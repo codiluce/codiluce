@@ -1,6 +1,6 @@
 # Archipelago — Code & Architecture Visualizer
 
-Archipelago is the project name. The primary npm command is `archipelago`; `atlas` remains an alias and existing `.atlas/atlas.db` caches are preserved.
+Archipelago is the project name and the npm command is `archipelago`.
 
 ## 1. Supported repository structure
 
@@ -15,7 +15,7 @@ Archipelago supports repositories containing Next.js and Laravel applications. A
 
 ## 2. Proposed architecture and location
 
-Keep the tool in this separate workspace. It accepts a target repository path; default generated configuration/cache lives in `<target>/.atlas/`, with `--state-dir` allowing all generated files to live outside that repository. No Laravel boot, Artisan invocation, database access, or application code mutation is required.
+Keep the tool in this separate workspace. It accepts a target repository path; default generated configuration/cache lives in `<target>/.archipelago/`, with `--state-dir` allowing all generated files to live outside that repository. No Laravel boot, Artisan invocation, database access, or application code mutation is required.
 
 Use a TypeScript engine with these actual boundaries:
 

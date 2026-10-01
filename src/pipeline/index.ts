@@ -15,7 +15,7 @@ const execute = promisify(execFile);
 export const analyzers: Analyzer[] = [filesystemAnalyzer, typescriptAnalyzer, laravelAnalyzer, apiMatcher];
 export async function indexRepository(repository: string, options: { stateDirectory?: string; config?: AtlasConfig; onProgress?: (name: string) => void } = {}): Promise<SoftwareGraph> {
   const root = await realpath(repository);
-  const config = options.config ?? await loadConfig(root, options.stateDirectory ?? path.join(root, '.atlas'));
+  const config = options.config ?? await loadConfig(root, options.stateDirectory ?? path.join(root, '.archipelago'));
   const graph = new GraphBuilder(config.repository.id ?? config.repository.name);
   const repositoryId = graph.id('repository');
   const context: AnalysisContext = { root, config, graph, repositoryId, applicationIds: new Map(), files: new Map(), http: [] };

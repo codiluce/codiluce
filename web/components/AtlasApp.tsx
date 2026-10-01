@@ -78,7 +78,7 @@ function Shell() {
   }, [store]);
   const run = meta?.run;
   return (
-    <div className="atlas" style={style} data-dark={String(theme.dark)}>
+    <div className="archipelago" style={style} data-dark={String(theme.dark)}>
       <header className="topbar">
         <div className="brand">
           <strong><span className="brand-mark" aria-hidden />Archipelago</strong>

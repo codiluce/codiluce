@@ -20,8 +20,8 @@ let root: string, state: string, graph: SoftwareGraph, store: GraphStore;
 async function createFixture(): Promise<string> {
   const directory = await mkdtemp(path.join(tmpdir(), 'atlas-projection-')); temporary.push(directory);
   await cp(fixture, directory, { recursive: true });
-  await mkdir(path.join(directory, '.atlas'));
-  await writeFile(path.join(directory, '.atlas/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'] }] }));
+  await mkdir(path.join(directory, '.archipelago'));
+  await writeFile(path.join(directory, '.archipelago/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'] }] }));
   return directory;
 }
 function entityId(name: string, type?: string): string {

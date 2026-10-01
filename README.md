@@ -2,7 +2,7 @@
 
 Code & Architecture Visualizer: a deterministic, evidenced software graph for Next.js + Laravel repositories (Phase 1) and an interactive isometric map that projects it (Phases 3–4: spatial map, evidence inspector, lazy source, named flows). The architecture and remaining phases are in [docs/architecture-visualizer.md](docs/architecture-visualizer.md).
 
-The primary command is `npm run archipelago -- …`. `npm run atlas -- …` remains a compatibility alias. Generated state continues to use `.atlas/` and `atlas.db` so existing indexes remain usable.
+The primary command is `npm run archipelago -- …`. Generated state uses `.archipelago/` and `archipelago.db`.
 
 ## Run against a repository
 
@@ -11,15 +11,15 @@ Requires Node >=22.12. The scripts enable the built-in SQLite API for the instal
 ```bash
 cd /path/to/archipelago
 npm ci
-npm run archipelago -- init --repo /path/to/repository --state-dir .atlas/example
-npm run archipelago -- index --repo /path/to/repository --state-dir .atlas/example
-npm run archipelago -- inspect summary --repo /path/to/repository --state-dir .atlas/example
-npm run archipelago -- serve --repo /path/to/repository --state-dir .atlas/example --port 4300
+npm run archipelago -- init --repo /path/to/repository --state-dir .archipelago/example
+npm run archipelago -- index --repo /path/to/repository --state-dir .archipelago/example
+npm run archipelago -- inspect summary --repo /path/to/repository --state-dir .archipelago/example
+npm run archipelago -- serve --repo /path/to/repository --state-dir .archipelago/example --port 4300
 ```
 
-Open **http://127.0.0.1:4300/api** for the endpoint directory, or **http://127.0.0.1:4300/api/summary** for index counts/diagnostics. The cache/configuration stays in this tool workspace; target application code is untouched. Omit `--state-dir` to use `<repository>/.atlas/` instead. `init` preserves existing config and database; `index` also works without init using autodetection.
+Open **http://127.0.0.1:4300/api** for the endpoint directory, or **http://127.0.0.1:4300/api/summary** for index counts/diagnostics. The cache/configuration stays in this tool workspace; target application code is untouched. Omit `--state-dir` to use `<repository>/.archipelago/` instead. `init` preserves existing config and database; `index` also works without init using autodetection.
 
-Generated state contains repository metadata, including file paths, symbols, routes, and diagnostics. Keep local state and inspection exports under `.atlas/`, which is excluded by `.gitignore`. If you choose another state directory, add it to that workspace's `.gitignore` before publishing. Share only sanitized configuration examples.
+Generated state contains repository metadata, including file paths, symbols, routes, and diagnostics. Keep local state and inspection exports under `.archipelago/`, which is excluded by `.gitignore`. If you choose another state directory, add it to that workspace's `.gitignore` before publishing. Share only sanitized configuration examples.
 
 ## Visualizer
 
@@ -28,9 +28,9 @@ The map is a Next.js + React app in `web/`, statically exported to `web/out` and
 ```bash
 cd /var/www/html/archipelago
 npm ci
-npm run archipelago -- index --repo /var/www/html/etengabe.eus --state-dir .atlas/etengabe
+npm run archipelago -- index --repo /var/www/html/etengabe.eus --state-dir .archipelago/etengabe
 npm run build:web
-npm run archipelago -- serve --repo /var/www/html/etengabe.eus --state-dir .atlas/etengabe --port 4300
+npm run archipelago -- serve --repo /var/www/html/etengabe.eus --state-dir .archipelago/etengabe --port 4300
 ```
 
 Open **http://127.0.0.1:4300/**. `serve` uses `web/out` automatically when it exists (`--ui PATH` chooses another build, `--ui none` serves only the API). Reindexing while the server runs is detected within ~30 s and the map offers a reload.
@@ -71,9 +71,9 @@ Layout, projection and source modules live in `src/projection/`, separate from a
 ## Inspect the graph
 
 ```bash
-npm run archipelago -- inspect entities --repo /path/to/repository --state-dir .atlas/example --search /auth/login --type api_endpoint
-npm run archipelago -- inspect entities --repo /path/to/repository --state-dir .atlas/example --search AuthController
-npm run archipelago -- inspect diagnostics --repo /path/to/repository --state-dir .atlas/example --code unresolved-http-call
+npm run archipelago -- inspect entities --repo /path/to/repository --state-dir .archipelago/example --search /auth/login --type api_endpoint
+npm run archipelago -- inspect entities --repo /path/to/repository --state-dir .archipelago/example --search AuthController
+npm run archipelago -- inspect diagnostics --repo /path/to/repository --state-dir .archipelago/example --code unresolved-http-call
 ```
 
 Use returned IDs with `inspect entity --id ID`, `inspect relations --id ID --direction outgoing --type handles`, and `inspect relation --id ID`. Entity and relation **details** include complete evidence; **lists** intentionally omit evidence/large entity metadata. Pagination defaults to 100, caps at 500, and returns `hasMore`.
@@ -93,13 +93,13 @@ The server binds to loopback and accepts GET only. It opens the cache read-only 
 SQLite can also be inspected directly:
 
 ```bash
-sqlite3 .atlas/example/atlas.db 'SELECT type, count(*) FROM entities GROUP BY type;'
-sqlite3 .atlas/example/atlas.db 'SELECT code, count(*) FROM diagnostics GROUP BY code;'
+sqlite3 .archipelago/example/archipelago.db 'SELECT type, count(*) FROM entities GROUP BY type;'
+sqlite3 .archipelago/example/archipelago.db 'SELECT code, count(*) FROM diagnostics GROUP BY code;'
 ```
 
 ## Configuration
 
-`init` autodetects Next/Laravel manifest roots (through two directory levels). Explicit applications override detection. `.atlas/config.yml` can contain:
+`init` autodetects Next/Laravel manifest roots (through two directory levels). Explicit applications override detection. `.archipelago/config.yml` can contain:
 
 ```yaml
 repository:

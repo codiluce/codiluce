@@ -11,7 +11,7 @@ export interface AtlasConfig {
 }
 export const DEFAULT_IGNORES = [
   '**/node_modules/**', '**/vendor/**', '**/.git/**', '**/.next/**', '**/storage/**', '**/coverage/**',
-  '**/build/**', '**/dist/**', '**/out/**', '**/.atlas/**', '**/.cache/**', '**/.gradle/**', '**/Pods/**',
+  '**/build/**', '**/dist/**', '**/out/**', '**/.archipelago/**', '**/.cache/**', '**/.gradle/**', '**/Pods/**',
   '**/.venv/**', '**/__pycache__/**', '**/bootstrap/cache/**', '**/public/phpmyadmin/**', '**/__db__/**',
   '**/.cursor/**', '**/.agents/**', '**/next-env.d.ts', '**/*.generated.*', '**/*.min.js', '**/*.map',
   '**/.env', '**/.env.*', '**/.htpasswd', '**/*.pem', '**/*.key', '**/*.sqlite', '**/*.db', '**/*.log',

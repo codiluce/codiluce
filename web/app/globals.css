@@ -11,7 +11,7 @@ button { cursor: pointer; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; }
 
-.atlas { display: grid; grid-template-rows: auto auto minmax(0, 1fr); grid-template-columns: minmax(0, 1fr); height: 100vh; }
+.archipelago { display: grid; grid-template-rows: auto auto minmax(0, 1fr); grid-template-columns: minmax(0, 1fr); height: 100vh; }
 .topbar { display: flex; align-items: center; gap: 14px; padding: 8px 14px; background: var(--panel-solid); border-bottom: 1px solid var(--panel-border); z-index: 5; }
 .brand { display: flex; flex-direction: column; min-width: 0; flex: 0 1 auto; }
 .brand strong { font-size: 14px; letter-spacing: 0.02em; display: flex; align-items: center; gap: 7px; }

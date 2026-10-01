@@ -7,7 +7,7 @@ coverage/
 *.tsbuildinfo
 
 # Local repository analysis state (may contain private source metadata)
-.atlas/
+.archipelago/
 /config.yml
 *.db
 *.db-shm

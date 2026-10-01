@@ -8,7 +8,6 @@
   },
   "scripts": {
     "archipelago": "node --experimental-sqlite --import tsx src/cli.ts",
-    "atlas": "node --experimental-sqlite --import tsx src/cli.ts",
     "dev:web": "next dev web --port 4310",
     "build:web": "next build web",
     "test": "node --experimental-sqlite --import tsx --test tests/*.test.ts web/tests/*.test.ts",

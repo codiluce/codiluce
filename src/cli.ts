@@ -19,11 +19,10 @@ Options: --search TEXT --type TYPE --id ID --path PATH --parent ID
          --direction incoming|outgoing|both --severity info|warning|error
          --code CODE --limit 1..500 --offset NUMBER
 
-State defaults to <repo>/.atlas. inspect outputs JSON; serve is a local,
+State defaults to <repo>/.archipelago. inspect outputs JSON; serve is a local,
 read-only API that also serves the built visualizer (web/out, see
 npm run build:web) unless --ui none. index persists diagnostics and exits 2
 for analyzer errors.
-The atlas npm script remains a compatibility alias.
 `;
 async function main(): Promise<void> {
   const string = { type: 'string' } as const;
@@ -32,8 +31,8 @@ async function main(): Promise<void> {
   const command = positionals[0];
   if (values.help || !command) { console.log(HELP); return; }
   const root = await realpath(String(values.repo ?? process.cwd()));
-  const stateDirectory = path.resolve(String(values['state-dir'] ?? path.join(root, '.atlas')));
-  const database = path.join(stateDirectory, 'atlas.db');
+  const stateDirectory = path.resolve(String(values['state-dir'] ?? path.join(root, '.archipelago')));
+  const database = path.join(stateDirectory, 'archipelago.db');
   if (command === 'init') {
     await mkdir(stateDirectory, { recursive: true });
     const configFile = path.join(stateDirectory, 'config.yml');

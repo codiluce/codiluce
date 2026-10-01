@@ -22,8 +22,8 @@ let root: string, graph: SoftwareGraph, store: GraphStore, projection: Projectio
 before(async () => {
   root = await mkdtemp(path.join(tmpdir(), 'atlas-web-'));
   await cp(fixture, root, { recursive: true });
-  await mkdir(path.join(root, '.atlas'));
-  await writeFile(path.join(root, '.atlas/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'] }] }));
+  await mkdir(path.join(root, '.archipelago'));
+  await writeFile(path.join(root, '.archipelago/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'] }] }));
   graph = await indexRepository(root);
   store = new GraphStore(':memory:'); store.save(graph);
   projection = new ProjectionService(store);
