@@ -1,0 +1,1 @@
+{ "name": "fixture-frontend", "dependencies": { "next": "16.0.7", "react": "19.2.0" } }
