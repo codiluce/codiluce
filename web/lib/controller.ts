@@ -10,7 +10,7 @@ import { themeById } from './themes';
 
 const STEP_MS = 1800;
 interface Animation { at(t: number): Camera; start: number; duration: number }
-export interface DebugHandle { screenPositionOf(id: string): { x: number; y: number } | undefined; camera(): Camera; visibleIds(): string[] }
+export interface DebugHandle { screenPositionOf(id: string): { x: number; y: number } | undefined; camera(): Camera; visibleIds(): string[]; rectOf(id: string): { x: number; y: number; w: number; h: number } | undefined }
 
 export class MapController implements MapNavigator {
   private readonly ctx: CanvasRenderingContext2D;
@@ -45,6 +45,7 @@ export class MapController implements MapNavigator {
     this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     store.navigator = this;
     store.visibility = id => this.set.index.has(id);
+    store.openContainers = () => this.set.items.filter(item => item.open).map(item => item.node.id);
     const resize = new ResizeObserver(() => this.resize());
     resize.observe(canvas);
     this.cleanup.push(() => resize.disconnect());
@@ -65,6 +66,7 @@ export class MapController implements MapNavigator {
       screenPositionOf: id => { const index = this.set.index.get(id); if (index === undefined) return undefined; const item = this.set.items[index]!; const r = item.node.rect; const p = worldToScreen(this.camera, this.viewport, r.x + r.w / 2, r.y + r.h / 2, item.zTop); const box = canvas.getBoundingClientRect(); return { x: box.left + p.x, y: box.top + p.y }; },
       camera: () => ({ ...this.camera }),
       visibleIds: () => this.set.items.map(item => item.node.id),
+      rectOf: id => this.store.scene.nodes.get(id)?.rect,
     };
     this.resize();
   }
@@ -72,7 +74,7 @@ export class MapController implements MapNavigator {
     cancelAnimationFrame(this.frame);
     if (this.reportTimer) clearTimeout(this.reportTimer);
     for (const dispose of this.cleanup) dispose();
-    if (this.store.navigator === this) { this.store.navigator = undefined; this.store.visibility = undefined; }
+    if (this.store.navigator === this) { this.store.navigator = undefined; this.store.visibility = undefined; this.store.openContainers = undefined; }
   }
   private get motionReduced(): boolean { return this.reducedMotion.matches; }
   private resize(): void {
@@ -176,7 +178,7 @@ export class MapController implements MapNavigator {
         if (state.relations.type && item.type !== state.relations.type) continue;
         emphasis.add(item.other.id);
         const incoming = item.direction === 'incoming';
-        edges.push({ key: item.id, type: item.type, count: 1, from: incoming ? item.other.id : selection.id, fromAncestors: incoming ? item.otherAncestors : selectedAncestors, to: incoming ? selection.id : item.other.id, toAncestors: incoming ? selectedAncestors : item.otherAncestors, emphasized: state.evidence?.relationId === item.id });
+        edges.push({ key: item.id, type: item.type, count: 1, from: incoming ? item.other.id : selection.id, fromAncestors: incoming ? item.otherAncestors : selectedAncestors, to: incoming ? selection.id : item.other.id, toAncestors: incoming ? selectedAncestors : item.otherAncestors, emphasized: state.evidence?.relationId === item.id, ...(item.change ? { change: item.change } : {}) });
       }
     } else if (selection?.node && isContainer(selection.node) && state.aggregate.forId === selection.id && state.aggregate.data?.groups.length) {
       emphasis = new Set([selection.id]);
@@ -198,6 +200,7 @@ export class MapController implements MapNavigator {
     return {
       selectedId: selection?.id, hoveredId: state.hover?.id, emphasis, edges, flow,
       showDiagnostics: state.showDiagnostics, source: this.sourceFace(state), time, reducedMotion: this.motionReduced,
+      ...(state.meta?.comparison ? { comparison: { dimUnchanged: state.timeline.dimUnchanged } } : {}),
       ...(unresolvedCount && selection ? { unresolved: { nodeId: selection.id, count: unresolvedCount } } : {}),
     };
   }
@@ -208,10 +211,12 @@ export class MapController implements MapNavigator {
     if (!selection || index === undefined) return undefined;
     const item = this.set.items[index]!;
     if (item.size < this.lod.sourcePx || item.open || isContainer(item.node) || !item.node.path) return undefined;
-    const cached = this.faceSource.get(selection.id);
+    // Content differs per snapshot: cache per view.
+    const key = `${state.meta?.snapshot.id ?? ''}|${state.meta?.comparison?.baseline.id ?? ''}|${selection.id}`;
+    const cached = this.faceSource.get(key);
     if (!cached) {
-      this.faceSource.set(selection.id, 'loading');
-      this.store.api.source({ entity: selection.id }).then(data => { this.faceSource.set(selection.id, data); this.request(); }).catch(() => this.faceSource.set(selection.id, 'error'));
+      this.faceSource.set(key, 'loading');
+      this.store.api.source({ entity: selection.id }).then(data => { this.faceSource.set(key, data); this.request(); }).catch(() => this.faceSource.set(key, 'error'));
       return undefined;
     }
     if (typeof cached === 'string') return undefined;

@@ -15,7 +15,8 @@ export const filesystemAnalyzer: Analyzer = {
     const { root, config, graph } = context;
     graph.addEntity({ id: context.repositoryId, type: 'repository', name: config.repository.name, metadata: {}, evidence: [evidence('filesystem', 'filesystem', undefined, undefined, 'Repository scan root')] });
     let ignored: string[] = [];
-    try {
+    // A materialized commit holds tracked files only: there is nothing ignored to prune.
+    if (!context.revision) try {
       const result = await execute('git', ['ls-files', '--others', '--ignored', '--exclude-standard', '--directory', '-z'], { cwd: root, maxBuffer: 16 * 1024 * 1024 });
       ignored = result.stdout.split('\0').filter(Boolean);
     } catch {

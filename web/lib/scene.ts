@@ -34,6 +34,8 @@ export function nodeHeight(node: Pick<NodeSummary, 'type' | 'rect' | 'loc'>): nu
     default: return 3;
   }
 }
+/** Revisions are global so a replacement scene never repeats a revision the map has already drawn. */
+let revisions = 0;
 /** Painter's order among siblings: back (small x+y) to front. */
 function depthKey(node: NodeSummary): number { return node.rect.x + node.rect.y + (node.rect.w + node.rect.h) / 2; }
 
@@ -43,19 +45,19 @@ export class Scene {
   private readonly base = new Map<string, number>();
   private readonly ordered = new Map<string, string[]>();
   rootId?: string;
-  revision = 0;
+  revision = ++revisions;
 
   reset(root: NodeSummary): void {
     this.nodes.clear(); this.children.clear(); this.base.clear(); this.ordered.clear();
-    this.rootId = root.id; this.nodes.set(root.id, root); this.revision++;
+    this.rootId = root.id; this.nodes.set(root.id, root); this.revision = ++revisions;
   }
   /** Add a known node (e.g. from search/locate) even before its parent's page is loaded. */
   upsert(node: NodeSummary): void {
-    if (!this.nodes.has(node.id)) { this.nodes.set(node.id, node); this.revision++; }
+    if (!this.nodes.has(node.id)) { this.nodes.set(node.id, node); this.revision = ++revisions; }
     const parent = node.spatialParentId;
     if (!parent || !this.nodes.has(parent)) return;
     const list = this.childList(parent);
-    if (!list.ids.includes(node.id)) { list.ids.push(node.id); this.ordered.delete(parent); this.revision++; }
+    if (!list.ids.includes(node.id)) { list.ids.push(node.id); this.ordered.delete(parent); this.revision = ++revisions; }
   }
   childList(parentId: string): ChildList {
     let list = this.children.get(parentId);
@@ -69,13 +71,13 @@ export class Scene {
       if (!list.ids.includes(item.id)) list.ids.push(item.id);
     }
     list.total = total; list.loadedPages++; list.complete = !hasMore; list.loading = false; delete list.error;
-    this.ordered.delete(parentId); this.revision++;
+    this.ordered.delete(parentId); this.revision = ++revisions;
   }
   setLoading(parentId: string, loading: boolean, error?: string): void {
     const list = this.childList(parentId);
     list.loading = loading;
     if (error) list.error = error; else delete list.error;
-    this.revision++;
+    this.revision = ++revisions;
   }
   zBase(id: string): number {
     const cached = this.base.get(id);

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 
 export const SCHEMA_VERSION = 1;
-export const ANALYZER_VERSION = '0.1.0';
+export const ANALYZER_VERSION = '0.2.0';
 export type EntityType = 'repository' | 'application' | 'domain' | 'directory' | 'file' | 'component' | 'class' | 'function' | 'method' | 'route' | 'api_endpoint' | 'controller' | 'model' | 'database_table' | 'external_service' | 'test' | 'user_flow';
 export type RelationType = 'contains' | 'imports' | 'exports' | 'calls' | 'renders' | 'routes_to' | 'handles' | 'requests' | 'reads' | 'writes' | 'queries' | 'maps_to' | 'extends' | 'implements' | 'observed_call' | 'part_of_flow' | 'changed_with';
 export interface SourceRange { startLine: number; endLine: number; startColumn?: number; endColumn?: number }
@@ -36,6 +36,14 @@ export interface AnalysisRun {
 export interface SoftwareGraph { schemaVersion: number; run: AnalysisRun; entities: Entity[]; relations: Relation[]; diagnostics: Diagnostic[] }
 export function stableId(kind: string, ...parts: string[]): string {
   return `${kind}:${createHash('sha256').update(JSON.stringify(parts)).digest('hex').slice(0, 24)}`;
+}
+/**
+ * Source fingerprints of a declaration: `contentHash` is its exact text;
+ * `bodyHash` is the whitespace-normalized text after its name, so it survives
+ * renames and reformatting (used to follow renamed symbols through history).
+ */
+export function declarationHashes(text: string, nameEnd: number): { contentHash: string; bodyHash: string } {
+  return { contentHash: createHash('sha256').update(text).digest('hex'), bodyHash: createHash('sha256').update(text.slice(Math.max(0, nameEnd)).replace(/\s+/g, ' ').trim()).digest('hex').slice(0, 32) };
 }
 export function evidence(source: Evidence['source'], analyzer: string, file?: string, line?: number, explanation?: string): Evidence {
   return { source, analyzer, analyzerVersion: ANALYZER_VERSION, confidence: 1, ...(file ? { file } : {}), ...(line ? { line } : {}), ...(explanation ? { explanation } : {}) };

@@ -13,6 +13,7 @@ export function MapView() {
   const error = useAtlas(state => state.error);
   const stale = useAtlas(state => state.staleIndex);
   const drafting = useAtlas(state => !!state.flows.draft);
+  const switching = useAtlas(state => state.timeline.switching);
   const [failure, setFailure] = useState<string>();
   useEffect(() => {
     if (!canvas.current) return;
@@ -29,6 +30,7 @@ export function MapView() {
       <VisibleList />
       {drafting && <div className="capture-banner" role="status">Recording flow steps: click entities on the map (or use “Add selection”).</div>}
       {stale && <div className="banner" role="status">A newer analysis run is available. <button className="button small primary" onClick={() => void store.reload()}>Reload map</button></div>}
+      {switching && <div className="switching" role="status"><span className="spinner tiny" />Loading snapshot…</div>}
       {(status === 'loading' || status === 'error' || failure) && (
         <div className="center-state">
           <div className="card" role={status === 'error' || failure ? 'alert' : 'status'}>
@@ -89,17 +91,25 @@ function Legend() {
   const types = ['application', 'directory', 'file', 'class', 'controller', 'component', 'function', 'method', 'api_endpoint', 'route'].filter(type => present.has(type));
   const relationTypes = meta.relationTypes.filter(item => item.type !== 'contains');
   const coverage = meta.coverage;
+  const comparison = meta.comparison;
   const items: { state: 'present' | 'partial' | 'absent'; text: string }[] = [
     { state: 'present', text: 'Hierarchy, files, symbols, routes, imports/exports, inheritance' },
     { state: coverage.resolvedHttpRequests ? 'partial' : 'absent', text: `HTTP request matching: ${coverage.resolvedHttpRequests} resolved, ${coverage.unresolvedHttpCalls} unresolved` },
     { state: coverage.calls ? 'partial' : 'absent', text: coverage.calls ? `Calls/renders: ${coverage.calls}` : 'Function calls and renders: not extracted yet' },
     { state: coverage.databaseTables ? 'present' : 'absent', text: coverage.databaseTables ? `Database tables: ${coverage.databaseTables}` : 'Database analysis not indexed yet' },
-    { state: coverage.gitHistory ? 'present' : 'absent', text: coverage.gitHistory ? 'Git history metrics' : 'Per-file Git history: not indexed (only the HEAD of the run)' },
+    { state: coverage.gitHistory ? 'present' : 'absent', text: coverage.gitHistory ? `History: ${coverage.gitHistory} indexed commits (History button)` : 'History: no commits indexed (run history index)' },
   ];
   return (
     <details className="legend">
       <summary>Legend &amp; coverage <span aria-hidden>▾</span></summary>
       <div className="legend-body">
+        {comparison && (
+          <div className="legend-grid" aria-label="Changes">
+            {(['added', 'modified', 'moved', 'removed'] as const).map(key => <span key={key} className="legend-item"><span className="change-swatch" style={{ borderColor: theme.change[key], background: `color-mix(in srgb, ${theme.change[key]} 40%, transparent)`, borderStyle: key === 'removed' ? 'dashed' : 'solid' }} />{key === 'removed' ? 'removed (ghost)' : key}</span>)}
+            <span className="legend-item"><span className="change-swatch" style={{ borderColor: theme.change.modified, borderStyle: 'dotted' }} />links/findings only</span>
+            <span className="legend-item"><span className="line" style={{ background: theme.change.added, height: 5, opacity: 0.6 }} />edge added</span>
+          </div>
+        )}
         <div className="legend-grid">
           {types.map(type => { const c = theme.entity[type]!; return <span key={type} className="legend-item"><span className="type-dot" style={{ background: `hsl(${c.h} ${c.s}% ${c.l}%)` }} />{typeLabel(type)}</span>; })}
         </div>
@@ -131,6 +141,8 @@ function HoverCard() {
       <div className="name">{hover.name}</div>
       <div className="type-badge">{hover.kind === 'group' ? 'Projection district' : typeLabel(hover.type, hover.role)}{hover.loc !== undefined ? ` · ${hover.loc} lines` : ''}{hover.diagnostics ? ` · ${hover.diagnostics} unresolved` : ''}</div>
       {hover.path && <div className="path">{hover.path}{hover.sourceRange ? `:${hover.sourceRange.startLine}` : ''}</div>}
+      {hover.change && <div className={`hover-change ${hover.change.status}`}>{hover.change.status}{hover.change.facets.length ? ` · ${hover.change.facets.join(', ')}` : ''}{hover.change.previousPath ? ` · from ${hover.change.previousPath}` : ''}{hover.change.previousName ? ` · was ${hover.change.previousName}` : ''}</div>}
+      {hover.changes && <div className="hover-change">inside: {(['added', 'modified', 'moved', 'removed'] as const).filter(key => hover.changes![key]).map(key => `${hover.changes![key]} ${key}`).join(', ')}</div>}
     </div>
   );
 }

@@ -1,8 +1,8 @@
 'use client';
 import type { Entity, Evidence } from '@engine/core/graph';
-import type { AggregateGroup, NodeSummary, RelationItem } from '@engine/projection/dto';
-import { compactNumber, percent, relationPhrase, typeLabel } from '../lib/format';
-import { isContainer, type AtlasStore } from '../lib/store';
+import type { AggregateGroup, ChangeFacet, DiagnosticItem, NodeChange, NodeSummary, RelationItem } from '@engine/projection/dto';
+import { compactNumber, percent, relationPhrase, shortSha, typeLabel } from '../lib/format';
+import { entryOf, isContainer, type AtlasStore } from '../lib/store';
 import { themeById } from '../lib/themes';
 import { useAtlas, useStore } from './context';
 import { TypeBadge } from './TypeBadge';
@@ -27,6 +27,7 @@ function Overview() {
   const meta = useAtlas(state => state.meta);
   const store = useStore();
   if (!meta) return <p className="absent">Waiting for the index…</p>;
+  if (meta.comparison) return <ComparisonOverview />;
   const root = meta.root;
   const severities = Object.fromEntries(meta.diagnosticSeverities.map(item => [item.severity, item.count]));
   return (
@@ -41,8 +42,10 @@ function Overview() {
         <dt>Routes &amp; endpoints</dt><dd>{compactNumber(root.stats.endpoints)}</dd>
         <dt>Measured lines</dt><dd>{compactNumber(root.stats.measuredLoc)}{root.stats.unmeasuredFiles ? <span className="absent"> · {root.stats.unmeasuredFiles} files not measured</span> : null}</dd>
         <dt>Commit</dt><dd className="mono">{meta.run.commitSha ?? <span className="absent">no Git metadata</span>}{meta.run.dirty ? ' (working tree has uncommitted changes)' : ''}</dd>
+        <dt>Snapshot</dt><dd>{meta.snapshot.kind === 'commit' ? 'Historical commit (read from Git objects)' : 'Live working-tree index'}</dd>
         <dt>Unresolved</dt><dd>{['error', 'warning', 'info'].filter(key => severities[key]).map(key => `${severities[key]} ${key}`).join(' · ') || 'none'}</dd>
       </dl>
+      {meta.snapshot.kind === 'commit' && <CommitCard sha={meta.snapshot.commitSha} />}
       <p className="note">Search with <kbd>/</kbd>, or zoom into the map: applications open into directories, then files, then symbols. Selecting an entity shows its indexed relationships and the evidence behind each one.</p>
       <div className="inspector-actions">
         <button className="button" onClick={() => void store.select(root.id, { fly: true })}>Repository connections</button>
@@ -88,10 +91,13 @@ function Selection() {
       {node.kind === 'group' && <p className="note">{node.explanation}</p>}
       {(node.type === 'api_endpoint' || node.type === 'route') && <p className="note">Shown in the <strong>Routes &amp; endpoints</strong> district of its application. That district is only a spatial grouping; the canonical parent is the application.</p>}
       {selection.entityStatus === 'error' && <p className="note error">{selection.error}</p>}
+      {node.change?.status === 'removed' && <p className="note">This entity existed in the baseline and was removed. It is shown as a ghost where it used to be; its facts below are from the baseline.</p>}
+      {selection.change && <ChangeSection node={node} />}
       <Facts node={node} entity={entity} />
       <HttpCalls selectionId={node.id} file={selection.file} />
       <Diagnostics />
       {container ? <Aggregate node={node} /> : <Relations node={node} />}
+      {selection.timeline && <EntityTimeline />}
       {entity && <EntityEvidence entity={entity} store={store} />}
       {entity && Object.keys(entity.metadata).length > 0 && (
         <details className="section">
@@ -173,7 +179,7 @@ function Diagnostics() {
         {data.items.map(item => (
           <li key={item.id} className={`row diagnostic ${item.severity}`}>
             <div className="row-main">
-              <div className="row-title"><span className="label">{item.code}</span><span className="type-badge">{item.severity}</span></div>
+              <div className="row-title">{item.change && <ChangeBadge status="added" text="new" />}<span className="label">{item.code}</span><span className="type-badge">{item.severity}</span></div>
               <div className="row-sub" title={item.reason}>{item.reason}</div>
               {item.file && <div className="row-sub mono">{item.file}{item.line ? `:${item.line}` : ''}{item.nodeName ? ` · ${item.nodeName}` : ''}</div>}
             </div>
@@ -235,9 +241,10 @@ function RelationRow({ item, emphasized, selectedName }: { item: RelationItem; e
   const via = hiddenVia(store, item);
   const from = item.direction === 'incoming' ? item.other.name : selectedName, to = item.direction === 'incoming' ? selectedName : item.other.name;
   return (
-    <li className={`row${emphasized ? ' emphasized' : ''}`}>
+    <li className={`row${emphasized ? ' emphasized' : ''}${item.change === 'removed' ? ' removed-row' : ''}`}>
       <div className="row-main">
         <div className="row-title">
+          {item.change && <ChangeBadge status={item.change} />}
           <span className="relation-phrase" style={{ color, background: `color-mix(in srgb, ${color} 16%, transparent)` }} title={`Graph relation: ${item.type} (${item.direction})`}>{relationPhrase(item.type, item.direction)}</span>
           <span className="label" title={item.other.name}>{item.other.name}</span>
         </div>
@@ -383,6 +390,208 @@ function EvidenceView() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+// History -------------------------------------------------------------------------
+const STATUS_TEXT: Record<string, string> = { added: 'Added', removed: 'Removed', modified: 'Modified', moved: 'Moved', unchanged: 'Unchanged' };
+const FACET_TEXT: Record<ChangeFacet, string> = {
+  source: 'source text changed', definition: 'declared facts changed', signature: 'signature changed', type: 'kind changed', size: 'size changed',
+  renamed: 'renamed or relocated', reparented: 'moved to another parent', relations: 'relationships changed', diagnostics: 'findings changed',
+};
+const LINEAGE_TEXT: Record<string, string> = {
+  'git-rename': 'Git rename detection', 'directory-rename': 'a directory rename implied by renamed files', 'qualified-name': 'the same qualified name',
+  body: 'an identical body under another name', name: 'the same name in the same (mapped) place',
+};
+export function ChangeBadge({ status, text }: { status: string; text?: string }) {
+  return <span className={`change-badge ${status}`}>{text ?? STATUS_TEXT[status]?.toLowerCase() ?? status}</span>;
+}
+function describe(change: NodeChange): string {
+  return change.facets.map(facet => FACET_TEXT[facet]).join(' · ');
+}
+function ChangeSection({ node }: { node: NodeSummary }) {
+  const store = useStore();
+  const change = useAtlas(state => state.selection?.change);
+  const meta = useAtlas(state => state.meta);
+  const data = change?.data;
+  const status = node.change?.status ?? 'unchanged';
+  const baseline = meta?.comparison?.baseline;
+  const at = (ref: { kind: string; commitSha?: string } | undefined) => ref?.kind === 'commit' ? shortSha(ref.commitSha) : 'working tree';
+  return (
+    <section className={`section change-section ${status}`} aria-label="Changes versus the baseline">
+      <h4>Change since <span className="mono" style={{ textTransform: 'none', letterSpacing: 0 }}>{at(baseline)}</span> <ChangeBadge status={status} /></h4>
+      {node.change && node.change.facets.length > 0 && <p className="change-facets">{describe(node.change)}</p>}
+      {!node.change && <p className="absent" style={{ margin: '0 0 6px' }}>Identical in both snapshots{node.changes ? ', but entities inside it changed' : ''}.</p>}
+      {node.change?.previousPath && <p className="change-from">{status === 'moved' ? 'Moved from' : 'Was at'} <span className="mono">{node.change.previousPath}</span></p>}
+      {node.change?.previousName && <p className="change-from">Renamed from <strong>{node.change.previousName}</strong></p>}
+      {node.change?.lineage && <p className="absent" style={{ margin: '0 0 6px' }}>Identity followed through {LINEAGE_TEXT[node.change.lineage] ?? node.change.lineage}; the canonical ID changed.</p>}
+      {node.changes && <p className="change-from">Inside: {(['added', 'modified', 'moved', 'removed'] as const).filter(key => node.changes![key]).map(key => <span key={key} className={`change-count ${key}`}>{compactNumber(node.changes![key])} {key}</span>)}</p>}
+      {change?.status === 'loading' && <p className="absent">Loading the comparison…</p>}
+      {change?.status === 'error' && <p className="note error">{change.error}</p>}
+      {data && (
+        <>
+          <div className="inspector-actions">
+            {data.sourceDiff && <button className="button small primary" onClick={() => void store.openDiff(node.id, `${typeLabel(node.type, node.role)} ${node.name}`)}>Source diff</button>}
+            {data.before && data.sourceDiff && status !== 'removed' && <button className="button small" onClick={() => void store.openSource({ entity: data.before!.entity.id, side: 'baseline' }, `Before · ${node.name} @ ${at(data.before!.snapshot)}`)}>Before</button>}
+          </div>
+          {(data.metadata.length > 0 || data.metrics.before !== data.metrics.after || data.before?.parent?.id !== data.after?.parent?.id) && status !== 'added' && status !== 'removed' && (
+            <dl className="facts change-facts">
+              {data.before?.parent?.id !== data.after?.parent?.id && data.before && data.after && <><dt>Parent</dt><dd><span className="before">{data.before.parent?.name ?? '—'}</span> → <span className="after">{data.after.parent?.name ?? '—'}</span></dd></>}
+              {data.metrics.before !== data.metrics.after && <><dt>Lines</dt><dd><span className="before">{data.metrics.before ?? '—'}</span> → <span className="after">{data.metrics.after ?? '—'}</span></dd></>}
+              {data.metadata.map(item => <MetadataChange key={item.key} item={item} />)}
+            </dl>
+          )}
+          {(data.relations.added.length > 0 || data.relations.removed.length > 0) && (
+            <div className="change-group">
+              <div className="direction">Relationships <span className="added">+{data.relations.added.length}</span> <span className="removed">−{data.relations.removed.length}</span></div>
+              <ul className="list">{[...data.relations.added, ...data.relations.removed].slice(0, 60).map(item => <RelationRow key={`${item.change}${item.id}`} item={item} emphasized={false} selectedName={node.name} />)}</ul>
+            </div>
+          )}
+          {(data.diagnostics.added.length > 0 || data.diagnostics.removed.length > 0) && (
+            <div className="change-group">
+              <div className="direction">Findings <span className="added">+{data.diagnostics.added.length} new</span> <span className="removed">−{data.diagnostics.removed.length} resolved</span></div>
+              <ul className="list">{[...data.diagnostics.added.map(item => ({ item, kind: 'added' })), ...data.diagnostics.removed.map(item => ({ item, kind: 'removed' }))].slice(0, 40).map(({ item, kind }) => <DiagnosticChange key={`${kind}${item.id}`} item={item} kind={kind} />)}</ul>
+            </div>
+          )}
+          {data.evidenceChanged && <p className="absent" style={{ margin: '6px 0 0' }}>Evidence changed ({data.before?.evidenceCount} → {data.after?.evidenceCount} records).</p>}
+        </>
+      )}
+    </section>
+  );
+}
+function MetadataChange({ item }: { item: { key: string; before?: unknown; after?: unknown } }) {
+  const format = (value: unknown) => value === undefined ? '—' : typeof value === 'string' ? (item.key === 'contentHash' ? `${value.slice(0, 10)}…` : value) : typeof value === 'boolean' ? (value ? 'yes' : 'no') : JSON.stringify(value);
+  const label = item.key === 'contentHash' ? 'Source hash' : FACT_LABELS[item.key] ?? item.key;
+  const before = format(item.before), after = format(item.after);
+  const long = before.length + after.length > 60;
+  return <><dt>{label}</dt><dd className={long ? 'mono change-long' : 'mono'}><span className="before">{before}</span>{long ? <br /> : ' '}→ <span className="after">{after}</span></dd></>;
+}
+function DiagnosticChange({ item, kind }: { item: DiagnosticItem; kind: string }) {
+  const store = useStore();
+  return (
+    <li className={`row diagnostic ${item.severity}${kind === 'removed' ? ' removed-row' : ''}`}>
+      <div className="row-main">
+        <div className="row-title"><ChangeBadge status={kind} text={kind === 'added' ? 'new' : 'resolved'} /><span className="label">{item.code}</span></div>
+        <div className="row-sub" title={item.reason}>{item.reason}</div>
+      </div>
+      {item.file && kind === 'added' && <div className="row-actions"><button className="button small" onClick={() => void store.openSource({ diagnostic: item.id }, `${item.code} · ${item.file}${item.line ? `:${item.line}` : ''}`)}>Source</button></div>}
+    </li>
+  );
+}
+/** When this entity appeared, changed and disappeared on the indexed timeline. */
+function EntityTimeline() {
+  const store = useStore();
+  const timeline = useAtlas(state => state.selection?.timeline);
+  const data = useAtlas(state => state.timeline.data);
+  const target = useAtlas(state => state.timeline.target);
+  const history = timeline?.data;
+  return (
+    <details className="section" open>
+      <summary>History of this entity {history && <span className="chip"><span className="count">{history.points.length}</span></span>}</summary>
+      {timeline?.status === 'loading' && <p className="absent">Loading…</p>}
+      {timeline?.status === 'error' && <p className="note error">{timeline.error}</p>}
+      {history && history.points.length === 0 && <p className="absent">Not present in any indexed commit under this identity (it may be new in the working tree, or its ID changed; comparisons follow renames).</p>}
+      {history && history.points.length > 0 && (
+        <>
+          <p className="absent" style={{ margin: '0 0 6px' }}>Present in {history.present} of {history.indexedSnapshots} indexed commits. Follows this ID; renames show up in comparisons.</p>
+          <ul className="list entity-history">
+            {[...history.points].reverse().map(point => {
+              const entry = data?.entries.find(item => item.sha === point.sha);
+              const current = entry?.snapshot?.id === target;
+              return (
+                <li key={point.sha + point.status} className={`row${current ? ' emphasized' : ''}`}>
+                  <div className="row-main">
+                    <div className="row-title"><ChangeBadge status={point.status === 'introduced' || point.status === 'reintroduced' ? 'added' : point.status} text={point.status} /><span className="mono">{shortSha(point.sha)}</span><span className="label" title={entry?.subject}>{entry?.subject ?? ''}</span></div>
+                    <div className="row-sub">{entry ? new Date(entry.authoredAt).toLocaleDateString() : ''}{entry ? ` · ${entry.authorName}` : ''}{point.path ? ` · ${point.path}` : ''}</div>
+                  </div>
+                  <div className="row-actions"><button className="button small" disabled={current} onClick={() => void store.setTarget(point.snapshotId)}>View</button></div>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
+    </details>
+  );
+}
+function CommitCard({ sha }: { sha?: string }) {
+  const data = useAtlas(state => state.timeline.data);
+  const entry = data?.entries.find(item => item.sha === sha);
+  if (!entry) return null;
+  return (
+    <section className="section">
+      <h4>Commit</h4>
+      <dl className="facts">
+        <dt>Subject</dt><dd>{entry.subject}</dd>
+        <dt>Author</dt><dd>{entry.authorName} · {new Date(entry.authoredAt).toLocaleString()}</dd>
+        <dt>Parents</dt><dd className="mono">{entry.parents.map(parent => shortSha(parent)).join(', ') || 'none (root commit)'}{entry.merge ? ' · merge commit' : ''}</dd>
+        {entry.pullRequest && <><dt>Pull request</dt><dd>#{entry.pullRequest.number}{entry.pullRequest.title ? ` ${entry.pullRequest.title}` : ''} <span className="absent">({entry.pullRequest.source === 'github' ? 'GitHub' : 'inferred from the commit message, unverified'})</span></dd></>}
+        {entry.snapshot?.stats.substitutedApplications && <><dt>Applications</dt><dd>{Object.entries(entry.snapshot.stats.substitutedApplications).map(([name, at]) => `${name} lived at ${at}/`).join(', ')}</dd></>}
+        {entry.snapshot?.stats.applicationSource === 'detected' && <><dt>Applications</dt><dd>autodetected at this commit: {entry.snapshot.stats.applications.join(', ') || 'none'}</dd></>}
+      </dl>
+    </section>
+  );
+}
+/** Comparison overview: what changed, by kind, with every changed entity one click away. */
+function ComparisonOverview() {
+  const store = useStore();
+  const meta = useAtlas(state => state.meta)!;
+  const timeline = useAtlas(state => state.timeline);
+  const changes = timeline.changes;
+  const comparison = meta.comparison!;
+  const summary = comparison.summary;
+  const at = (ref: { kind: string; commitSha?: string; id: string }) => ref.kind === 'commit' ? `${shortSha(ref.commitSha)} ${entryOf(timeline.data, ref.id)?.subject ?? ''}` : 'Working tree (live index)';
+  const statusCounts = changes.page?.statusCounts ?? {};
+  return (
+    <div>
+      <div className="inspector-title">
+        <span className="type-badge">Comparison</span>
+        <h3>{meta.run.repositoryName}</h3>
+      </div>
+      <dl className="facts">
+        <dt>From</dt><dd className="mono">{at(comparison.baseline)}</dd>
+        <dt>To</dt><dd className="mono">{at(meta.snapshot)}</dd>
+        <dt>Entities</dt><dd>{(['added', 'modified', 'moved', 'removed'] as const).map(key => <span key={key} className={`change-count ${key}`}>{compactNumber(summary.entities[key])} {key}</span>)}</dd>
+        <dt>Files</dt><dd>+{summary.files.added} ~{summary.files.modified} →{summary.files.moved} −{summary.files.removed} · lines {compactNumber(summary.files.locBefore)} → {compactNumber(summary.files.locAfter)}</dd>
+        <dt>Relationships</dt><dd><span className="added">+{summary.relations.added}</span> <span className="removed">−{summary.relations.removed}</span>{summary.relations.byType.length ? <span className="absent"> · {summary.relations.byType.slice(0, 4).map(row => `${row.type} +${row.added}/−${row.removed}`).join(', ')}</span> : null}</dd>
+        <dt>Findings</dt><dd><span className="added">+{summary.diagnostics.added} new</span> <span className="removed">−{summary.diagnostics.removed} resolved</span></dd>
+        {summary.lineage.mapped > 0 && <><dt>Identity</dt><dd>{summary.lineage.mapped} entities followed across renames <span className="absent">({Object.entries(summary.lineage.byReason).map(([reason, count]) => `${count} ${reason}`).join(', ')})</span></dd></>}
+      </dl>
+      {comparison.analyzerMismatch && <p className="note warning">These snapshots were analyzed by different analyzer versions. Reindex the working tree (or re-run history index) so differences come from the code only.</p>}
+      {summary.applications.length > 0 && (
+        <section className="section">
+          <h4>Applications</h4>
+          <ul className="list">{summary.applications.map(app => <li key={app.id} className="row"><div className="row-main"><div className="row-title"><ChangeBadge status={app.status} /><span className="label">{app.name}</span></div>{app.previousName && <div className="row-sub">was {app.previousName}</div>}</div><div className="row-actions"><button className="button small" onClick={() => void store.select(app.id, { fly: true })}>Go</button></div></li>)}</ul>
+        </section>
+      )}
+      {summary.interfaces.length > 0 && (
+        <details className="section" open={summary.interfaces.length <= 12 ? true : undefined}>
+          <summary>Routes &amp; endpoints <span className="chip"><span className="count">{summary.interfaces.length}</span></span></summary>
+          <ul className="list">{summary.interfaces.map(item => <li key={item.id} className="row"><div className="row-main"><div className="row-title"><ChangeBadge status={item.status} /><span className="label mono">{item.name}</span></div>{item.previousName && <div className="row-sub">was {item.previousName}</div>}</div><div className="row-actions"><button className="button small" onClick={() => void store.select(item.id, { fly: true })}>Go</button></div></li>)}</ul>
+        </details>
+      )}
+      <section className="section">
+        <h4>Changed entities {changes.page && <span className="chip"><span className="count">{changes.page.total}</span></span>}</h4>
+        <div className="filters" role="group" aria-label="Filter changes">
+          <button className="chip" aria-pressed={!changes.filter} onClick={() => void store.loadChanges(undefined)}>All</button>
+          {(['added', 'modified', 'moved', 'removed'] as const).map(key => <button key={key} className={`chip status-${key}`} aria-pressed={changes.filter === key} onClick={() => void store.loadChanges(changes.filter === key ? undefined : key)} disabled={!summary.entities[key]}>{key} <span className="count">{statusCounts[key] ?? summary.entities[key]}</span></button>)}
+        </div>
+        {changes.status === 'loading' && changes.items.length === 0 && <p className="absent">Loading changes…</p>}
+        {changes.status === 'error' && <p className="note error">{changes.error}</p>}
+        <ul className="list">
+          {changes.items.map(item => (
+            <li key={item.id} className={`row${item.change?.status === 'removed' ? ' removed-row' : ''}`}>
+              <div className="row-main">
+                <div className="row-title"><ChangeBadge status={item.change?.status ?? 'unchanged'} /><TypeBadge type={item.type} role={item.role} /><span className="label" title={item.name}>{item.name}</span></div>
+                <div className="row-sub" title={item.path ?? item.breadcrumb}>{item.change?.previousPath ? `${item.change.previousPath} → ` : ''}{item.path ?? item.breadcrumb}{item.change?.facets.length ? ` · ${describe(item.change)}` : ''}</div>
+              </div>
+              <div className="row-actions"><button className="button small" onClick={() => void store.select(item.id, { fly: true })} aria-label={`Go to ${item.name}`}>Go</button></div>
+            </li>
+          ))}
+        </ul>
+        {changes.page?.hasMore && <button className="button small" style={{ marginTop: 6 }} onClick={() => void store.loadChanges(changes.filter, true)} disabled={changes.status === 'loading'}>Load more ({changes.items.length} of {changes.page.total})</button>}
+      </section>
     </div>
   );
 }

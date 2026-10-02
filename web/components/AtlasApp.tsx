@@ -11,6 +11,7 @@ import { Inspector } from './Inspector';
 import { MapView } from './MapView';
 import { SearchBox } from './SearchBox';
 import { SourcePanel } from './SourcePanel';
+import { Timeline } from './Timeline';
 
 function createStore(): AtlasStore {
   const storage = (() => { try { return window.localStorage; } catch { return undefined; } })();
@@ -59,6 +60,8 @@ function Shell() {
   const history = useAtlas(state => state.history);
   const draft = useAtlas(state => !!state.flows.draft);
   const activeFlow = useAtlas(state => !!state.flows.activeId);
+  const timelineOpen = useAtlas(state => state.timeline.open);
+  const timeline = useAtlas(state => state.timeline.data);
   const theme = themeById(themeId);
   const [inspectorWidth, setInspectorWidth] = usePanelWidth('archipelago:inspector-width', 380);
   const [flowWidth, setFlowWidth] = usePanelWidth('archipelago:flow-width', 300);
@@ -72,22 +75,33 @@ function Shell() {
     const onKey = (event: KeyboardEvent) => {
       if (event.altKey && event.key === 'ArrowLeft') { event.preventDefault(); void store.back(); }
       if (event.altKey && event.key === 'ArrowRight') { event.preventDefault(); void store.forward(); }
+      const target = event.target as HTMLElement;
+      if (store.getState().timeline.open && !event.altKey && !event.ctrlKey && !event.metaKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
+        if (event.key === '[') { event.preventDefault(); void store.stepTarget(-1); }
+        if (event.key === ']') { event.preventDefault(); void store.stepTarget(1); }
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [store]);
   const run = meta?.run;
+  const snapshot = meta?.snapshot, baseline = meta?.comparison?.baseline;
+  const when = (iso: string | undefined) => iso ? new Date(iso).toLocaleDateString() : '';
+  const commitDate = (sha: string | undefined) => when(timeline?.entries.find(entry => entry.sha === sha)?.authoredAt);
   return (
     <div className="archipelago" style={style} data-dark={String(theme.dark)}>
       <header className="topbar">
         <div className="brand">
           <strong><span className="brand-mark" aria-hidden />Archipelago</strong>
-          {run && <small title={`Analysis run ${run.id}`}>{run.repositoryName} · working tree{run.commitSha ? ` at HEAD ${shortSha(run.commitSha)}` : ''}{run.dirty ? ' + uncommitted changes' : ''} · indexed {relativeTime(run.analyzedAt)}</small>}
+          {run && snapshot?.kind === 'commit'
+            ? <small title={`Snapshot ${snapshot.id}`}>{run.repositoryName} · commit {shortSha(snapshot.commitSha)} ({commitDate(snapshot.commitSha)}){baseline ? ` compared with ${baseline.kind === 'commit' ? shortSha(baseline.commitSha) : 'the working tree'}` : ''}</small>
+            : run && <small title={`Analysis run ${run.id}`}>{run.repositoryName} · working tree{run.commitSha ? ` at HEAD ${shortSha(run.commitSha)}` : ''}{run.dirty ? ' + uncommitted changes' : ''} · indexed {relativeTime(run.analyzedAt)}{baseline ? ` · compared with ${shortSha(baseline.commitSha)}` : ''}</small>}
         </div>
         <SearchBox />
         <div className="top-actions">
           <button className="icon-button" onClick={() => void store.back()} disabled={history.index <= 0} aria-label="Back to previous selection" title="Back (Alt+←)">←</button>
           <button className="icon-button" onClick={() => void store.forward()} disabled={history.index >= history.entries.length - 1} aria-label="Forward" title="Forward (Alt+→)">→</button>
+          <button className="button" onClick={() => void (timelineOpen ? store.closeTimeline() : store.openTimeline())} aria-pressed={timelineOpen} title={meta?.history.available ? `Browse ${meta.history.snapshots} indexed commits` : 'No history indexed yet'}>History</button>
           <button className="button" onClick={() => setFlowsOpen(open => !open)} aria-pressed={flowsOpen} aria-controls="flows-panel">Flows</button>
           <label className="sr-only" htmlFor="theme-select">Theme</label>
           <select id="theme-select" className="select" value={themeId} onChange={event => store.setTheme(event.target.value)}>
@@ -115,6 +129,7 @@ function Shell() {
           </aside>
         ) : <button className="panel-collapsed right" onClick={() => setInspectorOpen(true)}>Inspector</button>}
       </main>
+      {timelineOpen && <Timeline />}
       {help && <HelpDialog onClose={() => setHelp(false)} />}
     </div>
   );
@@ -126,13 +141,14 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
     ['/', 'Search entities'], ['↑ ↓ Enter', 'Choose a search result'], ['Drag · wheel · pinch', 'Pan and zoom the map'],
     ['Arrow keys · + −', 'Pan and zoom (map focused)'], ['F', 'Fit the whole repository'], ['Enter', 'Zoom to the selection'],
     ['Double-click', 'Zoom into an area'], ['Esc', 'Clear selection / close'], ['Backspace · Alt+←', 'Previous selection'], ['Alt+→', 'Next selection'],
+    ['[ ]', 'Previous / next indexed commit (History open)'], ['Shift + ← →', 'Move the comparison baseline (timeline focused)'],
   ];
   return (
     <div className="center-state" style={{ pointerEvents: 'auto', background: 'rgba(0,0,0,0.35)', zIndex: 30 }} onClick={onClose}>
       <div className="card" role="dialog" aria-modal="true" aria-labelledby="help-title" onClick={event => event.stopPropagation()} style={{ textAlign: 'left' }}>
         <h2 id="help-title" style={{ marginTop: 0, fontSize: 15 }}>Keyboard and pointer</h2>
         <dl className="facts">{rows.map(([key, text]) => [<dt key={`k${key}`}><kbd>{key}</kbd></dt>, <dd key={`d${key}`}>{text}</dd>])}</dl>
-        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout and never change with selection, search or filters.</p>
+        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout and never change with selection, search or filters. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing.</p>
         <button ref={close} className="button" onClick={onClose}>Close</button>
       </div>
     </div>

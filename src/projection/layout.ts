@@ -121,8 +121,9 @@ function skyline(items: Box[], gap: number, width: number): { x: number; y: numb
 /**
  * Lay out a hierarchy. `nodes` must contain every node reachable from `rootId`.
  * `previous` is the persisted slot state from an earlier layout of the same workspace.
+ * `compact: false` never drops holes: used to accumulate a slot registry across a timeline.
  */
-export function layoutHierarchy(nodes: Map<string, LayoutNode>, rootId: string, previous?: LayoutState): LayoutResult {
+export function layoutHierarchy(nodes: Map<string, LayoutNode>, rootId: string, previous?: LayoutState, options: { compact?: boolean } = {}): LayoutResult {
   const prior = previous?.version === LAYOUT_VERSION ? previous.containers : {};
   const sizes = new Map<string, Box>();
   const local = new Map<string, { x: number; y: number }>();
@@ -161,13 +162,15 @@ export function layoutHierarchy(nodes: Map<string, LayoutNode>, rootId: string, 
     for (const id of fresh) slots.push({ id, ...sizes.get(id)!, removed: false });
     let holeArea = 0, totalArea = 0;
     for (const slot of slots) { const area = slot.w * slot.h; totalArea += area; if (slot.removed) holeArea += area; }
-    const kept = holeArea > totalArea * HOLE_COMPACTION_RATIO ? slots.filter(slot => !slot.removed) : slots;
+    const kept = options.compact !== false && holeArea > totalArea * HOLE_COMPACTION_RATIO ? slots.filter(slot => !slot.removed) : slots;
     const gap = Math.max(2, Math.round(node.padding / 2));
     const packing = pack(kept, gap);
     kept.forEach((slot, i) => { if (!slot.removed) local.set(slot.id, packing.positions[i]!); else holes++; });
     containers[node.id] = kept.map(slot => slot.removed ? [slot.id, slot.w, slot.h, 1] : [slot.id, slot.w, slot.h]);
     sizes.set(node.id, { w: Math.max(minimum, packing.width + node.padding * 2), h: Math.max(minimum, packing.height + node.padding * 2) });
   }
+  // A registry also remembers the slot order of containers absent from this hierarchy.
+  if (options.compact === false) for (const [id, slots] of Object.entries(prior)) if (!(id in containers)) containers[id] = slots;
   const rects = new Map<string, Rect>();
   const root = sizes.get(rootId)!;
   rects.set(rootId, { x: 0, y: 0, w: root.w, h: root.h });
@@ -179,4 +182,134 @@ export function layoutHierarchy(nodes: Map<string, LayoutNode>, rootId: string, 
     }
   }
   return { rects, state: { version: LAYOUT_VERSION, containers }, holes };
+}
+
+// Timeline layout ------------------------------------------------------------------
+//
+// One layout for a whole history. The registry records, per container, every
+// child it ever had (in first-appearance order) and, per node, its largest
+// weight. The union of all those slots is packed once, each slot at its
+// largest size; a snapshot then draws only what exists at that point, at its
+// own size, inside its reserved slot. Siblings therefore never shift as
+// content grows, appears or disappears: moving through history only shows
+// islands appearing and disappearing in fixed places. Entities that lineage
+// identifies as renamed/moved inherit their predecessor's slot (`alias`).
+export const TIMELINE_LAYOUT_VERSION = 1;
+export interface TimelineRegistry {
+  version: number;
+  /** Container slot key → child slot keys, first appearance first. */
+  slots: Record<string, string[]>;
+  /** Slot key → layout inputs: largest weight seen, padding, whether default order matters. */
+  nodes: Record<string, { weight?: number; padding: number; preserveOrder?: 1 }>;
+  /** Entity ID → slot key it inherited through lineage. */
+  alias: Record<string, string>;
+}
+export function emptyRegistry(): TimelineRegistry { return { version: TIMELINE_LAYOUT_VERSION, slots: {}, nodes: {}, alias: {} }; }
+/** Add one snapshot's hierarchy to the registry. New children are appended largest-first (or in default order where it carries meaning). */
+export function extendRegistry(registry: TimelineRegistry, nodes: Map<string, LayoutNode>, rootId: string): void {
+  const key = (id: string) => registry.alias[id] ?? id;
+  // Rough packed area per node, only to order new siblings largest-first deterministically.
+  const area = new Map<string, number>();
+  const order: string[] = [];
+  const stack = [rootId];
+  while (stack.length) { const id = stack.pop()!; order.push(id); for (const child of nodes.get(id)!.children) stack.push(child); }
+  for (let index = order.length - 1; index >= 0; index--) {
+    const node = nodes.get(order[index]!)!;
+    const own = leafSide(node.weight) ** 2;
+    area.set(node.id, node.children.length ? Math.max(own, node.children.reduce((sum, child) => sum + area.get(child)!, 0) * 1.15) : own);
+  }
+  for (const id of order) {
+    const node = nodes.get(id)!;
+    // An alias whose own entity is present again under the same parent would share a slot: drop the alias.
+    const keys = new Map<string, string>();
+    for (const child of node.children) {
+      const slot = key(child), other = keys.get(slot);
+      if (other === undefined) { keys.set(slot, child); continue; }
+      // Two present siblings share a slot: the aliased one gets its own slot from now on.
+      if (other !== slot) { delete registry.alias[other]; keys.set(other, other); keys.set(slot, child); }
+      else { delete registry.alias[child]; keys.set(child, child); }
+    }
+    const slotKey = key(id);
+    const meta = registry.nodes[slotKey];
+    registry.nodes[slotKey] = { padding: node.padding, ...(node.preserveOrder ? { preserveOrder: 1 as const } : {}), ...(meta?.weight !== undefined || node.weight !== undefined ? { weight: Math.max(meta?.weight ?? 0, node.weight ?? 0) } : {}) };
+    if (!node.children.length) continue;
+    const list = registry.slots[slotKey] ?? (registry.slots[slotKey] = []);
+    const known = new Set(list);
+    const fresh = [...keys].filter(([slot]) => !known.has(slot));
+    if (!node.preserveOrder) {
+      const position = new Map(node.children.map((child, i) => [child, i]));
+      fresh.sort((a, b) => area.get(b[1])! - area.get(a[1])! || position.get(a[1])! - position.get(b[1])!);
+    }
+    for (const [slot] of fresh) list.push(slot);
+  }
+}
+export interface TimelineLayout { local: Map<string, Map<string, { x: number; y: number }>>; size: Map<string, Box> }
+/** Pack every slot of the registry once, bottom-up, at its largest size. */
+export function timelineLayout(registry: TimelineRegistry, rootKey: string): TimelineLayout {
+  const size = new Map<string, Box>(), local = new Map<string, Map<string, { x: number; y: number }>>();
+  const visiting = new Set<string>();
+  // Memoized post-order: a slot key can sit in several containers (an entity that changed parent keeps its ID), so the slot graph is a DAG.
+  const measure = (id: string): Box => {
+    const known = size.get(id);
+    if (known) return known;
+    const meta = registry.nodes[id] ?? { padding: 3 };
+    const minimum = leafSide(meta.weight);
+    const slots = (registry.slots[id] ?? []).filter(slot => !visiting.has(slot));
+    if (!slots.length) { const box = { w: minimum, h: minimum }; size.set(id, box); return box; }
+    visiting.add(id);
+    const boxes = slots.map(measure);
+    visiting.delete(id);
+    const packing = pack(boxes, Math.max(2, Math.round(meta.padding / 2)));
+    local.set(id, new Map(slots.map((slot, i) => [slot, packing.positions[i]!])));
+    const box = { w: Math.max(minimum, packing.width + meta.padding * 2), h: Math.max(minimum, packing.height + meta.padding * 2) };
+    size.set(id, box);
+    return box;
+  };
+  measure(rootKey);
+  return { local, size };
+}
+/**
+ * Rectangles of one snapshot on the timeline layout: fixed slot positions;
+ * leaves at their current size; containers shrunk to the extent of what they
+ * currently hold (never beyond their slot). Children missing from the
+ * registry (not expected after extending it) are shelved below the slots.
+ */
+export function placeOnTimeline(nodes: Map<string, LayoutNode>, rootId: string, registry: TimelineRegistry, layout: TimelineLayout): LayoutResult {
+  const key = (id: string) => registry.alias[id] ?? id;
+  const order: string[] = [];
+  const stack = [rootId];
+  while (stack.length) { const id = stack.pop()!; order.push(id); for (const child of nodes.get(id)!.children) stack.push(child); }
+  const sizes = new Map<string, Box>(), offsets = new Map<string, { x: number; y: number }>();
+  let misses = 0;
+  for (let index = order.length - 1; index >= 0; index--) {
+    const node = nodes.get(order[index]!)!;
+    const minimum = leafSide(node.weight);
+    if (!node.children.length) { sizes.set(node.id, { w: minimum, h: minimum }); continue; }
+    const slots = layout.local.get(key(node.id));
+    const gap = Math.max(2, Math.round(node.padding / 2));
+    let extentX = 0, extentY = 0;
+    const unplaced: string[] = [];
+    for (const child of node.children) {
+      const position = slots?.get(key(child));
+      if (!position) { unplaced.push(child); continue; }
+      const box = sizes.get(child)!;
+      offsets.set(child, position);
+      extentX = Math.max(extentX, position.x + box.w); extentY = Math.max(extentY, position.y + box.h);
+    }
+    if (unplaced.length) {
+      misses += unplaced.length;
+      const shelf = pack(unplaced.map(child => sizes.get(child)!), gap);
+      const top = extentY ? extentY + gap : 0;
+      unplaced.forEach((child, i) => { const p = shelf.positions[i]!; offsets.set(child, { x: p.x, y: top + p.y }); });
+      extentX = Math.max(extentX, shelf.width); extentY = top + shelf.height;
+    }
+    sizes.set(node.id, { w: Math.max(minimum, extentX + node.padding * 2), h: Math.max(minimum, extentY + node.padding * 2) });
+  }
+  const rects = new Map<string, Rect>();
+  rects.set(rootId, { x: 0, y: 0, ...sizes.get(rootId)! });
+  for (const id of order) {
+    const node = nodes.get(id)!, rect = rects.get(id)!;
+    for (const child of node.children) { const offset = offsets.get(child)!; rects.set(child, { x: rect.x + node.padding + offset.x, y: rect.y + node.padding + offset.y, ...sizes.get(child)! }); }
+  }
+  return { rects, state: { version: LAYOUT_VERSION, containers: {} }, holes: misses };
 }

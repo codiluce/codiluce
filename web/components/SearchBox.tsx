@@ -86,7 +86,7 @@ export function SearchBox() {
             {results?.items.map((item, index) => (
               <div key={item.id} id={`result-${index}`} role="option" aria-selected={index === active} className="search-result" onMouseDown={event => event.preventDefault()} onClick={() => choose(index)} onMouseEnter={() => setActive(index)}>
                 <TypeBadge type={item.type} role={item.role} />
-                <span className="name">{item.name}</span>
+                <span className="name">{item.change && item.change.status !== 'unchanged' && <span className={`change-badge ${item.change.status}`} style={{ marginRight: 6 }}>{item.change.status}</span>}{item.name}</span>
                 <span className="where">{item.qualifiedName && item.qualifiedName !== item.name ? `${item.qualifiedName} · ` : ''}{item.breadcrumb || item.path}</span>
               </div>
             ))}

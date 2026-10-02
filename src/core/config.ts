@@ -62,14 +62,20 @@ export async function detectApplications(root: string): Promise<ApplicationConfi
   return apps;
 }
 export async function loadConfig(root: string, stateDirectory: string): Promise<AtlasConfig> {
+  return resolveConfig(root, await readRawConfig(stateDirectory));
+}
+/** The configuration file as written, before defaults, autodetection and path validation. */
+export async function readRawConfig(stateDirectory: string): Promise<Partial<AtlasConfig>> {
   const file = path.join(stateDirectory, 'config.yml');
   const input: unknown = await exists(file) ? parse(await readFile(file, 'utf8')) : {};
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Configuration must be an object');
-  const raw = input as Partial<AtlasConfig>;
+  return input as Partial<AtlasConfig>;
+}
+export async function resolveConfig(root: string, raw: Partial<AtlasConfig>): Promise<AtlasConfig> {
   if (raw.ignore !== undefined && (!Array.isArray(raw.ignore) || !raw.ignore.every(glob => typeof glob === 'string'))) throw new Error('ignore must be a list of globs');
   const config: AtlasConfig = {
     repository: raw.repository ?? { name: path.basename(root) },
-    applications: raw.applications ?? await detectApplications(root),
+    applications: raw.applications?.map(app => ({ ...app })) ?? await detectApplications(root),
     ignore: [...DEFAULT_IGNORES, ...(raw.ignore ?? [])],
     maxFileBytes: raw.maxFileBytes ?? 1024 * 1024,
   };

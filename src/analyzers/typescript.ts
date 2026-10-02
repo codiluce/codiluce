@@ -2,7 +2,7 @@ import ts from 'typescript';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import type { Analyzer, AnalysisContext, ScannedFile } from '../core/analyzer.js';
-import { ANALYZER_VERSION, evidence, type Entity, type EntityType } from '../core/graph.js';
+import { ANALYZER_VERSION, declarationHashes, evidence, type Entity, type EntityType } from '../core/graph.js';
 
 const HTTP_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD']);
 function literal(node: ts.Node | undefined): string | undefined { return node && (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) ? node.text : undefined; }
@@ -151,11 +151,12 @@ async function analyzeFile(context: AnalysisContext, file: ScannedFile, options:
     let type: EntityType | undefined;
     let signature = '';
     let declaration: ts.Node = node;
-    if (ts.isClassDeclaration(node) || ts.isClassExpression(node)) { name = node.name?.text ?? (modifier(node, ts.SyntaxKind.DefaultKeyword) ? 'default' : undefined); type = 'class'; }
-    else if (ts.isFunctionDeclaration(node)) { name = node.name?.text ?? 'default'; signature = functionSignature(node, source); type = 'function'; }
-    else if (ts.isMethodDeclaration(node)) { name = node.name.getText(source); signature = functionSignature(node, source); type = 'method'; }
+    let nameNode: ts.Node | undefined;
+    if (ts.isClassDeclaration(node) || ts.isClassExpression(node)) { name = node.name?.text ?? (modifier(node, ts.SyntaxKind.DefaultKeyword) ? 'default' : undefined); type = 'class'; nameNode = node.name; }
+    else if (ts.isFunctionDeclaration(node)) { name = node.name?.text ?? 'default'; signature = functionSignature(node, source); type = 'function'; nameNode = node.name; }
+    else if (ts.isMethodDeclaration(node)) { name = node.name.getText(source); signature = functionSignature(node, source); type = 'method'; nameNode = node.name; }
     else if (ts.isVariableDeclaration(node) && node.initializer && (ts.isArrowFunction(node.initializer) || ts.isFunctionExpression(node.initializer)) && ts.isIdentifier(node.name)) {
-      name = node.name.text; signature = functionSignature(node.initializer, source); type = 'function';
+      name = node.name.text; signature = functionSignature(node.initializer, source); type = 'function'; nameNode = node.name;
       declaration = node.parent.parent;
     }
     if (name && type) {
@@ -167,7 +168,7 @@ async function analyzeFile(context: AnalysisContext, file: ScannedFile, options:
       else {
         const isExported = modifier(declaration, ts.SyntaxKind.ExportKeyword) || modifier(declaration, ts.SyntaxKind.DefaultKeyword);
         const isDefault = modifier(declaration, ts.SyntaxKind.DefaultKeyword);
-        const entity = graph.contain({ id, type, name, path: file.path, language: file.language, parentId: parent?.id ?? file.id, sourceRange: location(node), metrics: { loc: location(node).endLine - location(node).startLine + 1 }, metadata: { qualifiedName: qualified, signature, exported: isExported, default: isDefault, ...(/^use[A-Z]/.test(name) ? { role: 'hook' } : {}), serverAction: /^(?:[\s{]*)(?:['"]use server['"])/.test(ts.isFunctionDeclaration(node) ? node.body?.getText(source) ?? '' : '') }, evidence: facts(node, 'AST symbol declaration') });
+        const entity = graph.contain({ id, type, name, path: file.path, language: file.language, parentId: parent?.id ?? file.id, sourceRange: location(node), metrics: { loc: location(node).endLine - location(node).startLine + 1 }, metadata: { qualifiedName: qualified, signature, exported: isExported, default: isDefault, ...(/^use[A-Z]/.test(name) ? { role: 'hook' } : {}), serverAction: /^(?:[\s{]*)(?:['"]use server['"])/.test(ts.isFunctionDeclaration(node) ? node.body?.getText(source) ?? '' : ''), ...declarationHashes(node.getText(source), nameNode ? nameNode.getEnd() - node.getStart(source) : 0) }, evidence: facts(node, 'AST symbol declaration') });
         symbols.set(node, entity);
         if (ts.isVariableDeclaration(node) && node.initializer) symbols.set(node.initializer, entity);
         if (isExported) { exported.set(isDefault ? 'default' : name, entity); graph.relate(file.id, entity.id, 'exports', facts(node, 'Exported symbol')); }

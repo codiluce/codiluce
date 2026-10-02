@@ -18,6 +18,8 @@ export interface Theme {
   flow: { step: string; declared: string; indicator: string; dimAlpha: number };
   diagnostic: string;
   dimAlpha: number;
+  /** Comparison views: added / removed (ghosts) / modified / moved, and how strongly unchanged and removed blocks fade. */
+  change: { added: string; removed: string; modified: string; moved: string; ghostAlpha: number; unchangedAlpha: number };
   /** CSS custom properties for panels and controls. */
   ui: Record<string, string>;
 }
@@ -39,11 +41,13 @@ export const THEMES: Theme[] = [
     fallbackRelation: '#cbd5e1',
     flow: { step: '#ffd166', declared: '#94a3b8', indicator: '#fff7d6', dimAlpha: 0.18 },
     diagnostic: '#fbbf24', dimAlpha: 0.32,
+    change: { added: '#4ade80', removed: '#fb7185', modified: '#fbbf24', moved: '#c084fc', ghostAlpha: 0.4, unchangedAlpha: 0.42 },
     ui: {
       '--bg': '#0b1020', '--panel': 'rgba(16,22,42,0.94)', '--panel-solid': '#10162a', '--panel-border': 'rgba(148,163,214,0.16)',
       '--text': '#e7ecff', '--muted': '#93a3c8', '--subtle': '#64729a', '--accent': '#ffd166', '--accent-ink': '#1b1400', '--link': '#93c5fd',
       '--chip': 'rgba(148,163,214,0.12)', '--chip-active': 'rgba(255,209,102,0.22)', '--warning': '#fbbf24', '--danger': '#f87171', '--ok': '#4ade80',
       '--code-bg': '#0a0f1e', '--code-highlight': 'rgba(255,209,102,0.13)', '--code-evidence': 'rgba(96,165,250,0.18)', '--shadow': '0 12px 40px rgba(0,0,0,0.45)',
+      '--added': '#4ade80', '--removed': '#fb7185', '--modified': '#fbbf24', '--moved': '#c084fc', '--diff-added': 'rgba(74,222,128,0.13)', '--diff-removed': 'rgba(251,113,133,0.13)',
     },
   },
   {
@@ -62,11 +66,13 @@ export const THEMES: Theme[] = [
     fallbackRelation: '#495057',
     flow: { step: '#d9480f', declared: '#868e96', indicator: '#fff4e6', dimAlpha: 0.22 },
     diagnostic: '#e67700', dimAlpha: 0.38,
+    change: { added: '#2b8a3e', removed: '#c92a2a', modified: '#d97706', moved: '#7048e8', ghostAlpha: 0.42, unchangedAlpha: 0.5 },
     ui: {
       '--bg': '#f4f1ea', '--panel': 'rgba(255,253,248,0.95)', '--panel-solid': '#fffdf8', '--panel-border': 'rgba(60,50,30,0.14)',
       '--text': '#1d1a14', '--muted': '#5e5646', '--subtle': '#8a8170', '--accent': '#d9480f', '--accent-ink': '#ffffff', '--link': '#1864ab',
       '--chip': 'rgba(60,50,30,0.07)', '--chip-active': 'rgba(217,72,15,0.14)', '--warning': '#b35c00', '--danger': '#c92a2a', '--ok': '#2b8a3e',
       '--code-bg': '#fbf8f1', '--code-highlight': 'rgba(217,72,15,0.12)', '--code-evidence': 'rgba(28,126,214,0.13)', '--shadow': '0 12px 32px rgba(60,50,30,0.16)',
+      '--added': '#2b8a3e', '--removed': '#c92a2a', '--modified': '#b45309', '--moved': '#7048e8', '--diff-added': 'rgba(43,138,62,0.12)', '--diff-removed': 'rgba(201,42,42,0.10)',
     },
   },
 ];

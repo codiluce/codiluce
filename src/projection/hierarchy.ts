@@ -12,10 +12,12 @@ export interface EntityRow {
   id: string; type: string; name: string; path?: string; language?: string; parentId?: string;
   sourceRange?: SourceRange; loc?: number; qualifiedName?: string; signature?: string;
   routePath?: string; method?: string; framework?: string; role?: string; analysisSkipped?: string;
+  /** Comparison views only: how this entity differs from the baseline snapshot. */
+  change?: NodeChange;
 }
-export interface RelationRow { id: string; from: string; to: string; type: string }
+export interface RelationRow { id: string; from: string; to: string; type: string; change?: 'added' | 'removed' }
 export interface DiagnosticRow { id: string; severity: string; code: string; reason: string; analyzer: string; file?: string; line?: number; entityId?: string }
-import type { NodeStats } from './dto.js';
+import type { ChangeCounts, NodeChange, NodeStats } from './dto.js';
 export interface ProjectionNode {
   id: string; kind: 'entity' | 'group'; type: string; name: string;
   path?: string; language?: string; sourceRange?: SourceRange;
@@ -27,6 +29,9 @@ export interface ProjectionNode {
   /** Present only on projection groups. */
   explanation?: string;
   ownDiagnostics: number; diagnostics: number; stats: NodeStats;
+  change?: NodeChange;
+  /** Comparison views only: changed entities below this node. */
+  changes?: ChangeCounts;
   search: string;
 }
 export const SYMBOL_TYPES = new Set(['class', 'controller', 'component', 'function', 'method', 'model', 'test']);
@@ -50,7 +55,7 @@ export class ProjectionIndex {
   readonly fileByPath = new Map<string, string>();
   readonly rootId: string;
 
-  constructor(readonly runId: string, rows: EntityRow[], relations: RelationRow[], diagnostics: DiagnosticRow[]) {
+  constructor(readonly runId: string, rows: EntityRow[], relations: RelationRow[], diagnostics: DiagnosticRow[], readonly comparison = false) {
     const root = rows.find(row => row.type === 'repository' && !row.parentId);
     if (!root) throw new Error('Projection requires a repository root');
     this.rootId = root.id;
@@ -68,7 +73,7 @@ export class ProjectionIndex {
         ...(row.sourceRange ? { sourceRange: row.sourceRange } : {}), ...(row.parentId ? { canonicalParentId: row.parentId } : {}),
         ...(spatialParentId ? { spatialParentId } : {}), ...(row.loc !== undefined ? { loc: row.loc } : {}),
         ...(row.qualifiedName ? { qualifiedName: row.qualifiedName } : {}), ...(row.role ? { role: row.role } : {}),
-        ...(detail(row) ? { detail: detail(row) } : {}),
+        ...(detail(row) ? { detail: detail(row) } : {}), ...(row.change ? { change: row.change } : {}),
         ownDiagnostics: 0, diagnostics: 0, stats: { files: 0, symbols: 0, endpoints: 0, measuredLoc: 0, unmeasuredFiles: 0, descendants: 0 },
         search: [row.name, row.path ?? '', row.qualifiedName ?? ''].join('\u0000').toLowerCase(),
       };
@@ -119,6 +124,18 @@ export class ProjectionIndex {
         const s = node.stats, c = child.stats;
         s.files += c.files; s.symbols += c.symbols; s.endpoints += c.endpoints; s.measuredLoc += c.measuredLoc; s.unmeasuredFiles += c.unmeasuredFiles; s.descendants += c.descendants + 1;
       }
+      if (comparison) {
+        const counts: ChangeCounts = { added: 0, removed: 0, modified: 0, moved: 0 };
+        for (const id of node.children) {
+          const child = this.nodes.get(id)!;
+          if (child.changes) { counts.added += child.changes.added; counts.removed += child.changes.removed; counts.modified += child.changes.modified; counts.moved += child.changes.moved; }
+          const status = child.change?.status;
+          if (status && status !== 'unchanged') counts[status]++;
+        }
+        node.changes = counts;
+      }
+      // Ghosts (removed entities) are drawn but not counted as present content.
+      if (node.change?.status === 'removed') { node.post = counter - 1; return; }
       if (node.type === 'file') { node.stats.files++; if (node.loc !== undefined) node.stats.measuredLoc += node.loc; else node.stats.unmeasuredFiles++; }
       else if (SYMBOL_TYPES.has(node.type)) node.stats.symbols++;
       else if (INTERFACE_TYPES.has(node.type)) node.stats.endpoints++;

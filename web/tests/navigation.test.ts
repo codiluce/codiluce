@@ -7,15 +7,13 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stringify } from 'yaml';
-import type { NodeSummary, SourceRequest } from '@engine/projection/dto';
 import { indexRepository } from '../../src/pipeline/index.js';
 import { GraphStore } from '../../src/storage/sqlite.js';
 import { ProjectionService } from '../../src/projection/service.js';
-import { readIndexedSource } from '../../src/projection/source.js';
 import type { SoftwareGraph } from '../../src/core/graph.js';
-import { ApiError, type AtlasApi } from '../lib/api';
 import { memoryFlowPersistence } from '../lib/flows';
-import { AtlasStore, type MapNavigator } from '../lib/store';
+import { AtlasStore } from '../lib/store';
+import { RecordingNavigator, ServiceApi as BaseServiceApi } from './service-api';
 
 const fixture = fileURLToPath(new URL('../../tests/fixtures/repository', import.meta.url));
 let root: string, graph: SoftwareGraph, store: GraphStore, projection: ProjectionService;
@@ -26,43 +24,11 @@ before(async () => {
   await writeFile(path.join(root, '.archipelago/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'] }] }));
   graph = await indexRepository(root);
   store = new GraphStore(':memory:'); store.save(graph);
-  projection = new ProjectionService(store);
+  projection = new ProjectionService(store, { root });
 });
 after(async () => { store.close(); await rm(root, { recursive: true, force: true }); });
+class ServiceApi extends BaseServiceApi { constructor() { super(store, projection); } }
 
-/** AtlasApi backed by the server-side services, with optional per-call delays and a call log. */
-class ServiceApi implements AtlasApi {
-  calls: string[] = [];
-  delays = new Map<string, number>();
-  private async run<T>(name: string, key: string, signal: AbortSignal | undefined, work: () => T | Promise<T>): Promise<T> {
-    this.calls.push(`${name}:${key}`);
-    const delay = this.delays.get(key) ?? 0;
-    if (delay) await new Promise(resolve => setTimeout(resolve, delay));
-    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-    try { return await work(); } catch (error) { throw new ApiError(404, error instanceof Error ? error.message : String(error)); }
-  }
-  meta() { return this.run('meta', '', undefined, () => projection.meta()); }
-  children(id: string, offset: number, limit: number, signal?: AbortSignal) { return this.run('children', id, signal, () => projection.children(id, { offset, limit })); }
-  nodes(ids: string[], signal?: AbortSignal) { return this.run('nodes', ids.join(','), signal, () => projection.nodes(ids)); }
-  locate(id: string, signal?: AbortSignal) { return this.run('locate', id, signal, () => projection.locate(id)); }
-  search(query: string, type: string | undefined, signal?: AbortSignal) { return this.run('search', query, signal, () => projection.search(query, { type })); }
-  relations(id: string, options: { type?: string; direction?: string; offset?: number; limit?: number }, signal?: AbortSignal) { return this.run('relations', id, signal, () => projection.relations(id, options)); }
-  aggregate(id: string, signal?: AbortSignal) { return this.run('aggregate', id, signal, () => projection.aggregate(id, {})); }
-  aggregateEdges(id: string, options: { anchor: string; type: string; direction: string; offset?: number; limit?: number }, signal?: AbortSignal) { return this.run('edges', id, signal, () => projection.aggregateEdges(id, options)); }
-  diagnostics(id: string, options: { offset?: number; limit?: number }, signal?: AbortSignal) { return this.run('diagnostics', id, signal, () => projection.diagnostics(id, options)); }
-  between(a: string, b: string, signal?: AbortSignal) { return this.run('between', `${a}>${b}`, signal, () => projection.between(a, b)); }
-  entity(id: string, signal?: AbortSignal) { return this.run('entity', id, signal, () => { const entity = store.entity(id); if (!entity) throw new Error('Entity not found'); return entity; }); }
-  relation(id: string, signal?: AbortSignal) { return this.run('relation', id, signal, () => { const relation = store.relation(id); if (!relation) throw new Error('Relation not found'); return relation; }); }
-  source(request: SourceRequest, signal?: AbortSignal) { return this.run('source', JSON.stringify(request), signal, () => readIndexedSource(store, root, 1024 * 1024, request)); }
-  clear() {}
-}
-class RecordingNavigator implements MapNavigator {
-  flights: { id: string; mode?: string }[] = [];
-  flyTo(node: NodeSummary, options?: { mode?: 'focus' | 'enter' }) { this.flights.push({ id: node.id, mode: options?.mode }); }
-  fitNodes() {}
-  fitAll() {}
-  zoomBy() {}
-}
 const id = (name: string, type?: string) => graph.entities.find(entity => entity.name === name && (!type || entity.type === type))!.id;
 async function ready(api = new ServiceApi()) {
   const atlas = new AtlasStore(api, { flowPersistence: () => memoryFlowPersistence(), now: () => '2026-10-01T00:00:00Z', newId: () => 'flow-1' });

@@ -2,7 +2,7 @@ import { Engine } from 'php-parser';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { Analyzer, AnalysisContext, ScannedFile } from '../core/analyzer.js';
-import { ANALYZER_VERSION, evidence, type Entity, type Evidence } from '../core/graph.js';
+import { ANALYZER_VERSION, declarationHashes, evidence, type Entity, type Evidence } from '../core/graph.js';
 import { repoPath } from '../core/config.js';
 
 // The parser's declarations do not discriminate node kinds. Keep that boundary
@@ -18,6 +18,11 @@ function name(value: unknown): string | undefined { return typeof value === 'str
 function literal(value: unknown): string | undefined { const node = ast(value); return node?.kind === 'string' && typeof node.value === 'string' ? node.value : undefined; }
 function args(node: Ast): Ast[] { return nodes(node.arguments); }
 function text(node: Ast | undefined, parsed: ParsedFile): string { return node?.loc ? parsed.content.slice(node.loc.start.offset, node.loc.end.offset) : ''; }
+function fingerprint(node: Ast, parsed: ParsedFile): ReturnType<typeof declarationHashes> | Record<string, never> {
+  if (!node.loc) return {};
+  const nameLoc = ast(node.name)?.loc;
+  return declarationHashes(text(node, parsed), nameLoc ? nameLoc.end.offset - node.loc.start.offset : 0);
+}
 function walk(node: Ast, visit: (node: Ast) => void): void {
   visit(node);
   for (const [key, value] of Object.entries(node)) {
@@ -114,7 +119,7 @@ export const laravelAnalyzer: Analyzer = {
           const classId = graph.id('symbol', 'php', file.application!.name, fqn);
           if (graph.entities.has(classId)) { diagnostic(parsed, node, 'duplicate-php-class', `Duplicate class ${fqn}`, 'error'); return; }
           const controller = /(?:^|\/)app\/Http\/Controllers\//.test(file.path);
-          const entity = graph.contain({ id: classId, type: controller ? 'controller' : 'class', name: name(node.name)!, path: file.path, language: 'php', parentId: file.id, sourceRange: node.loc ? { startLine: node.loc.start.line, endLine: node.loc.end.line, startColumn: node.loc.start.column + 1, endColumn: node.loc.end.column + 1 } : undefined, metadata: { qualifiedName: fqn, extends: resolve(node.extends, scope) }, evidence: facts(parsed, node, 'PHP class declaration') });
+          const entity = graph.contain({ id: classId, type: controller ? 'controller' : 'class', name: name(node.name)!, path: file.path, language: 'php', parentId: file.id, sourceRange: node.loc ? { startLine: node.loc.start.line, endLine: node.loc.end.line, startColumn: node.loc.start.column + 1, endColumn: node.loc.end.column + 1 } : undefined, metadata: { qualifiedName: fqn, extends: resolve(node.extends, scope), ...fingerprint(node, parsed) }, evidence: facts(parsed, node, 'PHP class declaration') });
           classes.set(`${file.application!.name}:${fqn.toLowerCase()}`, entity);
           const base = resolve(node.extends, scope);
           if (base) inheritance.push({ from: entity.id, target: base, facts: facts(parsed, node, 'PHP extends declaration'), app: file.application!.name });
@@ -123,7 +128,7 @@ export const laravelAnalyzer: Analyzer = {
             const signature = `(${args(method).map(param => `${param.variadic ? '...' : ''}${param.nullable ? '?' : ''}${text(ast(param.type), parsed).replace(/\s+/g, '') || 'unknown'}${param.value ? '?' : ''}`).join(',')})`;
             const id = graph.id('symbol', 'php', file.application!.name, `${fqn}::${methodName}`, signature);
             if (graph.entities.has(id)) { diagnostic(parsed, method, 'duplicate-php-method', `Duplicate method ${fqn}::${methodName}`, 'error'); continue; }
-            const methodEntity = graph.contain({ id, type: 'method', name: methodName, path: file.path, language: 'php', parentId: classId, sourceRange: method.loc ? { startLine: method.loc.start.line, endLine: method.loc.end.line, startColumn: method.loc.start.column + 1, endColumn: method.loc.end.column + 1 } : undefined, metrics: method.loc ? { loc: method.loc.end.line - method.loc.start.line + 1 } : undefined, metadata: { qualifiedName: `${fqn}::${methodName}`, signature, visibility: method.visibility, static: !!method.isStatic }, evidence: facts(parsed, method, 'PHP method declaration') });
+            const methodEntity = graph.contain({ id, type: 'method', name: methodName, path: file.path, language: 'php', parentId: classId, sourceRange: method.loc ? { startLine: method.loc.start.line, endLine: method.loc.end.line, startColumn: method.loc.start.column + 1, endColumn: method.loc.end.column + 1 } : undefined, metrics: method.loc ? { loc: method.loc.end.line - method.loc.start.line + 1 } : undefined, metadata: { qualifiedName: `${fqn}::${methodName}`, signature, visibility: method.visibility, static: !!method.isStatic, ...fingerprint(method, parsed) }, evidence: facts(parsed, method, 'PHP method declaration') });
             methods.set(`${file.application!.name}:${fqn.toLowerCase()}::${methodName.toLowerCase()}`, methodEntity);
           }
         });

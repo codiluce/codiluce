@@ -13,14 +13,20 @@ import { apiMatcher } from './api-matcher.js';
 
 const execute = promisify(execFile);
 export const analyzers: Analyzer[] = [filesystemAnalyzer, typescriptAnalyzer, laravelAnalyzer, apiMatcher];
-export async function indexRepository(repository: string, options: { stateDirectory?: string; config?: AtlasConfig; onProgress?: (name: string) => void } = {}): Promise<SoftwareGraph> {
+export interface IndexOptions {
+  stateDirectory?: string; config?: AtlasConfig; onProgress?: (name: string) => void;
+  /** Index a materialized commit tree: Git is not consulted and the run records this commit, clean. */
+  revision?: string;
+}
+export async function indexRepository(repository: string, options: IndexOptions = {}): Promise<SoftwareGraph> {
   const root = await realpath(repository);
   const config = options.config ?? await loadConfig(root, options.stateDirectory ?? path.join(root, '.archipelago'));
   const graph = new GraphBuilder(config.repository.id ?? config.repository.name);
   const repositoryId = graph.id('repository');
-  const context: AnalysisContext = { root, config, graph, repositoryId, applicationIds: new Map(), files: new Map(), http: [] };
+  const context: AnalysisContext = { root, config, graph, repositoryId, applicationIds: new Map(), files: new Map(), http: [], ...(options.revision ? { revision: options.revision } : {}) };
   let commitSha: string | undefined, dirty: boolean | undefined;
-  try {
+  if (options.revision) { commitSha = options.revision; dirty = false; }
+  else try {
     const [commit, status] = await Promise.all([
       execute('git', ['rev-parse', 'HEAD'], { cwd: root }),
       execute('git', ['status', '--porcelain', '-z', '--untracked-files=normal'], { cwd: root, maxBuffer: 16 * 1024 * 1024 }),
