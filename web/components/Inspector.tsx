@@ -6,6 +6,7 @@ import { entryOf, isContainer, type AtlasStore } from '../lib/store';
 import { themeById } from '../lib/themes';
 import { useAtlas, useStore } from './context';
 import { TypeBadge } from './TypeBadge';
+import { CallSitesSection, EffectsSection, ImpactSection } from './Analysis';
 
 export function Inspector({ onClose }: { onClose: () => void }) {
   const selection = useAtlas(state => state.selection);
@@ -87,14 +88,18 @@ function Selection() {
         {sourceable && <button className="button primary small" onClick={() => void store.openSource({ entity: node.id }, `${typeLabel(node.type, node.role)} ${node.name}`)}>Open source</button>}
         <button className="button small" onClick={() => store.navigator?.flyTo(node, { mode: container ? 'enter' : 'focus' })}>Zoom to</button>
         <FlowAddButton id={node.id} kind={node.kind} />
+        <AnalysisButtons node={node} />
       </div>
       {node.kind === 'group' && <p className="note">{node.explanation}</p>}
       {(node.type === 'api_endpoint' || node.type === 'route') && <p className="note">Shown in the <strong>Routes &amp; endpoints</strong> district of its application. That district is only a spatial grouping; the canonical parent is the application.</p>}
       {selection.entityStatus === 'error' && <p className="note error">{selection.error}</p>}
       {node.change?.status === 'removed' && <p className="note">This entity existed in the baseline and was removed. It is shown as a ghost where it used to be; its facts below are from the baseline.</p>}
       {selection.change && <ChangeSection node={node} />}
+      <ImpactSection node={node} />
       <Facts node={node} entity={entity} />
       <HttpCalls selectionId={node.id} file={selection.file} />
+      {entity && <EffectsSection entity={entity} />}
+      {entity && <CallSitesSection entity={entity} />}
       <Diagnostics />
       {container ? <Aggregate node={node} /> : <Relations node={node} />}
       {selection.timeline && <EntityTimeline />}
@@ -106,6 +111,19 @@ function Selection() {
         </details>
       )}
     </div>
+  );
+}
+/** Blast radius toggle, and "what happens from here" for entities that run code or serve requests. */
+function AnalysisButtons({ node }: { node: NodeSummary }) {
+  const store = useStore();
+  const impactOpen = useAtlas(state => state.impact.open && state.impact.forId === node.id);
+  const stepsAnchor = useAtlas(state => state.steps?.anchor);
+  const runs = node.kind === 'entity' && !['repository', 'application', 'directory', 'file'].includes(node.type);
+  return (
+    <>
+      <button className="button small" aria-pressed={impactOpen} onClick={() => impactOpen ? store.hideImpact() : void store.showImpact(node.id)} title="What depends on this, hop by hop">{impactOpen ? 'Hide impact' : 'Impact'}</button>
+      {runs && <button className="button small" aria-pressed={stepsAnchor === node.id} onClick={() => stepsAnchor === node.id ? store.closeSteps() : void store.openSteps(node.id)} title="What this sets in motion: handlers, requests, endpoints and effects">What happens from here</button>}
+    </>
   );
 }
 function FlowAddButton({ id, kind }: { id: string; kind: string }) {
@@ -142,7 +160,7 @@ function Facts({ node, entity }: { node: NodeSummary; entity?: Entity }) {
   );
 }
 function FactRow({ label, value }: { label: string; value: string }) { return <><dt>{label}</dt><dd className={value.length > 40 ? 'mono' : undefined}>{value}</dd></>; }
-interface HttpRequest { callerId: string; method?: string; url?: string; expression: string; line?: number; resolution: 'literal' | 'unresolved' }
+interface HttpRequest { callerId: string; method?: string; url?: string; expression: string; line?: number; resolution: 'literal' | 'proven-base' | 'unresolved' }
 function HttpCalls({ selectionId, file }: { selectionId: string; file?: Entity }) {
   const store = useStore();
   const requests = ((file?.metadata.httpRequests as HttpRequest[] | undefined) ?? []).filter(request => request.callerId === selectionId);
@@ -155,7 +173,7 @@ function HttpCalls({ selectionId, file }: { selectionId: string; file?: Entity }
           <li key={index} className={`row diagnostic ${request.resolution === 'literal' ? 'info' : ''}`}>
             <div className="row-main">
               <div className="row-title"><span className="label mono">{request.method ?? '?'} {request.expression}</span></div>
-              <div className="row-sub">{request.resolution === 'literal' ? 'Literal URL — see relationships for a match, or findings if it stayed unmatched' : 'Unresolved: the URL is built dynamically, so no endpoint is linked'}{request.line ? ` · line ${request.line}` : ''}</div>
+              <div className="row-sub">{request.resolution === 'literal' ? 'Literal URL — see relationships for a match, or findings if it stayed unmatched' : request.resolution === 'proven-base' ? `Built from a proven base: ${request.url ?? ''} — see relationships (Why? lists every hop), or findings if no endpoint matched` : 'Unresolved: the URL could not be proven (see findings for the reason), so no endpoint is linked'}{request.line ? ` · line ${request.line}` : ''}</div>
             </div>
             {request.line && <div className="row-actions"><button className="button small" onClick={() => void store.openSource({ entity: file.id, start: Math.max(1, request.line! - 12), end: request.line! + 12 }, `HTTP call · ${file.name}:${request.line}`)}>Source</button></div>}
           </li>
@@ -209,7 +227,7 @@ function Relations({ node }: { node: NodeSummary }) {
   return (
     <section className="section">
       <h4>Relationships {relations.status === 'ready' && <span className="chip"><span className="count">{totalAll}</span></span>}</h4>
-      {relations.status === 'ready' && totalAll === 0 && <p className="note">No indexed relationships besides containment. Calls, renders and database access are not extracted yet, so their absence here is not evidence that none exist.</p>}
+      {relations.status === 'ready' && totalAll === 0 && <p className="note">No indexed relationships besides containment. Only calls the analyzers could resolve are relationships: calls through callbacks, props or untyped values are counted under call sites instead, so this is not evidence that nothing is connected.</p>}
       {totalAll > 0 && (
         <>
           <div className="segmented" role="group" aria-label="Direction">
@@ -248,7 +266,7 @@ function RelationRow({ item, emphasized, selectedName }: { item: RelationItem; e
           <span className="relation-phrase" style={{ color, background: `color-mix(in srgb, ${color} 16%, transparent)` }} title={`Graph relation: ${item.type} (${item.direction})`}>{relationPhrase(item.type, item.direction)}</span>
           <span className="label" title={item.other.name}>{item.other.name}</span>
         </div>
-        <div className="row-sub">{typeLabel(item.other.type, item.other.role)}{item.other.path ? ` · ${item.other.path}` : ''}{typeof item.metadata?.specifier === 'string' ? ` · “${item.metadata.specifier}”` : ''}</div>
+        <div className="row-sub">{typeLabel(item.other.type, item.other.role)}{item.other.path ? ` · ${item.other.path}` : ''}{typeof item.metadata?.specifier === 'string' ? ` · “${item.metadata.specifier}”` : ''}{siteSummary(item.metadata)}</div>
         {via && <div className="row-sub" style={{ color: 'var(--warning)' }}>{via === 'off-screen' ? 'Endpoint is off-screen' : `Not drawn at this zoom; the edge ends at ${via}`}</div>}
       </div>
       <div className="row-actions">
@@ -257,6 +275,20 @@ function RelationRow({ item, emphasized, selectedName }: { item: RelationItem; e
       </div>
     </li>
   );
+}
+/** `· 3 call sites · onClick` from a resolved relationship's metadata. */
+function siteSummary(metadata: Record<string, unknown> | undefined): string {
+  if (!metadata) return '';
+  const parts: string[] = [];
+  const sites = typeof metadata.sites === 'number' ? metadata.sites : undefined;
+  const forms = Array.isArray(metadata.forms) ? metadata.forms as string[] : [];
+  if (sites && sites > 1) parts.push(`${sites} sites`);
+  if (forms.includes('new')) parts.push('constructs');
+  if (forms.includes('handler') || forms.includes('callback')) parts.push(forms.includes('handler') ? 'as a handler' : 'as a callback');
+  if (Array.isArray(metadata.events) && metadata.events.length) parts.push((metadata.events as string[]).join(', '));
+  if (metadata.resolution === 'proven-base') parts.push('base URL proven');
+  else if (metadata.resolution === 'same-origin') parts.push('same origin');
+  return parts.length ? ` · ${parts.join(' · ')}` : '';
 }
 function Aggregate({ node }: { node: NodeSummary }) {
   const store = useStore();
@@ -274,7 +306,7 @@ function Aggregate({ node }: { node: NodeSummary }) {
     <section className="section">
       <h4>Connections across this boundary <span className="chip"><span className="count">{data.totalCrossing}</span></span></h4>
       {data.internal.length > 0 && <p className="absent" style={{ margin: '0 0 6px' }}>Inside: {data.internal.map(item => `${compactNumber(item.count)} ${item.type}`).join(' · ')}</p>}
-      {data.totalCrossing === 0 && <p className="note">No indexed relationship crosses this boundary.{node.type === 'application' ? ' Cross-application HTTP requests are only linked when the URL is literal and its origin is proven; unresolved calls are listed under findings.' : ''}</p>}
+      {data.totalCrossing === 0 && <p className="note">No indexed relationship crosses this boundary.{node.type === 'application' ? ' Cross-application HTTP requests are only linked when the URL\'s origin is proven: a literal configured origin, or a base built from one or from an environment variable declared in apiOriginEnv. Unresolved calls are listed under findings.' : ''}</p>}
       {types.length > 1 && (
         <div className="filters" role="group" aria-label="Relationship types">
           <button className="chip" aria-pressed={!filter} onClick={() => store.setRelationFilter({ type: null })}>All</button>

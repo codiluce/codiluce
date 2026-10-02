@@ -1,9 +1,29 @@
 import { createHash } from 'node:crypto';
 
 export const SCHEMA_VERSION = 1;
-export const ANALYZER_VERSION = '0.2.0';
+export const ANALYZER_VERSION = '0.3.0';
 export type EntityType = 'repository' | 'application' | 'domain' | 'directory' | 'file' | 'component' | 'class' | 'function' | 'method' | 'route' | 'api_endpoint' | 'controller' | 'model' | 'database_table' | 'external_service' | 'test' | 'user_flow';
-export type RelationType = 'contains' | 'imports' | 'exports' | 'calls' | 'renders' | 'routes_to' | 'handles' | 'requests' | 'reads' | 'writes' | 'queries' | 'maps_to' | 'extends' | 'implements' | 'observed_call' | 'part_of_flow' | 'changed_with';
+export type RelationType = 'contains' | 'imports' | 'exports' | 'calls' | 'renders' | 'routes_to' | 'handles' | 'requests' | 'reads' | 'writes' | 'queries' | 'maps_to' | 'extends' | 'implements' | 'references' | 'observed_call' | 'part_of_flow' | 'changed_with';
+/**
+ * Something a symbol's own code does outside the indexed code, proven by name
+ * resolution (an imported facade, a lib global, a framework helper): a
+ * database read, a response with a status, a navigation… Stored on the
+ * symbol's metadata (`effects`); `target` names an indexed entity when there
+ * is one (an Eloquent model, a job class, a matched endpoint).
+ */
+export type EffectCategory = 'database' | 'response' | 'network' | 'storage' | 'navigation' | 'cache' | 'mail' | 'queue' | 'event' | 'auth' | 'file' | 'process';
+export interface EffectFact {
+  category: EffectCategory; operation: string; detail: string; line: number;
+  /** HTTP status of a response, when literal. */
+  status?: number;
+  target?: string; targetName?: string;
+  /** What proves the classification: the resolved name it was matched on. */
+  via: string;
+  /** network: the HTTP call was linked to an endpoint by a `requests` relation. */
+  endpoint?: string;
+}
+/** Per-symbol call-site coverage: which calls were linked, left the indexed code, or could not be resolved. */
+export interface CallSites { resolved: number; external: number; unresolved: number; unresolvedNames?: Record<string, number> }
 export interface SourceRange { startLine: number; endLine: number; startColumn?: number; endColumn?: number }
 export interface Evidence {
   source: 'filesystem' | 'typescript' | 'php' | 'framework' | 'git' | 'runtime' | 'heuristic' | 'ai';

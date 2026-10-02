@@ -4,7 +4,7 @@ import type { NodeSummary } from '@engine/projection/dto';
 import { ISO_X, ISO_Y, worldToScreen, type Camera, type Point, type Viewport } from './camera';
 import type { LodConfig } from './lod';
 import type { Scene, VisibleItem, VisibleSet } from './scene';
-import { PaletteCache, type Theme } from './themes';
+import { PaletteCache, paletteKey, type Theme } from './themes';
 import { compactNumber, typeLabel } from './format';
 
 export interface EdgeOverlay { key: string; from: string; to: string; fromAncestors: string[]; toAncestors: string[]; type: string; count: number; emphasized?: boolean; change?: 'added' | 'removed' }
@@ -27,46 +27,68 @@ export interface RenderState {
   unresolved?: { nodeId: string; count: number };
   /** Comparison view: draw change status; optionally fade what did not change. */
   comparison?: { dimUnchanged: boolean };
+  /** Moving through history: blocks that appeared rise from the ground, changed ones flash. Start times by node ID. */
+  motion?: MotionState;
+  /** Blast radius of the selection or of a comparison. */
+  impact?: ImpactOverlay;
   time: number;
   reducedMotion: boolean;
 }
+export interface MotionState { appear: Map<string, number>; flash: Map<string, number> }
+/**
+ * Blast radius on the map: reached entities by hop count (seeds are 0), and
+ * closed areas with how many affected entities they hold. With `dimOthers`,
+ * everything unreached recedes.
+ */
+export interface ImpactOverlay { distances: Map<string, number>; areas: Map<string, { count: number; distance: number }>; depth: number; dimOthers: boolean }
 interface Label { x: number; y: number; lines: { text: string; font: string; color: string }[]; priority: number; align: 'center' | 'above' }
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 const MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
+/** Duration of a block rising into place, and of a change flash. */
+export const RISE_MS = 520, FLASH_MS = 900;
+/** Rounded corners and gradients are skipped below this on-screen size, where they would not show. */
+const SOFT_PX = 16;
 
 export class MapRenderer {
   private palettes: PaletteCache;
-  constructor(private theme: Theme) { this.palettes = new PaletteCache(theme); }
-  setTheme(theme: Theme): void { this.theme = theme; this.palettes = new PaletteCache(theme); }
+  private font = FONT;
+  private dpr = 1;
+  constructor(private theme: Theme) { this.palettes = new PaletteCache(theme); this.font = theme.style?.font ?? FONT; }
+  setTheme(theme: Theme): void { this.theme = theme; this.palettes = new PaletteCache(theme); this.font = theme.style?.font ?? FONT; }
 
   render(ctx: CanvasRenderingContext2D, dpr: number, viewport: Viewport, camera: Camera, scene: Scene, set: VisibleSet, state: RenderState, lod: LodConfig): void {
     const theme = this.theme;
+    this.dpr = dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const gradient = ctx.createLinearGradient(0, 0, 0, viewport.height);
-    gradient.addColorStop(0, theme.background[0]); gradient.addColorStop(1, theme.background[1]);
-    ctx.fillStyle = gradient; ctx.fillRect(0, 0, viewport.width, viewport.height);
-    this.grid(ctx, viewport, camera);
+    this.background(ctx, viewport);
+    if (theme.style?.grid === 'dots') this.dotGrid(ctx, viewport, camera); else this.grid(ctx, viewport, camera);
 
     const emphasis = state.emphasis ? this.expandEmphasis(scene, state.emphasis) : undefined;
     const flowSet = state.flow?.active ? this.expandEmphasis(scene, new Set(state.flow.steps.filter(step => !step.missing).flatMap(step => [step.entityId]))) : undefined;
     const labels: Label[] = [];
-    for (const item of set.items) {
+    const items = this.animate(set, state);
+    const impactLit = state.impact ? this.impactLit(scene, state.impact) : undefined;
+    for (const item of items) {
       const dimmed = (flowSet && !flowSet.has(item.node.id)) || (!flowSet && emphasis && !emphasis.has(item.node.id));
-      const alpha = item.alpha * (dimmed ? (flowSet ? theme.flow.dimAlpha : theme.dimAlpha) : 1) * (state.comparison ? this.changeAlpha(item, state.comparison) : 1);
+      // In a comparison, blocks a change reaches stay lit instead of fading with the unchanged ones.
+      const reached = impactLit?.has(item.node.id) && item.node.change?.status !== 'removed';
+      const alpha = item.alpha * (dimmed ? (flowSet ? theme.flow.dimAlpha : theme.dimAlpha) : 1) * (state.comparison && !reached ? this.changeAlpha(item, state.comparison) : 1) * (state.impact?.dimOthers && !reached ? theme.dimAlpha : 1);
       if (alpha <= 0.01) continue;
+      if (theme.style?.shadow && item.parent >= 0 && item.size > SOFT_PX) this.shadow(ctx, viewport, camera, item, alpha);
       this.prism(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId);
-      if (state.comparison) this.changeOverlay(ctx, viewport, camera, item, alpha);
+      if (state.comparison) this.changeOverlay(ctx, viewport, camera, item, alpha, state);
+      if (state.impact) this.impactOverlay(ctx, viewport, camera, item, alpha, state.impact);
       if (state.showDiagnostics && !item.open && item.node.diagnostics > 0 && item.size > 10) this.diagnosticMarker(ctx, viewport, camera, item, alpha);
       this.collectLabel(labels, viewport, camera, item, state, alpha, dimmed ?? false);
     }
-    const selected = state.selectedId ? set.items[set.index.get(state.selectedId) ?? -1] : undefined;
+    const selected = state.selectedId ? items[set.index.get(state.selectedId) ?? -1] : undefined;
     if (selected) this.outline(ctx, viewport, camera, selected, theme.selection, 2.5, true);
     else if (state.selectedId) {
       // Selected entity hidden at this LOD: ring its visible ancestor.
       const representative = scene.representative(state.selectedId, set);
       if (representative) this.outline(ctx, viewport, camera, representative, theme.selection, 1.5, false, [5, 4]);
     }
-    const hovered = state.hoveredId ? set.items[set.index.get(state.hoveredId) ?? -1] : undefined;
+    const hovered = state.hoveredId ? items[set.index.get(state.hoveredId) ?? -1] : undefined;
     if (hovered && hovered !== selected) this.outline(ctx, viewport, camera, hovered, theme.hover, 1.5, false);
     if (state.source && selected && selected.node.id === state.source.nodeId && selected.size >= lod.sourcePx) this.sourceFace(ctx, viewport, camera, selected, state.source);
     this.edges(ctx, viewport, camera, set, state.edges);
@@ -86,16 +108,48 @@ export class MapRenderer {
     }
     return result;
   }
-  private grid(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera): void {
-    // Ground grid with spacing that adapts to zoom (powers of 4 world units).
-    const spacing = 4 ** Math.ceil(Math.log(48 / camera.scale) / Math.log(4));
+  private background(ctx: CanvasRenderingContext2D, viewport: Viewport): void {
+    const { width, height } = viewport;
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0, this.theme.background[0]); gradient.addColorStop(1, this.theme.background[1]);
+    ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
+    // Soft color fields fixed to the viewport, like light behind frosted glass.
+    for (const glow of this.theme.style?.glows ?? []) {
+      const x = glow.x * width, y = glow.y * height, r = glow.r * Math.max(width, height);
+      const field = ctx.createRadialGradient(x, y, 0, x, y, r);
+      field.addColorStop(0, glow.color); field.addColorStop(1, transparent(glow.color));
+      ctx.fillStyle = field; ctx.fillRect(0, 0, width, height);
+    }
+  }
+  /** Ground extent on screen, in world units, and a grid spacing (powers of 4) that adapts to zoom. */
+  private groundExtent(viewport: Viewport, camera: Camera, minPx: number) {
+    const spacing = 4 ** Math.ceil(Math.log(minPx / camera.scale) / Math.log(4));
     const corners = [[0, 0], [viewport.width, 0], [0, viewport.height], [viewport.width, viewport.height]].map(([sx, sy]) => {
       const px = (sx! - viewport.width / 2) / camera.scale + camera.x, py = (sy! - viewport.height / 2) / camera.scale + camera.y;
       const a = px / ISO_X, b = py / ISO_Y;
       return { x: (a + b) / 2, y: (b - a) / 2 };
     });
-    const minX = Math.min(...corners.map(c => c.x)), maxX = Math.max(...corners.map(c => c.x));
-    const minY = Math.min(...corners.map(c => c.y)), maxY = Math.max(...corners.map(c => c.y));
+    return { spacing, minX: Math.min(...corners.map(c => c.x)), maxX: Math.max(...corners.map(c => c.x)), minY: Math.min(...corners.map(c => c.y)), maxY: Math.max(...corners.map(c => c.y)) };
+  }
+  /** Dots at the grid intersections, in one path. */
+  private dotGrid(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera): void {
+    const { spacing, minX, maxX, minY, maxY } = this.groundExtent(viewport, camera, 30);
+    if ((maxX - minX) / spacing > 160 || (maxY - minY) / spacing > 160) return;
+    ctx.fillStyle = this.theme.grid;
+    ctx.beginPath();
+    const size = 1.6;
+    for (let x = Math.floor(minX / spacing) * spacing; x <= maxX; x += spacing) {
+      for (let y = Math.floor(minY / spacing) * spacing; y <= maxY; y += spacing) {
+        const p = worldToScreen(camera, viewport, x, y);
+        if (p.x < -2 || p.y < -2 || p.x > viewport.width + 2 || p.y > viewport.height + 2) continue;
+        ctx.rect(p.x - size / 2, p.y - size / 2, size, size);
+      }
+    }
+    ctx.fill();
+  }
+  private grid(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera): void {
+    // Ground grid with spacing that adapts to zoom (powers of 4 world units).
+    const { spacing, minX, maxX, minY, maxY } = this.groundExtent(viewport, camera, 48);
     if ((maxX - minX) / spacing > 400 || (maxY - minY) / spacing > 400) return;
     ctx.strokeStyle = this.theme.grid; ctx.lineWidth = 1;
     ctx.beginPath();
@@ -113,24 +167,119 @@ export class MapRenderer {
     const { x, y, w, h } = item.node.rect;
     return [worldToScreen(camera, viewport, x, y, z), worldToScreen(camera, viewport, x + w, y, z), worldToScreen(camera, viewport, x + w, y + h, z), worldToScreen(camera, viewport, x, y + h, z)];
   }
+  /**
+   * Items as drawn this frame. A block that just appeared rises from the
+   * ground (with a slight overshoot) and fades in; what stands on it rides
+   * along, and children of a rising area follow in a cascade.
+   */
+  private animate(set: VisibleSet, state: RenderState): VisibleItem[] {
+    const appear = state.motion?.appear;
+    if (!appear?.size || state.reducedMotion) return set.items;
+    const lift = new Float64Array(set.items.length);
+    return set.items.map((item, index) => {
+      const below = item.parent >= 0 ? lift[item.parent]! : 0;
+      const start = appear.get(item.node.id);
+      let rise = 1, fade = 1;
+      if (start !== undefined && state.time - start < RISE_MS) {
+        const t = (state.time - start) / RISE_MS;
+        rise = t <= 0 ? 0 : easeOutBack(t);
+        fade = Math.max(0, Math.min(1, t * 3));
+      }
+      const height = item.zTop - item.zBase;
+      lift[index] = below + height * (rise - 1);
+      if (below === 0 && rise === 1) return item;
+      const zBase = item.zBase + below;
+      return { ...item, zBase, zTop: zBase + height * Math.max(0, rise), alpha: item.alpha * fade };
+    });
+  }
+  /** Corner radius in world units: proportional to the footprint, gentler for large areas, none when too small to see. */
+  private radius(item: VisibleItem, camera: Camera): number {
+    const rounding = this.theme.style?.rounding ?? 0;
+    if (!rounding || item.size < SOFT_PX) return 0;
+    const side = Math.min(item.node.rect.w, item.node.rect.h);
+    const r = Math.min(side * rounding, 14 + side * 0.06);
+    return r * camera.scale >= 1 ? r : 0;
+  }
+  /** Path of a footprint at elevation z (optionally grown and shifted on screen): a diamond, or a rounded one. */
+  private footprint(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, rect: { x: number; y: number; w: number; h: number }, z: number, r: number, grow = 0, dx = 0, dy = 0): void {
+    ctx.beginPath();
+    this.addFootprint(ctx, viewport, camera, rect, z, r, grow, dx, dy);
+  }
+  private addFootprint(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, rect: { x: number; y: number; w: number; h: number }, z: number, r: number, grow = 0, dx = 0, dy = 0): void {
+    const x = rect.x - grow, y = rect.y - grow, w = rect.w + grow * 2, h = rect.h + grow * 2;
+    const k = camera.scale, d = this.dpr;
+    const origin = worldToScreen(camera, viewport, x, y, z);
+    // Path points are transformed when added, so the footprint can be drawn in its own plane and stroked/filled afterwards.
+    ctx.setTransform(d * ISO_X * k, d * ISO_Y * k, -d * ISO_X * k, d * ISO_Y * k, d * (origin.x + dx), d * (origin.y + dy));
+    if (r > 0) ctx.roundRect(0, 0, w, h, Math.min(r + grow, w / 2, h / 2));
+    else ctx.rect(0, 0, w, h);
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+  }
+  private topPath(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, r: number): void {
+    if (r > 0) this.footprint(ctx, viewport, camera, item.node.rect, item.zTop, r);
+    else polygon(ctx, this.corners(viewport, camera, item, item.zTop));
+  }
+  /** Soft shadow cast forward onto the surface the block stands on, longer for taller blocks. */
+  private shadow(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number): void {
+    const wallPx = (item.zTop - item.zBase) * camera.scale;
+    if (wallPx < 1) return;
+    const r = this.radius(item, camera);
+    ctx.fillStyle = this.theme.style!.shadow!;
+    for (const [reach, strength] of [[1, 0.55], [0.55, 0.45]] as const) {
+      ctx.globalAlpha = alpha * strength;
+      this.footprint(ctx, viewport, camera, item.node.rect, item.zBase, r, 0, wallPx * 0.55 * reach, Math.min(14, 1.5 + wallPx * 0.35) * reach);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
   private prism(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, hovered: boolean): void {
-    const palette = this.palettes.get(item.node.type === 'application' && item.node.detail ? `application:${item.node.detail}` : item.node.type, item.node.depth);
-    const top = this.corners(viewport, camera, item, item.zTop);
+    const palette = this.palettes.get(paletteKey(item.node), item.node.depth);
+    const r = this.radius(item, camera);
     ctx.globalAlpha = alpha;
     const wallPx = (item.zTop - item.zBase) * camera.scale;
     if (wallPx >= 0.75 && item.size > 3) {
-      const bottom = this.corners(viewport, camera, item, item.zBase);
-      ctx.fillStyle = palette.left; polygon(ctx, [top[3], top[2], bottom[2], bottom[3]]); ctx.fill();
-      ctx.fillStyle = palette.right; polygon(ctx, [top[1], top[2], bottom[2], bottom[1]]); ctx.fill();
+      if (r > 0) this.roundedWalls(ctx, viewport, camera, item, r, palette.left, palette.right);
+      else {
+        const top = this.corners(viewport, camera, item, item.zTop), bottom = this.corners(viewport, camera, item, item.zBase);
+        ctx.fillStyle = palette.left; polygon(ctx, [top[3], top[2], bottom[2], bottom[3]]); ctx.fill();
+        ctx.fillStyle = palette.right; polygon(ctx, [top[1], top[2], bottom[2], bottom[1]]); ctx.fill();
+      }
     }
     ctx.fillStyle = hovered ? palette.hoverTop : palette.top;
-    polygon(ctx, top); ctx.fill();
+    this.topPath(ctx, viewport, camera, item, r); ctx.fill();
+    const sheen = this.theme.style?.sheen;
+    if (sheen && item.size > 28) {
+      // A soft highlight from the back corner, as on a rounded, slightly glossy surface.
+      const { x, y, w, h } = item.node.rect;
+      const back = worldToScreen(camera, viewport, x, y, item.zTop), front = worldToScreen(camera, viewport, x + w, y + h, item.zTop);
+      const light = ctx.createLinearGradient(back.x, back.y, front.x, front.y);
+      light.addColorStop(0, `rgba(255,255,255,${sheen})`); light.addColorStop(0.55, 'rgba(255,255,255,0)');
+      ctx.fillStyle = light; ctx.fill();
+    }
     if (item.size > 14) { ctx.strokeStyle = this.theme.outline; ctx.lineWidth = 1; ctx.stroke(); }
     if (item.node.kind === 'group' && item.size > 30) {
       // Projection districts get a dashed rim: they are spatial groupings, not entities.
-      ctx.setLineDash([4, 4]); ctx.strokeStyle = this.theme.text.secondary; ctx.lineWidth = 1; polygon(ctx, top); ctx.stroke(); ctx.setLineDash([]);
+      ctx.setLineDash([4, 4]); ctx.strokeStyle = this.theme.text.secondary; ctx.lineWidth = 1; this.topPath(ctx, viewport, camera, item, r); ctx.stroke(); ctx.setLineDash([]);
     }
     ctx.globalAlpha = 1;
+  }
+  /**
+   * Walls of a rounded block. A vertically extruded convex footprint is the
+   * union of its bottom outline and the band between its leftmost and
+   * rightmost points; the two wall tones meet at the front corner, blended
+   * across its curve.
+   */
+  private roundedWalls(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, r: number, left: string, right: string): void {
+    const { x, y, w, h } = item.node.rect, s = r * Math.SQRT1_2;
+    const leftAt = (z: number) => worldToScreen(camera, viewport, x + r - s, y + h - r + s, z), rightAt = (z: number) => worldToScreen(camera, viewport, x + w - r + s, y + r - s, z);
+    const front = worldToScreen(camera, viewport, x + w - r + s, y + h - r + s, item.zTop);
+    const a = leftAt(item.zTop), b = rightAt(item.zTop), c = rightAt(item.zBase), d = leftAt(item.zBase);
+    this.footprint(ctx, viewport, camera, item.node.rect, item.zBase, r);
+    ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.closePath();
+    const edge = Math.max(1, r * camera.scale * ISO_X * Math.SQRT2 * 0.9);
+    const shade = ctx.createLinearGradient(front.x - edge, 0, front.x + edge, 0);
+    shade.addColorStop(0, left); shade.addColorStop(1, right);
+    ctx.fillStyle = shade; ctx.fill();
   }
   /** Comparison fading: ghosts are translucent; with dimming on, blocks with nothing changed in or below them recede. */
   private changeAlpha(item: VisibleItem, comparison: NonNullable<RenderState['comparison']>): number {
@@ -139,27 +288,85 @@ export class MapRenderer {
     if (!comparison.dimUnchanged || item.node.type === 'repository') return 1;
     return change || item.node.changes ? 1 : this.theme.change.unchangedAlpha;
   }
-  private changeOverlay(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number): void {
+  private changeOverlay(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, state: RenderState): void {
     const node = item.node, colors = this.theme.change;
     const status = node.change?.status;
     if (item.size < 4) return;
-    const top = this.corners(viewport, camera, item, item.zTop);
+    const r = this.radius(item, camera);
+    // A change that just happened flashes, then settles into its status color.
+    const start = state.reducedMotion ? undefined : state.motion?.flash.get(node.id);
+    const boost = start === undefined ? 0 : Math.max(0, 1 - (state.time - start) / FLASH_MS) ** 2;
     if (status && status !== 'unchanged') {
       const color = colors[status];
       ctx.save();
       // Open containers keep their children readable: outline only.
-      if (!item.open) { ctx.globalAlpha = alpha * (status === 'removed' ? 0.35 : 0.42); ctx.fillStyle = color; polygon(ctx, top); ctx.fill(); }
+      if (!item.open) { ctx.globalAlpha = Math.min(1, alpha * (status === 'removed' ? 0.35 : 0.42) * (1 + 1.3 * boost)); ctx.fillStyle = color; this.topPath(ctx, viewport, camera, item, r); ctx.fill(); }
       ctx.globalAlpha = Math.min(1, alpha * 1.6);
-      ctx.strokeStyle = color; ctx.lineWidth = item.open ? 2 : 1.6; ctx.lineJoin = 'round';
+      ctx.strokeStyle = color; ctx.lineWidth = (item.open ? 2 : 1.6) + 2 * boost; ctx.lineJoin = 'round';
       if (status === 'removed') ctx.setLineDash([5, 4]);
-      polygon(ctx, top); ctx.stroke();
+      this.topPath(ctx, viewport, camera, item, r); ctx.stroke();
+      if (boost > 0.02 && !item.open && status !== 'removed') {
+        // A ripple spreading out from the changed block.
+        ctx.setLineDash([]); ctx.globalAlpha = alpha * boost * 0.9; ctx.lineWidth = 1.5;
+        this.footprint(ctx, viewport, camera, node.rect, item.zTop, r, (1 - boost) * 10 / camera.scale); ctx.stroke();
+      }
       ctx.restore();
     } else if (node.change?.facets.length && item.size > 10) {
       // Only its relationships or findings changed: a dotted rim.
-      ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = colors.modified; ctx.lineWidth = 1.2; ctx.setLineDash([1.5, 3]); polygon(ctx, top); ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = colors.modified; ctx.lineWidth = 1.2; ctx.setLineDash([1.5, 3]); this.topPath(ctx, viewport, camera, item, r); ctx.stroke(); ctx.restore();
     }
     const counts = node.changes;
     if (counts && !item.open && item.size > 34 && status !== 'removed') this.changeBadge(ctx, viewport, camera, item, counts, alpha);
+  }
+  /** Entities the blast radius reaches, plus their ancestors (computed once per overlay). */
+  private impactLit(scene: Scene, impact: ImpactOverlay): Set<string> {
+    if (this.impactCache?.key === impact) return this.impactCache.lit;
+    const lit = new Set<string>([...impact.areas.keys()]);
+    for (const id of impact.distances.keys()) {
+      for (let node: NodeSummary | undefined = scene.nodes.get(id); node; node = node.spatialParentId ? scene.nodes.get(node.spatialParentId) : undefined) lit.add(node.id);
+      lit.add(id);
+    }
+    this.impactCache = { key: impact, lit };
+    return lit;
+  }
+  private impactCache?: { key: ImpactOverlay; lit: Set<string> };
+  /** Origin ringed; reached blocks tinted by hop count with the count written on them; closed areas badged. */
+  private impactOverlay(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, impact: ImpactOverlay): void {
+    if (item.size < 4) return;
+    const colors = impactColors(this.theme);
+    const node = item.node, r = this.radius(item, camera);
+    const distance = impact.distances.get(node.id);
+    ctx.save();
+    if (distance === 0) {
+      ctx.globalAlpha = Math.min(1, alpha * 1.6); ctx.strokeStyle = colors.origin; ctx.lineWidth = item.open ? 2.4 : 2.2; ctx.lineJoin = 'round';
+      this.topPath(ctx, viewport, camera, item, r); ctx.stroke();
+    } else if (distance !== undefined) {
+      const color = mixHex(colors.near, colors.far, impact.depth > 1 ? (distance - 1) / (impact.depth - 1) : 0);
+      if (!item.open) { ctx.globalAlpha = Math.min(1, alpha * 0.5); ctx.fillStyle = color; this.topPath(ctx, viewport, camera, item, r); ctx.fill(); }
+      ctx.globalAlpha = Math.min(1, alpha * 1.5); ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.lineJoin = 'round';
+      this.topPath(ctx, viewport, camera, item, r); ctx.stroke();
+      if (!item.open && item.size > 18) {
+        // The hop count, so distance never depends on color alone.
+        const { x, y, w, h } = node.rect;
+        const anchor = worldToScreen(camera, viewport, x + Math.min(w, h) * 0.12, y + Math.min(w, h) * 0.12, item.zTop);
+        ctx.globalAlpha = Math.max(0.7, alpha); ctx.fillStyle = color;
+        ctx.beginPath(); ctx.arc(anchor.x, anchor.y, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = this.theme.dark ? '#0b1020' : '#ffffff'; ctx.font = `800 9px ${this.font}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(String(distance), anchor.x, anchor.y + 0.5);
+      }
+    }
+    const area = impact.areas.get(node.id);
+    if (area && !item.open && item.size > 34 && distance === undefined) {
+      const { x, y, w, h } = node.rect;
+      const anchor = worldToScreen(camera, viewport, x + w * 0.5, y + h - Math.min(h, w) * 0.1, item.zTop);
+      const text = `◎ ${compactNumber(area.count)} affected · ${area.distance} hop${area.distance === 1 ? '' : 's'}`;
+      ctx.globalAlpha = Math.max(0.65, alpha); ctx.font = `700 10px ${this.font}`; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+      const width = ctx.measureText(text).width + 14;
+      ctx.fillStyle = this.theme.dark ? 'rgba(8,12,26,0.82)' : 'rgba(255,253,248,0.92)';
+      roundRect(ctx, anchor.x - width / 2, anchor.y - 8, width, 16, 8); ctx.fill();
+      ctx.fillStyle = mixHex(colors.near, colors.far, impact.depth > 1 ? (area.distance - 1) / (impact.depth - 1) : 0); ctx.fillText(text, anchor.x, anchor.y + 0.5);
+    }
+    ctx.restore();
   }
   /** Changes hidden inside a closed area: one count per status. */
   private changeBadge(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, counts: NonNullable<NodeSummary['changes']>, alpha: number): void {
@@ -169,7 +376,7 @@ export class MapRenderer {
     const anchor = worldToScreen(camera, viewport, x + w * 0.5, y + Math.min(h, w) * 0.08, item.zTop);
     ctx.save();
     ctx.globalAlpha = Math.max(0.6, alpha);
-    ctx.font = `700 10px ${FONT}`; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    ctx.font = `700 10px ${this.font}`; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
     const texts = parts.map(([key, glyph]) => ({ key, text: `${glyph}${compactNumber(counts[key])}` }));
     const widths = texts.map(part => ctx.measureText(part.text).width);
     const total = widths.reduce((sum, width) => sum + width, 0) + 8 * (texts.length - 1) + 12;
@@ -181,12 +388,11 @@ export class MapRenderer {
     ctx.restore();
   }
   private outline(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, color: string, width: number, glow: boolean, dash?: number[]): void {
-    const top = this.corners(viewport, camera, item, item.zTop);
     ctx.save();
     if (glow) { ctx.shadowColor = color; ctx.shadowBlur = 14; }
     if (dash) ctx.setLineDash(dash);
     ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineJoin = 'round';
-    polygon(ctx, top); ctx.stroke();
+    this.topPath(ctx, viewport, camera, item, this.radius(item, camera)); ctx.stroke();
     ctx.restore();
   }
   private diagnosticMarker(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number): void {
@@ -197,7 +403,7 @@ export class MapRenderer {
     ctx.fillStyle = this.theme.diagnostic;
     ctx.beginPath(); ctx.moveTo(p.x, p.y - r); ctx.lineTo(p.x + r, p.y); ctx.lineTo(p.x, p.y + r); ctx.lineTo(p.x - r, p.y); ctx.closePath(); ctx.fill();
     if (item.size > 60) {
-      ctx.font = `600 10px ${FONT}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.font = `600 10px ${this.font}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
       ctx.lineWidth = 3; ctx.strokeStyle = this.theme.text.halo; ctx.strokeText(String(item.node.diagnostics), p.x + r + 2, p.y);
       ctx.fillStyle = this.theme.diagnostic; ctx.fillText(String(item.node.diagnostics), p.x + r + 2, p.y);
     }
@@ -214,21 +420,21 @@ export class MapRenderer {
       const top = worldToScreen(camera, viewport, node.rect.x, node.rect.y, item.zTop);
       const size = node.type === 'application' ? 15 : node.type === 'repository' ? 13 : 11;
       const text = `${state.comparison ? changeGlyph(node) : ''}${node.type === 'repository' ? node.name : node.kind === 'group' ? `${node.name}` : node.type === 'directory' ? `${node.name}/` : node.name}`;
-      labels.push({ x: top.x, y: top.y - 4, align: 'above', priority: 1e9 - node.depth * 1e6 + item.size, lines: [{ text, font: `${node.type === 'application' ? 700 : 600} ${size}px ${FONT}`, color: theme.text.district }] });
+      labels.push({ x: top.x, y: top.y - 4, align: 'above', priority: 1e9 - node.depth * 1e6 + item.size, lines: [{ text, font: `${node.type === 'application' ? 700 : 600} ${size}px ${this.font}`, color: theme.text.district }] });
       return;
     }
     const { x, y, w, h } = node.rect;
     const center = worldToScreen(camera, viewport, x + w / 2, y + h / 2, item.zTop);
     const big = node.type === 'application';
     const nameSize = big ? Math.min(22, 13 + item.size / 60) : Math.min(14, 10 + item.size / 70);
-    const lines: Label['lines'] = [{ text: `${state.comparison ? changeGlyph(node) : ''}${displayName(node)}`, font: `${big || important ? 700 : 600} ${nameSize.toFixed(1)}px ${FONT}`, color }];
+    const lines: Label['lines'] = [{ text: `${state.comparison ? changeGlyph(node) : ''}${displayName(node)}`, font: `${big || important ? 700 : 600} ${nameSize.toFixed(1)}px ${this.font}`, color }];
     if (item.tier === 'summary' || item.tier === 'detail') {
       const summary = summaryLine(node);
-      if (summary) lines.push({ text: summary, font: `500 ${Math.max(9.5, nameSize - 2.5).toFixed(1)}px ${FONT}`, color: theme.text.secondary });
+      if (summary) lines.push({ text: summary, font: `500 ${Math.max(9.5, nameSize - 2.5).toFixed(1)}px ${this.font}`, color: theme.text.secondary });
     }
     if (item.tier === 'detail') {
       const detail = detailLine(node);
-      if (detail) lines.push({ text: detail, font: `400 ${Math.max(9, nameSize - 3).toFixed(1)}px ${node.detail?.startsWith('(') ? MONO : FONT}`, color: theme.text.secondary });
+      if (detail) lines.push({ text: detail, font: `400 ${Math.max(9, nameSize - 3).toFixed(1)}px ${node.detail?.startsWith('(') ? MONO : this.font}`, color: theme.text.secondary });
     }
     labels.push({ x: center.x, y: center.y, align: 'center', priority: (important ? 2e9 : 0) + item.size, lines });
   }
@@ -285,6 +491,7 @@ export class MapRenderer {
       const dx = to.x - from.x, dy = to.y - from.y, distance = Math.hypot(dx, dy);
       const control = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 - Math.min(220, distance * 0.35 + 20) };
       ctx.save();
+      if (this.theme.style?.rounding) ctx.lineCap = 'round';
       const width = Math.min(5, 1.4 + Math.log2(edge.count) * 0.8) + (edge.emphasized ? 1.2 : 0);
       if (edge.change === 'added') {
         // Added since the baseline: a halo in the added color under the typed edge.
@@ -305,7 +512,7 @@ export class MapRenderer {
       if (edge.count > 1) {
         const mid = { x: 0.25 * from.x + 0.5 * control.x + 0.25 * to.x, y: 0.25 * from.y + 0.5 * control.y + 0.25 * to.y };
         const text = compactNumber(edge.count);
-        ctx.font = `700 10px ${FONT}`; const width = ctx.measureText(text).width + 10;
+        ctx.font = `700 10px ${this.font}`; const width = ctx.measureText(text).width + 10;
         ctx.fillStyle = edge.color; roundRect(ctx, mid.x - width / 2, mid.y - 8, width, 16, 8); ctx.fill();
         ctx.fillStyle = this.theme.dark ? '#0b1020' : '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, mid.x, mid.y + 0.5);
       }
@@ -322,8 +529,8 @@ export class MapRenderer {
     ctx.strokeStyle = this.theme.diagnostic; ctx.lineWidth = 1.6; ctx.setLineDash([3, 4]);
     ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.quadraticCurveTo(from.x + 10, to.y, to.x, to.y); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = this.theme.diagnostic; ctx.beginPath(); ctx.arc(to.x, to.y, 9, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = this.theme.dark ? '#0b1020' : '#fff'; ctx.font = `800 12px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('?', to.x, to.y + 0.5);
-    ctx.font = `600 10.5px ${FONT}`; ctx.textAlign = 'left'; ctx.lineWidth = 3; ctx.strokeStyle = this.theme.text.halo;
+    ctx.fillStyle = this.theme.dark ? '#0b1020' : '#fff'; ctx.font = `800 12px ${this.font}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('?', to.x, to.y + 0.5);
+    ctx.font = `600 10.5px ${this.font}`; ctx.textAlign = 'left'; ctx.lineWidth = 3; ctx.strokeStyle = this.theme.text.halo;
     const text = `${unresolved.count} unresolved HTTP call${unresolved.count === 1 ? '' : 's'}`;
     ctx.strokeText(text, to.x + 13, to.y); ctx.fillStyle = this.theme.diagnostic; ctx.fillText(text, to.x + 13, to.y);
     ctx.restore();
@@ -357,7 +564,7 @@ export class MapRenderer {
       ctx.strokeStyle = this.theme.flow.step; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(point.x, point.y, radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
       ctx.fillStyle = current ? (this.theme.dark ? '#1b1400' : '#ffffff') : this.theme.flow.step;
-      ctx.font = `800 ${current ? 12 : 11}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(i + 1), point.x, point.y + 0.5);
+      ctx.font = `800 ${current ? 12 : 11}px ${this.font}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(i + 1), point.x, point.y + 0.5);
     });
     // Moving indicator between the current step and the next one.
     const a = anchors[flow.current], b = anchors[flow.current + 1];
@@ -400,6 +607,16 @@ function ancestorChain(scene: Scene, node: NodeSummary): string[] {
   for (let current = node.spatialParentId ? scene.nodes.get(node.spatialParentId) : undefined; current; current = current.spatialParentId ? scene.nodes.get(current.spatialParentId) : undefined) chain.unshift(current.id);
   return chain;
 }
+/** Overshoots slightly before settling, like something springing into place. */
+function easeOutBack(t: number): number { const c = 1.4; return 1 + (c + 1) * (t - 1) ** 3 + c * (t - 1) ** 2; }
+/** The same color fully transparent, so gradients fade without shifting hue. */
+function transparent(color: string): string {
+  const rgba = /^rgba?\(([^,]+),([^,]+),([^,)]+)/.exec(color.replace(/\s+/g, ''));
+  if (rgba) return `rgba(${rgba[1]},${rgba[2]},${rgba[3]},0)`;
+  const hex = /^#([0-9a-f]{6})$/i.exec(color);
+  if (hex) { const n = parseInt(hex[1]!, 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},0)`; }
+  return 'rgba(0,0,0,0)';
+}
 function polygon(ctx: CanvasRenderingContext2D, points: Point[]): void {
   ctx.beginPath(); ctx.moveTo(points[0]!.x, points[0]!.y);
   for (let i = 1; i < points.length; i++) ctx.lineTo(points[i]!.x, points[i]!.y);
@@ -413,6 +630,16 @@ function fit(ctx: CanvasRenderingContext2D, text: string, max: number): string {
   let low = 0, high = text.length;
   while (low < high) { const mid = (low + high + 1) >> 1; if (ctx.measureText(`${text.slice(0, mid)}…`).width <= max) low = mid; else high = mid - 1; }
   return `${text.slice(0, low)}…`;
+}
+/** Impact colors: the theme's, or defaults that read on light and dark backgrounds. */
+export function impactColors(theme: Theme): { origin: string; near: string; far: string } {
+  return theme.impact ?? (theme.dark ? { origin: '#38bdf8', near: '#f87171', far: '#fbbf24' } : { origin: '#0369a1', near: '#dc2626', far: '#d97706' });
+}
+/** Linear mix of two #rrggbb colors. */
+export function mixHex(a: string, b: string, t: number): string {
+  const parse = (hex: string) => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+  const x = parse(a), y = parse(b), k = Math.max(0, Math.min(1, t));
+  return `#${x.map((value, i) => Math.round(value + (y[i]! - value) * k).toString(16).padStart(2, '0')).join('')}`;
 }
 /** Status glyph so changes read without relying on color alone. */
 export function changeGlyph(node: Pick<NodeSummary, 'change'>): string {

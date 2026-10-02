@@ -4,54 +4,16 @@ import path from 'node:path';
 import type { Analyzer, AnalysisContext, ScannedFile } from '../core/analyzer.js';
 import { ANALYZER_VERSION, declarationHashes, evidence, type Entity, type Evidence } from '../core/graph.js';
 import { repoPath } from '../core/config.js';
+import { args, ast, classConstant, literal, name, nodes, resolve, scopedChildren, text, walk, type Ast, type ParsedFile, type Scope } from './php-ast.js';
+import { resolvePhpReferences, type PhpClass, type PhpMethod } from './php-references.js';
+import { SiteCollector } from './references.js';
 
-// The parser's declarations do not discriminate node kinds. Keep that boundary
-// narrow and runtime-checked instead of spreading untyped AST values downstream.
-interface Ast { kind: string; loc?: { start: { line: number; column: number; offset: number }; end: { line: number; column: number; offset: number } }; [key: string]: unknown }
-interface Scope { namespace: string; imports: Map<string, string> }
-interface ParsedFile { file: ScannedFile; ast: Ast; content: string }
 interface ChainItem { name: string; args: Ast[]; ast: Ast }
 interface RouteContext { prefix: string; namePrefix: string; controller?: string; middleware: string[]; constraints: boolean; facts: Evidence[]; registration: 'static' | 'convention'; api: boolean }
-function ast(value: unknown): Ast | undefined { return value && typeof value === 'object' && 'kind' in value ? value as Ast : undefined; }
-function nodes(value: unknown): Ast[] { return Array.isArray(value) ? value.map(ast).filter((node): node is Ast => !!node) : []; }
-function name(value: unknown): string | undefined { return typeof value === 'string' ? value : typeof ast(value)?.name === 'string' ? ast(value)!.name as string : undefined; }
-function literal(value: unknown): string | undefined { const node = ast(value); return node?.kind === 'string' && typeof node.value === 'string' ? node.value : undefined; }
-function args(node: Ast): Ast[] { return nodes(node.arguments); }
-function text(node: Ast | undefined, parsed: ParsedFile): string { return node?.loc ? parsed.content.slice(node.loc.start.offset, node.loc.end.offset) : ''; }
 function fingerprint(node: Ast, parsed: ParsedFile): ReturnType<typeof declarationHashes> | Record<string, never> {
   if (!node.loc) return {};
   const nameLoc = ast(node.name)?.loc;
   return declarationHashes(text(node, parsed), nameLoc ? nameLoc.end.offset - node.loc.start.offset : 0);
-}
-function walk(node: Ast, visit: (node: Ast) => void): void {
-  visit(node);
-  for (const [key, value] of Object.entries(node)) {
-    if (key === 'loc' || key === 'comments' || key === 'leadingComments' || key === 'trailingComments') continue;
-    if (Array.isArray(value)) for (const child of nodes(value)) walk(child, visit);
-    else { const child = ast(value); if (child) walk(child, visit); }
-  }
-}
-function resolve(value: unknown, scope: Scope): string | undefined {
-  const raw = name(value);
-  if (!raw) return undefined;
-  if (raw.startsWith('\\') || ast(value)?.resolution === 'fqn') return raw.replace(/^\\/, '');
-  if (raw.startsWith('namespace\\')) return [scope.namespace, raw.slice(10)].filter(Boolean).join('\\');
-  const [first, ...rest] = raw.split('\\');
-  const imported = [...scope.imports.entries()].find(([alias]) => alias.toLowerCase() === first!.toLowerCase())?.[1];
-  return imported ? [imported, ...rest].join('\\') : [scope.namespace, raw].filter(Boolean).join('\\');
-}
-function scopedChildren(root: Ast, scope: Scope, visit: (children: Ast[], scope: Scope) => void): void {
-  const children = nodes(root.children);
-  const local = { namespace: scope.namespace, imports: new Map(scope.imports) };
-  for (const item of children) if (item.kind === 'usegroup' && !item.type) {
-    for (const use of nodes(item.items)) {
-      if (use.type) continue;
-      const fqn = [name(item.name), name(use.name)].filter(Boolean).join('\\').replace(/^\\/, '');
-      if (fqn) local.imports.set(name(use.alias) ?? fqn.split('\\').at(-1)!, fqn);
-    }
-  }
-  visit(children.filter(item => item.kind !== 'namespace'), local);
-  for (const child of children) if (child.kind === 'namespace') scopedChildren(child, { namespace: name(child.name) ?? '', imports: new Map() }, visit);
 }
 function chain(node: Ast, scope: Scope): ChainItem[] | undefined {
   if (node.kind !== 'call') return undefined;
@@ -68,10 +30,6 @@ function chain(node: Ast, scope: Scope): ChainItem[] | undefined {
     if (previous && method) return [...previous, { name: method.toLowerCase(), args: args(node), ast: node }];
   }
   return undefined;
-}
-function classConstant(value: unknown, scope: Scope): string | undefined {
-  const node = ast(value);
-  return node?.kind === 'staticlookup' && name(node.offset)?.toLowerCase() === 'class' ? resolve(node.what, scope) : undefined;
 }
 function routePath(prefix: string, uri: string): string { return `/${[prefix, uri].map(part => part.replace(/^\/+|\/+$/g, '')).filter(Boolean).join('/')}`; }
 function fileLiteral(node: Ast | undefined, parsed: ParsedFile): string | undefined {
@@ -98,6 +56,8 @@ export const laravelAnalyzer: Analyzer = {
     const classes = new Map<string, Entity>();
     const methods = new Map<string, Entity>();
     const inheritance: { from: string; target: string; facts: Evidence[]; app: string }[] = [];
+    const phpClasses = new Map<string, PhpClass>();
+    const phpMethods: PhpMethod[] = [];
     const { graph } = context;
     const diagnostic = (parsed: ParsedFile, node: Ast | undefined, code: string, reason: string, severity: 'warning' | 'error' = 'warning') => graph.diagnose({ analyzer: 'php-laravel', severity, code, reason, file: parsed.file.path, line: node?.loc?.start.line, entityId: parsed.file.id });
     const facts = (parsed: ParsedFile, node: Ast, explanation: string, framework = false): Evidence[] => [{ ...evidence(framework ? 'framework' : 'php', 'php-laravel', parsed.file.path, node.loc?.start.line, explanation), endLine: node.loc?.end.line }];
@@ -122,6 +82,8 @@ export const laravelAnalyzer: Analyzer = {
           const entity = graph.contain({ id: classId, type: controller ? 'controller' : 'class', name: name(node.name)!, path: file.path, language: 'php', parentId: file.id, sourceRange: node.loc ? { startLine: node.loc.start.line, endLine: node.loc.end.line, startColumn: node.loc.start.column + 1, endColumn: node.loc.end.column + 1 } : undefined, metadata: { qualifiedName: fqn, extends: resolve(node.extends, scope), ...fingerprint(node, parsed) }, evidence: facts(parsed, node, 'PHP class declaration') });
           classes.set(`${file.application!.name}:${fqn.toLowerCase()}`, entity);
           const base = resolve(node.extends, scope);
+          const phpClass: PhpClass = { entity, fqn, app: file.application!.name, scope, parsed, node, ...(base ? { extends: base } : {}) };
+          phpClasses.set(`${file.application!.name}:${fqn.toLowerCase()}`, phpClass);
           if (base) inheritance.push({ from: entity.id, target: base, facts: facts(parsed, node, 'PHP extends declaration'), app: file.application!.name });
           for (const method of nodes(node.body).filter(item => item.kind === 'method')) {
             const methodName = name(method.name)!;
@@ -130,6 +92,7 @@ export const laravelAnalyzer: Analyzer = {
             if (graph.entities.has(id)) { diagnostic(parsed, method, 'duplicate-php-method', `Duplicate method ${fqn}::${methodName}`, 'error'); continue; }
             const methodEntity = graph.contain({ id, type: 'method', name: methodName, path: file.path, language: 'php', parentId: classId, sourceRange: method.loc ? { startLine: method.loc.start.line, endLine: method.loc.end.line, startColumn: method.loc.start.column + 1, endColumn: method.loc.end.column + 1 } : undefined, metrics: method.loc ? { loc: method.loc.end.line - method.loc.start.line + 1 } : undefined, metadata: { qualifiedName: `${fqn}::${methodName}`, signature, visibility: method.visibility, static: !!method.isStatic, ...fingerprint(method, parsed) }, evidence: facts(parsed, method, 'PHP method declaration') });
             methods.set(`${file.application!.name}:${fqn.toLowerCase()}::${methodName.toLowerCase()}`, methodEntity);
+            phpMethods.push({ entity: methodEntity, node: method, owner: phpClass });
           }
         });
       });
@@ -268,5 +231,9 @@ export const laravelAnalyzer: Analyzer = {
       }
       for (const registration of registrations) processFile(registration.file, { ...registration, namePrefix: '', middleware: [], constraints: false }, new Set());
     }
+    // Calls between methods, constructions and effects, once every class is known.
+    const sites = new SiteCollector();
+    resolvePhpReferences(context, phpClasses, phpMethods, sites);
+    sites.flush(graph);
   },
 };

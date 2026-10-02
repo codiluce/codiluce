@@ -14,14 +14,20 @@ import { computeDiff, type EntityChange, type SnapshotDiff } from '../history/di
 import { canonicalJson, withoutPositions } from '../history/fingerprint.js';
 import { renamedPaths } from '../history/git.js';
 import { CommitSnapshot, WorkingTreeSnapshot, type SnapshotData, type SnapshotSource } from '../history/snapshot.js';
-import type { EntityHistoryRow, HistoryStore } from '../history/store.js';
+import type { EntityHistoryRow, HistoryStore, SnapshotRecord } from '../history/store.js';
+import type { EvolutionResponse } from './dto.js';
+import { computeEvolution, type EvolutionJob } from './evolution.js';
 import { lineDiff } from '../history/textdiff.js';
 import { pagination, type GraphStore } from '../storage/sqlite.js';
 import type { Entity, Relation } from '../core/graph.js';
 import { extendRegistry, LAYOUT_VERSION, TIMELINE_LAYOUT_VERSION, layoutHierarchy, placeOnTimeline, timelineLayout, type LayoutState, type Rect, type TimelineLayout, type TimelineRegistry } from './layout.js';
 import { ProjectionIndex, type EntityRow, type ProjectionNode, type RelationRow } from './hierarchy.js';
 import { readSnapshotFile, readSnapshotSource, snapshotRef, SourceError, splitLines, type SourceRequest, type SourceResponse } from './source.js';
-import type { AggregateResult, ChangesPage, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, LocateResult, NodeChange, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, SearchPage, SourceDiffResponse, SourceDiffSide, ViewKey } from './dto.js';
+import type { AggregateResult, ChangesPage, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, PathResult, ProjectionMeta, RelationItem, RelationsPage, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
+import { computeImpact, DEFAULT_IMPACT_DEPTH, FILE_IMPACT_TYPES, impactPath, MAX_IMPACT_SEEDS, seedsOf, SYMBOL_IMPACT_TYPES, type ImpactComputation } from './impact.js';
+import { shortestPath, STEP_LIMITS, walkSteps } from './steps.js';
+import { guardsAt, hintOf, phrase } from './conditions.js';
+import { SYMBOL_TYPES } from './hierarchy.js';
 export type { NodeSummary, Page, RelationItem, ViewKey } from './dto.js';
 export class NotFoundError extends Error {}
 interface View {
@@ -32,7 +38,14 @@ interface View {
   persisted: boolean; holes: number; layoutSource: 'timeline' | 'persisted' | 'fresh';
   diff?: SnapshotDiff;
   addedDiagnostics: Set<string>;
+  /** Lazily loaded: unresolved call sites by called name. */
+  unresolvedNames?: Map<string, { sites: number; entities: Set<string> }>;
+  /** Recent impact computations of this view. */
+  impacts?: Map<string, ImpactComputation>;
 }
+const HTTP_FINDINGS = new Set(['unresolved-http-call', 'unresolved-http-url', 'unmatched-http-call', 'ambiguous-http-match', 'constrained-http-match', 'unverified-relative-api-boundary']);
+const IMPACT_TYPE_ORDER: Record<string, number> = { route: 0, api_endpoint: 1, component: 2, controller: 3, class: 4, function: 5, method: 6, file: 7 };
+const OWN_CHANGE = new Set(['source', 'definition', 'signature', 'type', 'size']);
 const SEVERITY_ORDER: Record<string, number> = { error: 0, warning: 1, info: 2 };
 const STATUS_ORDER: Record<string, number> = { added: 0, removed: 1, moved: 2, modified: 3, unchanged: 4 };
 const TYPE_ORDER: Record<string, number> = { application: 0, directory: 1, file: 2, route: 3, api_endpoint: 3 };
@@ -50,6 +63,7 @@ export class ProjectionService {
   private readonly data = new Map<string, SnapshotData>();
   private readonly renames = new Map<string, Map<string, string>>();
   private timeline?: { stamp: string; registry: TimelineRegistry; snapshots: Set<string>; layouts: Map<string, { registry: TimelineRegistry; layout: TimelineLayout }> };
+  private evolutionRun?: { key: string; job: EvolutionJob; done: Promise<void>; result?: EvolutionResponse; error?: string };
   constructor(private readonly store: GraphStore, private readonly options: ProjectionOptions = {}) {}
 
   // Snapshots and views ---------------------------------------------------------------
@@ -421,6 +435,181 @@ export class ProjectionService {
     return readSnapshotSource(baseline ? request.side === 'baseline' ? [baseline] : [target, baseline] : [target], maxFileBytes, request);
   }
 
+  // Impact, steps and paths ---------------------------------------------------------
+  /** Blast radius of an entity (or everything inside a container): what depends on it, hop by hop. */
+  impact(id: string, options: { depth?: number; types?: string[]; type?: string; distance?: number; limit?: number; offset?: number; view?: ViewKey }): ImpactResult {
+    const current = this.load(options.view);
+    const node = this.require(current, id);
+    const depth = impactDepth(options.depth);
+    const types = impactTypes(options.types);
+    const key = `entity:${id}:${depth}:${[...types].sort().join(',')}`;
+    const computation = this.cachedImpact(current, key, () => { const { seeds } = seedsOf(current.index, node); return computeImpact(current.index, seeds, { depth, types }); });
+    return this.impactResult(current, computation, { kind: 'entity', node: this.summary(current, node) }, depth, types, options);
+  }
+  /** Blast radius of a comparison: what depends on the entities the target changed or removed since the baseline. */
+  commitImpact(view: ViewKey, options: { depth?: number; types?: string[]; type?: string; distance?: number; limit?: number; offset?: number }): ImpactResult {
+    const current = this.comparison(view);
+    const depth = impactDepth(options.depth);
+    const types = impactTypes(options.types);
+    const byStatus: Record<string, number> = {};
+    const key = `comparison:${depth}:${[...types].sort().join(',')}`;
+    const computation = this.cachedImpact(current, key, () => {
+      const changed: ProjectionNode[] = [];
+      for (const [changedId, change] of current.diff.changes) {
+        if (change.status === 'added' || change.status === 'unchanged') continue;
+        if (change.status !== 'removed' && !change.facets.some(facet => OWN_CHANGE.has(facet))) continue;
+        const changedNode = current.index.node(changedId);
+        if (!changedNode || changedNode.kind !== 'entity' || !(SYMBOL_TYPES.has(changedNode.type) || ['file', 'route', 'api_endpoint'].includes(changedNode.type))) continue;
+        changed.push(changedNode);
+      }
+      // A changed file seeds its importers only when no symbol inside it changed (a module-level change).
+      const symbolFiles = new Set(changed.filter(item => item.type !== 'file').map(item => item.path));
+      const seeds = changed.filter(item => item.type !== 'file' || !symbolFiles.has(item.path)).map(item => item.id).sort().slice(0, MAX_IMPACT_SEEDS);
+      return computeImpact(current.index, seeds, { depth, types, includeRemoved: true });
+    });
+    for (const seed of computation.seeds) { const status = current.index.node(seed)?.change?.status ?? 'modified'; byStatus[status] = (byStatus[status] ?? 0) + 1; }
+    return this.impactResult(current, computation, { kind: 'comparison', byStatus }, depth, types, options);
+  }
+  private cachedImpact(current: View, key: string, compute: () => ImpactComputation): ImpactComputation {
+    current.impacts ??= new Map();
+    let result = current.impacts.get(key);
+    if (!result) { result = compute(); current.impacts.set(key, result); if (current.impacts.size > 8) current.impacts.delete(current.impacts.keys().next().value!); }
+    return result;
+  }
+  private impactResult(current: View, computation: ImpactComputation, origin: ImpactResult['origin'], depth: number, types: Set<string>, options: { type?: string; distance?: number; limit?: number; offset?: number }): ImpactResult {
+    const { limit, offset } = pagination(options);
+    const index = current.index;
+    const affected: ProjectionNode[] = [];
+    const byDistance = Array.from({ length: depth + 1 }, () => 0);
+    const byType = new Map<string, number>();
+    const areas: Record<string, { count: number; distance: number }> = {};
+    const applications = new Map<string, number>();
+    let endpoints = 0, routes = 0;
+    for (const [id, distance] of computation.distance) {
+      if (distance === 0) continue;
+      const node = index.node(id);
+      if (!node) continue;
+      affected.push(node);
+      byDistance[distance]!++;
+      byType.set(node.type, (byType.get(node.type) ?? 0) + 1);
+      if (node.type === 'api_endpoint') endpoints++;
+      if (node.type === 'route') routes++;
+      for (const ancestor of index.spatialAncestors(node)) {
+        const area = areas[ancestor.id] ??= { count: 0, distance };
+        area.count++; area.distance = Math.min(area.distance, distance);
+        if (ancestor.type === 'application') applications.set(ancestor.id, (applications.get(ancestor.id) ?? 0) + 1);
+      }
+    }
+    const filtered = affected.filter(node => (!options.type || node.type === options.type) && (!options.distance || computation.distance.get(node.id) === options.distance));
+    filtered.sort((a, b) => computation.distance.get(a.id)! - computation.distance.get(b.id)! || (IMPACT_TYPE_ORDER[a.type] ?? 8) - (IMPACT_TYPE_ORDER[b.type] ?? 8) || compareNames(current, a.id, b.id) || (a.id < b.id ? -1 : 1));
+    const hop = (relationIndex: number): ImpactHop => {
+      const relation = index.relations[relationIndex]!, from = index.node(relation.from)!, to = index.node(relation.to)!;
+      return { relationId: relation.id, type: relation.type, from: { id: from.id, name: from.name, type: from.type }, to: { id: to.id, name: to.name, type: to.type } };
+    };
+    const items: ImpactItem[] = filtered.slice(offset, offset + limit).map(node => ({ ...this.summary(current, node), distance: computation.distance.get(node.id)!, breadcrumb: index.canonicalAncestors(node).slice(1).map(item => item.name).join(' › '), chain: impactPath(computation, index, node.id).map(hop) }));
+    // What the radius cannot see.
+    const reachesEndpoint = [...computation.distance.keys()].some(id => index.node(id)?.type === 'api_endpoint');
+    const unresolvedHttpCalls = reachesEndpoint ? index.diagnostics.filter(item => HTTP_FINDINGS.has(item.code)).length : 0;
+    const names = new Set(computation.seeds.slice(0, 200).map(id => index.node(id)).filter(node => node && ['function', 'method', 'component'].includes(node.type) && node.name.length > 2).map(node => node!.name));
+    const possibleCallers: ImpactResult['unknowns']['possibleCallers'] = [];
+    if (names.size) {
+      const unresolved = this.unresolvedNames(current);
+      const seedSet = new Set(computation.seeds);
+      for (const name of names) { const entry = unresolved.get(name); if (!entry) continue; const entities = [...entry.entities].filter(entity => !seedSet.has(entity)); if (entities.length) possibleCallers.push({ name, sites: entry.sites, entities: entities.length }); }
+      possibleCallers.sort((a, b) => b.sites - a.sites || (a.name < b.name ? -1 : 1));
+    }
+    return {
+      origin, depth, types: [...types].sort(), seeds: computation.seeds.length, seedsTruncated: computation.seedsTruncated,
+      total: affected.length, byDistance, byType: [...byType].map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count || (a.type < b.type ? -1 : 1)),
+      distances: Object.fromEntries(computation.distance), areas,
+      items: { items, limit, offset, total: filtered.length, hasMore: offset + limit < filtered.length },
+      truncated: computation.truncated,
+      highlights: { endpoints, routes, applications: [...applications].map(([id, count]) => ({ id, name: index.node(id)!.name, count })).sort((a, b) => b.count - a.count) },
+      unknowns: { unresolvedHttpCalls, possibleCallers: possibleCallers.slice(0, 10) },
+    };
+  }
+  private unresolvedNames(current: View): Map<string, { sites: number; entities: Set<string> }> {
+    if (!current.unresolvedNames) {
+      const names = new Map<string, { sites: number; entities: Set<string> }>();
+      for (const row of current.target.unresolvedCallNames()) { const entry = names.get(row.name) ?? { sites: 0, entities: new Set<string>() }; entry.sites += row.count; entry.entities.add(row.entityId); names.set(row.name, entry); }
+      current.unresolvedNames = names;
+    }
+    return current.unresolvedNames;
+  }
+  /** What happens from an entity: typed steps, folded links, effects, and the conditions read from source. */
+  async steps(id: string, options: { view?: ViewKey; maxFileBytes: number }): Promise<StepsResult> {
+    const current = this.load(options.view);
+    const anchor = this.require(current, id);
+    if (anchor.kind !== 'entity') throw new Error('Steps start from an entity');
+    const source = current.target;
+    const walk = walkSteps({ index: current.index, relationMetadata: ids => source.relationMetadata(ids), entity: entityId => source.entity(entityId) }, id);
+    const files = new Map<string, Promise<string | undefined>>();
+    const content = (relative: string) => {
+      if (!files.has(relative)) files.set(relative, readSnapshotFile(source, relative, options.maxFileBytes).then(file => file.buffer.toString('utf8'), () => undefined));
+      return files.get(relative)!;
+    };
+    const guards = async (ownerId: string, line: number | undefined, hint?: string): Promise<StepGuard[]> => {
+      const owner = current.index.node(ownerId);
+      if (!owner?.path || !line) return [];
+      const text = await content(owner.path);
+      if (text === undefined) return [];
+      const range = owner.type !== 'file' && owner.sourceRange ? { startLine: owner.sourceRange.startLine, endLine: owner.sourceRange.endLine } : undefined;
+      return guardsAt(`${source.info.id}:${owner.path}`, owner.path, owner.language, text, line, range, hint).map(guard => ({ ...guard, phrase: phrase(guard) }));
+    };
+    const appOf = (node: ProjectionNode) => current.index.canonicalAncestors(node).find(item => item.type === 'application')?.name;
+    const relationIds = [...new Set(walk.links.flatMap(link => link.chain.map(i => current.index.relations[i]!.id)))];
+    const metadata = relationIds.length ? source.relationMetadata(relationIds) : new Map<string, Record<string, unknown>>();
+    const firstLine = (relationId: string, type: string): number | undefined => {
+      const lines = metadata.get(relationId)?.lines;
+      if (Array.isArray(lines) && typeof lines[0] === 'number') return lines[0];
+      if (type === 'requests') return source.relation(relationId)?.evidence[0]?.line;
+      return undefined;
+    };
+    const steps: Step[] = await Promise.all(walk.steps.map(async step => {
+      if (step.effect) {
+        const owner = current.index.node(step.effect.owner);
+        return { id: step.id, kind: step.kind, layer: step.layer, caps: step.caps, ancestors: owner ? [...current.index.spatialAncestors(owner).map(item => item.id), owner.id] : [], effect: { ...step.effect, ownerName: owner?.name ?? step.effect.owner, ...(owner?.path ? { ownerPath: owner.path } : {}), when: await guards(step.effect.owner, step.effect.line, hintOf(step.effect.detail)) }, ...(owner && appOf(owner) ? { app: appOf(owner) } : {}) };
+      }
+      const node = current.index.node(step.entityId!)!;
+      return { id: step.id, kind: step.kind, layer: step.layer, caps: step.caps, ancestors: current.index.spatialAncestors(node).map(item => item.id), node: this.summary(current, node), ...(appOf(node) ? { app: appOf(node) } : {}) };
+    }));
+    const links: StepLink[] = await Promise.all(walk.links.map(async link => {
+      const hops: StepHop[] = await Promise.all(link.chain.map(async relationIndex => {
+        const relation = current.index.relations[relationIndex]!;
+        const line = relation.type === 'handles' || relation.type === 'routes_to' ? undefined : firstLine(relation.id, relation.type);
+        const from = current.index.node(relation.from);
+        const sites = Number(metadata.get(relation.id)?.sites ?? 1);
+        const target = current.index.node(relation.to);
+        const hint = relation.type === 'requests' ? undefined : target?.type === 'class' ? target.name : target?.name.replace(/^.*(::|\.)/, '');
+        return { relationId: relation.id, type: relation.type, from: relation.from, to: relation.to, ...(from?.path ? { file: from.path } : {}), ...(line ? { line } : {}), sites, when: line ? await guards(relation.from, line, hint) : [] };
+      }));
+      return {
+        id: `${link.from}>${link.to}`, from: link.from, to: link.to,
+        via: link.via.map(viaId => { const node = current.index.node(viaId)!; return { id: node.id, name: node.name, type: node.type }; }),
+        hops, ...(link.event ? { event: link.event } : {}), back: link.back,
+        // A step's own effect: the conditions at the effect's site.
+        when: hops[0]?.when ?? (link.via.length ? [] : steps.find(step => step.id === link.to)?.effect?.when ?? []),
+      };
+    }));
+    const notices: string[] = [];
+    if (walk.unresolvedCallSites) notices.push(`${walk.unresolvedCallSites} call site${walk.unresolvedCallSites === 1 ? '' : 's'} along this picture could not be resolved (callbacks, props, untyped values); what they reach is not drawn.`);
+    if (walk.truncated) notices.push('The picture is capped; each step says what was left out.');
+    if (!walk.links.length) notices.push('Nothing indexed happens from here: no calls, renders, handlers, requests or effects were resolved.');
+    return { anchor: this.summary(current, anchor), steps, links, truncated: walk.truncated, notices, limits: STEP_LIMITS };
+  }
+  /** Shortest evidenced path from one entity to another (forward relations; reversed when only the other direction exists). */
+  path(from: string, to: string, view?: ViewKey): PathResult {
+    const current = this.load(view);
+    this.require(current, from); this.require(current, to);
+    let reversed = false;
+    let chain = shortestPath(current.index, from, to);
+    if (!chain) { chain = shortestPath(current.index, to, from); reversed = !!chain; }
+    if (!chain) return { found: false, nodes: [], links: [] };
+    const start = reversed ? to : from;
+    const ids = [start, ...chain.map(i => current.index.relations[i]!.to)];
+    return { found: true, ...(reversed ? { reversed } : {}), nodes: ids.map(item => this.summary(current, current.index.node(item)!)), links: chain.map(i => { const relation = current.index.relations[i]!; return { relationId: relation.id, type: relation.type, from: relation.from, to: relation.to }; }) };
+  }
+
   // Comparison ----------------------------------------------------------------------
   private comparison(view?: ViewKey): View & { diff: SnapshotDiff; baseline: SnapshotSource; baselineData: SnapshotData } {
     if (!view?.compareTo) throw new Error('compareTo is required');
@@ -541,6 +730,37 @@ export class ProjectionService {
     }
     return { id, points, indexedSnapshots: indexed, present };
   }
+  /**
+   * The time-lapse of `snapshots` (timeline order): computed in the background
+   * on the first request, then kept until the timeline layout or the list
+   * changes. Snapshots the timeline layout does not cover yet are left out.
+   */
+  evolution(snapshots: string[]): EvolutionResponse {
+    const history = this.options.history?.();
+    const base = this.timelineBase();
+    if (!history || !base) throw new NotFoundError('No timeline layout: run history index');
+    const covered = snapshots.filter(id => this.timeline!.snapshots.has(id));
+    const key = `${base.stamp}|${covered.join(',')}`;
+    let entry = this.evolutionRun;
+    if (entry?.key !== key) {
+      if (entry) entry.job.cancelled = true;
+      const records = covered.map(id => history.snapshot(id)).filter((record): record is SnapshotRecord => !!record);
+      const job: EvolutionJob = { cancelled: false, progress: 0 };
+      const run: NonNullable<typeof entry> = { key, job, done: Promise.resolve() };
+      run.done = computeEvolution(history, records, rootId => this.timelineFor([], rootId), job)
+        .then(data => { if (data) run.result = { status: 'ready', stamp: base.stamp, ...data }; })
+        .catch(error => { run.error = error instanceof Error ? error.message : String(error); });
+      this.evolutionRun = entry = run;
+    }
+    if (entry.error) throw new Error(entry.error);
+    return entry.result ?? { status: 'computing', progress: entry.job.progress };
+  }
+  /** The time-lapse once computed (for callers that can wait, such as tests). */
+  async awaitEvolution(snapshots: string[]): Promise<EvolutionResponse> {
+    this.evolution(snapshots);
+    await this.evolutionRun!.done;
+    return this.evolution(snapshots);
+  }
 }
 function nodeChange(change: EntityChange, current: { name: string; path?: string }, previous: { name: string; path?: string } | undefined): NodeChange {
   return {
@@ -548,6 +768,17 @@ function nodeChange(change: EntityChange, current: { name: string; path?: string
     ...(change.previousId ? { previousId: change.previousId, ...(change.lineage ? { lineage: change.lineage } : {}) } : {}),
     ...(previous && previous.name !== current.name ? { previousName: previous.name } : {}), ...(previous?.path && previous.path !== current.path ? { previousPath: previous.path } : {}),
   };
+}
+function impactDepth(depth: number | undefined): number {
+  const value = depth ?? DEFAULT_IMPACT_DEPTH;
+  if (!Number.isSafeInteger(value) || value < 1 || value > 10) throw new Error('depth must be 1..10');
+  return value;
+}
+function impactTypes(types: string[] | undefined): Set<string> {
+  const all: string[] = [...SYMBOL_IMPACT_TYPES, ...FILE_IMPACT_TYPES];
+  if (!types?.length) return new Set(all);
+  for (const type of types) if (!all.includes(type)) throw new Error(`Unknown impact relation type ${type}`);
+  return new Set(types);
 }
 function bounded(value: unknown): unknown {
   const text = JSON.stringify(value);

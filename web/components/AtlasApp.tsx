@@ -3,10 +3,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { HttpAtlasApi } from '../lib/api';
 import { shortSha, relativeTime } from '../lib/format';
 import { AtlasStore } from '../lib/store';
-import { THEMES, themeById } from '../lib/themes';
+import { THEMES, themeById, UI_PROPERTIES } from '../lib/themes';
 import { Breadcrumbs } from './Breadcrumbs';
 import { AtlasContext, useAtlas, useStore } from './context';
 import { FlowPanel } from './FlowPanel';
+import { StepsPanel } from './StepsPanel';
 import { Inspector } from './Inspector';
 import { MapView } from './MapView';
 import { SearchBox } from './SearchBox';
@@ -67,10 +68,19 @@ function Shell() {
   const [flowWidth, setFlowWidth] = usePanelWidth('archipelago:flow-width', 300);
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [flowsOpen, setFlowsOpen] = useState(false);
+  // The left panel holds Flows and, once opened from the inspector, Steps.
+  const stepsAnchor = useAtlas(state => state.steps?.anchor);
+  const [leftTab, setLeftTab] = useState<'flows' | 'steps'>('flows');
+  useEffect(() => { if (stepsAnchor) { setFlowsOpen(true); setLeftTab('steps'); } else setLeftTab('flows'); }, [stepsAnchor]);
   const [help, setHelp] = useState(false);
-  const style = useMemo(() => ({ ...theme.ui, background: theme.ui['--bg'] }) as React.CSSProperties, [theme]);
-  useEffect(() => { for (const [key, value] of Object.entries(theme.ui)) document.body.style.setProperty(key, value); document.documentElement.style.colorScheme = theme.dark ? 'dark' : 'light'; }, [theme]);
-  useEffect(() => { if (draft || activeFlow) setFlowsOpen(true); }, [draft, activeFlow]);
+  // Floating themes paint a backdrop behind rounded panels; the others dock panels on a flat background.
+  const style = useMemo(() => ({ ...theme.ui, background: theme.style?.floating ? theme.ui['--app-bg'] ?? theme.ui['--bg'] : theme.ui['--bg'] }) as React.CSSProperties, [theme]);
+  useEffect(() => {
+    // Clear what the previous theme set and this one does not (a font, radii, a backdrop).
+    for (const key of UI_PROPERTIES) { const value = theme.ui[key]; if (value === undefined) document.body.style.removeProperty(key); else document.body.style.setProperty(key, value); }
+    document.documentElement.style.colorScheme = theme.dark ? 'dark' : 'light';
+  }, [theme]);
+  useEffect(() => { if (draft || activeFlow) { setFlowsOpen(true); setLeftTab('flows'); } }, [draft, activeFlow]);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.altKey && event.key === 'ArrowLeft') { event.preventDefault(); void store.back(); }
@@ -79,6 +89,8 @@ function Shell() {
       if (store.getState().timeline.open && !event.altKey && !event.ctrlKey && !event.metaKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
         if (event.key === '[') { event.preventDefault(); void store.stepTarget(-1); }
         if (event.key === ']') { event.preventDefault(); void store.stepTarget(1); }
+        // Space plays the time-lapse from the map or the page (focused controls keep their own Space).
+        if (event.key === ' ' && ['BODY', 'CANVAS', 'MAIN'].includes(target.tagName)) { event.preventDefault(); store.togglePlay(); }
       }
     };
     window.addEventListener('keydown', onKey);
@@ -89,7 +101,7 @@ function Shell() {
   const when = (iso: string | undefined) => iso ? new Date(iso).toLocaleDateString() : '';
   const commitDate = (sha: string | undefined) => when(timeline?.entries.find(entry => entry.sha === sha)?.authoredAt);
   return (
-    <div className="archipelago" style={style} data-dark={String(theme.dark)}>
+    <div className="archipelago" style={style} data-dark={String(theme.dark)} data-floating={String(!!theme.style?.floating)}>
       <header className="topbar">
         <div className="brand">
           <strong><span className="brand-mark" aria-hidden />Archipelago</strong>
@@ -113,8 +125,14 @@ function Shell() {
       <Breadcrumbs />
       <main className="workspace">
         {flowsOpen ? (
-          <aside id="flows-panel" className="panel left" style={{ width: flowWidth }} aria-label="Flows">
-            <FlowPanel onClose={() => setFlowsOpen(false)} />
+          <aside id="flows-panel" className="panel left" style={{ width: leftTab === 'steps' ? Math.max(flowWidth, 360) : flowWidth }} aria-label={leftTab === 'steps' ? 'Steps' : 'Flows'}>
+            {stepsAnchor && (
+              <div className="segmented panel-tabs" role="tablist" aria-label="Left panel">
+                <button role="tab" aria-selected={leftTab === 'flows'} aria-pressed={leftTab === 'flows'} onClick={() => setLeftTab('flows')}>Flows</button>
+                <button role="tab" aria-selected={leftTab === 'steps'} aria-pressed={leftTab === 'steps'} onClick={() => setLeftTab('steps')}>Steps</button>
+              </div>
+            )}
+            {leftTab === 'steps' && stepsAnchor ? <StepsPanel onClose={() => setLeftTab('flows')} /> : <FlowPanel onClose={() => setFlowsOpen(false)} />}
             <ResizeHandle side="left" width={flowWidth} onResize={setFlowWidth} label="Resize flows panel" />
           </aside>
         ) : <div />}
@@ -141,14 +159,14 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
     ['/', 'Search entities'], ['↑ ↓ Enter', 'Choose a search result'], ['Drag · wheel · pinch', 'Pan and zoom the map'],
     ['Arrow keys · + −', 'Pan and zoom (map focused)'], ['F', 'Fit the whole repository'], ['Enter', 'Zoom to the selection'],
     ['Double-click', 'Zoom into an area'], ['Esc', 'Clear selection / close'], ['Backspace · Alt+←', 'Previous selection'], ['Alt+→', 'Next selection'],
-    ['[ ]', 'Previous / next indexed commit (History open)'], ['Shift + ← →', 'Move the comparison baseline (timeline focused)'],
+    ['[ ]', 'Previous / next indexed commit (History open)'], ['Space', 'Play / pause the history time-lapse (History open)'], ['Shift + ← →', 'Move the comparison baseline (timeline focused)'],
   ];
   return (
     <div className="center-state" style={{ pointerEvents: 'auto', background: 'rgba(0,0,0,0.35)', zIndex: 30 }} onClick={onClose}>
       <div className="card" role="dialog" aria-modal="true" aria-labelledby="help-title" onClick={event => event.stopPropagation()} style={{ textAlign: 'left' }}>
         <h2 id="help-title" style={{ marginTop: 0, fontSize: 15 }}>Keyboard and pointer</h2>
         <dl className="facts">{rows.map(([key, text]) => [<dt key={`k${key}`}><kbd>{key}</kbd></dt>, <dd key={`d${key}`}>{text}</dd>])}</dl>
-        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout and never change with selection, search or filters. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing.</p>
+        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout and never change with selection, search or filters. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing. Dragging the timeline or pressing play shows each commit at once as a time-lapse; the full view of a commit loads when you let go or pause.</p>
         <button ref={close} className="button" onClick={onClose}>Close</button>
       </div>
     </div>

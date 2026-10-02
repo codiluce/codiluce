@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import '@fontsource-variable/nunito';
 import './globals.css';
 
 export const metadata: Metadata = { title: 'Archipelago — code map', description: 'Spatial projection of an evidenced software graph' };

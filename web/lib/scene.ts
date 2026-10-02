@@ -46,6 +46,8 @@ export class Scene {
   private readonly ordered = new Map<string, string[]>();
   rootId?: string;
   revision = ++revisions;
+  /** Time-lapse scenes: the frame they show (settled views have none). */
+  frame?: number;
 
   reset(root: NodeSummary): void {
     this.nodes.clear(); this.children.clear(); this.base.clear(); this.ordered.clear();

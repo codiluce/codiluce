@@ -1,14 +1,20 @@
 // Owns the canvas: input, camera animation, render scheduling and lazy child
 // loading. React never renders map primitives; it only mounts this controller.
 import type { NodeSummary, SourceResponse } from '@engine/projection/dto';
-import { easeInOut, fitBounds, panBy, projectedBounds, worldToScreen, zoomAround, zoomPath, type Camera, type Viewport, type ZoomLimits } from './camera';
+import { easeInOut, fitBounds, panBy, projectedBounds, worldToScreen, zoomAround, zoomPath, type Bounds, type Camera, type Viewport, type ZoomLimits } from './camera';
 import { DEFAULT_LOD, abstractionLevel, screenSize, type LodConfig } from './lod';
-import { MapRenderer, type EdgeOverlay, type RenderState } from './renderer';
-import { nodeHeight, type VisibleSet } from './scene';
+import { FLASH_MS, MapRenderer, RISE_MS, type EdgeOverlay, type MotionState, type RenderState } from './renderer';
+import { nodeHeight, type Scene, type VisibleSet } from './scene';
 import { isContainer, type AtlasState, type AtlasStore, type MapNavigator } from './store';
 import { themeById } from './themes';
 
 const STEP_MS = 1800;
+/** Delay between a rising area and its contents, so new districts build up level by level. */
+const CASCADE_MS = 70;
+/** While following playback, the camera frames the changes of this recent window… */
+const FOLLOW_WINDOW_MS = 1600;
+/** …approaching them with this time constant, never closer than this fraction of the whole map. */
+const FOLLOW_EASE_MS = 700, FOLLOW_MIN_SPAN = 0.22;
 interface Animation { at(t: number): Camera; start: number; duration: number }
 export interface DebugHandle { screenPositionOf(id: string): { x: number; y: number } | undefined; camera(): Camera; visibleIds(): string[]; rectOf(id: string): { x: number; y: number; w: number; h: number } | undefined }
 
@@ -36,6 +42,12 @@ export class MapController implements MapNavigator {
   private readonly faceSource = new Map<string, SourceResponse | 'loading' | 'error'>();
   private readonly cleanup: (() => void)[] = [];
   private readonly reducedMotion: MediaQueryList;
+  /** Rise and flash start times; `motionUntil` is when the last of them ends. */
+  private readonly motion: MotionState = { appear: new Map(), flash: new Map() };
+  private motionUntil = 0;
+  private drawnScene?: Scene;
+  /** Where recent time-lapse frames changed something, for the follow camera. */
+  private recentChanges: { bounds: Bounds; at: number }[] = [];
 
   constructor(private readonly canvas: HTMLCanvasElement, private readonly store: AtlasStore) {
     const ctx = canvas.getContext('2d', { alpha: false });
@@ -66,7 +78,7 @@ export class MapController implements MapNavigator {
       screenPositionOf: id => { const index = this.set.index.get(id); if (index === undefined) return undefined; const item = this.set.items[index]!; const r = item.node.rect; const p = worldToScreen(this.camera, this.viewport, r.x + r.w / 2, r.y + r.h / 2, item.zTop); const box = canvas.getBoundingClientRect(); return { x: box.left + p.x, y: box.top + p.y }; },
       camera: () => ({ ...this.camera }),
       visibleIds: () => this.set.items.map(item => item.node.id),
-      rectOf: id => this.store.scene.nodes.get(id)?.rect,
+      rectOf: id => this.scene.nodes.get(id)?.rect,
     };
     this.resize();
   }
@@ -77,6 +89,8 @@ export class MapController implements MapNavigator {
     if (this.store.navigator === this) { this.store.navigator = undefined; this.store.visibility = undefined; this.store.openContainers = undefined; }
   }
   private get motionReduced(): boolean { return this.reducedMotion.matches; }
+  /** What is on screen: a time-lapse frame while scrubbing or playing, otherwise the settled view. */
+  private get scene(): Scene { return this.store.previewScene ?? this.store.scene; }
   private resize(): void {
     const box = this.canvas.getBoundingClientRect();
     this.dpr = Math.min(3, window.devicePixelRatio || 1);
@@ -89,7 +103,7 @@ export class MapController implements MapNavigator {
     this.request();
   }
   private rootBounds() {
-    const root = this.store.scene.rootId ? this.store.scene.nodes.get(this.store.scene.rootId) : undefined;
+    const root = this.scene.rootId ? this.scene.nodes.get(this.scene.rootId) : undefined;
     return root ? projectedBounds(root.rect, 0, 40) : undefined;
   }
   private updateLimits(): void {
@@ -108,13 +122,13 @@ export class MapController implements MapNavigator {
   }
   fitNodes(nodes: NodeSummary[]): void {
     if (!nodes.length) return;
-    const bounds = nodes.map(node => { const z = this.store.scene.nodes.has(node.id) ? this.store.scene.zBase(node.id) : 0; return projectedBounds(node.rect, z, z + nodeHeight(node)); })
+    const bounds = nodes.map(node => { const z = this.scene.nodes.has(node.id) ? this.scene.zBase(node.id) : 0; return projectedBounds(node.rect, z, z + nodeHeight(node)); })
       .reduce((a, b) => ({ minX: Math.min(a.minX, b.minX), minY: Math.min(a.minY, b.minY), maxX: Math.max(a.maxX, b.maxX), maxY: Math.max(a.maxY, b.maxY) }));
     this.animateTo(fitBounds(bounds, this.viewport, 72, this.limits));
   }
   zoomBy(factor: number): void { this.animateTo(zoomAround(this.camera, this.viewport, this.viewport.width / 2, this.viewport.height / 2, factor, this.limits), 260); }
   flyTo(node: NodeSummary, options: { mode?: 'focus' | 'enter' } = {}): void {
-    const zBase = this.store.scene.nodes.has(node.id) ? this.store.scene.zBase(node.id) : 0;
+    const zBase = this.scene.nodes.has(node.id) ? this.scene.zBase(node.id) : 0;
     const bounds = projectedBounds(node.rect, zBase, zBase + nodeHeight(node));
     let target = fitBounds(bounds, this.viewport, 48, this.limits);
     if ((options.mode ?? 'focus') === 'focus') {
@@ -135,29 +149,40 @@ export class MapController implements MapNavigator {
   // Frame -----------------------------------------------------------------------
   private tick(time: number): void {
     this.frame = 0;
-    const state = this.store.getState();
     const elapsed = this.lastFrame ? Math.min(100, time - this.lastFrame) : 16;
     this.lastFrame = time;
-    if (!this.fitted && this.store.scene.rootId) { const bounds = this.rootBounds()!; this.updateLimits(); this.camera = fitBounds(bounds, this.viewport, 32, this.limits); this.fitted = true; }
+    if (this.store.getState().timeline.playing) this.store.advancePlayback(elapsed);
+    const state = this.store.getState();
+    const scene = this.scene;
+    if (scene !== this.drawnScene) { this.sceneChanged(this.drawnScene, scene, time, state); this.drawnScene = scene; }
+    if (state.timeline.playing && state.timeline.follow) this.follow(time, elapsed);
+    if (!this.fitted && this.scene.rootId) { const bounds = this.rootBounds()!; this.updateLimits(); this.camera = fitBounds(bounds, this.viewport, 32, this.limits); this.fitted = true; }
     else this.updateLimits();
     if (this.animation) {
       const t = Math.min(1, (time - this.animation.start) / this.animation.duration);
       this.camera = this.animation.at(easeInOut(t));
       if (t >= 1) this.animation = undefined;
     }
-    if (state.themeId !== this.themeId) { this.themeId = state.themeId; this.renderer.setTheme(themeById(state.themeId)); }
+    if (state.themeId !== this.themeId) {
+      this.themeId = state.themeId;
+      const theme = themeById(state.themeId);
+      this.renderer.setTheme(theme);
+      // Labels use the theme's font: draw again once it has loaded.
+      if (theme.style?.font && typeof document !== 'undefined') document.fonts?.load(`600 12px ${theme.style.font}`).then(() => this.request(), () => undefined);
+    }
     if (state.flows.playback.status === 'playing') this.store.playbackAction({ type: 'tick', elapsedMs: elapsed, stepMs: STEP_MS });
-    const key = `${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}|${this.store.scene.revision}`;
+    const key = `${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}|${this.scene.revision}`;
     if (key !== this.setKey) {
-      this.set = this.store.scene.visible(this.camera, this.viewport, this.lod);
+      this.set = this.scene.visible(this.camera, this.viewport, this.lod);
       this.setKey = key;
       if (this.set.pending.length) void this.store.loadChildren(this.set.pending);
     }
     const render = this.renderState(state, time);
-    this.renderer.render(this.ctx, this.dpr, this.viewport, this.camera, this.store.scene, this.set, render, this.lod);
+    this.renderer.render(this.ctx, this.dpr, this.viewport, this.camera, this.scene, this.set, render, this.lod);
     this.scheduleReport(time);
     const flowActive = !!state.flows.resolved && state.flows.playback.status === 'playing';
-    if (this.animation || flowActive) this.request();
+    if (this.animation || flowActive || state.timeline.playing || time < this.motionUntil) this.request();
+    else if (this.motion.appear.size || this.motion.flash.size) { this.motion.appear.clear(); this.motion.flash.clear(); }
   }
   private reportTimer?: ReturnType<typeof setTimeout>;
   /** Throttled status reporting (level, focus chain, visible items) to the store. */
@@ -202,8 +227,46 @@ export class MapController implements MapNavigator {
       showDiagnostics: state.showDiagnostics, source: this.sourceFace(state), time, reducedMotion: this.motionReduced,
       ...(state.meta?.comparison ? { comparison: { dimUnchanged: state.timeline.dimUnchanged } } : {}),
       ...(unresolvedCount && selection ? { unresolved: { nodeId: selection.id, count: unresolvedCount } } : {}),
+      ...this.analysisOverlays(state),
+      motion: this.motion,
+      // A time-lapse frame compares with the previous commit; overlays loaded for the settled view wait until it is back.
+      ...(this.store.previewScene ? { edges: [], emphasis: undefined, flow: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
     };
   }
+  /**
+   * Blast radius (of the selection, or of a comparison's changes) and the
+   * Steps picture. An open Steps panel lights its entities and draws its links
+   * in place of the selection's relationships.
+   */
+  private analysisOverlays(state: AtlasState): Partial<RenderState> {
+    const result: Partial<RenderState> = {};
+    const stamp = `${state.meta?.snapshot.id ?? ''}|${state.meta?.comparison?.baseline.id ?? ''}`;
+    const impact = state.impact.open && state.impact.data && state.impact.viewStamp === stamp ? state.impact.data
+      : state.commitImpact.show && state.commitImpact.data && state.commitImpact.viewStamp === stamp ? state.commitImpact.data : undefined;
+    if (impact) {
+      if (this.impactCache?.data !== impact) this.impactCache = { data: impact, overlay: { distances: new Map(Object.entries(impact.distances)), areas: new Map(Object.entries(impact.areas)), depth: impact.depth, dimOthers: !state.meta?.comparison } };
+      result.impact = this.impactCache.overlay;
+    }
+    const steps = state.steps?.status === 'ready' && state.steps.viewStamp === stamp ? state.steps.data : undefined;
+    if (steps) {
+      const byId = new Map(steps.steps.map(step => [step.id, step]));
+      const emphasis = new Set<string>();
+      for (const step of steps.steps) { for (const id of step.ancestors) emphasis.add(id); if (step.node) emphasis.add(step.node.id); }
+      const focus = state.steps!.focus;
+      const edges: EdgeOverlay[] = [];
+      for (const link of steps.links) {
+        const from = byId.get(link.from), to = byId.get(link.to);
+        if (!from?.node || !to) continue;
+        const target = to.node?.id ?? to.ancestors.at(-1);
+        if (!target) continue;
+        edges.push({ key: link.id, type: to.effect ? 'effect' : link.hops.at(-1)?.type ?? 'calls', count: 1, from: from.node.id, fromAncestors: from.ancestors, to: target, toAncestors: to.node ? to.ancestors : to.ancestors.slice(0, -1), emphasized: !!focus && (link.from === focus || link.to === focus) });
+      }
+      result.emphasis = emphasis;
+      result.edges = edges;
+    }
+    return result;
+  }
+  private impactCache?: { data: object; overlay: NonNullable<RenderState['impact']> };
   /** Deepest LOD: lazily fetch source for the selected symbol/file once it is very large on screen. */
   private sourceFace(state: AtlasState): RenderState['source'] {
     const selection = state.selection;
@@ -222,10 +285,53 @@ export class MapController implements MapNavigator {
     if (typeof cached === 'string') return undefined;
     return { nodeId: selection.id, start: cached.start, lines: cached.lines, ...(cached.focus ? { focus: cached.focus } : {}) };
   }
+  /**
+   * Another scene is on screen. Blocks that were not there before (and whose
+   * area was fully loaded, so this is not lazy loading) rise into place, the
+   * contents of a new area following it; changed blocks flash. While playing,
+   * the changes also steer the follow camera.
+   */
+  private sceneChanged(previous: Scene | undefined, next: Scene, time: number, state: AtlasState): void {
+    if (!previous?.rootId || this.motionReduced) return;
+    const appearing = new Map<string, number>();
+    for (const node of next.nodes.values()) {
+      if (previous.nodes.has(node.id) || !node.spatialParentId) continue;
+      const parentStart = appearing.get(node.spatialParentId);
+      if (parentStart !== undefined) appearing.set(node.id, parentStart + CASCADE_MS);
+      else if (previous.nodes.has(node.spatialParentId) && previous.children.get(node.spatialParentId)?.complete) appearing.set(node.id, time);
+    }
+    for (const [id, start] of appearing) { this.motion.appear.set(id, start); this.motionUntil = Math.max(this.motionUntil, start + RISE_MS); }
+    const timeMoved = next.frame !== undefined && next.frame !== previous.frame;
+    const changed: Bounds[] = [];
+    for (const node of next.nodes.values()) {
+      const status = node.change?.status;
+      if (!status || status === 'unchanged' || node.type === 'repository') continue;
+      if (!timeMoved && previous.nodes.get(node.id)?.change?.status === status) continue;
+      this.motion.flash.set(node.id, time);
+      if (state.timeline.playing && node.kind === 'entity') { const z = next.zBase(node.id); changed.push(projectedBounds(node.rect, z, z + nodeHeight(node))); }
+    }
+    if (this.motion.flash.size) this.motionUntil = Math.max(this.motionUntil, time + FLASH_MS);
+    if (changed.length) this.recentChanges.push({ bounds: changed.reduce(union), at: time });
+  }
+  /** Ease the camera toward where recent frames changed something, keeping at least a part of the map around it in view. */
+  private follow(time: number, elapsed: number): void {
+    this.recentChanges = this.recentChanges.filter(entry => time - entry.at < FOLLOW_WINDOW_MS);
+    const root = this.rootBounds();
+    if (!this.recentChanges.length || !root) return;
+    const bounds = this.recentChanges.map(entry => entry.bounds).reduce(union);
+    const grow = (min: number, max: number, span: number) => { const missing = Math.max(0, span - (max - min)) / 2; return [min - missing, max + missing] as const; };
+    const [minX, maxX] = grow(bounds.minX, bounds.maxX, (root.maxX - root.minX) * FOLLOW_MIN_SPAN), [minY, maxY] = grow(bounds.minY, bounds.maxY, (root.maxY - root.minY) * FOLLOW_MIN_SPAN);
+    const target = fitBounds({ minX, maxX, minY, maxY }, this.viewport, 80, this.limits);
+    const k = 1 - Math.exp(-elapsed / FOLLOW_EASE_MS);
+    this.animation = undefined; this.autoFit = false;
+    this.camera = { x: this.camera.x + (target.x - this.camera.x) * k, y: this.camera.y + (target.y - this.camera.y) * k, scale: Math.exp(Math.log(this.camera.scale) + (Math.log(target.scale) - Math.log(this.camera.scale)) * k) };
+  }
+  /** The user took the camera: stop following playback. */
+  private takeCamera(): void { if (this.store.getState().timeline.follow && this.store.getState().timeline.playing) this.store.setFollow(false); }
   private report(state: AtlasState): void {
     const focus = this.set.focus;
     const chain: { id: string; name: string; type: string }[] = [];
-    for (let node = focus?.node; node; node = node.spatialParentId ? this.store.scene.nodes.get(node.spatialParentId) : undefined) chain.unshift({ id: node.id, name: node.name, type: node.type });
+    for (let node = focus?.node; node; node = node.spatialParentId ? this.scene.nodes.get(node.spatialParentId) : undefined) chain.unshift({ id: node.id, name: node.name, type: node.type });
     const focusIndex = focus ? this.set.index.get(focus.node.id)! : -1;
     const children = this.set.items.filter(item => item.parent === focusIndex && focusIndex >= 0).map(item => ({ type: item.node.type, area: item.node.rect.w * item.node.rect.h }));
     const selectedIndex = state.selection ? this.set.index.get(state.selection.id) : undefined;
@@ -239,6 +345,7 @@ export class MapController implements MapNavigator {
   private onWheel(event: WheelEvent): void {
     event.preventDefault();
     this.autoFit = false;
+    this.takeCamera();
     const point = this.local(event);
     const delta = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
     const factor = Math.exp(-delta * (event.ctrlKey ? 0.01 : 0.0018));
@@ -270,13 +377,13 @@ export class MapController implements MapNavigator {
         this.drag.pinch = distance;
       } else if (this.drag) {
         if (Math.hypot(point.x - this.drag.x, point.y - this.drag.y) > 4) this.drag.moved = true;
-        if (this.drag.moved) { this.camera = panBy(this.camera, point.x - previous.x, point.y - previous.y); this.canvas.style.cursor = 'grabbing'; }
+        if (this.drag.moved) { this.camera = panBy(this.camera, point.x - previous.x, point.y - previous.y); this.canvas.style.cursor = 'grabbing'; this.takeCamera(); }
       }
       this.request();
       return;
     }
     this.hoverPoint = point;
-    const hit = this.store.scene.hitTest(this.set, this.camera, this.viewport, point.x, point.y);
+    const hit = this.scene.hitTest(this.set, this.camera, this.viewport, point.x, point.y);
     const node = hit && hit.node.type !== 'repository' ? hit.node : undefined;
     this.canvas.style.cursor = node ? 'pointer' : 'grab';
     this.store.hover(node);
@@ -288,14 +395,14 @@ export class MapController implements MapNavigator {
     if (this.pointers.size === 0) this.drag = undefined;
     this.canvas.style.cursor = 'grab';
     if (!drag || drag.moved || event.button !== 0) return;
-    const hit = this.store.scene.hitTest(this.set, this.camera, this.viewport, point.x, point.y);
+    const hit = this.scene.hitTest(this.set, this.camera, this.viewport, point.x, point.y);
     if (!hit || hit.node.type === 'repository') { if (!this.store.getState().flows.draft) this.store.clearSelection(); return; }
     if (this.store.getState().flows.draft && hit.node.kind === 'entity') this.store.addDraftStep(hit.node.id);
     void this.store.select(hit.node.id, { fly: false });
   }
   private onDoubleClick(event: MouseEvent): void {
     const point = this.local(event);
-    const hit = this.store.scene.hitTest(this.set, this.camera, this.viewport, point.x, point.y);
+    const hit = this.scene.hitTest(this.set, this.camera, this.viewport, point.x, point.y);
     if (!hit) return;
     const enter = hit.node.childCount > 0;
     this.flyTo(hit.node, { mode: enter ? 'enter' : 'focus' });
@@ -321,7 +428,9 @@ export class MapController implements MapNavigator {
     event.preventDefault();
     this.animation = undefined;
     this.autoFit = false;
+    this.takeCamera();
     action();
     this.request();
   }
 }
+function union(a: Bounds, b: Bounds): Bounds { return { minX: Math.min(a.minX, b.minX), minY: Math.min(a.minY, b.minY), maxX: Math.max(a.maxX, b.maxX), maxY: Math.max(a.maxY, b.maxY) }; }

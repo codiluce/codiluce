@@ -1,7 +1,13 @@
 import type { AtlasConfig, ApplicationConfig } from './config.js';
-import type { GraphBuilder, Evidence } from './graph.js';
+import type { GraphBuilder, Evidence, EffectFact } from './graph.js';
 export interface ScannedFile { path: string; absolutePath: string; id: string; language?: string; analyzable: boolean; application?: ApplicationConfig }
-export interface HttpObservation { callerId: string; fileId: string; method?: string; url?: string; expression: string; evidence: Evidence }
+export interface HttpObservation {
+  callerId: string; fileId: string; method?: string; url?: string; expression: string; evidence: Evidence;
+  /** A URL built from a proven base: target application, path pattern and the proof hops. */
+  resolved?: { app?: string; relative: boolean; pattern: string; holes: number; proof: Evidence[]; display: string };
+  /** The caller's network effect; the matcher records the endpoint it reaches. */
+  effect?: EffectFact;
+}
 export interface AnalysisContext {
   root: string; config: AtlasConfig; graph: GraphBuilder; repositoryId: string;
   applicationIds: Map<string, string>; files: Map<string, ScannedFile>; http: HttpObservation[];

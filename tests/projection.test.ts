@@ -13,6 +13,7 @@ import { ProjectionIndex, ROUTE_SUBGROUP_THRESHOLD, type EntityRow } from '../sr
 import { layoutHierarchy, pack, type LayoutNode, type Rect } from '../src/projection/layout.js';
 import { readIndexedSource, SourceError, SOURCE_MAX_LINES } from '../src/projection/source.js';
 import type { SoftwareGraph } from '../src/core/graph.js';
+import { guardsAt, hintOf, phrase } from '../src/projection/conditions.js';
 
 const fixture = fileURLToPath(new URL('./fixtures/repository', import.meta.url));
 const temporary: string[] = [];
@@ -21,8 +22,13 @@ async function createFixture(): Promise<string> {
   const directory = await mkdtemp(path.join(tmpdir(), 'atlas-projection-')); temporary.push(directory);
   await cp(fixture, directory, { recursive: true });
   await mkdir(path.join(directory, '.archipelago'));
-  await writeFile(path.join(directory, '.archipelago/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'] }] }));
+  await writeFile(path.join(directory, '.archipelago/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'], apiOriginEnv: ['NEXT_PUBLIC_API_URL'] }] }));
   return directory;
+}
+function symbolId(qualifiedName: string): string {
+  const found = graph.entities.find(entity => entity.metadata.qualifiedName === qualifiedName);
+  assert.ok(found, `Expected symbol ${qualifiedName}`);
+  return found.id;
 }
 function entityId(name: string, type?: string): string {
   const found = graph.entities.find(entity => entity.name === name && (!type || entity.type === type));
@@ -168,7 +174,7 @@ test('relations expose direction, type counts and endpoint ancestry; aggregates 
   const crossing = frontend.groups.filter(group => group.anchor.id === entityId('backend', 'application'));
   assert.ok(crossing.length > 0 && crossing.every(group => group.type === 'requests' && group.direction === 'outgoing'));
   const total = crossing.reduce((sum, group) => sum + group.count, 0);
-  assert.equal(total, graph.relations.filter(edge => edge.type === 'requests' && graph.entities.find(e => e.id === edge.to)!.metadata.framework === 'laravel').length);
+  assert.equal(total, graph.relations.filter(edge => edge.type === 'requests' && graph.entities.find(e => e.id === edge.to)!.metadata.framework === 'laravel' && graph.entities.find(e => e.id === edge.from)!.path?.startsWith('frontend/')).length);
   const edges = projection.aggregateEdges(entityId('frontend', 'application'), { anchor: crossing[0]!.anchor.id, type: 'requests', direction: 'outgoing' });
   assert.equal(edges.total, crossing[0]!.count);
   assert.ok(edges.items.every(item => item.inside.path?.startsWith('frontend/')));
@@ -176,11 +182,12 @@ test('relations expose direction, type counts and endpoint ancestry; aggregates 
 test('diagnostics are attached to entities and visible from containing areas', () => {
   const projection = new ProjectionService(store);
   const dynamic = entityId('dynamicUrl');
+  // A relative template URL resolves to a pattern, but nothing proves it crosses to Laravel.
   const own = projection.diagnostics(dynamic, {});
-  assert.ok(own.items.some(item => item.code === 'unresolved-http-call'));
+  assert.ok(own.items.some(item => item.code === 'unverified-relative-api-boundary'), 'dynamicUrl finding');
   const frontend = projection.diagnostics(entityId('frontend', 'application'), { limit: 500 });
-  assert.ok(frontend.items.some(item => item.entityId === dynamic));
-  assert.ok(frontend.codes.some(code => code.code === 'unresolved-http-call'));
+  assert.ok(frontend.items.some(item => item.entityId === dynamic), 'finding visible from the application');
+  assert.ok(frontend.codes.some(code => code.code === 'unresolved-http-call'), 'unresolved-http-call code');
 });
 test('between() only reports relationships that exist', () => {
   const projection = new ProjectionService(store);
@@ -270,5 +277,142 @@ test('static UI serving stays inside the build directory', async () => {
     assert.equal((await fetch(`${base}/..%2f..%2fetc%2fpasswd`)).status, 404);
     assert.equal((await fetch(`${base}/%2e%2e/%2e%2e/etc/passwd`)).status, 404);
     assert.equal((await fetch(`${base}/api/summary`)).status, 200, 'API still answers when a UI is configured');
+  } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
+});
+
+// --- Blast radius, steps and paths ---------------------------------------------
+test('impact walks dependents across the stack, hop by hop, with the chain that reaches each', () => {
+  const projection = new ProjectionService(store);
+  const impact = projection.impact(symbolId('App\\Services\\AuthService::authenticate'), { depth: 8, limit: 100 });
+  assert.equal(impact.origin.kind, 'entity');
+  const distance = (name: string, type: string) => impact.distances[entityId(name, type)];
+  assert.equal(impact.distances[symbolId('App\\Http\\Controllers\\AuthController::login')], 1);
+  assert.equal(distance('POST /auth/login', 'api_endpoint'), 2, 'endpoint handled by the caller');
+  assert.equal(distance('signIn', 'method'), 3, 'frontend method requesting the endpoint');
+  assert.equal(distance('handleSave', 'function'), 4);
+  assert.equal(distance('/account', 'route'), 6);
+  const page = impact.items.items.find(item => item.name === '/account')!;
+  assert.deepEqual(page.chain.map(hop => hop.type), ['calls', 'handles', 'requests', 'calls', 'renders', 'routes_to']);
+  assert.equal(page.chain[0]!.to.id, symbolId('App\\Services\\AuthService::authenticate'));
+  assert.equal(impact.byDistance.reduce((sum, count) => sum + count, 0), impact.total);
+  assert.deepEqual(impact.highlights.applications.map(app => app.name).sort(), ['backend', 'frontend']);
+  assert.equal(impact.areas[entityId('frontend', 'application')]!.distance, 3);
+  assert.ok(impact.unknowns.unresolvedHttpCalls > 0, 'unresolved HTTP calls might also reach the endpoints');
+  // Depth bounds the walk; items are ordered by distance and filterable.
+  assert.ok(Object.values(projection.impact(symbolId('App\\Services\\AuthService::authenticate'), { depth: 2 }).distances).every(value => value <= 2));
+  assert.ok(projection.impact(symbolId('App\\Services\\AuthService::authenticate'), { depth: 8, type: 'route' }).items.items.every(item => item.type === 'route'));
+  assert.throws(() => projection.impact(entityId('signIn'), { depth: 11 }), /depth/);
+  assert.equal(projection.impact(symbolId('App\\Services\\AuthService::authenticate'), { types: ['imports'] }).total, 0, 'relation types restrict the walk');
+});
+test('impact of a container seeds what it contains; name-only matches are reported as possible callers', () => {
+  const projection = new ProjectionService(store);
+  const service = projection.impact(symbolId('App\\Services\\AuthService'), {});
+  assert.ok(service.seeds >= 2, 'the class and its methods');
+  assert.ok(service.distances[symbolId('App\\Http\\Controllers\\ProfileController::show')] !== undefined, 'callers of a method of the class');
+  const record = projection.impact(symbolId('App\\Services\\AuditLog::record'), {});
+  assert.equal(record.total, 0);
+  assert.deepEqual(record.unknowns.possibleCallers, [{ name: 'record', sites: 1, entities: 1 }]);
+  // Symbols do not climb to their file's importers.
+  const signIn = projection.impact(entityId('signIn'), { depth: 3 });
+  assert.ok(!Object.keys(signIn.distances).some(id => graph.entities.find(entity => entity.id === id)!.type === 'file'));
+});
+test('steps draw what happens from a page: triggers, actions, endpoints, handlers and effects with conditions', async () => {
+  const projection = new ProjectionService(store, { root });
+  const steps = await projection.steps(entityId('/account', 'route'), { maxFileBytes: 1 << 20 });
+  const step = (name: string) => steps.steps.find(item => item.node?.name === name)!;
+  assert.equal(steps.steps[0]!.kind, 'anchor');
+  assert.equal(step('handleSave').kind, 'trigger');
+  assert.equal(step('signIn').kind, 'action');
+  assert.equal(step('POST /auth/login').kind, 'endpoint');
+  assert.equal(step('POST /auth/login').app, 'backend');
+  assert.equal(steps.steps.find(item => item.kind === 'handler' && item.node?.qualifiedName === 'App\\Http\\Controllers\\ProfileController::show')!.app, 'backend');
+  assert.ok(!steps.steps.some(item => item.node?.name === 'getInstance'), 'plumbing is folded, not a step');
+  const link = (from: string, to: string) => steps.links.find(item => item.from === step(from).id && item.to === step(to).id)!;
+  const save = steps.links.find(item => item.to === step('handleSave').id)!;
+  assert.equal(save.event, 'onClick');
+  assert.deepEqual(save.via.map(item => item.name), ['AccountPage', 'AccountPanel']);
+  assert.deepEqual(link('handleSave', 'signIn').when.map(guard => guard.phrase), ['when email'], 'early return read from source');
+  // Effects are steps, with the conditions at their own site.
+  const effects = steps.steps.filter(item => item.kind === 'effect').map(item => `${item.effect!.category}:${item.effect!.operation}:${item.effect!.status ?? ''}:${item.effect!.when.map(guard => guard.phrase).join('&')}`);
+  for (const expected of ['navigation:push::when email', 'storage:write::when response.ok', 'response:abort:404:when $id < 1', 'response:json:200:unless $id < 1', 'database:read::']) assert.ok(effects.includes(expected), expected);
+  assert.ok(!steps.steps.some(item => item.effect?.category === 'network'), 'linked requests are endpoints, not network effects');
+  // Every link endpoint is a step; every hop is an indexed relation.
+  const ids = new Set(steps.steps.map(item => item.id));
+  assert.ok(steps.links.every(item => ids.has(item.from) && ids.has(item.to)));
+  assert.ok(steps.links.flatMap(item => item.hops).every(hop => graph.relations.some(relation => relation.id === hop.relationId)));
+});
+test('steps are capped and say what was left out', async () => {
+  const projection = new ProjectionService(store, { root });
+  const { walkSteps, STEP_LIMITS } = await import('../src/projection/steps.js');
+  const current = (projection as unknown as { load(view?: object): { index: ProjectionIndex; target: { relationMetadata(ids: string[]): Map<string, Record<string, unknown>>; entity(id: string): import('../src/core/graph.js').Entity | undefined } } }).load();
+  const walk = walkSteps({ index: current.index, relationMetadata: ids => current.target.relationMetadata(ids), entity: id => current.target.entity(id) }, entityId('/account', 'route'), { ...STEP_LIMITS, fanout: 1, steps: 3 });
+  assert.ok(walk.truncated);
+  assert.ok(walk.steps.length <= 3);
+  assert.ok(walk.steps.some(item => item.caps.some(cap => cap.reason === 'fanout' && cap.hidden > 0)));
+});
+test('paths connect two entities over indexed relations, in either direction', () => {
+  const projection = new ProjectionService(store);
+  const forward = projection.path(entityId('/account', 'route'), symbolId('App\\Services\\AuthService::authenticate'));
+  assert.ok(forward.found);
+  assert.equal(forward.nodes[0]!.name, '/account');
+  assert.equal(forward.nodes.at(-1)!.qualifiedName, 'App\\Services\\AuthService::authenticate');
+  assert.equal(forward.links.length, forward.nodes.length - 1);
+  assert.ok(forward.links.some(item => item.type === 'requests') && forward.links.some(item => item.type === 'handles'));
+  const backward = projection.path(symbolId('App\\Services\\AuthService::authenticate'), entityId('/account', 'route'));
+  assert.ok(backward.found && backward.reversed);
+  assert.equal(projection.path(entityId('UserPage'), entityId('ping')).found, false);
+});
+test('conditions are read from source: if/else, ternaries, &&, early exits, switch and catch', () => {
+  const ts = `function f(a: number, user?: { ok: boolean }) {
+  if (!user) return;
+  if (a > 1) {
+    save();
+  } else {
+    a > 5 ? one() : two();
+  }
+  user.ok && three();
+  switch (a) { case 2: four(); break; default: five(); }
+  try { six(); } catch (e) { seven(); }
+}`;
+  const at = (line: number) => guardsAt(`ts-${line}`, 'f.ts', 'typescript', ts, line, { startLine: 1, endLine: 11 }).map(phrase);
+  assert.deepEqual(at(4), ['when user', 'when a > 1']);
+  assert.deepEqual(at(6), ['when user', 'unless a > 1', 'unless a > 5']);
+  assert.deepEqual(at(8), ['when user', 'when user.ok']);
+  assert.deepEqual(at(9).slice(-1), ['when a matches no case']);
+  assert.deepEqual(at(10).slice(-1), ['when an error was thrown']);
+  const php = `<?php
+class C {
+  public function show($id) {
+    if ($id < 1) {
+      abort(404);
+    }
+    return $ok ? response()->json([], 200) : null;
+  }
+}`;
+  assert.deepEqual(guardsAt('php-5', 'c.php', 'php', php, 5, { startLine: 3, endLine: 8 }).map(phrase), ['when $id < 1']);
+  // Several branches on one line: the hint names the call the site is about.
+  assert.deepEqual(guardsAt('php-7', 'c.php', 'php', php, 7, { startLine: 3, endLine: 8 }, 'response').map(phrase), ['unless $id < 1', 'when $ok']);
+  assert.deepEqual(guardsAt('ts-6h', 'f.ts', 'typescript', ts, 6, { startLine: 1, endLine: 11 }, 'one').map(phrase), ['when user', 'unless a > 1', 'when a > 5']);
+  assert.equal(hintOf('localStorage.setItem(\'session\')'), 'setItem');
+  assert.equal(hintOf('$user->update($data)'), 'update');
+  assert.equal(hintOf('abort(404);'), 'abort');
+  assert.deepEqual(guardsAt('bad', 'x.ts', 'typescript', 'export const = (', 1), []);
+});
+test('impact, steps and path are served over HTTP with validation', async () => {
+  const server = createInspectionServer(store, { root });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const address = server.address(); assert.ok(address && typeof address !== 'string');
+  const base = `http://127.0.0.1:${address.port}`;
+  try {
+    const impact = await fetch(`${base}/api/projection/impact/${encodeURIComponent(symbolId('App\\Services\\AuthService::authenticate'))}?depth=6&limit=5`).then(response => response.json());
+    assert.equal(impact.items.items.length, 5);
+    assert.ok(impact.total > 5 && impact.items.hasMore);
+    assert.equal((await fetch(`${base}/api/projection/impact/${encodeURIComponent(entityId('signIn'))}?types=bogus`)).status, 400);
+    const steps = await fetch(`${base}/api/projection/steps/${encodeURIComponent(entityId('/account', 'route'))}`).then(response => response.json());
+    assert.ok(steps.steps.length > 5 && steps.links.length > 5);
+    const path = await fetch(`${base}/api/projection/path?from=${encodeURIComponent(entityId('/account', 'route'))}&to=${encodeURIComponent(entityId('POST /auth/login'))}`).then(response => response.json());
+    assert.ok(path.found);
+    assert.equal((await fetch(`${base}/api/projection/path?from=x`)).status, 400);
+    assert.equal((await fetch(`${base}/api/projection/steps/missing`)).status, 404);
   } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
 });

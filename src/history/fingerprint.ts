@@ -26,8 +26,15 @@ export function withoutPositions(value: unknown): unknown {
   if (!value || typeof value !== 'object') return value;
   return Object.fromEntries(Object.entries(value as Record<string, unknown>).filter(([key]) => !POSITIONAL.has(key)).map(([key, item]) => [key, withoutPositions(item)]));
 }
+/**
+ * Metadata derived from resolving the rest of the graph (call coverage, effects
+ * linked to endpoints) rather than from the entity's own declaration. A change
+ * there shows as a relations change, not as the entity itself changing.
+ */
+const DERIVED = new Set(['callSites', 'effects']);
 export function shapeHash(entity: Pick<Entity, 'type' | 'name' | 'language' | 'metadata'>): string {
-  return digest(canonicalJson({ type: entity.type, name: entity.name, language: entity.language, metadata: withoutPositions(entity.metadata) }), 32);
+  const metadata = Object.fromEntries(Object.entries(entity.metadata).filter(([key]) => !DERIVED.has(key)));
+  return digest(canonicalJson({ type: entity.type, name: entity.name, language: entity.language, metadata: withoutPositions(metadata) }), 32);
 }
 /** Content identity: analyzer source hash when present; otherwise size for unread files. */
 export function contentKey(entity: Pick<Entity, 'metadata'>): string | undefined {

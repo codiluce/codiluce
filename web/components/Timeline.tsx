@@ -2,10 +2,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { TimelineEntry, TimelineResponse } from '@engine/projection/dto';
 import { compactNumber, shortSha } from '../lib/format';
-import { entryOf, timelineIndex } from '../lib/store';
+import { entryOf, predecessor, timelineIndex, type AtlasStore } from '../lib/store';
 import { useAtlas, useStore } from './context';
+import { CommitImpactChip } from './Analysis';
 
 const SCRUB_MS = 140;
+const SPEEDS = [0.5, 1, 2, 4];
+/** The snapshot on screen: the time-lapse frame while scrubbing or playing, otherwise the viewed one. */
+function shownSnapshot(store: AtlasStore, timeline: { preview?: number; target?: string }): string | undefined {
+  return timeline.preview !== undefined && store.evolution ? store.evolution.snapshotAt(timeline.preview) : timeline.target;
+}
 function formatDate(iso: string): string { const date = new Date(iso); return Number.isNaN(date.getTime()) ? iso : date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); }
 function label(data: TimelineResponse | undefined, id: string | undefined): string {
   if (!id || id === data?.workingTree?.id) return 'Working tree';
@@ -44,13 +50,17 @@ export function Timeline() {
       </div>
     </section>
   );
-  const target = entryOf(data, timeline.target);
+  const shown = shownSnapshot(store, timeline);
+  const target = entryOf(data, shown);
   const comparison = meta?.comparison;
   const summary = comparison?.summary;
+  // A time-lapse frame: what that commit changed, until the view settles on it.
+  const frameCounts = timeline.preview !== undefined && store.evolution && timeline.preview > 0 ? store.evolution.counts(timeline.preview) : undefined;
   const indexed = data.entries.filter(entry => entry.snapshot).length;
   return (
     <section className="timeline" aria-label="History">
       <div className="timeline-head">
+        <PlayButton />
         <div className="timeline-nav" role="group" aria-label="Step through indexed commits">
           <button className="icon-button small" onClick={() => void store.stepTarget(-1)} aria-label="Previous indexed commit" title="Previous indexed commit (←)">◀</button>
           <button className="icon-button small" onClick={() => void store.stepTarget(1)} aria-label="Next indexed commit" title="Next indexed commit (→)">▶</button>
@@ -73,6 +83,12 @@ export function Timeline() {
           )}
           {timeline.switching && <span className="spinner tiny" aria-label="Loading snapshot" />}
         </div>
+        {timeline.evolution.status === 'ready' && (
+          <div className="timeline-play" role="group" aria-label="Time-lapse">
+            <button className="chip" onClick={() => store.setSpeed(SPEEDS[(SPEEDS.indexOf(timeline.speed) + 1) % SPEEDS.length]!)} title="Playback speed" aria-label={`Playback speed ${timeline.speed}×`}>{timeline.speed}×</button>
+            <button className="chip" aria-pressed={timeline.follow} onClick={() => store.setFollow(!timeline.follow)} title="While playing, the camera follows where the code changes">Follow</button>
+          </div>
+        )}
         <div className="timeline-compare">
           <div className="segmented" role="group" aria-label="View mode">
             <button aria-pressed={!timeline.compare} onClick={() => void store.setCompare(false)}>Snapshot</button>
@@ -88,7 +104,15 @@ export function Timeline() {
         </div>
         <button className="icon-button small" onClick={close} aria-label="Close history" title="Back to the live map">✕</button>
       </div>
-      {summary && (
+      {frameCounts ? (
+        <div className="timeline-summary" aria-label="Changes in this commit">
+          {(['added', 'modified', 'moved', 'removed'] as const).map(status => (
+            <span key={status} className={`change-chip ${status}${frameCounts[status] ? '' : ' none'}`}><span className="glyph" aria-hidden>{({ added: '+', modified: '~', moved: '→', removed: '−' } as const)[status]}</span>{compactNumber(frameCounts[status])} {status}</span>
+          ))}
+          <span className="sep" />
+          <span className="change-stat">commit {timeline.preview! + 1} of {store.evolution!.length}{timeline.playing ? ' · playing' : ''}</span>
+        </div>
+      ) : summary && (
         <div className="timeline-summary" aria-label="Changes in this comparison">
           {(['added', 'modified', 'moved', 'removed'] as const).map(status => (
             <button key={status} className={`change-chip ${status}`} onClick={() => { store.clearSelection(); void store.loadChanges(status); }} title={`Show ${status} entities in the inspector`} disabled={!summary.entities[status]}>
@@ -99,6 +123,7 @@ export function Timeline() {
           <span className="change-stat" title="Relationships added / removed">edges <span className="added">+{summary.relations.added}</span> <span className="removed">−{summary.relations.removed}</span></span>
           <span className="change-stat" title="Unresolved findings added / resolved">findings <span className="added">+{summary.diagnostics.added}</span> <span className="removed">−{summary.diagnostics.removed}</span></span>
           <span className="change-stat" title="Measured lines in files">lines {compactNumber(summary.files.locBefore)} → {compactNumber(summary.files.locAfter)}</span>
+          <CommitImpactChip />
           {comparison.analyzerMismatch && <span className="chip warning" title="The two snapshots were analyzed by different analyzer versions; some differences may come from the analysis rather than the code. Reindex to compare like with like.">different analyzer versions</span>}
         </div>
       )}
@@ -151,23 +176,29 @@ function Track({ data }: { data: TimelineResponse }) {
     return undefined;
   };
   const idAt = (index: number) => index === data.entries.length ? undefined : data.entries[index]?.snapshot?.id;
-  const targetIndex = timelineIndex(data, timeline.target), baselineIndex = timeline.compare && timeline.baseline ? timelineIndex(data, timeline.baseline) : -1;
+  const shown = shownSnapshot(store, timeline);
+  // A time-lapse frame compares with the previous commit (unless a baseline is pinned).
+  const baselineId = timeline.compare ? (timeline.preview !== undefined && !timeline.pinned ? predecessor(data, shown) : timeline.baseline) : undefined;
+  const targetIndex = timelineIndex(data, shown), baselineIndex = baselineId ? timelineIndex(data, baselineId) : -1;
   const sparkline = useMemo(() => {
     const points = data.entries.map((entry, index) => ({ index, loc: entry.snapshot?.stats.loc })).filter((point): point is { index: number; loc: number } => point.loc !== undefined);
     const max = Math.max(1, ...points.map(point => point.loc));
     return { points, max };
   }, [data]);
   const marks = useMemo(() => axisMarks(data.entries), [data]);
-  const choose = (index: number | undefined, immediate: boolean) => {
+  /** Dragging shows the time-lapse frame at once when it is loaded (otherwise the commit after a short pause); releasing settles there. */
+  const choose = (index: number | undefined, release: boolean) => {
     if (index === undefined) return;
     if (scrub.current.timer) clearTimeout(scrub.current.timer);
+    if (store.scrubTo(idAt(index))) { if (release) void store.settle(); return; }
     const apply = () => void store.setTarget(idAt(index));
-    if (immediate) apply(); else scrub.current.timer = setTimeout(apply, SCRUB_MS);
+    if (release) apply(); else scrub.current.timer = setTimeout(apply, SCRUB_MS);
   };
   const onKeyDown = (event: React.KeyboardEvent) => {
     const keys: Record<string, () => void> = {
       ArrowLeft: () => void (event.shiftKey ? moveBaseline(-1) : store.stepTarget(-1)), ArrowRight: () => void (event.shiftKey ? moveBaseline(1) : store.stepTarget(1)),
       Home: () => choose(nearestIndexed(0), true), End: () => choose(count - 1 === data.entries.length && data.workingTree ? count - 1 : nearestIndexed(count - 1), true),
+      ' ': () => store.togglePlay(),
     };
     const action = keys[event.key];
     if (!action) return;
@@ -184,7 +215,7 @@ function Track({ data }: { data: TimelineResponse }) {
     <div className="timeline-track">
       <svg
         ref={svg} width="100%" height={height} role="slider" tabIndex={0}
-        aria-label="Commit timeline. Left and right arrows step through indexed commits; Shift with arrows moves the comparison baseline."
+        aria-label="Commit timeline. Left and right arrows step through indexed commits; Shift with arrows moves the comparison baseline; Space plays the history."
         aria-valuemin={0} aria-valuemax={count - 1} aria-valuenow={targetIndex} aria-valuetext={label(data, timeline.target)}
         onKeyDown={onKeyDown}
         onPointerDown={event => { (event.target as Element).setPointerCapture?.(event.pointerId); scrub.current.dragging = true; const index = indexAt(event.clientX); setPicked(undefined); if (data.entries[index] && !data.entries[index]!.snapshot) { setPicked(index); scrub.current.dragging = false; return; } choose(nearestIndexed(index), false); }}
@@ -195,6 +226,7 @@ function Track({ data }: { data: TimelineResponse }) {
         {sparkline.points.length > 1 && <path className="spark" d={`M ${x(sparkline.points[0]!.index)} ${base} ${sparkline.points.map(point => `L ${x(point.index).toFixed(1)} ${(base - 4 - (point.loc / sparkline.max) * 28).toFixed(1)}`).join(' ')} L ${x(sparkline.points.at(-1)!.index)} ${base} Z`} />}
         {baselineIndex >= 0 && targetIndex >= 0 && <rect className="range" x={Math.min(x(baselineIndex), x(targetIndex))} y={6} width={Math.abs(x(targetIndex) - x(baselineIndex))} height={base - 6} rx={3} />}
         <line className="axis" x1={pad} x2={width - pad} y1={base} y2={base} />
+        {timeline.preview !== undefined && targetIndex >= 0 && <line className="played" x1={pad} x2={x(targetIndex)} y1={base} y2={base} />}
         {data.entries.map((entry, index) => {
           const cx = x(index);
           return (
@@ -232,5 +264,20 @@ function Track({ data }: { data: TimelineResponse }) {
         </div>
       )}
     </div>
+  );
+}
+/** Plays the history as a time-lapse; while the server prepares it, a ring shows how far along it is. */
+function PlayButton() {
+  const store = useStore();
+  const playing = useAtlas(state => state.timeline.playing);
+  const evolution = useAtlas(state => state.timeline.evolution);
+  const preparing = evolution.status === 'loading' || evolution.status === 'idle';
+  const percent = Math.round((evolution.progress ?? 0) * 100);
+  const action = playing ? 'Pause the time-lapse' : 'Play the history as a time-lapse';
+  const title = evolution.status === 'error' ? `Time-lapse unavailable: ${evolution.error}` : preparing && !playing ? `Preparing the time-lapse… ${percent}%` : `${action} (Space on the timeline)`;
+  return (
+    <button className={`play-button${playing ? ' playing' : ''}${preparing ? ' preparing' : ''}`} onClick={() => store.togglePlay()} aria-label={action} aria-pressed={playing} title={title} disabled={evolution.status === 'error'} style={{ '--progress': `${percent}%` } as React.CSSProperties}>
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden>{playing ? <path d="M4 3h3v10H4zM9 3h3v10H9z" /> : <path d="M5 2.5v11l9-5.5z" />}</svg>
+    </button>
   );
 }

@@ -23,6 +23,7 @@ const RELATION_LABELS: Record<string, { outgoing: string; incoming: string }> = 
   writes: { outgoing: 'writes', incoming: 'written by' },
   queries: { outgoing: 'queries', incoming: 'queried by' },
   maps_to: { outgoing: 'maps to', incoming: 'mapped from' },
+  references: { outgoing: 'references', incoming: 'referenced by' },
 };
 /**
  * Phrase a relation from the perspective of the selected entity. `handles`

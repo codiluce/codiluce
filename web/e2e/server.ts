@@ -15,7 +15,7 @@ const ui = fileURLToPath(new URL('../out', import.meta.url));
 const root = await mkdtemp(path.join(tmpdir(), 'atlas-e2e-'));
 await cp(fixture, root, { recursive: true });
 await mkdir(path.join(root, '.archipelago'));
-await writeFile(path.join(root, '.archipelago/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'] }] }));
+await writeFile(path.join(root, '.archipelago/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'], apiOriginEnv: ['NEXT_PUBLIC_API_URL'] }] }));
 const store = new GraphStore(path.join(root, '.archipelago/archipelago.db'));
 store.save(await indexRepository(root));
 createInspectionServer(store, { root, stateDirectory: path.join(root, '.archipelago'), uiDirectory: ui }).listen(port, '127.0.0.1', () => console.log(`e2e server on ${port}`));

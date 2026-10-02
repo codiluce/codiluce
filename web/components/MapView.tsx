@@ -4,6 +4,7 @@ import { MapController } from '../lib/controller';
 import { typeLabel } from '../lib/format';
 import { LEVELS } from '../lib/lod';
 import { themeById } from '../lib/themes';
+import { impactColors } from '../lib/renderer';
 import { useAtlas, useStore } from './context';
 
 export function MapView() {
@@ -90,12 +91,15 @@ function Legend() {
   const present = new Set(meta.entityTypes.map(item => item.type));
   const types = ['application', 'directory', 'file', 'class', 'controller', 'component', 'function', 'method', 'api_endpoint', 'route'].filter(type => present.has(type));
   const relationTypes = meta.relationTypes.filter(item => item.type !== 'contains');
+  // Themes that color files by language list those colors.
+  const languages = Object.entries(theme.entity).filter(([key]) => key.startsWith('file:'));
   const coverage = meta.coverage;
   const comparison = meta.comparison;
+  const relationCount = (type: string) => meta.relationTypes.find(item => item.type === type)?.count ?? 0;
   const items: { state: 'present' | 'partial' | 'absent'; text: string }[] = [
     { state: 'present', text: 'Hierarchy, files, symbols, routes, imports/exports, inheritance' },
     { state: coverage.resolvedHttpRequests ? 'partial' : 'absent', text: `HTTP request matching: ${coverage.resolvedHttpRequests} resolved, ${coverage.unresolvedHttpCalls} unresolved` },
-    { state: coverage.calls ? 'partial' : 'absent', text: coverage.calls ? `Calls/renders: ${coverage.calls}` : 'Function calls and renders: not extracted yet' },
+    { state: coverage.calls ? 'partial' : 'absent', text: coverage.calls ? `Resolved calls, renders and references: ${relationCount('calls')} / ${relationCount('renders')} / ${relationCount('references')} (calls through callbacks, props or untyped values are counted per symbol, not linked)` : 'Function calls and renders: none resolved in this index' },
     { state: coverage.databaseTables ? 'present' : 'absent', text: coverage.databaseTables ? `Database tables: ${coverage.databaseTables}` : 'Database analysis not indexed yet' },
     { state: coverage.gitHistory ? 'present' : 'absent', text: coverage.gitHistory ? `History: ${coverage.gitHistory} indexed commits (History button)` : 'History: no commits indexed (run history index)' },
   ];
@@ -110,9 +114,15 @@ function Legend() {
             <span className="legend-item"><span className="line" style={{ background: theme.change.added, height: 5, opacity: 0.6 }} />edge added</span>
           </div>
         )}
+        <ImpactLegend />
         <div className="legend-grid">
-          {types.map(type => { const c = theme.entity[type]!; return <span key={type} className="legend-item"><span className="type-dot" style={{ background: `hsl(${c.h} ${c.s}% ${c.l}%)` }} />{typeLabel(type)}</span>; })}
+          {types.map(type => { const c = theme.entity[type]!; return <span key={type} className="legend-item"><span className="type-dot" style={{ background: `hsl(${c.h} ${c.s}% ${c.l}%)` }} />{typeLabel(type)}{type === 'file' && languages.length ? ' (other)' : ''}</span>; })}
         </div>
+        {languages.length > 0 && (
+          <div className="legend-grid" aria-label="Files by language">
+            {languages.map(([key, c]) => <span key={key} className="legend-item"><span className="type-dot" style={{ background: `hsl(${c.h} ${c.s}% ${c.l}%)` }} />{key.slice(5)} files</span>)}
+          </div>
+        )}
         <div className="legend-grid">
           {relationTypes.map(item => <span key={item.type} className="legend-item"><span className="line" style={{ background: theme.relation[item.type] ?? theme.fallbackRelation }} />{item.type}</span>)}
           <span className="legend-item"><span className="line" style={{ background: `repeating-linear-gradient(90deg, ${theme.text.secondary} 0 4px, transparent 4px 7px)` }} />via hidden endpoint</span>
@@ -120,6 +130,20 @@ function Legend() {
         <div>{items.map(item => <div key={item.text} className={`coverage-item ${item.state}`}><span className="mark">{item.state === 'present' ? '●' : item.state === 'partial' ? '◐' : '○'}</span>{item.text}</div>)}</div>
       </div>
     </details>
+  );
+}
+/** Shown while a blast radius is on the map. */
+function ImpactLegend() {
+  const theme = themeById(useAtlas(state => state.themeId));
+  const depth = useAtlas(state => state.impact.open ? state.impact.data?.depth : state.commitImpact.show ? state.commitImpact.data?.depth : undefined);
+  if (!depth) return null;
+  const colors = impactColors(theme);
+  return (
+    <div className="legend-grid" aria-label="Blast radius">
+      <span className="legend-item"><span className="change-swatch" style={{ borderColor: colors.origin }} />origin</span>
+      <span className="legend-item"><span className="line" style={{ width: 46, height: 6, background: `linear-gradient(90deg, ${colors.near}, ${colors.far})` }} />1 → {depth} hops (number on the block)</span>
+      <span className="legend-item"><span className="chip">◎ N affected</span>inside a closed area</span>
+    </div>
   );
 }
 function HoverCard() {
@@ -143,8 +167,18 @@ function HoverCard() {
       {hover.path && <div className="path">{hover.path}{hover.sourceRange ? `:${hover.sourceRange.startLine}` : ''}</div>}
       {hover.change && <div className={`hover-change ${hover.change.status}`}>{hover.change.status}{hover.change.facets.length ? ` · ${hover.change.facets.join(', ')}` : ''}{hover.change.previousPath ? ` · from ${hover.change.previousPath}` : ''}{hover.change.previousName ? ` · was ${hover.change.previousName}` : ''}</div>}
       {hover.changes && <div className="hover-change">inside: {(['added', 'modified', 'moved', 'removed'] as const).filter(key => hover.changes![key]).map(key => `${hover.changes![key]} ${key}`).join(', ')}</div>}
+      <ImpactHover id={hover.id} />
     </div>
   );
+}
+function ImpactHover({ id }: { id: string }) {
+  const data = useAtlas(state => state.impact.open ? state.impact.data : state.commitImpact.show ? state.commitImpact.data : undefined);
+  if (!data) return null;
+  const distance = data.distances[id], area = data.areas[id];
+  if (distance === 0) return <div className="hover-change">blast radius origin</div>;
+  if (distance !== undefined) return <div className="hover-change">affected · {distance} hop{distance === 1 ? '' : 's'} away</div>;
+  if (area) return <div className="hover-change">{area.count} affected inside · nearest {area.distance} hop{area.distance === 1 ? '' : 's'}</div>;
+  return null;
 }
 /** Screen-reader/keyboard access to the most prominent visible map items. */
 function VisibleList() {

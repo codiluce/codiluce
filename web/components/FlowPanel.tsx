@@ -14,7 +14,7 @@ export function FlowPanel({ onClose }: { onClose: () => void }) {
         <button className="icon-button small" onClick={onClose} aria-label="Close flows panel">⇤</button>
       </div>
       <div className="panel-body">
-        <p className="note">A flow is a sequence of entities that you choose and name. It is not observed runtime behaviour. Two steps are joined by a solid link only when an indexed relationship connects them.</p>
+        <p className="note">A flow is a named sequence of entities: one you choose (declared), or the shortest path of indexed relationships between two entities (static). Neither is observed runtime behaviour. Two steps are joined by a solid link only when an indexed relationship connects them.</p>
         {flows.storageError && <p className="note error">{flows.storageError}</p>}
         {flows.draft ? <DraftEditor /> : <button className="button primary" onClick={() => store.startDraft()}>New flow</button>}
         {flows.activeId && <ActiveFlow />}
@@ -26,7 +26,7 @@ export function FlowPanel({ onClose }: { onClose: () => void }) {
               <li key={flow.id} className={`row${flow.id === flows.activeId ? ' emphasized' : ''}`}>
                 <div className="row-main">
                   <div className="row-title"><span className="label">{flow.name}</span></div>
-                  <div className="row-sub">{flow.steps.length} steps · declared</div>
+                  <div className="row-sub">{flow.steps.length} steps · {flow.type === 'static' ? 'static (a path of indexed relationships)' : 'declared'}</div>
                 </div>
                 <div className="row-actions">
                   {flow.id === flows.activeId ? <button className="button small" onClick={() => store.deactivateFlow()}>Hide</button> : <button className="button small" onClick={() => void store.activateFlow(flow.id)}>Show</button>}
@@ -52,7 +52,8 @@ function DraftEditor() {
       <h4>{draft.id ? 'Edit flow' : 'New flow'}</h4>
       <label className="sr-only" htmlFor="flow-name">Flow name</label>
       <input id="flow-name" className="text-input" placeholder="Flow name, e.g. Login request" value={draft.name} onChange={event => store.setDraftName(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') void store.saveDraft(); }} />
-      <p className="absent" style={{ margin: '8px 0' }}>Click entities on the map to append them, or add the current selection.</p>
+      <p className="absent" style={{ margin: '8px 0' }}>Click entities on the map to append them, or add the current selection — or build the steps from a path.</p>
+      <PathBuilder />
       <button className="button small" disabled={!canAdd} onClick={() => selection && store.addDraftStep(selection.id)}>Add selection{canAdd ? `: ${selection!.node!.name}` : ''}</button>
       <ol className="list" style={{ marginTop: 8 }} aria-label="Steps">
         {draft.entityIds.map((id, index) => {
@@ -76,6 +77,29 @@ function DraftEditor() {
         <button className="button small" onClick={() => store.cancelDraft()}>Cancel</button>
       </div>
     </section>
+  );
+}
+/** Fill the draft with the shortest chain of indexed relationships between two entities. */
+function PathBuilder() {
+  const store = useStore();
+  const draft = useAtlas(state => state.flows.draft)!;
+  const selection = useAtlas(state => state.selection);
+  useAtlas(state => state.sceneRevision);
+  const canUse = selection?.node?.kind === 'entity';
+  const path = draft.path;
+  const name = (id?: string) => id ? store.scene.nodes.get(id)?.name ?? 'entity' : undefined;
+  return (
+    <div className="path-builder" role="group" aria-label="Build from a path">
+      <div className="path-ends">
+        <span className="absent">From</span><strong>{name(path?.from) ?? '—'}</strong>
+        <button className="button small" disabled={!canUse} onClick={() => store.setPathEnd('from')}>Use selection</button>
+        <span className="absent">To</span><strong>{name(path?.to) ?? '—'}</strong>
+        <button className="button small" disabled={!canUse} onClick={() => store.setPathEnd('to')}>Use selection</button>
+      </div>
+      <button className="button small" disabled={!path?.from || !path?.to || path.status === 'loading'} onClick={() => void store.draftPath()}>{path?.status === 'loading' ? 'Finding…' : 'Find path'}</button>
+      {draft.type === 'static' && <span className="chip">static: a path of indexed relationships</span>}
+      {path?.notice && <p className={`note${path.status === 'error' ? ' error' : ''}`}>{path.notice}</p>}
+    </div>
   );
 }
 function ActiveFlow() {

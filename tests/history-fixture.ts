@@ -13,7 +13,7 @@ import { stringify } from 'yaml';
 
 const fixture = fileURLToPath(new URL('./fixtures/repository', import.meta.url));
 export interface HistoryFixture { root: string; state: string; commits: { A: string; B: string; C: string; D: string }; cleanup(): Promise<void> }
-export const FIXTURE_CONFIG = { repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'] }] };
+export const FIXTURE_CONFIG = { repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'], apiOriginEnv: ['NEXT_PUBLIC_API_URL'] }] };
 
 export async function createHistoryFixture(): Promise<HistoryFixture> {
   const root = await mkdtemp(path.join(tmpdir(), 'atlas-history-'));

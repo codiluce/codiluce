@@ -36,6 +36,8 @@ export interface SnapshotSource {
   diagnostic(id: string): Diagnostic | undefined;
   fileByPath(relative: string): Entity | undefined;
   relationMetadata(ids: string[]): Map<string, Record<string, unknown>>;
+  /** Call sites the analyzers could not resolve, by the name they call (`callSites.unresolvedNames`). */
+  unresolvedCallNames(): { entityId: string; name: string; count: number }[];
   /** Content of an indexed file as of this snapshot, bounded by size. */
   readFile(relative: string, maxBytes: number): Promise<Buffer>;
 }
@@ -85,6 +87,9 @@ export class WorkingTreeSnapshot implements SnapshotSource {
     for (const row of this.store.db.prepare(`SELECT id, metadata FROM relations WHERE id IN (${ids.map(() => '?').join(',')})`).all(...ids)) if (row.metadata) result.set(String(row.id), JSON.parse(String(row.metadata)));
     return result;
   }
+  unresolvedCallNames(): { entityId: string; name: string; count: number }[] {
+    return this.store.db.prepare("SELECT e.id AS entity, j.key AS name, j.value AS count FROM entities e, json_each(e.metadata, '$.callSites.unresolvedNames') j").all().map(row => ({ entityId: String(row.entity), name: String(row.name), count: Number(row.count) }));
+  }
   /** Lexical containment, then no symlink anywhere between root and file. */
   async readFile(relative: string, maxBytes: number): Promise<Buffer> {
     if (!this.root) throw new SnapshotFileError(503, 'Source viewing requires the server to be started with a repository root');
@@ -118,6 +123,7 @@ export class CommitSnapshot implements SnapshotSource {
     for (const id of ids) { const relation = this.relation(id); if (relation?.metadata) result.set(id, relation.metadata); }
     return result;
   }
+  unresolvedCallNames(): { entityId: string; name: string; count: number }[] { return this.history.unresolvedCallNames(this.record.seq); }
   async readFile(relative: string, maxBytes: number): Promise<Buffer> {
     if (!this.root) throw new SnapshotFileError(503, 'Historical source requires the server to be started with a repository root');
     // The commit comes from the snapshot record and the path from its indexed file entity; neither is caller-supplied.

@@ -3,6 +3,10 @@ import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import type { Analyzer, AnalysisContext, ScannedFile } from '../core/analyzer.js';
 import { ANALYZER_VERSION, declarationHashes, evidence, type Entity, type EntityType } from '../core/graph.js';
+import { SiteCollector } from './references.js';
+import { createApplicationProgram } from './ts-program.js';
+import { resolveReferences, type TsApplicationState } from './ts-references.js';
+import { UrlEvaluator } from './ts-url.js';
 
 const HTTP_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD']);
 function literal(node: ts.Node | undefined): string | undefined { return node && (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) ? node.text : undefined; }
@@ -31,6 +35,13 @@ export function nextRoute(relative: string): { path: string; role: 'page' | 'lay
     return optional ? `:${optional[1]}*` : catchAll ? `:${catchAll[1]}+` : parameter ? `:${parameter[1]}` : segment;
   });
   return { path: `/${route.join('/')}`, role: match[2] as 'page' | 'layout' | 'route', ...(unsupported ? { unsupported } : {}) };
+}
+/** The function passed to useCallback (React), when the call is one. */
+function memoizedCallback(call: ts.CallExpression): ts.ArrowFunction | ts.FunctionExpression | undefined {
+  const callee = call.expression;
+  const name = ts.isIdentifier(callee) ? callee.text : ts.isPropertyAccessExpression(callee) ? callee.name.text : undefined;
+  const fn = call.arguments[0];
+  return name === 'useCallback' && fn && (ts.isArrowFunction(fn) || ts.isFunctionExpression(fn)) ? fn : undefined;
 }
 function bindingHas(name: ts.BindingName, identifier: string): boolean {
   if (ts.isIdentifier(name)) return name.text === identifier;
@@ -74,21 +85,38 @@ export const typescriptAnalyzer: Analyzer = {
       } else if (ts.sys.fileExists(configFile)) context.graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'error', code: 'tsconfig-error', file: path.relative(context.root, configFile), reason: ts.flattenDiagnosticMessageText(read.error.messageText, '\n') });
       optionsByApp.set(app.name, options);
     }
-    for (const file of context.files.values()) {
-      if (!file.analyzable || !['typescript', 'javascript'].includes(file.language ?? '') || !file.application || file.path.endsWith('.d.ts')) continue;
-      await analyzeFile(context, file, optionsByApp.get(file.application.name)!);
+    // One program per application: every file declares its symbols first, then
+    // calls, renders and references resolve across the whole application.
+    for (const app of context.config.applications) {
+      const files = [...context.files.values()].filter(file => file.analyzable && ['typescript', 'javascript'].includes(file.language ?? '') && file.application?.name === app.name);
+      if (!files.length) continue;
+      const texts = new Map<string, string>();
+      for (const file of files) texts.set(file.absolutePath, await readFile(file.absolutePath, 'utf8'));
+      const options = optionsByApp.get(app.name)!;
+      const program = createApplicationProgram(texts, options, path.join(context.root, app.path));
+      const checker = program.getTypeChecker();
+      const state: TsApplicationState = { program, checker, declarations: new Map(), sites: new SiteCollector() };
+      const urls = new UrlEvaluator(checker, program, context);
+      const analyzed: { file: ScannedFile; source: ts.SourceFile; symbols: Map<ts.Node, Entity> }[] = [];
+      for (const file of files) {
+        if (file.path.endsWith('.d.ts')) continue;
+        const source = program.getSourceFile(file.absolutePath);
+        if (!source) continue;
+        const symbols = analyzeFile(context, file, options, source, state, urls);
+        if (symbols) analyzed.push({ file, source, symbols });
+      }
+      for (const item of analyzed) resolveReferences(context, state, item.file, item.source, item.symbols);
+      state.sites.flush(context.graph);
     }
   },
 };
-async function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.CompilerOptions): Promise<void> {
+function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.CompilerOptions, source: ts.SourceFile, state: TsApplicationState, urls: UrlEvaluator): Map<ts.Node, Entity> | undefined {
   const { graph } = context;
   const app = file.application!;
-  const content = await readFile(file.absolutePath, 'utf8');
-  const source = ts.createSourceFile(file.absolutePath, content, ts.ScriptTarget.Latest, true);
   const parseDiagnostics = (source as ts.SourceFile & { parseDiagnostics: readonly ts.Diagnostic[] }).parseDiagnostics;
   if (parseDiagnostics.length) {
     for (const error of parseDiagnostics) graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'error', code: 'typescript-parse-error', file: file.path, line: source.getLineAndCharacterOfPosition(error.start ?? 0).line + 1, entityId: file.id, reason: ts.flattenDiagnosticMessageText(error.messageText, '\n') });
-    return;
+    return undefined;
   }
   const fileEntity = graph.entities.get(file.id)!;
   fileEntity.metadata.exports = [];
@@ -158,6 +186,13 @@ async function analyzeFile(context: AnalysisContext, file: ScannedFile, options:
     else if (ts.isVariableDeclaration(node) && node.initializer && (ts.isArrowFunction(node.initializer) || ts.isFunctionExpression(node.initializer)) && ts.isIdentifier(node.name)) {
       name = node.name.text; signature = functionSignature(node.initializer, source); type = 'function'; nameNode = node.name;
       declaration = node.parent.parent;
+    } else if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer && ts.isCallExpression(node.initializer) && memoizedCallback(node.initializer)) {
+      // const save = useCallback(async () => …, deps): the callback is the function.
+      name = node.name.text; signature = functionSignature(memoizedCallback(node.initializer)!, source); type = 'function'; nameNode = node.name;
+      declaration = node.parent.parent;
+    } else if (ts.isPropertyDeclaration(node) && node.initializer && (ts.isArrowFunction(node.initializer) || ts.isFunctionExpression(node.initializer)) && (ts.isIdentifier(node.name) || ts.isPrivateIdentifier(node.name))) {
+      // Class fields holding functions (handleClick = () => …) are methods.
+      name = node.name.text; signature = functionSignature(node.initializer, source); type = 'method'; nameNode = node.name;
     }
     if (name && type) {
       if (type === 'function' && /^[A-Z]/.test(name) && hasJsx(node)) type = 'component';
@@ -170,7 +205,12 @@ async function analyzeFile(context: AnalysisContext, file: ScannedFile, options:
         const isDefault = modifier(declaration, ts.SyntaxKind.DefaultKeyword);
         const entity = graph.contain({ id, type, name, path: file.path, language: file.language, parentId: parent?.id ?? file.id, sourceRange: location(node), metrics: { loc: location(node).endLine - location(node).startLine + 1 }, metadata: { qualifiedName: qualified, signature, exported: isExported, default: isDefault, ...(/^use[A-Z]/.test(name) ? { role: 'hook' } : {}), serverAction: /^(?:[\s{]*)(?:['"]use server['"])/.test(ts.isFunctionDeclaration(node) ? node.body?.getText(source) ?? '' : ''), ...declarationHashes(node.getText(source), nameNode ? nameNode.getEnd() - node.getStart(source) : 0) }, evidence: facts(node, 'AST symbol declaration') });
         symbols.set(node, entity);
-        if (ts.isVariableDeclaration(node) && node.initializer) symbols.set(node.initializer, entity);
+        state.declarations.set(node, entity);
+        if ((ts.isVariableDeclaration(node) || ts.isPropertyDeclaration(node)) && node.initializer) {
+          const fn = ts.isCallExpression(node.initializer) ? memoizedCallback(node.initializer) : node.initializer;
+          if (fn) { symbols.set(fn, entity); state.declarations.set(fn, entity); }
+          if (fn !== node.initializer) { symbols.set(node.initializer, entity); state.declarations.set(node.initializer, entity); }
+        }
         if (isExported) { exported.set(isDefault ? 'default' : name, entity); graph.relate(file.id, entity.id, 'exports', facts(node, 'Exported symbol')); }
       }
     }
@@ -182,6 +222,7 @@ async function analyzeFile(context: AnalysisContext, file: ScannedFile, options:
         let method: string | undefined = isFetch ? 'GET' : (node.expression as ts.PropertyAccessExpression).name.text.toUpperCase();
         let url = literal(node.arguments[0]);
         let reason: string | undefined;
+        let resolved: ReturnType<UrlEvaluator['resolve']> | undefined;
         if (isFetch && shadowedBinding(node, 'fetch')) { url = undefined; reason = 'fetch identifier has a local binding; cannot prove browser/global fetch'; }
         if (isAxios && shadowedBinding(node, (node.expression as ts.PropertyAccessExpression).expression.getText(source), 'axios')) { url = undefined; reason = 'axios identifier is shadowed by a local binding'; }
         if (isAxios && !HTTP_METHODS.has(method!)) { method = undefined; reason = 'Unsupported axios call form'; }
@@ -199,11 +240,18 @@ async function analyzeFile(context: AnalysisContext, file: ScannedFile, options:
             }
           }
         }
+        // A URL built from a proven base (configured origin or declared environment variable).
+        if (url === undefined && !reason && method && node.arguments[0]) {
+          resolved = urls.resolve(node.arguments[0]);
+          if ('reason' in resolved) reason = resolved.reason;
+        }
         const fact = facts(node, isFetch ? 'fetch() HTTP call' : 'Imported axios HTTP call')[0]!;
         const expression = node.arguments[0]?.getText(source) ?? '(missing URL)';
-        context.http.push({ callerId: caller.id, fileId: file.id, method, url, expression, evidence: fact });
-        (fileEntity.metadata.httpRequests as unknown[]).push({ callerId: caller.id, method, url, expression, line: fact.line, resolution: method && url !== undefined ? 'literal' : 'unresolved' });
-        if (!method || url === undefined) graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'unresolved-http-call', file: file.path, line: fact.line, entityId: caller.id, reason: reason ?? 'Dynamic URL construction' });
+        const proven = resolved && 'url' in resolved ? resolved.url : undefined;
+        const effect = state.sites.effect(caller.id, { category: 'network', operation: method ?? 'HTTP', detail: url ?? proven?.display ?? (expression.length > 80 ? `${expression.slice(0, 79)}…` : expression), line: fact.line!, via: isFetch ? 'fetch (Fetch API)' : 'axios' });
+        context.http.push({ callerId: caller.id, fileId: file.id, method, url, expression, evidence: fact, effect, ...(proven ? { resolved: proven } : {}) });
+        (fileEntity.metadata.httpRequests as unknown[]).push({ callerId: caller.id, method, url: url ?? proven?.display, expression, line: fact.line, resolution: method && url !== undefined ? 'literal' : proven ? 'proven-base' : 'unresolved' });
+        if (!method || (url === undefined && !proven)) graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'unresolved-http-call', file: file.path, line: fact.line, entityId: caller.id, reason: reason ?? 'Dynamic URL construction' });
       }
       if (node.expression.kind === ts.SyntaxKind.ImportKeyword && node.arguments[0]) {
         const specifier = literal(node.arguments[0]);
@@ -229,12 +277,12 @@ async function analyzeFile(context: AnalysisContext, file: ScannedFile, options:
       }
     }
   }
-  if (app.type !== 'nextjs') return;
+  if (app.type !== 'nextjs') return symbols;
   const route = nextRoute(modulePath);
-  if (!route) return;
+  if (!route) return symbols;
   fileEntity.metadata.nextjs = route;
-  if (route.unsupported) { graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'unsupported-next-route', file: file.path, entityId: file.id, reason: `Intercepted route segment ${route.unsupported}` }); return; }
-  if (route.role === 'layout') return;
+  if (route.unsupported) { graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'unsupported-next-route', file: file.path, entityId: file.id, reason: `Intercepted route segment ${route.unsupported}` }); return symbols; }
+  if (route.role === 'layout') return symbols;
   const routeFacts = [evidence('framework', 'typescript-nextjs', file.path, 1, `Next.js App Router ${route.role} convention`)];
   if (route.role === 'page') {
     const entity = graph.contain({ id: graph.id('route', app.name, route.path, modulePath), type: 'route', name: route.path, path: file.path, parentId: context.applicationIds.get(app.name)!, metadata: { routePath: route.path, framework: 'nextjs', registration: 'convention' }, evidence: routeFacts });
@@ -246,4 +294,5 @@ async function analyzeFile(context: AnalysisContext, file: ScannedFile, options:
       graph.relate(entity.id, handler.id, 'handles', [...routeFacts, ...handler.evidence]);
     }
   }
+  return symbols;
 }

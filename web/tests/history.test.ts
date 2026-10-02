@@ -135,3 +135,32 @@ test('rapid scrubbing keeps only the last view', async () => {
   assert.equal(atlas.scene.rootId, state.meta?.root.id);
   for (const node of atlas.scene.nodes.values()) assert.ok(node.change === undefined || state.meta?.comparison, 'no nodes from an older view');
 });
+test('the time-lapse shows commits at once while scrubbing and playing, then settles on the real view', async () => {
+  const { atlas, api } = await ready();
+  await atlas.openTimeline();
+  await until(() => atlas.getState().timeline.evolution.status === 'ready');
+  assert.equal(atlas.evolution?.length, 4);
+  // Scrubbing puts the frame on screen without asking the server for a view.
+  const before = api.calls.length;
+  assert.equal(atlas.scrubTo(snapshotOf('B').id), true);
+  assert.deepEqual([atlas.getState().timeline.preview, atlas.previewScene?.frame], [1, 1]);
+  assert.ok(!api.calls.slice(before).some(call => call.startsWith('meta') || call.startsWith('children')), 'no view requests while scrubbing');
+  assert.ok([...atlas.previewScene!.nodes.values()].some(node => node.name === 'Signup' && node.change?.status === 'added'));
+  const framed = new Map([...atlas.previewScene!.nodes].map(([id, node]) => [id, node.rect]));
+  // Releasing settles on that commit: the real scene replaces the frame, every block where it was.
+  await atlas.settle();
+  let state = atlas.getState();
+  assert.deepEqual([state.timeline.preview, atlas.previewScene, state.timeline.target], [undefined, undefined, snapshotOf('B').id]);
+  for (const [id, node] of atlas.scene.nodes) assert.deepEqual(node.rect, framed.get(id), `${id} did not move`);
+  // Playing advances by elapsed time and settles on the last commit.
+  atlas.scrubTo(snapshotOf('A').id);
+  await atlas.play();
+  assert.deepEqual([atlas.getState().timeline.playing, atlas.getState().timeline.preview], [true, 0]);
+  atlas.advancePlayback(1000 / atlas.playbackRate() + 1);
+  assert.equal(atlas.getState().timeline.preview, 1);
+  atlas.advancePlayback(60_000);
+  await until(() => atlas.getState().timeline.preview === undefined && atlas.getState().meta?.snapshot.commitSha === fixture.commits.D);
+  state = atlas.getState();
+  assert.equal(state.timeline.playing, false);
+  assert.equal(state.timeline.target, snapshotOf('D').id);
+});

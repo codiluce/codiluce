@@ -6,6 +6,31 @@ import { highlightLines } from '../lib/highlight';
 import { useAtlas, useStore } from './context';
 
 const WINDOW = 400;
+type Target = { id: string; name: string; type: string };
+/**
+ * Lines of the shown file where the selected symbol calls, renders or
+ * references an indexed entity (from its outgoing relationships' site lines).
+ */
+function useCallMarks(path: string | undefined): Map<number, Target[]> {
+  const selection = useAtlas(state => state.selection);
+  const relations = useAtlas(state => state.relations);
+  return useMemo(() => {
+    const marks = new Map<number, Target[]>();
+    if (!path || !selection || selection.node?.path !== path || relations.forId !== selection.id) return marks;
+    for (const item of relations.items) {
+      if (item.direction !== 'outgoing' || !['calls', 'renders', 'references'].includes(item.type)) continue;
+      const lines = Array.isArray(item.metadata?.lines) ? item.metadata.lines as number[] : [];
+      for (const line of lines) marks.set(line, [...marks.get(line) ?? [], { id: item.other.id, name: item.other.name, type: item.type }]);
+    }
+    return marks;
+  }, [path, selection, relations]);
+}
+function CallMark({ targets }: { targets: Target[] }) {
+  const store = useStore();
+  const first = targets[0]!;
+  const label = targets.map(target => `${target.type} ${target.name}`).join(', ');
+  return <button className="call-mark" title={`${label} — go to ${first.name}`} aria-label={`Go to ${first.name} (${label})`} onClick={() => void store.select(first.id, { fly: true })}>◆</button>;
+}
 function where(snapshot: SnapshotRef | undefined): string { return !snapshot ? '' : snapshot.kind === 'commit' ? `@ ${shortSha(snapshot.commitSha)}` : '@ working tree'; }
 export function SourcePanel() {
   const store = useStore();
@@ -14,6 +39,7 @@ export function SourcePanel() {
   const body = useRef<HTMLDivElement>(null);
   const data = source?.data;
   const html = useMemo(() => data ? highlightLines(data.lines, data.file.language) : [], [data]);
+  const marks = useCallMarks(data?.file.path);
   useEffect(() => {
     if (!data || !body.current) return;
     const target = body.current.querySelector<HTMLElement>('tr.focus');
@@ -52,6 +78,7 @@ export function SourcePanel() {
                 return (
                   <tr key={number} className={inFocus ? `focus${number === focus!.startLine ? ' focus-edge' : ''}` : undefined} data-line={number}>
                     <td className="ln">{number}</td>
+                    <td className="mark-cell">{marks.get(number) && <CallMark targets={marks.get(number)!} />}</td>
                     <td className="code" dangerouslySetInnerHTML={{ __html: line || ' ' }} />
                   </tr>
                 );

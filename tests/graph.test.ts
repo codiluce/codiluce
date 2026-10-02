@@ -13,6 +13,7 @@ import { createInspectionServer } from '../src/api/server.js';
 import { loadConfig, matchesGlob } from '../src/core/config.js';
 import { validateGraph, type SoftwareGraph, type Entity } from '../src/core/graph.js';
 import { nextRoute } from '../src/analyzers/typescript.js';
+import { shapeHash } from '../src/history/fingerprint.js';
 
 const execute = promisify(execFile);
 const fixture = fileURLToPath(new URL('./fixtures/repository', import.meta.url));
@@ -22,8 +23,17 @@ async function createFixture(): Promise<string> {
   const root = await mkdtemp(path.join(tmpdir(), 'atlas-fixture-')); temporary.push(root);
   await cp(fixture, root, { recursive: true });
   await mkdir(path.join(root, '.archipelago'));
-  await writeFile(path.join(root, '.archipelago/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'] }], ignore: ['**/custom-ignored/**'] }));
+  await writeFile(path.join(root, '.archipelago/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'], apiOriginEnv: ['NEXT_PUBLIC_API_URL'] }], ignore: ['**/custom-ignored/**'] }));
   return root;
+}
+/** `name` or `name:type` (e.g. `login:function`). */
+function relation(from: string, to: string, type: string) {
+  const pick = (spec: string) => { const [name, kind] = spec.split(':'); return entity(name!, kind); };
+  return graph.relations.find(edge => edge.from === pick(from).id && edge.to === pick(to).id && edge.type === type);
+}
+function symbol(qualifiedName: string): Entity {
+  const found = graph.entities.find(item => item.metadata.qualifiedName === qualifiedName);
+  assert.ok(found, `Expected symbol ${qualifiedName}`); return found;
 }
 function entity(name: string, type?: string): Entity {
   const found = graph.entities.find(entity => entity.name === name && (!type || entity.type === type));
@@ -195,4 +205,79 @@ test('CLI persists parse diagnostics and exits with analyzer error status', asyn
   await assert.rejects(execute(process.execPath, ['--experimental-sqlite', '--import', 'tsx', cli, 'index', '--repo', root]), (error: unknown) => typeof error === 'object' && error !== null && 'code' in error && error.code === 2);
   const store = new GraphStore(path.join(root, '.archipelago/archipelago.db'), true);
   try { assert.ok(store.diagnostics({ severity: 'error' }).items.some(item => item.code === 'typescript-parse-error')); } finally { store.close(); }
+});
+
+test('TypeScript calls, renders and handler references resolve through the type checker', () => {
+  // A component rendering another, a handler bound as an event prop, a callback, and an inline handler calling a function.
+  assert.ok(relation('AccountPage', 'AccountPanel', 'renders'));
+  assert.ok(relation('AccountPanel', 'LoginForm', 'renders'));
+  const handler = relation('AccountPanel', 'handleSave', 'references')!;
+  assert.deepEqual([handler.metadata!.forms, handler.metadata!.events], [['handler'], ['onClick']]);
+  assert.match(handler.evidence[0]!.explanation!, /Passes handleSave as onClick of <button>/);
+  assert.deepEqual(relation('AccountPanel', 'renderRow', 'references')!.metadata!.forms, ['callback']);
+  const inline = relation('LoginForm:component', 'login:function', 'calls')!;
+  assert.deepEqual(inline.metadata!.events, ['onSubmit']);
+  // Singleton: AccountService.getInstance().signIn() reaches the method through the declared return type.
+  assert.ok(relation('handleSave', 'getInstance', 'calls'));
+  assert.ok(relation('handleSave', 'signIn', 'calls'));
+  assert.deepEqual(relation('getInstance', 'AccountService:class', 'calls')!.metadata!.forms, ['new']);
+  assert.equal(relation('handleSave', 'signIn', 'calls')!.evidence[0]!.file, 'frontend/src/components/AccountPanel.tsx');
+  // Call-site coverage: package calls are external, a callback parameter is unresolved.
+  assert.deepEqual(entity('AccountPanel').metadata.callSites, { resolved: 2, external: 2, unresolved: 0 });
+  assert.deepEqual(entity('localFetch').metadata.callSites, { resolved: 0, external: 0, unresolved: 1, unresolvedNames: { fetch: 1 } });
+});
+test('HTTP URLs built from a proven base link to endpoints with every hop as evidence', () => {
+  const signIn = relation('signIn', 'POST /auth/login', 'requests')!;
+  assert.ok(signIn, 'this.API_BASE_URL → getUrlFromEnv() → configured origin or declared env var');
+  assert.equal(signIn.metadata!.resolution, 'proven-base');
+  const explanations = signIn.evidence.map(fact => fact.explanation ?? '');
+  assert.ok(explanations.some(text => /this\.API_BASE_URL is assigned getUrlFromEnv\(\)\.toString\(\)/.test(text)));
+  assert.ok(explanations.some(text => /process\.env\.NEXT_PUBLIC_API_URL is declared in the configuration \(apiOriginEnv\)/.test(text)));
+  assert.ok(signIn.evidence.some(fact => fact.file === 'frontend/src/data/api.ts'));
+  // A template hole fills a route parameter; the base is still proven.
+  const profile = relation('profile', 'GET /profiles/{id}', 'requests')!;
+  assert.equal(profile.metadata!.pattern, '/profiles/{*}');
+  assert.ok(profile.evidence.some(fact => /dynamic path segment matched to route parameter/.test(fact.explanation ?? '')));
+  // Same-origin: JavaScript served by the Laravel application calling its own routes.
+  assert.equal(relation('loadProfile', 'GET /profiles/{id}', 'requests')!.metadata!.resolution, 'same-origin');
+  // Failures keep a specific reason.
+  const reason = (name: string, code: string) => graph.diagnostics.find(item => item.entityId === entity(name).id && item.code === code)?.reason;
+  assert.match(reason('elsewhere', 'unresolved-http-call')!, /process\.env\.OTHER_SERVICE_URL is not declared as an application origin/);
+  assert.match(reason('missing', 'unmatched-http-call')!, /GET \/nowhere\/at\/all on backend: 0 eligible endpoints/);
+  assert.ok(!graph.relations.some(edge => edge.type === 'requests' && edge.from === entity('dynamicUrl').id), 'a relative template from Next still needs a proven boundary');
+  // The caller's network effect records the endpoint it reaches.
+  const network = (entity('signIn').metadata.effects as { category: string; endpoint?: string }[]).find(item => item.category === 'network')!;
+  assert.equal(network.endpoint, entity('POST /auth/login').id);
+});
+test('PHP calls resolve through $this, promoted properties, new and inheritance; the rest is counted', () => {
+  const login = symbol('App\\Http\\Controllers\\AuthController::login'), authenticate = symbol('App\\Services\\AuthService::authenticate');
+  const show = symbol('App\\Http\\Controllers\\ProfileController::show'), update = symbol('App\\Http\\Controllers\\ProfileController::update'), audit = symbol('App\\Http\\Controllers\\ProfileController::audit');
+  const has = (from: Entity, to: Entity, form: string) => graph.relations.some(edge => edge.from === from.id && edge.to === to.id && edge.type === 'calls' && (edge.metadata!.forms as string[]).includes(form));
+  assert.ok(has(login, authenticate, 'call'), '(new AuthService())->authenticate()');
+  assert.ok(has(login, symbol('App\\Services\\AuthService'), 'new'));
+  assert.ok(has(show, authenticate, 'call'), '$this->auth->authenticate() through the promoted constructor property');
+  assert.ok(has(update, audit, 'call'), '$this->audit()');
+  // An undeclared property is unresolved; FormRequest::validated() is inherited from the framework.
+  assert.deepEqual(audit.metadata.callSites, { resolved: 0, external: 0, unresolved: 1, unresolvedNames: { record: 1 } });
+  assert.equal((update.metadata.callSites as { unresolved: number }).unresolved, 0);
+});
+test('effects are recorded from resolved names: database, responses, storage and navigation', () => {
+  const effects = (item: Entity) => (item.metadata.effects as { category: string; operation: string; status?: number; target?: string }[]).map(fact => `${fact.category}:${fact.operation}${fact.status ? `:${fact.status}` : ''}`);
+  assert.deepEqual(effects(symbol('App\\Services\\AuthService::authenticate')), ['database:read']);
+  assert.equal((symbol('App\\Services\\AuthService::authenticate').metadata.effects as { target?: string }[])[0]!.target, symbol('App\\Models\\User').id);
+  assert.deepEqual(effects(symbol('App\\Http\\Controllers\\ProfileController::show')), ['response:abort:404', 'response:json:200']);
+  assert.deepEqual(effects(symbol('App\\Http\\Controllers\\ProfileController::update')), ['response:validation:422', 'database:read', 'response:not found:404', 'database:write', 'database:write', 'response:redirect:302']);
+  assert.deepEqual(effects(symbol('App\\Http\\Controllers\\AuthController::user')), ['response:return:200']);
+  assert.ok(effects(entity('signIn')).includes('storage:write'));
+  assert.deepEqual(effects(entity('handleSave')), ['navigation:push']);
+  assert.deepEqual(effects(entity('GET', 'function')), ['response:json:200']);
+});
+test('apiOriginEnv is validated, and derived metadata does not change an entity\'s shape', async () => {
+  const state = await mkdtemp(path.join(tmpdir(), 'atlas-state-')); temporary.push(state);
+  await writeFile(path.join(state, 'config.yml'), stringify({ applications: [{ name: 'backend', path: 'backend', type: 'laravel', apiOriginEnv: ['NOT VALID'] }] }));
+  await assert.rejects(loadConfig(root, state), /apiOriginEnv must contain environment variable names/);
+  await writeFile(path.join(state, 'config.yml'), stringify({ applications: [{ name: 'backend', path: 'backend', type: 'laravel', apiOriginEnv: ['API'] }, { name: 'frontend', path: 'frontend', type: 'nextjs', apiOriginEnv: ['API'] }] }));
+  await assert.rejects(loadConfig(root, state), /declared for more than one application/);
+  const target = entity('signIn');
+  assert.equal(shapeHash({ ...target, metadata: { ...target.metadata, callSites: { resolved: 9, external: 0, unresolved: 0 }, effects: [] } }), shapeHash(target));
 });

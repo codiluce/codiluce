@@ -209,17 +209,21 @@ export class HistoryStore {
 
   // Snapshot contents ------------------------------------------------------------
   entities(seq: number): SnapshotEntity[] {
-    return this.sql(`SELECT v.entity_id, v.type, v.name, v.path, v.language, v.parent_id, v.source_range, v.loc, v.qualified_name, v.signature, v.route_path, v.method, v.framework, v.role, v.skipped, v.content_key, v.body_hash, v.shape_hash
-      FROM snapshot_entities m JOIN entity_versions v ON v.vid=m.version WHERE m.snapshot=? ORDER BY v.entity_id`).all(seq).map(row => ({
-      id: String(row.entity_id), type: String(row.type), name: String(row.name),
-      ...(row.path ? { path: String(row.path) } : {}), ...(row.language ? { language: String(row.language) } : {}),
-      ...(row.parent_id ? { parentId: String(row.parent_id) } : {}), ...(row.source_range ? { sourceRange: JSON.parse(String(row.source_range)) as SourceRange } : {}),
-      ...(typeof row.loc === 'number' ? { loc: row.loc } : {}), ...(row.qualified_name ? { qualifiedName: String(row.qualified_name) } : {}),
-      ...(typeof row.signature === 'string' ? { signature: row.signature } : {}), ...(row.route_path ? { routePath: String(row.route_path) } : {}),
-      ...(row.method ? { method: String(row.method) } : {}), ...(row.framework ? { framework: String(row.framework) } : {}),
-      ...(row.role ? { role: String(row.role) } : {}), ...(row.skipped ? { analysisSkipped: String(row.skipped) } : {}),
-      ...(row.content_key ? { content: String(row.content_key) } : {}), ...(row.body_hash ? { body: String(row.body_hash) } : {}), shape: String(row.shape_hash),
-    }));
+    return this.sql(`SELECT ${ENTITY_COLUMNS} FROM snapshot_entities m JOIN entity_versions v ON v.vid=m.version WHERE m.snapshot=? ORDER BY v.entity_id`).all(seq).map(decodeEntity);
+  }
+  /** Every stored entity version by version ID, for walking a timeline through membership deltas. */
+  entityVersions(): Map<number, SnapshotEntity> {
+    const result = new Map<number, SnapshotEntity>();
+    for (const row of this.sql(`SELECT v.vid, ${ENTITY_COLUMNS} FROM entity_versions v`).all()) result.set(Number(row.vid), decodeEntity(row));
+    return result;
+  }
+  /** Entity versions in snapshot `seq` but not in `previous`, and the reverse (`previous` 0: every version of `seq`). */
+  entityDelta(seq: number, previous: number): { added: number[]; removed: number[] } {
+    const only = this.sql('SELECT version FROM snapshot_entities WHERE snapshot=? EXCEPT SELECT version FROM snapshot_entities WHERE snapshot=?');
+    return { added: only.all(seq, previous).map(row => Number(row.version)), removed: previous ? only.all(previous, seq).map(row => Number(row.version)) : [] };
+  }
+  unresolvedCallNames(seq: number): { entityId: string; name: string; count: number }[] {
+    return this.sql("SELECT v.entity_id AS entity, j.key AS name, j.value AS count FROM snapshot_entities m JOIN entity_versions v ON v.vid=m.version, json_each(v.data, '$.metadata.callSites.unresolvedNames') j WHERE m.snapshot=?").all(seq).map(row => ({ entityId: String(row.entity), name: String(row.name), count: Number(row.count) }));
   }
   relations(seq: number): SnapshotRelation[] {
     return this.sql('SELECT r.relation_id, r.from_id, r.to_id, r.type FROM snapshot_relations m JOIN relation_versions r ON r.vid=m.version WHERE m.snapshot=? ORDER BY r.relation_id').all(seq)
@@ -283,6 +287,19 @@ export class HistoryStore {
     this.db.exec('BEGIN IMMEDIATE');
     try { const result = work(); this.db.exec('COMMIT'); return result; } catch (error) { this.db.exec('ROLLBACK'); throw error; }
   }
+}
+const ENTITY_COLUMNS = 'v.entity_id, v.type, v.name, v.path, v.language, v.parent_id, v.source_range, v.loc, v.qualified_name, v.signature, v.route_path, v.method, v.framework, v.role, v.skipped, v.content_key, v.body_hash, v.shape_hash';
+function decodeEntity(row: Row): SnapshotEntity {
+  return {
+    id: String(row.entity_id), type: String(row.type), name: String(row.name),
+    ...(row.path ? { path: String(row.path) } : {}), ...(row.language ? { language: String(row.language) } : {}),
+    ...(row.parent_id ? { parentId: String(row.parent_id) } : {}), ...(row.source_range ? { sourceRange: JSON.parse(String(row.source_range)) as SourceRange } : {}),
+    ...(typeof row.loc === 'number' ? { loc: row.loc } : {}), ...(row.qualified_name ? { qualifiedName: String(row.qualified_name) } : {}),
+    ...(typeof row.signature === 'string' ? { signature: row.signature } : {}), ...(row.route_path ? { routePath: String(row.route_path) } : {}),
+    ...(row.method ? { method: String(row.method) } : {}), ...(row.framework ? { framework: String(row.framework) } : {}),
+    ...(row.role ? { role: String(row.role) } : {}), ...(row.skipped ? { analysisSkipped: String(row.skipped) } : {}),
+    ...(row.content_key ? { content: String(row.content_key) } : {}), ...(row.body_hash ? { body: String(row.body_hash) } : {}), shape: String(row.shape_hash),
+  };
 }
 function decodeCommit(row: Row): CommitInfo {
   return { sha: String(row.sha), tree: String(row.tree), parents: JSON.parse(String(row.parents)) as string[], authorName: String(row.author_name), authorEmail: String(row.author_email), authoredAt: String(row.authored_at), committedAt: String(row.committed_at), subject: String(row.subject), body: String(row.body) };

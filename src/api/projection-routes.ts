@@ -2,6 +2,8 @@
 // and bounded. Every projection route accepts `snapshot` (a stored snapshot ID;
 // absent = live working-tree index) and `compareTo` (a baseline snapshot).
 import type { ServerResponse } from 'node:http';
+import { promisify } from 'node:util';
+import { gzip } from 'node:zlib';
 import { NotFoundError, type ProjectionService } from '../projection/service.js';
 import { SourceError } from '../projection/source.js';
 import type { ViewKey } from '../projection/dto.js';
@@ -23,13 +25,17 @@ export function viewParams(params: URLSearchParams): ViewKey {
   }
   return view;
 }
+function impactParams(params: URLSearchParams): { depth?: number; types?: string[]; type?: string; distance?: number } {
+  return { depth: numberParam(params, 'depth'), types: params.get('types')?.split(',').filter(Boolean), type: text(params, 'type'), distance: numberParam(params, 'distance') };
+}
 export function isProjectionPath(pathname: string): boolean { return pathname.startsWith('/api/projection') || pathname === '/api/source' || pathname === '/api/source/diff' || pathname === '/api/history' || pathname.startsWith('/api/history/'); }
 
 /** Returns true when the request was handled. */
-export async function handleProjectionRoute(context: ProjectionContext, url: URL, response: ServerResponse): Promise<boolean> {
+export async function handleProjectionRoute(context: ProjectionContext, url: URL, response: ServerResponse, acceptEncoding?: string): Promise<boolean> {
   const { pathname } = url;
   if (!isProjectionPath(pathname)) return false;
   const params = url.searchParams;
+  if (pathname === '/api/history/evolution') return evolutionRoute(context, params, response, acceptEncoding);
   const page = { limit: numberParam(params, 'limit'), offset: numberParam(params, 'offset') };
   const { projection } = context;
   try {
@@ -54,6 +60,13 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
       if (!anchor) throw new Error('anchor is required');
       result = projection.aggregateEdges(decodeURIComponent(match[1]!), { ...page, anchor, direction: text(params, 'direction'), type: text(params, 'type'), view });
     } else if ((match = new RegExp(`^/api/projection/diagnostics/${ID}$`).exec(pathname))) result = projection.diagnostics(decodeURIComponent(match[1]!), { ...page, severity: text(params, 'severity'), view });
+    else if ((match = new RegExp(`^/api/projection/impact/${ID}$`).exec(pathname))) result = projection.impact(decodeURIComponent(match[1]!), { ...page, ...impactParams(params), view });
+    else if ((match = new RegExp(`^/api/projection/steps/${ID}$`).exec(pathname))) result = await projection.steps(decodeURIComponent(match[1]!), { view, maxFileBytes: context.maxFileBytes });
+    else if (pathname === '/api/projection/path') {
+      const from = params.get('from'), to = params.get('to');
+      if (!from || !to) throw new Error('from and to are required');
+      result = projection.path(from, to, view);
+    } else if (pathname === '/api/history/impact') result = projection.commitImpact(view, { ...page, ...impactParams(params) });
     else if (pathname === '/api/projection/between') {
       const a = params.get('a'), b = params.get('b');
       if (!a || !b) throw new Error('a and b are required');
@@ -78,6 +91,27 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
     }
     if (result === undefined) { response.writeHead(404).end(JSON.stringify({ error: 'Not found' })); return true; }
     response.end(JSON.stringify(result));
+  } catch (error) {
+    const status = error instanceof SourceError ? error.status : error instanceof NotFoundError ? 404 : 400;
+    response.writeHead(status).end(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }));
+  }
+  return true;
+}
+/** Encoded time-lapse bodies by result: the payload is large and does not change once computed. */
+const encodedEvolution = new WeakMap<object, { json: string; gzip: Buffer }>();
+const gzipAsync = promisify(gzip);
+/** `/api/history/evolution`: 202 with progress while the time-lapse is computed, then the frames (gzip when accepted). */
+async function evolutionRoute(context: ProjectionContext, params: URLSearchParams, response: ServerResponse, acceptEncoding?: string): Promise<boolean> {
+  try {
+    if (!context.history) throw new SourceError(503, 'History is unavailable');
+    const timeline = await context.history.timeline(text(params, 'ref'));
+    const result = context.projection.evolution(timeline.entries.flatMap(entry => entry.snapshot ? [entry.snapshot.id] : []));
+    if (result.status === 'computing') { response.writeHead(202).end(JSON.stringify(result)); return true; }
+    let encoded = encodedEvolution.get(result);
+    if (!encoded) { const json = JSON.stringify(result); encoded = { json, gzip: await gzipAsync(json) }; encodedEvolution.set(result, encoded); }
+    response.setHeader('Vary', 'Accept-Encoding');
+    if (/\bgzip\b/.test(acceptEncoding ?? '')) response.writeHead(200, { 'Content-Encoding': 'gzip' }).end(encoded.gzip);
+    else response.end(encoded.json);
   } catch (error) {
     const status = error instanceof SourceError ? error.status : error instanceof NotFoundError ? 404 : 400;
     response.writeHead(status).end(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }));

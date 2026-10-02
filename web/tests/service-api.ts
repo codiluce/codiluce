@@ -4,7 +4,7 @@ import type { NodeSummary, SourceRequest, ViewKey } from '@engine/projection/dto
 import type { GraphStore } from '../../src/storage/sqlite.js';
 import type { ProjectionService } from '../../src/projection/service.js';
 import type { HistoryService } from '../../src/history/service.js';
-import { ApiError, type AtlasApi } from '../lib/api';
+import { ApiError, type AtlasApi, type ImpactOptions } from '../lib/api';
 import type { MapNavigator } from '../lib/store';
 
 export class ServiceApi implements AtlasApi {
@@ -47,6 +47,19 @@ export class ServiceApi implements AtlasApi {
   }
   sourceDiff(entity: string, options: { ignoreWhitespace?: boolean }, signal?: AbortSignal) { return this.run('sourceDiff', entity, signal, () => this.projection.sourceDiff(entity, this.options.maxFileBytes ?? 1024 * 1024, this.view, options)); }
   requestIndex(sha: string) { return this.run('requestIndex', sha, undefined, () => { if (!this.options.history) throw new Error('No history'); return this.options.history.request(sha); }); }
+  /** Waits for the time-lapse instead of reporting progress. */
+  evolution(signal?: AbortSignal) {
+    return this.run('evolution', '', signal, async () => {
+      if (!this.options.history) throw new Error('No history');
+      const timeline = await this.options.history.timeline();
+      return this.projection.awaitEvolution(timeline.entries.flatMap(entry => entry.snapshot ? [entry.snapshot.id] : []));
+    });
+  }
+  impact(id: string | { comparison: true }, options: ImpactOptions, signal?: AbortSignal) {
+    return this.run('impact', typeof id === 'string' ? id : 'comparison', signal, () => typeof id === 'string' ? this.projection.impact(id, { ...options, view: this.view }) : this.projection.commitImpact(this.view, options));
+  }
+  steps(id: string, signal?: AbortSignal) { return this.run('steps', id, signal, () => this.projection.steps(id, { view: this.view, maxFileBytes: this.options.maxFileBytes ?? 1024 * 1024 })); }
+  path(from: string, to: string, signal?: AbortSignal) { return this.run('path', `${from}>${to}`, signal, () => this.projection.path(from, to, this.view)); }
   clear() {}
 }
 export class RecordingNavigator implements MapNavigator {

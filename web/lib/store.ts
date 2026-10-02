@@ -7,12 +7,13 @@
 // for the containers currently open, so the camera and the user's place on
 // the map are kept; a view epoch drops responses that belong to an old view.
 import type { Entity, Relation } from '@engine/core/graph';
-import type { AggregateEdgesPage, AggregateGroup, AggregateResult, ChangesPage, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, LocateResult, NodeSummary, ProjectionMeta, RelationItem, SourceDiffResponse, SourceRequest, SourceResponse, TimelineEntry, TimelineResponse, ViewKey } from '@engine/projection/dto';
+import type { AggregateEdgesPage, AggregateGroup, AggregateResult, ChangesPage, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, ImpactItem, ImpactResult, LocateResult, NodeSummary, ProjectionMeta, RelationItem, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineEntry, TimelineResponse, ViewKey } from '@engine/projection/dto';
 import { isAbort, type AtlasApi } from './api';
 import { localFlowPersistence, moveItem, removeAt, removeFlow, upsertFlow, validateFlowName, type FlowPersistence, type StoredFlow } from './flows';
 import type { Level } from './lod';
 import { initialPlayback, playback, type PlaybackAction, type PlaybackState } from './playback';
 import { Scene } from './scene';
+import { Evolution } from './evolution';
 
 export const CHILD_PAGE = 500;
 /** Children beyond this many per container are not fetched; the inspector says so. */
@@ -50,8 +51,35 @@ export interface TimelineState {
   /** Overview list of changed entities in the comparison. */
   changes: { status: Status; filter?: string; page?: ChangesPage; items: ChangesPage['items']; error?: string };
   notice?: string;
+  /** Time-lapse frames for continuous scrubbing and playback (the server builds them in the background). */
+  evolution: { status: Status; progress?: number; error?: string };
+  /** Time-lapse frame on screen while scrubbing or playing, before the view settles on its commit. */
+  preview?: number;
+  playing: boolean;
+  /** Playback speed multiplier. */
+  speed: number;
+  /** While playing, the camera drifts toward where the changes happen. */
+  follow: boolean;
 }
-export interface FlowDraft { id?: string; name: string; entityIds: string[]; error?: string }
+export interface FlowDraft {
+  id?: string; name: string; entityIds: string[]; error?: string;
+  /** `static`: the steps are a path found over indexed relationships (until edited). */
+  type?: 'declared' | 'static';
+  /** Building from a path: its two ends, and the search state. */
+  path?: { from?: string; to?: string; status: Status; notice?: string };
+}
+/** Blast radius of the selection. While `open`, it follows the selection. */
+export interface ImpactState {
+  open: boolean; status: Status; forId?: string;
+  /** The view (snapshot|baseline) the data was computed for. */
+  viewStamp?: string;
+  depth: number; filter: { type?: string; distance?: number };
+  data?: ImpactResult; items: ImpactItem[]; error?: string;
+}
+/** What the viewed comparison's changes reach (history). */
+export interface CommitImpactState { status: Status; viewStamp?: string; data?: ImpactResult; error?: string; show: boolean }
+/** "What happens from here": typed steps from an anchor entity. */
+export interface StepsState { anchor: string; status: Status; viewStamp: string; data?: StepsResult; error?: string; focus?: string }
 export interface ResolvedFlow { flowId: string; steps: { entityId: string; node?: NodeSummary; ancestors: string[]; missing: boolean }[]; links: RelationItem[][]; status: Status; error?: string }
 export interface FlowsState { flows: StoredFlow[]; draft?: FlowDraft; activeId?: string; resolved?: ResolvedFlow; playback: PlaybackState; storageError?: string }
 export interface ViewState { level: Level; focus: { id: string; name: string; type: string }[]; zoom: number; visible: { id: string; name: string; type: string }[]; truncated: boolean }
@@ -74,6 +102,9 @@ export interface AtlasState {
   flows: FlowsState;
   staleIndex: boolean;
   sceneRevision: number;
+  impact: ImpactState;
+  commitImpact: CommitImpactState;
+  steps?: StepsState;
 }
 export interface MapNavigator {
   flyTo(node: NodeSummary, options?: { mode?: 'focus' | 'enter' }): void;
@@ -122,6 +153,8 @@ export function predecessor(timeline: TimelineResponse | undefined, id: string |
 export function entryOf(timeline: TimelineResponse | undefined, id: string | undefined): TimelineEntry | undefined {
   return id ? timeline?.entries.find(item => item.snapshot?.id === id) : undefined;
 }
+/** Which snapshots a time-lapse covers: the indexed commits of the timeline, in order. */
+function evolutionKey(timeline: TimelineResponse | undefined): string { return (timeline?.entries ?? []).flatMap(entry => entry.snapshot ? [entry.snapshot.id] : []).join(','); }
 export function isContainer(node: Pick<NodeSummary, 'type' | 'kind'>): boolean {
   return node.kind === 'group' || ['repository', 'application', 'directory'].includes(node.type);
 }
@@ -137,6 +170,16 @@ export class AtlasStore {
   /** Incremented on every view change; async work started under an older epoch is discarded. */
   private epoch = 0;
   scene = new Scene();
+  /** Time-lapse of the indexed history, once loaded. */
+  evolution?: Evolution;
+  /** Drawn instead of `scene` while a time-lapse frame is on screen. */
+  previewScene?: Scene;
+  private evolutionLoad?: Promise<boolean>;
+  /** Indexed snapshots the loaded time-lapse covers; a different list means it is outdated. */
+  private evolutionKey = '';
+  /** Fractional frame position while playing. */
+  private playhead = 0;
+  private disposed = false;
   navigator?: MapNavigator;
   /** Set by the map: whether a node is drawn at the current level of detail. */
   visibility?: (id: string) => boolean;
@@ -151,7 +194,8 @@ export class AtlasStore {
       relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' },
       history: { entries: [], index: -1 }, showDiagnostics: prefs.showDiagnostics ?? true, themeId: prefs.themeId ?? 'midnight',
       flows: { flows: [], playback: initialPlayback() }, staleIndex: false, sceneRevision: 0,
-      timeline: { open: false, status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES },
+      impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false },
+      timeline: { open: false, status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true },
     };
   }
   getState = (): AtlasState => this.state;
@@ -171,7 +215,7 @@ export class AtlasStore {
   private savePrefs(): void {
     try { this.options.storage?.setItem('archipelago:prefs', JSON.stringify({ themeId: this.state.themeId, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged })); } catch { /* preferences are optional */ }
   }
-  dispose(): void { for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
+  dispose(): void { this.disposed = true; for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
 
   async init(): Promise<void> {
     this.set({ status: 'loading', error: undefined });
@@ -190,6 +234,8 @@ export class AtlasStore {
       const deepLink = param('id'), at = param('at'), vs = param('vs');
       if ((at || vs) && meta.history.available) await this.openTimeline({ at, vs, select: deepLink });
       else if (deepLink) await this.select(deepLink, { fly: true });
+      const impactDepth = Number(param('impact'));
+      if (deepLink && this.state.selection && Number.isInteger(impactDepth) && impactDepth >= 1 && impactDepth <= 10) void this.showImpact(this.state.selection.id, impactDepth);
       if (this.state.flows.activeId) await this.activateFlow(this.state.flows.activeId);
     } catch (error) {
       this.set({ status: 'error', error: error instanceof Error ? error.message : String(error) });
@@ -243,6 +289,7 @@ export class AtlasStore {
       history: options.recordHistory === false || state.history.entries[state.history.index] === id ? state.history : { entries: [...state.history.entries.slice(0, state.history.index + 1), id].slice(-100), index: Math.min(state.history.index + 1, 99) },
     }));
     this.writeHash(id);
+    if (this.state.impact.open) void this.loadImpact(id);
     try {
       const located = await this.api.locate(id, signal);
       if (signal.aborted) return;
@@ -267,6 +314,7 @@ export class AtlasStore {
   }
   clearSelection(): void {
     this.aborts.get('selection')?.abort();
+    if (this.state.impact.open) this.hideImpact();
     this.set({ selection: undefined, relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' }, evidence: undefined });
     this.writeHash(undefined);
   }
@@ -275,6 +323,7 @@ export class AtlasStore {
     const timeline = this.state.timeline;
     const parts: string[] = [];
     if (id) parts.push(`id=${encodeURIComponent(id)}`);
+    if (id && this.state.impact.open) parts.push(`impact=${this.state.impact.depth}`);
     if (timeline.open) {
       const at = snapshotToken(timeline.data, timeline.target) ?? 'live', vs = timeline.compare ? snapshotToken(timeline.data, timeline.baseline ?? timeline.data?.workingTree?.id) : undefined;
       parts.push(`at=${at}`);
@@ -414,6 +463,12 @@ export class AtlasStore {
     try {
       const data = await this.api.timeline();
       this.setTimeline({ data, status: 'ready', error: undefined });
+      if (this.evolution && evolutionKey(data) !== this.evolutionKey) {
+        // Commits were indexed since: rebuild the time-lapse (the server recomputes it for the new list).
+        this.evolution = undefined;
+        this.setTimeline({ evolution: { status: 'idle' } });
+        if (!this.state.timeline.playing) { this.clearPreview(); void this.loadEvolution(); }
+      }
       return data;
     } catch (error) {
       if (!isAbort(error)) this.setTimeline({ status: 'error', error: error instanceof Error ? error.message : String(error) });
@@ -438,16 +493,22 @@ export class AtlasStore {
     const baseline = compare ? (options.vs ? snapshotFromToken(data, options.vs) : undefined) ?? predecessor(data, target) : undefined;
     // A shared link names its baseline: keep it while stepping unless it is just the previous commit.
     this.setTimeline({ target, baseline, compare: compare && !!baseline, pinned: !!options.vs && !!baseline && baseline !== predecessor(data, target) });
+    if (data.available) void this.loadEvolution();
     await this.applyView(options.select, !!options.select);
   }
   async closeTimeline(): Promise<void> {
     if (this.timelineTimer) clearTimeout(this.timelineTimer);
-    this.setTimeline({ open: false, notice: undefined, changes: EMPTY_CHANGES });
+    this.setTimeline({ open: false, notice: undefined, changes: EMPTY_CHANGES, playing: false });
+    this.clearPreview();
     await this.applyView();
   }
   /** View another snapshot (undefined: the live index). The baseline follows unless pinned. */
   async setTarget(id: string | undefined): Promise<void> {
+    if (this.state.timeline.playing) this.setTimeline({ playing: false });
     const timeline = this.state.timeline;
+    // The time-lapse frame of that commit shows at once (it compares with the previous commit, as this view will).
+    const frame = timeline.compare && !timeline.pinned ? this.evolution?.frameOf(id) : undefined;
+    if (frame !== undefined) this.previewFrame(frame);
     const baseline = timeline.pinned ? timeline.baseline : predecessor(timeline.data, id);
     this.setTimeline({ target: id, baseline: baseline !== id ? baseline : undefined, notice: undefined });
     await this.applyView();
@@ -470,7 +531,9 @@ export class AtlasStore {
   async stepTarget(delta: -1 | 1): Promise<void> {
     const timeline = this.state.timeline, data = timeline.data;
     if (!data) return;
-    for (let index = timelineIndex(data, timeline.target) + delta; index >= 0 && index <= data.entries.length; index += delta) {
+    // From the frame on screen when scrubbing or playing.
+    const from = timeline.preview !== undefined && this.evolution ? this.evolution.snapshotAt(timeline.preview) : timeline.target;
+    for (let index = timelineIndex(data, from) + delta; index >= 0 && index <= data.entries.length; index += delta) {
       if (index === data.entries.length) { if (data.workingTree) await this.setTarget(undefined); return; }
       const snapshot = data.entries[index]!.snapshot;
       if (snapshot) { await this.setTarget(snapshot.id); return; }
@@ -482,6 +545,101 @@ export class AtlasStore {
     try { await this.api.requestIndex(sha); this.setTimeline({ notice: undefined }); await this.refreshTimeline(); }
     catch (error) { this.setTimeline({ notice: error instanceof Error ? error.message : String(error) }); }
   }
+
+  // Time-lapse ----------------------------------------------------------------
+  /** Fetch the time-lapse frames; the server builds them on first request and reports progress meanwhile. */
+  loadEvolution(): Promise<boolean> {
+    if (this.evolution) return Promise.resolve(true);
+    this.evolutionLoad ??= (async () => {
+      const key = evolutionKey(this.state.timeline.data);
+      this.setTimeline({ evolution: { status: 'loading', progress: 0 } });
+      try {
+        for (;;) {
+          const response = await this.api.evolution();
+          if (this.disposed) return false;
+          if (response.status === 'ready') {
+            this.evolution = new Evolution(response); this.evolutionKey = key;
+            this.setTimeline({ evolution: { status: 'ready' } });
+            return true;
+          }
+          this.setTimeline({ evolution: { status: 'loading', progress: response.progress } });
+          await new Promise(resolve => setTimeout(resolve, 400));
+        }
+      } catch (error) {
+        if (!this.disposed) this.setTimeline({ evolution: { status: 'error', error: error instanceof Error ? error.message : String(error) } });
+        return false;
+      } finally { this.evolutionLoad = undefined; }
+    })();
+    return this.evolutionLoad;
+  }
+  /** Put a time-lapse frame on screen at once. The settled view of its commit is loaded separately (`settle`). */
+  previewFrame(frame: number): void {
+    const evolution = this.evolution;
+    if (!evolution || !evolution.length) return;
+    const index = Math.max(0, Math.min(evolution.length - 1, Math.round(frame)));
+    const ghosts = this.state.timeline.compare;
+    if (this.state.timeline.preview === index && this.previewScene?.frame === index) return;
+    this.previewScene = evolution.scene(index, { ghosts });
+    this.set(state => ({ sceneRevision: state.sceneRevision + 1, timeline: { ...state.timeline, preview: index } }));
+  }
+  private clearPreview(): void {
+    if (!this.previewScene && this.state.timeline.preview === undefined) return;
+    this.previewScene = undefined;
+    this.set(state => ({ sceneRevision: state.sceneRevision + 1, timeline: { ...state.timeline, preview: undefined } }));
+  }
+  /** Drop a view that is still loading: a frame on screen supersedes it. */
+  private cancelView(): void {
+    this.epoch++;
+    this.aborts.get('view')?.abort();
+    if (this.state.timeline.switching) this.setTimeline({ switching: false });
+  }
+  /** Scrub to a commit: shown at once when the time-lapse is loaded (true); otherwise the caller falls back to `setTarget` (false). */
+  scrubTo(snapshot: string | undefined): boolean {
+    const frame = this.evolution?.frameOf(snapshot);
+    if (frame === undefined) return false;
+    if (this.state.timeline.playing) this.pause(false);
+    if (this.state.timeline.preview !== frame) this.cancelView();
+    this.previewFrame(frame);
+    return true;
+  }
+  /** Settle the view on the frame on screen: its commit, with full detail. */
+  async settle(): Promise<void> {
+    const preview = this.state.timeline.preview;
+    if (preview === undefined || !this.evolution) return;
+    await this.setTarget(this.evolution.snapshotAt(preview));
+  }
+  /** Play the history from the frame on screen (from the first commit when at the end). */
+  async play(): Promise<void> {
+    if (this.state.timeline.playing || !this.state.timeline.open) return;
+    if (!await this.loadEvolution() || !this.state.timeline.open) return;
+    const evolution = this.evolution!;
+    let frame = this.state.timeline.preview ?? evolution.frameOf(this.state.timeline.target) ?? evolution.length - 1;
+    if (frame >= evolution.length - 1) frame = 0;
+    this.cancelView();
+    this.playhead = frame;
+    this.setTimeline({ playing: true });
+    this.previewFrame(frame);
+  }
+  /** Stop playing; by default the view then settles on the frame on screen. */
+  pause(settle = true): void {
+    if (!this.state.timeline.playing) return;
+    this.setTimeline({ playing: false });
+    if (settle) void this.settle();
+  }
+  togglePlay(): void { if (this.state.timeline.playing) this.pause(); else void this.play(); }
+  /** Frames per second: the whole history in about forty seconds at 1×, within readable bounds. */
+  playbackRate(): number { return Math.max(2, Math.min(24, (this.evolution?.length ?? 0) / 40)) * this.state.timeline.speed; }
+  /** Advance playback by elapsed wall-clock time (the map calls this every animation frame). */
+  advancePlayback(elapsedMs: number): void {
+    const evolution = this.evolution;
+    if (!this.state.timeline.playing || !evolution) return;
+    this.playhead += (elapsedMs / 1000) * this.playbackRate();
+    if (this.playhead >= evolution.length) { this.previewFrame(evolution.length - 1); this.pause(); return; }
+    const frame = Math.floor(this.playhead);
+    if (frame !== this.state.timeline.preview) this.previewFrame(frame);
+  }
+  setSpeed(speed: number): void { this.setTimeline({ speed }); }
+  setFollow(follow: boolean): void { if (follow !== this.state.timeline.follow) this.setTimeline({ follow }); }
   /** Changed entities of the comparison, for the overview list. */
   async loadChanges(filter = this.state.timeline.changes.filter, append = false): Promise<void> {
     if (!this.comparing) { this.setTimeline({ changes: EMPTY_CHANGES }); return; }
@@ -522,7 +680,10 @@ export class AtlasStore {
       if (epoch !== this.epoch) return;
       this.scene = scene;
       this.childLoads.clear();
-      this.set(state => ({ meta, staleIndex: false, sceneRevision: state.sceneRevision + 1, relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' }, evidence: undefined, timeline: { ...state.timeline, switching: false, changes: EMPTY_CHANGES } }));
+      // The settled view takes over from a time-lapse frame (unless playback is moving on).
+      const settled = !this.state.timeline.playing;
+      if (settled) this.previewScene = undefined;
+      this.set(state => ({ meta, staleIndex: false, sceneRevision: state.sceneRevision + 1, relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' }, evidence: undefined, timeline: { ...state.timeline, switching: false, changes: EMPTY_CHANGES, ...(settled ? { preview: undefined } : {}) } }));
       this.writeHash(select);
       const { source, diff } = this.state;
       if (diff) { if (meta.comparison) void this.openDiff(diff.entity, diff.title); else this.set({ diff: undefined }); }
@@ -548,16 +709,39 @@ export class AtlasStore {
     catch (error) { this.setFlows({ storageError: error instanceof Error ? error.message : String(error) }); return false; }
   }
   startDraft(): void { this.setFlows({ draft: { name: '', entityIds: [] } }); }
-  editFlow(id: string): void { const flow = this.state.flows.flows.find(item => item.id === id); if (flow) this.setFlows({ draft: { id, name: flow.name, entityIds: flow.steps.map(step => step.entityId) } }); }
+  editFlow(id: string): void { const flow = this.state.flows.flows.find(item => item.id === id); if (flow) this.setFlows({ draft: { id, name: flow.name, entityIds: flow.steps.map(step => step.entityId), type: flow.type } }); }
   cancelDraft(): void { this.setFlows({ draft: undefined }); }
   setDraftName(name: string): void { const draft = this.state.flows.draft; if (draft) this.setFlows({ draft: { ...draft, name, error: undefined } }); }
   addDraftStep(entityId: string): void {
     const draft = this.state.flows.draft;
     if (!draft || entityId.startsWith('projection:')) return;
-    this.setFlows({ draft: { ...draft, entityIds: [...draft.entityIds, entityId], error: undefined } });
+    this.setFlows({ draft: { ...draft, entityIds: [...draft.entityIds, entityId], error: undefined, type: 'declared' } });
   }
-  moveDraftStep(from: number, to: number): void { const draft = this.state.flows.draft; if (draft) this.setFlows({ draft: { ...draft, entityIds: moveItem(draft.entityIds, from, to) } }); }
-  removeDraftStep(index: number): void { const draft = this.state.flows.draft; if (draft) this.setFlows({ draft: { ...draft, entityIds: removeAt(draft.entityIds, index) } }); }
+  moveDraftStep(from: number, to: number): void { const draft = this.state.flows.draft; if (draft) this.setFlows({ draft: { ...draft, entityIds: moveItem(draft.entityIds, from, to), type: 'declared' } }); }
+  removeDraftStep(index: number): void { const draft = this.state.flows.draft; if (draft) this.setFlows({ draft: { ...draft, entityIds: removeAt(draft.entityIds, index), type: 'declared' } }); }
+  /** Set one end of a path to build the draft from (the current selection by default). */
+  setPathEnd(end: 'from' | 'to', id = this.state.selection?.id): void {
+    const draft = this.state.flows.draft;
+    if (!draft || !id || id.startsWith('projection:')) return;
+    this.setFlows({ draft: { ...draft, path: { status: 'idle', ...draft.path, [end]: id, notice: undefined } } });
+  }
+  /** Fill the draft with the shortest path of indexed relationships between the two ends (a static flow). */
+  async draftPath(): Promise<void> {
+    const draft = this.state.flows.draft;
+    const from = draft?.path?.from, to = draft?.path?.to;
+    if (!draft || !from || !to) return;
+    const signal = this.abortable('path');
+    this.setFlows({ draft: { ...draft, path: { ...draft.path!, status: 'loading', notice: undefined } } });
+    try {
+      const result = await this.api.path(from, to, signal);
+      const current = this.state.flows.draft;
+      if (signal.aborted || !current) return;
+      if (!result.found) { this.setFlows({ draft: { ...current, path: { ...current.path!, status: 'ready', notice: 'No chain of indexed relationships connects these two entities, in either direction.' } } }); return; }
+      for (const node of result.nodes) this.scene.upsert(node);
+      const first = result.nodes[0]!, last = result.nodes.at(-1)!;
+      this.setFlows({ draft: { ...current, entityIds: result.nodes.map(node => node.id), type: 'static', name: current.name || `${first.name} → ${last.name}`.slice(0, 80), error: undefined, path: { ...current.path!, status: 'ready', notice: result.reversed ? 'Only the opposite direction is connected, so the path runs from the end you picked to the start.' : undefined } } });
+    } catch (error) { if (!isAbort(error)) { const current = this.state.flows.draft; if (current) this.setFlows({ draft: { ...current, path: { ...current.path!, status: 'error', notice: error instanceof Error ? error.message : String(error) } } }); } }
+  }
   async saveDraft(): Promise<boolean> {
     const draft = this.state.flows.draft;
     if (!draft) return false;
@@ -610,4 +794,71 @@ export class AtlasStore {
       else if (step?.node) { this.navigator?.flyTo(step.node); void this.select(step.entityId, { fly: false, recordHistory: false }); }
     }
   }
+
+  // Blast radius and steps ----------------------------------------------------
+  /** Identity of the current view, to tell whether loaded results still belong to it. */
+  viewStamp(): string { const meta = this.state.meta; return `${meta?.snapshot.id ?? ''}|${meta?.comparison?.baseline.id ?? ''}`; }
+  /** Show what depends on an entity (the selection by default); it then follows the selection. */
+  async showImpact(id = this.state.selection?.id, depth = this.state.impact.depth): Promise<void> {
+    if (!id) return;
+    this.set(state => ({ impact: { ...state.impact, open: true, depth, filter: {}, ...(state.impact.forId !== id || state.impact.depth !== depth ? { data: undefined, items: [] } : {}) } }));
+    this.writeHash();
+    await this.loadImpact(id);
+  }
+  hideImpact(): void {
+    this.aborts.get('impact')?.abort();
+    this.set(state => ({ impact: { ...state.impact, open: false, status: 'idle', forId: undefined, data: undefined, items: [], error: undefined } }));
+    this.writeHash();
+  }
+  async setImpactDepth(depth: number): Promise<void> {
+    this.set(state => ({ impact: { ...state.impact, depth, data: undefined, items: [] } }));
+    this.writeHash();
+    if (this.state.impact.open && this.state.impact.forId) await this.loadImpact(this.state.impact.forId);
+  }
+  async setImpactFilter(filter: ImpactState['filter']): Promise<void> {
+    this.set(state => ({ impact: { ...state.impact, filter } }));
+    if (this.state.impact.forId) await this.loadImpact(this.state.impact.forId);
+  }
+  async loadImpact(id: string, append = false): Promise<void> {
+    const signal = this.abortable('impact');
+    const current = this.state.impact, viewStamp = this.viewStamp();
+    this.set(state => ({ impact: { ...state.impact, status: 'loading', forId: id, viewStamp, ...(state.impact.forId !== id ? { data: undefined, items: [] } : {}) } }));
+    try {
+      const data = await this.api.impact(id, { depth: current.depth, ...current.filter, offset: append ? current.items.length : 0, limit: 100 }, signal);
+      if (signal.aborted) return;
+      for (const item of data.items.items) this.scene.upsert(item);
+      this.set(state => state.impact.forId === id && state.impact.open ? { impact: { ...state.impact, status: 'ready', data, viewStamp, items: append ? [...state.impact.items, ...data.items.items] : data.items.items, error: undefined } } : {});
+    } catch (error) { if (!isAbort(error)) this.set(state => ({ impact: { ...state.impact, status: 'error', error: error instanceof Error ? error.message : String(error) } })); }
+  }
+  loadMoreImpact(): void { const impact = this.state.impact; if (impact.forId && impact.data?.items.hasMore) void this.loadImpact(impact.forId, true); }
+  /** What the viewed comparison's changes reach; loaded once per comparison. */
+  async loadCommitImpact(): Promise<void> {
+    const meta = this.state.meta, viewStamp = this.viewStamp();
+    if (!meta?.comparison) { if (this.state.commitImpact.status !== 'idle') this.set(state => ({ commitImpact: { status: 'idle', show: state.commitImpact.show } })); return; }
+    if (this.state.commitImpact.viewStamp === viewStamp && this.state.commitImpact.status !== 'error') return;
+    const signal = this.abortable('commit-impact');
+    this.set(state => ({ commitImpact: { status: 'loading', viewStamp, show: state.commitImpact.show } }));
+    try {
+      const data = await this.api.impact({ comparison: true }, { depth: this.state.impact.depth, limit: 50 }, signal);
+      if (signal.aborted) return;
+      this.set(state => state.commitImpact.viewStamp === viewStamp ? { commitImpact: { ...state.commitImpact, status: 'ready', data } } : {});
+    } catch (error) { if (!isAbort(error)) this.set(state => ({ commitImpact: { ...state.commitImpact, status: 'error', error: error instanceof Error ? error.message : String(error) } })); }
+  }
+  toggleCommitImpact(): void { this.set(state => ({ commitImpact: { ...state.commitImpact, show: !state.commitImpact.show } })); }
+  /** Open "what happens from here" for an entity (the selection by default). */
+  async openSteps(id = this.state.selection?.id): Promise<void> {
+    if (!id || id.startsWith('projection:')) return;
+    const signal = this.abortable('steps');
+    const viewStamp = this.viewStamp();
+    this.set({ steps: { anchor: id, status: 'loading', viewStamp } });
+    try {
+      const data = await this.api.steps(id, signal);
+      if (signal.aborted) return;
+      for (const step of data.steps) if (step.node) this.scene.upsert(step.node);
+      this.set(state => state.steps?.anchor === id ? { steps: { ...state.steps, status: 'ready', data }, sceneRevision: state.sceneRevision + 1 } : {});
+    } catch (error) { if (!isAbort(error)) this.set(state => state.steps?.anchor === id ? { steps: { ...state.steps, status: 'error', error: error instanceof Error ? error.message : String(error) } } : {}); }
+  }
+  closeSteps(): void { this.aborts.get('steps')?.abort(); this.set({ steps: undefined }); }
+  /** Highlight one step (and its links) on the map. */
+  focusStep(id: string | undefined): void { this.set(state => state.steps ? { steps: { ...state.steps, focus: id } } : {}); }
 }

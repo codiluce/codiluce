@@ -1,9 +1,10 @@
-// Named, manually declared flows. Flows are an overlay: they store entity IDs
-// only (never copies of graph objects) and are kept apart from structural
-// facts. A declared sequence is not evidence of execution.
+// Named flows. Flows are an overlay: they store entity IDs only (never copies
+// of graph objects) and are kept apart from structural facts. A declared flow
+// is a sequence someone chose; a static flow was found as a path over indexed
+// relationships. Neither is evidence of execution.
 import type { Flow, FlowStep } from '@engine/core/graph';
 
-export interface StoredFlow extends Flow { type: 'declared'; createdAt: string; updatedAt: string }
+export interface StoredFlow extends Flow { type: 'declared' | 'static'; createdAt: string; updatedAt: string }
 export interface FlowPersistence { load(): StoredFlow[]; save(flows: StoredFlow[]): void }
 export const FLOW_STORAGE_VERSION = 1;
 export function flowStorageKey(repositoryId: string): string { return `archipelago:flows:v${FLOW_STORAGE_VERSION}:${repositoryId}`; }
@@ -13,7 +14,7 @@ function isStep(value: unknown): value is FlowStep {
 }
 function isFlow(value: unknown): value is StoredFlow {
   const flow = value as StoredFlow;
-  return !!flow && typeof flow === 'object' && typeof flow.id === 'string' && typeof flow.name === 'string' && flow.type === 'declared' && Array.isArray(flow.steps) && flow.steps.every(isStep);
+  return !!flow && typeof flow === 'object' && typeof flow.id === 'string' && typeof flow.name === 'string' && (flow.type === 'declared' || flow.type === 'static') && Array.isArray(flow.steps) && flow.steps.every(isStep);
 }
 /** localStorage adapter scoped to one repository identity. Malformed entries are ignored, not thrown. */
 export function localFlowPersistence(storage: Pick<Storage, 'getItem' | 'setItem'> | undefined, repositoryId: string): FlowPersistence {
@@ -43,14 +44,16 @@ export function validateFlowName(name: string, flows: StoredFlow[], editingId?: 
   if (flows.some(flow => flow.id !== editingId && flow.name.toLowerCase() === trimmed.toLowerCase())) return 'A flow with this name already exists';
   return undefined;
 }
-export function upsertFlow(flows: StoredFlow[], draft: { id?: string; name: string; entityIds: string[] }, now: string, newId: () => string): StoredFlow[] {
+export function upsertFlow(flows: StoredFlow[], draft: { id?: string; name: string; entityIds: string[]; type?: StoredFlow['type'] }, now: string, newId: () => string): StoredFlow[] {
   if (!draft.entityIds.length) throw new Error('A flow needs at least one step');
   const error = validateFlowName(draft.name, flows, draft.id);
   if (error) throw new Error(error);
   const steps = draft.entityIds.map(entityId => ({ entityId }));
   const existing = draft.id ? flows.find(flow => flow.id === draft.id) : undefined;
-  if (existing) return flows.map(flow => flow.id === existing.id ? { ...flow, name: draft.name.trim(), steps, updatedAt: now } : flow);
-  return [...flows, { id: newId(), name: draft.name.trim(), type: 'declared', steps, createdAt: now, updatedAt: now }];
+  // Editing the steps of a static flow makes it a declared one.
+  const type = draft.type ?? 'declared';
+  if (existing) return flows.map(flow => flow.id === existing.id ? { ...flow, name: draft.name.trim(), type: existing.type === 'static' && JSON.stringify(existing.steps) === JSON.stringify(steps) ? 'static' : type, steps, updatedAt: now } : flow);
+  return [...flows, { id: newId(), name: draft.name.trim(), type, steps, createdAt: now, updatedAt: now }];
 }
 export function removeFlow(flows: StoredFlow[], id: string): StoredFlow[] { return flows.filter(flow => flow.id !== id); }
 export function moveItem<T>(items: T[], from: number, to: number): T[] {

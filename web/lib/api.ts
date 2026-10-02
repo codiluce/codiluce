@@ -2,7 +2,8 @@
 // and view (immutable for that snapshot/baseline pair); in-flight requests can
 // be aborted by callers and aborted requests are never cached.
 import type { Entity, Relation } from '@engine/core/graph';
-import type { AggregateEdgesPage, AggregateResult, ChangesPage, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, TimelineResponse, ViewKey } from '@engine/projection/dto';
+import type { EvolutionResponse } from '@engine/projection/dto';
+import type { AggregateEdgesPage, AggregateResult, ChangesPage, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, ImpactResult, LocateResult, NodeSummary, Page, PathResult, ProjectionMeta, RelationItem, RelationsPage, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
 
 export class ApiError extends Error { constructor(readonly status: number, message: string) { super(message); } }
 export function isAbort(error: unknown): boolean { return error instanceof DOMException && error.name === 'AbortError' || (error instanceof Error && error.name === 'AbortError'); }
@@ -30,10 +31,17 @@ export interface AtlasApi {
   changes(options: { status?: string; type?: string; offset?: number; limit?: number }, signal?: AbortSignal): Promise<ChangesPage>;
   change(id: string, signal?: AbortSignal): Promise<EntityChangeDetail>;
   entityHistory(id: string, signal?: AbortSignal): Promise<EntityHistoryResponse>;
+  /** The history time-lapse (status `computing` with progress until the server has built it). */
+  evolution(signal?: AbortSignal): Promise<EvolutionResponse>;
   sourceDiff(entity: string, options: { ignoreWhitespace?: boolean }, signal?: AbortSignal): Promise<SourceDiffResponse>;
   requestIndex(sha: string): Promise<{ queued: boolean; position: number }>;
+  /** Blast radius of an entity; `comparison` asks for what the viewed comparison's changes reach. */
+  impact(id: string | { comparison: true }, options: ImpactOptions, signal?: AbortSignal): Promise<ImpactResult>;
+  steps(id: string, signal?: AbortSignal): Promise<StepsResult>;
+  path(from: string, to: string, signal?: AbortSignal): Promise<PathResult>;
   clear(): void;
 }
+export interface ImpactOptions { depth?: number; type?: string; distance?: number; offset?: number; limit?: number }
 const MAX_CACHE = 800;
 
 export class HttpAtlasApi implements AtlasApi {
@@ -95,7 +103,14 @@ export class HttpAtlasApi implements AtlasApi {
   changes(options: { status?: string; type?: string; offset?: number; limit?: number }, signal?: AbortSignal) { return this.get<ChangesPage>(`/api/history/changes${this.q({ status: options.status, type: options.type, offset: options.offset ?? 0, limit: options.limit ?? 100 })}`, signal); }
   change(id: string, signal?: AbortSignal) { return this.get<EntityChangeDetail>(`/api/history/change/${encodeURIComponent(id)}${this.q()}`, signal); }
   entityHistory(id: string, signal?: AbortSignal) { return this.get<EntityHistoryResponse>(`/api/history/entity/${encodeURIComponent(id)}`, signal, false); }
+  evolution(signal?: AbortSignal) { return this.get<EvolutionResponse>('/api/history/evolution', signal, false); }
   sourceDiff(entity: string, options: { ignoreWhitespace?: boolean }, signal?: AbortSignal) { return this.get<SourceDiffResponse>(`/api/source/diff${this.q({ entity, whitespace: options.ignoreWhitespace ? 'ignore' : undefined })}`, signal); }
+  impact(id: string | { comparison: true }, options: ImpactOptions, signal?: AbortSignal) {
+    const params = { depth: options.depth, type: options.type, distance: options.distance, offset: options.offset ?? 0, limit: options.limit ?? 100 };
+    return this.get<ImpactResult>(typeof id === 'string' ? `/api/projection/impact/${encodeURIComponent(id)}${this.q(params)}` : `/api/history/impact${this.q(params)}`, signal);
+  }
+  steps(id: string, signal?: AbortSignal) { return this.get<StepsResult>(`/api/projection/steps/${encodeURIComponent(id)}${this.q()}`, signal); }
+  path(from: string, to: string, signal?: AbortSignal) { return this.get<PathResult>(`/api/projection/path${this.q({ from, to })}`, signal); }
   async requestIndex(sha: string) {
     const response = await this.fetcher(`${this.base}/api/history/index`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Archipelago-Request': 'index' }, body: JSON.stringify({ sha }) });
     const body = await response.json().catch(() => ({})) as { error?: string; queued?: boolean; position?: number };

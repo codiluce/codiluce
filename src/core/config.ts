@@ -2,7 +2,11 @@ import { readFile, realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { parse } from 'yaml';
 
-export interface ApplicationConfig { name: string; path: string; type: 'nextjs' | 'laravel'; apiOrigins?: string[] }
+export interface ApplicationConfig {
+  name: string; path: string; type: 'nextjs' | 'laravel'; apiOrigins?: string[];
+  /** Environment variables declared to hold this application's origin (e.g. NEXT_PUBLIC_API_URL). A configured assumption, recorded as such in evidence. */
+  apiOriginEnv?: string[];
+}
 export interface AtlasConfig {
   repository: { name: string; id?: string };
   applications: ApplicationConfig[];
@@ -95,7 +99,10 @@ export async function resolveConfig(root: string, raw: Partial<AtlasConfig>): Pr
     if (names.has(app.name) || paths.has(app.path)) throw new Error('Application names and paths must be unique');
     names.add(app.name); paths.add(app.path);
     if (app.apiOrigins !== undefined && (!Array.isArray(app.apiOrigins) || !app.apiOrigins.every(origin => typeof origin === 'string' && /^https?:\/\//.test(origin) && new URL(origin).origin === origin))) throw new Error('apiOrigins must contain HTTP origins without paths');
+    if (app.apiOriginEnv !== undefined && (!Array.isArray(app.apiOriginEnv) || !app.apiOriginEnv.every(name => typeof name === 'string' && /^[A-Za-z_][A-Za-z0-9_]{0,127}$/.test(name)))) throw new Error('apiOriginEnv must contain environment variable names');
   }
   for (const a of config.applications) for (const b of config.applications) if (a !== b && (a.path === '.' || b.path.startsWith(`${a.path}/`))) throw new Error('Overlapping application paths are unsupported');
+  const envOwners = new Map<string, string>();
+  for (const app of config.applications) for (const name of app.apiOriginEnv ?? []) { if (envOwners.has(name) && envOwners.get(name) !== app.name) throw new Error(`apiOriginEnv ${name} is declared for more than one application`); envOwners.set(name, app.name); }
   return config;
 }

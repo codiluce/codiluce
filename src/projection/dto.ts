@@ -121,3 +121,69 @@ export interface TimelineResponse {
 }
 export interface EntityHistoryPoint { sha: string; snapshotId: string; status: 'introduced' | 'modified' | 'moved' | 'removed' | 'reintroduced'; name: string; path?: string }
 export interface EntityHistoryResponse { id: string; points: EntityHistoryPoint[]; indexedSnapshots: number; present: number }
+/** A node of the time-lapse: everything that exists in some frame. */
+export interface EvolutionNode { id: string; kind: 'entity' | 'group'; type: string; name: string; detail?: string; language?: string; path?: string }
+/**
+ * One indexed commit of the time-lapse, as a change to the frame before it (the first: to an empty map).
+ * `set`: nodes that appear, or whose parent, rectangle or measured lines changed: [node, parent (-1: none), x, y, w, h, loc (-1: not measured)].
+ * `drop`: nodes no longer drawn. `changes`: entities changed since the previous frame: [node, 1 added | 2 modified | 3 moved | 4 removed (a ghost for one frame)].
+ */
+export interface EvolutionFrame { snapshot: string; set: number[][]; drop: number[]; changes: number[][] }
+/** The history as frames on the timeline layout, computed in the background on first request. */
+export type EvolutionResponse = { status: 'computing'; progress: number } | { status: 'ready'; stamp: string; nodes: EvolutionNode[]; frames: EvolutionFrame[] };
+
+// Impact ----------------------------------------------------------------------
+export interface ImpactHop { relationId: string; type: string; from: { id: string; name: string; type: string }; to: { id: string; name: string; type: string } }
+/** An affected entity: hops from the origin, and the chain of relations that reaches it (origin first). */
+export type ImpactItem = NodeSummary & { distance: number; breadcrumb: string; chain: ImpactHop[] };
+export interface ImpactResult {
+  origin: { kind: 'entity'; node: NodeSummary } | { kind: 'comparison'; byStatus: Record<string, number> };
+  depth: number; types: string[];
+  /** Entities the walk starts from (the origin and everything inside it, or a comparison's changed entities). */
+  seeds: number; seedsTruncated: boolean;
+  /** Affected entities, excluding seeds. */
+  total: number;
+  /** Index = hops from the origin (0 unused). */
+  byDistance: number[];
+  byType: { type: string; count: number }[];
+  /** Every reached entity → hops (seeds are 0). */
+  distances: Record<string, number>;
+  /** Spatial containers holding affected entities: how many, and the nearest hop count. */
+  areas: Record<string, { count: number; distance: number }>;
+  items: Page<ImpactItem>;
+  truncated: boolean;
+  highlights: { endpoints: number; routes: number; applications: { id: string; name: string; count: number }[] };
+  /** What the radius cannot see; the result is a lower bound. */
+  unknowns: { unresolvedHttpCalls: number; possibleCallers: { name: string; sites: number; entities: number }[] };
+}
+
+// Steps -------------------------------------------------------------------------
+export type { StepCap, StepKind } from './steps.js';
+export interface StepGuard { text: string; negated: boolean; form: string; line: number; phrase: string }
+export interface Step {
+  id: string; kind: import('./steps.js').StepKind; layer: number;
+  node?: NodeSummary;
+  effect?: import('../core/graph.js').EffectFact & { owner: string; ownerName: string; ownerPath?: string; when: StepGuard[] };
+  /** Application the step belongs to. */
+  app?: string;
+  /** Spatial ancestors of the step's entity (of the effect's owner), root first: lets clients draw to the nearest visible ancestor. */
+  ancestors: string[];
+  caps: import('./steps.js').StepCap[];
+}
+export interface StepHop { relationId: string; type: string; from: string; to: string; file?: string; line?: number; sites: number; when: StepGuard[] }
+export interface StepLink {
+  id: string; from: string; to: string;
+  /** Folded entities between the two steps, in order. */
+  via: { id: string; name: string; type: string }[];
+  hops: StepHop[];
+  /** The event prop that binds the target (onClick, onSubmit…). */
+  event?: string;
+  /** Conditions in the source step's own code under which the link happens. */
+  when: StepGuard[];
+  /** The target was already drawn at the same or an earlier layer. */
+  back: boolean;
+}
+export interface StepsResult { anchor: NodeSummary; steps: Step[]; links: StepLink[]; truncated: boolean; notices: string[]; limits: { layers: number; steps: number; fanout: number; fold: number; hub: number } }
+
+// Paths -------------------------------------------------------------------------
+export interface PathResult { found: boolean; reversed?: boolean; nodes: NodeSummary[]; links: { relationId: string; type: string; from: string; to: string }[] }

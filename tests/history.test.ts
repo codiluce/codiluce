@@ -127,6 +127,30 @@ test('renames, signature changes and removed routes are followed through lineage
   assert.ok(diff.addedDiagnostics.some(item => item.code === 'unmatched-http-call'), 'the call is now unmatched');
   assert.equal(diff.summary.interfaces.find(item => item.name === 'GET /users/{id}')?.status, 'removed');
 });
+test('commit impact: what depends on the entities a commit changed or removed', async () => {
+  await projection.prepare(view('B', 'A'));
+  const impact = projection.commitImpact(view('B', 'A'), { depth: 8, limit: 200 });
+  assert.equal(impact.origin.kind, 'comparison');
+  const id = (predicate: (row: ReturnType<HistoryStore['entities']>[number]) => boolean) => entityIn('B', predicate).id;
+  // B edited login() and AuthService::authenticate: both seed the walk; their files do not, because symbols inside them changed.
+  assert.equal(impact.distances[id(row => row.name === 'login' && row.type === 'function')], 0);
+  assert.equal(impact.distances[id(row => row.qualifiedName === 'App\\Services\\AuthService::authenticate')], 0);
+  assert.equal(impact.distances[id(row => row.path === 'frontend/src/components/LoginForm.tsx' && row.type === 'file')], undefined);
+  assert.equal(impact.distances[id(row => row.name === 'LoginForm' && row.type === 'component')], 1);
+  assert.equal(impact.distances[id(row => row.qualifiedName === 'App\\Http\\Controllers\\AuthController::login')], 1);
+  assert.ok(impact.items.items.some(item => item.type === 'route' && item.name === '/login'));
+  assert.ok(impact.highlights.endpoints > 0);
+  assert.ok(!impact.items.items.some(item => item.name === 'Signup'), 'an added entity has no dependents yet');
+  // The same over HTTP; a comparison is required.
+  const server = createInspectionServer(store, { root: fixture.root, stateDirectory: fixture.state });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  try {
+    const served = await (await fetch(`${base}/api/history/impact?snapshot=${snapshots.B!.id}&compareTo=${snapshots.A!.id}&depth=8`)).json() as { total: number };
+    assert.equal(served.total, impact.total);
+    assert.equal((await fetch(`${base}/api/history/impact?snapshot=${snapshots.B!.id}`)).status, 400);
+  } finally { await new Promise(resolve => server.close(resolve)); }
+});
 test('moving an application directory reads as moves, not as a rewrite', async () => {
   const C = new CommitSnapshot(history, snapshots.C!, fixture.root).load(), D = new CommitSnapshot(history, snapshots.D!, fixture.root).load();
   const renames = await renamedPaths(fixture.root, fixture.commits.C, fixture.commits.D);
@@ -206,6 +230,56 @@ test('timeline layout: reserved slots at largest size, aliases inherit slots', (
   assert.deepEqual([one.get('a')!.x, one.get('a')!.y], [two.get('a')!.x, two.get('a')!.y], 'a keeps its slot while growing');
   assert.deepEqual([one.get('b')!.x, one.get('b')!.y], [two.get('c')!.x, two.get('c')!.y], 'c inherits b\'s slot');
   assert.ok(one.get('a')!.w < two.get('a')!.w, 'drawn at its size of the moment');
+});
+test('the time-lapse draws each commit where its comparison with the previous commit does, and names what changed', async () => {
+  const ids = ['A', 'B', 'C', 'D'].map(name => snapshots[name]!.id);
+  const fresh = new ProjectionService(store, { root: fixture.root, stateDirectory: fixture.state, history: new HistoryAccess(fixture.state).get });
+  assert.equal(fresh.evolution(ids).status, 'computing', 'computed in the background');
+  const evolution = await fresh.awaitEvolution(ids);
+  assert.equal(evolution.status, 'ready');
+  if (evolution.status !== 'ready') return;
+  assert.deepEqual(evolution.frames.map(frame => frame.snapshot), ids);
+  assert.deepEqual(evolution.frames[0]!.changes, [], 'the first commit has nothing to compare with');
+  const placed = new Map<number, number[]>();
+  const status = ['', 'added', 'modified', 'moved', 'removed'];
+  const changedAt = (frame: number) => new Map(evolution.frames[frame]!.changes.map(([node, code]) => [evolution.nodes[node!]!.id, status[code!]]));
+  for (const [i, frame] of evolution.frames.entries()) {
+    for (const node of frame.drop) placed.delete(node);
+    for (const [node, ...placement] of frame.set) placed.set(node!, placement);
+    if (!i) continue;
+    // Same nodes, same rectangles, same statuses as the settled comparison view of that commit.
+    const settled = view(['A', 'B', 'C', 'D'][i]!, ['A', 'B', 'C', 'D'][i - 1]!);
+    await fresh.prepare(settled);
+    const expected = new Map<string, { rect: Rect; status?: string }>();
+    const walk = (id: string) => { for (const item of fresh.children(id, { limit: 500, view: settled }).items) { expected.set(item.id, { rect: item.rect, ...(item.change && item.change.status !== 'unchanged' ? { status: item.change.status } : {}) }); walk(item.id); } };
+    const meta = fresh.meta(settled);
+    expected.set(meta.root.id, { rect: meta.root.rect });
+    walk(meta.root.id);
+    const frameNodes = new Map<string, Rect>([...placed].map(([node, entry]): [string, Rect] => [evolution.nodes[node]!.id, { x: entry[1]!, y: entry[2]!, w: entry[3]!, h: entry[4]! }]));
+    assert.deepEqual([...frameNodes.keys()].sort(), [...expected.keys()].sort(), `frame ${i}: the nodes of the comparison`);
+    for (const [id, rect] of frameNodes) assert.deepEqual(rect, expected.get(id)!.rect, `frame ${i}: ${id} in place`);
+    const changes = changedAt(i);
+    for (const [id, entry] of expected) if (evolution.nodes.find(node => node.id === id)?.kind === 'entity') assert.equal(changes.get(id), entry.status, `frame ${i}: status of ${id}`);
+  }
+  const named = (frame: number, name: string) => [...changedAt(frame)].filter(([id]) => evolution.nodes.find(node => node.id === id)!.name === name).map(([, code]) => code);
+  assert.ok(named(1, 'Signup').includes('added'));
+  assert.deepEqual(named(2, 'GET /users/{id}'), ['removed'], 'a removed endpoint is a ghost for one frame');
+  assert.ok(!evolution.frames[3]!.set.some(([node]) => evolution.nodes[node!]!.name === 'GET /users/{id}') && evolution.frames[3]!.drop.some(node => evolution.nodes[node]!.name === 'GET /users/{id}'), '…and gone the frame after');
+  // Over HTTP: progress first, then the frames, compressed when the client accepts it.
+  const server = createInspectionServer(store, { root: fixture.root, stateDirectory: fixture.state });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    const first = await fetch(`${base}/api/history/evolution`);
+    assert.equal(first.status, 202);
+    assert.equal(((await first.json()) as { status: string }).status, 'computing');
+    let response = first;
+    for (let attempt = 0; attempt < 200 && response.status === 202; attempt++) { await new Promise(resolve => setTimeout(resolve, 25)); response = await fetch(`${base}/api/history/evolution`, { headers: { 'Accept-Encoding': 'gzip' } }); }
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-encoding'), 'gzip');
+    const served = await response.json() as { status: string; frames: unknown[] };
+    assert.deepEqual([served.status, served.frames.length], ['ready', 4]);
+  } finally { server.close(); }
 });
 
 // --- Source -----------------------------------------------------------------------------
