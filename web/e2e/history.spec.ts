@@ -58,3 +58,26 @@ test('a modified symbol opens a line diff between the two commits', async ({ pag
   await diff.getByRole('button', { name: 'Side by side' }).click();
   await expect(diff.locator('table.split')).toBeVisible();
 });
+test('dragging the timeline shows each commit at once, and play runs through the history', async ({ page }) => {
+  await open(page);
+  await page.getByRole('button', { name: 'History' }).click();
+  await expect(page.locator('.play-button')).not.toHaveClass(/preparing/);
+  const slider = page.getByRole('slider', { name: /Commit timeline/ });
+  const box = (await slider.boundingBox())!;
+  // Ticks sit on the axis (14 px padding, 46 px down): four commits, then the working tree.
+  const at = (index: number) => [box.x + 14 + (index / 4) * (box.width - 28), box.y + 46] as const;
+  await page.mouse.move(...at(0));
+  await page.mouse.down();
+  await expect(timeline(page)).toContainText('Initial import');
+  await page.mouse.move(...at(1), { steps: 4 });
+  await expect(timeline(page)).toContainText('Edit login, add signup');
+  await expect(timeline(page)).toContainText('commit 2 of 4');
+  await expect(page.locator('.switching')).toHaveCount(0);
+  await page.mouse.up();
+  await expect(page.getByRole('button', { name: /added/ }).first()).toBeEnabled();
+  await page.getByRole('button', { name: 'Play the history as a time-lapse' }).click();
+  await expect(timeline(page)).toContainText('playing');
+  await expect(page.getByRole('button', { name: 'Play the history as a time-lapse' })).toBeVisible({ timeout: 10_000 });
+  await expect(timeline(page)).toContainText('Move the backend to server/');
+  await expect(page).toHaveURL(new RegExp(`at=[0-9a-f]{12}`));
+});

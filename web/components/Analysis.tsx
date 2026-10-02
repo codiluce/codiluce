@@ -54,7 +54,7 @@ export function ImpactSection({ node }: { node: NodeSummary }) {
               ))}
             </div>
           )}
-          {(data.highlights.endpoints > 0 || data.highlights.routes > 0) && <p className="impact-highlight">Reaches {[data.highlights.endpoints ? `${data.highlights.endpoints} endpoint${data.highlights.endpoints === 1 ? '' : 's'}` : '', data.highlights.routes ? `${data.highlights.routes} page${data.highlights.routes === 1 ? '' : 's'}` : ''].filter(Boolean).join(' and ')}{data.highlights.applications.length ? ` in ${data.highlights.applications.map(app => app.name).join(' and ')}` : ''}.</p>}
+          {data.total > 0 && <p className="impact-highlight">{(data.highlights.endpoints > 0 || data.highlights.routes > 0) && <>Reaches {[data.highlights.endpoints ? `${data.highlights.endpoints} endpoint${data.highlights.endpoints === 1 ? '' : 's'}` : '', data.highlights.routes ? `${data.highlights.routes} page${data.highlights.routes === 1 ? '' : 's'}` : ''].filter(Boolean).join(' and ')}. </>}Affected: {data.highlights.applications.map(app => `${app.count} in ${app.name}`).join(', ')}.</p>}
           {data.truncated && <p className="note warning">The walk stopped at its node limit; deeper dependents are not listed.</p>}
           {data.seedsTruncated && <p className="note warning">Only the first entities inside this container seed the walk.</p>}
           <Unknowns unknowns={data.unknowns} />

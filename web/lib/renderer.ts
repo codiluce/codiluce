@@ -14,7 +14,7 @@ export interface FlowOverlay {
   links: { relationType?: string }[];
   current: number; progress: number; active: boolean;
 }
-export interface SourceOverlay { nodeId: string; start: number; lines: string[]; focus?: { startLine: number; endLine: number } }
+export interface SourceOverlay { nodeId: string; start: number; lines: string[]; focus?: { startLine: number; endLine: number }; /** Lines where the symbol calls, renders or references an indexed entity. */ marks?: Set<number> }
 export interface RenderState {
   selectedId?: string; hoveredId?: string;
   /** When set, nodes outside it (and outside their ancestors) are dimmed. */
@@ -597,6 +597,12 @@ export class MapRenderer {
       const highlighted = source.focus && line >= source.focus.startLine && line <= source.focus.endLine;
       if (highlighted) { ctx.fillStyle = this.theme.dark ? 'rgba(255,209,102,0.16)' : 'rgba(217,72,15,0.12)'; ctx.fillRect(0, top - lineHeight / 2, w, lineHeight); }
       ctx.fillStyle = this.theme.text.secondary; ctx.fillText(String(line).padStart(4), lineHeight * 0.4, top);
+      if (source.marks?.has(line)) {
+        // A call site: the same mark as the source panel's gutter.
+        const cx = lineHeight * 3.05, r = lineHeight * 0.2;
+        ctx.fillStyle = this.theme.relation.calls ?? this.theme.fallbackRelation;
+        ctx.beginPath(); ctx.moveTo(cx, top - r); ctx.lineTo(cx + r, top); ctx.lineTo(cx, top + r); ctx.lineTo(cx - r, top); ctx.closePath(); ctx.fill();
+      }
       ctx.fillStyle = this.theme.text.primary; ctx.fillText(text.replace(/\t/g, '  '), lineHeight * 3.4, top);
     });
     ctx.restore();

@@ -250,7 +250,7 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.Co
         const proven = resolved && 'url' in resolved ? resolved.url : undefined;
         const effect = state.sites.effect(caller.id, { category: 'network', operation: method ?? 'HTTP', detail: url ?? proven?.display ?? (expression.length > 80 ? `${expression.slice(0, 79)}…` : expression), line: fact.line!, via: isFetch ? 'fetch (Fetch API)' : 'axios' });
         context.http.push({ callerId: caller.id, fileId: file.id, method, url, expression, evidence: fact, effect, ...(proven ? { resolved: proven } : {}) });
-        (fileEntity.metadata.httpRequests as unknown[]).push({ callerId: caller.id, method, url: url ?? proven?.display, expression, line: fact.line, resolution: method && url !== undefined ? 'literal' : proven ? 'proven-base' : 'unresolved' });
+        (fileEntity.metadata.httpRequests as unknown[]).push({ callerId: caller.id, method, url: url ?? proven?.display, expression, line: fact.line, resolution: method && url !== undefined ? 'literal' : proven ? (proven.app ? 'proven-base' : 'template') : 'unresolved' });
         if (!method || (url === undefined && !proven)) graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'unresolved-http-call', file: file.path, line: fact.line, entityId: caller.id, reason: reason ?? 'Dynamic URL construction' });
       }
       if (node.expression.kind === ts.SyntaxKind.ImportKeyword && node.arguments[0]) {

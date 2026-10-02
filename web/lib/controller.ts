@@ -267,6 +267,18 @@ export class MapController implements MapNavigator {
     return result;
   }
   private impactCache?: { data: object; overlay: NonNullable<RenderState['impact']> };
+  /** Lines where the selection calls, renders or references something (from its loaded outgoing relationships). */
+  private callMarks(state: AtlasState): Set<number> {
+    if (this.marksCache?.relations === state.relations) return this.marksCache.marks;
+    const marks = new Set<number>();
+    if (state.relations.forId === state.selection?.id) for (const item of state.relations.items) {
+      if (item.direction !== 'outgoing' || !['calls', 'renders', 'references'].includes(item.type) || !Array.isArray(item.metadata?.lines)) continue;
+      for (const line of item.metadata.lines as number[]) marks.add(line);
+    }
+    this.marksCache = { relations: state.relations, marks };
+    return marks;
+  }
+  private marksCache?: { relations: object; marks: Set<number> };
   /** Deepest LOD: lazily fetch source for the selected symbol/file once it is very large on screen. */
   private sourceFace(state: AtlasState): RenderState['source'] {
     const selection = state.selection;
@@ -283,7 +295,8 @@ export class MapController implements MapNavigator {
       return undefined;
     }
     if (typeof cached === 'string') return undefined;
-    return { nodeId: selection.id, start: cached.start, lines: cached.lines, ...(cached.focus ? { focus: cached.focus } : {}) };
+    const marks = this.callMarks(state);
+    return { nodeId: selection.id, start: cached.start, lines: cached.lines, ...(cached.focus ? { focus: cached.focus } : {}), ...(marks.size ? { marks } : {}) };
   }
   /**
    * Another scene is on screen. Blocks that were not there before (and whose

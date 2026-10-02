@@ -68,11 +68,18 @@ test('relationship evidence opens highlighted supporting source', async ({ page 
 });
 test('dynamic requests are shown as unresolved, not linked', async ({ page }) => {
   await open(page);
+  // A relative template URL from Next: its pattern matches Laravel, but nothing proves the boundary.
   await search(page, 'dynamicUrl');
   await expect(inspector(page).getByRole('heading', { name: 'dynamicUrl' })).toBeVisible();
   await expect(inspector(page)).toContainText('Unresolved findings');
+  await expect(inspector(page)).toContainText('unverified-relative-api-boundary');
+  await expect(inspector(page)).toContainText('Relative URL with dynamic segments');
+  await expect(inspector(page).locator('.relation-phrase', { hasText: 'requests' })).toHaveCount(0);
+  // Options the analyzer cannot read leave the URL unresolved.
+  await search(page, 'dynamicOptions');
+  await expect(inspector(page).getByRole('heading', { name: 'dynamicOptions' })).toBeVisible();
   await expect(inspector(page)).toContainText('unresolved-http-call');
-  await expect(inspector(page)).toContainText('Unresolved: the URL is built dynamically');
+  await expect(inspector(page)).toContainText('Unresolved: the request could not be proven');
   await expect(inspector(page).locator('.relation-phrase', { hasText: 'requests' })).toHaveCount(0);
 });
 test('a named flow is assembled, saved, shows only real graph links, and plays', async ({ page }) => {

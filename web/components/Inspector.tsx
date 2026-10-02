@@ -6,7 +6,7 @@ import { entryOf, isContainer, type AtlasStore } from '../lib/store';
 import { themeById } from '../lib/themes';
 import { useAtlas, useStore } from './context';
 import { TypeBadge } from './TypeBadge';
-import { CallSitesSection, EffectsSection, ImpactSection } from './Analysis';
+import { CallSitesSection, CommitImpactChip, EffectsSection, ImpactSection } from './Analysis';
 
 export function Inspector({ onClose }: { onClose: () => void }) {
   const selection = useAtlas(state => state.selection);
@@ -160,7 +160,7 @@ function Facts({ node, entity }: { node: NodeSummary; entity?: Entity }) {
   );
 }
 function FactRow({ label, value }: { label: string; value: string }) { return <><dt>{label}</dt><dd className={value.length > 40 ? 'mono' : undefined}>{value}</dd></>; }
-interface HttpRequest { callerId: string; method?: string; url?: string; expression: string; line?: number; resolution: 'literal' | 'proven-base' | 'unresolved' }
+interface HttpRequest { callerId: string; method?: string; url?: string; expression: string; line?: number; resolution: 'literal' | 'proven-base' | 'template' | 'unresolved' }
 function HttpCalls({ selectionId, file }: { selectionId: string; file?: Entity }) {
   const store = useStore();
   const requests = ((file?.metadata.httpRequests as HttpRequest[] | undefined) ?? []).filter(request => request.callerId === selectionId);
@@ -173,7 +173,7 @@ function HttpCalls({ selectionId, file }: { selectionId: string; file?: Entity }
           <li key={index} className={`row diagnostic ${request.resolution === 'literal' ? 'info' : ''}`}>
             <div className="row-main">
               <div className="row-title"><span className="label mono">{request.method ?? '?'} {request.expression}</span></div>
-              <div className="row-sub">{request.resolution === 'literal' ? 'Literal URL — see relationships for a match, or findings if it stayed unmatched' : request.resolution === 'proven-base' ? `Built from a proven base: ${request.url ?? ''} — see relationships (Why? lists every hop), or findings if no endpoint matched` : 'Unresolved: the URL could not be proven (see findings for the reason), so no endpoint is linked'}{request.line ? ` · line ${request.line}` : ''}</div>
+              <div className="row-sub">{request.resolution === 'literal' ? 'Literal URL — see relationships for a match, or findings if it stayed unmatched' : request.resolution === 'proven-base' ? `Built from a proven base: ${request.url ?? ''} — see relationships (Why? lists every hop), or findings if no endpoint matched` : request.resolution === 'template' ? `Relative URL with dynamic segments: ${request.url ?? ''} — linked only when the page making it is served by the endpoint's own application; otherwise see findings` : 'Unresolved: the request could not be proven (its URL or method is dynamic; see findings for the reason), so no endpoint is linked'}{request.line ? ` · line ${request.line}` : ''}</div>
             </div>
             {request.line && <div className="row-actions"><button className="button small" onClick={() => void store.openSource({ entity: file.id, start: Math.max(1, request.line! - 12), end: request.line! + 12 }, `HTTP call · ${file.name}:${request.line}`)}>Source</button></div>}
           </li>
@@ -588,6 +588,7 @@ function ComparisonOverview() {
         <dt>Files</dt><dd>+{summary.files.added} ~{summary.files.modified} →{summary.files.moved} −{summary.files.removed} · lines {compactNumber(summary.files.locBefore)} → {compactNumber(summary.files.locAfter)}</dd>
         <dt>Relationships</dt><dd><span className="added">+{summary.relations.added}</span> <span className="removed">−{summary.relations.removed}</span>{summary.relations.byType.length ? <span className="absent"> · {summary.relations.byType.slice(0, 4).map(row => `${row.type} +${row.added}/−${row.removed}`).join(', ')}</span> : null}</dd>
         <dt>Findings</dt><dd><span className="added">+{summary.diagnostics.added} new</span> <span className="removed">−{summary.diagnostics.removed} resolved</span></dd>
+        <dt>Reach</dt><dd><CommitImpactChip /> <span className="absent">dependents of what changed (click to show on the map)</span></dd>
         {summary.lineage.mapped > 0 && <><dt>Identity</dt><dd>{summary.lineage.mapped} entities followed across renames <span className="absent">({Object.entries(summary.lineage.byReason).map(([reason, count]) => `${count} ${reason}`).join(', ')})</span></dd></>}
       </dl>
       {comparison.analyzerMismatch && <p className="note warning">These snapshots were analyzed by different analyzer versions. Reindex the working tree (or re-run history index) so differences come from the code only.</p>}
