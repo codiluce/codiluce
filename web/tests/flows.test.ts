@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { flowStorageKey, localFlowPersistence, moveItem, removeAt, resolveSteps, upsertFlow, validateFlowName, type StoredFlow } from '../lib/flows';
+import { FlowConflict, flowStorageKey, localFlowPersistence, moveItem, removeAt, resolveSteps, serverFlowPersistence, upsertFlow, validateFlowName, type StoredFlow } from '../lib/flows';
 import { initialPlayback, nextPlayable, playback, type PlaybackState } from '../lib/playback';
 import { highlightLines, splitHighlighted } from '../lib/highlight';
 
@@ -11,23 +11,38 @@ function memoryStorage(): Storage {
 let counter = 0;
 const newId = () => `flow-${++counter}`;
 
-test('flows persist ordered entity IDs only, scoped to the repository identity', () => {
+test('flows persist ordered entity IDs only, scoped to the repository identity', async () => {
   const storage = memoryStorage();
   const repoA = localFlowPersistence(storage, 'repository:a'), repoB = localFlowPersistence(storage, 'repository:b');
-  const flows = upsertFlow([], { name: 'Login', entityIds: ['symbol:1', 'endpoint:2', 'symbol:3'] }, '2026-10-01T00:00:00Z', newId);
+  const [flow] = upsertFlow([], { name: 'Login', entityIds: ['symbol:1', 'endpoint:2', 'symbol:3'] }, '2026-10-01T00:00:00Z', newId);
   // Even if a caller sneaks graph objects onto a step, only the ID is written.
-  (flows[0]!.steps[0] as unknown as Record<string, unknown>).copiedEntity = { name: 'login', metadata: { huge: true } };
-  repoA.save(flows);
+  (flow!.steps[0] as unknown as Record<string, unknown>).copiedEntity = { name: 'login', metadata: { huge: true } };
+  await repoA.save(flow!, true);
   const raw = JSON.parse(storage.getItem(flowStorageKey('repository:a'))!);
   assert.deepEqual(raw[0].steps, [{ entityId: 'symbol:1' }, { entityId: 'endpoint:2' }, { entityId: 'symbol:3' }]);
   assert.equal(raw[0].type, 'declared');
-  assert.deepEqual(repoA.load().map(flow => flow.name), ['Login']);
-  assert.deepEqual(repoB.load(), [], 'another repository sees nothing');
+  assert.deepEqual((await repoA.list()).map(item => item.name), ['Login']);
+  await repoA.save({ ...flow!, name: 'Login (renamed)' }, false);
+  assert.deepEqual((await repoA.list()).map(item => item.name), ['Login (renamed)'], 'saving an existing flow replaces it');
+  assert.deepEqual(await repoB.list(), [], 'another repository sees nothing');
   storage.setItem(flowStorageKey('repository:b'), '{not json');
-  assert.deepEqual(repoB.load(), [], 'malformed storage is ignored');
+  assert.deepEqual(await repoB.list(), [], 'malformed storage is ignored');
   storage.setItem(flowStorageKey('repository:b'), JSON.stringify([{ id: 'x', name: 'bad', type: 'observed', steps: [] }, { id: 'y', name: 'ok', type: 'declared', steps: [{ entityId: 'e' }] }]));
-  assert.deepEqual(repoB.load().map(flow => flow.id), ['y'], 'only declared flows with valid steps load');
-  assert.throws(() => localFlowPersistence(undefined, 'r').save(flows), /unavailable/);
+  assert.deepEqual((await repoB.list()).map(item => item.id), ['y'], 'only declared flows with valid steps load');
+  await repoA.remove(flow!.id);
+  assert.deepEqual(await repoA.list(), []);
+  await assert.rejects(localFlowPersistence(undefined, 'r').save(flow!, true), /unavailable/);
+});
+test('the server adapter turns stale revisions and deleted flows into conflicts', async () => {
+  const stored = { id: 'f', name: 'Flow', type: 'declared' as const, steps: [{ entityId: 'symbol:1' }], createdAt: 't', updatedAt: 't', revision: 3 };
+  const failing = (status: number) => async () => { throw Object.assign(new Error('nope'), { status, body: { flow: stored } }); };
+  const api = { flows: async () => ({ storage: 'server' as const, writable: true, flows: [stored] }), createFlow: async () => stored, updateFlow: failing(409), deleteFlow: failing(404) };
+  const server = serverFlowPersistence(api, true);
+  assert.equal(server.kind, 'server');
+  await assert.rejects(server.save({ ...stored, revision: 2 }, false), (error: unknown) => error instanceof FlowConflict && error.current?.revision === 3);
+  await server.remove('f');
+  await assert.rejects(serverFlowPersistence({ ...api, updateFlow: failing(500) }, true).save(stored, false), /nope/);
+  await assert.rejects(serverFlowPersistence(api, false).save(stored, true), /read-only/);
 });
 test('flow editing keeps order, validates names and updates in place', () => {
   assert.deepEqual(moveItem(['a', 'b', 'c'], 0, 2), ['b', 'c', 'a']);

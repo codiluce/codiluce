@@ -2,11 +2,12 @@
 // analyzers walk their sources, then writes one relation per (from, to, type)
 // with every site as evidence. Relation metadata summarizes the sites:
 // how many, on which lines, in which forms (`call`, `new`, `render`,
-// `handler`, `callback`, `value`), and which event props bound them.
+// `handler`, `callback`, `value`; `eloquent`/`query` for table reads and
+// writes), and which event props bound them.
 import type { CallSites, EffectFact, Evidence, GraphBuilder } from '../core/graph.js';
 
-export type SiteType = 'calls' | 'renders' | 'references';
-export type SiteForm = 'call' | 'new' | 'render' | 'handler' | 'callback' | 'value' | 'dispatch';
+export type SiteType = 'calls' | 'renders' | 'references' | 'reads' | 'writes';
+export type SiteForm = 'call' | 'new' | 'render' | 'handler' | 'callback' | 'value' | 'dispatch' | 'eloquent' | 'query';
 export interface Site { from: string; to: string; type: SiteType; form: SiteForm; evidence: Evidence; event?: string }
 /** Evidence records kept per relation; `metadata.sites` keeps the full count. */
 export const MAX_SITE_EVIDENCE = 25;

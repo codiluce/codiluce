@@ -4,7 +4,8 @@
 // *projection groups* (synthetic, clearly marked, never entities) where the
 // canonical hierarchy has no spatial home for an entity: routes and endpoints
 // are canonical children of their application, so they are placed in a
-// "Routes & endpoints" district inside that application.
+// "Routes & endpoints" district inside that application; database tables
+// declared by its migrations go to a "Database" district.
 import type { SourceRange } from '../core/graph.js';
 import type { LayoutNode } from './layout.js';
 
@@ -36,6 +37,7 @@ export interface ProjectionNode {
 }
 export const SYMBOL_TYPES = new Set(['class', 'controller', 'component', 'function', 'method', 'model', 'test']);
 export const INTERFACE_TYPES = new Set(['route', 'api_endpoint']);
+export const DATA_TYPES = new Set(['database_table']);
 const BAND: Record<string, number> = { application: 0, group: 1, directory: 2, file: 3 };
 const PADDING: Record<string, number> = { repository: 48, application: 28, group: 10, directory: 10, file: 4, class: 3, controller: 3, component: 3, function: 2, method: 2 };
 function compareText(a: string, b: string): number { const x = a.toLowerCase(), y = b.toLowerCase(); return x < y ? -1 : x > y ? 1 : a < b ? -1 : a > b ? 1 : 0; }
@@ -91,8 +93,9 @@ export class ProjectionIndex {
       if (spatialParent) spatialParent.children.push(node.id);
       const children = canonicalChildren.get(row.id) ?? [];
       const districtParent = row.type === 'application' || row.type === 'repository';
-      const structural = children.filter(child => !(districtParent && INTERFACE_TYPES.has(child.type)));
+      const structural = children.filter(child => !(districtParent && (INTERFACE_TYPES.has(child.type) || DATA_TYPES.has(child.type))));
       const interfaces = children.filter(child => districtParent && INTERFACE_TYPES.has(child.type));
+      const tables = children.filter(child => districtParent && DATA_TYPES.has(child.type));
       if (interfaces.length) {
         const district = group(`projection:routes:${row.id}`, 'Routes & endpoints', node, `Projection grouping: routes and endpoints whose canonical parent is ${row.type} ${row.name}. Their containment is unchanged.`);
         interfaces.sort((a, b) => compareText(a.routePath ?? a.name, b.routePath ?? b.name) || compareText(a.method ?? '', b.method ?? '') || compareText(a.id, b.id));
@@ -104,6 +107,11 @@ export class ProjectionIndex {
             for (const item of bySegment.get(segment)!) build(item, sub);
           }
         } else for (const item of interfaces) build(item, district);
+      }
+      if (tables.length) {
+        const district = group(`projection:database:${row.id}`, 'Database', node, `Projection grouping: database tables declared by the migrations of ${row.type} ${row.name} (the intended schema, not the live database). Their containment is unchanged.`);
+        tables.sort((a, b) => compareText(a.name, b.name) || compareText(a.id, b.id));
+        for (const item of tables) build(item, district);
       }
       structural.sort((a, b) => {
         const bandA = BAND[a.type] ?? 4, bandB = BAND[b.type] ?? 4;
@@ -172,6 +180,7 @@ export class ProjectionIndex {
   layoutNodes(): Map<string, LayoutNode> {
     const result = new Map<string, LayoutNode>();
     for (const node of this.nodes.values()) {
+      // Tables have no measured lines: the span of the migration call declaring them sizes them, like a symbol's span.
       const span = node.sourceRange ? node.sourceRange.endLine - node.sourceRange.startLine + 1 : undefined;
       // Symbols keep source order inside files and classes; areas are packed largest-first.
       const preserveOrder = node.type === 'file' || SYMBOL_TYPES.has(node.type);
@@ -182,6 +191,8 @@ export class ProjectionIndex {
 }
 function detail(row: EntityRow): string | undefined {
   if (row.type === 'api_endpoint' || row.type === 'route') return row.framework ? `${row.framework} ${row.type === 'route' ? 'page route' : 'endpoint'}` : undefined;
+  // A table is declared by a migration (its path): name it without the timestamp prefix.
+  if (row.type === 'database_table') return row.path ? `from ${row.path.split('/').at(-1)!.replace(/\.php$/, '').replace(/^\d{4}_\d{2}_\d{2}_\d{6}_/, '')}` : undefined;
   if (row.signature) return `${row.role === 'hook' ? 'hook ' : ''}${row.signature}`;
   if (row.type === 'file') return row.analysisSkipped ? `not analyzed: ${row.analysisSkipped}` : row.language;
   if (row.type === 'application') return row.framework;

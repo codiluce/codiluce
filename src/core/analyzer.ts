@@ -1,5 +1,6 @@
 import type { AtlasConfig, ApplicationConfig } from './config.js';
 import type { GraphBuilder, Evidence, EffectFact } from './graph.js';
+import type { AnalysisCache } from '../pipeline/cache.js';
 export interface ScannedFile { path: string; absolutePath: string; id: string; language?: string; analyzable: boolean; application?: ApplicationConfig }
 export interface HttpObservation {
   callerId: string; fileId: string; method?: string; url?: string; expression: string; evidence: Evidence;
@@ -13,5 +14,7 @@ export interface AnalysisContext {
   applicationIds: Map<string, string>; files: Map<string, ScannedFile>; http: HttpObservation[];
   /** Commit whose tree was materialized at `root` (tracked files only). Absent for a working-tree scan. */
   revision?: string;
+  /** Persistent cache of analyzer work (working-tree indexing with a state directory). */
+  cache?: AnalysisCache;
 }
 export interface Analyzer { name: string; version: string; analyze(context: AnalysisContext): Promise<void> }

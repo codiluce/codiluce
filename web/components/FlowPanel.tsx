@@ -1,5 +1,5 @@
 'use client';
-import { Fragment } from 'react';
+import { Fragment, useEffect } from 'react';
 import { typeLabel } from '../lib/format';
 import { nextPlayable } from '../lib/playback';
 import { useAtlas, useStore } from './context';
@@ -7,6 +7,8 @@ import { useAtlas, useStore } from './context';
 export function FlowPanel({ onClose }: { onClose: () => void }) {
   const store = useStore();
   const flows = useAtlas(state => state.flows);
+  // Another tab or person may have changed the stored flows since the map loaded.
+  useEffect(() => { void store.refreshFlows(); }, [store]);
   return (
     <>
       <div className="panel-header">
@@ -15,8 +17,10 @@ export function FlowPanel({ onClose }: { onClose: () => void }) {
       </div>
       <div className="panel-body">
         <p className="note">A flow is a named sequence of entities: one you choose (declared), or the shortest path of indexed relationships between two entities (static). Neither is observed runtime behaviour. Two steps are joined by a solid link only when an indexed relationship connects them.</p>
+        <p className="absent flow-storage">{flows.storage === 'server' ? (flows.writable ? 'Saved on this server (flows.db in its state directory): every browser using it sees the same flows.' : 'Stored on this server, which is read-only.') : 'Saved in this browser only.'}</p>
+        {flows.notice && <p className="note">{flows.notice}</p>}
         {flows.storageError && <p className="note error">{flows.storageError}</p>}
-        {flows.draft ? <DraftEditor /> : <button className="button primary" onClick={() => store.startDraft()}>New flow</button>}
+        {flows.draft ? <DraftEditor /> : flows.writable && <button className="button primary" onClick={() => store.startDraft()}>New flow</button>}
         {flows.activeId && <ActiveFlow />}
         <section className="section" style={{ marginTop: 10 }}>
           <h4>Saved flows</h4>
@@ -30,8 +34,8 @@ export function FlowPanel({ onClose }: { onClose: () => void }) {
                 </div>
                 <div className="row-actions">
                   {flow.id === flows.activeId ? <button className="button small" onClick={() => store.deactivateFlow()}>Hide</button> : <button className="button small" onClick={() => void store.activateFlow(flow.id)}>Show</button>}
-                  <button className="button small" onClick={() => store.editFlow(flow.id)} disabled={!!flows.draft}>Edit</button>
-                  <button className="button small" onClick={() => store.deleteFlow(flow.id)} aria-label={`Delete flow ${flow.name}`}>✕</button>
+                  {flows.writable && <button className="button small" onClick={() => store.editFlow(flow.id)} disabled={!!flows.draft}>Edit</button>}
+                  {flows.writable && <button className="button small" onClick={() => void store.deleteFlow(flow.id)} aria-label={`Delete flow ${flow.name}`}>✕</button>}
                 </div>
               </li>
             ))}

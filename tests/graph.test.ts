@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
-import { cp, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -271,6 +271,96 @@ test('effects are recorded from resolved names: database, responses, storage and
   assert.ok(effects(entity('signIn')).includes('storage:write'));
   assert.deepEqual(effects(entity('handleSave')), ['navigation:push']);
   assert.deepEqual(effects(entity('GET', 'function')), ['response:json:200']);
+});
+test('HTTP wrappers and axios instances resolve at their call sites, as requests of the callers', () => {
+  const requests = (from: string, to: string) => relation(from, to, 'requests');
+  const explanations = (edge: { evidence: { explanation?: string }[] }) => edge.evidence.map(fact => fact.explanation ?? '');
+  // axios.create({ baseURL: process.env.NEXT_PUBLIC_API_URL }) in another module, then api.get(`/users/${id}`).
+  const instance = requests('loadUser', 'GET /users/{id}')!;
+  assert.equal(instance.metadata!.resolution, 'proven-base');
+  assert.ok(explanations(instance).some(text => /axios instance api/.test(text)) && explanations(instance).some(text => /NEXT_PUBLIC_API_URL is declared/.test(text)));
+  // postJson(url, body) sends fetch(url, { method: 'post' }): the caller's argument is the URL.
+  const wrapped = requests('signInJson', 'POST /auth/login')!;
+  assert.equal(wrapped.evidence[0]!.file, 'frontend/src/services/profileApi.ts');
+  assert.match(wrapped.evidence[0]!.explanation!, /Calls postJson\(…\)/);
+  assert.ok(wrapped.evidence.some(fact => fact.file === 'frontend/src/services/client.ts' && /in postJson\(\) is built from the function's parameters/.test(fact.explanation ?? '')));
+  // The method comes from the init the caller passes ({ ...init } in the wrapper).
+  assert.ok(requests('saveProfile', 'PUT /profiles/{id}'));
+  // Nested wrappers: readProfile → getJson(path) → apiFetch(path) → fetch.
+  const nested = requests('readProfile', 'GET /profiles/{id}')!;
+  assert.ok(explanations(nested).some(text => /apiFetch\(path\) passes its arguments on/.test(text)));
+  // Wrappers request nothing themselves; their network effect says it is made for their callers.
+  for (const name of ['postJson', 'apiFetch', 'getJson']) assert.ok(!graph.relations.some(edge => edge.type === 'requests' && edge.from === entity(name).id), name);
+  assert.equal((entity('postJson').metadata.effects as { wrapper?: boolean }[])[0]!.wrapper, true);
+  const network = (entity('readProfile').metadata.effects as { via: string; endpoint?: string }[])[0]!;
+  assert.deepEqual([network.via, network.endpoint], ['fetch (Fetch API) through getJson()', entity('GET /profiles/{id}').id]);
+  const finding = (name: string, code: string) => graph.diagnostics.find(item => item.entityId === entity(name).id && item.code === code)?.reason;
+  assert.match(finding('postJson', 'http-wrapper')!, /1 of 2 call sites resolved/);
+  assert.match(finding('apiFetch', 'http-wrapper')!, /2 of 3 call sites resolved/);
+  assert.match(finding('relay', 'unresolved-http-call')!, /built from a parameter of relay\(\), and no call site of relay\(\) was resolved/);
+  assert.match(finding('choose', 'unresolved-http-call')!, /no call site of choose\(\) was resolved/);
+  assert.match(finding('quarterlyReports', 'unresolved-http-call')!, /baseURL: process\.env\.REPORTS_URL is not declared/);
+  const calls = graph.entities.find(item => item.path === 'frontend/src/services/profileApi.ts' && item.type === 'file')!.metadata.httpRequests as { resolution: string; wrapper?: string }[];
+  assert.deepEqual(calls.filter(item => item.resolution === 'wrapper').map(item => item.wrapper).sort(), ['apiFetch', 'getJson', 'postJson']);
+});
+test('files carry Git metrics of committed history, following renames; history snapshots and non-Git trees have none', async () => {
+  const repository = await createFixture();
+  const env = { ...process.env, GIT_CONFIG_NOSYSTEM: '1', HOME: repository };
+  const git = (args: string[], author = 'Ana <ana@example.test>', date = '2026-01-01T10:00:00Z') => execute('git', ['-c', 'user.name=x', '-c', 'user.email=x@example.test', ...args], { cwd: repository, env: { ...env, GIT_AUTHOR_NAME: author.split(' <')[0], GIT_AUTHOR_EMAIL: author.split('<')[1]!.slice(0, -1), GIT_AUTHOR_DATE: date, GIT_COMMITTER_DATE: date } });
+  await git(['init', '-q', '-b', 'main']);
+  await git(['add', '-A']); await git(['commit', '-q', '-m', 'initial']);
+  const form = path.join(repository, 'frontend/src/components/LoginForm.tsx');
+  await writeFile(form, `${await readFile(form, 'utf8')}// one\n`);
+  await git(['commit', '-q', '-am', 'edit'], 'Ben <BEN@example.test>', '2026-01-02T10:00:00Z');
+  await mkdir(path.join(repository, 'frontend/src/components/auth'));
+  await git(['mv', 'frontend/src/components/LoginForm.tsx', 'frontend/src/components/auth/LoginForm.tsx']);
+  await git(['commit', '-q', '-m', 'move'], 'Ben <ben@example.test>', '2026-01-03T10:00:00Z');
+  const head = (await execute('git', ['rev-parse', 'HEAD'], { cwd: repository })).stdout.trim();
+  const indexed = await indexRepository(repository);
+  const moved = indexed.entities.find(item => item.type === 'file' && item.path === 'frontend/src/components/auth/LoginForm.tsx')!;
+  assert.deepEqual(moved.metrics, { loc: 7, commits: 3, authors: 2, churn: 7, lastChangedAt: '2026-01-03T10:00:00+00:00', lastCommit: head }, 'the rename carries the older history; author e-mails are compared case-insensitively');
+  const untouched = indexed.entities.find(item => item.type === 'file' && item.path === 'backend/routes/api.php')!;
+  assert.equal(untouched.metrics!.commits, 1);
+  assert.ok(indexed.run.analyzerVersions['git-metrics']);
+  // A materialized commit tree (history) and a directory without Git get no metrics, never zeros.
+  const plain = await indexRepository(repository, { revision: head });
+  assert.ok(plain.entities.every(item => item.metrics?.commits === undefined));
+  assert.ok(graph.entities.every(item => item.metrics?.commits === undefined));
+  assert.ok(graph.diagnostics.some(item => item.code === 'git-metrics-unavailable'));
+});
+test('migrations declare tables, columns and foreign keys; models map to them; code reads and writes them', () => {
+  const users = entity('users', 'database_table');
+  assert.equal(users.parentId, entity('backend', 'application').id);
+  assert.deepEqual((users.metadata.columns as { name: string }[]).map(column => column.name), ['id', 'email', 'admin', 'api_token', 'nickname'], 'created, altered, renamed and conditionally added columns');
+  assert.deepEqual(users.metadata.migrations, ['backend/database/migrations/2026_01_01_create_users.php', 'backend/database/migrations/2026_01_03_update_users.php']);
+  assert.equal(users.metadata.conditional, true);
+  assert.equal(users.path, 'backend/database/migrations/2026_01_01_create_users.php');
+  assert.ok(users.evidence.every(fact => fact.source === 'framework' && fact.file?.includes('/database/migrations/')));
+  assert.match(users.evidence[0]!.explanation!, /not the live database/);
+  assert.ok(!graph.entities.some(item => item.type === 'database_table' && item.name === 'legacy_sessions'), 'a table dropped by a later migration is gone');
+  const profiles = entity('profiles', 'database_table');
+  assert.deepEqual(profiles.metadata.foreignKeys, [{ column: 'user_id', table: 'users', references: 'id', onDelete: 'cascade' }]);
+  const constrained = relation('profiles:database_table', 'users:database_table', 'foreign_key')!;
+  assert.deepEqual(constrained.metadata!.columns, [{ column: 'user_id', references: 'id', onDelete: 'cascade' }]);
+  assert.match(constrained.evidence[0]!.explanation!, /constrained\(\) convention/);
+  assert.ok(relation('audit:database_table', 'users:database_table', 'foreign_key'), '->references()->on()');
+  // Eloquent models become models and map to their tables: explicit $table first, then the naming convention.
+  assert.equal(entity('User').type, 'model');
+  const explicit = relation('User:model', 'users:database_table', 'maps_to')!;
+  assert.deepEqual([explicit.metadata!.mapping, explicit.evidence[0]!.source, explicit.evidence[0]!.explanation], ['property', 'php', "protected $table = 'users'"]);
+  const convention = relation('Profile:model', 'profiles:database_table', 'maps_to')!;
+  assert.deepEqual([convention.metadata!.mapping, convention.evidence[0]!.source], ['convention', 'framework']);
+  // Reads and writes through models, model instances and DB::table().
+  const reads = (from: Entity, table: string) => graph.relations.find(edge => edge.from === from.id && edge.to === entity(table, 'database_table').id && edge.type === 'reads');
+  const writes = (from: Entity, table: string) => graph.relations.find(edge => edge.from === from.id && edge.to === entity(table, 'database_table').id && edge.type === 'writes');
+  assert.deepEqual(reads(symbol('App\\Services\\AuthService::authenticate'), 'users')!.metadata!.forms, ['eloquent']);
+  assert.ok(reads(symbol('App\\Services\\AuthService::profileOf'), 'profiles'));
+  const update = symbol('App\\Http\\Controllers\\ProfileController::update');
+  assert.ok(reads(update, 'users') && writes(update, 'users'), 'findOrFail, then $user->update()');
+  assert.deepEqual(writes(update, 'audit')!.metadata!.forms, ['query']);
+  assert.match(writes(update, 'audit')!.evidence[0]!.explanation!, /through DB::table\('audit'\)/);
+  assert.equal((symbol('App\\Services\\AuthService::authenticate').metadata.effects as { tableName?: string }[])[0]!.tableName, 'users');
+  assert.ok(graph.diagnostics.some(item => item.code === 'dynamic-migration-table' && item.file === 'backend/database/migrations/2026_01_03_update_users.php'), 'a dynamic table name is reported, not guessed');
 });
 test('apiOriginEnv is validated, and derived metadata does not change an entity\'s shape', async () => {
   const state = await mkdtemp(path.join(tmpdir(), 'atlas-state-')); temporary.push(state);

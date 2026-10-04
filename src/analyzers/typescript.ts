@@ -7,8 +7,9 @@ import { SiteCollector } from './references.js';
 import { createApplicationProgram } from './ts-program.js';
 import { resolveReferences, type TsApplicationState } from './ts-references.js';
 import { UrlEvaluator } from './ts-url.js';
+import { detectHttpSite, evaluateSite, expandWrappers, HTTP_METHODS, wrapperOf, type WrapperRoot } from './ts-http.js';
+import { fileKey, pathSetKey } from '../pipeline/cache.js';
 
-const HTTP_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD']);
 function literal(node: ts.Node | undefined): string | undefined { return node && (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) ? node.text : undefined; }
 function modifier(node: ts.Node, kind: ts.SyntaxKind): boolean { return ts.canHaveModifiers(node) && !!ts.getModifiers(node)?.some(item => item.kind === kind); }
 function hasJsx(node: ts.Node): boolean {
@@ -43,33 +44,6 @@ function memoizedCallback(call: ts.CallExpression): ts.ArrowFunction | ts.Functi
   const fn = call.arguments[0];
   return name === 'useCallback' && fn && (ts.isArrowFunction(fn) || ts.isFunctionExpression(fn)) ? fn : undefined;
 }
-function bindingHas(name: ts.BindingName, identifier: string): boolean {
-  if (ts.isIdentifier(name)) return name.text === identifier;
-  return name.elements.some(element => ts.isBindingElement(element) && bindingHas(element.name, identifier));
-}
-function shadowedBinding(node: ts.Node, identifier: string, allowedImport?: string): boolean {
-  let scope: ts.Node | undefined = node.parent;
-  while (scope) {
-    if (ts.isFunctionLike(scope) && scope.parameters.some(param => bindingHas(param.name, identifier))) return true;
-    if (ts.isCatchClause(scope) && scope.variableDeclaration && bindingHas(scope.variableDeclaration.name, identifier)) return true;
-    if ((ts.isForStatement(scope) || ts.isForOfStatement(scope) || ts.isForInStatement(scope)) && scope.initializer && ts.isVariableDeclarationList(scope.initializer) && scope.initializer.declarations.some(declaration => bindingHas(declaration.name, identifier))) return true;
-    if (ts.isBlock(scope) || ts.isSourceFile(scope)) {
-      let found = false;
-      for (const statement of scope.statements) {
-        if (ts.isFunctionDeclaration(statement) && statement.name?.text === identifier) found = true;
-        if (ts.isVariableStatement(statement) && statement.declarationList.declarations.some(declaration => bindingHas(declaration.name, identifier))) found = true;
-        if (ts.isImportDeclaration(statement) && literal(statement.moduleSpecifier) !== allowedImport) {
-          const clause = statement.importClause;
-          if (clause?.name?.text === identifier) found = true;
-          if (clause?.namedBindings && (ts.isNamespaceImport(clause.namedBindings) ? clause.namedBindings.name.text === identifier : clause.namedBindings.elements.some(element => element.name.text === identifier))) found = true;
-        }
-      }
-      if (found) return true;
-    }
-    scope = scope.parent;
-  }
-  return false;
-}
 export const typescriptAnalyzer: Analyzer = {
   name: 'typescript-nextjs', version: ANALYZER_VERSION,
   async analyze(context): Promise<void> {
@@ -86,31 +60,39 @@ export const typescriptAnalyzer: Analyzer = {
       optionsByApp.set(app.name, options);
     }
     // One program per application: every file declares its symbols first, then
-    // calls, renders and references resolve across the whole application.
+    // calls, renders and references resolve across the whole application. An
+    // application whose inputs did not change since the last index is replayed from the cache.
     for (const app of context.config.applications) {
       const files = [...context.files.values()].filter(file => file.analyzable && ['typescript', 'javascript'].includes(file.language ?? '') && file.application?.name === app.name);
       if (!files.length) continue;
-      const texts = new Map<string, string>();
-      for (const file of files) texts.set(file.absolutePath, await readFile(file.absolutePath, 'utf8'));
-      const options = optionsByApp.get(app.name)!;
-      const program = createApplicationProgram(texts, options, path.join(context.root, app.path));
-      const checker = program.getTypeChecker();
-      const state: TsApplicationState = { program, checker, declarations: new Map(), sites: new SiteCollector() };
-      const urls = new UrlEvaluator(checker, program, context);
-      const analyzed: { file: ScannedFile; source: ts.SourceFile; symbols: Map<ts.Node, Entity> }[] = [];
-      for (const file of files) {
-        if (file.path.endsWith('.d.ts')) continue;
-        const source = program.getSourceFile(file.absolutePath);
-        if (!source) continue;
-        const symbols = analyzeFile(context, file, options, source, state, urls);
-        if (symbols) analyzed.push({ file, source, symbols });
-      }
-      for (const item of analyzed) resolveReferences(context, state, item.file, item.source, item.symbols);
-      state.sites.flush(context.graph);
+      const run = () => analyzeApplication(context, files, optionsByApp.get(app.name)!, app.path);
+      if (context.cache) await context.cache.unit(context, 'typescript-nextjs', app.name, { app, options: optionsByApp.get(app.name), files: files.map(file => fileKey(context, file.path)), paths: pathSetKey(context), config: context.config, applications: [...context.applicationIds], typescript: ts.version }, run);
+      else await run();
     }
   },
 };
-function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.CompilerOptions, source: ts.SourceFile, state: TsApplicationState, urls: UrlEvaluator): Map<ts.Node, Entity> | undefined {
+async function analyzeApplication(context: AnalysisContext, files: ScannedFile[], options: ts.CompilerOptions, appPath: string): Promise<void> {
+  const texts = new Map<string, string>();
+  for (const file of files) texts.set(file.absolutePath, await readFile(file.absolutePath, 'utf8'));
+  const program = createApplicationProgram(texts, options, path.join(context.root, appPath));
+  const checker = program.getTypeChecker();
+  const state: TsApplicationState = { program, checker, declarations: new Map(), sites: new SiteCollector() };
+  const urls = new UrlEvaluator(checker, program, context);
+  const analyzed: { file: ScannedFile; source: ts.SourceFile; symbols: Map<ts.Node, Entity> }[] = [];
+  const wrappers: WrapperRoot[] = [];
+  for (const file of files) {
+    if (file.path.endsWith('.d.ts')) continue;
+    const source = program.getSourceFile(file.absolutePath);
+    if (!source) continue;
+    const symbols = analyzeFile(context, file, options, source, state, urls, wrappers);
+    if (symbols) analyzed.push({ file, source, symbols });
+  }
+  // HTTP wrappers resolve at their call sites, once every file has declared its symbols.
+  expandWrappers({ context, checker, program, urls, sites: state.sites, sources: analyzed.map(item => item.source), declarations: state.declarations }, wrappers);
+  for (const item of analyzed) resolveReferences(context, state, item.file, item.source, item.symbols);
+  state.sites.flush(context.graph);
+}
+function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.CompilerOptions, source: ts.SourceFile, state: TsApplicationState, urls: UrlEvaluator, wrappers: WrapperRoot[]): Map<ts.Node, Entity> | undefined {
   const { graph } = context;
   const app = file.application!;
   const parseDiagnostics = (source as ts.SourceFile & { parseDiagnostics: readonly ts.Diagnostic[] }).parseDiagnostics;
@@ -215,43 +197,23 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.Co
       }
     }
     if (ts.isCallExpression(node)) {
-      const isFetch = ts.isIdentifier(node.expression) && node.expression.text === 'fetch';
-      const isAxios = ts.isPropertyAccessExpression(node.expression) && ts.isIdentifier(node.expression.expression) && axiosNames.has(node.expression.expression.text);
-      if (isFetch || isAxios) {
+      const site = detectHttpSite(node, state.checker, axiosNames);
+      if (site) {
         const caller = parentSymbol(node) ?? fileEntity;
-        let method: string | undefined = isFetch ? 'GET' : (node.expression as ts.PropertyAccessExpression).name.text.toUpperCase();
-        let url = literal(node.arguments[0]);
-        let reason: string | undefined;
-        let resolved: ReturnType<UrlEvaluator['resolve']> | undefined;
-        if (isFetch && shadowedBinding(node, 'fetch')) { url = undefined; reason = 'fetch identifier has a local binding; cannot prove browser/global fetch'; }
-        if (isAxios && shadowedBinding(node, (node.expression as ts.PropertyAccessExpression).expression.getText(source), 'axios')) { url = undefined; reason = 'axios identifier is shadowed by a local binding'; }
-        if (isAxios && !HTTP_METHODS.has(method!)) { method = undefined; reason = 'Unsupported axios call form'; }
-        const option = node.arguments[isFetch || ['GET', 'DELETE', 'HEAD', 'OPTIONS'].includes(method ?? '') ? 1 : 2];
-        if (option) {
-          if (!ts.isObjectLiteralExpression(option)) { method = undefined; reason = 'Dynamic HTTP options'; }
-          else {
-            for (const property of option.properties) {
-              if (ts.isSpreadAssignment(property) || ts.isComputedPropertyName(property.name!)) { method = undefined; reason = 'HTTP options contain a spread/computed property'; break; }
-              if (isFetch && property.name && (ts.isIdentifier(property.name) ? property.name.text : literal(property.name)) === 'method') {
-                method = ts.isPropertyAssignment(property) ? literal(property.initializer)?.toUpperCase() : undefined;
-                if (!method || !HTTP_METHODS.has(method)) { method = undefined; reason = 'Dynamic/unsupported HTTP method'; }
-              }
-              if (!isFetch && property.name && ['baseURL', 'url', 'method'].includes(property.name.getText(source).replace(/['"]/g, ''))) { url = undefined; reason = 'Axios config overrides require further resolution'; }
-            }
-          }
-        }
-        // A URL built from a proven base (configured origin or declared environment variable).
-        if (url === undefined && !reason && method && node.arguments[0]) {
-          resolved = urls.resolve(node.arguments[0]);
-          if ('reason' in resolved) reason = resolved.reason;
-        }
-        const fact = facts(node, isFetch ? 'fetch() HTTP call' : 'Imported axios HTTP call')[0]!;
-        const expression = node.arguments[0]?.getText(source) ?? '(missing URL)';
-        const proven = resolved && 'url' in resolved ? resolved.url : undefined;
-        const effect = state.sites.effect(caller.id, { category: 'network', operation: method ?? 'HTTP', detail: url ?? proven?.display ?? (expression.length > 80 ? `${expression.slice(0, 79)}…` : expression), line: fact.line!, via: isFetch ? 'fetch (Fetch API)' : 'axios' });
-        context.http.push({ callerId: caller.id, fileId: file.id, method, url, expression, evidence: fact, effect, ...(proven ? { resolved: proven } : {}) });
-        (fileEntity.metadata.httpRequests as unknown[]).push({ callerId: caller.id, method, url: url ?? proven?.display, expression, line: fact.line, resolution: method && url !== undefined ? 'literal' : proven ? (proven.app ? 'proven-base' : 'template') : 'unresolved' });
-        if (!method || (url === undefined && !proven)) graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'unresolved-http-call', file: file.path, line: fact.line, entityId: caller.id, reason: reason ?? 'Dynamic URL construction' });
+        const outcome = evaluateSite(urls, site);
+        const fact = facts(node, site.client === 'fetch' ? 'fetch() HTTP call' : site.client === 'axios' ? 'Imported axios HTTP call' : `HTTP call on axios instance ${site.instance} (axios.create)`)[0]!;
+        const expression = site.url?.getText(source) ?? '(missing URL)';
+        const plain = 'reason' in outcome ? undefined : outcome.url;
+        const proven = 'reason' in outcome ? undefined : outcome.resolved;
+        const effect = state.sites.effect(caller.id, { category: 'network', operation: outcome.method ?? 'HTTP', detail: plain ?? proven?.display ?? (expression.length > 80 ? `${expression.slice(0, 79)}…` : expression), line: fact.line!, via: site.via });
+        const entry: Record<string, unknown> = { callerId: caller.id, method: outcome.method, url: plain ?? proven?.display ?? literal(site.url), expression, line: fact.line, resolution: 'reason' in outcome ? 'unresolved' : plain !== undefined ? 'literal' : proven!.app ? 'proven-base' : 'template', ...(site.instance ? { instance: site.instance } : {}) };
+        (fileEntity.metadata.httpRequests as unknown[]).push(entry);
+        if ('reason' in outcome) {
+          // The URL or method comes from the parameters of the function around the call: resolve it at its call sites.
+          const wrapper = wrapperOf(node, outcome.parameters);
+          if (wrapper) wrappers.push({ site, owner: caller, file, effect, fact, reason: outcome.reason, wrapper, entry });
+          else graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'unresolved-http-call', file: file.path, line: fact.line, entityId: caller.id, reason: outcome.reason });
+        } else context.http.push({ callerId: caller.id, fileId: file.id, method: outcome.method, ...(plain !== undefined ? { url: plain } : {}), expression, evidence: fact, effect, ...(proven ? { resolved: proven } : {}) });
       }
       if (node.expression.kind === ts.SyntaxKind.ImportKeyword && node.arguments[0]) {
         const specifier = literal(node.arguments[0]);

@@ -89,7 +89,7 @@ function Legend() {
   const theme = themeById(useAtlas(state => state.themeId));
   if (!meta) return null;
   const present = new Set(meta.entityTypes.map(item => item.type));
-  const types = ['application', 'directory', 'file', 'class', 'controller', 'component', 'function', 'method', 'api_endpoint', 'route'].filter(type => present.has(type));
+  const types = ['application', 'directory', 'file', 'class', 'controller', 'model', 'component', 'function', 'method', 'api_endpoint', 'route', 'database_table'].filter(type => present.has(type));
   const relationTypes = meta.relationTypes.filter(item => item.type !== 'contains');
   // Themes that color files by language list those colors.
   const languages = Object.entries(theme.entity).filter(([key]) => key.startsWith('file:'));
@@ -100,7 +100,7 @@ function Legend() {
     { state: 'present', text: 'Hierarchy, files, symbols, routes, imports/exports, inheritance' },
     { state: coverage.resolvedHttpRequests ? 'partial' : 'absent', text: `HTTP request matching: ${coverage.resolvedHttpRequests} resolved, ${coverage.unresolvedHttpCalls} unresolved` },
     { state: coverage.calls ? 'partial' : 'absent', text: coverage.calls ? `Resolved calls, renders and references: ${relationCount('calls')} / ${relationCount('renders')} / ${relationCount('references')} (calls through callbacks, props or untyped values are counted per symbol, not linked)` : 'Function calls and renders: none resolved in this index' },
-    { state: coverage.databaseTables ? 'present' : 'absent', text: coverage.databaseTables ? `Database tables: ${coverage.databaseTables}` : 'Database analysis not indexed yet' },
+    { state: coverage.databaseTables ? 'present' : 'absent', text: coverage.databaseTables ? `Database tables: ${coverage.databaseTables} declared by migrations (the intended schema, not the live database); ${relationCount('maps_to')} model mappings, ${relationCount('reads')} reads, ${relationCount('writes')} writes, ${relationCount('foreign_key')} foreign keys` : 'Database tables: no migrations indexed' },
     { state: coverage.gitHistory ? 'present' : 'absent', text: coverage.gitHistory ? `History: ${coverage.gitHistory} indexed commits (History button)` : 'History: no commits indexed (run history index)' },
   ];
   return (

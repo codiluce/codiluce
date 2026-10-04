@@ -252,7 +252,7 @@ test('HTTP API serves projection and source routes read-only, without exposing f
   try {
     const meta = await fetch(`${base}/api/projection`).then(response => response.json());
     assert.equal(meta.root.id, graph.run.repositoryId);
-    assert.equal(meta.coverage.databaseTables, 0);
+    assert.equal(meta.coverage.databaseTables, 3);
     const endpoint = entityId('POST /auth/login', 'api_endpoint');
     const source = await fetch(`${base}/api/source?entity=${encodeURIComponent(endpoint)}`).then(response => response.json());
     assert.equal(source.file.path, 'backend/routes/api.php');
@@ -349,6 +349,30 @@ test('steps are capped and say what was left out', async () => {
   assert.ok(walk.truncated);
   assert.ok(walk.steps.length <= 3);
   assert.ok(walk.steps.some(item => item.caps.some(cap => cap.reason === 'fanout' && cap.hidden > 0)));
+});
+test('tables sit in a Database district; their blast radius reaches code, endpoints, pages and dependent tables', () => {
+  const projection = new ProjectionService(store);
+  const users = entityId('users', 'database_table'), backend = entityId('backend', 'application');
+  const located = projection.locate(users);
+  assert.equal(located.node.canonicalParentId, backend, 'canonical parent stays the application');
+  const district = located.spatialAncestors.at(-1)!;
+  assert.deepEqual([district.id, district.kind, district.name], [`projection:database:${backend}`, 'group', 'Database']);
+  assert.match(district.explanation!, /declared by the migrations/);
+  assert.ok(inside(located.node.rect, district.rect));
+  const impact = projection.impact(users, { depth: 8, limit: 200 });
+  const distance = (id: string) => impact.distances[id];
+  assert.equal(distance(symbolId('App\\Services\\AuthService::authenticate')), 1, 'reads users');
+  assert.equal(distance(symbolId('App\\Models\\User')), 1, 'maps to users');
+  assert.equal(distance(entityId('profiles', 'database_table')), 1, 'foreign key to users');
+  assert.equal(distance(symbolId('App\\Services\\AuthService::profileOf')), 2, 'reads profiles, which references users');
+  assert.equal(distance(entityId('POST /auth/login', 'api_endpoint')), 3);
+  assert.ok(distance(entityId('/account', 'route'))! > 3, 'reaches the frontend page');
+  const page = impact.items.items.find(item => item.name === '/account')!;
+  assert.equal(page.chain[0]!.type, 'reads');
+  // A static flow can end at a table.
+  const path = projection.path(entityId('/account', 'route'), users);
+  assert.ok(path.found && !path.reversed);
+  assert.equal(path.links.at(-1)!.type, 'reads');
 });
 test('paths connect two entities over indexed relations, in either direction', () => {
   const projection = new ProjectionService(store);

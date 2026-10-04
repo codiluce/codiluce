@@ -44,7 +44,7 @@ interface View {
   impacts?: Map<string, ImpactComputation>;
 }
 const HTTP_FINDINGS = new Set(['unresolved-http-call', 'unresolved-http-url', 'unmatched-http-call', 'ambiguous-http-match', 'constrained-http-match', 'unverified-relative-api-boundary']);
-const IMPACT_TYPE_ORDER: Record<string, number> = { route: 0, api_endpoint: 1, component: 2, controller: 3, class: 4, function: 5, method: 6, file: 7 };
+const IMPACT_TYPE_ORDER: Record<string, number> = { route: 0, api_endpoint: 1, component: 2, controller: 3, model: 4, class: 4, function: 5, method: 6, database_table: 7, file: 8 };
 const OWN_CHANGE = new Set(['source', 'definition', 'signature', 'type', 'size']);
 const SEVERITY_ORDER: Record<string, number> = { error: 0, warning: 1, info: 2 };
 const STATUS_ORDER: Record<string, number> = { added: 0, removed: 1, moved: 2, modified: 3, unchanged: 4 };
@@ -580,7 +580,7 @@ export class ProjectionService {
         const from = current.index.node(relation.from);
         const sites = Number(metadata.get(relation.id)?.sites ?? 1);
         const target = current.index.node(relation.to);
-        const hint = relation.type === 'requests' ? undefined : target?.type === 'class' ? target.name : target?.name.replace(/^.*(::|\.)/, '');
+        const hint = relation.type === 'requests' ? undefined : target?.type === 'class' || target?.type === 'model' ? target.name : target?.name.replace(/^.*(::|\.)/, '');
         return { relationId: relation.id, type: relation.type, from: relation.from, to: relation.to, ...(from?.path ? { file: from.path } : {}), ...(line ? { line } : {}), sites, when: line ? await guards(relation.from, line, hint) : [] };
       }));
       return {

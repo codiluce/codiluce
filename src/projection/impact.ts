@@ -2,9 +2,12 @@
 //
 // Every relation reads "from depends on to" (a caller on its callee, an
 // endpoint on its handler, a page on its component, a requester on the
-// endpoint it reaches), so dependents are the `from` side of incoming
-// relations. Symbols follow symbol-level relations only (calls, renders,
-// references, handles, routes_to, requests, extends, implements); files follow
+// endpoint it reaches, code on the table it reads or writes, a model on its
+// table, a table on the table its foreign keys reference), so dependents are
+// the `from` side of incoming relations. Symbols and tables follow
+// symbol-level relations only (calls, renders, references, handles,
+// routes_to, requests, extends, implements, reads, writes, maps_to,
+// foreign_key); files follow
 // file-level ones (imports, re-exports). Containment is never climbed: a
 // change to one method does not make every importer of its file a dependent.
 // Seeding a container seeds everything inside it. The walk is bounded by
@@ -12,7 +15,7 @@
 // requests) is reported separately, so the result reads as a lower bound.
 import type { ProjectionIndex, ProjectionNode } from './hierarchy.js';
 
-export const SYMBOL_IMPACT_TYPES = ['calls', 'renders', 'references', 'handles', 'routes_to', 'requests', 'extends', 'implements'] as const;
+export const SYMBOL_IMPACT_TYPES = ['calls', 'renders', 'references', 'handles', 'routes_to', 'requests', 'extends', 'implements', 'reads', 'writes', 'maps_to', 'foreign_key'] as const;
 export const FILE_IMPACT_TYPES = ['imports', 'exports'] as const;
 export const DEFAULT_IMPACT_DEPTH = 4, MAX_IMPACT_DEPTH = 10, MAX_IMPACT_NODES = 5000, MAX_IMPACT_SEEDS = 3000;
 export interface ImpactComputation {

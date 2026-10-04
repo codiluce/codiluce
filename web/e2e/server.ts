@@ -8,6 +8,7 @@ import { stringify } from 'yaml';
 import { indexRepository } from '../../src/pipeline/index.js';
 import { GraphStore } from '../../src/storage/sqlite.js';
 import { createInspectionServer } from '../../src/api/server.js';
+import { FlowStore, FLOWS_DATABASE } from '../../src/storage/flows.js';
 
 const port = Number(process.env.E2E_PORT ?? 4399);
 const fixture = fileURLToPath(new URL('../../tests/fixtures/repository', import.meta.url));
@@ -18,4 +19,5 @@ await mkdir(path.join(root, '.archipelago'));
 await writeFile(path.join(root, '.archipelago/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'], apiOriginEnv: ['NEXT_PUBLIC_API_URL'] }] }));
 const store = new GraphStore(path.join(root, '.archipelago/archipelago.db'));
 store.save(await indexRepository(root));
-createInspectionServer(store, { root, stateDirectory: path.join(root, '.archipelago'), uiDirectory: ui }).listen(port, '127.0.0.1', () => console.log(`e2e server on ${port}`));
+const state = path.join(root, '.archipelago');
+createInspectionServer(store, { root, stateDirectory: state, uiDirectory: ui, flows: new FlowStore(path.join(state, FLOWS_DATABASE)) }).listen(port, '127.0.0.1', () => console.log(`e2e server on ${port}`));

@@ -11,16 +11,27 @@
 // segment (it then only matches a route parameter) or sit after `?`. Anything
 // else — a parameter nobody binds, an unconfigured origin, a hole inside a
 // segment, alternatives that disagree — fails with a reason, never a guess.
+//
+// A failure (or a hole) caused by a parameter of an enclosing function names
+// that parameter: the function is then an HTTP wrapper, and ts-http.ts
+// evaluates the same URL again at each of its call sites, with the
+// parameters bound to the arguments (`bind`). An axios instance's `baseURL`
+// is joined to the request path the way axios joins them (`resolveJoined`).
 import ts from 'typescript';
 import path from 'node:path';
 import type { AnalysisContext } from '../core/analyzer.js';
 import { evidence, type Evidence } from '../core/graph.js';
 
-type Part = { kind: 'text'; value: string } | { kind: 'hole'; text: string } | { kind: 'origin'; app: string; label: string };
+type Part = { kind: 'text'; value: string } | { kind: 'hole'; text: string; parameter?: ts.ParameterDeclaration } | { kind: 'origin'; app: string; label: string };
 interface Alternative { parts: Part[]; proof: Evidence[] }
-type Result = { ok: true; alternatives: Alternative[] } | { ok: false; reason: string };
+type Result = { ok: true; alternatives: Alternative[] } | { ok: false; reason: string; parameter?: ts.ParameterDeclaration };
 interface Binding { expression: ts.Expression; scope: Scope }
-interface Scope { bindings: Map<ts.Symbol, Binding>; depth: number; active: Set<ts.Node> }
+export interface Scope { bindings: Map<ts.Symbol, Binding>; depth: number; active: Set<ts.Node> }
+/** A failed resolution, with the unbound parameters it depends on (empty when it does not depend on one). */
+export interface Unresolved { reason: string; parameters: ts.ParameterDeclaration[] }
+/** Bound to a parameter whose argument the call site omits (and that has no default). */
+export const MISSING_ARGUMENT = ts.factory.createIdentifier('undefined');
+export function emptyScope(): Scope { return { bindings: new Map(), depth: 0, active: new Set() }; }
 export interface ResolvedUrl {
   /** Target application when the origin is proven; absent for a same-origin relative path. */
   app?: string;
@@ -33,7 +44,7 @@ export interface ResolvedUrl {
 }
 const MAX_ALTERNATIVES = 8, MAX_DEPTH = 8, MAX_PROOF = 10;
 const ok = (alternatives: Alternative[]): Result => ({ ok: true, alternatives });
-const fail = (reason: string): Result => ({ ok: false, reason });
+const fail = (reason: string, parameter?: ts.ParameterDeclaration): Result => ({ ok: false, reason, ...(parameter ? { parameter } : {}) });
 const text = (value: string): Alternative => ({ parts: [{ kind: 'text', value }], proof: [] });
 function short(node: ts.Node): string { const value = node.getText().replace(/\s+/g, ' '); return value.length > 80 ? `${value.slice(0, 77)}…` : value; }
 
@@ -56,18 +67,80 @@ export class UrlEvaluator {
     const source = node.getSourceFile();
     return !this.program.isSourceFileDefaultLibrary(source) && this.context.files.has(this.relative(node));
   }
-  /** Resolve a request URL expression; `undefined` reason when it is a plain literal (handled by the literal matcher). */
-  resolve(expression: ts.Expression): { url: ResolvedUrl } | { reason: string } {
-    const result = this.evaluate(expression, { bindings: new Map(), depth: 0, active: new Set() });
-    if (!result.ok) return { reason: result.reason };
-    const resolved: ResolvedUrl[] = [];
+  /** Resolve a request URL expression, optionally with parameters bound (an HTTP wrapper evaluated at a call site). */
+  resolve(expression: ts.Expression, scope: Scope = emptyScope()): { url: ResolvedUrl } | Unresolved {
+    const result = this.evaluate(expression, scope);
+    if (!result.ok) return { reason: result.reason, parameters: result.parameter ? [result.parameter] : [] };
+    return this.finish(result.alternatives);
+  }
+  /**
+   * An axios instance request: `baseURL` (evaluated where the instance is
+   * created) joined to the request path as axios does — trailing and leading
+   * slashes collapse to one — unless the path is itself an absolute URL.
+   */
+  resolveJoined(base: ts.Expression | undefined, url: ts.Expression, scope: Scope = emptyScope()): { url: ResolvedUrl } | Unresolved {
+    const path = this.evaluate(url, scope);
+    if (!path.ok) return { reason: path.reason, parameters: path.parameter ? [path.parameter] : [] };
+    if (!base) return this.finish(path.alternatives);
+    const origin = this.evaluate(base, emptyScope());
+    if (!origin.ok) return { reason: `The axios instance's baseURL: ${origin.reason}`, parameters: [] };
+    const absolute = (alternative: Alternative) => alternative.parts[0]?.kind === 'text' && /^(?:[a-z][a-z\d+\-.]*:)?\/\//i.test(alternative.parts[0].value);
+    const joined: Alternative[] = [];
+    for (const relative of path.alternatives) {
+      if (absolute(relative)) { joined.push(relative); continue; }
+      for (const start of origin.alternatives) {
+        const head = [...start.parts], tail = [...relative.parts];
+        const last = head.at(-1), first = tail[0];
+        if (last?.kind === 'text') head[head.length - 1] = { kind: 'text', value: last.value.replace(/\/+$/, '') };
+        if (first?.kind === 'text') tail[0] = { kind: 'text', value: first.value.replace(/^\/+/, '') };
+        const empty = tail.every(part => part.kind === 'text' && !part.value);
+        joined.push({ parts: empty ? start.parts : [...head, { kind: 'text', value: '/' }, ...tail], proof: [...start.proof, ...relative.proof] });
+      }
+    }
+    return joined.length > MAX_ALTERNATIVES ? { reason: 'The URL can take too many values', parameters: [] } : this.finish(joined);
+  }
+  /** A string-valued expression (an HTTP method) that must have exactly one literal value. */
+  stringValue(expression: ts.Expression, scope: Scope = emptyScope()): { value: string } | Unresolved {
+    const result = this.evaluate(expression, scope);
+    if (!result.ok) return { reason: result.reason, parameters: result.parameter ? [result.parameter] : [] };
+    const values = new Set<string>();
     for (const alternative of result.alternatives) {
+      const hole = alternative.parts.find(part => part.kind !== 'text');
+      if (hole) return { reason: `Dynamic value ${short(expression)}`, parameters: hole.kind === 'hole' && hole.parameter ? [hole.parameter] : [] };
+      values.add(alternative.parts.map(part => (part as { value: string }).value).join(''));
+    }
+    return values.size === 1 ? { value: [...values][0]! } : { reason: `${short(expression)} can take several values (${[...values].join(', ')})`, parameters: [] };
+  }
+  /** What an identifier or expression is bound to in a scope (a wrapper's argument), for reading object literals. */
+  boundValue(expression: ts.Expression, scope: Scope): { expression: ts.Expression; scope: Scope } | undefined {
+    if (!ts.isIdentifier(expression)) return undefined;
+    const symbol = this.symbolOf(expression);
+    const bound = symbol ? scope.bindings.get(symbol) : undefined;
+    return bound ? { expression: bound.expression, scope: bound.scope } : undefined;
+  }
+  /** Bind a function's parameters to a call's arguments (evaluated in `outer`); omitted ones to their default, or to MISSING_ARGUMENT. */
+  bind(declaration: ts.SignatureDeclaration, call: ts.CallExpression, outer: Scope): Scope {
+    const bindings = new Map<ts.Symbol, Binding>();
+    declaration.parameters.forEach((parameter, index) => {
+      const symbol = ts.isIdentifier(parameter.name) ? this.checker.getSymbolAtLocation(parameter.name) : undefined;
+      if (!symbol) return;
+      const argument = parameter.dotDotDotToken ? undefined : call.arguments[index];
+      if (argument) bindings.set(symbol, { expression: argument, scope: outer });
+      else if (parameter.initializer) bindings.set(symbol, { expression: parameter.initializer, scope: emptyScope() });
+      else if (!parameter.dotDotDotToken) bindings.set(symbol, { expression: MISSING_ARGUMENT, scope: emptyScope() });
+    });
+    return { bindings, depth: 0, active: new Set(outer.active) };
+  }
+  private finish(alternatives: Alternative[]): { url: ResolvedUrl } | Unresolved {
+    const parameters = () => [...new Set(alternatives.flatMap(alternative => alternative.parts.flatMap(part => part.kind === 'hole' && part.parameter ? [part.parameter] : [])))];
+    const resolved: ResolvedUrl[] = [];
+    for (const alternative of alternatives) {
       const one = this.normalize(alternative);
-      if ('reason' in one) return one;
+      if ('reason' in one) return { reason: one.reason, parameters: parameters() };
       resolved.push(one.url);
     }
     const first = resolved[0]!;
-    if (resolved.some(item => item.app !== first.app || item.relative !== first.relative || item.pattern !== first.pattern)) return { reason: `The URL can take values that reach different targets (${[...new Set(resolved.map(item => `${item.app ?? 'same origin'} ${item.pattern}`))].join(' | ')})` };
+    if (resolved.some(item => item.app !== first.app || item.relative !== first.relative || item.pattern !== first.pattern)) return { reason: `The URL can take values that reach different targets (${[...new Set(resolved.map(item => `${item.app ?? 'same origin'} ${item.pattern}`))].join(' | ')})`, parameters: parameters() };
     const proof = dedupe(resolved.flatMap(item => item.proof)).slice(0, MAX_PROOF);
     return { url: { ...first, proof } };
   }
@@ -128,9 +201,10 @@ export class UrlEvaluator {
   /** A sub-expression that may be dynamic: unknown values become a hole instead of failing. */
   private evaluateOrHole(expression: ts.Expression, scope: Scope): Result {
     const result = this.evaluate(expression, scope);
-    return result.ok ? result : ok([{ parts: [{ kind: 'hole', text: short(expression) }], proof: [] }]);
+    return result.ok ? result : ok([{ parts: [{ kind: 'hole', text: expression === MISSING_ARGUMENT ? 'undefined' : short(expression), ...(result.parameter ? { parameter: result.parameter } : {}) }], proof: [] }]);
   }
   private evaluate(node: ts.Expression, scope: Scope): Result {
+    if (node === MISSING_ARGUMENT) return fail('The call site does not pass this argument');
     if (scope.depth > MAX_DEPTH) return fail('The URL is built through too many steps');
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return ok([text(node.text)]);
     if (ts.isParenthesizedExpression(node) || ts.isAsExpression(node) || ts.isNonNullExpression(node) || ts.isSatisfiesExpression(node) || ts.isTypeAssertionExpression(node)) return this.evaluate(node.expression, scope);
@@ -186,7 +260,8 @@ export class UrlEvaluator {
     return !!symbol?.declarations?.length && symbol.declarations.every(declaration => this.program.isSourceFileDefaultLibrary(declaration.getSourceFile()));
   }
   private symbolOf(node: ts.Node): ts.Symbol | undefined {
-    let symbol = this.checker.getSymbolAtLocation(node);
+    // { method }: the shorthand names the variable, not the property.
+    let symbol = ts.isShorthandPropertyAssignment(node.parent) && node.parent.name === node ? this.checker.getShorthandAssignmentValueSymbol(node.parent) : this.checker.getSymbolAtLocation(node);
     if (symbol && symbol.flags & ts.SymbolFlags.Alias) { try { symbol = this.checker.getAliasedSymbol(symbol); } catch { return undefined; } }
     return symbol;
   }
@@ -200,7 +275,7 @@ export class UrlEvaluator {
     if (bound) return this.evaluate(bound.expression, { ...bound.scope, depth: scope.depth + 1 });
     const declaration = symbol.valueDeclaration ?? symbol.declarations?.[0];
     if (!declaration) return fail(`${node.text} has no declaration`);
-    if (ts.isParameter(declaration)) return fail(`The URL comes from parameter ${node.text}`);
+    if (ts.isParameter(declaration)) return fail(`The URL comes from parameter ${node.text}`, declaration);
     if (ts.isVariableDeclaration(declaration) && declaration.initializer && this.indexed(declaration)) {
       const list = declaration.parent;
       if (!ts.isVariableDeclarationList(list) || !(list.flags & ts.NodeFlags.Const)) return fail(`${node.text} is not a const binding`);

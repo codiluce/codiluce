@@ -39,7 +39,8 @@ export function walkSteps(context: WalkContext, anchor: string, limits = STEP_LI
   };
   const effectsOf = (id: string): EffectFact[] => {
     const value = entityOf(id)?.metadata.effects;
-    return Array.isArray(value) ? (value as EffectFact[]).filter(effect => !(effect.category === 'network' && effect.endpoint)) : [];
+    // A linked request is drawn as its endpoint; a wrapper's request belongs to its callers.
+    return Array.isArray(value) ? (value as EffectFact[]).filter(effect => !(effect.category === 'network' && (effect.endpoint || effect.wrapper))) : [];
   };
   const outgoing = (id: string) => (index.adjacency.get(id) ?? []).filter(i => { const relation = index.relations[i]!; return relation.from === id && relation.to !== id && STEP_FOLLOW.has(relation.type) && relation.change !== 'removed'; });
   const incomingCount = (id: string) => (index.adjacency.get(id) ?? []).filter(i => { const relation = index.relations[i]!; return relation.to === id && relation.from !== id && (relation.type === 'calls' || relation.type === 'references'); }).length;
@@ -117,10 +118,10 @@ export function walkSteps(context: WalkContext, anchor: string, limits = STEP_LI
   return { steps: [...steps.values()], links, truncated, unresolvedCallSites, explored };
 }
 
-/** Shortest forward path over step relations (and imports), as relation indices. */
+/** Shortest forward path over step relations (plus imports, inheritance and table access), as relation indices. */
 export function shortestPath(index: ProjectionIndex, from: string, to: string, maxDepth = 12): number[] | undefined {
   if (from === to) return [];
-  const follow = new Set([...STEP_FOLLOW, 'imports', 'exports', 'extends', 'implements']);
+  const follow = new Set([...STEP_FOLLOW, 'imports', 'exports', 'extends', 'implements', 'reads', 'writes', 'maps_to']);
   const previous = new Map<string, number>([[from, -1]]);
   let frontier = [from];
   for (let depth = 0; depth < maxDepth && frontier.length && previous.size < 50_000; depth++) {

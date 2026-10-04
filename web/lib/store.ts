@@ -8,8 +8,8 @@
 // the map are kept; a view epoch drops responses that belong to an old view.
 import type { Entity, Relation } from '@engine/core/graph';
 import type { AggregateEdgesPage, AggregateGroup, AggregateResult, ChangesPage, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, ImpactItem, ImpactResult, LocateResult, NodeSummary, ProjectionMeta, RelationItem, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineEntry, TimelineResponse, ViewKey } from '@engine/projection/dto';
-import { isAbort, type AtlasApi } from './api';
-import { localFlowPersistence, moveItem, removeAt, removeFlow, upsertFlow, validateFlowName, type FlowPersistence, type StoredFlow } from './flows';
+import { isAbort, type AtlasApi, type FlowsList } from './api';
+import { draftFlow, FlowConflict, flowStorageKey, localFlowPersistence, moveItem, readLocalFlows, removeAt, removeFlow, replaceFlow, serverFlowPersistence, validateFlowName, type FlowPersistence, type StoredFlow } from './flows';
 import type { Level } from './lod';
 import { initialPlayback, playback, type PlaybackAction, type PlaybackState } from './playback';
 import { Scene } from './scene';
@@ -81,7 +81,15 @@ export interface CommitImpactState { status: Status; viewStamp?: string; data?: 
 /** "What happens from here": typed steps from an anchor entity. */
 export interface StepsState { anchor: string; status: Status; viewStamp: string; data?: StepsResult; error?: string; focus?: string }
 export interface ResolvedFlow { flowId: string; steps: { entityId: string; node?: NodeSummary; ancestors: string[]; missing: boolean }[]; links: RelationItem[][]; status: Status; error?: string }
-export interface FlowsState { flows: StoredFlow[]; draft?: FlowDraft; activeId?: string; resolved?: ResolvedFlow; playback: PlaybackState; storageError?: string }
+export interface FlowsState {
+  flows: StoredFlow[]; draft?: FlowDraft; activeId?: string; resolved?: ResolvedFlow; playback: PlaybackState; storageError?: string;
+  /** Where flows are kept: the server's flow store, or this browser only. */
+  storage?: 'server' | 'browser';
+  /** False when flows can be shown but not changed (a read-only server). */
+  writable: boolean;
+  /** What happened to where flows are kept (moved from this browser to the server, server read-only…). */
+  notice?: string;
+}
 export interface ViewState { level: Level; focus: { id: string; name: string; type: string }[]; zoom: number; visible: { id: string; name: string; type: string }[]; truncated: boolean }
 export interface AtlasState {
   status: 'loading' | 'ready' | 'error'; error?: string;
@@ -114,7 +122,7 @@ export interface MapNavigator {
   zoomBy(factor: number): void;
 }
 export interface StoreOptions {
-  storage?: Pick<Storage, 'getItem' | 'setItem'>;
+  storage?: Pick<Storage, 'getItem' | 'setItem'> & Partial<Pick<Storage, 'removeItem'>>;
   now?: () => string;
   newId?: () => string;
   flowPersistence?: (repositoryId: string) => FlowPersistence;
@@ -193,7 +201,7 @@ export class AtlasStore {
       status: 'loading', view: { level: 'Applications', focus: [], zoom: 1, visible: [], truncated: false },
       relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' },
       history: { entries: [], index: -1 }, showDiagnostics: prefs.showDiagnostics ?? true, themeId: prefs.themeId ?? 'midnight',
-      flows: { flows: [], playback: initialPlayback() }, staleIndex: false, sceneRevision: 0,
+      flows: { flows: [], playback: initialPlayback(), writable: true }, staleIndex: false, sceneRevision: 0,
       impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false },
       timeline: { open: false, status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true },
     };
@@ -222,12 +230,13 @@ export class AtlasStore {
     const epoch = this.epoch;
     try {
       const meta = await this.api.meta();
-      this.persistence = (this.options.flowPersistence ?? (id => localFlowPersistence(this.options.storage, id)))(meta.run.repositoryId);
-      const flows = this.persistence.load();
+      const opened = await this.openFlows(meta.run.repositoryId);
+      this.persistence = opened.persistence;
+      const flows: Partial<FlowsState> = { flows: opened.flows, storage: opened.persistence.kind, writable: opened.persistence.writable, notice: opened.notice, storageError: opened.error };
       // History was opened while the live map loaded: that view transition owns the scene and meta now.
-      if (epoch !== this.epoch) { this.set(state => ({ status: 'ready', flows: { ...state.flows, flows } })); return; }
+      if (epoch !== this.epoch) { this.set(state => ({ status: 'ready', flows: { ...state.flows, ...flows } })); return; }
       this.scene.reset(meta.root);
-      this.set({ meta, status: 'ready', staleIndex: false, flows: { ...this.state.flows, flows } });
+      this.set({ meta, status: 'ready', staleIndex: false, flows: { ...this.state.flows, ...flows } });
       await this.loadChildren([meta.root.id]);
       const hash = this.options.location?.hash ?? '';
       const param = (name: string) => { const value = new RegExp(`(?:^#|&)${name}=([^&]+)`).exec(hash)?.[1]; return value ? decodeURIComponent(value) : undefined; };
@@ -704,9 +713,44 @@ export class AtlasStore {
 
   // Flows ------------------------------------------------------------------
   private setFlows(patch: Partial<FlowsState>): void { this.set(state => ({ flows: { ...state.flows, ...patch } })); }
-  private persist(flows: StoredFlow[]): boolean {
-    try { this.persistence?.save(flows); this.setFlows({ flows, storageError: undefined }); return true; }
-    catch (error) { this.setFlows({ storageError: error instanceof Error ? error.message : String(error) }); return false; }
+  /**
+   * Where flows are kept: the server's flow store when it accepts them (flows
+   * an earlier version kept in this browser move there once), otherwise this
+   * browser. A read-only server's flows are shown, not changed.
+   */
+  private async openFlows(repositoryId: string): Promise<{ persistence: FlowPersistence; flows: StoredFlow[]; notice?: string; error?: string }> {
+    const load = async (persistence: FlowPersistence, notice?: string) => {
+      try { return { persistence, flows: await persistence.list(), ...(notice ? { notice } : {}) }; }
+      catch (error) { return { persistence, flows: [], error: error instanceof Error ? error.message : String(error) }; }
+    };
+    if (this.options.flowPersistence) return load(this.options.flowPersistence(repositoryId));
+    const local = localFlowPersistence(this.options.storage, repositoryId);
+    let remote: FlowsList;
+    try { remote = await this.api.flows(); }
+    catch { return load(local, 'This server does not store flows: they are saved in this browser only.'); }
+    if (!remote.writable) {
+      if (remote.flows.length) return { persistence: serverFlowPersistence(this.api, false), flows: remote.flows, notice: 'This server is read-only: its flows can be shown and played, not changed.' };
+      return load(local, 'This server is read-only: flows are saved in this browser only.');
+    }
+    const server = serverFlowPersistence(this.api, true);
+    const pending = readLocalFlows(this.options.storage, repositoryId);
+    if (!pending.length) return { persistence: server, flows: remote.flows };
+    try {
+      const result = await this.api.importFlows(pending);
+      const failed = result.skipped.filter(item => item.reason !== 'already stored');
+      // Flows the server could not take stay in this browser's storage.
+      if (!failed.length) { try { if (this.options.storage?.removeItem) this.options.storage.removeItem(flowStorageKey(repositoryId)); else this.options.storage?.setItem(flowStorageKey(repositoryId), '[]'); } catch { /* nothing left to clear */ } }
+      const moved = result.imported.length;
+      return load(server, `${moved ? `${moved} flow${moved === 1 ? '' : 's'} saved in this browser moved to the server.` : ''}${failed.length ? ` ${failed.length} could not be moved (${failed.map(item => `${item.name ?? item.id}: ${item.reason}`).join('; ')}) and stay in this browser's storage.` : ''}`.trim() || undefined);
+    } catch (error) {
+      return { persistence: server, flows: remote.flows, notice: `Flows saved in this browser could not be moved to the server (${error instanceof Error ? error.message : String(error)}); they stay in this browser's storage.` };
+    }
+  }
+  /** Re-read stored flows (another tab or person may have changed them). */
+  async refreshFlows(): Promise<void> {
+    if (!this.persistence) return;
+    try { this.setFlows({ flows: await this.persistence.list(), storageError: undefined }); }
+    catch (error) { this.setFlows({ storageError: error instanceof Error ? error.message : String(error) }); }
   }
   startDraft(): void { this.setFlows({ draft: { name: '', entityIds: [] } }); }
   editFlow(id: string): void { const flow = this.state.flows.flows.find(item => item.id === id); if (flow) this.setFlows({ draft: { id, name: flow.name, entityIds: flow.steps.map(step => step.entityId), type: flow.type } }); }
@@ -744,19 +788,29 @@ export class AtlasStore {
   }
   async saveDraft(): Promise<boolean> {
     const draft = this.state.flows.draft;
-    if (!draft) return false;
+    if (!draft || !this.persistence) return false;
     const error = validateFlowName(draft.name, this.state.flows.flows, draft.id) ?? (draft.entityIds.length < 2 ? 'Add at least two steps' : undefined);
     if (error) { this.setFlows({ draft: { ...draft, error } }); return false; }
-    const flows = upsertFlow(this.state.flows.flows, draft, this.options.now?.() ?? new Date().toISOString(), this.options.newId ?? (() => crypto.randomUUID()));
-    if (!this.persist(flows)) return false;
-    const saved = draft.id ?? flows.at(-1)!.id;
-    this.setFlows({ draft: undefined });
-    await this.activateFlow(saved);
-    return true;
+    const { flow, isNew } = draftFlow(this.state.flows.flows, draft, this.options.now?.() ?? new Date().toISOString(), this.options.newId ?? (() => crypto.randomUUID()));
+    try {
+      const saved = await this.persistence.save(flow, isNew);
+      this.setFlows({ flows: replaceFlow(this.state.flows.flows, saved), draft: undefined, storageError: undefined });
+      await this.activateFlow(saved.id);
+      return true;
+    } catch (failure) {
+      if (failure instanceof FlowConflict) {
+        // Show what is stored now; saving again replaces it with this draft (or stores it anew if it was deleted).
+        const flows = await this.persistence.list().catch(() => this.state.flows.flows);
+        const current = this.state.flows.draft;
+        this.setFlows({ flows, ...(current ? { draft: { ...current, ...(failure.current ? {} : { id: undefined }), error: failure.current ? 'This flow was changed elsewhere since you opened it; the stored version is now in the list. Save again to replace it with yours.' : 'This flow was deleted elsewhere. Save again to store yours as a new flow.' } } : {}) });
+      } else this.setFlows({ storageError: failure instanceof Error ? failure.message : String(failure) });
+      return false;
+    }
   }
-  deleteFlow(id: string): void {
+  async deleteFlow(id: string): Promise<void> {
     if (this.state.flows.activeId === id) this.deactivateFlow();
-    this.persist(removeFlow(this.state.flows.flows, id));
+    try { await this.persistence?.remove(id); this.setFlows({ flows: removeFlow(this.state.flows.flows, id), storageError: undefined }); }
+    catch (error) { this.setFlows({ storageError: error instanceof Error ? error.message : String(error) }); }
   }
   async activateFlow(id: string): Promise<void> {
     const flow = this.state.flows.flows.find(item => item.id === id);

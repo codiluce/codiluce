@@ -4,6 +4,8 @@ import { ProjectionService } from '../projection/service.js';
 import { HistoryAccess, HistoryService } from '../history/service.js';
 import { handleProjectionRoute, isProjectionPath, viewParams } from './projection-routes.js';
 import { serveStatic } from './static.js';
+import { handleFlowRoute, isFlowPath } from './flow-routes.js';
+import type { FlowStore } from '../storage/flows.js';
 
 export interface InspectionServerOptions {
   /** Repository root; required for source viewing and live Git history. */
@@ -18,6 +20,10 @@ export interface InspectionServerOptions {
    * child process. Off by default: the server is otherwise read-only.
    */
   historyIndexing?: boolean;
+  /** Flow overlay storage (`<state>/flows.db`). Without it, GET /api/flows lists nothing. */
+  flows?: FlowStore;
+  /** Accept flow writes (default true when `flows` is given; `serve --read-only` turns them off). */
+  flowsWritable?: boolean;
 }
 /** Header that a cross-origin page cannot send without a CORS preflight, which this server never grants. */
 export const INDEX_REQUEST_HEADER = 'x-archipelago-request';
@@ -34,6 +40,7 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
     let pathname: string;
     try { pathname = new URL(request.url ?? '/', 'http://127.0.0.1').pathname; } catch { response.writeHead(400).end(JSON.stringify({ error: 'Bad request' })); return; }
     if (request.method === 'POST' && pathname === '/api/history/index') { handleIndexRequest(request, response, history).catch(fail); return; }
+    if (isFlowPath(pathname)) { handleFlowRoute({ store, ...(options.flows ? { flows: options.flows } : {}), writable: !!options.flows && options.flowsWritable !== false }, request, response, pathname).catch(fail); return; }
     if (request.method !== 'GET') { response.writeHead(405, { Allow: 'GET' }).end(JSON.stringify({ error: 'Read-only API' })); return; }
     if (options.uiDirectory && pathname !== '/api' && !pathname.startsWith('/api/')) { serveStatic(options.uiDirectory, pathname, response).catch(fail); return; }
     if (isProjectionPath(pathname)) {
@@ -46,7 +53,7 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
       const limit = params.has('limit') ? Number(params.get('limit')) : undefined;
       const offset = params.has('offset') ? Number(params.get('offset')) : undefined;
       let result: unknown;
-      if (url.pathname === '/' || url.pathname === '/api') result = { name: 'Archipelago inspection API', endpoints: ['/api/summary', '/api/entities?search=login&type=method&limit=100', '/api/entities/:id', '/api/entities/:id/children', '/api/entities/:id/relations?direction=outgoing&type=handles', '/api/relations/:id', '/api/diagnostics?severity=error', '/api/projection', '/api/projection/children/:id', '/api/projection/locate/:id', '/api/projection/search?q=login', '/api/projection/relations/:id', '/api/projection/aggregate/:id', '/api/projection/diagnostics/:id', '/api/projection/between?a=ID&b=ID', '/api/projection/impact/:id?depth=4&types=calls,renders', '/api/projection/steps/:id', '/api/projection/path?from=ID&to=ID', '/api/history/impact?snapshot=ID&compareTo=ID', '/api/source?entity=ID', '/api/history', '/api/history/changes?snapshot=ID&compareTo=ID', '/api/history/change/:id?snapshot=ID&compareTo=ID', '/api/history/entity/:id', '/api/history/evolution', '/api/source/diff?entity=ID&snapshot=ID&compareTo=ID'], views: 'Projection, source and entity/relation detail routes accept snapshot=ID (a history snapshot) and compareTo=ID (a baseline).' };
+      if (url.pathname === '/' || url.pathname === '/api') result = { name: 'Archipelago inspection API', endpoints: ['/api/summary', '/api/entities?search=login&type=method&limit=100', '/api/entities/:id', '/api/entities/:id/children', '/api/entities/:id/relations?direction=outgoing&type=handles', '/api/relations/:id', '/api/diagnostics?severity=error', '/api/projection', '/api/projection/children/:id', '/api/projection/locate/:id', '/api/projection/search?q=login', '/api/projection/relations/:id', '/api/projection/aggregate/:id', '/api/projection/diagnostics/:id', '/api/projection/between?a=ID&b=ID', '/api/projection/impact/:id?depth=4&types=calls,renders', '/api/projection/steps/:id', '/api/projection/path?from=ID&to=ID', '/api/history/impact?snapshot=ID&compareTo=ID', '/api/source?entity=ID', '/api/history', '/api/history/changes?snapshot=ID&compareTo=ID', '/api/history/change/:id?snapshot=ID&compareTo=ID', '/api/history/entity/:id', '/api/history/evolution', '/api/source/diff?entity=ID&snapshot=ID&compareTo=ID', '/api/flows'], views: 'Projection, source and entity/relation detail routes accept snapshot=ID (a history snapshot) and compareTo=ID (a baseline).' };
       else if (url.pathname === '/api/summary') result = store.summary();
       else if (url.pathname === '/api/entities') result = store.entities({ limit, offset, search: params.get('search') ?? undefined, type: params.get('type') ?? undefined, path: params.get('path') ?? undefined, parentId: params.get('parentId') ?? undefined });
       else if (url.pathname === '/api/diagnostics') result = store.diagnostics({ limit, offset, severity: params.get('severity') ?? undefined, code: params.get('code') ?? undefined });
@@ -72,7 +79,7 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
       response.end(JSON.stringify(result, null, 2));
     } catch (error) { response.writeHead(error instanceof Error && /^Unknown snapshot/.test(error.message) ? 404 : 400).end(JSON.stringify({ error: error instanceof Error ? error.message : String(error) })); }
   });
-  server.on('close', () => access.close());
+  server.on('close', () => { access.close(); options.flows?.close(); });
   return server;
 }
 async function handleIndexRequest(request: import('node:http').IncomingMessage, response: import('node:http').ServerResponse, history: HistoryService): Promise<void> {

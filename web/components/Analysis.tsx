@@ -156,10 +156,11 @@ export function EffectsSection({ entity }: { entity: Entity }) {
                 <span className="label">{effect.category} · {effect.operation}{effect.status ? ` · ${effect.status}` : ''}</span>
               </div>
               <div className="row-sub mono" title={effect.detail}>{effect.detail}</div>
-              <div className="row-sub">matched on {effect.via}{effect.line ? ` · line ${effect.line}` : ''}{effect.endpoint ? ` · reaches ${effect.targetName ?? 'an endpoint'}` : effect.targetName ? ` · ${effect.targetName}` : ''}</div>
+              <div className="row-sub">matched on {effect.via}{effect.line ? ` · line ${effect.line}` : ''}{effect.endpoint ? ` · reaches ${effect.targetName ?? 'an endpoint'}` : effect.targetName ? ` · ${effect.targetName}` : ''}{effect.tableName ? ` · table ${effect.tableName}` : ''}{effect.wrapper ? ' · made for the callers of this wrapper (see their requests)' : ''}</div>
             </div>
             <div className="row-actions">
               {(effect.endpoint ?? effect.target) && <button className="button small" onClick={() => void store.select((effect.endpoint ?? effect.target)!, { fly: true })}>Go</button>}
+              {effect.table && <button className="button small" onClick={() => void store.select(effect.table!, { fly: true })}>Table</button>}
               {entity.path && effect.line && <button className="button small" onClick={() => void store.openSource({ entity: entity.id, start: Math.max(1, effect.line - 12), end: effect.line + 12 }, `${effect.category} · ${entity.name}:${effect.line}`)}>Source</button>}
             </div>
           </li>

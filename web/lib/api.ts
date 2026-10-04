@@ -1,11 +1,16 @@
 // Browser client for the read-only API. Responses are cached per analysis run
 // and view (immutable for that snapshot/baseline pair); in-flight requests can
 // be aborted by callers and aborted requests are never cached.
-import type { Entity, Relation } from '@engine/core/graph';
+import type { Entity, FlowStep, Relation } from '@engine/core/graph';
+import type { StoredFlow } from '@engine/core/flows';
 import type { EvolutionResponse } from '@engine/projection/dto';
 import type { AggregateEdgesPage, AggregateResult, ChangesPage, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, ImpactResult, LocateResult, NodeSummary, Page, PathResult, ProjectionMeta, RelationItem, RelationsPage, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
 
-export class ApiError extends Error { constructor(readonly status: number, message: string) { super(message); } }
+export class ApiError extends Error { constructor(readonly status: number, message: string, readonly body?: unknown) { super(message); } }
+/** GET /api/flows: the server's stored flows, and whether it accepts writes. */
+export interface FlowsList { storage: 'server'; writable: boolean; flows: StoredFlow[] }
+export interface StoredFlowInput { id?: string; name: string; type: StoredFlow['type']; steps: FlowStep[] }
+export interface FlowImport { imported: StoredFlow[]; skipped: { id?: string; name?: string; reason: string }[] }
 export function isAbort(error: unknown): boolean { return error instanceof DOMException && error.name === 'AbortError' || (error instanceof Error && error.name === 'AbortError'); }
 type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -39,6 +44,13 @@ export interface AtlasApi {
   impact(id: string | { comparison: true }, options: ImpactOptions, signal?: AbortSignal): Promise<ImpactResult>;
   steps(id: string, signal?: AbortSignal): Promise<StepsResult>;
   path(from: string, to: string, signal?: AbortSignal): Promise<PathResult>;
+  /** Named flows stored by the server (404 from a server that stores none). */
+  flows(signal?: AbortSignal): Promise<FlowsList>;
+  createFlow(flow: StoredFlowInput): Promise<StoredFlow>;
+  /** 409 (ApiError with `body.flow`) when `revision` is not the stored one. */
+  updateFlow(id: string, flow: StoredFlowInput & { revision?: number }): Promise<StoredFlow>;
+  deleteFlow(id: string): Promise<void>;
+  importFlows(flows: StoredFlow[]): Promise<FlowImport>;
   clear(): void;
 }
 export interface ImpactOptions { depth?: number; type?: string; distance?: number; offset?: number; limit?: number }
@@ -111,6 +123,19 @@ export class HttpAtlasApi implements AtlasApi {
   }
   steps(id: string, signal?: AbortSignal) { return this.get<StepsResult>(`/api/projection/steps/${encodeURIComponent(id)}${this.q()}`, signal); }
   path(from: string, to: string, signal?: AbortSignal) { return this.get<PathResult>(`/api/projection/path${this.q({ from, to })}`, signal); }
+  flows(signal?: AbortSignal) { return this.get<FlowsList>('/api/flows', signal, false); }
+  createFlow(flow: StoredFlowInput) { return this.write<StoredFlow>('POST', '/api/flows', flow); }
+  updateFlow(id: string, flow: StoredFlowInput & { revision?: number }) { return this.write<StoredFlow>('PUT', `/api/flows/${encodeURIComponent(id)}`, flow); }
+  async deleteFlow(id: string) { await this.write<void>('DELETE', `/api/flows/${encodeURIComponent(id)}`); }
+  importFlows(flows: StoredFlow[]) { return this.write<FlowImport>('POST', '/api/flows/import', { flows }); }
+  /** Flow writes: JSON with the header the server requires (a cross-origin page cannot send it without a preflight). */
+  private async write<T>(method: 'POST' | 'PUT' | 'DELETE', path: string, body?: unknown): Promise<T> {
+    const response = await this.fetcher(`${this.base}${path}`, { method, headers: { 'X-Archipelago-Request': 'flows', Accept: 'application/json', ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}) }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+    if (response.status === 204) return undefined as T;
+    const parsed = await response.json().catch(() => ({})) as { error?: string };
+    if (!response.ok) throw new ApiError(response.status, parsed.error ?? `Request failed (${response.status})`, parsed);
+    return parsed as T;
+  }
   async requestIndex(sha: string) {
     const response = await this.fetcher(`${this.base}/api/history/index`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Archipelago-Request': 'index' }, body: JSON.stringify({ sha }) });
     const body = await response.json().catch(() => ({})) as { error?: string; queued?: boolean; position?: number };

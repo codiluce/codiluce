@@ -669,6 +669,7 @@ export function summaryLine(node: NodeSummary): string | undefined {
       if (s.files) parts.push(`${compactNumber(s.files)} file${s.files === 1 ? '' : 's'}`);
       if (s.endpoints && (node.type !== 'directory')) parts.push(`${compactNumber(s.endpoints)} route${s.endpoints === 1 ? '' : 's'}`);
       if (!s.files && !s.endpoints && s.symbols) parts.push(`${compactNumber(s.symbols)} symbols`);
+      if (node.id.startsWith('projection:database:')) parts.push(`${compactNumber(s.descendants)} table${s.descendants === 1 ? '' : 's'}`);
       return parts.join(' · ') || undefined;
     }
     case 'file': return [node.language, node.loc !== undefined ? `${compactNumber(node.loc)} lines` : undefined].filter(Boolean).join(' · ') || 'not analyzed';
@@ -684,6 +685,7 @@ export function detailLine(node: NodeSummary): string | undefined {
       if (s.measuredLoc) parts.push(`${compactNumber(s.measuredLoc)} measured lines`);
       if (s.symbols && node.type !== 'group') parts.push(`${compactNumber(s.symbols)} symbols`);
       if (node.diagnostics) parts.push(`${node.diagnostics} unresolved`);
+      if (node.id.startsWith('projection:database:')) parts.push(`${compactNumber(s.descendants)} table${s.descendants === 1 ? '' : 's'} declared by migrations`);
       return parts.join(' · ') || node.detail;
     }
     case 'file': return node.stats.symbols ? `${node.stats.symbols} symbol${node.stats.symbols === 1 ? '' : 's'}${node.diagnostics ? ` · ${node.diagnostics} unresolved` : ''}` : node.diagnostics ? `${node.diagnostics} unresolved` : undefined;

@@ -7,23 +7,29 @@ import { loadConfig, type AtlasConfig } from '../core/config.js';
 import { GraphBuilder, SCHEMA_VERSION, type AnalysisRun, type SoftwareGraph } from '../core/graph.js';
 import type { AnalysisContext, Analyzer } from '../core/analyzer.js';
 import { filesystemAnalyzer } from '../analyzers/filesystem.js';
+import { gitMetricsAnalyzer } from '../analyzers/git-metrics.js';
 import { typescriptAnalyzer } from '../analyzers/typescript.js';
 import { laravelAnalyzer } from '../analyzers/laravel.js';
 import { apiMatcher } from './api-matcher.js';
+import { AnalysisCache, type CacheEvent } from './cache.js';
 
 const execute = promisify(execFile);
-export const analyzers: Analyzer[] = [filesystemAnalyzer, typescriptAnalyzer, laravelAnalyzer, apiMatcher];
+export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, typescriptAnalyzer, laravelAnalyzer, apiMatcher];
 export interface IndexOptions {
   stateDirectory?: string; config?: AtlasConfig; onProgress?: (name: string) => void;
   /** Index a materialized commit tree: Git is not consulted and the run records this commit, clean. */
   revision?: string;
+  /** Reuse unchanged analyzer work: a cache directory (or cache). Ignored for revisions. */
+  cache?: string | AnalysisCache;
+  onCache?: (event: CacheEvent) => void;
 }
 export async function indexRepository(repository: string, options: IndexOptions = {}): Promise<SoftwareGraph> {
   const root = await realpath(repository);
   const config = options.config ?? await loadConfig(root, options.stateDirectory ?? path.join(root, '.archipelago'));
   const graph = new GraphBuilder(config.repository.id ?? config.repository.name);
   const repositoryId = graph.id('repository');
-  const context: AnalysisContext = { root, config, graph, repositoryId, applicationIds: new Map(), files: new Map(), http: [], ...(options.revision ? { revision: options.revision } : {}) };
+  const cache = options.revision || !options.cache ? undefined : typeof options.cache === 'string' ? new AnalysisCache(options.cache, undefined, options.onCache) : options.cache;
+  const context: AnalysisContext = { root, config, graph, repositoryId, applicationIds: new Map(), files: new Map(), http: [], ...(options.revision ? { revision: options.revision } : {}), ...(cache ? { cache } : {}) };
   let commitSha: string | undefined, dirty: boolean | undefined;
   if (options.revision) { commitSha = options.revision; dirty = false; }
   else try {

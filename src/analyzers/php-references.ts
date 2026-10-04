@@ -9,7 +9,9 @@
 // class (`Illuminate\Support\Facades\DB`, or the global alias), Eloquent
 // queries on classes whose `extends` chain reaches an Eloquent base,
 // framework helpers (`abort`, `response`, `redirect`, `dispatch`…) and
-// framework exceptions with a known HTTP status.
+// framework exceptions with a known HTTP status. Database effects also become
+// `reads`/`writes` relations to the table, when the model maps to a table the
+// migrations declare (or `DB::table('…')` names one literally).
 import type { AnalysisContext } from '../core/analyzer.js';
 import { evidence, type EffectCategory, type Entity } from '../core/graph.js';
 import { args, ast, classConstant, literal, name, nodes, resolve, text, walk, type Ast, type ParsedFile, type Scope } from './php-ast.js';
@@ -18,6 +20,8 @@ import type { SiteCollector } from './references.js';
 export interface PhpClass { entity: Entity; fqn: string; app: string; scope: Scope; parsed: ParsedFile; node: Ast; extends?: string }
 export interface PhpMethod { entity: Entity; node: Ast; owner: PhpClass }
 type Type = { kind: 'class'; fqn: string } | { kind: 'query'; model: string } | { kind: 'external'; via: string } | undefined;
+/** Database tables of the application (laravel-schema.ts): the table a model maps to, or a table by name. */
+export interface TableLookup { model(app: string, fqn: string): Entity | undefined; named(app: string, table: string): Entity | undefined }
 
 const ELOQUENT_BASES = new Set(['illuminate\\database\\eloquent\\model', 'illuminate\\foundation\\auth\\user', 'illuminate\\database\\eloquent\\relations\\pivot', 'illuminate\\database\\eloquent\\relations\\morphpivot', 'illuminate\\notifications\\databasenotification']);
 const FORM_REQUEST = 'illuminate\\foundation\\http\\formrequest';
@@ -33,16 +37,20 @@ const EXCEPTION_STATUS: Record<string, number> = {
 };
 const RESPONSE_HELPERS = new Set(['response', 'redirect', 'back', 'to_route', 'view', 'abort', 'abort_if', 'abort_unless']);
 function short(value: string, max = 70): string { const text = value.replace(/\s+/g, ' '); return text.length > max ? `${text.slice(0, max - 1)}…` : text; }
+/** The class's `extends` chain (lower-cased FQNs, itself first), through indexed classes. */
+export function classChain(classes: Map<string, PhpClass>, app: string, fqn: string): string[] {
+  const result: string[] = [];
+  for (let current: string | undefined = fqn; current && result.length < 20 && !result.includes(current.toLowerCase()); current = classes.get(`${app}:${current.toLowerCase()}`)?.extends) result.push(current.toLowerCase());
+  return result;
+}
+/** Whether a class's `extends` chain reaches an Eloquent base class. */
+export function isEloquentModel(classes: Map<string, PhpClass>, app: string, fqn: string): boolean { return classChain(classes, app, fqn).some(item => ELOQUENT_BASES.has(item)); }
 
-export function resolvePhpReferences(context: AnalysisContext, classes: Map<string, PhpClass>, methods: PhpMethod[], sites: SiteCollector): void {
+export function resolvePhpReferences(context: AnalysisContext, classes: Map<string, PhpClass>, methods: PhpMethod[], sites: SiteCollector, tables?: TableLookup): void {
   const key = (app: string, fqn: string) => `${app}:${fqn.toLowerCase()}`;
   const classOf = (app: string, fqn: string | undefined) => fqn ? classes.get(key(app, fqn)) : undefined;
-  const chain = (app: string, fqn: string): string[] => {
-    const result: string[] = [];
-    for (let current: string | undefined = fqn; current && result.length < 20 && !result.includes(current.toLowerCase()); current = classOf(app, current)?.extends) result.push(current.toLowerCase());
-    return result;
-  };
-  const isModel = (app: string, fqn: string) => chain(app, fqn).some(item => ELOQUENT_BASES.has(item));
+  const chain = (app: string, fqn: string): string[] => classChain(classes, app, fqn);
+  const isModel = (app: string, fqn: string) => isEloquentModel(classes, app, fqn);
   /** The class inherits from code outside the index (a framework or vendor class). */
   const inheritsExternal = (app: string, fqn: string) => chain(app, fqn).some(item => !classes.has(`${app}:${item}`));
   const isFormRequest = (app: string, fqn: string) => chain(app, fqn).includes(FORM_REQUEST);
@@ -172,8 +180,12 @@ export function resolvePhpReferences(context: AnalysisContext, classes: Map<stri
         return { root: current, names };
       }
     };
-    const effect = (node: Ast, category: EffectCategory, operation: string, via: string, extra: { status?: number; target?: Entity; detail?: string } = {}) => {
-      sites.effect(from.id, { category, operation, detail: extra.detail ?? short(text(node, parsed)), line: lineOf(node), via, ...(extra.status !== undefined ? { status: extra.status } : {}), ...(extra.target ? { target: extra.target.id, targetName: extra.target.name } : {}) });
+    const effect = (node: Ast, category: EffectCategory, operation: string, via: string, extra: { status?: number; target?: Entity; detail?: string; table?: Entity } = {}) => {
+      sites.effect(from.id, { category, operation, detail: extra.detail ?? short(text(node, parsed)), line: lineOf(node), via, ...(extra.status !== undefined ? { status: extra.status } : {}), ...(extra.target ? { target: extra.target.id, targetName: extra.target.name } : {}), ...(extra.table ? { table: extra.table.id, tableName: extra.table.name } : {}) });
+    };
+    /** A database read or write of a table: an effect, and a `reads`/`writes` relation to the table. */
+    const tableAccess = (node: Ast, table: Entity | undefined, write: boolean, form: 'eloquent' | 'query', explanation: string) => {
+      if (table) sites.add({ from: from.id, to: table.id, type: write ? 'writes' : 'reads', form, evidence: fact(node, `${write ? 'Writes' : 'Reads'} ${table.name} ${explanation}`) });
     };
     const statusArgument = (value: Ast | undefined, fallback: number) => value?.kind === 'number' && /^\d{3}$/.test(String(value.value)) ? Number(value.value) : fallback;
     const isChained = (node: Ast, parent: Ast | undefined) => !!parent && (parent.kind === 'propertylookup' || parent.kind === 'nullsafepropertylookup') && ast(parent.what) === node;
@@ -218,10 +230,17 @@ export function resolvePhpReferences(context: AnalysisContext, classes: Map<stri
         if (rootWhat?.kind === 'staticlookup') {
           const fqn = classTarget(rootWhat.what), facade = facadeOf(fqn);
           const write = names.some(item => WRITES.has(item));
-          if (facade) effect(node, FACADES[facade]!, FACADES[facade] === 'database' ? (write ? 'write' : 'read') : names[0] ?? facade, fqn!);
+          if (facade && FACADES[facade] === 'database') {
+            // DB::table('audit')->insert(…): the table is named literally.
+            const named = names[0] === 'table' ? literal(args(root)[0]) : undefined;
+            const table = named !== undefined ? tables?.named(app, named) : undefined;
+            effect(node, 'database', write ? 'write' : 'read', fqn!, { ...(table ? { table } : {}), ...(named !== undefined && !table ? { detail: `${short(text(node, parsed))} (table ${named} is not declared by indexed migrations)` } : {}) });
+            tableAccess(node, table, write, 'query', `through ${fqn!.split('\\').at(-1)}::table('${named}')`);
+          } else if (facade) effect(node, FACADES[facade]!, names[0] ?? facade, fqn!);
           else if (fqn && isModel(app, fqn) && !lookup(app, fqn, names[0] ?? '')) {
-            const model = classOf(app, fqn);
-            effect(node, 'database', write ? 'write' : 'read', `Eloquent model ${fqn}`, model ? { target: model.entity } : {});
+            const model = classOf(app, fqn), table = tables?.model(app, fqn);
+            effect(node, 'database', write ? 'write' : 'read', `Eloquent model ${fqn}`, { ...(model ? { target: model.entity } : {}), ...(table ? { table } : {}) });
+            tableAccess(node, table, write, 'eloquent', `through Eloquent model ${fqn.split('\\').at(-1)}`);
             if (names.some(item => item === 'findorfail' || item === 'firstorfail')) effect(node, 'response', 'not found', 'ModelNotFoundException', { status: 404, detail: `${fqn.split('\\').at(-1)}::…OrFail() → 404 when missing` });
           } else if (fqn && names[0] === 'dispatch' && classOf(app, fqn)) effect(node, 'queue', 'dispatch', fqn, { target: classOf(app, fqn)!.entity });
           else if (fqn && fqn.toLowerCase() === 'illuminate\\validation\\validationexception') effect(node, 'response', 'validation', fqn, { status: 422 });
@@ -247,7 +266,11 @@ export function resolvePhpReferences(context: AnalysisContext, classes: Map<stri
           if (names.at(-1) === 'validate' && receiver?.kind === 'class' && (receiver.fqn.toLowerCase() === 'illuminate\\http\\request' || isFormRequest(app, receiver.fqn))) effect(node, 'response', 'validation', receiver.fqn, { status: 422, detail: `${short(text(root, parsed), 50)} → 422 when invalid` });
           // Writes on a model instance ($user->update(…), $user->save()).
           const model = receiver?.kind === 'class' && isModel(app, receiver.fqn) ? receiver.fqn : receiver?.kind === 'query' ? receiver.model : undefined;
-          if (model && !lookup(app, model, names[0] ?? '') && names.some(item => WRITES.has(item))) effect(node, 'database', 'write', `Eloquent model ${model}`, classOf(app, model) ? { target: classOf(app, model)!.entity } : {});
+          if (model && !lookup(app, model, names[0] ?? '') && names.some(item => WRITES.has(item))) {
+            const table = tables?.model(app, model);
+            effect(node, 'database', 'write', `Eloquent model ${model}`, { ...(classOf(app, model) ? { target: classOf(app, model)!.entity } : {}), ...(table ? { table } : {}) });
+            tableAccess(node, table, true, 'eloquent', `through an instance of Eloquent model ${model.split('\\').at(-1)}`);
+          }
         }
       }
       // The call itself.

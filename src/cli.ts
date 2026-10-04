@@ -9,13 +9,14 @@ import { GraphStore } from './storage/sqlite.js';
 import { createInspectionServer } from './api/server.js';
 import { HISTORY_DATABASE, indexHistory, type HistoryProgress } from './history/indexer.js';
 import { HistoryStore } from './history/store.js';
+import { FLOWS_DATABASE, FlowStore } from './storage/flows.js';
 
 const HELP = `Archipelago — Phase 1 graph inspection
 
 npm run archipelago -- init [--repo PATH] [--state-dir PATH]
-npm run archipelago -- index [--repo PATH] [--state-dir PATH]
-npm run archipelago -- inspect [summary|entities|entity|relations|relation|diagnostics] [options]
-npm run archipelago -- serve [--repo PATH] [--state-dir PATH] [--port 4300] [--ui PATH|none] [--history-indexing]
+npm run archipelago -- index [--repo PATH] [--state-dir PATH] [--no-cache]
+npm run archipelago -- inspect [summary|entities|entity|relations|relation|diagnostics|flows] [options]
+npm run archipelago -- serve [--repo PATH] [--state-dir PATH] [--port 4300] [--ui PATH|none] [--history-indexing] [--read-only]
 npm run archipelago -- history index [--repo PATH] [--state-dir PATH] [--ref BRANCH] [--limit N]
                        [--since DATE] [--commits SHA,SHA] [--jobs N] [--all-parents] [--pr-metadata github]
 npm run archipelago -- history status [--repo PATH] [--state-dir PATH]
@@ -24,10 +25,13 @@ Options: --search TEXT --type TYPE --id ID --path PATH --parent ID
          --direction incoming|outgoing|both --severity info|warning|error
          --code CODE --limit 1..500 --offset NUMBER
 
-State defaults to <repo>/.archipelago. inspect outputs JSON; serve is a local,
-read-only API that also serves the built visualizer (web/out, see
-npm run build:web) unless --ui none. index persists diagnostics and exits 2
-for analyzer errors.
+State defaults to <repo>/.archipelago. inspect outputs JSON; serve is a local
+API that also serves the built visualizer (web/out, see npm run build:web)
+unless --ui none. It reads the graph and writes only named flows, to
+<state>/flows.db (--read-only: no writes at all). index persists diagnostics and exits 2
+for analyzer errors. index reuses the analysis of applications whose files
+did not change from <state>/cache (bounded; safe to delete; --no-cache
+re-analyzes everything).
 
 history index analyzes past commits of a branch (first-parent history by
 default) into <state>/history.db for the timeline. Commits are read from Git
@@ -39,7 +43,7 @@ from the GitHub API (GITHUB_TOKEN for private repositories). serve
 async function main(): Promise<void> {
   const string = { type: 'string' } as const;
   const boolean = { type: 'boolean' } as const;
-  const options = { repo: string, 'state-dir': string, port: string, ui: string, search: string, type: string, id: string, path: string, parent: string, direction: string, severity: string, code: string, limit: string, offset: string, ref: string, since: string, commits: string, jobs: string, 'pr-metadata': string, 'all-parents': boolean, 'history-indexing': boolean, help: boolean };
+  const options = { repo: string, 'state-dir': string, port: string, ui: string, search: string, type: string, id: string, path: string, parent: string, direction: string, severity: string, code: string, limit: string, offset: string, ref: string, since: string, commits: string, jobs: string, 'pr-metadata': string, 'all-parents': boolean, 'history-indexing': boolean, 'no-cache': boolean, 'read-only': boolean, help: boolean };
   const { positionals, values } = parseArgs({ allowPositionals: true, options });
   const command = positionals[0];
   if (values.help || !command) { console.log(HELP); return; }
@@ -57,10 +61,14 @@ async function main(): Promise<void> {
     return;
   }
   if (command === 'index') {
-    const graph = await indexRepository(root, { stateDirectory, onProgress: name => console.error(`Analyzing ${name}…`) });
+    const cache: { hits: string[]; misses: string[] } = { hits: [], misses: [] };
+    const graph = await indexRepository(root, {
+      stateDirectory, onProgress: name => console.error(`Analyzing ${name}…`),
+      ...(values['no-cache'] ? {} : { cache: path.join(stateDirectory, 'cache'), onCache: event => { (event.hit ? cache.hits : cache.misses).push(`${event.analyzer}:${event.unit}`); if (event.hit) console.error(`  ${event.unit}: unchanged, reused from the cache (${event.ms} ms)`); } }),
+    });
     await mkdir(stateDirectory, { recursive: true });
     const store = new GraphStore(database);
-    try { store.save(graph); console.log(JSON.stringify({ database, ...store.summary() }, null, 2)); } finally { store.close(); }
+    try { store.save(graph); console.log(JSON.stringify({ database, ...store.summary(), ...(values['no-cache'] ? {} : { cache }) }, null, 2)); } finally { store.close(); }
     if (graph.diagnostics.some(diagnostic => diagnostic.severity === 'error')) process.exitCode = 2;
     return;
   }
@@ -98,11 +106,14 @@ async function main(): Promise<void> {
     const ui = values.ui === 'none' ? undefined : values.ui ? path.resolve(String(values.ui)) : fileURLToPath(new URL('../web/out', import.meta.url));
     const uiDirectory = ui && await exists(path.join(ui, 'index.html')) ? ui : undefined;
     if (values.ui && values.ui !== 'none' && !uiDirectory) { store.close(); throw new Error(`No built UI at ${ui}; run npm run build:web`); }
-    const server = createInspectionServer(store, { root, stateDirectory, uiDirectory, maxFileBytes, historyIndexing: !!values['history-indexing'] });
+    const flowsFile = path.join(stateDirectory, FLOWS_DATABASE);
+    const flows = values['read-only'] && !await exists(flowsFile) ? undefined : new FlowStore(flowsFile, undefined, !!values['read-only']);
+    const server = createInspectionServer(store, { root, stateDirectory, uiDirectory, maxFileBytes, historyIndexing: !!values['history-indexing'] && !values['read-only'], ...(flows ? { flows } : {}), flowsWritable: !values['read-only'] });
     server.once('error', error => { store.close(); console.error(error.message); process.exitCode = 1; });
     server.listen(port, '127.0.0.1', () => {
       console.log(`Graph inspection API: http://127.0.0.1:${port}/api`);
       console.log(uiDirectory ? `Visualizer: http://127.0.0.1:${port}/` : 'Visualizer UI not built (npm run build:web); API only');
+      console.log(values['read-only'] ? 'Read-only: flows cannot be saved' : `Flows are saved to ${flowsFile}`);
     });
     const stop = () => server.close(() => { store.close(); process.exit(0); });
     process.once('SIGINT', stop); process.once('SIGTERM', stop);
@@ -122,6 +133,13 @@ async function main(): Promise<void> {
       }
       case 'relation': if (!values.id) throw new Error('relation requires --id'); result = store.relation(String(values.id)); break;
       case 'diagnostics': result = store.diagnostics({ ...pagination, severity: values.severity as string | undefined, code: values.code as string | undefined }); break;
+      case 'flows': {
+        const file = path.join(stateDirectory, FLOWS_DATABASE), repositoryId = store.currentRun()?.repositoryId;
+        if (!await exists(file) || !repositoryId) { result = { flows: [] }; break; }
+        const flows = new FlowStore(file, undefined, true);
+        try { result = { flows: flows.list(repositoryId) }; } finally { flows.close(); }
+        break;
+      }
       default: throw new Error('Unknown inspection query');
     }
     if (result === undefined) throw new Error('No matching entity/relation');

@@ -107,10 +107,20 @@ test('a named flow is assembled, saved, shows only real graph links, and plays',
   await page.getByRole('button', { name: 'Restart' }).click();
   await page.getByRole('button', { name: 'Pause' }).click();
   await expect(steps.locator('.flow-step.current')).toContainText('login');
-  // Persisted under the repository identity, as IDs only.
-  const stored = await page.evaluate(() => Object.entries(localStorage).filter(([key]) => key.startsWith('archipelago:flows:')));
-  expect(stored).toHaveLength(1);
-  expect(JSON.parse(stored[0]![1])[0].steps.every((step: Record<string, unknown>) => Object.keys(step).join() === 'entityId')).toBe(true);
+  // Persisted by the server (flows.db), as IDs only; nothing is kept in this browser.
+  await expect(page.locator('.flow-storage')).toContainText('Saved on this server');
+  const stored = await page.evaluate(() => fetch('/api/flows').then(response => response.json()) as Promise<{ flows: { name: string; steps: Record<string, unknown>[] }[] }>);
+  const saved = stored.flows.find(flow => flow.name === 'Login chain')!;
+  expect(saved.steps).toHaveLength(4);
+  expect(saved.steps.every(step => Object.keys(step).join() === 'entityId')).toBe(true);
+  expect(await page.evaluate(() => Object.keys(localStorage).filter(key => key.startsWith('archipelago:flows:')))).toHaveLength(0);
+  // Another browser session sees the same flow.
+  const other = await page.context().browser()!.newPage();
+  await other.goto('/');
+  await other.getByRole('button', { name: 'Flows' }).click();
+  await expect(other.getByRole('button', { name: 'Show' }).first()).toBeVisible();
+  await expect(other.getByRole('complementary', { name: 'Flows' })).toContainText('Login chain');
+  await other.close();
 });
 test('keyboard: slash focuses search, escape clears selection, arrow keys pan the focused map', async ({ page }) => {
   await open(page);

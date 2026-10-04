@@ -1,7 +1,8 @@
 'use client';
+import { Fragment } from 'react';
 import type { Entity, Evidence } from '@engine/core/graph';
 import type { AggregateGroup, ChangeFacet, DiagnosticItem, NodeChange, NodeSummary, RelationItem } from '@engine/projection/dto';
-import { compactNumber, percent, relationPhrase, shortSha, typeLabel } from '../lib/format';
+import { compactNumber, percent, relationPhrase, relativeTime, shortSha, typeLabel } from '../lib/format';
 import { entryOf, isContainer, type AtlasStore } from '../lib/store';
 import { themeById } from '../lib/themes';
 import { useAtlas, useStore } from './context';
@@ -92,11 +93,13 @@ function Selection() {
       </div>
       {node.kind === 'group' && <p className="note">{node.explanation}</p>}
       {(node.type === 'api_endpoint' || node.type === 'route') && <p className="note">Shown in the <strong>Routes &amp; endpoints</strong> district of its application. That district is only a spatial grouping; the canonical parent is the application.</p>}
+      {node.type === 'database_table' && <p className="note">Declared by the application's migrations, replayed in order: the schema they intend, not the live database. Shown in the <strong>Database</strong> district; the canonical parent is the application.</p>}
       {selection.entityStatus === 'error' && <p className="note error">{selection.error}</p>}
       {node.change?.status === 'removed' && <p className="note">This entity existed in the baseline and was removed. It is shown as a ghost where it used to be; its facts below are from the baseline.</p>}
       {selection.change && <ChangeSection node={node} />}
       <ImpactSection node={node} />
       <Facts node={node} entity={entity} />
+      {node.type === 'database_table' && entity && <TableSection entity={entity} />}
       <HttpCalls selectionId={node.id} file={selection.file} />
       {entity && <EffectsSection entity={entity} />}
       {entity && <CallSitesSection entity={entity} />}
@@ -118,7 +121,7 @@ function AnalysisButtons({ node }: { node: NodeSummary }) {
   const store = useStore();
   const impactOpen = useAtlas(state => state.impact.open && state.impact.forId === node.id);
   const stepsAnchor = useAtlas(state => state.steps?.anchor);
-  const runs = node.kind === 'entity' && !['repository', 'application', 'directory', 'file'].includes(node.type);
+  const runs = node.kind === 'entity' && !['repository', 'application', 'directory', 'file', 'database_table'].includes(node.type);
   return (
     <>
       <button className="button small" aria-pressed={impactOpen} onClick={() => impactOpen ? store.hideImpact() : void store.showImpact(node.id)} title="What depends on this, hop by hop">{impactOpen ? 'Hide impact' : 'Impact'}</button>
@@ -142,7 +145,7 @@ function Facts({ node, entity }: { node: NodeSummary; entity?: Entity }) {
       <dl className="facts">
         {node.language && <><dt>Language</dt><dd>{node.language}</dd></>}
         {node.sourceRange && <><dt>Source range</dt><dd>lines {node.sourceRange.startLine}–{node.sourceRange.endLine}</dd></>}
-        {!container && node.kind === 'entity' && <><dt>Lines (metric)</dt><dd>{entity?.metrics?.loc !== undefined ? compactNumber(entity.metrics.loc) : node.loc !== undefined ? compactNumber(node.loc) : <span className="absent">not measured</span>}</dd></>}
+        {!container && node.kind === 'entity' && node.type !== 'database_table' && <><dt>Lines (metric)</dt><dd>{entity?.metrics?.loc !== undefined ? compactNumber(entity.metrics.loc) : node.loc !== undefined ? compactNumber(node.loc) : <span className="absent">not measured</span>}</dd></>}
         {container && <>
           <dt>Files</dt><dd>{compactNumber(node.stats.files)}</dd>
           <dt>Symbols</dt><dd>{compactNumber(node.stats.symbols)}</dd>
@@ -153,14 +156,52 @@ function Facts({ node, entity }: { node: NodeSummary; entity?: Entity }) {
         {keys.map(key => <FactRow key={key} label={FACT_LABELS[key]!} value={formatValue(key, metadata[key])} />)}
         {Array.isArray(metadata.exports) && (metadata.exports as unknown[]).length > 0 && <><dt>Export statements</dt><dd>{(metadata.exports as unknown[]).length}</dd></>}
         {Array.isArray(metadata.externalImports) && (metadata.externalImports as string[]).length > 0 && <><dt>External imports</dt><dd className="mono">{[...new Set(metadata.externalImports as string[])].join(', ')}</dd></>}
-        {node.type === 'file' && <><dt>Git history</dt><dd className="absent">not indexed</dd></>}
+        {node.type === 'file' && <GitMetrics entity={entity} />}
       </dl>
       {node.childCount > 0 && node.kind === 'entity' && node.childCount > 3000 && <p className="note">Only the first 3,000 children are loaded on the map.</p>}
     </section>
   );
 }
+interface TableColumn { name: string; type: string; nullable?: boolean; unique?: boolean; primary?: boolean; default?: string }
+/** Columns and foreign keys of a table, as its migrations declare them. */
+function TableSection({ entity }: { entity: Entity }) {
+  const store = useStore();
+  const columns = (entity.metadata.columns as TableColumn[] | undefined) ?? [];
+  const keys = (entity.metadata.foreignKeys as { column: string; table: string; references: string; onDelete?: string }[] | undefined) ?? [];
+  const migrations = (entity.metadata.migrations as string[] | undefined) ?? [];
+  return (
+    <section className="section">
+      <h4>Columns <span className="chip"><span className="count">{columns.length}</span></span></h4>
+      {entity.metadata.origin === 'altered' && <p className="note warning">Migrations alter this table, but none of the indexed ones creates it: its full column list is not known.</p>}
+      {entity.metadata.conditional === true && <p className="note">Some columns are added under a condition in a migration (e.g. <span className="mono">if (!Schema::hasColumn(…))</span>).</p>}
+      <dl className="facts columns">
+        {columns.map(column => <Fragment key={column.name}><dt className="mono">{column.name}</dt><dd><span className="mono">{column.type}</span>{[column.primary && 'primary', column.unique && 'unique', column.nullable && 'nullable', column.default !== undefined && `default ${column.default}`, keys.some(key => key.column === column.name) && 'foreign key'].filter(Boolean).map(flag => <span key={String(flag)} className="chip">{flag}</span>)}</dd></Fragment>)}
+      </dl>
+      {keys.length > 0 && <>
+        <h4 style={{ marginTop: 10 }}>Foreign keys</h4>
+        <ul className="list">{keys.map(key => <li key={key.column} className="row"><div className="row-main"><div className="row-title mono">{key.column} → {key.table}.{key.references}</div>{key.onDelete && <div className="row-sub">on delete {key.onDelete}</div>}</div></li>)}</ul>
+      </>}
+      {migrations.length > 0 && <>
+        <h4 style={{ marginTop: 10 }}>Migrations <span className="chip"><span className="count">{migrations.length}</span></span></h4>
+        <ul className="list">{migrations.map(file => { const index = entity.evidence.findIndex(fact => fact.file === file); return <li key={file} className="row"><div className="row-main"><div className="row-sub mono">{file.split('/').at(-1)}</div></div>{index >= 0 && <div className="row-actions"><button className="button small" onClick={() => void store.openSource({ entity: entity.id, evidence: index }, `Migration · ${file.split('/').at(-1)}`)}>Source</button></div>}</li>; })}</ul>
+      </>}
+    </section>
+  );
+}
+/** Per-file Git metrics (committed history of the working-tree index). */
+function GitMetrics({ entity }: { entity?: Entity }) {
+  const metrics = entity?.metrics;
+  if (!entity) return null;
+  if (metrics?.commits === undefined) return <><dt>Git history</dt><dd className="absent">not measured (no commit of this file in the indexed history)</dd></>;
+  return <>
+    <dt>Commits</dt><dd>{compactNumber(metrics.commits)}</dd>
+    <dt>Authors</dt><dd>{metrics.authors ?? '—'}</dd>
+    <dt>Churn</dt><dd title="Lines added plus lines deleted, over every commit that changed the file">{metrics.churn !== undefined ? `${compactNumber(metrics.churn)} lines` : '—'}</dd>
+    {metrics.lastChangedAt && <><dt>Last changed</dt><dd>{relativeTime(metrics.lastChangedAt)}{metrics.lastCommit ? <span className="absent mono"> · {shortSha(metrics.lastCommit)}</span> : null}</dd></>}
+  </>;
+}
 function FactRow({ label, value }: { label: string; value: string }) { return <><dt>{label}</dt><dd className={value.length > 40 ? 'mono' : undefined}>{value}</dd></>; }
-interface HttpRequest { callerId: string; method?: string; url?: string; expression: string; line?: number; resolution: 'literal' | 'proven-base' | 'template' | 'unresolved' }
+interface HttpRequest { callerId: string; method?: string; url?: string; expression: string; line?: number; resolution: 'literal' | 'proven-base' | 'template' | 'unresolved' | 'wrapper'; wrapper?: string; instance?: string; callSites?: { resolved: number; unresolved: number } }
 function HttpCalls({ selectionId, file }: { selectionId: string; file?: Entity }) {
   const store = useStore();
   const requests = ((file?.metadata.httpRequests as HttpRequest[] | undefined) ?? []).filter(request => request.callerId === selectionId);
@@ -173,7 +214,7 @@ function HttpCalls({ selectionId, file }: { selectionId: string; file?: Entity }
           <li key={index} className={`row diagnostic ${request.resolution === 'literal' ? 'info' : ''}`}>
             <div className="row-main">
               <div className="row-title"><span className="label mono">{request.method ?? '?'} {request.expression}</span></div>
-              <div className="row-sub">{request.resolution === 'literal' ? 'Literal URL — see relationships for a match, or findings if it stayed unmatched' : request.resolution === 'proven-base' ? `Built from a proven base: ${request.url ?? ''} — see relationships (Why? lists every hop), or findings if no endpoint matched` : request.resolution === 'template' ? `Relative URL with dynamic segments: ${request.url ?? ''} — linked only when the page making it is served by the endpoint's own application; otherwise see findings` : 'Unresolved: the request could not be proven (its URL or method is dynamic; see findings for the reason), so no endpoint is linked'}{request.line ? ` · line ${request.line}` : ''}</div>
+              <div className="row-sub">{request.resolution === 'literal' ? 'Literal URL — see relationships for a match, or findings if it stayed unmatched' : request.resolution === 'proven-base' ? `Built from a proven base: ${request.url ?? ''} — see relationships (Why? lists every hop), or findings if no endpoint matched` : request.resolution === 'template' ? `Relative URL with dynamic segments: ${request.url ?? ''} — linked only when the page making it is served by the endpoint's own application; otherwise see findings` : request.resolution === 'wrapper' ? (request.wrapper ? `Through the HTTP wrapper ${request.wrapper}(): ${request.url ?? ''} — see relationships for the endpoint it reaches` : `This symbol is an HTTP wrapper: its URL or method comes from its parameters, so each call site is resolved as a request of its caller (${request.callSites?.resolved ?? 0} resolved, ${request.callSites?.unresolved ?? 0} not)`) : 'Unresolved: the request could not be proven (its URL or method is dynamic; see findings for the reason), so no endpoint is linked'}{request.line ? ` · line ${request.line}` : ''}</div>
             </div>
             {request.line && <div className="row-actions"><button className="button small" onClick={() => void store.openSource({ entity: file.id, start: Math.max(1, request.line! - 12), end: request.line! + 12 }, `HTTP call · ${file.name}:${request.line}`)}>Source</button></div>}
           </li>

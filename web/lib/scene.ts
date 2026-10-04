@@ -30,7 +30,7 @@ export function nodeHeight(node: Pick<NodeSummary, 'type' | 'rect' | 'loc'>): nu
       const height = node.loc === undefined ? 2 : 3 + 4 * Math.log2(1 + node.loc / 8);
       return Math.max(2, Math.min(side * 0.3, height));
     }
-    case 'class': case 'controller': return 4;
+    case 'class': case 'controller': case 'model': case 'database_table': return 4;
     default: return 3;
   }
 }
