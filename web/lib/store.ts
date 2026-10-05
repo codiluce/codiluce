@@ -7,13 +7,15 @@
 // for the containers currently open, so the camera and the user's place on
 // the map are kept; a view epoch drops responses that belong to an old view.
 import type { Entity, Relation } from '@engine/core/graph';
-import type { AggregateEdgesPage, AggregateGroup, AggregateResult, ChangesPage, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, ImpactItem, ImpactResult, LocateResult, NodeSummary, ProjectionMeta, RelationItem, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineEntry, TimelineResponse, ViewKey } from '@engine/projection/dto';
+import type { AggregateEdgesPage, AggregateGroup, AggregateResult, ChangesPage, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, ImpactItem, ImpactResult, LocateResult, NodeSummary, ProjectionMeta, RelationItem, RequestFlow, RequestFlowList, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineEntry, TimelineResponse, ViewKey } from '@engine/projection/dto';
+import type { FlowStatus } from '@engine/projection/dto';
 import { isAbort, type AtlasApi, type FlowsList } from './api';
 import { draftFlow, FlowConflict, flowStorageKey, localFlowPersistence, moveItem, readLocalFlows, removeAt, removeFlow, replaceFlow, serverFlowPersistence, validateFlowName, type FlowPersistence, type StoredFlow } from './flows';
 import type { Level } from './lod';
 import { initialPlayback, playback, type PlaybackAction, type PlaybackState } from './playback';
 import { Scene } from './scene';
 import { Evolution } from './evolution';
+import { spineEntities } from './request-flows';
 
 export const CHILD_PAGE = 500;
 /** Children beyond this many per container are not fetched; the inspector says so. */
@@ -80,6 +82,29 @@ export interface ImpactState {
 export interface CommitImpactState { status: Status; viewStamp?: string; data?: ImpactResult; error?: string; show: boolean }
 /** "What happens from here": typed steps from an anchor entity. */
 export interface StepsState { anchor: string; status: Status; viewStamp: string; data?: StepsResult; error?: string; focus?: string }
+/**
+ * Request flows, derived by the server (one per endpoint, and per entity whose
+ * requests no endpoint answers). One can be open: in the theater over the map,
+ * or traced on the map itself.
+ */
+export interface RequestFlowsState {
+  status: Status; viewStamp?: string; data?: RequestFlowList; error?: string;
+  query: string; filter?: FlowStatus;
+  /** Only the flows that draw this entity. */
+  entity?: { id: string; name: string };
+  open?: OpenRequestFlow;
+  /** Incremented to ask the shell to show the Requests panel. */
+  reveal?: number;
+}
+export interface OpenRequestFlow {
+  id: string; status: Status; viewStamp: string; data?: RequestFlow; error?: string;
+  /** Focused node of the flow (its details are shown). */
+  focus?: string;
+  /** `theater`: the lane diagram over the map; `map`: traced on the map. */
+  mode: 'theater' | 'map';
+  /** The request is animated along the flow. */
+  playing: boolean;
+}
 export interface ResolvedFlow { flowId: string; steps: { entityId: string; node?: NodeSummary; ancestors: string[]; missing: boolean }[]; links: RelationItem[][]; status: Status; error?: string }
 export interface FlowsState {
   flows: StoredFlow[]; draft?: FlowDraft; activeId?: string; resolved?: ResolvedFlow; playback: PlaybackState; storageError?: string;
@@ -113,6 +138,7 @@ export interface AtlasState {
   impact: ImpactState;
   commitImpact: CommitImpactState;
   steps?: StepsState;
+  requests: RequestFlowsState;
 }
 export interface MapNavigator {
   flyTo(node: NodeSummary, options?: { mode?: 'focus' | 'enter' }): void;
@@ -202,7 +228,7 @@ export class AtlasStore {
       relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' },
       history: { entries: [], index: -1 }, showDiagnostics: prefs.showDiagnostics ?? true, themeId: prefs.themeId ?? 'midnight',
       flows: { flows: [], playback: initialPlayback(), writable: true }, staleIndex: false, sceneRevision: 0,
-      impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false },
+      impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: { status: 'idle', query: '' },
       timeline: { open: false, status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true },
     };
   }
@@ -705,6 +731,8 @@ export class AtlasStore {
         else { this.set({ selection: undefined }); this.setTimeline({ notice: 'The selected entity does not exist in this snapshot.' }); this.writeHash(undefined); }
       }
       if (this.state.flows.activeId) await this.activateFlow(this.state.flows.activeId);
+      if (this.state.requests.status !== 'idle') void this.loadRequestFlows();
+      if (this.state.requests.open) void this.openRequestFlow(this.state.requests.open.id, { mode: this.state.requests.open.mode, fit: false });
     } catch (error) {
       if (isAbort(error) || epoch !== this.epoch) return;
       this.setTimeline({ switching: false, error: error instanceof Error ? error.message : String(error) });
@@ -915,4 +943,70 @@ export class AtlasStore {
   closeSteps(): void { this.aborts.get('steps')?.abort(); this.set({ steps: undefined }); }
   /** Highlight one step (and its links) on the map. */
   focusStep(id: string | undefined): void { this.set(state => state.steps ? { steps: { ...state.steps, focus: id } } : {}); }
+
+  // Request flows -------------------------------------------------------------
+  private setRequests(patch: Partial<RequestFlowsState> | ((requests: RequestFlowsState) => Partial<RequestFlowsState>)): void {
+    this.set(state => ({ requests: { ...state.requests, ...(typeof patch === 'function' ? patch(state.requests) : patch) } }));
+  }
+  /** List the request flows of the view (`entity`: only those that draw it; `null` lists them all again). */
+  async loadRequestFlows(entity?: { id: string; name: string } | null): Promise<void> {
+    if (entity !== undefined) this.setRequests({ entity: entity ?? undefined });
+    const filter = this.state.requests.entity?.id;
+    const signal = this.abortable('request-flows');
+    const viewStamp = this.viewStamp();
+    this.setRequests({ status: 'loading', error: undefined });
+    try {
+      const data = await this.api.requestFlows(filter, signal);
+      if (signal.aborted) return;
+      this.setRequests(requests => requests.entity?.id === filter ? { status: 'ready', data, viewStamp } : {});
+    } catch (error) { if (!isAbort(error)) this.setRequests({ status: 'error', error: error instanceof Error ? error.message : String(error) }); }
+  }
+  /** Show the Requests panel: an endpoint opens its own flow; another entity lists the flows through it. */
+  async showRequestFlows(node?: { id: string; name: string; type: string }): Promise<void> {
+    this.setRequests(requests => ({ reveal: (requests.reveal ?? 0) + 1 }));
+    if (node?.type === 'api_endpoint') {
+      await Promise.all([this.openRequestFlow(node.id), this.state.requests.status === 'idle' ? this.loadRequestFlows() : undefined]);
+      return;
+    }
+    await this.loadRequestFlows(node ? { id: node.id, name: node.name } : null);
+  }
+  setRequestQuery(query: string): void { this.setRequests({ query }); }
+  setRequestFilter(filter: FlowStatus | undefined): void { this.setRequests(requests => ({ filter: requests.filter === filter ? undefined : filter })); }
+  /** Open one flow (the theater by default); its entities are placed in the scene so the map can show them. */
+  async openRequestFlow(id: string, options: { mode?: OpenRequestFlow['mode']; fit?: boolean } = {}): Promise<void> {
+    const signal = this.abortable('request-flow');
+    const viewStamp = this.viewStamp();
+    const mode = options.mode ?? 'theater';
+    this.setRequests(requests => ({ open: { id, status: 'loading', viewStamp, mode, playing: requests.open?.playing ?? true } }));
+    try {
+      const data = await this.api.requestFlow(id, signal);
+      if (signal.aborted) return;
+      for (const node of data.nodes) if (node.node) this.scene.upsert(node.node);
+      this.setRequests(requests => requests.open?.id === id ? { open: { ...requests.open, status: 'ready', data, viewStamp } } : {});
+      this.bumpScene();
+      if (mode === 'map' && options.fit !== false) this.fitRequestFlow();
+    } catch (error) { if (!isAbort(error)) this.setRequests(requests => requests.open?.id === id ? { open: { ...requests.open, status: 'error', error: error instanceof Error ? error.message : String(error) } } : {}); }
+  }
+  closeRequestFlow(): void { this.aborts.get('request-flow')?.abort(); this.setRequests({ open: undefined }); }
+  focusRequestNode(id: string | undefined): void { this.setRequests(requests => requests.open ? { open: { ...requests.open, focus: id } } : {}); }
+  toggleRequestFlowPlaying(): void { this.setRequests(requests => requests.open ? { open: { ...requests.open, playing: !requests.open.playing } } : {}); }
+  /** Switch between the theater and the map; on the map, the flow's entities are brought into view. */
+  setRequestFlowMode(mode: OpenRequestFlow['mode']): void {
+    this.setRequests(requests => requests.open ? { open: { ...requests.open, mode } } : {});
+    if (mode === 'map') this.fitRequestFlow();
+  }
+  private fitRequestFlow(): void {
+    const data = this.state.requests.open?.data;
+    if (data) this.navigator?.fitNodes(data.nodes.flatMap(node => node.node ? [node.node] : []));
+  }
+  /** Start a saved-flow draft from the open flow's spine (a page down to its deepest model or table). */
+  draftFromRequestFlow(): void {
+    const data = this.state.requests.open?.data;
+    if (!data) return;
+    const entityIds = spineEntities(data);
+    const taken = new Set(this.state.flows.flows.map(flow => flow.name.toLowerCase()));
+    let name = data.name.slice(0, 70);
+    for (let n = 2; taken.has(name.toLowerCase()); n++) name = `${data.name.slice(0, 66)} (${n})`;
+    this.setFlows({ draft: { name, entityIds } });
+  }
 }

@@ -422,6 +422,90 @@ class C {
   assert.equal(hintOf('abort(404);'), 'abort');
   assert.deepEqual(guardsAt('bad', 'x.ts', 'typescript', 'export const = (', 1), []);
 });
+// --- Request flows ----------------------------------------------------------------
+test('a request flow follows one request from the page to the tables and back to the client', async () => {
+  const projection = new ProjectionService(store, { root });
+  const flow = await projection.requestFlow(entityId('POST /auth/login', 'api_endpoint'), { maxFileBytes: 1 << 20 });
+  assert.deepEqual(flow.lanes, ['client', 'call', 'route', 'gate', 'controller', 'service', 'data', 'response', 'return']);
+  const node = (kind: string, label: string) => { const found = flow.nodes.find(item => item.kind === kind && item.label === label); assert.ok(found, `Expected ${kind} ${label}`); return found; };
+  const edge = (from: { id: string }, to: { id: string }) => { const found = flow.edges.find(item => item.from === from.id && item.to === to.id); assert.ok(found, `Expected ${from.id} → ${to.id}`); return found; };
+  const page = node('page', '/account'), trigger = node('trigger', 'handleSave'), caller = node('caller', 'AccountService.signIn');
+  const endpoint = node('endpoint', 'POST /auth/login'), middleware = node('middleware', 'api'), handler = node('handler', 'AuthController::login');
+  const service = node('method', 'AuthService::authenticate'), model = node('model', 'User'), table = node('table', 'users');
+  // Client: the page, the event binding (plumbing folded), the call.
+  const binding = edge(page, trigger);
+  assert.equal(binding.label, 'onClick · AccountPanel');
+  assert.deepEqual(binding.via.map(item => item.name), ['AccountPage', 'AccountPanel']);
+  edge(trigger, caller);
+  assert.equal(edge(caller, endpoint).kind, 'requests');
+  // Server: middleware, the controller, a service, the model and its table, the response.
+  edge(endpoint, middleware); edge(middleware, handler); edge(handler, service);
+  assert.equal(edge(service, model).kind, 'reads');
+  edge(model, table);
+  assert.equal(service.lane, 'service'); assert.equal(model.lane, 'data');
+  const ok = node('response', '200 return');
+  edge(handler, ok);
+  // Back on the client, in source order after the request, with the conditions read from source.
+  const receiver = flow.nodes.find(item => item.kind === 'receive' && item.node?.id === caller.node!.id)!;
+  edge(ok, receiver);
+  const stored = edge(receiver, node('continuation', 'storage · write'));
+  assert.deepEqual(stored.when.map(guard => guard.phrase), ['when response.ok']);
+  const navigated = edge(receiver, node('continuation', 'navigation · push'));
+  assert.equal(navigated.label, 'in handleSave');
+  // A caller nothing indexed calls is a gap, not a silent omission; the flow is then partial.
+  const orphan = flow.nodes.find(item => item.gap?.reason === 'no-trigger')!;
+  assert.match(orphan.gap!.text, /signInJson/);
+  assert.equal(flow.status, 'partial');
+  assert.deepEqual(flow.stages, { client: true, call: true, handler: true, data: true, response: true, returns: true });
+  // Every link is made of indexed relationships, and every link joins drawn nodes.
+  const ids = new Set(flow.nodes.map(item => item.id));
+  assert.ok(flow.edges.every(item => ids.has(item.from) && ids.has(item.to)));
+  assert.ok(flow.edges.flatMap(item => item.hops).every(hop => graph.relations.some(relation => relation.id === hop.relationId)));
+});
+test('request flows draw validation, guarded responses, and what the index could not resolve as gaps', async () => {
+  const projection = new ProjectionService(store, { root });
+  const update = await projection.requestFlow(entityId('PUT /profiles/{id}', 'api_endpoint'), { maxFileBytes: 1 << 20 });
+  const find = (flow: typeof update, test: (item: typeof update.nodes[number]) => boolean) => flow.nodes.find(test)!;
+  const validation = find(update, item => item.kind === 'validation');
+  assert.equal(validation.label, 'UpdateProfileRequest');
+  assert.equal(validation.lane, 'gate');
+  const invalid = find(update, item => item.status === 422);
+  assert.equal(update.edges.find(item => item.from === validation.id && item.to === invalid.id)!.label, 'when invalid');
+  assert.deepEqual(update.responses, [302, 404, 422]);
+  assert.ok(find(update, item => item.kind === 'table' && item.label === 'audit'));
+  const helper = find(update, item => item.label === 'ProfileController::audit');
+  assert.deepEqual([helper.lane, helper.depth], ['controller', 1], 'a helper of the controller stays in its lane, one column deeper');
+  const unresolved = find(update, item => item.gap?.reason === 'unresolved-calls');
+  assert.equal(unresolved.label, '? record()');
+  assert.ok(update.edges.some(item => item.from === helper.id && item.to === unresolved.id && item.kind === 'gap'));
+  const show = await projection.requestFlow(entityId('GET /profiles/{id}', 'api_endpoint'), { maxFileBytes: 1 << 20 });
+  const respond = (status: number) => show.edges.find(item => item.to === find(show, node => node.status === status).id)!;
+  assert.deepEqual(respond(404).when.map(guard => guard.phrase), ['when $id < 1']);
+  assert.deepEqual(respond(200).when.map(guard => guard.phrase), ['unless $id < 1']);
+  // A closure route: the handler is a gap, and nothing indexed calls it.
+  const home = await projection.requestFlow(graph.entities.find(entity => entity.type === 'api_endpoint' && entity.name === 'GET /')!.id, { maxFileBytes: 1 << 20 });
+  assert.equal(home.status, 'headless');
+  assert.deepEqual(home.nodes.flatMap(item => item.gap ? [item.gap.reason] : []).sort(), ['no-caller', 'no-handler']);
+});
+test('request flows are listed per endpoint with their completeness, unmatched requests apart, and by entity', async () => {
+  const projection = new ProjectionService(store, { root });
+  const list = projection.requestFlows();
+  const names = list.items.map(item => item.name);
+  assert.ok(names.includes('GET /users/{id}') && !names.includes('HEAD /users/{id}'), 'a HEAD route that mirrors a GET route is listed once');
+  assert.equal(Object.values(list.counts).reduce((sum, count) => sum + count, 0), list.items.length);
+  const login = list.items.find(item => item.name === 'POST /auth/login')!;
+  assert.deepEqual([login.app, login.group, login.handler, login.callers, login.responses], ['backend', '/auth', 'AuthController::login', 3, [200]]);
+  const kinds = list.items.map(item => item.kind);
+  assert.ok(kinds.indexOf('unmatched') > kinds.lastIndexOf('endpoint'), 'unmatched requests come last');
+  const missing = list.items.find(item => item.kind === 'unmatched' && item.caller === 'AccountService.missing')!;
+  assert.equal(missing.status, 'unmatched');
+  const flow = await projection.requestFlow(missing.id, { maxFileBytes: 1 << 20 });
+  assert.match(flow.nodes.find(item => item.gap?.reason === 'unmatched')!.gap!.text, /0 eligible endpoints/);
+  // Flows that draw an entity.
+  const through = projection.requestFlows({ entity: symbolId('App\\Services\\AuthService::authenticate') });
+  assert.deepEqual(through.items.map(item => item.name).sort(), ['GET /duplicate', 'GET /profiles/{id}', 'POST /auth/login', 'POST /session/login']);
+  await assert.rejects(projection.requestFlow(symbolId('App\\Services\\AuthService::authenticate'), { maxFileBytes: 1 << 20 }), /No request flow starts/);
+});
 test('impact, steps and path are served over HTTP with validation', async () => {
   const server = createInspectionServer(store, { root });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -438,5 +522,11 @@ test('impact, steps and path are served over HTTP with validation', async () => 
     assert.ok(path.found);
     assert.equal((await fetch(`${base}/api/projection/path?from=x`)).status, 400);
     assert.equal((await fetch(`${base}/api/projection/steps/missing`)).status, 404);
+    const flows = await fetch(`${base}/api/projection/request-flows`).then(response => response.json());
+    assert.ok(flows.items.length > 5 && flows.counts.partial > 0);
+    const flow = await fetch(`${base}/api/projection/request-flows/${encodeURIComponent(entityId('POST /auth/login'))}`).then(response => response.json());
+    assert.ok(flow.nodes.length > 10 && flow.edges.length > 10);
+    assert.equal((await fetch(`${base}/api/projection/request-flows/missing`)).status, 404);
+    assert.equal((await fetch(`${base}/api/projection/request-flows?entity=missing`)).status, 404);
   } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
 });

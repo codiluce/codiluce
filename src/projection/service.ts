@@ -23,9 +23,10 @@ import type { Entity, Relation } from '../core/graph.js';
 import { extendRegistry, LAYOUT_VERSION, TIMELINE_LAYOUT_VERSION, layoutHierarchy, placeOnTimeline, timelineLayout, type LayoutState, type Rect, type TimelineLayout, type TimelineRegistry } from './layout.js';
 import { ProjectionIndex, type EntityRow, type ProjectionNode, type RelationRow } from './hierarchy.js';
 import { readSnapshotFile, readSnapshotSource, snapshotRef, SourceError, splitLines, type SourceRequest, type SourceResponse } from './source.js';
-import type { AggregateResult, ChangesPage, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, PathResult, ProjectionMeta, RelationItem, RelationsPage, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
+import type { AggregateResult, ChangesPage, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, PathResult, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowEdge, RequestFlowList, RequestFlowNode, RequestFlowSummary, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
 import { computeImpact, DEFAULT_IMPACT_DEPTH, FILE_IMPACT_TYPES, impactPath, MAX_IMPACT_SEEDS, seedsOf, SYMBOL_IMPACT_TYPES, type ImpactComputation } from './impact.js';
 import { shortestPath, STEP_LIMITS, walkSteps } from './steps.js';
+import { displayName, endpointFlow, FLOW_LANES, unmatchedFlow, type FlowContext, type RawFlow } from './request-flows.js';
 import { guardsAt, hintOf, phrase } from './conditions.js';
 import { SYMBOL_TYPES } from './hierarchy.js';
 export type { NodeSummary, Page, RelationItem, ViewKey } from './dto.js';
@@ -42,6 +43,9 @@ interface View {
   unresolvedNames?: Map<string, { sites: number; entities: Set<string> }>;
   /** Recent impact computations of this view. */
   impacts?: Map<string, ImpactComputation>;
+  /** Request flows built so far (undefined: the ID anchors none), and the listing once computed. */
+  requestFlows?: Map<string, RawFlow | undefined>;
+  requestFlowList?: { summary: RequestFlowSummary; members: Set<string> }[];
 }
 const HTTP_FINDINGS = new Set(['unresolved-http-call', 'unresolved-http-url', 'unmatched-http-call', 'ambiguous-http-match', 'constrained-http-match', 'unverified-relative-api-boundary']);
 const IMPACT_TYPE_ORDER: Record<string, number> = { route: 0, api_endpoint: 1, component: 2, controller: 3, model: 4, class: 4, function: 5, method: 6, database_table: 7, file: 8 };
@@ -50,6 +54,7 @@ const SEVERITY_ORDER: Record<string, number> = { error: 0, warning: 1, info: 2 }
 const STATUS_ORDER: Record<string, number> = { added: 0, removed: 1, moved: 2, modified: 3, unchanged: 4 };
 const TYPE_ORDER: Record<string, number> = { application: 0, directory: 1, file: 2, route: 3, api_endpoint: 3 };
 const VIEW_CACHE = 6, DATA_CACHE = 10;
+const METHOD_ORDER: Record<string, number> = { GET: 0, HEAD: 1, POST: 2, PUT: 3, PATCH: 4, DELETE: 5, OPTIONS: 6 };
 export interface ProjectionOptions {
   stateDirectory?: string;
   /** Repository root: Git rename detection for comparisons, and source reading. */
@@ -543,20 +548,8 @@ export class ProjectionService {
     if (anchor.kind !== 'entity') throw new Error('Steps start from an entity');
     const source = current.target;
     const walk = walkSteps({ index: current.index, relationMetadata: ids => source.relationMetadata(ids), entity: entityId => source.entity(entityId) }, id);
-    const files = new Map<string, Promise<string | undefined>>();
-    const content = (relative: string) => {
-      if (!files.has(relative)) files.set(relative, readSnapshotFile(source, relative, options.maxFileBytes).then(file => file.buffer.toString('utf8'), () => undefined));
-      return files.get(relative)!;
-    };
-    const guards = async (ownerId: string, line: number | undefined, hint?: string): Promise<StepGuard[]> => {
-      const owner = current.index.node(ownerId);
-      if (!owner?.path || !line) return [];
-      const text = await content(owner.path);
-      if (text === undefined) return [];
-      const range = owner.type !== 'file' && owner.sourceRange ? { startLine: owner.sourceRange.startLine, endLine: owner.sourceRange.endLine } : undefined;
-      return guardsAt(`${source.info.id}:${owner.path}`, owner.path, owner.language, text, line, range, hint).map(guard => ({ ...guard, phrase: phrase(guard) }));
-    };
-    const appOf = (node: ProjectionNode) => current.index.canonicalAncestors(node).find(item => item.type === 'application')?.name;
+    const guards = this.guardReader(current, options.maxFileBytes);
+    const appOf = (node: ProjectionNode) => appName(current, node);
     const relationIds = [...new Set(walk.links.flatMap(link => link.chain.map(i => current.index.relations[i]!.id)))];
     const metadata = relationIds.length ? source.relationMetadata(relationIds) : new Map<string, Record<string, unknown>>();
     const firstLine = (relationId: string, type: string): number | undefined => {
@@ -597,6 +590,104 @@ export class ProjectionService {
     if (!walk.links.length) notices.push('Nothing indexed happens from here: no calls, renders, handlers, requests or effects were resolved.');
     return { anchor: this.summary(current, anchor), steps, links, truncated: walk.truncated, notices, limits: STEP_LIMITS };
   }
+  /** The conditions a site runs under, read from the viewed snapshot's source (files read once per reader). */
+  private guardReader(current: View, maxFileBytes: number): (ownerId: string, line: number | undefined, hint?: string) => Promise<StepGuard[]> {
+    const source = current.target;
+    const files = new Map<string, Promise<string | undefined>>();
+    const content = (relative: string) => {
+      if (!files.has(relative)) files.set(relative, readSnapshotFile(source, relative, maxFileBytes).then(file => file.buffer.toString('utf8'), () => undefined));
+      return files.get(relative)!;
+    };
+    return async (ownerId, line, hint) => {
+      const owner = current.index.node(ownerId);
+      if (!owner?.path || !line) return [];
+      const text = await content(owner.path);
+      if (text === undefined) return [];
+      const range = owner.type !== 'file' && owner.sourceRange ? { startLine: owner.sourceRange.startLine, endLine: owner.sourceRange.endLine } : undefined;
+      return guardsAt(`${source.info.id}:${owner.path}`, owner.path, owner.language, text, line, range, hint).map(guard => ({ ...guard, phrase: phrase(guard) }));
+    };
+  }
+
+  // Request flows -------------------------------------------------------------------
+  private flowContext(current: View): FlowContext {
+    const source = current.target;
+    const findings = new Map<string, { code: string; reason: string; line?: number }[]>();
+    for (const item of current.index.diagnostics) if (item.entityId && HTTP_FINDINGS.has(item.code)) findings.set(item.entityId, [...findings.get(item.entityId) ?? [], { code: item.code, reason: item.reason, ...(item.line !== undefined ? { line: item.line } : {}) }]);
+    return { index: current.index, relationMetadata: ids => source.relationMetadata(ids), entity: id => source.entity(id), findings: id => findings.get(id) ?? [] };
+  }
+  /** The flow anchored at an endpoint, or at an entity making requests no endpoint answers (cached per view). */
+  private rawFlow(current: View, id: string, context?: FlowContext): RawFlow | undefined {
+    current.requestFlows ??= new Map();
+    if (!current.requestFlows.has(id)) {
+      const node = current.index.node(id);
+      const using = context ?? this.flowContext(current);
+      current.requestFlows.set(id, !node || node.kind !== 'entity' ? undefined : node.type === 'api_endpoint' ? endpointFlow(using, id) : unmatchedFlow(using, id));
+    }
+    return current.requestFlows.get(id);
+  }
+  private flowSummary(current: View, flow: RawFlow): RequestFlowSummary {
+    const anchor = current.index.node(flow.anchor)!;
+    const segment = flow.kind === 'unmatched' ? 'unmatched' : `/${flow.path.split('/').filter(Boolean)[0] ?? ''}`;
+    const app = appName(current, anchor);
+    return { id: flow.id, kind: flow.kind, name: flow.name, method: flow.method, path: flow.path, ...(app ? { app } : {}), group: segment, status: flow.status, stages: flow.stages, gaps: flow.gaps, callers: flow.callers, tables: flow.tables, responses: flow.responses, ...(flow.handler ? { handler: flow.handler } : {}), ...(flow.caller ? { caller: flow.caller } : {}) };
+  }
+  /**
+   * Every request flow of the view: one per endpoint (a HEAD route that
+   * mirrors a GET route is listed once), and one per entity whose requests no
+   * endpoint answers. `entity` keeps the flows that draw that entity.
+   */
+  requestFlows(options: { view?: ViewKey; entity?: string } = {}): RequestFlowList {
+    const current = this.load(options.view);
+    if (options.entity) this.require(current, options.entity);
+    if (!current.requestFlowList) {
+      const context = this.flowContext(current);
+      const endpoints = [...current.index.nodes.values()].filter(node => node.type === 'api_endpoint' && node.change?.status !== 'removed');
+      const gets = new Set(endpoints.filter(node => node.name.startsWith('GET ')).map(node => `${node.canonicalParentId}|${node.name.slice(4)}`));
+      const flows: RawFlow[] = [];
+      for (const endpoint of endpoints) {
+        if (endpoint.name.startsWith('HEAD ') && gets.has(`${endpoint.canonicalParentId}|${endpoint.name.slice(5)}`)) continue;
+        const flow = this.rawFlow(current, endpoint.id, context);
+        if (flow) flows.push(flow);
+      }
+      const unmatched = [...new Set(current.index.diagnostics.flatMap(item => item.entityId && HTTP_FINDINGS.has(item.code) && current.index.node(item.entityId)?.change?.status !== 'removed' ? [item.entityId] : []))];
+      for (const id of unmatched) { const flow = this.rawFlow(current, id, context); if (flow) flows.push(flow); }
+      const order = (flow: RawFlow) => `${flow.kind === 'unmatched' ? 1 : 0}\u0000${appName(current, current.index.node(flow.anchor)!) ?? ''}\u0000${flow.path.toLowerCase()}\u0000${METHOD_ORDER[flow.method] ?? 9}\u0000${flow.id}`;
+      flows.sort((a, b) => order(a) < order(b) ? -1 : order(a) > order(b) ? 1 : 0);
+      current.requestFlowList = flows.map(flow => ({ summary: this.flowSummary(current, flow), members: new Set(flow.members) }));
+    }
+    const items = current.requestFlowList.filter(item => !options.entity || item.members.has(options.entity)).map(item => item.summary);
+    const counts: RequestFlowList['counts'] = { complete: 0, partial: 0, headless: 0, unmatched: 0 };
+    for (const item of items) counts[item.status]++;
+    return { items, counts, ...(options.entity ? { entity: options.entity } : {}) };
+  }
+  /** One request flow, with entity summaries, folded entities, relationship hops and the conditions read from source. */
+  async requestFlow(id: string, options: { view?: ViewKey; maxFileBytes: number }): Promise<RequestFlow> {
+    const current = this.load(options.view);
+    const anchor = this.require(current, id);
+    const flow = this.rawFlow(current, id);
+    if (!flow) throw new NotFoundError(`No request flow starts at ${anchor.name}: it is not an endpoint and makes no unmatched request`);
+    const guards = this.guardReader(current, options.maxFileBytes);
+    const ancestorsOf = (nodeId: string) => { const node = current.index.node(nodeId); return node ? current.index.spatialAncestors(node).map(item => item.id) : []; };
+    const nodes: RequestFlowNode[] = flow.nodes.map(item => {
+      const node = item.entityId ? current.index.node(item.entityId) : undefined;
+      const owner = item.effect ? current.index.node(item.effect.owner) : undefined;
+      return {
+        id: item.id, lane: item.lane, kind: item.kind, depth: item.depth, label: item.label, ...(item.detail ? { detail: item.detail } : {}),
+        ...(node ? { node: this.summary(current, node) } : {}),
+        ancestors: node ? ancestorsOf(node.id) : owner ? [...ancestorsOf(owner.id), owner.id] : [],
+        ...(item.effect ? { effect: { ...item.effect, ownerName: owner ? displayName(owner) : item.effect.owner, ...(owner?.path ? { ownerPath: owner.path } : {}) } } : {}),
+        ...(item.status !== undefined ? { status: item.status } : {}), ...(item.event ? { event: item.event } : {}), ...(item.gap ? { gap: item.gap } : {}),
+      };
+    });
+    const edges: RequestFlowEdge[] = await Promise.all(flow.edges.map(async edge => ({
+      id: edge.id, from: edge.from, to: edge.to, kind: edge.kind, ...(edge.label ? { label: edge.label } : {}),
+      hops: edge.chain.map(index => { const relation = current.index.relations[index]!; return { relationId: relation.id, type: relation.type, from: relation.from, to: relation.to }; }),
+      via: edge.via.map(viaId => { const node = current.index.node(viaId)!; return { id: node.id, name: displayName(node), type: node.type }; }),
+      when: edge.site ? await guards(edge.site.owner, edge.site.line, edge.site.hint === undefined ? undefined : hintOf(edge.site.hint) ?? edge.site.hint) : [],
+    })));
+    return { ...this.flowSummary(current, flow), anchor: this.summary(current, anchor), lanes: FLOW_LANES.filter(lane => nodes.some(node => node.lane === lane)), nodes, edges, truncated: flow.truncated, notices: flow.notices };
+  }
+
   /** Shortest evidenced path from one entity to another (forward relations; reversed when only the other direction exists). */
   path(from: string, to: string, view?: ViewKey): PathResult {
     const current = this.load(view);
@@ -783,6 +874,9 @@ function impactTypes(types: string[] | undefined): Set<string> {
 function bounded(value: unknown): unknown {
   const text = JSON.stringify(value);
   return text && text.length > 4000 ? `${text.slice(0, 4000)}…` : value;
+}
+function appName(current: View, node: ProjectionNode): string | undefined {
+  return current.index.canonicalAncestors(node).find(item => item.type === 'application')?.name;
 }
 function compareNames(current: View, a: string, b: string): number {
   const x = current.index.node(a)!.name, y = current.index.node(b)!.name;

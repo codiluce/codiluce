@@ -62,6 +62,8 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
     } else if ((match = new RegExp(`^/api/projection/diagnostics/${ID}$`).exec(pathname))) result = projection.diagnostics(decodeURIComponent(match[1]!), { ...page, severity: text(params, 'severity'), view });
     else if ((match = new RegExp(`^/api/projection/impact/${ID}$`).exec(pathname))) result = projection.impact(decodeURIComponent(match[1]!), { ...page, ...impactParams(params), view });
     else if ((match = new RegExp(`^/api/projection/steps/${ID}$`).exec(pathname))) result = await projection.steps(decodeURIComponent(match[1]!), { view, maxFileBytes: context.maxFileBytes });
+    else if (pathname === '/api/projection/request-flows') result = projection.requestFlows({ view, entity: text(params, 'entity') });
+    else if ((match = new RegExp(`^/api/projection/request-flows/${ID}$`).exec(pathname))) result = await projection.requestFlow(decodeURIComponent(match[1]!), { view, maxFileBytes: context.maxFileBytes });
     else if (pathname === '/api/projection/path') {
       const from = params.get('from'), to = params.get('to');
       if (!from || !to) throw new Error('from and to are required');

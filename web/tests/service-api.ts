@@ -69,6 +69,8 @@ export class ServiceApi implements AtlasApi {
     return this.run('impact', typeof id === 'string' ? id : 'comparison', signal, () => typeof id === 'string' ? this.projection.impact(id, { ...options, view: this.view }) : this.projection.commitImpact(this.view, options));
   }
   steps(id: string, signal?: AbortSignal) { return this.run('steps', id, signal, () => this.projection.steps(id, { view: this.view, maxFileBytes: this.options.maxFileBytes ?? 1024 * 1024 })); }
+  requestFlows(entity?: string, signal?: AbortSignal) { return this.run('requestFlows', entity ?? '', signal, () => this.projection.requestFlows({ view: this.view, entity })); }
+  requestFlow(id: string, signal?: AbortSignal) { return this.run('requestFlow', id, signal, () => this.projection.requestFlow(id, { view: this.view, maxFileBytes: this.options.maxFileBytes ?? 1024 * 1024 })); }
   path(from: string, to: string, signal?: AbortSignal) { return this.run('path', `${from}>${to}`, signal, () => this.projection.path(from, to, this.view)); }
   flows(signal?: AbortSignal) {
     return this.run('flows', '', signal, () => {

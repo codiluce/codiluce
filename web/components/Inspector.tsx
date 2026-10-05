@@ -126,6 +126,7 @@ function AnalysisButtons({ node }: { node: NodeSummary }) {
     <>
       <button className="button small" aria-pressed={impactOpen} onClick={() => impactOpen ? store.hideImpact() : void store.showImpact(node.id)} title="What depends on this, hop by hop">{impactOpen ? 'Hide impact' : 'Impact'}</button>
       {runs && <button className="button small" aria-pressed={stepsAnchor === node.id} onClick={() => stepsAnchor === node.id ? store.closeSteps() : void store.openSteps(node.id)} title="What this sets in motion: handlers, requests, endpoints and effects">What happens from here</button>}
+      {(runs || node.type === 'database_table') && <button className="button small" onClick={() => void store.showRequestFlows(node)} title={node.type === 'api_endpoint' ? 'This endpoint\'s request, from the client to the response and back' : 'The HTTP requests whose flow passes through here'}>{node.type === 'api_endpoint' ? 'Request flow' : 'Request flows'}</button>}
     </>
   );
 }

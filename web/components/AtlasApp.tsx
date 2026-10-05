@@ -7,6 +7,7 @@ import { THEMES, themeById, UI_PROPERTIES } from '../lib/themes';
 import { Breadcrumbs } from './Breadcrumbs';
 import { AtlasContext, useAtlas, useStore } from './context';
 import { FlowPanel } from './FlowPanel';
+import { RequestFlowRibbon, RequestFlowsPanel, RequestFlowTheater } from './RequestFlows';
 import { StepsPanel } from './StepsPanel';
 import { Inspector } from './Inspector';
 import { MapView } from './MapView';
@@ -68,10 +69,13 @@ function Shell() {
   const [flowWidth, setFlowWidth] = usePanelWidth('archipelago:flow-width', 300);
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [flowsOpen, setFlowsOpen] = useState(false);
-  // The left panel holds Flows and, once opened from the inspector, Steps.
+  // The left panel holds request flows, saved flows and, once opened from the inspector, Steps.
   const stepsAnchor = useAtlas(state => state.steps?.anchor);
-  const [leftTab, setLeftTab] = useState<'flows' | 'steps'>('flows');
-  useEffect(() => { if (stepsAnchor) { setFlowsOpen(true); setLeftTab('steps'); } else setLeftTab('flows'); }, [stepsAnchor]);
+  const [leftTab, setLeftTab] = useState<'requests' | 'flows' | 'steps'>('flows');
+  useEffect(() => { if (stepsAnchor) { setFlowsOpen(true); setLeftTab('steps'); } else setLeftTab(tab => tab === 'steps' ? 'flows' : tab); }, [stepsAnchor]);
+  const reveal = useAtlas(state => state.requests.reveal);
+  useEffect(() => { if (reveal) { setFlowsOpen(true); setLeftTab('requests'); } }, [reveal]);
+  const showTab = (tab: 'requests' | 'flows') => { if (flowsOpen && leftTab === tab) setFlowsOpen(false); else { setFlowsOpen(true); setLeftTab(tab); } };
   const [help, setHelp] = useState(false);
   // Floating themes paint a backdrop behind rounded panels; the others dock panels on a flat background.
   const style = useMemo(() => ({ ...theme.ui, background: theme.style?.floating ? theme.ui['--app-bg'] ?? theme.ui['--bg'] : theme.ui['--bg'] }) as React.CSSProperties, [theme]);
@@ -114,7 +118,8 @@ function Shell() {
           <button className="icon-button" onClick={() => void store.back()} disabled={history.index <= 0} aria-label="Back to previous selection" title="Back (Alt+←)">←</button>
           <button className="icon-button" onClick={() => void store.forward()} disabled={history.index >= history.entries.length - 1} aria-label="Forward" title="Forward (Alt+→)">→</button>
           <button className="button" onClick={() => void (timelineOpen ? store.closeTimeline() : store.openTimeline())} aria-pressed={timelineOpen} title={meta?.history.available ? `Browse ${meta.history.snapshots} indexed commits` : 'No history indexed yet'}>History</button>
-          <button className="button" onClick={() => setFlowsOpen(open => !open)} aria-pressed={flowsOpen} aria-controls="flows-panel">Flows</button>
+          <button className="button rf-top" onClick={() => showTab('requests')} aria-pressed={flowsOpen && leftTab === 'requests'} aria-controls="flows-panel" title="Every HTTP request the index can follow, end to end">Requests</button>
+          <button className="button" onClick={() => showTab('flows')} aria-pressed={flowsOpen && leftTab === 'flows'} aria-controls="flows-panel">Flows</button>
           <label className="sr-only" htmlFor="theme-select">Theme</label>
           <select id="theme-select" className="select" value={themeId} onChange={event => store.setTheme(event.target.value)}>
             {THEMES.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -125,19 +130,19 @@ function Shell() {
       <Breadcrumbs />
       <main className="workspace">
         {flowsOpen ? (
-          <aside id="flows-panel" className="panel left" style={{ width: leftTab === 'steps' ? Math.max(flowWidth, 360) : flowWidth }} aria-label={leftTab === 'steps' ? 'Steps' : 'Flows'}>
-            {stepsAnchor && (
-              <div className="segmented panel-tabs" role="tablist" aria-label="Left panel">
-                <button role="tab" aria-selected={leftTab === 'flows'} aria-pressed={leftTab === 'flows'} onClick={() => setLeftTab('flows')}>Flows</button>
-                <button role="tab" aria-selected={leftTab === 'steps'} aria-pressed={leftTab === 'steps'} onClick={() => setLeftTab('steps')}>Steps</button>
-              </div>
-            )}
-            {leftTab === 'steps' && stepsAnchor ? <StepsPanel onClose={() => setLeftTab('flows')} /> : <FlowPanel onClose={() => setFlowsOpen(false)} />}
+          <aside id="flows-panel" className="panel left" style={{ width: leftTab === 'flows' ? flowWidth : Math.max(flowWidth, 360) }} aria-label={leftTab === 'steps' ? 'Steps' : leftTab === 'requests' ? 'Request flows' : 'Flows'}>
+            <div className="segmented panel-tabs" role="tablist" aria-label="Left panel">
+              <button role="tab" aria-selected={leftTab === 'requests'} aria-pressed={leftTab === 'requests'} onClick={() => setLeftTab('requests')}>Requests</button>
+              <button role="tab" aria-selected={leftTab === 'flows'} aria-pressed={leftTab === 'flows'} onClick={() => setLeftTab('flows')}>Flows</button>
+              {stepsAnchor && <button role="tab" aria-selected={leftTab === 'steps'} aria-pressed={leftTab === 'steps'} onClick={() => setLeftTab('steps')}>Steps</button>}
+            </div>
+            {leftTab === 'steps' && stepsAnchor ? <StepsPanel onClose={() => setLeftTab('flows')} /> : leftTab === 'requests' ? <RequestFlowsPanel onClose={() => setFlowsOpen(false)} /> : <FlowPanel onClose={() => setFlowsOpen(false)} />}
             <ResizeHandle side="left" width={flowWidth} onResize={setFlowWidth} label="Resize flows panel" />
           </aside>
         ) : <div />}
         <section className="map-area">
           <MapView />
+          <RequestFlowRibbon />
           <SourcePanel />
         </section>
         {inspectorOpen ? (
@@ -146,6 +151,7 @@ function Shell() {
             <Inspector onClose={() => setInspectorOpen(false)} />
           </aside>
         ) : <button className="panel-collapsed right" onClick={() => setInspectorOpen(true)}>Inspector</button>}
+        <RequestFlowTheater />
       </main>
       {timelineOpen && <Timeline />}
       {help && <HelpDialog onClose={() => setHelp(false)} />}

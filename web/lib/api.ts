@@ -4,7 +4,7 @@
 import type { Entity, FlowStep, Relation } from '@engine/core/graph';
 import type { StoredFlow } from '@engine/core/flows';
 import type { EvolutionResponse } from '@engine/projection/dto';
-import type { AggregateEdgesPage, AggregateResult, ChangesPage, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, ImpactResult, LocateResult, NodeSummary, Page, PathResult, ProjectionMeta, RelationItem, RelationsPage, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
+import type { AggregateEdgesPage, AggregateResult, ChangesPage, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, ImpactResult, LocateResult, NodeSummary, Page, PathResult, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
 
 export class ApiError extends Error { constructor(readonly status: number, message: string, readonly body?: unknown) { super(message); } }
 /** GET /api/flows: the server's stored flows, and whether it accepts writes. */
@@ -43,6 +43,10 @@ export interface AtlasApi {
   /** Blast radius of an entity; `comparison` asks for what the viewed comparison's changes reach. */
   impact(id: string | { comparison: true }, options: ImpactOptions, signal?: AbortSignal): Promise<ImpactResult>;
   steps(id: string, signal?: AbortSignal): Promise<StepsResult>;
+  /** Request flows of the view (`entity`: only those that draw it). */
+  requestFlows(entity?: string, signal?: AbortSignal): Promise<RequestFlowList>;
+  /** One request flow: an endpoint's, or an entity's unmatched requests. */
+  requestFlow(id: string, signal?: AbortSignal): Promise<RequestFlow>;
   path(from: string, to: string, signal?: AbortSignal): Promise<PathResult>;
   /** Named flows stored by the server (404 from a server that stores none). */
   flows(signal?: AbortSignal): Promise<FlowsList>;
@@ -122,6 +126,8 @@ export class HttpAtlasApi implements AtlasApi {
     return this.get<ImpactResult>(typeof id === 'string' ? `/api/projection/impact/${encodeURIComponent(id)}${this.q(params)}` : `/api/history/impact${this.q(params)}`, signal);
   }
   steps(id: string, signal?: AbortSignal) { return this.get<StepsResult>(`/api/projection/steps/${encodeURIComponent(id)}${this.q()}`, signal); }
+  requestFlows(entity?: string, signal?: AbortSignal) { return this.get<RequestFlowList>(`/api/projection/request-flows${this.q({ entity })}`, signal); }
+  requestFlow(id: string, signal?: AbortSignal) { return this.get<RequestFlow>(`/api/projection/request-flows/${encodeURIComponent(id)}${this.q()}`, signal); }
   path(from: string, to: string, signal?: AbortSignal) { return this.get<PathResult>(`/api/projection/path${this.q({ from, to })}`, signal); }
   flows(signal?: AbortSignal) { return this.get<FlowsList>('/api/flows', signal, false); }
   createFlow(flow: StoredFlowInput) { return this.write<StoredFlow>('POST', '/api/flows', flow); }

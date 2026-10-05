@@ -185,5 +185,57 @@ export interface StepLink {
 }
 export interface StepsResult { anchor: NodeSummary; steps: Step[]; links: StepLink[]; truncated: boolean; notices: string[]; limits: { layers: number; steps: number; fanout: number; fold: number; hub: number } }
 
+// Request flows -------------------------------------------------------------------
+export type { FlowEdgeKind, FlowGap, FlowGapReason, FlowLane, FlowNodeKind, FlowStages, FlowStatus } from './request-flows.js';
+export interface RequestFlowNode {
+  id: string; lane: import('./request-flows.js').FlowLane; kind: import('./request-flows.js').FlowNodeKind;
+  /** Sub-column inside the lane. */
+  depth: number;
+  label: string; detail?: string;
+  /** The entity the node stands for (absent on effects, responses, middleware and gaps). */
+  node?: NodeSummary;
+  /** Spatial ancestors of the node's entity (of an effect's owner), root first. */
+  ancestors: string[];
+  effect?: import('../core/graph.js').EffectFact & { owner: string; ownerName: string; ownerPath?: string };
+  status?: number; event?: string;
+  gap?: import('./request-flows.js').FlowGap;
+}
+export interface RequestFlowEdge {
+  id: string; from: string; to: string; kind: import('./request-flows.js').FlowEdgeKind; label?: string;
+  /** Indexed relationships the edge stands for, in order (Why?). */
+  hops: { relationId: string; type: string; from: string; to: string }[];
+  /** Entities folded into the edge, in order. */
+  via: { id: string; name: string; type: string }[];
+  /** Conditions at the source site under which the edge happens. */
+  when: StepGuard[];
+}
+export interface RequestFlowSummary {
+  /** The endpoint's ID, or the calling entity's ID for an unmatched request. */
+  id: string; kind: 'endpoint' | 'unmatched';
+  name: string; method: string; path: string;
+  /** Application of the endpoint (of the caller for an unmatched request). */
+  app?: string;
+  /** List grouping: the first path segment, or `unmatched`. */
+  group: string;
+  status: import('./request-flows.js').FlowStatus; stages: import('./request-flows.js').FlowStages;
+  gaps: number; callers: number; tables: number; responses: number[];
+  handler?: string;
+  /** Unmatched requests: the entity making them. */
+  caller?: string;
+}
+export interface RequestFlow extends RequestFlowSummary {
+  anchor: NodeSummary;
+  /** Lanes that hold at least one node, in request order. */
+  lanes: import('./request-flows.js').FlowLane[];
+  nodes: RequestFlowNode[]; edges: RequestFlowEdge[];
+  truncated: boolean; notices: string[];
+}
+export interface RequestFlowList {
+  items: RequestFlowSummary[];
+  counts: Record<import('./request-flows.js').FlowStatus, number>;
+  /** `entity` filter: the flows that draw this entity. */
+  entity?: string;
+}
+
 // Paths -------------------------------------------------------------------------
 export interface PathResult { found: boolean; reversed?: boolean; nodes: NodeSummary[]; links: { relationId: string; type: string; from: string; to: string }[] }
