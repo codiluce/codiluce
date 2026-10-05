@@ -10,11 +10,13 @@
 // functions making the call, then incoming calls, references, renders and
 // routes_to up to a page route (or the outermost caller). Server side, it goes
 // forwards from the handler over calls, collecting effects and table access.
-// What the index cannot see is drawn as a gap instead of being left out: call
-// sites that were not resolved, an endpoint nothing indexed calls, a request no
-// endpoint matches, a missing handler or response. A flow is therefore a lower
-// bound of the real behaviour, and never evidence of execution. Pure: the same
-// index gives the same flow.
+// Nothing is capped: every caller, every entry it is reached from, every
+// callable the handler reaches and every response are drawn, each entity once
+// (which is what ends the walks). What the index cannot see is drawn as a gap
+// instead of being left out: call sites that were not resolved, an endpoint
+// nothing indexed calls, a request no endpoint matches, a missing handler or
+// response. A flow is therefore a lower bound of the real behaviour, and never
+// evidence of execution. Pure: the same index gives the same flow.
 //
 // Inertia: a page component rendered by a handler (`renders` from the
 // server) is entered through the endpoint that serves it, and an Inertia
@@ -75,7 +77,7 @@ export interface RawFlow {
   caller?: string;
   /** Every entity drawn, for "flows through this entity". */
   members: string[];
-  truncated: boolean; notices: string[];
+  notices: string[];
 }
 export interface FlowContext {
   index: ProjectionIndex;
@@ -84,7 +86,8 @@ export interface FlowContext {
   /** HTTP findings (unmatched, ambiguous, unresolved requests) of an entity. */
   findings?(entityId: string): { code: string; reason: string; line?: number }[];
 }
-export const FLOW_LIMITS = { callers: 8, entries: 3, clientDepth: 8, clientVisits: 400, fanout: 14, serverDepth: 6, nodes: 56, hub: 40, laneDepth: 3, returns: 24 };
+/** Sub-columns a lane uses for deeper calls (layout only: deeper calls share the last one). */
+const LANE_COLUMNS = 3;
 // `handles` reaches the endpoint serving an Inertia page from the handler that renders it.
 const CLIENT_FOLLOW = new Set(['calls', 'references', 'renders', 'routes_to', 'handles']);
 const ENTRY_TYPES = new Set(['route', 'api_endpoint']);
@@ -104,13 +107,10 @@ class FlowBuilder {
   readonly nodes = new Map<string, RawFlowNode>();
   readonly edges: RawFlowEdge[] = [];
   private readonly edgeKeys = new Set<string>();
-  truncated = false;
   readonly notices: string[] = [];
-  constructor(private readonly limit: number) {}
-  add(node: RawFlowNode): RawFlowNode | undefined {
+  add(node: RawFlowNode): RawFlowNode {
     const existing = this.nodes.get(node.id);
     if (existing) return existing;
-    if (this.nodes.size >= this.limit) { this.truncated = true; return undefined; }
     this.nodes.set(node.id, node);
     return node;
   }
@@ -127,7 +127,7 @@ class FlowBuilder {
 class FlowWalker {
   private readonly entities = new Map<string, Entity | undefined>();
   private readonly metadata = new Map<string, Record<string, unknown>>();
-  constructor(readonly context: FlowContext, readonly limits: typeof FLOW_LIMITS) {}
+  constructor(readonly context: FlowContext) {}
   get index(): ProjectionIndex { return this.context.index; }
   entity(id: string): Entity | undefined { if (!this.entities.has(id)) this.entities.set(id, this.context.entity(id)); return this.entities.get(id); }
   meta(relationIndex: number): Record<string, unknown> {
@@ -145,7 +145,6 @@ class FlowWalker {
   }
   incoming(id: string, types: Set<string>): number[] { return this.relations(id, relation => relation.to === id && types.has(relation.type)); }
   outgoing(id: string, types: Set<string>): number[] { return this.relations(id, relation => relation.from === id && types.has(relation.type)); }
-  callerCount(id: string): number { return this.relations(id, relation => relation.to === id && (relation.type === 'calls' || relation.type === 'references')).length; }
   firstLine(relationIndex: number): number | undefined { const lines = this.meta(relationIndex).lines; return Array.isArray(lines) && typeof lines[0] === 'number' ? lines[0] : undefined; }
   events(relationIndex: number): string[] {
     const relation = this.index.relations[relationIndex]!;
@@ -168,17 +167,17 @@ class FlowWalker {
   entryChains(caller: string): { nodes: string[]; relations: number[] }[] {
     const previous = new Map<string, { next: string; relation: number } | undefined>([[caller, undefined]]);
     const routes: string[] = [], roots: string[] = [];
-    let frontier = [caller], visits = 0, last = caller;
-    for (let depth = 0; depth < this.limits.clientDepth && frontier.length && visits < this.limits.clientVisits; depth++) {
+    let frontier = [caller], last = caller;
+    while (frontier.length) {
       const next: string[] = [];
       for (const id of frontier) {
         const incoming = this.byName(this.incoming(id, CLIENT_FOLLOW), 'from');
         if (!incoming.length && id !== caller) roots.push(id);
-        for (const relationIndex of incoming.slice(0, this.limits.fanout)) {
+        for (const relationIndex of incoming) {
           const from = this.index.relations[relationIndex]!.from;
           if (previous.has(from)) continue;
           previous.set(from, { next: id, relation: relationIndex });
-          visits++; last = from;
+          last = from;
           const fromNode = this.index.node(from);
           // A HEAD route mirrors its GET twin: the page is entered once.
           if (fromNode?.type === 'api_endpoint' && fromNode.name.startsWith('HEAD ')) continue;
@@ -189,7 +188,7 @@ class FlowWalker {
       frontier = next;
     }
     const entries = routes.length ? routes : roots.length ? roots : last !== caller ? [last] : [];
-    return entries.slice(0, this.limits.entries).map(entry => {
+    return entries.map(entry => {
       const nodes = [entry], relations: number[] = [];
       for (let step = previous.get(entry); step; step = previous.get(step.next)) { relations.push(step.relation); nodes.push(step.next); }
       return { nodes, relations };
@@ -243,7 +242,7 @@ class FlowWalker {
         if (effect.line <= line || isRequest(effect) || effect.category === 'network' && effect.wrapper) continue;
         const node = builder.add({ id: `then:${owner}:${effect.line}:${effect.category}:${effect.operation}`, lane: 'return', kind: 'continuation', depth: 1, label: `${effect.category} · ${effect.operation}`, detail: effect.detail, effect: { ...effect, owner } });
         builder.link(receiver, node, 'then', { ...(owner !== caller ? { label: `in ${this.name(owner)}` } : {}), site: { owner, line: effect.line, hint: effect.detail } });
-        if (node) found = true;
+        found = true;
       }
     };
     after(caller, requestLine);
@@ -278,13 +277,13 @@ class FlowWalker {
     const mapsTo = (model: string, table: string) => this.outgoing(model, new Set(['maps_to'])).find(i => this.index.relations[i]!.to === table);
     const responseNode = (owner: string, effect: EffectFact) => {
       const node = builder.add({ id: `res:${owner}:${effect.line}:${effect.status ?? ''}:${effect.operation}`, lane: 'response', kind: 'response', depth: 0, label: `${effect.status ?? ''} ${effect.operation}`.trim(), detail: effect.detail, effect: { ...effect, owner }, ...(effect.status !== undefined ? { status: effect.status } : {}) });
-      if (node && !responses.includes(node)) responses.push(node);
+      if (!responses.includes(node)) responses.push(node);
       return node;
     };
     const tableNode = (table: string) => { const node = this.index.node(table)!; return builder.add({ id: `data:${table}`, lane: 'data', kind: 'table', depth: 1, entityId: table, label: node.name, detail: 'table' }); };
-    const queue: { id: string; steps: number }[] = [{ id: handler, steps: 0 }];
+    const queue: string[] = [handler];
     while (queue.length) {
-      const { id, steps } = queue.shift()!;
+      const id = queue.shift()!;
       const from = placed.get(id)!;
       // Effects of this callable.
       for (const effect of this.effects(id)) {
@@ -304,7 +303,7 @@ class FlowWalker {
           if (model) {
             const modelNode = builder.add({ id: `data:${model}`, lane: 'data', kind: 'model', depth: 0, entityId: model, label: this.name(model), detail: 'model' });
             builder.link(from, modelNode, kind, { label: effect.operation, site });
-            if (modelNode) modelsOf.set(id, new Set([...modelsOf.get(id) ?? [], model]));
+            modelsOf.set(id, new Set([...modelsOf.get(id) ?? [], model]));
             if (table) { const maps = mapsTo(model, table); builder.link(modelNode, tableNode(table), 'maps', { label: 'table', ...(maps !== undefined ? { chain: [maps] } : {}) }); linkedTables.add(`${id}>${table}`); }
           } else if (table) {
             builder.link(from, tableNode(table), kind, { label: effect.operation, site });
@@ -330,14 +329,12 @@ class FlowWalker {
       // What this callable calls that the index could not resolve.
       const sites = this.entity(id)?.metadata.callSites as { unresolved?: number; unresolvedNames?: Record<string, number> } | undefined;
       if (sites?.unresolved) {
-        const names = Object.keys(sites.unresolvedNames ?? {}).sort().slice(0, 4);
+        const names = Object.keys(sites.unresolvedNames ?? {}).sort();
         const lane: FlowLane = from.lane === 'controller' ? 'service' : from.lane;
-        const gap = builder.add({ id: `gap:calls:${id}`, lane, kind: 'gap', depth: Math.min(this.limits.laneDepth - 1, from.lane === lane ? from.depth + 1 : 0), label: names.length ? `? ${names.map(name => `${name}()`).join(', ')}` : `? ${sites.unresolved} call${sites.unresolved === 1 ? '' : 's'}`, detail: `${sites.unresolved} unresolved call site${sites.unresolved === 1 ? '' : 's'}`, gap: { reason: 'unresolved-calls', names, count: sites.unresolved, text: `${sites.unresolved} call site${sites.unresolved === 1 ? '' : 's'} in ${this.name(id)} could not be resolved (dynamic receivers, untyped properties, callbacks); what ${sites.unresolved === 1 ? 'it reaches' : 'they reach'} is not drawn.` } });
+        const gap = builder.add({ id: `gap:calls:${id}`, lane, kind: 'gap', depth: Math.min(LANE_COLUMNS - 1, from.lane === lane ? from.depth + 1 : 0), label: names.length ? `? ${names.slice(0, 4).map(name => `${name}()`).join(', ')}${names.length > 4 ? ` +${names.length - 4}` : ''}` : `? ${sites.unresolved} call${sites.unresolved === 1 ? '' : 's'}`, detail: `${sites.unresolved} unresolved call site${sites.unresolved === 1 ? '' : 's'}`, gap: { reason: 'unresolved-calls', names, count: sites.unresolved, text: `${sites.unresolved} call site${sites.unresolved === 1 ? '' : 's'} in ${this.name(id)} could not be resolved (dynamic receivers, untyped properties, callbacks); what ${sites.unresolved === 1 ? 'it reaches' : 'they reach'} is not drawn.` } });
         builder.link(from, gap, 'gap');
       }
-      if (steps >= this.limits.serverDepth) { if (this.outgoing(id, SERVER_FOLLOW).length) builder.notices.push(`Calls deeper than ${this.limits.serverDepth} hops from the handler are not drawn (from ${this.name(id)}).`); continue; }
-      if (id !== handler && this.callerCount(id) > this.limits.hub) { builder.notices.push(`${this.name(id)} is a widely used helper (more than ${this.limits.hub} callers); what it calls is not followed.`); continue; }
-      for (const relationIndex of this.byName(this.outgoing(id, SERVER_FOLLOW), 'to').slice(0, this.limits.fanout)) {
+      for (const relationIndex of this.byName(this.outgoing(id, SERVER_FOLLOW), 'to')) {
         const target = this.index.relations[relationIndex]!.to;
         const node = this.index.node(target);
         if (!node || !CALLABLE.has(node.type)) continue;
@@ -348,12 +345,11 @@ class FlowWalker {
         // Lanes only move forward along a call; deeper calls in a lane take the next sub-column.
         let lane = this.laneOf(target, handler);
         if (LANE_ORDER.get(lane)! < LANE_ORDER.get(from.lane)!) lane = from.lane;
-        const depth = Math.min(this.limits.laneDepth - 1, lane === from.lane ? from.depth + 1 : 0);
+        const depth = Math.min(LANE_COLUMNS - 1, lane === from.lane ? from.depth + 1 : 0);
         const added = builder.add({ id: `srv:${target}`, lane, kind: lane === 'data' ? 'model' : 'method', depth, entityId: target, label: displayName(node), ...(node.type === 'function' ? { detail: 'function' } : {}) });
-        if (!added) continue;
         placed.set(target, added);
         builder.link(from, added, 'calls', { chain: [relationIndex], ...(site ? { site } : {}) });
-        queue.push({ id: target, steps: steps + 1 });
+        queue.push(target);
       }
     }
     return { responses, data };
@@ -365,26 +361,25 @@ function finish(builder: FlowBuilder, base: Pick<RawFlow, 'id' | 'kind' | 'ancho
   const gaps = nodes.filter(node => node.kind === 'gap').length;
   const status: FlowStatus = base.kind === 'unmatched' ? 'unmatched' : !stages.call ? 'headless' : stages.client && stages.handler && stages.response && !gaps ? 'complete' : 'partial';
   const responses = [...new Set(nodes.flatMap(node => node.kind === 'response' && node.status !== undefined ? [node.status] : []))].sort((a, b) => a - b);
-  if (builder.truncated) builder.notices.push('The flow reached its size limit; some steps are not drawn.');
   return {
     ...base, nodes, edges: builder.edges, stages, status, gaps, callers, responses,
     tables: nodes.filter(node => node.kind === 'table').length,
     members: [...new Set(nodes.flatMap(node => node.entityId ? [node.entityId] : []))],
-    truncated: builder.truncated, notices: [...new Set(builder.notices)],
+    notices: [...new Set(builder.notices)],
   };
 }
 
 /** The request flow of an endpoint: who calls it, what its handler does, and what goes back. */
-export function endpointFlow(context: FlowContext, endpointId: string, limits = FLOW_LIMITS): RawFlow | undefined {
-  const walker = new FlowWalker(context, limits);
+export function endpointFlow(context: FlowContext, endpointId: string): RawFlow | undefined {
+  const walker = new FlowWalker(context);
   const index = context.index;
   const endpoint = index.node(endpointId);
   if (!endpoint || endpoint.type !== 'api_endpoint') return undefined;
   const entity = walker.entity(endpointId);
   const method = String(entity?.metadata.method ?? endpoint.name.split(' ')[0] ?? '');
   const path = String(entity?.metadata.routePath ?? endpoint.name.replace(/^[A-Z]+\s+/, ''));
-  const builder = new FlowBuilder(limits.nodes);
-  const endpointNode = builder.add({ id: `ep:${endpointId}`, lane: 'route', kind: 'endpoint', depth: 0, entityId: endpointId, label: endpoint.name, ...(endpoint.detail ? { detail: endpoint.detail } : {}) })!;
+  const builder = new FlowBuilder();
+  const endpointNode = builder.add({ id: `ep:${endpointId}`, lane: 'route', kind: 'endpoint', depth: 0, entityId: endpointId, label: endpoint.name, ...(endpoint.detail ? { detail: endpoint.detail } : {}) });
 
   // Server side: middleware, validation, the handler and what it reaches.
   let entry: RawFlowNode = endpointNode;
@@ -392,7 +387,7 @@ export function endpointFlow(context: FlowContext, endpointId: string, limits = 
   if (middleware.length) {
     const node = builder.add({ id: `mw:${endpointId}`, lane: 'gate', kind: 'middleware', depth: 0, label: middleware.join(' · '), detail: `middleware (by name; ${middleware.length === 1 ? 'its class is' : 'their classes are'} not followed)` });
     builder.link(endpointNode, node, 'routes');
-    if (node) entry = node;
+    entry = node;
   }
   const handles = walker.byName(walker.outgoing(endpointId, new Set(['handles'])), 'to');
   let responses: RawFlowNode[] = [], data = false, handlerName: string | undefined;
@@ -402,7 +397,6 @@ export function endpointFlow(context: FlowContext, endpointId: string, limits = 
     if (!node) continue;
     handlerName ??= displayName(node);
     const handlerNode = builder.add({ id: `srv:${handler}`, lane: 'controller', kind: 'handler', depth: 0, entityId: handler, label: displayName(node), ...(node.detail ? { detail: node.detail } : {}) });
-    if (!handlerNode) continue;
     let before = entry;
     for (const effect of walker.effects(handler)) {
       if (effect.category !== 'response' || effect.operation !== 'validation' || !BEFORE_HANDLER.test(effect.detail)) continue;
@@ -410,8 +404,8 @@ export function endpointFlow(context: FlowContext, endpointId: string, limits = 
       builder.link(before, validation, 'routes');
       const rejected = builder.add({ id: `res:${handler}:${effect.line}:${effect.status ?? ''}:validation`, lane: 'response', kind: 'response', depth: 0, label: `${effect.status ?? 422} invalid`, detail: effect.detail, effect: { ...effect, owner: handler }, status: effect.status ?? 422 });
       builder.link(validation, rejected, 'responds', { label: 'when invalid' });
-      if (rejected) responses.push(rejected);
-      if (validation) before = validation;
+      responses.push(rejected);
+      before = validation;
     }
     builder.link(before, handlerNode, 'handles', { chain: [relationIndex] });
     const reached = walker.serverSide(builder, handler, handlerNode);
@@ -434,13 +428,11 @@ export function endpointFlow(context: FlowContext, endpointId: string, limits = 
 
   // Client side: who makes this request, what leads there, and what happens once it is answered.
   const requests = walker.byName(walker.incoming(endpointId, new Set(['requests'])), 'from');
-  let client = false, returns = false, returned = 0;
-  if (requests.length > limits.callers) builder.notices.push(`${requests.length} places request this endpoint; the first ${limits.callers} are drawn.`);
-  for (const relationIndex of requests.slice(0, limits.callers)) {
+  let client = false, returns = false;
+  for (const relationIndex of requests) {
     const caller = index.relations[relationIndex]!.from;
     const meta = walker.meta(relationIndex);
     const callerNode = builder.add({ id: `call:${caller}`, lane: 'call', kind: 'caller', depth: 0, entityId: caller, label: walker.name(caller), detail: `${String(meta.method ?? method)} ${String(meta.url ?? path)}` });
-    if (!callerNode) continue;
     builder.link(callerNode, endpointNode, 'requests', { label: String(meta.method ?? method), chain: [relationIndex] });
     const chain = walker.clientSide(builder, callerNode, caller);
     if (chain) client = true;
@@ -448,8 +440,7 @@ export function endpointFlow(context: FlowContext, endpointId: string, limits = 
     const isRequest = (effect: EffectFact) => effect.category === 'network' && effect.endpoint === endpointId;
     const requestLine = walker.effects(caller).find(isRequest)?.line;
     const receiver = builder.add({ id: `ret:${caller}`, lane: 'return', kind: 'receive', depth: 0, entityId: caller, label: walker.name(caller), detail: 'receives the response' });
-    if (!receiver) continue;
-    for (const response of responses) if (returned++ < limits.returns) builder.link(response, receiver, 'returns');
+    for (const response of responses) builder.link(response, receiver, 'returns');
     if (!responses.length) builder.link(builder.nodes.get(`gap:no-response:${endpointId}`) ?? builder.nodes.get(`gap:no-handler:${endpointId}`), receiver, 'returns');
     if (walker.continuation(builder, receiver, caller, requestLine, chain, isRequest)) returns = true;
   }
@@ -467,14 +458,14 @@ export function unmatchedRequests(context: FlowContext, id: string): EffectFact[
 }
 
 /** The flow of a request no indexed endpoint answers: how the client gets there, and why it ends. */
-export function unmatchedFlow(context: FlowContext, callerId: string, limits = FLOW_LIMITS): RawFlow | undefined {
-  const walker = new FlowWalker(context, limits);
+export function unmatchedFlow(context: FlowContext, callerId: string): RawFlow | undefined {
+  const walker = new FlowWalker(context);
   const caller = context.index.node(callerId);
   const effects = unmatchedRequests(context, callerId);
   if (!caller || caller.kind !== 'entity' || !effects.length) return undefined;
-  const builder = new FlowBuilder(limits.nodes);
+  const builder = new FlowBuilder();
   const first = effects[0]!;
-  const callerNode = builder.add({ id: `call:${callerId}`, lane: 'call', kind: 'caller', depth: 0, entityId: callerId, label: displayName(caller), detail: `${first.operation} ${first.detail}` })!;
+  const callerNode = builder.add({ id: `call:${callerId}`, lane: 'call', kind: 'caller', depth: 0, entityId: callerId, label: displayName(caller), detail: `${first.operation} ${first.detail}` });
   const chain = walker.clientSide(builder, callerNode, callerId);
   const findings = context.findings?.(callerId) ?? [];
   for (const effect of effects) {
@@ -489,18 +480,18 @@ export function unmatchedFlow(context: FlowContext, callerId: string, limits = F
  * A console command: what runs it (scheduled tasks, code running it by name,
  * or nothing: run by hand), the command, its handler and what that reaches.
  */
-export function commandFlow(context: FlowContext, commandId: string, limits = FLOW_LIMITS): RawFlow | undefined {
-  const walker = new FlowWalker(context, limits);
+export function commandFlow(context: FlowContext, commandId: string): RawFlow | undefined {
+  const walker = new FlowWalker(context);
   const index = context.index;
   const command = index.node(commandId);
   if (!command || command.type !== 'command') return undefined;
   const entity = walker.entity(commandId);
-  const builder = new FlowBuilder(limits.nodes);
-  const commandNode = builder.add({ id: `cmd:${commandId}`, lane: 'route', kind: 'command', depth: 0, entityId: commandId, label: command.name, ...(entity?.metadata.description ? { detail: String(entity.metadata.description) } : {}) })!;
+  const builder = new FlowBuilder();
+  const commandNode = builder.add({ id: `cmd:${commandId}`, lane: 'route', kind: 'command', depth: 0, entityId: commandId, label: command.name, ...(entity?.metadata.description ? { detail: String(entity.metadata.description) } : {}) });
   // Who runs it.
   const invokers = walker.byName(walker.incoming(commandId, new Set(['invokes'])), 'from');
   let client = false;
-  for (const relationIndex of invokers.slice(0, limits.callers)) {
+  for (const relationIndex of invokers) {
     const from = index.relations[relationIndex]!.from, node = index.node(from)!;
     if (node.type === 'scheduled_task') {
       const task = walker.entity(from);
@@ -511,9 +502,8 @@ export function commandFlow(context: FlowContext, commandId: string, limits = FL
     }
     const callerNode = builder.add({ id: `call:${from}`, lane: 'call', kind: 'caller', depth: 0, entityId: from, label: walker.name(from), detail: `runs ${command.name} by name` });
     builder.link(callerNode, commandNode, 'invokes', { label: 'Artisan', chain: [relationIndex], ...(walker.firstLine(relationIndex) ? { site: { owner: from, line: walker.firstLine(relationIndex)!, hint: command.name } } : {}) });
-    if (callerNode && walker.clientSide(builder, callerNode, from)) client = true;
+    if (walker.clientSide(builder, callerNode, from)) client = true;
   }
-  if (invokers.length > limits.callers) builder.notices.push(`${invokers.length} places run this command; the first ${limits.callers} are drawn.`);
   if (!invokers.length) {
     const manual = builder.add({ id: `manual:${commandId}`, lane: 'client', kind: 'entry', depth: 0, label: `php artisan ${command.name}`, detail: 'run by hand: nothing indexed schedules or runs it' });
     builder.link(manual, commandNode, 'invokes', { label: 'runs' });
@@ -523,15 +513,15 @@ export function commandFlow(context: FlowContext, commandId: string, limits = FL
 }
 
 /** A scheduled task: its cadence, the command or job it runs, and what that reaches. */
-export function scheduleFlow(context: FlowContext, taskId: string, limits = FLOW_LIMITS): RawFlow | undefined {
-  const walker = new FlowWalker(context, limits);
+export function scheduleFlow(context: FlowContext, taskId: string): RawFlow | undefined {
+  const walker = new FlowWalker(context);
   const index = context.index;
   const task = index.node(taskId);
   if (!task || task.type !== 'scheduled_task') return undefined;
   const entity = walker.entity(taskId);
-  const builder = new FlowBuilder(limits.nodes);
+  const builder = new FlowBuilder();
   const cadence = String(entity?.metadata.cadence ?? 'scheduled');
-  const taskNode = builder.add({ id: `sch:${taskId}`, lane: 'client', kind: 'schedule', depth: 0, entityId: taskId, label: cadence, detail: `scheduler: ${task.name}` })!;
+  const taskNode = builder.add({ id: `sch:${taskId}`, lane: 'client', kind: 'schedule', depth: 0, entityId: taskId, label: cadence, detail: `scheduler: ${task.name}` });
   let handled: { found: boolean; data: boolean; name?: string } = { found: false, data: false };
   const invokes = walker.outgoing(taskId, new Set(['invokes']));
   for (const relationIndex of invokes) {
@@ -539,12 +529,12 @@ export function scheduleFlow(context: FlowContext, taskId: string, limits = FLOW
     if (node.type === 'command') {
       const commandNode = builder.add({ id: `cmd:${target}`, lane: 'route', kind: 'command', depth: 0, entityId: target, label: node.name });
       builder.link(taskNode, commandNode, 'invokes', { label: 'runs', chain: [relationIndex] });
-      if (commandNode) handled = handlerSide(walker, builder, target, commandNode, walker.entity(target)?.metadata.handlerKind === 'closure');
+      handled = handlerSide(walker, builder, target, commandNode, walker.entity(target)?.metadata.handlerKind === 'closure');
     } else {
       // A job: the scheduler runs its handler directly.
       const handlerNode = builder.add({ id: `srv:${target}`, lane: 'controller', kind: 'handler', depth: 0, entityId: target, label: displayName(node) });
       builder.link(taskNode, handlerNode, 'invokes', { label: 'runs', chain: [relationIndex] });
-      if (handlerNode) handled = { found: true, data: walker.serverSide(builder, target, handlerNode).data, name: displayName(node) };
+      handled = { found: true, data: walker.serverSide(builder, target, handlerNode).data, name: displayName(node) };
     }
   }
   if (!invokes.length) {
@@ -566,7 +556,7 @@ function handlerSide(walker: FlowWalker, builder: FlowBuilder, commandId: string
     name ??= displayName(node);
     const handlerNode = builder.add({ id: `srv:${handler}`, lane: 'controller', kind: 'handler', depth: 0, entityId: handler, label: displayName(node) });
     builder.link(commandNode, handlerNode, 'handles', { chain: [relationIndex] });
-    if (handlerNode) data = walker.serverSide(builder, handler, handlerNode).data || data;
+    data = walker.serverSide(builder, handler, handlerNode).data || data;
   }
   if (!handles.length) {
     const gap = builder.add({ id: `gap:no-handler:${commandId}`, lane: 'controller', kind: 'gap', depth: 0, label: closure ? 'Closure command' : 'No handler', gap: { reason: 'no-handler', text: closure ? 'The command runs a closure: its body is not indexed as a symbol, so what it does is not drawn.' : 'No handle() method was found for this command.' } });

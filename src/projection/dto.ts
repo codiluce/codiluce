@@ -240,7 +240,7 @@ export interface RequestFlow extends RequestFlowSummary {
   /** Lanes that hold at least one node, in request order. */
   lanes: import('./request-flows.js').FlowLane[];
   nodes: RequestFlowNode[]; edges: RequestFlowEdge[];
-  truncated: boolean; notices: string[];
+  notices: string[];
 }
 export interface RequestFlowList {
   items: RequestFlowSummary[];

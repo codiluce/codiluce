@@ -342,8 +342,12 @@ test('steps draw what happens from a page: triggers, actions, endpoints, handler
   assert.ok(steps.links.every(item => ids.has(item.from) && ids.has(item.to)));
   assert.ok(steps.links.flatMap(item => item.hops).every(hop => graph.relations.some(relation => relation.id === hop.relationId)));
 });
-test('steps are not capped, and stop at navigation to another page', async () => {
+test('steps and request flows are not capped; steps stop at navigation to another page', async () => {
   const projection = new ProjectionService(store, { root });
+  // Request flows: every caller and every page it is reached from.
+  const login = await projection.requestFlow(entityId('POST /auth/login', 'api_endpoint'), { maxFileBytes: 1 << 20 });
+  assert.ok(!('truncated' in login) && login.notices.every(notice => !/limit|are drawn|not followed|deeper than/.test(notice)));
+  assert.equal(login.nodes.filter(node => node.kind === 'caller').length, login.callers, 'every caller is drawn');
   const result = await projection.steps(entityId('GET /admin', 'api_endpoint'), { maxFileBytes: 1 << 20 });
   assert.ok(!('truncated' in result) && result.notices.every(notice => !/capped/.test(notice)));
   // A link to another page is a step of its own; that page's steps are another journey.

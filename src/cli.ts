@@ -10,9 +10,13 @@ import { createInspectionServer } from './api/server.js';
 import { HISTORY_DATABASE, indexHistory, type HistoryProgress } from './history/indexer.js';
 import { HistoryStore } from './history/store.js';
 import { annotateCommand } from './ai/command.js';
+import { launchLocal, toolDirectory } from './launcher.js';
 
-const HELP = `Archipelago — Phase 1 graph inspection
+const HELP = `Archipelago — code and architecture visualizer
 
+npm start -- [PATH] [--state-dir PATH] [--port N] [--no-open] [--build-ui]
+npm run archipelago -- start [PATH] [--repo PATH] [--state-dir PATH] [--port N]
+                            [--no-open] [--build-ui] [--ui PATH] [--no-cache] [--history-indexing]
 npm run archipelago -- init [--repo PATH] [--state-dir PATH]
 npm run archipelago -- index [--repo PATH] [--state-dir PATH] [--no-cache]
 npm run archipelago -- inspect [summary|entities|entity|relations|relation|diagnostics] [options]
@@ -36,6 +40,12 @@ for analyzer errors. index reuses the analysis of applications whose files
 did not change from <state>/cache (bounded; safe to delete; --no-cache
 re-analyzes everything).
 
+start prepares the visualizer (building it if missing), analyzes the local
+repository and opens the map in your browser. PATH defaults to the current
+directory. Existing configuration and analysis caches are reused. Omit --port
+to choose an available port starting at 4300; --port 0 asks the OS to choose.
+--no-open leaves browser opening to you; --build-ui rebuilds the bundled UI.
+
 history index analyzes past commits of a branch (first-parent history by
 default) into <state>/history.db for the timeline. Commits are read from Git
 objects into scratch directories; the repository is not modified. Already
@@ -54,10 +64,29 @@ the estimate (add --pilot to measure). Unchanged inputs are never sent again.
 async function main(): Promise<void> {
   const string = { type: 'string' } as const;
   const boolean = { type: 'boolean' } as const;
-  const options = { tasks: string, 'max-cost': string, concurrency: string, estimate: boolean, pilot: boolean, force: boolean, repo: string, 'state-dir': string, port: string, ui: string, search: string, type: string, id: string, path: string, parent: string, direction: string, severity: string, code: string, limit: string, offset: string, ref: string, since: string, commits: string, jobs: string, 'pr-metadata': string, 'all-parents': boolean, 'history-indexing': boolean, 'no-cache': boolean, 'read-only': boolean, help: boolean };
+  const options = { tasks: string, 'max-cost': string, concurrency: string, estimate: boolean, pilot: boolean, force: boolean, repo: string, 'state-dir': string, port: string, ui: string, search: string, type: string, id: string, path: string, parent: string, direction: string, severity: string, code: string, limit: string, offset: string, ref: string, since: string, commits: string, jobs: string, 'pr-metadata': string, 'all-parents': boolean, 'history-indexing': boolean, 'no-cache': boolean, 'no-open': boolean, 'build-ui': boolean, 'read-only': boolean, help: boolean };
   const { positionals, values } = parseArgs({ allowPositionals: true, options });
   const command = positionals[0];
   if (values.help || !command) { console.log(HELP); return; }
+  if (command === 'start') {
+    if (positionals.length > 2) throw new Error('start accepts one repository directory');
+    if (positionals[1] && values.repo) throw new Error('Choose a repository with PATH or --repo, not both');
+    const controller = new AbortController();
+    const stop = () => controller.abort();
+    process.once('SIGINT', stop); process.once('SIGTERM', stop);
+    try {
+      const session = await launchLocal({
+        repo: positionals[1] ?? values.repo, stateDirectory: values['state-dir'],
+        port: values.port !== undefined ? Number(values.port) : undefined,
+        uiDirectory: values.ui, buildUi: !!values['build-ui'], open: !values['no-open'],
+        noCache: !!values['no-cache'], historyIndexing: !!values['history-indexing'] && !values['read-only'],
+        signal: controller.signal,
+      });
+      await session.closed;
+    } catch (error) { if (!controller.signal.aborted) throw error; }
+    finally { process.off('SIGINT', stop); process.off('SIGTERM', stop); }
+    return;
+  }
   const root = await realpath(String(values.repo ?? process.cwd()));
   const stateDirectory = path.resolve(String(values['state-dir'] ?? path.join(root, '.archipelago')));
   const database = path.join(stateDirectory, 'archipelago.db');
@@ -123,7 +152,7 @@ async function main(): Promise<void> {
     if (!Number.isSafeInteger(port) || port < 1 || port > 65535) { store.close(); throw new Error('Invalid port'); }
     let maxFileBytes: number | undefined;
     try { maxFileBytes = (await loadConfig(root, stateDirectory)).maxFileBytes; } catch (error) { console.error(`Configuration unavailable (${error instanceof Error ? error.message : String(error)}); source viewing uses the default size limit`); }
-    const ui = values.ui === 'none' ? undefined : values.ui ? path.resolve(String(values.ui)) : fileURLToPath(new URL('../web/out', import.meta.url));
+    const ui = values.ui === 'none' ? undefined : values.ui ? path.resolve(String(values.ui)) : path.join(await toolDirectory(), 'web/out');
     const uiDirectory = ui && await exists(path.join(ui, 'index.html')) ? ui : undefined;
     if (values.ui && values.ui !== 'none' && !uiDirectory) { store.close(); throw new Error(`No built UI at ${ui}; run npm run build:web`); }
     const server = createInspectionServer(store, { root, stateDirectory, uiDirectory, maxFileBytes, historyIndexing: !!values['history-indexing'] && !values['read-only'] });

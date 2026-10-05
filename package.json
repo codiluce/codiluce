@@ -7,6 +7,7 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+    "start": "node --experimental-sqlite --import tsx src/cli.ts start",
     "archipelago": "node --experimental-sqlite --import tsx src/cli.ts",
     "dev:web": "next dev web --port 4310",
     "build:web": "next build web",

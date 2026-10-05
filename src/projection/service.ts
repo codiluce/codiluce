@@ -811,7 +811,7 @@ export class ProjectionService {
       via: edge.via.map(viaId => { const node = current.index.node(viaId)!; return { id: node.id, name: displayName(node), type: node.type, ancestors: ancestorsOf(node.id) }; }),
       when: edge.site ? await guards(edge.site.owner, edge.site.line, edge.site.hint === undefined ? undefined : hintOf(edge.site.hint) ?? edge.site.hint) : [],
     })));
-    return { ...this.flowSummary(current, flow), anchor: this.summary(current, anchor), lanes: FLOW_LANES.filter(lane => nodes.some(node => node.lane === lane)), nodes, edges, truncated: flow.truncated, notices: flow.notices };
+    return { ...this.flowSummary(current, flow), anchor: this.summary(current, anchor), lanes: FLOW_LANES.filter(lane => nodes.some(node => node.lane === lane)), nodes, edges, notices: flow.notices };
   }
 
   // Flow catalog and coverage ------------------------------------------------------------
