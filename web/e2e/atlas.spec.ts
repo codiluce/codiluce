@@ -82,46 +82,6 @@ test('dynamic requests are shown as unresolved, not linked', async ({ page }) =>
   await expect(inspector(page)).toContainText('Unresolved: the request could not be proven');
   await expect(inspector(page).locator('.relation-phrase', { hasText: 'requests' })).toHaveCount(0);
 });
-test('a named flow is assembled, saved, shows only real graph links, and plays', async ({ page }) => {
-  await open(page);
-  await page.getByRole('button', { name: 'Flows' }).click();
-  await page.getByRole('button', { name: 'New flow' }).click();
-  await page.getByLabel('Flow name').fill('Login chain');
-  for (const [query, name] of [['LoginForm.tsx login', 'login'], ['POST /auth/login', 'POST /auth/login'], ['AuthController::login', 'login'], ['UserPage', 'UserPage']] as const) {
-    const before = await page.getByRole('list', { name: 'Steps' }).locator('li').count();
-    await search(page, query);
-    await expect(inspector(page).getByRole('heading', { name, exact: true })).toBeVisible();
-    await expect(inspector(page)).toContainText(query === 'AuthController::login' ? 'App\\Http\\Controllers\\AuthController::login' : name);
-    await page.getByRole('button', { name: `Add selection: ${name}`, exact: true }).click();
-    await expect(page.getByRole('list', { name: 'Steps' }).locator('li')).toHaveCount(before + 1);
-  }
-  await page.getByRole('button', { name: 'Save flow' }).click();
-  const steps = page.getByRole('list', { name: 'Flow steps' });
-  await expect(steps.locator('.flow-step')).toHaveCount(4);
-  await expect(steps.locator('.flow-link').nth(0)).toContainText('requests');
-  await expect(steps.locator('.flow-link').nth(1)).toContainText('handles');
-  await expect(steps.locator('.flow-link').nth(2)).toContainText('declared order only');
-  await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await expect(page.getByRole('group', { name: 'Playback' })).toContainText(/Step [23] of 4/, { timeout: 6000 });
-  await page.getByRole('button', { name: 'Pause' }).click();
-  await page.getByRole('button', { name: 'Restart' }).click();
-  await page.getByRole('button', { name: 'Pause' }).click();
-  await expect(steps.locator('.flow-step.current')).toContainText('login');
-  // Persisted by the server (flows.db), as IDs only; nothing is kept in this browser.
-  await expect(page.locator('.flow-storage')).toContainText('Saved on this server');
-  const stored = await page.evaluate(() => fetch('/api/flows').then(response => response.json()) as Promise<{ flows: { name: string; steps: Record<string, unknown>[] }[] }>);
-  const saved = stored.flows.find(flow => flow.name === 'Login chain')!;
-  expect(saved.steps).toHaveLength(4);
-  expect(saved.steps.every(step => Object.keys(step).join() === 'entityId')).toBe(true);
-  expect(await page.evaluate(() => Object.keys(localStorage).filter(key => key.startsWith('archipelago:flows:')))).toHaveLength(0);
-  // Another browser session sees the same flow.
-  const other = await page.context().browser()!.newPage();
-  await other.goto('/');
-  await other.getByRole('button', { name: 'Flows' }).click();
-  await expect(other.getByRole('button', { name: 'Show' }).first()).toBeVisible();
-  await expect(other.getByRole('complementary', { name: 'Flows' })).toContainText('Login chain');
-  await other.close();
-});
 test('keyboard: slash focuses search, escape clears selection, arrow keys pan the focused map', async ({ page }) => {
   await open(page);
   await page.locator('body').press('/');

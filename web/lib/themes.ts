@@ -60,12 +60,12 @@ export const THEMES: Theme[] = [
       repository: hsl(225, 25, 16), application: hsl(222, 32, 24), 'application:laravel': hsl(356, 30, 26), 'application:nextjs': hsl(206, 38, 25), group: hsl(268, 30, 30), directory: hsl(214, 26, 31),
       file: hsl(196, 45, 46), class: hsl(150, 45, 46), controller: hsl(28, 75, 54), component: hsl(286, 52, 60),
       function: hsl(170, 50, 46), method: hsl(48, 70, 55), route: hsl(330, 65, 60), api_endpoint: hsl(350, 72, 62),
-      model: hsl(100, 45, 48), database_table: hsl(40, 40, 50),
+      model: hsl(100, 45, 48), database_table: hsl(40, 40, 50), command: hsl(192, 62, 52), scheduled_task: hsl(204, 58, 48),
     },
     fallbackEntity: hsl(210, 10, 50), depthStep: 3.2, wallShade: [0.55, 0.72], outline: 'rgba(0,0,0,0.35)',
     text: { primary: '#eef2ff', secondary: '#9fb0d6', halo: 'rgba(8,12,26,0.85)', district: '#c9d5ff' },
     selection: '#ffd166', hover: '#7dd3fc', focusRing: '#ffd166',
-    relation: { imports: '#60a5fa', exports: '#34d399', handles: '#f97316', routes_to: '#f472b6', requests: '#facc15', extends: '#a78bfa', implements: '#a78bfa', calls: '#22d3ee', renders: '#e879f9', reads: '#4ade80', writes: '#fb7185', queries: '#4ade80', maps_to: '#fbbf24', foreign_key: '#fbbf24', references: '#2dd4bf' },
+    relation: { imports: '#60a5fa', exports: '#34d399', handles: '#f97316', routes_to: '#f472b6', requests: '#facc15', extends: '#a78bfa', implements: '#a78bfa', calls: '#22d3ee', renders: '#e879f9', reads: '#4ade80', writes: '#fb7185', queries: '#4ade80', maps_to: '#fbbf24', foreign_key: '#fbbf24', references: '#2dd4bf', invokes: '#c084fc' },
     impact: { origin: '#38bdf8', near: '#f87171', far: '#fbbf24' },
     fallbackRelation: '#cbd5e1',
     flow: { step: '#ffd166', declared: '#94a3b8', indicator: '#fff7d6', dimAlpha: 0.18 },
@@ -86,12 +86,12 @@ export const THEMES: Theme[] = [
       repository: hsl(40, 18, 86), application: hsl(38, 22, 80), 'application:laravel': hsl(8, 34, 84), 'application:nextjs': hsl(205, 30, 84), group: hsl(268, 25, 80), directory: hsl(205, 22, 78),
       file: hsl(199, 50, 62), class: hsl(150, 40, 58), controller: hsl(26, 78, 60), component: hsl(286, 45, 66),
       function: hsl(170, 42, 55), method: hsl(45, 80, 58), route: hsl(330, 60, 64), api_endpoint: hsl(352, 66, 62),
-      model: hsl(100, 40, 55), database_table: hsl(40, 40, 60),
+      model: hsl(100, 40, 55), database_table: hsl(40, 40, 60), command: hsl(192, 62, 52), scheduled_task: hsl(204, 58, 48),
     },
     fallbackEntity: hsl(210, 10, 70), depthStep: -2.6, wallShade: [0.72, 0.84], outline: 'rgba(40,30,10,0.22)',
     text: { primary: '#1d1a14', secondary: '#5e5646', halo: 'rgba(250,247,240,0.9)', district: '#3a3324' },
     selection: '#d9480f', hover: '#1c7ed6', focusRing: '#d9480f',
-    relation: { imports: '#1c7ed6', exports: '#2b8a3e', handles: '#d9480f', routes_to: '#c2255c', requests: '#e67700', extends: '#7048e8', implements: '#7048e8', calls: '#0c8599', renders: '#ae3ec9', reads: '#2f9e44', writes: '#e03131', queries: '#2f9e44', maps_to: '#f08c00', foreign_key: '#e8590c', references: '#0b7285' },
+    relation: { imports: '#1c7ed6', exports: '#2b8a3e', handles: '#d9480f', routes_to: '#c2255c', requests: '#e67700', extends: '#7048e8', implements: '#7048e8', calls: '#0c8599', renders: '#ae3ec9', reads: '#2f9e44', writes: '#e03131', queries: '#2f9e44', maps_to: '#f08c00', foreign_key: '#e8590c', references: '#0b7285', invokes: '#c084fc' },
     impact: { origin: '#1864ab', near: '#c92a2a', far: '#e67700' },
     fallbackRelation: '#495057',
     flow: { step: '#d9480f', declared: '#868e96', indicator: '#fff4e6', dimAlpha: 0.22 },
@@ -113,12 +113,12 @@ export const THEMES: Theme[] = [
       repository: hsl(262, 70, 98), application: hsl(258, 70, 95), 'application:laravel': hsl(334, 100, 95), 'application:nextjs': hsl(216, 100, 95), group: hsl(44, 100, 91), directory: hsl(256, 60, 93),
       file: hsl(250, 26, 80), ...fileLanguages(66), class: hsl(86, 72, 54), controller: hsl(26, 100, 62), component: hsl(326, 92, 64),
       function: hsl(176, 66, 48), method: hsl(44, 100, 60), route: hsl(268, 86, 68), api_endpoint: hsl(350, 94, 66),
-      model: hsl(140, 58, 52), database_table: hsl(36, 92, 62),
+      model: hsl(140, 58, 52), database_table: hsl(36, 92, 62), command: hsl(192, 62, 52), scheduled_task: hsl(204, 58, 48),
     },
     fallbackEntity: hsl(250, 20, 82), depthStep: -2, wallShade: [0.86, 0.93], outline: 'rgba(90,70,150,0.10)',
     text: { primary: '#2b2540', secondary: '#6d6690', halo: 'rgba(255,255,255,0.9)', district: '#4b4180' },
     selection: '#ff3d8b', hover: '#3d6bff', focusRing: '#ff3d8b',
-    relation: { imports: '#3d6bff', exports: '#16b981', handles: '#ff7a1a', routes_to: '#ff3d8b', requests: '#f5a300', extends: '#8b5cf6', implements: '#8b5cf6', calls: '#06b6d4', renders: '#d946ef', reads: '#22c55e', writes: '#f43f5e', queries: '#22c55e', maps_to: '#f59e0b', foreign_key: '#fb923c', references: '#14b8a6' },
+    relation: { imports: '#3d6bff', exports: '#16b981', handles: '#ff7a1a', routes_to: '#ff3d8b', requests: '#f5a300', extends: '#8b5cf6', implements: '#8b5cf6', calls: '#06b6d4', renders: '#d946ef', reads: '#22c55e', writes: '#f43f5e', queries: '#22c55e', maps_to: '#f59e0b', foreign_key: '#fb923c', references: '#14b8a6', invokes: '#c084fc' },
     impact: { origin: '#3d6bff', near: '#ff3d8b', far: '#ffb000' },
     fallbackRelation: '#7c7699',
     flow: { step: '#ff3d8b', declared: '#a39dbd', indicator: '#ffffff', dimAlpha: 0.22 },
@@ -145,12 +145,12 @@ export const THEMES: Theme[] = [
       repository: hsl(256, 34, 14), application: hsl(256, 34, 19), 'application:laravel': hsl(332, 46, 21), 'application:nextjs': hsl(224, 52, 21), group: hsl(44, 40, 21), directory: hsl(256, 28, 25),
       file: hsl(250, 18, 46), ...fileLanguages(62, 4), class: hsl(86, 80, 56), controller: hsl(26, 100, 62), component: hsl(326, 95, 66),
       function: hsl(176, 72, 50), method: hsl(46, 100, 60), route: hsl(268, 92, 72), api_endpoint: hsl(350, 96, 68),
-      model: hsl(140, 62, 54), database_table: hsl(36, 92, 62),
+      model: hsl(140, 62, 54), database_table: hsl(36, 92, 62), command: hsl(192, 62, 52), scheduled_task: hsl(204, 58, 48),
     },
     fallbackEntity: hsl(250, 14, 40), depthStep: 2.6, wallShade: [0.62, 0.8], outline: 'rgba(0,0,0,0.3)',
     text: { primary: '#f4f0ff', secondary: '#aba2d2', halo: 'rgba(18,14,36,0.88)', district: '#ddd4ff' },
     selection: '#ff4f9a', hover: '#7aa2ff', focusRing: '#ff4f9a',
-    relation: { imports: '#6f95ff', exports: '#34e0a1', handles: '#ff8a3d', routes_to: '#ff5fa8', requests: '#ffd23d', extends: '#a88bff', implements: '#a88bff', calls: '#3ee0f0', renders: '#f07bff', reads: '#5ef08a', writes: '#ff6b86', queries: '#5ef08a', maps_to: '#ffc53d', foreign_key: '#ffb26b', references: '#4ee6c8' },
+    relation: { imports: '#6f95ff', exports: '#34e0a1', handles: '#ff8a3d', routes_to: '#ff5fa8', requests: '#ffd23d', extends: '#a88bff', implements: '#a88bff', calls: '#3ee0f0', renders: '#f07bff', reads: '#5ef08a', writes: '#ff6b86', queries: '#5ef08a', maps_to: '#ffc53d', foreign_key: '#ffb26b', references: '#4ee6c8', invokes: '#c084fc' },
     impact: { origin: '#6f95ff', near: '#ff5fa8', far: '#ffd23d' },
     fallbackRelation: '#c9c2e8',
     flow: { step: '#ff4f9a', declared: '#8e86b0', indicator: '#fff0f7', dimAlpha: 0.18 },
@@ -174,7 +174,11 @@ export const THEMES: Theme[] = [
 /** Every custom property any theme sets, so switching themes can clear the ones the next theme lacks. */
 export const UI_PROPERTIES = [...new Set(THEMES.flatMap(theme => Object.keys(theme.ui)))];
 /** Palette key of a node: applications by framework, files by language (themes without those keys fall back to the type). */
-export function paletteKey(node: { type: string; detail?: string; language?: string }): string {
+/** A stable hue per domain key, shared by the map and the panels. */
+export function domainHue(key: string): number { let hash = 0; for (const char of key) hash = (hash * 31 + char.charCodeAt(0)) >>> 0; return (hash * 137) % 360; }
+export function paletteKey(node: { id?: string; type: string; detail?: string; language?: string }): string {
+  // The Features view: each domain has its own hue.
+  if (node.id?.startsWith('lens:domain:')) return `domain:${node.id.slice(12)}`;
   if (node.type === 'application' && node.detail) return `application:${node.detail}`;
   if (node.type === 'file' && node.language) return `file:${node.language}`;
   return node.type;
@@ -183,6 +187,18 @@ export function themeById(id: string | undefined): Theme { return THEMES.find(th
 
 export interface Palette { top: string; left: string; right: string; hoverTop: string }
 /** Memoized fills for a (theme, type, depth) combination. */
+/**
+ * Coverage lens: one color per category (in flows green, entry points violet,
+ * supporting teal, not reached red, with a known reason amber; tests,
+ * configuration, outside code and assets recede in greys).
+ */
+const COVERAGE_HSL: Record<string, [dark: Hsl, light: Hsl]> = {
+  entry: [hsl(266, 82, 72), hsl(266, 66, 56)], flow: [hsl(150, 62, 50), hsl(150, 58, 40)], supporting: [hsl(188, 62, 56), hsl(188, 62, 40)],
+  explained: [hsl(38, 92, 58), hsl(34, 88, 48)], unreached: [hsl(356, 80, 63), hsl(356, 72, 52)],
+  test: [hsl(48, 14, 52), hsl(48, 12, 62)], config: [hsl(220, 14, 52), hsl(220, 12, 64)], outside: [hsl(220, 8, 38), hsl(220, 8, 74)], asset: [hsl(220, 6, 30), hsl(220, 8, 82)],
+};
+export function coverageHsl(category: string, dark: boolean): Hsl { const pair = COVERAGE_HSL[category] ?? COVERAGE_HSL.asset!; return dark ? pair[0] : pair[1]; }
+export function coverageCss(category: string, dark: boolean): string { const c = coverageHsl(category, dark); return `hsl(${c.h} ${c.s}% ${c.l}%)`; }
 export class PaletteCache {
   private readonly cache = new Map<string, Palette>();
   constructor(readonly theme: Theme) {}
@@ -190,7 +206,7 @@ export class PaletteCache {
     const key = `${type}:${depth}`;
     let palette = this.cache.get(key);
     if (!palette) {
-      const base = this.theme.entity[type] ?? this.theme.entity[type.split(':')[0]!] ?? this.theme.fallbackEntity;
+      const base = type.startsWith('coverage:') ? coverageHsl(type.slice(9), this.theme.dark) : type.startsWith('domain:') ? { h: domainHue(type.slice(7)), s: this.theme.dark ? 42 : 46, l: this.theme.dark ? 30 : 78 } : this.theme.entity[type] ?? this.theme.entity[type.split(':')[0]!] ?? this.theme.fallbackEntity;
       const structural = type === 'directory' || type === 'group' || type.startsWith('application');
       const l = Math.max(4, Math.min(96, base.l + (structural ? depth * this.theme.depthStep : 0)));
       const color = (lightness: number) => `hsl(${base.h} ${base.s}% ${Math.max(2, Math.min(98, lightness)).toFixed(1)}%)`;

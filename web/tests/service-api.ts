@@ -1,27 +1,17 @@
 // AtlasApi backed by the server-side services (no HTTP), with optional
 // per-call delays and a call log. Shared by the store-level tests.
-import type { NodeSummary, SourceRequest, ViewKey } from '@engine/projection/dto';
+import type { CatalogKind, NodeSummary, SourceRequest, ViewKey } from '@engine/projection/dto';
 import type { GraphStore } from '../../src/storage/sqlite.js';
 import type { ProjectionService } from '../../src/projection/service.js';
 import type { HistoryService } from '../../src/history/service.js';
-import { FlowError, type FlowStore } from '../../src/storage/flows.js';
-import type { StoredFlow } from '../../src/core/flows.js';
-import { ApiError, type AtlasApi, type ImpactOptions, type StoredFlowInput } from '../lib/api';
+import { ApiError, type AtlasApi, type ImpactOptions } from '../lib/api';
 import type { MapNavigator } from '../lib/store';
 
 export class ServiceApi implements AtlasApi {
   calls: string[] = [];
   delays = new Map<string, number>();
   view: ViewKey = {};
-  constructor(private readonly store: GraphStore, private readonly projection: ProjectionService, private readonly options: { maxFileBytes?: number; history?: HistoryService; flows?: FlowStore; flowsWritable?: boolean } = {}) {}
-  /** Flow writes report the server's status (409 with the stored flow on a stale revision). */
-  private async flowWrite<T>(name: string, work: (flows: FlowStore, repositoryId: string) => T): Promise<T> {
-    this.calls.push(`${name}:`);
-    const flows = this.options.flows;
-    if (!flows || this.options.flowsWritable === false) throw new ApiError(403, 'Flows are read-only on this server');
-    try { return work(flows, this.store.currentRun()!.repositoryId); }
-    catch (error) { if (error instanceof FlowError) throw new ApiError(error.status, error.message, error.flow ? { flow: error.flow } : undefined); throw error; }
-  }
+  constructor(private readonly store: GraphStore, private readonly projection: ProjectionService, private readonly options: { maxFileBytes?: number; history?: HistoryService } = {}) {}
   private async run<T>(name: string, key: string, signal: AbortSignal | undefined, work: () => T | Promise<T>): Promise<T> {
     this.calls.push(`${name}:${key}`);
     const delay = this.delays.get(key) ?? 0;
@@ -36,7 +26,7 @@ export class ServiceApi implements AtlasApi {
   locate(id: string, signal?: AbortSignal) { return this.run('locate', id, signal, () => this.projection.locate(id, this.view)); }
   resolve(id: string, from?: string, signal?: AbortSignal) { return this.run('resolve', id, signal, async () => { if (from) await this.projection.prepare({ ...(this.view.snapshot ? { snapshot: this.view.snapshot } : {}), compareTo: from }); return this.projection.resolve(id, this.view, from); }); }
   search(query: string, type: string | undefined, signal?: AbortSignal) { return this.run('search', query, signal, () => this.projection.search(query, { type, view: this.view })); }
-  relations(id: string, options: { type?: string; direction?: string; offset?: number; limit?: number }, signal?: AbortSignal) { return this.run('relations', id, signal, () => this.projection.relations(id, { ...options, view: this.view })); }
+  relations(id: string, options: { type?: string; direction?: string; offset?: number; limit?: number; scope?: 'contained' }, signal?: AbortSignal) { return this.run('relations', id, signal, () => this.projection.relations(id, { ...options, view: this.view })); }
   aggregate(id: string, signal?: AbortSignal) { return this.run('aggregate', id, signal, () => this.projection.aggregate(id, { view: this.view })); }
   aggregateEdges(id: string, options: { anchor: string; type: string; direction: string; offset?: number; limit?: number }, signal?: AbortSignal) { return this.run('edges', id, signal, () => this.projection.aggregateEdges(id, { ...options, view: this.view })); }
   diagnostics(id: string, options: { offset?: number; limit?: number }, signal?: AbortSignal) { return this.run('diagnostics', id, signal, () => this.projection.diagnostics(id, { ...options, view: this.view })); }
@@ -71,17 +61,11 @@ export class ServiceApi implements AtlasApi {
   steps(id: string, signal?: AbortSignal) { return this.run('steps', id, signal, () => this.projection.steps(id, { view: this.view, maxFileBytes: this.options.maxFileBytes ?? 1024 * 1024 })); }
   requestFlows(entity?: string, signal?: AbortSignal) { return this.run('requestFlows', entity ?? '', signal, () => this.projection.requestFlows({ view: this.view, entity })); }
   requestFlow(id: string, signal?: AbortSignal) { return this.run('requestFlow', id, signal, () => this.projection.requestFlow(id, { view: this.view, maxFileBytes: this.options.maxFileBytes ?? 1024 * 1024 })); }
-  path(from: string, to: string, signal?: AbortSignal) { return this.run('path', `${from}>${to}`, signal, () => this.projection.path(from, to, this.view)); }
-  flows(signal?: AbortSignal) {
-    return this.run('flows', '', signal, () => {
-      if (!this.options.flows) throw new Error('This server stores no flows');
-      return { storage: 'server' as const, writable: this.options.flowsWritable !== false, flows: this.options.flows.list(this.store.currentRun()!.repositoryId) };
-    });
-  }
-  createFlow(flow: StoredFlowInput) { return this.flowWrite<StoredFlow>('createFlow', (flows, repository) => flows.create(repository, flow)); }
-  updateFlow(id: string, flow: StoredFlowInput & { revision?: number }) { return this.flowWrite<StoredFlow>('updateFlow', (flows, repository) => flows.update(repository, id, flow, flow.revision)); }
-  async deleteFlow(id: string) { await this.flowWrite('deleteFlow', (flows, repository) => { if (!flows.remove(repository, id)) throw new FlowError(404, 'Unknown flow'); }); }
-  importFlows(list: StoredFlow[]) { return this.flowWrite('importFlows', (flows, repository) => flows.import(repository, list)); }
+  catalog(options: { entity?: string; kind?: CatalogKind }, signal?: AbortSignal) { return this.run('catalog', `${options.kind ?? ''}|${options.entity ?? ''}`, signal, () => this.projection.flows({ ...options, view: this.view })); }
+  coverage(signal?: AbortSignal) { return this.run('coverage', '', signal, () => this.projection.coverage(this.view)); }
+  coverageOf(id: string, signal?: AbortSignal) { return this.run('coverageOf', id, signal, () => this.projection.coverageOf(id, this.view)); }
+  annotations(signal?: AbortSignal) { return this.run('annotations', '', signal, () => this.projection.annotationsOverview()); }
+  entityAnnotation(id: string, signal?: AbortSignal) { return this.run('entityAnnotation', id, signal, () => this.projection.entityAnnotation(id, this.view)); }
   clear() {}
 }
 export class RecordingNavigator implements MapNavigator {

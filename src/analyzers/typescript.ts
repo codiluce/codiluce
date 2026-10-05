@@ -7,7 +7,7 @@ import { SiteCollector } from './references.js';
 import { createApplicationProgram } from './ts-program.js';
 import { resolveReferences, type TsApplicationState } from './ts-references.js';
 import { UrlEvaluator } from './ts-url.js';
-import { detectHttpSite, evaluateSite, expandWrappers, HTTP_METHODS, wrapperOf, type WrapperRoot } from './ts-http.js';
+import { detectHttpSite, detectInertiaElement, evaluateSite, expandWrappers, HTTP_METHODS, wrapperOf, type HttpSite, type WrapperRoot } from './ts-http.js';
 import { fileKey, pathSetKey } from '../pipeline/cache.js';
 
 function literal(node: ts.Node | undefined): string | undefined { return node && (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) ? node.text : undefined; }
@@ -91,6 +91,39 @@ async function analyzeApplication(context: AnalysisContext, files: ScannedFile[]
   expandWrappers({ context, checker, program, urls, sites: state.sites, sources: analyzed.map(item => item.source), declarations: state.declarations }, wrappers);
   for (const item of analyzed) resolveReferences(context, state, item.file, item.source, item.symbols);
   state.sites.flush(context.graph);
+  linkNextWrappers(context, analyzed.map(item => item.file));
+}
+/** Next.js files that wrap or stand in for the pages below their directory. */
+const NEXT_WRAPPERS = /^(?:src\/)?app\/(?:.*\/)?(layout|template|loading|error|not-found|global-error)\.[cm]?[jt]sx?$/;
+/**
+ * A page is rendered inside every layout and template above it, and replaced
+ * by the nearest loading, error and not-found files while it loads or fails:
+ * each page route `routes_to` them (the default export, else the file), so
+ * what a layout renders belongs to the pages it wraps.
+ */
+function linkNextWrappers(context: AnalysisContext, files: ScannedFile[]): void {
+  const { graph } = context;
+  const wrappers: { directory: string; role: string; target: string; path: string }[] = [];
+  for (const file of files) {
+    const app = file.application;
+    if (app?.type !== 'nextjs') continue;
+    const modulePath = path.posix.relative(app.path === '.' ? '' : app.path, file.path);
+    const match = NEXT_WRAPPERS.exec(modulePath);
+    const entity = graph.entities.get(file.id);
+    if (!match || !entity) continue;
+    const target = typeof entity.metadata.defaultExport === 'string' && graph.entities.has(entity.metadata.defaultExport) ? entity.metadata.defaultExport : file.id;
+    wrappers.push({ directory: path.posix.dirname(file.path), role: match[1]!, target, path: file.path });
+  }
+  if (!wrappers.length) return;
+  const paths = new Set(files.map(file => file.path));
+  for (const route of [...graph.entities.values()]) {
+    if (route.type !== 'route' || route.metadata.framework !== 'nextjs' || !route.path || !paths.has(route.path)) continue;
+    const directory = path.posix.dirname(route.path);
+    for (const wrapper of wrappers) {
+      if (directory !== wrapper.directory && !directory.startsWith(`${wrapper.directory}/`)) continue;
+      graph.relate(route.id, wrapper.target, 'routes_to', [evidence('framework', 'typescript-nextjs', wrapper.path, 1, `Next.js App Router: the ${wrapper.role} of ${wrapper.directory} ${['layout', 'template'].includes(wrapper.role) ? 'wraps' : 'stands in for'} the page ${route.name}`)], { role: wrapper.role });
+    }
+  }
 }
 function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.CompilerOptions, source: ts.SourceFile, state: TsApplicationState, urls: UrlEvaluator, wrappers: WrapperRoot[]): Map<ts.Node, Entity> | undefined {
   const { graph } = context;
@@ -193,35 +226,44 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.Co
           if (fn) { symbols.set(fn, entity); state.declarations.set(fn, entity); }
           if (fn !== node.initializer) { symbols.set(node.initializer, entity); state.declarations.set(node.initializer, entity); }
         }
-        if (isExported) { exported.set(isDefault ? 'default' : name, entity); graph.relate(file.id, entity.id, 'exports', facts(node, 'Exported symbol')); }
+        if (isExported) { exported.set(isDefault ? 'default' : name, entity); graph.relate(file.id, entity.id, 'exports', facts(node, 'Exported symbol')); if (isDefault) fileEntity.metadata.defaultExport = entity.id; }
       }
     }
     if (ts.isCallExpression(node)) {
       const site = detectHttpSite(node, state.checker, axiosNames);
-      if (site) {
-        const caller = parentSymbol(node) ?? fileEntity;
-        const outcome = evaluateSite(urls, site);
-        const fact = facts(node, site.client === 'fetch' ? 'fetch() HTTP call' : site.client === 'axios' ? 'Imported axios HTTP call' : `HTTP call on axios instance ${site.instance} (axios.create)`)[0]!;
-        const expression = site.url?.getText(source) ?? '(missing URL)';
-        const plain = 'reason' in outcome ? undefined : outcome.url;
-        const proven = 'reason' in outcome ? undefined : outcome.resolved;
-        const effect = state.sites.effect(caller.id, { category: 'network', operation: outcome.method ?? 'HTTP', detail: plain ?? proven?.display ?? (expression.length > 80 ? `${expression.slice(0, 79)}…` : expression), line: fact.line!, via: site.via });
-        const entry: Record<string, unknown> = { callerId: caller.id, method: outcome.method, url: plain ?? proven?.display ?? literal(site.url), expression, line: fact.line, resolution: 'reason' in outcome ? 'unresolved' : plain !== undefined ? 'literal' : proven!.app ? 'proven-base' : 'template', ...(site.instance ? { instance: site.instance } : {}) };
-        (fileEntity.metadata.httpRequests as unknown[]).push(entry);
-        if ('reason' in outcome) {
-          // The URL or method comes from the parameters of the function around the call: resolve it at its call sites.
-          const wrapper = wrapperOf(node, outcome.parameters);
-          if (wrapper) wrappers.push({ site, owner: caller, file, effect, fact, reason: outcome.reason, wrapper, entry });
-          else graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'unresolved-http-call', file: file.path, line: fact.line, entityId: caller.id, reason: outcome.reason });
-        } else context.http.push({ callerId: caller.id, fileId: file.id, method: outcome.method, ...(plain !== undefined ? { url: plain } : {}), expression, evidence: fact, effect, ...(proven ? { resolved: proven } : {}) });
-      }
+      if (site) httpSite(site);
       if (node.expression.kind === ts.SyntaxKind.ImportKeyword && node.arguments[0]) {
         const specifier = literal(node.arguments[0]);
         if (specifier !== undefined) importModule(node, specifier, 'imports');
         else graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'dynamic-import', file: file.path, line: location(node).startLine, entityId: file.id, reason: 'Dynamic import specifier' });
       }
     }
+    if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
+      const site = detectInertiaElement(node, state.checker);
+      if (site) httpSite(site);
+    }
     ts.forEachChild(node, visit);
+  }
+  /** Record a request site on its caller and file; resolved ones go to the API matcher, the others are findings or wait for their wrapper's call sites. */
+  function httpSite(site: HttpSite): void {
+    const node = site.node;
+    const caller = parentSymbol(node) ?? fileEntity;
+    const outcome = evaluateSite(urls, site);
+    const fact = facts(node, site.client === 'fetch' ? 'fetch() HTTP call' : site.client === 'axios' ? 'Imported axios HTTP call' : site.client === 'inertia' ? `${site.via} visit` : `HTTP call on axios instance ${site.instance} (axios.create)`)[0]!;
+    const expression = site.url?.getText(source) ?? '(missing URL)';
+    const plain = 'reason' in outcome ? undefined : outcome.url;
+    const proven = 'reason' in outcome ? undefined : outcome.resolved;
+    const effect = state.sites.effect(caller.id, { category: 'network', operation: outcome.method ?? 'HTTP', detail: plain ?? proven?.display ?? (expression.length > 80 ? `${expression.slice(0, 79)}…` : expression), line: fact.line!, via: site.via });
+    const entry: Record<string, unknown> = { callerId: caller.id, method: outcome.method, url: plain ?? proven?.display ?? literal(site.url), expression, line: fact.line, resolution: 'reason' in outcome ? 'unresolved' : plain !== undefined ? 'literal' : proven!.app ? 'proven-base' : 'template', ...(site.instance ? { instance: site.instance } : {}), ...(site.client === 'inertia' ? { client: site.via } : {}) };
+    (fileEntity.metadata.httpRequests as unknown[]).push(entry);
+    if ('reason' in outcome) {
+      // Markup links with computed URLs are navigation: recorded, not reported.
+      if (site.element) { entry.reason = outcome.reason; return; }
+      // The URL or method comes from the parameters of the function around the call: resolve it at its call sites.
+      const wrapper = wrapperOf(node, outcome.parameters);
+      if (wrapper) wrappers.push({ site, owner: caller, file, effect, fact, reason: outcome.reason, wrapper, entry });
+      else graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'unresolved-http-call', file: file.path, line: fact.line, entityId: caller.id, reason: outcome.reason });
+    } else context.http.push({ callerId: caller.id, fileId: file.id, method: outcome.method, ...(plain !== undefined ? { url: plain } : {}), expression, evidence: fact, effect, ...(proven ? { resolved: proven } : {}) });
   }
   visit(source);
   fileEntity.metadata.serverModule = source.statements.some(statement => ts.isExpressionStatement(statement) && literal(statement.expression) === 'use server');
@@ -229,7 +271,7 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.Co
   for (const statement of source.statements) {
     if (ts.isExportAssignment(statement) && ts.isIdentifier(statement.expression)) {
       const symbol = [...symbols.values()].find(entity => entity.name === statement.expression.getText(source) && entity.parentId === file.id);
-      if (symbol) { exported.set('default', symbol); graph.relate(file.id, symbol.id, 'exports', facts(statement, 'Default export binding')); }
+      if (symbol) { exported.set('default', symbol); fileEntity.metadata.defaultExport = symbol.id; graph.relate(file.id, symbol.id, 'exports', facts(statement, 'Default export binding')); }
     }
     if (ts.isExportDeclaration(statement) && !statement.moduleSpecifier && statement.exportClause && ts.isNamedExports(statement.exportClause)) {
       for (const item of statement.exportClause.elements) {

@@ -1,8 +1,7 @@
-// Request flows in the visualizer: filtering and grouping the list, laying a
-// flow out in lanes (one band per layer a request passes, left to right), and
-// the spine a flow is traced along on the map. Pure: the same flow gives the
-// same picture.
-import type { FlowLane, FlowStatus, RequestFlow, RequestFlowEdge, RequestFlowSummary } from '@engine/projection/dto';
+// Request flows in the visualizer: laying a flow out in lanes (one band per
+// layer a request passes, left to right). Pure: the same flow gives the same
+// picture.
+import type { FlowLane, FlowStatus } from '@engine/projection/dto';
 
 export const LANE_TEXT: Record<FlowLane, string> = { client: 'Client', call: 'HTTP call', route: 'Route', gate: 'Middleware', controller: 'Controller', service: 'Services', data: 'Models & data', response: 'Response', return: 'Back on the client' };
 export const STATUS_TEXT: Record<FlowStatus, string> = { complete: 'Complete', partial: 'Partial', headless: 'No caller', unmatched: 'Unmatched' };
@@ -15,25 +14,6 @@ export const STATUS_HINT: Record<FlowStatus, string> = {
 /** Stages shown as pips, in request order. */
 export const STAGES = [['client', 'Client'], ['call', 'Call'], ['handler', 'Handler'], ['data', 'Data'], ['response', 'Response'], ['returns', 'Back']] as const;
 
-export function matchesQuery(item: RequestFlowSummary, query: string): boolean {
-  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  if (!words.length) return true;
-  const text = [item.name, item.handler ?? '', item.caller ?? '', item.app ?? ''].join('\u0000').toLowerCase();
-  return words.every(word => text.includes(word));
-}
-export interface RequestFlowGroup { key: string; app?: string; group: string; items: RequestFlowSummary[] }
-/** Groups by application and first path segment, keeping the server's order. */
-export function groupRequestFlows(items: RequestFlowSummary[], query = '', status?: FlowStatus): RequestFlowGroup[] {
-  const groups = new Map<string, RequestFlowGroup>();
-  for (const item of items) {
-    if ((status && item.status !== status) || !matchesQuery(item, query)) continue;
-    const key = `${item.app ?? ''}\u0000${item.group}`;
-    let group = groups.get(key);
-    if (!group) { group = { key, ...(item.app ? { app: item.app } : {}), group: item.group, items: [] }; groups.set(key, group); }
-    group.items.push(item);
-  }
-  return [...groups.values()];
-}
 /** `2xx` → ok, `3xx` → redirect, `4xx` → client, `5xx` → server. */
 export function statusClass(status: number | undefined): 'ok' | 'redirect' | 'client' | 'server' | 'unknown' {
   if (status === undefined) return 'unknown';
@@ -138,53 +118,4 @@ export function fitScale(layout: Pick<RequestFlowLayout, 'width' | 'height'>, vi
   if (!view.w || !view.h) return 1;
   const across = view.w / layout.width, whole = Math.min(across, view.h / layout.height);
   return Math.max(min, Math.min(max, whole >= 0.72 ? whole : Math.min(across, 0.9)));
-}
-
-// Spine ----------------------------------------------------------------------
-const SPINE_SKIP = new Set(['gap', 'returns', 'then', 'responds']);
-/**
- * The longest forward chain through the flow (a page to the deepest model or
- * table), as flow node IDs: what the map traces, step by step.
- */
-export function flowSpine(flow: Pick<RequestFlow, 'nodes' | 'edges' | 'lanes'>): string[] {
-  const order = new Map(flow.lanes.map((lane, index) => [lane, index]));
-  const byId = new Map(flow.nodes.map(node => [node.id, node]));
-  const rank = (id: string) => { const node = byId.get(id)!; return (order.get(node.lane) ?? 0) * 10 + node.depth; };
-  const next = new Map<string, string[]>();
-  const incoming = new Set<string>();
-  for (const edge of flow.edges) {
-    if (SPINE_SKIP.has(edge.kind) || !byId.has(edge.from) || !byId.has(edge.to) || rank(edge.to) <= rank(edge.from)) continue;
-    next.set(edge.from, [...next.get(edge.from) ?? [], edge.to]);
-    incoming.add(edge.to);
-  }
-  const memo = new Map<string, number>();
-  const length = (id: string): number => {
-    if (memo.has(id)) return memo.get(id)!;
-    memo.set(id, 0);
-    const value = 1 + Math.max(0, ...(next.get(id) ?? []).map(length));
-    memo.set(id, value);
-    return value;
-  };
-  const starts = flow.nodes.filter(node => !incoming.has(node.id) && node.kind !== 'gap' && next.has(node.id));
-  if (!starts.length) return flow.nodes.slice(0, 1).map(node => node.id);
-  let current = starts.reduce((best, node) => length(node.id) > length(best.id) ? node : best).id;
-  const spine = [current];
-  while (next.get(current)?.length) {
-    current = next.get(current)!.reduce((best, id) => length(id) > length(best) ? id : best);
-    spine.push(current);
-  }
-  return spine;
-}
-/** The entities along the spine, with the entities folded into its links: consecutive ones are joined by indexed relationships where the flow has them. */
-export function spineEntities(flow: Pick<RequestFlow, 'nodes' | 'edges' | 'lanes'>, spine = flowSpine(flow)): string[] {
-  const byId = new Map(flow.nodes.map(node => [node.id, node]));
-  const edges = new Map<string, RequestFlowEdge>(flow.edges.map(edge => [`${edge.from}>${edge.to}`, edge]));
-  const ids: string[] = [];
-  const push = (id: string | undefined) => { if (id && ids.at(-1) !== id) ids.push(id); };
-  spine.forEach((id, index) => {
-    const edge = index ? edges.get(`${spine[index - 1]}>${id}`) : undefined;
-    if (edge?.hops.length) for (const hop of edge.hops) { push(hop.from); push(hop.to); }
-    push(byId.get(id)?.node?.id);
-  });
-  return ids;
 }

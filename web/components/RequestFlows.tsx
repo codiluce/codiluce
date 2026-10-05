@@ -1,18 +1,18 @@
 'use client';
-// Request flows: the list of every request the index can follow (left panel),
-// the theater (one flow in lanes over the map, with a request travelling
-// through it), and the ribbon shown while a flow is traced on the map.
-// Everything drawn comes from indexed relationships and effects; gaps say
-// what the index could not see.
+// The lanes of a flow (the theater over the map): one request, command or
+// scheduled task left to right, with a request travelling through it — the
+// schematic of what the map shows in place. Everything drawn comes from
+// indexed relationships and effects; gaps say what the index could not see.
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import type { FlowLane, RequestFlow, RequestFlowEdge, RequestFlowNode, RequestFlowSummary } from '@engine/projection/dto';
+import type { FlowLane, FlowStages, RequestFlow, RequestFlowEdge, RequestFlowNode } from '@engine/projection/dto';
 import { typeLabel } from '../lib/format';
-import { fitScale, groupRequestFlows, layoutRequestFlow, LANE_TEXT, STAGES, statusClass, STATUS_HINT, STATUS_TEXT, type PlacedFlowEdge, type RequestFlowLayout } from '../lib/request-flows';
+import { visibleCatalog } from '../lib/catalog';
+import { fitScale, layoutRequestFlow, LANE_TEXT, STAGES, statusClass, STATUS_HINT, STATUS_TEXT, type PlacedFlowEdge, type RequestFlowLayout } from '../lib/request-flows';
 import { useAtlas, useStore } from './context';
 import { TypeBadge } from './TypeBadge';
 
-const KIND_ICON: Record<string, string> = { page: '▦', entry: '◆', trigger: '⚡', caller: '↗', endpoint: '⇥', middleware: '◈', validation: '✓', handler: '⚙', method: 'ƒ', model: '◉', table: '⛁', effect: '✦', response: '↩', receive: '↘', continuation: '➜', gap: '?' };
-const KIND_TEXT: Record<string, string> = { page: 'page', entry: 'entry point', trigger: 'event handler', caller: 'makes the request', endpoint: 'endpoint', middleware: 'middleware', validation: 'validation', handler: 'handler', method: 'method', model: 'model', table: 'table', effect: 'side effect', response: 'response', receive: 'receives the response', continuation: 'then, on the client', gap: 'gap' };
+const KIND_ICON: Record<string, string> = { page: '▦', entry: '◆', trigger: '⚡', caller: '↗', endpoint: '⇥', command: '⌘', schedule: '⏱', middleware: '◈', validation: '✓', handler: '⚙', method: 'ƒ', model: '◉', table: '⛁', effect: '✦', response: '↩', receive: '↘', continuation: '➜', gap: '?' };
+const KIND_TEXT: Record<string, string> = { page: 'page', entry: 'entry point', trigger: 'event handler', caller: 'makes the request', endpoint: 'endpoint', command: 'Artisan command', schedule: 'scheduled task', middleware: 'middleware', validation: 'validation', handler: 'handler', method: 'method', model: 'model', table: 'table', effect: 'side effect', response: 'response', receive: 'receives the response', continuation: 'then, on the client', gap: 'gap' };
 const LANE_ICON: Record<FlowLane, string> = { client: '▦', call: '↗', route: '⇥', gate: '◈', controller: '⚙', service: 'ƒ', data: '⛁', response: '↩', return: '↘' };
 const STAGE_LANE: Record<string, FlowLane> = { client: 'client', call: 'call', handler: 'controller', data: 'data', response: 'response', returns: 'return' };
 /** Seconds the request takes to cross one column of the theater. */
@@ -41,7 +41,7 @@ export function MethodBadge({ method }: { method: string }) {
   const known = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'].includes(method.toUpperCase());
   return <span className={`rf-method m-${known ? method.toLowerCase() : 'other'}`}>{known ? method.toUpperCase() : method.slice(0, 6) || 'HTTP'}</span>;
 }
-function StagePips({ stages, labels }: { stages: RequestFlowSummary['stages']; labels?: boolean }) {
+export function StagePips({ stages, labels }: { stages: FlowStages; labels?: boolean }) {
   return (
     <span className={`rf-pips${labels ? ' labelled' : ''}`} aria-label={`Stages found: ${STAGES.filter(([key]) => stages[key]).map(([, text]) => text).join(', ') || 'none'}`}>
       {STAGES.map(([key, text]) => (
@@ -53,96 +53,15 @@ function StagePips({ stages, labels }: { stages: RequestFlowSummary['stages']; l
   );
 }
 
-// List -----------------------------------------------------------------------
-export function RequestFlowsPanel({ onClose }: { onClose: () => void }) {
-  const store = useStore();
-  const requests = useAtlas(state => state.requests);
-  const stamp = useAtlas(state => `${state.meta?.snapshot.id ?? ''}|${state.meta?.comparison?.baseline.id ?? ''}`);
-  useEffect(() => { if (requests.status === 'idle' || (requests.status === 'ready' && requests.viewStamp !== stamp)) void store.loadRequestFlows(); }, [store, requests.status, requests.viewStamp, stamp]);
-  const data = requests.data;
-  const groups = useMemo(() => data ? groupRequestFlows(data.items, requests.query, requests.filter) : [], [data, requests.query, requests.filter]);
-  const shown = groups.reduce((sum, group) => sum + group.items.length, 0);
-  const total = data ? data.items.length : 0;
-  return (
-    <>
-      <div className="panel-header">
-        <h2>Request flows</h2>
-        <button className="icon-button small" onClick={onClose} aria-label="Hide the requests panel">⇤</button>
-      </div>
-      <div className="panel-body rf-panel">
-        <p className="note">Every HTTP request the index can follow, from the page or event that sends it to the controller, services, models and the response that goes back. Derived from indexed relationships, not observed at runtime: gaps show what could not be seen.</p>
-        {requests.entity && (
-          <div className="rf-through">
-            <span className="absent">Through</span><strong className="label">{requests.entity.name}</strong>
-            <button className="button tiny" onClick={() => void store.loadRequestFlows(null)} aria-label="Show all request flows">✕ all</button>
-          </div>
-        )}
-        {requests.status === 'loading' && !data && <div className="rf-loading" aria-live="polite"><span className="rf-spark" />Following every request…</div>}
-        {requests.status === 'error' && <p className="note error">{requests.error}</p>}
-        {data && (
-          <>
-            <div className="rf-tiles" role="group" aria-label="Filter by completeness">
-              {(['complete', 'partial', 'headless', 'unmatched'] as const).map(status => (
-                <button key={status} className={`rf-tile s-${status}`} aria-pressed={requests.filter === status} onClick={() => store.setRequestFilter(status)} title={STATUS_HINT[status]}>
-                  <span className="rf-tile-count">{data.counts[status]}</span>
-                  <span className="rf-tile-text">{STATUS_TEXT[status]}</span>
-                </button>
-              ))}
-            </div>
-            {total > 0 && (
-              <div className="rf-coverage" aria-hidden>
-                {(['complete', 'partial', 'headless', 'unmatched'] as const).map(status => data.counts[status] ? <span key={status} className={`s-${status}`} style={{ flexGrow: data.counts[status] }} /> : null)}
-              </div>
-            )}
-            <label className="sr-only" htmlFor="rf-query">Filter request flows</label>
-            <input id="rf-query" className="text-input rf-query" placeholder="Filter: path, controller, caller…" value={requests.query} onChange={event => store.setRequestQuery(event.target.value)} />
-            {shown !== total && <p className="absent" style={{ margin: '6px 2px' }}>{shown} of {total} shown</p>}
-            {!total && <p className="absent">{requests.entity ? 'No request flow passes through here.' : 'No endpoints or HTTP requests were indexed.'}</p>}
-            <div className="rf-groups">
-              {groups.map(group => (
-                <section key={group.key} className="rf-group" aria-label={`${group.app ?? ''} ${group.group}`}>
-                  <h4>{group.group === 'unmatched' ? 'Unmatched requests' : group.group}{group.app && <span className="chip app-chip">{group.app}</span>}<span className="count">{group.items.length}</span></h4>
-                  <ul className="rf-list">
-                    {group.items.map(item => <FlowRow key={item.id} item={item} active={requests.open?.id === item.id} />)}
-                  </ul>
-                </section>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-    </>
-  );
-}
-function FlowRow({ item, active }: { item: RequestFlowSummary; active: boolean }) {
-  const store = useStore();
-  const sub = item.kind === 'unmatched' ? `from ${item.caller ?? 'unknown'}` : item.handler ?? 'no handler resolved';
-  return (
-    <li>
-      <button className={`rf-row s-${item.status}${active ? ' active' : ''}`} onClick={() => void store.openRequestFlow(item.id)} aria-current={active ? 'true' : undefined} title={STATUS_HINT[item.status]}>
-        <span className="rf-row-top">
-          <MethodBadge method={item.method} />
-          <span className="rf-row-path mono">{item.path}</span>
-          {item.gaps > 0 && <span className="rf-gaps" title={`${item.gaps} gap${item.gaps === 1 ? '' : 's'}: what the index could not see`}>{item.gaps}?</span>}
-        </span>
-        <span className="rf-row-bottom">
-          <span className="rf-row-sub">{sub}</span>
-          <StagePips stages={item.stages} />
-        </span>
-      </button>
-    </li>
-  );
-}
-
 // Theater --------------------------------------------------------------------
 export function RequestFlowTheater() {
   const store = useStore();
   const open = useAtlas(state => state.requests.open);
-  const requests = useAtlas(state => state.requests);
+  const catalog = useAtlas(state => state.catalog);
   const reduced = usePrefersReducedMotion();
-  const visible = !!open && open.mode === 'theater';
-  // Previous / next flow in the list as filtered in the panel.
-  const order = useMemo(() => requests.data ? groupRequestFlows(requests.data.items, requests.query, requests.filter).flatMap(group => group.items.map(item => item.id)) : [], [requests.data, requests.query, requests.filter]);
+  const visible = !!open;
+  // Previous / next flow drawn in lanes, in the list as filtered in the Flows panel.
+  const order = useMemo(() => catalog.data ? visibleCatalog(catalog.data.items, { tab: catalog.kind, query: catalog.query, status: catalog.filter }).flatMap(group => group.items.filter(item => item.detail === 'lanes').map(item => item.id)) : [], [catalog.data, catalog.kind, catalog.query, catalog.filter]);
   const position = open ? order.indexOf(open.id) : -1;
   const step = (delta: number) => { const id = order[position + delta]; if (id) void store.openRequestFlow(id); };
   useEffect(() => {
@@ -165,16 +84,15 @@ export function RequestFlowTheater() {
           <button className="icon-button small" onClick={() => step(-1)} disabled={position <= 0} aria-label="Previous request flow" title="Previous in the list">‹</button>
           <button className="icon-button small" onClick={() => step(1)} disabled={position < 0 || position >= order.length - 1} aria-label="Next request flow" title="Next in the list">›</button>
         </div>
-        {data ? <MethodBadge method={data.method} /> : <span className="rf-method m-other">…</span>}
+        {data ? (data.kind === 'command' ? <span className="rf-method m-other">⌘</span> : data.kind === 'schedule' ? <span className="rf-method m-other">⏱</span> : <MethodBadge method={data.method} />) : <span className="rf-method m-other">…</span>}
         <div className="rf-head-title">
-          <h2 className="mono">{data ? data.path : 'Loading…'}</h2>
-          {data && <span className="rf-head-sub">{data.kind === 'unmatched' ? `requested by ${data.caller}` : data.handler ? `handled by ${data.handler}` : 'no handler resolved'}{data.app ? ` · ${data.app}` : ''}{position >= 0 ? ` · ${position + 1} of ${order.length}` : ''}</span>}
+          <h2 className="mono">{data ? (data.kind === 'command' || data.kind === 'schedule' ? data.name : data.path) : 'Loading…'}</h2>
+          {data && <span className="rf-head-sub">{data.kind === 'unmatched' ? `requested by ${data.caller}` : data.kind === 'schedule' ? data.path : data.handler ? `${data.kind === 'command' ? 'runs' : 'handled by'} ${data.handler}` : 'no handler resolved'}{data.app ? ` · ${data.app}` : ''}{position >= 0 ? ` · ${position + 1} of ${order.length}` : ''}</span>}
         </div>
         {data && <span className={`rf-status s-${data.status}`} title={STATUS_HINT[data.status]}>{STATUS_TEXT[data.status]}{data.gaps ? ` · ${data.gaps} gap${data.gaps === 1 ? '' : 's'}` : ''}</span>}
         <div className="rf-head-actions">
           {!reduced && <button className="button small" onClick={() => store.toggleRequestFlowPlaying()} aria-pressed={open.playing} disabled={!data}>{open.playing ? '❚❚ Pause' : '▶ Play'}</button>}
-          <button className="button small primary" onClick={() => store.setRequestFlowMode('map')} disabled={!data} title="Light this flow on the map and trace the request through it">Trace on map</button>
-          <button className="button small" onClick={() => store.draftFromRequestFlow()} disabled={!data} title="Start a saved flow from this request's main path">Save as flow</button>
+          <button className="button small primary" onClick={() => store.traceRequestFlow()} disabled={!data} title="Show this flow on the map: its areas open and a request travels through them">Show on map</button>
           <button className="icon-button small" onClick={() => store.closeRequestFlow()} aria-label="Close request flow" autoFocus>✕</button>
         </div>
       </header>
@@ -314,7 +232,7 @@ function FlowNodeBox({ node, box, focused, dimmed, cycle, animate, onFocus }: { 
   const member = node.node?.type === 'method' ? memberOf(node.label) : undefined;
   const title = member ? `${member.name}()` : node.label;
   const sub = (member && ['handler', 'method', 'model'].includes(node.kind) ? member.owner : node.gap ? node.detail ?? KIND_TEXT.gap : node.detail ?? (node.node ? typeLabel(node.node.type, node.node.role) : KIND_TEXT[node.kind])) ?? '';
-  const open = () => { const id = node.node?.id ?? node.effect?.owner; if (!id) return; store.setRequestFlowMode('map'); void store.select(id, { fly: true }); };
+  const open = () => { const id = node.node?.id ?? node.effect?.owner; if (!id) return; store.traceRequestFlow({ play: false }); void store.select(id, { fly: true }); };
   return (
     <g className={`rf-node k-${node.kind}${status ? ` st-${status}` : ''}${focused ? ' focused' : ''}${dimmed ? ' dim' : ''}`} style={{ '--lane': `var(--lane-${node.lane})` } as CSSProperties} transform={`translate(${box.x},${box.y})`}
       tabIndex={0} role="button" aria-label={`${KIND_TEXT[node.kind]}: ${node.label}`} aria-pressed={focused}
@@ -356,7 +274,7 @@ function FlowDetail({ flow, focus }: { flow: RequestFlow; focus?: string }) {
       {at && <div className="row-sub"><TypeBadge type={at.type} role={at.role} /> <span className="mono">{at.path ?? ''}</span></div>}
       {node.effect && <div className="row-sub">in {node.effect.ownerName}{node.effect.ownerPath ? <span className="mono"> · {node.effect.ownerPath}:{node.effect.line}</span> : null} · matched on {node.effect.via}</div>}
       <div className="inspector-actions">
-        {node.node && <button className="button small primary" onClick={() => { store.setRequestFlowMode('map'); void store.select(node.node!.id, { fly: true }); }}>Show on map</button>}
+        {node.node && <button className="button small primary" onClick={() => { store.traceRequestFlow({ play: false }); void store.select(node.node!.id, { fly: true }); }}>Show on map</button>}
         {node.node && node.node.path && <button className="button small" onClick={() => void store.openSource({ entity: node.node!.id }, node.label)}>Source</button>}
         {node.effect && <button className="button small" onClick={() => void store.openSource({ entity: node.effect!.owner, start: Math.max(1, node.effect!.line - 12), end: node.effect!.line + 12 }, `${node.label} · ${node.effect!.ownerName}:${node.effect!.line}`)}>Source</button>}
         {node.node && node.node.type !== 'database_table' && <button className="button small" onClick={() => void store.openSteps(node.node!.id)}>What happens from here</button>}
@@ -381,24 +299,5 @@ function FlowDetail({ flow, focus }: { flow: RequestFlow; focus?: string }) {
         </section>
       )}
     </aside>
-  );
-}
-
-// Ribbon (traced on the map) ----------------------------------------------------
-export function RequestFlowRibbon() {
-  const store = useStore();
-  const open = useAtlas(state => state.requests.open);
-  const reduced = usePrefersReducedMotion();
-  if (!open || open.mode !== 'map') return null;
-  const data = open.data;
-  return (
-    <div className="rf-ribbon" role="status" aria-label="Request flow on the map">
-      {data ? <MethodBadge method={data.method} /> : null}
-      <span className="rf-ribbon-path mono">{data?.path ?? 'Loading…'}</span>
-      {data && <StagePips stages={data.stages} />}
-      {!reduced && data && <button className="icon-button small" onClick={() => store.toggleRequestFlowPlaying()} aria-label={open.playing ? 'Pause the trace' : 'Play the trace'}>{open.playing ? '❚❚' : '▶'}</button>}
-      <button className="button small" onClick={() => store.setRequestFlowMode('theater')}>Diagram</button>
-      <button className="icon-button small" onClick={() => store.closeRequestFlow()} aria-label="Stop showing the request flow">✕</button>
-    </div>
   );
 }

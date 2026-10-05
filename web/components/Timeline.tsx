@@ -69,7 +69,8 @@ export function Timeline() {
           {target ? (
             <>
               <span className="mono sha">{shortSha(target.sha)}</span>
-              <span className="subject" title={target.subject}>{target.subject}</span>
+              {target.note && <span className={`intent-chip i-${target.note.intent}`} title="Kind of change, from a language model's reading of the commit">{target.note.intent}</span>}
+              <span className="subject" title={target.note ? `${target.note.summary}\n\nCommit message: ${target.subject}` : target.subject}>{target.note?.title ?? target.subject}</span>
               <span className="meta">{target.authorName} · {formatDate(target.authoredAt)}</span>
               {target.pullRequest && <PullRequestChip entry={target} />}
               {target.merge && !target.pullRequest && <span className="chip" title="Merge commit. Git does not record whether it came from a pull request.">merge</span>}
@@ -161,7 +162,22 @@ function Track({ data }: { data: TimelineResponse }) {
     return () => observer.disconnect();
   }, []);
   const count = data.entries.length + (data.workingTree ? 1 : 0);
-  const pad = 14, height = 64, base = 46;
+  const chapters = data.chapters ?? [];
+  const pad = 14, height = chapters.length ? 80 : 64, base = 46;
+  const [chapterHover, setChapterHover] = useState<number>();
+  const chapterSpan = (chapter: NonNullable<TimelineResponse['chapters']>[number]) => {
+    const from = data.entries.findIndex(entry => entry.sha.startsWith(chapter.from)), to = data.entries.findIndex(entry => entry.sha.startsWith(chapter.to));
+    return from >= 0 && to >= from ? { from, to } : undefined;
+  };
+  /** Compare a whole chapter: its last commit against the one before its first. */
+  const openChapter = (chapter: NonNullable<TimelineResponse['chapters']>[number]) => {
+    const span = chapterSpan(chapter);
+    if (!span) return;
+    const target = data.entries.slice(span.from, span.to + 1).reverse().find(entry => entry.snapshot)?.snapshot?.id;
+    const baseline = data.entries.slice(0, span.from).reverse().find(entry => entry.snapshot)?.snapshot?.id;
+    if (!target) return;
+    void (async () => { await store.setTarget(target); if (baseline) await store.setBaseline(baseline); })();
+  };
   const x = (index: number) => pad + (count <= 1 ? 0 : (index / (count - 1)) * (width - pad * 2));
   const indexAt = (clientX: number) => {
     const box = svg.current!.getBoundingClientRect();
@@ -230,7 +246,7 @@ function Track({ data }: { data: TimelineResponse }) {
         {data.entries.map((entry, index) => {
           const cx = x(index);
           return (
-            <g key={entry.sha} className={`tick${entry.snapshot ? ' indexed' : ''}${entry.snapshot?.stale ? ' stale' : ''}${index === hover ? ' hover' : ''}`}>
+            <g key={entry.sha} className={`tick${entry.snapshot ? ' indexed' : ''}${entry.snapshot?.stale ? ' stale' : ''}${index === hover ? ' hover' : ''}${entry.note ? ` i-${entry.note.intent}` : ''}`}>
               <line x1={cx} x2={cx} y1={entry.snapshot ? base - 12 : base - 5} y2={base} />
               {entry.merge && <rect className="merge" x={cx - 2.5} y={base - 19} width={5} height={5} transform={`rotate(45 ${cx} ${base - 16.5})`} />}
               {entry.pullRequest?.source === 'github' && <circle className="pr" cx={cx} cy={base - 16} r={2.5} />}
@@ -241,13 +257,26 @@ function Track({ data }: { data: TimelineResponse }) {
         {marks.map(mark => <text key={mark.index} className="mark" x={x(mark.index)} y={base + 13}>{mark.text}</text>)}
         {baselineIndex >= 0 && <g className="handle baseline" transform={`translate(${x(baselineIndex)} ${base})`}><circle r={5.5} /><title>Baseline: {label(data, timeline.baseline)}</title></g>}
         {targetIndex >= 0 && <g className="handle target" transform={`translate(${x(targetIndex)} ${base})`}><path d="M -6 -22 L 6 -22 L 0 -14 Z" /><circle r={6.5} /><title>Viewing: {label(data, timeline.target)}</title></g>}
+        {chapters.map((chapter, index) => {
+          const span = chapterSpan(chapter);
+          if (!span) return null;
+          const x0 = x(span.from) - 2, x1 = x(span.to) + 2;
+          return (
+            <g key={`${chapter.from}-${index}`} className={`chapter c${index % 6}${chapterHover === index ? ' hover' : ''}`} onPointerEnter={() => setChapterHover(index)} onPointerLeave={() => setChapterHover(undefined)} onPointerDown={event => { event.stopPropagation(); openChapter(chapter); }}>
+              <rect x={x0} y={base + 19} width={Math.max(3, x1 - x0)} height={11} rx={3} />
+              {x1 - x0 > 46 && <text x={(x0 + x1) / 2} y={base + 27.5} textAnchor="middle">{chapter.title.length * 5.2 > x1 - x0 - 6 ? `${chapter.title.slice(0, Math.max(3, Math.floor((x1 - x0 - 10) / 5.2)))}…` : chapter.title}</text>}
+              <title>{`${chapter.title}\n${chapter.summary}\nClick: compare the whole chapter`}</title>
+            </g>
+          );
+        })}
       </svg>
       {(hovered || hover === data.entries.length) && hover !== undefined && (
         <div className="timeline-tooltip" style={{ left: Math.min(Math.max(0, x(hover) - 140), Math.max(0, width - 300)) }} aria-hidden>
           {hovered ? (
             <>
               <div><span className="mono">{shortSha(hovered.sha)}</span> · {formatDate(hovered.authoredAt)} · {hovered.authorName}</div>
-              <div className="subject">{hovered.subject}</div>
+              <div className="subject">{hovered.note ? <><span className={`intent-chip i-${hovered.note.intent}`}>{hovered.note.intent}</span> {hovered.note.title}</> : hovered.subject}</div>
+              {hovered.note && <div className="meta note-summary">{hovered.note.summary}</div>}
               <div className="meta">{hovered.snapshot ? `${compactNumber(hovered.snapshot.stats.files)} files · ${compactNumber(hovered.snapshot.stats.loc)} lines · ${compactNumber(hovered.snapshot.stats.symbols)} symbols` : 'not indexed'}{hovered.merge ? ' · merge' : ''}{hovered.pullRequest ? ` · PR #${hovered.pullRequest.number}${hovered.pullRequest.source === 'github' ? '' : ' (unverified)'}` : ''}</div>
             </>
           ) : <div>Working tree (live index)</div>}

@@ -4,6 +4,7 @@ const TYPE_LABELS: Record<string, string> = {
   class: 'Class', controller: 'Controller', component: 'Component', function: 'Function', method: 'Method',
   route: 'Page route', api_endpoint: 'Endpoint', model: 'Model', database_table: 'Database table',
   external_service: 'External service', test: 'Test', user_flow: 'User flow', domain: 'Domain',
+  command: 'Command', scheduled_task: 'Scheduled task',
 };
 export function typeLabel(type: string, role?: string): string {
   if (type === 'function' && role === 'hook') return 'Hook';
@@ -25,6 +26,7 @@ const RELATION_LABELS: Record<string, { outgoing: string; incoming: string }> = 
   maps_to: { outgoing: 'maps to', incoming: 'mapped from' },
   references: { outgoing: 'references', incoming: 'referenced by' },
   foreign_key: { outgoing: 'foreign key to', incoming: 'foreign key from' },
+  invokes: { outgoing: 'runs', incoming: 'run by' },
 };
 /**
  * Phrase a relation from the perspective of the selected entity. `handles`

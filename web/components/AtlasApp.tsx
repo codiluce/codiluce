@@ -6,8 +6,9 @@ import { AtlasStore } from '../lib/store';
 import { THEMES, themeById, UI_PROPERTIES } from '../lib/themes';
 import { Breadcrumbs } from './Breadcrumbs';
 import { AtlasContext, useAtlas, useStore } from './context';
-import { FlowPanel } from './FlowPanel';
-import { RequestFlowRibbon, RequestFlowsPanel, RequestFlowTheater } from './RequestFlows';
+import { FlowBar } from './FlowBar';
+import { FlowsPanel } from './FlowsPanel';
+import { RequestFlowTheater } from './RequestFlows';
 import { StepsPanel } from './StepsPanel';
 import { Inspector } from './Inspector';
 import { MapView } from './MapView';
@@ -60,8 +61,6 @@ function Shell() {
   const themeId = useAtlas(state => state.themeId);
   const meta = useAtlas(state => state.meta);
   const history = useAtlas(state => state.history);
-  const draft = useAtlas(state => !!state.flows.draft);
-  const activeFlow = useAtlas(state => !!state.flows.activeId);
   const timelineOpen = useAtlas(state => state.timeline.open);
   const timeline = useAtlas(state => state.timeline.data);
   const theme = themeById(themeId);
@@ -69,13 +68,16 @@ function Shell() {
   const [flowWidth, setFlowWidth] = usePanelWidth('archipelago:flow-width', 300);
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [flowsOpen, setFlowsOpen] = useState(false);
-  // The left panel holds request flows, saved flows and, once opened from the inspector, Steps.
+  // The left panel holds every flow (pages, requests, console) and, once opened, Steps.
   const stepsAnchor = useAtlas(state => state.steps?.anchor);
-  const [leftTab, setLeftTab] = useState<'requests' | 'flows' | 'steps'>('flows');
+  const [leftTab, setLeftTab] = useState<'flows' | 'steps'>('flows');
   useEffect(() => { if (stepsAnchor) { setFlowsOpen(true); setLeftTab('steps'); } else setLeftTab(tab => tab === 'steps' ? 'flows' : tab); }, [stepsAnchor]);
-  const reveal = useAtlas(state => state.requests.reveal);
-  useEffect(() => { if (reveal) { setFlowsOpen(true); setLeftTab('requests'); } }, [reveal]);
-  const showTab = (tab: 'requests' | 'flows') => { if (flowsOpen && leftTab === tab) setFlowsOpen(false); else { setFlowsOpen(true); setLeftTab(tab); } };
+  const reveal = useAtlas(state => state.catalog.reveal);
+  useEffect(() => { if (reveal) { setFlowsOpen(true); setLeftTab('flows'); } }, [reveal]);
+  const coverage = useAtlas(state => state.coverage.show);
+  const lens = useAtlas(state => state.lens);
+  const domains = useAtlas(state => state.annotations.data?.domains.length ?? 0);
+  const showFlows = () => { if (flowsOpen && leftTab === 'flows') setFlowsOpen(false); else { setFlowsOpen(true); setLeftTab('flows'); } };
   const [help, setHelp] = useState(false);
   // Floating themes paint a backdrop behind rounded panels; the others dock panels on a flat background.
   const style = useMemo(() => ({ ...theme.ui, background: theme.style?.floating ? theme.ui['--app-bg'] ?? theme.ui['--bg'] : theme.ui['--bg'] }) as React.CSSProperties, [theme]);
@@ -84,7 +86,6 @@ function Shell() {
     for (const key of UI_PROPERTIES) { const value = theme.ui[key]; if (value === undefined) document.body.style.removeProperty(key); else document.body.style.setProperty(key, value); }
     document.documentElement.style.colorScheme = theme.dark ? 'dark' : 'light';
   }, [theme]);
-  useEffect(() => { if (draft || activeFlow) { setFlowsOpen(true); setLeftTab('flows'); } }, [draft, activeFlow]);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.altKey && event.key === 'ArrowLeft') { event.preventDefault(); void store.back(); }
@@ -118,8 +119,14 @@ function Shell() {
           <button className="icon-button" onClick={() => void store.back()} disabled={history.index <= 0} aria-label="Back to previous selection" title="Back (Alt+←)">←</button>
           <button className="icon-button" onClick={() => void store.forward()} disabled={history.index >= history.entries.length - 1} aria-label="Forward" title="Forward (Alt+→)">→</button>
           <button className="button" onClick={() => void (timelineOpen ? store.closeTimeline() : store.openTimeline())} aria-pressed={timelineOpen} title={meta?.history.available ? `Browse ${meta.history.snapshots} indexed commits` : 'No history indexed yet'}>History</button>
-          <button className="button rf-top" onClick={() => showTab('requests')} aria-pressed={flowsOpen && leftTab === 'requests'} aria-controls="flows-panel" title="Every HTTP request the index can follow, end to end">Requests</button>
-          <button className="button" onClick={() => showTab('flows')} aria-pressed={flowsOpen && leftTab === 'flows'} aria-controls="flows-panel">Flows</button>
+          <button className="button rf-top" onClick={showFlows} aria-pressed={flowsOpen && leftTab === 'flows'} aria-controls="flows-panel" title="Every flow of the code in one list: pages, requests, console commands and scheduled tasks">Flows</button>
+          <button className="button" onClick={() => void store.toggleCoverage()} aria-pressed={coverage} title="Color every file by whether flows touch it: entry points, in flows, supporting, not reached">Coverage</button>
+          {domains > 0 && !timelineOpen && (
+            <div className="segmented lens-toggle" role="group" aria-label="Arrange the map">
+              <button aria-pressed={lens === 'folders'} onClick={() => void store.setLens('folders')} title="By folder: the repository as it is on disk">Folders</button>
+              <button aria-pressed={lens === 'domains'} onClick={() => void store.setLens('domains')} title={`By domain: ${domains} features or areas of the product, each with its frontend and backend code`}>Features</button>
+            </div>
+          )}
           <label className="sr-only" htmlFor="theme-select">Theme</label>
           <select id="theme-select" className="select" value={themeId} onChange={event => store.setTheme(event.target.value)}>
             {THEMES.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -130,19 +137,20 @@ function Shell() {
       <Breadcrumbs />
       <main className="workspace">
         {flowsOpen ? (
-          <aside id="flows-panel" className="panel left" style={{ width: leftTab === 'flows' ? flowWidth : Math.max(flowWidth, 360) }} aria-label={leftTab === 'steps' ? 'Steps' : leftTab === 'requests' ? 'Request flows' : 'Flows'}>
-            <div className="segmented panel-tabs" role="tablist" aria-label="Left panel">
-              <button role="tab" aria-selected={leftTab === 'requests'} aria-pressed={leftTab === 'requests'} onClick={() => setLeftTab('requests')}>Requests</button>
-              <button role="tab" aria-selected={leftTab === 'flows'} aria-pressed={leftTab === 'flows'} onClick={() => setLeftTab('flows')}>Flows</button>
-              {stepsAnchor && <button role="tab" aria-selected={leftTab === 'steps'} aria-pressed={leftTab === 'steps'} onClick={() => setLeftTab('steps')}>Steps</button>}
-            </div>
-            {leftTab === 'steps' && stepsAnchor ? <StepsPanel onClose={() => setLeftTab('flows')} /> : leftTab === 'requests' ? <RequestFlowsPanel onClose={() => setFlowsOpen(false)} /> : <FlowPanel onClose={() => setFlowsOpen(false)} />}
+          <aside id="flows-panel" className="panel left" style={{ width: Math.max(flowWidth, 340) }} aria-label={leftTab === 'steps' ? 'Steps' : 'Flows'}>
+            {stepsAnchor && (
+              <div className="segmented panel-tabs" role="tablist" aria-label="Left panel">
+                <button role="tab" aria-selected={leftTab === 'flows'} aria-pressed={leftTab === 'flows'} onClick={() => setLeftTab('flows')}>Flows</button>
+                <button role="tab" aria-selected={leftTab === 'steps'} aria-pressed={leftTab === 'steps'} onClick={() => setLeftTab('steps')}>Steps</button>
+              </div>
+            )}
+            {leftTab === 'steps' && stepsAnchor ? <StepsPanel onClose={() => setLeftTab('flows')} /> : <FlowsPanel onClose={() => setFlowsOpen(false)} />}
             <ResizeHandle side="left" width={flowWidth} onResize={setFlowWidth} label="Resize flows panel" />
           </aside>
         ) : <div />}
         <section className="map-area">
           <MapView />
-          <RequestFlowRibbon />
+          <FlowBar />
           <SourcePanel />
         </section>
         {inspectorOpen ? (

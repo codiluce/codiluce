@@ -1,16 +1,12 @@
 // Browser client for the read-only API. Responses are cached per analysis run
 // and view (immutable for that snapshot/baseline pair); in-flight requests can
 // be aborted by callers and aborted requests are never cached.
-import type { Entity, FlowStep, Relation } from '@engine/core/graph';
-import type { StoredFlow } from '@engine/core/flows';
+import type { Entity, Relation } from '@engine/core/graph';
 import type { EvolutionResponse } from '@engine/projection/dto';
-import type { AggregateEdgesPage, AggregateResult, ChangesPage, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, ImpactResult, LocateResult, NodeSummary, Page, PathResult, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
+import type { AnnotationsOverview, EntityAnnotation } from '@engine/projection/dto';
+import type { AggregateEdgesPage, AggregateResult, CatalogKind, ChangesPage, CoverageDetail, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FlowList, ImpactResult, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
 
 export class ApiError extends Error { constructor(readonly status: number, message: string, readonly body?: unknown) { super(message); } }
-/** GET /api/flows: the server's stored flows, and whether it accepts writes. */
-export interface FlowsList { storage: 'server'; writable: boolean; flows: StoredFlow[] }
-export interface StoredFlowInput { id?: string; name: string; type: StoredFlow['type']; steps: FlowStep[] }
-export interface FlowImport { imported: StoredFlow[]; skipped: { id?: string; name?: string; reason: string }[] }
 export function isAbort(error: unknown): boolean { return error instanceof DOMException && error.name === 'AbortError' || (error instanceof Error && error.name === 'AbortError'); }
 type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -24,7 +20,8 @@ export interface AtlasApi {
   /** The ID an entity has in the current view (lineage may have carried it to another ID). */
   resolve(id: string, from?: string, signal?: AbortSignal): Promise<{ id: string; via?: 'lineage' } | undefined>;
   search(query: string, type: string | undefined, signal?: AbortSignal): Promise<SearchPage>;
-  relations(id: string, options: { type?: string; direction?: string; offset?: number; limit?: number }, signal?: AbortSignal): Promise<RelationsPage>;
+  /** `scope: 'contained'` (files): also the relationships of its symbols across the file's boundary. */
+  relations(id: string, options: { type?: string; direction?: string; offset?: number; limit?: number; scope?: 'contained' }, signal?: AbortSignal): Promise<RelationsPage>;
   aggregate(id: string, signal?: AbortSignal): Promise<AggregateResult>;
   aggregateEdges(id: string, options: { anchor: string; type: string; direction: string; offset?: number; limit?: number }, signal?: AbortSignal): Promise<AggregateEdgesPage>;
   diagnostics(id: string, options: { offset?: number; limit?: number }, signal?: AbortSignal): Promise<DiagnosticsPage>;
@@ -47,14 +44,16 @@ export interface AtlasApi {
   requestFlows(entity?: string, signal?: AbortSignal): Promise<RequestFlowList>;
   /** One request flow: an endpoint's, or an entity's unmatched requests. */
   requestFlow(id: string, signal?: AbortSignal): Promise<RequestFlow>;
-  path(from: string, to: string, signal?: AbortSignal): Promise<PathResult>;
-  /** Named flows stored by the server (404 from a server that stores none). */
-  flows(signal?: AbortSignal): Promise<FlowsList>;
-  createFlow(flow: StoredFlowInput): Promise<StoredFlow>;
-  /** 409 (ApiError with `body.flow`) when `revision` is not the stored one. */
-  updateFlow(id: string, flow: StoredFlowInput & { revision?: number }): Promise<StoredFlow>;
-  deleteFlow(id: string): Promise<void>;
-  importFlows(flows: StoredFlow[]): Promise<FlowImport>;
+  /** Every flow by entry point (`entity`: those touching it; `kind`: one kind). */
+  catalog(options: { entity?: string; kind?: CatalogKind }, signal?: AbortSignal): Promise<FlowList>;
+  /** Which files the flows touch, per file and per area. */
+  coverage(signal?: AbortSignal): Promise<CoverageResult>;
+  /** Why an entity is (or is not) part of flows, and the flows touching it. */
+  coverageOf(id: string, signal?: AbortSignal): Promise<CoverageDetail>;
+  /** What the language models said about the repository (overview, domains, counts, cost). */
+  annotations(signal?: AbortSignal): Promise<AnnotationsOverview>;
+  /** An entity's description and domain. */
+  entityAnnotation(id: string, signal?: AbortSignal): Promise<EntityAnnotation>;
   clear(): void;
 }
 export interface ImpactOptions { depth?: number; type?: string; distance?: number; offset?: number; limit?: number }
@@ -72,6 +71,7 @@ export class HttpAtlasApi implements AtlasApi {
     for (const [key, value] of Object.entries(params)) if (value !== undefined) search.set(key, String(value));
     if (this.view.snapshot) search.set('snapshot', this.view.snapshot);
     if (this.view.compareTo) search.set('compareTo', this.view.compareTo);
+    if (this.view.lens) search.set('lens', this.view.lens);
     const text = search.toString();
     return text ? `?${text}` : '';
   }
@@ -100,8 +100,8 @@ export class HttpAtlasApi implements AtlasApi {
     catch (error) { if (error instanceof ApiError && error.status === 404) return undefined; throw error; }
   }
   search(query: string, type: string | undefined, signal?: AbortSignal) { return this.get<SearchPage>(`/api/projection/search${this.q({ q: query, limit: 40, type })}`, signal); }
-  relations(id: string, options: { type?: string; direction?: string; offset?: number; limit?: number }, signal?: AbortSignal) {
-    return this.get<RelationsPage>(`/api/projection/relations/${encodeURIComponent(id)}${this.q({ offset: options.offset ?? 0, limit: options.limit ?? 100, type: options.type, direction: options.direction })}`, signal);
+  relations(id: string, options: { type?: string; direction?: string; offset?: number; limit?: number; scope?: 'contained' }, signal?: AbortSignal) {
+    return this.get<RelationsPage>(`/api/projection/relations/${encodeURIComponent(id)}${this.q({ offset: options.offset ?? 0, limit: options.limit ?? 100, type: options.type, direction: options.direction, scope: options.scope })}`, signal);
   }
   aggregate(id: string, signal?: AbortSignal) { return this.get<AggregateResult>(`/api/projection/aggregate/${encodeURIComponent(id)}${this.q()}`, signal); }
   aggregateEdges(id: string, options: { anchor: string; type: string; direction: string; offset?: number; limit?: number }, signal?: AbortSignal) {
@@ -128,20 +128,11 @@ export class HttpAtlasApi implements AtlasApi {
   steps(id: string, signal?: AbortSignal) { return this.get<StepsResult>(`/api/projection/steps/${encodeURIComponent(id)}${this.q()}`, signal); }
   requestFlows(entity?: string, signal?: AbortSignal) { return this.get<RequestFlowList>(`/api/projection/request-flows${this.q({ entity })}`, signal); }
   requestFlow(id: string, signal?: AbortSignal) { return this.get<RequestFlow>(`/api/projection/request-flows/${encodeURIComponent(id)}${this.q()}`, signal); }
-  path(from: string, to: string, signal?: AbortSignal) { return this.get<PathResult>(`/api/projection/path${this.q({ from, to })}`, signal); }
-  flows(signal?: AbortSignal) { return this.get<FlowsList>('/api/flows', signal, false); }
-  createFlow(flow: StoredFlowInput) { return this.write<StoredFlow>('POST', '/api/flows', flow); }
-  updateFlow(id: string, flow: StoredFlowInput & { revision?: number }) { return this.write<StoredFlow>('PUT', `/api/flows/${encodeURIComponent(id)}`, flow); }
-  async deleteFlow(id: string) { await this.write<void>('DELETE', `/api/flows/${encodeURIComponent(id)}`); }
-  importFlows(flows: StoredFlow[]) { return this.write<FlowImport>('POST', '/api/flows/import', { flows }); }
-  /** Flow writes: JSON with the header the server requires (a cross-origin page cannot send it without a preflight). */
-  private async write<T>(method: 'POST' | 'PUT' | 'DELETE', path: string, body?: unknown): Promise<T> {
-    const response = await this.fetcher(`${this.base}${path}`, { method, headers: { 'X-Archipelago-Request': 'flows', Accept: 'application/json', ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}) }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
-    if (response.status === 204) return undefined as T;
-    const parsed = await response.json().catch(() => ({})) as { error?: string };
-    if (!response.ok) throw new ApiError(response.status, parsed.error ?? `Request failed (${response.status})`, parsed);
-    return parsed as T;
-  }
+  catalog(options: { entity?: string; kind?: CatalogKind }, signal?: AbortSignal) { return this.get<FlowList>(`/api/projection/flows${this.q({ entity: options.entity, kind: options.kind })}`, signal); }
+  coverage(signal?: AbortSignal) { return this.get<CoverageResult>(`/api/projection/coverage${this.q()}`, signal); }
+  coverageOf(id: string, signal?: AbortSignal) { return this.get<CoverageDetail>(`/api/projection/coverage/${encodeURIComponent(id)}${this.q()}`, signal); }
+  annotations(signal?: AbortSignal) { return this.get<AnnotationsOverview>('/api/annotations', signal, false); }
+  entityAnnotation(id: string, signal?: AbortSignal) { return this.get<EntityAnnotation>(`/api/annotations/entity/${encodeURIComponent(id)}${this.q()}`, signal); }
   async requestIndex(sha: string) {
     const response = await this.fetcher(`${this.base}/api/history/index`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Archipelago-Request': 'index' }, body: JSON.stringify({ sha }) });
     const body = await response.json().catch(() => ({})) as { error?: string; queued?: boolean; position?: number };

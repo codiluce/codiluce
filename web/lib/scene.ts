@@ -106,7 +106,12 @@ export class Scene {
     }
     return undefined;
   }
-  visible(camera: Camera, viewport: Viewport, lod: LodConfig = DEFAULT_LOD): VisibleSet {
+  /**
+   * What to draw from this camera. `force` names areas to open whatever their
+   * size on screen (the areas a flow on the map passes), so its stops are
+   * drawn at any zoom; their children appear at once instead of fading in.
+   */
+  visible(camera: Camera, viewport: Viewport, lod: LodConfig = DEFAULT_LOD, force?: ReadonlySet<string>): VisibleSet {
     const set: VisibleSet = { items: [], index: new Map(), pending: [], truncated: false };
     if (!this.rootId) return set;
     const view = visibleBounds(camera, viewport, 80);
@@ -117,7 +122,8 @@ export class Scene {
       const zBase = this.zBase(id), zTop = zBase + nodeHeight(node);
       if (!intersects(projectedBounds(node.rect, zBase, zTop), view)) return;
       const size = screenSize(node.rect, camera.scale);
-      const wantsOpen = shouldOpen(node, camera.scale, lod);
+      const forced = !!force?.has(id) && node.childCount > 0;
+      const wantsOpen = forced || shouldOpen(node, camera.scale, lod);
       const list = this.children.get(id);
       const open = wantsOpen && set.items.length < lod.budget && !!list?.ids.length;
       if (wantsOpen && set.items.length >= lod.budget) set.truncated = true;
@@ -129,7 +135,7 @@ export class Scene {
       const ground = unproject(center.x, center.y, zTop);
       const r = node.rect;
       if (ground.x >= r.x && ground.x <= r.x + r.w && ground.y >= r.y && ground.y <= r.y + r.h) set.focus = item;
-      const alpha = inheritedAlpha * openProgress(node, camera.scale, lod);
+      const alpha = inheritedAlpha * (forced ? 1 : openProgress(node, camera.scale, lod));
       for (const child of this.orderedChildren(id)) visit(child, index, alpha);
     };
     visit(this.rootId, -1, 1);

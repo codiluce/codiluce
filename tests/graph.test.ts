@@ -222,6 +222,9 @@ test('TypeScript calls, renders and handler references resolve through the type 
   assert.ok(relation('handleSave', 'signIn', 'calls'));
   assert.deepEqual(relation('getInstance', 'AccountService:class', 'calls')!.metadata!.forms, ['new']);
   assert.equal(relation('handleSave', 'signIn', 'calls')!.evidence[0]!.file, 'frontend/src/components/AccountPanel.tsx');
+  // A service held in useMemo(() => AccountService.getInstance(), []): React's types are not loaded, so it is typed from the factory.
+  assert.ok(relation('UserPage', 'profile', 'calls'), 'service.profile() through a memoized singleton');
+  assert.deepEqual(entity('UserPage').metadata.callSites, { resolved: 2, external: 2, unresolved: 0 }, 'getInstance() and profile(); useMemo and useEffect are external');
   // Call-site coverage: package calls are external, a callback parameter is unresolved.
   assert.deepEqual(entity('AccountPanel').metadata.callSites, { resolved: 2, external: 2, unresolved: 0 });
   assert.deepEqual(entity('localFetch').metadata.callSites, { resolved: 0, external: 0, unresolved: 1, unresolvedNames: { fetch: 1 } });
@@ -370,4 +373,59 @@ test('apiOriginEnv is validated, and derived metadata does not change an entity\
   await assert.rejects(loadConfig(root, state), /declared for more than one application/);
   const target = entity('signIn');
   assert.equal(shapeHash({ ...target, metadata: { ...target.metadata, callSites: { resolved: 9, external: 0, unresolved: 0 }, effects: [] } }), shapeHash(target));
+});
+
+test('Artisan commands, the scheduler and the code running them by name are entry points with evidence', () => {
+  const send = entity('reports:send', 'command'), prune = entity('reports:prune', 'command'), inspire = entity('inspire', 'command');
+  assert.equal(send.parentId, entity('backend', 'application').id);
+  assert.equal(send.metadata.signature, 'reports:send {--daily : Only the daily report}');
+  assert.equal(send.metadata.description, 'Send the activity reports');
+  assert.ok(graph.relations.some(edge => edge.from === send.id && edge.to === symbol('App\\Console\\Commands\\SendReports::handle').id && edge.type === 'handles'));
+  assert.equal(inspire.metadata.handlerKind, 'closure');
+  assert.equal(inspire.metadata.description, 'Display an inspiring quote');
+  // The scheduler: cadence and modifiers, by command line, by class, and a job.
+  const daily = entity('reports:send --daily', 'scheduled_task');
+  assert.equal(daily.metadata.cadence, 'daily at 02:00');
+  assert.deepEqual(daily.metadata.modifiers, ['withoutOverlapping']);
+  assert.ok(graph.relations.some(edge => edge.from === daily.id && edge.to === send.id && edge.type === 'invokes'));
+  const weekly = graph.entities.find(item => item.type === 'scheduled_task' && item.metadata.cadence === 'weekly')!;
+  assert.ok(graph.relations.some(edge => edge.from === weekly.id && edge.to === prune.id && edge.type === 'invokes'));
+  const job = entity('RebuildIndex', 'scheduled_task');
+  assert.ok(graph.relations.some(edge => edge.from === job.id && edge.to === symbol('App\\Jobs\\RebuildIndex::handle').id && edge.type === 'invokes'));
+  assert.ok(graph.diagnostics.some(item => item.code === 'unresolved-scheduled-task' && item.entityId === entity('reports:missing', 'scheduled_task').id));
+  // Running commands by name, and dispatching a job.
+  const invoked = (from: string, to: Entity) => graph.relations.find(edge => edge.from === symbol(from).id && edge.to === to.id && edge.type === 'invokes');
+  assert.equal(invoked('App\\Console\\Commands\\SendReports::handle', prune)?.metadata?.forms?.toString(), 'artisan');
+  assert.ok(invoked('App\\Http\\Controllers\\AdminController::rebuild', send));
+  const dispatch = graph.relations.find(edge => edge.from === symbol('App\\Http\\Controllers\\AdminController::rebuild').id && edge.to === symbol('App\\Jobs\\RebuildIndex::handle').id && edge.type === 'calls');
+  assert.deepEqual(dispatch?.metadata?.forms, ['dispatch']);
+});
+
+test('Inertia: the server renders page components by name, and their visits are requests', () => {
+  const dashboard = graph.entities.find(item => item.type === 'component' && item.path === 'backend/resources/js/pages/admin/dashboard.tsx' && item.name === 'Dashboard')!;
+  const index = symbol('App\\Http\\Controllers\\AdminController::index');
+  const renders = graph.relations.find(edge => edge.from === index.id && edge.to === dashboard.id && edge.type === 'renders');
+  assert.ok(renders);
+  assert.equal(renders.metadata?.page, 'admin/dashboard');
+  const effect = (index.metadata.effects as { operation: string; page?: string; target?: string; status?: number }[]).find(item => item.operation === 'inertia')!;
+  assert.deepEqual([effect.page, effect.target, effect.status], ['admin/dashboard', dashboard.id, 200]);
+  assert.ok(!(index.metadata.effects as { operation: string }[]).some(item => item.operation === 'return'), 'the render is the response, not a generic return value');
+  // A route closure rendering a page.
+  const about = graph.entities.find(item => item.type === 'component' && item.name === 'About')!;
+  assert.ok(graph.relations.some(edge => edge.from === entity('GET /about', 'api_endpoint').id && edge.to === about.id && edge.type === 'renders'));
+  assert.ok(graph.diagnostics.some(item => item.code === 'inertia-page-not-found' && item.entityId === symbol('App\\Http\\Controllers\\AdminController::missing').id));
+  // Visits: the router, a useForm() form (assigned and destructured), and links.
+  const rebuild = entity('POST /admin/rebuild', 'api_endpoint');
+  for (const caller of ['rebuild', 'again', 'third']) {
+    const from = graph.entities.find(item => item.name === caller && item.path === dashboard.path)!;
+    const request = graph.relations.find(edge => edge.from === from.id && edge.to === rebuild.id && edge.type === 'requests');
+    assert.ok(request, `${caller} requests POST /admin/rebuild`);
+    assert.equal(request.metadata?.resolution, 'same-origin');
+  }
+  assert.ok(graph.relations.some(edge => edge.from === dashboard.id && edge.to === rebuild.id && edge.type === 'requests'), '<Link method="post"> is a request');
+  assert.ok(graph.relations.some(edge => edge.from === dashboard.id && edge.to === entity('GET /about', 'api_endpoint').id && edge.type === 'requests'));
+  // A link built from data is recorded, not reported.
+  const file = graph.entities.find(item => item.path === dashboard.path && item.type === 'file')!;
+  assert.ok((file.metadata.httpRequests as { client?: string; resolution: string }[]).some(item => item.client === 'Inertia Link' && item.resolution === 'unresolved'));
+  assert.ok(!graph.diagnostics.some(item => item.file === dashboard.path && item.code === 'unresolved-http-call'));
 });

@@ -1,4 +1,4 @@
-// Store-level behavior of blast radius, Steps and path → static flow, against
+// Store-level behavior of blast radius and Steps, against
 // the real projection service over the indexed fixture repository.
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
@@ -11,7 +11,6 @@ import { indexRepository } from '../../src/pipeline/index.js';
 import { GraphStore } from '../../src/storage/sqlite.js';
 import { ProjectionService } from '../../src/projection/service.js';
 import type { SoftwareGraph } from '../../src/core/graph.js';
-import { memoryFlowPersistence } from '../lib/flows';
 import { layoutSteps } from '../lib/steps-layout';
 import { mixHex } from '../lib/renderer';
 import { AtlasStore } from '../lib/store';
@@ -34,7 +33,7 @@ const id = (name: string, type?: string) => graph.entities.find(entity => entity
 const symbol = (qualifiedName: string) => graph.entities.find(entity => entity.metadata.qualifiedName === qualifiedName)!.id;
 async function ready(hash = '') {
   const replaced: string[] = [];
-  const atlas = new AtlasStore(new ServiceApi(), { flowPersistence: () => memoryFlowPersistence(), now: () => '2026-10-01T00:00:00Z', newId: () => 'flow-1', location: { hash, replace: value => { replaced.push(value); } } });
+  const atlas = new AtlasStore(new ServiceApi(), { location: { hash, replace: value => { replaced.push(value); } } });
   atlas.navigator = new RecordingNavigator();
   await atlas.init();
   return { atlas, replaced };
@@ -86,38 +85,6 @@ test('steps open for an entity and carry ancestors for the map; focus highlights
   assert.equal(atlas.getState().steps!.focus, save.id);
   atlas.closeSteps();
   assert.equal(atlas.getState().steps, undefined);
-});
-test('a path between two entities fills a static flow draft; editing it makes it declared', async () => {
-  const { atlas } = await ready();
-  atlas.startDraft();
-  await atlas.select(id('/account', 'route'), { fly: false });
-  atlas.setPathEnd('from');
-  await atlas.select(symbol('App\\Services\\AuthService::authenticate'), { fly: false });
-  atlas.setPathEnd('to');
-  await atlas.draftPath();
-  let draft = atlas.getState().flows.draft!;
-  assert.equal(draft.type, 'static');
-  assert.equal(draft.entityIds[0], id('/account', 'route'));
-  assert.equal(draft.entityIds.at(-1), symbol('App\\Services\\AuthService::authenticate'));
-  assert.match(draft.name, /\/account → authenticate/);
-  assert.ok(await atlas.saveDraft());
-  const saved = atlas.getState().flows.flows.find(flow => flow.id === 'flow-1')!;
-  assert.equal(saved.type, 'static');
-  // Every link of a static flow is an indexed relationship.
-  const resolved = atlas.getState().flows.resolved!;
-  assert.ok(resolved.links.every(links => links.length > 0));
-  atlas.editFlow('flow-1');
-  atlas.removeDraftStep(1);
-  draft = atlas.getState().flows.draft!;
-  assert.equal(draft.type, 'declared');
-  // No path: a notice, steps untouched.
-  atlas.cancelDraft(); atlas.startDraft();
-  await atlas.select(id('UserPage'), { fly: false }); atlas.setPathEnd('from');
-  await atlas.select(id('ping'), { fly: false }); atlas.setPathEnd('to');
-  await atlas.draftPath();
-  draft = atlas.getState().flows.draft!;
-  assert.deepEqual(draft.entityIds, []);
-  assert.match(draft.path!.notice!, /No chain of indexed relationships/);
 });
 test('steps diagram layout is layered, ordered by parents and non-overlapping', () => {
   const nodes = [{ id: 'a', layer: 0 }, { id: 'b', layer: 1 }, { id: 'c', layer: 1 }, { id: 'd', layer: 2 }, { id: 'e', layer: 2 }];

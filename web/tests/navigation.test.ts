@@ -11,8 +11,6 @@ import { indexRepository } from '../../src/pipeline/index.js';
 import { GraphStore } from '../../src/storage/sqlite.js';
 import { ProjectionService } from '../../src/projection/service.js';
 import type { SoftwareGraph } from '../../src/core/graph.js';
-import { flowStorageKey, memoryFlowPersistence } from '../lib/flows';
-import { FlowStore } from '../../src/storage/flows.js';
 import { AtlasStore } from '../lib/store';
 import { RecordingNavigator, ServiceApi as BaseServiceApi } from './service-api';
 
@@ -32,7 +30,7 @@ class ServiceApi extends BaseServiceApi { constructor() { super(store, projectio
 
 const id = (name: string, type?: string) => graph.entities.find(entity => entity.name === name && (!type || entity.type === type))!.id;
 async function ready(api = new ServiceApi()) {
-  const atlas = new AtlasStore(api, { flowPersistence: () => memoryFlowPersistence(), now: () => '2026-10-01T00:00:00Z', newId: () => 'flow-1' });
+  const atlas = new AtlasStore(api);
   const navigator = new RecordingNavigator();
   atlas.navigator = navigator;
   await atlas.init();
@@ -42,7 +40,8 @@ async function ready(api = new ServiceApi()) {
 test('init loads only the projection root and its first level, not the whole graph', async () => {
   const { atlas, api } = await ready();
   assert.equal(atlas.getState().status, 'ready');
-  assert.deepEqual(api.calls, ['meta:', `children:${graph.run.repositoryId}`]);
+  // Besides the root's children, only the small annotations overview (empty when none were written).
+  assert.deepEqual(api.calls.sort(), ['annotations:', `children:${graph.run.repositoryId}`, 'meta:'].sort());
   assert.ok(atlas.scene.nodes.size < graph.entities.length / 3);
 });
 test('selecting a deeply nested search result loads its ancestors, reveals it and records history', async () => {
@@ -112,83 +111,4 @@ test('containers show aggregated boundary edges that drill down to individual re
   const drill = atlas.getState().aggregate.drill!;
   assert.equal(drill.items.length, toBackend.count);
   assert.ok(drill.items.every(item => item.type === 'requests' && item.inside.path?.startsWith('frontend/')));
-});
-test('flows save entity IDs, show graph links only where relationships exist, and play', async () => {
-  const { atlas } = await ready();
-  const caller = id('login', 'function'), endpoint = id('POST /auth/login', 'api_endpoint');
-  const handler = graph.entities.find(entity => entity.metadata.qualifiedName === 'App\\Http\\Controllers\\AuthController::login')!.id;
-  const unrelated = id('UserPage', 'component');
-  atlas.startDraft();
-  atlas.addDraftStep(caller); atlas.addDraftStep(unrelated); atlas.addDraftStep(endpoint); atlas.addDraftStep(handler);
-  atlas.moveDraftStep(1, 3);
-  atlas.setDraftName('Login chain');
-  assert.equal(await atlas.saveDraft(), true);
-  const { flows } = atlas.getState();
-  assert.deepEqual(flows.flows[0]!.steps.map(step => step.entityId), [caller, endpoint, handler, unrelated]);
-  const links = flows.resolved!.links.map(items => items.map(item => item.type));
-  assert.deepEqual(links, [['requests'], ['handles'], []], 'declared order without a relationship stays unlinked');
-  atlas.playbackAction({ type: 'play' });
-  atlas.playbackAction({ type: 'tick', elapsedMs: 2500, stepMs: 1000 });
-  assert.equal(atlas.getState().flows.playback.index, 2);
-});
-test('flows survive reindexing with missing steps flagged', async () => {
-  const persistence = memoryFlowPersistence([{ id: 'old', name: 'Old', type: 'declared', createdAt: 't', updatedAt: 't', steps: [{ entityId: id('LoginForm', 'component') }, { entityId: 'symbol:removed-by-reindex' }, { entityId: id('UserPage', 'component') }] }]);
-  const atlas = new AtlasStore(new ServiceApi(), { flowPersistence: () => persistence });
-  await atlas.init();
-  await atlas.activateFlow('old');
-  const resolved = atlas.getState().flows.resolved!;
-  assert.deepEqual(resolved.steps.map(step => step.missing), [false, true, false]);
-  assert.deepEqual(atlas.getState().flows.playback.playable, [0, 2]);
-});
-
-function memoryStorage(): Storage {
-  const data = new Map<string, string>();
-  return { getItem: key => data.get(key) ?? null, setItem: (key, value) => void data.set(key, value), removeItem: key => void data.delete(key), clear: () => data.clear(), key: index => [...data.keys()][index] ?? null, get length() { return data.size; } };
-}
-test('flows live on the server: browser flows move there once, every browser shares them, stale edits are refused', async () => {
-  const flows = new FlowStore(':memory:');
-  const repositoryId = graph.run.repositoryId;
-  const storage = memoryStorage();
-  storage.setItem(flowStorageKey(repositoryId), JSON.stringify([{ id: 'local-1', name: 'From this browser', type: 'declared', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z', steps: [{ entityId: id('LoginForm', 'component') }, { entityId: id('UserPage', 'component') }] }]));
-  const atlas = new AtlasStore(new BaseServiceApi(store, projection, { flows }), { storage, newId: () => 'flow-2' });
-  await atlas.init();
-  let state = atlas.getState().flows;
-  assert.deepEqual([state.storage, state.writable], ['server', true]);
-  assert.match(state.notice!, /1 flow saved in this browser moved to the server/);
-  assert.equal(storage.getItem(flowStorageKey(repositoryId)), null, 'the browser copy is cleared once the server has it');
-  assert.deepEqual(flows.list(repositoryId).map(flow => [flow.id, flow.createdAt]), [['local-1', '2026-01-01T00:00:00.000Z']]);
-  atlas.startDraft();
-  atlas.addDraftStep(id('signIn')); atlas.addDraftStep(id('POST /auth/login', 'api_endpoint'));
-  atlas.setDraftName('Shared');
-  assert.equal(await atlas.saveDraft(), true);
-  assert.equal(flows.get(repositoryId, 'flow-2')!.revision, 1);
-  // Another browser sees the same flows and edits one meanwhile.
-  const other = new AtlasStore(new BaseServiceApi(store, projection, { flows }), { storage: memoryStorage() });
-  await other.init();
-  assert.deepEqual(other.getState().flows.flows.map(flow => flow.name), ['From this browser', 'Shared']);
-  other.editFlow('flow-2'); other.setDraftName('Shared (theirs)');
-  assert.equal(await other.saveDraft(), true);
-  // This browser's edit started from the older version: refused, the stored version is shown, saving again wins.
-  atlas.editFlow('flow-2'); atlas.setDraftName('Shared (mine)');
-  assert.equal(await atlas.saveDraft(), false);
-  state = atlas.getState().flows;
-  assert.match(state.draft!.error!, /changed elsewhere/);
-  assert.ok(state.flows.some(flow => flow.name === 'Shared (theirs)'));
-  assert.equal(await atlas.saveDraft(), true);
-  assert.deepEqual([flows.get(repositoryId, 'flow-2')!.name, flows.get(repositoryId, 'flow-2')!.revision], ['Shared (mine)', 3]);
-  await atlas.deleteFlow('local-1');
-  assert.deepEqual(flows.list(repositoryId).map(flow => flow.id), ['flow-2']);
-  // A read-only server shows its flows and changes nothing.
-  const readOnly = new AtlasStore(new BaseServiceApi(store, projection, { flows, flowsWritable: false }), { storage: memoryStorage() });
-  await readOnly.init();
-  state = readOnly.getState().flows;
-  assert.deepEqual([state.storage, state.writable, state.flows.length], ['server', false, 1]);
-  assert.match(state.notice!, /read-only/);
-  // A server that stores no flows (an older version): this browser keeps them.
-  const legacy = new AtlasStore(new BaseServiceApi(store, projection), { storage: memoryStorage() });
-  await legacy.init();
-  state = legacy.getState().flows;
-  assert.deepEqual([state.storage, state.writable], ['browser', true]);
-  assert.match(state.notice!, /does not store flows/);
-  flows.close();
 });

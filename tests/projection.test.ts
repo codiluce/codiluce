@@ -104,9 +104,10 @@ test('routes and endpoints get a projection district without changing canonical 
   const backend = entityId('backend', 'application');
   assert.equal(located.node.canonicalParentId, backend, 'canonical parent stays the application');
   assert.equal(located.canonicalAncestors.at(-1)!.id, backend);
-  const district = located.spatialAncestors.at(-1)!;
+  // The backend has enough endpoints for its district to split by first path segment.
+  const district = located.spatialAncestors.find(item => item.id === `projection:routes:${backend}`)!;
   assert.equal(district.kind, 'group');
-  assert.equal(district.id, `projection:routes:${backend}`);
+  assert.equal(located.spatialAncestors.at(-1)!.id, `projection:routes:${backend}:/auth`);
   assert.ok(district.explanation?.includes('containment is unchanged'));
   assert.ok(!graph.entities.some(entity => entity.id === district.id), 'district is not an entity');
   assert.ok(projection.search('Routes', {}).items.every(item => item.kind === 'entity'), 'search only returns indexed entities');
@@ -341,14 +342,30 @@ test('steps draw what happens from a page: triggers, actions, endpoints, handler
   assert.ok(steps.links.every(item => ids.has(item.from) && ids.has(item.to)));
   assert.ok(steps.links.flatMap(item => item.hops).every(hop => graph.relations.some(relation => relation.id === hop.relationId)));
 });
-test('steps are capped and say what was left out', async () => {
+test('steps are not capped, and stop at navigation to another page', async () => {
   const projection = new ProjectionService(store, { root });
-  const { walkSteps, STEP_LIMITS } = await import('../src/projection/steps.js');
-  const current = (projection as unknown as { load(view?: object): { index: ProjectionIndex; target: { relationMetadata(ids: string[]): Map<string, Record<string, unknown>>; entity(id: string): import('../src/core/graph.js').Entity | undefined } } }).load();
-  const walk = walkSteps({ index: current.index, relationMetadata: ids => current.target.relationMetadata(ids), entity: id => current.target.entity(id) }, entityId('/account', 'route'), { ...STEP_LIMITS, fanout: 1, steps: 3 });
-  assert.ok(walk.truncated);
-  assert.ok(walk.steps.length <= 3);
-  assert.ok(walk.steps.some(item => item.caps.some(cap => cap.reason === 'fanout' && cap.hidden > 0)));
+  const result = await projection.steps(entityId('GET /admin', 'api_endpoint'), { maxFileBytes: 1 << 20 });
+  assert.ok(!('truncated' in result) && result.notices.every(notice => !/capped/.test(notice)));
+  // A link to another page is a step of its own; that page's steps are another journey.
+  const about = result.steps.find(step => step.node?.name === 'GET /about')!;
+  assert.equal(about.navigation, true);
+  assert.equal(result.links.filter(link => link.from === about.id).length, 0, 'not followed');
+  assert.ok(!result.steps.some(step => step.node?.path?.endsWith('pages/about.tsx')), 'the other page is not drawn');
+  // Folded entities say where they are, so a client can keep their areas lit.
+  const account = await projection.steps(entityId('/account', 'route'), { maxFileBytes: 1 << 20 });
+  const folded = account.links.flatMap(link => link.via);
+  assert.ok(folded.some(item => item.name === 'AccountPanel') && folded.every(item => item.ancestors.length > 0));
+  // What a step leads to: closest first (fewest folded hops), then by file and line.
+  const byId = new Map(result.steps.map(step => [step.id, step]));
+  for (const parent of result.steps) {
+    const keys = result.links.filter(link => link.from === parent.id).map(link => {
+      const step = byId.get(link.to)!;
+      const path = step.effect ? step.effect.ownerPath ?? '' : step.node?.path ?? '', line = step.effect ? step.effect.line : step.node?.sourceRange?.startLine ?? 0;
+      return [link.via.length, path, line] as const;
+    });
+    const sorted = [...keys].sort((x, y) => x[0] - y[0] || (x[1] < y[1] ? -1 : x[1] > y[1] ? 1 : 0) || x[2] - y[2]);
+    assert.deepEqual(keys, sorted, `order of what ${parent.node?.name ?? parent.id} leads to`);
+  }
 });
 test('tables sit in a Database district; their blast radius reaches code, endpoints, pages and dependent tables', () => {
   const projection = new ProjectionService(store);
@@ -369,22 +386,6 @@ test('tables sit in a Database district; their blast radius reaches code, endpoi
   assert.ok(distance(entityId('/account', 'route'))! > 3, 'reaches the frontend page');
   const page = impact.items.items.find(item => item.name === '/account')!;
   assert.equal(page.chain[0]!.type, 'reads');
-  // A static flow can end at a table.
-  const path = projection.path(entityId('/account', 'route'), users);
-  assert.ok(path.found && !path.reversed);
-  assert.equal(path.links.at(-1)!.type, 'reads');
-});
-test('paths connect two entities over indexed relations, in either direction', () => {
-  const projection = new ProjectionService(store);
-  const forward = projection.path(entityId('/account', 'route'), symbolId('App\\Services\\AuthService::authenticate'));
-  assert.ok(forward.found);
-  assert.equal(forward.nodes[0]!.name, '/account');
-  assert.equal(forward.nodes.at(-1)!.qualifiedName, 'App\\Services\\AuthService::authenticate');
-  assert.equal(forward.links.length, forward.nodes.length - 1);
-  assert.ok(forward.links.some(item => item.type === 'requests') && forward.links.some(item => item.type === 'handles'));
-  const backward = projection.path(symbolId('App\\Services\\AuthService::authenticate'), entityId('/account', 'route'));
-  assert.ok(backward.found && backward.reversed);
-  assert.equal(projection.path(entityId('UserPage'), entityId('ping')).found, false);
 });
 test('conditions are read from source: if/else, ternaries, &&, early exits, switch and catch', () => {
   const ts = `function f(a: number, user?: { ok: boolean }) {
@@ -506,7 +507,7 @@ test('request flows are listed per endpoint with their completeness, unmatched r
   assert.deepEqual(through.items.map(item => item.name).sort(), ['GET /duplicate', 'GET /profiles/{id}', 'POST /auth/login', 'POST /session/login']);
   await assert.rejects(projection.requestFlow(symbolId('App\\Services\\AuthService::authenticate'), { maxFileBytes: 1 << 20 }), /No request flow starts/);
 });
-test('impact, steps and path are served over HTTP with validation', async () => {
+test('impact, steps, flows and coverage are served over HTTP with validation', async () => {
   const server = createInspectionServer(store, { root });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const address = server.address(); assert.ok(address && typeof address !== 'string');
@@ -518,9 +519,12 @@ test('impact, steps and path are served over HTTP with validation', async () => 
     assert.equal((await fetch(`${base}/api/projection/impact/${encodeURIComponent(entityId('signIn'))}?types=bogus`)).status, 400);
     const steps = await fetch(`${base}/api/projection/steps/${encodeURIComponent(entityId('/account', 'route'))}`).then(response => response.json());
     assert.ok(steps.steps.length > 5 && steps.links.length > 5);
-    const path = await fetch(`${base}/api/projection/path?from=${encodeURIComponent(entityId('/account', 'route'))}&to=${encodeURIComponent(entityId('POST /auth/login'))}`).then(response => response.json());
-    assert.ok(path.found);
-    assert.equal((await fetch(`${base}/api/projection/path?from=x`)).status, 400);
+    const catalog = await fetch(`${base}/api/projection/flows?kind=command`).then(response => response.json());
+    assert.ok(catalog.items.length > 0 && catalog.items.every((item: { kind: string }) => item.kind === 'command'));
+    assert.equal((await fetch(`${base}/api/projection/flows?kind=bogus`)).status, 400);
+    const coverage = await fetch(`${base}/api/projection/coverage`).then(response => response.json());
+    assert.ok(coverage.codeFiles > 0 && Object.keys(coverage.files).length > 0);
+    assert.equal((await fetch(`${base}/api/projection/path?from=x&to=y`)).status, 404, 'path finding is gone');
     assert.equal((await fetch(`${base}/api/projection/steps/missing`)).status, 404);
     const flows = await fetch(`${base}/api/projection/request-flows`).then(response => response.json());
     assert.ok(flows.items.length > 5 && flows.counts.partial > 0);
@@ -529,4 +533,94 @@ test('impact, steps and path are served over HTTP with validation', async () => 
     assert.equal((await fetch(`${base}/api/projection/request-flows/missing`)).status, 404);
     assert.equal((await fetch(`${base}/api/projection/request-flows?entity=missing`)).status, 404);
   } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
+});
+
+// --- Flow catalog and coverage ------------------------------------------------------
+test('the flow catalog lists every entry point with the entities it touches', () => {
+  const projection = new ProjectionService(store, { root });
+  const list = projection.flows();
+  const byEntry = (name: string, type: string) => { const found = list.items.find(item => item.entry.name === name && item.entry.type === type); assert.ok(found, `Expected a flow from ${type} ${name}`); return found; };
+  // Pages: Next.js routes (drawn as Steps), and endpoints serving an Inertia page (drawn as lanes).
+  const account = byEntry('/account', 'route');
+  assert.deepEqual([account.kind, account.detail], ['page', 'steps']);
+  const admin = byEntry('GET /admin', 'api_endpoint');
+  assert.deepEqual([admin.kind, admin.detail], ['page', 'lanes']);
+  assert.equal(byEntry('POST /auth/login', 'api_endpoint').kind, 'request');
+  assert.equal(byEntry('reports:send', 'command').kind, 'command');
+  const schedule = byEntry('reports:send --daily', 'scheduled_task');
+  assert.deepEqual([schedule.kind, schedule.cadence, schedule.group], ['schedule', 'daily at 02:00', 'scheduler']);
+  assert.equal(list.counts.page, list.items.filter(item => item.kind === 'page').length);
+  assert.ok(list.items.every(item => item.entities >= 1 && item.files >= 0));
+  // A page journey reaches what the page sets in motion, down to the tables, but not the pages it links to.
+  const through = (entity: string) => projection.flows({ entity }).items.map(item => item.id);
+  assert.ok(through(entityId('users', 'database_table')).includes(account.id));
+  assert.ok(!through(entityId('About', 'component')).includes(admin.id), 'navigating to /about is another journey');
+  assert.ok(through(entityId('About', 'component')).includes(byEntry('GET /about', 'api_endpoint').id));
+  // A command run by the scheduler, and by a controller: its flow shows both, and the scheduled task's flow reaches the command's tables.
+  assert.ok(through(entityId('reports:prune', 'command')).includes(schedule.id), 'the daily report runs reports:prune by name');
+  const flow = projection.flows({ kind: 'command' });
+  assert.ok(flow.items.every(item => item.kind === 'command'));
+  assert.equal(flow.counts.schedule, list.counts.schedule);
+  assert.throws(() => projection.flows({ kind: 'nope' }), /kind must be/);
+});
+test('a command flow shows what runs it, and a scheduled task what it runs', async () => {
+  const projection = new ProjectionService(store, { root });
+  const send = await projection.requestFlow(entityId('reports:send', 'command'), { maxFileBytes: 1 << 20 });
+  assert.equal(send.kind, 'command');
+  assert.ok(send.nodes.some(item => item.kind === 'schedule' && item.label === 'daily at 02:00'));
+  assert.ok(send.nodes.some(item => item.kind === 'caller' && item.label === 'AdminController::rebuild'));
+  assert.ok(send.nodes.some(item => item.kind === 'handler' && item.label === 'SendReports::handle'));
+  assert.ok(send.edges.some(item => item.kind === 'invokes'));
+  const prune = await projection.requestFlow(entityId('reports:prune', 'command'), { maxFileBytes: 1 << 20 });
+  assert.ok(prune.nodes.some(item => item.kind === 'caller' && item.label === 'SendReports::handle'));
+  const inspire = await projection.requestFlow(entityId('inspire', 'command'), { maxFileBytes: 1 << 20 });
+  assert.ok(inspire.nodes.some(item => item.kind === 'entry' && item.label === 'php artisan inspire'), 'a command nothing runs is run by hand');
+  assert.ok(inspire.nodes.some(item => item.gap?.reason === 'no-handler'), 'a closure command is a gap');
+  const job = await projection.requestFlow(entityId('RebuildIndex', 'scheduled_task'), { maxFileBytes: 1 << 20 });
+  assert.ok(job.nodes.some(item => item.kind === 'handler' && item.label === 'RebuildIndex::handle'));
+  assert.ok(job.nodes.some(item => item.kind === 'table' && item.label === 'users'));
+  // The page an Inertia response renders is drawn back on the client.
+  const admin = await projection.requestFlow(entityId('GET /admin', 'api_endpoint'), { maxFileBytes: 1 << 20 });
+  const page = admin.nodes.find(item => item.kind === 'page' && item.lane === 'return')!;
+  assert.equal(page.label, 'Dashboard');
+  assert.ok(admin.edges.some(item => item.kind === 'renders' && item.to === page.id));
+  // A visit made by an Inertia page enters through the endpoint serving it.
+  const rebuild = await projection.requestFlow(entityId('POST /admin/rebuild', 'api_endpoint'), { maxFileBytes: 1 << 20 });
+  assert.ok(rebuild.nodes.some(item => item.kind === 'page' && item.lane === 'client' && item.label === 'GET /admin'));
+});
+test('coverage classifies every file by the flows touching it, and says why', () => {
+  const projection = new ProjectionService(store, { root });
+  const coverage = projection.coverage();
+  const fileId = (path: string) => { const found = graph.entities.find(item => item.type === 'file' && item.path === path); assert.ok(found, `Expected file ${path}`); return found.id; };
+  const category = (path: string) => coverage.files[fileId(path)]!.category;
+  assert.equal(category('backend/app/Services/AuthService.php'), 'flow');
+  assert.ok(coverage.files[fileId('backend/app/Services/AuthService.php')]!.flows >= 1);
+  assert.equal(category('backend/app/Console/Commands/SendReports.php'), 'entry');
+  assert.equal(category('backend/routes/console.php'), 'entry');
+  assert.equal(category('backend/bootstrap/app.php'), 'config');
+  assert.equal(category('frontend/src/components/LoginForm.module.scss'), 'asset');
+  // Imported by code in flows without being in one itself: supporting.
+  assert.equal(category('backend/app/Http/Controllers/Controller.php'), 'supporting');
+  const detail = projection.coverageOf(fileId('backend/app/Http/Controllers/Controller.php'));
+  assert.match(detail.reason!, /imported or extended by/);
+  // Areas roll up their code files; the repository holds them all.
+  const rootId = graph.entities.find(item => item.type === 'repository')!.id;
+  const total = Object.values(coverage.areas[rootId]!).reduce((sum, count) => sum + count, 0);
+  assert.equal(total, Object.keys(coverage.files).length);
+  assert.equal(coverage.codeFiles, Object.values(coverage.files).filter(item => item.category !== 'asset').length);
+  // Coverage of an area lists the flows through anything inside it.
+  const services = projection.coverageOf(graph.entities.find(item => item.type === 'directory' && item.path === 'backend/app/Services')!.id);
+  assert.ok(services.totalFlows >= 1 && services.counts!.flow >= 1);
+});
+test('a file lists its symbols\' relationships across its boundary, with the symbol inside', () => {
+  const projection = new ProjectionService(store, { root });
+  const file = graph.entities.find(item => item.type === 'file' && item.path === 'backend/app/Console/Commands/PruneReports.php')!;
+  assert.equal(projection.relations(file.id, {}).total, 0, 'a PHP file has no relationships of its own');
+  const contained = projection.relations(file.id, { scope: 'contained' });
+  const write = contained.items.find(item => item.type === 'writes')!;
+  assert.equal(write.other.name, 'audit');
+  assert.equal(write.inside?.name, 'handle');
+  assert.ok(contained.items.some(item => item.type === 'handles' && item.direction === 'incoming' && item.other.name === 'reports:prune' && item.inside?.name === 'handle'));
+  assert.ok(!contained.items.some(item => item.other.id === file.id || item.type === 'contains'));
+  assert.throws(() => projection.relations(file.id, { scope: 'everything' }), /scope must be contained/);
 });

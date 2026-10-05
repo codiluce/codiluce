@@ -4,7 +4,9 @@
 // the application's program (ts-program.ts). An edge is emitted only when the
 // checker resolves a site to a declaration that is an indexed entity:
 //   calls       f(), obj.method(), Class.staticMethod(), X.getInstance().m(),
-//               new Class() (form `new`)
+//               new Class() (form `new`), and methods of a value held in
+//               useMemo(() => X.getInstance(), deps) (typed from the factory:
+//               React's own types are not loaded)
 //   renders     <Component /> whose tag resolves to an indexed component
 //   references  a function passed as a value: onSubmit={handleSubmit}
 //               (form `handler`, with the event prop), arr.map(renderRow)
@@ -75,6 +77,40 @@ export function resolveReferences(context: AnalysisContext, state: TsApplication
       if (ts.isPropertyAssignment(declaration) && (ts.isIdentifier(declaration.initializer) || ts.isPropertyAccessExpression(declaration.initializer))) { const value = aliased(checker.getSymbolAtLocation(ts.isPropertyAccessExpression(declaration.initializer) ? declaration.initializer.name : declaration.initializer)); const found = entityOf(value?.declarations) ?? destructured(value, depth + 1); if (found) return found; }
       const fn = ts.isPropertyAssignment(declaration) ? declaration.initializer : undefined;
       if (fn && declarations.get(fn)) return declarations.get(fn);
+    }
+    return undefined;
+  }
+  /**
+   * const service = useMemo(() => Service.getInstance(), []): React's types are
+   * not in the program, so `service` is untyped; its methods are looked up on
+   * the type of what the factory returns.
+   */
+  function memoized(access: ts.PropertyAccessExpression): Entity | undefined {
+    if (!ts.isIdentifier(access.expression)) return undefined;
+    let symbol: ts.Symbol | undefined;
+    try { symbol = checker.getSymbolAtLocation(access.expression); } catch { return undefined; }
+    const declaration = symbol?.valueDeclaration;
+    const call = declaration && ts.isVariableDeclaration(declaration) && declaration.initializer && ts.isCallExpression(declaration.initializer) ? declaration.initializer : undefined;
+    // useMemo(…) or React.useMemo(…), imported from react.
+    const callee = call?.expression;
+    const imported = callee && (ts.isIdentifier(callee) && callee.text === 'useMemo' ? callee : ts.isPropertyAccessExpression(callee) && callee.name.text === 'useMemo' && ts.isIdentifier(callee.expression) ? callee.expression : undefined);
+    if (!call || !imported || importedFrom(imported) !== 'react') return undefined;
+    const factory = call.arguments[0];
+    if (!factory || !(ts.isArrowFunction(factory) || ts.isFunctionExpression(factory))) return undefined;
+    const returned: ts.Expression[] = [];
+    if (!ts.isBlock(factory.body)) returned.push(factory.body);
+    else {
+      const collect = (node: ts.Node): void => {
+        if (ts.isReturnStatement(node) && node.expression) returned.push(node.expression);
+        else if (!ts.isFunctionLike(node)) ts.forEachChild(node, collect);
+      };
+      ts.forEachChild(factory.body, collect);
+    }
+    for (const expression of returned) {
+      try {
+        const entity = entityOf(checker.getTypeAtLocation(expression).getProperty(access.name.text)?.declarations);
+        if (entity) return entity;
+      } catch { /* untyped */ }
     }
     return undefined;
   }
@@ -220,6 +256,7 @@ export function resolveReferences(context: AnalysisContext, state: TsApplication
       try { declaration = checker.getResolvedSignature(node)?.declaration as ts.Declaration | undefined; } catch { declaration = undefined; }
       target = declaration ? declarations.get(declaration) : undefined;
       if (!target) { const name = ts.isPropertyAccessExpression(node.expression) ? node.expression.name : node.expression; target = symbolEntity(name); }
+      if (!target && ts.isPropertyAccessExpression(node.expression)) target = memoized(node.expression);
       const calleeText = short(node.expression);
       if (target && TARGETS.has(target.type)) {
         const event = eventOf(node, from);

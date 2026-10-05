@@ -3,8 +3,9 @@ import { Fragment } from 'react';
 import type { Entity, Evidence } from '@engine/core/graph';
 import type { AggregateGroup, ChangeFacet, DiagnosticItem, NodeChange, NodeSummary, RelationItem } from '@engine/projection/dto';
 import { compactNumber, percent, relationPhrase, relativeTime, shortSha, typeLabel } from '../lib/format';
-import { entryOf, isContainer, type AtlasStore } from '../lib/store';
-import { themeById } from '../lib/themes';
+import { entryOf, isContainer, tourEntry, type AtlasStore } from '../lib/store';
+import { coverageCss, domainHue, themeById } from '../lib/themes';
+import { COVERAGE_TEXT } from '../lib/coverage';
 import { useAtlas, useStore } from './context';
 import { TypeBadge } from './TypeBadge';
 import { CallSitesSection, CommitImpactChip, EffectsSection, ImpactSection } from './Analysis';
@@ -48,6 +49,7 @@ function Overview() {
         <dt>Unresolved</dt><dd>{['error', 'warning', 'info'].filter(key => severities[key]).map(key => `${severities[key]} ${key}`).join(' · ') || 'none'}</dd>
       </dl>
       {meta.snapshot.kind === 'commit' && <CommitCard sha={meta.snapshot.commitSha} />}
+      <RepositoryOverview />
       <p className="note">Search with <kbd>/</kbd>, or zoom into the map: applications open into directories, then files, then symbols. Selecting an entity shows its indexed relationships and the evidence behind each one.</p>
       <div className="inspector-actions">
         <button className="button" onClick={() => void store.select(root.id, { fly: true })}>Repository connections</button>
@@ -60,7 +62,8 @@ const FACT_LABELS: Record<string, string> = {
   visibility: 'Visibility', static: 'Static', extends: 'Extends', method: 'HTTP method', routePath: 'Route path', framework: 'Framework', routeFile: 'Route file',
   api: 'API route file', registration: 'Registration', middleware: 'Middleware', constraintsUnresolved: 'Unevaluated constraints', handlerKind: 'Handler kind',
   routeName: 'Route name', controller: 'Controller', controllerMethod: 'Controller method', extension: 'Extension', bytes: 'Size', contentHash: 'Content hash',
-  analysisSkipped: 'Not analyzed', serverModule: '"use server" module',
+  analysisSkipped: 'Not analyzed', serverModule: '"use server" module', inertiaPage: 'Inertia page', command: 'Command', description: 'Description',
+  class: 'Class', cadence: 'Runs', schedule: 'Scheduler call', target: 'Runs', modifiers: 'Options',
 };
 function formatValue(key: string, value: unknown): string {
   if (typeof value === 'boolean') return value ? 'yes' : 'no';
@@ -88,16 +91,18 @@ function Selection() {
       <div className="inspector-actions">
         {sourceable && <button className="button primary small" onClick={() => void store.openSource({ entity: node.id }, `${typeLabel(node.type, node.role)} ${node.name}`)}>Open source</button>}
         <button className="button small" onClick={() => store.navigator?.flyTo(node, { mode: container ? 'enter' : 'focus' })}>Zoom to</button>
-        <FlowAddButton id={node.id} kind={node.kind} />
         <AnalysisButtons node={node} />
       </div>
-      {node.kind === 'group' && <p className="note">{node.explanation}</p>}
+      <SummaryCard node={node} />
+      {node.kind === 'group' && !node.id.startsWith('lens:domain:') && <p className="note">{node.explanation}</p>}
       {(node.type === 'api_endpoint' || node.type === 'route') && <p className="note">Shown in the <strong>Routes &amp; endpoints</strong> district of its application. That district is only a spatial grouping; the canonical parent is the application.</p>}
       {node.type === 'database_table' && <p className="note">Declared by the application's migrations, replayed in order: the schema they intend, not the live database. Shown in the <strong>Database</strong> district; the canonical parent is the application.</p>}
+      {(node.type === 'command' || node.type === 'scheduled_task') && <p className="note">{node.type === 'command' ? 'An Artisan command: an entry point that runs without a request, by the scheduler, by code running it by name, or by hand.' : 'A task the Laravel scheduler runs on its own, at the cadence below.'} Shown in the <strong>Console</strong> district; the canonical parent is the application.</p>}
       {selection.entityStatus === 'error' && <p className="note error">{selection.error}</p>}
       {node.change?.status === 'removed' && <p className="note">This entity existed in the baseline and was removed. It is shown as a ghost where it used to be; its facts below are from the baseline.</p>}
       {selection.change && <ChangeSection node={node} />}
       <ImpactSection node={node} />
+      <FlowsSection node={node} />
       <Facts node={node} entity={entity} />
       {node.type === 'database_table' && entity && <TableSection entity={entity} />}
       <HttpCalls selectionId={node.id} file={selection.file} />
@@ -126,15 +131,104 @@ function AnalysisButtons({ node }: { node: NodeSummary }) {
     <>
       <button className="button small" aria-pressed={impactOpen} onClick={() => impactOpen ? store.hideImpact() : void store.showImpact(node.id)} title="What depends on this, hop by hop">{impactOpen ? 'Hide impact' : 'Impact'}</button>
       {runs && <button className="button small" aria-pressed={stepsAnchor === node.id} onClick={() => stepsAnchor === node.id ? store.closeSteps() : void store.openSteps(node.id)} title="What this sets in motion: handlers, requests, endpoints and effects">What happens from here</button>}
-      {(runs || node.type === 'database_table') && <button className="button small" onClick={() => void store.showRequestFlows(node)} title={node.type === 'api_endpoint' ? 'This endpoint\'s request, from the client to the response and back' : 'The HTTP requests whose flow passes through here'}>{node.type === 'api_endpoint' ? 'Request flow' : 'Request flows'}</button>}
+      {['api_endpoint', 'command', 'scheduled_task'].includes(node.type) && <button className="button small" onClick={() => void store.openTour({ id: node.id, detail: 'lanes', title: node.name })} title="Show the flow that starts here on the map">Show flow on map</button>}
     </>
   );
 }
-function FlowAddButton({ id, kind }: { id: string; kind: string }) {
+/** A short note on where descriptions come from: a language model, scored for ASD-STE100. */
+function ModelNote({ model, ste, date }: { model?: string; ste?: number; date?: string }) {
+  return <span className="model-note" title={`Written by the language model ${model ?? ''}${date ? ` on ${new Date(date).toLocaleDateString()}` : ''} from the index and the source; ASD-STE100 rules checked automatically. Facts above are indexed; this text is not.`}>AI · {model ?? 'model'}{ste !== undefined ? ` · STE ${Math.round(ste * 100)}%` : ''}</span>;
+}
+/** What the models said about the selection: a description (and its domain), apart from the indexed facts. */
+function SummaryCard({ node }: { node: NodeSummary }) {
   const store = useStore();
-  const drafting = useAtlas(state => !!state.flows.draft);
-  if (!drafting || kind !== 'entity') return null;
-  return <button className="button small" onClick={() => store.addDraftStep(id)}>Add to flow</button>;
+  const annotation = useAtlas(state => state.selection?.annotation);
+  const domainSummary = node.id.startsWith('lens:domain:') ? node.explanation : undefined;
+  const data = annotation?.data;
+  if (!domainSummary && !data?.summary && !data?.domain) return null;
+  return (
+    <section className="summary-card">
+      {(domainSummary ?? data?.summary) && <p>{domainSummary ?? data?.summary}</p>}
+      {data?.outdated && <p className="note warning">The file changed after this was written; run annotate again to describe it anew.</p>}
+      <div className="summary-meta">
+        {data?.role && <span className="chip">{data.role}</span>}
+        {data?.domain && <button className="chip domain-chip" onClick={() => void store.setLens('domains')} title={data.domain.inferred ? 'Domain inferred from the code it is connected to' : 'Domain from the paths the model gave'}>◆ {data.domain.name}{data.domain.inferred ? ' (inferred)' : ''}</button>}
+        {(data?.summary || domainSummary) && <ModelNote model={data?.model ?? 'gpt-6.1-sol'} ste={data?.ste} date={data?.createdAt} />}
+      </div>
+    </section>
+  );
+}
+/** The repository as the models describe it: what it is, where to start, and its domains. */
+function RepositoryOverview() {
+  const store = useStore();
+  const annotations = useAtlas(state => state.annotations.data);
+  const lens = useAtlas(state => state.lens);
+  if (!annotations?.available) return null;
+  const overview = annotations.overview;
+  return (
+    <section className="section">
+      {overview && <div className="summary-card"><p>{overview.summary}</p><div className="summary-meta"><ModelNote model={annotations.models.find(model => model.includes('sol')) ?? annotations.models[0]} /></div></div>}
+      {overview?.start.length ? <><h4>Where to start</h4><ul className="start-list">{overview.start.map(tip => <li key={tip}>{tip}</li>)}</ul></> : null}
+      {annotations.domains.length > 0 && (
+        <>
+          <h4>Domains <span className="chip"><span className="count">{annotations.domains.length}</span></span></h4>
+          <ul className="list domain-list">
+            {annotations.domains.map(domain => (
+              <li key={domain.key} className="row">
+                <div className="row-main">
+                  <div className="row-title"><span className="domain-dot" style={{ background: `hsl(${domainHue(domain.key)} 70% 58%)` }} /><span className="label">{domain.name}</span><span className="absent"> · {domain.files} files</span></div>
+                  <div className="row-sub">{domain.summary}</div>
+                </div>
+                <div className="row-actions"><button className="button small" onClick={() => void store.setLens('domains').then(() => store.select(`lens:domain:${domain.key}`, { fly: true }))}>Show</button></div>
+              </li>
+            ))}
+          </ul>
+          {lens !== 'domains' && <button className="button small" onClick={() => void store.setLens('domains')}>Arrange the map by domain</button>}
+        </>
+      )}
+      {annotations.cost && <p className="absent">Descriptions written by language models for ${annotations.cost.total.toFixed(2)} in total. They describe the indexed code; check the facts and relationships for proof.</p>}
+    </section>
+  );
+}
+/** Which flows touch the selection (or anything inside it) and, for a file, whether and why it is part of one. */
+function FlowsSection({ node }: { node: NodeSummary }) {
+  const store = useStore();
+  const coverage = useAtlas(state => state.selection?.coverage);
+  const dark = themeById(useAtlas(state => state.themeId)).dark;
+  const active = useAtlas(state => state.tour?.key);
+  if (!coverage || coverage.status === 'idle') return null;
+  if (coverage.status === 'loading' && !coverage.data) return <section className="section"><h4>Flows</h4><p className="absent">Finding the flows through here…</p></section>;
+  if (coverage.status === 'error') return <section className="section"><h4>Flows</h4><p className="note error">{coverage.error}</p></section>;
+  const data = coverage.data!;
+  const counts = data.counts;
+  const code = counts ? Object.entries(counts).filter(([key]) => key !== 'asset').reduce((sum, [, count]) => sum + count, 0) : 0;
+  return (
+    <section className="section flows-section">
+      <h4>Flows <span className="chip"><span className="count">{data.totalFlows}</span></span></h4>
+      {data.category && (
+        <p className="coverage-reason"><span className="coverage-chip" style={{ background: coverageCss(data.category, dark) }}>{COVERAGE_TEXT[data.category]}</span>{data.reason}</p>
+      )}
+      {counts && code > 0 && (
+        <div className="coverage-counts" aria-label="Files inside, by coverage">
+          <div className="coverage-bar">{Object.entries(counts).filter(([key, count]) => key !== 'asset' && count).map(([key, count]) => <span key={key} style={{ flexGrow: count, background: coverageCss(key, dark) }} title={`${COVERAGE_TEXT[key as keyof typeof COVERAGE_TEXT]}: ${count}`} />)}</div>
+          <span className="absent">{Math.round((((counts.entry ?? 0) + (counts.flow ?? 0)) / code) * 100)}% of {code} code files in flows · {counts.unreached ?? 0} not reached</span>
+        </div>
+      )}
+      {data.totalFlows === 0 && !data.category && <p className="absent">No flow touches this.</p>}
+      {data.flows.length > 0 && (
+        <ul className="rf-list">
+          {data.flows.slice(0, 8).map(item => (
+            <li key={item.id}>
+              <button className={`rf-row compact${active === `${item.detail}:${item.id}` ? ' active' : ''}`} onClick={() => void store.openCatalogFlow(item)} title="Show this flow on the map">
+                <span className="rf-row-top"><span className="flow-kind-tag">{item.kind === 'request' ? item.method : item.kind === 'unmatched' ? '?' : item.kind}</span><span className="rf-row-path mono">{tourEntry(item).title}</span></span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {data.totalFlows > 0 && <button className="button small" onClick={() => void store.showFlows({ kind: 'all', entity: { id: node.id, name: node.name } })}>{data.totalFlows > 8 ? `All ${data.totalFlows} in the Flows panel` : 'List in the Flows panel'}</button>}
+    </section>
+  );
 }
 function Facts({ node, entity }: { node: NodeSummary; entity?: Entity }) {
   const container = isContainer(node);
@@ -269,7 +363,8 @@ function Relations({ node }: { node: NodeSummary }) {
   return (
     <section className="section">
       <h4>Relationships {relations.status === 'ready' && <span className="chip"><span className="count">{totalAll}</span></span>}</h4>
-      {relations.status === 'ready' && totalAll === 0 && <p className="note">No indexed relationships besides containment. Only calls the analyzers could resolve are relationships: calls through callbacks, props or untyped values are counted under call sites instead, so this is not evidence that nothing is connected.</p>}
+      {relations.status === 'ready' && totalAll === 0 && <p className="note">No indexed relationships besides containment{node.type === 'file' ? ', for the file or its symbols' : ''}. Only calls the analyzers could resolve are relationships: calls through callbacks, props or untyped values are counted under call sites instead, so this is not evidence that nothing is connected.</p>}
+      {node.type === 'file' && totalAll > 0 && <p className="absent" style={{ margin: '0 0 6px' }}>The file's own relationships and those of its symbols with code outside it.</p>}
       {totalAll > 0 && (
         <>
           <div className="segmented" role="group" aria-label="Direction">
@@ -309,6 +404,7 @@ function RelationRow({ item, emphasized, selectedName }: { item: RelationItem; e
           <span className="label" title={item.other.name}>{item.other.name}</span>
         </div>
         <div className="row-sub">{typeLabel(item.other.type, item.other.role)}{item.other.path ? ` · ${item.other.path}` : ''}{typeof item.metadata?.specifier === 'string' ? ` · “${item.metadata.specifier}”` : ''}{siteSummary(item.metadata)}</div>
+        {item.inside && <div className="row-sub">through <button className="button link small" onClick={() => void store.select(item.inside!.id, { fly: true })}>{item.inside.name}</button> in this file</div>}
         {via && <div className="row-sub" style={{ color: 'var(--warning)' }}>{via === 'off-screen' ? 'Endpoint is off-screen' : `Not drawn at this zoom; the edge ends at ${via}`}</div>}
       </div>
       <div className="row-actions">
@@ -596,6 +692,13 @@ function CommitCard({ sha }: { sha?: string }) {
   return (
     <section className="section">
       <h4>Commit</h4>
+      {entry.note && (
+        <div className="summary-card">
+          <p><span className={`intent-chip i-${entry.note.intent}`}>{entry.note.intent}</span> <strong>{entry.note.title}</strong></p>
+          <p>{entry.note.summary}</p>
+          <div className="summary-meta">{entry.note.areas.map(area => <span key={area} className="chip">{area}</span>)}<ModelNote model="gpt-6-luna" /></div>
+        </div>
+      )}
       <dl className="facts">
         <dt>Subject</dt><dd>{entry.subject}</dd>
         <dt>Author</dt><dd>{entry.authorName} · {new Date(entry.authoredAt).toLocaleString()}</dd>

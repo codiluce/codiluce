@@ -11,10 +11,11 @@ import { gitMetricsAnalyzer } from '../analyzers/git-metrics.js';
 import { typescriptAnalyzer } from '../analyzers/typescript.js';
 import { laravelAnalyzer } from '../analyzers/laravel.js';
 import { apiMatcher } from './api-matcher.js';
+import { inertiaLinker } from './inertia-linker.js';
 import { AnalysisCache, type CacheEvent } from './cache.js';
 
 const execute = promisify(execFile);
-export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, typescriptAnalyzer, laravelAnalyzer, apiMatcher];
+export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, typescriptAnalyzer, laravelAnalyzer, inertiaLinker, apiMatcher];
 export interface IndexOptions {
   stateDirectory?: string; config?: AtlasConfig; onProgress?: (name: string) => void;
   /** Index a materialized commit tree: Git is not consulted and the run records this commit, clean. */

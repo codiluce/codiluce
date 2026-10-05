@@ -1,17 +1,17 @@
 // Owns the canvas: input, camera animation, render scheduling and lazy child
 // loading. React never renders map primitives; it only mounts this controller.
-import type { NodeSummary, RequestFlow, SourceResponse } from '@engine/projection/dto';
+import type { NodeSummary, SourceResponse } from '@engine/projection/dto';
 import { easeInOut, fitBounds, panBy, projectedBounds, worldToScreen, zoomAround, zoomPath, type Bounds, type Camera, type Viewport, type ZoomLimits } from './camera';
 import { DEFAULT_LOD, abstractionLevel, screenSize, type LodConfig } from './lod';
-import { FLASH_MS, MapRenderer, RISE_MS, type EdgeOverlay, type FlowOverlay, type MotionState, type RenderState } from './renderer';
-import { flowSpine } from './request-flows';
+import { FLASH_MS, MapRenderer, RISE_MS, type CalloutOverlay, type CoverageOverlay, type EdgeOverlay, type FlowOverlay, type MotionState, type RenderState } from './renderer';
+import { branchDuration, branchPosition, flowAreas, flowLit, type MapFlow } from './map-flow';
+import type { PlaybackState } from './playback';
 import { nodeHeight, type Scene, type VisibleSet } from './scene';
 import { isContainer, type AtlasState, type AtlasStore, type MapNavigator } from './store';
 import { themeById } from './themes';
 
-const STEP_MS = 1800;
-/** A traced request moves from one step of its flow to the next in this time. */
-const TRACE_STEP_MS = 850;
+/** A branch with more stops than this labels only its start and the waves around the front; at most this many pins show. */
+const CALLOUT_ALL = 18, PIN_MAX = 40;
 /** Delay between a rising area and its contents, so new districts build up level by level. */
 const CASCADE_MS = 70;
 /** While following playback, the camera frames the changes of this recent window… */
@@ -173,18 +173,19 @@ export class MapController implements MapNavigator {
       // Labels use the theme's font: draw again once it has loaded.
       if (theme.style?.font && typeof document !== 'undefined') document.fonts?.load(`600 12px ${theme.style.font}`).then(() => this.request(), () => undefined);
     }
-    if (state.flows.playback.status === 'playing') this.store.playbackAction({ type: 'tick', elapsedMs: elapsed, stepMs: STEP_MS });
-    const key = `${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}|${this.scene.revision}`;
+    if (state.tour?.playback.status === 'playing') this.store.tourAction({ type: 'tick', elapsedMs: elapsed, stepMs: branchDuration(state.tour.flow?.branches[state.tour.playback.index]) });
+    const shown = this.shownFlow(this.store.getState());
+    const force = shown && !this.store.previewScene ? this.areasOf(shown.flow, shown.playback.index) : undefined;
+    const key = `${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}|${this.scene.revision}|${shown ? `${shown.flow.key}#${shown.playback.index}` : ''}`;
     if (key !== this.setKey) {
-      this.set = this.scene.visible(this.camera, this.viewport, this.lod);
+      this.set = this.scene.visible(this.camera, this.viewport, this.lod, force);
       this.setKey = key;
       if (this.set.pending.length) void this.store.loadChildren(this.set.pending);
     }
     const render = this.renderState(state, time);
     this.renderer.render(this.ctx, this.dpr, this.viewport, this.camera, this.scene, this.set, render, this.lod);
     this.scheduleReport(time);
-    const traced = state.requests.open;
-    const flowActive = (!!state.flows.resolved && state.flows.playback.status === 'playing') || (traced?.mode === 'map' && traced.playing && traced.status === 'ready' && !this.motionReduced);
+    const flowActive = state.tour?.playback.status === 'playing';
     if (this.animation || flowActive || state.timeline.playing || time < this.motionUntil) this.request();
     else if (this.motion.appear.size || this.motion.flash.size) { this.motion.appear.clear(); this.motion.flash.clear(); }
   }
@@ -219,22 +220,16 @@ export class MapController implements MapNavigator {
         edges.push({ key: `${group.direction}:${group.type}:${group.anchor.id}`, type: group.type, count: group.count, from: outgoing ? selection.id : group.anchor.id, fromAncestors: outgoing ? selectedAncestors : group.anchorAncestors, to: outgoing ? group.anchor.id : selection.id, toAncestors: outgoing ? group.anchorAncestors : selectedAncestors, emphasized: drill?.group === group });
       }
     }
-    const resolved = state.flows.resolved;
-    const flow = resolved && resolved.status === 'ready' ? {
-      steps: resolved.steps.map(step => ({ entityId: step.entityId, ancestors: step.ancestors, missing: step.missing })),
-      links: resolved.links.map(items => ({ relationType: items[0]?.type })),
-      current: state.flows.playback.index, progress: state.flows.playback.progress, active: true,
-    } : undefined;
     const unresolvedCount = selection && !isContainer(selection.node ?? { type: 'file', kind: 'entity' }) && selection.node?.type !== 'file' ? state.diagnostics.data?.codes.find(code => code.code === 'unresolved-http-call')?.count ?? 0 : 0;
     return {
-      selectedId: selection?.id, hoveredId: state.hover?.id, emphasis, edges, flow,
+      selectedId: selection?.id, hoveredId: state.hover?.id, emphasis, edges,
       showDiagnostics: state.showDiagnostics, source: this.sourceFace(state), time, reducedMotion: this.motionReduced,
       ...(state.meta?.comparison ? { comparison: { dimUnchanged: state.timeline.dimUnchanged } } : {}),
       ...(unresolvedCount && selection ? { unresolved: { nodeId: selection.id, count: unresolvedCount } } : {}),
       ...this.analysisOverlays(state, time),
       motion: this.motion,
       // A time-lapse frame compares with the previous commit; overlays loaded for the settled view wait until it is back.
-      ...(this.store.previewScene ? { edges: [], emphasis: undefined, flow: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
+      ...(this.store.previewScene ? { edges: [], emphasis: undefined, lit: undefined, flow: undefined, callouts: undefined, pins: undefined, coverage: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
     };
   }
   /**
@@ -244,7 +239,7 @@ export class MapController implements MapNavigator {
    */
   private analysisOverlays(state: AtlasState, time: number): Partial<RenderState> {
     const result: Partial<RenderState> = {};
-    const stamp = `${state.meta?.snapshot.id ?? ''}|${state.meta?.comparison?.baseline.id ?? ''}`;
+    const stamp = this.store.viewStamp();
     const impact = state.impact.open && state.impact.data && state.impact.viewStamp === stamp ? state.impact.data
       : state.commitImpact.show && state.commitImpact.data && state.commitImpact.viewStamp === stamp ? state.commitImpact.data : undefined;
     if (impact) {
@@ -268,50 +263,54 @@ export class MapController implements MapNavigator {
       result.emphasis = emphasis;
       result.edges = edges;
     }
-    const open = state.requests.open;
-    const flow = open?.status === 'ready' && open.viewStamp === stamp ? open.data : undefined;
-    if (flow) Object.assign(result, this.requestOverlay(flow, open!.focus, open!.mode === 'map' ? { playing: open!.playing, time } : undefined));
+    const shown = this.shownFlow(state);
+    if (shown) Object.assign(result, this.mapFlowOverlay(shown));
+    const coverage = state.coverage.show && state.coverage.data && state.coverage.viewStamp === stamp ? state.coverage.data : undefined;
+    if (coverage) {
+      if (this.coverageCache?.data !== coverage) this.coverageCache = { data: coverage, overlay: { files: new Map(Object.entries(coverage.files).map(([id, item]) => [id, item.category])), areas: new Map(Object.entries(coverage.areas)) } };
+      result.coverage = this.coverageCache.overlay;
+    }
     return result;
   }
-  private traceCache?: { data: RequestFlow; steps: FlowOverlay['steps']; links: FlowOverlay['links'] };
+  private coverageCache?: { data: object; overlay: CoverageOverlay };
+  /** The flow shown on the map (opened from the Flows panel, the inspector or the lanes). */
+  private shownFlow(state: AtlasState): { flow: MapFlow; playback: PlaybackState } | undefined {
+    const tour = state.tour;
+    return tour?.flow && tour.viewStamp === this.store.viewStamp() ? { flow: tour.flow, playback: tour.playback } : undefined;
+  }
+  /** The areas the current branch passes: opened whatever the zoom while it plays. */
+  private areasOf(flow: MapFlow, branch: number): Set<string> {
+    if (this.areasCache?.flow !== flow || this.areasCache.branch !== branch) this.areasCache = { flow, branch, areas: flowAreas(flow, flow.branches[branch]) };
+    return this.areasCache.areas;
+  }
+  private areasCache?: { flow: MapFlow; branch: number; areas: Set<string> };
+  private litCache?: { flow: MapFlow; lit: Set<string> };
   /**
-   * An open request flow on the map: its entities lit, its links drawn, and
-   * (traced) a request moving along its spine, from the page to the data.
+   * A flow on the map: everything it touches stays lit and the rest dims; the
+   * current branch's edges carry the pulse as far as it has flowed, its stops
+   * are marked (reached, at the front, still ahead) and labelled with their
+   * wave, and the pins of the stops reached show.
    */
-  private requestOverlay(flow: RequestFlow, focus: string | undefined, trace: { playing: boolean; time: number } | undefined): Partial<RenderState> {
-    const byId = new Map(flow.nodes.map(node => [node.id, node]));
-    // Where a flow node is drawn: its entity, or the owner of its effect.
-    const anchor = (id: string) => {
-      const node = byId.get(id);
-      if (node?.node) return { id: node.node.id, ancestors: node.ancestors };
-      if (node?.effect) return { id: node.effect.owner, ancestors: node.ancestors.slice(0, -1) };
-      return undefined;
+  private mapFlowOverlay(shown: { flow: MapFlow; playback: PlaybackState }): Partial<RenderState> {
+    const { flow, playback } = shown;
+    if (this.litCache?.flow !== flow) this.litCache = { flow, lit: flowLit(flow) };
+    const result: Partial<RenderState> = { lit: this.litCache.lit, edges: [], emphasis: undefined };
+    const branch = flow.branches[playback.index];
+    if (!branch) return result;
+    const { position, front } = branchPosition(branch, playback);
+    const waveOf = new Map<number, number>();
+    branch.waves.forEach((wave, depth) => { for (const stop of wave) if (!waveOf.has(stop)) waveOf.set(stop, depth); });
+    const reached = new Set<string>();
+    for (const [stop, depth] of waveOf) if (depth <= position) reached.add(flow.stops[stop]!.entityId);
+    const overlay: FlowOverlay = {
+      links: branch.links.map(link => { const edge = flow.edges[link.edge]!; return { from: edge.from, fromAncestors: edge.fromAncestors, to: edge.to, toAncestors: edge.toAncestors, fill: Math.max(0, Math.min(1, position - link.wave)), back: !!edge.back }; }),
+      stops: [...waveOf].map(([stop, depth]) => ({ entityId: flow.stops[stop]!.entityId, ancestors: flow.stops[stop]!.ancestors, state: depth === front ? 'front' as const : depth <= position ? 'reached' as const : 'ahead' as const })),
+      moving: playback.status === 'playing' && !this.motionReduced,
     };
-    const emphasis = new Set<string>();
-    for (const node of flow.nodes) { for (const id of node.ancestors) emphasis.add(id); if (node.node) emphasis.add(node.node.id); }
-    const edges: EdgeOverlay[] = [];
-    for (const edge of flow.edges) {
-      const from = anchor(edge.from), to = anchor(edge.to);
-      if (!from || !to || from.id === to.id) continue;
-      edges.push({ key: edge.id, type: edge.hops.at(-1)?.type ?? (edge.kind === 'returns' || edge.kind === 'then' ? 'requests' : 'calls'), count: 1, from: from.id, fromAncestors: from.ancestors, to: to.id, toAncestors: to.ancestors, emphasized: !!focus && (edge.from === focus || edge.to === focus) });
-    }
-    if (!trace) return { emphasis, edges };
-    if (this.traceCache?.data !== flow) {
-      const spine = flowSpine(flow).map(id => ({ id, at: anchor(id) })).filter(item => item.at).filter((item, index, list) => !index || list[index - 1]!.at!.id !== item.at!.id);
-      const edgeOf = new Map(flow.edges.map(edge => [`${edge.from}>${edge.to}`, edge]));
-      this.traceCache = {
-        data: flow,
-        steps: spine.map(item => ({ entityId: item.at!.id, ancestors: item.at!.ancestors, missing: false })),
-        links: spine.slice(1).map((item, index) => ({ relationType: edgeOf.get(`${spine[index]!.id}>${item.id}`)?.hops.at(-1)?.type })),
-      };
-    }
-    const { steps, links } = this.traceCache;
-    // The request travels the spine, then rests a moment at the end before starting again.
-    const span = Math.max(1, links.length) * TRACE_STEP_MS + 900;
-    const t = trace.playing && !this.motionReduced ? trace.time % span : 0;
-    const current = Math.min(Math.max(0, links.length - 1), Math.floor(t / TRACE_STEP_MS));
-    const progress = trace.playing && !this.motionReduced ? Math.min(1, (t - current * TRACE_STEP_MS) / TRACE_STEP_MS) : 0;
-    return { emphasis, edges, flow: { steps, links, current, progress, active: true } };
+    const many = waveOf.size > CALLOUT_ALL;
+    const callouts: CalloutOverlay[] = [...waveOf].flatMap(([stop, depth]) => many && depth !== 0 && Math.abs(depth - front) > 1 ? [] : [{ entityId: flow.stops[stop]!.entityId, ancestors: flow.stops[stop]!.ancestors, number: depth + 1, label: flow.stops[stop]!.label, tone: flow.stops[stop]!.tone, current: depth === front }]);
+    const pins = flow.pins.filter(pin => reached.has(pin.after)).slice(0, PIN_MAX);
+    return { ...result, flow: overlay, callouts, pins };
   }
   private impactCache?: { data: object; overlay: NonNullable<RenderState['impact']> };
   /** Lines where the selection calls, renders or references something (from its loaded outgoing relationships). */
@@ -456,8 +455,7 @@ export class MapController implements MapNavigator {
     this.canvas.style.cursor = 'grab';
     if (!drag || drag.moved || event.button !== 0) return;
     const hit = this.scene.hitTest(this.set, this.camera, this.viewport, point.x, point.y);
-    if (!hit || hit.node.type === 'repository') { if (!this.store.getState().flows.draft) this.store.clearSelection(); return; }
-    if (this.store.getState().flows.draft && hit.node.kind === 'entity') this.store.addDraftStep(hit.node.id);
+    if (!hit || hit.node.type === 'repository') { this.store.clearSelection(); return; }
     void this.store.select(hit.node.id, { fly: false });
   }
   private onDoubleClick(event: MouseEvent): void {

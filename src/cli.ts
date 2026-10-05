@@ -9,17 +9,19 @@ import { GraphStore } from './storage/sqlite.js';
 import { createInspectionServer } from './api/server.js';
 import { HISTORY_DATABASE, indexHistory, type HistoryProgress } from './history/indexer.js';
 import { HistoryStore } from './history/store.js';
-import { FLOWS_DATABASE, FlowStore } from './storage/flows.js';
+import { annotateCommand } from './ai/command.js';
 
 const HELP = `Archipelago — Phase 1 graph inspection
 
 npm run archipelago -- init [--repo PATH] [--state-dir PATH]
 npm run archipelago -- index [--repo PATH] [--state-dir PATH] [--no-cache]
-npm run archipelago -- inspect [summary|entities|entity|relations|relation|diagnostics|flows] [options]
+npm run archipelago -- inspect [summary|entities|entity|relations|relation|diagnostics] [options]
 npm run archipelago -- serve [--repo PATH] [--state-dir PATH] [--port 4300] [--ui PATH|none] [--history-indexing] [--read-only]
 npm run archipelago -- history index [--repo PATH] [--state-dir PATH] [--ref BRANCH] [--limit N]
                        [--since DATE] [--commits SHA,SHA] [--jobs N] [--all-parents] [--pr-metadata github]
 npm run archipelago -- history status [--repo PATH] [--state-dir PATH]
+npm run archipelago -- annotate [--repo PATH] [--state-dir PATH] [--tasks files,flows,commits,folders,domains,overview,chapters]
+                       [--estimate] [--pilot] [--max-cost 10] [--concurrency 6] [--force]
 
 Options: --search TEXT --type TYPE --id ID --path PATH --parent ID
          --direction incoming|outgoing|both --severity info|warning|error
@@ -27,8 +29,9 @@ Options: --search TEXT --type TYPE --id ID --path PATH --parent ID
 
 State defaults to <repo>/.archipelago. inspect outputs JSON; serve is a local
 API that also serves the built visualizer (web/out, see npm run build:web)
-unless --ui none. It reads the graph and writes only named flows, to
-<state>/flows.db (--read-only: no writes at all). index persists diagnostics and exits 2
+unless --ui none. It only reads the graph (it keeps the map's layout slots in
+<state>/layout.json); --read-only refuses on-demand history indexing even with
+--history-indexing. index persists diagnostics and exits 2
 for analyzer errors. index reuses the analysis of applications whose files
 did not change from <state>/cache (bounded; safe to delete; --no-cache
 re-analyzes everything).
@@ -39,11 +42,19 @@ objects into scratch directories; the repository is not modified. Already
 indexed commits are skipped. --pr-metadata github reads merged pull requests
 from the GitHub API (GITHUB_TOKEN for private repositories). serve
 --history-indexing lets the map index a missing commit on request.
+
+annotate describes files, folders, flows, domains, commits and history
+chapters with OpenAI models (OPENAI_API_KEY from the environment or a .env in
+this workspace or the state directory) into <state>/annotations.db, in
+ASD-STE100 Simplified Technical English. It always estimates the cost first,
+measured by one pilot request per small task, and does not run when the
+estimate exceeds --max-cost (US dollars, default 10). --estimate stops after
+the estimate (add --pilot to measure). Unchanged inputs are never sent again.
 `;
 async function main(): Promise<void> {
   const string = { type: 'string' } as const;
   const boolean = { type: 'boolean' } as const;
-  const options = { repo: string, 'state-dir': string, port: string, ui: string, search: string, type: string, id: string, path: string, parent: string, direction: string, severity: string, code: string, limit: string, offset: string, ref: string, since: string, commits: string, jobs: string, 'pr-metadata': string, 'all-parents': boolean, 'history-indexing': boolean, 'no-cache': boolean, 'read-only': boolean, help: boolean };
+  const options = { tasks: string, 'max-cost': string, concurrency: string, estimate: boolean, pilot: boolean, force: boolean, repo: string, 'state-dir': string, port: string, ui: string, search: string, type: string, id: string, path: string, parent: string, direction: string, severity: string, code: string, limit: string, offset: string, ref: string, since: string, commits: string, jobs: string, 'pr-metadata': string, 'all-parents': boolean, 'history-indexing': boolean, 'no-cache': boolean, 'read-only': boolean, help: boolean };
   const { positionals, values } = parseArgs({ allowPositionals: true, options });
   const command = positionals[0];
   if (values.help || !command) { console.log(HELP); return; }
@@ -70,6 +81,15 @@ async function main(): Promise<void> {
     const store = new GraphStore(database);
     try { store.save(graph); console.log(JSON.stringify({ database, ...store.summary(), ...(values['no-cache'] ? {} : { cache }) }, null, 2)); } finally { store.close(); }
     if (graph.diagnostics.some(diagnostic => diagnostic.severity === 'error')) process.exitCode = 2;
+    return;
+  }
+  if (command === 'annotate') {
+    if (!await exists(database)) throw new Error('No graph cache; run init and index first');
+    process.exitCode = await annotateCommand({
+      root, stateDirectory, keyDirectories: [fileURLToPath(new URL('..', import.meta.url)), stateDirectory],
+      tasks: values.tasks as string | undefined, estimateOnly: !!values.estimate, pilot: !!values.pilot,
+      maxCost: values['max-cost'] !== undefined ? Number(values['max-cost']) : 10, concurrency: values.concurrency !== undefined ? Number(values.concurrency) : 6, force: !!values.force,
+    });
     return;
   }
   if (command === 'history') {
@@ -106,14 +126,11 @@ async function main(): Promise<void> {
     const ui = values.ui === 'none' ? undefined : values.ui ? path.resolve(String(values.ui)) : fileURLToPath(new URL('../web/out', import.meta.url));
     const uiDirectory = ui && await exists(path.join(ui, 'index.html')) ? ui : undefined;
     if (values.ui && values.ui !== 'none' && !uiDirectory) { store.close(); throw new Error(`No built UI at ${ui}; run npm run build:web`); }
-    const flowsFile = path.join(stateDirectory, FLOWS_DATABASE);
-    const flows = values['read-only'] && !await exists(flowsFile) ? undefined : new FlowStore(flowsFile, undefined, !!values['read-only']);
-    const server = createInspectionServer(store, { root, stateDirectory, uiDirectory, maxFileBytes, historyIndexing: !!values['history-indexing'] && !values['read-only'], ...(flows ? { flows } : {}), flowsWritable: !values['read-only'] });
+    const server = createInspectionServer(store, { root, stateDirectory, uiDirectory, maxFileBytes, historyIndexing: !!values['history-indexing'] && !values['read-only'] });
     server.once('error', error => { store.close(); console.error(error.message); process.exitCode = 1; });
     server.listen(port, '127.0.0.1', () => {
       console.log(`Graph inspection API: http://127.0.0.1:${port}/api`);
       console.log(uiDirectory ? `Visualizer: http://127.0.0.1:${port}/` : 'Visualizer UI not built (npm run build:web); API only');
-      console.log(values['read-only'] ? 'Read-only: flows cannot be saved' : `Flows are saved to ${flowsFile}`);
     });
     const stop = () => server.close(() => { store.close(); process.exit(0); });
     process.once('SIGINT', stop); process.once('SIGTERM', stop);
@@ -133,13 +150,6 @@ async function main(): Promise<void> {
       }
       case 'relation': if (!values.id) throw new Error('relation requires --id'); result = store.relation(String(values.id)); break;
       case 'diagnostics': result = store.diagnostics({ ...pagination, severity: values.severity as string | undefined, code: values.code as string | undefined }); break;
-      case 'flows': {
-        const file = path.join(stateDirectory, FLOWS_DATABASE), repositoryId = store.currentRun()?.repositoryId;
-        if (!await exists(file) || !repositoryId) { result = { flows: [] }; break; }
-        const flows = new FlowStore(file, undefined, true);
-        try { result = { flows: flows.list(repositoryId) }; } finally { flows.close(); }
-        break;
-      }
       default: throw new Error('Unknown inspection query');
     }
     if (result === undefined) throw new Error('No matching entity/relation');

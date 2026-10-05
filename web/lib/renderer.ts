@@ -5,20 +5,34 @@ import { ISO_X, ISO_Y, worldToScreen, type Camera, type Point, type Viewport } f
 import type { LodConfig } from './lod';
 import type { Scene, VisibleItem, VisibleSet } from './scene';
 import { PaletteCache, paletteKey, type Theme } from './themes';
+import type { StopTone } from './map-flow';
 import { compactNumber, typeLabel } from './format';
 
 export interface EdgeOverlay { key: string; from: string; to: string; fromAncestors: string[]; toAncestors: string[]; type: string; count: number; emphasized?: boolean; change?: 'added' | 'removed' }
+/**
+ * The branch of a flow being played: its links with how far the pulse has
+ * flowed along each (0 not yet, 1 all the way), and its stops — reached, at
+ * the front (reached last), or still ahead.
+ */
 export interface FlowOverlay {
-  steps: { entityId: string; ancestors: string[]; missing: boolean }[];
-  /** Per gap between step i and i+1: graph relationship type if one exists. */
-  links: { relationType?: string }[];
-  current: number; progress: number; active: boolean;
+  links: { from: string; fromAncestors: string[]; to: string; toAncestors: string[]; fill: number; back: boolean }[];
+  stops: { entityId: string; ancestors: string[]; state: 'reached' | 'front' | 'ahead' }[];
+  /** The pulse streams while the flow plays. */
+  moving: boolean;
 }
+/** A flow's stop labelled on screen next to its block (whatever the zoom), with its number. */
+export interface CalloutOverlay { entityId: string; ancestors: string[]; number: number; label: string; tone: StopTone; current: boolean }
+/** What a flow passes that is not an entity (middleware, a response, an effect, a gap), pinned to its block. */
+export interface PinOverlay { key: string; ownerId: string; ownerAncestors: string[]; label: string; tone: 'ok' | 'warn' | 'error' | 'info' }
+/** Coverage lens: files colored by category; closed areas badged with how much of them flows touch. */
+export interface CoverageOverlay { files: Map<string, string>; areas: Map<string, Record<string, number>> }
 export interface SourceOverlay { nodeId: string; start: number; lines: string[]; focus?: { startLine: number; endLine: number }; /** Lines where the symbol calls, renders or references an indexed entity. */ marks?: Set<number> }
 export interface RenderState {
   selectedId?: string; hoveredId?: string;
   /** When set, nodes outside it (and outside their ancestors) are dimmed. */
   emphasis?: Set<string>;
+  /** A flow is shown: what it touches (with the areas holding it) is drawn as usual, everything else dims. */
+  lit?: Set<string>;
   edges: EdgeOverlay[];
   flow?: FlowOverlay;
   showDiagnostics: boolean;
@@ -31,6 +45,9 @@ export interface RenderState {
   motion?: MotionState;
   /** Blast radius of the selection or of a comparison. */
   impact?: ImpactOverlay;
+  callouts?: CalloutOverlay[];
+  pins?: PinOverlay[];
+  coverage?: CoverageOverlay;
   time: number;
   reducedMotion: boolean;
 }
@@ -64,10 +81,11 @@ export class MapRenderer {
     if (theme.style?.grid === 'dots') this.dotGrid(ctx, viewport, camera); else this.grid(ctx, viewport, camera);
 
     const emphasis = state.emphasis ? this.expandEmphasis(scene, state.emphasis) : undefined;
-    const flowSet = state.flow?.active ? this.expandEmphasis(scene, new Set(state.flow.steps.filter(step => !step.missing).flatMap(step => [step.entityId]))) : undefined;
+    const flowSet = state.lit;
     const labels: Label[] = [];
     const items = this.animate(set, state);
     const impactLit = state.impact ? this.impactLit(scene, state.impact) : undefined;
+    const coverageOf = state.coverage ? this.coverageResolver(scene, state.coverage) : undefined;
     for (const item of items) {
       const dimmed = (flowSet && !flowSet.has(item.node.id)) || (!flowSet && emphasis && !emphasis.has(item.node.id));
       // In a comparison, blocks a change reaches stay lit instead of fading with the unchanged ones.
@@ -75,7 +93,9 @@ export class MapRenderer {
       const alpha = item.alpha * (dimmed ? (flowSet ? theme.flow.dimAlpha : theme.dimAlpha) : 1) * (state.comparison && !reached ? this.changeAlpha(item, state.comparison) : 1) * (state.impact?.dimOthers && !reached ? theme.dimAlpha : 1);
       if (alpha <= 0.01) continue;
       if (theme.style?.shadow && item.parent >= 0 && item.size > SOFT_PX) this.shadow(ctx, viewport, camera, item, alpha);
-      this.prism(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId);
+      const category = coverageOf?.(item.node);
+      this.prism(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId, category ? `coverage:${category}` : undefined);
+      if (state.coverage && !item.open && !category && state.coverage.areas.has(item.node.id)) this.coverageBadge(ctx, viewport, camera, item, alpha, state.coverage.areas.get(item.node.id)!);
       if (state.comparison) this.changeOverlay(ctx, viewport, camera, item, alpha, state);
       if (state.impact) this.impactOverlay(ctx, viewport, camera, item, alpha, state.impact);
       if (state.showDiagnostics && !item.open && item.node.diagnostics > 0 && item.size > 10) this.diagnosticMarker(ctx, viewport, camera, item, alpha);
@@ -95,6 +115,8 @@ export class MapRenderer {
     if (state.unresolved && state.unresolved.count > 0) this.unresolvedStub(ctx, viewport, camera, scene, set, state.unresolved);
     if (state.flow) this.flow(ctx, viewport, camera, set, state.flow, state);
     this.labels(ctx, labels);
+    if (state.pins?.length) this.pins(ctx, viewport, camera, set, state.pins);
+    if (state.callouts?.length) this.callouts(ctx, viewport, camera, set, state.callouts);
   }
   private expandEmphasis(scene: Scene, ids: Set<string>): Set<string> {
     // Keep ancestors lit so emphasized nodes are not drawn on dimmed platforms.
@@ -232,8 +254,8 @@ export class MapRenderer {
     }
     ctx.globalAlpha = 1;
   }
-  private prism(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, hovered: boolean): void {
-    const palette = this.palettes.get(paletteKey(item.node), item.node.depth);
+  private prism(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, hovered: boolean, paletteOverride?: string): void {
+    const palette = this.palettes.get(paletteOverride ?? paletteKey(item.node), item.node.depth);
     const r = this.radius(item, camera);
     ctx.globalAlpha = alpha;
     const wallPx = (item.zTop - item.zBase) * camera.scale;
@@ -488,8 +510,7 @@ export class MapRenderer {
     }
     for (const edge of drawn.values()) {
       const { from, to } = edge;
-      const dx = to.x - from.x, dy = to.y - from.y, distance = Math.hypot(dx, dy);
-      const control = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 - Math.min(220, distance * 0.35 + 20) };
+      const control = curveControl(from, to);
       ctx.save();
       if (this.theme.style?.rounding) ctx.lineCap = 'round';
       const width = Math.min(5, 1.4 + Math.log2(edge.count) * 0.8) + (edge.emphasized ? 1.2 : 0);
@@ -535,44 +556,203 @@ export class MapRenderer {
     ctx.strokeText(text, to.x + 13, to.y); ctx.fillStyle = this.theme.diagnostic; ctx.fillText(text, to.x + 13, to.y);
     ctx.restore();
   }
+  /**
+   * The branch being played: a faint track where the flow goes, and along the
+   * part it has reached a glowing line with dashes streaming from source to
+   * target, brightest at the front. Links joining the same visible blocks
+   * (zoomed out) are drawn once. Stops are marked by state.
+   */
   private flow(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, set: VisibleSet, flow: FlowOverlay, state: RenderState): void {
-    const points = flow.steps.map(step => step.missing ? undefined : this.resolve(set, step.entityId, step.ancestors));
-    const anchors = points.map(point => point ? this.anchor(viewport, camera, point.item) : undefined);
-    const curve = (a: Point, b: Point) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 - Math.min(160, Math.hypot(b.x - a.x, b.y - a.y) * 0.3 + 16) });
-    ctx.save();
-    for (let i = 0; i < flow.links.length; i++) {
-      const a = anchors[i], b = anchors[i + 1];
-      if (!a || !b) continue;
-      const link = flow.links[i]!, c = curve(a, b);
-      ctx.strokeStyle = link.relationType ? (this.theme.relation[link.relationType] ?? this.theme.flow.step) : this.theme.flow.declared;
-      ctx.lineWidth = link.relationType ? 3 : 2;
-      ctx.setLineDash(link.relationType ? [] : [7, 6]);
-      ctx.globalAlpha = i === flow.current ? 1 : 0.75;
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(c.x, c.y, b.x, b.y); ctx.stroke();
+    const color = this.theme.flow.step, bright = this.theme.flow.indicator;
+    const moving = flow.moving && !state.reducedMotion;
+    const links = new Map<string, { a: Point; b: Point; fill: number }>();
+    for (const link of flow.links) {
+      const from = this.resolve(set, link.from, link.fromAncestors), to = this.resolve(set, link.to, link.toAncestors);
+      if (!from || !to || from.item === to.item) continue;
+      const key = `${from.item.node.id}>${to.item.node.id}`;
+      const existing = links.get(key);
+      if (existing) { existing.fill = Math.max(existing.fill, link.fill); continue; }
+      links.set(key, { a: this.anchor(viewport, camera, from.item), b: this.anchor(viewport, camera, to.item), fill: link.fill });
     }
-    ctx.setLineDash([]); ctx.globalAlpha = 1;
-    anchors.forEach((point, i) => {
-      if (!point) return;
-      const current = i === flow.current;
-      const radius = current ? 13 : 10;
-      if (current && flow.active && !state.reducedMotion) {
-        const pulse = (state.time % 1400) / 1400;
-        ctx.strokeStyle = this.theme.flow.step; ctx.globalAlpha = 1 - pulse; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(point.x, point.y, radius + pulse * 16, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
+    ctx.save();
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const { a, b, fill } of links.values()) {
+      const c = curveControl(a, b);
+      // The track.
+      ctx.setLineDash([2, 6]); ctx.lineDashOffset = 0; ctx.strokeStyle = color; ctx.globalAlpha = fill > 0 ? 0.4 : 0.25; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(c.x, c.y, b.x, b.y); ctx.stroke();
+      if (fill <= 0) continue;
+      const points = sampleQuadratic(a, c, b, fill);
+      // The flow: a soft glow, then dashes streaming toward the target.
+      ctx.setLineDash([]); ctx.globalAlpha = 0.3; ctx.lineWidth = 9;
+      polyline(ctx, points); ctx.stroke();
+      ctx.globalAlpha = 1; ctx.lineWidth = 3; ctx.strokeStyle = color;
+      polyline(ctx, points); ctx.stroke();
+      ctx.setLineDash([9, 13]); ctx.lineDashOffset = moving ? -((state.time * 0.045) % 22) : 0; ctx.strokeStyle = bright; ctx.lineWidth = 2.2;
+      polyline(ctx, points); ctx.stroke();
+      ctx.setLineDash([]);
+      if (fill < 1) {
+        // The front: the newest stretch of the flow, brightening toward its edge.
+        const tail = sampleQuadratic(a, c, b, fill, Math.max(0, fill - 0.18));
+        const start = tail[0]!, end = tail.at(-1)!;
+        const gradient = ctx.createLinearGradient(start.x, start.y, end.x, end.y);
+        gradient.addColorStop(0, transparent(bright)); gradient.addColorStop(1, bright);
+        ctx.strokeStyle = gradient; ctx.lineWidth = 5; ctx.shadowColor = color; ctx.shadowBlur = 14;
+        polyline(ctx, tail); ctx.stroke();
+        ctx.shadowBlur = 0;
+      } else {
+        // Arrived: an arrowhead along the curve's tangent at the target.
+        const angle = Math.atan2(b.y - c.y, b.x - c.x), size = 9;
+        ctx.fillStyle = color; ctx.beginPath();
+        ctx.moveTo(b.x, b.y); ctx.lineTo(b.x - size * Math.cos(angle - 0.42), b.y - size * Math.sin(angle - 0.42)); ctx.lineTo(b.x - size * Math.cos(angle + 0.42), b.y - size * Math.sin(angle + 0.42)); ctx.closePath(); ctx.fill();
       }
-      ctx.fillStyle = current ? this.theme.flow.step : this.theme.dark ? '#1e2747' : '#ffffff';
-      ctx.strokeStyle = this.theme.flow.step; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(point.x, point.y, radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = current ? (this.theme.dark ? '#1b1400' : '#ffffff') : this.theme.flow.step;
-      ctx.font = `800 ${current ? 12 : 11}px ${this.font}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(i + 1), point.x, point.y + 0.5);
-    });
-    // Moving indicator between the current step and the next one.
-    const a = anchors[flow.current], b = anchors[flow.current + 1];
-    if (flow.active && a && b && flow.progress > 0) {
-      const c = curve(a, b), t = state.reducedMotion ? 1 : flow.progress;
-      const p = { x: (1 - t) ** 2 * a.x + 2 * (1 - t) * t * c.x + t * t * b.x, y: (1 - t) ** 2 * a.y + 2 * (1 - t) * t * c.y + t * t * b.y };
-      ctx.shadowColor = this.theme.flow.step; ctx.shadowBlur = 18; ctx.fillStyle = this.theme.flow.indicator;
-      ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill();
+    }
+    // Stops: one mark per visible block, the most advanced state winning.
+    const rank = { front: 0, reached: 1, ahead: 2 } as const;
+    const marks = new Map<string, { at: Point; state: keyof typeof rank }>();
+    for (const stop of [...flow.stops].sort((x, y) => rank[x.state] - rank[y.state])) {
+      const at = this.resolve(set, stop.entityId, stop.ancestors);
+      if (!at || marks.has(at.item.node.id)) continue;
+      marks.set(at.item.node.id, { at: this.anchor(viewport, camera, at.item), state: stop.state });
+    }
+    for (const { at, state: mark } of [...marks.values()].reverse()) {
+      if (mark === 'ahead') { ctx.globalAlpha = 0.7; ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.fillStyle = this.theme.dark ? '#141a30' : '#ffffff'; ctx.beginPath(); ctx.arc(at.x, at.y, 4.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); continue; }
+      if (mark === 'front' && !state.reducedMotion) {
+        const pulse = (state.time % 1400) / 1400;
+        ctx.globalAlpha = 1 - pulse; ctx.strokeStyle = color; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(at.x, at.y, 8 + pulse * 16, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.globalAlpha = 1; ctx.fillStyle = color; ctx.strokeStyle = bright; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(at.x, at.y, mark === 'front' ? 7 : 5.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  /**
+   * The coverage category a block is drawn in: files by their own; symbols by
+   * their file's; routes, endpoints, commands and tasks are entry points;
+   * areas keep their colors and get a badge instead.
+   */
+  private coverageResolver(scene: Scene, coverage: CoverageOverlay): (node: NodeSummary) => string | undefined {
+    if (this.coverageCache?.key === coverage) return this.coverageCache.resolve;
+    const cache = new Map<string, string | undefined>();
+    const resolve = (node: NodeSummary): string | undefined => {
+      if (cache.has(node.id)) return cache.get(node.id);
+      let found: string | undefined;
+      if (node.type === 'file') found = coverage.files.get(node.id);
+      else if (['route', 'api_endpoint', 'command', 'scheduled_task'].includes(node.type)) found = 'entry';
+      else if (node.kind === 'entity' && !['repository', 'application', 'directory', 'database_table'].includes(node.type)) {
+        const parent = node.spatialParentId ? scene.nodes.get(node.spatialParentId) : undefined;
+        found = parent ? resolve(parent) : undefined;
+      }
+      cache.set(node.id, found);
+      return found;
+    };
+    this.coverageCache = { key: coverage, resolve };
+    return resolve;
+  }
+  private coverageCache?: { key: CoverageOverlay; resolve: (node: NodeSummary) => string | undefined };
+  /** A closed area: the share of its code files that flows touch (entry points included), as a small bar and a percentage. */
+  private coverageBadge(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, counts: Record<string, number>): void {
+    if (item.size < 34) return;
+    const code = Object.entries(counts).filter(([key]) => key !== 'asset').reduce((sum, [, count]) => sum + count, 0);
+    if (!code) return;
+    const order = ['entry', 'flow', 'supporting', 'explained', 'test', 'config', 'outside', 'unreached'];
+    const touched = (counts.entry ?? 0) + (counts.flow ?? 0);
+    const { x, y, w, h } = item.node.rect;
+    const anchor = worldToScreen(camera, viewport, x + w * 0.5, y + h - Math.min(h, w) * 0.12, item.zTop);
+    const text = `${Math.round((touched / code) * 100)}% in flows`;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0.75, alpha);
+    ctx.font = `700 10px ${this.font}`; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+    const width = Math.max(64, ctx.measureText(text).width + 14);
+    ctx.fillStyle = this.theme.dark ? 'rgba(8,12,26,0.86)' : 'rgba(255,253,248,0.94)';
+    roundRect(ctx, anchor.x - width / 2, anchor.y - 11, width, 22, 7); ctx.fill();
+    let cursor = anchor.x - width / 2 + 5;
+    for (const key of order) {
+      const share = (counts[key] ?? 0) / code;
+      if (!share) continue;
+      ctx.fillStyle = this.palettes.get(`coverage:${key}`, 0).top;
+      ctx.fillRect(cursor, anchor.y + 5, share * (width - 10), 3);
+      cursor += share * (width - 10);
+    }
+    ctx.fillStyle = this.theme.text.primary; ctx.fillText(text, anchor.x, anchor.y - 2);
+    ctx.restore();
+  }
+  private toneColor(tone: StopTone): string {
+    const dark = this.theme.dark;
+    const colors: Record<StopTone, [string, string]> = { client: ['#f472f6', '#c026d3'], call: ['#a78bfa', '#7c3aed'], route: ['#60a5fa', '#2563eb'], server: ['#34d399', '#059669'], data: ['#fbbf24', '#d97706'], response: ['#fb923c', '#ea580c'], return: ['#fb7cbe', '#db2777'], console: ['#22d3ee', '#0891b2'] };
+    return colors[tone][dark ? 0 : 1];
+  }
+  /**
+   * Stops of a flow labelled on screen, whatever the zoom: a numbered pill
+   * beside each block (or the area holding it), placed where it does not
+   * cover another, with a leader line to its block.
+   */
+  private callouts(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, set: VisibleSet, callouts: CalloutOverlay[]): void {
+    const placed: { x0: number; y0: number; x1: number; y1: number }[] = [];
+    const resolved = callouts.map(callout => ({ callout, at: this.resolve(set, callout.entityId, callout.ancestors) })).filter(item => item.at);
+    // The current stop first, so it always gets the best place.
+    resolved.sort((a, b) => Number(b.callout.current) - Number(a.callout.current) || a.callout.number - b.callout.number);
+    ctx.save();
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    for (const { callout, at } of resolved) {
+      const anchor = this.anchor(viewport, camera, at!.item);
+      const color = this.toneColor(callout.tone);
+      ctx.font = `${callout.current ? 800 : 700} ${callout.current ? 12.5 : 11}px ${this.font}`;
+      const text = fit(ctx, callout.label, callout.current ? 260 : 190);
+      const h = callout.current ? 24 : 20, badge = h - 6;
+      const w = ctx.measureText(text).width + badge + 16;
+      const candidates = [[18, -h - 10], [18, 10], [-w - 18, -h - 10], [-w - 18, 10], [-w / 2, -h - 22], [-w / 2, 16]];
+      let box: { x0: number; y0: number; x1: number; y1: number } | undefined;
+      for (const [dx, dy] of candidates) {
+        const candidate = { x0: anchor.x + dx!, y0: anchor.y + dy!, x1: anchor.x + dx! + w, y1: anchor.y + dy! + h };
+        if (candidate.x0 < 2 || candidate.y0 < 2 || candidate.x1 > viewport.width - 2 || candidate.y1 > viewport.height - 2) continue;
+        if (!placed.some(other => candidate.x0 < other.x1 && candidate.x1 > other.x0 && candidate.y0 < other.y1 && candidate.y1 > other.y0)) { box = candidate; break; }
+      }
+      // No free place: the current stop still shows (on top), the others only keep their number on the map.
+      if (!box && !callout.current) continue;
+      box ??= { x0: anchor.x + 18, y0: anchor.y - h - 10, x1: anchor.x + 18 + w, y1: anchor.y - 10 };
+      placed.push(box);
+      const near = { x: Math.max(box.x0, Math.min(anchor.x, box.x1)), y: Math.max(box.y0, Math.min(anchor.y, box.y1)) };
+      ctx.globalAlpha = callout.current ? 1 : 0.92;
+      ctx.strokeStyle = color; ctx.lineWidth = callout.current ? 2 : 1.4;
+      ctx.beginPath(); ctx.moveTo(anchor.x, anchor.y); ctx.lineTo(near.x, near.y); ctx.stroke();
+      if (callout.current) { ctx.shadowColor = color; ctx.shadowBlur = 16; }
+      ctx.fillStyle = this.theme.dark ? 'rgba(10,14,30,0.94)' : 'rgba(255,255,255,0.97)';
+      roundRect(ctx, box.x0, box.y0, w, h, h / 2); ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = callout.current ? 2 : 1.2; ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(box.x0 + 3 + badge / 2, box.y0 + h / 2, badge / 2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = this.theme.dark ? '#0b1020' : '#ffffff'; ctx.textAlign = 'center';
+      ctx.font = `800 ${callout.current ? 10.5 : 9.5}px ${this.font}`;
+      ctx.fillText(String(callout.number), box.x0 + 3 + badge / 2, box.y0 + h / 2 + 0.5);
+      ctx.textAlign = 'left'; ctx.fillStyle = this.theme.text.primary;
+      ctx.font = `${callout.current ? 800 : 700} ${callout.current ? 12.5 : 11}px ${this.font}`;
+      ctx.fillText(text, box.x0 + badge + 9, box.y0 + h / 2 + 0.5);
+    }
+    ctx.restore();
+  }
+  /** Pins stacked under their block: what the flow does there that is not an entity. */
+  private pins(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, set: VisibleSet, pins: PinOverlay[]): void {
+    const tones = { ok: this.theme.dark ? '#4ade80' : '#15803d', warn: this.theme.dark ? '#fbbf24' : '#b45309', error: this.theme.dark ? '#f87171' : '#b91c1c', info: this.theme.text.secondary };
+    const stacks = new Map<string, number>();
+    ctx.save();
+    ctx.font = `600 10px ${this.font}`; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    for (const pin of pins) {
+      const at = this.resolve(set, pin.ownerId, pin.ownerAncestors);
+      if (!at) continue;
+      const anchor = this.anchor(viewport, camera, at.item);
+      const index = stacks.get(at.item.node.id) ?? 0;
+      stacks.set(at.item.node.id, index + 1);
+      if (index >= 5) continue;
+      const text = fit(ctx, index === 4 ? `+ more` : pin.label, 180);
+      const w = ctx.measureText(text).width + 12, x = anchor.x - w / 2, y = anchor.y + 14 + index * 17;
+      ctx.globalAlpha = 0.95;
+      ctx.fillStyle = this.theme.dark ? 'rgba(10,14,30,0.9)' : 'rgba(255,255,255,0.95)';
+      roundRect(ctx, x, y, w, 15, 7.5); ctx.fill();
+      ctx.strokeStyle = tones[pin.tone]; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = tones[pin.tone]; ctx.fillText(text, x + 6, y + 8);
     }
     ctx.restore();
   }
@@ -607,6 +787,25 @@ export class MapRenderer {
     });
     ctx.restore();
   }
+}
+/** The control point of the arc drawn between two blocks (relationships and flows share it). */
+function curveControl(from: Point, to: Point): Point {
+  const distance = Math.hypot(to.x - from.x, to.y - from.y);
+  return { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 - Math.min(220, distance * 0.35 + 20) };
+}
+/** Points along a quadratic curve from `start` to `end` (0..1). */
+function sampleQuadratic(a: Point, c: Point, b: Point, end: number, start = 0, segments = 28): Point[] {
+  const points: Point[] = [];
+  const count = Math.max(2, Math.ceil(segments * (end - start)));
+  for (let i = 0; i <= count; i++) {
+    const t = start + ((end - start) * i) / count;
+    points.push({ x: (1 - t) ** 2 * a.x + 2 * (1 - t) * t * c.x + t * t * b.x, y: (1 - t) ** 2 * a.y + 2 * (1 - t) * t * c.y + t * t * b.y });
+  }
+  return points;
+}
+function polyline(ctx: CanvasRenderingContext2D, points: Point[]): void {
+  ctx.beginPath(); ctx.moveTo(points[0]!.x, points[0]!.y);
+  for (let i = 1; i < points.length; i++) ctx.lineTo(points[i]!.x, points[i]!.y);
 }
 function ancestorChain(scene: Scene, node: NodeSummary): string[] {
   const chain: string[] = [];

@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import { MapController } from '../lib/controller';
 import { typeLabel } from '../lib/format';
 import { LEVELS } from '../lib/lod';
-import { themeById } from '../lib/themes';
+import { coverageCss, themeById } from '../lib/themes';
+import { COVERAGE_HINT, COVERAGE_ORDER, COVERAGE_TEXT } from '../lib/coverage';
 import { impactColors } from '../lib/renderer';
 import { useAtlas, useStore } from './context';
 
@@ -13,7 +14,6 @@ export function MapView() {
   const status = useAtlas(state => state.status);
   const error = useAtlas(state => state.error);
   const stale = useAtlas(state => state.staleIndex);
-  const drafting = useAtlas(state => !!state.flows.draft);
   const switching = useAtlas(state => state.timeline.switching);
   const [failure, setFailure] = useState<string>();
   useEffect(() => {
@@ -27,9 +27,9 @@ export function MapView() {
       <MapControls />
       <StatusBar />
       <Legend />
+      <CoverageLegend />
       <HoverCard />
       <VisibleList />
-      {drafting && <div className="capture-banner" role="status">Recording flow steps: click entities on the map (or use “Add selection”).</div>}
       {stale && <div className="banner" role="status">A newer analysis run is available. <button className="button small primary" onClick={() => void store.reload()}>Reload map</button></div>}
       {switching && <div className="switching" role="status"><span className="spinner tiny" />Loading snapshot…</div>}
       {(status === 'loading' || status === 'error' || failure) && (
@@ -53,6 +53,7 @@ export function MapView() {
 function MapControls() {
   const store = useStore();
   const diagnostics = useAtlas(state => state.showDiagnostics);
+  const coverage = useAtlas(state => state.coverage.show);
   return (
     <div className="map-controls">
       <div className="control-group" role="group" aria-label="Zoom">
@@ -63,6 +64,7 @@ function MapControls() {
         <button onClick={() => store.navigator?.fitAll()} aria-label="Fit whole repository" title="Fit / reset view (F)">⤢</button>
         <button onClick={() => { const node = store.getState().selection?.node; if (node) store.navigator?.flyTo(node, { mode: node.childCount > 0 ? 'enter' : 'focus' }); }} aria-label="Zoom to selection" title="Zoom to selection (Enter)">◎</button>
         <button onClick={() => store.toggleDiagnostics()} aria-pressed={diagnostics} aria-label="Show unresolved findings on the map" title="Unresolved findings">⚠</button>
+        <button onClick={() => void store.toggleCoverage()} aria-pressed={coverage} aria-label="Color files by flow coverage" title="Coverage: which files flows touch">◑</button>
       </div>
     </div>
   );
@@ -130,6 +132,35 @@ function Legend() {
         <div>{items.map(item => <div key={item.text} className={`coverage-item ${item.state}`}><span className="mark">{item.state === 'present' ? '●' : item.state === 'partial' ? '◐' : '○'}</span>{item.text}</div>)}</div>
       </div>
     </details>
+  );
+}
+/** While the coverage lens is on: what each color means, how many files, and how much of the code flows touch. */
+function CoverageLegend() {
+  const store = useStore();
+  const coverage = useAtlas(state => state.coverage);
+  const dark = themeById(useAtlas(state => state.themeId)).dark;
+  if (!coverage.show) return null;
+  const data = coverage.data;
+  const touched = data ? data.totals.entry + data.totals.flow : 0;
+  return (
+    <div className="coverage-legend" role="region" aria-label="Coverage lens">
+      <div className="coverage-legend-head">
+        <strong>Coverage by flows</strong>
+        <button className="icon-button small" onClick={() => void store.toggleCoverage(false)} aria-label="Hide coverage">✕</button>
+      </div>
+      {coverage.status === 'loading' && !data && <p className="absent">Following every flow…</p>}
+      {coverage.status === 'error' && <p className="note error">{coverage.error}</p>}
+      {data && (
+        <>
+          <p className="coverage-headline"><span className="big">{data.codeFiles ? Math.round((touched / data.codeFiles) * 100) : 0}%</span> of {data.codeFiles} code files are entry points or in one of {data.flows} flows</p>
+          <div className="coverage-bar wide">{COVERAGE_ORDER.filter(key => key !== 'asset' && data.totals[key]).map(key => <span key={key} style={{ flexGrow: data.totals[key], background: coverageCss(key, dark) }} />)}</div>
+          <ul className="coverage-keys">
+            {COVERAGE_ORDER.filter(key => data.totals[key]).map(key => <li key={key} title={COVERAGE_HINT[key]}><span className="type-dot" style={{ background: coverageCss(key, dark) }} />{COVERAGE_TEXT[key]}<span className="count">{data.totals[key]}</span></li>)}
+          </ul>
+          <p className="absent">Closed areas show the share of their code files in flows. Select a file to see why.</p>
+        </>
+      )}
+    </div>
   );
 }
 /** Shown while a blast radius is on the map. */

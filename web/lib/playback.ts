@@ -1,30 +1,31 @@
-// Pure playback state machine for declared flows. Missing steps (entities that
-// disappeared after reindexing) are skipped, never played.
+// Pure playback state machine: a current item (a branch of a flow on the
+// map), how far it has played (0..1), play/pause/step/seek. Items marked as
+// skipped are never played.
 export type PlaybackStatus = 'idle' | 'playing' | 'paused' | 'finished';
 export interface PlaybackState {
   status: PlaybackStatus;
-  /** Index into the flow's steps of the current step. */
+  /** Index of the current item. */
   index: number;
-  /** 0..1 progress of the indicator from `index` toward the next playable step. */
+  /** 0..1: how far the current item has played. */
   progress: number;
-  /** Indices of steps that can be played, ascending. */
+  /** Indices of items that can be played, ascending. */
   playable: number[];
 }
 export type PlaybackAction =
-  | { type: 'load'; missing: boolean[] }
+  | { type: 'load'; skipped: boolean[] }
   | { type: 'play' } | { type: 'pause' } | { type: 'restart' }
   | { type: 'next' } | { type: 'previous' } | { type: 'seek'; index: number }
   | { type: 'tick'; elapsedMs: number; stepMs: number };
 
-export function initialPlayback(missing: boolean[] = []): PlaybackState {
-  const playable = missing.flatMap((isMissing, index) => isMissing ? [] : [index]);
+export function initialPlayback(skipped: boolean[] = []): PlaybackState {
+  const playable = skipped.flatMap((skip, index) => skip ? [] : [index]);
   return { status: 'idle', index: playable[0] ?? 0, progress: 0, playable };
 }
 function after(state: PlaybackState, index: number): number | undefined { return state.playable.find(candidate => candidate > index); }
 function before(state: PlaybackState, index: number): number | undefined { return [...state.playable].reverse().find(candidate => candidate < index); }
 export function playback(state: PlaybackState, action: PlaybackAction): PlaybackState {
   switch (action.type) {
-    case 'load': return initialPlayback(action.missing);
+    case 'load': return initialPlayback(action.skipped);
     case 'play':
       if (!state.playable.length) return state;
       if (state.status === 'finished') return { ...state, status: 'playing', index: state.playable[0]!, progress: 0 };
@@ -49,10 +50,9 @@ export function playback(state: PlaybackState, action: PlaybackAction): Playback
         if (next === undefined) return { ...state, index, progress: 0, status: 'finished' };
         index = next; progress -= 1;
       }
-      // The last playable step has nowhere to travel; it simply dwells then finishes.
       return { ...state, index, progress };
     }
   }
 }
-/** Next playable step after the current one, for drawing the travelling indicator. */
+/** The next playable item after the current one. */
 export function nextPlayable(state: PlaybackState): number | undefined { return after(state, state.index); }

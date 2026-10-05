@@ -11,11 +11,16 @@
 // framework helpers (`abort`, `response`, `redirect`, `dispatch`…) and
 // framework exceptions with a known HTTP status. Database effects also become
 // `reads`/`writes` relations to the table, when the model maps to a table the
-// migrations declare (or `DB::table('…')` names one literally).
+// migrations declare (or `DB::table('…')` names one literally). Console
+// commands run by name (`Artisan::call('name')`, `$this->call('name')` in a
+// command) become `invokes` relations to the command; a dispatched job class
+// (`Job::dispatch()`, `dispatch(new Job)`) is a call of its `handle` method;
+// `Inertia::render('page')` is a response that renders that page component.
 import type { AnalysisContext } from '../core/analyzer.js';
 import { evidence, type EffectCategory, type Entity } from '../core/graph.js';
 import { args, ast, classConstant, literal, name, nodes, resolve, text, walk, type Ast, type ParsedFile, type Scope } from './php-ast.js';
 import type { SiteCollector } from './references.js';
+import type { CommandLookup } from './laravel-console.js';
 
 export interface PhpClass { entity: Entity; fqn: string; app: string; scope: Scope; parsed: ParsedFile; node: Ast; extends?: string }
 export interface PhpMethod { entity: Entity; node: Ast; owner: PhpClass }
@@ -35,7 +40,10 @@ const EXCEPTION_STATUS: Record<string, number> = {
   'symfony\\component\\httpkernel\\exception\\conflicthttpexception': 409, 'symfony\\component\\httpkernel\\exception\\toomanyrequestshttpexception': 429,
   'symfony\\component\\httpkernel\\exception\\unprocessableentityhttpexception': 422,
 };
-const RESPONSE_HELPERS = new Set(['response', 'redirect', 'back', 'to_route', 'view', 'abort', 'abort_if', 'abort_unless']);
+const RESPONSE_HELPERS = new Set(['response', 'redirect', 'back', 'to_route', 'view', 'abort', 'abort_if', 'abort_unless', 'inertia']);
+const CONSOLE_COMMAND = 'illuminate\\console\\command';
+const ARTISAN_RUN = new Set(['call', 'queue', 'callsilently', 'callsilent']);
+const isInertia = (fqn: string | undefined) => !!fqn && ['inertia\\inertia', 'inertia'].includes(fqn.toLowerCase());
 function short(value: string, max = 70): string { const text = value.replace(/\s+/g, ' '); return text.length > max ? `${text.slice(0, max - 1)}…` : text; }
 /** The class's `extends` chain (lower-cased FQNs, itself first), through indexed classes. */
 export function classChain(classes: Map<string, PhpClass>, app: string, fqn: string): string[] {
@@ -46,7 +54,7 @@ export function classChain(classes: Map<string, PhpClass>, app: string, fqn: str
 /** Whether a class's `extends` chain reaches an Eloquent base class. */
 export function isEloquentModel(classes: Map<string, PhpClass>, app: string, fqn: string): boolean { return classChain(classes, app, fqn).some(item => ELOQUENT_BASES.has(item)); }
 
-export function resolvePhpReferences(context: AnalysisContext, classes: Map<string, PhpClass>, methods: PhpMethod[], sites: SiteCollector, tables?: TableLookup): void {
+export function resolvePhpReferences(context: AnalysisContext, classes: Map<string, PhpClass>, methods: PhpMethod[], sites: SiteCollector, tables?: TableLookup, commands?: CommandLookup): void {
   const key = (app: string, fqn: string) => `${app}:${fqn.toLowerCase()}`;
   const classOf = (app: string, fqn: string | undefined) => fqn ? classes.get(key(app, fqn)) : undefined;
   const chain = (app: string, fqn: string): string[] => classChain(classes, app, fqn);
@@ -180,8 +188,8 @@ export function resolvePhpReferences(context: AnalysisContext, classes: Map<stri
         return { root: current, names };
       }
     };
-    const effect = (node: Ast, category: EffectCategory, operation: string, via: string, extra: { status?: number; target?: Entity; detail?: string; table?: Entity } = {}) => {
-      sites.effect(from.id, { category, operation, detail: extra.detail ?? short(text(node, parsed)), line: lineOf(node), via, ...(extra.status !== undefined ? { status: extra.status } : {}), ...(extra.target ? { target: extra.target.id, targetName: extra.target.name } : {}), ...(extra.table ? { table: extra.table.id, tableName: extra.table.name } : {}) });
+    const effect = (node: Ast, category: EffectCategory, operation: string, via: string, extra: { status?: number; target?: Entity; detail?: string; table?: Entity; page?: string } = {}) => {
+      sites.effect(from.id, { category, operation, detail: extra.detail ?? short(text(node, parsed)), line: lineOf(node), via, ...(extra.status !== undefined ? { status: extra.status } : {}), ...(extra.target ? { target: extra.target.id, targetName: extra.target.name } : {}), ...(extra.table ? { table: extra.table.id, tableName: extra.table.name } : {}), ...(extra.page ? { page: extra.page } : {}) });
     };
     /** A database read or write of a table: an effect, and a `reads`/`writes` relation to the table. */
     const tableAccess = (node: Ast, table: Entity | undefined, write: boolean, form: 'eloquent' | 'query', explanation: string) => {
@@ -193,6 +201,19 @@ export function resolvePhpReferences(context: AnalysisContext, classes: Map<stri
     walk(method.node, node => { for (const value of Object.values(node)) { if (Array.isArray(value)) for (const child of nodes(value)) parents.set(child, node); else { const child = ast(value); if (child && child !== node) parents.set(child, node); } } });
     const insideClosure = (node: Ast) => { for (let current = parents.get(node); current && current !== method.node; current = parents.get(current)) if (current.kind === 'closure' || current.kind === 'arrowfunc') return true; return false; };
     const controllerMethod = owner.entity.type === 'controller' && method.node.visibility !== 'private' && method.node.visibility !== 'protected';
+    /** A console command run by name: an `invokes` relation, or a finding when the name is not literal or not indexed. */
+    const runCommand = (node: Ast, argument: Ast | undefined, how: string) => {
+      const line = literal(argument), fqn = classConstant(argument, scope);
+      const command = line ? commands?.byName(app, line) : fqn ? commands?.byClass(app, fqn) : undefined;
+      if (command) { sites.add({ from: from.id, to: command.id, type: 'invokes', form: 'artisan', evidence: fact(node, `${how} runs Artisan command ${command.name}`) }); return; }
+      context.graph.diagnose({ analyzer: 'php-laravel', severity: 'warning', code: 'unresolved-artisan-call', file: parsed.file.path, line: lineOf(node), entityId: from.id, reason: line || fqn ? `${how} runs ${line ?? fqn}, which is not an indexed command` : `${how} runs a command whose name is not a literal (${short(text(argument, parsed), 50) || 'no argument'})` });
+    };
+    /** A job class handled by its `handle` method: the dispatch is a call of it. */
+    const dispatchJob = (node: Ast, fqn: string | undefined) => {
+      const handler = fqn ? lookup(app, fqn, 'handle') ?? lookup(app, fqn, '__invoke') : undefined;
+      if (handler) sites.add({ from: from.id, to: handler.id, type: 'calls', form: 'dispatch', evidence: fact(node, `Dispatches ${fqn!.split('\\').at(-1)}, which runs its ${handler.name}() method`) });
+    };
+    const isCommand = classChain(classes, app, owner.fqn).includes(CONSOLE_COMMAND);
 
     // FormRequest parameters validate before the method body runs.
     for (const parameter of args(method.node)) {
@@ -216,7 +237,9 @@ export function resolvePhpReferences(context: AnalysisContext, classes: Map<stri
         const value = ast(node.expr)!;
         const root = value.kind === 'call' ? chainOf(value).root : value;
         const helper = root.kind === 'call' && ast(root.what)?.kind === 'name' ? name(ast(root.what))!.toLowerCase() : undefined;
-        if (!helper || !RESPONSE_HELPERS.has(helper)) effect(node, 'response', 'return', 'controller return value', { status: 200 });
+        const rootWhat = root.kind === 'call' ? ast(root.what) : undefined;
+        const inertiaRender = rootWhat?.kind === 'staticlookup' && isInertia(classTarget(rootWhat.what)) && name(rootWhat.offset)?.toLowerCase() === 'render';
+        if ((!helper || !RESPONSE_HELPERS.has(helper)) && !inertiaRender) effect(node, 'response', 'return', 'controller return value', { status: 200 });
         return;
       }
       if (node.kind !== 'call') return;
@@ -236,13 +259,20 @@ export function resolvePhpReferences(context: AnalysisContext, classes: Map<stri
             const table = named !== undefined ? tables?.named(app, named) : undefined;
             effect(node, 'database', write ? 'write' : 'read', fqn!, { ...(table ? { table } : {}), ...(named !== undefined && !table ? { detail: `${short(text(node, parsed))} (table ${named} is not declared by indexed migrations)` } : {}) });
             tableAccess(node, table, write, 'query', `through ${fqn!.split('\\').at(-1)}::table('${named}')`);
+          } else if (facade === 'artisan' && ARTISAN_RUN.has(names[0] ?? '')) {
+            effect(node, 'process', names[0]!, fqn!);
+            runCommand(node, args(root)[0], `${fqn!.split('\\').at(-1)}::${names[0]}()`);
           } else if (facade) effect(node, FACADES[facade]!, names[0] ?? facade, fqn!);
+          else if (isInertia(fqn) && names[0] === 'render') {
+            const page = literal(args(root)[0]);
+            effect(node, 'response', 'inertia', fqn!, { status: 200, detail: page ? `Inertia::render('${page}')` : short(text(node, parsed)), ...(page ? { page } : {}) });
+          }
           else if (fqn && isModel(app, fqn) && !lookup(app, fqn, names[0] ?? '')) {
             const model = classOf(app, fqn), table = tables?.model(app, fqn);
             effect(node, 'database', write ? 'write' : 'read', `Eloquent model ${fqn}`, { ...(model ? { target: model.entity } : {}), ...(table ? { table } : {}) });
             tableAccess(node, table, write, 'eloquent', `through Eloquent model ${fqn.split('\\').at(-1)}`);
             if (names.some(item => item === 'findorfail' || item === 'firstorfail')) effect(node, 'response', 'not found', 'ModelNotFoundException', { status: 404, detail: `${fqn.split('\\').at(-1)}::…OrFail() → 404 when missing` });
-          } else if (fqn && names[0] === 'dispatch' && classOf(app, fqn)) effect(node, 'queue', 'dispatch', fqn, { target: classOf(app, fqn)!.entity });
+          } else if (fqn && names[0] === 'dispatch' && classOf(app, fqn)) { effect(node, 'queue', 'dispatch', fqn, { target: classOf(app, fqn)!.entity }); dispatchJob(node, fqn); }
           else if (fqn && fqn.toLowerCase() === 'illuminate\\validation\\validationexception') effect(node, 'response', 'validation', fqn, { status: 422 });
         } else if (rootWhat?.kind === 'name') {
           const fn = name(rootWhat)!.toLowerCase(), first = args(root)[0];
@@ -259,6 +289,10 @@ export function resolvePhpReferences(context: AnalysisContext, classes: Map<stri
             const created = ast(first)?.kind === 'new' ? classTarget(ast(first)!.what) : undefined;
             const target = created ? classOf(app, created) : undefined;
             effect(node, fn === 'dispatch' ? 'queue' : 'event', fn, `${fn}()`, target ? { target: target.entity } : {});
+            if (fn === 'dispatch' && target) dispatchJob(node, created);
+          } else if (fn === 'inertia' && first) {
+            const page = literal(first);
+            effect(node, 'response', 'inertia', 'inertia()', { status: 200, detail: page ? `inertia('${page}')` : short(text(node, parsed)), ...(page ? { page } : {}) });
           } else if (fn === 'cache') effect(node, 'cache', names[0] ?? 'cache', 'cache()');
           else if (fn === 'session') effect(node, 'storage', names[0] ?? 'session', 'session()');
         } else if (rootWhat?.kind === 'propertylookup' || rootWhat?.kind === 'nullsafepropertylookup') {
@@ -272,6 +306,13 @@ export function resolvePhpReferences(context: AnalysisContext, classes: Map<stri
             tableAccess(node, table, true, 'eloquent', `through an instance of Eloquent model ${model.split('\\').at(-1)}`);
           }
         }
+      }
+      // A command running another one by name: `$this->call('name')` (inherited from Laravel's Command).
+      if (isCommand && what.kind === 'propertylookup' && ast(what.what)?.kind === 'variable' && ast(what.what)!.name === 'this' && ARTISAN_RUN.has((name(what.offset) ?? '').toLowerCase()) && !lookup(app, owner.fqn, name(what.offset)!)) {
+        effect(node, 'process', (name(what.offset) ?? 'call').toLowerCase(), 'Illuminate\\Console\\Command');
+        runCommand(node, args(node)[0], `$this->${name(what.offset)}()`);
+        sites.count(from.id, 'resolved');
+        return;
       }
       // The call itself.
       if (what.kind === 'name') { sites.count(from.id, 'external'); return; }

@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
-// Blast radius, Steps, path → static flow, effects and call sites, against the
-// fixture repository served by web/e2e/server.ts.
+// Blast radius, Steps, effects and call sites, against the fixture repository
+// served by web/e2e/server.ts.
 async function open(page: Page) {
   await page.goto('/');
   await page.waitForFunction(() => ((window as unknown as { __ARCHIPELAGO__?: { visibleIds(): string[] } }).__ARCHIPELAGO__?.visibleIds().length ?? 0) > 2);
@@ -22,7 +22,7 @@ test('impact shows what depends on a method across the stack and survives in the
   await inspector(page).getByRole('button', { name: 'Impact', exact: true }).click();
   const section = inspector(page).getByRole('region', { name: 'Blast radius' });
   await expect(section.locator('.impact-bars')).toBeVisible();
-  await expect(section).toContainText(/Reaches \d+ endpoints\. Affected: \d+ in backend, \d+ in frontend\./);
+  await expect(section).toContainText(/Reaches \d+ endpoints\. Affected: \d+ in (backend|frontend), \d+ in (backend|frontend)\./);
   await expect(section).toContainText('Lower bound');
   // Hop counts grow down the list; the frontend method requesting the endpoint is three hops away.
   const row = (name: string) => section.locator('.impact-row').filter({ has: page.locator('.row-title .label', { hasText: new RegExp(`^${name.replace(/[/$]/g, '\\$&')}$`) }) });
@@ -36,7 +36,7 @@ test('impact shows what depends on a method across the stack and survives in the
   // Deeper walks reach the pages.
   await section.getByLabel('Hops').selectOption('6');
   await expect(row('/account').locator('.impact-distance')).toHaveText('6');
-  await expect(section).toContainText(/Reaches \d+ endpoints and 2 pages\./);
+  await expect(section).toContainText(/Reaches \d+ endpoints and 3 pages\./);
   await expect.poll(() => page.url()).toContain('impact=6');
   // The link reopens it.
   await page.reload();
@@ -67,9 +67,10 @@ test('steps draw what happens from a page, with events, conditions, endpoints an
   await expect(outline.locator('.step-card.kind-effect', { hasText: 'response · abort · 404' })).toContainText('when $id < 1');
   await expect(outline.locator('.step-card.kind-effect', { hasText: 'database · read' }).first()).toBeVisible();
   // Each link is a chain of indexed relationships with evidence.
-  const link = outline.locator('.steps-link', { hasText: 'when email' }).first();
+  const link = outline.locator('.steps-link', { hasText: 'when email' }).filter({ has: page.getByRole('button', { name: /hop/ }) }).first();
   await link.getByRole('button', { name: /hop/ }).click();
-  await link.getByRole('button', { name: 'Why?' }).first().click();
+  // Expanded, its hops each have Why?
+  await outline.locator('.steps-link', { hasText: 'when email' }).getByRole('button', { name: 'Why?' }).first().click();
   await expect(page.getByRole('dialog', { name: 'Why is this connected?' })).toContainText('frontend/src/components/AccountPanel.tsx');
   await page.getByRole('button', { name: 'Close evidence' }).click();
   // Clicking a step selects it on the map.
@@ -83,26 +84,6 @@ test('steps draw what happens from a page, with events, conditions, endpoints an
   await diagram.getByRole('button', { name: 'Close diagram' }).click();
   await panel.getByRole('button', { name: 'Close steps' }).click();
   await expect(page.getByRole('complementary', { name: 'Steps' })).toHaveCount(0);
-});
-test('a flow can be built from the path between two entities; every link is a graph relationship', async ({ page }) => {
-  await open(page);
-  await page.getByRole('button', { name: 'Flows' }).click();
-  await page.getByRole('button', { name: 'New flow' }).click();
-  const builder = page.getByRole('group', { name: 'Build from a path' });
-  await select(page, '/account', '/account');
-  await builder.getByRole('button', { name: 'Use selection' }).first().click();
-  await select(page, 'AuthService::authenticate', 'authenticate');
-  await builder.getByRole('button', { name: 'Use selection' }).last().click();
-  await builder.getByRole('button', { name: 'Find path' }).click();
-  await expect(builder).toContainText('static: a path of indexed relationships');
-  await expect(page.getByLabel('Flow name')).toHaveValue('/account → authenticate');
-  expect(await page.getByRole('list', { name: 'Steps' }).locator('li').count()).toBeGreaterThan(3);
-  await page.getByRole('button', { name: 'Save flow' }).click();
-  const steps = page.getByRole('list', { name: 'Flow steps' });
-  await expect(steps.locator('.flow-link').first()).toBeVisible();
-  await expect(steps.locator('.flow-link', { hasText: 'declared order only' })).toHaveCount(0);
-  await expect(steps.locator('.flow-link', { hasText: 'requests' })).toHaveCount(1);
-  await expect(page.locator('.row', { hasText: '/account → authenticate' })).toContainText('static');
 });
 test('effects and call sites explain what a symbol does and what could not be resolved', async ({ page }) => {
   await open(page);

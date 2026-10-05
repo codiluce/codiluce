@@ -15,6 +15,13 @@
 // resolves becomes a request of its own caller, with the wrapper's site and
 // every binding as evidence. Call sites that do not resolve are reported on
 // their callers; a wrapper nobody calls stays unresolved.
+//
+// Inertia visits are requests too: `router.get/post/put/patch/delete(url)` and
+// `router.visit(url, { method })` of `@inertiajs/*`, the same verbs on a form
+// made by Inertia's `useForm()` (`form.post(url)`, or a destructured
+// `post(url)`), and the `<Link href method>` and `<Form action method>`
+// elements. A link whose URL cannot be proven (a menu built from data) is
+// recorded on its file but is not a finding: it is navigation, not an API call.
 import ts from 'typescript';
 import path from 'node:path';
 import type { AnalysisContext, HttpObservation, ScannedFile } from '../core/analyzer.js';
@@ -24,14 +31,19 @@ import { emptyScope, MISSING_ARGUMENT, type ResolvedUrl, type Scope, type Unreso
 
 export const HTTP_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD']);
 const AXIOS_VERBS = new Set(['get', 'post', 'put', 'patch', 'delete', 'options', 'head']);
+const INERTIA_MODULES = new Set(['@inertiajs/react', '@inertiajs/vue3', '@inertiajs/svelte', '@inertiajs/core', '@inertiajs/inertia', '@inertiajs/inertia-react']);
+const INERTIA_VERBS = new Set(['get', 'post', 'put', 'patch', 'delete']);
 /** Wrapper nesting followed from a site to its outermost caller, and call sites read per wrapper. */
 const MAX_WRAPPER_DEPTH = 4, MAX_CALL_SITES = 300, MAX_PROOF = 12;
 
 export interface HttpSite {
-  node: ts.CallExpression;
-  client: 'fetch' | 'axios' | 'axios-instance';
-  /** axios: the method named by the member called. */
+  /** The call (or, for Inertia's `<Link>` and `<Form>`, the JSX element) making the request. */
+  node: ts.Node;
+  client: 'fetch' | 'axios' | 'axios-instance' | 'inertia';
+  /** axios and Inertia: the method named by the member called (`VISIT`: read from the options). */
   verb?: string;
+  /** Inertia `<Link>` / `<Form>`: navigation; an unproven URL is not reported as a finding. */
+  element?: boolean;
   url?: ts.Expression;
   /** fetch: the init object; axios: the request config. */
   options?: ts.Expression;
@@ -82,6 +94,79 @@ function importedFrom(checker: ts.TypeChecker, identifier: ts.Identifier): strin
   while (node && !ts.isImportDeclaration(node)) node = node.parent;
   return node && ts.isImportDeclaration(node) ? literalText(node.moduleSpecifier) : undefined;
 }
+/** The module and exported name an identifier is imported as (`import { router as r } from '@inertiajs/react'` → router). */
+function importedBinding(checker: ts.TypeChecker, identifier: ts.Identifier): { module: string; name: string } | undefined {
+  let symbol: ts.Symbol | undefined;
+  try { symbol = checker.getSymbolAtLocation(identifier); } catch { return undefined; }
+  const declaration = symbol?.declarations?.[0];
+  if (!declaration) return undefined;
+  const name = ts.isImportSpecifier(declaration) ? (declaration.propertyName ?? declaration.name).text : ts.isImportClause(declaration) ? 'default' : undefined;
+  let node: ts.Node | undefined = declaration;
+  while (node && !ts.isImportDeclaration(node)) node = node.parent;
+  const module = node && ts.isImportDeclaration(node) ? literalText(node.moduleSpecifier) : undefined;
+  return name && module ? { module, name } : undefined;
+}
+function isInertiaImport(checker: ts.TypeChecker, identifier: ts.Identifier, ...names: string[]): boolean {
+  const binding = importedBinding(checker, identifier);
+  return !!binding && INERTIA_MODULES.has(binding.module) && names.includes(binding.name);
+}
+/** Whether an expression is a call of Inertia's `useForm()`. */
+function isUseForm(checker: ts.TypeChecker, expression: ts.Expression | undefined): boolean {
+  return !!expression && ts.isCallExpression(expression) && ts.isIdentifier(expression.expression) && isInertiaImport(checker, expression.expression, 'useForm');
+}
+/** Inertia visits made by a call: the router, a `useForm()` form, or one of its destructured methods. */
+function inertiaSite(node: ts.CallExpression, checker: ts.TypeChecker): HttpSite | undefined {
+  const callee = node.expression;
+  const site = (verb: string, via: string, url: ts.Expression | undefined, options?: ts.Expression): HttpSite => ({ node, client: 'inertia', verb, via, ...(url ? { url } : {}), ...(options ? { options } : {}) });
+  if (ts.isPropertyAccessExpression(callee) && ts.isIdentifier(callee.expression)) {
+    const member = callee.name.text, receiver = callee.expression;
+    if (isInertiaImport(checker, receiver, 'router', 'Inertia')) {
+      if (INERTIA_VERBS.has(member)) return site(member.toUpperCase(), 'Inertia router', node.arguments[0]);
+      if (member === 'visit') return site('VISIT', 'Inertia router', node.arguments[0], node.arguments[1]);
+      return undefined;
+    }
+    let symbol: ts.Symbol | undefined;
+    try { symbol = checker.getSymbolAtLocation(receiver); } catch { symbol = undefined; }
+    const declaration = symbol?.valueDeclaration;
+    if (declaration && ts.isVariableDeclaration(declaration) && isUseForm(checker, declaration.initializer)) {
+      if (INERTIA_VERBS.has(member)) return site(member.toUpperCase(), 'Inertia useForm', node.arguments[0]);
+      if (member === 'submit') { const method = literalText(node.arguments[0]); return method ? site(method.toUpperCase(), 'Inertia useForm', node.arguments[1]) : { ...site('GET', 'Inertia useForm', node.arguments[1]), blocked: 'The method of form.submit() is not a literal' }; }
+    }
+    return undefined;
+  }
+  if (!ts.isIdentifier(callee)) return undefined;
+  // const { post } = useForm(…); post(url)
+  let symbol: ts.Symbol | undefined;
+  try { symbol = checker.getSymbolAtLocation(callee); } catch { symbol = undefined; }
+  const declaration = symbol?.valueDeclaration;
+  if (!declaration || !ts.isBindingElement(declaration) || !ts.isObjectBindingPattern(declaration.parent) || !ts.isVariableDeclaration(declaration.parent.parent) || !isUseForm(checker, declaration.parent.parent.initializer)) return undefined;
+  const member = (declaration.propertyName && ts.isIdentifier(declaration.propertyName) ? declaration.propertyName : ts.isIdentifier(declaration.name) ? declaration.name : undefined)?.text;
+  return member && INERTIA_VERBS.has(member) ? site(member.toUpperCase(), 'Inertia useForm', node.arguments[0]) : undefined;
+}
+/** Inertia's `<Link href method>` and `<Form action method>`: visits made from markup. */
+export function detectInertiaElement(node: ts.JsxOpeningLikeElement, checker: ts.TypeChecker): HttpSite | undefined {
+  if (!ts.isIdentifier(node.tagName)) return undefined;
+  const binding = importedBinding(checker, node.tagName);
+  if (!binding || !INERTIA_MODULES.has(binding.module) || !['Link', 'Form', 'InertiaLink'].includes(binding.name)) return undefined;
+  const isForm = binding.name === 'Form';
+  const attribute = (key: string): ts.Expression | undefined | null => {
+    for (const property of node.attributes.properties) {
+      if (!ts.isJsxAttribute(property) || property.name.getText() !== key) continue;
+      const value = property.initializer;
+      if (!value) return null;
+      return ts.isStringLiteral(value) ? value : ts.isJsxExpression(value) ? value.expression : null;
+    }
+    return undefined;
+  };
+  const url = attribute(isForm ? 'action' : 'href');
+  const spread = node.attributes.properties.some(property => ts.isJsxSpreadAttribute(property));
+  const via = isForm ? 'Inertia Form' : 'Inertia Link';
+  if (!url) return spread ? { node, client: 'inertia', element: true, verb: 'GET', via, blocked: `The ${isForm ? 'action' : 'href'} of this ${via} comes from spread attributes` } : undefined;
+  const methodValue = attribute('method');
+  const method = methodValue === undefined ? 'GET' : methodValue && literalText(methodValue)?.toUpperCase();
+  const site: HttpSite = { node, client: 'inertia', element: true, verb: method ?? 'GET', via, url };
+  return method && HTTP_METHODS.has(method) ? site : { ...site, blocked: `The method of this ${via} is not a literal HTTP method` };
+}
 /** `const api = axios.create(config?)` that an expression refers to (possibly imported from another module). */
 function axiosInstance(checker: ts.TypeChecker, expression: ts.Expression): { declaration: ts.VariableDeclaration; config?: ts.Expression } | undefined {
   if (!ts.isIdentifier(expression) && !ts.isPropertyAccessExpression(expression)) return undefined;
@@ -106,6 +191,8 @@ function propertyName(name: ts.PropertyName | undefined): string | undefined {
 /** Recognize an HTTP request site. `axiosNames` are this file's default imports of `axios`. */
 export function detectHttpSite(node: ts.CallExpression, checker: ts.TypeChecker, axiosNames: ReadonlySet<string>): HttpSite | undefined {
   const callee = node.expression;
+  const inertia = (ts.isPropertyAccessExpression(callee) && ts.isIdentifier(callee.expression)) || ts.isIdentifier(callee) ? inertiaSite(node, checker) : undefined;
+  if (inertia) return inertia;
   if (ts.isIdentifier(callee) && callee.text === 'fetch') {
     return { node, client: 'fetch', ...(node.arguments[0] ? { url: node.arguments[0] } : {}), ...(node.arguments[1] ? { options: node.arguments[1] } : {}), via: 'fetch (Fetch API)', ...(shadowedBinding(node, 'fetch') ? { blocked: 'fetch identifier has a local binding; cannot prove browser/global fetch' } : {}) };
   }
@@ -142,11 +229,13 @@ export function detectHttpSite(node: ts.CallExpression, checker: ts.TypeChecker,
 export function evaluateSite(urls: UrlEvaluator, site: HttpSite, scope: Scope = emptyScope()): SiteOutcome {
   if (site.blocked) return { reason: site.blocked, parameters: [] };
   let method: string;
-  if (site.client === 'fetch') {
+  if (site.client === 'fetch' || site.verb === 'VISIT') {
+    // fetch init and Inertia visit options name the method the same way.
     const read = readOptions(urls, site.options, scope, 'fetch');
     if ('reason' in read) return read;
     method = read.method ?? 'GET';
-  } else {
+  } else if (site.client === 'inertia') method = site.verb!;
+  else {
     method = site.verb!;
     const read = readOptions(urls, site.options, scope, 'axios');
     if ('reason' in read) return { ...read, method };
@@ -328,7 +417,7 @@ export function expandWrappers(input: WrapperContext, roots: WrapperRoot[]): voi
         resolved++;
         const callee = displayName(frames.length > 1 ? wrapperFrame(frames, frames.length - 1) : root.wrapper);
         const outerCall = frames.at(-1)!;
-        const callFact = fact(outerCall, `Calls ${callee}(…), which sends ${root.site.client === 'fetch' ? 'fetch()' : 'an axios request'} with what it is given`);
+        const callFact = fact(outerCall, `Calls ${callee}(…), which sends ${root.site.client === 'fetch' ? 'fetch()' : root.site.client === 'inertia' ? 'an Inertia visit' : 'an axios request'} with what it is given`);
         const frameFacts = frames.slice(0, -1).reverse().map(frame => fact(frame, `${short(frame)} passes its arguments on`));
         const display = outcome.resolved?.display ?? outcome.url ?? short(root.site.url ?? outerCall);
         const effect = sites.effect(caller.id, { category: 'network', operation: outcome.method, detail: display, line: callFact.line!, via: `${root.site.via} through ${callee}()` });

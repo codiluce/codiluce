@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
 
 export const SCHEMA_VERSION = 1;
-export const ANALYZER_VERSION = '0.4.0';
-export type EntityType = 'repository' | 'application' | 'domain' | 'directory' | 'file' | 'component' | 'class' | 'function' | 'method' | 'route' | 'api_endpoint' | 'controller' | 'model' | 'database_table' | 'external_service' | 'test' | 'user_flow';
-export type RelationType = 'contains' | 'imports' | 'exports' | 'calls' | 'renders' | 'routes_to' | 'handles' | 'requests' | 'reads' | 'writes' | 'queries' | 'maps_to' | 'extends' | 'implements' | 'references' | 'observed_call' | 'part_of_flow' | 'changed_with' | 'foreign_key';
+export const ANALYZER_VERSION = '0.6.0';
+export type EntityType = 'repository' | 'application' | 'domain' | 'directory' | 'file' | 'component' | 'class' | 'function' | 'method' | 'route' | 'api_endpoint' | 'controller' | 'model' | 'database_table' | 'external_service' | 'test' | 'user_flow' | 'command' | 'scheduled_task';
+export type RelationType = 'contains' | 'imports' | 'exports' | 'calls' | 'renders' | 'routes_to' | 'handles' | 'requests' | 'reads' | 'writes' | 'queries' | 'maps_to' | 'extends' | 'implements' | 'references' | 'observed_call' | 'part_of_flow' | 'changed_with' | 'foreign_key' | 'invokes';
 /**
  * Something a symbol's own code does outside the indexed code, proven by name
  * resolution (an imported facade, a lib global, a framework helper): a
@@ -25,6 +25,8 @@ export interface EffectFact {
   table?: string; tableName?: string;
   /** network: the request is made for the callers of this wrapper function; each resolved call site carries its own request. */
   wrapper?: boolean;
+  /** response: the Inertia page component rendered (`Inertia::render('words/index')`), by its literal name. */
+  page?: string;
 }
 /** Per-symbol call-site coverage: which calls were linked, left the indexed code, or could not be resolved. */
 export interface CallSites { resolved: number; external: number; unresolved: number; unresolvedNames?: Record<string, number> }
@@ -50,8 +52,6 @@ export interface Diagnostic {
   id: string; analyzer: string; severity: 'info' | 'warning' | 'error'; code: string;
   resolution: 'unresolved'; reason: string; file?: string; line?: number; entityId?: string;
 }
-export interface FlowStep { entityId: string; relationId?: string; timestamp?: string; durationMs?: number; traceId?: string }
-export interface Flow { id: string; name: string; type: 'declared' | 'static' | 'observed'; steps: FlowStep[] }
 export interface Annotation { id: string; entityId: string; source: 'jev' | 'openai' | 'anthropic' | 'manual'; kind: 'summary' | 'domain' | 'role' | 'architecture_layer'; value: unknown; confidence?: number }
 export interface AnalysisRun {
   id: string; repositoryId: string; repositoryName: string; commitSha?: string; dirty?: boolean;

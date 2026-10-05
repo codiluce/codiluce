@@ -12,7 +12,6 @@ import { TypeBadge } from './TypeBadge';
 
 const KIND_TEXT: Record<string, string> = { anchor: 'start', route: 'page', endpoint: 'endpoint', handler: 'handler', trigger: 'trigger', action: 'action', effect: 'effect' };
 const EFFECT_ICON: Record<string, string> = { database: '⛁', response: '↩', network: '⇄', storage: '▤', navigation: '➜', cache: '◷', mail: '✉', queue: '⇶', event: '✦', auth: '⚿', file: '▢', process: '⚙' };
-const CAP_TEXT: Record<string, string> = { fanout: 'more steps from here are not drawn', layers: 'steps beyond this layer are not drawn', steps: 'the picture reached its step limit', hub: 'widely used helpers are not followed' };
 
 export function stepTitle(step: Step): string {
   if (step.effect) return `${step.effect.category} · ${step.effect.operation}${step.effect.status ? ` · ${step.effect.status}` : ''}`;
@@ -109,7 +108,7 @@ function StepCard({ step, repeat }: { step: Step; repeat?: boolean }) {
       {step.effect && <div className="row-sub mono" title={step.effect.detail}>{step.effect.detail}{step.effect.when.length ? <span className="step-when"> · {step.effect.when.map(guard => guard.phrase).join(' · ')}</span> : null}</div>}
       {step.effect && <div className="row-sub">in {step.effect.ownerName} · matched on {step.effect.via}</div>}
       {repeat && <div className="row-sub">already shown above</div>}
-      {step.caps.map(cap => <div key={cap.reason} className="step-cap">+{cap.hidden} · {cap.detail ?? CAP_TEXT[cap.reason]}</div>)}
+      {step.navigation && <div className="row-sub">opens another page: its steps are its own flow</div>}
     </div>
   );
 }
@@ -187,8 +186,7 @@ function StepsDiagram({ data, onClose }: { data: StepsResult; onClose: () => voi
                 <text x={10} y={18} className="steps-box-kind">{(step.effect ? `${EFFECT_ICON[step.effect.category] ?? '•'} ` : '') + KIND_TEXT[step.kind]}{step.app ? ` · ${step.app}` : ''}</text>
                 <text x={10} y={36} className="steps-box-title">{title.length > 25 ? `${title.slice(0, 24)}…` : title}</text>
                 <text x={10} y={52} className="steps-box-sub">{sub.length > 34 ? `${sub.slice(0, 33)}…` : sub}</text>
-                {step.caps.length > 0 && <text x={box.w - 8} y={18} textAnchor="end" className="steps-box-cap">+{step.caps.reduce((sum, cap) => sum + cap.hidden, 0)}</text>}
-                <title>{[title, sub, ...step.caps.map(cap => `+${cap.hidden} · ${cap.detail ?? CAP_TEXT[cap.reason]}`), step.node ? 'Double-click to start from here' : ''].filter(Boolean).join('\n')}</title>
+                <title>{[title, sub, step.navigation ? 'Opens another page: its steps are its own flow' : '', step.node ? 'Double-click to start from here' : ''].filter(Boolean).join('\n')}</title>
               </g>
             );
           })}

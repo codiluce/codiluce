@@ -5,7 +5,8 @@
 // canonical hierarchy has no spatial home for an entity: routes and endpoints
 // are canonical children of their application, so they are placed in a
 // "Routes & endpoints" district inside that application; database tables
-// declared by its migrations go to a "Database" district.
+// declared by its migrations go to a "Database" district; Artisan commands and
+// scheduled tasks to a "Console" district.
 import type { SourceRange } from '../core/graph.js';
 import type { LayoutNode } from './layout.js';
 
@@ -15,6 +16,13 @@ export interface EntityRow {
   routePath?: string; method?: string; framework?: string; role?: string; analysisSkipped?: string;
   /** Comparison views only: how this entity differs from the baseline snapshot. */
   change?: NodeChange;
+  /**
+   * A projection group given as a row (the Features view: a domain, a folder
+   * inside it): its explanation. Such rows are spatial only, never entities.
+   */
+  group?: string;
+  /** A group row holding routes, tables and commands in districts, as an application does. */
+  districts?: boolean;
 }
 export interface RelationRow { id: string; from: string; to: string; type: string; change?: 'added' | 'removed' }
 export interface DiagnosticRow { id: string; severity: string; code: string; reason: string; analyzer: string; file?: string; line?: number; entityId?: string }
@@ -38,6 +46,7 @@ export interface ProjectionNode {
 export const SYMBOL_TYPES = new Set(['class', 'controller', 'component', 'function', 'method', 'model', 'test']);
 export const INTERFACE_TYPES = new Set(['route', 'api_endpoint']);
 export const DATA_TYPES = new Set(['database_table']);
+export const CONSOLE_TYPES = new Set(['command', 'scheduled_task']);
 const BAND: Record<string, number> = { application: 0, group: 1, directory: 2, file: 3 };
 const PADDING: Record<string, number> = { repository: 48, application: 28, group: 10, directory: 10, file: 4, class: 3, controller: 3, component: 3, function: 2, method: 2 };
 function compareText(a: string, b: string): number { const x = a.toLowerCase(), y = b.toLowerCase(); return x < y ? -1 : x > y ? 1 : a < b ? -1 : a > b ? 1 : 0; }
@@ -70,7 +79,8 @@ export class ProjectionIndex {
     }
     const make = (row: EntityRow, spatialParentId: string | undefined, depth: number): ProjectionNode => {
       const node: ProjectionNode = {
-        id: row.id, kind: 'entity', type: row.type, name: row.name, children: [], depth, pre: 0, post: 0,
+        id: row.id, kind: row.group !== undefined ? 'group' : 'entity', type: row.group !== undefined ? 'group' : row.type, name: row.name, children: [], depth, pre: 0, post: 0,
+        ...(row.group !== undefined ? { explanation: row.group } : {}),
         ...(row.path ? { path: row.path } : {}), ...(row.language ? { language: row.language } : {}),
         ...(row.sourceRange ? { sourceRange: row.sourceRange } : {}), ...(row.parentId ? { canonicalParentId: row.parentId } : {}),
         ...(spatialParentId ? { spatialParentId } : {}), ...(row.loc !== undefined ? { loc: row.loc } : {}),
@@ -92,10 +102,11 @@ export class ProjectionIndex {
       const node = make(row, spatialParent?.id, spatialParent ? spatialParent.depth + 1 : 0);
       if (spatialParent) spatialParent.children.push(node.id);
       const children = canonicalChildren.get(row.id) ?? [];
-      const districtParent = row.type === 'application' || row.type === 'repository';
-      const structural = children.filter(child => !(districtParent && (INTERFACE_TYPES.has(child.type) || DATA_TYPES.has(child.type))));
+      const districtParent = row.type === 'application' || row.type === 'repository' || !!row.districts;
+      const structural = children.filter(child => !(districtParent && (INTERFACE_TYPES.has(child.type) || DATA_TYPES.has(child.type) || CONSOLE_TYPES.has(child.type))));
       const interfaces = children.filter(child => districtParent && INTERFACE_TYPES.has(child.type));
       const tables = children.filter(child => districtParent && DATA_TYPES.has(child.type));
+      const console = children.filter(child => districtParent && CONSOLE_TYPES.has(child.type));
       if (interfaces.length) {
         const district = group(`projection:routes:${row.id}`, 'Routes & endpoints', node, `Projection grouping: routes and endpoints whose canonical parent is ${row.type} ${row.name}. Their containment is unchanged.`);
         interfaces.sort((a, b) => compareText(a.routePath ?? a.name, b.routePath ?? b.name) || compareText(a.method ?? '', b.method ?? '') || compareText(a.id, b.id));
@@ -112,6 +123,11 @@ export class ProjectionIndex {
         const district = group(`projection:database:${row.id}`, 'Database', node, `Projection grouping: database tables declared by the migrations of ${row.type} ${row.name} (the intended schema, not the live database). Their containment is unchanged.`);
         tables.sort((a, b) => compareText(a.name, b.name) || compareText(a.id, b.id));
         for (const item of tables) build(item, district);
+      }
+      if (console.length) {
+        const district = group(`projection:console:${row.id}`, 'Console', node, `Projection grouping: Artisan commands and scheduled tasks of ${row.type} ${row.name}, entry points that run without an HTTP request. Their containment is unchanged.`);
+        console.sort((a, b) => compareText(a.type, b.type) || compareText(a.name, b.name) || compareText(a.id, b.id));
+        for (const item of console) build(item, district);
       }
       structural.sort((a, b) => {
         const bandA = BAND[a.type] ?? 4, bandB = BAND[b.type] ?? 4;
@@ -191,6 +207,7 @@ export class ProjectionIndex {
 }
 function detail(row: EntityRow): string | undefined {
   if (row.type === 'api_endpoint' || row.type === 'route') return row.framework ? `${row.framework} ${row.type === 'route' ? 'page route' : 'endpoint'}` : undefined;
+  if (row.type === 'scheduled_task') return 'scheduled task';
   // A table is declared by a migration (its path): name it without the timestamp prefix.
   if (row.type === 'database_table') return row.path ? `from ${row.path.split('/').at(-1)!.replace(/\.php$/, '').replace(/^\d{4}_\d{2}_\d{2}_\d{6}_/, '')}` : undefined;
   if (row.signature) return `${row.role === 'hook' ? 'hook ' : ''}${row.signature}`;

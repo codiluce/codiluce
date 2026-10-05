@@ -7,6 +7,7 @@ import { repoPath } from '../core/config.js';
 import { args, ast, classConstant, literal, name, nodes, resolve, scopedChildren, text, walk, type Ast, type ParsedFile, type Scope } from './php-ast.js';
 import { resolvePhpReferences, type PhpClass, type PhpMethod } from './php-references.js';
 import { declareTables } from './laravel-schema.js';
+import { declareConsole, type ConsoleRegistration } from './laravel-console.js';
 import { fileKey, pathSetKey } from '../pipeline/cache.js';
 import { SiteCollector } from './references.js';
 
@@ -107,6 +108,7 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
     });
   }
   for (const base of inheritance) { const target = classes.get(`${base.app}:${base.target.toLowerCase()}`); if (target) graph.relate(base.from, target.id, 'extends', base.facts); }
+  const consoleRegistrations: ConsoleRegistration[] = [];
 
   for (const app of context.config.applications.filter(app => app.type === 'laravel')) {
     const appId = context.applicationIds.get(app.name);
@@ -137,6 +139,12 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
           const relative = path.relative(context.root, registered).split(path.sep).join('/');
           registrations.push({ file: relative, prefix: routeType === 'api' ? apiPrefix! : '', api: routeType === 'api', facts: facts(bootstrap, node, 'Laravel withRouting registration and API prefix', true), registration: 'static' });
         }
+        const commands = named.get('commands');
+        if (commands) {
+          const registered = fileLiteral(commands, bootstrap);
+          if (registered) consoleRegistrations.push({ app: app.name, file: path.relative(context.root, registered).split(path.sep).join('/'), registration: 'static', facts: facts(bootstrap, node, 'Laravel withRouting(commands:) registers console routes', true) });
+          else diagnostic(bootstrap, node, 'dynamic-route-registration', 'Cannot resolve the console route file of withRouting(commands:)');
+        }
         if (named.has('then')) diagnostic(bootstrap, node, 'additional-route-registration', 'withRouting(then:) may register additional routes; not resolved');
         });
         }
@@ -149,6 +157,9 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
       }
       graph.diagnose({ analyzer: 'php-laravel', severity: 'warning', code: 'route-registration-unverified', reason: `No bootstrap/app.php in ${app.name}; conventional route candidates are not eligible for exact HTTP linking` });
     }
+    // Laravel ≤ 10 loads routes/console.php from the console Kernel: a conventional console route file.
+    const consolePath = path.posix.join(app.path === '.' ? '' : app.path, 'routes/console.php');
+    if (!consoleRegistrations.some(item => item.app === app.name) && parsedFiles.has(consolePath)) consoleRegistrations.push({ app: app.name, file: consolePath, registration: 'convention', facts: [evidence('framework', 'php-laravel', consolePath, 1, 'Conventional console route file (routes/console.php)')] });
     graph.diagnose({ analyzer: 'php-laravel', severity: 'info', code: 'framework-route-coverage', reason: `${app.name}: package/provider routes and implicit framework health endpoints are outside the Phase 1 static route-file inventory` });
     const seen = new Set<string>();
     function processFile(relative: string, routeContext: RouteContext, ancestry: Set<string>): void {
@@ -226,6 +237,7 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
           if (current.controller) { handlerClass = current.controller; handlerMethod = value; }
           else if (value.includes('@')) { [handlerClass, handlerMethod] = value.replace(/^\\/, '').split('@'); }
         } else if (action?.kind === 'closure' || action?.kind === 'arrowfunc') handlerKind = 'closure';
+        const inertiaPage = handlerKind === 'closure' ? inertiaPageOf(action!, scope) : undefined;
         const handler = handlerClass && handlerMethod ? methods.get(`${app.name}:${handlerClass.toLowerCase()}::${handlerMethod.toLowerCase()}`) : undefined;
         if (handler) handlerKind = 'method';
         if (handlerKind === 'unresolved') diagnostic(parsed, http.ast, 'unresolved-route-handler', `Cannot resolve route handler ${handlerClass ?? text(action, parsed)}${handlerMethod ? `::${handlerMethod}` : ''}`);
@@ -233,7 +245,7 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
           const fullPath = routePath(current.prefix, uri);
           const id = graph.id('endpoint', app.name, method, fullPath, parsed.file.path, handlerClass ?? handlerKind, handlerMethod ?? '');
           if (graph.entities.has(id)) { diagnostic(parsed, http.ast, 'duplicate-route-declaration', `Repeated ${method} ${fullPath} registration`); continue; }
-          const endpoint = graph.contain({ id, type: 'api_endpoint', name: `${method} ${fullPath}`, path: parsed.file.path, parentId: appId, sourceRange: http.ast.loc ? { startLine: http.ast.loc.start.line, endLine: http.ast.loc.end.line } : undefined, metadata: { method, routePath: fullPath, framework: 'laravel', routeFile: parsed.file.path, api: current.api, registration: current.registration, middleware: current.middleware, constraintsUnresolved: current.constraints, handlerKind, ...(routeName ? { routeName } : {}), ...(handlerClass ? { controller: handlerClass, controllerMethod: handlerMethod } : {}) }, evidence: current.facts });
+          const endpoint = graph.contain({ id, type: 'api_endpoint', name: `${method} ${fullPath}`, path: parsed.file.path, parentId: appId, sourceRange: http.ast.loc ? { startLine: http.ast.loc.start.line, endLine: http.ast.loc.end.line } : undefined, metadata: { method, routePath: fullPath, framework: 'laravel', routeFile: parsed.file.path, api: current.api, registration: current.registration, middleware: current.middleware, constraintsUnresolved: current.constraints, handlerKind, ...(routeName ? { routeName } : {}), ...(inertiaPage ? { inertiaPage } : {}), ...(handlerClass ? { controller: handlerClass, controllerMethod: handlerMethod } : {}) }, evidence: current.facts });
           if (handler) graph.relate(endpoint.id, handler.id, 'handles', [...current.facts, ...handler.evidence]);
         }
       }
@@ -242,8 +254,21 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
   }
   // Tables declared by migrations, and the Eloquent models that map to them.
   const tables = declareTables(context, parsedFiles, phpClasses);
-  // Calls between methods, constructions, effects and table access, once every class and table is known.
+  // Artisan commands and scheduled tasks: entry points without an HTTP request.
+  const commands = declareConsole(context, phpClasses, methods, parsedFiles, consoleRegistrations);
+  // Calls between methods, constructions, effects and table access, once every class, table and command is known.
   const sites = new SiteCollector();
-  resolvePhpReferences(context, phpClasses, phpMethods, sites, tables);
+  resolvePhpReferences(context, phpClasses, phpMethods, sites, tables, commands);
   sites.flush(graph);
+}
+/** The Inertia page a route closure renders: `Inertia::render('page')` or `inertia('page')` with a literal name. */
+function inertiaPageOf(closure: Ast, scope: Scope): string | undefined {
+  let page: string | undefined;
+  walk(closure, node => {
+    if (page !== undefined || node.kind !== 'call') return;
+    const what = ast(node.what);
+    const isRender = what?.kind === 'staticlookup' ? ['inertia\\inertia', 'inertia'].includes(resolve(what.what, scope)?.toLowerCase() ?? '') && name(what.offset)?.toLowerCase() === 'render' : what?.kind === 'name' && name(what)?.toLowerCase() === 'inertia';
+    if (isRender) page = literal(args(node)[0]);
+  });
+  return page;
 }

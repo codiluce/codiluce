@@ -10,7 +10,8 @@ import type { Rect } from './layout.js';
 
 export type { ChangeFacet, ChangeStatus, DiffLine, DiffSummary, Hunk, LineageReason, PullRequestRef, SnapshotStats };
 /** Which snapshot a request reads, and optionally which baseline it is compared to. Absent = live working-tree index. */
-export interface ViewKey { snapshot?: string; compareTo?: string }
+/** Which snapshot (and baseline) a request reads; `lens: 'domains'` draws the live index by domain instead of by folder. */
+export interface ViewKey { snapshot?: string; compareTo?: string; lens?: 'domains' }
 export interface SnapshotRef { id: string; kind: 'working_tree' | 'commit'; commitSha?: string; dirty?: boolean; analyzedAt: string }
 export interface NodeChange {
   status: ChangeStatus; facets: ChangeFacet[];
@@ -59,6 +60,8 @@ export interface LocateResult { node: NodeSummary; spatialAncestors: NodeSummary
 export type SearchPage = Page<NodeSummary & { breadcrumb: string }> & { typeCounts: { type: string; count: number }[] };
 export interface RelationItem {
   id: string; type: string; direction: 'outgoing' | 'incoming' | 'self'; other: NodeSummary;
+  /** A file's relationships through its symbols (`scope=contained`): the symbol inside the file at this end. */
+  inside?: NodeSummary;
   /** Spatial ancestors of `other`, root first: lets clients draw to the nearest visible ancestor. */
   otherAncestors: string[];
   metadata?: Record<string, unknown>;
@@ -110,7 +113,12 @@ export interface TimelineEntry {
   sha: string; parents: string[]; authorName: string; authoredAt: string; committedAt: string; subject: string;
   merge: boolean; pullRequest?: PullRequestRef;
   snapshot?: { id: string; stale: boolean; stats: SnapshotStats };
+  /** Language-model explanation of the commit (`annotate`), from its message and indexed changes. */
+  note?: CommitNote;
 }
+export interface CommitNote { intent: string; title: string; summary: string; areas: string[] }
+/** A run of consecutive commits with one theme (`annotate`). */
+export interface HistoryChapter { title: string; summary: string; from: string; to: string; areas: string[] }
 export interface TimelineResponse {
   available: boolean; reason?: string;
   ref?: string; head?: string; firstParent: boolean;
@@ -118,6 +126,7 @@ export interface TimelineResponse {
   entries: TimelineEntry[];
   workingTree?: SnapshotRef & { stats: { entities: number } };
   indexing: { enabled: boolean; active?: string; queued: string[]; failed: { sha: string; error: string }[] };
+  chapters?: HistoryChapter[];
 }
 export interface EntityHistoryPoint { sha: string; snapshotId: string; status: 'introduced' | 'modified' | 'moved' | 'removed' | 'reintroduced'; name: string; path?: string }
 export interface EntityHistoryResponse { id: string; points: EntityHistoryPoint[]; indexedSnapshots: number; present: number }
@@ -158,7 +167,7 @@ export interface ImpactResult {
 }
 
 // Steps -------------------------------------------------------------------------
-export type { StepCap, StepKind } from './steps.js';
+export type { StepKind } from './steps.js';
 export interface StepGuard { text: string; negated: boolean; form: string; line: number; phrase: string }
 export interface Step {
   id: string; kind: import('./steps.js').StepKind; layer: number;
@@ -168,13 +177,16 @@ export interface Step {
   app?: string;
   /** Spatial ancestors of the step's entity (of the effect's owner), root first: lets clients draw to the nearest visible ancestor. */
   ancestors: string[];
-  caps: import('./steps.js').StepCap[];
+  /** An endpoint serving another page, reached by a request: navigation, not followed. */
+  navigation?: boolean;
 }
+/** An entity folded into a link, with its spatial ancestors (root first). */
+export interface FoldedEntity { id: string; name: string; type: string; ancestors: string[] }
 export interface StepHop { relationId: string; type: string; from: string; to: string; file?: string; line?: number; sites: number; when: StepGuard[] }
 export interface StepLink {
   id: string; from: string; to: string;
   /** Folded entities between the two steps, in order. */
-  via: { id: string; name: string; type: string }[];
+  via: FoldedEntity[];
   hops: StepHop[];
   /** The event prop that binds the target (onClick, onSubmit…). */
   event?: string;
@@ -183,7 +195,7 @@ export interface StepLink {
   /** The target was already drawn at the same or an earlier layer. */
   back: boolean;
 }
-export interface StepsResult { anchor: NodeSummary; steps: Step[]; links: StepLink[]; truncated: boolean; notices: string[]; limits: { layers: number; steps: number; fanout: number; fold: number; hub: number } }
+export interface StepsResult { anchor: NodeSummary; steps: Step[]; links: StepLink[]; notices: string[] }
 
 // Request flows -------------------------------------------------------------------
 export type { FlowEdgeKind, FlowGap, FlowGapReason, FlowLane, FlowNodeKind, FlowStages, FlowStatus } from './request-flows.js';
@@ -205,13 +217,13 @@ export interface RequestFlowEdge {
   /** Indexed relationships the edge stands for, in order (Why?). */
   hops: { relationId: string; type: string; from: string; to: string }[];
   /** Entities folded into the edge, in order. */
-  via: { id: string; name: string; type: string }[];
+  via: FoldedEntity[];
   /** Conditions at the source site under which the edge happens. */
   when: StepGuard[];
 }
 export interface RequestFlowSummary {
   /** The endpoint's ID, or the calling entity's ID for an unmatched request. */
-  id: string; kind: 'endpoint' | 'unmatched';
+  id: string; kind: 'endpoint' | 'unmatched' | 'command' | 'schedule';
   name: string; method: string; path: string;
   /** Application of the endpoint (of the caller for an unmatched request). */
   app?: string;
@@ -237,5 +249,74 @@ export interface RequestFlowList {
   entity?: string;
 }
 
-// Paths -------------------------------------------------------------------------
-export interface PathResult { found: boolean; reversed?: boolean; nodes: NodeSummary[]; links: { relationId: string; type: string; from: string; to: string }[] }
+// Flow catalog and coverage -------------------------------------------------------
+export type { CatalogKind, CoverageCategory, CoverageCounts } from './catalog.js';
+/** One flow of the catalog: where it starts and what it touches. */
+export interface FlowSummary {
+  /** The entry entity's ID (the endpoint, page route, command, task, or the entity making unmatched requests). */
+  id: string; kind: import('./catalog.js').CatalogKind;
+  entry: { id: string; type: string; name: string };
+  name: string; app?: string;
+  /** List grouping: first path segment, command namespace, `scheduler` or `unmatched`. */
+  group: string;
+  method?: string; path?: string;
+  /** How the detail is drawn: lanes (`/request-flows/:id`) or the Steps picture of a page (`/steps/:id`). */
+  detail: 'lanes' | 'steps';
+  /** Lanes flows: completeness and what was found. */
+  status?: import('./request-flows.js').FlowStatus; stages?: import('./request-flows.js').FlowStages;
+  gaps?: number; tables?: number; responses?: number[]; handler?: string; callers?: number;
+  /** Scheduled tasks: when they run. */
+  cadence?: string;
+  /** Size of the slice: entities and distinct files it touches. */
+  entities: number; files: number;
+  truncated?: boolean;
+  /** Language-model annotation (`annotate`): what the flow lets someone do, and who starts it. */
+  title?: string; goal?: string; actor?: string;
+}
+export interface FlowList {
+  items: FlowSummary[];
+  counts: Record<import('./catalog.js').CatalogKind, number>;
+  /** `entity` filter: the flows touching this entity (or anything inside it). */
+  entity?: string;
+}
+/** File coverage by flows, per file (code and assets) and rolled up per area. */
+export interface CoverageResult {
+  totals: import('./catalog.js').CoverageCounts;
+  /** Code files measured (assets excluded). */
+  codeFiles: number;
+  flows: number;
+  /** Per file: category and the number of flows touching it. */
+  files: Record<string, { category: import('./catalog.js').CoverageCategory; flows: number }>;
+  /** Per area (spatial ancestors of files): counts by category. */
+  areas: Record<string, import('./catalog.js').CoverageCounts>;
+}
+export interface CoverageDetail {
+  id: string;
+  /** Files: their category and why. Areas: counts below them. */
+  category?: import('./catalog.js').CoverageCategory; reason?: string;
+  counts?: import('./catalog.js').CoverageCounts;
+  /** Flows touching the entity (or anything inside it), first 50. */
+  flows: FlowSummary[]; totalFlows: number;
+}
+
+// Annotations (language models) ----------------------------------------------------
+/** A domain: a feature or area of the product, and the number of code files serving it. */
+export interface DomainSummary { key: string; name: string; summary: string; files: number; color: number }
+export interface AnnotationsOverview {
+  available: boolean;
+  overview?: { summary: string; applications: { name: string; summary: string }[]; start: string[] };
+  domains: DomainSummary[];
+  /** Annotations per kind, with their mean ASD-STE100 score (0..1). */
+  counts: Record<string, { count: number; ste: number }>;
+  models: string[];
+  /** Spend of the latest run, and of every run. */
+  cost?: { last: number; total: number };
+}
+export interface EntityAnnotation {
+  id: string; summary?: string; role?: string;
+  domain?: { key: string; name: string; inferred: boolean };
+  model?: string; ste?: number; createdAt?: string;
+  /** The description was made from another version of this code. */
+  outdated?: boolean;
+}
+

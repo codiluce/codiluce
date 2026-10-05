@@ -23,12 +23,15 @@ export function viewParams(params: URLSearchParams): ViewKey {
     if (!SNAPSHOT_ID.test(value)) throw new Error(`Invalid ${name}`);
     view[name] = value;
   }
+  const lens = params.get('lens');
+  if (lens && lens !== 'domains' && lens !== 'folders') throw new Error('lens must be domains or folders');
+  if (lens === 'domains') view.lens = 'domains';
   return view;
 }
 function impactParams(params: URLSearchParams): { depth?: number; types?: string[]; type?: string; distance?: number } {
   return { depth: numberParam(params, 'depth'), types: params.get('types')?.split(',').filter(Boolean), type: text(params, 'type'), distance: numberParam(params, 'distance') };
 }
-export function isProjectionPath(pathname: string): boolean { return pathname.startsWith('/api/projection') || pathname === '/api/source' || pathname === '/api/source/diff' || pathname === '/api/history' || pathname.startsWith('/api/history/'); }
+export function isProjectionPath(pathname: string): boolean { return pathname.startsWith('/api/projection') || pathname === '/api/source' || pathname === '/api/source/diff' || pathname === '/api/history' || pathname.startsWith('/api/history/') || pathname === '/api/annotations' || pathname.startsWith('/api/annotations/'); }
 
 /** Returns true when the request was handled. */
 export async function handleProjectionRoute(context: ProjectionContext, url: URL, response: ServerResponse, acceptEncoding?: string): Promise<boolean> {
@@ -53,7 +56,7 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
       result = projection.resolve(decodeURIComponent(match[1]!), view, from);
     }
     else if (pathname === '/api/projection/search') result = projection.search(params.get('q') ?? '', { ...page, type: text(params, 'type'), view });
-    else if ((match = new RegExp(`^/api/projection/relations/${ID}$`).exec(pathname))) result = projection.relations(decodeURIComponent(match[1]!), { ...page, direction: text(params, 'direction'), type: text(params, 'type'), view });
+    else if ((match = new RegExp(`^/api/projection/relations/${ID}$`).exec(pathname))) result = projection.relations(decodeURIComponent(match[1]!), { ...page, direction: text(params, 'direction'), type: text(params, 'type'), scope: text(params, 'scope'), view });
     else if ((match = new RegExp(`^/api/projection/aggregate/${ID}$`).exec(pathname))) result = projection.aggregate(decodeURIComponent(match[1]!), { direction: text(params, 'direction'), type: text(params, 'type'), view });
     else if ((match = new RegExp(`^/api/projection/aggregate/${ID}/edges$`).exec(pathname))) {
       const anchor = params.get('anchor');
@@ -63,12 +66,13 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
     else if ((match = new RegExp(`^/api/projection/impact/${ID}$`).exec(pathname))) result = projection.impact(decodeURIComponent(match[1]!), { ...page, ...impactParams(params), view });
     else if ((match = new RegExp(`^/api/projection/steps/${ID}$`).exec(pathname))) result = await projection.steps(decodeURIComponent(match[1]!), { view, maxFileBytes: context.maxFileBytes });
     else if (pathname === '/api/projection/request-flows') result = projection.requestFlows({ view, entity: text(params, 'entity') });
+    else if (pathname === '/api/projection/flows') result = projection.flows({ view, entity: text(params, 'entity'), kind: text(params, 'kind') });
+    else if (pathname === '/api/projection/coverage') result = projection.coverage(view);
+    else if (pathname === '/api/annotations') result = projection.annotationsOverview();
+    else if ((match = new RegExp(`^/api/annotations/entity/${ID}$`).exec(pathname))) result = projection.entityAnnotation(decodeURIComponent(match[1]!), view);
+    else if ((match = new RegExp(`^/api/projection/coverage/${ID}$`).exec(pathname))) result = projection.coverageOf(decodeURIComponent(match[1]!), view);
     else if ((match = new RegExp(`^/api/projection/request-flows/${ID}$`).exec(pathname))) result = await projection.requestFlow(decodeURIComponent(match[1]!), { view, maxFileBytes: context.maxFileBytes });
-    else if (pathname === '/api/projection/path') {
-      const from = params.get('from'), to = params.get('to');
-      if (!from || !to) throw new Error('from and to are required');
-      result = projection.path(from, to, view);
-    } else if (pathname === '/api/history/impact') result = projection.commitImpact(view, { ...page, ...impactParams(params) });
+    else if (pathname === '/api/history/impact') result = projection.commitImpact(view, { ...page, ...impactParams(params) });
     else if (pathname === '/api/projection/between') {
       const a = params.get('a'), b = params.get('b');
       if (!a || !b) throw new Error('a and b are required');
@@ -82,7 +86,7 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
       result = await projection.sourceDiff(entity, context.maxFileBytes, view, { context: numberParam(params, 'context'), ignoreWhitespace: params.get('whitespace') === 'ignore' });
     } else if (pathname === '/api/history') {
       if (!context.history) throw new SourceError(503, 'History is unavailable');
-      result = await context.history.timeline(text(params, 'ref'));
+      result = projection.annotateTimeline(await context.history.timeline(text(params, 'ref')));
     } else if (pathname === '/api/history/changes') result = projection.changes(view, { ...page, status: text(params, 'status'), type: text(params, 'type') });
     else if ((match = new RegExp(`^/api/history/change/${ID}$`).exec(pathname))) result = projection.change(decodeURIComponent(match[1]!), view);
     else if ((match = new RegExp(`^/api/history/entity/${ID}$`).exec(pathname))) {

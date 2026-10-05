@@ -15,16 +15,22 @@
 // endpoint matches, a missing handler or response. A flow is therefore a lower
 // bound of the real behaviour, and never evidence of execution. Pure: the same
 // index gives the same flow.
+//
+// Inertia: a page component rendered by a handler (`renders` from the
+// server) is entered through the endpoint that serves it, and an Inertia
+// response draws the page it renders back on the client. Console entry points
+// get the same picture without HTTP: a scheduled task or the code running a
+// command by name, the command, its handler and what it reaches.
 import type { EffectFact, Entity } from '../core/graph.js';
 import type { ProjectionIndex, ProjectionNode, RelationRow } from './hierarchy.js';
 
 /** Columns of a request flow, in the order a request passes them. */
 export type FlowLane = 'client' | 'call' | 'route' | 'gate' | 'controller' | 'service' | 'data' | 'response' | 'return';
 export const FLOW_LANES: FlowLane[] = ['client', 'call', 'route', 'gate', 'controller', 'service', 'data', 'response', 'return'];
-export type FlowNodeKind = 'page' | 'entry' | 'trigger' | 'caller' | 'endpoint' | 'middleware' | 'validation' | 'handler' | 'method' | 'model' | 'table' | 'effect' | 'response' | 'receive' | 'continuation' | 'gap';
-export type FlowEdgeKind = 'triggers' | 'calls' | 'requests' | 'routes' | 'handles' | 'reads' | 'writes' | 'maps' | 'effect' | 'responds' | 'returns' | 'then' | 'gap';
+export type FlowNodeKind = 'page' | 'entry' | 'trigger' | 'caller' | 'endpoint' | 'command' | 'schedule' | 'middleware' | 'validation' | 'handler' | 'method' | 'model' | 'table' | 'effect' | 'response' | 'receive' | 'continuation' | 'gap';
+export type FlowEdgeKind = 'triggers' | 'calls' | 'requests' | 'invokes' | 'routes' | 'handles' | 'reads' | 'writes' | 'maps' | 'effect' | 'responds' | 'returns' | 'renders' | 'then' | 'gap';
 export type FlowGapReason = 'no-trigger' | 'no-caller' | 'unmatched' | 'no-handler' | 'unresolved-calls' | 'no-response';
-/** `unmatched`: a request no indexed endpoint answers. `headless`: an endpoint no indexed code calls. */
+/** `unmatched`: a request no indexed endpoint answers. `headless`: an endpoint no indexed code calls (a command nothing schedules or runs: run by hand). */
 export type FlowStatus = 'complete' | 'partial' | 'headless' | 'unmatched';
 export interface FlowStages {
   /** A page or event binding leads to the HTTP call. */
@@ -59,7 +65,7 @@ export interface RawFlowEdge {
   site?: { owner: string; line: number; hint?: string };
 }
 export interface RawFlow {
-  id: string; kind: 'endpoint' | 'unmatched'; anchor: string;
+  id: string; kind: 'endpoint' | 'unmatched' | 'command' | 'schedule'; anchor: string;
   name: string; method: string; path: string;
   nodes: RawFlowNode[]; edges: RawFlowEdge[];
   stages: FlowStages; status: FlowStatus; gaps: number;
@@ -79,7 +85,9 @@ export interface FlowContext {
   findings?(entityId: string): { code: string; reason: string; line?: number }[];
 }
 export const FLOW_LIMITS = { callers: 8, entries: 3, clientDepth: 8, clientVisits: 400, fanout: 14, serverDepth: 6, nodes: 56, hub: 40, laneDepth: 3, returns: 24 };
-const CLIENT_FOLLOW = new Set(['calls', 'references', 'renders', 'routes_to']);
+// `handles` reaches the endpoint serving an Inertia page from the handler that renders it.
+const CLIENT_FOLLOW = new Set(['calls', 'references', 'renders', 'routes_to', 'handles']);
+const ENTRY_TYPES = new Set(['route', 'api_endpoint']);
 const SERVER_FOLLOW = new Set(['calls', 'references']);
 const CALLABLE = new Set(['method', 'function']);
 const LANE_ORDER = new Map(FLOW_LANES.map((lane, index) => [lane, index]));
@@ -171,7 +179,10 @@ class FlowWalker {
           if (previous.has(from)) continue;
           previous.set(from, { next: id, relation: relationIndex });
           visits++; last = from;
-          if (this.index.node(from)?.type === 'route') { routes.push(from); continue; }
+          const fromNode = this.index.node(from);
+          // A HEAD route mirrors its GET twin: the page is entered once.
+          if (fromNode?.type === 'api_endpoint' && fromNode.name.startsWith('HEAD ')) continue;
+          if (ENTRY_TYPES.has(fromNode?.type ?? '')) { routes.push(from); continue; }
           next.push(from);
         }
       }
@@ -199,7 +210,8 @@ class FlowWalker {
     for (const chain of chains) {
       const entry = chain.nodes[0]!;
       const entryNode = this.index.node(entry)!;
-      const start = builder.add({ id: `client:${entry}`, lane: 'client', kind: entryNode.type === 'route' ? 'page' : 'entry', depth: 0, entityId: entry, label: displayName(entryNode), ...(entryNode.type === 'route' ? { detail: 'page' } : {}) });
+      const page = entryNode.type === 'route' || entryNode.type === 'api_endpoint';
+      const start = builder.add({ id: `client:${entry}`, lane: 'client', kind: page ? 'page' : 'entry', depth: 0, entityId: entry, label: displayName(entryNode), ...(entryNode.type === 'route' ? { detail: 'page' } : entryNode.type === 'api_endpoint' ? { detail: 'serves the page (Inertia)' } : {}) });
       // The binding that fires the request: the event relation closest to the caller.
       let bound = -1;
       for (let i = chain.relations.length - 1; i >= 0; i--) if (this.events(chain.relations[i]!).length) { bound = i; break; }
@@ -279,7 +291,11 @@ class FlowWalker {
         const site = { owner: id, line: effect.line, hint: effect.detail };
         if (effect.category === 'response') {
           if (id === handler && effect.operation === 'validation' && BEFORE_HANDLER.test(effect.detail)) continue;
-          builder.link(from, responseNode(id, effect), 'responds', { site });
+          const response = responseNode(id, effect);
+          builder.link(from, response, 'responds', { site });
+          // An Inertia response renders a page component on the client.
+          const page = effect.operation === 'inertia' && effect.target && this.index.node(effect.target) ? this.index.node(effect.target)! : undefined;
+          if (page) builder.link(response, builder.add({ id: `page:${page.id}`, lane: 'return', kind: 'page', depth: 0, entityId: page.id, label: displayName(page), detail: `page ${effect.page ?? ''}`.trim() }), 'renders', { chain: this.outgoing(id, new Set(['renders'])).filter(i => this.index.relations[i]!.to === page.id) });
         } else if (effect.category === 'database') {
           data = true;
           const table = effect.table && this.index.node(effect.table) ? effect.table : undefined;
@@ -406,6 +422,11 @@ export function endpointFlow(context: FlowContext, endpointId: string, limits = 
     const closure = entity?.metadata.handlerKind === 'closure';
     const gap = builder.add({ id: `gap:no-handler:${endpointId}`, lane: 'controller', kind: 'gap', depth: 0, label: closure ? 'Closure handler' : 'No handler', detail: closure ? 'its body is not indexed as a symbol' : 'not resolved', gap: { reason: 'no-handler', text: closure ? 'The route runs a closure: its body is not indexed as a symbol, so what it does is not drawn.' : 'No handler was resolved for this endpoint (a controller or method the index could not find).' } });
     builder.link(entry, gap, 'gap');
+    // A route closure rendering an Inertia page.
+    for (const relationIndex of walker.outgoing(endpointId, new Set(['renders']))) {
+      const page = index.node(index.relations[relationIndex]!.to);
+      if (page) builder.link(gap, builder.add({ id: `page:${page.id}`, lane: 'return', kind: 'page', depth: 0, entityId: page.id, label: displayName(page), detail: 'Inertia page' }), 'renders', { chain: [relationIndex] });
+    }
   } else if (!responses.length) {
     const gap = builder.add({ id: `gap:no-response:${endpointId}`, lane: 'response', kind: 'gap', depth: 0, label: 'Response not classified', gap: { reason: 'no-response', text: 'No response was classified: the handler\'s return value, a view or a framework default answers the request.' } });
     builder.link(builder.nodes.get(`srv:${index.relations[handles[0]!]!.to}`), gap, 'gap');
@@ -462,4 +483,94 @@ export function unmatchedFlow(context: FlowContext, callerId: string, limits = F
     builder.link(callerNode, gap, 'requests', { label: effect.operation, site: { owner: callerId, line: effect.line, hint: effect.detail } });
   }
   return finish(builder, { id: callerId, kind: 'unmatched', anchor: callerId, name: `${first.operation} ${first.detail}`, method: first.operation, path: first.detail, caller: displayName(caller) }, { client: !!chain, call: true, handler: false, data: false, response: false, returns: false }, 1);
+}
+
+/**
+ * A console command: what runs it (scheduled tasks, code running it by name,
+ * or nothing: run by hand), the command, its handler and what that reaches.
+ */
+export function commandFlow(context: FlowContext, commandId: string, limits = FLOW_LIMITS): RawFlow | undefined {
+  const walker = new FlowWalker(context, limits);
+  const index = context.index;
+  const command = index.node(commandId);
+  if (!command || command.type !== 'command') return undefined;
+  const entity = walker.entity(commandId);
+  const builder = new FlowBuilder(limits.nodes);
+  const commandNode = builder.add({ id: `cmd:${commandId}`, lane: 'route', kind: 'command', depth: 0, entityId: commandId, label: command.name, ...(entity?.metadata.description ? { detail: String(entity.metadata.description) } : {}) })!;
+  // Who runs it.
+  const invokers = walker.byName(walker.incoming(commandId, new Set(['invokes'])), 'from');
+  let client = false;
+  for (const relationIndex of invokers.slice(0, limits.callers)) {
+    const from = index.relations[relationIndex]!.from, node = index.node(from)!;
+    if (node.type === 'scheduled_task') {
+      const task = walker.entity(from);
+      const schedule = builder.add({ id: `sch:${from}`, lane: 'client', kind: 'schedule', depth: 0, entityId: from, label: String(task?.metadata.cadence ?? 'scheduled'), detail: `scheduler: ${node.name}` });
+      builder.link(schedule, commandNode, 'invokes', { label: 'runs', chain: [relationIndex] });
+      client = true;
+      continue;
+    }
+    const callerNode = builder.add({ id: `call:${from}`, lane: 'call', kind: 'caller', depth: 0, entityId: from, label: walker.name(from), detail: `runs ${command.name} by name` });
+    builder.link(callerNode, commandNode, 'invokes', { label: 'Artisan', chain: [relationIndex], ...(walker.firstLine(relationIndex) ? { site: { owner: from, line: walker.firstLine(relationIndex)!, hint: command.name } } : {}) });
+    if (callerNode && walker.clientSide(builder, callerNode, from)) client = true;
+  }
+  if (invokers.length > limits.callers) builder.notices.push(`${invokers.length} places run this command; the first ${limits.callers} are drawn.`);
+  if (!invokers.length) {
+    const manual = builder.add({ id: `manual:${commandId}`, lane: 'client', kind: 'entry', depth: 0, label: `php artisan ${command.name}`, detail: 'run by hand: nothing indexed schedules or runs it' });
+    builder.link(manual, commandNode, 'invokes', { label: 'runs' });
+  }
+  const handled = handlerSide(walker, builder, commandId, commandNode, entity?.metadata.handlerKind === 'closure');
+  return finish(builder, { id: commandId, kind: 'command', anchor: commandId, name: command.name, method: 'ARTISAN', path: String(entity?.metadata.signature ?? command.name), ...(handled.name ? { handler: handled.name } : {}) }, { client, call: invokers.length > 0, handler: handled.found, data: handled.data, response: false, returns: false }, invokers.length);
+}
+
+/** A scheduled task: its cadence, the command or job it runs, and what that reaches. */
+export function scheduleFlow(context: FlowContext, taskId: string, limits = FLOW_LIMITS): RawFlow | undefined {
+  const walker = new FlowWalker(context, limits);
+  const index = context.index;
+  const task = index.node(taskId);
+  if (!task || task.type !== 'scheduled_task') return undefined;
+  const entity = walker.entity(taskId);
+  const builder = new FlowBuilder(limits.nodes);
+  const cadence = String(entity?.metadata.cadence ?? 'scheduled');
+  const taskNode = builder.add({ id: `sch:${taskId}`, lane: 'client', kind: 'schedule', depth: 0, entityId: taskId, label: cadence, detail: `scheduler: ${task.name}` })!;
+  let handled: { found: boolean; data: boolean; name?: string } = { found: false, data: false };
+  const invokes = walker.outgoing(taskId, new Set(['invokes']));
+  for (const relationIndex of invokes) {
+    const target = index.relations[relationIndex]!.to, node = index.node(target)!;
+    if (node.type === 'command') {
+      const commandNode = builder.add({ id: `cmd:${target}`, lane: 'route', kind: 'command', depth: 0, entityId: target, label: node.name });
+      builder.link(taskNode, commandNode, 'invokes', { label: 'runs', chain: [relationIndex] });
+      if (commandNode) handled = handlerSide(walker, builder, target, commandNode, walker.entity(target)?.metadata.handlerKind === 'closure');
+    } else {
+      // A job: the scheduler runs its handler directly.
+      const handlerNode = builder.add({ id: `srv:${target}`, lane: 'controller', kind: 'handler', depth: 0, entityId: target, label: displayName(node) });
+      builder.link(taskNode, handlerNode, 'invokes', { label: 'runs', chain: [relationIndex] });
+      if (handlerNode) handled = { found: true, data: walker.serverSide(builder, target, handlerNode).data, name: displayName(node) };
+    }
+  }
+  if (!invokes.length) {
+    const kind = String(entity?.metadata.schedule ?? '');
+    const gap = builder.add({ id: `gap:no-handler:${taskId}`, lane: 'route', kind: 'gap', depth: 0, label: kind === 'call' ? 'Closure' : kind === 'exec' ? 'Shell command' : 'Not indexed', detail: String(entity?.metadata.target ?? ''), gap: { reason: 'no-handler', text: kind === 'call' ? 'The task runs a closure: its body is not indexed as a symbol.' : kind === 'exec' ? 'The task runs a shell command outside the indexed code.' : `The task runs ${String(entity?.metadata.target ?? 'something')}, which is not an indexed command or job.` } });
+    builder.link(taskNode, gap, 'gap');
+  }
+  return finish(builder, { id: taskId, kind: 'schedule', anchor: taskId, name: task.name, method: 'SCHEDULE', path: cadence, ...(handled.name ? { handler: handled.name } : {}) }, { client: true, call: true, handler: handled.found, data: handled.data, response: false, returns: false }, 1);
+}
+
+/** The handler of a command (`handles`) and what it reaches; a closure command is a gap. */
+function handlerSide(walker: FlowWalker, builder: FlowBuilder, commandId: string, commandNode: RawFlowNode, closure: boolean): { found: boolean; data: boolean; name?: string } {
+  const index = walker.index;
+  const handles = walker.outgoing(commandId, new Set(['handles']));
+  let data = false, name: string | undefined;
+  for (const relationIndex of handles) {
+    const handler = index.relations[relationIndex]!.to, node = index.node(handler);
+    if (!node) continue;
+    name ??= displayName(node);
+    const handlerNode = builder.add({ id: `srv:${handler}`, lane: 'controller', kind: 'handler', depth: 0, entityId: handler, label: displayName(node) });
+    builder.link(commandNode, handlerNode, 'handles', { chain: [relationIndex] });
+    if (handlerNode) data = walker.serverSide(builder, handler, handlerNode).data || data;
+  }
+  if (!handles.length) {
+    const gap = builder.add({ id: `gap:no-handler:${commandId}`, lane: 'controller', kind: 'gap', depth: 0, label: closure ? 'Closure command' : 'No handler', gap: { reason: 'no-handler', text: closure ? 'The command runs a closure: its body is not indexed as a symbol, so what it does is not drawn.' : 'No handle() method was found for this command.' } });
+    builder.link(commandNode, gap, 'gap');
+  }
+  return { found: handles.length > 0, data, ...(name ? { name } : {}) };
 }

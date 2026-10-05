@@ -23,10 +23,14 @@ import type { Entity, Relation } from '../core/graph.js';
 import { extendRegistry, LAYOUT_VERSION, TIMELINE_LAYOUT_VERSION, layoutHierarchy, placeOnTimeline, timelineLayout, type LayoutState, type Rect, type TimelineLayout, type TimelineRegistry } from './layout.js';
 import { ProjectionIndex, type EntityRow, type ProjectionNode, type RelationRow } from './hierarchy.js';
 import { readSnapshotFile, readSnapshotSource, snapshotRef, SourceError, splitLines, type SourceRequest, type SourceResponse } from './source.js';
-import type { AggregateResult, ChangesPage, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, PathResult, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowEdge, RequestFlowList, RequestFlowNode, RequestFlowSummary, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
+import type { AggregateResult, ChangesPage, CoverageDetail, CoverageResult, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, FlowList, FlowSummary, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowEdge, RequestFlowList, RequestFlowNode, RequestFlowSummary, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
 import { computeImpact, DEFAULT_IMPACT_DEPTH, FILE_IMPACT_TYPES, impactPath, MAX_IMPACT_SEEDS, seedsOf, SYMBOL_IMPACT_TYPES, type ImpactComputation } from './impact.js';
-import { shortestPath, STEP_LIMITS, walkSteps } from './steps.js';
-import { displayName, endpointFlow, FLOW_LANES, unmatchedFlow, type FlowContext, type RawFlow } from './request-flows.js';
+import { walkSteps } from './steps.js';
+import { commandFlow, displayName, endpointFlow, FLOW_LANES, scheduleFlow, unmatchedFlow, type FlowContext, type RawFlow } from './request-flows.js';
+import { CATALOG_KINDS, computeCoverage, fileResolver, forwardSlice, pageEndpoints, type CatalogKind, type CoverageComputation } from './catalog.js';
+import type { AnnotationStore } from '../ai/store.js';
+import { assignDomains, type DomainAssignment, type DomainRule } from '../ai/domains.js';
+import type { AnnotationsOverview, EntityAnnotation, TimelineResponse } from './dto.js';
 import { guardsAt, hintOf, phrase } from './conditions.js';
 import { SYMBOL_TYPES } from './hierarchy.js';
 export type { NodeSummary, Page, RelationItem, ViewKey } from './dto.js';
@@ -46,6 +50,10 @@ interface View {
   /** Request flows built so far (undefined: the ID anchors none), and the listing once computed. */
   requestFlows?: Map<string, RawFlow | undefined>;
   requestFlowList?: { summary: RequestFlowSummary; members: Set<string> }[];
+  /** Every flow by entry point with its slice, the flows per entity, and file coverage (lazily). */
+  catalog?: { flows: { summary: FlowSummary; members: Set<string> }[]; byEntity: Map<string, number[]>; coverage?: CoverageComputation };
+  /** Endpoints serving a page (lazily): Steps stop at navigation to them. */
+  pages?: Set<string>;
 }
 const HTTP_FINDINGS = new Set(['unresolved-http-call', 'unresolved-http-url', 'unmatched-http-call', 'ambiguous-http-match', 'constrained-http-match', 'unverified-relative-api-boundary']);
 const IMPACT_TYPE_ORDER: Record<string, number> = { route: 0, api_endpoint: 1, component: 2, controller: 3, model: 4, class: 4, function: 5, method: 6, database_table: 7, file: 8 };
@@ -61,6 +69,8 @@ export interface ProjectionOptions {
   root?: string;
   /** Read-only history store, when one exists. */
   history?: () => HistoryStore | undefined;
+  /** Read-only language-model annotations (`annotate`), when they exist. */
+  annotations?: () => AnnotationStore | undefined;
 }
 
 export class ProjectionService {
@@ -145,6 +155,8 @@ export class ProjectionService {
     return entry;
   }
   private load(view: ViewKey = {}): View {
+    // The Features view: the live index drawn by domain (only once domains are described).
+    if (view.lens === 'domains' && !view.snapshot && !view.compareTo) { const lensed = this.lensView(); if (lensed) return lensed; }
     const { target, baseline } = this.sources(view);
     // Any snapshot parameter selects the timeline layout (when history exists); none is the live, compact map.
     const historical = !!(view.snapshot || view.compareTo) && !!this.timelineBase();
@@ -206,6 +218,105 @@ export class ProjectionService {
     const node = current.index.node(id);
     if (!node) throw new NotFoundError(`Unknown projection node ${id}`);
     return node;
+  }
+
+  // Annotations and the Features view ------------------------------------------------
+  private domainCache?: { key: string; assignment: DomainAssignment };
+  /** Domains of the live index from the model's rules (cached until the rules or the index change). */
+  private domains(): DomainAssignment | undefined {
+    const annotations = this.options.annotations?.();
+    const rules = annotations?.get<{ domains: DomainRule[] }>('domains', 'repository');
+    if (!rules?.value.domains?.length) return undefined;
+    const base = this.load({});
+    const key = `${base.key}|${rules.createdAt}`;
+    if (this.domainCache?.key !== key) this.domainCache = { key, assignment: assignDomains(base.index, rules.value.domains) };
+    return this.domainCache.assignment;
+  }
+  /**
+   * The live index by domain: repository → domain → folder → file. Folders
+   * are the files' directories, named by path; routes, tables and commands sit
+   * in districts of their domain. Directories and applications are not drawn.
+   */
+  private lensView(): View | undefined {
+    const assignment = this.domains();
+    if (!assignment) return undefined;
+    const target = this.snapshotSource();
+    const key = `${target.info.id}||lens:${this.domainCache!.key}`;
+    const cached = this.views.get(key);
+    if (cached) return cached;
+    const data = this.snapshotData(target);
+    const rows: EntityRow[] = [];
+    const repository = data.entities.find(row => row.type === 'repository' && !row.parentId)!;
+    rows.push(repository);
+    const byId = new Map(data.entities.map(row => [row.id, row]));
+    const names = new Map(assignment.domains.map(domain => [domain.key, domain]));
+    const used = new Set<string>();
+    const folders = new Map<string, EntityRow>();
+    const domainId = (key: string) => `lens:domain:${key}`;
+    for (const row of data.entities) {
+      if (row.type === 'repository' || row.type === 'directory' || row.type === 'application') continue;
+      const parent = row.parentId ? byId.get(row.parentId) : undefined;
+      // Symbols stay in their files.
+      if (parent && parent.type !== 'directory' && parent.type !== 'application' && parent.type !== 'repository') { rows.push(row); continue; }
+      const key = assignment.of.get(row.id) ?? 'platform';
+      used.add(key);
+      if (row.type === 'file') {
+        const folder = row.path?.includes('/') ? row.path.slice(0, row.path.lastIndexOf('/')) : '(root)';
+        const id = `lens:folder:${key}:${folder}`;
+        if (!folders.has(id)) folders.set(id, { id, type: 'group', name: folder, parentId: domainId(key), group: `Folder ${folder}: its files that serve ${names.get(key)?.name ?? key}.` });
+        rows.push({ ...row, parentId: id });
+      } else rows.push({ ...row, parentId: domainId(key) });
+    }
+    for (const domain of assignment.domains) if (used.has(domain.key)) rows.push({ id: domainId(domain.key), type: 'group', name: domain.name, parentId: repository.id, group: domain.summary, districts: true });
+    rows.push(...folders.values());
+    const index = new ProjectionIndex(target.info.id, rows, data.relations, data.diagnostics);
+    const result = layoutHierarchy(index.layoutNodes(), index.rootId);
+    const built: View = { key, target, targetData: data, index, rects: result.rects, persisted: false, holes: result.holes, layoutSource: 'fresh', addedDiagnostics: new Set() };
+    this.views.set(key, built);
+    if (this.views.size > VIEW_CACHE) this.views.delete(this.views.keys().next().value!);
+    return built;
+  }
+  /** What the models said about the repository: its overview and domains, how much was described, and the cost. */
+  annotationsOverview(): AnnotationsOverview {
+    const annotations = this.options.annotations?.();
+    if (!annotations) return { available: false, domains: [], counts: {}, models: [] };
+    const overview = annotations.get<{ summary: string; applications: { name: string; summary: string }[]; start: string[] }>('overview', 'repository')?.value;
+    const runs = annotations.runs();
+    const counts = annotations.counts();
+    const models = [...new Set(annotations.db.prepare('SELECT DISTINCT model FROM annotations').all().map(row => String(row.model)))];
+    const assignment = this.domains();
+    return {
+      available: Object.keys(counts).length > 0, ...(overview ? { overview } : {}),
+      domains: assignment ? assignment.domains.filter(domain => domain.files > 0) : [],
+      counts, models, ...(runs.length ? { cost: { last: runs[0]!.cost, total: runs.reduce((sum, run) => sum + run.cost, 0) } } : {}),
+    };
+  }
+  /** The description of an entity (files, folders and applications; others by their file), and its domain. */
+  entityAnnotation(id: string, view?: ViewKey): EntityAnnotation {
+    const current = this.load(view);
+    const node = this.require(current, id);
+    const annotations = this.options.annotations?.();
+    const result: EntityAnnotation = { id };
+    if (!annotations) return result;
+    if (node.kind === 'group' && id.startsWith('lens:domain:')) return { ...result, summary: node.explanation ?? '' };
+    const kind = node.type === 'file' ? 'file' : node.type === 'directory' || node.type === 'application' ? 'folder' : node.type === 'repository' ? 'overview' : undefined;
+    const stored = kind ? annotations.get<{ summary?: string; role?: string; hash?: string }>(kind, kind === 'overview' ? 'repository' : id) : undefined;
+    if (stored) Object.assign(result, { summary: stored.value.summary ?? '', ...(stored.value.role ? { role: stored.value.role } : {}), model: stored.model, createdAt: stored.createdAt, ...(stored.ste !== undefined ? { ste: stored.ste } : {}) });
+    // The file changed since it was described: the description may be out of date.
+    if (stored?.value.hash && node.type === 'file') { const hash = current.target.entity(id)?.metadata.contentHash; if (typeof hash === 'string' && hash !== stored.value.hash) result.outdated = true; }
+    const assignment = this.domains();
+    const key = assignment?.of.get(id);
+    const domain = key ? assignment!.domains.find(item => item.key === key) : undefined;
+    if (domain) result.domain = { key: domain.key, name: domain.name, inferred: assignment!.inferred.has(id) };
+    return result;
+  }
+  /** Commit explanations and history chapters on the timeline, when described. */
+  annotateTimeline(timeline: TimelineResponse): TimelineResponse {
+    const annotations = this.options.annotations?.();
+    if (!annotations) return timeline;
+    const notes = annotations.map<{ intent: string; title: string; summary: string; areas: string[] }>('commit');
+    const chapters = annotations.get<{ chapters: TimelineResponse['chapters'] }>('chapters', 'repository')?.value.chapters;
+    return { ...timeline, entries: timeline.entries.map(entry => { const note = notes.get(entry.sha)?.value; return note ? { ...entry, note } : entry; }), ...(chapters?.length ? { chapters } : {}) };
   }
 
   // Queries -------------------------------------------------------------------------
@@ -312,17 +423,31 @@ export class ProjectionService {
       return { id: relation.id, type: relation.type, direction, other: this.summary(current, other), otherAncestors: current.index.spatialAncestors(other).map(node => node.id), ...(metadata.has(relation.id) ? { metadata: metadata.get(relation.id) } : {}), ...(relation.change ? { change: relation.change } : {}) };
     });
   }
-  relations(id: string, options: { direction?: string; type?: string; limit?: number; offset?: number; view?: ViewKey }): RelationsPage {
+  /**
+   * Relationships of an entity. `scope: 'contained'` (files) adds those of its
+   * symbols that cross the file's boundary, each with the symbol inside.
+   */
+  relations(id: string, options: { direction?: string; type?: string; limit?: number; offset?: number; view?: ViewKey; scope?: string }): RelationsPage {
     const current = this.load(options.view);
     const node = this.require(current, id);
     const { limit, offset } = pagination(options);
     const direction = options.direction ?? 'both';
     if (!['incoming', 'outgoing', 'both'].includes(direction)) throw new Error('direction must be incoming, outgoing or both');
-    const all = (current.index.adjacency.get(node.id) ?? []).map(index => {
-      const relation = current.index.relations[index]!;
-      const dir: RelationItem['direction'] = relation.from === relation.to ? 'self' : relation.from === node.id ? 'outgoing' : 'incoming';
-      return { index, relation, direction: dir, otherId: dir === 'incoming' ? relation.from : relation.to };
-    });
+    if (options.scope !== undefined && options.scope !== 'contained') throw new Error('scope must be contained');
+    const index = current.index;
+    const contained = options.scope === 'contained' && node.kind === 'entity' && node.type !== 'repository' && node.type !== 'application' ? [...index.nodes.values()].filter(item => item.id !== node.id && index.contains(node, item)) : [];
+    const inside = new Set([node.id, ...contained.map(item => item.id)]);
+    const seen = new Set<number>();
+    const all = [node, ...contained].flatMap(owner => (index.adjacency.get(owner.id) ?? []).flatMap(relationIndex => {
+      const relation = index.relations[relationIndex]!;
+      const fromInside = inside.has(relation.from), toInside = inside.has(relation.to);
+      // Relations between two symbols of the file are internal to it.
+      if (seen.has(relationIndex) || (owner !== node && fromInside && toInside)) return [];
+      seen.add(relationIndex);
+      const dir: RelationItem['direction'] = relation.from === relation.to || (fromInside && toInside) ? 'self' : fromInside ? 'outgoing' : 'incoming';
+      const insideId = dir === 'incoming' ? relation.to : relation.from;
+      return [{ index: relationIndex, relation, direction: dir, otherId: dir === 'incoming' ? relation.from : relation.to, ...(insideId !== node.id ? { insideId } : {}) }];
+    }));
     const counts = new Map<string, number>();
     for (const item of all) { const key = `${item.relation.type}\u0000${item.direction}`; counts.set(key, (counts.get(key) ?? 0) + 1); }
     const filtered = all.filter(item => (direction === 'both' || item.direction === direction || item.direction === 'self') && (!options.type || item.relation.type === options.type));
@@ -331,7 +456,7 @@ export class ProjectionService {
     const page = filtered.slice(offset, offset + limit);
     const lookup = new Map(page.map(item => [item.index, item]));
     return {
-      items: this.relationItems(current, page.map(item => item.index), index => lookup.get(index)!),
+      items: this.relationItems(current, page.map(item => item.index), relationIndex => lookup.get(relationIndex)!).map((item, i) => { const insideId = page[i]!.insideId; return insideId ? { ...item, inside: this.summary(current, index.node(insideId)!) } : item; }),
       limit, offset, total: filtered.length, hasMore: offset + limit < filtered.length,
       typeCounts: [...counts].map(([key, count]) => { const [type, dir] = key.split('\u0000'); return { type: type!, direction: dir!, count }; }).sort((a, b) => a.type < b.type ? -1 : a.type > b.type ? 1 : a.direction < b.direction ? -1 : 1),
     };
@@ -440,7 +565,7 @@ export class ProjectionService {
     return readSnapshotSource(baseline ? request.side === 'baseline' ? [baseline] : [target, baseline] : [target], maxFileBytes, request);
   }
 
-  // Impact, steps and paths ---------------------------------------------------------
+  // Impact and steps ---------------------------------------------------------------
   /** Blast radius of an entity (or everything inside a container): what depends on it, hop by hop. */
   impact(id: string, options: { depth?: number; types?: string[]; type?: string; distance?: number; limit?: number; offset?: number; view?: ViewKey }): ImpactResult {
     const current = this.load(options.view);
@@ -547,7 +672,9 @@ export class ProjectionService {
     const anchor = this.require(current, id);
     if (anchor.kind !== 'entity') throw new Error('Steps start from an entity');
     const source = current.target;
-    const walk = walkSteps({ index: current.index, relationMetadata: ids => source.relationMetadata(ids), entity: entityId => source.entity(entityId) }, id);
+    current.pages ??= pageEndpoints(current.index);
+    const walk = walkSteps({ index: current.index, relationMetadata: ids => source.relationMetadata(ids), entity: entityId => source.entity(entityId), pages: current.pages }, id);
+    const ancestorsOf = (nodeId: string) => { const node = current.index.node(nodeId); return node ? current.index.spatialAncestors(node).map(item => item.id) : []; };
     const guards = this.guardReader(current, options.maxFileBytes);
     const appOf = (node: ProjectionNode) => appName(current, node);
     const relationIds = [...new Set(walk.links.flatMap(link => link.chain.map(i => current.index.relations[i]!.id)))];
@@ -561,10 +688,10 @@ export class ProjectionService {
     const steps: Step[] = await Promise.all(walk.steps.map(async step => {
       if (step.effect) {
         const owner = current.index.node(step.effect.owner);
-        return { id: step.id, kind: step.kind, layer: step.layer, caps: step.caps, ancestors: owner ? [...current.index.spatialAncestors(owner).map(item => item.id), owner.id] : [], effect: { ...step.effect, ownerName: owner?.name ?? step.effect.owner, ...(owner?.path ? { ownerPath: owner.path } : {}), when: await guards(step.effect.owner, step.effect.line, hintOf(step.effect.detail)) }, ...(owner && appOf(owner) ? { app: appOf(owner) } : {}) };
+        return { id: step.id, kind: step.kind, layer: step.layer, ancestors: owner ? [...current.index.spatialAncestors(owner).map(item => item.id), owner.id] : [], effect: { ...step.effect, ownerName: owner?.name ?? step.effect.owner, ...(owner?.path ? { ownerPath: owner.path } : {}), when: await guards(step.effect.owner, step.effect.line, hintOf(step.effect.detail)) }, ...(owner && appOf(owner) ? { app: appOf(owner) } : {}) };
       }
       const node = current.index.node(step.entityId!)!;
-      return { id: step.id, kind: step.kind, layer: step.layer, caps: step.caps, ancestors: current.index.spatialAncestors(node).map(item => item.id), node: this.summary(current, node), ...(appOf(node) ? { app: appOf(node) } : {}) };
+      return { id: step.id, kind: step.kind, layer: step.layer, ancestors: current.index.spatialAncestors(node).map(item => item.id), node: this.summary(current, node), ...(appOf(node) ? { app: appOf(node) } : {}), ...(step.navigation ? { navigation: true } : {}) };
     }));
     const links: StepLink[] = await Promise.all(walk.links.map(async link => {
       const hops: StepHop[] = await Promise.all(link.chain.map(async relationIndex => {
@@ -578,7 +705,7 @@ export class ProjectionService {
       }));
       return {
         id: `${link.from}>${link.to}`, from: link.from, to: link.to,
-        via: link.via.map(viaId => { const node = current.index.node(viaId)!; return { id: node.id, name: node.name, type: node.type }; }),
+        via: link.via.map(viaId => { const node = current.index.node(viaId)!; return { id: node.id, name: node.name, type: node.type, ancestors: ancestorsOf(node.id) }; }),
         hops, ...(link.event ? { event: link.event } : {}), back: link.back,
         // A step's own effect: the conditions at the effect's site.
         when: hops[0]?.when ?? (link.via.length ? [] : steps.find(step => step.id === link.to)?.effect?.when ?? []),
@@ -586,9 +713,8 @@ export class ProjectionService {
     }));
     const notices: string[] = [];
     if (walk.unresolvedCallSites) notices.push(`${walk.unresolvedCallSites} call site${walk.unresolvedCallSites === 1 ? '' : 's'} along this picture could not be resolved (callbacks, props, untyped values); what they reach is not drawn.`);
-    if (walk.truncated) notices.push('The picture is capped; each step says what was left out.');
     if (!walk.links.length) notices.push('Nothing indexed happens from here: no calls, renders, handlers, requests or effects were resolved.');
-    return { anchor: this.summary(current, anchor), steps, links, truncated: walk.truncated, notices, limits: STEP_LIMITS };
+    return { anchor: this.summary(current, anchor), steps, links, notices };
   }
   /** The conditions a site runs under, read from the viewed snapshot's source (files read once per reader). */
   private guardReader(current: View, maxFileBytes: number): (ownerId: string, line: number | undefined, hint?: string) => Promise<StepGuard[]> {
@@ -621,7 +747,7 @@ export class ProjectionService {
     if (!current.requestFlows.has(id)) {
       const node = current.index.node(id);
       const using = context ?? this.flowContext(current);
-      current.requestFlows.set(id, !node || node.kind !== 'entity' ? undefined : node.type === 'api_endpoint' ? endpointFlow(using, id) : unmatchedFlow(using, id));
+      current.requestFlows.set(id, !node || node.kind !== 'entity' ? undefined : node.type === 'api_endpoint' ? endpointFlow(using, id) : node.type === 'command' ? commandFlow(using, id) : node.type === 'scheduled_task' ? scheduleFlow(using, id) : unmatchedFlow(using, id));
     }
     return current.requestFlows.get(id);
   }
@@ -682,23 +808,111 @@ export class ProjectionService {
     const edges: RequestFlowEdge[] = await Promise.all(flow.edges.map(async edge => ({
       id: edge.id, from: edge.from, to: edge.to, kind: edge.kind, ...(edge.label ? { label: edge.label } : {}),
       hops: edge.chain.map(index => { const relation = current.index.relations[index]!; return { relationId: relation.id, type: relation.type, from: relation.from, to: relation.to }; }),
-      via: edge.via.map(viaId => { const node = current.index.node(viaId)!; return { id: node.id, name: displayName(node), type: node.type }; }),
+      via: edge.via.map(viaId => { const node = current.index.node(viaId)!; return { id: node.id, name: displayName(node), type: node.type, ancestors: ancestorsOf(node.id) }; }),
       when: edge.site ? await guards(edge.site.owner, edge.site.line, edge.site.hint === undefined ? undefined : hintOf(edge.site.hint) ?? edge.site.hint) : [],
     })));
     return { ...this.flowSummary(current, flow), anchor: this.summary(current, anchor), lanes: FLOW_LANES.filter(lane => nodes.some(node => node.lane === lane)), nodes, edges, truncated: flow.truncated, notices: flow.notices };
   }
 
-  /** Shortest evidenced path from one entity to another (forward relations; reversed when only the other direction exists). */
-  path(from: string, to: string, view?: ViewKey): PathResult {
+  // Flow catalog and coverage ------------------------------------------------------------
+  /** Every flow by entry point, with the entities it touches (built once per view). */
+  private catalog(current: View): NonNullable<View['catalog']> {
+    if (current.catalog) return current.catalog;
+    const index = current.index;
+    const context = this.flowContext(current);
+    const pages = current.pages ??= pageEndpoints(index);
+    const fileOf = fileResolver(index);
+    const present = (node: ProjectionNode) => node.kind === 'entity' && node.change?.status !== 'removed';
+    const all = [...index.nodes.values()].filter(present);
+    const gets = new Set(all.filter(node => node.type === 'api_endpoint' && node.name.startsWith('GET ')).map(node => `${node.canonicalParentId}|${node.name.slice(4)}`));
+    const entries: { id: string; kind: CatalogKind }[] = [];
+    for (const node of all) {
+      if (node.type === 'route') entries.push({ id: node.id, kind: 'page' });
+      else if (node.type === 'api_endpoint' && !(node.name.startsWith('HEAD ') && gets.has(`${node.canonicalParentId}|${node.name.slice(5)}`))) entries.push({ id: node.id, kind: pages.has(node.id) ? 'page' : 'request' });
+      else if (node.type === 'command') entries.push({ id: node.id, kind: 'command' });
+      else if (node.type === 'scheduled_task') entries.push({ id: node.id, kind: 'schedule' });
+    }
+    for (const id of new Set(index.diagnostics.flatMap(item => item.entityId && HTTP_FINDINGS.has(item.code) && index.node(item.entityId) && present(index.node(item.entityId)!) ? [item.entityId] : []))) entries.push({ id, kind: 'unmatched' });
+    const flows: NonNullable<View['catalog']>['flows'] = [];
+    for (const entry of entries) {
+      const node = index.node(entry.id)!;
+      const raw = node.type === 'route' ? undefined : this.rawFlow(current, entry.id, context);
+      if (node.type !== 'route' && !raw) continue;
+      const slice = entry.kind === 'unmatched' ? { members: new Set<string>(), truncated: false } : forwardSlice(index, entry.id, pages);
+      const members = new Set([...slice.members, ...raw?.members ?? [], entry.id]);
+      const files = new Set([...members].map(fileOf).filter((file): file is string => !!file));
+      const app = appName(current, node);
+      const base = { id: entry.id, kind: entry.kind, entry: { id: node.id, type: node.type, name: node.name }, ...(app ? { app } : {}), entities: members.size, files: files.size, ...(slice.truncated ? { truncated: true } : {}) };
+      let summary: FlowSummary;
+      if (!raw) summary = { ...base, name: node.name, path: node.name, group: `/${node.name.split('/').filter(Boolean)[0] ?? ''}`, detail: 'steps' };
+      else {
+        const request = this.flowSummary(current, raw);
+        const group = entry.kind === 'command' ? (node.name.includes(':') ? `${node.name.split(':')[0]}:` : 'commands') : entry.kind === 'schedule' ? 'scheduler' : request.group;
+        summary = { ...base, name: request.name, group, method: request.method, path: request.path, detail: 'lanes', status: request.status, stages: request.stages, gaps: request.gaps, tables: request.tables, responses: request.responses, callers: request.callers, ...(request.handler ? { handler: request.handler } : {}), ...(entry.kind === 'schedule' ? { cadence: request.path } : {}) };
+      }
+      flows.push({ summary, members });
+    }
+    const order = (item: FlowSummary) => [String(CATALOG_KINDS.indexOf(item.kind)), item.app ?? '', item.group.toLowerCase(), (item.path ?? item.name).toLowerCase(), String(METHOD_ORDER[item.method ?? ''] ?? 9), item.id].join('\u0000');
+    flows.sort((a, b) => order(a.summary) < order(b.summary) ? -1 : order(a.summary) > order(b.summary) ? 1 : 0);
+    const byEntity = new Map<string, number[]>();
+    flows.forEach((flow, flowIndex) => { for (const id of flow.members) { const list = byEntity.get(id) ?? []; list.push(flowIndex); byEntity.set(id, list); } });
+    // Titles the models gave the flows.
+    const titles = this.options.annotations?.()?.map<{ title: string; goal: string; actor: string }>('flow');
+    if (titles?.size) for (const flow of flows) { const note = titles.get(flow.summary.id)?.value; if (note) flow.summary = { ...flow.summary, title: note.title, goal: note.goal, actor: note.actor }; }
+    current.catalog = { flows, byEntity };
+    return current.catalog;
+  }
+  /** Flows touching an entity, or anything inside an area or file (indices into the catalog). */
+  private flowsThrough(current: View, node: ProjectionNode): number[] {
+    const catalog = this.catalog(current);
+    if (node.type === 'repository') return catalog.flows.map((_, i) => i);
+    const found = new Set<number>(catalog.byEntity.get(node.id) ?? []);
+    const area = node.kind === 'group' || ['application', 'directory', 'file', 'class', 'controller', 'component', 'model'].includes(node.type);
+    if (area) for (const [id, flows] of catalog.byEntity) { const member = current.index.node(id); if (member && current.index.contains(node, member)) for (const flow of flows) found.add(flow); }
+    return [...found].sort((a, b) => a - b);
+  }
+  /** Every flow of the view by entry point: pages, requests, commands, scheduled tasks and unmatched requests. */
+  flows(options: { view?: ViewKey; entity?: string; kind?: string } = {}): FlowList {
+    const current = this.load(options.view);
+    if (options.kind && !CATALOG_KINDS.includes(options.kind as CatalogKind)) throw new Error(`kind must be one of ${CATALOG_KINDS.join(', ')}`);
+    const catalog = this.catalog(current);
+    const indices = options.entity ? this.flowsThrough(current, this.require(current, options.entity)) : catalog.flows.map((_, i) => i);
+    const counts = Object.fromEntries(CATALOG_KINDS.map(kind => [kind, 0])) as FlowList['counts'];
+    const items: FlowSummary[] = [];
+    for (const i of indices) { const summary = catalog.flows[i]!.summary; counts[summary.kind]++; if (!options.kind || summary.kind === options.kind) items.push(summary); }
+    return { items, counts, ...(options.entity ? { entity: options.entity } : {}) };
+  }
+  private coverageOfView(current: View): CoverageComputation {
+    const catalog = this.catalog(current);
+    if (!catalog.coverage) {
+      const dynamicCommandRuns = current.index.diagnostics.filter(item => item.code === 'unresolved-artisan-call' && /not a literal/.test(item.reason)).length;
+      catalog.coverage = computeCoverage({ index: current.index, flows: catalog.flows.map(flow => ({ name: flow.summary.name, members: flow.members })), entries: catalog.flows.filter(flow => flow.summary.kind !== 'unmatched').map(flow => flow.summary.id), unresolvedNames: this.unresolvedNames(current), dynamicCommandRuns });
+    }
+    return catalog.coverage;
+  }
+  /** Which files the flows touch: a category per file, rolled up per area. */
+  coverage(view?: ViewKey): CoverageResult {
     const current = this.load(view);
-    this.require(current, from); this.require(current, to);
-    let reversed = false;
-    let chain = shortestPath(current.index, from, to);
-    if (!chain) { chain = shortestPath(current.index, to, from); reversed = !!chain; }
-    if (!chain) return { found: false, nodes: [], links: [] };
-    const start = reversed ? to : from;
-    const ids = [start, ...chain.map(i => current.index.relations[i]!.to)];
-    return { found: true, ...(reversed ? { reversed } : {}), nodes: ids.map(item => this.summary(current, current.index.node(item)!)), links: chain.map(i => { const relation = current.index.relations[i]!; return { relationId: relation.id, type: relation.type, from: relation.from, to: relation.to }; }) };
+    const computed = this.coverageOfView(current);
+    return {
+      totals: computed.totals, codeFiles: computed.codeFiles, flows: this.catalog(current).flows.length,
+      files: Object.fromEntries([...computed.files].map(([id, item]) => [id, { category: item.category, flows: item.flows }])),
+      areas: Object.fromEntries(computed.areas),
+    };
+  }
+  /** Why an entity is (or is not) part of flows, and the flows touching it. */
+  coverageOf(id: string, view?: ViewKey): CoverageDetail {
+    const current = this.load(view);
+    const node = this.require(current, id);
+    const computed = this.coverageOfView(current);
+    const file = node.type === 'file' ? computed.files.get(node.id) : undefined;
+    const indices = this.flowsThrough(current, node);
+    const catalog = this.catalog(current);
+    return {
+      id, ...(file ? { category: file.category, reason: file.reason } : {}),
+      ...(computed.areas.has(node.id) ? { counts: computed.areas.get(node.id) } : {}),
+      flows: indices.slice(0, 50).map(i => catalog.flows[i]!.summary), totalFlows: indices.length,
+    };
   }
 
   // Comparison ----------------------------------------------------------------------

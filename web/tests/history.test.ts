@@ -10,7 +10,6 @@ import { HISTORY_DATABASE, historyConfig, indexHistory, revisionConfig } from '.
 import { HistoryAccess, HistoryService } from '../../src/history/service.js';
 import { HistoryStore } from '../../src/history/store.js';
 import { createHistoryFixture, type HistoryFixture } from '../../tests/history-fixture.js';
-import { memoryFlowPersistence } from '../lib/flows';
 import { AtlasStore, predecessor } from '../lib/store';
 import { RecordingNavigator, ServiceApi } from './service-api';
 
@@ -38,7 +37,7 @@ const entityAt = (commit: keyof HistoryFixture['commits'], predicate: (row: Retu
 async function ready(hash = '') {
   const location = { hash, replace(next: string) { this.hash = next; } };
   const api = new ServiceApi(store, projection, { history: service });
-  const atlas = new AtlasStore(api, { flowPersistence: () => memoryFlowPersistence(), location });
+  const atlas = new AtlasStore(api, { location });
   atlas.navigator = new RecordingNavigator();
   stores.push(atlas);
   await atlas.init();
