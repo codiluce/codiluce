@@ -528,6 +528,8 @@ test('impact, steps, flows and coverage are served over HTTP with validation', a
     assert.equal((await fetch(`${base}/api/projection/flows?kind=bogus`)).status, 400);
     const coverage = await fetch(`${base}/api/projection/coverage`).then(response => response.json());
     assert.ok(coverage.codeFiles > 0 && Object.keys(coverage.files).length > 0);
+    const exported = await fetch(`${base}/api/projection/coverage/export`).then(response => response.json());
+    assert.ok(Array.isArray(exported.files) && Array.isArray(exported.symbols), 'the export route is not taken for an entity id');
     assert.equal((await fetch(`${base}/api/projection/path?from=x&to=y`)).status, 404, 'path finding is gone');
     assert.equal((await fetch(`${base}/api/projection/steps/missing`)).status, 404);
     const flows = await fetch(`${base}/api/projection/request-flows`).then(response => response.json());
@@ -607,6 +609,13 @@ test('coverage classifies every file by the flows touching it, and says why', ()
   assert.equal(category('backend/app/Http/Controllers/Controller.php'), 'supporting');
   const detail = projection.coverageOf(fileId('backend/app/Http/Controllers/Controller.php'));
   assert.match(detail.reason!, /imported or extended by/);
+  // A barrel only re-exported by another barrel forwards a component flows render.
+  assert.equal(category('frontend/src/components/badge/index.ts'), 'supporting');
+  assert.match(projection.coverageOf(fileId('frontend/src/components/badge/index.ts')).reason!, /re-exports Badge\.tsx/);
+  // Fortify's view endpoint reaches its page, and the page its anonymous layout.
+  assert.equal(category('backend/resources/js/pages/auth/register.tsx'), 'flow');
+  assert.equal(category('backend/resources/js/layouts/auth-layout.tsx'), 'flow');
+  assert.equal(category('backend/app/Actions/Fortify/CreateNewUser.php'), 'flow');
   // Areas roll up their code files; the repository holds them all.
   const rootId = graph.entities.find(item => item.type === 'repository')!.id;
   const total = Object.values(coverage.areas[rootId]!).reduce((sum, count) => sum + count, 0);
@@ -627,4 +636,20 @@ test('a file lists its symbols\' relationships across its boundary, with the sym
   assert.ok(contained.items.some(item => item.type === 'handles' && item.direction === 'incoming' && item.other.name === 'reports:prune' && item.inside?.name === 'handle'));
   assert.ok(!contained.items.some(item => item.other.id === file.id || item.type === 'contains'));
   assert.throws(() => projection.relations(file.id, { scope: 'everything' }), /scope must be contained/);
+});
+test('the coverage export lists unreached files with their symbols, and unused symbols of reached files', () => {
+  const projection = new ProjectionService(store, { root });
+  const exported = projection.coverageExport();
+  assert.ok(exported.about.length > 0 && exported.repository);
+  const coverage = projection.coverage();
+  const unreached = Object.values(coverage.files).filter(item => item.category === 'unreached' || item.category === 'explained').length;
+  assert.equal(exported.files.length, unreached);
+  assert.ok(exported.files.every(file => file.reason && (file.category === 'unreached' || file.category === 'explained')));
+  // An unused symbol is in a reached file, and in no flow.
+  assert.ok(exported.symbols.length > 0);
+  for (const item of exported.symbols) {
+    assert.ok(['entry', 'flow', 'supporting'].includes(item.fileCategory));
+    const entity = graph.entities.find(candidate => candidate.path === item.path && candidate.name === item.name && candidate.type === item.type)!;
+    assert.equal(projection.flows({ entity: entity.id }).items.length, 0, `${item.path} ${item.name} is in a flow`);
+  }
 });

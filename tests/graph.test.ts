@@ -10,7 +10,7 @@ import { stringify } from 'yaml';
 import { indexRepository } from '../src/pipeline/index.js';
 import { GraphStore } from '../src/storage/sqlite.js';
 import { createInspectionServer } from '../src/api/server.js';
-import { loadConfig, matchesGlob } from '../src/core/config.js';
+import { applicationAt, loadConfig, matchesGlob } from '../src/core/config.js';
 import { validateGraph, type SoftwareGraph, type Entity } from '../src/core/graph.js';
 import { nextRoute } from '../src/analyzers/typescript.js';
 import { shapeHash } from '../src/history/fingerprint.js';
@@ -178,14 +178,26 @@ test('API serves bounded search, hierarchy, dependencies and evidence; rejects m
     assert.equal((await fetch(`${base}/api`, { method: 'POST' })).status, 405);
   } finally { await new Promise<void>(resolve => server.close(() => resolve())); store.close(); }
 });
-test('configuration autodetects apps and rejects escaping/overlapping paths', async () => {
+test('configuration autodetects apps, completes configured ones from manifests and rejects escaping/duplicate paths', async () => {
   const state = await mkdtemp(path.join(tmpdir(), 'atlas-state-')); temporary.push(state);
   const config = await loadConfig(root, state);
-  assert.deepEqual(config.applications.map(item => item.type).sort(), ['laravel', 'nextjs']);
+  assert.deepEqual(config.applications.map(item => item.frameworks[0]).sort(), ['laravel', 'nextjs']);
+  // The earlier single `type` is one configured framework; manifests add theirs and the ecosystem.
+  await writeFile(path.join(state, 'config.yml'), stringify({ applications: [{ name: 'web', path: 'frontend', type: 'nextjs' }] }));
+  const [web] = (await loadConfig(root, state)).applications;
+  assert.equal(web!.frameworks[0], 'nextjs'); assert.ok(web!.frameworks.includes('react')); assert.deepEqual(web!.ecosystems, ['node']);
   await writeFile(path.join(state, 'config.yml'), stringify({ applications: [{ name: 'escape', path: '../', type: 'nextjs' }] }));
   await assert.rejects(loadConfig(root, state), /outside repository/);
-  await writeFile(path.join(state, 'config.yml'), stringify({ applications: [{ name: 'one', path: 'frontend', type: 'nextjs' }, { name: 'two', path: 'frontend/src', type: 'nextjs' }] }));
-  await assert.rejects(loadConfig(root, state), /Overlapping/);
+  await writeFile(path.join(state, 'config.yml'), stringify({ applications: [{ name: 'one', path: 'frontend', frameworks: ['nextjs'] }, { name: 'two', path: 'frontend/', frameworks: ['nextjs'] }] }));
+  await assert.rejects(loadConfig(root, state), /must be unique/);
+  await writeFile(path.join(state, 'config.yml'), stringify({ applications: [{ name: 'one', path: 'frontend', ecosystems: ['cobol'] }] }));
+  await assert.rejects(loadConfig(root, state), /Invalid application configuration/);
+  // Applications nest: a file belongs to the innermost one.
+  await writeFile(path.join(state, 'config.yml'), stringify({ applications: [{ name: 'one', path: 'frontend', frameworks: ['nextjs'] }, { name: 'two', path: 'frontend/src/services' }] }));
+  const nested = (await loadConfig(root, state)).applications;
+  assert.equal(applicationAt(nested, 'frontend/src/services/client.ts')?.name, 'two');
+  assert.equal(applicationAt(nested, 'frontend/src/app/layout.tsx')?.name, 'one');
+  assert.equal(applicationAt(nested, 'backend/routes/web.php'), undefined);
   await writeFile(path.join(state, 'config.yml'), 'ignore: not-a-list');
   await assert.rejects(loadConfig(root, state), /ignore must be a list/);
 });
@@ -428,4 +440,30 @@ test('Inertia: the server renders page components by name, and their visits are 
   const file = graph.entities.find(item => item.path === dashboard.path && item.type === 'file')!;
   assert.ok((file.metadata.httpRequests as { client?: string; resolution: string }[]).some(item => item.client === 'Inertia Link' && item.resolution === 'unresolved'));
   assert.ok(!graph.diagnostics.some(item => item.file === dashboard.path && item.code === 'unresolved-http-call'));
+});
+
+test('Fortify: endpoints come from config/fortify.php features, views and action bindings', () => {
+  const fortify = graph.entities.filter(item => item.type === 'api_endpoint' && item.metadata.package === 'laravel/fortify');
+  const names = fortify.map(item => item.name);
+  // Always registered, by enabled feature; disabled features (resetPasswords) declare nothing.
+  for (const name of ['GET /login', 'POST /login', 'POST /logout', 'GET /register', 'POST /register', 'GET /user/confirm-password']) assert.ok(names.includes(name), `Expected ${name}`);
+  assert.ok(!names.includes('POST /forgot-password') && !names.includes('GET /two-factor-challenge'));
+  // A view closure renders its Inertia page; an action binding handles the endpoint.
+  const register = fortify.find(item => item.name === 'GET /register')!;
+  assert.equal(register.metadata.inertiaPage, 'auth/register');
+  assert.equal(register.path, 'backend/app/Providers/FortifyServiceProvider.php');
+  const page = graph.entities.find(item => item.type === 'component' && item.name === 'Register')!;
+  assert.ok(graph.relations.some(edge => edge.from === register.id && edge.to === page.id && edge.type === 'renders'));
+  const store = fortify.find(item => item.name === 'POST /register')!;
+  assert.ok(graph.relations.some(edge => edge.from === store.id && edge.to === symbol('App\\Actions\\Fortify\\CreateNewUser::create').id && edge.type === 'handles'));
+  assert.equal(fortify.find(item => item.name === 'GET /login')!.metadata.view, 'auth.login');
+  assert.equal(fortify.find(item => item.name === 'POST /login')!.metadata.handlerKind, 'package');
+});
+
+test('an anonymous default-exported arrow is a component that importers render', () => {
+  const layout = graph.entities.find(item => item.path === 'backend/resources/js/layouts/auth-layout.tsx' && item.type === 'component')!;
+  assert.equal(layout.name, 'default');
+  assert.equal(graph.entities.find(item => item.type === 'file' && item.path === layout.path)!.metadata.defaultExport, layout.id);
+  const page = graph.entities.find(item => item.type === 'component' && item.name === 'Register')!;
+  assert.ok(graph.relations.some(edge => edge.from === page.id && edge.to === layout.id && edge.type === 'renders'));
 });

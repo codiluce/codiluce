@@ -4,7 +4,7 @@
 import type { Entity, Relation } from '@engine/core/graph';
 import type { EvolutionResponse } from '@engine/projection/dto';
 import type { AnnotationsOverview, EntityAnnotation } from '@engine/projection/dto';
-import type { AggregateEdgesPage, AggregateResult, CatalogKind, ChangesPage, CoverageDetail, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FlowList, ImpactResult, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
+import type { AggregateEdgesPage, AggregateResult, CatalogKind, ChangesPage, CoverageDetail, CoverageExport, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FlowList, ImpactResult, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
 
 export class ApiError extends Error { constructor(readonly status: number, message: string, readonly body?: unknown) { super(message); } }
 export function isAbort(error: unknown): boolean { return error instanceof DOMException && error.name === 'AbortError' || (error instanceof Error && error.name === 'AbortError'); }
@@ -50,6 +50,8 @@ export interface AtlasApi {
   coverage(signal?: AbortSignal): Promise<CoverageResult>;
   /** Why an entity is (or is not) part of flows, and the flows touching it. */
   coverageOf(id: string, signal?: AbortSignal): Promise<CoverageDetail>;
+  /** Code no flow is proven to use (files, and unused symbols of reached files), to review. */
+  coverageExport(signal?: AbortSignal): Promise<CoverageExport>;
   /** What the language models said about the repository (overview, domains, counts, cost). */
   annotations(signal?: AbortSignal): Promise<AnnotationsOverview>;
   /** An entity's description and domain. */
@@ -131,6 +133,7 @@ export class HttpAtlasApi implements AtlasApi {
   catalog(options: { entity?: string; kind?: CatalogKind }, signal?: AbortSignal) { return this.get<FlowList>(`/api/projection/flows${this.q({ entity: options.entity, kind: options.kind })}`, signal); }
   coverage(signal?: AbortSignal) { return this.get<CoverageResult>(`/api/projection/coverage${this.q()}`, signal); }
   coverageOf(id: string, signal?: AbortSignal) { return this.get<CoverageDetail>(`/api/projection/coverage/${encodeURIComponent(id)}${this.q()}`, signal); }
+  coverageExport(signal?: AbortSignal) { return this.get<CoverageExport>(`/api/projection/coverage/export${this.q()}`, signal); }
   annotations(signal?: AbortSignal) { return this.get<AnnotationsOverview>('/api/annotations', signal, false); }
   entityAnnotation(id: string, signal?: AbortSignal) { return this.get<EntityAnnotation>(`/api/annotations/entity/${encodeURIComponent(id)}${this.q()}`, signal); }
   async requestIndex(sha: string) {

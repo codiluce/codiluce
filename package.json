@@ -23,6 +23,7 @@
     "php-parser": "^3.7.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "smol-toml": "^1.9.0",
     "typescript": "^5.9.3",
     "yaml": "^2.8.1"
   },

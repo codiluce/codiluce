@@ -11,6 +11,7 @@
 import path from 'node:path';
 import type { AnalysisContext, Analyzer } from '../core/analyzer.js';
 import { ANALYZER_VERSION, evidence, type EffectFact, type Entity } from '../core/graph.js';
+import { hasFramework } from '../core/config.js';
 
 const PAGE_DIRECTORIES = ['resources/js/pages', 'resources/js/Pages'];
 const EXTENSIONS = ['tsx', 'jsx', 'ts', 'js', 'vue', 'svelte'];
@@ -21,7 +22,7 @@ export const inertiaLinker: Analyzer = {
     const { graph } = context;
     const page = (entity: Entity, name: string): { file: string; target: Entity } | undefined => {
       const app = entity.path ? context.files.get(entity.path)?.application : undefined;
-      if (!app || app.type !== 'laravel') return undefined;
+      if (!hasFramework(app, 'laravel')) return undefined;
       const base = app.path === '.' ? '' : app.path;
       for (const directory of PAGE_DIRECTORIES) for (const extension of EXTENSIONS) {
         const file = context.files.get(path.posix.join(base, directory, `${name}.${extension}`));

@@ -2,6 +2,7 @@ import ts from 'typescript';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import type { Analyzer, AnalysisContext, ScannedFile } from '../core/analyzer.js';
+import { hasFramework } from '../core/config.js';
 import { ANALYZER_VERSION, declarationHashes, evidence, type Entity, type EntityType } from '../core/graph.js';
 import { SiteCollector } from './references.js';
 import { createApplicationProgram } from './ts-program.js';
@@ -106,7 +107,7 @@ function linkNextWrappers(context: AnalysisContext, files: ScannedFile[]): void 
   const wrappers: { directory: string; role: string; target: string; path: string }[] = [];
   for (const file of files) {
     const app = file.application;
-    if (app?.type !== 'nextjs') continue;
+    if (!hasFramework(app, 'nextjs')) continue;
     const modulePath = path.posix.relative(app.path === '.' ? '' : app.path, file.path);
     const match = NEXT_WRAPPERS.exec(modulePath);
     const entity = graph.entities.get(file.id);
@@ -208,19 +209,25 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.Co
     } else if (ts.isPropertyDeclaration(node) && node.initializer && (ts.isArrowFunction(node.initializer) || ts.isFunctionExpression(node.initializer)) && (ts.isIdentifier(node.name) || ts.isPrivateIdentifier(node.name))) {
       // Class fields holding functions (handleClick = () => …) are methods.
       name = node.name.text; signature = functionSignature(node.initializer, source); type = 'method'; nameNode = node.name;
+    } else if ((ts.isArrowFunction(node) || ts.isFunctionExpression(node)) && ts.isExportAssignment(node.parent) && !node.parent.isExportEquals) {
+      // export default (props) => …: an anonymous default export, named like `export default function () {}`.
+      name = 'default'; signature = functionSignature(node, source); type = 'function'; nameNode = undefined;
+      declaration = node.parent;
     }
     if (name && type) {
-      if (type === 'function' && /^[A-Z]/.test(name) && hasJsx(node)) type = 'component';
+      if (type === 'function' && (/^[A-Z]/.test(name) || name === 'default') && hasJsx(node)) type = 'component';
       const parent = parentSymbol(node);
       const qualified = `${parent?.metadata.qualifiedName ? `${parent.metadata.qualifiedName}.` : ''}${name}`;
       const id = graph.id('symbol', file.language!, app.name, modulePath, qualified, signature);
       if (graph.entities.has(id)) graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'duplicate-symbol', file: file.path, line: location(node).startLine, reason: `Duplicate/overloaded symbol identity ${qualified}${signature}` });
       else {
-        const isExported = modifier(declaration, ts.SyntaxKind.ExportKeyword) || modifier(declaration, ts.SyntaxKind.DefaultKeyword);
-        const isDefault = modifier(declaration, ts.SyntaxKind.DefaultKeyword);
+        const isDefault = modifier(declaration, ts.SyntaxKind.DefaultKeyword) || ts.isExportAssignment(declaration);
+        const isExported = modifier(declaration, ts.SyntaxKind.ExportKeyword) || isDefault;
         const entity = graph.contain({ id, type, name, path: file.path, language: file.language, parentId: parent?.id ?? file.id, sourceRange: location(node), metrics: { loc: location(node).endLine - location(node).startLine + 1 }, metadata: { qualifiedName: qualified, signature, exported: isExported, default: isDefault, ...(/^use[A-Z]/.test(name) ? { role: 'hook' } : {}), serverAction: /^(?:[\s{]*)(?:['"]use server['"])/.test(ts.isFunctionDeclaration(node) ? node.body?.getText(source) ?? '' : ''), ...declarationHashes(node.getText(source), nameNode ? nameNode.getEnd() - node.getStart(source) : 0) }, evidence: facts(node, 'AST symbol declaration') });
         symbols.set(node, entity);
         state.declarations.set(node, entity);
+        // An importer's `default` symbol is declared by the export assignment itself.
+        if (ts.isExportAssignment(declaration)) state.declarations.set(declaration, entity);
         if ((ts.isVariableDeclaration(node) || ts.isPropertyDeclaration(node)) && node.initializer) {
           const fn = ts.isCallExpression(node.initializer) ? memoizedCallback(node.initializer) : node.initializer;
           if (fn) { symbols.set(fn, entity); state.declarations.set(fn, entity); }
@@ -281,7 +288,7 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.Co
       }
     }
   }
-  if (app.type !== 'nextjs') return symbols;
+  if (!hasFramework(app, 'nextjs')) return symbols;
   const route = nextRoute(modulePath);
   if (!route) return symbols;
   fileEntity.metadata.nextjs = route;

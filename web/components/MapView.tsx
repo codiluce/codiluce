@@ -4,7 +4,7 @@ import { MapController } from '../lib/controller';
 import { typeLabel } from '../lib/format';
 import { LEVELS } from '../lib/lod';
 import { coverageCss, themeById } from '../lib/themes';
-import { COVERAGE_HINT, COVERAGE_ORDER, COVERAGE_TEXT } from '../lib/coverage';
+import { COVERAGE_HINT, COVERAGE_ORDER, COVERAGE_TEXT, NOT_MEASURED } from '../lib/coverage';
 import { impactColors } from '../lib/renderer';
 import { useAtlas, useStore } from './context';
 
@@ -139,7 +139,21 @@ function CoverageLegend() {
   const store = useStore();
   const coverage = useAtlas(state => state.coverage);
   const dark = themeById(useAtlas(state => state.themeId)).dark;
+  const [exporting, setExporting] = useState<'idle' | 'busy' | 'error'>('idle');
   if (!coverage.show) return null;
+  /** Download what no flow is proven to use as JSON, to review (e.g. with a language model). */
+  const exportUnused = async () => {
+    setExporting('busy');
+    try {
+      const result = await store.api.coverageExport();
+      const url = URL.createObjectURL(new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' }));
+      const link = document.createElement('a');
+      link.href = url; link.download = `${result.repository || 'repository'}-unused-code.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setExporting('idle');
+    } catch { setExporting('error'); }
+  };
   const data = coverage.data;
   const touched = data ? data.totals.entry + data.totals.flow : 0;
   return (
@@ -153,11 +167,15 @@ function CoverageLegend() {
       {data && (
         <>
           <p className="coverage-headline"><span className="big">{data.codeFiles ? Math.round((touched / data.codeFiles) * 100) : 0}%</span> of {data.codeFiles} code files are entry points or in one of {data.flows} flows</p>
-          <div className="coverage-bar wide">{COVERAGE_ORDER.filter(key => key !== 'asset' && data.totals[key]).map(key => <span key={key} style={{ flexGrow: data.totals[key], background: coverageCss(key, dark) }} />)}</div>
+          <div className="coverage-bar wide">{COVERAGE_ORDER.filter(key => !NOT_MEASURED.has(key) && data.totals[key]).map(key => <span key={key} style={{ flexGrow: data.totals[key], background: coverageCss(key, dark) }} />)}</div>
           <ul className="coverage-keys">
             {COVERAGE_ORDER.filter(key => data.totals[key]).map(key => <li key={key} title={COVERAGE_HINT[key]}><span className="type-dot" style={{ background: coverageCss(key, dark) }} />{COVERAGE_TEXT[key]}<span className="count">{data.totals[key]}</span></li>)}
           </ul>
           <p className="absent">Closed areas show the share of their code files in flows. Select a file to see why.</p>
+          <div className="coverage-export">
+            <button className="button" onClick={() => void exportUnused()} disabled={exporting === 'busy'} title="Download the files no flow reaches and the unused symbols of reached files, with the reasons, as JSON to review">{exporting === 'busy' ? 'Exporting…' : 'Export unused (JSON)'}</button>
+            {exporting === 'error' && <span className="note error">Export failed</span>}
+          </div>
         </>
       )}
     </div>

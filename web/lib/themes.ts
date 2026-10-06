@@ -50,6 +50,11 @@ function fileLanguages(l: number, s = 0): Record<string, Hsl> {
   return {
     'file:typescript': tone(222, 92), 'file:javascript': tone(46, 96, l + 4), 'file:php': tone(268, 78, l + 2), 'file:scss': tone(326, 88, l + 2), 'file:css': tone(198, 88, l + 2),
     'file:json': tone(28, 96, l + 2), 'file:markdown': tone(250, 40, l + 10), 'file:html': tone(8, 88, l + 2), 'file:xml': tone(172, 62, l - 4), 'file:yaml': tone(92, 64, l - 2),
+    // Hues apart from the web languages above, which appear beside every other; languages that seldom share a repository may share a hue.
+    'file:python': tone(140, 62), 'file:go': tone(186, 86), 'file:rust': tone(22, 58, l - 8), 'file:java': tone(6, 72, l - 4), 'file:kotlin': tone(284, 80),
+    'file:scala': tone(348, 78), 'file:csharp': tone(120, 58, l - 6), 'file:fsharp': tone(300, 70), 'file:vbnet': tone(236, 50), 'file:ruby': tone(354, 82, l - 2),
+    'file:erb': tone(354, 56, l + 8), 'file:c': tone(212, 28), 'file:cpp': tone(336, 80), 'file:objective-c': tone(198, 46, l - 6), 'file:swift': tone(14, 94),
+    'file:vue': tone(156, 70), 'file:svelte': tone(18, 100, l + 2), 'file:astro': tone(292, 86, l + 2), 'file:liquid': tone(80, 70), 'file:razor': tone(276, 60),
   };
 }
 export const THEMES: Theme[] = [
@@ -190,12 +195,13 @@ export interface Palette { top: string; left: string; right: string; hoverTop: s
 /**
  * Coverage lens: one color per category (in flows green, entry points violet,
  * supporting teal, not reached red, with a known reason amber; tests,
- * configuration, outside code and assets recede in greys).
+ * configuration, outside code, code that is not analyzed and assets recede in
+ * greys).
  */
 const COVERAGE_HSL: Record<string, [dark: Hsl, light: Hsl]> = {
   entry: [hsl(266, 82, 72), hsl(266, 66, 56)], flow: [hsl(150, 62, 50), hsl(150, 58, 40)], supporting: [hsl(188, 62, 56), hsl(188, 62, 40)],
   explained: [hsl(38, 92, 58), hsl(34, 88, 48)], unreached: [hsl(356, 80, 63), hsl(356, 72, 52)],
-  test: [hsl(48, 14, 52), hsl(48, 12, 62)], config: [hsl(220, 14, 52), hsl(220, 12, 64)], outside: [hsl(220, 8, 38), hsl(220, 8, 74)], asset: [hsl(220, 6, 30), hsl(220, 8, 82)],
+  test: [hsl(48, 14, 52), hsl(48, 12, 62)], config: [hsl(220, 14, 52), hsl(220, 12, 64)], outside: [hsl(220, 8, 38), hsl(220, 8, 74)], unanalyzed: [hsl(250, 10, 34), hsl(250, 10, 78)], asset: [hsl(220, 6, 30), hsl(220, 8, 82)],
 };
 export function coverageHsl(category: string, dark: boolean): Hsl { const pair = COVERAGE_HSL[category] ?? COVERAGE_HSL.asset!; return dark ? pair[0] : pair[1]; }
 export function coverageCss(category: string, dark: boolean): string { const c = coverageHsl(category, dark); return `hsl(${c.h} ${c.s}% ${c.l}%)`; }

@@ -3,11 +3,12 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { Analyzer, AnalysisContext, ScannedFile } from '../core/analyzer.js';
 import { ANALYZER_VERSION, declarationHashes, evidence, type Entity, type Evidence } from '../core/graph.js';
-import { repoPath } from '../core/config.js';
-import { args, ast, classConstant, literal, name, nodes, resolve, scopedChildren, text, walk, type Ast, type ParsedFile, type Scope } from './php-ast.js';
+import { hasFramework, repoPath } from '../core/config.js';
+import { args, ast, classConstant, inertiaPageOf, literal, name, nodes, resolve, scopedChildren, text, walk, type Ast, type ParsedFile, type Scope } from './php-ast.js';
 import { resolvePhpReferences, type PhpClass, type PhpMethod } from './php-references.js';
 import { declareTables } from './laravel-schema.js';
 import { declareConsole, type ConsoleRegistration } from './laravel-console.js';
+import { declareFortify } from './laravel-fortify.js';
 import { fileKey, pathSetKey } from '../pipeline/cache.js';
 import { SiteCollector } from './references.js';
 
@@ -55,7 +56,7 @@ export const laravelAnalyzer: Analyzer = {
   name: 'php-laravel', version: ANALYZER_VERSION,
   async analyze(context): Promise<void> {
     // Route registration, call resolution and tables are application-wide facts: the PHP of every Laravel application is one cache unit.
-    const files = [...context.files.values()].filter(file => file.language === 'php' && file.application?.type === 'laravel').map(file => fileKey(context, file.path));
+    const files = [...context.files.values()].filter(file => file.language === 'php' && hasFramework(file.application, 'laravel')).map(file => fileKey(context, file.path));
     if (context.cache && files.length) await context.cache.unit(context, 'php-laravel', 'laravel', { files, paths: pathSetKey(context), config: context.config, applications: [...context.applicationIds], parser: 'php-parser 8.4' }, () => analyzeLaravel(context));
     else await analyzeLaravel(context);
   },
@@ -72,7 +73,7 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
   const diagnostic = (parsed: ParsedFile, node: Ast | undefined, code: string, reason: string, severity: 'warning' | 'error' = 'warning') => graph.diagnose({ analyzer: 'php-laravel', severity, code, reason, file: parsed.file.path, line: node?.loc?.start.line, entityId: parsed.file.id });
   const facts = (parsed: ParsedFile, node: Ast, explanation: string, framework = false): Evidence[] => [{ ...evidence(framework ? 'framework' : 'php', 'php-laravel', parsed.file.path, node.loc?.start.line, explanation), endLine: node.loc?.end.line }];
   for (const file of context.files.values()) {
-    if (file.language !== 'php' || !file.analyzable || file.application?.type !== 'laravel') continue;
+    if (file.language !== 'php' || !file.analyzable || !hasFramework(file.application, 'laravel')) continue;
     const content = await readFile(file.absolutePath, 'utf8');
     let root: Ast;
     try { root = parser.parseCode(content, file.path) as unknown as Ast; }
@@ -110,7 +111,7 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
   for (const base of inheritance) { const target = classes.get(`${base.app}:${base.target.toLowerCase()}`); if (target) graph.relate(base.from, target.id, 'extends', base.facts); }
   const consoleRegistrations: ConsoleRegistration[] = [];
 
-  for (const app of context.config.applications.filter(app => app.type === 'laravel')) {
+  for (const app of context.config.applications.filter(app => hasFramework(app, 'laravel'))) {
     const appId = context.applicationIds.get(app.name);
     if (!appId) continue;
     const bootstrapPath = path.posix.join(app.path === '.' ? '' : app.path, 'bootstrap/app.php');
@@ -160,7 +161,6 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
     // Laravel ≤ 10 loads routes/console.php from the console Kernel: a conventional console route file.
     const consolePath = path.posix.join(app.path === '.' ? '' : app.path, 'routes/console.php');
     if (!consoleRegistrations.some(item => item.app === app.name) && parsedFiles.has(consolePath)) consoleRegistrations.push({ app: app.name, file: consolePath, registration: 'convention', facts: [evidence('framework', 'php-laravel', consolePath, 1, 'Conventional console route file (routes/console.php)')] });
-    graph.diagnose({ analyzer: 'php-laravel', severity: 'info', code: 'framework-route-coverage', reason: `${app.name}: package/provider routes and implicit framework health endpoints are outside the Phase 1 static route-file inventory` });
     const seen = new Set<string>();
     function processFile(relative: string, routeContext: RouteContext, ancestry: Set<string>): void {
       try { repoPath(context.root, relative); } catch { graph.diagnose({ analyzer: 'php-laravel', severity: 'warning', code: 'route-include-outside-repository', file: relative, reason: 'Route include escapes repository' }); return; }
@@ -251,6 +251,9 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
       }
     }
     for (const registration of registrations) processFile(registration.file, { ...registration, namePrefix: '', middleware: [], constraints: false }, new Set());
+    // Packages that register routes from their own route files: Fortify's are declared from the application's configuration.
+    const fortify = declareFortify(context, app, appId, parsedFiles, methods);
+    graph.diagnose({ analyzer: 'php-laravel', severity: 'info', code: 'framework-route-coverage', reason: `${app.name}: package/provider routes${fortify ? ' other than laravel/fortify\'s' : ''} and implicit framework health endpoints are outside the static route-file inventory` });
   }
   // Tables declared by migrations, and the Eloquent models that map to them.
   const tables = declareTables(context, parsedFiles, phpClasses);
@@ -260,15 +263,4 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
   const sites = new SiteCollector();
   resolvePhpReferences(context, phpClasses, phpMethods, sites, tables, commands);
   sites.flush(graph);
-}
-/** The Inertia page a route closure renders: `Inertia::render('page')` or `inertia('page')` with a literal name. */
-function inertiaPageOf(closure: Ast, scope: Scope): string | undefined {
-  let page: string | undefined;
-  walk(closure, node => {
-    if (page !== undefined || node.kind !== 'call') return;
-    const what = ast(node.what);
-    const isRender = what?.kind === 'staticlookup' ? ['inertia\\inertia', 'inertia'].includes(resolve(what.what, scope)?.toLowerCase() ?? '') && name(what.offset)?.toLowerCase() === 'render' : what?.kind === 'name' && name(what)?.toLowerCase() === 'inertia';
-    if (isRender) page = literal(args(node)[0]);
-  });
-  return page;
 }

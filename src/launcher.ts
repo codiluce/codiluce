@@ -122,8 +122,8 @@ export async function launchLocal(options: LaunchOptions = {}): Promise<LocalSes
   check();
   log(`Repository: ${root}`);
   log(`State: ${stateDirectory}`);
-  log(config.applications.length ? `Applications: ${config.applications.map(app => `${app.name} (${app.type})`).join(', ')}`
-    : `No Next.js or Laravel applications detected; showing a file map. Applications can be configured in ${path.join(stateDirectory, 'config.yml')}.`);
+  log(config.applications.length ? `Applications: ${config.applications.map(app => `${app.name} (${[...app.frameworks, ...app.frameworks.length ? [] : app.ecosystems].join(', ') || 'no manifest'})`).join(', ')}`
+    : `No applications detected (no package.json, composer.json, pyproject.toml, go.mod, Cargo.toml… manifest); showing a file map. Applications can be configured in ${path.join(stateDirectory, 'config.yml')}.`);
   log('[1/3] Preparing the visualizer…');
   const uiDirectory = await prepareVisualizer(await toolDirectory(), { ...options, log });
   check();

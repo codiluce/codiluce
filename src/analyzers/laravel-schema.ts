@@ -16,6 +16,7 @@
 // evidence says. A mapping is linked only to a table the migrations declare.
 import path from 'node:path';
 import type { AnalysisContext } from '../core/analyzer.js';
+import { hasFramework } from '../core/config.js';
 import type { Entity, Evidence } from '../core/graph.js';
 import { evidence } from '../core/graph.js';
 import { args, ast, classConstant, literal, name, nodes, resolve, scopedChildren, text, type Ast, type ParsedFile, type Scope } from './php-ast.js';
@@ -334,7 +335,7 @@ export function declareTables(context: AnalysisContext, parsedFiles: Map<string,
   const analyzer = 'php-laravel';
   const byApp = new Map<string, Map<string, Entity>>();
   const models = new Map<string, Entity>();
-  for (const app of context.config.applications.filter(item => item.type === 'laravel')) {
+  for (const app of context.config.applications.filter(item => hasFramework(item, 'laravel'))) {
     const appId = context.applicationIds.get(app.name);
     if (!appId) continue;
     const prefix = app.path === '.' ? '' : `${app.path}/`;

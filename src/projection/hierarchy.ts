@@ -212,6 +212,7 @@ function detail(row: EntityRow): string | undefined {
   if (row.type === 'database_table') return row.path ? `from ${row.path.split('/').at(-1)!.replace(/\.php$/, '').replace(/^\d{4}_\d{2}_\d{2}_\d{6}_/, '')}` : undefined;
   if (row.signature) return `${row.role === 'hook' ? 'hook ' : ''}${row.signature}`;
   if (row.type === 'file') return row.analysisSkipped ? `not analyzed: ${row.analysisSkipped}` : row.language;
-  if (row.type === 'application') return row.framework;
+  // Its primary framework, else the language most of its code is written in.
+  if (row.type === 'application') return row.framework ?? row.language;
   return undefined;
 }

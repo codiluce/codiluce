@@ -7,6 +7,7 @@ import type { Scene, VisibleItem, VisibleSet } from './scene';
 import { PaletteCache, paletteKey, type Theme } from './themes';
 import type { StopTone } from './map-flow';
 import { compactNumber, typeLabel } from './format';
+import { NOT_MEASURED } from './coverage';
 
 export interface EdgeOverlay { key: string; from: string; to: string; fromAncestors: string[]; toAncestors: string[]; type: string; count: number; emphasized?: boolean; change?: 'added' | 'removed' }
 /**
@@ -654,7 +655,7 @@ export class MapRenderer {
   /** A closed area: the share of its code files that flows touch (entry points included), as a small bar and a percentage. */
   private coverageBadge(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, counts: Record<string, number>): void {
     if (item.size < 34) return;
-    const code = Object.entries(counts).filter(([key]) => key !== 'asset').reduce((sum, [, count]) => sum + count, 0);
+    const code = Object.entries(counts).filter(([key]) => !NOT_MEASURED.has(key)).reduce((sum, [, count]) => sum + count, 0);
     if (!code) return;
     const order = ['entry', 'flow', 'supporting', 'explained', 'test', 'config', 'outside', 'unreached'];
     const touched = (counts.entry ?? 0) + (counts.flow ?? 0);

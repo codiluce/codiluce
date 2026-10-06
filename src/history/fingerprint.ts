@@ -28,10 +28,11 @@ export function withoutPositions(value: unknown): unknown {
 }
 /**
  * Metadata derived from resolving the rest of the graph (call coverage, effects
- * linked to endpoints) rather than from the entity's own declaration. A change
- * there shows as a relations change, not as the entity itself changing.
+ * linked to endpoints) or measured from other entities (an application's lines
+ * per language) rather than from the entity's own declaration. A change there
+ * shows as a relations or file change, not as the entity itself changing.
  */
-const DERIVED = new Set(['callSites', 'effects']);
+const DERIVED = new Set(['callSites', 'effects', 'languages']);
 export function shapeHash(entity: Pick<Entity, 'type' | 'name' | 'language' | 'metadata'>): string {
   const metadata = Object.fromEntries(Object.entries(entity.metadata).filter(([key]) => !DERIVED.has(key)));
   return digest(canonicalJson({ type: entity.type, name: entity.name, language: entity.language, metadata: withoutPositions(metadata) }), 32);

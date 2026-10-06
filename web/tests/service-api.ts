@@ -64,6 +64,7 @@ export class ServiceApi implements AtlasApi {
   catalog(options: { entity?: string; kind?: CatalogKind }, signal?: AbortSignal) { return this.run('catalog', `${options.kind ?? ''}|${options.entity ?? ''}`, signal, () => this.projection.flows({ ...options, view: this.view })); }
   coverage(signal?: AbortSignal) { return this.run('coverage', '', signal, () => this.projection.coverage(this.view)); }
   coverageOf(id: string, signal?: AbortSignal) { return this.run('coverageOf', id, signal, () => this.projection.coverageOf(id, this.view)); }
+  coverageExport(signal?: AbortSignal) { return this.run('coverageExport', '', signal, () => this.projection.coverageExport(this.view)); }
   annotations(signal?: AbortSignal) { return this.run('annotations', '', signal, () => this.projection.annotationsOverview()); }
   entityAnnotation(id: string, signal?: AbortSignal) { return this.run('entityAnnotation', id, signal, () => this.projection.entityAnnotation(id, this.view)); }
   clear() {}

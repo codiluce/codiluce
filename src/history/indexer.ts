@@ -7,7 +7,7 @@ import { mkdtemp, realpath, rm, lstat } from 'node:fs/promises';
 import { cpus, tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { detectApplications, readRawConfig, repoPath, resolveConfig, type ApplicationConfig, type AtlasConfig } from '../core/config.js';
+import { applicationKind, detectApplications, readRawConfig, repoPath, resolveConfig, type ApplicationInput, type AtlasConfig, type RawConfig } from '../core/config.js';
 import { SCHEMA_VERSION, type SoftwareGraph } from '../core/graph.js';
 import { analyzers, indexRepository } from '../pipeline/index.js';
 import { ProjectionIndex } from '../projection/hierarchy.js';
@@ -21,14 +21,14 @@ import { HISTORY_SCHEMA_VERSION, HistoryStore, type SnapshotRecord, type Snapsho
 
 export const HISTORY_DATABASE = 'history.db';
 /** How applications are chosen at a revision; part of the snapshot identity. */
-const APPLICATION_POLICY = 'configured-substitute-detected:2';
+const APPLICATION_POLICY = 'configured-substitute-detected:3';
 
 /**
  * Snapshot identity inputs other than the commit: the configuration as
  * written, the analyzers and schemas. Re-analyzing a commit under a
  * different identity creates a new snapshot rather than overwriting one.
  */
-export function historyIdentity(raw: Partial<AtlasConfig>): string {
+export function historyIdentity(raw: RawConfig): string {
   return digest(canonicalJson({
     history: HISTORY_SCHEMA_VERSION, graph: SCHEMA_VERSION, policy: APPLICATION_POLICY,
     analyzers: Object.fromEntries(analyzers.map(analyzer => [analyzer.name, analyzer.version])),
@@ -36,7 +36,7 @@ export function historyIdentity(raw: Partial<AtlasConfig>): string {
   }), 24);
 }
 /** The configuration file of the state directory, with the repository identity pinned to the real checkout name. */
-export async function historyConfig(root: string, stateDirectory: string): Promise<Partial<AtlasConfig>> {
+export async function historyConfig(root: string, stateDirectory: string): Promise<RawConfig> {
   const raw = await readRawConfig(stateDirectory);
   return { ...raw, repository: raw.repository ?? { name: path.basename(root) } };
 }
@@ -51,14 +51,15 @@ export interface RevisionApplications {
  * Applications move over time (e.g. api/ → backend/). At a revision,
  * configured applications whose directory exists are used. A configured
  * application that is missing is matched to the one autodetected application
- * of the same framework, keeping the configured *name*: application names are
+ * of the same kind (primary framework, else ecosystem; see `applicationKind`),
+ * keeping the configured *name*: application names are
  * part of symbol identities, so the same application keeps its entities
  * across the move. When nothing configured can be placed, the revision's
  * autodetected applications are used as they are.
  */
-export async function revisionConfig(raw: Partial<AtlasConfig>, root: string): Promise<{ config: AtlasConfig; applications: RevisionApplications }> {
+export async function revisionConfig(raw: RawConfig, root: string): Promise<{ config: AtlasConfig; applications: RevisionApplications }> {
   if (!Array.isArray(raw.applications)) return { config: await resolveConfig(root, raw), applications: { source: 'detected', substituted: {}, missing: [] } };
-  const present: ApplicationConfig[] = [], missing: ApplicationConfig[] = [];
+  const present: ApplicationInput[] = [], missing: ApplicationInput[] = [];
   for (const app of raw.applications) {
     let directory = false;
     try { directory = typeof app?.path === 'string' && (await lstat(repoPath(root, app.path))).isDirectory(); } catch { /* absent at this revision */ }
@@ -67,10 +68,11 @@ export async function revisionConfig(raw: Partial<AtlasConfig>, root: string): P
   const substituted: Record<string, string> = {};
   if (missing.length) {
     const overlaps = (a: string, b: string) => a === b || a === '.' || b === '.' || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
-    const detected = (await detectApplications(root)).filter(app => !present.some(item => overlaps(item.path, app.path)));
+    const detected = (await detectApplications(root, raw.repository?.name)).filter(app => !present.some(item => overlaps(item.path, app.path)));
     for (const app of [...missing]) {
-      const sameType = missing.filter(item => item.type === app.type), candidates = detected.filter(item => item.type === app.type);
-      if (sameType.length !== 1 || candidates.length !== 1) continue;
+      const kind = applicationKind(app);
+      const sameKind = missing.filter(item => applicationKind(item) === kind), candidates = detected.filter(item => applicationKind(item) === kind);
+      if (!kind || sameKind.length !== 1 || candidates.length !== 1) continue;
       present.push({ ...app, path: candidates[0]!.path });
       substituted[app.name] = candidates[0]!.path;
       missing.splice(missing.indexOf(app), 1);
@@ -81,7 +83,7 @@ export async function revisionConfig(raw: Partial<AtlasConfig>, root: string): P
   return { config, applications: { source, substituted, missing: missing.map(app => app.name) } };
 }
 export interface AnalyzedCommit { sha: string; graph: SoftwareGraph; durationMs: number; applications: RevisionApplications }
-export async function analyzeCommit(mirror: TreeMirror, raw: Partial<AtlasConfig>, sha: string): Promise<AnalyzedCommit> {
+export async function analyzeCommit(mirror: TreeMirror, raw: RawConfig, sha: string): Promise<AnalyzedCommit> {
   const started = performance.now();
   await mirror.checkout(sha);
   const { config, applications } = await revisionConfig(raw, mirror.directory);
@@ -164,7 +166,7 @@ export async function indexHistory(options: HistoryIndexOptions): Promise<Histor
 }
 
 async function scratch(): Promise<string> { return realpath(await mkdtemp(path.join(tmpdir(), 'archipelago-history-'))); }
-async function analyzeInProcess(root: string, raw: Partial<AtlasConfig>, shas: string[], save: (result: AnalyzedCommit) => void, fail: (sha: string, error: string) => void): Promise<void> {
+async function analyzeInProcess(root: string, raw: RawConfig, shas: string[], save: (result: AnalyzedCommit) => void, fail: (sha: string, error: string) => void): Promise<void> {
   const directory = await scratch();
   const mirror = new TreeMirror(root, path.join(directory, 'tree'));
   try {
@@ -178,9 +180,9 @@ async function analyzeInProcess(root: string, raw: Partial<AtlasConfig>, shas: s
 export function childExecArgv(): string[] { return process.execArgv.filter(arg => !arg.startsWith('--test') && !arg.startsWith('--watch')); }
 const WORKER = fileURLToPath(new URL(`./worker${path.extname(fileURLToPath(import.meta.url))}`, import.meta.url));
 export type WorkerMessage = { type: 'result'; result: AnalyzedCommit } | { type: 'error'; sha: string; message: string } | { type: 'done' };
-export interface WorkerJob { root: string; directory: string; raw: Partial<AtlasConfig>; commits: string[] }
+export interface WorkerJob { root: string; directory: string; raw: RawConfig; commits: string[] }
 /** Contiguous chunks keep each worker's tree mirror applying small diffs. */
-async function analyzeInWorkers(root: string, raw: Partial<AtlasConfig>, shas: string[], jobs: number, save: (result: AnalyzedCommit) => void, fail: (sha: string, error: string) => void): Promise<void> {
+async function analyzeInWorkers(root: string, raw: RawConfig, shas: string[], jobs: number, save: (result: AnalyzedCommit) => void, fail: (sha: string, error: string) => void): Promise<void> {
   const size = Math.ceil(shas.length / jobs);
   const chunks = Array.from({ length: jobs }, (_, i) => shas.slice(i * size, (i + 1) * size)).filter(chunk => chunk.length);
   await Promise.all(chunks.map(async commits => {

@@ -5,7 +5,7 @@ import type { AggregateGroup, ChangeFacet, DiagnosticItem, NodeChange, NodeSumma
 import { compactNumber, percent, relationPhrase, relativeTime, shortSha, typeLabel } from '../lib/format';
 import { entryOf, isContainer, tourEntry, type AtlasStore } from '../lib/store';
 import { coverageCss, domainHue, themeById } from '../lib/themes';
-import { COVERAGE_TEXT } from '../lib/coverage';
+import { COVERAGE_TEXT, NOT_MEASURED } from '../lib/coverage';
 import { useAtlas, useStore } from './context';
 import { TypeBadge } from './TypeBadge';
 import { CallSitesSection, CommitImpactChip, EffectsSection, ImpactSection } from './Analysis';
@@ -61,14 +61,16 @@ const FACT_LABELS: Record<string, string> = {
   qualifiedName: 'Qualified name', signature: 'Signature', exported: 'Exported', default: 'Default export', role: 'Role', serverAction: 'Server action',
   visibility: 'Visibility', static: 'Static', extends: 'Extends', method: 'HTTP method', routePath: 'Route path', framework: 'Framework', routeFile: 'Route file',
   api: 'API route file', registration: 'Registration', middleware: 'Middleware', constraintsUnresolved: 'Unevaluated constraints', handlerKind: 'Handler kind',
-  routeName: 'Route name', controller: 'Controller', controllerMethod: 'Controller method', extension: 'Extension', bytes: 'Size', contentHash: 'Content hash',
+  routeName: 'Route name', package: 'Package', view: 'View', controller: 'Controller', controllerMethod: 'Controller method', extension: 'Extension', bytes: 'Size', contentHash: 'Content hash',
   analysisSkipped: 'Not analyzed', serverModule: '"use server" module', inertiaPage: 'Inertia page', command: 'Command', description: 'Description',
   class: 'Class', cadence: 'Runs', schedule: 'Scheduler call', target: 'Runs', modifiers: 'Options',
+  frameworks: 'Frameworks', ecosystems: 'Ecosystems', languages: 'Languages',
 };
 function formatValue(key: string, value: unknown): string {
   if (typeof value === 'boolean') return value ? 'yes' : 'no';
   if (key === 'bytes' && typeof value === 'number') return `${compactNumber(value)} bytes`;
   if (key === 'contentHash' && typeof value === 'string') return `${value.slice(0, 16)}… (sha256 at index time)`;
+  if (key === 'languages' && value && typeof value === 'object') return `${Object.entries(value).map(([language, lines]) => `${language} ${compactNumber(Number(lines))}`).join(' · ')} lines`;
   if (Array.isArray(value)) return value.length ? value.map(item => typeof item === 'string' ? item : JSON.stringify(item)).join(', ') : '—';
   if (value && typeof value === 'object') return JSON.stringify(value);
   return String(value);
@@ -201,7 +203,7 @@ function FlowsSection({ node }: { node: NodeSummary }) {
   if (coverage.status === 'error') return <section className="section"><h4>Flows</h4><p className="note error">{coverage.error}</p></section>;
   const data = coverage.data!;
   const counts = data.counts;
-  const code = counts ? Object.entries(counts).filter(([key]) => key !== 'asset').reduce((sum, [, count]) => sum + count, 0) : 0;
+  const code = counts ? Object.entries(counts).filter(([key]) => !NOT_MEASURED.has(key)).reduce((sum, [, count]) => sum + count, 0) : 0;
   return (
     <section className="section flows-section">
       <h4>Flows <span className="chip"><span className="count">{data.totalFlows}</span></span></h4>
@@ -210,7 +212,7 @@ function FlowsSection({ node }: { node: NodeSummary }) {
       )}
       {counts && code > 0 && (
         <div className="coverage-counts" aria-label="Files inside, by coverage">
-          <div className="coverage-bar">{Object.entries(counts).filter(([key, count]) => key !== 'asset' && count).map(([key, count]) => <span key={key} style={{ flexGrow: count, background: coverageCss(key, dark) }} title={`${COVERAGE_TEXT[key as keyof typeof COVERAGE_TEXT]}: ${count}`} />)}</div>
+          <div className="coverage-bar">{Object.entries(counts).filter(([key, count]) => !NOT_MEASURED.has(key) && count).map(([key, count]) => <span key={key} style={{ flexGrow: count, background: coverageCss(key, dark) }} title={`${COVERAGE_TEXT[key as keyof typeof COVERAGE_TEXT]}: ${count}`} />)}</div>
           <span className="absent">{Math.round((((counts.entry ?? 0) + (counts.flow ?? 0)) / code) * 100)}% of {code} code files in flows · {counts.unreached ?? 0} not reached</span>
         </div>
       )}
@@ -233,7 +235,7 @@ function FlowsSection({ node }: { node: NodeSummary }) {
 function Facts({ node, entity }: { node: NodeSummary; entity?: Entity }) {
   const container = isContainer(node);
   const metadata = entity?.metadata ?? {};
-  const keys = Object.keys(FACT_LABELS).filter(key => metadata[key] !== undefined && metadata[key] !== null && !(key === 'qualifiedName' && metadata[key] === node.name) && !(Array.isArray(metadata[key]) && !(metadata[key] as unknown[]).length) && !(metadata[key] === false && ['serverAction', 'serverModule', 'constraintsUnresolved', 'static'].includes(key)));
+  const keys = Object.keys(FACT_LABELS).filter(key => metadata[key] !== undefined && metadata[key] !== null && !(key === 'qualifiedName' && metadata[key] === node.name) && !(key === 'framework' && Array.isArray(metadata.frameworks)) && !(Array.isArray(metadata[key]) && !(metadata[key] as unknown[]).length) && !(metadata[key] === false && ['serverAction', 'serverModule', 'constraintsUnresolved', 'static'].includes(key)));
   return (
     <section className="section">
       <h4>Facts</h4>

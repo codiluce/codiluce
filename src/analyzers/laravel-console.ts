@@ -16,6 +16,7 @@
 // job's handler) it runs. Anything not literal stays a finding.
 import path from 'node:path';
 import type { AnalysisContext } from '../core/analyzer.js';
+import { hasFramework } from '../core/config.js';
 import { evidence, type Entity, type Evidence } from '../core/graph.js';
 import { args, ast, classConstant, literal, name, nodes, resolve, scopedChildren, text, walk, type Ast, type ParsedFile, type Scope } from './php-ast.js';
 import { classChain, type PhpClass } from './php-references.js';
@@ -218,7 +219,7 @@ export function declareConsole(context: AnalysisContext, classes: Map<string, Ph
     scopedChildren(parsed.ast, { namespace: '', imports: new Map() }, visit);
   }
   // bootstrap/app.php withSchedule(fn (Schedule $schedule) => …) and the console Kernel's schedule().
-  for (const app of context.config.applications.filter(item => item.type === 'laravel')) {
+  for (const app of context.config.applications.filter(item => hasFramework(item, 'laravel'))) {
     const bootstrap = parsedFiles.get(path.posix.join(app.path === '.' ? '' : app.path, 'bootstrap/app.php'));
     if (bootstrap) scopedChildren(bootstrap.ast, { namespace: '', imports: new Map() }, (children, scope) => {
       for (const statement of children) walk(statement, node => {

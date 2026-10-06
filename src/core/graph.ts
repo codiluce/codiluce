@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 
 export const SCHEMA_VERSION = 1;
-export const ANALYZER_VERSION = '0.6.0';
+export const ANALYZER_VERSION = '0.7.1';
 export type EntityType = 'repository' | 'application' | 'domain' | 'directory' | 'file' | 'component' | 'class' | 'function' | 'method' | 'route' | 'api_endpoint' | 'controller' | 'model' | 'database_table' | 'external_service' | 'test' | 'user_flow' | 'command' | 'scheduled_task';
 export type RelationType = 'contains' | 'imports' | 'exports' | 'calls' | 'renders' | 'routes_to' | 'handles' | 'requests' | 'reads' | 'writes' | 'queries' | 'maps_to' | 'extends' | 'implements' | 'references' | 'observed_call' | 'part_of_flow' | 'changed_with' | 'foreign_key' | 'invokes';
 /**

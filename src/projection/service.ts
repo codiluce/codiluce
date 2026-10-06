@@ -23,7 +23,7 @@ import type { Entity, Relation } from '../core/graph.js';
 import { extendRegistry, LAYOUT_VERSION, TIMELINE_LAYOUT_VERSION, layoutHierarchy, placeOnTimeline, timelineLayout, type LayoutState, type Rect, type TimelineLayout, type TimelineRegistry } from './layout.js';
 import { ProjectionIndex, type EntityRow, type ProjectionNode, type RelationRow } from './hierarchy.js';
 import { readSnapshotFile, readSnapshotSource, snapshotRef, SourceError, splitLines, type SourceRequest, type SourceResponse } from './source.js';
-import type { AggregateResult, ChangesPage, CoverageDetail, CoverageResult, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, FlowList, FlowSummary, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowEdge, RequestFlowList, RequestFlowNode, RequestFlowSummary, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
+import type { AggregateResult, ChangesPage, CoverageDetail, CoverageExport, CoverageExportSymbol, CoverageResult, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, FlowList, FlowSummary, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowEdge, RequestFlowList, RequestFlowNode, RequestFlowSummary, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
 import { computeImpact, DEFAULT_IMPACT_DEPTH, FILE_IMPACT_TYPES, impactPath, MAX_IMPACT_SEEDS, seedsOf, SYMBOL_IMPACT_TYPES, type ImpactComputation } from './impact.js';
 import { walkSteps } from './steps.js';
 import { commandFlow, displayName, endpointFlow, FLOW_LANES, scheduleFlow, unmatchedFlow, type FlowContext, type RawFlow } from './request-flows.js';
@@ -34,6 +34,12 @@ import type { AnnotationsOverview, EntityAnnotation, TimelineResponse } from './
 import { guardsAt, hintOf, phrase } from './conditions.js';
 import { SYMBOL_TYPES } from './hierarchy.js';
 export type { NodeSummary, Page, RelationItem, ViewKey } from './dto.js';
+/** Relations that do not make their target used: structure and re-export bookkeeping. */
+const UNUSED_IGNORED = new Set(['contains', 'exports']);
+const EXPORT_SYMBOLS = new Set(['function', 'method', 'component']);
+const REACHED = new Set(['entry', 'flow', 'supporting']);
+/** Methods Laravel and PHP libraries call by name. */
+const FRAMEWORK_HOOK = /^(boot|booted|register|handle|rules|authorize|messages|attributes|prepareForValidation|passedValidation|withValidator|up|down|casts|toArray|toResponse|envelope|content|attachments|headers|build|via|toMail|toDatabase|toBroadcast|broadcastOn|broadcastWith|definition|configure|run|render|report|failed|middleware|schedule|commands|scope[A-Z]\w*|get\w+Attribute|set\w+Attribute)$/;
 export class NotFoundError extends Error {}
 interface View {
   key: string;
@@ -898,6 +904,61 @@ export class ProjectionService {
       totals: computed.totals, codeFiles: computed.codeFiles, flows: this.catalog(current).flows.length,
       files: Object.fromEntries([...computed.files].map(([id, item]) => [id, { category: item.category, flows: item.flows }])),
       areas: Object.fromEntries(computed.areas),
+    };
+  }
+  /**
+   * Code no flow is proven to use, as one document to review: files not
+   * reached (or reached only by an unresolved name), with their symbols, and
+   * the symbols of reached files that nothing indexed points at.
+   */
+  coverageExport(view?: ViewKey): CoverageExport {
+    const current = this.load(view);
+    const { index } = current;
+    const computed = this.coverageOfView(current);
+    const catalog = this.catalog(current);
+    const unresolved = this.unresolvedNames(current);
+    const fileOf = fileResolver(index);
+    const used = new Set<string>();
+    for (const relation of index.relations) if (relation.change !== 'removed' && !UNUSED_IGNORED.has(relation.type) && relation.from !== relation.to) used.add(relation.to);
+    const symbolsByFile = new Map<string, ProjectionNode[]>();
+    for (const node of index.nodes.values()) {
+      if (node.kind !== 'entity' || !EXPORT_SYMBOLS.has(node.type) || node.change?.status === 'removed') continue;
+      const file = fileOf(node.id);
+      if (file) symbolsByFile.set(file, [...symbolsByFile.get(file) ?? [], node]);
+    }
+    const describe = (node: ProjectionNode): CoverageExportSymbol => {
+      const sites = node.name.length > 2 ? unresolved.get(node.name)?.sites : undefined;
+      const note = node.language === 'php' && node.type === 'method' && FRAMEWORK_HOOK.test(node.name) ? 'A name the framework calls by convention (lifecycle, validation, mail, Eloquent scope or accessor)'
+        : node.language === 'php' && node.type === 'method' && /(^|\/)app\/Models\//.test(node.path ?? '') ? 'A model method: possibly an Eloquent relationship loaded by name (with(\'…\'), ->relation)' : undefined;
+      return { name: node.name, type: node.type, ...(node.qualifiedName && node.qualifiedName !== node.name ? { qualifiedName: node.qualifiedName } : {}), ...(node.sourceRange ? { startLine: node.sourceRange.startLine, endLine: node.sourceRange.endLine } : {}), ...(sites ? { possiblyCalledByName: sites } : {}), ...(note ? { note } : {}) };
+    };
+    const byLine = (a: ProjectionNode, b: ProjectionNode) => (a.sourceRange?.startLine ?? 0) - (b.sourceRange?.startLine ?? 0);
+    const files: CoverageExport['files'] = [];
+    const symbols: CoverageExport['symbols'] = [];
+    for (const [id, coverage] of computed.files) {
+      const file = index.node(id)!;
+      const own = (symbolsByFile.get(id) ?? []).sort(byLine);
+      if (coverage.category === 'unreached' || coverage.category === 'explained') {
+        files.push({ path: file.path ?? file.name, category: coverage.category, reason: coverage.reason, ...(file.language ? { language: file.language } : {}), ...(file.loc ? { loc: file.loc } : {}), symbols: own.map(describe) });
+      } else if (REACHED.has(coverage.category)) {
+        // Symbols nothing points at, inside files flows do reach; a symbol inside an unused one is listed through its parent.
+        const unused = own.filter(node => !used.has(node.id) && !catalog.byEntity.has(node.id) && !node.name.startsWith('__') && node.name !== 'default');
+        const unusedIds = new Set(unused.map(node => node.id));
+        for (const node of unused) if (!node.canonicalParentId || !unusedIds.has(node.canonicalParentId)) symbols.push({ path: file.path ?? file.name, fileCategory: coverage.category, ...describe(node) });
+      }
+    }
+    files.sort((a, b) => a.path.localeCompare(b.path));
+    symbols.sort((a, b) => a.path.localeCompare(b.path) || (a.startLine ?? 0) - (b.startLine ?? 0));
+    return {
+      repository: index.node(index.rootId)?.name ?? '', generatedAt: new Date().toISOString(), ...(view?.snapshot ? { snapshot: view.snapshot } : {}),
+      about: [
+        'Static analysis by Archipelago: flows start at entry points (pages, routes, endpoints, console commands, scheduled tasks) and follow resolved calls, renders, requests and references.',
+        '"files" lists code files no flow reaches (category "unreached") or reaches only possibly, through a call by a name the analyzers could not resolve ("explained"); "reason" says why.',
+        '"symbols" lists functions, methods and components inside files flows do reach that nothing indexed calls, renders, routes to or references.',
+        'These are candidates, not proof of dead code. The analyzers do not see: code run by framework convention (type-hinted form requests, Eloquent relationships and scopes, class names passed as strings or ::class to a container or package, Blade views by name, bundler entry points in vite/webpack config, traits, event listeners, observers, policies), dynamic dispatch (callbacks, props, $this->$method, call_user_func), reflection, code used only by tests, and code used by other repositories or published packages.',
+        '"possiblyCalledByName" counts unresolved call sites using the same name; "note" flags framework conventions. Check usages in the source (search for the name, the file name and the class name) before removing anything.',
+      ],
+      totals: computed.totals, codeFiles: computed.codeFiles, flows: catalog.flows.length, files, symbols,
     };
   }
   /** Why an entity is (or is not) part of flows, and the flows touching it. */

@@ -12,6 +12,7 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { CODE_LANGUAGES } from '../core/languages.js';
 import type { ProjectionService } from '../projection/service.js';
 import type { CoverageResult, FlowSummary, TimelineEntry } from '../projection/dto.js';
 import type { GraphStore } from '../storage/sqlite.js';
@@ -53,7 +54,6 @@ export interface AnnotationInput {
   /** Estimates: earlier answers stand in at this length when they do not exist yet. */
   placeholder?: boolean;
 }
-const CODE_LANGUAGES = new Set(['typescript', 'javascript', 'php', 'vue', 'svelte']);
 const EXCERPT_CHARS = 3200;
 const digest = (text: string) => createHash('sha256').update(text).digest('hex').slice(0, 32);
 const clip = (text: string, max: number) => text.length > max ? `${text.slice(0, max - 1)}…` : text;

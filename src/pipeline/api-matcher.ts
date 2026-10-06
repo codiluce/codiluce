@@ -1,4 +1,5 @@
 import type { AnalysisContext, Analyzer, HttpObservation } from '../core/analyzer.js';
+import { hasFramework } from '../core/config.js';
 import { ANALYZER_VERSION, evidence, type Entity, type Evidence } from '../core/graph.js';
 
 const HOLE = '{*}';
@@ -44,7 +45,7 @@ export const apiMatcher: Analyzer = {
         if (!app || endpoint.metadata.method !== observation.method || endpoint.metadata.registration === 'convention' && endpoint.metadata.framework === 'laravel') return false;
         if (origin && !app.apiOrigins?.includes(origin)) return false;
         // Relative requests can target a local Next endpoint or a unique backend.
-        if (!origin && app.type === 'nextjs' && app.name !== callerApp?.name) return false;
+        if (!origin && hasFramework(app, 'nextjs') && app.name !== callerApp?.name) return false;
         return matchPath(String(endpoint.metadata.routePath), pathname);
       });
       // Keep constrained candidates in ambiguity detection: ignoring one could
@@ -75,7 +76,7 @@ export const apiMatcher: Analyzer = {
         const app = appFor(endpoint);
         if (!app || endpoint.metadata.method !== observation.method || endpoint.metadata.registration === 'convention' && endpoint.metadata.framework === 'laravel') return false;
         if (resolved.app) return app.name === resolved.app;
-        return app.name === callerApp?.name || (app.type === 'laravel' && callerApp?.type !== 'laravel');
+        return app.name === callerApp?.name || (hasFramework(app, 'laravel') && !hasFramework(callerApp, 'laravel'));
       });
       const strict = eligible.filter(endpoint => matchPath(String(endpoint.metadata.routePath), resolved.pattern));
       const loose = eligible.filter(endpoint => matchPath(String(endpoint.metadata.routePath), resolved.pattern, false));

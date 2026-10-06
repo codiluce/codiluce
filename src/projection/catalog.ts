@@ -13,27 +13,30 @@
 // flows, supporting flows (imported, extended or declaring a table by code in
 // flows), tests and tooling, configuration, not reached but with a known
 // reason (an unresolved call site of the same name, a command run by a dynamic
-// name), not reached at all, or outside the configured applications (scripts
-// and tools the analyzers do not read for flows). Pure and bounded; built once
-// per view.
+// name), not reached at all, outside the configured applications (scripts
+// and tools the analyzers do not read for flows), or code in a language whose
+// calls are not analyzed (on the map with its history, but no flow can reach
+// it: like assets, it is not measured). Pure and bounded; built once per view.
+import { CODE_LANGUAGES, FLOW_LANGUAGES } from '../core/languages.js';
 import type { ProjectionIndex, ProjectionNode } from './hierarchy.js';
 
 export type CatalogKind = 'page' | 'request' | 'command' | 'schedule' | 'unmatched';
 export const CATALOG_KINDS: CatalogKind[] = ['page', 'request', 'command', 'schedule', 'unmatched'];
-export type CoverageCategory = 'entry' | 'flow' | 'supporting' | 'test' | 'config' | 'explained' | 'unreached' | 'outside' | 'asset';
-export const COVERAGE_CATEGORIES: CoverageCategory[] = ['entry', 'flow', 'supporting', 'test', 'config', 'explained', 'unreached', 'outside', 'asset'];
+export type CoverageCategory = 'entry' | 'flow' | 'supporting' | 'test' | 'config' | 'explained' | 'unreached' | 'outside' | 'unanalyzed' | 'asset';
+export const COVERAGE_CATEGORIES: CoverageCategory[] = ['entry', 'flow', 'supporting', 'test', 'config', 'explained', 'unreached', 'outside', 'unanalyzed', 'asset'];
+/** Categories outside the measure: no flow can reach these files. */
+export const NOT_MEASURED = new Set<CoverageCategory>(['unanalyzed', 'asset']);
 export type CoverageCounts = Record<CoverageCategory, number>;
 const SLICE_FOLLOW = new Set(['routes_to', 'renders', 'calls', 'references', 'requests', 'handles', 'invokes', 'reads', 'writes']);
 const SUPPORT_TYPES = new Set(['imports', 'exports', 'extends', 'implements']);
 export const SLICE_LIMIT = 6000;
-const CODE_LANGUAGES = new Set(['typescript', 'javascript', 'php', 'vue', 'svelte']);
 const TEST_PATH = /(^|\/)(tests?|__tests__|__mocks__|e2e|cypress|spec)\/|\.(test|spec)\.[cm]?[jt]sx?$|Test\.php$|(^|\/)database\/(seeders|factories)\//i;
 const CONFIG_PATH = /(^|\/)(config|bootstrap)\/|(^|\/)[^/]*\.config\.[cm]?[jt]s$|(^|\/)(next-env\.d|vite-env\.d|env\.d)\.ts$|(^|\/)(artisan|server\.php|index\.php)$/;
 /** Classes the framework calls by registration: middleware, providers, kernels, exception handlers. */
 const FRAMEWORK_PATH = /(^|\/)app\/(Http\/Middleware|Providers|Exceptions)\/|(^|\/)app\/(Http|Console)\/Kernel\.php$/;
 const MIGRATION_PATH = /(^|\/)database\/migrations\//;
 
-export function emptyCounts(): CoverageCounts { return { entry: 0, flow: 0, supporting: 0, test: 0, config: 0, explained: 0, unreached: 0, outside: 0, asset: 0 }; }
+export function emptyCounts(): CoverageCounts { return { entry: 0, flow: 0, supporting: 0, test: 0, config: 0, explained: 0, unreached: 0, outside: 0, unanalyzed: 0, asset: 0 }; }
 export function isCodeFile(node: Pick<ProjectionNode, 'type' | 'language'>): boolean { return node.type === 'file' && CODE_LANGUAGES.has(node.language ?? ''); }
 
 /** Endpoints serving a page (their handler, or the route closure, renders a client component): navigation targets. */
@@ -123,6 +126,17 @@ export function computeCoverage(input: CoverageInput): CoverageComputation {
     if (!to || from === to || !SUPPORT_TYPES.has(relation.type) || !inFlow(from) || inFlow(to)) continue;
     const set = support.get(to) ?? new Set<string>(); set.add(from!); support.set(to, set);
   }
+  // Barrels: a file re-exporting code that flows use forwards it (index.tsx → ./Component), through nested barrels too.
+  const forwards = new Map<string, Set<string>>();
+  const reexports = index.relations.filter(relation => relation.type === 'exports' && relation.change !== 'removed');
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const relation of reexports) {
+      const from = fileOf(relation.from), to = fileOf(relation.to);
+      if (!from || !to || from === to || inFlow(from) || support.has(from) || forwards.get(from)?.has(to) || !(inFlow(to) || support.has(to) || forwards.has(to))) continue;
+      const set = forwards.get(from) ?? new Set<string>(); set.add(to); forwards.set(from, set); changed = true;
+    }
+  }
   const tablesInFlows = new Set<string>();
   for (const flow of input.flows) for (const id of flow.members) if (index.node(id)?.type === 'database_table') tablesInFlows.add(id);
   const declares = new Map<string, string[]>();
@@ -144,6 +158,14 @@ export function computeCoverage(input: CoverageInput): CoverageComputation {
   for (const node of index.nodes.values()) if (node.type === 'command') { const file = fileOf(node.id); if (file) commandFiles.add(file); }
   const nameOf = (file: string) => index.node(file)?.name ?? file;
   const insideApplication = (node: ProjectionNode) => index.canonicalAncestors(node).some(item => item.type === 'application');
+  /**
+   * Code whose calls no analyzer resolves, wherever it is: a language without
+   * an analyzer, or PHP in an application that is not Laravel (an
+   * application's label is its primary framework). Outside the applications,
+   * TypeScript, JavaScript and PHP stay "outside", as before.
+   */
+  const unanalyzed = (node: ProjectionNode) => !FLOW_LANGUAGES.has(node.language ?? '')
+    || (node.language === 'php' && insideApplication(node) && index.canonicalAncestors(node).filter(item => item.type === 'application').at(-1)?.detail !== 'laravel');
   const listNames = (ids: Iterable<string>, max = 3) => { const names = [...ids].map(nameOf).sort(); return `${names.slice(0, max).join(', ')}${names.length > max ? ` and ${names.length - max} more` : ''}`; };
 
   const files = new Map<string, FileCoverage>();
@@ -157,8 +179,10 @@ export function computeCoverage(input: CoverageInput): CoverageComputation {
       reason = support.has(node.id) ? `Not code; used by ${listNames(support.get(node.id)!)}` : 'Not code (styles, data, documents, images…): not measured for flow coverage';
     } else if (entryFiles.has(node.id)) { category = 'entry'; reason = `Entry point: ${entryFiles.get(node.id)}${flows.length ? `; in ${flows.length} flow${flows.length === 1 ? '' : 's'}` : ''}`; }
     else if (flows.length) { category = 'flow'; reason = `In ${flows.length} flow${flows.length === 1 ? '' : 's'}: ${flows.slice(0, 3).map(i => input.flows[i]!.name).join(', ')}${flows.length > 3 ? ` and ${flows.length - 3} more` : ''}`; }
+    else if (unanalyzed(node) && !support.has(node.id)) { category = 'unanalyzed'; reason = `${node.language === 'php' ? 'PHP outside a Laravel application' : `Code in ${node.language}`}: its calls are not analyzed yet, so no flow can reach it (not measured)`; }
     else if (TEST_PATH.test(path)) { category = 'test'; reason = 'Tests or test data: run by the test runner, not by the application'; }
     else if (support.has(node.id)) { category = 'supporting'; reason = `Supports flows: imported or extended by ${listNames(support.get(node.id)!)}`; }
+    else if (forwards.has(node.id)) { category = 'supporting'; reason = `Supports flows: re-exports ${listNames(forwards.get(node.id)!)}, which flows use`; }
     else if (declares.has(node.id)) { category = 'supporting'; reason = `Declares table${declares.get(node.id)!.length === 1 ? '' : 's'} ${declares.get(node.id)!.join(', ')}, which flows read or write`; }
     else if (CONFIG_PATH.test(path) || MIGRATION_PATH.test(path) || FRAMEWORK_PATH.test(path)) { category = 'config'; reason = MIGRATION_PATH.test(path) ? 'A migration whose tables no flow reaches' : FRAMEWORK_PATH.test(path) ? 'Registered with the framework (middleware, provider, kernel or exception handler): it runs around requests, but flows do not follow it yet' : 'Configuration or bootstrapping, loaded by the framework'; }
     else if (!insideApplication(node)) { category = 'outside'; reason = 'Outside the configured applications (scripts, tools, other projects): not analyzed for flows'; }
@@ -180,7 +204,7 @@ export function computeCoverage(input: CoverageInput): CoverageComputation {
   let codeFiles = 0;
   for (const [id, coverage] of files) {
     totals[coverage.category]++;
-    if (coverage.category !== 'asset') codeFiles++;
+    if (!NOT_MEASURED.has(coverage.category)) codeFiles++;
     for (let node = index.node(index.node(id)!.spatialParentId ?? ''); node; node = node.spatialParentId ? index.node(node.spatialParentId) : undefined) {
       const counts = areas.get(node.id) ?? emptyCounts(); counts[coverage.category]++; areas.set(node.id, counts);
     }

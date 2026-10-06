@@ -68,6 +68,7 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
     else if (pathname === '/api/projection/request-flows') result = projection.requestFlows({ view, entity: text(params, 'entity') });
     else if (pathname === '/api/projection/flows') result = projection.flows({ view, entity: text(params, 'entity'), kind: text(params, 'kind') });
     else if (pathname === '/api/projection/coverage') result = projection.coverage(view);
+    else if (pathname === '/api/projection/coverage/export') result = projection.coverageExport(view);
     else if (pathname === '/api/annotations') result = projection.annotationsOverview();
     else if ((match = new RegExp(`^/api/annotations/entity/${ID}$`).exec(pathname))) result = projection.entityAnnotation(decodeURIComponent(match[1]!), view);
     else if ((match = new RegExp(`^/api/projection/coverage/${ID}$`).exec(pathname))) result = projection.coverageOf(decodeURIComponent(match[1]!), view);

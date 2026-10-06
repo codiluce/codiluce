@@ -282,13 +282,30 @@ export interface FlowList {
 /** File coverage by flows, per file (code and assets) and rolled up per area. */
 export interface CoverageResult {
   totals: import('./catalog.js').CoverageCounts;
-  /** Code files measured (assets excluded). */
+  /** Code files measured (assets and code whose calls are not analyzed excluded). */
   codeFiles: number;
   flows: number;
   /** Per file: category and the number of flows touching it. */
   files: Record<string, { category: import('./catalog.js').CoverageCategory; flows: number }>;
   /** Per area (spatial ancestors of files): counts by category. */
   areas: Record<string, import('./catalog.js').CoverageCounts>;
+}
+/** Code no flow is proven to use, for review (by a person or a language model): files, and unused symbols in files flows do reach. */
+export interface CoverageExport {
+  repository: string; generatedAt: string; snapshot?: string;
+  /** How to read the lists, and what the analyzers cannot see. */
+  about: string[];
+  totals: import('./catalog.js').CoverageCounts; codeFiles: number; flows: number;
+  /** Not reached, and possibly reached by a name the analyzers could not resolve ("explained"). */
+  files: { path: string; category: 'unreached' | 'explained'; reason: string; language?: string; loc?: number; symbols: CoverageExportSymbol[] }[];
+  /** Functions, methods and components in reached files that nothing indexed calls, renders, routes to or references. */
+  symbols: (CoverageExportSymbol & { path: string; fileCategory: import('./catalog.js').CoverageCategory })[];
+}
+export interface CoverageExportSymbol {
+  name: string; type: string; qualifiedName?: string; startLine?: number; endLine?: number;
+  /** Unresolved call sites anywhere that call this name: it may be used after all. */
+  possiblyCalledByName?: number;
+  note?: string;
 }
 export interface CoverageDetail {
   id: string;

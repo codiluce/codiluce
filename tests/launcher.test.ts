@@ -34,7 +34,7 @@ test('launch indexes an uninitialized repository and serves its map, API and sou
   const session = await launchLocal({ repo: root, uiDirectory: ui, port: 0, open: false, log: quiet });
   try {
     assert.equal(session.stateDirectory, path.join(root, '.archipelago'));
-    assert.match(await readFile(path.join(session.stateDirectory, 'config.yml'), 'utf8'), /type: nextjs/);
+    assert.match(await readFile(path.join(session.stateDirectory, 'config.yml'), 'utf8'), /frameworks:\n\s+- nextjs/);
     assert.match(await (await fetch(session.url)).text(), /Launcher fixture/);
     const summary = await (await fetch(`${session.url}api/summary`)).json() as { counts: { entities: number; relations: number } };
     assert.ok(summary.counts.entities > 0 && summary.counts.relations > 0);

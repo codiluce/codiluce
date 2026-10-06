@@ -46,3 +46,14 @@ export function classConstant(value: unknown, scope: Scope): string | undefined 
   const node = ast(value);
   return node?.kind === 'staticlookup' && name(node.offset)?.toLowerCase() === 'class' ? resolve(node.what, scope) : undefined;
 }
+/** The Inertia page a route closure renders: `Inertia::render('page')` or `inertia('page')` with a literal name. */
+export function inertiaPageOf(closure: Ast, scope: Scope): string | undefined {
+  let page: string | undefined;
+  walk(closure, node => {
+    if (page !== undefined || node.kind !== 'call') return;
+    const what = ast(node.what);
+    const isRender = what?.kind === 'staticlookup' ? ['inertia\\inertia', 'inertia'].includes(resolve(what.what, scope)?.toLowerCase() ?? '') && name(what.offset)?.toLowerCase() === 'render' : what?.kind === 'name' && name(what)?.toLowerCase() === 'inertia';
+    if (isRender) page = literal(args(node)[0]);
+  });
+  return page;
+}
