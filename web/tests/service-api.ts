@@ -1,6 +1,6 @@
 // AtlasApi backed by the server-side services (no HTTP), with optional
 // per-call delays and a call log. Shared by the store-level tests.
-import type { CatalogKind, NodeSummary, SourceRequest, ViewKey } from '@engine/projection/dto';
+import type { CatalogKind, NodeSummary, RegionLevel, SourceRequest, ViewKey } from '@engine/projection/dto';
 import type { GraphStore } from '../../src/storage/sqlite.js';
 import type { ProjectionService } from '../../src/projection/service.js';
 import type { HistoryService } from '../../src/history/service.js';
@@ -37,6 +37,7 @@ export class ServiceApi implements AtlasApi {
   timeline(signal?: AbortSignal) { return this.run('timeline', '', signal, () => { if (!this.options.history) throw new Error('No history'); return this.options.history.timeline(); }); }
   changes(options: { status?: string; type?: string; offset?: number; limit?: number }, signal?: AbortSignal) { return this.run('changes', options.status ?? '', signal, () => this.projection.changes(this.view, options)); }
   change(id: string, signal?: AbortSignal) { return this.run('change', id, signal, () => this.projection.change(id, this.view)); }
+  regions(level: RegionLevel, signal?: AbortSignal) { return this.run('regions', level, signal, () => this.projection.regions(this.view, { level })); }
   entityHistory(id: string, signal?: AbortSignal) {
     return this.run('entityHistory', id, signal, async () => {
       const history = this.options.history;

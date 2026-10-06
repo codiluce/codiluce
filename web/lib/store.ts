@@ -7,7 +7,7 @@
 // for the containers currently open, so the camera and the user's place on
 // the map are kept; a view epoch drops responses that belong to an old view.
 import type { Entity, Relation } from '@engine/core/graph';
-import type { AggregateEdgesPage, AggregateGroup, AggregateResult, CatalogKind, ChangesPage, CoverageDetail, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FlowList, FlowSummary, ImpactItem, ImpactResult, LocateResult, NodeSummary, ProjectionMeta, RelationItem, RequestFlow, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineEntry, TimelineResponse, ViewKey } from '@engine/projection/dto';
+import type { AggregateEdgesPage, AggregateGroup, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FlowList, FlowSummary, ImpactItem, ImpactResult, LocateResult, NodeSummary, ProjectionMeta, Rect, RelationItem, RequestFlow, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineEntry, TimelineResponse, ViewKey } from '@engine/projection/dto';
 import type { AnnotationsOverview, EntityAnnotation, FlowStatus } from '@engine/projection/dto';
 import type { CatalogTab } from './catalog';
 import { fromRequestFlow, fromSteps, type MapFlow } from './map-flow';
@@ -66,6 +66,12 @@ export interface TimelineState {
   speed: number;
   /** While playing, the camera drifts toward where the changes happen. */
   follow: boolean;
+  /** Comparing: one view on each place where the code changed, around an overview of the whole map (otherwise one map). */
+  split: boolean;
+  /** How finely the split map groups the changes into places. */
+  regionLevel: RegionLevel;
+  /** The places of the settled comparison (time-lapse frames are grouped in the browser). */
+  regions: { status: Status; viewStamp?: string; data?: ChangeRegionsResult; error?: string };
 }
 /** Blast radius of the selection. While `open`, it follows the selection. */
 export interface ImpactState {
@@ -222,9 +228,11 @@ export class AtlasStore {
   visibility?: (id: string) => boolean;
   /** Set by the map: containers currently open (top-down), to prefetch when the view changes. */
   openContainers?: () => string[];
+  /** Where the single map starts when it next appears (a place of the split map opened on its own). */
+  private pendingFocus?: { node: NodeSummary; frame?: Rect };
 
   constructor(readonly api: AtlasApi, private readonly options: StoreOptions = {}) {
-    let prefs: { themeId?: string; showDiagnostics?: boolean; dimUnchanged?: boolean } = {};
+    let prefs: { themeId?: string; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel } = {};
     try { prefs = JSON.parse(options.storage?.getItem('archipelago:prefs') ?? '{}'); } catch { /* defaults */ }
     this.state = {
       status: 'loading', view: { level: 'Applications', focus: [], zoom: 1, visible: [], truncated: false },
@@ -232,7 +240,7 @@ export class AtlasStore {
       history: { entries: [], index: -1 }, showDiagnostics: prefs.showDiagnostics ?? true, themeId: prefs.themeId ?? 'midnight',
       staleIndex: false, sceneRevision: 0,
       impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '' }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, lens: 'folders',
-      timeline: { open: false, status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true },
+      timeline: { open: false, status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true, split: prefs.split ?? true, regionLevel: prefs.regionLevel ?? 'auto', regions: { status: 'idle' } },
     };
   }
   getState = (): AtlasState => this.state;
@@ -250,7 +258,7 @@ export class AtlasStore {
   }
   private bumpScene(): void { this.set(state => ({ sceneRevision: state.sceneRevision + 1 })); }
   private savePrefs(): void {
-    try { this.options.storage?.setItem('archipelago:prefs', JSON.stringify({ themeId: this.state.themeId, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged })); } catch { /* preferences are optional */ }
+    try { this.options.storage?.setItem('archipelago:prefs', JSON.stringify({ themeId: this.state.themeId, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel })); } catch { /* preferences are optional */ }
   }
   dispose(): void { this.disposed = true; for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
 
@@ -623,6 +631,36 @@ export class AtlasStore {
     }
   }
   toggleDimUnchanged(): void { this.setTimeline({ dimUnchanged: !this.state.timeline.dimUnchanged }); this.savePrefs(); }
+  /** Compare in one map or split by place; `focus` is where the single map starts (a place opened on its own). */
+  setSplit(split: boolean, focus?: { node: NodeSummary; frame?: Rect }): void {
+    this.pendingFocus = split ? undefined : focus;
+    this.setTimeline({ split }); this.savePrefs();
+    if (split) void this.loadRegions();
+  }
+  setRegionLevel(regionLevel: RegionLevel): void {
+    if (regionLevel === this.state.timeline.regionLevel) return;
+    this.setTimeline({ regionLevel }); this.savePrefs();
+    void this.loadRegions();
+  }
+  /** Where the single map should start, once. */
+  takeFocus(): { node: NodeSummary; frame?: Rect } | undefined { const focus = this.pendingFocus; this.pendingFocus = undefined; return focus; }
+  /** The places of the comparison for the split map; their areas are placed in the scene so the views can frame them. */
+  async loadRegions(): Promise<void> {
+    const timeline = this.state.timeline;
+    if (!timeline.open || !timeline.split || !this.comparing) return;
+    const viewStamp = `${this.viewStamp()}|${timeline.regionLevel}`;
+    if (timeline.regions.viewStamp === viewStamp && timeline.regions.status !== 'error') return;
+    const signal = this.abortable('regions');
+    const scene = this.scene, epoch = this.epoch;
+    // The places on screen stay until the new ones arrive.
+    this.setTimeline({ regions: { ...timeline.regions, status: 'loading', viewStamp, error: undefined } });
+    try {
+      const data = await this.api.regions(timeline.regionLevel, signal);
+      if (signal.aborted || epoch !== this.epoch) return;
+      for (const region of data.regions) { for (const ancestor of region.ancestors) scene.upsert(ancestor); scene.upsert(region.node); }
+      this.set(state => state.timeline.regions.viewStamp === viewStamp ? { sceneRevision: state.sceneRevision + 1, timeline: { ...state.timeline, regions: { status: 'ready', viewStamp, data } } } : {});
+    } catch (error) { if (!isAbort(error)) this.set(state => state.timeline.regions.viewStamp === viewStamp ? { timeline: { ...state.timeline, regions: { ...state.timeline.regions, status: 'error', error: error instanceof Error ? error.message : String(error) } } } : {}); }
+  }
   /** Ask the server to analyze a timeline commit that has no snapshot yet. */
   async indexCommit(sha: string): Promise<void> {
     try { await this.api.requestIndex(sha); this.setTimeline({ notice: undefined }); await this.refreshTimeline(); }
@@ -744,7 +782,7 @@ export class AtlasStore {
   private async applyView(select = this.state.selection?.id, fly = false): Promise<void> {
     const epoch = ++this.epoch;
     const previousSnapshot = this.state.meta?.snapshot.id;
-    for (const key of ['selection', 'relations-more', 'drill', 'evidence', 'flow', 'changes']) this.aborts.get(key)?.abort();
+    for (const key of ['selection', 'relations-more', 'drill', 'evidence', 'flow', 'changes', 'regions']) this.aborts.get(key)?.abort();
     const signal = this.abortable('view');
     this.api.setView(this.viewKey());
     this.setTimeline({ switching: true, error: undefined });
@@ -771,7 +809,7 @@ export class AtlasStore {
       const { source, diff } = this.state;
       if (diff) { if (meta.comparison) void this.openDiff(diff.entity, diff.title); else this.set({ diff: undefined }); }
       else if (source) void this.openSource(source.request, source.title);
-      if (meta.comparison) void this.loadChanges();
+      if (meta.comparison) { void this.loadChanges(); void this.loadRegions(); }
       if (select) {
         const resolved = await this.api.resolve(select, previousSnapshot !== meta.snapshot.id ? previousSnapshot : undefined, signal);
         if (epoch !== this.epoch) return;

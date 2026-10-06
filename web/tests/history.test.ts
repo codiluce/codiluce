@@ -10,6 +10,8 @@ import { HISTORY_DATABASE, historyConfig, indexHistory, revisionConfig } from '.
 import { HistoryAccess, HistoryService } from '../../src/history/service.js';
 import { HistoryStore } from '../../src/history/store.js';
 import { createHistoryFixture, type HistoryFixture } from '../../tests/history-fixture.js';
+import type { ChangeRegionsResult } from '@engine/projection/dto';
+import { sceneRegions, timelapseRegions } from '../lib/split';
 import { AtlasStore, predecessor } from '../lib/store';
 import { RecordingNavigator, ServiceApi } from './service-api';
 
@@ -162,4 +164,39 @@ test('the time-lapse shows commits at once while scrubbing and playing, then set
   state = atlas.getState();
   assert.equal(state.timeline.playing, false);
   assert.equal(state.timeline.target, snapshotOf('D').id);
+});
+test('the split map: the places of a comparison are placed in the scene, and a time-lapse frame is grouped as the server groups it', async () => {
+  const { atlas } = await ready();
+  await atlas.openTimeline();
+  await atlas.setTarget(snapshotOf('C').id);
+  await until(() => atlas.getState().timeline.regions.status === 'ready');
+  const { data } = atlas.getState().timeline.regions;
+  assert.equal(data?.level, 'auto');
+  assert.ok(data!.regions.length >= 3);
+  for (const region of data!.regions) assert.ok([region.node, ...region.ancestors].every(node => atlas.scene.nodes.has(node.id)), 'each place can be framed and opened');
+  atlas.setRegionLevel('application');
+  await until(() => atlas.getState().timeline.regions.status === 'ready' && atlas.getState().timeline.regions.data?.level === 'application');
+  assert.deepEqual(atlas.getState().timeline.regions.data!.regions.map(region => region.node.name).sort(), ['backend', 'frontend']);
+  // The frame of C in the time-lapse compares with B, as the settled view does: the browser finds the same places.
+  await until(() => atlas.getState().timeline.evolution.status === 'ready');
+  const scene = atlas.evolution!.scene(atlas.evolution!.frameOf(snapshotOf('C').id)!);
+  const view = { snapshot: snapshotOf('C').id, compareTo: snapshotOf('B').id };
+  await projection.prepare(view);
+  for (const level of ['auto', 'application', 'directory', 'file'] as const) {
+    const places = (result: ChangeRegionsResult) => result.regions.map(region => [region.node.id, region.total, region.frame]);
+    assert.deepEqual(places(sceneRegions(scene, level)), places(projection.regions(view, { level })), level);
+  }
+  // While playing, the views wait where the next frames change things: B's and C's places together.
+  const frameC = atlas.evolution!.frameOf(snapshotOf('C').id)!;
+  assert.deepEqual(timelapseRegions(atlas.evolution!, frameC, frameC, 'file').regions.map(region => region.node.id), sceneRegions(scene, 'file').regions.map(region => region.node.id));
+  const both = timelapseRegions(atlas.evolution!, frameC - 1, frameC, 'file').regions.map(region => region.node.path);
+  assert.ok(both.includes('frontend/src/components/Signup.tsx') && both.includes('backend/app/Http/Controllers/AuthController.php'), both.join());
+  // A place opened in the single map: the map starts there, once.
+  const first = atlas.getState().timeline.regions.data!.regions[0]!;
+  atlas.setSplit(false, { node: first.node, frame: first.frame });
+  assert.equal(atlas.getState().timeline.split, false);
+  assert.equal(atlas.takeFocus()?.node.id, first.node.id);
+  assert.equal(atlas.takeFocus(), undefined);
+  atlas.setSplit(true);
+  assert.equal(atlas.getState().timeline.split, true);
 });

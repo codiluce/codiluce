@@ -1,13 +1,16 @@
-// Owns the canvas: input, camera animation, render scheduling and lazy child
-// loading. React never renders map primitives; it only mounts this controller.
-import type { NodeSummary, SourceResponse } from '@engine/projection/dto';
-import { easeInOut, fitBounds, panBy, projectedBounds, worldToScreen, zoomAround, zoomPath, type Bounds, type Camera, type Viewport, type ZoomLimits } from './camera';
+// Owns a canvas: input, camera animation, render scheduling and lazy child
+// loading. React never renders map primitives; it only mounts controllers.
+// The single map has one (`main`); the split map of History has an `overview`
+// of the whole repository and a `region` controller per place that changed,
+// all drawing the same scene from their own camera.
+import type { NodeSummary, Rect, SourceResponse } from '@engine/projection/dto';
+import { easeInOut, fitBounds, fromScreen, panBy, projectedBounds, visibleBounds, worldToScreen, zoomAround, zoomPath, type Bounds, type Camera, type Point, type Viewport, type ZoomLimits } from './camera';
 import { DEFAULT_LOD, abstractionLevel, screenSize, type LodConfig } from './lod';
-import { FLASH_MS, MapRenderer, RISE_MS, type CalloutOverlay, type CoverageOverlay, type EdgeOverlay, type FlowOverlay, type MotionState, type RenderState } from './renderer';
+import { FLASH_MS, MapRenderer, RISE_MS, type CalloutOverlay, type CoverageOverlay, type EdgeOverlay, type FlowOverlay, type FrameOverlay, type MotionState, type RenderState } from './renderer';
 import { branchDuration, branchPosition, flowAreas, flowLit, type MapFlow } from './map-flow';
 import type { PlaybackState } from './playback';
 import { nodeHeight, type Scene, type VisibleSet } from './scene';
-import { isContainer, type AtlasState, type AtlasStore, type MapNavigator } from './store';
+import { isContainer, type AtlasState, type AtlasStore, type MapNavigator, type ViewState } from './store';
 import { themeById } from './themes';
 
 /** A branch with more stops than this labels only its start and the waves around the front; at most this many pins show. */
@@ -20,11 +23,34 @@ const FOLLOW_WINDOW_MS = 1600;
 const FOLLOW_EASE_MS = 700, FOLLOW_MIN_SPAN = 0.22;
 interface Animation { at(t: number): Camera; start: number; duration: number }
 export interface DebugHandle { screenPositionOf(id: string): { x: number; y: number } | undefined; camera(): Camera; visibleIds(): string[]; rectOf(id: string): { x: number; y: number; w: number; h: number } | undefined }
+export interface MapControllerOptions {
+  /**
+   * `main`: the single map (the store's navigator and view status). `overview`:
+   * the split map's whole repository. `region`: a view of the split map. Main
+   * and overview run the clocks (time-lapse, flow playback): one is mounted at a time.
+   */
+  role?: 'main' | 'overview' | 'region';
+  lod?: LodConfig;
+  /** What fitting shows (`frame`: a part of the node, by default all of it): the whole repository by default. A node without children is framed with its surroundings. */
+  home?: () => { node: NodeSummary; frame?: Rect } | undefined;
+  /** More to draw: areas opened whatever their size, frames of other views; `key` changes when they do. */
+  extra?: () => { key: string; force?: ReadonlySet<string>; frames?: FrameOverlay[] };
+  /** The camera or the viewport changed. */
+  onCamera?: () => void;
+  /** Level and focus at the center (throttled); the main map reports to the store. */
+  onReport?: (view: ViewState) => void;
+  /** The user pressed on this map. */
+  onActivate?: () => void;
+  /** A click on the map, as a point of the projection plane: true when it was handled (a frame of the overview). */
+  onClick?: (point: Point) => boolean;
+}
 
 export class MapController implements MapNavigator {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly renderer: MapRenderer;
-  private readonly lod: LodConfig = DEFAULT_LOD;
+  private readonly lod: LodConfig;
+  private readonly role: NonNullable<MapControllerOptions['role']>;
+  private lastCamera = '';
   private camera: Camera = { x: 0, y: 0, scale: 0.05 };
   private viewport: Viewport = { width: 1, height: 1 };
   private dpr = 1;
@@ -52,15 +78,19 @@ export class MapController implements MapNavigator {
   /** Where recent time-lapse frames changed something, for the follow camera. */
   private recentChanges: { bounds: Bounds; at: number }[] = [];
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly store: AtlasStore) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly store: AtlasStore, private readonly options: MapControllerOptions = {}) {
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) throw new Error('Canvas 2D is unavailable in this browser');
     this.ctx = ctx;
+    this.role = options.role ?? 'main';
+    this.lod = options.lod ?? DEFAULT_LOD;
     this.renderer = new MapRenderer(themeById(store.getState().themeId));
     this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    store.navigator = this;
-    store.visibility = id => this.set.index.has(id);
-    store.openContainers = () => this.set.items.filter(item => item.open).map(item => item.node.id);
+    if (this.role === 'main') {
+      store.navigator = this;
+      store.visibility = id => this.has(id);
+      store.openContainers = () => this.openContainers();
+    }
     const resize = new ResizeObserver(() => this.resize());
     resize.observe(canvas);
     this.cleanup.push(() => resize.disconnect());
@@ -76,8 +106,10 @@ export class MapController implements MapNavigator {
     listen('pointercancel', event => { this.pointers.delete(event.pointerId); this.drag = undefined; });
     listen('pointerleave', () => { this.hoverPoint = undefined; this.store.hover(undefined); });
     listen('dblclick', event => this.onDoubleClick(event));
+    listen('focus', () => this.options.onActivate?.());
     listen('keydown', event => this.onKey(event));
-    (window as unknown as { __ARCHIPELAGO__?: DebugHandle }).__ARCHIPELAGO__ = {
+    // Tests read the map that runs the clocks: the single map, or the split map's overview.
+    if (this.role !== 'region') (window as unknown as { __ARCHIPELAGO__?: DebugHandle }).__ARCHIPELAGO__ = this.debug = {
       screenPositionOf: id => { const index = this.set.index.get(id); if (index === undefined) return undefined; const item = this.set.items[index]!; const r = item.node.rect; const p = worldToScreen(this.camera, this.viewport, r.x + r.w / 2, r.y + r.h / 2, item.zTop); const box = canvas.getBoundingClientRect(); return { x: box.left + p.x, y: box.top + p.y }; },
       camera: () => ({ ...this.camera }),
       visibleIds: () => this.set.items.map(item => item.node.id),
@@ -85,11 +117,30 @@ export class MapController implements MapNavigator {
     };
     this.resize();
   }
+  private debug?: DebugHandle;
   destroy(): void {
     cancelAnimationFrame(this.frame);
     if (this.reportTimer) clearTimeout(this.reportTimer);
     for (const dispose of this.cleanup) dispose();
     if (this.store.navigator === this) { this.store.navigator = undefined; this.store.visibility = undefined; this.store.openContainers = undefined; }
+    const global = window as unknown as { __ARCHIPELAGO__?: DebugHandle };
+    if (this.debug && global.__ARCHIPELAGO__ === this.debug) delete global.__ARCHIPELAGO__;
+  }
+  /** Whether a node is drawn at this map's level of detail. */
+  has(id: string): boolean { return this.set.index.has(id); }
+  /** Containers open on this map (top-down). */
+  openContainers(): string[] { return this.set.items.filter(item => item.open).map(item => item.node.id); }
+  /** CSS pixels per plane unit. */
+  scale(): number { return this.camera.scale; }
+  /** The part of the projection plane on screen. */
+  visiblePlane(): Bounds { return visibleBounds(this.camera, this.viewport); }
+  /** Back to what this map frames (its place, or the whole repository). */
+  goHome(animate = true): void {
+    const target = this.homeCamera();
+    if (!target) return;
+    this.autoFit = true;
+    if (animate && this.fitted) { this.animateTo(target); this.autoFit = true; }
+    else { this.camera = target; this.animation = undefined; this.fitted = true; this.request(); }
   }
   private get motionReduced(): boolean { return this.reducedMotion.matches; }
   /** What is on screen: a time-lapse frame while scrubbing or playing, otherwise the settled view. */
@@ -102,12 +153,22 @@ export class MapController implements MapNavigator {
     this.viewport = { width, height };
     this.canvas.width = Math.round(width * this.dpr); this.canvas.height = Math.round(height * this.dpr);
     this.setKey = '';
-    if (this.autoFit && this.fitted) { const bounds = this.rootBounds(); if (bounds) { this.updateLimits(); this.camera = fitBounds(bounds, this.viewport, 32, this.limits); } }
+    if (this.autoFit && this.fitted) { this.updateLimits(); const target = this.homeCamera(); if (target) this.camera = target; }
     this.request();
   }
   private rootBounds() {
     const root = this.scene.rootId ? this.scene.nodes.get(this.scene.rootId) : undefined;
     return root ? projectedBounds(root.rect, 0, 40) : undefined;
+  }
+  /** The camera framing this map's home: its place (a leaf with room around it), else the whole repository. */
+  private homeCamera(focus = this.options.home?.()): Camera | undefined {
+    if (!focus) { const bounds = this.rootBounds(); return bounds ? fitBounds(bounds, this.viewport, this.role === 'main' ? 32 : 14, this.limits) : undefined; }
+    const { node } = focus, rect = focus.frame ?? node.rect;
+    const z = this.scene.nodes.has(node.id) ? this.scene.zBase(node.id) : 0;
+    // A frame inside the node: what stands on it rises above the node's top.
+    const camera = fitBounds(projectedBounds(rect, z, z + nodeHeight(node) + (focus.frame ? 12 : 0)), this.viewport, 22, this.limits);
+    if (node.childCount > 0) return camera;
+    return { ...camera, scale: Math.max(this.limits.min, Math.min(camera.scale, (0.42 * Math.min(this.viewport.width, this.viewport.height)) / Math.sqrt(rect.w * rect.h))) };
   }
   private updateLimits(): void {
     const bounds = this.rootBounds();
@@ -120,8 +181,8 @@ export class MapController implements MapNavigator {
   }
   // MapNavigator --------------------------------------------------------------
   fitAll(): void {
-    const bounds = this.rootBounds();
-    if (bounds) this.animateTo(fitBounds(bounds, this.viewport, 32, this.limits));
+    const target = this.homeCamera();
+    if (target) this.animateTo(target);
   }
   fitNodes(nodes: NodeSummary[]): void {
     if (!nodes.length) return;
@@ -154,13 +215,19 @@ export class MapController implements MapNavigator {
     this.frame = 0;
     const elapsed = this.lastFrame ? Math.min(100, time - this.lastFrame) : 16;
     this.lastFrame = time;
-    if (this.store.getState().timeline.playing) this.store.advancePlayback(elapsed);
+    const clock = this.role !== 'region';
+    if (clock && this.store.getState().timeline.playing) this.store.advancePlayback(elapsed);
     const state = this.store.getState();
     const scene = this.scene;
     if (scene !== this.drawnScene) { this.sceneChanged(this.drawnScene, scene, time, state); this.drawnScene = scene; }
-    if (state.timeline.playing && state.timeline.follow) this.follow(time, elapsed);
-    if (!this.fitted && this.scene.rootId) { const bounds = this.rootBounds()!; this.updateLimits(); this.camera = fitBounds(bounds, this.viewport, 32, this.limits); this.fitted = true; }
-    else this.updateLimits();
+    if (this.role === 'main' && state.timeline.playing && state.timeline.follow) this.follow(time, elapsed);
+    if (!this.fitted && this.scene.rootId) {
+      this.updateLimits();
+      // A place of the split map opened on its own starts there.
+      const focus = this.role === 'main' ? this.store.takeFocus() : undefined;
+      if (focus) this.autoFit = false;
+      this.camera = this.homeCamera(focus) ?? this.camera; this.fitted = true;
+    } else this.updateLimits();
     if (this.animation) {
       const t = Math.min(1, (time - this.animation.start) / this.animation.duration);
       this.camera = this.animation.at(easeInOut(t));
@@ -173,17 +240,22 @@ export class MapController implements MapNavigator {
       // Labels use the theme's font: draw again once it has loaded.
       if (theme.style?.font && typeof document !== 'undefined') document.fonts?.load(`600 12px ${theme.style.font}`).then(() => this.request(), () => undefined);
     }
-    if (state.tour?.playback.status === 'playing') this.store.tourAction({ type: 'tick', elapsedMs: elapsed, stepMs: branchDuration(state.tour.flow?.branches[state.tour.playback.index]) });
+    if (clock && state.tour?.playback.status === 'playing') this.store.tourAction({ type: 'tick', elapsedMs: elapsed, stepMs: branchDuration(state.tour.flow?.branches[state.tour.playback.index]) });
     const shown = this.shownFlow(this.store.getState());
-    const force = shown && !this.store.previewScene ? this.areasOf(shown.flow, shown.playback.index) : undefined;
-    const key = `${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}|${this.scene.revision}|${shown ? `${shown.flow.key}#${shown.playback.index}` : ''}`;
+    const extra = this.options.extra?.();
+    const flowAreas = shown && !this.store.previewScene ? this.areasOf(shown.flow, shown.playback.index) : undefined;
+    const force = flowAreas && extra?.force ? new Set([...flowAreas, ...extra.force]) : flowAreas ?? extra?.force;
+    const key = `${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}|${this.scene.revision}|${shown ? `${shown.flow.key}#${shown.playback.index}` : ''}|${extra?.key ?? ''}`;
     if (key !== this.setKey) {
       this.set = this.scene.visible(this.camera, this.viewport, this.lod, force);
       this.setKey = key;
       if (this.set.pending.length) void this.store.loadChildren(this.set.pending);
     }
     const render = this.renderState(state, time);
+    if (extra?.frames) render.frames = extra.frames;
     this.renderer.render(this.ctx, this.dpr, this.viewport, this.camera, this.scene, this.set, render, this.lod);
+    const moved = `${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}`;
+    if (moved !== this.lastCamera) { this.lastCamera = moved; this.options.onCamera?.(); }
     this.scheduleReport(time);
     const flowActive = state.tour?.playback.status === 'playing';
     if (this.animation || flowActive || state.timeline.playing || time < this.motionUntil) this.request();
@@ -397,7 +469,9 @@ export class MapController implements MapNavigator {
     const sourceVisible = selectedIndex !== undefined && this.set.items[selectedIndex]!.size >= this.lod.sourcePx && !isContainer(this.set.items[selectedIndex]!.node);
     const visible = this.set.items.filter(item => item.tier !== 'hidden' && item.alpha > 0.5 && item.node.kind === 'entity' && item.node.type !== 'repository')
       .sort((a, b) => b.size - a.size).slice(0, 40).map(item => ({ id: item.node.id, name: item.node.name, type: item.node.type }));
-    this.store.setView({ level: abstractionLevel(focus ? children : [], sourceVisible), focus: chain, zoom: Math.round(this.camera.scale * 1000) / 1000, visible, truncated: this.set.truncated });
+    const view: ViewState = { level: abstractionLevel(focus ? children : [], sourceVisible), focus: chain, zoom: Math.round(this.camera.scale * 1000) / 1000, visible, truncated: this.set.truncated };
+    if (this.options.onReport) this.options.onReport(view);
+    else if (this.role === 'main') this.store.setView(view);
   }
   // Input -------------------------------------------------------------------------
   private local(event: { clientX: number; clientY: number }) { const box = this.canvas.getBoundingClientRect(); return { x: event.clientX - box.left, y: event.clientY - box.top }; }
@@ -414,6 +488,7 @@ export class MapController implements MapNavigator {
   }
   private onPointerDown(event: PointerEvent): void {
     this.canvas.focus({ preventScroll: true });
+    this.options.onActivate?.();
     this.canvas.setPointerCapture(event.pointerId);
     const point = this.local(event);
     this.pointers.set(event.pointerId, point);
@@ -454,6 +529,7 @@ export class MapController implements MapNavigator {
     if (this.pointers.size === 0) this.drag = undefined;
     this.canvas.style.cursor = 'grab';
     if (!drag || drag.moved || event.button !== 0) return;
+    if (this.options.onClick?.(fromScreen(this.camera, this.viewport, point))) return;
     const hit = this.scene.hitTest(this.set, this.camera, this.viewport, point.x, point.y);
     if (!hit || hit.node.type === 'repository') { this.store.clearSelection(); return; }
     void this.store.select(hit.node.id, { fly: false });

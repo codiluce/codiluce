@@ -36,6 +36,12 @@ export class Evolution {
     for (const [, status] of this.frames[frame]?.changes ?? []) counts[STATUS[status!]!]++;
     return counts;
   }
+  /** Entities changed in the frames from `from` to `to` (inclusive), each with the status of its last change. */
+  changesBetween(from: number, to: number): Map<string, EvolutionStatus> {
+    const result = new Map<string, EvolutionStatus>();
+    for (let frame = Math.max(0, from); frame <= Math.min(to, this.frames.length - 1); frame++) for (const [node, code] of this.frames[frame]!.changes) result.set(this.nodes[node!]!.id, STATUS[code!]!);
+    return result;
+  }
   /** Where every node of a frame is. */
   placements(frame: number): Map<number, Placement> {
     const base = Math.floor(frame / KEYFRAME) * KEYFRAME;

@@ -89,6 +89,7 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
       if (!context.history) throw new SourceError(503, 'History is unavailable');
       result = projection.annotateTimeline(await context.history.timeline(text(params, 'ref')));
     } else if (pathname === '/api/history/changes') result = projection.changes(view, { ...page, status: text(params, 'status'), type: text(params, 'type') });
+    else if (pathname === '/api/history/regions') result = projection.regions(view, { level: text(params, 'level') });
     else if ((match = new RegExp(`^/api/history/change/${ID}$`).exec(pathname))) result = projection.change(decodeURIComponent(match[1]!), view);
     else if ((match = new RegExp(`^/api/history/entity/${ID}$`).exec(pathname))) {
       if (!context.history) throw new SourceError(503, 'History is unavailable');

@@ -14,6 +14,7 @@ import { Inspector } from './Inspector';
 import { MapView } from './MapView';
 import { SearchBox } from './SearchBox';
 import { SourcePanel } from './SourcePanel';
+import { SplitMap } from './SplitMap';
 import { Timeline } from './Timeline';
 
 function createStore(): AtlasStore {
@@ -77,6 +78,8 @@ function Shell() {
   const coverage = useAtlas(state => state.coverage.show);
   const lens = useAtlas(state => state.lens);
   const domains = useAtlas(state => state.annotations.data?.domains.length ?? 0);
+  // Comparing in History: one view per place that changed, around an overview (unless the single map is chosen).
+  const split = useAtlas(state => state.timeline.open && state.timeline.compare && state.timeline.split && (!!state.meta?.comparison || state.timeline.preview !== undefined));
   const showFlows = () => { if (flowsOpen && leftTab === 'flows') setFlowsOpen(false); else { setFlowsOpen(true); setLeftTab('flows'); } };
   const [help, setHelp] = useState(false);
   // Floating themes paint a backdrop behind rounded panels; the others dock panels on a flat background.
@@ -149,7 +152,7 @@ function Shell() {
           </aside>
         ) : <div />}
         <section className="map-area">
-          <MapView />
+          {split ? <SplitMap /> : <MapView />}
           <FlowBar />
           <SourcePanel />
         </section>
@@ -173,14 +176,14 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
     ['/', 'Search entities'], ['↑ ↓ Enter', 'Choose a search result'], ['Drag · wheel · pinch', 'Pan and zoom the map'],
     ['Arrow keys · + −', 'Pan and zoom (map focused)'], ['F', 'Fit the whole repository'], ['Enter', 'Zoom to the selection'],
     ['Double-click', 'Zoom into an area'], ['Esc', 'Clear selection / close'], ['Backspace · Alt+←', 'Previous selection'], ['Alt+→', 'Next selection'],
-    ['[ ]', 'Previous / next indexed commit (History open)'], ['Space', 'Play / pause the history time-lapse (History open)'], ['Shift + ← →', 'Move the comparison baseline (timeline focused)'],
+    ['[ ]', 'Previous / next indexed commit (History open)'], ['Space', 'Play / pause the history time-lapse (History open)'], ['Shift + ← →', 'Move the comparison baseline (timeline focused)'], ['Page Up · Page Down', 'Previous / next views of the split map (History, Compare)'],
   ];
   return (
     <div className="center-state" style={{ pointerEvents: 'auto', background: 'rgba(0,0,0,0.35)', zIndex: 30 }} onClick={onClose}>
       <div className="card" role="dialog" aria-modal="true" aria-labelledby="help-title" onClick={event => event.stopPropagation()} style={{ textAlign: 'left' }}>
         <h2 id="help-title" style={{ marginTop: 0, fontSize: 15 }}>Keyboard and pointer</h2>
         <dl className="facts">{rows.map(([key, text]) => [<dt key={`k${key}`}><kbd>{key}</kbd></dt>, <dd key={`d${key}`}>{text}</dd>])}</dl>
-        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout and never change with selection, search or filters. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing. Dragging the timeline or pressing play shows each commit at once as a time-lapse; the full view of a commit loads when you let go or pause.</p>
+        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout and never change with selection, search or filters. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing. Dragging the timeline or pressing play shows each commit at once as a time-lapse; the full view of a commit loads when you let go or pause. When comparing, the split map shows one view on each place that changed around an overview of the whole repository, where numbered frames show what each view shows.</p>
         <button ref={close} className="button" onClick={onClose}>Close</button>
       </div>
     </div>

@@ -75,7 +75,7 @@ export const THEMES: Theme[] = [
     fallbackRelation: '#cbd5e1',
     flow: { step: '#ffd166', declared: '#94a3b8', indicator: '#fff7d6', dimAlpha: 0.18 },
     diagnostic: '#fbbf24', dimAlpha: 0.32,
-    change: { added: '#4ade80', removed: '#fb7185', modified: '#fbbf24', moved: '#c084fc', ghostAlpha: 0.4, unchangedAlpha: 0.42 },
+    change: { added: '#4ade80', removed: '#fb7185', modified: '#fbbf24', moved: '#c084fc', ghostAlpha: 0.4, unchangedAlpha: 0.14 },
     ui: {
       '--bg': '#0b1020', '--panel': 'rgba(16,22,42,0.94)', '--panel-solid': '#10162a', '--panel-border': 'rgba(148,163,214,0.16)',
       '--text': '#e7ecff', '--muted': '#93a3c8', '--subtle': '#64729a', '--accent': '#ffd166', '--accent-ink': '#1b1400', '--link': '#93c5fd',
@@ -101,7 +101,7 @@ export const THEMES: Theme[] = [
     fallbackRelation: '#495057',
     flow: { step: '#d9480f', declared: '#868e96', indicator: '#fff4e6', dimAlpha: 0.22 },
     diagnostic: '#e67700', dimAlpha: 0.38,
-    change: { added: '#2b8a3e', removed: '#c92a2a', modified: '#d97706', moved: '#7048e8', ghostAlpha: 0.42, unchangedAlpha: 0.5 },
+    change: { added: '#2b8a3e', removed: '#c92a2a', modified: '#d97706', moved: '#7048e8', ghostAlpha: 0.42, unchangedAlpha: 0.18 },
     ui: {
       '--bg': '#f4f1ea', '--panel': 'rgba(255,253,248,0.95)', '--panel-solid': '#fffdf8', '--panel-border': 'rgba(60,50,30,0.14)',
       '--text': '#1d1a14', '--muted': '#5e5646', '--subtle': '#8a8170', '--accent': '#d9480f', '--accent-ink': '#ffffff', '--link': '#1864ab',
@@ -128,7 +128,7 @@ export const THEMES: Theme[] = [
     fallbackRelation: '#7c7699',
     flow: { step: '#ff3d8b', declared: '#a39dbd', indicator: '#ffffff', dimAlpha: 0.22 },
     diagnostic: '#f59e0b', dimAlpha: 0.36,
-    change: { added: '#1fc46f', removed: '#ff4d6d', modified: '#ffa31a', moved: '#8b5cf6', ghostAlpha: 0.42, unchangedAlpha: 0.5 },
+    change: { added: '#1fc46f', removed: '#ff4d6d', modified: '#ffa31a', moved: '#8b5cf6', ghostAlpha: 0.42, unchangedAlpha: 0.18 },
     ui: {
       '--bg': '#faf7ff', '--app-bg': 'radial-gradient(1100px 650px at 0% 0%, #ffe2d1 0%, rgba(255,226,209,0) 60%), radial-gradient(1000px 750px at 100% 20%, #e3dbff 0%, rgba(227,219,255,0) 62%), radial-gradient(900px 600px at 45% 100%, #ffdff0 0%, rgba(255,223,240,0) 60%), #faf7ff',
       '--panel': 'rgba(255,255,255,0.74)', '--panel-solid': '#ffffff', '--panel-border': 'rgba(110,90,180,0.14)',
@@ -160,7 +160,7 @@ export const THEMES: Theme[] = [
     fallbackRelation: '#c9c2e8',
     flow: { step: '#ff4f9a', declared: '#8e86b0', indicator: '#fff0f7', dimAlpha: 0.18 },
     diagnostic: '#ffc53d', dimAlpha: 0.32,
-    change: { added: '#3ee08a', removed: '#ff5c7a', modified: '#ffc23d', moved: '#a88bff', ghostAlpha: 0.4, unchangedAlpha: 0.42 },
+    change: { added: '#3ee08a', removed: '#ff5c7a', modified: '#ffc23d', moved: '#a88bff', ghostAlpha: 0.4, unchangedAlpha: 0.14 },
     ui: {
       '--bg': '#120e24', '--app-bg': 'radial-gradient(1100px 650px at 0% 0%, rgba(255,79,154,0.20) 0%, rgba(255,79,154,0) 60%), radial-gradient(1000px 750px at 100% 25%, rgba(91,120,255,0.22) 0%, rgba(91,120,255,0) 62%), radial-gradient(900px 600px at 50% 105%, rgba(160,240,90,0.10) 0%, rgba(160,240,90,0) 60%), #100c20',
       '--panel': 'rgba(30,24,54,0.72)', '--panel-solid': '#1c1733', '--panel-border': 'rgba(200,180,255,0.14)',

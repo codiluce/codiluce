@@ -1,7 +1,7 @@
 // Canvas 2D renderer for the isometric map. Stateless per frame: everything it
 // draws comes from the visible set, the camera and a RenderState.
 import type { NodeSummary } from '@engine/projection/dto';
-import { ISO_X, ISO_Y, worldToScreen, type Camera, type Point, type Viewport } from './camera';
+import { ISO_X, ISO_Y, toScreen, worldToScreen, type Bounds, type Camera, type Point, type Viewport } from './camera';
 import type { LodConfig } from './lod';
 import type { Scene, VisibleItem, VisibleSet } from './scene';
 import { PaletteCache, paletteKey, type Theme } from './themes';
@@ -27,6 +27,8 @@ export interface CalloutOverlay { entityId: string; ancestors: string[]; number:
 export interface PinOverlay { key: string; ownerId: string; ownerAncestors: string[]; label: string; tone: 'ok' | 'warn' | 'error' | 'info' }
 /** Coverage lens: files colored by category; closed areas badged with how much of them flows touch. */
 export interface CoverageOverlay { files: Map<string, string>; areas: Map<string, Record<string, number>> }
+/** Another view of the split map, drawn on the overview: the part of the plane it shows (so its size tells its zoom), numbered. */
+export interface FrameOverlay { key: string; number: number; bounds: Bounds; /** The view in use. */ active: boolean; /** On the current page (the others are dashed). */ shown: boolean }
 export interface SourceOverlay { nodeId: string; start: number; lines: string[]; focus?: { startLine: number; endLine: number }; /** Lines where the symbol calls, renders or references an indexed entity. */ marks?: Set<number> }
 export interface RenderState {
   selectedId?: string; hoveredId?: string;
@@ -49,6 +51,7 @@ export interface RenderState {
   callouts?: CalloutOverlay[];
   pins?: PinOverlay[];
   coverage?: CoverageOverlay;
+  frames?: FrameOverlay[];
   time: number;
   reducedMotion: boolean;
 }
@@ -118,6 +121,31 @@ export class MapRenderer {
     this.labels(ctx, labels);
     if (state.pins?.length) this.pins(ctx, viewport, camera, set, state.pins);
     if (state.callouts?.length) this.callouts(ctx, viewport, camera, set, state.callouts);
+    if (state.frames?.length) this.frames(ctx, viewport, camera, state.frames);
+  }
+  /** The other views' frames, numbered at their corner; the active one on top and glowing, those of other pages dashed and unnumbered. */
+  private frames(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, frames: FrameOverlay[]): void {
+    const theme = this.theme;
+    ctx.save();
+    for (const frame of [...frames].sort((a, b) => Number(a.active) - Number(b.active) || Number(a.shown) - Number(b.shown))) {
+      const a = toScreen(camera, viewport, { x: frame.bounds.minX, y: frame.bounds.minY }), b = toScreen(camera, viewport, { x: frame.bounds.maxX, y: frame.bounds.maxY });
+      // A view zoomed in very far keeps a visible frame around its center.
+      const w = Math.max(12, b.x - a.x), h = Math.max(9, b.y - a.y), x0 = (a.x + b.x - w) / 2, y0 = (a.y + b.y - h) / 2;
+      const color = frame.active ? theme.selection : frame.shown ? theme.text.primary : theme.text.secondary;
+      ctx.globalAlpha = frame.active ? 0.14 : frame.shown ? 0.08 : 0.04; ctx.fillStyle = color; ctx.fillRect(x0, y0, w, h);
+      ctx.globalAlpha = frame.shown ? 0.95 : 0.65; ctx.strokeStyle = color; ctx.lineWidth = frame.active ? 2.2 : 1.4;
+      if (!frame.shown) ctx.setLineDash([4, 4]);
+      if (frame.active) { ctx.shadowColor = color; ctx.shadowBlur = 10; }
+      ctx.strokeRect(x0, y0, w, h);
+      ctx.shadowBlur = 0; ctx.setLineDash([]);
+      if (!frame.shown) continue;
+      const bx = Math.max(9, Math.min(viewport.width - 9, x0)), by = Math.max(9, Math.min(viewport.height - 9, y0));
+      ctx.globalAlpha = 1; ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(bx, by, 8.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = theme.dark ? '#0b1020' : '#ffffff'; ctx.font = `800 10px ${this.font}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(String(frame.number), bx, by + 0.5);
+    }
+    ctx.restore();
   }
   private expandEmphasis(scene: Scene, ids: Set<string>): Set<string> {
     // Keep ancestors lit so emphasized nodes are not drawn on dimmed platforms.

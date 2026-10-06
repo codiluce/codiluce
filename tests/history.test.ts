@@ -186,6 +186,31 @@ test('comparison views place removed entities as ghosts and report change counts
   assert.equal(projection.meta(view('C')).comparison, undefined);
   assert.equal(projection.meta().layout.source, 'persisted');
 });
+test('a comparison names the places where it changed, for the split map: by default as close as each can be framed', async () => {
+  await projection.prepare(view('C', 'B'));
+  const auto = projection.regions(view('C', 'B'), {});
+  assert.equal(auto.level, 'auto');
+  assert.equal(auto.truncated, 0);
+  const named = auto.regions.map(region => region.node.path ?? region.node.name);
+  assert.ok(named.includes('backend/app/Http/Controllers/AuthController.php'));
+  assert.ok(named.includes('frontend/src/components/auth/LoginForm.tsx'));
+  // The removed route is seen in its routes district, not on its own.
+  const district = auto.regions.find(region => region.node.kind === 'group')!;
+  assert.ok(district.counts.removed >= 1);
+  for (const region of auto.regions) {
+    assert.equal(region.ancestors[0]!.type, 'repository');
+    assert.equal(region.ancestors.at(-1)!.id, region.node.spatialParentId);
+    const { node: { rect }, frame } = region;
+    assert.ok(frame.x >= rect.x && frame.y >= rect.y && frame.x + frame.w <= rect.x + rect.w + 1e-6 && frame.y + frame.h <= rect.y + rect.h + 1e-6, 'a view frames what changed inside its place');
+  }
+  // Auto places never hold one another (an added folder is seen through what was added in it).
+  for (const region of auto.regions) assert.ok(!auto.regions.some(other => other.ancestors.some(ancestor => ancestor.id === region.node.id)), `${region.node.name} holds no other place`);
+  assert.ok(auto.regions.reduce((sum, region) => sum + region.total, 0) <= auto.changed);
+  assert.deepEqual(projection.regions(view('C', 'B'), { level: 'application' }).regions.map(region => region.node.name).sort(), ['backend', 'frontend']);
+  assert.ok(projection.regions(view('C', 'B'), { level: 'directory' }).regions.every(region => region.node.type !== 'repository'));
+  assert.throws(() => projection.regions(view('C', 'B'), { level: 'everything' }), /level must be/);
+  assert.throws(() => projection.regions(view('C'), {}), /compareTo is required/);
+});
 test('selections follow renames between views, in both directions of time', async () => {
   const oldComponent = entityIn('B', row => row.name === 'LoginForm' && row.type === 'component').id;
   const newComponent = entityIn('C', row => row.name === 'LoginForm' && row.type === 'component').id;
@@ -350,6 +375,10 @@ test('timeline and snapshot routes over HTTP; indexing endpoint is opt-in and gu
     assert.equal(timeline.indexing.enabled, false);
     const meta = await (await fetch(`${base}/api/projection?snapshot=${snapshots.C!.id}&compareTo=${snapshots.B!.id}`)).json() as { comparison: { summary: { entities: { removed: number } } } };
     assert.ok(meta.comparison.summary.entities.removed > 0);
+    const regions = await (await fetch(`${base}/api/history/regions?level=file&snapshot=${snapshots.C!.id}&compareTo=${snapshots.B!.id}`)).json() as { level: string; regions: { node: { id: string } }[] };
+    assert.equal(regions.level, 'file');
+    assert.ok(regions.regions.length >= 4);
+    assert.equal((await fetch(`${base}/api/history/regions?level=nope&snapshot=${snapshots.C!.id}&compareTo=${snapshots.B!.id}`)).status, 400);
     const login = entityIn('A', row => row.name === 'login' && row.type === 'function').id;
     const entity = await (await fetch(`${base}/api/entities/${encodeURIComponent(login)}?snapshot=${snapshots.A!.id}`)).json() as { evidence: unknown[]; sourceRange: { startLine: number } };
     assert.ok(entity.evidence.length > 0);

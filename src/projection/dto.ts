@@ -90,6 +90,12 @@ export interface SourceResponse {
 
 // History -------------------------------------------------------------------
 export interface ChangesPage extends Page<NodeSummary & { breadcrumb: string }> { statusCounts: Record<string, number> }
+/** How finely the split map groups a comparison's changes into places: `auto` adapts to where they are. */
+export type RegionLevel = 'auto' | 'application' | 'directory' | 'file';
+/** A place where the code changed: an area or a file, with its spatial ancestors (root first), the changes in it, and the ground-plane rectangle around its changed files and areas (what its view frames). */
+export interface ChangeRegion { node: NodeSummary; ancestors: NodeSummary[]; counts: ChangeCounts; total: number; frame: Rect }
+/** The places of a comparison, most changes first; `truncated` counts places left out beyond the limit. */
+export interface ChangeRegionsResult { level: RegionLevel; regions: ChangeRegion[]; changed: number; truncated: number }
 export interface EntitySide { snapshot: SnapshotRef; entity: Omit<Entity, 'evidence'>; parent?: { id: string; type: string; name: string; path?: string }; evidenceCount: number }
 export interface EntityChangeDetail {
   id: string; change: NodeChange;

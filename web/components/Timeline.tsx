@@ -87,7 +87,7 @@ export function Timeline() {
         {timeline.evolution.status === 'ready' && (
           <div className="timeline-play" role="group" aria-label="Time-lapse">
             <button className="chip" onClick={() => store.setSpeed(SPEEDS[(SPEEDS.indexOf(timeline.speed) + 1) % SPEEDS.length]!)} title="Playback speed" aria-label={`Playback speed ${timeline.speed}×`}>{timeline.speed}×</button>
-            <button className="chip" aria-pressed={timeline.follow} onClick={() => store.setFollow(!timeline.follow)} title="While playing, the camera follows where the code changes">Follow</button>
+            {!(timeline.compare && timeline.split) && <button className="chip" aria-pressed={timeline.follow} onClick={() => store.setFollow(!timeline.follow)} title="While playing, the camera follows where the code changes">Follow</button>}
           </div>
         )}
         <div className="timeline-compare">
@@ -102,6 +102,7 @@ export function Timeline() {
             </span>
           )}
           {comparison && <button className="chip" aria-pressed={timeline.dimUnchanged} onClick={() => store.toggleDimUnchanged()} title="Fade areas with no changes">Dim unchanged</button>}
+          {timeline.compare && <button className="chip" aria-pressed={timeline.split} onClick={() => store.setSplit(!timeline.split)} title="Split the map: an overview of the whole repository and a view on each place where the code changed">Split view</button>}
         </div>
         <button className="icon-button small" onClick={close} aria-label="Close history" title="Back to the live map">✕</button>
       </div>

@@ -86,7 +86,7 @@ function StatusBar() {
     </div>
   );
 }
-function Legend() {
+export function Legend() {
   const meta = useAtlas(state => state.meta);
   const theme = themeById(useAtlas(state => state.themeId));
   if (!meta) return null;
@@ -135,7 +135,7 @@ function Legend() {
   );
 }
 /** While the coverage lens is on: what each color means, how many files, and how much of the code flows touch. */
-function CoverageLegend() {
+export function CoverageLegend() {
   const store = useStore();
   const coverage = useAtlas(state => state.coverage);
   const dark = themeById(useAtlas(state => state.themeId)).dark;
@@ -195,7 +195,7 @@ function ImpactLegend() {
     </div>
   );
 }
-function HoverCard() {
+export function HoverCard() {
   const hover = useAtlas(state => state.hover);
   const [point, setPoint] = useState<{ x: number; y: number } | null>(null);
   useEffect(() => {

@@ -23,9 +23,10 @@ import type { Entity, Relation } from '../core/graph.js';
 import { extendRegistry, LAYOUT_VERSION, TIMELINE_LAYOUT_VERSION, layoutHierarchy, placeOnTimeline, timelineLayout, type LayoutState, type Rect, type TimelineLayout, type TimelineRegistry } from './layout.js';
 import { ProjectionIndex, type EntityRow, type ProjectionNode, type RelationRow } from './hierarchy.js';
 import { readSnapshotFile, readSnapshotSource, snapshotRef, SourceError, splitLines, type SourceRequest, type SourceResponse } from './source.js';
-import type { AggregateResult, ChangesPage, CoverageDetail, CoverageExport, CoverageExportSymbol, CoverageResult, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, FlowList, FlowSummary, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowEdge, RequestFlowList, RequestFlowNode, RequestFlowSummary, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
+import type { AggregateResult, ChangeRegionsResult, ChangesPage, CoverageDetail, CoverageExport, CoverageExportSymbol, CoverageResult, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, FlowList, FlowSummary, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowEdge, RequestFlowList, RequestFlowNode, RequestFlowSummary, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
 import { computeImpact, DEFAULT_IMPACT_DEPTH, FILE_IMPACT_TYPES, impactPath, MAX_IMPACT_SEEDS, seedsOf, SYMBOL_IMPACT_TYPES, type ImpactComputation } from './impact.js';
 import { walkSteps } from './steps.js';
+import { changeRegions, isRegionLevel } from './regions.js';
 import { commandFlow, displayName, endpointFlow, FLOW_LANES, scheduleFlow, unmatchedFlow, type FlowContext, type RawFlow } from './request-flows.js';
 import { CATALOG_KINDS, computeCoverage, fileResolver, forwardSlice, pageEndpoints, type CatalogKind, type CoverageComputation } from './catalog.js';
 import type { AnnotationStore } from '../ai/store.js';
@@ -1000,6 +1001,17 @@ export class ProjectionService {
     matching.sort((a, b) => STATUS_ORDER[a.change!.status]! - STATUS_ORDER[b.change!.status]! || (TYPE_ORDER[a.type] ?? 4) - (TYPE_ORDER[b.type] ?? 4) || (a.path ?? a.name).localeCompare(b.path ?? b.name, 'en') || (a.sourceRange?.startLine ?? 0) - (b.sourceRange?.startLine ?? 0) || (a.id < b.id ? -1 : 1));
     const items = matching.slice(offset, offset + limit).map(node => ({ ...this.summary(current, node), breadcrumb: current.index.canonicalAncestors(node).slice(1).map(item => item.name).join(' › ') }));
     return { items, limit, offset, total: matching.length, hasMore: offset + limit < matching.length, statusCounts };
+  }
+  /** Where a comparison's changes are, as places for the split map to frame (projection/regions.ts). */
+  regions(view: ViewKey, options: { level?: string }): ChangeRegionsResult {
+    const current = this.comparison(view);
+    if (options.level !== undefined && !isRegionLevel(options.level)) throw new Error('level must be auto, application, directory or file');
+    const lookup = (id: string) => { const node = current.index.node(id); return node && { id, kind: node.kind, type: node.type, rect: current.rects.get(id)!, childCount: node.children.length, ...(node.spatialParentId ? { spatialParentId: node.spatialParentId } : {}), ...(node.change ? { change: node.change } : {}) }; };
+    const picks = changeRegions(current.diff.changes.keys(), lookup, { level: options.level ?? 'auto' });
+    return {
+      level: picks.level, changed: picks.changed, truncated: picks.truncated,
+      regions: picks.regions.map(pick => { const node = current.index.node(pick.id)!; return { node: this.summary(current, node), ancestors: current.index.spatialAncestors(node).map(ancestor => this.summary(current, ancestor)), counts: pick.counts, total: pick.total, frame: pick.box }; }),
+    };
   }
   /** The architectural diff of one entity: facts, parent, metrics, relationships, findings and evidence before and after. */
   change(id: string, view: ViewKey): EntityChangeDetail {

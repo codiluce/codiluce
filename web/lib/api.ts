@@ -4,7 +4,7 @@
 import type { Entity, Relation } from '@engine/core/graph';
 import type { EvolutionResponse } from '@engine/projection/dto';
 import type { AnnotationsOverview, EntityAnnotation } from '@engine/projection/dto';
-import type { AggregateEdgesPage, AggregateResult, CatalogKind, ChangesPage, CoverageDetail, CoverageExport, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FlowList, ImpactResult, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
+import type { AggregateEdgesPage, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageExport, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FlowList, ImpactResult, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
 
 export class ApiError extends Error { constructor(readonly status: number, message: string, readonly body?: unknown) { super(message); } }
 export function isAbort(error: unknown): boolean { return error instanceof DOMException && error.name === 'AbortError' || (error instanceof Error && error.name === 'AbortError'); }
@@ -32,6 +32,8 @@ export interface AtlasApi {
   timeline(signal?: AbortSignal): Promise<TimelineResponse>;
   changes(options: { status?: string; type?: string; offset?: number; limit?: number }, signal?: AbortSignal): Promise<ChangesPage>;
   change(id: string, signal?: AbortSignal): Promise<EntityChangeDetail>;
+  /** Where the comparison's changes are, grouped into places for the split map. */
+  regions(level: RegionLevel, signal?: AbortSignal): Promise<ChangeRegionsResult>;
   entityHistory(id: string, signal?: AbortSignal): Promise<EntityHistoryResponse>;
   /** The history time-lapse (status `computing` with progress until the server has built it). */
   evolution(signal?: AbortSignal): Promise<EvolutionResponse>;
@@ -119,6 +121,7 @@ export class HttpAtlasApi implements AtlasApi {
   }
   timeline(signal?: AbortSignal) { return this.get<TimelineResponse>('/api/history', signal, false); }
   changes(options: { status?: string; type?: string; offset?: number; limit?: number }, signal?: AbortSignal) { return this.get<ChangesPage>(`/api/history/changes${this.q({ status: options.status, type: options.type, offset: options.offset ?? 0, limit: options.limit ?? 100 })}`, signal); }
+  regions(level: RegionLevel, signal?: AbortSignal) { return this.get<ChangeRegionsResult>(`/api/history/regions${this.q({ level })}`, signal); }
   change(id: string, signal?: AbortSignal) { return this.get<EntityChangeDetail>(`/api/history/change/${encodeURIComponent(id)}${this.q()}`, signal); }
   entityHistory(id: string, signal?: AbortSignal) { return this.get<EntityHistoryResponse>(`/api/history/entity/${encodeURIComponent(id)}`, signal, false); }
   evolution(signal?: AbortSignal) { return this.get<EvolutionResponse>('/api/history/evolution', signal, false); }

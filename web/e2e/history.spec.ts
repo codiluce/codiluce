@@ -81,3 +81,30 @@ test('dragging the timeline shows each commit at once, and play runs through the
   await expect(timeline(page)).toContainText('Move the backend to server/');
   await expect(page).toHaveURL(new RegExp(`at=[0-9a-f]{12}`));
 });
+test('comparing splits the map: an overview of the whole repository and a view on each place that changed', async ({ page }) => {
+  await open(page);
+  await page.getByRole('button', { name: 'History' }).click();
+  const slider = page.getByRole('slider', { name: /Commit timeline/ });
+  await slider.focus();
+  for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowLeft');
+  await expect(timeline(page)).toContainText('Edit login, add signup');
+  const bar = page.getByRole('toolbar', { name: 'Split map' });
+  await expect(bar).toContainText('5 places · 10 changes');
+  await expect(page.getByRole('region', { name: 'Overview of the whole repository' })).toBeVisible();
+  const views = page.locator('.split-tile.region');
+  await expect(views).toHaveCount(5);
+  await expect(views.first()).toHaveAttribute('aria-label', 'View 1: backend/app/Services/AuthService.php');
+  await expect(views.first()).toContainText('~');
+  // Coarser places: one view per application (and per top-level entry outside them).
+  await bar.getByRole('button', { name: 'Apps' }).click();
+  await expect(bar).toContainText('4 places');
+  await expect(page.getByRole('region', { name: 'View 1: frontend' })).toBeVisible();
+  await bar.getByRole('button', { name: 'Auto' }).click();
+  await expect(bar).toContainText('5 places');
+  // A place opened on its own: the single map, back with the Split view switch.
+  await page.getByRole('button', { name: 'Open AuthService.php in the single map' }).click();
+  await expect(page.locator('.split-stage')).toHaveCount(0);
+  await expect(page.locator('#map-status')).toContainText('AuthService.php');
+  await page.getByRole('button', { name: 'Split view' }).click();
+  await expect(views).toHaveCount(5);
+});
