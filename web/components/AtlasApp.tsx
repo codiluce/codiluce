@@ -6,6 +6,7 @@ import { AtlasStore, type Lens } from '../lib/store';
 import { THEMES, themeById, UI_PROPERTIES } from '../lib/themes';
 import { Breadcrumbs } from './Breadcrumbs';
 import { AtlasContext, useAtlas, useStore } from './context';
+import { EclipseMark } from './EclipseMark';
 import { FlowBar } from './FlowBar';
 import { FlowsPanel } from './FlowsPanel';
 import { RequestFlowTheater } from './RequestFlows';
@@ -119,12 +120,20 @@ function Shell() {
     <div className="codiluce" style={style} data-theme={theme.id} data-dark={String(theme.dark)} data-floating={String(!!theme.style?.floating)}>
       <header className="topbar">
         <div className="brand">
-          <strong><span className="brand-mark" aria-hidden />Codiluce</strong>
-          <small>Bring your code to light</small>
-          {run && snapshot?.kind === 'commit'
-            ? <small title={`Snapshot ${snapshot.id}`}>{run.repositoryName} · commit {shortSha(snapshot.commitSha)} ({commitDate(snapshot.commitSha)}){baseline ? ` compared with ${baseline.kind === 'commit' ? shortSha(baseline.commitSha) : 'the working tree'}` : ''}</small>
-            : run && <small title={`Analysis run ${run.id}`}>{run.repositoryName} · working tree{run.commitSha ? ` at HEAD ${shortSha(run.commitSha)}` : ''}{run.dirty ? ' + uncommitted changes' : ''} · indexed {relativeTime(run.analyzedAt)}{baseline ? ` · compared with ${shortSha(baseline.commitSha)}` : ''}</small>}
+          <EclipseMark />
+          <div className="brand-words">
+            <strong>Codiluce</strong>
+            <small>Bring your code to light</small>
+          </div>
         </div>
+        {run && (
+          <div className="run-info" title={snapshot?.kind === 'commit' ? `Snapshot ${snapshot.id}` : `Analysis run ${run.id}`}>
+            <span>{run.repositoryName}</span>
+            {snapshot?.kind === 'commit'
+              ? <small>commit {shortSha(snapshot.commitSha)} ({commitDate(snapshot.commitSha)}){baseline ? ` compared with ${baseline.kind === 'commit' ? shortSha(baseline.commitSha) : 'the working tree'}` : ''}</small>
+              : <small>working tree{run.commitSha ? ` at HEAD ${shortSha(run.commitSha)}` : ''}{run.dirty ? ' + uncommitted changes' : ''} · indexed {relativeTime(run.analyzedAt)}{baseline ? ` · compared with ${shortSha(baseline.commitSha)}` : ''}</small>}
+          </div>
+        )}
         <SearchBox />
         <div className="top-actions">
           <button className="icon-button" onClick={() => void store.back()} disabled={history.index <= 0} aria-label="Back to previous selection" title="Back (Alt+←)">←</button>

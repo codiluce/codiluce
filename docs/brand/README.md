@@ -15,8 +15,25 @@ require installed fonts. Geist, Inter and Archivo use the SIL Open Font License;
 the preview fonts and their licenses are included.
 
 The gallery and all downloads live in `web/public/brand-explorations/`.
-`codiluce-10-logo-directions.zip` contains the complete collection. The existing
-application logo is unchanged until a direction is selected.
+`codiluce-10-logo-directions.zip` contains the complete collection.
+
+## Selected logo: Eclipse 04 · Geometric
+
+The application uses **E04**: the Eclipse mark (a disc cut by a horizontal band)
+beside a lowercase Space Grotesk 500 wordmark, with the tagline under the name.
+Its source files are in
+`web/public/brand-explorations/eclipse-daybreak/eclipse/04-geometric/`. The
+brand colors are ink `#111113` on paper `#f5f5f2`, and paper `#f5f5f3` on ink
+`#0a0a0b`. The quiet tagline grays are `#63636a` and `#929297`.
+
+- The header draws the lockup in every theme (`web/components/EclipseMark.tsx`
+  and `.brand` in `web/app/globals.css`). Themes change only its color.
+- `web/app/icon.svg` is the favicon. It is dark on light browsers and light on
+  dark browsers.
+- The **Codiluce Dawn** and **Codiluce Dusk** themes use the brand colors and
+  Space Grotesk. They have high contrast: on the map, gray folder plates are
+  under white (Dawn) or lit-gray (Dusk) code, and amber marks the selection and
+  the flows.
 
 To regenerate the vectors, install `fonttools[woff]` and `uharfbuzz`, then run
 `python3 docs/brand/generate_logos.py`. Run

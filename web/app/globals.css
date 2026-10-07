@@ -13,10 +13,19 @@ code, .mono { font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, Cons
 
 .codiluce { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr); height: 100vh; }
 .topbar { display: flex; align-items: center; gap: 14px; padding: 8px 14px; background: var(--panel-solid); border-bottom: 1px solid var(--panel-border); z-index: 5; }
-.brand { display: flex; flex-direction: column; min-width: 0; flex: 0 1 auto; }
-.brand strong { font-size: var(--brand-size, 14px); font-weight: var(--brand-weight, 700); letter-spacing: var(--brand-tracking, 0.02em); font-family: var(--font-display, inherit); font-stretch: var(--display-stretch, normal); display: flex; align-items: center; gap: 7px; }
-.brand-mark { width: 16px; height: 16px; display: inline-block; background: linear-gradient(135deg, var(--accent), #60a5fa); clip-path: polygon(50% 0, 100% 28%, 100% 72%, 50% 100%, 0 72%, 0 28%); }
-.brand small { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 360px; }
+/*
+ * The logo (Eclipse 04, Geometric) in every theme: the Eclipse mark beside a lowercase Space Grotesk
+ * wordmark with the tagline tucked under it, no wider than the name. Themes only tint it.
+ */
+.brand { display: flex; align-items: center; gap: 9px; flex: none; color: var(--text); font-family: "Space Grotesk Variable", "Space Grotesk", system-ui, sans-serif; }
+.brand-mark { width: 28px; height: 28px; flex: none; fill: currentColor; }
+.brand-words { display: flex; flex-direction: column; line-height: 1; }
+.brand strong { font-size: 27px; font-weight: 500; letter-spacing: -0.027em; text-transform: lowercase; margin-top: -3px; }
+.brand small { font-size: 9.5px; font-weight: 400; color: var(--muted); white-space: nowrap; margin-top: 2px; }
+.run-info { display: flex; flex-direction: column; min-width: 0; flex: 0 1 auto; padding-left: 14px; border-left: 1px solid var(--panel-border); line-height: 1.35; }
+.run-info span, .run-info small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 380px; }
+.run-info span { font-weight: 600; }
+.run-info small { color: var(--muted); }
 .top-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; flex: none; }
 .icon-button, .button { border: 1px solid var(--panel-border); background: var(--chip); border-radius: var(--radius, 7px); padding: 5px 9px; display: inline-flex; align-items: center; gap: 6px; line-height: 1.2; }
 .icon-button { padding: 5px 8px; min-width: 30px; justify-content: center; }
@@ -335,7 +344,6 @@ details[open].section > summary::before { transform: rotate(90deg); }
  */
 .codiluce[data-floating="true"] { padding: 0 var(--gap, 12px) var(--gap, 12px); row-gap: calc(var(--gap, 12px) - 2px); }
 [data-floating="true"] .topbar { background: transparent; border: none; padding: var(--gap, 12px) 4px 0; }
-[data-floating="true"] .brand strong { font-size: var(--brand-size, 15px); font-weight: var(--brand-weight, 800); letter-spacing: var(--brand-tracking, 0); }
 [data-floating="true"] .breadcrumbs { background: transparent; border: none; padding: 0 6px; min-height: 24px; }
 [data-floating="true"] .breadcrumbs .crumb { border-radius: var(--radius, 999px); padding: 2px 8px; }
 [data-floating="true"] .workspace { gap: var(--gap, 12px); }
@@ -369,21 +377,20 @@ details[open].section > summary::before { transform: rotate(90deg); }
 [data-floating="true"] .source-panel { border-top: 1px solid var(--panel-border); }
 
 /* Theme signatures: the few touches custom properties cannot carry. */
-/* Codiluce: an open C and a point of light; quiet, docked studio panels. */
-[data-theme^="codiluce-"] .brand strong { text-transform: lowercase; }
-[data-theme^="codiluce-"] .brand-mark { position: relative; clip-path: none; width: 19px; height: 19px; flex: none; background: none; border: 2px solid var(--text); border-right-color: transparent; border-radius: 50%; }
-[data-theme^="codiluce-"] .brand-mark::after { content: ''; position: absolute; right: -2px; top: 50%; transform: translateY(-50%); width: 5px; height: 5px; border-radius: 50%; background: var(--illumination); box-shadow: 0 0 6px color-mix(in srgb, var(--illumination) 32%, transparent); }
-[data-theme^="codiluce-"] .topbar { padding: 10px 16px; }
+/* Codiluce: the brand's own themes. Ink and paper at full contrast, geometric type, docked panels, an ink primary button. */
+[data-theme^="codiluce-"] .topbar { padding: 12px 18px; gap: 18px; }
 [data-theme^="codiluce-"] .panel-header { padding: 14px 16px 11px; }
 [data-theme^="codiluce-"] .panel-body { padding: 14px 16px; }
-[data-theme^="codiluce-"] .inspector-title h3 { font-family: var(--font-mono); font-size: 15px; font-weight: 500; }
+[data-theme^="codiluce-"] .inspector-title h3 { font-size: 19px; font-weight: 500; letter-spacing: -0.02em; }
 [data-theme^="codiluce-"] .button.primary { background: var(--text); color: var(--panel-solid); }
 [data-theme^="codiluce-"] .button.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--text) 85%, var(--panel-solid)); }
-[data-theme^="codiluce-"] .type-dot { width: 8px; height: 8px; border-radius: 2px; transform: none; }
+[data-theme^="codiluce-"] .segmented button[aria-pressed="true"], [data-theme^="codiluce-"] .button[aria-pressed="true"] { background: var(--text); color: var(--panel-solid); }
+[data-theme^="codiluce-"] .type-dot { width: 8px; height: 8px; border-radius: 50%; transform: none; }
 [data-theme^="codiluce-"] .legend .line { height: 2px; }
 
-/* Sorbet: candy dots for a mark, round swatches and pips. */
-[data-theme^="sorbet"] .brand-mark { clip-path: none; width: 34px; height: 10px; background: radial-gradient(circle at 5px 5px, #ff5f8f 4px, transparent 4.6px), radial-gradient(circle at 17px 5px, #ffc23d 4px, transparent 4.6px), radial-gradient(circle at 29px 5px, #3dd68c 4px, transparent 4.6px); }
+/* Sorbet: a candy-colored mark, round swatches and pips. */
+[data-theme^="sorbet"] .eclipse-upper { fill: #ff5f8f; }
+[data-theme^="sorbet"] .eclipse-lower { fill: #ffc23d; }
 [data-theme^="sorbet"] .type-dot { border-radius: 50%; transform: none; width: 10px; height: 10px; }
 [data-theme^="sorbet"] .level-scale { gap: 4px; }
 [data-theme^="sorbet"] .level-scale span { width: 7px; height: 7px; border-radius: 50%; }
@@ -391,36 +398,31 @@ details[open].section > summary::before { transform: rotate(90deg); }
 [data-theme^="sorbet"] .timeline-track .handle.target circle, [data-theme^="sorbet"] .timeline-track .handle.target path { stroke-width: 2.5; }
 [data-theme^="sorbet"] .timeline-track .tick.indexed line { stroke-linecap: round; }
 
-/* Ink: a square of ink for a mark, square swatches. */
-[data-theme="ink"] .brand-mark { clip-path: none; width: 11px; height: 11px; background: var(--text); }
+/* Ink: square swatches. */
 [data-theme="ink"] .type-dot, [data-theme="void"] .type-dot, [data-theme="phosphor"] .type-dot { transform: none; width: 8px; height: 8px; border-radius: 0; }
 
-/* Void: a ring for a mark, round swatches; nothing but space between surfaces. */
-[data-theme="void"] .brand-mark { clip-path: none; width: 13px; height: 13px; border-radius: 50%; background: transparent; box-shadow: inset 0 0 0 2px var(--text); }
+/* Void: round swatches; nothing but space between surfaces. */
 [data-theme="void"] .type-dot { border-radius: 50%; }
 
-/* Gazette: an italic masthead after an oxblood rule; section titles over a double rule, like a newspaper. */
-[data-theme="gazette"] .brand strong { font-style: italic; gap: 10px; }
-[data-theme="gazette"] .brand-mark { clip-path: none; width: 3px; height: 22px; background: var(--accent); }
-[data-theme="gazette"] .brand small { font-style: italic; }
+/* Gazette: an oxblood mark; section titles over a double rule, like a newspaper. */
+[data-theme="gazette"] .brand-mark { color: var(--accent); }
 [data-theme="gazette"] .panel-header { border-bottom: 3px double color-mix(in srgb, var(--text) 55%, transparent); }
 [data-theme="gazette"] .inspector-title h3 { font-size: 24px; font-weight: 600; letter-spacing: -0.015em; }
 /* The serif lacks the map controls' symbols. */
 [data-theme="gazette"] .control-group button { font-family: system-ui, sans-serif; }
 
-/* Phosphor: a blinking block cursor, a prompt before titles, glowing type, scanlines over the map. */
-[data-theme="phosphor"] .brand strong { text-transform: uppercase; }
-[data-theme="phosphor"] .brand-mark { clip-path: none; width: 8px; height: 15px; background: var(--text); box-shadow: 0 0 8px var(--text); animation: phosphor-blink 1.06s steps(1) infinite; }
+/* Phosphor: a glowing mark whose lower half blinks like a cursor, a prompt before titles, glowing type, scanlines over the map. */
+[data-theme="phosphor"] .brand-mark { filter: drop-shadow(0 0 5px color-mix(in srgb, var(--text) 60%, transparent)); }
+[data-theme="phosphor"] .eclipse-lower { animation: phosphor-blink 1.06s steps(1) infinite; }
 [data-theme="phosphor"] .brand strong, [data-theme="phosphor"] .panel-header h2, [data-theme="phosphor"] .inspector-title h3 { text-shadow: 0 0 8px color-mix(in srgb, var(--text) 45%, transparent); }
 [data-theme="phosphor"] .panel-header h2::before { content: '> '; color: var(--accent); }
 [data-theme="phosphor"] .map-stage::after, [data-theme="phosphor"] .split-tile::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0 1px, transparent 1px 3px); }
 @keyframes phosphor-blink { 50% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { [data-theme="phosphor"] .brand-mark { animation: none; } }
+@media (prefers-reduced-motion: reduce) { [data-theme="phosphor"] .eclipse-lower { animation: none; } }
 
-/* Brutal: heavy expanded type, ink borders, hard shadows that press in when clicked. */
-[data-theme="brutal"] .brand strong { text-transform: uppercase; }
-[data-theme="brutal"] .brand-mark { clip-path: none; width: 16px; height: 16px; background: #ff2e00; border: 2px solid var(--text); box-shadow: 2px 2px 0 var(--text); }
-[data-theme="brutal"] .brand small, [data-theme="brutal"] .breadcrumbs .crumb, [data-theme="brutal"] .breadcrumbs .hint, [data-theme="brutal"] .breadcrumbs .sep { color: var(--text); font-weight: 600; }
+/* Brutal: a red mark with a hard shadow, heavy expanded type, ink borders, hard shadows that press in when clicked. */
+[data-theme="brutal"] .brand-mark { color: #ff2e00; filter: drop-shadow(2px 2px 0 var(--text)); }
+[data-theme="brutal"] .brand small, [data-theme="brutal"] .run-info small, [data-theme="brutal"] .breadcrumbs .crumb, [data-theme="brutal"] .breadcrumbs .hint, [data-theme="brutal"] .breadcrumbs .sep { color: var(--text); font-weight: 600; }
 [data-theme="brutal"] .button, [data-theme="brutal"] .icon-button { font-weight: 700; }
 [data-theme="brutal"] .topbar .button:active:not(:disabled), [data-theme="brutal"] .topbar .icon-button:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: none; }
 [data-theme="brutal"] .control-group, [data-theme="brutal"] .status-bar, [data-theme="brutal"] .legend, [data-theme="brutal"] .hover-card, [data-theme="brutal"] .search-results, [data-theme="brutal"] .flow-bar, [data-theme="brutal"] .coverage-legend, [data-theme="brutal"] .banner, [data-theme="brutal"] .split-tile, [data-theme="brutal"] .center-state .card { border-width: 2px; border-color: var(--text); }
@@ -428,9 +430,11 @@ details[open].section > summary::before { transform: rotate(90deg); }
 [data-theme="brutal"] .type-dot { transform: none; width: 10px; height: 10px; border-radius: 0; box-shadow: inset 0 0 0 1.5px var(--text); }
 [data-theme="brutal"] .inspector-title h3 { font-stretch: 112%; font-weight: 800; }
 
-/* Neon: a glowing gradient wordmark and orb, glowing accents. */
-[data-theme="neon"] .brand strong { text-transform: uppercase; background: linear-gradient(90deg, #ff7ae6, #7df9ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
-[data-theme="neon"] .brand-mark { clip-path: none; width: 12px; height: 12px; border-radius: 50%; background: conic-gradient(#ff2bd6, #00f0ff, #a855ff, #ff2bd6); box-shadow: 0 0 10px rgba(255, 43, 214, 0.6), 0 0 18px rgba(0, 240, 255, 0.35); }
+/* Neon: a glowing gradient wordmark and a magenta and cyan mark, glowing accents. */
+[data-theme="neon"] .brand strong { background: linear-gradient(90deg, #ff7ae6, #7df9ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+[data-theme="neon"] .brand-mark { filter: drop-shadow(0 0 5px rgba(255, 43, 214, 0.55)) drop-shadow(0 0 9px rgba(0, 240, 255, 0.3)); }
+[data-theme="neon"] .eclipse-upper { fill: #ff2bd6; }
+[data-theme="neon"] .eclipse-lower { fill: #00f0ff; }
 [data-theme="neon"] .chip[aria-pressed="true"], [data-theme="neon"] .split-tile.region.active { box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 30%, transparent); }
 [data-theme="neon"] .level-scale span.on { box-shadow: 0 0 6px var(--accent); }
 [data-theme="neon"] .inspector-title h3 { font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
@@ -439,7 +443,7 @@ details[open].section > summary::before { transform: rotate(90deg); }
   .workspace { grid-template-columns: 1fr; }
   .panel { position: absolute; top: 0; bottom: 0; right: 0; width: min(92vw, 380px) !important; z-index: 8; box-shadow: var(--shadow); }
   .panel.left { left: 0; right: auto; }
-  .brand small { display: none; }
+  .brand small, .run-info { display: none; }
   .status-bar { max-width: calc(100% - 24px); bottom: 56px; }
   .legend { display: none; }
   .timeline-target .meta, .timeline-summary .change-stat { display: none; }
