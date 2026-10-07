@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 // served by web/e2e/server.ts.
 async function open(page: Page) {
   await page.goto('/');
-  await page.waitForFunction(() => ((window as unknown as { __ARCHIPELAGO__?: { visibleIds(): string[] } }).__ARCHIPELAGO__?.visibleIds().length ?? 0) > 2);
+  await page.waitForFunction(() => ((window as unknown as { __CODILUCE__?: { visibleIds(): string[] } }).__CODILUCE__?.visibleIds().length ?? 0) > 2);
 }
 async function search(page: Page, query: string) {
   await page.getByRole('combobox', { name: 'Search the indexed graph' }).fill(query);

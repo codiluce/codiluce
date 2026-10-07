@@ -1,5 +1,5 @@
 // A snapshot is one indexed state of the repository: either the live
-// working-tree index (archipelago.db) or a stored commit snapshot
+// working-tree index (codiluce.db) or a stored commit snapshot
 // (history.db). Projection, diff and source code read both through this
 // interface, so every view works the same way at any point in history.
 import { lstat, readFile, realpath } from 'node:fs/promises';
@@ -65,6 +65,8 @@ export class WorkingTreeSnapshot implements SnapshotSource {
         ...(text('method') ? { method: text('method') } : {}), ...(text('framework') ? { framework: text('framework') } : {}),
         ...(text('role') ? { role: text('role') } : {}), ...(text('analysisSkipped') ? { analysisSkipped: text('analysisSkipped') } : {}),
         ...(content ? { content } : {}), ...(text('bodyHash') ? { body: text('bodyHash') } : {}), shape: shapeHash(entity as Pick<Entity, 'type' | 'name' | 'language' | 'metadata'>),
+        // Tables: every migration that creates or changes them (data families place migrations by it).
+        ...(entity.type === 'database_table' && Array.isArray(metadata.migrations) ? { migrations: metadata.migrations.filter((item): item is string => typeof item === 'string') } : {}),
       };
     });
     const relations = db.prepare("SELECT id, from_id, to_id, type FROM relations WHERE type != 'contains' ORDER BY id").all().map(row => ({ id: String(row.id), from: String(row.from_id), to: String(row.to_id), type: String(row.type) }));

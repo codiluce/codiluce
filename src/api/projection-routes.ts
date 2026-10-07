@@ -7,6 +7,7 @@ import { gzip } from 'node:zlib';
 import { NotFoundError, type ProjectionService } from '../projection/service.js';
 import { SourceError } from '../projection/source.js';
 import type { ViewKey } from '../projection/dto.js';
+import { arrangeText, parseArrange } from '../projection/arrange.js';
 import type { HistoryService } from '../history/service.js';
 import type { GraphStore } from '../storage/sqlite.js';
 
@@ -24,8 +25,10 @@ export function viewParams(params: URLSearchParams): ViewKey {
     view[name] = value;
   }
   const lens = params.get('lens');
-  if (lens && lens !== 'domains' && lens !== 'folders') throw new Error('lens must be domains or folders');
-  if (lens === 'domains') view.lens = 'domains';
+  if (lens && lens !== 'domains' && lens !== 'data' && lens !== 'folders') throw new Error('lens must be folders, data or domains');
+  if (lens === 'domains' || lens === 'data') view.lens = lens;
+  const arrange = params.get('arrange');
+  if (arrange) { const text = arrangeText(parseArrange(arrange)); if (text) view.arrange = text; }
   return view;
 }
 function impactParams(params: URLSearchParams): { depth?: number; types?: string[]; type?: string; distance?: number } {
@@ -69,6 +72,8 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
     else if (pathname === '/api/projection/flows') result = projection.flows({ view, entity: text(params, 'entity'), kind: text(params, 'kind') });
     else if (pathname === '/api/projection/coverage') result = projection.coverage(view);
     else if (pathname === '/api/projection/coverage/export') result = projection.coverageExport(view);
+    else if (pathname === '/api/projection/families') result = projection.families(view);
+    else if ((match = new RegExp(`^/api/projection/arrangement/${ID}$`).exec(pathname))) result = projection.arrangement(decodeURIComponent(match[1]!), view);
     else if (pathname === '/api/annotations') result = projection.annotationsOverview();
     else if ((match = new RegExp(`^/api/annotations/entity/${ID}$`).exec(pathname))) result = projection.entityAnnotation(decodeURIComponent(match[1]!), view);
     else if ((match = new RegExp(`^/api/projection/coverage/${ID}$`).exec(pathname))) result = projection.coverageOf(decodeURIComponent(match[1]!), view);

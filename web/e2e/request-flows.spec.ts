@@ -3,10 +3,10 @@ import { expect, test, type Page } from '@playwright/test';
 // Flows against the fixture repository served by web/e2e/server.ts: the
 // Flows panel, a request shown on the map, its lanes, a step's details, and
 // the inspector's way in.
-const visibleIds = () => (window as unknown as { __ARCHIPELAGO__?: { visibleIds(): string[] } }).__ARCHIPELAGO__?.visibleIds() ?? [];
+const visibleIds = () => (window as unknown as { __CODILUCE__?: { visibleIds(): string[] } }).__CODILUCE__?.visibleIds() ?? [];
 async function open(page: Page) {
   await page.goto('/');
-  await page.waitForFunction(() => ((window as unknown as { __ARCHIPELAGO__?: { visibleIds(): string[] } }).__ARCHIPELAGO__?.visibleIds().length ?? 0) > 2);
+  await page.waitForFunction(() => ((window as unknown as { __CODILUCE__?: { visibleIds(): string[] } }).__CODILUCE__?.visibleIds().length ?? 0) > 2);
 }
 async function idOf(page: Page, query: string, type: string): Promise<string> {
   return page.evaluate(async ([q, t]) => (await fetch(`/api/projection/search?q=${encodeURIComponent(q!)}&type=${t}`).then(response => response.json())).items[0].id as string, [query, type]);

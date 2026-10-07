@@ -16,8 +16,8 @@ async function directory(prefix: string): Promise<string> { const folder = await
 async function createFixture(): Promise<string> {
   const root = await directory('atlas-cache-');
   await cp(fixture, root, { recursive: true });
-  await mkdir(path.join(root, '.archipelago'));
-  await writeFile(path.join(root, '.archipelago/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'], apiOriginEnv: ['NEXT_PUBLIC_API_URL'] }] }));
+  await mkdir(path.join(root, '.codiluce'));
+  await writeFile(path.join(root, '.codiluce/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'], apiOriginEnv: ['NEXT_PUBLIC_API_URL'] }] }));
   return root;
 }
 /** Graphs are persisted as JSON: compare what is stored (keys holding `undefined` are not). */

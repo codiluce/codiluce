@@ -37,7 +37,7 @@ export async function fetchGitHubPullRequests(root: string, options: { since?: s
   const repository = githubRepository(remote);
   if (!repository) throw new Error('The origin remote is not a GitHub repository');
   const fetcher: Fetcher = options.fetcher ?? ((url, init) => fetch(url, init));
-  const headers: Record<string, string> = { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'archipelago-history' };
+  const headers: Record<string, string> = { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'codiluce-history' };
   const token = options.token ?? process.env.GITHUB_TOKEN;
   if (token) headers.Authorization = `Bearer ${token}`;
   const records: PullRequestRecord[] = [];

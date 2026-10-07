@@ -12,7 +12,7 @@ const port = Number(process.env.E2E_HISTORY_PORT ?? 4398);
 const ui = fileURLToPath(new URL('../out', import.meta.url));
 const fixture = await createHistoryFixture();
 await indexHistory({ root: fixture.root, stateDirectory: fixture.state, ref: 'main', jobs: 1 });
-const store = new GraphStore(path.join(fixture.state, 'archipelago.db'));
+const store = new GraphStore(path.join(fixture.state, 'codiluce.db'));
 store.save(await indexRepository(fixture.root, { config: (await revisionConfig(await historyConfig(fixture.root, fixture.state), fixture.root)).config }));
 createInspectionServer(store, { root: fixture.root, stateDirectory: fixture.state, uiDirectory: ui }).listen(port, '127.0.0.1', () => console.log(`e2e history server on ${port}`));
 for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, () => void fixture.cleanup().finally(() => process.exit(0)));

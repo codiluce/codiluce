@@ -1,14 +1,14 @@
 import { expect, test, type Page } from '@playwright/test';
 
-declare global { interface Window { __ARCHIPELAGO__?: { screenPositionOf(id: string): { x: number; y: number } | undefined; camera(): { x: number; y: number; scale: number }; visibleIds(): string[]; rectOf(id: string): { x: number; y: number; w: number; h: number } | undefined } } }
+declare global { interface Window { __CODILUCE__?: { screenPositionOf(id: string): { x: number; y: number } | undefined; camera(): { x: number; y: number; scale: number }; visibleIds(): string[]; rectOf(id: string): { x: number; y: number; w: number; h: number } | undefined } } }
 const base = `http://127.0.0.1:${process.env.E2E_HISTORY_PORT ?? 4398}`;
 async function open(page: Page) {
   await page.goto(`${base}/`);
-  await page.waitForFunction(() => (window.__ARCHIPELAGO__?.visibleIds().length ?? 0) > 2);
+  await page.waitForFunction(() => (window.__CODILUCE__?.visibleIds().length ?? 0) > 2);
 }
 const timeline = (page: Page) => page.getByRole('region', { name: 'History' });
 /** World-space origins of what is on screen: containers resize with their content, but nothing moves. */
-const positions = (page: Page) => page.evaluate(() => Object.fromEntries(window.__ARCHIPELAGO__!.visibleIds().map(id => [id, window.__ARCHIPELAGO__!.rectOf(id)])));
+const positions = (page: Page) => page.evaluate(() => Object.fromEntries(window.__CODILUCE__!.visibleIds().map(id => [id, window.__CODILUCE__!.rectOf(id)])));
 
 test('the timeline steps through commits without moving the map, and shows what changed', async ({ page }) => {
   await open(page);
@@ -30,7 +30,7 @@ test('the timeline steps through commits without moving the map, and shows what 
   const shared = Object.keys(before).filter(id => after[id]);
   expect(shared.length).toBeGreaterThan(3);
   for (const id of shared) expect([after[id]!.x, after[id]!.y]).toEqual([before[id]!.x, before[id]!.y]);
-  const camera = await page.evaluate(() => window.__ARCHIPELAGO__!.camera());
+  const camera = await page.evaluate(() => window.__CODILUCE__!.camera());
   expect(camera.scale).toBeGreaterThan(0);
   // The overview lists the removed endpoint; selecting it shows its architectural diff.
   const inspector = page.getByRole('complementary', { name: 'Inspector' });

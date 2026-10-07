@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="Ten Eclipse and ten Daybreak logos for Codiluce. Typography, scale and spacing studies with Bring your code to light.">
+  <title>Codiluce — Eclipse & Daybreak, 20 variations</title>
+  <link rel="icon" href="eclipse/mark.svg" type="image/svg+xml">
+  <style>
+    @font-face{font-family:Geist;src:url('fonts/geist.woff2') format('woff2');font-weight:100 900;font-display:swap}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#080809;color:#f5f5f3;font:14px/1.5 Geist,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+    :root{--muted:#919197;--line:#27272b;--paper:#0a0a0b;--ink:#f5f5f3;--quiet:#929297}
+    button,select{font:inherit}button,a,select{-webkit-tap-highlight-color:transparent}button{cursor:pointer}a{color:inherit;text-decoration:none}button:disabled{opacity:.3;cursor:default}:focus-visible{outline:2px solid #f5f5f3;outline-offset:4px}
+    .page{max-width:1400px;margin:0 auto;padding:0 48px}header{display:flex;align-items:center;justify-content:space-between;height:90px;border-bottom:1px solid var(--line)}
+    .brand{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:580;letter-spacing:-.6px}.brand img{width:27px;height:27px}.back{font-size:12px;color:var(--muted)}.back:hover{color:#fff}
+    .intro{display:grid;grid-template-columns:1fr 330px;align-items:end;gap:60px;padding:60px 0 48px}.eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted)}h1{margin:18px 0 0;font-size:clamp(46px,5.5vw,78px);line-height:1.04;letter-spacing:-.06em;font-weight:510}.intro p{margin:0 0 3px;color:var(--muted);font-size:15px;line-height:1.8}.intro strong{color:#f5f5f3;font-weight:500}
+    .controls{display:flex;align-items:center;justify-content:space-between;gap:18px;position:sticky;top:0;z-index:2;background:rgba(8,8,9,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:28px}
+    .control-group{display:flex;align-items:center;gap:12px}.segmented{display:flex;padding:3px;border:1px solid var(--line);gap:2px;border-radius:4px}.segmented button{border:0;background:none;color:var(--muted);padding:6px 11px;font-size:12px;border-radius:2px;white-space:nowrap}.segmented button[aria-pressed=true]{background:#f0f0ee;color:#111113}
+    .filter{background:#101012;border:1px solid var(--line);color:#dddde0;padding:9px 11px;border-radius:4px;font-size:12px;max-width:180px}.download-all{border:1px solid #525258;border-radius:4px;padding:9px 12px;font-size:12px;white-space:nowrap}.download-all:hover{background:#202023}.count{color:var(--muted);font-size:11px;padding:0 0 19px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}.card{border:1px solid var(--line);background:var(--paper);color:var(--ink);min-width:0}.card:hover{border-color:#65656b}.card.pick{border-color:#57575e}
+    .card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px 20px 0}.card-head h2{margin:0;font-size:13px;font-weight:510;letter-spacing:-.25px}.card-id{font-size:10px;color:var(--quiet);margin-right:8px;font-variant-numeric:tabular-nums}.badge{color:var(--quiet);font-size:9px;letter-spacing:.07em;text-transform:uppercase;border:1px solid #56565e;padding:3px 7px;border-radius:2px}
+    .preview{display:block;width:100%;background:var(--paper);padding:0;border:0}.preview img{display:block;width:100%;height:auto}.card-info{padding:0 20px 18px}.type-row{display:flex;justify-content:space-between;align-items:center;gap:14px;font-size:11px;color:var(--quiet);padding-bottom:12px}.type-row span:first-child{color:var(--ink)}.size-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 0;margin-bottom:14px}.size-row div{font-size:13px;font-weight:500;font-variant-numeric:tabular-nums}.size-row small{display:block;color:var(--quiet);font-size:9px;letter-spacing:.04em;font-weight:400}.card-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:10px;color:var(--quiet)}.downloads{display:flex;gap:15px;color:var(--ink)}.downloads a:hover{text-decoration:underline;text-underline-offset:4px}.layout-label{text-transform:capitalize}
+    .notes{display:grid;grid-template-columns:1fr 1fr;gap:80px;border-top:1px solid var(--line);padding:42px 0;margin-top:45px}.notes h2{font-size:25px;letter-spacing:-1px;line-height:1.25;font-weight:500;margin:10px 0 14px}.notes p{font-size:13px;line-height:1.8;color:var(--muted);margin:0;max-width:520px}.notes a{color:#f5f5f3;text-decoration:underline;text-underline-offset:3px}footer{display:flex;justify-content:space-between;gap:20px;border-top:1px solid var(--line);padding:22px 0 32px;font-size:11px;color:var(--muted)}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    dialog{width:min(1100px,calc(100vw - 32px));max-height:92vh;overflow:auto;border:1px solid #55555c;padding:0;background:#0a0a0b;color:#f5f5f3}dialog::backdrop{background:rgba(0,0,0,.87);backdrop-filter:blur(5px)}.dialog-head{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--line);gap:12px}.dialog-head h2{font-weight:500;font-size:17px;letter-spacing:-.4px;margin:0}.dialog-buttons{display:flex;gap:8px}.dialog-buttons button{border:0;background:none;color:inherit;padding:5px 9px;font-size:18px}.dialog-art{width:100%;display:block}.dialog-info{display:grid;grid-template-columns:1fr 1fr;gap:30px;padding:0 24px 24px}.dialog-info p{color:var(--muted);margin:0 0 10px;font-size:13px;line-height:1.7}.specs{font-size:11px!important}.dialog-downloads{display:flex;gap:8px;flex-wrap:wrap;align-content:start}.dialog-downloads a{border:1px solid #3b3b42;padding:9px 12px;border-radius:3px;font-size:11px}.dialog-downloads a:hover{border-color:#95959e}
+    body.light{--paper:#f5f5f2;--ink:#111113;--quiet:#63636a}body.light .card .size-row{border-color:#d4d4d4}
+    @media(max-width:1100px){.page{padding:0 28px}.controls{flex-wrap:wrap}.intro{gap:30px;grid-template-columns:1fr 280px}.control-group{gap:8px}.filter{max-width:170px}}
+    @media(max-width:700px){.page{padding:0 20px}header{height:74px}.intro{grid-template-columns:1fr;gap:25px;padding:42px 0 30px}h1{font-size:51px}.intro p{font-size:14px;max-width:440px}.controls{padding:12px 0;gap:12px;position:static}.control-group{flex-wrap:wrap;width:100%;justify-content:space-between}.control-group:first-child{justify-content:start}.segmented button{font-size:11px;padding:6px 9px}.filter{flex:1;max-width:180px}.grid{grid-template-columns:1fr;gap:20px}.notes{grid-template-columns:1fr;gap:30px;padding:32px 0;margin-top:32px}.dialog-head{padding:15px 16px}.dialog-head h2{font-size:14px}.dialog-info{grid-template-columns:1fr;gap:15px;padding:0 16px 20px}.type-row{font-size:10px}.back{font-size:10px}.size-row{gap:8px}footer{font-size:10px;align-items:start}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header><a class="brand" href="../"><img src="eclipse/mark.svg" alt="">Codiluce</a><a class="back" href="../">← Original ten directions</a></header>
+    <main>
+      <section class="intro" aria-labelledby="title"><div><span class="eyebrow">Eclipse / Daybreak · Typography & proportion</span><h1 id="title">Two symbols.<br>Twenty possibilities.</h1></div><p><strong>Ten versions of each.</strong><br>Compare typefaces, weights, scale and spacing. Each pair uses the same typography and proportions, so the symbol is easy to judge.</p></section>
+      <div class="controls">
+        <div class="control-group"><div class="segmented" role="group" aria-label="Logo family"><button data-family="all" aria-pressed="true">Both · 20</button><button data-family="eclipse" aria-pressed="false">Eclipse · 10</button><button data-family="daybreak" aria-pressed="false">Daybreak · 10</button></div><label class="sr-only" for="font-filter">Typeface</label><select id="font-filter" class="filter"><option value="all">All typefaces</option></select></div>
+        <div class="control-group"><div class="segmented" role="group" aria-label="Background"><button data-mode="dark" aria-pressed="true">Dark</button><button data-mode="light" aria-pressed="false">Light</button></div><a class="download-all" id="archive" href="codiluce-eclipse-daybreak-20-versions.zip" download>Download all 20 ↓</a></div>
+      </div>
+      <p class="count" id="count" aria-live="polite">20 versions · Eclipse on the left, Daybreak on the right</p>
+      <section class="grid" id="versions" aria-label="Logo variations"></section>
+      <section class="notes"><div><span class="eyebrow">A useful starting shortlist</span><h2>E01 Swiss. D10 Signature.</h2><p><strong>Eclipse 01</strong> balances the solid disc with Inter at medium weight. <strong>Daybreak 10</strong> gives the symbol and name their own row, with the tagline centered underneath. Both are simple enough for a small header and strong enough for a larger brand image.</p></div><div><span class="eyebrow">Included in every version</span><h2>Vectors and matching images.</h2><p>Transparent SVGs with and without the tagline. Dark and light presentation SVGs. Matching 2400 × 1440 PNGs. Every letter is converted to a vector path. The size labels show the symbol’s visible height and the name and tagline’s type sizes in the 1200 × 720 design.</p></div></section>
+    </main>
+    <footer><span>Codiluce · Bring your code to light</span><span>Seven typefaces. Twenty compositions.</span></footer>
+  </div>
+  <dialog id="detail" aria-labelledby="detail-title"><div class="dialog-head"><h2 id="detail-title"></h2><div class="dialog-buttons"><button id="previous" aria-label="Previous variation">←</button><button id="next" aria-label="Next variation">→</button><button id="close" aria-label="Close preview">×</button></div></div><img class="dialog-art" alt=""><div class="dialog-info"><div><p id="detail-description"></p><p class="specs" id="detail-font"></p><p class="specs" id="detail-sizes"></p></div><div class="dialog-downloads"></div></div></dialog>
+  <script src="versions.js"></script>
+  <script>
+    const data=window.CODILUCE_REFINEMENTS;
+    const grid=document.querySelector('#versions');
+    const dialog=document.querySelector('#detail');
+    let family='all',font='all',mode='dark',selected;
+    const code=v=>(v.mark==='eclipse'?'E':'D')+v.id.slice(0,2);
+    const suffix=()=>mode==='light'?'-light':'';
+    const visible=()=>data.versions.filter(v=>(family==='all'||v.mark===family)&&(font==='all'||v.font===font));
+    const layout=v=>v.layout==='signature'?'Centered tagline':v.layout==='stacked'?'Stacked':'Horizontal';
+    const title=v=>`${code(v)} / ${v.mark==='eclipse'?'Eclipse':'Daybreak'} · ${v.name}`;
+    Object.entries(data.fonts).forEach(([id,name])=>document.querySelector('#font-filter').add(new Option(name,id)));
+    function render(){
+      const versions=visible();
+      grid.innerHTML=versions.map(v=>`<article class="card ${v.recommended?'pick':''}" data-version="${v.path}"><div class="card-head"><h2><span class="card-id">${code(v)}</span>${v.mark==='eclipse'?'Eclipse':'Daybreak'} / ${v.name}</h2>${v.recommended?'<span class="badge">Shortlist</span>':''}</div><button class="preview" data-open="${v.path}" aria-label="Inspect ${code(v)} ${v.name}"><img src="${v.path}/${mode}.svg" alt="${title(v)} logo with Bring your code to light" loading="lazy"></button><div class="card-info"><div class="type-row"><span>${v.fontName} · ${v.weight}</span><span>${layout(v)}</span></div><div class="size-row"><div>${v.markHeight}<small>Symbol height</small></div><div>${v.nameSize}<small>Name size</small></div><div>${v.taglineSize}<small>Tagline size</small></div></div><div class="card-bottom"><span class="layout-label">${v.word==='Codiluce'?'Titlecase':v.word==='codiluce'?'Lowercase':'Uppercase'}</span><div class="downloads"><a href="${v.path}/logo${suffix()}.svg" download>Logo</a><a href="${v.path}/lockup${suffix()}.svg" download>SVG ↓</a><a href="${v.path}/${mode}.png" download>PNG ↓</a></div></div></div></article>`).join('');
+      document.querySelector('#count').textContent=`${versions.length} versions`+(family==='all'?' · Paired Eclipse / Daybreak':' · '+(family==='eclipse'?'Eclipse':'Daybreak'));
+      const archive=document.querySelector('#archive');
+      archive.href=family==='all'?'codiluce-eclipse-daybreak-20-versions.zip':`codiluce-${family}-10-versions.zip`;
+      archive.textContent=family==='all'?'Download all 20 ↓':`Download ${family==='eclipse'?'Eclipse':'Daybreak'} 10 ↓`;
+    }
+    function detail(v){
+      selected=v;
+      document.querySelector('#detail-title').textContent=title(v);
+      const image=dialog.querySelector('.dialog-art');image.src=`${v.path}/${mode}.svg`;image.alt=title(v)+'. Bring your code to light.';
+      document.querySelector('#detail-description').textContent=v.description;
+      document.querySelector('#detail-font').textContent=`Name: ${v.fontName} ${v.weight} · Tagline: ${v.taglineFontName} ${v.taglineWeight}`;
+      document.querySelector('#detail-sizes').textContent=`Symbol height ${v.markHeight} · Name ${v.nameSize} · Tagline ${v.taglineSize} · ${layout(v)}`;
+      dialog.querySelector('.dialog-downloads').innerHTML=`<a href="${v.path}/lockup${suffix()}.svg" download>Tagline SVG ↓</a><a href="${v.path}/logo${suffix()}.svg" download>Logo SVG ↓</a><a href="${v.path}/${mode}.png" download>${mode==='dark'?'Dark':'Light'} PNG ↓</a><a href="${v.mark}/mark${suffix()}.svg" download>Symbol ↓</a>`;
+      const items=visible(),index=items.findIndex(item=>item.path===v.path);document.querySelector('#previous').disabled=index<=0;document.querySelector('#next').disabled=index>=items.length-1;
+    }
+    function step(delta){const items=visible(),index=items.findIndex(v=>v.path===selected?.path);if(items[index+delta])detail(items[index+delta]);}
+    document.addEventListener('click',event=>{
+      const open=event.target.closest('[data-open]');if(open){detail(data.versions.find(v=>v.path===open.dataset.open));dialog.showModal();}
+      const familyButton=event.target.closest('[data-family]');if(familyButton){family=familyButton.dataset.family;document.querySelectorAll('[data-family]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.family===family)));render();}
+      const modeButton=event.target.closest('[data-mode]');if(modeButton){mode=modeButton.dataset.mode;document.body.classList.toggle('light',mode==='light');document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));render();if(selected)detail(selected);}
+    });
+    document.querySelector('#font-filter').addEventListener('change',event=>{font=event.target.value;render();});
+    document.querySelector('#close').addEventListener('click',()=>dialog.close());
+    document.querySelector('#previous').addEventListener('click',()=>step(-1));document.querySelector('#next').addEventListener('click',()=>step(1));
+    dialog.addEventListener('keydown',event=>{if(event.key==='ArrowLeft'){event.preventDefault();step(-1);}if(event.key==='ArrowRight'){event.preventDefault();step(1);}});
+    dialog.addEventListener('click',event=>{const r=dialog.getBoundingClientRect();if(event.target===dialog&&(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom))dialog.close();});
+    render();
+  </script>
+</body>
+</html>

@@ -79,7 +79,7 @@ export class HistoryService {
     const run = this.options.store.currentRun();
     const workingTree = run ? { ...snapshotRef(new WorkingTreeSnapshot(this.options.store, this.options.root, run)), stats: { entities: Number(this.options.store.db.prepare('SELECT count(*) AS count FROM entities').get()!.count) } } : undefined;
     const indexing = { enabled: this.indexingEnabled, ...(this.active ? { active: this.active.sha } : {}), queued: [...this.queue], failed: [...this.failed].map(([sha, error]) => ({ sha, error })) };
-    if (!history) return { available: false, reason: 'No history has been indexed for this state directory. Run: npm run archipelago -- history index --repo PATH --state-dir PATH', firstParent: true, entries: [], ...(workingTree ? { workingTree } : {}), indexing };
+    if (!history) return { available: false, reason: 'No history has been indexed for this state directory. Run: npm run codiluce -- history index --repo PATH --state-dir PATH', firstParent: true, entries: [], ...(workingTree ? { workingTree } : {}), indexing };
     const ref = requestedRef ?? await this.defaultRef();
     const listed = await this.commits(ref);
     if (!listed) return { available: false, reason: `No timeline is recorded for ${ref}`, ref, firstParent: true, entries: [], ...(workingTree ? { workingTree } : {}), indexing };

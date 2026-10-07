@@ -22,8 +22,8 @@ let root: string, graph: SoftwareGraph;
 async function createFixture(): Promise<string> {
   const root = await mkdtemp(path.join(tmpdir(), 'atlas-fixture-')); temporary.push(root);
   await cp(fixture, root, { recursive: true });
-  await mkdir(path.join(root, '.archipelago'));
-  await writeFile(path.join(root, '.archipelago/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'], apiOriginEnv: ['NEXT_PUBLIC_API_URL'] }], ignore: ['**/custom-ignored/**'] }));
+  await mkdir(path.join(root, '.codiluce'));
+  await writeFile(path.join(root, '.codiluce/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'], apiOriginEnv: ['NEXT_PUBLIC_API_URL'] }], ignore: ['**/custom-ignored/**'] }));
   return root;
 }
 /** `name` or `name:type` (e.g. `login:function`). */
@@ -215,7 +215,7 @@ test('CLI persists parse diagnostics and exits with analyzer error status', asyn
   await writeFile(path.join(root, 'frontend/src/broken.ts'), 'const broken = (');
   const cli = fileURLToPath(new URL('../src/cli.ts', import.meta.url));
   await assert.rejects(execute(process.execPath, ['--experimental-sqlite', '--import', 'tsx', cli, 'index', '--repo', root]), (error: unknown) => typeof error === 'object' && error !== null && 'code' in error && error.code === 2);
-  const store = new GraphStore(path.join(root, '.archipelago/archipelago.db'), true);
+  const store = new GraphStore(path.join(root, '.codiluce/codiluce.db'), true);
   try { assert.ok(store.diagnostics({ severity: 'error' }).items.some(item => item.code === 'typescript-parse-error')); } finally { store.close(); }
 });
 

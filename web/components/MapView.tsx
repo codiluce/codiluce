@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { MapController } from '../lib/controller';
 import { typeLabel } from '../lib/format';
 import { LEVELS } from '../lib/lod';
-import { coverageCss, themeById } from '../lib/themes';
+import { coverageCss, familyCss, familyHues, themeById } from '../lib/themes';
 import { COVERAGE_HINT, COVERAGE_ORDER, COVERAGE_TEXT, NOT_MEASURED } from '../lib/coverage';
 import { impactColors } from '../lib/renderer';
 import { useAtlas, useStore } from './context';
@@ -28,6 +28,7 @@ export function MapView() {
       <StatusBar />
       <Legend />
       <CoverageLegend />
+      <FamiliesLegend />
       <HoverCard />
       <VisibleList />
       {stale && <div className="banner" role="status">A newer analysis run is available. <button className="button small primary" onClick={() => void store.reload()}>Reload map</button></div>}
@@ -40,7 +41,7 @@ export function MapView() {
               <>
                 <strong>Map unavailable</strong>
                 <p>{failure ?? error}</p>
-                <p className="note">Start the API with <code>npm run archipelago -- serve --repo PATH --state-dir PATH</code> after indexing.</p>
+                <p className="note">Start the API with <code>npm run codiluce -- serve --repo PATH --state-dir PATH</code> after indexing.</p>
                 {!failure && <button className="button primary" onClick={() => void store.init()}>Retry</button>}
               </>
             )}
@@ -54,6 +55,8 @@ function MapControls() {
   const store = useStore();
   const diagnostics = useAtlas(state => state.showDiagnostics);
   const coverage = useAtlas(state => state.coverage.show);
+  const families = useAtlas(state => state.families.show);
+  const tables = useAtlas(state => state.meta?.coverage.databaseTables ?? 0);
   return (
     <div className="map-controls">
       <div className="control-group" role="group" aria-label="Zoom">
@@ -65,6 +68,7 @@ function MapControls() {
         <button onClick={() => { const node = store.getState().selection?.node; if (node) store.navigator?.flyTo(node, { mode: node.childCount > 0 ? 'enter' : 'focus' }); }} aria-label="Zoom to selection" title="Zoom to selection (Enter)">◎</button>
         <button onClick={() => store.toggleDiagnostics()} aria-pressed={diagnostics} aria-label="Show unresolved findings on the map" title="Unresolved findings">⚠</button>
         <button onClick={() => void store.toggleCoverage()} aria-pressed={coverage} aria-label="Color files by flow coverage" title="Coverage: which files flows touch">◑</button>
+        {tables > 0 && <button onClick={() => void store.toggleFamilies()} aria-pressed={families} aria-label="Color files by data family" title="Data families: color files by the tables they use">▦</button>}
       </div>
     </div>
   );
@@ -181,6 +185,44 @@ export function CoverageLegend() {
     </div>
   );
 }
+/** While data families are shown: each family (select one to light it on the map), its tables and its files. */
+export function FamiliesLegend() {
+  const store = useStore();
+  const families = useAtlas(state => state.families);
+  const dark = themeById(useAtlas(state => state.themeId)).dark;
+  if (!families.show) return null;
+  const data = families.data;
+  const listed = data?.families.filter(family => family.files > 0) ?? [];
+  const hues = familyHues(data?.families.map(family => family.key) ?? []);
+  const tablesOnly = (data?.families.length ?? 0) - listed.length;
+  return (
+    <div className="coverage-legend families-legend" role="region" aria-label="Data families">
+      <div className="coverage-legend-head">
+        <strong>Data families</strong>
+        <button className="icon-button small" onClick={() => void store.toggleFamilies(false)} aria-label="Hide data families">✕</button>
+      </div>
+      {families.status === 'loading' && !data && <p className="absent">Grouping the tables…</p>}
+      {families.status === 'error' && <p className="note error">{families.error}</p>}
+      {data && (
+        <>
+          <p className="absent">Tables joined by foreign keys, with the code that maps, writes or reads them, or uses code that does. Select a family to light it on the map.</p>
+          <ul className="coverage-keys family-keys">
+            {listed.map(family => (
+              <li key={family.key}>
+                <button aria-pressed={families.focus === family.key} onClick={() => store.focusFamily(family.key)} title={`Tables: ${family.tables.join(', ')}${family.hub ? '. Referenced by many tables, so it does not join their families.' : ''}`}>
+                  <span className="type-dot" style={{ background: familyCss(hues.get(family.key)!, dark) }} />{family.name}{family.hub ? <span className="absent"> · hub</span> : null}<span className="count">{family.files}</span>
+                </button>
+              </li>
+            ))}
+            <li title="Code files that use no table, directly or through the code they are connected to"><span className="type-dot" style={{ background: familyCss('none', dark) }} />No tables<span className="count">{data.without}</span></li>
+          </ul>
+          {tablesOnly > 0 && <p className="absent">{tablesOnly} more famil{tablesOnly === 1 ? 'y has' : 'ies have'} tables but no code using them.</p>}
+          <p className="absent">Closed areas show their main family. Files placed through the code they use are counted with it.</p>
+        </>
+      )}
+    </div>
+  );
+}
 /** Shown while a blast radius is on the map. */
 function ImpactLegend() {
   const theme = themeById(useAtlas(state => state.themeId));
@@ -217,6 +259,7 @@ export function HoverCard() {
       {hover.change && <div className={`hover-change ${hover.change.status}`}>{hover.change.status}{hover.change.facets.length ? ` · ${hover.change.facets.join(', ')}` : ''}{hover.change.previousPath ? ` · from ${hover.change.previousPath}` : ''}{hover.change.previousName ? ` · was ${hover.change.previousName}` : ''}</div>}
       {hover.changes && <div className="hover-change">inside: {(['added', 'modified', 'moved', 'removed'] as const).filter(key => hover.changes![key]).map(key => `${hover.changes![key]} ${key}`).join(', ')}</div>}
       <ImpactHover id={hover.id} />
+      <FamilyHover id={hover.id} />
     </div>
   );
 }
@@ -228,6 +271,13 @@ function ImpactHover({ id }: { id: string }) {
   if (distance !== undefined) return <div className="hover-change">affected · {distance} hop{distance === 1 ? '' : 's'} away</div>;
   if (area) return <div className="hover-change">{area.count} affected inside · nearest {area.distance} hop{area.distance === 1 ? '' : 's'}</div>;
   return null;
+}
+function FamilyHover({ id }: { id: string }) {
+  const data = useAtlas(state => state.families.show ? state.families.data : undefined);
+  const key = data?.of[id];
+  if (!data || !key) return null;
+  const family = data.families.find(item => item.key === key);
+  return <div className="hover-change">data family: {family?.name ?? key}{data.inferred.includes(id) ? ' (from the code it is connected to)' : ''}</div>;
 }
 /** Screen-reader/keyboard access to the most prominent visible map items. */
 function VisibleList() {

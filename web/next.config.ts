@@ -2,9 +2,9 @@ import path from 'node:path';
 import type { NextConfig } from 'next';
 import { PHASE_DEVELOPMENT_SERVER } from 'next/constants';
 
-// Production builds are a static export served by `archipelago serve` on the
+// Production builds are a static export served by `codiluce serve` on the
 // same origin as the read-only API. The dev server proxies /api to it instead.
-const api = process.env.ARCHIPELAGO_API ?? 'http://127.0.0.1:4300';
+const api = process.env.CODILUCE_API ?? 'http://127.0.0.1:4300';
 const root = path.resolve(process.cwd(), process.cwd().endsWith(`${path.sep}web`) ? '..' : '.');
 
 export default function config(phase: string): NextConfig {

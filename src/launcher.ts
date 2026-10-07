@@ -41,10 +41,10 @@ export async function toolDirectory(): Promise<string> {
     const manifest = path.join(directory, 'package.json');
     if (await exists(manifest)) {
       const data = JSON.parse(await readFile(manifest, 'utf8')) as { name?: string };
-      if (data.name === 'archipelago') return directory;
+      if (data.name === 'codiluce') return directory;
     }
     const parent = path.dirname(directory);
-    if (parent === directory) throw new Error('Cannot locate the Archipelago installation');
+    if (parent === directory) throw new Error('Cannot locate the Codiluce installation');
     directory = parent;
   }
 }
@@ -117,7 +117,7 @@ export async function launchLocal(options: LaunchOptions = {}): Promise<LocalSes
   try { root = await realpath(requestedRoot); }
   catch { throw new Error(`Repository directory not found: ${requestedRoot}`); }
   if (!(await stat(root)).isDirectory()) throw new Error(`Repository must be a directory: ${root}`);
-  const stateDirectory = path.resolve(options.stateDirectory ?? path.join(root, '.archipelago'));
+  const stateDirectory = path.resolve(options.stateDirectory ?? path.join(root, '.codiluce'));
   const config = await loadConfig(root, stateDirectory);
   check();
   log(`Repository: ${root}`);
@@ -141,7 +141,7 @@ export async function launchLocal(options: LaunchOptions = {}): Promise<LocalSes
     ...(options.noCache ? {} : { cache: path.join(stateDirectory, 'cache'), onCache: event => { if (event.hit) log(`  ${event.unit}: unchanged, reused from the cache`); } }),
   });
   check();
-  const database = path.join(stateDirectory, 'archipelago.db');
+  const database = path.join(stateDirectory, 'codiluce.db');
   const writer = new GraphStore(database);
   try { writer.save(graph); } finally { writer.close(); }
   const errors = graph.diagnostics.filter(item => item.severity === 'error');

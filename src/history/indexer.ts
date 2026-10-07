@@ -165,7 +165,7 @@ export async function indexHistory(options: HistoryIndexOptions): Promise<Histor
   } finally { history.close(); }
 }
 
-async function scratch(): Promise<string> { return realpath(await mkdtemp(path.join(tmpdir(), 'archipelago-history-'))); }
+async function scratch(): Promise<string> { return realpath(await mkdtemp(path.join(tmpdir(), 'codiluce-history-'))); }
 async function analyzeInProcess(root: string, raw: RawConfig, shas: string[], save: (result: AnalyzedCommit) => void, fail: (sha: string, error: string) => void): Promise<void> {
   const directory = await scratch();
   const mirror = new TreeMirror(root, path.join(directory, 'tree'));

@@ -1,10 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 
-declare global { interface Window { __ARCHIPELAGO__?: { screenPositionOf(id: string): { x: number; y: number } | undefined; camera(): { x: number; y: number; scale: number }; visibleIds(): string[]; rectOf(id: string): { x: number; y: number; w: number; h: number } | undefined } } }
+declare global { interface Window { __CODILUCE__?: { screenPositionOf(id: string): { x: number; y: number } | undefined; camera(): { x: number; y: number; scale: number }; visibleIds(): string[]; rectOf(id: string): { x: number; y: number; w: number; h: number } | undefined } } }
 
 async function open(page: Page) {
   await page.goto('/');
-  await page.waitForFunction(() => (window.__ARCHIPELAGO__?.visibleIds().length ?? 0) > 2);
+  await page.waitForFunction(() => (window.__CODILUCE__?.visibleIds().length ?? 0) > 2);
 }
 /** Type and press Enter immediately, as a fast user would. */
 async function search(page: Page, query: string) {
@@ -18,14 +18,14 @@ test('map renders application areas at device pixel ratio and selects by clickin
   const canvas = page.locator('canvas.map-canvas');
   const size = await canvas.evaluate((element: HTMLCanvasElement) => ({ width: element.width, css: element.getBoundingClientRect().width }));
   expect(size.width).toBe(Math.round(size.css * 2));
-  const visible = await page.evaluate(() => window.__ARCHIPELAGO__!.visibleIds());
+  const visible = await page.evaluate(() => window.__CODILUCE__!.visibleIds());
   const apps = await page.evaluate(async ids => {
     const response = await fetch(`/api/projection/nodes?ids=${ids.map(encodeURIComponent).join(',')}`).then(r => r.json());
     return response.items.filter((item: { type: string }) => item.type === 'application').map((item: { id: string; name: string }) => item);
   }, visible);
   expect(apps.map((app: { name: string }) => app.name).sort()).toEqual(['backend', 'frontend']);
   const backend = apps.find((app: { name: string }) => app.name === 'backend');
-  const point = await page.evaluate(id => window.__ARCHIPELAGO__!.screenPositionOf(id), backend.id);
+  const point = await page.evaluate(id => window.__CODILUCE__!.screenPositionOf(id), backend.id);
   expect(point).toBeTruthy();
   // The center of an open application may be covered by a child; any hit inside backend selects backend or a descendant.
   await page.mouse.click(point!.x, point!.y);
@@ -33,15 +33,15 @@ test('map renders application areas at device pixel ratio and selects by clickin
 });
 test('search reveals a deeply nested method and navigates the map to it', async ({ page }) => {
   await open(page);
-  const before = await page.evaluate(() => window.__ARCHIPELAGO__!.camera().scale);
+  const before = await page.evaluate(() => window.__CODILUCE__!.camera().scale);
   await search(page, 'AuthController::login');
   await expect(inspector(page).getByRole('heading', { name: 'login' })).toBeVisible();
   await expect(inspector(page)).toContainText('App\\Http\\Controllers\\AuthController::login');
   const crumbs = page.getByRole('navigation', { name: 'Canonical location of the selection' });
   for (const part of ['fixture', 'backend', 'Controllers', 'AuthController.php', 'AuthController', 'login']) await expect(crumbs).toContainText(part);
-  await expect.poll(() => page.evaluate(() => window.__ARCHIPELAGO__!.camera().scale)).toBeGreaterThan(before * 4);
+  await expect.poll(() => page.evaluate(() => window.__CODILUCE__!.camera().scale)).toBeGreaterThan(before * 4);
   const id = await page.evaluate(async () => (await fetch('/api/projection/search?q=AuthController::login').then(r => r.json())).items[0].id);
-  await expect.poll(() => page.evaluate(target => window.__ARCHIPELAGO__!.visibleIds().includes(target), id)).toBe(true);
+  await expect.poll(() => page.evaluate(target => window.__CODILUCE__!.visibleIds().includes(target), id)).toBe(true);
   // Back returns to the previous location.
   await search(page, 'LoginForm');
   await expect(inspector(page).getByRole('heading', { name: 'LoginForm' }).first()).toBeVisible();
@@ -90,9 +90,9 @@ test('keyboard: slash focuses search, escape clears selection, arrow keys pan th
   await expect(inspector(page).getByRole('heading', { name: 'LoginForm' }).first()).toBeVisible();
   const canvas = page.locator('canvas.map-canvas');
   await canvas.focus();
-  const before = await page.evaluate(() => window.__ARCHIPELAGO__!.camera());
+  const before = await page.evaluate(() => window.__CODILUCE__!.camera());
   await page.keyboard.press('ArrowRight');
-  const after = await page.evaluate(() => window.__ARCHIPELAGO__!.camera());
+  const after = await page.evaluate(() => window.__CODILUCE__!.camera());
   expect(after.x).toBeGreaterThan(before.x);
   await page.keyboard.press('Escape');
   await expect(inspector(page)).toContainText('Search with');

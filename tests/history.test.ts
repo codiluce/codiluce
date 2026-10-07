@@ -386,7 +386,7 @@ test('timeline and snapshot routes over HTTP; indexing endpoint is opt-in and gu
     assert.equal((await fetch(`${base}/api/projection?snapshot=${encodeURIComponent('../x y')}`)).status, 400);
     const diff = await (await fetch(`${base}/api/source/diff?entity=${encodeURIComponent(login)}&snapshot=${snapshots.B!.id}&compareTo=${snapshots.A!.id}`)).json() as { added: number };
     assert.equal(diff.added, 2);
-    const refused = await fetch(`${base}/api/history/index`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Archipelago-Request': 'index' }, body: JSON.stringify({ sha: fixture.commits.A }) });
+    const refused = await fetch(`${base}/api/history/index`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Codiluce-Request': 'index' }, body: JSON.stringify({ sha: fixture.commits.A }) });
     assert.equal(refused.status, 403);
     assert.equal((await fetch(`${base}/api/history/index`, { method: 'PUT' })).status, 405);
   } finally { await new Promise(resolve => server.close(resolve)); }

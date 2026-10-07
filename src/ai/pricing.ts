@@ -6,8 +6,8 @@
 import type { ModelUse, Usage } from './openai.js';
 
 export const MODELS: Record<'high' | 'low', ModelUse> = {
-  high: { model: process.env.ARCHIPELAGO_AI_HIGH_MODEL ?? 'gpt-6.1-sol', effort: 'high' },
-  low: { model: process.env.ARCHIPELAGO_AI_LOW_MODEL ?? 'gpt-6-luna', effort: 'low' },
+  high: { model: process.env.CODILUCE_AI_HIGH_MODEL ?? 'gpt-6.1-sol', effort: 'high' },
+  low: { model: process.env.CODILUCE_AI_LOW_MODEL ?? 'gpt-6-luna', effort: 'low' },
 };
 export const PRICES: Record<string, { input: number; cached: number; output: number }> = {
   'gpt-6.1-sol': { input: 2.0, cached: 0.1, output: 10.0 },

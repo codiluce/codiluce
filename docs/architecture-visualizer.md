@@ -1,10 +1,10 @@
-# Archipelago — Code & Architecture Visualizer
+# Codiluce — Code & Architecture Visualizer
 
-Archipelago is the project name and the npm command is `archipelago`.
+Codiluce is the project name, its tagline is "Bring your code to light", and the npm command is `codiluce`.
 
 ## 1. Supported repository structure
 
-Archipelago supports repositories containing Next.js and Laravel applications. A typical repository uses the following structure:
+Codiluce supports repositories containing Next.js and Laravel applications. A typical repository uses the following structure:
 
 - `frontend/`: Next.js, React, TypeScript, Sass; App Router under `src/app`, components under `src/components`, HTTP wrappers under `src/services`, hooks under `src/hooks`. A common `tsconfig.json` alias maps `@/*` to `./src/*`.
 - `backend/`: Laravel / PHP, Composer PSR-4 `App\\` → `app/`. Routes under `routes/`; controllers in `app/Http/Controllers`, Eloquent models in `app/Models`, services in `app/Services`, migrations in `database/migrations`.
@@ -16,7 +16,7 @@ Archipelago supports repositories containing Next.js and Laravel applications. A
 
 ## 2. Proposed architecture and location
 
-Keep the tool in this separate workspace. It accepts a target repository path; default generated configuration/cache lives in `<target>/.archipelago/`, with `--state-dir` allowing all generated files to live outside that repository. No Laravel boot, Artisan invocation, database access, or application code mutation is required.
+Keep the tool in this separate workspace. It accepts a target repository path; default generated configuration/cache lives in `<target>/.codiluce/`, with `--state-dir` allowing all generated files to live outside that repository. No Laravel boot, Artisan invocation, database access, or application code mutation is required.
 
 Use a TypeScript engine with these actual boundaries:
 
@@ -91,7 +91,7 @@ LOD 0: applications, with their Routes & endpoints and Database districts. LOD 1
 
 ### Implemented visualizer (Phases 3–4, first iteration)
 
-- **Location:** `web/` (Next.js App Router, React, TypeScript, statically exported and served by `archipelago serve`). Server-side projection lives in `src/projection/` (`hierarchy.ts`, `layout.ts`, `service.ts`, `source.ts`, `dto.ts`), with routes in `src/api/projection-routes.ts`. Analyzers and storage are unchanged.
+- **Location:** `web/` (Next.js App Router, React, TypeScript, statically exported and served by `codiluce serve`). Server-side projection lives in `src/projection/` (`hierarchy.ts`, `layout.ts`, `service.ts`, `source.ts`, `dto.ts`, `arrange.ts` for data families and folder groups), with routes in `src/api/projection-routes.ts`. Analyzers and storage are unchanged.
 - **Layout:** computed on the server per analysis run, from a compact in-memory hierarchy index (no metadata blobs), and cached until the run changes. Children are packed bottom-up with a skyline packer over integer, bucketed sizes. Several quantized row widths are scored, plus exact side-by-side fits of the largest children. Slot order is persisted in `<state-dir>/layout.json` (versioned): first layouts seed slots largest-first (files and classes keep source order), later additions append, and removals leave holes until compacted. A container's own size still changes when its content crosses a bucket or width step, which moves later siblings. Changes are local, not zero.
 - **Projection groups:** `route`/`api_endpoint` entities whose canonical parent is an application are placed in a synthetic `projection:routes:<appId>` district (split by first path segment above 16), and `database_table` entities in a `projection:database:<appId>` district. Groups are flagged `kind: group`, carry an explanation, are excluded from search and breadcrumbs, and never become entities.
 - **Client:** `web/lib/` separates camera/isometric transforms (`camera.ts`), LOD rules (`lod.ts`), the loaded-node cache with culling, budget and hit testing (`scene.ts`), Canvas drawing (`renderer.ts`), themes (`themes.ts`), input and animation (`controller.ts`), state and request cancellation (`store.ts`), the flow catalog (`catalog.ts`), flows on the map (`map-flow.ts`) and their playback (`playback.ts`). Hit testing scans the culled, budgeted visible set back to front. The client never holds more than the opened parts of the hierarchy.
@@ -142,7 +142,7 @@ References: [TypeScript compiler API](https://github.com/microsoft/TypeScript/wi
 Git commits (+ optional GitHub PR records)
       ↓  history index: materialize each commit from Git objects, run the same analyzers
 Versioned snapshot store (history.db): content-addressed versions + per-snapshot membership
-      ↓  snapshot sources (live archipelago.db, or a stored commit)
+      ↓  snapshot sources (live codiluce.db, or a stored commit)
 Snapshot-aware projection + diff (lineage, union with ghosts, timeline layout)
       ↓
 Timeline / map / inspector diff / source diff
@@ -245,3 +245,12 @@ annotations.db (kind, target, content_key, prompt_version, model, value, ste)  �
 - **Domains** (`src/ai/domains.ts`): the model names 6–16 domains with the paths they include (`platform`: only folders every domain uses). Every file takes the longest matching path; a file no path matches takes the domain its connected files clearly agree on (imports, calls, renders, requests, handles, table access; each neighbour weighted 1/log2(2 + its degree), a 60% share needed), over rounds; what stays undecided is `platform`; a file matched only by a `platform` path moves to a domain that holds a clear majority of at least two of its connections. Endpoints follow their handler, page routes their component, commands their handler, tables the code reading or writing them, scheduled tasks their command. Recomputed when the rules or the index change.
 - **Features view** (`ProjectionService.lensView`, `lens=domains` on the live view): rows rewritten to repository → domain → folder (the files' directory paths) → file → symbols, domains and folders being group rows (`EntityRow.group`, explanation = the domain's description; a domain holds Routes & endpoints, Database and Console districts). Directories and applications are not drawn; the layout is computed fresh (not persisted). History views ignore the lens.
 - **Serving**: flow summaries carry `title`, `goal`, `actor`; `/api/annotations` the overview, domains and cost; `/api/annotations/entity/:id` an entity's description, role and domain; the timeline its commits' notes and the chapters. Without `annotations.db` nothing changes.
+
+## 22. Data families and folder groups
+
+Arrangements that need no language model (`src/projection/arrange.ts`, pure and deterministic).
+
+- **Data families** (`dataFamilies`): tables are joined by their foreign keys (union-find), except through a *hub* (a table linked to six or more tables), which is a family of its own; a table named after another one (the longest `prefix`, `prefixs`, `prefixes` or `prefix`→`ies` that names a table) joins it, unless that table is a hub, which it joins only when nothing else connects it; tables sharing a first word of three letters or more that names no table join each other. A family is named by its hub, else the table most tables are named after, the most linked, the most used, the shortest name; tables all sharing a prefix of three letters or less are named by it in capitals (`CRM`). Files are placed by the tables their own code touches (through `fileResolver`: maps_to 4, a migration creating or changing the table 4 — the table's `migrations` on the live index, its own path otherwise — writes 2, reads 1; a hub's family counts half). The rest follow connected code over rounds applied together (order-independent): a file joins the family holding ≥60% of the weighted code it uses (each file weighted 1/log2(2 + its links), half for a hub's family; code only it uses is ignored, other code without a family counts half against the majority), or the family of every file using it when they all agree. Endpoints, routes, commands bridge their callers to what they run (a request links the caller's file to the handler's), and follow what they run; scheduled tasks follow their command. On Etengabe: 24 families; files in family groups of two or more: Commands 51 of 55, migrations 93 of 101, Models 43 of 57, Services 16 of 24, Controllers 11 of 34 (one controller per resource, so Auto leaves it alone). Most frontend files have no family: their requests go through a wrapper the analyzers do not resolve.
+- **Folder groups** (`planFolder`, `folderGroups`): for a folder's files (≥6), two options: by the first word of the file name (camel case, kebab or snake case split, numbers skipped, a plural meeting its singular when both start names there), and by data family. An option's groups are its values held by two files or more; it *fits* when it groups at least half the files, in two groups or more (at most a third of the files' count, at least 4), none holding over 60%. Score: share grouped − 0.02 per group past 8 − the largest group's share past 35%, + 0.05 for data families. **Auto** takes the best fitting option for folders of 16 files or more. `ProjectionIndex` takes the groups per container (`SpatialGroup`): they are projection groups (`projection:arrange:<folder>:<key>:<value>`) built inside the folder; their files keep the folder as canonical parent.
+- **Views**: `arrange=auto|off[;<folder>=auto|data|name|none…]` on the live view (`ProjectionService.arrangedView`) rebuilds the folder view with the groups; its slots persist in `layout-grouped.json`, seeded from `layout.json` so areas the groups do not touch keep their places. `lens=data` (`familyView`) rewrites rows to repository → family (districts: its tables, endpoints, commands) → folder → file, and *No tables*; slots persist in `layout-data.json`. `/api/projection/families` serves a view's families, each entity's, and files per family in each area (code without one as `none`); `/api/projection/arrangement/:id` a folder's options. History views are never arranged; families can still color them.
+- **Client**: `lens` (`folders` | `data` | `domains`) and `arrange` (mode and per-folder choices, saved in the browser's preferences) form the view key; the families overlay colors files (symbols by their file), entry points and tables, badges closed areas, and dims what lies outside the family in focus. Families and coverage both color files and replace each other.

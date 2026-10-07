@@ -24,8 +24,8 @@ let root: string, graph: SoftwareGraph, store: GraphStore, projection: Projectio
 before(async () => {
   root = await mkdtemp(path.join(tmpdir(), 'atlas-request-flows-'));
   await cp(fixture, root, { recursive: true });
-  await mkdir(path.join(root, '.archipelago'));
-  await writeFile(path.join(root, '.archipelago/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'], apiOriginEnv: ['NEXT_PUBLIC_API_URL'] }] }));
+  await mkdir(path.join(root, '.codiluce'));
+  await writeFile(path.join(root, '.codiluce/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'], apiOriginEnv: ['NEXT_PUBLIC_API_URL'] }] }));
   graph = await indexRepository(root);
   store = new GraphStore(':memory:'); store.save(graph);
   projection = new ProjectionService(store, { root });

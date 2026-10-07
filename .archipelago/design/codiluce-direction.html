@@ -1,0 +1,161 @@
+<div id="codiluce-concept" aria-label="Codiluce design concept">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap');
+#codiluce-concept{color-scheme:light dark;--cd-bg:light-dark(#f4f3ee,#161a20);--cd-panel:light-dark(#fcfbf8,#1b2027);--cd-text:light-dark(#242a31,#e8ebef);--cd-muted:light-dark(#6a717a,#a0a8b4);--cd-line:light-dark(#dedfd9,#333b45);--cd-soft:light-dark(#eaeae4,#252c35);--cd-top:light-dark(#e4e7e3,#343f4c);--cd-left:light-dark(#cdd3ce,#27323f);--cd-right:light-dark(#d9ded9,#2d3846);--cd-ink:light-dark(#906414,#f0c675);--cd-light:#dcae57;--cd-radius:8px;font-family:Geist,system-ui,sans-serif;color:var(--cd-text);font-size:13px;background:transparent}
+#codiluce-concept *{box-sizing:border-box}
+#codiluce-concept button,#codiluce-concept input{font:inherit;color:inherit}
+#codiluce-concept button:focus-visible{outline:2px solid var(--cd-ink);outline-offset:3px}
+#codiluce-concept .cd-shell{background:var(--cd-bg);border:1px solid var(--cd-line);border-radius:12px;overflow:hidden}
+#codiluce-concept .cd-topbar{min-height:64px;display:flex;align-items:center;gap:24px;padding:12px 19px;border-bottom:1px solid var(--cd-line);background:var(--cd-panel);flex-wrap:wrap}
+#codiluce-concept .cd-brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:500;letter-spacing:-.8px}
+#codiluce-concept .cd-logo{font-family:Geist Mono,monospace;font-size:27px;font-weight:500;line-height:1;position:relative;color:var(--cd-text)}
+#codiluce-concept .cd-logo:after{content:'';position:absolute;right:0;top:11px;width:5px;height:5px;background:var(--cd-light);box-shadow:0 0 10px color-mix(in srgb,var(--cd-light) 60%,transparent);border-radius:50%}
+#codiluce-concept .cd-divider{width:1px;height:22px;background:var(--cd-line)}
+#codiluce-concept .cd-project{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#codiluce-concept .cd-project span{color:var(--cd-muted);font-family:Geist Mono,monospace;font-size:11px}
+#codiluce-concept .cd-spacer{flex:1}
+#codiluce-concept .cd-icon{border:0;background:transparent;display:inline-flex;align-items:center;justify-content:center;min-width:32px;min-height:32px;padding:7px;border-radius:var(--cd-radius)}
+#codiluce-concept .cd-icon:hover{background:var(--cd-soft)}
+#codiluce-concept .cd-button{border:1px solid var(--cd-line);background:var(--cd-panel);padding:8px 10px;border-radius:var(--cd-radius);display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font-size:12px}
+#codiluce-concept .cd-button:hover{background:var(--cd-soft)}
+#codiluce-concept .cd-button.cd-primary{border-color:transparent;background:var(--cd-text);color:var(--cd-bg)}
+#codiluce-concept .cd-layout{display:grid;grid-template-columns:150px minmax(0,1fr) 229px;min-width:0}
+#codiluce-concept .cd-sidebar{border-right:1px solid var(--cd-line);padding:19px 10px;background:var(--cd-panel)}
+#codiluce-concept .cd-eyebrow{color:var(--cd-muted);font-size:11px;letter-spacing:1.15px;text-transform:uppercase;font-weight:500}
+#codiluce-concept .cd-sidebar .cd-eyebrow{padding:0 9px;margin:0 0 12px}
+#codiluce-concept .cd-nav{display:flex;flex-direction:column;gap:4px;margin-bottom:29px}
+#codiluce-concept .cd-nav button{display:flex;gap:9px;align-items:center;padding:10px;border:0;background:transparent;border-radius:var(--cd-radius);text-align:left;color:var(--cd-muted)}
+#codiluce-concept .cd-nav button[aria-pressed=true]{color:var(--cd-text);background:var(--cd-soft)}
+#codiluce-concept .cd-tree{display:grid;gap:15px;padding:0 9px;color:var(--cd-muted);font-size:12px}
+#codiluce-concept .cd-tree div{display:flex;gap:7px;align-items:center}
+#codiluce-concept .cd-tree .cd-child{padding-left:19px;font-family:Geist Mono,monospace;font-size:11px}
+#codiluce-concept .cd-workspace{min-width:0;position:relative;background:radial-gradient(ellipse at 48% 50%,color-mix(in srgb,var(--cd-light) 4%,transparent),transparent 70%),var(--cd-bg)}
+#codiluce-concept .cd-viewbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:17px 18px;min-height:60px;flex-wrap:wrap}
+#codiluce-concept .cd-view-title{font-weight:500;font-size:14px}
+#codiluce-concept .cd-subtitle{display:block;font-size:11px;color:var(--cd-muted);margin-top:5px}
+#codiluce-concept .cd-map{height:394px;width:100%;position:relative;overflow:hidden}
+#codiluce-concept .cd-map svg{width:100%;height:100%;display:block;overflow:visible}
+#codiluce-concept .cd-map text{fill:var(--cd-muted);font-family:Geist,system-ui,sans-serif;font-size:11px;font-weight:400}
+#codiluce-concept .cd-plate{fill:color-mix(in srgb,var(--cd-soft) 55%,transparent);stroke:var(--cd-line);stroke-width:1}
+#codiluce-concept .cd-node-top{fill:var(--cd-top);stroke:var(--cd-line);stroke-width:1}
+#codiluce-concept .cd-node-left{fill:var(--cd-left)}
+#codiluce-concept .cd-node-right{fill:var(--cd-right)}
+#codiluce-concept .cd-active .cd-node-top{fill:color-mix(in srgb,var(--cd-light) 38%,var(--cd-top));stroke:var(--cd-light)}
+#codiluce-concept .cd-active .cd-node-right{fill:color-mix(in srgb,var(--cd-light) 23%,var(--cd-right))}
+#codiluce-concept .cd-edge{stroke:var(--cd-line);stroke-width:1.25;fill:none}
+#codiluce-concept .cd-edge.cd-lit{stroke:var(--cd-light);stroke-width:2;filter:drop-shadow(0 0 3px color-mix(in srgb,var(--cd-light) 25%,transparent))}
+#codiluce-concept .cd-node-button{background:transparent;border:0;border-radius:4px;font-size:11px;font-family:Geist Mono,monospace;width:100%;height:100%;padding:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;color:var(--cd-text);white-space:nowrap}
+#codiluce-concept .cd-node-button:hover{background:color-mix(in srgb,var(--cd-light) 10%,transparent)}
+#codiluce-concept .cd-work-footer{min-height:61px;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--cd-line);flex-wrap:wrap}
+#codiluce-concept .cd-legend{display:flex;align-items:center;gap:7px;color:var(--cd-muted);font-size:11px}
+#codiluce-concept .cd-dot{width:6px;height:6px;background:var(--cd-light);border-radius:50%;display:inline-block;flex-shrink:0}
+#codiluce-concept .cd-inspector{border-left:1px solid var(--cd-line);background:var(--cd-panel);padding:21px 17px;min-width:0}
+#codiluce-concept .cd-inspector h3{font-family:Geist Mono,monospace;font-size:15px;line-height:1.6;font-weight:500;overflow-wrap:anywhere;margin:15px 0 3px}
+#codiluce-concept .cd-inspector .cd-kind{color:var(--cd-muted);font-size:12px;margin:0 0 21px}
+#codiluce-concept .cd-section{border-top:1px solid var(--cd-line);padding-top:18px;margin-top:19px}
+#codiluce-concept .cd-detail{font-size:12px;line-height:1.8;margin:10px 0 0;overflow-wrap:anywhere}
+#codiluce-concept .cd-evidence{display:grid;gap:9px;padding:12px;border:1px solid var(--cd-line);border-radius:var(--cd-radius);margin:12px 0;font-size:11px;line-height:1.65}
+#codiluce-concept .cd-evidence code{font-family:Geist Mono,monospace;color:var(--cd-ink);overflow-wrap:anywhere}
+#codiluce-concept .cd-evidence span{color:var(--cd-muted)}
+#codiluce-concept .cd-inspector .cd-button{width:100%;justify-content:center}
+#codiluce-concept .cd-route{display:flex;align-items:center;gap:8px;font-size:11px;margin-top:12px;line-height:1.6}
+#codiluce-concept .cd-route .cd-dot{background:var(--cd-muted)}
+#codiluce-concept .cd-route[aria-current=true] .cd-dot{background:var(--cd-light)}
+#codiluce-concept .cd-bottom{padding:9px 16px;border-top:1px solid var(--cd-line);background:var(--cd-panel);display:flex;justify-content:space-between;gap:9px;flex-wrap:wrap;color:var(--cd-muted);font-size:11px}
+#codiluce-concept .cd-source{font-family:Geist Mono,monospace;white-space:pre-wrap;font-size:11px;line-height:1.8;color:var(--cd-text);overflow-wrap:anywhere;margin:12px 0}
+#codiluce-concept .cd-history{display:none;padding:0 18px 16px;gap:12px;align-items:center;font-size:11px;color:var(--cd-muted)}
+#codiluce-concept .cd-history:before{content:'';width:7px;height:7px;border-radius:50%;background:var(--cd-light)}
+#codiluce-concept[data-mode=history] .cd-history{display:flex}
+#codiluce-concept[data-mode=history] .cd-map{height:362px}
+@media(max-width:850px){#codiluce-concept .cd-layout{grid-template-columns:52px minmax(0,1fr) 218px}#codiluce-concept .cd-sidebar{padding:15px 6px}#codiluce-concept .cd-sidebar .cd-eyebrow,#codiluce-concept .cd-tree,#codiluce-concept .cd-nav button span{display:none}#codiluce-concept .cd-nav button{justify-content:center;padding:11px 6px}#codiluce-concept .cd-topbar{gap:14px}}
+@media(max-width:650px){#codiluce-concept .cd-layout{grid-template-columns:48px minmax(0,1fr)}#codiluce-concept .cd-inspector{grid-column:1/-1;border-left:0;border-top:1px solid var(--cd-line);padding:17px;display:grid;grid-template-columns:1fr 1fr;gap:18px}#codiluce-concept .cd-inspector h3{margin-top:8px}#codiluce-concept .cd-inspector .cd-kind{margin-bottom:0}#codiluce-concept .cd-section{margin-top:0}#codiluce-concept .cd-inspector .cd-detail-section{grid-column:2;grid-row:1 / span 2}#codiluce-concept .cd-inspector .cd-flow-section{grid-column:1;grid-row:2}#codiluce-concept .cd-topbar{padding:12px;gap:10px}#codiluce-concept .cd-brand{font-size:19px}#codiluce-concept .cd-divider{display:none}#codiluce-concept .cd-project{font-size:11px}#codiluce-concept .cd-project span{display:none}#codiluce-concept .cd-viewbar,#codiluce-concept .cd-work-footer{padding:13px}#codiluce-concept .cd-map{height:370px}}
+@media(max-width:380px){#codiluce-concept .cd-inspector{grid-template-columns:1fr}#codiluce-concept .cd-inspector .cd-detail-section,#codiluce-concept .cd-inspector .cd-flow-section{grid-column:auto;grid-row:auto}#codiluce-concept .cd-project{display:none}#codiluce-concept .cd-topbar{min-height:58px}#codiluce-concept .cd-viewbar .cd-button{padding:7px;font-size:11px}#codiluce-concept .cd-legend{font-size:11px}#codiluce-concept .cd-view-title{font-size:13px}}
+@media(pointer:coarse){#codiluce-concept .cd-button,#codiluce-concept .cd-icon,#codiluce-concept .cd-nav button{min-height:44px}}
+</style>
+<div class="cd-shell" aria-label="Codiluce application appearance">
+  <header class="cd-topbar">
+    <div class="cd-brand"><span class="cd-logo" aria-hidden="true">c</span>codiluce</div><span class="cd-divider"></span>
+    <div class="cd-project"><i data-lucide="folder-git-2" aria-hidden="true"></i> example-app <span>/ main</span></div>
+    <div class="cd-spacer"></div><button type="button" class="cursor-interaction cd-icon" id="cd-appearance" aria-label="Switch light and dark appearance"><i data-lucide="sun-moon" aria-hidden="true"></i></button>
+  </header>
+  <div class="cd-layout">
+    <aside class="cd-sidebar"><div class="cd-eyebrow">Explore</div>
+      <nav class="cd-nav" aria-label="Repository views">
+        <button type="button" data-mode="map" aria-pressed="true" aria-label="Map"><i data-lucide="layers" aria-hidden="true"></i><span>Map</span></button>
+        <button type="button" data-mode="flows" aria-pressed="false" aria-label="Flows"><i data-lucide="route" aria-hidden="true"></i><span>Flows</span></button>
+        <button type="button" data-mode="history" aria-pressed="false" aria-label="History"><i data-lucide="history" aria-hidden="true"></i><span>History</span></button>
+      </nav><div class="cd-eyebrow">Repository</div>
+      <div class="cd-tree"><div><i data-lucide="folder" aria-hidden="true"></i>frontend</div><div class="cd-child">app/account</div><div class="cd-child">components</div><div><i data-lucide="folder" aria-hidden="true"></i>backend</div><div class="cd-child">app/Http</div><div class="cd-child">routes</div><div><i data-lucide="database" aria-hidden="true"></i>database</div></div>
+    </aside>
+    <main class="cd-workspace">
+      <div class="cd-viewbar"><div><div class="cd-view-title" id="cd-view-title">The whole system, in view.</div><span class="cd-subtitle" id="cd-view-subtitle">Account → authentication → users</span></div><button class="cursor-interaction cd-button" id="cd-trace" type="button"><i data-lucide="waypoints" aria-hidden="true"></i><span>Trace flow</span></button></div>
+      <div class="cd-map" id="cd-map" aria-label="Interactive example code architecture map"></div>
+      <div class="cd-history" id="cd-history">main · example change <span>Authentication route added</span></div>
+      <div class="cd-work-footer"><div class="cd-legend"><span class="cd-dot"></span><span id="cd-legend-text">Selected route</span></div><button type="button" class="cursor-interaction cd-button cd-primary" id="cd-play"><i data-lucide="play" aria-hidden="true"></i><span>Follow sign-in</span></button></div>
+    </main>
+    <aside class="cd-inspector" aria-label="Selected code evidence">
+      <div><div class="cd-eyebrow">In focus</div><h3 id="cd-node-title">POST /auth/login</h3><p class="cd-kind" id="cd-node-kind">HTTP endpoint · Laravel</p></div>
+      <div class="cd-section cd-detail-section"><div class="cd-eyebrow" id="cd-detail-heading">Why it's connected</div><p class="cd-detail" id="cd-node-detail">The account panel calls this route. Its controller authenticates against the users table.</p><div class="cd-evidence" id="cd-evidence"><code>routes/api.php:12</code><span>Route declaration links the endpoint to AuthController::login.</span></div><pre class="cd-source" id="cd-source" hidden></pre><button class="cursor-interaction cd-button" id="cd-source-toggle" type="button"><i data-lucide="code-2" aria-hidden="true"></i><span>View source</span></button></div>
+      <div class="cd-section cd-flow-section"><div class="cd-eyebrow">Sign-in path</div><div class="cd-route"><span class="cd-dot"></span>AccountPanel</div><div class="cd-route" aria-current="true"><span class="cd-dot"></span>POST /auth/login</div><div class="cd-route"><span class="cd-dot"></span>AuthController::login</div><div class="cd-route"><span class="cd-dot"></span>users</div></div>
+    </aside>
+  </div>
+  <footer class="cd-bottom"><span>Example repository · illustrative interface</span><span id="cd-status" aria-live="polite">Select a block to inspect its connections</span></footer>
+</div>
+<script>
+(function(){
+const root=document.getElementById('codiluce-concept'),map=root.querySelector('#cd-map');
+const saved=window.openai?.widgetState?.modelContent||{};
+const state={appearance:saved.appearance||'Auto',accent:saved.accent||'#dcae57',depth:9,radius:8,mode:saved.mode||'map',selected:saved.selected||'endpoint',lit:saved.trace??true,playing:false,source:false};
+const nodes=[
+{id:'page',short:'Page',label:'page.tsx',x:.18,y:.24,title:'account/page.tsx',kind:'Page · Next.js',detail:'The account page renders AccountPanel, the entry point for the sign-in flow.',file:'app/account/page.tsx:8',evidence:'The page renders AccountPanel through its JSX.',source:'export default function AccountPage() {\n  return <AccountPanel />;\n}'},
+{id:'panel',short:'Panel',label:'AccountPanel',x:.37,y:.35,title:'AccountPanel',kind:'Component · React',detail:'The account interface binds its save action to handleSave.',file:'components/AccountPanel.tsx:18',evidence:'The click handler connects the interface to handleSave.',source:'<button onClick={handleSave}>\n  Sign in\n</button>'},
+{id:'handler',short:'Action',label:'handleSave',x:.22,y:.47,title:'handleSave',kind:'Function · TypeScript',detail:'The action calls the account service, which requests the authentication endpoint.',file:'components/AccountPanel.tsx:11',evidence:'The resolved call leads from the handler to the account service.',source:'async function handleSave() {\n  await accountService.signIn();\n}'},
+{id:'endpoint',short:'API',label:'/auth/login',x:.66,y:.28,title:'POST /auth/login',kind:'HTTP endpoint · Laravel',detail:'The account panel calls this route. Its controller authenticates against the users table.',file:'routes/api.php:12',evidence:'Route declaration links the endpoint to AuthController::login.',source:"Route::post('/auth/login', [\n  AuthController::class, 'login'\n]);"},
+{id:'controller',short:'Controller',label:'AuthController',x:.78,y:.47,title:'AuthController::login',kind:'Method · PHP',detail:'The endpoint handler delegates authentication to AuthService.',file:'app/Http/Controllers/AuthController.php:16',evidence:'A resolved method call connects the controller to the authentication service.',source:'public function login(Request $request)\n{\n  return $this->auth->authenticate(\n    $request->validated()\n  );\n}'},
+{id:'service',short:'Service',label:'AuthService',x:.60,y:.59,title:'AuthService::authenticate',kind:'Method · PHP',detail:'Authentication reads the users table through its Eloquent model.',file:'app/Services/AuthService.php:24',evidence:'The User model is mapped to the users table.',source:"User::where('email', $email)\n  ->first();"},
+{id:'users',short:'users',label:'users',x:.48,y:.79,title:'users',kind:'Database table · Laravel',detail:'The table stores the account records reached by the sign-in flow.',file:'database/migrations/create_users.php:14',evidence:'The migration declares the table read by the User model.',source:"Schema::create('users',\n  function (Blueprint $table) {\n    $table->id();\n    $table->string('email');\n  }\n);"}
+];
+const edges=[['page','panel'],['panel','handler'],['handler','endpoint'],['endpoint','controller'],['controller','service'],['service','users']];
+let timer=null;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function persist(){window.openai?.setWidgetState?.({modelContent:{appearance:state.appearance,accent:state.accent,mode:state.mode,selected:state.selected,trace:state.lit},privateContent:{}})?.catch(()=>{});}
+function draw(){
+ const w=map.clientWidth,h=map.clientHeight;if(!w)return;const compact=w<390;
+ const smallPos={page:[.25,.16],panel:[.60,.26],handler:[.25,.39],endpoint:[.70,.47],controller:[.40,.59],service:[.70,.71],users:[.30,.84]};
+ const pts=Object.fromEntries(nodes.map(n=>[n.id,{x:w*(compact?smallPos[n.id][0]:n.x),y:h*(compact?smallPos[n.id][1]:n.y)}]));
+ let out=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" role="group" aria-label="Code map: account page through authentication to users"><defs><pattern id="cd-grid" width="23" height="23" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".65" fill="var(--cd-line)"/></pattern></defs><rect width="${w}" height="${h}" fill="url(#cd-grid)" opacity=".5"/>`;
+ if(!compact){for(const z of [{x:.28,y:.38,a:.37,b:.37,label:'Frontend · Next.js'},{x:.69,y:.48,a:.41,b:.46,label:'Backend · Laravel'},{x:.48,y:.79,a:.28,b:.22,label:'Database'}]){const x=w*z.x,y=h*z.y,a=w*z.a/2,b=h*z.b/2;out+=`<polygon class="cd-plate" points="${x},${y-b} ${x+a},${y} ${x},${y+b} ${x-a},${y}"/><text x="${x-a+3}" y="${y-b-13}">${z.label}</text>`;}}
+ for(const [a,b]of edges){let p=pts[a],q=pts[b];out+=`<path class="cd-edge ${state.lit||state.mode==='flows'?'cd-lit':''}" d="M${p.x} ${p.y} C${p.x} ${p.y+(q.y-p.y)*.55},${q.x} ${p.y+(q.y-p.y)*.45},${q.x} ${q.y}"/>`;}
+ for(const n of nodes){const p=pts[n.id],a=compact?30:Math.min(45,w*.079),b=compact?15:22,d=state.depth;out+=`<g class="${n.id===state.selected?'cd-active':''}"><polygon class="cd-node-left" points="${p.x-a},${p.y} ${p.x},${p.y+b} ${p.x},${p.y+b+d} ${p.x-a},${p.y+d}"/><polygon class="cd-node-right" points="${p.x},${p.y+b} ${p.x+a},${p.y} ${p.x+a},${p.y+d} ${p.x},${p.y+b+d}"/><polygon class="cd-node-top" points="${p.x},${p.y-b} ${p.x+a},${p.y} ${p.x},${p.y+b} ${p.x-a},${p.y}"/><foreignObject x="${p.x-(compact?42:58)}" y="${p.y-b}" width="${compact?84:116}" height="${b*2+d+26}"><button xmlns="http://www.w3.org/1999/xhtml" type="button" class="cursor-interaction cd-node-button" data-node="${n.id}" aria-label="Inspect ${esc(n.title)}" aria-pressed="${n.id===state.selected}">${esc(compact?n.short:n.label)}</button></foreignObject></g>`;}
+ out+='</svg>';map.innerHTML=out;
+ map.querySelectorAll('[data-node]').forEach(b=>b.addEventListener('click',()=>{stop();state.selected=b.dataset.node;state.source=false;render();persist();}));
+}
+function render(){
+ root.style.colorScheme=state.appearance==='Dawn'?'light':state.appearance==='Dusk'?'dark':'light dark';
+ root.style.setProperty('--cd-light',state.accent);root.style.setProperty('--cd-radius',state.radius+'px');root.dataset.mode=state.mode;
+ const n=nodes.find(n=>n.id===state.selected)||nodes[3];state.selected=n.id;
+ root.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===state.mode)));
+ root.querySelector('#cd-node-title').textContent=n.title;root.querySelector('#cd-node-kind').textContent=n.kind;root.querySelector('#cd-node-detail').textContent=n.detail;
+ root.querySelectorAll('.cd-route').forEach(row=>row.setAttribute('aria-current',String(row.textContent.trim()===n.title)));
+ root.querySelector('#cd-evidence').innerHTML='<code>'+esc(n.file)+'</code><span>'+esc(n.evidence)+'</span>';
+ root.querySelector('#cd-source').textContent=n.source;root.querySelector('#cd-source').hidden=!state.source;root.querySelector('#cd-evidence').hidden=state.source;
+ root.querySelector('#cd-detail-heading').textContent=state.source?'Source':'Why it\'s connected';root.querySelector('#cd-source-toggle span').textContent=state.source?'View evidence':'View source';
+ root.querySelector('#cd-view-title').textContent=state.mode==='flows'?'Follow what happens next.':state.mode==='history'?'See what changed.':'The whole system, in view.';
+ root.querySelector('#cd-view-subtitle').textContent=state.mode==='history'?'Example change · authentication route added':'Account → authentication → users';
+ root.querySelector('#cd-trace span').textContent=state.lit?'Clear trace':'Trace flow';root.querySelector('#cd-play span').textContent=state.playing?'Pause flow':'Follow sign-in';
+ root.querySelector('#cd-legend-text').textContent=state.playing?'Following sign-in':state.lit||state.mode==='flows'?'Sign-in flow':state.mode==='history'?'Changed route':'Selected '+n.kind.split(' · ')[0].toLowerCase();
+ root.querySelector('#cd-status').textContent=state.playing?n.title:state.mode==='history'?'Example history state':state.source?'Source shown for '+n.title:'Select a block to inspect its connections';
+ draw();
+}
+function stop(){clearTimeout(timer);state.playing=false;}
+root.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{stop();state.mode=b.dataset.mode;state.lit=state.mode==='flows';state.selected='endpoint';render();persist();}));
+root.querySelector('#cd-appearance').addEventListener('click',()=>{const dark=state.appearance==='Dusk'||(state.appearance==='Auto'&&matchMedia('(prefers-color-scheme: dark)').matches);state.appearance=dark?'Dawn':'Dusk';render();persist();});
+root.querySelector('#cd-trace').addEventListener('click',()=>{stop();state.lit=!state.lit;render();persist();});
+root.querySelector('#cd-source-toggle').addEventListener('click',()=>{state.source=!state.source;render();});
+root.querySelector('#cd-play').addEventListener('click',()=>{if(state.playing){stop();render();return;}state.mode='flows';state.lit=true;state.playing=true;let i=0;function step(){state.selected=nodes[i].id;state.source=false;render();i++;if(i<nodes.length){timer=setTimeout(step,1050);}else{state.playing=false;render();persist();}}step();});
+window.addEventListener('openai:set_globals',event=>{const next=event.detail?.globals?.widgetState?.modelContent;if(!next)return;stop();for(const key of ['appearance','accent','mode','selected'])if(typeof next[key]==='string')state[key]=next[key];if(typeof next.trace==='boolean')state.lit=next.trace;render();});
+new ResizeObserver(draw).observe(map);render();
+if(globalThis.Tweak){const tweak=new Tweak({container:root.querySelector('.cd-shell'),onChange:()=>{render();persist();}});tweak.addSelect(state,'appearance',{label:'Appearance',options:['Auto','Dawn','Dusk']});tweak.addColorPicker(state,'accent',{label:'Illumination',reference:'--cd-light'});tweak.addSlider(state,'depth',{label:'Map depth',min:0,max:16,step:1,unit:'px'});tweak.addSlider(state,'radius',{label:'Corner radius',min:2,max:12,step:1,unit:'px'});}
+})();
+</script>
+</div>

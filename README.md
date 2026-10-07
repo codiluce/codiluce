@@ -1,12 +1,14 @@
-# Archipelago
+# Codiluce
+
+Bring your code to light
 
 Code & Architecture Visualizer: a deterministic, evidenced software graph for Next.js + Laravel repositories (applications of other ecosystems are detected and mapped, see [Configuration](#configuration)) and an interactive isometric map that projects it (spatial map, evidence inspector, lazy source), plus Git history: every commit of a branch indexed as a versioned snapshot, browsable on a timeline and comparable as an architectural and source diff. Calls between symbols are resolved across both stacks (including frontend HTTP requests whose base URL is built in code, through axios instances and wrapper functions), down to the **database tables** the Laravel migrations declare, which gives every entity and every commit a **blast radius**, and every page, endpoint or function a **"what happens from here"** picture. Files carry their Git history (commits, authors, churn), and indexing again only re-analyzes the applications that changed. Every **flow** of the code is in one list, filtered by where it starts — pages (Next.js, and Inertia pages served by Laravel), HTTP requests, Artisan commands and scheduled tasks — with what it touches, so each file says which flows reach it and **coverage** shows what no flow reaches; a flow plays on the map itself. Optionally, language models **describe** files, folders, flows, domains and commits in ASD-STE100 Simplified Technical English (cost estimated and capped first), which adds a **Features** view: the code arranged by product domain instead of by folder. Phases 1–4 are implemented, with annotations from Phase 5; the architecture and what remains (runtime ingestion) are in [docs/architecture-visualizer.md](docs/architecture-visualizer.md).
 
-The local launcher is `npm start -- /path/to/repository`. Individual commands use `npm run archipelago -- …`. Generated state uses `.archipelago/` and `archipelago.db`.
+The local launcher is `npm start -- /path/to/repository`. Individual commands use `npm run codiluce -- …`. Generated state uses `.codiluce/` and `codiluce.db`.
 
 ## One-command local launcher
 
-Requires Node >=22.12. Install Archipelago's dependencies once with `npm ci`, then run from the Archipelago checkout:
+Requires Node >=22.12. Install Codiluce's dependencies once with `npm ci`, then run from the Codiluce checkout:
 
 ```bash
 npm start -- /path/to/repository
@@ -14,53 +16,53 @@ npm start -- /path/to/repository
 
 This detects the applications, prepares the visualizer (building it automatically if missing), indexes the repository, starts a local server, and opens the map in your browser. It tries port 4300 first and chooses another if it is occupied. Press **Ctrl+C** to stop. The target application's dependencies do not need to be installed and its application code is not executed.
 
-State defaults to `<repository>/.archipelago/`: configuration, the graph, the analysis cache and layout slots. Existing configuration is preserved; subsequent launches analyze the current files and reuse cached work for unchanged applications. Applications are detected from their manifests in every common ecosystem; Next.js and Laravel applications are analyzed in depth, TypeScript and JavaScript in any application, and files in other languages are named, measured and highlighted (see [Configuration](#configuration)). A directory without applications still gets a file map. Git is optional for local scanning and required for Git metrics and history.
+State defaults to `<repository>/.codiluce/`: configuration, the graph, the analysis cache and layout slots. Existing configuration is preserved; subsequent launches analyze the current files and reuse cached work for unchanged applications. Applications are detected from their manifests in every common ecosystem; Next.js and Laravel applications are analyzed in depth, TypeScript and JavaScript in any application, and files in other languages are named, measured and highlighted (see [Configuration](#configuration)). A directory without applications still gets a file map. Git is optional for local scanning and required for Git metrics and history.
 
 ```bash
 # Store the analysis outside the target repository and leave browser opening to you
-npm start -- /path/to/repository --state-dir .archipelago/example --no-open
+npm start -- /path/to/repository --state-dir .codiluce/example --no-open
 
 # Choose an exact port; 0 asks the OS for an available port
 npm start -- /path/to/repository --port 4400
 
-# Rebuild the visualizer after changing Archipelago's UI
+# Rebuild the visualizer after changing Codiluce's UI
 npm start -- /path/to/repository --build-ui
 
 # Allow the map to index historical commits on demand
 npm start -- /path/to/repository --history-indexing
 ```
 
-The equivalent CLI command is `npm run archipelago -- start --repo /path/to/repository`. Without a path or `--repo`, `start` scans its current working directory. `--ui PATH` uses an existing visualizer build and `--no-cache` forces fresh analysis. On a headless computer, the launcher prints the URL so you can open it manually. Installation through `npx` and GitHub URL inputs are not yet available.
+The equivalent CLI command is `npm run codiluce -- start --repo /path/to/repository`. Without a path or `--repo`, `start` scans its current working directory. `--ui PATH` uses an existing visualizer build and `--no-cache` forces fresh analysis. On a headless computer, the launcher prints the URL so you can open it manually. Installation through `npx` and GitHub URL inputs are not yet available.
 
 ## Run against a repository
 
 Requires Node >=22.12. The scripts enable the built-in SQLite API for the installed Node version.
 
 ```bash
-cd /path/to/archipelago
+cd /path/to/codiluce
 npm ci
-npm run archipelago -- init --repo /path/to/repository --state-dir .archipelago/example
-npm run archipelago -- index --repo /path/to/repository --state-dir .archipelago/example
-npm run archipelago -- inspect summary --repo /path/to/repository --state-dir .archipelago/example
-npm run archipelago -- serve --repo /path/to/repository --state-dir .archipelago/example --port 4300
+npm run codiluce -- init --repo /path/to/repository --state-dir .codiluce/example
+npm run codiluce -- index --repo /path/to/repository --state-dir .codiluce/example
+npm run codiluce -- inspect summary --repo /path/to/repository --state-dir .codiluce/example
+npm run codiluce -- serve --repo /path/to/repository --state-dir .codiluce/example --port 4300
 ```
 
-Open **http://127.0.0.1:4300/api** for the endpoint directory, or **http://127.0.0.1:4300/api/summary** for index counts/diagnostics. The cache/configuration stays in this tool workspace; target application code is untouched. Omit `--state-dir` to use `<repository>/.archipelago/` instead. `init` preserves existing config and database; `index` also works without init using autodetection.
+Open **http://127.0.0.1:4300/api** for the endpoint directory, or **http://127.0.0.1:4300/api/summary** for index counts/diagnostics. The cache/configuration stays in this tool workspace; target application code is untouched. Omit `--state-dir` to use `<repository>/.codiluce/` instead. `init` preserves existing config and database; `index` also works without init using autodetection.
 
 `index` keeps a bounded analysis cache in `<state>/cache/`: an application whose files did not change since the last index is replayed instead of analyzed (on Etengabe, an unchanged re-index takes ~3.5 s instead of ~11 s; editing one frontend file re-analyzes only the frontend). The cache is safe to delete; `index --no-cache` re-analyzes everything.
 
-Generated state contains repository metadata, including file paths, symbols, routes, and diagnostics. Keep local state and inspection exports under `.archipelago/`, which is excluded by `.gitignore`. If you choose another state directory, add it to that workspace's `.gitignore` before publishing. Share only sanitized configuration examples.
+Generated state contains repository metadata, including file paths, symbols, routes, and diagnostics. Keep local state and inspection exports under `.codiluce/`, which is excluded by `.gitignore`. If you choose another state directory, add it to that workspace's `.gitignore` before publishing. Share only sanitized configuration examples.
 
 ## Visualizer
 
 The map is a Next.js + React app in `web/`, statically exported to `web/out` and served by `serve` on the same origin as the API (which only reads the graph).
 
 ```bash
-cd /var/www/html/archipelago
+cd /path/to/codiluce
 npm ci
-npm run archipelago -- index --repo /var/www/html/etengabe.eus --state-dir .archipelago/etengabe
+npm run codiluce -- index --repo /var/www/html/etengabe.eus --state-dir .codiluce/etengabe
 npm run build:web
-npm run archipelago -- serve --repo /var/www/html/etengabe.eus --state-dir .archipelago/etengabe --port 4300
+npm run codiluce -- serve --repo /var/www/html/etengabe.eus --state-dir .codiluce/etengabe --port 4300
 ```
 
 Open **http://127.0.0.1:4300/**. `serve` uses `web/out` automatically when it exists (`--ui PATH` chooses another build, `--ui none` serves only the API). Reindexing while the server runs is detected within ~30 s and the map offers a reload. The server writes nothing but the map's layout slots (`<state>/layout.json`); with `--history-indexing` it can also index history on demand, which `--read-only` refuses. A `<state>/flows.db` left by an earlier version (saved flows) is no longer used and can be deleted.
@@ -68,12 +70,12 @@ Open **http://127.0.0.1:4300/**. `serve` uses `web/out` automatically when it ex
 UI development with hot reload uses two terminals: the `serve` command above (API on 4300), plus
 
 ```bash
-npm run dev:web            # http://127.0.0.1:4310, proxies /api to ARCHIPELAGO_API (default http://127.0.0.1:4300)
+npm run dev:web            # http://127.0.0.1:4310, proxies /api to CODILUCE_API (default http://127.0.0.1:4300)
 ```
 
 ### What the map does
 
-- **Spatial map.** Native Canvas 2D, isometric 2.5D, one `<canvas>`; React renders only controls and panels. Drag/wheel/pinch or arrow keys and `+`/`−` pan and zoom; `F` fits; double-click zooms into an area. Rendering is device-pixel-ratio aware, culls off-screen boxes and has a per-frame primitive budget. Themes are data (`web/lib/themes.ts`): Midnight and Paper dock flat panels around sharp blocks; Sorbet and Sorbet Night (light and dark) float rounded glass panels over a pastel backdrop, draw rounded blocks with soft shadows on a dot grid, color files by language and use a rounded typeface (Nunito, bundled with the UI).
+- **Spatial map.** Native Canvas 2D, isometric 2.5D, one `<canvas>`; React renders only controls and panels. Drag/wheel/pinch or arrow keys and `+`/`−` pan and zoom; `F` fits; double-click zooms into an area. Rendering is device-pixel-ratio aware, culls off-screen boxes and has a per-frame primitive budget. Themes are data (`web/lib/themes.ts`): Midnight and Paper dock flat panels around sharp blocks; Sorbet and Sorbet Night (light and dark) float rounded glass panels over a pastel backdrop, draw rounded blocks with soft shadows on a dot grid, color files by language and use a rounded typeface (Nunito, bundled with the UI). Codiluce Dawn (light) and Codiluce Dusk (dark) use warm ivory or graphite surfaces, neutral blocks, gold selections and flow paths, docked panels and bundled Geist/Geist Mono typography. Choose a theme in the header; the choice is saved locally.
 - **Stable layout.** Coordinates come from the server (`src/projection/layout.ts`), never from the browser: integer world rectangles from a deterministic bottom-up skyline packing with bucketed sizes and quantized row widths. Slot order is persisted per state directory in `layout.json`, so children added later are appended and removed children leave holes (compacted past 30% of a container). Selection, search, filters, panel size and loading order never move anything. Without `layout.json`, the same graph gives the same coordinates. Insertion stability comes from the persisted slots, not from sorting.
 - **Projection districts.** Routes and endpoints are canonical children of their application. They are drawn in a dashed **Routes & endpoints** district inside that application (split by first path segment above 16 entries); Artisan commands and scheduled tasks in a **Console** district. Districts are projection-only (`projection:…` IDs), not graph entities, and breadcrumbs always show canonical ancestry.
 - **Semantic zoom.** A container opens once it is larger than ~210 px on screen, and its children load on demand (pages of 500, capped at 3,000 per container). Labels change content by tier: applications show their primary framework (else the language most of their code is in) and counts; directories show files, measured lines and findings; files show language, lines and symbols; symbols show kind and signature. At the deepest level, a selected file or symbol draws its source on its own face. The status bar names the level (Applications → Directories & modules → Files → Symbols → Source) and the area at the center of the view.
@@ -90,6 +92,7 @@ npm run dev:web            # http://127.0.0.1:4310, proxies /api to ARCHIPELAGO_
 - **Flows.** The **Flows** panel is one list of every flow the index can follow, grouped by area (a page and the requests under its path share a group; command namespaces, the scheduler and requests no endpoint answers come after), with filters for where a flow starts — **All**, **Pages**, **Requests**, **Console** — and, where the list has HTTP flows, for completeness. Every flow is derived from indexed relationships; there are no hand-made flows. *Pages*: a Next.js page route, or an endpoint serving an Inertia page (its handler renders the page component); a page's flow is everything it sets in motion — what it renders, the requests it makes, and what those reach down to the tables — but not the pages it links to. *Requests*: one per endpoint, plus requests no endpoint answers, with their completeness (*complete*, *partial*, *no caller*, *unmatched*) and gaps; nothing in them is capped — every caller, every page it is reached from, everything the handler calls and every response are drawn. *Console*: Artisan commands (with what runs them: the scheduler, code running them by name, or a person) and scheduled tasks with their cadence. Filtering matches paths, handlers, callers and the titles below. The inspector of any entity, file or area lists the flows touching it (*Flows*) and opens one on the map; **List in the Flows panel** filters the panel to them.
 - **A flow on the map.** Choosing a flow shows it on the map, not over it: everything the flow touches — its stops and the entities folded into its links, with the files and folders holding them — is drawn as usual, and everything else dims. It plays **branch by branch**: each choice the flow offers (an event a page binds, work it does on load, each place an endpoint is called from) is a branch, played from where the flow starts along real edges only. A pulse flows along the branch's links in **waves**: the stops one edge further are reached together (alternatives, or work done side by side, at the same moment), and a response going back to its caller flows last. The areas the branch passes open whatever the zoom; its stops are labelled with their wave; what is not an entity — middleware, validation, responses by status, effects, gaps — is pinned to its block as the flow reaches it. The bar over the map lists the branches, grouped by the component that binds them, and the current branch wave by wave; choosing a branch plays it (its choice is selected; with **Follow**, the camera frames the whole branch), choosing a stop selects it. Choosing something yourself pauses it. **Lanes** opens the same flow as a diagram, left to right (a request travels through it; each step shows its links, conditions, evidence and source; **Show on map** comes back), and **Outline** opens a page's Steps.
 - **Coverage.** **Coverage** colors every file by what the flows say about it: *entry point* (where flows start: page files, route files, commands, the console routes), *in flows* (touched by at least one), *supports flows* (imported, extended, or declaring a table by code that is), *possibly reached* (an unresolved call site calls one of its symbols by name; a command that may be run by a computed name), *not reached* (candidate dead code, or code reached in ways the analyzers do not see), *tests & tooling*, *configuration* (config, bootstrap, providers, middleware, migrations no flow reaches), *outside the apps*, and two kinds that are not counted: *not analyzed* (code in a language whose calls are not analyzed yet — Python, Go, Swift… — or PHP outside a Laravel application) and assets. Closed areas carry the share of their code files in flows; a file's inspector says why it is where it is ("Entry point: command parse-words:news; in 4 flows", "Used only by code no flow reaches: …"). A file's relationships include those of its symbols across its boundary (*through `handle` in this file*), so a PHP file no longer reads as unconnected because its methods hold the relationships.
+- **Data families, Group files and the Data view.** Without a language model, the tables are grouped into *data families* (`src/projection/arrange.ts`): tables joined by foreign keys, a table named after another (`song_artists` → `songs`) joining it, and tables sharing a short prefix (`crm_…`) together. A table that six or more tables reference (`users`, a shared dictionary) is a *hub*: it is a family of its own and never joins the families referencing it to each other. A file takes the family of the tables its own code maps (a model), creates or changes (a migration), writes or reads; a file with no table of its own follows the code it uses when most of that code is in one family (a command its service, a page the endpoint it requests), or the code using it when all of that code is in one (a style sheet its component); code shared between families stays apart. ▦ in the map controls colors files, endpoints, commands and tables by family (code with no family in grey) and badges closed areas with their main family; selecting a family in its legend lights it everywhere on the map. **Group files** (header) draws the files of every folder of 16 files or more in dashed groups inside the folder — by data family, or by the first word of their names (`Import…`, `Parse…`), whichever puts most files in a few groups (a fixed score; a folder where neither reads well, such as one controller per resource, stays as it is). A folder's inspector shows both options with their groups and lets you choose **Auto**, **By data**, **By name** or **No groups** for it (from 6 files); the choice is saved in the browser, and grouped slots persist apart in `layout-grouped.json`. The groups are projection districts: files stay children of their folder and breadcrumbs keep the real path. **Data** (beside **Folders**) arranges the whole live map by family: repository → family (with its tables, endpoints and commands in districts) → folder → file, and *No tables* for the rest. History always shows folders, ungrouped.
 - **Descriptions and the Features view** (after `annotate`, below). Files, folders and the repository get a short description, set apart from the indexed facts with the model that wrote it and its ASD-STE100 score, and flagged when the file changed since; flows get a title, a goal and who starts them (*user*, *admin*, *scheduler*…); the overview says what the product does and where to start reading. **Features** (beside **Folders** in the header) arranges the live map by domain: repository → domain (Vocabulary, Lessons, Accounts…, each with its frontend and backend code, routes, tables and commands) → folder → file. A domain's inspector shows its description, the connections across its boundary to other domains, its flows and how much of it they cover. The timeline colors commits by intent, explains each one in its tooltip and the inspector, and shows **chapters** (runs of commits with one theme) under the axis; choosing one compares the whole chapter.
 
 ### History: browse and compare commits
@@ -97,9 +100,9 @@ npm run dev:web            # http://127.0.0.1:4310, proxies /api to ARCHIPELAGO_
 Index a branch's history, then open **History** in the map:
 
 ```bash
-npm run archipelago -- history index --repo /var/www/html/etengabe.eus --state-dir .archipelago/etengabe   # first-parent history of the current branch
-npm run archipelago -- history status --repo /var/www/html/etengabe.eus --state-dir .archipelago/etengabe
-npm run archipelago -- serve --repo /var/www/html/etengabe.eus --state-dir .archipelago/etengabe --port 4300 [--history-indexing]
+npm run codiluce -- history index --repo /var/www/html/etengabe.eus --state-dir .codiluce/etengabe   # first-parent history of the current branch
+npm run codiluce -- history status --repo /var/www/html/etengabe.eus --state-dir .codiluce/etengabe
+npm run codiluce -- serve --repo /var/www/html/etengabe.eus --state-dir .codiluce/etengabe --port 4300 [--history-indexing]
 ```
 
 `history index` options: `--ref BRANCH` (default: the checked-out branch), `--limit N` (newest N commits), `--since DATE` (Git date syntax), `--commits SHA,SHA`, `--jobs N` (parallel analysis processes, default up to 6), `--all-parents`, `--pr-metadata github`. Commits that already have a snapshot under the current configuration and analyzer versions are skipped, so re-running after new commits only analyzes those. On the real Etengabe repository the 315 first-parent commits take ~3 min with 6 processes (call resolution type-checks each commit; ~90 s with analyzer 0.2.0); its largest commits take ~3 s each.
@@ -128,11 +131,11 @@ Limitations: the timeline follows first parents of one branch (other commits can
 
 ```bash
 echo 'OPENAI_API_KEY=…' >> .env   # in this workspace (or the state directory), never read from the target repository
-npm run archipelago -- annotate --repo /var/www/html/etengabe.eus --state-dir .archipelago/etengabe --estimate --pilot
-npm run archipelago -- annotate --repo /var/www/html/etengabe.eus --state-dir .archipelago/etengabe --max-cost 10
+npm run codiluce -- annotate --repo /var/www/html/etengabe.eus --state-dir .codiluce/etengabe --estimate --pilot
+npm run codiluce -- annotate --repo /var/www/html/etengabe.eus --state-dir .codiluce/etengabe --max-cost 10
 ```
 
-`annotate` writes `<state>/annotations.db`: descriptions of files (from their symbols, effects, relationships, flows and the start of their source), folders (from their files' descriptions), flows (titles, goals, actors), commits (from their message and indexed changes against the commit before; needs `history index`), and, with a stronger model, the domains of the product, the overview and the chapters of the history. Models: `gpt-6-luna` (low effort) for the many small descriptions, `gpt-6.1-sol` (high effort) for the three syntheses (`src/ai/pricing.ts`; `ARCHIPELAGO_AI_LOW_MODEL` / `ARCHIPELAGO_AI_HIGH_MODEL` override them). Every request asks for a strict JSON schema, and every prose answer is scored against the testable ASD-STE100 rules (sentence length, active voice, no -ing forms or contractions, approved words; code names exempt; target 80%).
+`annotate` writes `<state>/annotations.db`: descriptions of files (from their symbols, effects, relationships, flows and the start of their source), folders (from their files' descriptions), flows (titles, goals, actors), commits (from their message and indexed changes against the commit before; needs `history index`), and, with a stronger model, the domains of the product, the overview and the chapters of the history. Models: `gpt-6-luna` (low effort) for the many small descriptions, `gpt-6.1-sol` (high effort) for the three syntheses (`src/ai/pricing.ts`; `CODILUCE_AI_LOW_MODEL` / `CODILUCE_AI_HIGH_MODEL` override them). Every request asks for a strict JSON schema, and every prose answer is scored against the testable ASD-STE100 rules (sentence length, active voice, no -ing forms or contractions, approved words; code names exempt; target 80%).
 
 It always estimates first: it builds every request it would send, skips items already described from the same input with the same prompt, prices them, then measures with one real request per small task (its answers are kept) and prices again. It does not run when the measured estimate exceeds `--max-cost` (US dollars, default 10; exit code 3), and stops sending requests once the run's spend reaches it. `--estimate` stops after the estimate (`--pilot` adds the measurement); `--tasks files,flows,commits,folders,domains,overview,chapters` chooses tasks; `--force` describes everything again. On Etengabe (917 code files, 290 flows, 315 commits) the estimate was $0.65 and the whole run cost **$0.34** for 251 requests in about 8 minutes (describing the domains and the overview again after a prompt change cost $0.10 more); describing it again after a change only sends what changed.
 
@@ -159,7 +162,9 @@ The descriptions are generated text, not facts: the UI marks them as such, keeps
 - `GET /api/projection/coverage`: a category per file and counts per area; `GET /api/projection/coverage/:id`: why a file is where it is, an area's counts, and the flows touching it
 - `GET /api/projection/relations/:id?scope=contained`: a file's relationships including its symbols' across its boundary (`inside` names the symbol)
 - `GET /api/annotations`: the overview, domains (with code files each), annotation counts with their mean ASD-STE100 score, models and cost; `GET /api/annotations/entity/:id`: an entity's description, role and domain
-- Every projection route accepts `lens=domains` on the live view: the Features arrangement (domains and their folders are projection groups, `lens:…` IDs)
+- `GET /api/projection/families`: data families (tables, hub or not, files), the family of every file, endpoint, command and table, the files placed through connected code, and files per family in each area
+- `GET /api/projection/arrangement/:id`: how a folder's files can be grouped (by name, by data family: groups, files grouped, whether Auto may choose it), what Auto chooses, and what the view draws
+- Every projection route accepts `lens=domains` on the live view: the Features arrangement (domains and their folders are projection groups, `lens:…` IDs); `lens=data`: the live map by data family; `arrange=auto` (or `off`), then `;FOLDER_ID=auto|data|name|none` per folder: the folder view with the files of large folders in groups (`projection:arrange:…` IDs)
 
 Every route above (and `/api/entities/:id`, `/api/relations/:id`) accepts `snapshot=ID` (a history snapshot, or the live run's ID) and `compareTo=ID` (a baseline); node summaries then carry `change` (status, facets, previous ID/path/name, lineage reason) and, for areas, `changes` counts. History routes:
 
@@ -177,10 +182,10 @@ Layout, projection and source modules live in `src/projection/`, history modules
 ## Inspect the graph
 
 ```bash
-npm run archipelago -- inspect entities --repo /path/to/repository --state-dir .archipelago/example --search /auth/login --type api_endpoint
-npm run archipelago -- inspect entities --repo /path/to/repository --state-dir .archipelago/example --search AuthController
-npm run archipelago -- inspect diagnostics --repo /path/to/repository --state-dir .archipelago/example --code unresolved-http-call
-npm run archipelago -- inspect entities --repo /path/to/repository --state-dir .archipelago/example --type database_table
+npm run codiluce -- inspect entities --repo /path/to/repository --state-dir .codiluce/example --search /auth/login --type api_endpoint
+npm run codiluce -- inspect entities --repo /path/to/repository --state-dir .codiluce/example --search AuthController
+npm run codiluce -- inspect diagnostics --repo /path/to/repository --state-dir .codiluce/example --code unresolved-http-call
+npm run codiluce -- inspect entities --repo /path/to/repository --state-dir .codiluce/example --type database_table
 ```
 
 Use returned IDs with `inspect entity --id ID`, `inspect relations --id ID --direction outgoing --type handles`, and `inspect relation --id ID`. Entity and relation **details** include complete evidence; **lists** intentionally omit evidence/large entity metadata. Pagination defaults to 100, caps at 500, and returns `hasMore`.
@@ -200,8 +205,8 @@ The server binds to loopback. Besides GET, it accepts only `POST /api/history/in
 SQLite can also be inspected directly:
 
 ```bash
-sqlite3 .archipelago/example/archipelago.db 'SELECT type, count(*) FROM entities GROUP BY type;'
-sqlite3 .archipelago/example/archipelago.db 'SELECT code, count(*) FROM diagnostics GROUP BY code;'
+sqlite3 .codiluce/example/codiluce.db 'SELECT type, count(*) FROM entities GROUP BY type;'
+sqlite3 .codiluce/example/codiluce.db 'SELECT code, count(*) FROM diagnostics GROUP BY code;'
 ```
 
 ## Configuration
@@ -224,7 +229,7 @@ sqlite3 .archipelago/example/archipelago.db 'SELECT code, count(*) FROM diagnost
 
 Only **nextjs** and **laravel** are analyzed in depth (routes, endpoints, entry points, tables); TypeScript and JavaScript are analyzed in every application; the other frameworks are recorded and shown, ready for their own analyzers. Manifests are read, never executed; one that cannot be parsed stops detection with `Invalid manifest: <path>`. A manifest that only declares a workspace (npm/pnpm workspaces, a Cargo workspace without a package, `go.work`, a Maven aggregator, a Gradle multi-project `settings.gradle`, a solution file alone) or only tooling (a `package.json` without runtime dependencies or entry points, a `composer.json` requiring only PHP extensions, a `pyproject.toml` with only tool settings, a Gemfile of fastlane/CocoaPods/linters) is not an application; detection continues below it. Applications can nest — a Capacitor or Express shell at the root around a Next.js frontend and a Laravel backend — and a file belongs to the innermost one; a Next.js or Laravel application owns its whole directory. Test directories (`tests`, `fixtures`, `testdata`…) and Git-ignored directories are not searched.
 
-`.archipelago/config.yml` can contain:
+`.codiluce/config.yml` can contain:
 
 ```yaml
 repository:
@@ -273,7 +278,7 @@ Ignore patterns support `*`, `**`, and `?` and extend safe defaults. Git-ignored
 - Inertia: `router.get/post/put/patch/delete/visit`, `useForm()` forms (assigned or destructured), `<Link href method>` and `<Form action method>` as requests (a link built from data is recorded, not reported); `Inertia::render('page')`/`inertia('page')` in handlers and route closures as `renders` of the page component (resources/js/pages), and the endpoint serving a page as the entry point of the requests it makes. Next.js pages route to every layout and template above them and to their loading, error and not-found files, so what a layout renders belongs to the pages it wraps.
 - The flow catalog and coverage (`src/projection/catalog.ts`), flows on the map (`web/lib/map-flow.ts`), and language-model annotations with ASD-STE100 scoring, cost estimates and the Features view (`src/ai/`).
 
-The fixture chain proves **page /account → AccountPanel (onClick) → handleSave → AccountService.getInstance().signIn() → POST /auth/login (base URL from `getUrlFromEnv()` and `NEXT_PUBLIC_API_URL`) → AuthController::login → AuthService::authenticate → reads table users (model User, `$table = 'users'`, declared by a migration)**. On the real Etengabe index (configured with its API origins and `NEXT_PUBLIC_API_URL`), frontend requests linked to Laravel endpoints went from 0 to 53 (two through an HTTP wrapper) and unresolved HTTP calls from 68 to 14; with Inertia visits, links and renders, Artisan commands (57) and scheduled tasks (6), linked requests are 237, complete request flows went from 18 to 92 and requests nobody calls from 164 to 64, and 56% of its 917 code files are entry points or in one of 346 flows (111 not reached, mostly unused UI kit components). The new links also surfaced mismatches in the application: admin pages visiting `/locutions` (registered under `/admin`), `update-level` routes that exist for songs but not for videos or news, and an Inertia page (`bertsolariak/index`) with no component; with 2,696 calls (including methods of services held in `useMemo`, which linked the search page to `GET /search`), 1,153 renders and 422 references resolved; its migrations declare 62 tables with 48 foreign keys, 48 of its 57 models map to one (the others name legacy tables no migration creates), and 295 reads and 233 writes link its code to them. `AuthService.login → POST /auth/login → AuthController::login → users` is one chain, from frontend code to a table. The live index (`archipelago.db`) keeps one current snapshot; past states live in `history.db`.
+The fixture chain proves **page /account → AccountPanel (onClick) → handleSave → AccountService.getInstance().signIn() → POST /auth/login (base URL from `getUrlFromEnv()` and `NEXT_PUBLIC_API_URL`) → AuthController::login → AuthService::authenticate → reads table users (model User, `$table = 'users'`, declared by a migration)**. On the real Etengabe index (configured with its API origins and `NEXT_PUBLIC_API_URL`), frontend requests linked to Laravel endpoints went from 0 to 53 (two through an HTTP wrapper) and unresolved HTTP calls from 68 to 14; with Inertia visits, links and renders, Artisan commands (57) and scheduled tasks (6), linked requests are 237, complete request flows went from 18 to 92 and requests nobody calls from 164 to 64, and 56% of its 917 code files are entry points or in one of 346 flows (111 not reached, mostly unused UI kit components). The new links also surfaced mismatches in the application: admin pages visiting `/locutions` (registered under `/admin`), `update-level` routes that exist for songs but not for videos or news, and an Inertia page (`bertsolariak/index`) with no component; with 2,696 calls (including methods of services held in `useMemo`, which linked the search page to `GET /search`), 1,153 renders and 422 references resolved; its migrations declare 62 tables with 48 foreign keys, 48 of its 57 models map to one (the others name legacy tables no migration creates), and 295 reads and 233 writes link its code to them. `AuthService.login → POST /auth/login → AuthController::login → users` is one chain, from frontend code to a table. The live index (`codiluce.db`) keeps one current snapshot; past states live in `history.db`.
 
 `index` exits **0** for a graph with no analyzer errors, **2** when parse/config analyzer errors are persisted, and **1** for fatal/configuration/storage failures. Warnings remain inspectable. A fatal scan or write failure preserves the previous successful graph.
 

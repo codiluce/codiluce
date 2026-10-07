@@ -4,7 +4,7 @@ import type { NodeSummary } from '@engine/projection/dto';
 import { ISO_X, ISO_Y, toScreen, worldToScreen, type Bounds, type Camera, type Point, type Viewport } from './camera';
 import type { LodConfig } from './lod';
 import type { Scene, VisibleItem, VisibleSet } from './scene';
-import { PaletteCache, paletteKey, type Theme } from './themes';
+import { familyHashHue, PaletteCache, paletteKey, type Theme } from './themes';
 import type { StopTone } from './map-flow';
 import { compactNumber, typeLabel } from './format';
 import { NOT_MEASURED } from './coverage';
@@ -27,6 +27,12 @@ export interface CalloutOverlay { entityId: string; ancestors: string[]; number:
 export interface PinOverlay { key: string; ownerId: string; ownerAncestors: string[]; label: string; tone: 'ok' | 'warn' | 'error' | 'info' }
 /** Coverage lens: files colored by category; closed areas badged with how much of them flows touch. */
 export interface CoverageOverlay { files: Map<string, string>; areas: Map<string, Record<string, number>> }
+/**
+ * Data families: files, entry points and tables colored by family (code without
+ * one in grey); closed areas badged with their main family. With `focus`, what
+ * is outside that family recedes.
+ */
+export interface FamilyOverlay { of: Map<string, string>; areas: Map<string, Record<string, number>>; names: Map<string, string>; hues: Map<string, number>; focus?: string }
 /** Another view of the split map, drawn on the overview: the part of the plane it shows (so its size tells its zoom), numbered. */
 export interface FrameOverlay { key: string; number: number; bounds: Bounds; /** The view in use. */ active: boolean; /** On the current page (the others are dashed). */ shown: boolean }
 export interface SourceOverlay { nodeId: string; start: number; lines: string[]; focus?: { startLine: number; endLine: number }; /** Lines where the symbol calls, renders or references an indexed entity. */ marks?: Set<number> }
@@ -51,6 +57,7 @@ export interface RenderState {
   callouts?: CalloutOverlay[];
   pins?: PinOverlay[];
   coverage?: CoverageOverlay;
+  families?: FamilyOverlay;
   frames?: FrameOverlay[];
   time: number;
   reducedMotion: boolean;
@@ -82,7 +89,7 @@ export class MapRenderer {
     this.dpr = dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.background(ctx, viewport);
-    if (theme.style?.grid === 'dots') this.dotGrid(ctx, viewport, camera); else this.grid(ctx, viewport, camera);
+    if (theme.style?.grid === 'dots') this.dotGrid(ctx, viewport, camera); else if (theme.style?.grid !== 'none') this.grid(ctx, viewport, camera);
 
     const emphasis = state.emphasis ? this.expandEmphasis(scene, state.emphasis) : undefined;
     const flowSet = state.lit;
@@ -90,16 +97,23 @@ export class MapRenderer {
     const items = this.animate(set, state);
     const impactLit = state.impact ? this.impactLit(scene, state.impact) : undefined;
     const coverageOf = state.coverage ? this.coverageResolver(scene, state.coverage) : undefined;
+    const familyOf = state.families ? this.familyResolver(scene, state.families) : undefined;
+    const familyLit = state.families?.focus ? this.familyLit(scene, state.families, familyOf!) : undefined;
     for (const item of items) {
-      const dimmed = (flowSet && !flowSet.has(item.node.id)) || (!flowSet && emphasis && !emphasis.has(item.node.id));
+      // Outside the family in focus: receding like what a selection does not reach.
+      const dimmed = (flowSet && !flowSet.has(item.node.id)) || (!flowSet && emphasis && !emphasis.has(item.node.id)) || (!flowSet && !emphasis && !!familyLit && !familyLit(item.node));
       // In a comparison, blocks a change reaches stay lit instead of fading with the unchanged ones.
       const reached = impactLit?.has(item.node.id) && item.node.change?.status !== 'removed';
       const alpha = item.alpha * (dimmed ? (flowSet ? theme.flow.dimAlpha : theme.dimAlpha) : 1) * (state.comparison && !reached ? this.changeAlpha(item, state.comparison) : 1) * (state.impact?.dimOthers && !reached ? theme.dimAlpha : 1);
       if (alpha <= 0.01) continue;
       if (theme.style?.shadow && item.parent >= 0 && item.size > SOFT_PX) this.shadow(ctx, viewport, camera, item, alpha);
       const category = coverageOf?.(item.node);
-      this.prism(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId, category ? `coverage:${category}` : undefined);
+      const family = category ? undefined : familyOf?.(item.node);
+      // The Data view's family areas take the legend's hues while the families are shown.
+      const area = state.families && item.node.id.startsWith('lens:family:') ? `family-area:${this.familyHue(item.node.id.slice(12), state.families)}` : undefined;
+      this.prism(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId, category ? `coverage:${category}` : family ? `family:${this.familyHue(family, state.families!)}` : area);
       if (state.coverage && !item.open && !category && state.coverage.areas.has(item.node.id)) this.coverageBadge(ctx, viewport, camera, item, alpha, state.coverage.areas.get(item.node.id)!);
+      if (state.families && !item.open && !family && state.families.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.families.areas.get(item.node.id)!, state.families);
       if (state.comparison) this.changeOverlay(ctx, viewport, camera, item, alpha, state);
       if (state.impact) this.impactOverlay(ctx, viewport, camera, item, alpha, state.impact);
       if (state.showDiagnostics && !item.open && item.node.diagnostics > 0 && item.size > 10) this.diagnosticMarker(ctx, viewport, camera, item, alpha);
@@ -307,7 +321,7 @@ export class MapRenderer {
       light.addColorStop(0, `rgba(255,255,255,${sheen})`); light.addColorStop(0.55, 'rgba(255,255,255,0)');
       ctx.fillStyle = light; ctx.fill();
     }
-    if (item.size > 14) { ctx.strokeStyle = this.theme.outline; ctx.lineWidth = 1; ctx.stroke(); }
+    if (item.size > 14) { ctx.strokeStyle = this.theme.outline; ctx.lineWidth = this.theme.style?.outlineWidth ?? 1; ctx.stroke(); }
     if (item.node.kind === 'group' && item.size > 30) {
       // Projection districts get a dashed rim: they are spatial groupings, not entities.
       ctx.setLineDash([4, 4]); ctx.strokeStyle = this.theme.text.secondary; ctx.lineWidth = 1; this.topPath(ctx, viewport, camera, item, r); ctx.stroke(); ctx.setLineDash([]);
@@ -542,6 +556,7 @@ export class MapRenderer {
       const control = curveControl(from, to);
       ctx.save();
       if (this.theme.style?.rounding) ctx.lineCap = 'round';
+      if (this.theme.style?.edgeGlow) { ctx.shadowColor = edge.change === 'removed' ? this.theme.change.removed : edge.color; ctx.shadowBlur = this.theme.style.edgeGlow; }
       const width = Math.min(5, 1.4 + Math.log2(edge.count) * 0.8) + (edge.emphasized ? 1.2 : 0);
       if (edge.change === 'added') {
         // Added since the baseline: a halo in the added color under the typed edge.
@@ -680,6 +695,72 @@ export class MapRenderer {
     return resolve;
   }
   private coverageCache?: { key: CoverageOverlay; resolve: (node: NodeSummary) => string | undefined };
+  /**
+   * The family a block is drawn in: files, entry points and tables by their
+   * own (`none` without one); symbols by their file's; areas keep their colors
+   * and get a badge instead.
+   */
+  private familyResolver(scene: Scene, families: FamilyOverlay): (node: NodeSummary) => string | undefined {
+    if (this.familyCache?.key === families) return this.familyCache.resolve;
+    const cache = new Map<string, string | undefined>();
+    const resolve = (node: NodeSummary): string | undefined => {
+      if (cache.has(node.id)) return cache.get(node.id);
+      let found: string | undefined;
+      if (node.kind !== 'entity' || ['repository', 'application', 'directory'].includes(node.type)) found = undefined;
+      else if (families.of.has(node.id)) found = families.of.get(node.id);
+      else if (['file', 'route', 'api_endpoint', 'command', 'scheduled_task', 'database_table'].includes(node.type)) found = 'none';
+      else { const parent = node.spatialParentId ? scene.nodes.get(node.spatialParentId) : undefined; found = parent ? resolve(parent) : undefined; }
+      cache.set(node.id, found);
+      return found;
+    };
+    this.familyCache = { key: families, resolve };
+    return resolve;
+  }
+  private familyCache?: { key: FamilyOverlay; resolve: (node: NodeSummary) => string | undefined };
+  private familyHue(key: string, families: FamilyOverlay): string { return key === 'none' ? 'none' : String(families.hues.get(key) ?? familyHashHue(key)); }
+  /** Whether a block stays lit while a family is in focus: its members, and the areas and districts holding them. */
+  private familyLit(scene: Scene, families: FamilyOverlay, familyOf: (node: NodeSummary) => string | undefined): (node: NodeSummary) => boolean {
+    // Districts load later than the areas counted by the server: recomputed as the scene grows.
+    if (this.familyLitCache?.key === families && this.familyLitCache.scene === scene && this.familyLitCache.size === scene.nodes.size) return this.familyLitCache.lit;
+    const focus = families.focus!;
+    const areas = new Set<string>();
+    for (const [id, counts] of families.areas) if (counts[focus]) areas.add(id);
+    for (const [id, key] of families.of) {
+      if (key !== focus) continue;
+      for (let node = scene.nodes.get(id); node && !areas.has(node.id); node = node.spatialParentId ? scene.nodes.get(node.spatialParentId) : undefined) areas.add(node.id);
+    }
+    const lit = (node: NodeSummary) => areas.has(node.id) || familyOf(node) === focus;
+    this.familyLitCache = { key: families, scene, size: scene.nodes.size, lit };
+    return lit;
+  }
+  private familyLitCache?: { key: FamilyOverlay; scene: Scene; size: number; lit: (node: NodeSummary) => boolean };
+  /** A closed area: its main family and its share of the area's code files (in focus: the family's files there), over a bar of every family. */
+  private familyBadge(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, counts: Record<string, number>, families: FamilyOverlay): void {
+    if (item.size < 34) return;
+    const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    const focus = families.focus;
+    if (!total || (focus && !counts[focus])) return;
+    const ranked = Object.entries(counts).filter(([key]) => key !== 'none').sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
+    const name = (key: string) => families.names.get(key) ?? key;
+    const text = focus ? `${name(focus)} · ${counts[focus]} file${counts[focus] === 1 ? '' : 's'}` : ranked[0] ? `${name(ranked[0][0])} ${Math.round((ranked[0][1] / total) * 100)}%` : 'No tables';
+    const { x, y, w, h } = item.node.rect;
+    const anchor = worldToScreen(camera, viewport, x + w * 0.5, y + h - Math.min(h, w) * 0.12, item.zTop);
+    ctx.save();
+    ctx.globalAlpha = Math.max(0.75, alpha);
+    ctx.font = `700 10px ${this.font}`; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+    const width = Math.max(64, ctx.measureText(text).width + 14);
+    ctx.fillStyle = this.theme.dark ? 'rgba(8,12,26,0.86)' : 'rgba(255,253,248,0.94)';
+    roundRect(ctx, anchor.x - width / 2, anchor.y - 11, width, 22, 7); ctx.fill();
+    let cursor = anchor.x - width / 2 + 5;
+    for (const [key, count] of [...ranked, ...(counts.none ? [['none', counts.none] as [string, number]] : [])]) {
+      const share = count / total;
+      ctx.fillStyle = this.palettes.get(`family:${this.familyHue(key, families)}`, 0).top;
+      ctx.fillRect(cursor, anchor.y + 5, share * (width - 10), 3);
+      cursor += share * (width - 10);
+    }
+    ctx.fillStyle = this.theme.text.primary; ctx.fillText(text, anchor.x, anchor.y - 2);
+    ctx.restore();
+  }
   /** A closed area: the share of its code files that flows touch (entry points included), as a small bar and a percentage. */
   private coverageBadge(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, counts: Record<string, number>): void {
     if (item.size < 34) return;

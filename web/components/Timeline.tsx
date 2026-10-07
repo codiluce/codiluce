@@ -289,7 +289,7 @@ function Track({ data }: { data: TimelineResponse }) {
           <p className="note">This commit has no snapshot yet.</p>
           {data.indexing.enabled
             ? <button className="button small primary" onClick={() => { void store.indexCommit(pickedEntry.sha); setPicked(undefined); }}>Index this commit</button>
-            : <p className="note mono">npm run archipelago -- history index --commits {shortSha(pickedEntry.sha)} --repo … --state-dir …</p>}
+            : <p className="note mono">npm run codiluce -- history index --commits {shortSha(pickedEntry.sha)} --repo … --state-dir …</p>}
           <button className="button small" onClick={() => setPicked(undefined)}>Close</button>
         </div>
       )}

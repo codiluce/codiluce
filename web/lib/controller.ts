@@ -6,12 +6,12 @@
 import type { NodeSummary, Rect, SourceResponse } from '@engine/projection/dto';
 import { easeInOut, fitBounds, fromScreen, panBy, projectedBounds, visibleBounds, worldToScreen, zoomAround, zoomPath, type Bounds, type Camera, type Point, type Viewport, type ZoomLimits } from './camera';
 import { DEFAULT_LOD, abstractionLevel, screenSize, type LodConfig } from './lod';
-import { FLASH_MS, MapRenderer, RISE_MS, type CalloutOverlay, type CoverageOverlay, type EdgeOverlay, type FlowOverlay, type FrameOverlay, type MotionState, type RenderState } from './renderer';
+import { FLASH_MS, MapRenderer, RISE_MS, type CalloutOverlay, type CoverageOverlay, type EdgeOverlay, type FamilyOverlay, type FlowOverlay, type FrameOverlay, type MotionState, type RenderState } from './renderer';
 import { branchDuration, branchPosition, flowAreas, flowLit, type MapFlow } from './map-flow';
 import type { PlaybackState } from './playback';
 import { nodeHeight, type Scene, type VisibleSet } from './scene';
 import { isContainer, type AtlasState, type AtlasStore, type MapNavigator, type ViewState } from './store';
-import { themeById } from './themes';
+import { familyHues, themeById } from './themes';
 
 /** A branch with more stops than this labels only its start and the waves around the front; at most this many pins show. */
 const CALLOUT_ALL = 18, PIN_MAX = 40;
@@ -109,7 +109,7 @@ export class MapController implements MapNavigator {
     listen('focus', () => this.options.onActivate?.());
     listen('keydown', event => this.onKey(event));
     // Tests read the map that runs the clocks: the single map, or the split map's overview.
-    if (this.role !== 'region') (window as unknown as { __ARCHIPELAGO__?: DebugHandle }).__ARCHIPELAGO__ = this.debug = {
+    if (this.role !== 'region') (window as unknown as { __CODILUCE__?: DebugHandle }).__CODILUCE__ = this.debug = {
       screenPositionOf: id => { const index = this.set.index.get(id); if (index === undefined) return undefined; const item = this.set.items[index]!; const r = item.node.rect; const p = worldToScreen(this.camera, this.viewport, r.x + r.w / 2, r.y + r.h / 2, item.zTop); const box = canvas.getBoundingClientRect(); return { x: box.left + p.x, y: box.top + p.y }; },
       camera: () => ({ ...this.camera }),
       visibleIds: () => this.set.items.map(item => item.node.id),
@@ -123,8 +123,8 @@ export class MapController implements MapNavigator {
     if (this.reportTimer) clearTimeout(this.reportTimer);
     for (const dispose of this.cleanup) dispose();
     if (this.store.navigator === this) { this.store.navigator = undefined; this.store.visibility = undefined; this.store.openContainers = undefined; }
-    const global = window as unknown as { __ARCHIPELAGO__?: DebugHandle };
-    if (this.debug && global.__ARCHIPELAGO__ === this.debug) delete global.__ARCHIPELAGO__;
+    const global = window as unknown as { __CODILUCE__?: DebugHandle };
+    if (this.debug && global.__CODILUCE__ === this.debug) delete global.__CODILUCE__;
   }
   /** Whether a node is drawn at this map's level of detail. */
   has(id: string): boolean { return this.set.index.has(id); }
@@ -301,7 +301,7 @@ export class MapController implements MapNavigator {
       ...this.analysisOverlays(state, time),
       motion: this.motion,
       // A time-lapse frame compares with the previous commit; overlays loaded for the settled view wait until it is back.
-      ...(this.store.previewScene ? { edges: [], emphasis: undefined, lit: undefined, flow: undefined, callouts: undefined, pins: undefined, coverage: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
+      ...(this.store.previewScene ? { edges: [], emphasis: undefined, lit: undefined, flow: undefined, callouts: undefined, pins: undefined, coverage: undefined, families: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
     };
   }
   /**
@@ -342,9 +342,16 @@ export class MapController implements MapNavigator {
       if (this.coverageCache?.data !== coverage) this.coverageCache = { data: coverage, overlay: { files: new Map(Object.entries(coverage.files).map(([id, item]) => [id, item.category])), areas: new Map(Object.entries(coverage.areas)) } };
       result.coverage = this.coverageCache.overlay;
     }
+    const families = state.families.show && state.families.data && state.families.viewStamp === stamp ? state.families.data : undefined;
+    if (families) {
+      const focus = state.families.focus;
+      if (this.familyCache?.data !== families || this.familyCache.focus !== focus) this.familyCache = { data: families, focus, overlay: { of: new Map(Object.entries(families.of)), areas: new Map(Object.entries(families.areas)), names: new Map(families.families.map(family => [family.key, family.name])), hues: familyHues(families.families.map(family => family.key)), ...(focus ? { focus } : {}) } };
+      result.families = this.familyCache.overlay;
+    }
     return result;
   }
   private coverageCache?: { data: object; overlay: CoverageOverlay };
+  private familyCache?: { data: object; focus?: string; overlay: FamilyOverlay };
   /** The flow shown on the map (opened from the Flows panel, the inspector or the lanes). */
   private shownFlow(state: AtlasState): { flow: MapFlow; playback: PlaybackState } | undefined {
     const tour = state.tour;

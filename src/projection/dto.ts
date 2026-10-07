@@ -9,9 +9,13 @@ import type { DiffLine, Hunk } from '../history/textdiff.js';
 import type { Rect } from './layout.js';
 
 export type { ChangeFacet, ChangeStatus, DiffLine, DiffSummary, Hunk, LineageReason, PullRequestRef, SnapshotStats };
-/** Which snapshot a request reads, and optionally which baseline it is compared to. Absent = live working-tree index. */
-/** Which snapshot (and baseline) a request reads; `lens: 'domains'` draws the live index by domain instead of by folder. */
-export interface ViewKey { snapshot?: string; compareTo?: string; lens?: 'domains' }
+/**
+ * Which snapshot (and baseline) a request reads; absent = the live working-tree index.
+ * The live index can be drawn another way: `lens: 'domains'` by domain (the
+ * Features view), `lens: 'data'` by data family; `arrange` groups the files of
+ * large folders (projection/arrange.ts: `auto` or `off`, then `;<folder>=<choice>`).
+ */
+export interface ViewKey { snapshot?: string; compareTo?: string; lens?: 'domains' | 'data'; arrange?: string }
 export interface SnapshotRef { id: string; kind: 'working_tree' | 'commit'; commitSha?: string; dirty?: boolean; analyzedAt: string }
 export interface NodeChange {
   status: ChangeStatus; facets: ChangeFacet[];
@@ -320,6 +324,33 @@ export interface CoverageDetail {
   counts?: import('./catalog.js').CoverageCounts;
   /** Flows touching the entity (or anything inside it), first 50. */
   flows: FlowSummary[]; totalFlows: number;
+}
+
+// Data families and folder groups (projection/arrange.ts) -------------------------------
+export type { ArrangeChoice, DataFamily } from './arrange.js';
+export interface FamiliesResult {
+  /** Most files first. */
+  families: import('./arrange.js').DataFamily[];
+  /** Entity → family key: files, tables, routes, endpoints, commands and scheduled tasks (symbols take their file's). */
+  of: Record<string, string>;
+  /** Files placed through the code they are connected to (no table access of their own). */
+  inferred: string[];
+  /** Code files no family reaches. */
+  without: number;
+  /** Per area (spatial ancestors of files): files per family, code files without one as `none`. */
+  areas: Record<string, Record<string, number>>;
+}
+/** How a folder's files can be grouped on the live map. */
+export interface FolderArrangement {
+  id: string;
+  /** Files directly in the folder. */
+  files: number;
+  /** What Auto groups it by (`none` below 16 files, or when no grouping reads well). */
+  auto: import('./arrange.js').ArrangeChoice;
+  /** Each way to group, with its groups (two files or more, largest first) and whether Auto may choose it. */
+  options: { key: 'name' | 'data'; groups: { name: string; files: number }[]; grouped: number; fits: boolean }[];
+  /** What the viewed map draws. */
+  current: import('./arrange.js').ArrangeChoice;
 }
 
 // Annotations (language models) ----------------------------------------------------

@@ -26,7 +26,7 @@ export interface IndexOptions {
 }
 export async function indexRepository(repository: string, options: IndexOptions = {}): Promise<SoftwareGraph> {
   const root = await realpath(repository);
-  const config = options.config ?? await loadConfig(root, options.stateDirectory ?? path.join(root, '.archipelago'));
+  const config = options.config ?? await loadConfig(root, options.stateDirectory ?? path.join(root, '.codiluce'));
   const graph = new GraphBuilder(config.repository.id ?? config.repository.name);
   const repositoryId = graph.id('repository');
   const cache = options.revision || !options.cache ? undefined : typeof options.cache === 'string' ? new AnalysisCache(options.cache, undefined, options.onCache) : options.cache;

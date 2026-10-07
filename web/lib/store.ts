@@ -8,7 +8,7 @@
 // the map are kept; a view epoch drops responses that belong to an old view.
 import type { Entity, Relation } from '@engine/core/graph';
 import type { AggregateEdgesPage, AggregateGroup, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FlowList, FlowSummary, ImpactItem, ImpactResult, LocateResult, NodeSummary, ProjectionMeta, Rect, RelationItem, RequestFlow, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineEntry, TimelineResponse, ViewKey } from '@engine/projection/dto';
-import type { AnnotationsOverview, EntityAnnotation, FlowStatus } from '@engine/projection/dto';
+import type { AnnotationsOverview, EntityAnnotation, FamiliesResult, FlowStatus } from '@engine/projection/dto';
 import type { CatalogTab } from './catalog';
 import { fromRequestFlow, fromSteps, type MapFlow } from './map-flow';
 import { isAbort, type AtlasApi } from './api';
@@ -109,6 +109,20 @@ export interface CatalogState {
 }
 /** Which files the flows touch, drawn as a lens over the map. */
 export interface CoverageState { show: boolean; status: Status; viewStamp?: string; data?: CoverageResult; error?: string }
+/** Data families drawn over the map: files colored by the tables they use; `focus` lights one family and dims the rest. */
+export interface FamiliesState { show: boolean; status: Status; viewStamp?: string; data?: FamiliesResult; error?: string; focus?: string }
+/** How a folder's files are grouped: as fits best, by name, by data family, or not. */
+export type FolderChoice = 'auto' | 'name' | 'data' | 'none';
+/** How the live folder map groups the files of large folders: `auto` groups each as fits it best; a folder's own choice overrides. */
+export interface ArrangeState { mode: 'auto' | 'off'; folders: Record<string, FolderChoice> }
+/** How the live map is arranged: by folder (the canonical tree), by data family, or by domain (the Features view). */
+export type Lens = 'folders' | 'data' | 'domains';
+/** The `arrange` view parameter: the mode, then each folder whose choice differs from it (sorted); undefined when nothing is grouped. */
+export function arrangeParam(arrange: ArrangeState): string | undefined {
+  const items = Object.entries(arrange.folders).filter(([, choice]) => choice !== (arrange.mode === 'auto' ? 'auto' : 'none')).sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
+  if (arrange.mode === 'off' && !items.length) return undefined;
+  return [arrange.mode, ...items.map(([id, choice]) => `${id}=${choice}`)].join(';');
+}
 /**
  * A flow shown on the map: everything it touches stays lit, the rest dims;
  * it plays branch by branch (`playback.index` is the branch), the pulse
@@ -150,8 +164,9 @@ export interface AtlasState {
   tour?: TourState;
   /** The repository's overview, domains and model notes, when `annotate` has run. */
   annotations: { status: Status; data?: AnnotationsOverview; error?: string };
-  /** How the live map is arranged: by folder (the canonical tree) or by domain (the Features view). */
-  lens: 'folders' | 'domains';
+  lens: Lens;
+  arrange: ArrangeState;
+  families: FamiliesState;
 }
 export interface MapNavigator {
   flyTo(node: NodeSummary, options?: { mode?: 'focus' | 'enter' }): void;
@@ -232,14 +247,15 @@ export class AtlasStore {
   private pendingFocus?: { node: NodeSummary; frame?: Rect };
 
   constructor(readonly api: AtlasApi, private readonly options: StoreOptions = {}) {
-    let prefs: { themeId?: string; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel } = {};
-    try { prefs = JSON.parse(options.storage?.getItem('archipelago:prefs') ?? '{}'); } catch { /* defaults */ }
+    let prefs: { themeId?: string; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; arrange?: ArrangeState } = {};
+    try { prefs = JSON.parse(options.storage?.getItem('codiluce:prefs') ?? '{}'); } catch { /* defaults */ }
     this.state = {
       status: 'loading', view: { level: 'Applications', focus: [], zoom: 1, visible: [], truncated: false },
       relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' },
       history: { entries: [], index: -1 }, showDiagnostics: prefs.showDiagnostics ?? true, themeId: prefs.themeId ?? 'midnight',
       staleIndex: false, sceneRevision: 0,
-      impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '' }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, lens: 'folders',
+      impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '' }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, lens: 'folders', families: { show: false, status: 'idle' },
+      arrange: prefs.arrange?.mode === 'auto' || prefs.arrange?.mode === 'off' ? { mode: prefs.arrange.mode, folders: { ...prefs.arrange.folders } } : { mode: 'off', folders: {} },
       timeline: { open: false, status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true, split: prefs.split ?? true, regionLevel: prefs.regionLevel ?? 'auto', regions: { status: 'idle' } },
     };
   }
@@ -258,7 +274,7 @@ export class AtlasStore {
   }
   private bumpScene(): void { this.set(state => ({ sceneRevision: state.sceneRevision + 1 })); }
   private savePrefs(): void {
-    try { this.options.storage?.setItem('archipelago:prefs', JSON.stringify({ themeId: this.state.themeId, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel })); } catch { /* preferences are optional */ }
+    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, arrange: this.state.arrange })); } catch { /* preferences are optional */ }
   }
   dispose(): void { this.disposed = true; for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
 
@@ -266,7 +282,7 @@ export class AtlasStore {
     this.set({ status: 'loading', error: undefined });
     const epoch = this.epoch;
     try {
-      const lens = /(?:^#|&)lens=domains(?:&|$)/.test(this.options.location?.hash ?? '') ? 'domains' : this.state.lens;
+      const lens = (/(?:^#|&)lens=(domains|data)(?:&|$)/.exec(this.options.location?.hash ?? '')?.[1] as Lens | undefined) ?? this.state.lens;
       if (lens !== this.state.lens) this.set({ lens });
       this.api.setView(this.viewKey());
       const meta = await this.api.meta();
@@ -378,7 +394,7 @@ export class AtlasStore {
     const parts: string[] = [];
     if (id) parts.push(`id=${encodeURIComponent(id)}`);
     if (id && this.state.impact.open) parts.push(`impact=${this.state.impact.depth}`);
-    if (this.state.lens === 'domains') parts.push('lens=domains');
+    if (this.state.lens !== 'folders') parts.push(`lens=${this.state.lens}`);
     if (timeline.open) {
       const at = snapshotToken(timeline.data, timeline.target) ?? 'live', vs = timeline.compare ? snapshotToken(timeline.data, timeline.baseline ?? timeline.data?.workingTree?.id) : undefined;
       parts.push(`at=${at}`);
@@ -410,14 +426,36 @@ export class AtlasStore {
       if (data.available && selection && !selection.annotation) void this.loadSelectionAnnotation(selection.id, this.aborts.get('selection')?.signal ?? new AbortController().signal);
     } catch (error) { this.set({ annotations: { status: 'error', error: error instanceof Error ? error.message : String(error) } }); }
   }
-  /** Arrange the live map by folder or by domain; the camera starts over on the new arrangement. */
-  async setLens(lens: 'folders' | 'domains'): Promise<void> {
+  /** Arrange the live map by folder, by data family or by domain; the camera starts over on the new arrangement. */
+  async setLens(lens: Lens): Promise<void> {
     if (lens === this.state.lens) return;
     this.set({ lens });
     if (this.state.timeline.open) { this.writeHash(); return; }
     // Domains and districts exist in one arrangement only: their selection does not carry over.
     const selected = this.state.selection?.id;
     if (selected && (selected.startsWith('lens:') || selected.startsWith('projection:'))) this.clearSelection();
+    this.scene = new Scene();
+    await this.applyView(this.state.selection?.id, false);
+    this.navigator?.fitAll();
+  }
+  /** Group the files of every large folder as fits each (`auto`), or only those given a choice (`off`). */
+  async setArrangeMode(mode: ArrangeState['mode']): Promise<void> {
+    if (mode !== this.state.arrange.mode) await this.changeArrangement({ ...this.state.arrange, mode });
+  }
+  /** One folder's own grouping; the map then shows that folder. */
+  async setFolderArrangement(id: string, choice: FolderChoice): Promise<void> {
+    const folders = { ...this.state.arrange.folders };
+    if (choice === (this.state.arrange.mode === 'auto' ? 'auto' : 'none')) delete folders[id]; else folders[id] = choice;
+    await this.changeArrangement({ ...this.state.arrange, folders }, id);
+  }
+  private async changeArrangement(arrange: ArrangeState, folder?: string): Promise<void> {
+    const before = arrangeParam(this.state.arrange);
+    this.set({ arrange }); this.savePrefs();
+    if (arrangeParam(arrange) === before || this.state.timeline.open || this.state.lens !== 'folders') return;
+    // Groups exist in one arrangement only: their selection does not carry over.
+    const selected = this.state.selection?.id;
+    if (selected?.startsWith('projection:arrange:')) this.clearSelection();
+    if (folder) { await this.applyView(folder, true); return; }
     this.scene = new Scene();
     await this.applyView(this.state.selection?.id, false);
     this.navigator?.fitAll();
@@ -545,7 +583,11 @@ export class AtlasStore {
   /** The snapshot/baseline pair every request reads. */
   viewKey(): ViewKey {
     const timeline = this.state.timeline;
-    if (!timeline.open) return this.state.lens === 'domains' ? { lens: 'domains' } : {};
+    if (!timeline.open) {
+      if (this.state.lens !== 'folders') return { lens: this.state.lens };
+      const arrange = arrangeParam(this.state.arrange);
+      return arrange ? { arrange } : {};
+    }
     // The live index is named explicitly in history mode, so it is drawn on the timeline layout like every commit.
     const snapshot = timeline.target ?? timeline.data?.workingTree?.id;
     return { ...(snapshot ? { snapshot } : {}), ...(timeline.compare && timeline.baseline ? { compareTo: timeline.baseline } : {}) };
@@ -818,6 +860,7 @@ export class AtlasStore {
       }
       if (this.state.catalog.status !== 'idle') void this.loadCatalog();
       if (this.state.coverage.show) void this.loadCoverage();
+      if (this.state.families.show) void this.loadFamilies();
       if (this.state.requests.open) void this.openRequestFlow(this.state.requests.open.id);
       const tour = this.state.tour;
       if (tour) void this.openTour({ id: tour.id, detail: tour.detail, title: tour.title, ...(tour.subtitle ? { subtitle: tour.subtitle } : {}), ...(tour.kind ? { kind: tour.kind } : {}) }, { fit: false, play: false });
@@ -829,7 +872,7 @@ export class AtlasStore {
 
   // Blast radius and steps ----------------------------------------------------
   /** Identity of the current view, to tell whether loaded results still belong to it. */
-  viewStamp(): string { const meta = this.state.meta; return `${meta?.snapshot.id ?? ''}|${meta?.comparison?.baseline.id ?? ''}|${this.state.timeline.open ? 'folders' : this.state.lens}`; }
+  viewStamp(): string { const meta = this.state.meta; return `${meta?.snapshot.id ?? ''}|${meta?.comparison?.baseline.id ?? ''}|${this.state.timeline.open ? 'folders' : this.state.lens === 'folders' ? `folders:${arrangeParam(this.state.arrange) ?? ''}` : this.state.lens}`; }
   /** Show what depends on an entity (the selection by default); it then follows the selection. */
   async showImpact(id = this.state.selection?.id, depth = this.state.impact.depth): Promise<void> {
     if (!id) return;
@@ -1021,7 +1064,8 @@ export class AtlasStore {
   }
   /** Show or hide the coverage lens: files colored by whether flows touch them. */
   async toggleCoverage(show = !this.state.coverage.show): Promise<void> {
-    this.set(state => ({ coverage: { ...state.coverage, show } }));
+    // Coverage and data families both color files: one at a time.
+    this.set(state => ({ coverage: { ...state.coverage, show }, ...(show && state.families.show ? { families: { ...state.families, show: false, focus: undefined } } : {}) }));
     if (show && (this.state.coverage.status !== 'ready' || this.state.coverage.viewStamp !== this.viewStamp())) await this.loadCoverage();
   }
   async loadCoverage(): Promise<void> {
@@ -1033,6 +1077,27 @@ export class AtlasStore {
       if (signal.aborted) return;
       this.set(state => ({ coverage: { ...state.coverage, status: 'ready', data, viewStamp } }));
     } catch (error) { if (!isAbort(error)) this.set(state => ({ coverage: { ...state.coverage, status: 'error', error: error instanceof Error ? error.message : String(error) } })); }
+  }
+  /** Show or hide data families: files colored by the tables they use (or the code they use does). */
+  async toggleFamilies(show = !this.state.families.show): Promise<void> {
+    this.set(state => ({ families: { ...state.families, show, ...(show ? {} : { focus: undefined }) }, ...(show && state.coverage.show ? { coverage: { ...state.coverage, show: false } } : {}) }));
+    if (show && (this.state.families.status !== 'ready' || this.state.families.viewStamp !== this.viewStamp())) await this.loadFamilies();
+  }
+  async loadFamilies(): Promise<void> {
+    const signal = this.abortable('families');
+    const viewStamp = this.viewStamp();
+    this.set(state => ({ families: { ...state.families, status: 'loading', error: undefined } }));
+    try {
+      const data = await this.api.families(signal);
+      if (signal.aborted) return;
+      // A family that no longer exists in this view is no longer lit.
+      this.set(state => ({ families: { ...state.families, status: 'ready', data, viewStamp, ...(state.families.focus && !data.families.some(family => family.key === state.families.focus) ? { focus: undefined } : {}) } }));
+    } catch (error) { if (!isAbort(error)) this.set(state => ({ families: { ...state.families, status: 'error', error: error instanceof Error ? error.message : String(error) } })); }
+  }
+  /** Light one family on the map (again: none); the colors are shown if they were not. */
+  focusFamily(key: string | undefined): void {
+    this.set(state => ({ families: { ...state.families, focus: key === undefined || state.families.focus === key ? undefined : key } }));
+    if (key && !this.state.families.show) void this.toggleFamilies(true);
   }
 }
 /** How a catalog flow is shown on the map, and its title. */

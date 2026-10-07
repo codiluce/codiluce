@@ -30,20 +30,35 @@ export interface Theme {
 export interface ThemeStyle {
   /** Corner radius of block footprints as a fraction of their shorter side (0: sharp corners). */
   rounding: number;
-  grid: 'lines' | 'dots';
+  grid: 'lines' | 'dots' | 'none';
   /** Soft color fields over the background, in viewport fractions (radius relative to the larger side). */
   glows?: { x: number; y: number; r: number; color: string }[];
   /** Shadow that blocks cast onto what they stand on. */
   shadow?: string;
   /** Strength (0..1) of the highlight across top faces. */
   sheen?: number;
+  /** Width of the outline around block tops (default 1). */
+  outlineWidth?: number;
+  /** Blur of a glow in their own color around relation edges (0 or absent: none). */
+  edgeGlow?: number;
   /** Map labels; the panels read it from the `--font` custom property. */
   font?: string;
-  /** Panels float as rounded cards over a backdrop (`--app-bg`) instead of docking edge to edge. */
+  /**
+   * Panels float as cards over a backdrop (`--app-bg`) instead of docking edge to edge. The space
+   * between them (`--gap`), their corners (`--radius-*`) and borders (`--border-width`) come from `ui`.
+   */
   floating?: boolean;
 }
 const hsl = (h: number, s: number, l: number): Hsl => ({ h, s, l });
 const ROUNDED_FONT = '"Nunito Variable", Nunito, ui-rounded, "SF Pro Rounded", system-ui, sans-serif';
+const INTER = '"Inter Variable", Inter, system-ui, sans-serif';
+const GEIST = '"Geist Variable", Geist, system-ui, sans-serif';
+const GEIST_MONO = '"Geist Mono Variable", "Geist Mono", ui-monospace, monospace';
+const FRAUNCES = '"Fraunces Variable", Fraunces, Georgia, serif';
+const JETBRAINS_MONO = '"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace';
+const ARCHIVO = '"Archivo Variable", Archivo, system-ui, sans-serif';
+const SPACE_GROTESK = '"Space Grotesk Variable", "Space Grotesk", system-ui, sans-serif';
+const UNBOUNDED = '"Unbounded Variable", Unbounded, system-ui, sans-serif';
 /** Files colored by language (palette key `file:<language>`); other themes color every file alike. */
 function fileLanguages(l: number, s = 0): Record<string, Hsl> {
   const tone = (h: number, saturation: number, lightness = l) => hsl(h, Math.max(0, Math.min(100, saturation + s)), lightness);
@@ -175,15 +190,282 @@ export const THEMES: Theme[] = [
       glows: [{ x: 0, y: 0, r: 0.7, color: 'rgba(255,79,154,0.16)' }, { x: 1, y: 0.3, r: 0.75, color: 'rgba(91,120,255,0.20)' }, { x: 0.5, y: 1.05, r: 0.55, color: 'rgba(150,240,90,0.07)' }],
     },
   },
+  {
+    // Super minimal, light: white paper, hairlines, docked panels, quiet tints; the one accent marks what you interact with.
+    id: 'ink', name: 'Ink', dark: false,
+    background: ['#ffffff', '#fafafa'], grid: 'rgba(0,0,0,0.035)',
+    entity: {
+      repository: hsl(0, 0, 98), application: hsl(0, 0, 95), group: hsl(0, 0, 92), directory: hsl(0, 0, 93),
+      file: hsl(0, 0, 84), class: hsl(150, 16, 70), controller: hsl(20, 30, 66), component: hsl(280, 16, 74),
+      function: hsl(180, 16, 66), method: hsl(45, 26, 72), route: hsl(330, 20, 70), api_endpoint: hsl(350, 26, 66),
+      model: hsl(100, 14, 64), database_table: hsl(35, 16, 62), command: hsl(200, 18, 64), scheduled_task: hsl(210, 16, 70),
+    },
+    fallbackEntity: hsl(0, 0, 78), depthStep: -2.2, wallShade: [0.8, 0.9], outline: 'rgba(0,0,0,0.12)',
+    text: { primary: '#0a0a0a', secondary: '#737373', halo: 'rgba(255,255,255,0.92)', district: '#262626' },
+    selection: '#0047ff', hover: '#0a0a0a', focusRing: '#0047ff',
+    relation: { imports: '#a3a3a3', exports: '#b8b8b8', handles: '#0047ff', routes_to: '#0047ff', requests: '#0047ff', extends: '#525252', implements: '#525252', calls: '#262626', renders: '#525252', reads: '#737373', writes: '#e5484d', queries: '#737373', maps_to: '#8a8a8a', foreign_key: '#8a8a8a', references: '#8a8a8a', invokes: '#404040' },
+    impact: { origin: '#0047ff', near: '#e5484d', far: '#b5b5b5' },
+    fallbackRelation: '#8a8a8a',
+    flow: { step: '#0047ff', declared: '#a3a3a3', indicator: '#ffffff', dimAlpha: 0.16 },
+    diagnostic: '#d97706', dimAlpha: 0.3,
+    change: { added: '#16a34a', removed: '#e5484d', modified: '#d97706', moved: '#7c3aed', ghostAlpha: 0.4, unchangedAlpha: 0.16 },
+    ui: {
+      '--bg': '#ffffff', '--panel': 'rgba(255,255,255,0.96)', '--panel-solid': '#ffffff', '--panel-border': '#ebebeb',
+      '--text': '#0a0a0a', '--muted': '#737373', '--subtle': '#a3a3a3', '--accent': '#0047ff', '--accent-ink': '#ffffff', '--link': '#0047ff',
+      '--chip': '#f5f5f5', '--chip-active': 'rgba(0,71,255,0.08)', '--warning': '#b45309', '--danger': '#dc2626', '--ok': '#16a34a',
+      '--code-bg': '#fcfcfc', '--code-highlight': 'rgba(0,71,255,0.07)', '--code-evidence': 'rgba(0,0,0,0.05)', '--shadow': '0 0 0 transparent',
+      '--added': '#16a34a', '--removed': '#dc2626', '--modified': '#b45309', '--moved': '#7c3aed', '--diff-added': 'rgba(22,163,74,0.10)', '--diff-removed': 'rgba(220,38,38,0.08)',
+      '--font': INTER, '--font-display': INTER, '--radius': '3px', '--radius-chip': '3px', '--radius-item': '3px', '--radius-float': '4px', '--radius-panel': '4px',
+      '--title-size': '10.5px', '--title-weight': '600', '--title-tracking': '0.12em', '--brand-weight': '600', '--brand-tracking': '-0.01em',
+    },
+    style: { rounding: 0, grid: 'lines', font: INTER },
+  },
+  {
+    // Super minimal, dark: pure black, flat cards held apart by space alone, a grey map; white marks what you interact with.
+    id: 'void', name: 'Void', dark: true,
+    background: ['#000000', '#050505'], grid: 'transparent',
+    entity: {
+      repository: hsl(0, 0, 6), application: hsl(0, 0, 9), group: hsl(0, 0, 11), directory: hsl(0, 0, 12),
+      file: hsl(0, 0, 30), class: hsl(160, 12, 42), controller: hsl(30, 18, 46), component: hsl(270, 14, 50),
+      function: hsl(190, 12, 42), method: hsl(45, 16, 48), route: hsl(330, 14, 48), api_endpoint: hsl(350, 18, 48),
+      model: hsl(110, 10, 40), database_table: hsl(35, 10, 38), command: hsl(200, 14, 44), scheduled_task: hsl(215, 12, 46),
+    },
+    fallbackEntity: hsl(0, 0, 34), depthStep: 2.4, wallShade: [0.55, 0.75], outline: 'rgba(0,0,0,0.5)',
+    text: { primary: '#ededed', secondary: '#8f8f8f', halo: 'rgba(0,0,0,0.85)', district: '#d4d4d4' },
+    selection: '#ffffff', hover: '#8f8f8f', focusRing: '#ffffff',
+    relation: { imports: '#6e6e6e', exports: '#8f8f8f', handles: '#ededed', routes_to: '#ededed', requests: '#cfcfcf', extends: '#7a7a7a', implements: '#7a7a7a', calls: '#a8a8a8', renders: '#9a9a9a', reads: '#7f7f7f', writes: '#ff6166', queries: '#7f7f7f', maps_to: '#7a7a7a', foreign_key: '#7a7a7a', references: '#8a8a8a', invokes: '#b5b5b5' },
+    impact: { origin: '#ffffff', near: '#ff6166', far: '#4d4d4d' },
+    fallbackRelation: '#8f8f8f',
+    flow: { step: '#ffffff', declared: '#5c5c5c', indicator: '#000000', dimAlpha: 0.16 },
+    diagnostic: '#f5a623', dimAlpha: 0.3,
+    change: { added: '#3ecf8e', removed: '#ff6166', modified: '#f5a623', moved: '#a78bfa', ghostAlpha: 0.4, unchangedAlpha: 0.14 },
+    ui: {
+      '--bg': '#000000', '--app-bg': '#000000', '--panel': '#0a0a0a', '--panel-solid': '#0a0a0a', '--panel-border': 'rgba(255,255,255,0.08)',
+      '--text': '#ededed', '--muted': '#8f8f8f', '--subtle': '#5c5c5c', '--accent': '#ededed', '--accent-ink': '#000000', '--link': '#d4d4d4',
+      '--chip': 'rgba(255,255,255,0.05)', '--chip-active': 'rgba(255,255,255,0.11)', '--warning': '#f5a623', '--danger': '#ff6166', '--ok': '#3ecf8e',
+      '--code-bg': '#050505', '--code-highlight': 'rgba(255,255,255,0.07)', '--code-evidence': 'rgba(255,255,255,0.05)', '--shadow': '0 0 0 transparent',
+      '--added': '#3ecf8e', '--removed': '#ff6166', '--modified': '#f5a623', '--moved': '#a78bfa', '--diff-added': 'rgba(62,207,142,0.11)', '--diff-removed': 'rgba(255,97,102,0.11)',
+      '--font': GEIST, '--font-display': GEIST, '--font-mono': GEIST_MONO, '--gap': '16px', '--blur': '0px', '--control-shadow': '0 0 0 transparent', '--primary-shadow': '0 0 0 transparent',
+      '--radius': '8px', '--radius-chip': '6px', '--radius-item': '8px', '--radius-float': '10px', '--radius-panel': '12px', '--panel-pad': '16px 18px',
+      '--title-size': '13px', '--title-weight': '500', '--title-tracking': '-0.01em', '--brand-weight': '600', '--brand-tracking': '-0.03em',
+    },
+    style: { rounding: 0.05, grid: 'none', font: GEIST, floating: true },
+  },
+  {
+    // Editorial: warm newsprint, serif type, wide margins between flat sheets, an earthy map and one oxblood accent.
+    id: 'gazette', name: 'Gazette', dark: false,
+    background: ['#f8f5ef', '#f3efe6'], grid: 'rgba(60,40,20,0.16)',
+    entity: {
+      repository: hsl(40, 25, 95), application: hsl(38, 22, 91), group: hsl(30, 18, 88), directory: hsl(40, 14, 89),
+      file: hsl(36, 10, 80), class: hsl(150, 18, 54), controller: hsl(14, 55, 54), component: hsl(345, 30, 62),
+      function: hsl(190, 20, 50), method: hsl(42, 55, 62), route: hsl(4, 52, 48), api_endpoint: hsl(355, 45, 54),
+      model: hsl(90, 20, 50), database_table: hsl(30, 30, 48), command: hsl(210, 22, 48), scheduled_task: hsl(215, 18, 60),
+    },
+    fallbackEntity: hsl(36, 8, 76), depthStep: -2.4, wallShade: [0.8, 0.9], outline: 'rgba(40,30,20,0.14)',
+    text: { primary: '#1a1714', secondary: '#6b625a', halo: 'rgba(250,248,243,0.92)', district: '#2a2420' },
+    selection: '#b3261e', hover: '#1a1714', focusRing: '#b3261e',
+    relation: { imports: '#3f5c7a', exports: '#5b7a3a', handles: '#b3541e', routes_to: '#a3263e', requests: '#b8860b', extends: '#6a4c93', implements: '#6a4c93', calls: '#2f6f6f', renders: '#8e3b6b', reads: '#4f7a3a', writes: '#b3261e', queries: '#4f7a3a', maps_to: '#a6761d', foreign_key: '#a35a1d', references: '#2f6f6f', invokes: '#6a4c93' },
+    impact: { origin: '#1a1714', near: '#b3261e', far: '#c9a227' },
+    fallbackRelation: '#6b625a',
+    flow: { step: '#b3261e', declared: '#9a9086', indicator: '#fffaf0', dimAlpha: 0.2 },
+    diagnostic: '#b8860b', dimAlpha: 0.34,
+    change: { added: '#3d7a3a', removed: '#b3261e', modified: '#b8860b', moved: '#6a4c93', ghostAlpha: 0.42, unchangedAlpha: 0.18 },
+    ui: {
+      '--bg': '#efebe2', '--app-bg': '#efebe2', '--panel': '#fbf9f4', '--panel-solid': '#fbf9f4', '--panel-border': 'rgba(26,23,20,0.12)',
+      '--text': '#1a1714', '--muted': '#6b625a', '--subtle': '#a1978c', '--accent': '#b3261e', '--accent-ink': '#ffffff', '--link': '#1f4e79',
+      '--chip': 'rgba(26,23,20,0.045)', '--chip-active': 'rgba(179,38,30,0.09)', '--warning': '#9a6700', '--danger': '#b3261e', '--ok': '#3d7a3a',
+      '--code-bg': '#fdfcf8', '--code-highlight': 'rgba(179,38,30,0.08)', '--code-evidence': 'rgba(31,78,121,0.09)', '--shadow': '0 1px 0 rgba(26,23,20,0.05)',
+      '--added': '#3d7a3a', '--removed': '#b3261e', '--modified': '#9a6700', '--moved': '#6a4c93', '--diff-added': 'rgba(61,122,58,0.10)', '--diff-removed': 'rgba(179,38,30,0.08)',
+      '--font': FRAUNCES, '--font-display': FRAUNCES, '--font-size': '13.5px', '--gap': '22px', '--blur': '0px', '--control-shadow': '0 0 0 transparent', '--primary-shadow': '0 0 0 transparent',
+      '--radius': '2px', '--radius-chip': '2px', '--radius-item': '2px', '--radius-float': '3px', '--radius-panel': '3px', '--panel-pad': '16px 22px',
+      '--title-size': '20px', '--title-weight': '500', '--title-tracking': '-0.01em', '--brand-size': '22px', '--brand-weight': '600', '--brand-tracking': '-0.02em',
+    },
+    style: { rounding: 0, grid: 'dots', font: FRAUNCES, floating: true },
+  },
+  {
+    // A phosphor terminal: green on black in a monospace, tight tiles, square corners, a faint glow and scanlines; amber marks the selection.
+    id: 'phosphor', name: 'Phosphor', dark: true,
+    background: ['#030b06', '#020603'], grid: 'rgba(51,255,102,0.07)',
+    entity: {
+      repository: hsl(140, 40, 5), application: hsl(140, 45, 8), group: hsl(140, 35, 10), directory: hsl(140, 30, 10),
+      file: hsl(140, 30, 24), class: hsl(140, 80, 40), controller: hsl(40, 100, 52), component: hsl(160, 90, 45),
+      function: hsl(120, 70, 38), method: hsl(90, 70, 45), route: hsl(45, 100, 60), api_endpoint: hsl(30, 100, 55),
+      model: hsl(150, 60, 32), database_table: hsl(170, 60, 32), command: hsl(180, 80, 42), scheduled_task: hsl(190, 70, 40),
+    },
+    fallbackEntity: hsl(140, 20, 22), depthStep: 2.2, wallShade: [0.42, 0.62], outline: 'rgba(51,255,102,0.22)',
+    text: { primary: '#b8ffc9', secondary: '#4fae6a', halo: 'rgba(2,6,3,0.9)', district: '#7dffa0' },
+    selection: '#ffb000', hover: '#e6ffe9', focusRing: '#ffb000',
+    relation: { imports: '#33ff66', exports: '#7dff9e', handles: '#ffb000', routes_to: '#ffcc4d', requests: '#ffd966', extends: '#00e5c7', implements: '#00e5c7', calls: '#66ffcc', renders: '#99ff33', reads: '#33ff99', writes: '#ff5533', queries: '#33ff99', maps_to: '#ffb000', foreign_key: '#ff9900', references: '#00e5c7', invokes: '#b3ff66' },
+    impact: { origin: '#e6ffe9', near: '#ffb000', far: '#1f7a3a' },
+    fallbackRelation: '#4fae6a',
+    flow: { step: '#ffb000', declared: '#2f7a45', indicator: '#fff2cc', dimAlpha: 0.16 },
+    diagnostic: '#ffb000', dimAlpha: 0.3,
+    change: { added: '#33ff66', removed: '#ff5533', modified: '#ffb000', moved: '#00e5c7', ghostAlpha: 0.4, unchangedAlpha: 0.14 },
+    ui: {
+      '--bg': '#020603', '--app-bg': '#020603', '--panel': '#030e07', '--panel-solid': '#030e07', '--panel-border': 'rgba(51,255,102,0.2)',
+      '--text': '#b8ffc9', '--muted': '#4fbf70', '--subtle': '#2f7a45', '--accent': '#ffb000', '--accent-ink': '#140d00', '--link': '#66ffcc',
+      '--chip': 'rgba(51,255,102,0.07)', '--chip-active': 'rgba(51,255,102,0.16)', '--warning': '#ffb000', '--danger': '#ff5533', '--ok': '#33ff66',
+      '--code-bg': '#010402', '--code-highlight': 'rgba(255,176,0,0.12)', '--code-evidence': 'rgba(51,255,102,0.10)', '--shadow': '0 0 0 1px rgba(51,255,102,0.04), 0 0 24px rgba(51,255,102,0.07)',
+      '--added': '#33ff66', '--removed': '#ff5533', '--modified': '#ffb000', '--moved': '#00e5c7', '--diff-added': 'rgba(51,255,102,0.11)', '--diff-removed': 'rgba(255,85,51,0.12)',
+      '--font': JETBRAINS_MONO, '--font-display': JETBRAINS_MONO, '--font-mono': JETBRAINS_MONO, '--font-size': '12px', '--gap': '6px', '--blur': '0px', '--control-shadow': '0 0 0 transparent', '--primary-shadow': '0 0 14px rgba(255,176,0,0.35)',
+      '--radius': '0px', '--radius-chip': '0px', '--radius-item': '0px', '--radius-float': '0px', '--radius-panel': '0px', '--panel-pad': '10px 12px',
+      '--title-size': '11.5px', '--title-weight': '700', '--title-case': 'uppercase', '--title-tracking': '0.08em', '--brand-size': '13px', '--brand-weight': '800', '--brand-tracking': '0.14em',
+    },
+    style: { rounding: 0, grid: 'lines', font: JETBRAINS_MONO, floating: true, edgeGlow: 6, glows: [{ x: 0.5, y: 0.45, r: 0.7, color: 'rgba(51,255,102,0.05)' }] },
+  },
+  {
+    // Neo-brutalist poster: a halftone yellow backdrop, heavy expanded type, black borders, hard offset shadows, flat primaries outlined in ink.
+    id: 'brutal', name: 'Brutal', dark: false,
+    background: ['#f4f1e8', '#f4f1e8'], grid: 'rgba(10,10,10,0.08)',
+    entity: {
+      repository: hsl(45, 25, 96), application: hsl(48, 100, 86), 'application:laravel': hsl(10, 100, 88), 'application:nextjs': hsl(225, 100, 90), group: hsl(300, 80, 90), directory: hsl(45, 20, 91),
+      file: hsl(0, 0, 100), ...fileLanguages(58, 10), class: hsl(152, 100, 38), controller: hsl(16, 100, 52), component: hsl(320, 100, 62),
+      function: hsl(190, 100, 42), method: hsl(50, 100, 50), route: hsl(228, 100, 60), api_endpoint: hsl(0, 90, 55),
+      model: hsl(100, 70, 45), database_table: hsl(36, 100, 50), command: hsl(270, 90, 60), scheduled_task: hsl(204, 100, 48),
+    },
+    fallbackEntity: hsl(45, 10, 82), depthStep: -1.6, wallShade: [0.45, 0.66], outline: '#0a0a0a',
+    text: { primary: '#0a0a0a', secondary: '#3d3d3d', halo: 'rgba(244,241,232,0.95)', district: '#0a0a0a' },
+    selection: '#ff2e00', hover: '#2f5bff', focusRing: '#ff2e00',
+    relation: { imports: '#2f5bff', exports: '#00a85a', handles: '#ff5a00', routes_to: '#ff2e93', requests: '#e6b800', extends: '#7a3cff', implements: '#7a3cff', calls: '#0a0a0a', renders: '#d6249f', reads: '#00a85a', writes: '#ff2e00', queries: '#00a85a', maps_to: '#e6a100', foreign_key: '#e67300', references: '#008f8f', invokes: '#7a3cff' },
+    impact: { origin: '#2f5bff', near: '#ff2e00', far: '#ffd400' },
+    fallbackRelation: '#0a0a0a',
+    flow: { step: '#ff2e00', declared: '#7a7a7a', indicator: '#ffd400', dimAlpha: 0.2 },
+    diagnostic: '#e6a100', dimAlpha: 0.36,
+    change: { added: '#00a85a', removed: '#ff2e00', modified: '#e6a100', moved: '#7a3cff', ghostAlpha: 0.42, unchangedAlpha: 0.18 },
+    ui: {
+      '--bg': '#ffd400', '--app-bg': 'radial-gradient(rgba(10,10,10,0.2) 1px, transparent 1.4px) 0 0 / 11px 11px, #ffd400',
+      '--panel': '#ffffff', '--panel-solid': '#ffffff', '--panel-border': '#0a0a0a',
+      '--text': '#0a0a0a', '--muted': '#4a4a4a', '--subtle': '#8a8a8a', '--accent': '#0a0a0a', '--accent-ink': '#ffd400', '--link': '#2f5bff',
+      '--chip': 'rgba(10,10,10,0.06)', '--chip-active': '#ffd400', '--warning': '#b35c00', '--danger': '#e01e00', '--ok': '#00875a',
+      '--code-bg': '#fffdf5', '--code-highlight': 'rgba(255,212,0,0.35)', '--code-evidence': 'rgba(47,91,255,0.14)', '--shadow': '4px 4px 0 #0a0a0a',
+      '--added': '#00875a', '--removed': '#e01e00', '--modified': '#b35c00', '--moved': '#7a3cff', '--diff-added': 'rgba(0,168,90,0.14)', '--diff-removed': 'rgba(255,46,0,0.12)',
+      '--font': ARCHIVO, '--font-display': ARCHIVO, '--display-stretch': '125%', '--gap': '14px', '--border-width': '2px', '--blur': '0px', '--control-shadow': '3px 3px 0 #0a0a0a', '--primary-shadow': '3px 3px 0 #ff2e00',
+      '--radius': '0px', '--radius-chip': '0px', '--radius-item': '0px', '--radius-float': '0px', '--radius-panel': '0px',
+      '--title-size': '13px', '--title-weight': '900', '--title-case': 'uppercase', '--title-tracking': '0.01em', '--brand-size': '17px', '--brand-weight': '900', '--brand-tracking': '0',
+    },
+    style: { rounding: 0, grid: 'lines', font: ARCHIVO, floating: true, outlineWidth: 2, shadow: '#0a0a0a' },
+  },
+  {
+    // Synthwave: glassy cards glowing over a dark violet night, wide display type, vivid blocks with dark walls, edges that glow.
+    id: 'neon', name: 'Neon', dark: true,
+    background: ['#0b0818', '#05040c'], grid: 'rgba(0,229,255,0.07)',
+    entity: {
+      repository: hsl(250, 40, 8), application: hsl(255, 45, 12), 'application:laravel': hsl(330, 55, 14), 'application:nextjs': hsl(195, 60, 12), group: hsl(280, 45, 15), directory: hsl(250, 35, 14),
+      file: hsl(240, 20, 36), ...fileLanguages(56, 8), class: hsl(150, 100, 50), controller: hsl(25, 100, 58), component: hsl(310, 100, 62),
+      function: hsl(180, 100, 48), method: hsl(55, 100, 55), route: hsl(285, 100, 68), api_endpoint: hsl(340, 100, 60),
+      model: hsl(120, 90, 55), database_table: hsl(40, 100, 55), command: hsl(195, 100, 55), scheduled_task: hsl(210, 100, 62),
+    },
+    fallbackEntity: hsl(250, 20, 30), depthStep: 2.6, wallShade: [0.36, 0.52], outline: 'rgba(0,0,0,0.4)',
+    text: { primary: '#f5f3ff', secondary: '#9d95c9', halo: 'rgba(5,4,12,0.9)', district: '#c4b5fd' },
+    selection: '#00f0ff', hover: '#ff2bd6', focusRing: '#00f0ff',
+    relation: { imports: '#4d7cff', exports: '#00ffa3', handles: '#ff8a00', routes_to: '#ff2bd6', requests: '#ffe600', extends: '#a855ff', implements: '#a855ff', calls: '#00f0ff', renders: '#ff4dff', reads: '#39ff88', writes: '#ff3d6e', queries: '#39ff88', maps_to: '#ffc400', foreign_key: '#ff9e3d', references: '#2bffd9', invokes: '#c77dff' },
+    impact: { origin: '#00f0ff', near: '#ff2bd6', far: '#ffe600' },
+    fallbackRelation: '#b8b2e0',
+    flow: { step: '#00f0ff', declared: '#6b6394', indicator: '#e6fdff', dimAlpha: 0.15 },
+    diagnostic: '#ffc400', dimAlpha: 0.3,
+    change: { added: '#39ff88', removed: '#ff3d6e', modified: '#ffc400', moved: '#a855ff', ghostAlpha: 0.4, unchangedAlpha: 0.14 },
+    ui: {
+      '--bg': '#05040c', '--app-bg': 'radial-gradient(900px 600px at 0% 0%, rgba(255,43,214,0.16) 0%, rgba(255,43,214,0) 60%), radial-gradient(1000px 700px at 100% 100%, rgba(0,240,255,0.13) 0%, rgba(0,240,255,0) 60%), #05040c',
+      '--panel': 'rgba(13,10,28,0.78)', '--panel-solid': '#0d0a1c', '--panel-border': 'rgba(167,139,250,0.2)',
+      '--text': '#f5f3ff', '--muted': '#a39dc9', '--subtle': '#6b6394', '--accent': '#00f0ff', '--accent-ink': '#001417', '--link': '#5ee7ff',
+      '--chip': 'rgba(167,139,250,0.08)', '--chip-active': 'rgba(0,240,255,0.14)', '--warning': '#ffc400', '--danger': '#ff3d6e', '--ok': '#39ff88',
+      '--code-bg': '#080612', '--code-highlight': 'rgba(0,240,255,0.10)', '--code-evidence': 'rgba(255,43,214,0.12)', '--shadow': '0 0 0 1px rgba(0,240,255,0.05), 0 0 28px rgba(255,43,214,0.10), 0 18px 48px rgba(0,0,0,0.55)',
+      '--added': '#39ff88', '--removed': '#ff3d6e', '--modified': '#ffc400', '--moved': '#a855ff', '--diff-added': 'rgba(57,255,136,0.12)', '--diff-removed': 'rgba(255,61,110,0.13)',
+      '--font': SPACE_GROTESK, '--font-display': UNBOUNDED, '--gap': '10px', '--blur': '20px', '--control-shadow': '0 0 14px rgba(0,240,255,0.08)', '--primary-shadow': '0 0 18px rgba(0,240,255,0.45)',
+      '--radius': '10px', '--radius-chip': '999px', '--radius-item': '10px', '--radius-float': '14px', '--radius-panel': '16px',
+      '--title-size': '10.5px', '--title-weight': '600', '--title-case': 'uppercase', '--title-tracking': '0.16em', '--brand-size': '14px', '--brand-weight': '700', '--brand-tracking': '0.08em',
+    },
+    style: {
+      rounding: 0.08, grid: 'lines', font: SPACE_GROTESK, floating: true, edgeGlow: 9, sheen: 0.08,
+      glows: [{ x: 0, y: 0, r: 0.65, color: 'rgba(255,43,214,0.13)' }, { x: 1, y: 1, r: 0.7, color: 'rgba(0,240,255,0.10)' }, { x: 0.55, y: 0.5, r: 0.45, color: 'rgba(124,58,237,0.08)' }],
+    },
+  },
+  {
+    // An illuminated architecture studio: warm ivory, neutral structure and gold where code comes into focus.
+    id: 'codiluce-dawn', name: 'Codiluce Dawn', dark: false,
+    background: ['#f4f3ee', '#efeee8'], grid: 'rgba(75,83,86,0.12)',
+    entity: {
+      repository: hsl(48, 12, 94), application: hsl(45, 9, 91), group: hsl(200, 5, 88), directory: hsl(200, 5, 87),
+      file: hsl(190, 6, 82), class: hsl(205, 7, 80), controller: hsl(205, 7, 79), component: hsl(190, 7, 83),
+      function: hsl(205, 6, 80), method: hsl(205, 6, 79), route: hsl(38, 12, 82), api_endpoint: hsl(38, 14, 81),
+      model: hsl(190, 6, 79), database_table: hsl(190, 6, 81), command: hsl(205, 6, 80), scheduled_task: hsl(205, 6, 81),
+    },
+    fallbackEntity: hsl(200, 5, 82), depthStep: -1.6, wallShade: [0.87, 0.95], outline: 'rgba(77,88,84,0.18)',
+    text: { primary: '#242a31', secondary: '#626b72', halo: 'rgba(244,243,238,0.94)', district: '#414a50' },
+    selection: '#ad7b26', hover: '#677e8c', focusRing: '#ad7b26',
+    relation: { imports: '#929a9c', exports: '#7d898b', handles: '#ad7b26', routes_to: '#ad7b26', requests: '#ad7b26', extends: '#8b959b', implements: '#8b959b', calls: '#ad7b26', renders: '#ad7b26', reads: '#ad7b26', writes: '#ad7b26', queries: '#ad7b26', maps_to: '#8b959b', foreign_key: '#8b959b', references: '#8b959b', invokes: '#ad7b26' },
+    fallbackRelation: '#8b959b', impact: { origin: '#ad7b26', near: '#be7254', far: '#d3b780' },
+    flow: { step: '#ad7b26', declared: '#8b959b', indicator: '#fff5da', dimAlpha: 0.22 },
+    diagnostic: '#a16a19', dimAlpha: 0.34,
+    change: { added: '#377b5b', removed: '#b24c4b', modified: '#9b6e25', moved: '#706395', ghostAlpha: 0.42, unchangedAlpha: 0.18 },
+    ui: {
+      '--bg': '#f4f3ee', '--panel': '#fcfbf8', '--panel-solid': '#fcfbf8', '--panel-border': '#dedfd9',
+      '--text': '#242a31', '--muted': '#626b72', '--subtle': '#737b80', '--accent': '#906414', '--accent-ink': '#fffaf0', '--link': '#906414', '--illumination': '#dcae57',
+      '--chip': '#eaeae4', '--chip-active': 'rgba(173,123,38,0.12)', '--warning': '#956216', '--danger': '#b24c4b', '--ok': '#377b5b',
+      '--code-bg': '#f4f3ee', '--code-highlight': 'rgba(173,123,38,0.12)', '--code-evidence': 'rgba(103,126,140,0.10)', '--shadow': '0 4px 16px rgba(36,42,49,0.06)',
+      '--added': '#377b5b', '--removed': '#b24c4b', '--modified': '#9b6e25', '--moved': '#706395', '--diff-added': 'rgba(55,123,91,0.10)', '--diff-removed': 'rgba(178,76,75,0.10)',
+      '--font': GEIST, '--font-display': GEIST, '--font-mono': GEIST_MONO, '--blur': '0px',
+      '--radius': '8px', '--radius-chip': '6px', '--radius-item': '8px', '--radius-float': '8px', '--radius-panel': '8px',
+      '--title-size': '11px', '--title-weight': '500', '--title-case': 'uppercase', '--title-tracking': '0.08em', '--brand-size': '22px', '--brand-weight': '500', '--brand-tracking': '-0.04em',
+    },
+    style: {
+      rounding: 0.025, grid: 'dots', font: GEIST, shadow: 'rgba(44,53,47,0.07)', sheen: 0.08, outlineWidth: 0.75, edgeGlow: 2,
+      glows: [{ x: 0.48, y: 0.48, r: 0.65, color: 'rgba(220,174,87,0.045)' }],
+    },
+  },
+  {
+    // The same studio after dark: graphite surfaces, soft slate blocks and fine illuminated paths.
+    id: 'codiluce-dusk', name: 'Codiluce Dusk', dark: true,
+    background: ['#161a20', '#14181d'], grid: 'rgba(160,168,180,0.10)',
+    entity: {
+      repository: hsl(215, 14, 14), application: hsl(215, 14, 19), group: hsl(213, 12, 23), directory: hsl(213, 12, 24),
+      file: hsl(212, 16, 31), class: hsl(212, 15, 33), controller: hsl(212, 15, 34), component: hsl(210, 15, 33),
+      function: hsl(212, 14, 34), method: hsl(212, 14, 33), route: hsl(38, 12, 34), api_endpoint: hsl(38, 14, 35),
+      model: hsl(210, 14, 32), database_table: hsl(210, 14, 33), command: hsl(212, 14, 33), scheduled_task: hsl(212, 14, 34),
+    },
+    fallbackEntity: hsl(212, 14, 31), depthStep: 1.8, wallShade: [0.70, 0.86], outline: 'rgba(152,165,178,0.14)',
+    text: { primary: '#e8ebef', secondary: '#a0a8b4', halo: 'rgba(22,26,32,0.92)', district: '#c4ccd5' },
+    selection: '#dcae57', hover: '#a2b3c1', focusRing: '#dcae57',
+    relation: { imports: '#5f6c78', exports: '#788895', handles: '#dcae57', routes_to: '#dcae57', requests: '#dcae57', extends: '#788895', implements: '#788895', calls: '#dcae57', renders: '#dcae57', reads: '#dcae57', writes: '#dcae57', queries: '#dcae57', maps_to: '#788895', foreign_key: '#788895', references: '#788895', invokes: '#dcae57' },
+    fallbackRelation: '#788895', impact: { origin: '#dcae57', near: '#d48b70', far: '#81704b' },
+    flow: { step: '#dcae57', declared: '#788895', indicator: '#fff0cc', dimAlpha: 0.18 },
+    diagnostic: '#dcae57', dimAlpha: 0.30,
+    change: { added: '#7ebc98', removed: '#dd8b87', modified: '#dcae57', moved: '#b1a0ce', ghostAlpha: 0.40, unchangedAlpha: 0.14 },
+    ui: {
+      '--bg': '#161a20', '--panel': '#1b2027', '--panel-solid': '#1b2027', '--panel-border': '#333b45',
+      '--text': '#e8ebef', '--muted': '#a0a8b4', '--subtle': '#8c96a4', '--accent': '#dcae57', '--accent-ink': '#262014', '--link': '#e4be77', '--illumination': '#dcae57',
+      '--chip': '#252c35', '--chip-active': 'rgba(220,174,87,0.14)', '--warning': '#e4be77', '--danger': '#dd8b87', '--ok': '#7ebc98',
+      '--code-bg': '#161a20', '--code-highlight': 'rgba(220,174,87,0.13)', '--code-evidence': 'rgba(162,179,193,0.10)', '--shadow': '0 6px 20px rgba(0,0,0,0.20)',
+      '--added': '#7ebc98', '--removed': '#dd8b87', '--modified': '#dcae57', '--moved': '#b1a0ce', '--diff-added': 'rgba(126,188,152,0.12)', '--diff-removed': 'rgba(221,139,135,0.12)',
+      '--font': GEIST, '--font-display': GEIST, '--font-mono': GEIST_MONO, '--blur': '0px',
+      '--radius': '8px', '--radius-chip': '6px', '--radius-item': '8px', '--radius-float': '8px', '--radius-panel': '8px',
+      '--title-size': '11px', '--title-weight': '500', '--title-case': 'uppercase', '--title-tracking': '0.08em', '--brand-size': '22px', '--brand-weight': '500', '--brand-tracking': '-0.04em',
+    },
+    style: {
+      rounding: 0.025, grid: 'dots', font: GEIST, shadow: 'rgba(0,0,0,0.18)', sheen: 0.06, outlineWidth: 0.75, edgeGlow: 4,
+      glows: [{ x: 0.48, y: 0.48, r: 0.65, color: 'rgba(220,174,87,0.035)' }],
+    },
+  },
 ];
 /** Every custom property any theme sets, so switching themes can clear the ones the next theme lacks. */
 export const UI_PROPERTIES = [...new Set(THEMES.flatMap(theme => Object.keys(theme.ui)))];
 /** Palette key of a node: applications by framework, files by language (themes without those keys fall back to the type). */
 /** A stable hue per domain key, shared by the map and the panels. */
 export function domainHue(key: string): number { let hash = 0; for (const char of key) hash = (hash * 31 + char.charCodeAt(0)) >>> 0; return (hash * 137) % 360; }
+/**
+ * Data families: hues spread by the golden angle in the order given (most files
+ * first), so the largest families and neighbours in the legend differ. Code
+ * without a family is grey.
+ */
+export function familyHues(keys: string[]): Map<string, number> { return new Map(keys.map((key, i) => [key, Math.round((210 + i * 137.508) % 360)])); }
+/** A family's hue when the order of the families is not at hand (the Data view with the colors off). */
+export function familyHashHue(key: string): number { return domainHue(`family:${key}`); }
+export function familyHsl(hue: number | 'none', dark: boolean): Hsl { return hue === 'none' ? hsl(220, 8, dark ? 34 : 78) : hsl(hue, dark ? 60 : 58, dark ? 58 : 50); }
+export function familyCss(hue: number | 'none', dark: boolean): string { const c = familyHsl(hue, dark); return `hsl(${c.h} ${c.s}% ${c.l}%)`; }
 export function paletteKey(node: { id?: string; type: string; detail?: string; language?: string }): string {
-  // The Features view: each domain has its own hue.
+  // The Features view: each domain has its own hue; the data view, each family.
   if (node.id?.startsWith('lens:domain:')) return `domain:${node.id.slice(12)}`;
+  if (node.id?.startsWith('lens:family:')) { const key = node.id.slice(12); return `family-area:${key === 'none' ? 'none' : familyHashHue(key)}`; }
   if (node.type === 'application' && node.detail) return `application:${node.detail}`;
   if (node.type === 'file' && node.language) return `file:${node.language}`;
   return node.type;
@@ -212,7 +494,10 @@ export class PaletteCache {
     const key = `${type}:${depth}`;
     let palette = this.cache.get(key);
     if (!palette) {
-      const base = type.startsWith('coverage:') ? coverageHsl(type.slice(9), this.theme.dark) : type.startsWith('domain:') ? { h: domainHue(type.slice(7)), s: this.theme.dark ? 42 : 46, l: this.theme.dark ? 30 : 78 } : this.theme.entity[type] ?? this.theme.entity[type.split(':')[0]!] ?? this.theme.fallbackEntity;
+      const base = type.startsWith('coverage:') ? coverageHsl(type.slice(9), this.theme.dark) : type.startsWith('domain:') ? { h: domainHue(type.slice(7)), s: this.theme.dark ? 42 : 46, l: this.theme.dark ? 30 : 78 }
+        : type.startsWith('family:') ? familyHsl(type === 'family:none' ? 'none' : Number(type.slice(7)), this.theme.dark)
+        : type.startsWith('family-area:') ? (type === 'family-area:none' ? { h: 220, s: 8, l: this.theme.dark ? 24 : 84 } : { h: Number(type.slice(12)), s: this.theme.dark ? 40 : 44, l: this.theme.dark ? 28 : 80 })
+        : this.theme.entity[type] ?? this.theme.entity[type.split(':')[0]!] ?? this.theme.fallbackEntity;
       const structural = type === 'directory' || type === 'group' || type.startsWith('application');
       const l = Math.max(4, Math.min(96, base.l + (structural ? depth * this.theme.depthStep : 0)));
       const color = (lightness: number) => `hsl(${base.h} ${base.s}% ${Math.max(2, Math.min(98, lightness)).toFixed(1)}%)`;

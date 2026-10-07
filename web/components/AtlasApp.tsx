@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { HttpAtlasApi } from '../lib/api';
 import { shortSha, relativeTime } from '../lib/format';
-import { AtlasStore } from '../lib/store';
+import { AtlasStore, type Lens } from '../lib/store';
 import { THEMES, themeById, UI_PROPERTIES } from '../lib/themes';
 import { Breadcrumbs } from './Breadcrumbs';
 import { AtlasContext, useAtlas, useStore } from './context';
@@ -65,8 +65,8 @@ function Shell() {
   const timelineOpen = useAtlas(state => state.timeline.open);
   const timeline = useAtlas(state => state.timeline.data);
   const theme = themeById(themeId);
-  const [inspectorWidth, setInspectorWidth] = usePanelWidth('archipelago:inspector-width', 380);
-  const [flowWidth, setFlowWidth] = usePanelWidth('archipelago:flow-width', 300);
+  const [inspectorWidth, setInspectorWidth] = usePanelWidth('codiluce:inspector-width', 380);
+  const [flowWidth, setFlowWidth] = usePanelWidth('codiluce:flow-width', 300);
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [flowsOpen, setFlowsOpen] = useState(false);
   // The left panel holds every flow (pages, requests, console) and, once opened, Steps.
@@ -78,11 +78,18 @@ function Shell() {
   const coverage = useAtlas(state => state.coverage.show);
   const lens = useAtlas(state => state.lens);
   const domains = useAtlas(state => state.annotations.data?.domains.length ?? 0);
+  const tables = useAtlas(state => state.meta?.coverage.databaseTables ?? 0);
+  const grouped = useAtlas(state => state.arrange.mode === 'auto');
+  const lenses: { id: Lens; label: string; title: string }[] = [
+    { id: 'folders', label: 'Folders', title: 'By folder: the repository as it is on disk' },
+    ...(tables > 0 ? [{ id: 'data' as const, label: 'Data', title: 'By data family: tables joined by foreign keys, each with the models, migrations, services, commands, endpoints and pages that use them' }] : []),
+    ...(domains > 0 ? [{ id: 'domains' as const, label: 'Features', title: `By domain: ${domains} features or areas of the product, each with its frontend and backend code` }] : []),
+  ];
   // Comparing in History: one view per place that changed, around an overview (unless the single map is chosen).
   const split = useAtlas(state => state.timeline.open && state.timeline.compare && state.timeline.split && (!!state.meta?.comparison || state.timeline.preview !== undefined));
   const showFlows = () => { if (flowsOpen && leftTab === 'flows') setFlowsOpen(false); else { setFlowsOpen(true); setLeftTab('flows'); } };
   const [help, setHelp] = useState(false);
-  // Floating themes paint a backdrop behind rounded panels; the others dock panels on a flat background.
+  // Floating themes paint a backdrop behind panels held apart by the theme's gap; the others dock panels on a flat background.
   const style = useMemo(() => ({ ...theme.ui, background: theme.style?.floating ? theme.ui['--app-bg'] ?? theme.ui['--bg'] : theme.ui['--bg'] }) as React.CSSProperties, [theme]);
   useEffect(() => {
     // Clear what the previous theme set and this one does not (a font, radii, a backdrop).
@@ -109,10 +116,11 @@ function Shell() {
   const when = (iso: string | undefined) => iso ? new Date(iso).toLocaleDateString() : '';
   const commitDate = (sha: string | undefined) => when(timeline?.entries.find(entry => entry.sha === sha)?.authoredAt);
   return (
-    <div className="archipelago" style={style} data-dark={String(theme.dark)} data-floating={String(!!theme.style?.floating)}>
+    <div className="codiluce" style={style} data-theme={theme.id} data-dark={String(theme.dark)} data-floating={String(!!theme.style?.floating)}>
       <header className="topbar">
         <div className="brand">
-          <strong><span className="brand-mark" aria-hidden />Archipelago</strong>
+          <strong><span className="brand-mark" aria-hidden />Codiluce</strong>
+          <small>Bring your code to light</small>
           {run && snapshot?.kind === 'commit'
             ? <small title={`Snapshot ${snapshot.id}`}>{run.repositoryName} · commit {shortSha(snapshot.commitSha)} ({commitDate(snapshot.commitSha)}){baseline ? ` compared with ${baseline.kind === 'commit' ? shortSha(baseline.commitSha) : 'the working tree'}` : ''}</small>
             : run && <small title={`Analysis run ${run.id}`}>{run.repositoryName} · working tree{run.commitSha ? ` at HEAD ${shortSha(run.commitSha)}` : ''}{run.dirty ? ' + uncommitted changes' : ''} · indexed {relativeTime(run.analyzedAt)}{baseline ? ` · compared with ${shortSha(baseline.commitSha)}` : ''}</small>}
@@ -124,12 +132,12 @@ function Shell() {
           <button className="button" onClick={() => void (timelineOpen ? store.closeTimeline() : store.openTimeline())} aria-pressed={timelineOpen} title={meta?.history.available ? `Browse ${meta.history.snapshots} indexed commits` : 'No history indexed yet'}>History</button>
           <button className="button rf-top" onClick={showFlows} aria-pressed={flowsOpen && leftTab === 'flows'} aria-controls="flows-panel" title="Every flow of the code in one list: pages, requests, console commands and scheduled tasks">Flows</button>
           <button className="button" onClick={() => void store.toggleCoverage()} aria-pressed={coverage} title="Color every file by whether flows touch it: entry points, in flows, supporting, not reached">Coverage</button>
-          {domains > 0 && !timelineOpen && (
+          {lenses.length > 1 && !timelineOpen && (
             <div className="segmented lens-toggle" role="group" aria-label="Arrange the map">
-              <button aria-pressed={lens === 'folders'} onClick={() => void store.setLens('folders')} title="By folder: the repository as it is on disk">Folders</button>
-              <button aria-pressed={lens === 'domains'} onClick={() => void store.setLens('domains')} title={`By domain: ${domains} features or areas of the product, each with its frontend and backend code`}>Features</button>
+              {lenses.map(item => <button key={item.id} aria-pressed={lens === item.id} onClick={() => void store.setLens(item.id)} title={item.title}>{item.label}</button>)}
             </div>
           )}
+          {lens === 'folders' && !timelineOpen && <button className="button" aria-pressed={grouped} onClick={() => void store.setArrangeMode(grouped ? 'off' : 'auto')} title="Group the files of large folders (16 files or more) by data family or by the first word of their names, whichever reads best for each folder. Choose per folder in the inspector.">Group files</button>}
           <label className="sr-only" htmlFor="theme-select">Theme</label>
           <select id="theme-select" className="select" value={themeId} onChange={event => store.setTheme(event.target.value)}>
             {THEMES.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -183,7 +191,7 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
       <div className="card" role="dialog" aria-modal="true" aria-labelledby="help-title" onClick={event => event.stopPropagation()} style={{ textAlign: 'left' }}>
         <h2 id="help-title" style={{ marginTop: 0, fontSize: 15 }}>Keyboard and pointer</h2>
         <dl className="facts">{rows.map(([key, text]) => [<dt key={`k${key}`}><kbd>{key}</kbd></dt>, <dd key={`d${key}`}>{text}</dd>])}</dl>
-        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout and never change with selection, search or filters. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing. Dragging the timeline or pressing play shows each commit at once as a time-lapse; the full view of a commit loads when you let go or pause. When comparing, the split map shows one view on each place that changed around an overview of the whole repository, where numbered frames show what each view shows.</p>
+        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout and never change with selection, search or filters. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing. Dragging the timeline or pressing play shows each commit at once as a time-lapse; the full view of a commit loads when you let go or pause. When comparing, the split map shows one view on each place that changed around an overview of the whole repository, where numbered frames show what each view shows. <strong>Group files</strong> draws the files of large folders in dashed groups (by data family or by name; choose per folder in the inspector), and <strong>Data</strong> arranges the whole map by data family; both keep every file in its folder and only apply to the live map.</p>
         <button ref={close} className="button" onClick={onClose}>Close</button>
       </div>
     </div>

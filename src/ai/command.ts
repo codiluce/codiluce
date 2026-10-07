@@ -1,4 +1,4 @@
-// `archipelago annotate`: describe the indexed code with language models.
+// `codiluce annotate`: describe the indexed code with language models.
 // Always estimates the cost first (optionally measured by a pilot request per
 // task); never starts when the estimate exceeds --max-cost.
 import { execFile } from 'node:child_process';
@@ -24,7 +24,7 @@ export async function annotateCommand(options: AnnotateOptions): Promise<number>
   const tasks = (options.tasks ? options.tasks.split(',').map(item => item.trim()).filter(Boolean) : TASK_ORDER) as TaskName[];
   for (const task of tasks) if (!TASK_ORDER.includes(task)) throw new Error(`Unknown task ${task}; tasks are ${TASK_ORDER.join(', ')}`);
   if (!Number.isFinite(options.maxCost) || options.maxCost <= 0) throw new Error('--max-cost must be a positive number of US dollars');
-  const store = new GraphStore(path.join(options.stateDirectory, 'archipelago.db'), true);
+  const store = new GraphStore(path.join(options.stateDirectory, 'codiluce.db'), true);
   const access = new HistoryAccess(options.stateDirectory);
   const annotations = new AnnotationStore(path.join(options.stateDirectory, ANNOTATIONS_DATABASE));
   try {

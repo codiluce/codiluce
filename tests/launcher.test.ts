@@ -12,7 +12,7 @@ import { launchLocal, listenLocally, prepareVisualizer } from '../src/launcher.j
 const temporary: string[] = [];
 after(async () => { for (const directory of temporary) await rm(directory, { recursive: true, force: true }); });
 async function directory(): Promise<string> {
-  const folder = await mkdtemp(path.join(tmpdir(), 'archipelago-launcher-')); temporary.push(folder); return folder;
+  const folder = await mkdtemp(path.join(tmpdir(), 'codiluce-launcher-')); temporary.push(folder); return folder;
 }
 async function fixture(): Promise<{ root: string; ui: string }> {
   const root = path.join(await directory(), 'repository with spaces');
@@ -33,7 +33,7 @@ test('launch indexes an uninitialized repository and serves its map, API and sou
   const { root, ui } = await fixture();
   const session = await launchLocal({ repo: root, uiDirectory: ui, port: 0, open: false, log: quiet });
   try {
-    assert.equal(session.stateDirectory, path.join(root, '.archipelago'));
+    assert.equal(session.stateDirectory, path.join(root, '.codiluce'));
     assert.match(await readFile(path.join(session.stateDirectory, 'config.yml'), 'utf8'), /frameworks:\n\s+- nextjs/);
     assert.match(await (await fetch(session.url)).text(), /Launcher fixture/);
     const summary = await (await fetch(`${session.url}api/summary`)).json() as { counts: { entities: number; relations: number } };
@@ -63,7 +63,7 @@ test('relaunch preserves configuration, reuses cache, and indexes subsequent edi
     const search = await (await fetch(`${session.url}api/projection/search?q=UpdatedWelcome`)).json() as { items: { name: string }[] };
     assert.ok(search.items.some(item => item.name === 'UpdatedWelcome'));
     assert.equal(await readFile(path.join(stateDirectory, 'config.yml'), 'utf8'), config);
-    assert.equal((await readdir(root)).includes('.archipelago'), false, 'external state stays outside the repository');
+    assert.equal((await readdir(root)).includes('.codiluce'), false, 'external state stays outside the repository');
   } finally { await session.close(); }
 });
 
@@ -90,7 +90,7 @@ test('invalid inputs fail before creating repository state', async () => {
   await assert.rejects(launchLocal({ ...base, uiDirectory: path.join(ui, 'missing') }), /No built visualizer/);
   await assert.rejects(launchLocal({ ...base, uiDirectory: 'none' }), /requires the visualizer/);
   await assert.rejects(launchLocal({ ...base, buildUi: true }), /cannot be combined/);
-  assert.equal((await readdir(root)).includes('.archipelago'), false);
+  assert.equal((await readdir(root)).includes('.codiluce'), false);
 });
 
 test('automatic port selection skips an occupied port, while an explicit port fails clearly', async () => {

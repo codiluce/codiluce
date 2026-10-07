@@ -12,26 +12,27 @@ import { HistoryStore } from './history/store.js';
 import { annotateCommand } from './ai/command.js';
 import { launchLocal, toolDirectory } from './launcher.js';
 
-const HELP = `Archipelago — code and architecture visualizer
+const HELP = `Codiluce — Bring your code to light
+Code and architecture visualizer
 
 npm start -- [PATH] [--state-dir PATH] [--port N] [--no-open] [--build-ui]
-npm run archipelago -- start [PATH] [--repo PATH] [--state-dir PATH] [--port N]
+npm run codiluce -- start [PATH] [--repo PATH] [--state-dir PATH] [--port N]
                             [--no-open] [--build-ui] [--ui PATH] [--no-cache] [--history-indexing]
-npm run archipelago -- init [--repo PATH] [--state-dir PATH]
-npm run archipelago -- index [--repo PATH] [--state-dir PATH] [--no-cache]
-npm run archipelago -- inspect [summary|entities|entity|relations|relation|diagnostics] [options]
-npm run archipelago -- serve [--repo PATH] [--state-dir PATH] [--port 4300] [--ui PATH|none] [--history-indexing] [--read-only]
-npm run archipelago -- history index [--repo PATH] [--state-dir PATH] [--ref BRANCH] [--limit N]
+npm run codiluce -- init [--repo PATH] [--state-dir PATH]
+npm run codiluce -- index [--repo PATH] [--state-dir PATH] [--no-cache]
+npm run codiluce -- inspect [summary|entities|entity|relations|relation|diagnostics] [options]
+npm run codiluce -- serve [--repo PATH] [--state-dir PATH] [--port 4300] [--ui PATH|none] [--history-indexing] [--read-only]
+npm run codiluce -- history index [--repo PATH] [--state-dir PATH] [--ref BRANCH] [--limit N]
                        [--since DATE] [--commits SHA,SHA] [--jobs N] [--all-parents] [--pr-metadata github]
-npm run archipelago -- history status [--repo PATH] [--state-dir PATH]
-npm run archipelago -- annotate [--repo PATH] [--state-dir PATH] [--tasks files,flows,commits,folders,domains,overview,chapters]
+npm run codiluce -- history status [--repo PATH] [--state-dir PATH]
+npm run codiluce -- annotate [--repo PATH] [--state-dir PATH] [--tasks files,flows,commits,folders,domains,overview,chapters]
                        [--estimate] [--pilot] [--max-cost 10] [--concurrency 6] [--force]
 
 Options: --search TEXT --type TYPE --id ID --path PATH --parent ID
          --direction incoming|outgoing|both --severity info|warning|error
          --code CODE --limit 1..500 --offset NUMBER
 
-State defaults to <repo>/.archipelago. inspect outputs JSON; serve is a local
+State defaults to <repo>/.codiluce. inspect outputs JSON; serve is a local
 API that also serves the built visualizer (web/out, see npm run build:web)
 unless --ui none. It only reads the graph (it keeps the map's layout slots in
 <state>/layout.json); --read-only refuses on-demand history indexing even with
@@ -88,8 +89,8 @@ async function main(): Promise<void> {
     return;
   }
   const root = await realpath(String(values.repo ?? process.cwd()));
-  const stateDirectory = path.resolve(String(values['state-dir'] ?? path.join(root, '.archipelago')));
-  const database = path.join(stateDirectory, 'archipelago.db');
+  const stateDirectory = path.resolve(String(values['state-dir'] ?? path.join(root, '.codiluce')));
+  const database = path.join(stateDirectory, 'codiluce.db');
   if (command === 'init') {
     await mkdir(stateDirectory, { recursive: true });
     const configFile = path.join(stateDirectory, 'config.yml');

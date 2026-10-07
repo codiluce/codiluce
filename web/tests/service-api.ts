@@ -68,6 +68,8 @@ export class ServiceApi implements AtlasApi {
   coverageExport(signal?: AbortSignal) { return this.run('coverageExport', '', signal, () => this.projection.coverageExport(this.view)); }
   annotations(signal?: AbortSignal) { return this.run('annotations', '', signal, () => this.projection.annotationsOverview()); }
   entityAnnotation(id: string, signal?: AbortSignal) { return this.run('entityAnnotation', id, signal, () => this.projection.entityAnnotation(id, this.view)); }
+  families(signal?: AbortSignal) { return this.run('families', '', signal, () => this.projection.families(this.view)); }
+  arrangement(id: string, signal?: AbortSignal) { return this.run('arrangement', id, signal, () => this.projection.arrangement(id, this.view)); }
   clear() {}
 }
 export class RecordingNavigator implements MapNavigator {

@@ -21,8 +21,8 @@ let root: string, state: string, graph: SoftwareGraph, store: GraphStore;
 async function createFixture(): Promise<string> {
   const directory = await mkdtemp(path.join(tmpdir(), 'atlas-projection-')); temporary.push(directory);
   await cp(fixture, directory, { recursive: true });
-  await mkdir(path.join(directory, '.archipelago'));
-  await writeFile(path.join(directory, '.archipelago/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'], apiOriginEnv: ['NEXT_PUBLIC_API_URL'] }] }));
+  await mkdir(path.join(directory, '.codiluce'));
+  await writeFile(path.join(directory, '.codiluce/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'], apiOriginEnv: ['NEXT_PUBLIC_API_URL'] }] }));
   return directory;
 }
 function symbolId(qualifiedName: string): string {
@@ -652,4 +652,43 @@ test('the coverage export lists unreached files with their symbols, and unused s
     const entity = graph.entities.find(candidate => candidate.path === item.path && candidate.name === item.name && candidate.type === item.type)!;
     assert.equal(projection.flows({ entity: entity.id }).items.length, 0, `${item.path} ${item.name} is in a flow`);
   }
+});
+
+// --- Data families and folder groups ------------------------------------------------
+test('data families color the map, draw the "by data" view, and arrange folders on request', async () => {
+  const projection = new ProjectionService(store, { root, stateDirectory: state });
+  const families = projection.families();
+  const userModel = entityId('User.php', 'file'), profileModel = entityId('Profile.php', 'file');
+  const users = families.of[entityId('users', 'database_table')]!;
+  assert.ok(users, 'tables have a family');
+  assert.equal(families.of[userModel], users, 'a model takes the family of the table it maps');
+  assert.equal(families.of[profileModel], families.of[entityId('profiles', 'database_table')]);
+  assert.ok(families.families.some(family => family.key === users && family.tables.includes('users')));
+  assert.ok(families.areas[graph.entities.find(entity => entity.type === 'repository')!.id]![users]! > 0, 'areas count their files per family');
+  // By data: repository → family → folder → file; symbols stay in their files.
+  const located = projection.locate(userModel, { lens: 'data' });
+  assert.equal(located.spatialAncestors[1]!.id, `lens:family:${users}`);
+  assert.equal(located.spatialAncestors[2]!.name, 'backend/app/Models');
+  assert.ok(projection.locate(symbolId('App\\Models\\User'), { lens: 'data' }).spatialAncestors.some(item => item.id === userModel));
+  assert.ok(projection.locate(entityId('users', 'database_table'), { lens: 'data' }).spatialAncestors.some(item => item.id === `lens:family:${users}`), 'tables sit in their family\'s district');
+  // Folders below the threshold are not grouped; an arranged map still holds everything.
+  const controllers = entityId('Controllers', 'directory');
+  const plan = projection.arrangement(controllers);
+  assert.equal(plan.auto, 'none');
+  assert.deepEqual(plan.options, [], 'too few files to group');
+  assert.equal(projection.meta({ arrange: 'auto' }).root.stats.files, projection.meta().root.stats.files);
+  assert.throws(() => projection.arrangement(controllers, { snapshot: 'missing' }), /live map/);
+  const server = createInspectionServer(store, { root });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const address = server.address(); assert.ok(address && typeof address !== 'string');
+  const base = `http://127.0.0.1:${address.port}`;
+  try {
+    assert.equal((await fetch(`${base}/api/projection/families`)).status, 200);
+    assert.equal((await fetch(`${base}/api/projection?lens=data`)).status, 200);
+    assert.equal((await fetch(`${base}/api/projection?arrange=auto`)).status, 200);
+    assert.equal((await fetch(`${base}/api/projection?arrange=sideways`)).status, 400);
+    assert.equal((await fetch(`${base}/api/projection?arrange=${encodeURIComponent('auto;../x=name')}`)).status, 400);
+    assert.equal((await fetch(`${base}/api/projection/arrangement/${encodeURIComponent(controllers)}`)).status, 200);
+    assert.equal((await fetch(`${base}/api/projection/arrangement/${encodeURIComponent(userModel)}`)).status, 400, 'only folders');
+  } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
 });

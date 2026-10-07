@@ -1,10 +1,11 @@
 'use client';
-import { Fragment } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import type { Entity, Evidence } from '@engine/core/graph';
-import type { AggregateGroup, ChangeFacet, DiagnosticItem, NodeChange, NodeSummary, RelationItem } from '@engine/projection/dto';
+import type { AggregateGroup, ChangeFacet, DiagnosticItem, FolderArrangement, NodeChange, NodeSummary, RelationItem } from '@engine/projection/dto';
+import { isAbort } from '../lib/api';
 import { compactNumber, percent, relationPhrase, relativeTime, shortSha, typeLabel } from '../lib/format';
-import { entryOf, isContainer, tourEntry, type AtlasStore } from '../lib/store';
-import { coverageCss, domainHue, themeById } from '../lib/themes';
+import { arrangeParam, entryOf, isContainer, tourEntry, type AtlasStore, type FolderChoice } from '../lib/store';
+import { coverageCss, domainHue, familyCss, familyHues, themeById } from '../lib/themes';
 import { COVERAGE_TEXT, NOT_MEASURED } from '../lib/coverage';
 import { useAtlas, useStore } from './context';
 import { TypeBadge } from './TypeBadge';
@@ -96,6 +97,7 @@ function Selection() {
         <AnalysisButtons node={node} />
       </div>
       <SummaryCard node={node} />
+      <FamilyChip node={node} />
       {node.kind === 'group' && !node.id.startsWith('lens:domain:') && <p className="note">{node.explanation}</p>}
       {(node.type === 'api_endpoint' || node.type === 'route') && <p className="note">Shown in the <strong>Routes &amp; endpoints</strong> district of its application. That district is only a spatial grouping; the canonical parent is the application.</p>}
       {node.type === 'database_table' && <p className="note">Declared by the application's migrations, replayed in order: the schema they intend, not the live database. Shown in the <strong>Database</strong> district; the canonical parent is the application.</p>}
@@ -105,6 +107,7 @@ function Selection() {
       {selection.change && <ChangeSection node={node} />}
       <ImpactSection node={node} />
       <FlowsSection node={node} />
+      {node.kind === 'entity' && node.type === 'directory' && <FolderGroups node={node} />}
       <Facts node={node} entity={entity} />
       {node.type === 'database_table' && entity && <TableSection entity={entity} />}
       <HttpCalls selectionId={node.id} file={selection.file} />
@@ -157,6 +160,70 @@ function SummaryCard({ node }: { node: NodeSummary }) {
         {data?.domain && <button className="chip domain-chip" onClick={() => void store.setLens('domains')} title={data.domain.inferred ? 'Domain inferred from the code it is connected to' : 'Domain from the paths the model gave'}>◆ {data.domain.name}{data.domain.inferred ? ' (inferred)' : ''}</button>}
         {(data?.summary || domainSummary) && <ModelNote model={data?.model ?? 'gpt-6.1-sol'} ste={data?.ste} date={data?.createdAt} />}
       </div>
+    </section>
+  );
+}
+/** The data family of the selection, while families are shown: selecting it lights the family on the map. */
+function FamilyChip({ node }: { node: NodeSummary }) {
+  const store = useStore();
+  const data = useAtlas(state => state.families.status === 'ready' ? state.families.data : undefined);
+  const dark = themeById(useAtlas(state => state.themeId)).dark;
+  const key = data?.of[node.id];
+  if (!data || !key) return null;
+  const family = data.families.find(item => item.key === key);
+  return (
+    <div className="summary-meta">
+      <button className="chip" onClick={() => store.focusFamily(key)} title={`Tables: ${family?.tables.join(', ') ?? key}${data.inferred.includes(node.id) ? '. Placed through the code it is connected to.' : ''} Select to light the family on the map.`}>
+        <span className="type-dot" style={{ background: familyCss(familyHues(data.families.map(item => item.key)).get(key) ?? 'none', dark) }} />{family?.name ?? key} data family{data.inferred.includes(node.id) ? ' (inferred)' : ''}
+      </button>
+    </div>
+  );
+}
+const CHOICES: { id: FolderChoice; label: string }[] = [{ id: 'auto', label: 'Auto' }, { id: 'data', label: 'By data' }, { id: 'name', label: 'By name' }, { id: 'none', label: 'No groups' }];
+/** How the folder's files are grouped on the map, the ways they could be, and a choice for this folder. */
+function FolderGroups({ node }: { node: NodeSummary }) {
+  const store = useStore();
+  const active = useAtlas(state => state.lens === 'folders' && !state.timeline.open);
+  const arrange = useAtlas(state => state.arrange);
+  const key = `${node.id}|${arrangeParam(arrange) ?? ''}`;
+  const [result, setResult] = useState<{ key: string; data?: FolderArrangement; error?: string }>();
+  useEffect(() => {
+    if (!active) return;
+    const controller = new AbortController();
+    store.api.arrangement(node.id, controller.signal).then(data => setResult({ key, data }), (error: unknown) => { if (!isAbort(error)) setResult({ key, error: error instanceof Error ? error.message : String(error) }); });
+    return () => controller.abort();
+  }, [store, node.id, key, active]);
+  if (!active) return null;
+  const current = result?.key === key ? result : undefined;
+  const data = current?.data;
+  const choice = arrange.folders[node.id] ?? (arrange.mode === 'auto' ? 'auto' : 'none');
+  const how = (by: string) => by === 'data' ? 'by data family' : by === 'name' ? 'by the first word of their names' : 'not grouped';
+  return (
+    <section className="section folder-groups">
+      <h4>Group files</h4>
+      {!current && <p className="absent">Looking at its files…</p>}
+      {current?.error && <p className="note error">{current.error}</p>}
+      {data && !data.options.length && <p className="absent">{data.files} file{data.files === 1 ? '' : 's'} directly inside: too few to group.</p>}
+      {data && data.options.length > 0 && (
+        <>
+          <div className="segmented" role="group" aria-label="Group this folder's files">
+            {CHOICES.map(item => <button key={item.id} aria-pressed={choice === item.id} onClick={() => void store.setFolderArrangement(node.id, item.id)} title={item.id === 'auto' ? `As fits best: here ${how(data.auto)}${data.files < 16 ? ' (Auto groups folders of 16 files or more)' : ''}` : `Files ${how(item.id)}`}>{item.label}</button>)}
+          </div>
+          <p className="note">
+            {data.current !== 'none'
+              ? `Its ${data.files} files are drawn in dashed groups ${how(data.current)}${choice === 'auto' ? ', as Auto chose' : ''}. The groups are only spatial: every file stays in this folder.`
+              : choice === 'auto' ? `Auto leaves its ${data.files} files as they are: ${data.files < 16 ? 'it groups folders of 16 files or more' : 'neither way puts most of them in a few groups'}.` : `Its ${data.files} files are not grouped${arrange.mode === 'off' && choice === 'none' ? ' (Group files is off)' : ''}.`}
+          </p>
+          <dl className="facts">
+            {data.options.map(option => (
+              <Fragment key={option.key}>
+                <dt>{option.key === 'data' ? 'By data' : 'By name'}</dt>
+                <dd>{option.groups.length ? `${option.grouped} of ${data.files} files in ${option.groups.length} group${option.groups.length === 1 ? '' : 's'}: ${option.groups.slice(0, 6).map(group => `${group.name} ${group.files}`).join(', ')}${option.groups.length > 6 ? ', …' : ''}` : 'no two files alike'}{option.groups.length > 0 && !option.fits ? ' — Auto does not choose it' : ''}</dd>
+              </Fragment>
+            ))}
+          </dl>
+        </>
+      )}
     </section>
   );
 }

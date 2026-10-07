@@ -11,7 +11,7 @@ import { indexRepository } from '../../src/pipeline/index.js';
 import { GraphStore } from '../../src/storage/sqlite.js';
 import { ProjectionService } from '../../src/projection/service.js';
 import type { SoftwareGraph } from '../../src/core/graph.js';
-import { AtlasStore } from '../lib/store';
+import { arrangeParam, AtlasStore } from '../lib/store';
 import { RecordingNavigator, ServiceApi as BaseServiceApi } from './service-api';
 
 const fixture = fileURLToPath(new URL('../../tests/fixtures/repository', import.meta.url));
@@ -19,8 +19,8 @@ let root: string, graph: SoftwareGraph, store: GraphStore, projection: Projectio
 before(async () => {
   root = await mkdtemp(path.join(tmpdir(), 'atlas-web-'));
   await cp(fixture, root, { recursive: true });
-  await mkdir(path.join(root, '.archipelago'));
-  await writeFile(path.join(root, '.archipelago/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'], apiOriginEnv: ['NEXT_PUBLIC_API_URL'] }] }));
+  await mkdir(path.join(root, '.codiluce'));
+  await writeFile(path.join(root, '.codiluce/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'], apiOriginEnv: ['NEXT_PUBLIC_API_URL'] }] }));
   graph = await indexRepository(root);
   store = new GraphStore(':memory:'); store.save(graph);
   projection = new ProjectionService(store, { root });
@@ -111,4 +111,39 @@ test('containers show aggregated boundary edges that drill down to individual re
   const drill = atlas.getState().aggregate.drill!;
   assert.equal(drill.items.length, toBackend.count);
   assert.ok(drill.items.every(item => item.type === 'requests' && item.inside.path?.startsWith('frontend/')));
+});
+test('arranging folders and data families: view parameters, saved choices, one file coloring at a time', async () => {
+  assert.equal(arrangeParam({ mode: 'off', folders: {} }), undefined);
+  assert.equal(arrangeParam({ mode: 'auto', folders: { b: 'none', a: 'auto', c: 'name' } }), 'auto;b=none;c=name', 'choices equal to the mode are dropped, folders sorted');
+  const saved = new Map<string, string>();
+  const storage = { getItem: (key: string) => saved.get(key) ?? null, setItem: (key: string, value: string) => void saved.set(key, value) };
+  const atlas = new AtlasStore(new ServiceApi(), { storage });
+  atlas.navigator = new RecordingNavigator();
+  await atlas.init();
+  const controllers = id('Controllers', 'directory');
+  await atlas.setArrangeMode('auto');
+  assert.deepEqual(atlas.viewKey(), { arrange: 'auto' });
+  await atlas.setFolderArrangement(controllers, 'name');
+  assert.deepEqual(atlas.viewKey(), { arrange: `auto;${controllers}=name` });
+  assert.equal(atlas.getState().selection?.id, controllers, 'the folder is shown after its choice');
+  await atlas.setFolderArrangement(controllers, 'auto');
+  assert.deepEqual(atlas.getState().arrange.folders, {}, 'back to the default: nothing to remember');
+  assert.equal(JSON.parse(saved.get('codiluce:prefs')!).arrange.mode, 'auto', 'the arrangement is a preference');
+  await atlas.setLens('data');
+  assert.deepEqual(atlas.viewKey(), { lens: 'data' });
+  assert.equal(atlas.getState().meta!.layout.bounds !== undefined, true);
+  await atlas.toggleCoverage(true);
+  await atlas.toggleFamilies(true);
+  assert.equal(atlas.getState().coverage.show, false, 'families replace coverage');
+  assert.ok(atlas.getState().families.data!.families.length > 0);
+  const users = atlas.getState().families.data!.of[id('users', 'database_table')]!;
+  atlas.focusFamily(users);
+  assert.equal(atlas.getState().families.focus, users);
+  atlas.focusFamily(users);
+  assert.equal(atlas.getState().families.focus, undefined, 'selecting the family again lets it go');
+  await atlas.toggleCoverage(true);
+  assert.equal(atlas.getState().families.show, false, 'coverage replaces families');
+  // A returning user keeps the arrangement.
+  const again = new AtlasStore(new ServiceApi(), { storage });
+  assert.equal(again.getState().arrange.mode, 'auto');
 });

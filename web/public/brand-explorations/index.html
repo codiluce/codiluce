@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="Ten minimal Codiluce logo directions. Bring your code to light.">
+  <title>Codiluce — Ten studies in light</title>
+  <link rel="icon" type="image/svg+xml" href="10-lucent/mark.svg">
+  <style>
+    @font-face { font-family: Geist; src: url('fonts/geist.woff2') format('woff2'); font-style: normal; font-weight: 100 900; font-display: swap; }
+    * { box-sizing: border-box; }
+    :root { --bg:#080809; --panel:#0a0a0b; --ink:#f5f5f3; --muted:#939397; --line:#262628; --surface:#131314; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.5 Geist, Helvetica, Arial, sans-serif; -webkit-font-smoothing:antialiased; }
+    a { color:inherit; text-decoration:none; }
+    button { font:inherit; cursor:pointer; }
+    button, a { -webkit-tap-highlight-color:transparent; }
+    :focus-visible { outline:2px solid var(--ink); outline-offset:5px; }
+    .page { max-width:1280px; margin:0 auto; padding:0 48px; }
+    header { display:flex; align-items:center; justify-content:space-between; height:100px; border-bottom:1px solid var(--line); }
+    .brand { display:inline-flex; align-items:center; gap:10px; font-size:18px; font-weight:580; letter-spacing:-.6px; }
+    .brand img { width:28px; height:28px; }
+    .eyebrow { font-size:11px; font-weight:450; letter-spacing:.13em; text-transform:uppercase; color:var(--muted); }
+    .intro { padding:66px 0 48px; display:grid; grid-template-columns:1fr 280px; align-items:end; gap:60px; }
+    h1 { margin:20px 0 0; font-size:clamp(48px,6.6vw,86px); font-weight:510; line-height:1.03; letter-spacing:-.065em; }
+    .intro p { margin:0 0 4px; font-size:16px; line-height:1.65; color:var(--muted); letter-spacing:-.25px; }
+    .intro p strong { color:var(--ink); font-weight:500; }
+    .recommended { position:relative; border:1px solid var(--line); margin-bottom:48px; background:var(--panel); }
+    .recommended .label { position:absolute; top:24px; left:28px; display:flex; align-items:center; gap:12px; z-index:1; }
+    .badge { font-size:10px; font-weight:550; letter-spacing:.075em; text-transform:uppercase; padding:4px 9px; border:1px solid #535357; border-radius:2px; }
+    .recommended .hero-art { display:block; width:100%; height:auto; max-height:500px; object-fit:contain; }
+    .hero-caption { position:absolute; bottom:24px; left:28px; right:28px; display:flex; align-items:center; justify-content:space-between; gap:20px; font-size:12px; color:var(--muted); }
+    .hero-caption button { padding:0; background:none; border:0; color:var(--ink); }
+    .toolbar { display:flex; align-items:center; justify-content:space-between; gap:20px; padding-bottom:24px; }
+    .toolbar h2 { margin:0; font-size:20px; letter-spacing:-.6px; font-weight:520; }
+    .tools { display:flex; align-items:center; gap:12px; }
+    .segmented { display:flex; padding:3px; border:1px solid var(--line); gap:2px; border-radius:4px; }
+    .segmented button { border:0; background:none; color:var(--muted); padding:6px 12px; font-size:12px; border-radius:2px; }
+    .segmented button[aria-pressed=true] { background:#ededeb; color:#111113; }
+    .download-all { border:1px solid #4c4c50; padding:9px 13px; border-radius:4px; font-size:12px; white-space:nowrap; }
+    .download-all:hover { background:#202022; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+    .card { min-width:0; border:1px solid var(--line); background:var(--panel); transition:border-color 160ms; }
+    .card:hover { border-color:#5f5f64; }
+    .card.pick { border-color:#5c5c60; }
+    .card-meta { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:19px 22px 0; }
+    .card-meta h3 { margin:0; font-size:14px; font-weight:510; letter-spacing:-.25px; }
+    .number { margin-right:10px; color:var(--muted); font-size:11px; font-variant-numeric:tabular-nums; }
+    .font-label { font-size:10px; color:var(--muted); white-space:nowrap; }
+    .card-visual { display:block; width:100%; border:0; background:var(--panel); padding:0; }
+    .card-visual img { display:block; width:100%; height:auto; }
+    .card-info { padding:0 22px 19px; }
+    .description { margin:0 0 17px; color:var(--muted); font-size:12px; min-height:36px; line-height:1.65; }
+    .card-bottom { display:flex; align-items:center; justify-content:space-between; gap:15px; padding-top:16px; border-top:1px solid var(--line); }
+    .miniatures { display:flex; align-items:center; gap:14px; }
+    .miniatures img { display:block; width:24px; height:24px; }
+    .miniatures img:nth-child(2) { width:16px; height:16px; }
+    .miniatures span { color:#77777e; font-size:10px; }
+    .downloads { display:flex; gap:16px; font-size:11px; color:#d4d4d5; }
+    .downloads a:hover { text-decoration:underline; text-underline-offset:4px; }
+    .closing { display:grid; grid-template-columns:1fr 1fr; gap:80px; padding:62px 0; margin-top:40px; border-top:1px solid var(--line); }
+    .closing h2 { margin:10px 0 14px; font-size:32px; font-weight:500; letter-spacing:-1.3px; line-height:1.18; }
+    .closing p { margin:0; max-width:430px; color:var(--muted); line-height:1.8; }
+    .closing ul { margin:14px 0 0; padding:0; list-style:none; color:var(--muted); }
+    .closing li { padding:8px 0; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; gap:20px; font-size:12px; }
+    .closing li span:last-child { color:var(--ink); }
+    footer { padding:23px 0 35px; border-top:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; gap:20px; color:var(--muted); font-size:11px; }
+    footer a:hover { color:var(--ink); }
+    dialog { width:min(1100px,calc(100vw - 40px)); border:1px solid #4a4a4e; background:var(--panel); color:var(--ink); padding:0; max-height:90vh; overflow:auto; }
+    dialog::backdrop { background:rgba(0,0,0,.84); backdrop-filter:blur(6px); }
+    .dialog-head { padding:22px 28px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); }
+    .dialog-head h2 { margin:0; font-size:18px; font-weight:500; letter-spacing:-.5px; }
+    .close { border:0; background:none; color:var(--ink); width:30px; height:30px; font-size:24px; }
+    .dialog-art { width:100%; display:block; }
+    .dialog-info { padding:0 28px 28px; display:grid; grid-template-columns:1.3fr 1fr; gap:32px; }
+    .dialog-info p { margin:0 0 10px; color:var(--muted); font-size:13px; line-height:1.7; }
+    .dialog-info .geometry { font-size:11px; }
+    .dialog-downloads { display:flex; gap:10px; flex-wrap:wrap; align-content:start; }
+    .dialog-downloads a { font-size:12px; padding:10px 12px; border:1px solid var(--line); border-radius:3px; }
+    .dialog-downloads a:hover { border-color:var(--muted); }
+    body.light-previews .recommended, body.light-previews .card, body.light-previews .card-visual { background:#f5f5f2; }
+    body.light-previews .recommended .label, body.light-previews .card-meta { color:#111113; }
+    body.light-previews .recommended .badge { border-color:#7d7d80; }
+    body.light-previews .hero-caption { color:#63636a; }
+    body.light-previews .hero-caption button { color:#111113; }
+    body.light-previews .card-info { color:#111113; }
+    body.light-previews .card .description, body.light-previews .card .font-label, body.light-previews .card .number { color:#63636a; }
+    body.light-previews .card-bottom { border-color:#d8d8d7; }
+    body.light-previews .downloads { color:#111113; }
+    @media (max-width:900px) { .page { padding:0 28px; } .intro { grid-template-columns:1fr; gap:28px; padding-top:48px; } .intro p { max-width:460px; } .recommended .hero-art { min-height:300px; } .grid { gap:18px; } .font-label { display:none; } .closing { gap:35px; } .toolbar { align-items:start; } .tools { flex-wrap:wrap; justify-content:end; } }
+    @media (max-width:620px) { .page { padding:0 20px; } header { height:76px; } header .eyebrow { font-size:9px; letter-spacing:.08em; } .intro { padding:42px 0 30px; gap:22px; } h1 { font-size:58px; } .intro p { font-size:14px; } .recommended { margin-bottom:32px; } .recommended .label { top:18px; left:18px; gap:8px; } .recommended .hero-art { min-height:240px; } .hero-caption { bottom:18px; left:18px; right:18px; } .hero-caption span { display:none; } .toolbar { display:block; } .tools { margin-top:17px; justify-content:space-between; gap:8px; } .grid { grid-template-columns:1fr; gap:20px; } .closing { grid-template-columns:1fr; gap:30px; padding:38px 0; margin-top:32px; } footer { align-items:start; } .dialog-info { grid-template-columns:1fr; gap:16px; } .dialog-head { padding:16px 20px; } .dialog-info { padding:0 20px 20px; } .badge { font-size:9px; } }
+    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } .card { transition:none; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <a class="brand" href="#" aria-label="Codiluce logo studies"><img src="10-lucent/mark.svg" alt="">Codiluce</a>
+      <span class="eyebrow">Identity studies / 01—10</span>
+    </header>
+    <main>
+      <section class="intro" aria-labelledby="headline">
+        <div><span class="eyebrow">A circle. A horizontal line.</span><h1 id="headline">Bring your code<br>to light.</h1></div>
+        <p><strong>Ten studies in simplicity.</strong><br>Swiss restraint. Precise typography.<br>Drawn for the dark. Clear in the light.<br><a href="eclipse-daybreak/" style="color:var(--ink);font-size:13px">Explore Eclipse & Daybreak refinements ↗</a></p>
+      </section>
+      <section class="recommended" aria-label="Recommended direction: 10 Lucent">
+        <div class="label"><span class="badge">Recommended</span><span class="eyebrow">10 / Lucent</span></div>
+        <img class="hero-art" src="10-lucent/dark.svg" alt="Codiluce Lucent logo with the tagline Bring your code to light">
+        <div class="hero-caption"><span>The final refinement: precise gaps, balanced weight, quiet type.</span><button type="button" data-open="10-lucent">Inspect direction ↗</button></div>
+      </section>
+      <section aria-labelledby="directions-title">
+        <div class="toolbar">
+          <h2 id="directions-title">The ten directions</h2>
+          <div class="tools">
+            <div class="segmented" role="group" aria-label="Preview background">
+              <button type="button" data-mode="dark" aria-pressed="true">Dark</button>
+              <button type="button" data-mode="light" aria-pressed="false">Light</button>
+            </div>
+            <a class="download-all" href="codiluce-10-logo-directions.zip" download>Download all ↓</a>
+          </div>
+        </div>
+        <div class="grid" id="directions"></div>
+      </section>
+      <section class="closing" aria-label="Recommended logo and included files">
+        <div><span class="eyebrow">My pick / 10 Lucent</span><h2>Keep the idea.<br>Refine the proportions.</h2><p>A continuous horizontal line passes through an almost complete circle. Small openings keep the intersections crisp. Geist at weight 550 brings enough presence without overpowering the mark.</p></div>
+        <div><span class="eyebrow">Included in every direction</span><ul><li><span>Symbol & wordmark</span><span>Transparent SVG</span></li><li><span>Logo with tagline</span><span>Outlined SVG</span></li><li><span>Dark & light presentation cards</span><span>SVG + PNG</span></li><li><span>PNG resolution</span><span>2400 × 1440</span></li><li><span>Typefaces</span><span>Geist / Inter / Archivo</span></li></ul></div>
+      </section>
+    </main>
+    <footer><span>Codiluce · Bring your code to light</span><span>Outlined type. <a href="fonts/geist-LICENSE.txt">Font licenses ↗</a></span></footer>
+  </div>
+  <dialog id="detail" aria-labelledby="detail-title">
+    <div class="dialog-head"><h2 id="detail-title"></h2><button class="close" type="button" aria-label="Close logo preview">×</button></div>
+    <img class="dialog-art" alt="">
+    <div class="dialog-info"><div><p id="detail-note"></p><p class="geometry" id="detail-geometry"></p><p class="geometry" id="detail-font"></p></div><div class="dialog-downloads"></div></div>
+  </dialog>
+  <script src="directions.js"></script>
+  <script>
+    const directions = window.CODILUCE_LOGO_DIRECTIONS;
+    const grid = document.querySelector('#directions');
+    const dialog = document.querySelector('#detail');
+    let mode = 'dark';
+    let selected;
+    const family = name => ({geist:'Geist',inter:'Inter',archivo:'Archivo'})[name];
+    const suffix = () => mode === 'light' ? '-light' : '';
+    function cards() {
+      grid.innerHTML = directions.map((d,i) => `<article class="card ${d.recommended?'pick':''}" data-direction="${d.id}">
+        <div class="card-meta"><h3><span class="number">${String(i+1).padStart(2,'0')}</span>${d.name}</h3><span class="font-label">${family(d.font)} / ${d.weight}</span></div>
+        <button class="card-visual" type="button" data-open="${d.id}" aria-label="Inspect ${d.name} logo"><img src="${d.id}/${mode}.svg" alt="${d.name}: Codiluce logo with Bring your code to light" loading="lazy"></button>
+        <div class="card-info"><p class="description">${d.description}</p><div class="card-bottom"><div class="miniatures"><img src="${d.id}/mark${suffix()}.svg" alt="${d.name} at 24 pixels"><img src="${d.id}/mark${suffix()}.svg" alt="${d.name} at 16 pixels"><span>24 / 16 px</span></div><div class="downloads"><a href="${d.id}/mark${suffix()}.svg" download>Mark</a><a href="${d.id}/lockup${suffix()}.svg" download>SVG ↓</a><a href="${d.id}/${mode}.png" download>PNG ↓</a></div></div></div>
+      </article>`).join('');
+    }
+    function detail(d) {
+      selected = d;
+      document.querySelector('#detail-title').textContent = `${d.id.slice(0,2)} / ${d.name}`;
+      const image = dialog.querySelector('.dialog-art');
+      image.src = `${d.id}/${mode}.svg`;
+      image.alt = `${d.name} Codiluce logo. Bring your code to light.`;
+      document.querySelector('#detail-note').textContent = d.note;
+      document.querySelector('#detail-geometry').textContent = d.geometry;
+      document.querySelector('#detail-font').textContent = `${family(d.font)} · weight ${d.weight} · optically spaced, kerned and outlined`;
+      dialog.querySelector('.dialog-downloads').innerHTML = `<a href="${d.id}/lockup${suffix()}.svg" download>Tagline SVG ↓</a><a href="${d.id}/${mode}.png" download>${mode === 'dark'?'Dark':'Light'} PNG ↓</a><a href="${d.id}/mark${suffix()}.svg" download>Symbol ↓</a>`;
+    }
+    document.addEventListener('click', event => {
+      const open = event.target.closest('[data-open]');
+      if (open) { detail(directions.find(d=>d.id===open.dataset.open)); dialog.showModal(); }
+      const toggle = event.target.closest('[data-mode]');
+      if (toggle) {
+        mode = toggle.dataset.mode;
+        document.body.classList.toggle('light-previews',mode==='light');
+        document.querySelectorAll('[data-mode]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.mode===mode)));
+        document.querySelector('.hero-art').src = `10-lucent/${mode}.svg`;
+        cards();
+        if (selected) detail(selected);
+      }
+    });
+    dialog.querySelector('.close').addEventListener('click',()=>dialog.close());
+    dialog.addEventListener('click', event => {
+      const r = dialog.getBoundingClientRect();
+      if (event.target===dialog && (event.clientX<r.left || event.clientX>r.right || event.clientY<r.top || event.clientY>r.bottom)) dialog.close();
+    });
+    cards();
+  </script>
+</body>
+</html>
