@@ -173,7 +173,7 @@ export function EffectsSection({ entity }: { entity: Entity }) {
 /** Timeline: what the viewed comparison's changes reach, and a toggle to show it on the map. */
 export function CommitImpactChip() {
   const store = useStore();
-  const stamp = useAtlas(state => `${state.meta?.snapshot.id ?? ''}|${state.meta?.comparison?.baseline.id ?? ''}|${state.timeline.open ? 'folders' : state.lens}`);
+  const stamp = useAtlas(() => store.viewStamp());
   const comparing = useAtlas(state => !!state.meta?.comparison);
   const commitImpact = useAtlas(state => state.commitImpact);
   useEffect(() => { if (comparing) void store.loadCommitImpact(); }, [store, stamp, comparing]);

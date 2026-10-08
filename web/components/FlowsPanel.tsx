@@ -16,7 +16,8 @@ export function FlowsPanel({ onClose }: { onClose: () => void }) {
   const store = useStore();
   const catalog = useAtlas(state => state.catalog);
   const active = useAtlas(state => state.tour?.key);
-  const stamp = useAtlas(state => `${state.meta?.snapshot.id ?? ''}|${state.meta?.comparison?.baseline.id ?? ''}|${state.timeline.open ? 'folders' : state.lens}`);
+  // Use the same identity as catalog loads, including live folder grouping.
+  const stamp = useAtlas(() => store.viewStamp());
   useEffect(() => { if (catalog.status === 'idle' || (catalog.status === 'ready' && catalog.viewStamp !== stamp)) void store.loadCatalog(); }, [store, catalog.status, catalog.viewStamp, stamp]);
   const data = catalog.data;
   const tab = catalog.kind;

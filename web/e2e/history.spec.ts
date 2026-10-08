@@ -10,6 +10,24 @@ const timeline = (page: Page) => page.getByRole('region', { name: 'History' });
 /** World-space origins of what is on screen: containers resize with their content, but nothing moves. */
 const positions = (page: Page) => page.evaluate(() => Object.fromEntries(window.__CODILUCE__!.visibleIds().map(id => [id, window.__CODILUCE__!.rectOf(id)])));
 
+test('Flows stays responsive when entering, stepping and leaving indexed history', async ({ page }) => {
+  await open(page);
+  await page.getByRole('button', { name: 'Flows', exact: true }).click();
+  const rows = page.getByRole('complementary', { name: 'Flows' }).locator('.rf-row');
+  await expect(rows.first()).toBeVisible();
+  await page.getByRole('button', { name: 'History', exact: true }).click();
+  await expect(timeline(page)).toContainText('4 commits, 4 indexed');
+  await page.getByRole('slider', { name: /Commit timeline/ }).focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect(timeline(page)).toContainText('Move the backend to server/');
+  await expect(rows.first()).toBeVisible();
+  await page.getByRole('button', { name: 'Close history', exact: true }).click();
+  await expect(timeline(page)).toHaveCount(0);
+  await expect(rows.first()).toBeVisible();
+  await page.getByRole('button', { name: 'Coverage', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Coverage lens' })).toBeVisible();
+});
+
 test('the timeline steps through commits without moving the map, and shows what changed', async ({ page }) => {
   await open(page);
   await page.getByRole('button', { name: 'History' }).click();

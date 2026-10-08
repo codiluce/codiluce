@@ -12,6 +12,33 @@ async function idOf(page: Page, query: string, type: string): Promise<string> {
   return page.evaluate(async ([q, t]) => (await fetch(`/api/projection/search?q=${encodeURIComponent(q!)}&type=${t}`).then(response => response.json())).items[0].id as string, [query, type]);
 }
 
+for (const empty of [true, false]) {
+  test(`${empty ? 'empty' : 'populated'} Flows stays responsive through coverage, grouping and history`, async ({ page }) => {
+    if (empty) await page.route('**/api/projection/flows*', route => route.fulfill({ json: { items: [], counts: { page: 0, request: 0, command: 0, schedule: 0, unmatched: 0 } } }));
+    await open(page);
+    await page.getByRole('button', { name: 'Flows', exact: true }).click();
+    const panel = page.getByRole('complementary', { name: 'Flows' });
+    const loaded = empty ? panel.getByText('No flows were indexed.', { exact: true }) : panel.locator('.rf-row').first();
+    await expect(loaded).toBeVisible();
+    await page.getByRole('button', { name: 'Coverage', exact: true }).click();
+    await expect(page.getByRole('region', { name: 'Coverage lens' })).toBeVisible();
+    await page.getByRole('button', { name: 'Group files', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Group files', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(loaded).toBeVisible();
+    await page.getByRole('button', { name: 'History', exact: true }).click();
+    await expect(page.getByRole('region', { name: 'History' })).toContainText('No history indexed yet.');
+    await page.getByRole('button', { name: 'Close history', exact: true }).click();
+    await expect(page.getByRole('region', { name: 'History' })).toHaveCount(0);
+    await expect(loaded).toBeVisible();
+    // Reopening the panel reads the cached catalog, which must also settle.
+    await page.getByRole('button', { name: 'Hide the flows panel', exact: true }).click();
+    await page.getByRole('button', { name: 'Flows', exact: true }).click();
+    await expect(loaded).toBeVisible();
+    await page.getByRole('button', { name: 'Coverage', exact: true }).click();
+    await expect(page.getByRole('region', { name: 'Coverage lens' })).toHaveCount(0);
+  });
+}
+
 test('one list holds every flow, filtered by kind and completeness; a request is shown on the map, then as lanes', async ({ page }) => {
   await open(page);
   await page.getByRole('button', { name: 'Flows', exact: true }).click();
