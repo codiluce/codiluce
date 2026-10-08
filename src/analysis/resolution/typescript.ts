@@ -33,9 +33,15 @@ export class TypeScriptResolver {
       const target = targets.get(match[1]!);
       return target ? path.join(this.context.root, target.root, match[2] ?? '') : undefined;
     };
+    const componentProbe = (target: string): string | undefined => {
+      if (this.sources.fileExists(target)) return undefined;
+      const match = /^(.*)\.d\.(vue|svelte|astro)\.ts$/.exec(target) ?? /^(.*)\.(vue|svelte|astro)\.(?:ts|tsx|js|jsx)$/.exec(target);
+      const original = match ? `${match[1]}.${match[2]}` : undefined;
+      return original && this.sources.fileExists(original) ? this.context.embedded?.facade(original) : undefined;
+    };
     const host: ts.ModuleResolutionHost = {
-      fileExists: fileName => { const target = translate(fileName); return target !== undefined && this.sources.fileExists(target); },
-      readFile: fileName => { const target = translate(fileName); return target === undefined ? undefined : this.sources.readFile(target); },
+      fileExists: fileName => { const target = translate(fileName); return target !== undefined && (this.sources.fileExists(target) || !!this.context.embedded?.input(target) || !!componentProbe(target)); },
+      readFile: fileName => { const target = translate(fileName); return target === undefined ? undefined : this.context.embedded?.readFile(target) ?? this.sources.readFile(target); },
       directoryExists: directory => {
         const normalized = directory.split(path.sep).join('/');
         if (/(?:^|\/)node_modules$/.test(normalized)) return eligible.length > 0;
@@ -43,7 +49,7 @@ export class TypeScriptResolver {
         if (scope) return eligible.some(name => name.startsWith(`${scope[1]}/`));
         const target = translate(directory); return target !== undefined && this.sources.directoryExists(target);
       },
-      realpath: fileName => translate(fileName) ?? fileName,
+      realpath: fileName => { const target = translate(fileName) ?? fileName; return componentProbe(target) ?? target; },
       getCurrentDirectory: () => this.context.root,
     };
     this.hosts.set(importer.id, host); return host;
@@ -56,17 +62,35 @@ export class TypeScriptResolver {
       return text;
     } };
   }
-  resolve(specifier: string, containingFile: string, mode?: ts.ResolutionMode): ts.ResolvedModuleWithFailedLookupLocations {
+  resolve(specifier: string, containingFile: string, mode?: ts.ResolutionMode, generated = false): ts.ResolvedModuleWithFailedLookupLocations {
     const project = this.owner(containingFile), options = this.options.get(project.id) ?? {};
-    const key = JSON.stringify([containingFile, specifier, mode]);
+    const key = JSON.stringify([containingFile, specifier, mode, generated]);
     const cached = this.results.get(key); if (cached) return cached;
+    const internal = generated ? this.context.embedded?.internal(specifier, containingFile) : undefined;
+    if (internal) return { resolvedModule: { resolvedFileName: internal, extension: internal.endsWith('.js') ? ts.Extension.Js : internal.endsWith('.jsx') ? ts.Extension.Jsx : internal.endsWith('.tsx') ? ts.Extension.Tsx : ts.Extension.Ts, isExternalLibraryImport: false } };
+    if (specifier.includes('.__codiluce_')) return { resolvedModule: undefined };
     const host = this.virtualHost(project);
     let result = ts.resolveModuleName(specifier, containingFile, options, host, undefined, undefined, mode);
     if (result.resolvedModule) {
       const physical = host.realpath!(result.resolvedModule.resolvedFileName);
       // Every graph/program target is a canonical indexed path, even when
       // the target project asks the runtime to preserve workspace symlinks.
-      result = { ...result, resolvedModule: this.sources.fileExists(physical) ? { ...result.resolvedModule, resolvedFileName: physical, isExternalLibraryImport: false, packageId: undefined } : undefined };
+      const facade = this.context.embedded?.input(physical)?.facade;
+      result = { ...result, resolvedModule: facade || this.sources.fileExists(physical) && !this.context.embedded?.input(physical) ? { ...result.resolvedModule, ...(facade ? { extension: ts.Extension.Ts } : {}), resolvedFileName: physical, isExternalLibraryImport: false, packageId: undefined } : undefined };
+    }
+    if (!result.resolvedModule && /\.(?:vue|svelte|astro)$/.test(specifier)) {
+      const candidates: string[] = []; if (specifier.startsWith('.')) candidates.push(path.resolve(path.dirname(containingFile), specifier));
+      const base = options.baseUrl ?? (options as ts.CompilerOptions & { pathsBasePath?: string }).pathsBasePath ?? path.join(this.context.root, project.root);
+      for (const [alias, replacements] of Object.entries(options.paths ?? {})) {
+        const star = alias.indexOf('*');
+        if (star < 0 ? specifier !== alias : !specifier.startsWith(alias.slice(0, star)) || !specifier.endsWith(alias.slice(star + 1))) continue;
+        const capture = star < 0 ? '' : specifier.slice(star, specifier.length - (alias.length - star - 1));
+        for (const replacement of replacements) candidates.push(path.resolve(base, replacement.replace('*', capture)));
+      }
+      for (const candidate of candidates) {
+        const physical = host.realpath!(candidate), facade = this.sources.fileExists(physical) ? this.context.embedded?.facade(physical) : undefined;
+        if (facade) { result = { ...result, resolvedModule: { resolvedFileName: facade, extension: ts.Extension.Ts, isExternalLibraryImport: false } }; break; }
+      }
     }
     this.results.set(key, result); return result;
   }

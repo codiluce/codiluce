@@ -18,7 +18,7 @@
 // parameters bound to the arguments (`bind`). An axios instance's `baseURL`
 // is joined to the request path the way axios joins them (`resolveJoined`).
 import ts from 'typescript';
-import path from 'node:path';
+import { sourcePath } from '../analysis/embedded/index.js';
 import type { AnalysisContext } from '../core/analyzer.js';
 import { evidence, type Evidence } from '../core/graph.js';
 
@@ -57,7 +57,7 @@ export class UrlEvaluator {
       for (const origin of app.apiOrigins ?? []) this.originOwners.set(origin, app.name);
     }
   }
-  private relative(node: ts.Node): string { return path.relative(this.context.root, node.getSourceFile().fileName).split(path.sep).join('/'); }
+  private relative(node: ts.Node): string { return sourcePath(this.context, node.getSourceFile().fileName); }
   private fact(node: ts.Node, explanation: string): Evidence {
     const source = node.getSourceFile();
     const start = source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1, end = source.getLineAndCharacterOfPosition(node.getEnd()).line + 1;

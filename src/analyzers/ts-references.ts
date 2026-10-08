@@ -18,10 +18,10 @@
 // are matched on resolves to a lib global or to an import from the framework.
 import ts from 'typescript';
 import { runtimeReference } from '../analysis/languages/typescript-runtime.js';
-import path from 'node:path';
 import type { AnalysisContext, ScannedFile } from '../core/analyzer.js';
 import { evidence, type EffectFact, type Entity, type Evidence } from '../core/graph.js';
 import type { SiteCollector, SiteForm } from './references.js';
+import { sourcePath, sourceMapped, embeddedOwner } from '../analysis/embedded/index.js';
 
 export interface TsApplicationState {
   program: ts.Program; checker: ts.TypeChecker;
@@ -37,13 +37,13 @@ function short(node: ts.Node, max = 60): string { const text = node.getText().re
 export function resolveReferences(context: AnalysisContext, state: TsApplicationState, file: ScannedFile, source: ts.SourceFile, owners: Map<ts.Node, Entity>): void {
   const { checker, program, declarations, sites } = state;
   const fileEntity = context.graph.entities.get(file.id)!;
-  const relativeOf = (sourceFile: ts.SourceFile) => path.relative(context.root, sourceFile.fileName).split(path.sep).join('/');
+  const relativeOf = (sourceFile: ts.SourceFile) => sourcePath(context, sourceFile.fileName);
   const indexed = (node: ts.Node) => { const sf = node.getSourceFile(); return !program.isSourceFileDefaultLibrary(sf) && context.files.has(relativeOf(sf)); };
   const lineOf = (node: ts.Node) => source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1;
   const fact = (node: ts.Node, explanation: string): Evidence => ({ ...evidence('typescript', 'typescript-nextjs', file.path, lineOf(node), explanation), endLine: source.getLineAndCharacterOfPosition(node.getEnd()).line + 1 });
   function owner(node: ts.Node): Entity {
     for (let parent = node.parent; parent; parent = parent.parent) { const entity = owners.get(parent); if (entity) return entity; }
-    return fileEntity;
+    return embeddedOwner(context, file) ?? fileEntity;
   }
   function aliased(symbol: ts.Symbol | undefined): ts.Symbol | undefined {
     if (symbol && symbol.flags & ts.SymbolFlags.Alias) { try { return checker.getAliasedSymbol(symbol); } catch { return undefined; } }
@@ -251,6 +251,7 @@ export function resolveReferences(context: AnalysisContext, state: TsApplication
     sites.add({ from: from.id, to: target.id, type: 'references', form, evidence: fact(value, explanation), ...(event ? { event } : {}) });
   }
   function visit(node: ts.Node): void {
+    if (!ts.isSourceFile(node) && !sourceMapped(context, source.fileName, node.getStart(source), node.end)) return;
     if (ts.isCallExpression(node) && node.expression.kind !== ts.SyntaxKind.ImportKeyword && node.expression.kind !== ts.SyntaxKind.SuperKeyword) {
       const from = owner(node);
       if (!runtimeReference(node.expression, checker)) { sites.count(from.id, 'unresolved', calleeName(node.expression)); ts.forEachChild(node, visit); return; }

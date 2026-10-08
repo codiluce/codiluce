@@ -23,8 +23,8 @@
 // elements. A link whose URL cannot be proven (a menu built from data) is
 // recorded on its file but is not a finding: it is navigation, not an API call.
 import ts from 'typescript';
+import { sourcePath, sourceMapped } from '../analysis/embedded/index.js';
 import { runtimeReference } from '../analysis/languages/typescript-runtime.js';
-import path from 'node:path';
 import type { AnalysisContext, HttpObservation, ScannedFile } from '../core/analyzer.js';
 import { evidence, type EffectFact, type Entity, type Evidence } from '../core/graph.js';
 import type { SiteCollector } from './references.js';
@@ -376,12 +376,13 @@ export function expandWrappers(input: WrapperContext, roots: WrapperRoot[]): Map
   if (!roots.length) return results;
   const { context, checker, urls, sites } = input;
   const { graph } = context;
-  const relative = (fileName: string) => path.relative(context.root, fileName).split(path.sep).join('/');
+  const relative = (fileName: string) => sourcePath(context, fileName);
   // Resolved declarations, collected once. Aliased imports and barrel exports
   // can have different spellings from the function they call.
   const callSites = new Map<ts.SignatureDeclaration, ts.CallExpression[]>();
   for (const source of input.sources) {
     const visit = (node: ts.Node): void => {
+      if (!ts.isSourceFile(node) && !sourceMapped(context, source.fileName, node.getStart(source), node.end)) return;
       if (ts.isCallExpression(node) && runtimeReference(node.expression, checker)) {
         let target: ts.SignatureDeclaration | undefined;
         try { const declaration = checker.getResolvedSignature(node)?.declaration; target = declaration && !ts.isJSDocSignature(declaration) ? declaration : undefined; } catch { target = undefined; }

@@ -22,9 +22,10 @@ import { pythonAnalyzer } from '../analysis/languages/python.js';
 import { FASTAPI_VERSION } from '../analysis/frameworks/fastapi.js';
 import { FLASK_VERSION } from '../analysis/frameworks/flask.js';
 import { DJANGO_VERSION } from '../analysis/frameworks/django.js';
+import { embeddedAnalyzer } from '../analysis/embedded/index.js';
 
 const execute = promisify(execFile);
-export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, structureAnalyzer, pythonAnalyzer, typescriptAnalyzer, typescriptServicesRelease, laravelAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
+export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, structureAnalyzer, pythonAnalyzer, embeddedAnalyzer, typescriptAnalyzer, typescriptServicesRelease, laravelAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
 export interface IndexOptions {
   stateDirectory?: string; config?: AtlasConfig; onProgress?: (name: string) => void;
   /** Index a materialized commit tree: Git is not consulted and the run records this commit, clean. */

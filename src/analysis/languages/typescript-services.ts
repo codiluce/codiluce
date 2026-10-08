@@ -7,6 +7,7 @@ import { ProjectCatalog, type NodeProject } from '../project-model.js';
 import { TypeScriptResolver } from '../resolution/typescript.js';
 import { IndexedSources } from '../indexed-sources.js';
 import { createApplicationProgram } from '../../analyzers/ts-program.js';
+import { sourcePath, sourceMapped, embeddedOwner } from '../embedded/index.js';
 
 /** A node's exact source site, not its spelling, bridges separate compiler
  * programs. Each program keeps its own options, checker and global scope. */
@@ -19,7 +20,7 @@ export class DeclarationIndex extends Map<ts.Node, Entity> {
   override clear(): void { super.clear(); this.bySite.clear(); }
 }
 export interface TypeScriptProject {
-  project: NodeProject; files: ScannedFile[];
+  project: NodeProject; files: ScannedFile[]; inputs: ScannedFile[];
   program(): ts.Program;
   owners(source: ts.SourceFile): Map<ts.Node, Entity>;
   rememberOwners(source: ts.SourceFile, owners: Map<ts.Node, Entity>): void;
@@ -36,12 +37,14 @@ export interface TypeScriptServices {
 /** Recover declaration ownership after a graph-cache hit without extracting
  * a second set of graph entities. Source ranges identify the exact AST node. */
 function restoreOwners(context: AnalysisContext, source: ts.SourceFile, declarations: DeclarationIndex): Map<ts.Node, Entity> {
-  const relative = path.relative(context.root, source.fileName).split(path.sep).join('/');
-  const entities = new Map([...context.graph.entities.values()].filter(entity => entity.path === relative && entity.sourceRange && ['function', 'method', 'class', 'component', 'controller'].includes(entity.type)).map(entity => {
+  const relative = sourcePath(context, source.fileName), region = context.embedded?.input(source.fileName)?.region;
+  const entities = new Map([...context.graph.entities.values()].filter(entity => entity.path === relative && entity.sourceRange && (!region || entity.metadata.embeddedRegion === region.key) && ['function', 'method', 'class', 'component', 'controller'].includes(entity.type)).map(entity => {
     const range = entity.sourceRange!;
     return [JSON.stringify([range.startLine, range.startColumn, range.endLine, range.endColumn]), entity];
   }));
   const owners = new Map<ts.Node, Entity>();
+  const file = context.files.get(relative), scope = file && region ? embeddedOwner(context, { ...file, embedded: region }) : undefined;
+  if (scope) { owners.set(source, scope); declarations.set(source, scope); }
   const visit = (node: ts.Node): void => {
     const start = source.getLineAndCharacterOfPosition(node.getStart(source)), end = source.getLineAndCharacterOfPosition(node.end);
     const entity = entities.get(JSON.stringify([start.line + 1, start.character + 1, end.line + 1, end.character + 1]));
@@ -85,17 +88,19 @@ export function createTypeScriptServices(context: AnalysisContext): TypeScriptSe
     resolver.options.set(project.id, options);
   }
   const projects = catalog.node.map(project => {
-    const files = catalog.nodeFiles(project), bySource = new Map<ts.SourceFile, Map<ts.Node, Entity>>();
+    const inputs = catalog.nodeFiles(project), files = inputs.flatMap(file => ['vue', 'svelte', 'astro'].includes(file.language ?? '') ? context.embedded?.inputs(file) ?? [] : [file]), bySource = new Map<ts.SourceFile, Map<ts.Node, Entity>>();
+    const facades = inputs.map(file => context.embedded?.facade(file.absolutePath)).filter((file): file is string => !!file);
     let program: ts.Program | undefined;
     const runtime: TypeScriptProject = {
-      project, files,
+      project, files, inputs,
       program() {
         if (!program) {
           const texts = new Map<string, string>();
-          for (const file of files) { const text = sources.readFile(file.absolutePath); if (text !== undefined) texts.set(file.absolutePath, text); }
+          for (const file of files) { const text = context.embedded?.readFile(file.absolutePath) ?? sources.readFile(file.absolutePath); if (text !== undefined) texts.set(file.absolutePath, text); }
+          for (const facade of facades) texts.set(facade, context.embedded!.readFile(facade)!);
           program = createApplicationProgram(texts, resolver.options.get(project.id)!, path.join(context.root, project.root), {
-            rootNames: [...texts.keys()], moduleHost: sources.moduleHost, readSource: sources.readFile,
-            resolveModuleNameLiterals: (literals, containingFile, _redirect, _options, source) => literals.map(literal => resolver.resolve(literal.text, containingFile, ts.getModeForUsageLocation(source, literal, resolver.options.get(resolver.owner(containingFile).id)!))),
+            rootNames: [...texts.keys()], moduleHost: sources.moduleHost, readSource: fileName => context.embedded?.readFile(fileName) ?? sources.readFile(fileName),
+            resolveModuleNameLiterals: (literals, containingFile, _redirect, _options, source) => literals.map(literal => resolver.resolve(literal.text, containingFile, ts.getModeForUsageLocation(source, literal, resolver.options.get(resolver.owner(containingFile).id)!), !!context.embedded?.input(containingFile)?.facade || literal.pos >= 0 && !sourceMapped(context, containingFile, literal.pos, literal.end))),
           });
         }
         return program;
@@ -105,7 +110,7 @@ export function createTypeScriptServices(context: AnalysisContext): TypeScriptSe
       releaseProgram() { program = undefined; bySource.clear(); },
     };
     return runtime;
-  }).filter(project => project.files.length);
+  }).filter(project => project.inputs.length);
   const byProject = new Map(projects.map(runtime => [runtime.project.id, runtime]));
   const services: TypeScriptServices = {
     projects, declarations, resolver, projectFor: relative => byProject.get(catalog.nodeOwner(relative).id),
@@ -139,7 +144,7 @@ export function typescriptComponents(context: AnalysisContext, services: TypeScr
     for (const name of Object.keys(runtime.project.dependencies)) { const binding = catalog.packageBinding(runtime.project, name); if (binding.status === 'resolved') connect(runtime, binding.project); }
     for (const reference of runtime.project.references) connect(runtime, catalog.node.find(project => project.root === reference));
     for (const file of runtime.files) {
-      const text = context.sources!.readFile(file.absolutePath); if (text === undefined) continue;
+      const text = context.embedded?.readFile(file.absolutePath) ?? context.sources!.readFile(file.absolutePath); if (text === undefined) continue;
       for (const imported of ts.preProcessFile(text, true, true).importedFiles) {
         // Relative directory imports use main/types fields, rather than
         // conditional package exports. One conservative probe is sufficient

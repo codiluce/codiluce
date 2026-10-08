@@ -141,6 +141,14 @@ try {
   await writeFile(path.join(djangoServer, 'settings.py'), 'ROOT_URLCONF = "urls"\n');
   await writeFile(path.join(djangoServer, 'urls.py'), 'from django.urls import path, include\nfrom handlers import PackagedDjangoHandler, PackagedDjangoView\nurlpatterns = [path("package-django/", include(([path("items/<int:id>/", PackagedDjangoHandler, name="item"), path("class/", PackagedDjangoView.as_view())], "package"), namespace="installed"))]\n');
   await writeFile(path.join(djangoServer, 'handlers.py'), 'from django.views import View\nfrom django.views.decorators.http import require_GET\ndef PackagedDjangoLeaf():\n    return "ok"\n@require_GET\ndef PackagedDjangoHandler(request, id):\n    return PackagedDjangoLeaf()\nclass PackagedDjangoView(View):\n    def get(self, request):\n        return PackagedDjangoLeaf()\n');
+  const embeddedUi = path.join(repo, 'embedded-ui');
+  await mkdir(embeddedUi);
+  await writeFile(path.join(embeddedUi, 'package.json'), JSON.stringify({ dependencies: { vue: '^3.5.0', svelte: '^5.0.0', astro: '^5.0.0' } }));
+  await writeFile(path.join(embeddedUi, 'helper.ts'), 'export function PackagedEmbeddedLeaf() { return 1; }');
+  await writeFile(path.join(embeddedUi, 'Widget.vue'), '<template><span/></template>\n<script setup lang="ts">import { PackagedEmbeddedLeaf } from "./helper";\nfunction PackagedVueSave() { return PackagedEmbeddedLeaf(); }\n</script>');
+  await writeFile(path.join(embeddedUi, 'Counter.svelte'), '<script module lang="ts">import { PackagedEmbeddedLeaf } from "./helper";\nexport function PackagedSvelteShared() { return PackagedEmbeddedLeaf(); }\n</script>');
+  await writeFile(path.join(embeddedUi, 'Page.astro'), '---\nimport { PackagedEmbeddedLeaf } from "./helper";\nfunction PackagedAstroLoad() { return PackagedEmbeddedLeaf(); }\n---\n<script>import { PackagedEmbeddedLeaf } from "./helper";\nfunction PackagedAstroClick() { return PackagedEmbeddedLeaf(); }\n</script>');
+  await writeFile(path.join(embeddedUi, 'consumer.ts'), 'import { PackagedSvelteShared } from "./Counter.svelte"; export function PackagedSvelteConsumer() { return PackagedSvelteShared(); }');
   console.log('Starting the installed executable from a repository with spaces…');
   await checkSession(bin, repo);
   assert.ok((await readdir(path.join(repo, '.codiluce'))).includes('codiluce.db'));
@@ -220,6 +228,22 @@ try {
   const djangoOptions = djangoEntities.find(entity => entity.type === 'api_endpoint' && entity.name === 'OPTIONS /package-django/class/');
   assert.ok(djangoOptions);
   assert.equal(JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', djangoOptions.id, '--type', 'handles'], repo)).stdout).items.length, 0, 'Django default OPTIONS carries no view handler');
+  const embeddedSymbols = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'Packaged'], repo)).stdout).items;
+  const embeddedLeaf = embeddedSymbols.find(entity => entity.name === 'PackagedEmbeddedLeaf');
+  assert.ok(embeddedLeaf);
+  for (const [name, file, line, context] of [['PackagedVueSave', 'Widget.vue', 3, 'unknown'], ['PackagedSvelteShared', 'Counter.svelte', 2, 'unknown'], ['PackagedAstroLoad', 'Page.astro', 3, 'server'], ['PackagedAstroClick', 'Page.astro', 6, 'browser']]) {
+    const symbol = embeddedSymbols.find(entity => entity.name === name);
+    assert.ok(symbol, `installed embedded adapter extracts ${name}`);
+    const detail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', symbol.id], repo)).stdout);
+    assert.equal(detail.path, `embedded-ui/${file}`);
+    assert.equal(detail.sourceRange.startLine, line);
+    assert.equal(detail.metadata.executionContext, context);
+    const calls = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', symbol.id, '--type', 'calls'], repo)).stdout).items;
+    assert.ok(calls.some(edge => edge.to === embeddedLeaf.id), `installed ${file} script binds its imported TS declaration`);
+  }
+  const svelteConsumer = embeddedSymbols.find(entity => entity.name === 'PackagedSvelteConsumer'), svelteShared = embeddedSymbols.find(entity => entity.name === 'PackagedSvelteShared');
+  assert.ok(svelteConsumer && svelteShared);
+  assert.ok(JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', svelteConsumer.id, '--type', 'calls'], repo)).stdout).items.some(edge => edge.to === svelteShared.id), 'installed component facade retains exact public module exports');
   await assert.rejects(run(process.execPath, [bin, 'start', '--build-ui', '--no-open'], repo), error => error.code === 1 && /only available in a Codiluce source checkout/.test(error.stderr));
   await assert.rejects(run(process.execPath, [bin, 'unknown-command'], repo), error => error.code === 1);
   const broken = path.join(repo, 'frontend/src/broken.ts');
@@ -268,7 +292,7 @@ try {
   console.log('Checking npm exec against the tarball without a local installation…');
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
-  console.log('Package installation, seven grammars, workspace binding, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
+  console.log('Package installation, seven grammars, workspace binding, Vue/Svelte/Astro embedded scripts, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

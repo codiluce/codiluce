@@ -84,7 +84,7 @@ export class ProjectCatalog {
     return owner;
   }
   nodeFiles(project: NodeProject): ScannedFile[] {
-    return [...this.context.files.values()].filter(file => file.analyzable && ['typescript', 'javascript'].includes(file.language ?? '') && this.nodeOwner(file.path) === project).sort((a, b) => a.path.localeCompare(b.path, 'en'));
+    return [...this.context.files.values()].filter(file => file.analyzable && ['typescript', 'javascript', 'vue', 'svelte', 'astro'].includes(file.language ?? '') && this.nodeOwner(file.path) === project).sort((a, b) => a.path.localeCompare(b.path, 'en'));
   }
   packageBinding(importer: NodeProject, name: string): PackageBinding {
     if (!/^(?:@[a-zA-Z0-9_.-]+\/)?[a-zA-Z0-9_.-]+$/.test(name)) return { status: 'unsupported', reason: `Unsupported package name: ${name}` };

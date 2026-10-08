@@ -15,6 +15,7 @@ import type { NodeProject } from '../analysis/project-model.js';
 import type { ImportOutcome, ImportBinding } from '../analysis/facts.js';
 import { typescriptFrameworkPacks } from '../analysis/frameworks/index.js';
 import type { TypeScriptPackScope } from '../analysis/frameworks/typescript-pack.js';
+import { EMBEDDED_VERSION, sourcePath, sourceAvailable, sourceMapped, embeddedOwner, embeddedOutcome } from '../analysis/embedded/index.js';
 
 function literal(node: ts.Node | undefined): string | undefined { return node && (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) ? node.text : undefined; }
 function modifier(node: ts.Node, kind: ts.SyntaxKind): boolean { return ts.canHaveModifiers(node) && !!ts.getModifiers(node)?.some(item => item.kind === kind); }
@@ -58,12 +59,12 @@ export const typescriptAnalyzer: Analyzer = {
     for (const file of resolutionFiles) if (file.analyzable) sources.readFile(file.absolutePath);
     const services = createTypeScriptServices(context);
     for (const component of typescriptComponents(context, services)) {
-      const files = component.flatMap(project => project.files);
+      const files = component.flatMap(project => project.inputs);
       const inputsAvailable = files.map(file => sources.readFile(file.absolutePath) !== undefined).every(Boolean) && !sources.failures.size;
       const run = () => analyzeComponent(context, component, services);
       const resolutionInputs = [...new Set([...resolutionFiles.map(file => file.path), ...services.resolver.configInputs])].sort().map(file => fileKey(context, file));
       const unit = component.length === 1 ? component[0]!.project.name : `group:${component.map(runtime => runtime.project.root).sort().join(',')}`;
-      if (context.cache && inputsAvailable) await context.cache.unit(context, 'typescript-nextjs', unit, { projects: component.map(runtime => runtime.project), options: component.map(runtime => services.resolver.options.get(runtime.project.id)), files: files.map(file => fileKey(context, file.path)), resolutionInputs, paths: pathSetKey(context), config: context.config, applications: [...context.applicationIds], typescript: ts.version, packs: typescriptFrameworkPacks.map(pack => [pack.id, pack.version]) }, run);
+      if (context.cache && inputsAvailable) await context.cache.unit(context, 'typescript-nextjs', unit, { projects: component.map(runtime => runtime.project), options: component.map(runtime => services.resolver.options.get(runtime.project.id)), files: files.map(file => fileKey(context, file.path)), resolutionInputs, paths: pathSetKey(context), config: context.config, applications: [...context.applicationIds], typescript: ts.version, embedded: EMBEDDED_VERSION, packs: typescriptFrameworkPacks.map(pack => [pack.id, pack.version]) }, run);
       else await run();
     }
     for (const [file, reason] of sources.failures) context.graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'indexed-source-unavailable', file, entityId: context.files.get(file)?.id, reason });
@@ -76,16 +77,18 @@ async function analyzeComponent(context: AnalysisContext, component: TypeScriptP
     const state: TsApplicationState = { program, checker, declarations: services.declarations, sites };
     const urls = new UrlEvaluator(checker, program, context), wrappers: WrapperRoot[] = [];
     const analyzed: { file: ScannedFile; source: ts.SourceFile; symbols: Map<ts.Node, Entity>; behavior: () => void }[] = [];
+    const initialized = new Set<string>();
     for (const file of runtime.files) {
       const source = program.getSourceFile(file.absolutePath);
       if (!source || source.isDeclarationFile) continue;
-      const result = analyzeFile(context, file, runtime.project, source, state, urls, wrappers, services);
+      const result = analyzeFile(context, file, runtime.project, source, state, urls, wrappers, services, !initialized.has(file.id)); initialized.add(file.id);
       if (result) { runtime.rememberOwners(source, result.symbols); analyzed.push({ file, source, ...result }); }
     }
     return { runtime, program, checker, state, urls, wrappers, analyzed };
   });
   const scope: TypeScriptPackScope = { context, services, files: prepared.flatMap(item => item.analyzed.map(file => ({ runtime: item.runtime, file: file.file, source: file.source, state: item.state, owners: file.symbols }))) };
-  for (const pack of typescriptFrameworkPacks) if (pack.applies(scope)) pack.declare(scope);
+  const backendScope = { ...scope, files: scope.files.filter(frame => !frame.file.embedded) };
+  for (const pack of typescriptFrameworkPacks) if (pack.applies(backendScope)) pack.declare(backendScope);
   for (const item of prepared) for (const file of item.analyzed) file.behavior();
   // Declare every owned file before linking references across compiler programs.
   const roots = prepared.flatMap(item => item.wrappers);
@@ -93,7 +96,7 @@ async function analyzeComponent(context: AnalysisContext, component: TypeScriptP
   for (const item of prepared) {
     const owned = new Set(item.analyzed.map(file => file.source.fileName));
     const rebased = wrapperRootsForProgram(roots, item.program, item.checker);
-    const results = expandWrappers({ context, checker: item.checker, program: item.program, urls: item.urls, sites, sources: item.program.getSourceFiles().filter(source => !source.isDeclarationFile && context.sources!.fileExists(source.fileName)), declarations: services.declarations, ownsCall: call => owned.has(call.getSourceFile().fileName), report: false, deferUncalled: component.length > 1 }, [...rebased.keys()]);
+    const results = expandWrappers({ context, checker: item.checker, program: item.program, urls: item.urls, sites, sources: item.program.getSourceFiles().filter(source => !source.isDeclarationFile && sourceAvailable(context, source.fileName)), declarations: services.declarations, ownsCall: call => owned.has(call.getSourceFile().fileName), report: false, deferUncalled: component.length > 1 }, [...rebased.keys()]);
     for (const [root, stats] of results) {
       const total = totals.get(rebased.get(root)!)!; total.found += stats.found; total.resolved += stats.resolved; total.failed += stats.failed;
       if (stats.uncalled) (total.uncalled ??= []).push(...stats.uncalled);
@@ -139,26 +142,26 @@ function linkNextWrappers(context: AnalysisContext, files: ScannedFile[]): void 
     }
   }
 }
-function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeProject, source: ts.SourceFile, state: TsApplicationState, urls: UrlEvaluator, wrappers: WrapperRoot[], services: TypeScriptServices): { symbols: Map<ts.Node, Entity>; behavior: () => void } | undefined {
+function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeProject, source: ts.SourceFile, state: TsApplicationState, urls: UrlEvaluator, wrappers: WrapperRoot[], services: TypeScriptServices, initialize = true): { symbols: Map<ts.Node, Entity>; behavior: () => void } | undefined {
   const { graph } = context;
   const app = file.application;
   const options = services.resolver.options.get(project.id)!;
   const parseDiagnostics = (source as ts.SourceFile & { parseDiagnostics: readonly ts.Diagnostic[] }).parseDiagnostics;
   if (parseDiagnostics.length) {
+    embeddedOutcome(context, file, true);
     for (const error of parseDiagnostics) graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'error', code: 'typescript-parse-error', file: file.path, line: source.getLineAndCharacterOfPosition(error.start ?? 0).line + 1, entityId: file.id, reason: ts.flattenDiagnosticMessageText(error.messageText, '\n') });
     return undefined;
   }
+  embeddedOutcome(context, file, false);
   const fileEntity = graph.entities.get(file.id)!;
-  fileEntity.metadata.exports = [];
-  fileEntity.metadata.externalImports = [];
-  fileEntity.metadata.httpRequests = [];
-  fileEntity.metadata.importOutcomes = [];
+  if (initialize) { fileEntity.metadata.exports = []; fileEntity.metadata.externalImports = []; fileEntity.metadata.httpRequests = []; fileEntity.metadata.importOutcomes = []; }
   const symbols = new Map<ts.Node, Entity>();
   const exported = new Map<string, Entity>();
   const axiosNames = new Set<string>();
   const httpSites: HttpSite[] = [];
   const result = { symbols, behavior: () => { for (const site of httpSites) httpSite(site); } };
-  const modulePath = path.relative(path.join(context.root, app?.path ?? project.root), file.absolutePath).split(path.sep).join('/');
+  const modulePath = path.posix.relative(app?.path ?? project.root, file.path), scriptOwner = embeddedOwner(context, file);
+  if (scriptOwner) { symbols.set(source, scriptOwner); state.declarations.set(source, scriptOwner); }
   function location(node: ts.Node) {
     const start = source.getLineAndCharacterOfPosition(node.getStart(source));
     const end = source.getLineAndCharacterOfPosition(node.getEnd());
@@ -174,7 +177,7 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeP
     const moduleLiteral = ts.isImportDeclaration(node) || ts.isExportDeclaration(node) ? node.moduleSpecifier : ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference) ? node.moduleReference.expression : ts.isCallExpression(node) ? node.arguments[0] : undefined;
     const mode = moduleLiteral && ts.isStringLiteralLike(moduleLiteral) ? ts.getModeForUsageLocation(source, moduleLiteral, options) : undefined;
     const resolved = services.resolver.resolve(specifier, file.absolutePath, mode).resolvedModule;
-    const relative = resolved ? path.relative(context.root, resolved.resolvedFileName).split(path.sep).join('/') : undefined;
+    const relative = resolved ? sourcePath(context, resolved.resolvedFileName) : undefined;
     let target = relative ? context.files.get(relative) : undefined;
     let assetResolution = false;
     let isConfiguredAlias = false;
@@ -220,6 +223,7 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeP
     (fileEntity.metadata.importOutcomes as unknown[]).push({ specifier, kind: ts.isCallExpression(node) ? node.expression.kind === ts.SyntaxKind.ImportKeyword ? 'dynamic' : 'require' : relationType, range: location(node), bindings, outcome });
   }
   function visit(node: ts.Node): void {
+    if (!ts.isSourceFile(node) && !sourceMapped(context, source.fileName, node.getStart(source), node.end)) return;
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
       importModule(node, node.moduleSpecifier.text, 'imports');
       if (node.moduleSpecifier.text === 'axios' && node.importClause?.name) axiosNames.add(node.importClause.name.text);
@@ -255,13 +259,13 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeP
     if (name && type) {
       if (type === 'function' && (/^[A-Z]/.test(name) || name === 'default') && hasJsx(node)) type = 'component';
       const parent = parentSymbol(node);
-      const qualified = `${parent?.metadata.qualifiedName ? `${parent.metadata.qualifiedName}.` : ''}${name}`;
+      const qualified = `${parent?.metadata.qualifiedName ? `${parent.metadata.qualifiedName}.` : file.embedded ? `${file.embedded.key}.` : ''}${name}`;
       const id = graph.id('symbol', file.language!, app?.name ?? project.id, modulePath, qualified, signature);
       if (graph.entities.has(id)) graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'duplicate-symbol', file: file.path, line: location(node).startLine, reason: `Duplicate/overloaded symbol identity ${qualified}${signature}` });
       else {
         const isDefault = modifier(declaration, ts.SyntaxKind.DefaultKeyword) || ts.isExportAssignment(declaration);
         const isExported = modifier(declaration, ts.SyntaxKind.ExportKeyword) || isDefault;
-        const entity = graph.contain({ id, type, name, path: file.path, language: file.language, parentId: parent?.id ?? file.id, sourceRange: location(node), metrics: { loc: location(node).endLine - location(node).startLine + 1 }, metadata: { qualifiedName: qualified, signature, exported: isExported, default: isDefault, ...(/^use[A-Z]/.test(name) ? { role: 'hook' } : {}), serverAction: /^(?:[\s{]*)(?:['"]use server['"])/.test(ts.isFunctionDeclaration(node) ? node.body?.getText(source) ?? '' : ''), ...declarationHashes(node.getText(source), nameNode ? nameNode.getEnd() - node.getStart(source) : 0) }, evidence: facts(node, 'AST symbol declaration') });
+        const entity = graph.contain({ id, type, name, path: file.path, language: file.language, parentId: parent?.id ?? scriptOwner?.id ?? file.id, sourceRange: location(node), metrics: { loc: location(node).endLine - location(node).startLine + 1 }, metadata: { qualifiedName: qualified, signature, exported: isExported, default: isDefault, ...(file.embedded ? { embeddedRegion: file.embedded.key, executionContext: file.embedded.executionContext } : {}), ...(/^use[A-Z]/.test(name) ? { role: 'hook' } : {}), serverAction: /^(?:[\s{]*)(?:['"]use server['"])/.test(ts.isFunctionDeclaration(node) ? node.body?.getText(source) ?? '' : ''), ...declarationHashes(node.getText(source), nameNode ? nameNode.getEnd() - node.getStart(source) : 0) }, evidence: facts(node, 'AST symbol declaration') });
         symbols.set(node, entity);
         state.declarations.set(node, entity);
         // An importer's `default` symbol is declared by the export assignment itself.
@@ -271,7 +275,7 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeP
           if (fn) { symbols.set(fn, entity); state.declarations.set(fn, entity); }
           if (fn !== node.initializer) { symbols.set(node.initializer, entity); state.declarations.set(node.initializer, entity); }
         }
-        if (isExported) { exported.set(isDefault ? 'default' : name, entity); graph.relate(file.id, entity.id, 'exports', facts(node, 'Exported symbol')); if (isDefault) fileEntity.metadata.defaultExport = entity.id; }
+        if (isExported) { exported.set(isDefault ? 'default' : name, entity); graph.relate(file.id, entity.id, 'exports', facts(node, 'Exported symbol')); if (isDefault && !file.embedded) fileEntity.metadata.defaultExport = entity.id; }
       }
     }
     if (ts.isCallExpression(node)) {
@@ -297,7 +301,7 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeP
   /** Record a request site on its caller and file; resolved ones go to the API matcher, the others are findings or wait for their wrapper's call sites. */
   function httpSite(site: HttpSite): void {
     const node = site.node;
-    const caller = parentSymbol(node) ?? fileEntity;
+    const caller = parentSymbol(node) ?? scriptOwner ?? fileEntity;
     const outcome = evaluateSite(urls, site);
     const fact = facts(node, site.client === 'fetch' ? 'fetch() HTTP call' : site.client === 'axios' ? 'Imported axios HTTP call' : site.client === 'inertia' ? `${site.via} visit` : `HTTP call on axios instance ${site.instance} (axios.create)`)[0]!;
     const expression = site.url?.getText(source) ?? '(missing URL)';
@@ -321,18 +325,18 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeP
   // Named export lists and export-default identifiers bind only to symbols in this file.
   for (const statement of source.statements) {
     if (ts.isExportAssignment(statement) && ts.isIdentifier(statement.expression)) {
-      const symbol = [...symbols.values()].find(entity => entity.name === statement.expression.getText(source) && entity.parentId === file.id);
-      if (symbol) { exported.set('default', symbol); fileEntity.metadata.defaultExport = symbol.id; graph.relate(file.id, symbol.id, 'exports', facts(statement, 'Default export binding')); }
+      const symbol = [...symbols.values()].find(entity => entity.name === statement.expression.getText(source) && entity.parentId === (scriptOwner?.id ?? file.id));
+      if (symbol) { exported.set('default', symbol); if (!file.embedded) fileEntity.metadata.defaultExport = symbol.id; graph.relate(file.id, symbol.id, 'exports', facts(statement, 'Default export binding')); }
     }
     if (ts.isExportDeclaration(statement) && !statement.moduleSpecifier && statement.exportClause && ts.isNamedExports(statement.exportClause)) {
       for (const item of statement.exportClause.elements) {
         const local = (item.propertyName ?? item.name).text;
-        const symbol = [...symbols.values()].find(entity => entity.name === local && entity.parentId === file.id);
+        const symbol = [...symbols.values()].find(entity => entity.name === local && entity.parentId === (scriptOwner?.id ?? file.id));
         if (symbol) { exported.set(item.name.text, symbol); graph.relate(file.id, symbol.id, 'exports', facts(item, 'Named export binding')); }
       }
     }
   }
-  if (!hasFramework(app, 'nextjs')) return result;
+  if (file.embedded || !hasFramework(app, 'nextjs')) return result;
   const route = nextRoute(modulePath);
   if (!route) return result;
   fileEntity.metadata.nextjs = route;

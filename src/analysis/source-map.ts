@@ -8,7 +8,11 @@ import type { SourceRange } from '../core/graph.js';
 export class SourceText {
   private readonly starts = [0];
   constructor(readonly text: string) {
-    for (let i = 0; i < text.length; i++) if (text.charCodeAt(i) === 10) this.starts.push(i + 1);
+    for (let i = 0; i < text.length; i++) {
+      const code = text.charCodeAt(i);
+      if (code === 13) { if (text.charCodeAt(i + 1) === 10) i++; this.starts.push(i + 1); }
+      else if (code === 10 || code === 0x2028 || code === 0x2029) this.starts.push(i + 1);
+    }
   }
   position(offset: number): { line: number; column: number } {
     if (!Number.isSafeInteger(offset) || offset < 0 || offset > this.text.length) throw new Error('Source offset outside text');
