@@ -163,6 +163,15 @@ try {
   await writeFile(path.join(svelteUi, 'src/routes/(app)/package-svelte/+page.ts'), 'export const load=({fetch})=>fetch("/package-svelte-api");');
   await writeFile(path.join(svelteUi, 'src/routes/(app)/package-svelte/+page.server.ts'), 'export const actions={save:()=>({ok:true})};');
   await writeFile(path.join(svelteUi, 'src/routes/package-svelte-api/+server.ts'), 'export function GET(){return new Response("ok");}');
+  const astroUi = path.join(repo, 'astro-ui');
+  await mkdir(path.join(astroUi, 'src/pages'), { recursive: true }); await mkdir(path.join(astroUi, 'src/components'), { recursive: true });
+  await writeFile(path.join(astroUi, 'package.json'), JSON.stringify({ dependencies: { astro: '^7.3.8', svelte: '^5.57.2', '@astrojs/svelte': '^9.0.1', '@astrojs/node': '^11.0.0' } }));
+  await writeFile(path.join(astroUi, 'astro.config.mjs'), 'import {defineConfig} from "astro/config";import node from "@astrojs/node";import svelte from "@astrojs/svelte";export default defineConfig({adapter:node({mode:"standalone"}),integrations:[svelte()]});');
+  await writeFile(path.join(astroUi, 'src/pages/package-astro.astro'), '---\nimport Layout from "../components/Layout.astro";import Counter from "../components/Counter.svelte";\n---\n<Layout><Counter client:load/></Layout>');
+  await writeFile(path.join(astroUi, 'src/components/Layout.astro'), '<main><slot/></main>');
+  await writeFile(path.join(astroUi, 'src/components/Counter.svelte'), '<script>function PackagedAstroIslandSave(){return fetch("/package-astro-api");}</script><button onclick={PackagedAstroIslandSave}/>');
+  await writeFile(path.join(astroUi, 'src/pages/package-astro-api.ts'), 'export const prerender = false;\nexport function GET(){return new Response("ok");}');
+  await writeFile(path.join(astroUi, 'src/pages/package-astro-static.json.ts'), 'export function GET(){return new Response("static output");}');
   console.log('Starting the installed executable from a repository with spaces…');
   await checkSession(bin, repo);
   assert.ok((await readdir(path.join(repo, '.codiluce'))).includes('codiluce.db'));
@@ -280,6 +289,15 @@ try {
   assert.ok(JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', kitEvent.to, '--type', 'requests'], repo)).stdout).items.some(edge => edge.to === kitEndpoint.id), 'installed Svelte callback supplies browser context to its source-backed request');
   const kitLoad = kitTargets.find(edge => edge.metadata?.role === 'universal-load'); assert.ok(kitLoad);
   assert.ok(JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', kitLoad.to, '--type', 'requests'], repo)).stdout).items.some(edge => edge.to === kitEndpoint.id && edge.metadata?.resolution === 'sveltekit-fetch'), 'installed RequestEvent.fetch replaces an unqualified parameter spelling with framework proof');
+  const astroEntities = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', '/package-astro'], repo)).stdout).items;
+  const astroPage = astroEntities.find(entity => entity.type === 'route' && entity.name === '/package-astro'), astroEndpoint = astroEntities.find(entity => entity.type === 'api_endpoint' && entity.name === 'GET /package-astro-api'), astroStatic = astroEntities.find(entity => entity.type === 'route' && entity.name === 'GET /package-astro-static.json');
+  assert.ok(astroPage && astroEndpoint && astroStatic, 'installed Astro parser preserves pages, runtime APIs and separate static build operations');
+  const astroStaticDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', astroStatic.id], repo)).stdout); assert.equal(astroStaticDetail.metadata.operationKind, 'static-endpoint');
+  const astroPageTargets = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', astroPage.id, '--type', 'routes_to'], repo)).stdout).items; assert.equal(astroPageTargets.length, 1);
+  const astroReferences = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', astroPageTargets[0].to, '--type', 'references'], repo)).stdout).items, astroIsland = astroReferences.find(edge => edge.metadata?.role === 'hydrated-island'); assert.ok(astroIsland);
+  const astroIslandDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', astroIsland.to], repo)).stdout); assert.equal(astroIslandDetail.sourceRange.startLine, 4); assert.equal(astroIslandDetail.metadata.executionContext, 'browser'); assert.equal(astroIslandDetail.metadata.renderer, 'svelte');
+  const astroRequests = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', astroIsland.to, '--type', 'requests'], repo)).stdout).items, astroRequest = astroRequests.find(edge => edge.to === astroEndpoint.id); assert.ok(astroRequest, 'installed hydrated island supplies the Astro application origin');
+  const astroRequestDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relation', '--id', astroRequest.id], repo)).stdout); assert.ok(astroRequestDetail.evidence.some(fact => fact.file === 'astro-ui/src/components/Counter.svelte'), 'installed Astro invocation preserves original Svelte call evidence');
   await assert.rejects(run(process.execPath, [bin, 'start', '--build-ui', '--no-open'], repo), error => error.code === 1 && /only available in a Codiluce source checkout/.test(error.stderr));
   await assert.rejects(run(process.execPath, [bin, 'unknown-command'], repo), error => error.code === 1);
   const broken = path.join(repo, 'frontend/src/broken.ts');
@@ -328,7 +346,7 @@ try {
   console.log('Checking npm exec against the tarball without a local installation…');
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
-  console.log('Package installation, seven grammars, workspace binding, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
+  console.log('Package installation, seven grammars, workspace binding, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

@@ -18,21 +18,24 @@ export class TypeScriptStatic {
   private steps = 0;
   constructor(readonly scope: TypeScriptPackScope, private readonly pack = 'vue', private readonly trustedModules = ['vue', 'vue-router']) {
     for (const frame of scope.files) {
-      const mark = (expression: ts.Expression, seen = new Set<string>()): void => {
+      const mark = (expression: ts.Expression, seen = new Set<string>(), receiverMutation = false): void => {
+        receiverMutation ||= ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression);
         let root = expression;
         while (ts.isPropertyAccessExpression(root) || ts.isElementAccessExpression(root)) root = root.expression;
         const declaration = valueDeclaration(root, frame.state.checker);
         if (declaration) {
           const key = nodeSite(declaration); if (seen.has(key)) return; seen.add(key); this.writes.add(key);
-          if (ts.isVariableDeclaration(declaration) && declaration.initializer && (ts.isIdentifier(unwrap(declaration.initializer)) || ts.isPropertyAccessExpression(unwrap(declaration.initializer)) || ts.isElementAccessExpression(unwrap(declaration.initializer)))) mark(unwrap(declaration.initializer), seen);
-          if (ts.isExportAssignment(declaration)) mark(declaration.expression, seen);
+          // Rebinding an alias does not mutate its former receiver. Member
+          // writes, mutators and escaped objects do invalidate receiver aliases.
+          if (receiverMutation && ts.isVariableDeclaration(declaration) && declaration.initializer && (ts.isIdentifier(unwrap(declaration.initializer)) || ts.isPropertyAccessExpression(unwrap(declaration.initializer)) || ts.isElementAccessExpression(unwrap(declaration.initializer)))) mark(unwrap(declaration.initializer), seen, true);
+          if (receiverMutation && ts.isExportAssignment(declaration)) mark(declaration.expression, seen, true);
         }
       };
       const visit = (node: ts.Node): void => {
         if (!ts.isSourceFile(node) && !sourceMapped(scope.context, frame.source.fileName, node.getStart(frame.source), node.end)) return;
         if (ts.isBinaryExpression(node) && node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment && node.operatorToken.kind <= ts.SyntaxKind.LastAssignment) mark(node.left);
         if (ts.isPostfixUnaryExpression(node) || ts.isPrefixUnaryExpression(node) && [ts.SyntaxKind.PlusPlusToken, ts.SyntaxKind.MinusMinusToken].includes(node.operator)) mark(node.operand);
-        if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression) && ['push', 'pop', 'splice', 'shift', 'unshift', 'sort', 'reverse', 'fill', 'copyWithin'].includes(node.expression.name.text)) mark(node.expression.expression);
+        if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression) && ['push', 'pop', 'splice', 'shift', 'unshift', 'sort', 'reverse', 'fill', 'copyWithin'].includes(node.expression.name.text)) mark(node.expression.expression, new Set(), true);
         if (ts.isCallExpression(node)) {
           const binding = frameworkBinding(node.expression, frame.state.checker, scope.services);
           if (!binding || !this.trustedModules.includes(binding.module)) for (const argument of node.arguments) {
@@ -44,7 +47,7 @@ export class TypeScriptStatic {
               if (!key || visited.has(key)) { value = undefined; break; } visited.add(key);
               value = target && ts.isVariableDeclaration(target) ? target.initializer : target && ts.isExportAssignment(target) ? target.expression : undefined;
             }
-            if (value && (ts.isObjectLiteralExpression(unwrap(value)) || ts.isArrayLiteralExpression(unwrap(value)))) mark(argument);
+            if (value && (ts.isObjectLiteralExpression(unwrap(value)) || ts.isArrayLiteralExpression(unwrap(value)))) mark(argument, new Set(), true);
           }
         }
         ts.forEachChild(node, visit);

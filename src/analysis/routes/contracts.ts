@@ -3,7 +3,7 @@
 export type RoutePart = { kind: 'literal'; value: string } | { kind: 'parameter'; name: string; converter?: 'int' | 'float' | 'uuid' | 'slug' };
 export type RouteSegment = { kind: 'segment'; parts: RoutePart[] } | { kind: 'rest'; name: string; minimum: 0 | 1 };
 export interface RoutePattern {
-  version: 1; dialect: 'express-common' | 'express-4' | 'express-5' | 'starlette' | 'werkzeug' | 'django-path' | 'django-re-path' | 'sveltekit'; original: string;
+  version: 1; dialect: 'express-common' | 'express-4' | 'express-5' | 'starlette' | 'werkzeug' | 'django-path' | 'django-re-path' | 'sveltekit' | 'astro'; original: string;
   status: 'exact' | 'partial'; reason?: string; alternatives: RouteSegment[][];
   prefix?: string;
   caseSensitive: boolean; strict: boolean;
@@ -156,6 +156,12 @@ export function djangoRegexRoute(original: string, include = false): string | un
   return route;
 }
 export function matchRoutePattern(pattern: RoutePattern, pathname: string, strictHoles = true): boolean {
+  if (pattern.dialect === 'astro') {
+    // Repeated encoding has version-specific fallback semantics. The common
+    // profile qualifies one decoding pass without guessing a percent cascade.
+    if (/%25/i.test(pathname)) return false;
+    try { pathname = decodeURI(pathname); } catch { return false; }
+  }
   if (pattern.dialect === 'sveltekit') {
     try { pathname = pathname.split('/').map(segment => decodeURIComponent(segment)).join('/'); }
     catch { return false; }

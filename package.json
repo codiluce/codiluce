@@ -42,6 +42,7 @@
     "prepack": "npm run build"
   },
   "dependencies": {
+    "@astrojs/compiler-rs": "0.5.1",
     "php-parser": "^3.7.0",
     "semver": "7.8.5",
     "smol-toml": "^1.9.0",

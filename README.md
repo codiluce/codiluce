@@ -84,7 +84,9 @@ sites enter the existing flow inspector and browser proxy matching. Unsupported 
 Svelte 4/5 links parsed local components, scoped snippets and legacy or modern browser callbacks. SvelteKit 2/3 adds
 filesystem pages/layouts, loads, HTTP handlers and named POST actions, with static configuration and distinct execution
 contexts. RequestEvent fetch and shared registrations keep the invoking application's ownership. Dynamic hooks/matchers
-and unsupported syntax retain gaps. Astro and bounded Nuxt framework conventions are next.
+and unsupported syntax retain gaps. Astro 5/6/7 now links original components/layouts, pages, method exports,
+static build operations and qualified Vue/Svelte/React islands. Prerendered files stay separate from live APIs;
+dynamic configuration, middleware policies and generated URLs retain gaps. Bounded Nuxt conventions are next.
 
 ## Learn more
 

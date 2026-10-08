@@ -9,6 +9,7 @@ import { IndexedSources } from '../indexed-sources.js';
 import { createApplicationProgram } from '../../analyzers/ts-program.js';
 import { sourcePath, sourceMapped, embeddedOwner } from '../embedded/index.js';
 import { kitConfiguration, type KitConfig } from '../frameworks/sveltekit-config.js';
+import { astroConfiguration, type AstroConfig } from '../frameworks/astro-config.js';
 
 /** A node's exact source site, not its spelling, bridges separate compiler
  * programs. Each program keeps its own options, checker and global scope. */
@@ -32,6 +33,7 @@ export interface TypeScriptServices {
   declarations: DeclarationIndex;
   resolver: TypeScriptResolver;
   sveltekit: Map<string, KitConfig>;
+  astro: Map<string, AstroConfig>;
   projectFor(relative: string): TypeScriptProject | undefined;
   releasePrograms(): void;
 }
@@ -68,7 +70,7 @@ function restoreOwners(context: AnalysisContext, source: ts.SourceFile, declarat
 export function createTypeScriptServices(context: AnalysisContext): TypeScriptServices {
   const sources = context.sources ??= new IndexedSources(context);
   const catalog = context.projects ??= new ProjectCatalog(context, sources);
-  const resolver = new TypeScriptResolver(context, catalog, sources), declarations = new DeclarationIndex(), sveltekit = new Map<string, KitConfig>();
+  const resolver = new TypeScriptResolver(context, catalog, sources), declarations = new DeclarationIndex(), sveltekit = new Map<string, KitConfig>(), astro = new Map<string, AstroConfig>();
   for (const project of catalog.node) {
     const tsconfig = path.join(context.root, project.root, 'tsconfig.json');
     const configFile = sources.fileExists(tsconfig) ? tsconfig : path.join(context.root, project.root, 'jsconfig.json');
@@ -93,6 +95,8 @@ export function createTypeScriptServices(context: AnalysisContext): TypeScriptSe
       if (kit.valid) options.paths = { ...kit.aliases, ...options.paths };
     }
     resolver.options.set(project.id, options);
+    const astroConfig = astroConfiguration(context, project, sources);
+    if (astroConfig) { astro.set(project.id, astroConfig); for (const file of astroConfig.inputs) resolver.configInputs.add(file); }
   }
   const projects = catalog.node.map(project => {
     const inputs = catalog.nodeFiles(project), files = inputs.flatMap(file => ['vue', 'svelte', 'astro'].includes(file.language ?? '') ? context.embedded?.inputs(file) ?? [] : [file]), bySource = new Map<ts.SourceFile, Map<ts.Node, Entity>>();
@@ -120,7 +124,7 @@ export function createTypeScriptServices(context: AnalysisContext): TypeScriptSe
   }).filter(project => project.inputs.length);
   const byProject = new Map(projects.map(runtime => [runtime.project.id, runtime]));
   const services: TypeScriptServices = {
-    projects, declarations, resolver, sveltekit, projectFor: relative => byProject.get(catalog.nodeOwner(relative).id),
+    projects, declarations, resolver, sveltekit, astro, projectFor: relative => byProject.get(catalog.nodeOwner(relative).id),
     releasePrograms() { for (const runtime of projects) runtime.releaseProgram(); declarations.clear(); },
   };
   context.typescript = services;

@@ -16,6 +16,7 @@ import type { ImportOutcome, ImportBinding } from '../analysis/facts.js';
 import { typescriptFrameworkPacks } from '../analysis/frameworks/index.js';
 import type { TypeScriptPackScope } from '../analysis/frameworks/typescript-pack.js';
 import { kitVirtualImport } from '../analysis/frameworks/sveltekit-config.js';
+import { astroVirtualImport } from '../analysis/frameworks/astro-config.js';
 import { EMBEDDED_VERSION, sourcePath, sourceAvailable, sourceMapped, embeddedOwner, embeddedOutcome } from '../analysis/embedded/index.js';
 
 function literal(node: ts.Node | undefined): string | undefined { return node && (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) ? node.text : undefined; }
@@ -215,7 +216,8 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeP
     if (target) {
       graph.relate(file.id, target.id, relationType, proof, { specifier, resolver: assetResolution ? 'indexed-asset' : workspace ? 'workspace' : 'typescript' });
       outcome = { status: 'resolved', targets: [target.id], proof };
-    } else if (kitVirtualImport(services.sveltekit.get(project.id), specifier, file.path)) outcome = { status: 'external', dependency: specifier, proof: [...proof, evidence('framework', 'sveltekit', file.path, location(node).startLine, 'SvelteKit virtual module; no indexed source file is invented')] };
+    } else if (astroVirtualImport(services.astro.get(project.id), specifier)) outcome = { status: 'external', dependency: specifier, proof: [...proof, evidence('framework', 'astro', file.path, location(node).startLine, 'Astro virtual module; no indexed source file is invented')] };
+    else if (kitVirtualImport(services.sveltekit.get(project.id), specifier, file.path)) outcome = { status: 'external', dependency: specifier, proof: [...proof, evidence('framework', 'sveltekit', file.path, location(node).startLine, 'SvelteKit virtual module; no indexed source file is invented')] };
     else if (binding?.status === 'ambiguous') outcome = { status: 'ambiguous', candidates: binding.candidates.map(project => project.id), reason: binding.reason };
     else if (binding && ['excluded', 'unsupported'].includes(binding.status)) outcome = { status: binding.status as 'excluded' | 'unsupported', reason: 'reason' in binding ? binding.reason : 'Unavailable local dependency' };
     else if (specifier.startsWith('.') || specifier.startsWith('#') || isConfiguredAlias || binding?.status === 'resolved' || (resolved && !resolved.isExternalLibraryImport)) outcome = { status: 'unresolved', reason: `Cannot link indexed local module: ${specifier}` };

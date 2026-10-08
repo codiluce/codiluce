@@ -1,0 +1,144 @@
+import assert from 'node:assert/strict';
+import { after, test } from 'node:test';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { tmpdir } from 'node:os';
+import { indexRepository } from '../src/pipeline/index.js';
+import { resolveConfig, type ApplicationInput } from '../src/core/config.js';
+import { AnalysisCache } from '../src/pipeline/cache.js';
+import { canonicalJson } from '../src/history/fingerprint.js';
+import type { SoftwareGraph } from '../src/core/graph.js';
+import { astroPath } from '../src/analysis/frameworks/astro-path.js';
+import { matchRoutePattern } from '../src/analysis/routes/contracts.js';
+import { GraphStore } from '../src/storage/sqlite.js';
+import { ProjectionService } from '../src/projection/service.js';
+
+const temporary: string[] = [];
+after(async () => { await Promise.all(temporary.map(root => rm(root, { recursive: true, force: true }))); });
+const manifest = JSON.stringify({ workspaces: ['old', 'v5', 'v6', 'shared'], dependencies: { astro: '^7.3.8', svelte: '^5.57.2', vue: '^3.5.0', react: '^19.0.0', '@astrojs/vue': '^6.0.0', '@astrojs/svelte': '^9.0.0', '@astrojs/react': '^5.0.0', '@astrojs/node': '^11.0.0' } });
+const server = 'import {defineConfig} from "astro/config"; import node from "@astrojs/node"; export default defineConfig({output:"server",adapter:node({mode:"standalone"})});';
+const integrated = 'import {defineConfig} from "astro/config"; import node from "@astrojs/node"; import vue from "@astrojs/vue"; import svelte from "@astrojs/svelte"; import react from "@astrojs/react"; export default defineConfig({output:"server",adapter:node({mode:"standalone"}),integrations:[vue(),svelte(),react()]});';
+async function repository(files: Record<string, string>): Promise<string> { const root = await mkdtemp(path.join(tmpdir(), 'codiluce-astro-')); temporary.push(root); for (const [file, text] of Object.entries({ 'package.json': manifest, ...files })) { await mkdir(path.dirname(path.join(root, file)), { recursive: true }); await writeFile(path.join(root, file), text); } return root; }
+async function index(root: string, cache?: AnalysisCache, revision?: string, applications: ApplicationInput[] = [{ name: 'app', path: '.', frameworks: ['astro', 'vue', 'svelte', 'react'] }]) { return indexRepository(root, { config: await resolveConfig(root, { repository: { name: 'astro' }, applications }), cache, revision }); }
+const stored = (graph: SoftwareGraph) => canonicalJson({ entities: graph.entities, relations: graph.relations, diagnostics: graph.diagnostics.filter(item => !['git-metrics', 'indexer'].includes(item.analyzer) && item.code !== 'git-ignore-unavailable') });
+const components = (graph: SoftwareGraph) => graph.entities.filter(item => item.type === 'component');
+const pages = (graph: SoftwareGraph) => graph.entities.filter(item => item.type === 'route' && item.metadata.framework === 'astro');
+const endpoints = (graph: SoftwareGraph) => graph.entities.filter(item => item.type === 'api_endpoint' && item.metadata.framework === 'astro');
+const component = (graph: SoftwareGraph, file: string) => components(graph).find(item => item.path === file)!;
+const named = (graph: SoftwareGraph, name: string) => graph.entities.find(item => item.name === name)!;
+
+test('Astro layouts, aliases, namespace imports and server expressions retain original CRLF/UTF-16 evidence', async () => {
+  const root = await repository({ 'src/pages/index.astro': '---\r\nimport Layout from "../layouts/Layout.astro"; import Card from "../components/Card.astro"; import * as UI from "../barrel"; import {title} from "../helper"; const Alias=Card;\r\n---\r\n<p>😀</p><Layout><Card/><Alias/><UI.Card/>{title()}</Layout>', 'src/layouts/Layout.astro': '<main><slot/></main>', 'src/components/Card.astro': '<span>Card</span>', 'src/barrel.ts': 'export {default as Card} from "./components/Card.astro";', 'src/helper.ts': 'export function title(){return "Title";}' });
+  const graph = await index(root), page = component(graph, 'src/pages/index.astro'), card = component(graph, 'src/components/Card.astro'), layout = component(graph, 'src/layouts/Layout.astro');
+  const renders = graph.relations.filter(item => item.type === 'renders' && item.from === page.id); assert.equal(renders.length, 2); assert.equal(renders.find(item => item.to === card.id)!.evidence.length, 3); assert.ok(renders.some(item => item.to === layout.id));
+  assert.ok(renders.every(item => item.evidence.every(fact => fact.file === page.path && fact.line === 4))); assert.ok(graph.relations.some(item => item.type === 'calls' && item.from === page.id && item.to === named(graph, 'title').id));
+  assert.equal(pages(graph)[0]!.name, '/'); assert.equal(pages(graph)[0]!.metadata.delivery, 'static'); assert.ok(graph.relations.some(item => item.from === pages(graph)[0]!.id && item.to === page.id && item.type === 'routes_to'));
+  assert.equal(graph.entities.some(item => item.path?.includes('.__codiluce_')), false);
+});
+
+test('Astro AST scopes, comments, raw text, type-only barrels and mutable bindings suppress false render/call edges', async () => {
+  const root = await repository({ 'App.astro': '---\nimport Card from "./Card.astro"; import type Fake from "./Card.astro"; import * as Types from "./types";import * as UI from "./barrel";UI.Card=other; import {title} from "./helper"; const items=[1]; let Changed=Card; Changed=other;\n---\n<!-- <Card/> -->{"<Card/>"}<div is:raw>{title()}<Card/></div><Fake/><Types.Card/><Changed/><UI.Card/>{items.map((Card) => <Card/>)}{items.map(item => <Card label={title()}/>) }{(()=>title())}', 'Card.astro': '<span/>', 'helper.ts': 'export function title(){return "ok";}', 'types.ts': 'export type {default as Card} from "./Card.astro";', 'barrel.ts': 'export {default as Card} from "./Card.astro";' });
+  const graph = await index(root), app = component(graph, 'App.astro'); assert.equal(graph.relations.find(item => item.type === 'renders' && item.from === app.id)!.evidence.length, 1); assert.equal(graph.relations.filter(item => item.type === 'calls' && item.to === named(graph, 'title').id).length, 1); assert.ok(graph.diagnostics.some(item => item.code === 'astro-template-gap' && item.reason.includes('Deferred')));
+});
+
+test('Astro browser scripts do not inherit server frontmatter bindings; unprocessed scripts retain independent gaps', async () => {
+  const root = await repository({ 'astro.config.mjs': server, 'src/pages/index.astro': '---\nimport {serverHelper} from "../helper";\n---\n{serverHelper()}<script>import {browserHelper} from "../helper"; browserHelper();</script><script is:inline>const invalid=;</script>', 'src/helper.ts': 'export function serverHelper(){return fetch("/api");} export function browserHelper(){return fetch("/api");}', 'src/pages/api.ts': 'export function GET(){return new Response("ok");}' });
+  const graph = await index(root), page = component(graph, 'src/pages/index.astro'); assert.equal(page.metadata.astroParsed, true); assert.ok(graph.diagnostics.some(item => item.code === 'embedded-unprocessed-script')); assert.equal(graph.relations.filter(item => item.type === 'requests').length, 1);
+  const request = graph.relations.find(item => item.type === 'requests')!; assert.equal(graph.entities.find(item => item.id === request.from)!.metadata.executionContext, 'browser'); assert.equal(graph.entities.find(item => item.id === request.from)!.name, 'client script 0');
+  assert.ok(graph.diagnostics.some(item => item.code === 'unverified-relative-api-boundary'));
+});
+
+test('Astro hydration preserves Vue/Svelte/React identities, client-only SSR policy and source ranges', async () => {
+  const root = await repository({ 'astro.config.mjs': integrated, 'src/pages/index.astro': '---\r\nimport Vue from "../Vue.vue"; import Svelte from "../Svelte.svelte"; import * as UI from "../React"; import Astro from "../Child.astro";\r\n---\r\n😀<Vue client:load/><Svelte client:only="svelte"/><UI.React client:media="(min-width:600px)"/><Astro/><Astro client:load/>', 'src/Vue.vue': '<template><span/></template>', 'src/Svelte.svelte': '<span/>', 'src/React.tsx': 'export function React(){return <span/>;}', 'src/Child.astro': '<span/>' });
+  const graph = await index(root), page = component(graph, 'src/pages/index.astro'), islands = graph.entities.filter(item => item.metadata.role === 'hydrated-island'); assert.equal(islands.length, 3); assert.ok(islands.every(item => item.sourceRange?.startLine === 4 && item.metadata.executionContext === 'browser')); assert.equal(islands.find(item => item.metadata.directive === 'client:load')!.sourceRange?.startColumn, 3);
+  assert.equal(graph.relations.some(item => item.type === 'renders' && item.from === page.id && item.to === component(graph, 'src/Svelte.svelte').id), false); assert.equal(graph.relations.filter(item => item.type === 'renders' && item.from === page.id).length, 3);
+  assert.ok(graph.diagnostics.some(item => item.code === 'astro-hydration-gap')); assert.equal(component(graph, 'src/Vue.vue').metadata.executionContext, undefined);
+});
+
+test('Only qualified hydrated islands supply browser origin to shared UI methods; SSR-only uses remain unverified', async () => {
+  const root = await repository({ 'astro.config.mjs': integrated, 'src/pages/index.astro': '---\nimport Vue from "../Vue.vue"; import Svelte from "../Svelte.svelte"; import React from "../React";\n---\n<Vue/><Vue client:load/><Svelte client:idle/><React client:visible/>', 'src/Vue.vue': '<script setup>import {save} from "./helper";</script><template><button @click="save()"/></template>', 'src/Svelte.svelte': '<script>import {save} from "./helper";</script><button onclick={save}/>', 'src/React.tsx': 'import {save} from "./helper"; export default function React(){save();return <span/>;}', 'src/helper.ts': 'export function save(){return fetch("/api");}', 'src/pages/api.ts': 'export function GET(){return new Response("ok");}' });
+  const graph = await index(root), islands = graph.entities.filter(item => item.metadata.astroInvocation), requests = graph.relations.filter(item => item.type === 'requests'); assert.equal(islands.length, 3); assert.equal(requests.filter(item => islands.some(island => island.id === item.from)).length, 3); assert.ok(requests.every(item => item.metadata?.resolution === 'same-origin')); assert.equal(named(graph, 'save').metadata.executionContext, undefined);
+  assert.ok(graph.diagnostics.some(item => item.code === 'unverified-relative-api-boundary' && item.entityId === named(graph, 'save').id));
+});
+
+test('Missing renderers, aliased/dynamic client directives and incorrect client-only renderer hints retain gaps', async () => {
+  const root = await repository({ 'astro.config.mjs': integrated, 'src/pages/index.astro': '---\nimport Vue from "../Vue.vue";const Alias=Vue;\n---\n<Alias client:load/><Vue client:only="react"/><Vue client:media={media}/><Vue client:load client:idle/><Vue client:custom/>', 'src/Vue.vue': '<template><span/></template>', 'old/package.json': '{"dependencies":{"astro":"^7.0.0","vue":"^3.0.0"}}', 'old/src/pages/index.astro': '---\nimport Vue from "../../../src/Vue.vue";\n---\n<Vue client:load/>' });
+  const graph = await index(root); assert.equal(graph.entities.some(item => item.metadata.astroInvocation), false); assert.ok(graph.diagnostics.some(item => item.code === 'astro-renderer-gap')); assert.ok(graph.diagnostics.some(item => item.code === 'astro-hydration-gap'));
+});
+
+test('Default static endpoints and dynamic getStaticPaths remain build outputs, never live APIs or concrete generated URLs', async () => {
+  const root = await repository({ 'src/pages/data.json.ts': 'export function GET(){return new Response("ok");} export function POST(){return new Response("no");}', 'src/pages/posts/[slug].astro': '---\nexport function getStaticPaths(){return [{params:{slug:"one"}}];}\n---\n<p>{Astro.params.slug}</p>', 'src/pages/api/[id].json.ts': 'export function getStaticPaths(){return [{params:{id:"one"}}];} export function GET(){return new Response("ok");}', 'src/pages/_private.ts': 'export function GET(){}', 'src/pages/_group/hidden.astro': '<span/>', 'src/pages/data.d.ts': 'export declare function GET():void;' });
+  const graph = await index(root); assert.equal(endpoints(graph).length, 0); assert.equal(pages(graph).length, 3); assert.equal(pages(graph).find(item => item.name === 'GET /data.json')!.metadata.operationKind, 'static-endpoint'); assert.equal(pages(graph).find(item => item.name === '/posts/[slug]')!.metadata.concretePaths, 'unknown'); assert.equal(pages(graph).some(item => item.name.includes('/one')), false); assert.equal(graph.relations.filter(item => item.metadata?.role === 'static-path-generator').length, 2);
+});
+
+test('On-demand method exports bind originals, ALL precedes implicit HEAD, and type-only exports cannot create endpoints', async () => {
+  const root = await repository({ 'astro.config.mjs': server, 'src/pages/a.ts': 'export {get as GET} from "../helper"; export {all as ALL} from "../helper";', 'src/pages/b.ts': 'export {get as GET} from "../helper";', 'src/pages/types.ts': 'export type {get as GET} from "../helper";', 'src/pages/star.ts': 'export * from "../types";', 'src/helper.ts': 'export function get(){return new Response("ok");} export const all=()=>new Response("fallback");', 'src/types.ts': 'export type {get as GET} from "./helper";' });
+  const graph = await index(root); assert.deepEqual(endpoints(graph).map(item => item.name).sort(), ['ALL /a', 'GET /a', 'GET /b', 'HEAD /b']); const all = named(graph, 'ALL /a'); assert.deepEqual((all.metadata.routing as any).excludedMethods, ['GET']); assert.ok(graph.relations.some(item => item.type === 'routes_to' && item.from === all.id && item.to === named(graph, 'all').id));
+  assert.equal(graph.entities.some(item => item.name === 'HEAD /a'), false);
+});
+
+test('Prerender literal overrides and flags that Astro cannot statically recognize preserve delivery uncertainty', async () => {
+  const root = await repository({ 'astro.config.mjs': server, 'src/pages/static.ts': 'export const prerender = true;\nexport function GET(){return new Response("ok");}', 'src/pages/dynamic.ts': 'const flag=true;export const prerender=flag; export function GET(){}', 'src/pages/typed.ts': 'export const prerender:boolean = false; export function GET(){}', 'src/pages/midline.ts': 'console.log("setup");export const prerender = true; export function GET(){}', 'src/pages/page.astro': '---\nexport const prerender = true;\n---\n<span/>', 'src/pages/api.ts': 'export function GET(){return new Response("ok");}' });
+  const graph = await index(root); assert.deepEqual(endpoints(graph).map(item => item.name).sort(), ['GET /api', 'HEAD /api']); assert.equal(named(graph, 'GET /static').metadata.delivery, 'static'); assert.equal(named(graph, '/page').metadata.delivery, 'static'); assert.ok(graph.diagnostics.filter(item => item.code === 'astro-route-gap' && item.reason.includes('Dynamic prerender')).length >= 2);
+});
+
+test('Astro 5/6 profiles, literal srcDir/base and strict extension/trailing slash policies select indexed sources', async () => {
+  const root = await repository({ 'astro.config.mjs': 'import {defineConfig as config} from "astro/config";import node from "@astrojs/node";const options={srcDir:"./website",base:"/docs/",output:"server",trailingSlash:"always",adapter:node()};export default config(options);', 'website/pages/index.astro': '<span/>', 'website/pages/[id].json.ts': 'export function GET(){}', 'website/pages/docs/[...path].ts': 'export function GET(){}', 'src/pages/ignored.astro': '<span/>', 'v5/package.json': '{"dependencies":{"astro":"^5.0.0"}}', 'v5/src/pages/index.astro': '<span/>', 'v6/package.json': '{"dependencies":{"astro":"^6.0.0"}}', 'v6/src/pages/index.astro': '<span/>' });
+  const graph = await index(root); assert.ok(pages(graph).some(item => item.name === '/docs/' && item.path === 'website/pages/index.astro')); assert.equal(pages(graph).some(item => item.path === 'src/pages/ignored.astro'), false); assert.ok(pages(graph).some(item => item.metadata.profile === 'astro-5')); assert.ok(pages(graph).some(item => item.metadata.profile === 'astro-6'));
+  const json = endpoints(graph).find(item => item.metadata.routePath === '/docs/[id].json')!, pattern = (json.metadata.routing as any).pattern; assert.equal(matchRoutePattern(pattern, '/docs/one.json'), true); assert.equal(matchRoutePattern(pattern, '/docs/one.json/'), false);
+});
+
+test('Dynamic, mutated, conflicting, unproven, and unsupported-version config cannot invent default filesystem routes', async () => {
+  const fixtures: Record<string, string>[] = [ { 'astro.config.mjs': 'export default factory();' }, { 'astro.config.mjs': 'const opts={output:"server"}; mutate(opts);export default opts;' }, { 'astro.config.mjs': 'function defineConfig(x){return x;}export default defineConfig({});' }, { 'astro.config.mjs': 'export default {};', 'astro.config.ts': 'export default {};' }, { 'package.json': '{"dependencies":{"astro":"^4.0.0"}}' } ];
+  for (const files of fixtures) { const root = await repository({ ...files, 'src/pages/index.astro': '<span/>', 'src/pages/api.ts': 'export function GET(){}' }); const graph = await index(root); assert.equal(pages(graph).length + endpoints(graph).length, 0); assert.ok(graph.diagnostics.some(item => ['astro-config-gap', 'astro-version-profile'].includes(item.code))); }
+});
+
+test('Literal onRequest/defineMiddleware/sequence bind original callbacks in order and constrain dispatch', async () => {
+  const root = await repository({ 'astro.config.mjs': server, 'src/middleware.ts': 'import {defineMiddleware as define,sequence} from "astro:middleware";import {auth} from "./helper";const log=define((ctx,next)=>next());export const onRequest=sequence(auth,log);', 'src/helper.ts': 'export function auth(ctx,next){return next();}', 'src/pages/api.ts': 'export function GET(){}' });
+  const graph = await index(root), endpoint = named(graph, 'GET /api'), middleware = (endpoint.metadata.routing as any).middleware; assert.equal(middleware.length, 2); assert.equal(middleware[0], named(graph, 'auth').id); assert.equal(endpoint.metadata.constraintsUnresolved, true); assert.equal(graph.relations.filter(item => item.from === endpoint.id && item.metadata?.role === 'middleware').length, 2); assert.ok(graph.diagnostics.some(item => item.code === 'astro-middleware-gap'));
+  assert.ok(graph.entities.find(item => item.id === middleware[1])!.sourceRange?.startLine === 1);
+});
+
+test('Parse errors, renderer plugins and Astro 7 custom fetch pipelines expose partial/failed outcomes', async () => {
+  const root = await repository({ 'astro.config.mjs': 'import {defineConfig} from "astro/config";import custom from "custom-plugin"; export default defineConfig({integrations:[custom()]});', 'src/fetch.ts': 'export default function fetch(request){return new Response("custom");}', 'src/pages/api.ts': 'export function GET(){}', 'src/pages/broken.astro': '---\nconst broken=;\n---\n<span/>', 'src/pages/unclosed.astro': '<Card>' });
+  const graph = await index(root); assert.equal(pages(graph).filter(item => item.metadata.operationKind === 'page').length, 0); assert.ok(graph.diagnostics.some(item => item.code === 'astro-parse-error')); assert.ok(graph.diagnostics.some(item => item.code === 'astro-config-gap' && item.reason.includes('fetch pipeline'))); assert.ok(pages(graph).every(item => item.metadata.constraintsUnresolved)); const file = graph.entities.find(item => item.type === 'file' && item.path === 'src/pages/broken.astro')!; assert.equal((file.metadata.analysis as any).features.framework.status, 'failed');
+});
+
+test('Astro filename patterns distinguish suffix parameters, empty rest, exclusions and unsupported rest suffixes', () => {
+  assert.equal(matchRoutePattern(astroPath('[id].json.ts')!, '/42.json'), true); assert.equal(matchRoutePattern(astroPath('[id].json.ts')!, '/42'), false); assert.equal(matchRoutePattern(astroPath('docs/[...path].astro')!, '/docs'), true); assert.equal(matchRoutePattern(astroPath('docs/[...path].astro')!, '/docs/a/b'), true); assert.equal(astroPath('index.astro')!.original, '/'); assert.equal(astroPath('about/index.astro')!.original, '/about'); assert.equal(astroPath('_private/a.astro'), undefined); assert.equal(astroPath('[...path].json.ts')!.status, 'partial');
+  assert.equal(matchRoutePattern(astroPath('café.ts')!, '/caf%C3%A9'), true); assert.equal(matchRoutePattern(astroPath('a/[id].ts')!, '/a/%2F'), true); assert.equal(matchRoutePattern(astroPath('a/[id].ts')!, '/a/%Q'), false);
+  assert.equal(matchRoutePattern(astroPath('cafe\u0301.ts')!, '/caf%C3%A9'), true); assert.equal(matchRoutePattern(astroPath('%61.ts')!, '/%2561'), false);
+});
+
+test('Renderer include/exclude filters and JSX import sources prevent other integrations from acquiring React identity', async () => {
+  const root = await repository({ 'astro.config.mjs': 'import react from "@astrojs/react";export default {integrations:[react({include:["**/react/*"],exclude:["**/Excluded.tsx"]})]};', 'src/pages/index.astro': '---\nimport Good from "../react/Good";import Excluded from "../react/Excluded";import Other from "../other/Other";import Preact from "../react/Preact";\n---\n<Good client:load/><Excluded client:load/><Other client:load/><Preact client:load/>', 'src/react/Good.tsx': 'export default function Good(){return <span/>;}', 'src/react/Excluded.tsx': 'export default function Excluded(){return <span/>;}', 'src/other/Other.tsx': 'export default function Other(){return <span/>;}', 'src/react/Preact.tsx': '/** @jsxImportSource preact */\nexport default function Preact(){return <span/>;}' });
+  const graph = await index(root), islands = graph.entities.filter(item => item.metadata.role === 'hydrated-island'); assert.equal(islands.length, 1); assert.equal(islands[0]!.metadata.registeredTarget, component(graph, 'src/react/Good.tsx').id); assert.equal(graph.diagnostics.filter(item => item.code === 'astro-renderer-gap').length, 3);
+});
+
+test('Scriptless server fetch effects, native event attributes and custom transport methods retain execution boundaries', async () => {
+  const root = await repository({ 'astro.config.mjs': server, 'src/pages/index.astro': '{fetch("/api")}<button onclick={() => fetch("/api")}/>', 'src/pages/api.ts': 'export function GET(){}export function QUERY(){}' });
+  const graph = await index(root), page = component(graph, 'src/pages/index.astro'), file = graph.entities.find(item => item.type === 'file' && item.path === page.path)!; assert.equal((file.metadata.analysis as any).features.effects.status, 'partial'); assert.equal(graph.entities.some(item => item.metadata.role === 'hydrated-island'), false); assert.equal(graph.relations.some(item => item.type === 'requests'), false); assert.equal((page.metadata.effects as any[]).length, 1); assert.ok(graph.diagnostics.some(item => item.code === 'astro-native-event-gap')); assert.ok(graph.diagnostics.some(item => item.code === 'astro-method-gap')); assert.ok(endpoints(graph).every(item => item.metadata.constraintsUnresolved));
+});
+
+test('Shared hydrated components use each Astro registration application and retain exact helper source proof', async () => {
+  const root = await repository({ 'one/package.json': manifest, 'two/package.json': manifest, 'shared/package.json': '{"name":"shared","exports":"./Shared.svelte","dependencies":{"svelte":"^5.0.0"}}', 'one/astro.config.mjs': integrated, 'two/astro.config.mjs': integrated, 'one/src/pages/index.astro': '---\nimport Shared from "../../../shared/Shared.svelte";\n---\n<Shared client:load/>', 'two/src/pages/index.astro': '---\nimport Shared from "../../../shared/Shared.svelte";\n---\n<Shared client:load/>', 'shared/Shared.svelte': '<script>import {save} from "./helper";</script><button onclick={save}/>', 'shared/helper.ts': 'export function save(){return fetch("/api");}', 'one/src/pages/api.ts': 'export function GET(){}', 'two/src/pages/api.ts': 'export function GET(){}' });
+  const applications: ApplicationInput[] = [{ name: 'one', path: 'one', frameworks: ['astro'] }, { name: 'two', path: 'two', frameworks: ['astro'] }, { name: 'shared', path: 'shared', frameworks: ['svelte'] }], graph = await index(root, undefined, undefined, applications);
+  const requests = graph.relations.filter(item => item.type === 'requests' && graph.entities.find(entity => entity.id === item.from)?.metadata.role === 'hydrated-island'); assert.equal(requests.length, 2); for (const request of requests) { const caller = graph.entities.find(item => item.id === request.from)!, target = graph.entities.find(item => item.id === request.to)!; assert.equal(caller.path?.split('/')[0], target.path?.split('/')[0]); assert.ok(request.evidence.some(item => item.file === 'shared/helper.ts')); }
+});
+
+test('Missing adapters, dynamic routes without generators, collisions and deeply nested templates remain constrained', async () => {
+  const root = await repository({ 'astro.config.mjs': 'export default {output:"server"};', 'src/pages/api.ts': 'export function GET(){}', 'src/pages/api.astro': '<span/>', 'src/pages/[id].astro': '---\nexport const prerender = true;\n---\n<span/>', 'src/pages/deep.astro': `${'<div>'.repeat(70)}<span/>${'</div>'.repeat(70)}` });
+  const graph = await index(root); assert.ok(endpoints(graph).every(item => item.metadata.constraintsUnresolved)); assert.ok(graph.diagnostics.some(item => item.code === 'astro-route-gap' && item.reason.includes('Duplicate'))); assert.ok(graph.diagnostics.some(item => item.code === 'astro-route-gap' && item.reason.includes('getStaticPaths'))); assert.ok(graph.diagnostics.some(item => item.code === 'astro-template-budget'));
+});
+
+test('Cold/warm/revision replay and configuration changes preserve exact Astro graph ownership', async () => {
+  const root = await repository({ 'astro.config.mjs': integrated, 'src/pages/index.astro': '---\nimport Svelte from "../Svelte.svelte";\n---\n<Svelte client:load/>', 'src/Svelte.svelte': '<script>function save(){return fetch("/api");}</script><button onclick={save}/>', 'src/pages/api.ts': 'export function GET(){return new Response("ok");}' });
+  const cache = new AnalysisCache(path.join(root, '.cache')), first = await index(root, cache), warm = await index(root, cache), revision = await index(root, cache, 'revision'); assert.equal(stored(first), stored(warm)); assert.equal(stored(first), stored(revision));
+  await writeFile(path.join(root, 'astro.config.mjs'), integrated.replace('output:"server"', 'output:"static"')); const changed = await index(root, cache); assert.equal(endpoints(changed).length, 0); assert.equal(graphRequests(changed), 0); assert.equal(stored(changed), stored(await index(root)));
+  function graphRequests(graph: SoftwareGraph) { return graph.relations.filter(item => item.type === 'requests').length; }
+});
+
+test('Existing projection/catalog/request inspector consumes Astro page to island to backend evidence', async () => {
+  const root = await repository({ 'astro.config.mjs': integrated, 'src/pages/index.astro': '---\nimport Svelte from "../Svelte.svelte";\n---\n<Svelte client:load/>', 'src/Svelte.svelte': '<script>function save(){return fetch("/api");}</script><button onclick={save}/>', 'src/pages/api.ts': 'export function GET(){return new Response("ok");}' });
+  const graph = await index(root), store = new GraphStore(':memory:'); try { store.save(graph); const projection = new ProjectionService(store, { root }), page = pages(graph)[0]!, handler = named(graph, 'GET'); const flow = projection.flows({ entity: handler.id }).items.find(item => item.entry.id === page.id); assert.ok(flow); assert.equal(flow.kind, 'page'); const requests = projection.requestFlows({ entity: graph.entities.find(item => item.metadata.role === 'hydrated-island')!.id }); assert.ok(requests.items.length); const detail = await projection.requestFlow(requests.items[0]!.id, { maxFileBytes: 1 << 20 }); assert.ok(JSON.stringify(detail).includes('client:load')); } finally { store.close(); }
+});
