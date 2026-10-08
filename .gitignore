@@ -51,3 +51,7 @@ web/.next/
 web/out/
 test-results/
 playwright-report/
+
+# Local example checkouts and analysis output; keep only the catalog tracked
+/examples/*
+!/examples/readme.md
