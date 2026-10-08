@@ -4,9 +4,36 @@ Bring your code to light
 
 Code & Architecture Visualizer: a deterministic, evidenced software graph for Next.js + Laravel repositories (applications of other ecosystems are detected and mapped, see [Configuration](#configuration)) and an interactive isometric map that projects it (spatial map, evidence inspector, lazy source), plus Git history: every commit of a branch indexed as a versioned snapshot, browsable on a timeline and comparable as an architectural and source diff. Calls between symbols are resolved across both stacks (including frontend HTTP requests whose base URL is built in code, through axios instances and wrapper functions), down to the **database tables** the Laravel migrations declare, which gives every entity and every commit a **blast radius**, and every page, endpoint or function a **"what happens from here"** picture. Files carry their Git history (commits, authors, churn), and indexing again only re-analyzes the applications that changed. Every **flow** of the code is in one list, filtered by where it starts — pages (Next.js, and Inertia pages served by Laravel), HTTP requests, Artisan commands and scheduled tasks — with what it touches, so each file says which flows reach it and **coverage** shows what no flow reaches; a flow plays on the map itself. Optionally, language models **describe** files, folders, flows, domains and commits in ASD-STE100 Simplified Technical English (cost estimated and capped first), which adds a **Features** view: the code arranged by product domain instead of by folder. Phases 1–4 are implemented, with annotations from Phase 5; the architecture and what remains (runtime ingestion) are in [docs/architecture-visualizer.md](docs/architecture-visualizer.md).
 
-The local launcher is `npm start -- /path/to/repository`. Individual commands use `npm run codiluce -- …`. Generated state uses `.codiluce/` and `codiluce.db`.
+The local launcher is `npx codiluce@latest start /path/to/repository`. Generated state uses `.codiluce/` and `codiluce.db`. From a source checkout, use `npm start -- /path/to/repository` or `npm run codiluce -- …`.
 
-## One-command local launcher
+## Install and run
+
+Requires **Node.js >=22.12.0** and npm. Run in the repository you want to visualize:
+
+```bash
+cd /path/to/my-repository
+npx codiluce@latest start .
+```
+
+The npm package includes the compiled CLI and a prebuilt visualizer. It detects applications, indexes the repository, starts a local server and opens the map in your browser. No UI build or target application installation is required. The target application code is not executed. Omit `.` to scan the current directory, or pass another local directory. Node versions that require the SQLite startup flag are handled automatically.
+
+`npx` downloads Codiluce into npm's cache without adding it to your repository's dependencies. Analysis state remains in `<repository>/.codiluce/`; add `.codiluce/` to that repository's `.gitignore`. For a repeatable installation in a Node project, install it as a development dependency and commit the package lockfile:
+
+```bash
+npm install --save-dev codiluce
+npx codiluce start .
+```
+
+For an executable available across repositories:
+
+```bash
+npm install --global codiluce
+codiluce start /path/to/my-repository
+```
+
+Use `npx codiluce --help` for all commands and `npx codiluce --version` for the installed version. Options include `--no-open`, `--port 4400`, `--state-dir /path/to/state` and `--history-indexing`. `--build-ui` is available only in a source checkout; npm releases already contain the built UI. Git is optional for local scanning and required for Git metrics and history. GitHub URL inputs are not supported; clone the repository locally first.
+
+## Run from a source checkout
 
 Requires Node >=22.12. Install Codiluce's dependencies once with `npm ci`, then run from the Codiluce checkout:
 
@@ -32,7 +59,7 @@ npm start -- /path/to/repository --build-ui
 npm start -- /path/to/repository --history-indexing
 ```
 
-The equivalent CLI command is `npm run codiluce -- start --repo /path/to/repository`. Without a path or `--repo`, `start` scans its current working directory. `--ui PATH` uses an existing visualizer build and `--no-cache` forces fresh analysis. On a headless computer, the launcher prints the URL so you can open it manually. Installation through `npx` and GitHub URL inputs are not yet available.
+The equivalent CLI command is `npm run codiluce -- start --repo /path/to/repository`. Without a path or `--repo`, `start` scans its current working directory. `--ui PATH` uses an existing visualizer build and `--no-cache` forces fresh analysis. On a headless computer, the launcher prints the URL so you can open it manually.
 
 ## Run against a repository
 
@@ -288,10 +315,40 @@ The fixture chain proves **page /account → AccountPanel (onClick) → handleSa
 npm test            # engine, projection/layout/source and frontend unit/integration tests (Node test runner)
 npm run typecheck   # engine and web
 npm run build       # engine (tsc) and static UI (next build)
+npm run test:package # build/pack, install with production dependencies, and exercise the shipped CLI/UI
 npm run test:e2e    # Playwright browser tests against the indexed fixture repository and a scripted Git history (builds the UI first)
 ```
 
 Browser tests use Playwright's Chromium. Run `npx playwright install chromium` once if it is not cached.
+
+## Publishing to npm
+
+Codiluce is licensed under [MIT](LICENSE). The package is configured for the public npm registry under the name `codiluce`. Publishing builds the CLI and visualizer through `prepack`; consumers receive the built files and only the analyzer's runtime dependencies. The package excludes source/tests, local state, credentials and brand explorations. License notices for the bundled UI libraries and fonts are included in `web/out/licenses/`.
+
+1. [Create an npm account](https://www.npmjs.com/signup) if needed and enable two-factor authentication. Direct publishing requires 2FA or a granular token with bypass 2FA enabled; see [npm's publishing guide](https://docs.npmjs.com/creating-and-publishing-unscoped-public-packages/).
+2. Run `npm login --registry=https://registry.npmjs.org/`, then `npm whoami --registry=https://registry.npmjs.org/` to check the signed-in account.
+3. Check `npm view codiluce --registry=https://registry.npmjs.org/`. An E404 means no package is visible at that name; npm still decides whether the name can be published. If another owner has it, use a scope you own: `npm pkg set name="@YOUR_NPM_USERNAME/codiluce"`, then run `npm install --package-lock-only --ignore-scripts`. The executable remains `codiluce`, and users run `npx @YOUR_NPM_USERNAME/codiluce@latest start .`.
+4. Validate the checkout and preview the release contents:
+
+   ```bash
+   npm ci
+   npm run typecheck
+   npm test
+   npm run test:package
+   npm publish --dry-run
+   ```
+
+   The package check builds and packs a real tarball, installs it with development dependencies omitted and install scripts disabled, then verifies the prebuilt UI, API, compiled history workers, shutdown and `npm exec` from outside the checkout. It needs Git for its temporary history fixture.
+
+5. Publish the first release:
+
+   ```bash
+   npm publish --access public
+   ```
+
+   Complete npm's authentication prompt. After publishing, verify the registry release with `npx codiluce@latest --version` and `npx codiluce@latest start /path/to/a/repository` (use the scoped name if applicable).
+
+For subsequent releases, commit your changes, run `npm version patch` (or `minor`/`major`), repeat validation and publish. Each published name/version pair can be used only once, even after unpublishing; see [npm publish](https://docs.npmjs.com/cli/v11/commands/npm-publish/). `npm pack` can also produce a tarball for testing or sharing before any registry release.
 
 Measured (not a guarantee), Node 22 on this workstation:
 - A synthetic 101k-entity / 151k-relation hierarchy builds its projection index in ~0.4 s and its layout in ~1.1 s, with ~164 MB server heap. Re-layout from persisted state is identical.

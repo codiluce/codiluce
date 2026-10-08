@@ -41,7 +41,7 @@ export async function toolDirectory(): Promise<string> {
     const manifest = path.join(directory, 'package.json');
     if (await exists(manifest)) {
       const data = JSON.parse(await readFile(manifest, 'utf8')) as { name?: string };
-      if (data.name === 'codiluce') return directory;
+      if (data.name === 'codiluce' || data.name?.endsWith('/codiluce')) return directory;
     }
     const parent = path.dirname(directory);
     if (parent === directory) throw new Error('Cannot locate the Codiluce installation');
@@ -60,6 +60,11 @@ export async function prepareVisualizer(directory: string, options: Pick<LaunchO
     return ui;
   }
   if (!options.buildUi && await exists(path.join(ui, 'index.html'))) return ui;
+  if (!await exists(path.join(directory, 'web/app/page.tsx'))) {
+    throw new Error(options.buildUi
+      ? '--build-ui is only available in a Codiluce source checkout. The npm package includes a prebuilt visualizer.'
+      : 'The bundled visualizer is missing. Reinstall Codiluce or choose an existing build with --ui PATH.');
+  }
   options.log?.('Building the visualizer (this is only needed on the first run or with --build-ui)…');
   const next = createRequire(path.join(directory, 'package.json')).resolve('next/dist/bin/next');
   await new Promise<void>((resolve, reject) => {

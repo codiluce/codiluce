@@ -1,0 +1,26 @@
+{
+  "name": "codiluce-site",
+  "private": true,
+  "description": "The Codiluce website: home, roadmap and docs, statically exported",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 4320",
+    "build": "next build",
+    "preview": "npx --yes serve out -l 4321",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/geist-mono": "^5.3.0",
+    "@fontsource-variable/space-grotesk": "^5.3.0",
+    "next": "^16.3.8",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,6 +1,5 @@
 import { mkdir, realpath, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { stringify } from 'yaml';
 import { detectApplications, exists, loadConfig } from './core/config.js';
@@ -15,25 +14,27 @@ import { launchLocal, toolDirectory } from './launcher.js';
 const HELP = `Codiluce — Bring your code to light
 Code and architecture visualizer
 
-npm start -- [PATH] [--state-dir PATH] [--port N] [--no-open] [--build-ui]
-npm run codiluce -- start [PATH] [--repo PATH] [--state-dir PATH] [--port N]
+npx codiluce start [PATH] [--repo PATH] [--state-dir PATH] [--port N]
                             [--no-open] [--build-ui] [--ui PATH] [--no-cache] [--history-indexing]
-npm run codiluce -- init [--repo PATH] [--state-dir PATH]
-npm run codiluce -- index [--repo PATH] [--state-dir PATH] [--no-cache]
-npm run codiluce -- inspect [summary|entities|entity|relations|relation|diagnostics] [options]
-npm run codiluce -- serve [--repo PATH] [--state-dir PATH] [--port 4300] [--ui PATH|none] [--history-indexing] [--read-only]
-npm run codiluce -- history index [--repo PATH] [--state-dir PATH] [--ref BRANCH] [--limit N]
+npx codiluce init [--repo PATH] [--state-dir PATH]
+npx codiluce index [--repo PATH] [--state-dir PATH] [--no-cache]
+npx codiluce inspect [summary|entities|entity|relations|relation|diagnostics] [options]
+npx codiluce serve [--repo PATH] [--state-dir PATH] [--port 4300] [--ui PATH|none] [--history-indexing] [--read-only]
+npx codiluce history index [--repo PATH] [--state-dir PATH] [--ref BRANCH] [--limit N]
                        [--since DATE] [--commits SHA,SHA] [--jobs N] [--all-parents] [--pr-metadata github]
-npm run codiluce -- history status [--repo PATH] [--state-dir PATH]
-npm run codiluce -- annotate [--repo PATH] [--state-dir PATH] [--tasks files,flows,commits,folders,domains,overview,chapters]
+npx codiluce history status [--repo PATH] [--state-dir PATH]
+npx codiluce annotate [--repo PATH] [--state-dir PATH] [--tasks files,flows,commits,folders,domains,overview,chapters]
                        [--estimate] [--pilot] [--max-cost 10] [--concurrency 6] [--force]
 
 Options: --search TEXT --type TYPE --id ID --path PATH --parent ID
          --direction incoming|outgoing|both --severity info|warning|error
          --code CODE --limit 1..500 --offset NUMBER
 
+From a source checkout, use npm start -- [PATH] or npm run codiluce -- COMMAND.
+The installed executable also supports --version. Node.js >=22.12 is required.
+
 State defaults to <repo>/.codiluce. inspect outputs JSON; serve is a local
-API that also serves the built visualizer (web/out, see npm run build:web)
+API that also serves the bundled visualizer (web/out)
 unless --ui none. It only reads the graph (it keeps the map's layout slots in
 <state>/layout.json); --read-only refuses on-demand history indexing even with
 --history-indexing. index persists diagnostics and exits 2
@@ -41,11 +42,11 @@ for analyzer errors. index reuses the analysis of applications whose files
 did not change from <state>/cache (bounded; safe to delete; --no-cache
 re-analyzes everything).
 
-start prepares the visualizer (building it if missing), analyzes the local
+start prepares the visualizer (prebuilt in npm; built if missing in a checkout), analyzes the local
 repository and opens the map in your browser. PATH defaults to the current
 directory. Existing configuration and analysis caches are reused. Omit --port
 to choose an available port starting at 4300; --port 0 asks the OS to choose.
---no-open leaves browser opening to you; --build-ui rebuilds the bundled UI.
+--no-open leaves browser opening to you; --build-ui rebuilds the UI in a source checkout.
 
 history index analyzes past commits of a branch (first-parent history by
 default) into <state>/history.db for the timeline. Commits are read from Git
@@ -74,7 +75,7 @@ async function main(): Promise<void> {
     if (positionals[1] && values.repo) throw new Error('Choose a repository with PATH or --repo, not both');
     const controller = new AbortController();
     const stop = () => controller.abort();
-    process.once('SIGINT', stop); process.once('SIGTERM', stop);
+    process.on('SIGINT', stop); process.on('SIGTERM', stop);
     try {
       const session = await launchLocal({
         repo: positionals[1] ?? values.repo, stateDirectory: values['state-dir'],
@@ -116,7 +117,7 @@ async function main(): Promise<void> {
   if (command === 'annotate') {
     if (!await exists(database)) throw new Error('No graph cache; run init and index first');
     process.exitCode = await annotateCommand({
-      root, stateDirectory, keyDirectories: [fileURLToPath(new URL('..', import.meta.url)), stateDirectory],
+      root, stateDirectory, keyDirectories: [await toolDirectory(), stateDirectory],
       tasks: values.tasks as string | undefined, estimateOnly: !!values.estimate, pilot: !!values.pilot,
       maxCost: values['max-cost'] !== undefined ? Number(values['max-cost']) : 10, concurrency: values.concurrency !== undefined ? Number(values.concurrency) : 6, force: !!values.force,
     });

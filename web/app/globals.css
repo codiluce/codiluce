@@ -186,7 +186,7 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .direction { font-weight: 700; font-size: 11px; color: var(--muted); }
 .relation-phrase { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 5px; white-space: nowrap; }
 .filters { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
-.segmented { display: inline-flex; border: 1px solid var(--panel-border); border-radius: var(--radius, 7px); overflow: hidden; margin-bottom: 8px; }
+.segmented { display: inline-flex; border: 1px solid var(--panel-border); border-radius: var(--radius, 7px); overflow: hidden; }
 .segmented button { border: none; background: none; padding: 3px 9px; font-size: 12px; }
 .segmented button[aria-pressed="true"] { background: var(--chip-active); color: var(--text); font-weight: 600; }
 .evidence-card { border: 1px solid var(--panel-border); border-radius: var(--radius-item, 8px); padding: 8px 10px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; background: var(--chip); }

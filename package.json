@@ -2,8 +2,27 @@
   "name": "codiluce",
   "description": "Bring your code to light",
   "version": "0.1.0",
-  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ojoven/codiluce.git"
+  },
+  "homepage": "https://github.com/ojoven/codiluce#readme",
+  "bugs": "https://github.com/ojoven/codiluce/issues",
   "type": "module",
+  "bin": {
+    "codiluce": "bin/codiluce.js"
+  },
+  "files": [
+    "bin/codiluce.js",
+    "dist/src/",
+    "web/out/",
+    "docs/architecture-visualizer.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "engines": {
     "node": ">=22.12.0"
   },
@@ -11,13 +30,22 @@
     "start": "node --experimental-sqlite --import tsx src/cli.ts start",
     "codiluce": "node --experimental-sqlite --import tsx src/cli.ts",
     "dev:web": "next dev web --port 4310",
-    "build:web": "next build web",
+    "build:web": "next build web && node scripts/copy-ui-licenses.mjs",
     "test": "node --experimental-sqlite --import tsx --test tests/*.test.ts web/tests/*.test.ts",
     "test:e2e": "next build web && playwright test",
+    "test:package": "node scripts/test-package.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit -p web",
-    "build": "tsc && next build web"
+    "build:cli": "node scripts/build-cli.mjs",
+    "build": "npm run build:cli && npm run build:web",
+    "prepack": "npm run build"
   },
   "dependencies": {
+    "php-parser": "^3.7.0",
+    "smol-toml": "^1.9.0",
+    "typescript": "^5.9.3",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
     "@fontsource-variable/archivo": "^5.3.0",
     "@fontsource-variable/fraunces": "^5.3.0",
     "@fontsource-variable/geist": "^5.3.0",
@@ -29,14 +57,8 @@
     "@fontsource-variable/unbounded": "^5.3.0",
     "highlight.js": "^11.12.0",
     "next": "^16.3.8",
-    "php-parser": "^3.7.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "smol-toml": "^1.9.0",
-    "typescript": "^5.9.3",
-    "yaml": "^2.8.1"
-  },
-  "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@types/node": "^22.10.0",
     "@types/react": "^19.3.0",

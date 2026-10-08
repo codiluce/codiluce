@@ -5,6 +5,7 @@ coverage/
 .nyc_output/
 .cache/
 *.tsbuildinfo
+/*.tgz
 
 # Local repository analysis state (may contain private source metadata)
 .codiluce/

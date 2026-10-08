@@ -124,6 +124,8 @@ test('missing UI is built in the tool directory, reused thereafter, and can be e
   const tool = await directory();
   const bin = path.join(tool, 'node_modules/next/dist/bin');
   await mkdir(bin, { recursive: true });
+  await mkdir(path.join(tool, 'web/app'), { recursive: true });
+  await writeFile(path.join(tool, 'web/app/page.tsx'), '// Source checkout marker\n');
   await writeFile(path.join(tool, 'package.json'), '{"type":"module"}');
   const builder = path.join(bin, 'next.js');
   await writeFile(builder, `
@@ -141,6 +143,15 @@ appendFileSync('build-count', 'built\\n');
   assert.equal(await readFile(path.join(tool, 'build-count'), 'utf8'), 'built\nbuilt\n');
   await writeFile(builder, 'process.exit(1);');
   await assert.rejects(prepareVisualizer(tool, { buildUi: true }), /Visualizer build failed/);
+});
+
+test('an installed package uses its prebuilt UI and reports missing assets without attempting a build', async () => {
+  const tool = await directory();
+  await assert.rejects(prepareVisualizer(tool), /bundled visualizer is missing.*Reinstall Codiluce/);
+  await mkdir(path.join(tool, 'web/out'), { recursive: true });
+  await writeFile(path.join(tool, 'web/out/index.html'), '<!doctype html><title>Shipped</title>');
+  assert.equal(await prepareVisualizer(tool), path.join(tool, 'web/out'));
+  await assert.rejects(prepareVisualizer(tool, { buildUi: true }), /only available in a Codiluce source checkout/);
 });
 
 test('CLI defaults to the current repository and shuts down cleanly on SIGINT', { timeout: 20_000 }, async () => {
