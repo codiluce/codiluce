@@ -66,8 +66,10 @@ to your checkout. Nothing leaves your computer unless you ask for AI description
 
 ## How deep does it go?
 
-TypeScript and JavaScript are analyzed down to calls and requests in any application, and supported frameworks down to
-routes, commands and tables. Other ecosystems are detected and mapped with their files, lines and Git metrics. Missing
+TypeScript and JavaScript are analyzed down to calls and requests across applications and local workspace packages, and supported frameworks down to
+routes, commands and tables. Python, Go, Ruby, Rust, Java, C# and Kotlin also have declaration maps, with source ranges
+and nested types/functions. The inspector shows which analysis features are available for each file. Other ecosystems
+are detected and mapped with their files, lines and Git metrics. Missing
 yours? [Tell us](https://github.com/codiluce/codiluce/issues).
 
 ## Learn more
