@@ -121,7 +121,7 @@ test('file languages come from well-known names and extensions; headers follow t
   assert.equal(headerLanguage(new Set(['swift', 'objective-c'])), 'objective-c');
 });
 
-test('a mixed repository: TypeScript is analyzed in any application, other languages are measured, and coverage leaves them out', async () => {
+test('a mixed repository measures TypeScript and Python reference coverage while leaving structural-only languages out', async () => {
   const root = await repository({
     'api/package.json': { dependencies: { express: '4' } },
     'api/src/server.ts': "import { route } from './routes';\nexport function start() { return route(); }\n",
@@ -146,7 +146,7 @@ test('a mixed repository: TypeScript is analyzed in any application, other langu
   assert.ok(start && route);
   assert.ok(graph.relations.some(relation => relation.type === 'calls' && relation.from === start.id && relation.to === route.id));
   assert.deepEqual({ ...app('api').metadata, languages: undefined }, { framework: 'express', frameworks: ['express'], ecosystems: ['node'], languages: undefined });
-  // Other languages: named and measured, not analyzed.
+  // Python has reference analysis; C/C++ remain named and measured.
   const tasks = byPath('worker/app/tasks.py');
   assert.equal(tasks.language, 'python'); assert.equal(tasks.metrics?.loc, 2); assert.equal(tasks.metadata.analysisSkipped, undefined);
   assert.equal(app('worker').language, 'python');
@@ -161,12 +161,12 @@ test('a mixed repository: TypeScript is analyzed in any application, other langu
   try {
     const coverage = new ProjectionService(store).coverage();
     const category = (file: string) => coverage.files[byPath(file).id]?.category;
-    assert.equal(category('worker/app/tasks.py'), 'unanalyzed');
-    assert.equal(category('worker/tests/test_tasks.py'), 'unanalyzed', 'not analyzed comes before tests: neither is measured');
+    assert.equal(category('worker/app/tasks.py'), 'unreached');
+    assert.equal(category('worker/tests/test_tasks.py'), 'test');
     assert.equal(category('engine/src/core.cpp'), 'unanalyzed');
     assert.equal(category('lib/legacy.c'), 'unanalyzed');
     assert.equal(category('scripts/seed.ts'), 'outside');
     assert.equal(category('api/src/routes.ts'), 'unreached');
-    assert.equal(coverage.codeFiles, 3, 'only the TypeScript files are measured');
+    assert.equal(coverage.codeFiles, 5, 'TypeScript and Python files have reference analysis');
   } finally { store.close(); }
 });

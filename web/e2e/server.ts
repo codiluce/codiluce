@@ -14,6 +14,7 @@ const fixture = fileURLToPath(new URL('../../tests/fixtures/repository', import.
 const ui = fileURLToPath(new URL('../out', import.meta.url));
 const root = await mkdtemp(path.join(tmpdir(), 'atlas-e2e-'));
 await cp(fixture, root, { recursive: true });
+await cp(fileURLToPath(new URL('../../tests/fixtures/structure', import.meta.url)), path.join(root, 'structure'), { recursive: true });
 await mkdir(path.join(root, '.codiluce'));
 await writeFile(path.join(root, '.codiluce/config.yml'), stringify({ repository: { name: 'fixture' }, applications: [{ name: 'frontend', path: 'frontend', type: 'nextjs' }, { name: 'backend', path: 'backend', type: 'laravel', apiOrigins: ['https://api.fixture.test'], apiOriginEnv: ['NEXT_PUBLIC_API_URL'] }] }));
 const store = new GraphStore(path.join(root, '.codiluce/codiluce.db'));

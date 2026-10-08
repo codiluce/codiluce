@@ -1,6 +1,7 @@
 'use client';
 import { Fragment, useEffect, useState } from 'react';
 import type { Entity, Evidence } from '@engine/core/graph';
+import { fileAnalysis } from '@engine/analysis/facts';
 import type { AggregateGroup, ChangeFacet, DiagnosticItem, NodeChange, NodeSummary, RelationItem } from '@engine/projection/dto';
 import { compactNumber, percent, relationPhrase, relativeTime, shortSha, typeLabel } from '../lib/format';
 import { entryOf, isContainer, NO_FAMILY, tourEntry, type AtlasStore } from '../lib/store';
@@ -8,6 +9,7 @@ import { coverageCss, familyCss, familyHues, featureHues, personHue, themeById }
 import { COVERAGE_TEXT, NOT_MEASURED } from '../lib/coverage';
 import { useAtlas, useStore } from './context';
 import { TypeBadge } from './TypeBadge';
+import { AnalysisSupport } from './AnalysisSupport';
 import { CallSitesSection, CommitImpactChip, EffectsSection, ImpactSection } from './Analysis';
 import { CommitList, KindTag, PersonDot, WindowPicker, windowText } from './PeoplePanel';
 
@@ -111,6 +113,7 @@ function Selection() {
       {node.kind === 'entity' && (node.type === 'directory' || node.type === 'application' || node.type === 'repository') && <DataBreakdown key={node.id} node={node} />}
       <PeopleSection key={`people:${node.id}`} />
       <Facts node={node} entity={entity} />
+      <AnalysisSupport analysis={node.analysis ?? fileAnalysis(selection.file?.metadata.analysis)} />
       {node.type === 'database_table' && entity && <TableSection entity={entity} />}
       <HttpCalls selectionId={node.id} file={selection.file} />
       {entity && <EffectsSection entity={entity} />}

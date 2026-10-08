@@ -1,0 +1,105 @@
+{
+  "format": 1,
+  "runtime": {
+    "package": "web-tree-sitter",
+    "version": "0.27.0"
+  },
+  "builder": {
+    "package": "@vscode/tree-sitter-wasm",
+    "version": "0.3.1",
+    "sourceRevision": "78c97c860ddd965b9617f0e30962ad1da08c4c91"
+  },
+  "grammars": [
+    {
+      "language": "python",
+      "file": "tree-sitter-python.wasm",
+      "sha256": "16108b50df4ee9a30168794252ab55e7c93bfc5765d7fa0aa3e335752c515f47",
+      "abi": 15,
+      "artifactPackage": "@vscode/tree-sitter-wasm",
+      "artifactVersion": "0.3.1",
+      "artifactPath": "wasm/tree-sitter-python.wasm",
+      "source": "https://github.com/tree-sitter/tree-sitter-python",
+      "sourceRevision": "npm:tree-sitter-python@0.25.0",
+      "license": "MIT",
+      "licenseFile": "licenses/python.txt"
+    },
+    {
+      "language": "go",
+      "file": "tree-sitter-go.wasm",
+      "sha256": "9504573f352b20be7f2f1911754d710622aedc15afff16d5ed8fb5645681aee7",
+      "abi": 15,
+      "artifactPackage": "@vscode/tree-sitter-wasm",
+      "artifactVersion": "0.3.1",
+      "artifactPath": "wasm/tree-sitter-go.wasm",
+      "source": "https://github.com/tree-sitter/tree-sitter-go",
+      "sourceRevision": "npm:tree-sitter-go@0.25.0",
+      "license": "MIT",
+      "licenseFile": "licenses/go.txt"
+    },
+    {
+      "language": "ruby",
+      "file": "tree-sitter-ruby.wasm",
+      "sha256": "09a96427d7c72f0613ed470cd9812223fc4a91d6a9c025c0235cc6bd59ff96f4",
+      "abi": 14,
+      "artifactPackage": "@vscode/tree-sitter-wasm",
+      "artifactVersion": "0.3.1",
+      "artifactPath": "wasm/tree-sitter-ruby.wasm",
+      "source": "https://github.com/tree-sitter/tree-sitter-ruby",
+      "sourceRevision": "npm:tree-sitter-ruby@0.23.1",
+      "license": "MIT",
+      "licenseFile": "licenses/ruby.txt"
+    },
+    {
+      "language": "rust",
+      "file": "tree-sitter-rust.wasm",
+      "sha256": "0dac14947cb04d94466e3df659f80a4e264c216a60b3eda175eae4cf12ed7a8d",
+      "abi": 15,
+      "artifactPackage": "@vscode/tree-sitter-wasm",
+      "artifactVersion": "0.3.1",
+      "artifactPath": "wasm/tree-sitter-rust.wasm",
+      "source": "https://github.com/tree-sitter/tree-sitter-rust",
+      "sourceRevision": "261b20226c04ef601adbdf185a800512a5f66291",
+      "license": "MIT",
+      "licenseFile": "licenses/rust.txt"
+    },
+    {
+      "language": "java",
+      "file": "tree-sitter-java.wasm",
+      "sha256": "4fdeac4ca6ca089f06c6f7e562abcac1733cd465728cc7031ebb73c2019122c4",
+      "abi": 14,
+      "artifactPackage": "@vscode/tree-sitter-wasm",
+      "artifactVersion": "0.3.1",
+      "artifactPath": "wasm/tree-sitter-java.wasm",
+      "source": "https://github.com/tree-sitter/tree-sitter-java",
+      "sourceRevision": "npm:tree-sitter-java@0.23.5",
+      "license": "MIT",
+      "licenseFile": "licenses/java.txt"
+    },
+    {
+      "language": "csharp",
+      "file": "tree-sitter-csharp.wasm",
+      "sha256": "d12d85996c25957b4c1b71e26db2d7cc8a294997b60642e9c2a3b031b2c66dd3",
+      "abi": 15,
+      "artifactPackage": "@vscode/tree-sitter-wasm",
+      "artifactVersion": "0.3.1",
+      "artifactPath": "wasm/tree-sitter-c-sharp.wasm",
+      "source": "https://github.com/tree-sitter/tree-sitter-c-sharp",
+      "sourceRevision": "485f0bae0274ac9114797fc10db6f7034e4086e3",
+      "license": "MIT",
+      "licenseFile": "licenses/csharp.txt"
+    },
+    {
+      "language": "kotlin",
+      "file": "tree-sitter-kotlin.wasm",
+      "sha256": "7009d69453bc8735e438b2818a633efb21c88f99782769abba60dffedfab73f7",
+      "abi": 14,
+      "artifactPackage": "@tree-sitter-grammars/tree-sitter-kotlin",
+      "artifactVersion": "1.1.0",
+      "artifactPath": "tree-sitter-kotlin.wasm",
+      "source": "https://github.com/tree-sitter-grammars/tree-sitter-kotlin",
+      "sourceRevision": "77dd60ea0a9003ce062c9728a513ffe1aaff8c82",
+      "license": "MIT",
+      "licenseFile": "licenses/kotlin.txt"
+    }
+  ]
+}

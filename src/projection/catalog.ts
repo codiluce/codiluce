@@ -164,8 +164,10 @@ export function computeCoverage(input: CoverageInput): CoverageComputation {
    * application's label is its primary framework). Outside the applications,
    * TypeScript, JavaScript and PHP stay "outside", as before.
    */
-  const unanalyzed = (node: ProjectionNode) => !FLOW_LANGUAGES.has(node.language ?? '')
-    || (node.language === 'php' && insideApplication(node) && index.canonicalAncestors(node).filter(item => item.type === 'application').at(-1)?.detail !== 'laravel');
+  const unanalyzed = (node: ProjectionNode) => node.analysis && insideApplication(node)
+    ? !['supported', 'partial'].includes(node.analysis.features.references.status)
+    : !FLOW_LANGUAGES.has(node.language ?? '')
+      || (node.language === 'php' && insideApplication(node) && index.canonicalAncestors(node).filter(item => item.type === 'application').at(-1)?.detail !== 'laravel');
   const listNames = (ids: Iterable<string>, max = 3) => { const names = [...ids].map(nameOf).sort(); return `${names.slice(0, max).join(', ')}${names.length > max ? ` and ${names.length - max} more` : ''}`; };
 
   const files = new Map<string, FileCoverage>();
@@ -179,7 +181,9 @@ export function computeCoverage(input: CoverageInput): CoverageComputation {
       reason = support.has(node.id) ? `Not code; used by ${listNames(support.get(node.id)!)}` : 'Not code (styles, data, documents, images…): not measured for flow coverage';
     } else if (entryFiles.has(node.id)) { category = 'entry'; reason = `Entry point: ${entryFiles.get(node.id)}${flows.length ? `; in ${flows.length} flow${flows.length === 1 ? '' : 's'}` : ''}`; }
     else if (flows.length) { category = 'flow'; reason = `In ${flows.length} flow${flows.length === 1 ? '' : 's'}: ${flows.slice(0, 3).map(i => input.flows[i]!.name).join(', ')}${flows.length > 3 ? ` and ${flows.length - 3} more` : ''}`; }
-    else if (unanalyzed(node) && !support.has(node.id)) { category = 'unanalyzed'; reason = `${node.language === 'php' ? 'PHP outside a Laravel application' : `Code in ${node.language}`}: its calls are not analyzed yet, so no flow can reach it (not measured)`; }
+    else if (unanalyzed(node)) { category = 'unanalyzed'; reason = node.analysis && insideApplication(node)
+      ? `Code in ${node.language}: reference analysis is ${node.analysis.features.references.status}${node.analysis.features.references.reason ? ` (${node.analysis.features.references.reason})` : ''}; excluded from flow coverage`
+      : `${node.language === 'php' ? 'PHP outside a Laravel application' : `Code in ${node.language}`}: its calls are not analyzed yet, so no flow can reach it (not measured)`; }
     else if (TEST_PATH.test(path)) { category = 'test'; reason = 'Tests or test data: run by the test runner, not by the application'; }
     else if (support.has(node.id)) { category = 'supporting'; reason = `Supports flows: imported or extended by ${listNames(support.get(node.id)!)}`; }
     else if (forwards.has(node.id)) { category = 'supporting'; reason = `Supports flows: re-exports ${listNames(forwards.get(node.id)!)}, which flows use`; }

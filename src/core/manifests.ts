@@ -17,8 +17,9 @@ import { parse as parseToml } from 'smol-toml';
 /** In priority order: when a directory has several manifests, the first names it (node last: its package.json is often the asset build of a server application). */
 export const ECOSYSTEMS = ['php', 'python', 'ruby', 'go', 'rust', 'jvm', 'dotnet', 'swift', 'xcode', 'native', 'shopify', 'node'] as const;
 export type Ecosystem = typeof ECOSYSTEMS[number];
-/** Frameworks analyzed in depth (routes, endpoints, entry points); the others are recorded. */
-export const ANALYZED_FRAMEWORKS = new Set(['nextjs', 'laravel']);
+/** Legacy owning applications can also be workspace roots. Pack capability
+ * does not control discovery or hide nested applications. */
+const OWNING_NODE_FRAMEWORKS = new Set(['nextjs', 'laravel']);
 /**
  * Known frameworks by rank: 0 an application framework (it shapes the whole
  * application), 1 a library an application is served or extended with, 2 a
@@ -98,7 +99,7 @@ export async function readManifests(directory: string, entries: string[], label:
     const runtime = [manifest.dependencies, manifest.peerDependencies, manifest.optionalDependencies].some(value => keys(value).length > 0);
     const entry = ['main', 'module', 'exports', 'bin', 'types', 'typings', 'browser'].some(key => manifest[key] !== undefined);
     // A workspace root is not an application, unless it is a Next.js or Laravel application itself.
-    add('node', frameworks.some(framework => ANALYZED_FRAMEWORKS.has(framework)) ? 'application' : workspace ? 'workspace' : frameworks.length || runtime || entry ? 'application' : 'tooling', frameworks);
+    add('node', frameworks.some(framework => OWNING_NODE_FRAMEWORKS.has(framework)) ? 'application' : workspace ? 'workspace' : frameworks.length || runtime || entry ? 'application' : 'tooling', frameworks);
   } else if (names.has('pnpm-workspace.yaml')) add('node', 'workspace');
   if (names.has('composer.json')) {
     const manifest = await json('composer.json');

@@ -13,6 +13,7 @@ import type { TimelineRegistry } from '../projection/layout.js';
 import type { CommitInfo } from './git.js';
 import { contentKey, shapeHash, storageHash } from './fingerprint.js';
 import type { SnapshotDiagnostic, SnapshotEntity, SnapshotRelation } from './snapshot.js';
+import { fileAnalysis } from '../analysis/facts.js';
 
 export const HISTORY_SCHEMA_VERSION = 1;
 const DDL = `
@@ -288,8 +289,9 @@ export class HistoryStore {
     try { const result = work(); this.db.exec('COMMIT'); return result; } catch (error) { this.db.exec('ROLLBACK'); throw error; }
   }
 }
-const ENTITY_COLUMNS = 'v.entity_id, v.type, v.name, v.path, v.language, v.parent_id, v.source_range, v.loc, v.qualified_name, v.signature, v.route_path, v.method, v.framework, v.role, v.skipped, v.content_key, v.body_hash, v.shape_hash';
+const ENTITY_COLUMNS = "v.entity_id, v.type, v.name, v.path, v.language, v.parent_id, v.source_range, v.loc, v.qualified_name, v.signature, v.route_path, v.method, v.framework, v.role, v.skipped, v.content_key, v.body_hash, v.shape_hash, json_extract(v.data, '$.metadata.analysis') AS analysis";
 function decodeEntity(row: Row): SnapshotEntity {
+  const analysis = row.analysis ? fileAnalysis(JSON.parse(String(row.analysis))) : undefined;
   return {
     id: String(row.entity_id), type: String(row.type), name: String(row.name),
     ...(row.path ? { path: String(row.path) } : {}), ...(row.language ? { language: String(row.language) } : {}),
@@ -298,6 +300,7 @@ function decodeEntity(row: Row): SnapshotEntity {
     ...(typeof row.signature === 'string' ? { signature: row.signature } : {}), ...(row.route_path ? { routePath: String(row.route_path) } : {}),
     ...(row.method ? { method: String(row.method) } : {}), ...(row.framework ? { framework: String(row.framework) } : {}),
     ...(row.role ? { role: String(row.role) } : {}), ...(row.skipped ? { analysisSkipped: String(row.skipped) } : {}),
+    ...(analysis ? { analysis } : {}),
     ...(row.content_key ? { content: String(row.content_key) } : {}), ...(row.body_hash ? { body: String(row.body_hash) } : {}), shape: String(row.shape_hash),
   };
 }

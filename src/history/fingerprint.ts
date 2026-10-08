@@ -32,7 +32,7 @@ export function withoutPositions(value: unknown): unknown {
  * per language) rather than from the entity's own declaration. A change there
  * shows as a relations or file change, not as the entity itself changing.
  */
-const DERIVED = new Set(['callSites', 'effects', 'languages']);
+const DERIVED = new Set(['callSites', 'effects', 'languages', 'analysis', 'project', 'projects', 'importOutcomes', 'importResolver', 'importGaps', 'symbolResolver', 'pythonCallable']);
 export function shapeHash(entity: Pick<Entity, 'type' | 'name' | 'language' | 'metadata'>): string {
   const metadata = Object.fromEntries(Object.entries(entity.metadata).filter(([key]) => !DERIVED.has(key)));
   return digest(canonicalJson({ type: entity.type, name: entity.name, language: entity.language, metadata: withoutPositions(metadata) }), 32);

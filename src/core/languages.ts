@@ -3,7 +3,8 @@
 //
 // A language names the file on the map (label, color, syntax highlighting)
 // and makes its lines measured; it does not make the file analyzed. Symbols,
-// calls and flows come from the analyzers, which cover `FLOW_LANGUAGES` only.
+// calls and flows come from the analyzers. Per-file analysis outcomes state
+// what ran; `FLOW_LANGUAGES` is a fallback for older stored snapshots.
 
 /** By lower-case extension. */
 const EXTENSIONS: Record<string, string> = {
@@ -29,18 +30,20 @@ const EXTENSIONS: Record<string, string> = {
 const NAMES: Record<string, string> = {
   Gemfile: 'ruby', Rakefile: 'ruby', Podfile: 'ruby', Fastfile: 'ruby', Appfile: 'ruby', Brewfile: 'ruby', Guardfile: 'ruby', Vagrantfile: 'ruby',
   Makefile: 'makefile', GNUmakefile: 'makefile', makefile: 'makefile', 'CMakeLists.txt': 'cmake', Jenkinsfile: 'groovy', Pipfile: 'toml',
+  'setup.cfg': 'ini',
 };
 /** Languages whose files are code (the others: styles, data, configuration, documents). */
 export const CODE_LANGUAGES = new Set([
   'typescript', 'javascript', 'php', 'vue', 'svelte', 'astro', 'liquid', 'erb', 'razor', 'python', 'go', 'rust', 'java', 'kotlin', 'scala',
   'csharp', 'fsharp', 'vbnet', 'ruby', 'c', 'cpp', 'objective-c', 'swift',
 ]);
-/** Code languages whose calls are resolved, so flows can follow them (PHP only inside Laravel applications). */
+/** Legacy flow-language fallback for snapshots without per-file analysis outcomes (PHP requires Laravel). */
 export const FLOW_LANGUAGES = new Set(['typescript', 'javascript', 'php']);
 
 export function languageOf(relative: string): string | undefined {
   const name = relative.slice(relative.lastIndexOf('/') + 1);
   if (NAMES[name]) return NAMES[name];
+  if (/^requirements[\w.-]*\.txt$/.test(name)) return 'pip-requirements';
   if (/^Dockerfile(\..+)?$/.test(name) || name.endsWith('.dockerfile')) return 'dockerfile';
   const dot = name.lastIndexOf('.');
   return dot > 0 ? EXTENSIONS[name.slice(dot).toLowerCase()] : undefined;

@@ -8,6 +8,9 @@ const TYPE_LABELS: Record<string, string> = {
 };
 export function typeLabel(type: string, role?: string): string {
   if (type === 'function' && role === 'hook') return 'Hook';
+  if (type === 'class' && role && ['interface', 'struct', 'trait', 'record', 'enum', 'module', 'namespace', 'object', 'annotation', 'type'].includes(role)) return role === 'type' ? 'Type declaration' : role.charAt(0).toUpperCase() + role.slice(1);
+  if (type === 'method' && role === 'property') return 'Property';
+  if (type === 'method' && role === 'constructor') return 'Constructor';
   return TYPE_LABELS[type] ?? type.replace(/_/g, ' ');
 }
 const RELATION_LABELS: Record<string, { outgoing: string; incoming: string }> = {

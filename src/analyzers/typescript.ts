@@ -1,15 +1,20 @@
 import ts from 'typescript';
 import path from 'node:path';
-import { readFile } from 'node:fs/promises';
 import type { Analyzer, AnalysisContext, ScannedFile } from '../core/analyzer.js';
 import { hasFramework } from '../core/config.js';
 import { ANALYZER_VERSION, declarationHashes, evidence, type Entity, type EntityType } from '../core/graph.js';
 import { SiteCollector } from './references.js';
-import { createApplicationProgram } from './ts-program.js';
 import { resolveReferences, type TsApplicationState } from './ts-references.js';
 import { UrlEvaluator } from './ts-url.js';
-import { detectHttpSite, detectInertiaElement, evaluateSite, expandWrappers, HTTP_METHODS, wrapperOf, type HttpSite, type WrapperRoot } from './ts-http.js';
+import { detectHttpSite, detectInertiaElement, evaluateSite, expandWrappers, reportWrapper, wrapperRootsForProgram, shadowedBinding, HTTP_METHODS, wrapperOf, type HttpSite, type WrapperRoot, type WrapperStats } from './ts-http.js';
+import { runtimeReference } from '../analysis/languages/typescript-runtime.js';
 import { fileKey, pathSetKey } from '../pipeline/cache.js';
+import { IndexedSources } from '../analysis/indexed-sources.js';
+import { createTypeScriptServices, typescriptComponents, type TypeScriptProject, type TypeScriptServices } from '../analysis/languages/typescript-services.js';
+import type { NodeProject } from '../analysis/project-model.js';
+import type { ImportOutcome, ImportBinding } from '../analysis/facts.js';
+import { typescriptFrameworkPacks } from '../analysis/frameworks/index.js';
+import type { TypeScriptPackScope } from '../analysis/frameworks/typescript-pack.js';
 
 function literal(node: ts.Node | undefined): string | undefined { return node && (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) ? node.text : undefined; }
 function modifier(node: ts.Node, kind: ts.SyntaxKind): boolean { return ts.canHaveModifiers(node) && !!ts.getModifiers(node)?.some(item => item.kind === kind); }
@@ -48,51 +53,59 @@ function memoizedCallback(call: ts.CallExpression): ts.ArrowFunction | ts.Functi
 export const typescriptAnalyzer: Analyzer = {
   name: 'typescript-nextjs', version: ANALYZER_VERSION,
   async analyze(context): Promise<void> {
-    const optionsByApp = new Map<string, ts.CompilerOptions>();
-    for (const app of context.config.applications) {
-      const configFile = path.join(context.root, app.path, 'tsconfig.json');
-      const read = ts.readConfigFile(configFile, ts.sys.readFile);
-      let options: ts.CompilerOptions = { allowJs: true, jsx: ts.JsxEmit.ReactJSX, moduleResolution: ts.ModuleResolutionKind.Bundler, module: ts.ModuleKind.ESNext };
-      if (!read.error) {
-        const parsed = ts.parseJsonConfigFileContent(read.config, { ...ts.sys, readDirectory: () => [] }, path.dirname(configFile));
-        options = { ...options, ...parsed.options };
-        for (const error of parsed.errors.filter(error => error.code !== 18003 && error.code !== 18002)) context.graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'error', code: 'tsconfig-error', file: path.relative(context.root, configFile), reason: ts.flattenDiagnosticMessageText(error.messageText, '\n') });
-      } else if (ts.sys.fileExists(configFile)) context.graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'error', code: 'tsconfig-error', file: path.relative(context.root, configFile), reason: ts.flattenDiagnosticMessageText(read.error.messageText, '\n') });
-      optionsByApp.set(app.name, options);
-    }
-    // One program per application: every file declares its symbols first, then
-    // calls, renders and references resolve across the whole application. An
-    // application whose inputs did not change since the last index is replayed from the cache.
-    for (const app of context.config.applications) {
-      const files = [...context.files.values()].filter(file => file.analyzable && ['typescript', 'javascript'].includes(file.language ?? '') && file.application?.name === app.name);
-      if (!files.length) continue;
-      const run = () => analyzeApplication(context, files, optionsByApp.get(app.name)!, app.path);
-      if (context.cache) await context.cache.unit(context, 'typescript-nextjs', app.name, { app, options: optionsByApp.get(app.name), files: files.map(file => fileKey(context, file.path)), paths: pathSetKey(context), config: context.config, applications: [...context.applicationIds], typescript: ts.version }, run);
+    const sources = context.sources ??= new IndexedSources(context);
+    const resolutionFiles = [...context.files.values()].filter(file => /(?:^|\/)(?:package\.json|(?:ts|js)config[^/]*\.json)$/.test(file.path));
+    for (const file of resolutionFiles) if (file.analyzable) sources.readFile(file.absolutePath);
+    const services = createTypeScriptServices(context);
+    for (const component of typescriptComponents(context, services)) {
+      const files = component.flatMap(project => project.files);
+      const inputsAvailable = files.map(file => sources.readFile(file.absolutePath) !== undefined).every(Boolean) && !sources.failures.size;
+      const run = () => analyzeComponent(context, component, services);
+      const resolutionInputs = [...new Set([...resolutionFiles.map(file => file.path), ...services.resolver.configInputs])].sort().map(file => fileKey(context, file));
+      const unit = component.length === 1 ? component[0]!.project.name : `group:${component.map(runtime => runtime.project.root).sort().join(',')}`;
+      if (context.cache && inputsAvailable) await context.cache.unit(context, 'typescript-nextjs', unit, { projects: component.map(runtime => runtime.project), options: component.map(runtime => services.resolver.options.get(runtime.project.id)), files: files.map(file => fileKey(context, file.path)), resolutionInputs, paths: pathSetKey(context), config: context.config, applications: [...context.applicationIds], typescript: ts.version, packs: typescriptFrameworkPacks.map(pack => [pack.id, pack.version]) }, run);
       else await run();
     }
+    for (const [file, reason] of sources.failures) context.graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'indexed-source-unavailable', file, entityId: context.files.get(file)?.id, reason });
   },
 };
-async function analyzeApplication(context: AnalysisContext, files: ScannedFile[], options: ts.CompilerOptions, appPath: string): Promise<void> {
-  const texts = new Map<string, string>();
-  for (const file of files) texts.set(file.absolutePath, await readFile(file.absolutePath, 'utf8'));
-  const program = createApplicationProgram(texts, options, path.join(context.root, appPath));
-  const checker = program.getTypeChecker();
-  const state: TsApplicationState = { program, checker, declarations: new Map(), sites: new SiteCollector() };
-  const urls = new UrlEvaluator(checker, program, context);
-  const analyzed: { file: ScannedFile; source: ts.SourceFile; symbols: Map<ts.Node, Entity> }[] = [];
-  const wrappers: WrapperRoot[] = [];
-  for (const file of files) {
-    if (file.path.endsWith('.d.ts')) continue;
-    const source = program.getSourceFile(file.absolutePath);
-    if (!source) continue;
-    const symbols = analyzeFile(context, file, options, source, state, urls, wrappers);
-    if (symbols) analyzed.push({ file, source, symbols });
+async function analyzeComponent(context: AnalysisContext, component: TypeScriptProject[], services: TypeScriptServices): Promise<void> {
+  const sites = new SiteCollector();
+  const prepared = component.map(runtime => {
+    const program = runtime.program(), checker = program.getTypeChecker();
+    const state: TsApplicationState = { program, checker, declarations: services.declarations, sites };
+    const urls = new UrlEvaluator(checker, program, context), wrappers: WrapperRoot[] = [];
+    const analyzed: { file: ScannedFile; source: ts.SourceFile; symbols: Map<ts.Node, Entity>; behavior: () => void }[] = [];
+    for (const file of runtime.files) {
+      const source = program.getSourceFile(file.absolutePath);
+      if (!source || source.isDeclarationFile) continue;
+      const result = analyzeFile(context, file, runtime.project, source, state, urls, wrappers, services);
+      if (result) { runtime.rememberOwners(source, result.symbols); analyzed.push({ file, source, ...result }); }
+    }
+    return { runtime, program, checker, state, urls, wrappers, analyzed };
+  });
+  const scope: TypeScriptPackScope = { context, services, files: prepared.flatMap(item => item.analyzed.map(file => ({ runtime: item.runtime, file: file.file, source: file.source, state: item.state, owners: file.symbols }))) };
+  for (const pack of typescriptFrameworkPacks) if (pack.applies(scope)) pack.declare(scope);
+  for (const item of prepared) for (const file of item.analyzed) file.behavior();
+  // Declare every owned file before linking references across compiler programs.
+  const roots = prepared.flatMap(item => item.wrappers);
+  const totals = new Map<WrapperRoot, WrapperStats>(roots.map(root => [root, { found: 0, resolved: 0, failed: 0 }]));
+  for (const item of prepared) {
+    const owned = new Set(item.analyzed.map(file => file.source.fileName));
+    const rebased = wrapperRootsForProgram(roots, item.program, item.checker);
+    const results = expandWrappers({ context, checker: item.checker, program: item.program, urls: item.urls, sites, sources: item.program.getSourceFiles().filter(source => !source.isDeclarationFile && context.sources!.fileExists(source.fileName)), declarations: services.declarations, ownsCall: call => owned.has(call.getSourceFile().fileName), report: false, deferUncalled: component.length > 1 }, [...rebased.keys()]);
+    for (const [root, stats] of results) {
+      const total = totals.get(rebased.get(root)!)!; total.found += stats.found; total.resolved += stats.resolved; total.failed += stats.failed;
+      if (stats.uncalled) (total.uncalled ??= []).push(...stats.uncalled);
+    }
+    for (const file of item.analyzed) resolveReferences(context, item.state, file.file, file.source, file.symbols);
   }
-  // HTTP wrappers resolve at their call sites, once every file has declared its symbols.
-  expandWrappers({ context, checker, program, urls, sites: state.sites, sources: analyzed.map(item => item.source), declarations: state.declarations }, wrappers);
-  for (const item of analyzed) resolveReferences(context, state, item.file, item.source, item.symbols);
-  state.sites.flush(context.graph);
-  linkNextWrappers(context, analyzed.map(item => item.file));
+  for (const [root, stats] of totals) {
+    if (!stats.resolved) for (const failure of stats.uncalled ?? []) { context.graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'unresolved-http-call', ...failure }); stats.failed++; }
+    reportWrapper(context, root, stats);
+  }
+  sites.flush(context.graph);
+  linkNextWrappers(context, prepared.flatMap(item => item.analyzed.map(file => file.file)));
 }
 /** Next.js files that wrap or stand in for the pages below their directory. */
 const NEXT_WRAPPERS = /^(?:src\/)?app\/(?:.*\/)?(layout|template|loading|error|not-found|global-error)\.[cm]?[jt]sx?$/;
@@ -126,9 +139,10 @@ function linkNextWrappers(context: AnalysisContext, files: ScannedFile[]): void 
     }
   }
 }
-function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.CompilerOptions, source: ts.SourceFile, state: TsApplicationState, urls: UrlEvaluator, wrappers: WrapperRoot[]): Map<ts.Node, Entity> | undefined {
+function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeProject, source: ts.SourceFile, state: TsApplicationState, urls: UrlEvaluator, wrappers: WrapperRoot[], services: TypeScriptServices): { symbols: Map<ts.Node, Entity>; behavior: () => void } | undefined {
   const { graph } = context;
-  const app = file.application!;
+  const app = file.application;
+  const options = services.resolver.options.get(project.id)!;
   const parseDiagnostics = (source as ts.SourceFile & { parseDiagnostics: readonly ts.Diagnostic[] }).parseDiagnostics;
   if (parseDiagnostics.length) {
     for (const error of parseDiagnostics) graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'error', code: 'typescript-parse-error', file: file.path, line: source.getLineAndCharacterOfPosition(error.start ?? 0).line + 1, entityId: file.id, reason: ts.flattenDiagnosticMessageText(error.messageText, '\n') });
@@ -138,10 +152,13 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.Co
   fileEntity.metadata.exports = [];
   fileEntity.metadata.externalImports = [];
   fileEntity.metadata.httpRequests = [];
+  fileEntity.metadata.importOutcomes = [];
   const symbols = new Map<ts.Node, Entity>();
   const exported = new Map<string, Entity>();
   const axiosNames = new Set<string>();
-  const modulePath = path.relative(path.join(context.root, app.path), file.absolutePath).split(path.sep).join('/');
+  const httpSites: HttpSite[] = [];
+  const result = { symbols, behavior: () => { for (const site of httpSites) httpSite(site); } };
+  const modulePath = path.relative(path.join(context.root, app?.path ?? project.root), file.absolutePath).split(path.sep).join('/');
   function location(node: ts.Node) {
     const start = source.getLineAndCharacterOfPosition(node.getStart(source));
     const end = source.getLineAndCharacterOfPosition(node.getEnd());
@@ -154,7 +171,9 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.Co
     return undefined;
   }
   function importModule(node: ts.Node, specifier: string, relationType: 'imports' | 'exports'): void {
-    const resolved = ts.resolveModuleName(specifier, file.absolutePath, options, ts.sys).resolvedModule;
+    const moduleLiteral = ts.isImportDeclaration(node) || ts.isExportDeclaration(node) ? node.moduleSpecifier : ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference) ? node.moduleReference.expression : ts.isCallExpression(node) ? node.arguments[0] : undefined;
+    const mode = moduleLiteral && ts.isStringLiteralLike(moduleLiteral) ? ts.getModeForUsageLocation(source, moduleLiteral, options) : undefined;
+    const resolved = services.resolver.resolve(specifier, file.absolutePath, mode).resolvedModule;
     const relative = resolved ? path.relative(context.root, resolved.resolvedFileName).split(path.sep).join('/') : undefined;
     let target = relative ? context.files.get(relative) : undefined;
     let assetResolution = false;
@@ -163,7 +182,7 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.Co
     if (specifier.startsWith('.')) candidates.push(path.resolve(path.dirname(file.absolutePath), specifier));
     // Exact bundler asset imports (Sass, images, etc.) are not TS modules.
     // Resolve only existing indexed paths using explicit tsconfig path mappings.
-    const pathsBase = options.baseUrl ?? (options as ts.CompilerOptions & { pathsBasePath?: string }).pathsBasePath ?? path.join(context.root, app.path);
+    const pathsBase = options.baseUrl ?? (options as ts.CompilerOptions & { pathsBasePath?: string }).pathsBasePath ?? path.join(context.root, project.root);
     for (const [alias, substitutions] of Object.entries(options.paths ?? {})) {
       const star = alias.indexOf('*');
       const matches = star < 0 ? specifier === alias : specifier.startsWith(alias.slice(0, star)) && specifier.endsWith(alias.slice(star + 1));
@@ -178,15 +197,34 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.Co
         if (indexed) { target = indexed; assetResolution = true; break; }
       }
     }
-    if (target) graph.relate(file.id, target.id, relationType, [...facts(node, `${relationType} ${specifier}`), ...(assetResolution ? [evidence('filesystem', 'typescript-nextjs', target.path, undefined, 'Exact indexed asset path using relative/tsconfig mapping')] : [])], { specifier, resolver: assetResolution ? 'indexed-asset' : 'typescript' });
-    else if (specifier.startsWith('.') || isConfiguredAlias || (resolved && !resolved.isExternalLibraryImport)) graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'unresolved-local-import', file: file.path, line: location(node).startLine, entityId: file.id, reason: `Cannot link indexed local module: ${specifier}` });
-    else (fileEntity.metadata.externalImports as string[]).push(specifier);
+    const binding = services.resolver.binding(specifier, file.absolutePath);
+    const workspace = target && binding?.status === 'resolved' && services.resolver.projects.nodeOwner(target.path) === binding.project ? binding : undefined;
+    const proof = [...facts(node, `${relationType} ${specifier}`), ...(workspace?.proof ?? []), ...(assetResolution ? [evidence('filesystem', 'typescript-nextjs', target!.path, undefined, 'Exact indexed asset path using relative/tsconfig mapping')] : [])];
+    let outcome: ImportOutcome;
+    if (target) {
+      graph.relate(file.id, target.id, relationType, proof, { specifier, resolver: assetResolution ? 'indexed-asset' : workspace ? 'workspace' : 'typescript' });
+      outcome = { status: 'resolved', targets: [target.id], proof };
+    } else if (binding?.status === 'ambiguous') outcome = { status: 'ambiguous', candidates: binding.candidates.map(project => project.id), reason: binding.reason };
+    else if (binding && ['excluded', 'unsupported'].includes(binding.status)) outcome = { status: binding.status as 'excluded' | 'unsupported', reason: 'reason' in binding ? binding.reason : 'Unavailable local dependency' };
+    else if (specifier.startsWith('.') || specifier.startsWith('#') || isConfiguredAlias || binding?.status === 'resolved' || (resolved && !resolved.isExternalLibraryImport)) outcome = { status: 'unresolved', reason: `Cannot link indexed local module: ${specifier}` };
+    else { outcome = { status: 'external', dependency: specifier, proof }; (fileEntity.metadata.externalImports as string[]).push(specifier); }
+    if (!['resolved', 'external'].includes(outcome.status)) graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: outcome.status === 'unresolved' ? 'unresolved-local-import' : `${outcome.status}-local-import`, file: file.path, line: location(node).startLine, entityId: file.id, reason: 'reason' in outcome ? outcome.reason : 'Unavailable local dependency' });
+    const bindings: ImportBinding[] = [];
+    if (ts.isImportDeclaration(node) && node.importClause) {
+      const clause = node.importClause;
+      if (clause.name) bindings.push({ imported: 'default', local: clause.name.text, ...(clause.isTypeOnly ? { typeOnly: true } : {}) });
+      if (clause.namedBindings && ts.isNamespaceImport(clause.namedBindings)) bindings.push({ imported: '*', local: clause.namedBindings.name.text, ...(clause.isTypeOnly ? { typeOnly: true } : {}) });
+      else if (clause.namedBindings) for (const item of clause.namedBindings.elements) bindings.push({ imported: (item.propertyName ?? item.name).text, local: item.name.text, ...(clause.isTypeOnly || item.isTypeOnly ? { typeOnly: true } : {}) });
+    }
+    if (ts.isImportEqualsDeclaration(node)) bindings.push({ imported: '*', local: node.name.text, ...(node.isTypeOnly ? { typeOnly: true } : {}) });
+    (fileEntity.metadata.importOutcomes as unknown[]).push({ specifier, kind: ts.isCallExpression(node) ? node.expression.kind === ts.SyntaxKind.ImportKeyword ? 'dynamic' : 'require' : relationType, range: location(node), bindings, outcome });
   }
   function visit(node: ts.Node): void {
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
       importModule(node, node.moduleSpecifier.text, 'imports');
       if (node.moduleSpecifier.text === 'axios' && node.importClause?.name) axiosNames.add(node.importClause.name.text);
     }
+    if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference) && node.moduleReference.expression && ts.isStringLiteralLike(node.moduleReference.expression)) importModule(node, node.moduleReference.expression.text, 'imports');
     if (ts.isExportDeclaration(node)) {
       (fileEntity.metadata.exports as unknown[]).push({ expression: node.exportClause?.getText(source) ?? '*', source: literal(node.moduleSpecifier) });
       if (node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) importModule(node, node.moduleSpecifier.text, 'exports');
@@ -218,7 +256,7 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.Co
       if (type === 'function' && (/^[A-Z]/.test(name) || name === 'default') && hasJsx(node)) type = 'component';
       const parent = parentSymbol(node);
       const qualified = `${parent?.metadata.qualifiedName ? `${parent.metadata.qualifiedName}.` : ''}${name}`;
-      const id = graph.id('symbol', file.language!, app.name, modulePath, qualified, signature);
+      const id = graph.id('symbol', file.language!, app?.name ?? project.id, modulePath, qualified, signature);
       if (graph.entities.has(id)) graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'duplicate-symbol', file: file.path, line: location(node).startLine, reason: `Duplicate/overloaded symbol identity ${qualified}${signature}` });
       else {
         const isDefault = modifier(declaration, ts.SyntaxKind.DefaultKeyword) || ts.isExportAssignment(declaration);
@@ -237,17 +275,22 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.Co
       }
     }
     if (ts.isCallExpression(node)) {
-      const site = detectHttpSite(node, state.checker, axiosNames);
-      if (site) httpSite(site);
+      const site = runtimeReference(node.expression, state.checker) ? detectHttpSite(node, state.checker, axiosNames) : undefined;
+      if (site) httpSites.push(site);
       if (node.expression.kind === ts.SyntaxKind.ImportKeyword && node.arguments[0]) {
         const specifier = literal(node.arguments[0]);
         if (specifier !== undefined) importModule(node, specifier, 'imports');
         else graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'dynamic-import', file: file.path, line: location(node).startLine, entityId: file.id, reason: 'Dynamic import specifier' });
       }
+      if (project.manifest && ts.isIdentifier(node.expression) && node.expression.text === 'require' && !state.checker.getSymbolAtLocation(node.expression)?.declarations?.length && !shadowedBinding(node, 'require') && node.arguments.length === 1) {
+        const specifier = literal(node.arguments[0]);
+        if (specifier !== undefined) importModule(node, specifier, 'imports');
+        else graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'dynamic-import', file: file.path, line: location(node).startLine, entityId: file.id, reason: 'Dynamic CommonJS require specifier' });
+      }
     }
     if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
       const site = detectInertiaElement(node, state.checker);
-      if (site) httpSite(site);
+      if (site) httpSites.push(site);
     }
     ts.forEachChild(node, visit);
   }
@@ -274,6 +317,7 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.Co
   }
   visit(source);
   fileEntity.metadata.serverModule = source.statements.some(statement => ts.isExpressionStatement(statement) && literal(statement.expression) === 'use server');
+  if (source.statements.some(statement => ts.isExpressionStatement(statement) && literal(statement.expression) === 'use client')) fileEntity.metadata.executionContext = 'browser';
   // Named export lists and export-default identifiers bind only to symbols in this file.
   for (const statement of source.statements) {
     if (ts.isExportAssignment(statement) && ts.isIdentifier(statement.expression)) {
@@ -288,12 +332,12 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.Co
       }
     }
   }
-  if (!hasFramework(app, 'nextjs')) return symbols;
+  if (!hasFramework(app, 'nextjs')) return result;
   const route = nextRoute(modulePath);
-  if (!route) return symbols;
+  if (!route) return result;
   fileEntity.metadata.nextjs = route;
-  if (route.unsupported) { graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'unsupported-next-route', file: file.path, entityId: file.id, reason: `Intercepted route segment ${route.unsupported}` }); return symbols; }
-  if (route.role === 'layout') return symbols;
+  if (route.unsupported) { graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'unsupported-next-route', file: file.path, entityId: file.id, reason: `Intercepted route segment ${route.unsupported}` }); return result; }
+  if (route.role === 'layout') return result;
   const routeFacts = [evidence('framework', 'typescript-nextjs', file.path, 1, `Next.js App Router ${route.role} convention`)];
   if (route.role === 'page') {
     const entity = graph.contain({ id: graph.id('route', app.name, route.path, modulePath), type: 'route', name: route.path, path: file.path, parentId: context.applicationIds.get(app.name)!, metadata: { routePath: route.path, framework: 'nextjs', registration: 'convention' }, evidence: routeFacts });
@@ -305,5 +349,5 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, options: ts.Co
       graph.relate(entity.id, handler.id, 'handles', [...routeFacts, ...handler.evidence]);
     }
   }
-  return symbols;
+  return result;
 }

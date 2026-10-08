@@ -23,6 +23,7 @@
 // elements. A link whose URL cannot be proven (a menu built from data) is
 // recorded on its file but is not a finding: it is navigation, not an API call.
 import ts from 'typescript';
+import { runtimeReference } from '../analysis/languages/typescript-runtime.js';
 import path from 'node:path';
 import type { AnalysisContext, HttpObservation, ScannedFile } from '../core/analyzer.js';
 import { evidence, type EffectFact, type Entity, type Evidence } from '../core/graph.js';
@@ -332,43 +333,66 @@ export interface WrapperContext {
   sources: ts.SourceFile[];
   /** Declaration node → entity (owners of call sites). */
   declarations: Map<ts.Node, Entity>;
+  /** Imported dependency files may be traversed, but each project emits only
+   * observations belonging to its own caller files. */
+  ownsCall?: (call: ts.CallExpression) => boolean;
+  report?: boolean;
+  deferUncalled?: boolean;
+}
+export interface DeferredWrapperFailure { file: string; line: number; entityId?: string; reason: string }
+export interface WrapperStats { found: number; resolved: number; failed: number; uncalled?: DeferredWrapperFailure[] }
+/** A consumer program owns separate AST instances of imported dependencies.
+ * Re-detect its HTTP site with that program's checker before binding arguments. */
+export function wrapperRootsForProgram(roots: WrapperRoot[], program: ts.Program, checker: ts.TypeChecker): Map<WrapperRoot, WrapperRoot> {
+  const indexes = new Map<string, Map<string, ts.Node>>(), result = new Map<WrapperRoot, WrapperRoot>();
+  const key = (node: ts.Node): string => JSON.stringify([node.kind, node.getStart(node.getSourceFile()), node.end]);
+  const equivalent = (node: ts.Node): ts.Node | undefined => {
+    const fileName = node.getSourceFile().fileName, source = program.getSourceFile(fileName);
+    if (!source) return undefined;
+    if (source === node.getSourceFile()) return node;
+    let index = indexes.get(fileName);
+    if (!index) {
+      index = new Map();
+      const visit = (child: ts.Node): void => { index!.set(key(child), child); ts.forEachChild(child, visit); };
+      visit(source); indexes.set(fileName, index);
+    }
+    return index.get(key(node));
+  };
+  for (const root of roots) {
+    const wrapper = equivalent(root.wrapper), node = equivalent(root.site.node);
+    if (!wrapper || !node || !ts.isFunctionLike(wrapper)) continue;
+    const axiosNames = new Set(node.getSourceFile().statements.filter(ts.isImportDeclaration).filter(declaration => literalText(declaration.moduleSpecifier) === 'axios').flatMap(declaration => declaration.importClause?.name ? [declaration.importClause.name.text] : []));
+    const site = ts.isCallExpression(node) ? detectHttpSite(node, checker, axiosNames) : ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node) ? detectInertiaElement(node, checker) : undefined;
+    if (site) result.set({ ...root, wrapper, site }, root);
+  }
+  return result;
 }
 /**
  * Resolve queued wrapper sites at the call sites of their wrappers, through
  * nested wrappers. Emits observations, effects, file metadata and diagnostics.
  */
-export function expandWrappers(input: WrapperContext, roots: WrapperRoot[]): void {
-  if (!roots.length) return;
+export function expandWrappers(input: WrapperContext, roots: WrapperRoot[]): Map<WrapperRoot, WrapperStats> {
+  const results = new Map<WrapperRoot, WrapperStats>();
+  if (!roots.length) return results;
   const { context, checker, urls, sites } = input;
   const { graph } = context;
   const relative = (fileName: string) => path.relative(context.root, fileName).split(path.sep).join('/');
-  // Calls by callee name, collected once.
-  const callsByName = new Map<string, ts.CallExpression[]>();
+  // Resolved declarations, collected once. Aliased imports and barrel exports
+  // can have different spellings from the function they call.
+  const callSites = new Map<ts.SignatureDeclaration, ts.CallExpression[]>();
   for (const source of input.sources) {
     const visit = (node: ts.Node): void => {
-      if (ts.isCallExpression(node)) {
-        const callee = node.expression;
-        const name = ts.isIdentifier(callee) ? callee.text : ts.isPropertyAccessExpression(callee) ? callee.name.text : undefined;
-        if (name) { const list = callsByName.get(name) ?? []; list.push(node); callsByName.set(name, list); }
+      if (ts.isCallExpression(node) && runtimeReference(node.expression, checker)) {
+        let target: ts.SignatureDeclaration | undefined;
+        try { const declaration = checker.getResolvedSignature(node)?.declaration; target = declaration && !ts.isJSDocSignature(declaration) ? declaration : undefined; } catch { target = undefined; }
+        if (target) { const list = callSites.get(target) ?? []; list.push(node); callSites.set(target, list); }
       }
       ts.forEachChild(node, visit);
     };
     visit(source);
   }
-  const callSites = new Map<ts.SignatureDeclaration, ts.CallExpression[]>();
-  const callsOf = (declaration: ts.SignatureDeclaration): ts.CallExpression[] => {
-    let found = callSites.get(declaration);
-    if (!found) {
-      found = [];
-      for (const name of callNames(declaration)) for (const call of callsByName.get(name) ?? []) {
-        let target: ts.Declaration | undefined;
-        try { target = checker.getResolvedSignature(call)?.declaration as ts.Declaration | undefined; } catch { target = undefined; }
-        if (target === declaration) found.push(call);
-      }
-      callSites.set(declaration, found);
-    }
-    return found;
-  };
+  const callsOf = (declaration: ts.SignatureDeclaration): ts.CallExpression[] => callSites.get(declaration) ?? [];
+  const ownsCall = input.ownsCall ?? (() => true);
   const ownerOf = (node: ts.Node): Entity | undefined => {
     for (let parent = node.parent; parent; parent = parent.parent) { const entity = input.declarations.get(parent); if (entity) return entity; }
     const file = context.files.get(relative(node.getSourceFile().fileName));
@@ -387,14 +411,23 @@ export function expandWrappers(input: WrapperContext, roots: WrapperRoot[]): voi
     const name = displayName(root.wrapper);
     const siteFact: Evidence = { ...root.fact, explanation: `${root.site.via} in ${name}() is built from the function's parameters` };
     let resolved = 0, failed = 0, found = 0;
+    const uncalled: DeferredWrapperFailure[] = [];
     const work: { frames: ts.CallExpression[]; wrapper: ts.SignatureDeclaration }[] = [{ frames: [], wrapper: root.wrapper }];
     while (work.length) {
       const item = work.shift()!;
       const calls = callsOf(item.wrapper).slice(0, MAX_CALL_SITES);
       if (item.frames.length) {
         // A nested wrapper nobody calls: its own call (the outermost frame) stays unresolved.
-        if (!calls.length) { const outer = item.frames.at(-1)!; diagnoseAt(outer, ownerOf(outer), `Through ${name}(): the request is built from a parameter of ${displayName(item.wrapper)}(), and no call site of ${displayName(item.wrapper)}() was resolved`); failed++; continue; }
-      } else found = calls.length;
+        if (!calls.length) {
+          const outer = item.frames.at(-1)!;
+          if (ownsCall(outer)) {
+            const reason = `Through ${name}(): the request is built from a parameter of ${displayName(item.wrapper)}(), and no call site of ${displayName(item.wrapper)}() was resolved`;
+            if (input.deferUncalled) uncalled.push({ file: relative(outer.getSourceFile().fileName), line: lineOf(outer), entityId: ownerOf(outer)?.id, reason });
+            else { diagnoseAt(outer, ownerOf(outer), reason); failed++; }
+          }
+          continue;
+        }
+      } else found = calls.filter(ownsCall).length;
       for (const call of calls) {
         const frames = [...item.frames, call];
         let scope = emptyScope();
@@ -409,11 +442,12 @@ export function expandWrappers(input: WrapperContext, roots: WrapperRoot[]): voi
           const nested = wrapperOf(call, outcome.parameters);
           const seen = new Set<ts.Node>([root.wrapper, ...frames.map((_, index) => index === 0 ? root.wrapper : wrapperFrame(frames, index))]);
           if (nested && frames.length < MAX_WRAPPER_DEPTH && !seen.has(nested)) { work.push({ frames, wrapper: nested }); continue; }
+          if (!ownsCall(call)) continue;
           diagnoseAt(call, caller, `Through ${name}(): ${outcome.reason}`);
           failed++;
           continue;
         }
-        if (!caller) continue;
+        if (!caller || !ownsCall(call)) continue;
         resolved++;
         const callee = displayName(frames.length > 1 ? wrapperFrame(frames, frames.length - 1) : root.wrapper);
         const outerCall = frames.at(-1)!;
@@ -430,15 +464,9 @@ export function expandWrappers(input: WrapperContext, roots: WrapperRoot[]): voi
         metadataOf(outerCall)?.list.push({ callerId: caller.id, method: outcome.method, url: display, expression: short(outerCall, 120), line: callFact.line, resolution: 'wrapper', wrapper: callee });
       }
     }
-    root.entry.resolution = 'wrapper';
-    root.entry.callSites = { resolved, unresolved: failed };
-    if (resolved) {
-      root.effect.wrapper = true;
-      graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'info', code: 'http-wrapper', file: root.file.path, line: root.fact.line, entityId: root.owner.id, reason: `${name}() is an HTTP wrapper (${root.site.via} built from its parameters); ${resolved} of ${resolved + failed} call sites resolved, each as a request of its caller` });
-    } else if (!found) {
-      root.entry.resolution = 'unresolved';
-      graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'unresolved-http-call', file: root.file.path, line: root.fact.line, entityId: root.owner.id, reason: `${root.reason}; no call site of ${name}() was resolved` });
-    } else graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'info', code: 'http-wrapper', file: root.file.path, line: root.fact.line, entityId: root.owner.id, reason: `${name}() is an HTTP wrapper (${root.site.via} built from its parameters); none of its ${found} call sites could be resolved (each is reported on its caller)` });
+    const stats = { found, resolved, failed, ...(uncalled.length ? { uncalled } : {}) };
+    results.set(root, stats);
+    if (input.report !== false) reportWrapper(context, root, stats);
   }
   /** The declaration called by frame `index` (> 0): the function around the previous frame's call. */
   function wrapperFrame(frames: ts.CallExpression[], index: number): ts.SignatureDeclaration {
@@ -446,5 +474,18 @@ export function expandWrappers(input: WrapperContext, roots: WrapperRoot[]): voi
     try { target = checker.getResolvedSignature(frames[index]!)?.declaration as ts.Declaration | undefined; } catch { target = undefined; }
     return target as ts.SignatureDeclaration;
   }
+  return results;
+}
+export function reportWrapper(context: AnalysisContext, root: WrapperRoot, stats: WrapperStats): void {
+  const { found, resolved, failed } = stats, name = displayName(root.wrapper), { graph } = context;
+  root.entry.resolution = 'wrapper';
+  root.entry.callSites = { resolved, unresolved: failed };
+  if (resolved) {
+    root.effect.wrapper = true;
+    graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'info', code: 'http-wrapper', file: root.file.path, line: root.fact.line, entityId: root.owner.id, reason: `${name}() is an HTTP wrapper (${root.site.via} built from its parameters); ${resolved} of ${resolved + failed} call sites resolved, each as a request of its caller` });
+  } else if (!found) {
+    root.entry.resolution = 'unresolved';
+    graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'unresolved-http-call', file: root.file.path, line: root.fact.line, entityId: root.owner.id, reason: `${root.reason}; no call site of ${name}() was resolved` });
+  } else graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'info', code: 'http-wrapper', file: root.file.path, line: root.fact.line, entityId: root.owner.id, reason: `${name}() is an HTTP wrapper (${root.site.via} built from its parameters); none of its ${found} call sites could be resolved (each is reported on its caller)` });
 }
 function dedupe(facts: Evidence[]): Evidence[] { return [...new Map(facts.map(fact => [JSON.stringify(fact), fact])).values()]; }

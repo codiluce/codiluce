@@ -1,30 +1,29 @@
 import type { AnalysisContext, Analyzer, HttpObservation } from '../core/analyzer.js';
 import { hasFramework } from '../core/config.js';
 import { ANALYZER_VERSION, evidence, type Entity, type Evidence } from '../core/graph.js';
-
-const HOLE = '{*}';
-function isParameter(segment: string): boolean { return /^\{[^/{}]+\??\}$/.test(segment) || /^:[^/]+$/.test(segment); }
-/**
- * Route path vs request path. A request segment `{*}` stands for a dynamic
- * value filling one segment: `strict` lets it match only a route parameter;
- * otherwise it may also equal a literal segment (used to detect ambiguity).
- */
-function matchPath(route: string, url: string, strict = true): boolean {
-  const routeSegments = route.split('/').filter(Boolean), urlSegments = url.split('/').filter(Boolean);
-  let cursor = 0;
-  for (const segment of routeSegments) {
-    if (/^\{[^/{}]+\?\}$/.test(segment)) { if (cursor < urlSegments.length) cursor++; }
-    else if (/^\{[^/{}]+\}$/.test(segment) || /^:[^*+]+$/.test(segment)) { if (!urlSegments[cursor++]) return false; }
-    else if (/^:[^/]+[+*]$/.test(segment)) { return segment.endsWith('*') || cursor < urlSegments.length; }
-    else { const value = urlSegments[cursor++]; if (value === HOLE ? strict : segment !== value) return false; }
-  }
-  return cursor === urlSegments.length;
-}
+import { compileIndexedPath, matchIndexedPath, requestPathSegments } from '../analysis/routes/pattern.js';
+import { routingContract, matchRoutePattern } from '../analysis/routes/contracts.js';
+import { configuredProxy, proxyPath, relativeApiBoundary } from '../analysis/routes/boundaries.js';
 export const apiMatcher: Analyzer = {
   name: 'api-matcher', version: ANALYZER_VERSION,
   async analyze(context: AnalysisContext): Promise<void> {
     const endpoints = [...context.graph.entities.values()].filter(entity => entity.type === 'api_endpoint');
-    const appFor = (entity: Entity) => context.config.applications.find(app => context.applicationIds.get(app.name) === entity.parentId);
+    const appsById = new Map(context.config.applications.map(app => [context.applicationIds.get(app.name), app]));
+    const appFor = (entity: Entity) => entity.parentId ? appsById.get(entity.parentId) : undefined;
+    const contracts = new Map(endpoints.map(endpoint => [endpoint.id, routingContract(endpoint.metadata.routing)]));
+    const patterns = new Map(endpoints.map(endpoint => [endpoint.id, compileIndexedPath(String(endpoint.metadata.routePath))]));
+    const requests = new Map<string, string[]>();
+    const matchPath = (endpoint: Entity, path: string, strict = true): boolean => {
+      const contract = contracts.get(endpoint.id);
+      if (contract) return matchRoutePattern(contract.pattern, path, strict);
+      let segments = requests.get(path); if (!segments) { segments = requestPathSegments(path); requests.set(path, segments); }
+      return matchIndexedPath(patterns.get(endpoint.id)!, segments, strict);
+    };
+    const methodMatches = (endpoint: Entity, method: string): boolean => {
+      const methods = contracts.get(endpoint.id)?.methods;
+      return endpoint.metadata.method === method || methods === '*' || Array.isArray(methods) && methods.includes(method);
+    };
+    const literalEligible = new Map<string, Entity[]>(), resolvedEligible = new Map<string, Entity[]>();
     const link = (observation: HttpObservation, endpoint: Entity, facts: Evidence[], metadata: Record<string, unknown>) => {
       context.graph.relate(observation.callerId, endpoint.id, 'requests', facts, metadata);
       if (observation.effect) { observation.effect.endpoint = endpoint.id; observation.effect.targetName = endpoint.name; }
@@ -40,14 +39,20 @@ export const apiMatcher: Analyzer = {
         else throw new Error('Relative URLs without a leading slash require browser/base URL context');
       } catch (error) { context.graph.diagnose({ analyzer: 'api-matcher', severity: 'warning', code: 'unresolved-http-url', entityId: observation.callerId, file: observation.evidence.file, line: observation.evidence.line, reason: error instanceof Error ? error.message : String(error) }); continue; }
       const callerApp = context.files.get(observation.evidence.file!)?.application;
-      const candidates = endpoints.filter(endpoint => {
-        const app = appFor(endpoint);
-        if (!app || endpoint.metadata.method !== observation.method || endpoint.metadata.registration === 'convention' && endpoint.metadata.framework === 'laravel') return false;
-        if (origin && !app.apiOrigins?.includes(origin)) return false;
-        // Relative requests can target a local Next endpoint or a unique backend.
-        if (!origin && hasFramework(app, 'nextjs') && app.name !== callerApp?.name) return false;
-        return matchPath(String(endpoint.metadata.routePath), pathname);
-      });
+      const key = JSON.stringify([observation.method, origin, callerApp?.name]);
+      let eligible = literalEligible.get(key);
+      if (!eligible) {
+        eligible = endpoints.filter(endpoint => {
+          const app = appFor(endpoint);
+          if (!app || !methodMatches(endpoint, observation.method!) || endpoint.metadata.registration === 'convention' && endpoint.metadata.framework === 'laravel') return false;
+          if (origin && !app.apiOrigins?.includes(origin)) return false;
+          // Relative requests can target a local Next endpoint or a unique backend.
+          return !!origin || !hasFramework(app, 'nextjs') || app.name === callerApp?.name;
+        });
+        literalEligible.set(key, eligible);
+      }
+      const proxy = !origin ? configuredProxy(callerApp, pathname) : undefined;
+      const candidates = eligible.filter(endpoint => (!proxy || appFor(endpoint)?.name === proxy.target) && matchPath(endpoint, proxy ? proxyPath(proxy, pathname) : pathname));
       // Keep constrained candidates in ambiguity detection: ignoring one could
       // falsely select another route with the same HTTP method/path.
       if (candidates.length !== 1 || candidates[0]!.metadata.constraintsUnresolved) {
@@ -55,6 +60,12 @@ export const apiMatcher: Analyzer = {
         continue;
       }
       const endpoint = candidates[0]!;
+      if (!origin && (contracts.get(endpoint.id) || proxy)) {
+        const boundary = relativeApiBoundary(context, observation, callerApp, appFor(endpoint)!, pathname);
+        if ('reason' in boundary) { context.graph.diagnose({ analyzer: 'api-matcher', severity: 'warning', code: 'unverified-relative-api-boundary', entityId: observation.callerId, file: observation.evidence.file, line: observation.evidence.line, reason: boundary.reason }); continue; }
+        link(observation, endpoint, [observation.evidence, ...boundary.proof, ...endpoint.evidence], { method: observation.method, url: observation.url, resolution: boundary.resolution });
+        continue;
+      }
       // Laravel relative paths require an explicit proxy association. A browser
       // relative URL alone does not prove it reaches another application —
       // unless the page making it is served by that same Laravel application.
@@ -72,14 +83,22 @@ export const apiMatcher: Analyzer = {
     function matchResolved(observation: HttpObservation, resolved: NonNullable<HttpObservation['resolved']>): void {
       const callerApp = context.files.get(observation.evidence.file!)?.application;
       const diagnose = (code: string, reason: string) => context.graph.diagnose({ analyzer: 'api-matcher', severity: 'warning', code, entityId: observation.callerId, file: observation.evidence.file, line: observation.evidence.line, reason });
-      const eligible = endpoints.filter(endpoint => {
-        const app = appFor(endpoint);
-        if (!app || endpoint.metadata.method !== observation.method || endpoint.metadata.registration === 'convention' && endpoint.metadata.framework === 'laravel') return false;
-        if (resolved.app) return app.name === resolved.app;
-        return app.name === callerApp?.name || (hasFramework(app, 'laravel') && !hasFramework(callerApp, 'laravel'));
-      });
-      const strict = eligible.filter(endpoint => matchPath(String(endpoint.metadata.routePath), resolved.pattern));
-      const loose = eligible.filter(endpoint => matchPath(String(endpoint.metadata.routePath), resolved.pattern, false));
+      const key = JSON.stringify([observation.method, resolved.app, callerApp?.name]);
+      let eligible = resolvedEligible.get(key);
+      if (!eligible) {
+        eligible = endpoints.filter(endpoint => {
+          const app = appFor(endpoint);
+          if (!app || !methodMatches(endpoint, observation.method!) || endpoint.metadata.registration === 'convention' && endpoint.metadata.framework === 'laravel') return false;
+          if (resolved.app) return app.name === resolved.app;
+          return !!contracts.get(endpoint.id) || app.name === callerApp?.name || (hasFramework(app, 'laravel') && !hasFramework(callerApp, 'laravel'));
+        });
+        resolvedEligible.set(key, eligible);
+      }
+      const proxy = !resolved.app ? configuredProxy(callerApp, resolved.pattern) : undefined;
+      const pattern = proxy ? proxyPath(proxy, resolved.pattern) : resolved.pattern;
+      const scoped = proxy ? eligible.filter(endpoint => appFor(endpoint)?.name === proxy.target) : eligible;
+      const strict = scoped.filter(endpoint => matchPath(endpoint, pattern));
+      const loose = scoped.filter(endpoint => matchPath(endpoint, pattern, false));
       const label = `${observation.method} ${resolved.pattern}${resolved.app ? ` on ${resolved.app}` : ''}`;
       if (strict.length !== 1 || loose.length !== 1 || strict[0]!.metadata.constraintsUnresolved) {
         const reason = loose.length > strict.length ? `${label}: a dynamic segment could also equal a literal route segment (${loose.filter(item => !strict.includes(item)).map(item => item.name).join(', ')})` : `${label}: ${strict.length} eligible endpoints${strict[0]?.metadata.constraintsUnresolved ? '; route constraints unresolved' : ''}`;
@@ -87,10 +106,16 @@ export const apiMatcher: Analyzer = {
         return;
       }
       const endpoint = strict[0]!;
+      let boundaryProof: Evidence[] = [], boundaryResolution: string | undefined;
+      if (!resolved.app && (contracts.get(endpoint.id) || proxy)) {
+        const boundary = relativeApiBoundary(context, observation, callerApp, appFor(endpoint)!, resolved.pattern);
+        if ('reason' in boundary) { diagnose('unverified-relative-api-boundary', boundary.reason); return; }
+        boundaryProof = boundary.proof; boundaryResolution = boundary.resolution;
+      }
       const sameOrigin = !resolved.app && endpoint.metadata.framework === 'laravel' && callerApp?.name === appFor(endpoint)?.name;
-      if (!resolved.app && endpoint.metadata.framework === 'laravel' && !sameOrigin) { diagnose('unverified-relative-api-boundary', `${label} matches Laravel structurally, but no origin/proxy mapping proves the cross-application boundary`); return; }
+      if (!boundaryResolution && !resolved.app && endpoint.metadata.framework === 'laravel' && !sameOrigin) { diagnose('unverified-relative-api-boundary', `${label} matches Laravel structurally, but no origin/proxy mapping proves the cross-application boundary`); return; }
       const holes = resolved.holes ? [evidence('framework', 'api-matcher', observation.evidence.file, observation.evidence.line, `${resolved.holes} dynamic path segment${resolved.holes === 1 ? '' : 's'} matched to route parameter${resolved.holes === 1 ? '' : 's'} of ${endpoint.name}; no literal route can match them`)] : [];
-      link(observation, endpoint, [observation.evidence, ...resolved.proof, ...(sameOrigin ? [sameOriginFact(observation, endpoint)] : []), ...holes, ...endpoint.evidence], { method: observation.method, url: resolved.display, pattern: resolved.pattern, resolution: resolved.app ? 'proven-base' : sameOrigin ? 'same-origin' : 'template' });
+      link(observation, endpoint, [observation.evidence, ...resolved.proof, ...boundaryProof, ...(sameOrigin ? [sameOriginFact(observation, endpoint)] : []), ...holes, ...endpoint.evidence], { method: observation.method, url: resolved.display, pattern: resolved.pattern, resolution: resolved.app ? 'proven-base' : boundaryResolution ?? (sameOrigin ? 'same-origin' : 'template') });
     }
   },
 };

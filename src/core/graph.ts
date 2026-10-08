@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 
 export const SCHEMA_VERSION = 1;
-export const ANALYZER_VERSION = '0.7.1';
+export const ANALYZER_VERSION = '0.9.3';
 export type EntityType = 'repository' | 'application' | 'domain' | 'directory' | 'file' | 'component' | 'class' | 'function' | 'method' | 'route' | 'api_endpoint' | 'controller' | 'model' | 'database_table' | 'external_service' | 'test' | 'user_flow' | 'command' | 'scheduled_task';
 export type RelationType = 'contains' | 'imports' | 'exports' | 'calls' | 'renders' | 'routes_to' | 'handles' | 'requests' | 'reads' | 'writes' | 'queries' | 'maps_to' | 'extends' | 'implements' | 'references' | 'observed_call' | 'part_of_flow' | 'changed_with' | 'foreign_key' | 'invokes';
 /**
@@ -32,7 +32,7 @@ export interface EffectFact {
 export interface CallSites { resolved: number; external: number; unresolved: number; unresolvedNames?: Record<string, number> }
 export interface SourceRange { startLine: number; endLine: number; startColumn?: number; endColumn?: number }
 export interface Evidence {
-  source: 'filesystem' | 'typescript' | 'php' | 'framework' | 'git' | 'runtime' | 'heuristic' | 'ai';
+  source: 'filesystem' | 'typescript' | 'php' | 'syntax' | 'framework' | 'git' | 'runtime' | 'heuristic' | 'ai';
   confidence: number;
   analyzer: string;
   analyzerVersion: string;

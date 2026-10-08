@@ -9,11 +9,13 @@
 // scheduled tasks to a "Console" district.
 import type { SourceRange } from '../core/graph.js';
 import type { LayoutNode } from './layout.js';
+import type { FileAnalysis } from '../analysis/facts.js';
 
 export interface EntityRow {
   id: string; type: string; name: string; path?: string; language?: string; parentId?: string;
   sourceRange?: SourceRange; loc?: number; qualifiedName?: string; signature?: string;
   routePath?: string; method?: string; framework?: string; role?: string; analysisSkipped?: string;
+  analysis?: FileAnalysis;
   /** Comparison views only: how this entity differs from the baseline snapshot. */
   change?: NodeChange;
   /** Database tables of the live index: the migrations that create or change them. */
@@ -30,6 +32,7 @@ export interface ProjectionNode {
   children: string[];
   depth: number; pre: number; post: number;
   loc?: number; detail?: string; qualifiedName?: string; role?: string;
+  analysis?: FileAnalysis;
   /** Present only on projection groups. */
   explanation?: string;
   ownDiagnostics: number; diagnostics: number; stats: NodeStats;
@@ -82,6 +85,7 @@ export class ProjectionIndex {
         ...(spatialParentId ? { spatialParentId } : {}), ...(row.loc !== undefined ? { loc: row.loc } : {}),
         ...(row.qualifiedName ? { qualifiedName: row.qualifiedName } : {}), ...(row.role ? { role: row.role } : {}),
         ...(detail(row) ? { detail: detail(row) } : {}), ...(row.change ? { change: row.change } : {}), ...(row.migrations?.length ? { migrations: row.migrations } : {}),
+        ...(row.analysis ? { analysis: row.analysis } : {}),
         ownDiagnostics: 0, diagnostics: 0, stats: { files: 0, symbols: 0, endpoints: 0, measuredLoc: 0, unmeasuredFiles: 0, descendants: 0 },
         search: [row.name, row.path ?? '', row.qualifiedName ?? ''].join('\u0000').toLowerCase(),
       };

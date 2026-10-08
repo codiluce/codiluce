@@ -1,8 +1,9 @@
 // A bounded, persistent cache of analyzer work, so that indexing again only
 // re-analyzes what changed.
 //
-// The unit of caching is one analyzer over one application (TypeScript: one
-// program per application; Laravel: its PHP), because call resolution and
+// The unit of caching is one analyzer over a dependency component (TypeScript:
+// connected projects, with a separate compiler program per project; Laravel:
+// its PHP applications), because call resolution and
 // route registration are whole-application facts: a file's relations cannot
 // be reused without the rest of its application. A unit's key digests every
 // input the analyzer reads: the application's file paths and content hashes,

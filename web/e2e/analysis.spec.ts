@@ -16,6 +16,33 @@ async function select(page: Page, query: string, heading: string) {
   await expect(inspector(page).getByRole('heading', { name: heading, exact: true })).toBeVisible();
 }
 
+test('Python shows source, declarations and partial import/reference support', async ({ page }) => {
+  await open(page);
+  await select(page, 'StructurePython', 'StructurePython');
+  const coverage = inspector(page).getByRole('region', { name: 'Analysis coverage' });
+  await expect(coverage).toContainText('Declarations');
+  await expect(coverage).toContainText('Available');
+  await expect(coverage.locator('dt').filter({ hasText: /^Imports$/ }).locator('+ dd')).toHaveText('Partial');
+  await expect(coverage.locator('dt').filter({ hasText: /^Code connections$/ }).locator('+ dd')).toHaveText('Partial');
+  await expect(coverage).not.toContainText('Calls and flows are not measured for this file');
+  await coverage.getByText('Limits and findings').click();
+  await expect(coverage).toContainText('Lexical declarations, imported members');
+  await inspector(page).getByRole('button', { name: 'Open source' }).click();
+  const source = page.getByRole('region', { name: 'Source' });
+  await expect(source).toContainText('class StructurePython');
+  await expect(source).toContainText('é😀');
+});
+
+test('structural-only languages show their declarations and analysis limits', async ({ page }) => {
+  await open(page);
+  await select(page, 'StructureRuby', 'StructureRuby');
+  const coverage = inspector(page).getByRole('region', { name: 'Analysis coverage' });
+  await expect(coverage.locator('dt').filter({ hasText: /^Declarations$/ }).locator('+ dd')).toHaveText('Available');
+  await expect(coverage).toContainText('Calls and flows are not measured for this file');
+  await coverage.getByText('Limits and findings').click();
+  await expect(coverage).toContainText('extracts declarations only');
+});
+
 test('impact shows what depends on a method across the stack and survives in the link', async ({ page }) => {
   await open(page);
   await select(page, 'AuthService::authenticate', 'authenticate');

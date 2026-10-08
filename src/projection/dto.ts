@@ -27,6 +27,7 @@ export interface NodeSummary {
   kind: 'entity' | 'group';
   type: string; name: string;
   path?: string; language?: string; sourceRange?: SourceRange;
+  analysis?: import('../analysis/facts.js').FileAnalysis;
   canonicalParentId?: string; spatialParentId?: string;
   depth: number; rect: Rect; childCount: number;
   /** Own LOC metric, absent when not measured. */
@@ -469,4 +470,3 @@ export interface EntityAnnotation {
   /** The description was made from another version of this code. */
   outdated?: boolean;
 }
-

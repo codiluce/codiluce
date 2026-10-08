@@ -3,7 +3,8 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import path from 'node:path';
 import { parse } from 'yaml';
-import { ANALYZED_FRAMEWORKS, ECOSYSTEMS, readManifests, type Ecosystem } from './manifests.js';
+import { ECOSYSTEMS, readManifests, type Ecosystem } from './manifests.js';
+import { nodeWorkspacePatterns } from './workspaces.js';
 
 const execute = promisify(execFile);
 
@@ -11,8 +12,8 @@ export interface ApplicationConfig {
   name: string; path: string;
   /**
    * What it is built on, primary first: the configured frameworks, then those
-   * its manifests declare. nextjs and laravel are analyzed in depth; the
-   * others are recorded.
+   * its manifests declare. Analysis depth is reported per file by adapters
+   * and packs; framework recognition alone does not imply semantic support.
    */
   frameworks: string[];
   /** Ecosystems of the manifests at its root (package.json → node, composer.json → php, go.mod → go…), by priority. */
@@ -20,6 +21,10 @@ export interface ApplicationConfig {
   apiOrigins?: string[];
   /** Environment variables declared to hold this application's origin (e.g. NEXT_PUBLIC_API_URL). A configured assumption, recorded as such in evidence. */
   apiOriginEnv?: string[];
+  /** Explicit browser proxy assumptions; executable proxy configuration is not evaluated. */
+  apiProxies?: { target: string; pathPrefix: string; targetPrefix?: string }[];
+  /** Static language source roots, relative to this application's path. */
+  sourceRoots?: Record<string, string[]>;
 }
 /** An application as configuration may give it: frameworks and ecosystems are completed from its manifests. */
 export type ApplicationInput = Omit<ApplicationConfig, 'frameworks' | 'ecosystems'> & {
@@ -48,6 +53,9 @@ export const DEFAULT_IGNORES = [
 /** Directories of tests and test data: what they hold is not an application of the repository. */
 const TEST_DIRECTORIES = /^(tests?|__tests__|spec|fixtures|__fixtures__|testdata)$/;
 const IDENTIFIER = /^[a-z0-9][a-z0-9.+-]*$/;
+// Directory ownership is independent of the framework pack registry. Keep
+// legacy ownership, while explicitly declared workspace members can nest.
+const OWNS_DIRECTORY = new Set(['nextjs', 'laravel']);
 /** The frameworks analyzed in depth, with the ecosystem each implies when no manifest names it. */
 const IMPLIED_ECOSYSTEM: Record<string, Ecosystem> = { nextjs: 'node', laravel: 'php' };
 export function hasFramework<T extends Pick<ApplicationConfig, 'frameworks'>>(app: T | undefined, framework: string): app is T { return !!app?.frameworks.includes(framework); }
@@ -95,7 +103,7 @@ export function matchesGlob(relative: string, glob: string): boolean {
 }
 /**
  * Applications found by their manifests, down to two directory levels below
- * the root (`apps/web`), outside test directories and those the scanner
+ * the root (`apps/web`) and at declared Node workspace members, outside test directories and those the scanner
  * prunes (default ignores, Git-ignored). A directory is an application when
  * one of its manifests declares one, not only a workspace or tooling (see
  * manifests.ts). Applications can nest — a Capacitor shell at the root around
@@ -103,21 +111,63 @@ export function matchesGlob(relative: string, glob: string): boolean {
  * Laravel application, which owns its whole directory: a nested application
  * would split its analysis. `rootName` names one at the root.
  */
-export async function detectApplications(root: string, rootName = path.basename(root)): Promise<ApplicationConfig[]> {
+export async function detectApplications(root: string, rootName = path.basename(root), extraIgnores: readonly string[] = []): Promise<ApplicationConfig[]> {
   const apps: ApplicationConfig[] = [];
-  const ignored = (await gitIgnored(root))?.directories ?? new Set<string>();
+  const inventory = await gitIgnored(root);
+  const ignored = inventory?.directories ?? new Set<string>();
+  const ignores = [...DEFAULT_IGNORES, ...extraIgnores];
+  const inspected = new Map<string, number>();
+  const ownedDirectories = new Set<string>();
+  const allowed = (relative: string) => !relative.split('/').some(segment => segment.startsWith('.') && segment !== '.' || TEST_DIRECTORIES.test(segment)) && ![...ignored].some(directory => relative === directory || relative.startsWith(`${directory}/`)) && !ignores.some(glob => matchesGlob(relative, glob));
+  async function declaredMembers(relative: string, names: string[]): Promise<void> {
+    for (const manifest of ['package.json', 'pnpm-workspace.yaml']) {
+      if (!names.includes(manifest)) continue;
+      const patterns = nodeWorkspacePatterns(manifest, await readFile(path.join(repoPath(root, relative), manifest), 'utf8'));
+      const normalize = (pattern: string) => path.posix.normalize(path.posix.join(relative, pattern));
+      const includes = patterns.include.map(normalize).filter(pattern => pattern !== '..' && !pattern.startsWith('../'));
+      const excludes = patterns.exclude.map(normalize);
+      let visited = 0;
+      const walked = new Set<string>();
+      async function walk(directory: string, depth: number): Promise<void> {
+        if (walked.has(directory) || depth > 32 || ++visited > 20_000 || !allowed(directory)) return;
+        walked.add(directory);
+        const entries = (await readdir(repoPath(root, directory), { withFileTypes: true }).catch(() => [])).sort((a, b) => a.name.localeCompare(b.name, 'en'));
+        if (includes.some(pattern => matchesGlob(directory, pattern)) && !excludes.some(pattern => matchesGlob(directory, pattern))) await inspect(directory, 2);
+        for (const entry of entries) if (entry.isDirectory()) await walk(path.posix.join(directory, entry.name), depth + 1);
+      }
+      for (const pattern of includes) {
+        const wildcard = pattern.search(/[?*]/);
+        const prefix = wildcard < 0 ? pattern : pattern.slice(0, wildcard);
+        const directory = wildcard < 0 ? prefix : prefix.endsWith('/') ? prefix.slice(0, -1) || '.' : path.posix.dirname(prefix);
+        // No glob expansion follows a symlink, including a literal member.
+        const absolute = repoPath(root, directory);
+        if (await realpath(absolute).catch(() => undefined) !== absolute || !allowed(directory) || !(await stat(absolute).catch(() => undefined))?.isDirectory()) continue;
+        if (wildcard < 0) {
+          if (!excludes.some(pattern => matchesGlob(directory, pattern))) await inspect(directory, 2);
+        } else await walk(directory, 0);
+      }
+    }
+  }
   async function inspect(relative: string, depth: number): Promise<void> {
+    const previousDepth = inspected.get(relative);
+    if (previousDepth !== undefined && previousDepth <= depth) return;
+    inspected.set(relative, depth);
     const directory = repoPath(root, relative);
     const entries = (await readdir(directory, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name, 'en'));
-    const found = await readManifests(directory, entries.map(entry => entry.name), relative);
-    if (found?.application) {
-      apps.push({ name: relative === '.' ? rootName : relative.replaceAll('/', '-'), path: relative, frameworks: found.frameworks, ecosystems: found.ecosystems });
-      if (found.frameworks.some(framework => ANALYZED_FRAMEWORKS.has(framework))) return;
+    const names = entries.filter(entry => !entry.isSymbolicLink() && !inventory?.files.has(path.posix.join(relative, entry.name)) && !ignores.some(glob => matchesGlob(path.posix.join(relative, entry.name), glob))).map(entry => entry.name);
+    if (previousDepth === undefined) {
+      const found = await readManifests(directory, names, relative);
+      await declaredMembers(relative, names);
+      if (found?.application) {
+        apps.push({ name: relative === '.' ? rootName : relative.replaceAll('/', '-'), path: relative, frameworks: found.frameworks, ecosystems: found.ecosystems });
+        if (found.frameworks.some(framework => OWNS_DIRECTORY.has(framework))) ownedDirectories.add(relative);
+      }
     }
+    if (ownedDirectories.has(relative)) return;
     if (depth >= 2) return;
     for (const entry of entries) {
       const rel = relative === '.' ? entry.name : `${relative}/${entry.name}`;
-      if (entry.isDirectory() && !entry.name.startsWith('.') && !TEST_DIRECTORIES.test(entry.name) && !ignored.has(rel) && !DEFAULT_IGNORES.some(glob => matchesGlob(rel, glob))) await inspect(rel, depth + 1);
+      if (entry.isDirectory() && allowed(rel)) await inspect(rel, depth + 1);
     }
   }
   await inspect('.', 0);
@@ -143,7 +193,7 @@ export async function resolveConfig(root: string, raw: RawConfig): Promise<Atlas
   if (raw.applications !== undefined && !Array.isArray(raw.applications)) throw new Error('applications must be a list');
   const config: AtlasConfig = {
     repository,
-    applications: raw.applications ? await Promise.all(raw.applications.map(app => configuredApplication(root, app))) : await detectApplications(root, repository.name),
+    applications: raw.applications ? await Promise.all(raw.applications.map(app => configuredApplication(root, app))) : await detectApplications(root, repository.name, raw.ignore ?? []),
     ignore: [...DEFAULT_IGNORES, ...(raw.ignore ?? [])],
     maxFileBytes: raw.maxFileBytes ?? 1024 * 1024,
   };
@@ -156,6 +206,12 @@ export async function resolveConfig(root: string, raw: RawConfig): Promise<Atlas
     names.add(app.name); paths.add(app.path);
     if (app.apiOrigins !== undefined && (!Array.isArray(app.apiOrigins) || !app.apiOrigins.every(origin => typeof origin === 'string' && /^https?:\/\//.test(origin) && new URL(origin).origin === origin))) throw new Error('apiOrigins must contain HTTP origins without paths');
     if (app.apiOriginEnv !== undefined && (!Array.isArray(app.apiOriginEnv) || !app.apiOriginEnv.every(name => typeof name === 'string' && /^[A-Za-z_][A-Za-z0-9_]{0,127}$/.test(name)))) throw new Error('apiOriginEnv must contain environment variable names');
+    const prefix = (value: unknown) => typeof value === 'string' && value.startsWith('/') && !/[?#{}\\]/.test(value) && !value.includes('//') && !value.split('/').some(part => part === '.' || part === '..');
+    if (app.apiProxies !== undefined && (!Array.isArray(app.apiProxies) || !app.apiProxies.every(proxy => proxy && config.applications.some(target => target.name === proxy.target) && prefix(proxy.pathPrefix) && (proxy.targetPrefix === undefined || prefix(proxy.targetPrefix))) || new Set(app.apiProxies.map(proxy => proxy.pathPrefix.replace(/\/$/, '') || '/')).size !== app.apiProxies.length)) throw new Error('apiProxies must contain unique absolute path prefixes and existing target application names');
+    if (app.sourceRoots !== undefined) {
+      if (!app.sourceRoots || typeof app.sourceRoots !== 'object' || Array.isArray(app.sourceRoots) || !Object.entries(app.sourceRoots).every(([language, roots]) => IDENTIFIER.test(language) && Array.isArray(roots) && roots.length > 0 && roots.every(root => typeof root === 'string' && !path.isAbsolute(root) && !/^[A-Za-z]:/.test(root) && !/[\\\0]/.test(root)))) throw new Error('sourceRoots must map language names to nonempty lists of repository-relative paths');
+      for (const roots of Object.values(app.sourceRoots)) for (const sourceRoot of roots) repoPath(root, path.posix.join(app.path, sourceRoot));
+    }
   }
   const envOwners = new Map<string, string>();
   for (const app of config.applications) for (const name of app.apiOriginEnv ?? []) { if (envOwners.has(name) && envOwners.get(name) !== app.name) throw new Error(`apiOriginEnv ${name} is declared for more than one application`); envOwners.set(name, app.name); }

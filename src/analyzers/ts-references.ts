@@ -17,6 +17,7 @@
 // Effects — storage, navigation, responses — are recorded when the name they
 // are matched on resolves to a lib global or to an import from the framework.
 import ts from 'typescript';
+import { runtimeReference } from '../analysis/languages/typescript-runtime.js';
 import path from 'node:path';
 import type { AnalysisContext, ScannedFile } from '../core/analyzer.js';
 import { evidence, type EffectFact, type Entity, type Evidence } from '../core/graph.js';
@@ -242,6 +243,7 @@ export function resolveReferences(context: AnalysisContext, state: TsApplication
   }
   function reference(from: Entity, value: ts.Expression, form: SiteForm, explanation: string, event?: string): void {
     if (!ts.isIdentifier(value) && !ts.isPropertyAccessExpression(value)) return;
+    if (!runtimeReference(value, checker)) return;
     let target: Entity | undefined;
     if (ts.isShorthandPropertyAssignment(value.parent)) { try { target = entityOf(aliased(checker.getShorthandAssignmentValueSymbol(value.parent))?.declarations); } catch { target = undefined; } }
     else target = symbolEntity(ts.isPropertyAccessExpression(value) ? value.name : value);
@@ -251,6 +253,7 @@ export function resolveReferences(context: AnalysisContext, state: TsApplication
   function visit(node: ts.Node): void {
     if (ts.isCallExpression(node) && node.expression.kind !== ts.SyntaxKind.ImportKeyword && node.expression.kind !== ts.SyntaxKind.SuperKeyword) {
       const from = owner(node);
+      if (!runtimeReference(node.expression, checker)) { sites.count(from.id, 'unresolved', calleeName(node.expression)); ts.forEachChild(node, visit); return; }
       let target: Entity | undefined;
       let declaration: ts.Declaration | undefined;
       try { declaration = checker.getResolvedSignature(node)?.declaration as ts.Declaration | undefined; } catch { declaration = undefined; }
@@ -269,7 +272,7 @@ export function resolveReferences(context: AnalysisContext, state: TsApplication
       for (const argument of node.arguments) reference(from, argument, 'callback', `Passes ${short(argument)} to ${calleeText}(…)`);
     } else if (ts.isNewExpression(node)) {
       const from = owner(node);
-      const target = symbolEntity(node.expression);
+      const target = runtimeReference(node.expression, checker) ? symbolEntity(node.expression) : undefined;
       if (target && (target.type === 'class' || target.type === 'controller')) {
         sites.add({ from: from.id, to: target.id, type: 'calls', form: 'new', evidence: fact(node, `Constructs new ${short(node.expression)}(…)`) });
         sites.count(from.id, 'resolved');
@@ -282,7 +285,7 @@ export function resolveReferences(context: AnalysisContext, state: TsApplication
       const from = owner(node);
       const tag = node.tagName.getText();
       if (!/^[a-z]/.test(tag)) {
-        const target = symbolEntity(ts.isPropertyAccessExpression(node.tagName) ? node.tagName.name : node.tagName);
+        const target = runtimeReference(node.tagName, checker) ? symbolEntity(ts.isPropertyAccessExpression(node.tagName) ? node.tagName.name : node.tagName) : undefined;
         if (target && target.id !== from.id && (target.type === 'component' || target.type === 'function' || target.type === 'class')) sites.add({ from: from.id, to: target.id, type: 'renders', form: 'render', evidence: fact(node, `Renders <${tag}>`) });
       }
     } else if (ts.isJsxAttribute(node) && node.initializer && ts.isJsxExpression(node.initializer) && node.initializer.expression) {

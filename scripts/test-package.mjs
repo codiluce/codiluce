@@ -1,6 +1,7 @@
 // Exercise the release tarball with production dependencies, outside this
 // checkout. No install scripts, TypeScript loader, or Next.js runtime is used.
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { execFile, spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
@@ -45,6 +46,20 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
     assert.ok(summary.counts.entities > 0 && summary.counts.relations > 0);
     const search = await (await fetch(`${url}api/projection/search?q=LoginForm`)).json();
     assert.ok(search.items.some(item => item.name.includes('LoginForm')));
+    for (const language of ['python', 'go', 'ruby', 'rust', 'java', 'csharp', 'kotlin']) {
+      const name = `Structure${language.charAt(0).toUpperCase()}${language.slice(1)}`;
+      const found = await (await fetch(`${url}api/projection/search?q=${name}`)).json();
+      const symbol = found.items.find(item => item.name === name && item.type === 'class');
+      assert.ok(symbol, `installed grammar did not extract ${language}`);
+      const entity = await (await fetch(`${url}api/entities/${symbol.id}`)).json();
+      assert.equal(entity.evidence[0].source, 'syntax');
+      const source = await (await fetch(`${url}api/source?entity=${symbol.id}`)).json();
+      assert.equal(source.file.language, language);
+      assert.equal(source.focus.startLine, entity.sourceRange.startLine);
+      const file = await (await fetch(`${url}api/projection/locate/${source.file.id}`)).json();
+      assert.equal(file.node.analysis.features.structure.status, 'supported');
+      assert.equal(file.node.analysis.features.references.status, language === 'python' ? 'partial' : 'unsupported');
+    }
     assert.equal((await fetch(`${url}licenses/fontsource-variable-nunito.txt`)).status, 200);
     child.kill(signal);
     assert.deepEqual(await exited, [0, null], output);
@@ -66,6 +81,11 @@ try {
   for (const required of ['bin/codiluce.js', 'dist/src/cli.js', 'dist/src/history/worker.js', 'web/out/index.html', 'LICENSE', 'web/out/licenses/react.txt']) {
     assert.ok(files.includes(required), `tarball is missing ${required}`);
   }
+  const grammarManifest = JSON.parse(await readFile(path.join(root, 'grammars/manifest.json'), 'utf8'));
+  for (const grammar of grammarManifest.grammars) {
+    for (const asset of [grammar.file, grammar.licenseFile, `queries/${grammar.language}/declarations.scm`]) assert.ok(files.includes(`dist/grammars/${asset}`), `tarball is missing ${asset}`);
+  }
+  assert.ok(files.includes('dist/grammars/manifest.json'));
   for (const file of files) {
     assert.doesNotMatch(file, /(?:^|\/)(?:\.env(?:\..*)?|\.codiluce|node_modules|tests|test-results|brand-explorations)(?:\/|$)|\.(?:db|sqlite|tgz|ts|tsx|tsbuildinfo)$/, `unexpected package file: ${file}`);
   }
@@ -78,6 +98,7 @@ try {
   await npm(['install', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund', '--package-lock=false', tarball], consumer);
   const installed = path.join(consumer, 'node_modules', ...manifest.name.split('/'));
   const bin = path.join(installed, 'bin/codiluce.js');
+  for (const grammar of grammarManifest.grammars) assert.equal(createHash('sha256').update(await readFile(path.join(installed, 'dist/grammars', grammar.file))).digest('hex'), grammar.sha256);
   const dependencies = JSON.parse((await npm(['ls', '--omit=dev', '--all', '--json'], consumer)).stdout).dependencies[manifest.name].dependencies;
   assert.deepEqual(Object.keys(dependencies).sort(), Object.keys(manifest.dependencies).sort());
   const help = (await npm(['exec', '--offline', '--no', '--', 'codiluce', '--help'], consumer)).stdout;
@@ -86,12 +107,70 @@ try {
 
   const repo = path.join(consumer, 'repository with spaces');
   await cp(path.join(root, 'tests/fixtures/repository'), repo, { recursive: true });
+  await cp(path.join(root, 'tests/fixtures/structure'), path.join(repo, 'structure'), { recursive: true });
+  await writeFile(path.join(repo, 'package.json'), JSON.stringify({ private: true, workspaces: ['shared-workspace/**'] }));
+  const workspaceConsumer = path.join(repo, 'shared-workspace/deep/consumer'), workspaceShared = path.join(repo, 'shared-workspace/deep/shared');
+  await mkdir(workspaceConsumer, { recursive: true }); await mkdir(workspaceShared, { recursive: true });
+  await writeFile(path.join(workspaceConsumer, 'package.json'), JSON.stringify({ name: 'consumer', dependencies: { '@package-test/shared': 'workspace:*' } }));
+  await writeFile(path.join(workspaceConsumer, 'source.ts'), 'import { WorkspaceShared as shared } from "@package-test/shared"; export function WorkspaceConsumer() { return shared(); }');
+  await writeFile(path.join(workspaceShared, 'package.json'), JSON.stringify({ name: '@package-test/shared', exports: './source.ts' }));
+  await writeFile(path.join(workspaceShared, 'source.ts'), 'export function WorkspaceShared() { return 1; }');
+  const expressServer = path.join(repo, 'express-server');
+  await mkdir(expressServer);
+  await writeFile(path.join(expressServer, 'package.json'), JSON.stringify({ dependencies: { express: '^5.1.0' } }));
+  await writeFile(path.join(expressServer, 'main.ts'), 'import express from "express"; import router from "./router"; const app = express(); app.use("/package-express", router);');
+  await writeFile(path.join(expressServer, 'router.ts'), 'import { Router } from "express"; const router = Router(); export function PackagedExpressHandler() { return "ok"; } router.get("/items/:id", () => PackagedExpressHandler()); export default router;');
+  const nestServer = path.join(repo, 'nest-server');
+  await mkdir(nestServer);
+  await writeFile(path.join(nestServer, 'package.json'), JSON.stringify({ dependencies: { '@nestjs/core': '^11.1.0', '@nestjs/common': '^11.1.0' } }));
+  await writeFile(path.join(nestServer, 'main.ts'), 'import { NestFactory } from "@nestjs/core"; import { Module, Controller, Get } from "@nestjs/common"; @Controller("package-nest") class PackagedNestController { @Get(":id") PackagedNestHandler() { return "ok"; } } @Module({ controllers: [PackagedNestController] }) class Root {} async function bootstrap() { await NestFactory.create(Root); } bootstrap();');
+  const pythonServer = path.join(repo, 'python-server'), pythonPackage = path.join(pythonServer, 'src/packaged_service');
+  await mkdir(pythonPackage, { recursive: true });
+  await writeFile(path.join(pythonServer, 'pyproject.toml'), '[project]\nname="distribution-not-import-name"\nversion="1.0.0"\n[tool.setuptools.package-dir]\n""="src"\n');
+  await writeFile(path.join(pythonPackage, '__init__.py'), '');
+  await writeFile(path.join(pythonPackage, 'main.py'), 'from fastapi import FastAPI\nfrom .handler import PackagedPythonHandler as handler\napp = FastAPI()\napp.add_api_route("/package-python/{id:int}", handler, methods=["GET"])\n');
+  await writeFile(path.join(pythonPackage, 'handler.py'), 'def PackagedPythonLeaf():\n    return "ok"\ndef PackagedPythonHandler():\n    return PackagedPythonLeaf()\n');
   console.log('Starting the installed executable from a repository with spaces…');
   await checkSession(bin, repo);
   assert.ok((await readdir(path.join(repo, '.codiluce'))).includes('codiluce.db'));
   const summary = JSON.parse((await run(process.execPath, [bin, 'inspect', 'summary'], repo)).stdout);
   assert.ok(summary.counts.entities > 0);
   assert.deepEqual(JSON.parse((await run(process.execPath, ['--experimental-sqlite', bin, 'inspect', 'summary'], repo)).stdout), summary);
+  const workspaceSymbols = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'Workspace'], repo)).stdout).items;
+  const consumerSymbol = workspaceSymbols.find(entity => entity.name === 'WorkspaceConsumer' && entity.type === 'function'), sharedSymbol = workspaceSymbols.find(entity => entity.name === 'WorkspaceShared' && entity.type === 'function');
+  assert.ok(consumerSymbol && sharedSymbol, 'installed project services extract deep workspace declarations');
+  const workspaceCalls = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', consumerSymbol.id, '--type', 'calls'], repo)).stdout).items;
+  assert.ok(workspaceCalls.some(relation => relation.from === consumerSymbol.id && relation.to === sharedSymbol.id), 'installed workspace resolver binds the shared declaration');
+  const expressEntities = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', '/package-express'], repo)).stdout).items;
+  const expressEndpoint = expressEntities.find(entity => entity.type === 'api_endpoint' && entity.name === 'GET /package-express/items/:id');
+  assert.ok(expressEndpoint, 'installed framework pack composes the Express mount path');
+  const handlers = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', expressEndpoint.id, '--type', 'handles'], repo)).stdout).items;
+  assert.equal(handlers.length, 1);
+  const expressCalls = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', handlers[0].to, '--type', 'calls'], repo)).stdout).items;
+  const packagedHandlers = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'PackagedExpressHandler'], repo)).stdout).items;
+  assert.ok(expressCalls.some(relation => relation.from === handlers[0].to && relation.to === packagedHandlers.find(entity => entity.name === 'PackagedExpressHandler')?.id), 'installed inline handler owns its bound calls');
+  const nestEntities = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', '/package-nest'], repo)).stdout).items;
+  const nestEndpoint = nestEntities.find(entity => entity.type === 'api_endpoint' && entity.name === 'GET /package-nest/:id');
+  assert.ok(nestEndpoint, 'installed Nest pack resolves bootstrap/module/controller registration');
+  const nestHandlers = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', nestEndpoint.id, '--type', 'handles'], repo)).stdout).items;
+  const nestSymbols = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'PackagedNestHandler'], repo)).stdout).items;
+  assert.ok(nestHandlers.some(relation => relation.to === nestSymbols.find(entity => entity.name === 'PackagedNestHandler')?.id), 'installed Nest endpoint binds its exact method declaration');
+  const pythonEntities = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'python-server/src/packaged_service'], repo)).stdout).items;
+  const pythonMain = pythonEntities.find(entity => entity.type === 'file' && entity.path.endsWith('/main.py')), pythonHandler = pythonEntities.find(entity => entity.type === 'file' && entity.path.endsWith('/handler.py'));
+  assert.ok(pythonMain && pythonHandler, 'installed Python parser extracts source-layout files');
+  const pythonImports = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', pythonMain.id, '--type', 'imports'], repo)).stdout).items;
+  assert.ok(pythonImports.some(relation => relation.to === pythonHandler.id), 'installed Python resolver links a relative import under the manifest src root');
+  const pythonDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', pythonMain.id], repo)).stdout);
+  assert.equal(pythonDetail.metadata.analysis.features.imports.status, 'partial');
+  assert.equal(pythonDetail.metadata.analysis.features.references.status, 'partial');
+  const pythonEndpoints = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', '/package-python'], repo)).stdout).items;
+  const pythonEndpoint = pythonEndpoints.find(entity => entity.type === 'api_endpoint' && entity.name === 'GET /package-python/{id:int}');
+  assert.ok(pythonEndpoint, 'installed FastAPI pack resolves its imported handler');
+  const pythonHandlers = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', pythonEndpoint.id, '--type', 'handles'], repo)).stdout).items;
+  assert.equal(pythonHandlers.length, 1);
+  const pythonCalls = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', pythonHandlers[0].to, '--type', 'calls'], repo)).stdout).items;
+  const pythonSymbols = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'PackagedPythonLeaf'], repo)).stdout).items;
+  assert.ok(pythonCalls.some(relation => relation.from === pythonHandlers[0].to && relation.to === pythonSymbols.find(entity => entity.name === 'PackagedPythonLeaf')?.id), 'installed Python handler owns its exact local call');
   await assert.rejects(run(process.execPath, [bin, 'start', '--build-ui', '--no-open'], repo), error => error.code === 1 && /only available in a Codiluce source checkout/.test(error.stderr));
   await assert.rejects(run(process.execPath, [bin, 'unknown-command'], repo), error => error.code === 1);
   const broken = path.join(repo, 'frontend/src/broken.ts');
@@ -112,6 +191,25 @@ try {
   assert.equal(history.failed, 0);
   assert.equal(history.indexed, 2);
 
+  console.log('Checking missing parser assets leave semantic analysis usable…');
+  const pythonAsset = path.join(installed, 'dist/grammars', grammarManifest.grammars.find(grammar => grammar.language === 'python').file);
+  const grammarRoot = path.join(installed, 'dist/grammars');
+  for (const asset of [pythonAsset, path.join(grammarRoot, 'queries/python/declarations.scm'), path.join(grammarRoot, 'manifest.json')]) {
+    const bytes = await readFile(asset);
+    try {
+      await rm(asset);
+      await run(process.execPath, [bin, 'index'], repo);
+      const diagnostics = JSON.parse((await run(process.execPath, [bin, 'inspect', 'diagnostics', '--code', 'syntax-analysis-failed'], repo)).stdout);
+      assert.ok(diagnostics.items.some(item => item.file === 'structure/python.py'), asset);
+      const semantic = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'LoginForm'], repo)).stdout);
+      assert.ok(semantic.items.some(item => item.name === 'LoginForm'), asset);
+      if (!asset.endsWith('manifest.json')) {
+        const rust = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'StructureRust'], repo)).stdout);
+        assert.ok(rust.items.some(item => item.name === 'StructureRust'), asset);
+      }
+    } finally { await writeFile(asset, bytes); }
+  }
+
   // A scoped fallback must still locate its own bundled assets.
   await writeFile(path.join(installed, 'package.json'), JSON.stringify({ ...manifest, name: '@package-test/codiluce' }));
   await checkSession(bin, repo, [], 'SIGTERM');
@@ -121,7 +219,7 @@ try {
   console.log('Checking npm exec against the tarball without a local installation…');
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
-  console.log('Package installation, static UI, API, history workers, signals and npm exec passed.');
+  console.log('Package installation, seven grammars, workspace binding, Express/Nest/FastAPI registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

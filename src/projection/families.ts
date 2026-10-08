@@ -14,6 +14,7 @@
 // stays apart. Entities outside files follow their code: an endpoint its
 // handler, a command its class.
 import { fileResolver } from './catalog.js';
+import { CODE_LANGUAGES } from '../core/languages.js';
 import type { ProjectionIndex, ProjectionNode } from './hierarchy.js';
 
 /** A table with links to at least this many other tables is a hub. */
@@ -47,7 +48,6 @@ const ENTRY_TYPES = new Set(['api_endpoint', 'route', 'command', 'scheduled_task
 const RUNS = new Set(['handles', 'renders', 'routes_to', 'invokes']);
 /** A file joins a family holding at least this share of the code it uses. */
 const CLEAR_MAJORITY = 0.6;
-const CODE_LANGUAGES = new Set(['typescript', 'javascript', 'php', 'vue', 'svelte']);
 
 export function dataFamilies(index: ProjectionIndex): FamilyAssignment {
   const present = (node: ProjectionNode | undefined): node is ProjectionNode => !!node && node.kind === 'entity' && node.change?.status !== 'removed';

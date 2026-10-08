@@ -1,6 +1,11 @@
 import type { AtlasConfig, ApplicationConfig } from './config.js';
 import type { GraphBuilder, Evidence, EffectFact } from './graph.js';
 import type { AnalysisCache } from '../pipeline/cache.js';
+import type { IndexedSources } from '../analysis/indexed-sources.js';
+import type { ProjectCatalog } from '../analysis/project-model.js';
+import type { TypeScriptServices } from '../analysis/languages/typescript-services.js';
+import type { StructureFacts } from '../analysis/facts.js';
+import type { PythonResolver } from '../analysis/resolution/python.js';
 export interface ScannedFile { path: string; absolutePath: string; id: string; language?: string; analyzable: boolean; application?: ApplicationConfig }
 export interface HttpObservation {
   callerId: string; fileId: string; method?: string; url?: string; expression: string; evidence: Evidence;
@@ -16,5 +21,11 @@ export interface AnalysisContext {
   revision?: string;
   /** Persistent cache of analyzer work (working-tree indexing with a state directory). */
   cache?: AnalysisCache;
+  sources?: IndexedSources;
+  projects?: ProjectCatalog;
+  typescript?: TypeScriptServices;
+  /** Serializable syntax facts and exact declaration sites for language services. */
+  syntax?: Map<string, { facts: StructureFacts; declarations: Map<string, string> }>;
+  python?: PythonResolver;
 }
 export interface Analyzer { name: string; version: string; analyze(context: AnalysisContext): Promise<void> }

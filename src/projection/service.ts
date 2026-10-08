@@ -20,6 +20,7 @@ import { computeEvolution, type EvolutionJob } from './evolution.js';
 import { lineDiff } from '../history/textdiff.js';
 import { pagination, type GraphStore } from '../storage/sqlite.js';
 import type { Entity, Relation } from '../core/graph.js';
+import { CODE_LANGUAGES } from '../core/languages.js';
 import { extendRegistry, LAYOUT_VERSION, TIMELINE_LAYOUT_VERSION, layoutHierarchy, placeOnTimeline, timelineLayout, type LayoutResult, type LayoutState, type Rect, type TimelineLayout, type TimelineRegistry } from './layout.js';
 import { ProjectionIndex, type EntityRow, type ProjectionNode, type RelationRow } from './hierarchy.js';
 import { dataFamilies, NO_FAMILY, type FamilyAssignment } from './families.js';
@@ -70,8 +71,6 @@ interface View {
   /** Authorship by window (lazily). */
   authorship?: Map<string, AuthorshipComputation>;
 }
-/** Languages whose files count as code (files of other languages are placed, not counted). */
-const CODE_LANGUAGES = new Set(['typescript', 'javascript', 'php', 'vue', 'svelte']);
 const HTTP_FINDINGS = new Set(['unresolved-http-call', 'unresolved-http-url', 'unmatched-http-call', 'ambiguous-http-match', 'constrained-http-match', 'unverified-relative-api-boundary']);
 const IMPACT_TYPE_ORDER: Record<string, number> = { route: 0, api_endpoint: 1, component: 2, controller: 3, model: 4, class: 4, function: 5, method: 6, database_table: 7, file: 8 };
 const OWN_CHANGE = new Set(['source', 'definition', 'signature', 'type', 'size']);
@@ -231,6 +230,7 @@ export class ProjectionService {
     return {
       id: node.id, kind: node.kind, type: node.type, name: node.name,
       ...(node.path ? { path: node.path } : {}), ...(node.language ? { language: node.language } : {}), ...(node.sourceRange ? { sourceRange: node.sourceRange } : {}),
+      ...(node.analysis ? { analysis: node.analysis } : {}),
       ...(node.canonicalParentId ? { canonicalParentId: node.canonicalParentId } : {}), ...(node.spatialParentId ? { spatialParentId: node.spatialParentId } : {}),
       depth: node.depth, rect: current.rects.get(node.id)!, childCount: node.children.length,
       ...(node.loc !== undefined ? { loc: node.loc } : {}), ...(node.detail ? { detail: node.detail } : {}), ...(node.qualifiedName ? { qualifiedName: node.qualifiedName } : {}),

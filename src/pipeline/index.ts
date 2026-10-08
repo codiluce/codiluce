@@ -13,9 +13,16 @@ import { laravelAnalyzer } from '../analyzers/laravel.js';
 import { apiMatcher } from './api-matcher.js';
 import { inertiaLinker } from './inertia-linker.js';
 import { AnalysisCache, type CacheEvent } from './cache.js';
+import { structureAnalyzer } from '../analysis/tree-sitter/analyzer.js';
+import { capabilitiesAnalyzer } from '../analysis/capabilities.js';
+import { projectAnalyzer } from '../analysis/project-model.js';
+import { typescriptFrameworkPacks } from '../analysis/frameworks/index.js';
+import { typescriptServicesRelease } from '../analysis/languages/typescript-services.js';
+import { pythonAnalyzer } from '../analysis/languages/python.js';
+import { FASTAPI_VERSION } from '../analysis/frameworks/fastapi.js';
 
 const execute = promisify(execFile);
-export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, typescriptAnalyzer, laravelAnalyzer, inertiaLinker, apiMatcher];
+export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, structureAnalyzer, pythonAnalyzer, typescriptAnalyzer, typescriptServicesRelease, laravelAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
 export interface IndexOptions {
   stateDirectory?: string; config?: AtlasConfig; onProgress?: (name: string) => void;
   /** Index a materialized commit tree: Git is not consulted and the run records this commit, clean. */
@@ -43,6 +50,6 @@ export async function indexRepository(repository: string, options: IndexOptions 
     graph.diagnose({ analyzer: 'indexer', severity: 'info', code: 'git-metadata-unavailable', reason: 'No readable Git HEAD/status; this is still a valid working-tree scan' });
   }
   for (const analyzer of analyzers) { options.onProgress?.(analyzer.name); await analyzer.analyze(context); }
-  const run: AnalysisRun = { id: randomUUID(), repositoryId, repositoryName: config.repository.name, ...(commitSha ? { commitSha } : {}), ...(dirty !== undefined ? { dirty } : {}), analyzedAt: new Date().toISOString(), configDigest: createHash('sha256').update(JSON.stringify(config)).digest('hex'), schemaVersion: SCHEMA_VERSION, analyzerVersions: Object.fromEntries(analyzers.map(analyzer => [analyzer.name, analyzer.version])) };
+  const run: AnalysisRun = { id: randomUUID(), repositoryId, repositoryName: config.repository.name, ...(commitSha ? { commitSha } : {}), ...(dirty !==undefined ? { dirty } : {}), analyzedAt: new Date().toISOString(), configDigest: createHash('sha256').update(JSON.stringify(config)).digest('hex'), schemaVersion: SCHEMA_VERSION, analyzerVersions: Object.fromEntries([...analyzers.map(analyzer => [analyzer.name, analyzer.version]), ...typescriptFrameworkPacks.map(pack => [pack.id, pack.version]), ['fastapi', FASTAPI_VERSION]]) };
   return graph.finish(run);
 }

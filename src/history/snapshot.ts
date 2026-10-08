@@ -10,6 +10,7 @@ import type { DiagnosticRow, EntityRow, RelationRow } from '../projection/hierar
 import type { GraphStore } from '../storage/sqlite.js';
 import { contentKey, shapeHash } from './fingerprint.js';
 import { readBlobAt } from './git.js';
+import { fileAnalysis } from '../analysis/facts.js';
 import type { HistoryStore, SnapshotRecord } from './store.js';
 
 export interface SnapshotEntity extends EntityRow {
@@ -64,6 +65,7 @@ export class WorkingTreeSnapshot implements SnapshotSource {
         ...(text('signature') !== undefined ? { signature: text('signature') } : {}), ...(text('routePath') ? { routePath: text('routePath') } : {}),
         ...(text('method') ? { method: text('method') } : {}), ...(text('framework') ? { framework: text('framework') } : {}),
         ...(text('role') ? { role: text('role') } : {}), ...(text('analysisSkipped') ? { analysisSkipped: text('analysisSkipped') } : {}),
+        ...(fileAnalysis(metadata.analysis) ? { analysis: fileAnalysis(metadata.analysis) } : {}),
         ...(content ? { content } : {}), ...(text('bodyHash') ? { body: text('bodyHash') } : {}), shape: shapeHash(entity as Pick<Entity, 'type' | 'name' | 'language' | 'metadata'>),
         // Tables: every migration that creates or changes them (data families place migrations by it).
         ...(entity.type === 'database_table' && Array.isArray(metadata.migrations) ? { migrations: metadata.migrations.filter((item): item is string => typeof item === 'string') } : {}),
