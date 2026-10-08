@@ -1,6 +1,6 @@
 # Codiluce website
 
-The public site: home (goal, status, roadmap, contributing) and the docs. Next.js App Router, statically
+The public site: home (goal, features, contributing) and the docs. Next.js App Router, statically
 exported to `out/`, so any static host works (GitHub Pages, Netlify, Cloudflare Pages, S3, nginx).
 
 ```bash
@@ -16,6 +16,7 @@ npm run preview    # serves out/ on http://localhost:4321
   above the hero text. It pauses off screen and in background tabs, draws one still frame with
   `prefers-reduced-motion`, and leaves the CSS backdrop in place when WebGL2 is missing.
 - `public/shots/`: screenshots of Codiluce (Codiluce Dusk theme) mapping
-  [BookStack](https://github.com/BookStackApp/BookStack), an open-source Laravel app. Retake them with any
+  [BookStack](https://github.com/BookStackApp/BookStack), an open-source wiki. Retake them with any
   repository, at 1600 × 1000 CSS px and device scale 2, and save them as 2400 × 1500 WebP.
-- Install commands, the version and links are in `lib/site.ts`.
+- Install commands, the version, links, the call booking URL and the Google Analytics ID are in `lib/site.ts`.
+  The Google tag (`app/layout.tsx`) is only included in production builds, so `npm run dev` is not counted.

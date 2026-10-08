@@ -1,10 +1,9 @@
 'use client';
 import { Fragment, useEffect, useState } from 'react';
 import type { Entity, Evidence } from '@engine/core/graph';
-import type { AggregateGroup, ChangeFacet, DiagnosticItem, FolderArrangement, NodeChange, NodeSummary, RelationItem } from '@engine/projection/dto';
-import { isAbort } from '../lib/api';
+import type { AggregateGroup, ChangeFacet, DiagnosticItem, NodeChange, NodeSummary, RelationItem } from '@engine/projection/dto';
 import { compactNumber, percent, relationPhrase, relativeTime, shortSha, typeLabel } from '../lib/format';
-import { arrangeParam, entryOf, isContainer, tourEntry, type AtlasStore, type FolderChoice } from '../lib/store';
+import { entryOf, isContainer, NO_FAMILY, tourEntry, type AtlasStore } from '../lib/store';
 import { coverageCss, domainHue, familyCss, familyHues, themeById } from '../lib/themes';
 import { COVERAGE_TEXT, NOT_MEASURED } from '../lib/coverage';
 import { useAtlas, useStore } from './context';
@@ -107,7 +106,7 @@ function Selection() {
       {selection.change && <ChangeSection node={node} />}
       <ImpactSection node={node} />
       <FlowsSection node={node} />
-      {node.kind === 'entity' && node.type === 'directory' && <FolderGroups node={node} />}
+      {((node.kind === 'entity' && (node.type === 'directory' || node.type === 'application' || node.type === 'repository')) || node.id.startsWith('lens:domain:')) && <DataBreakdown key={node.id} node={node} />}
       <Facts node={node} entity={entity} />
       {node.type === 'database_table' && entity && <TableSection entity={entity} />}
       <HttpCalls selectionId={node.id} file={selection.file} />
@@ -179,49 +178,57 @@ function FamilyChip({ node }: { node: NodeSummary }) {
     </div>
   );
 }
-const CHOICES: { id: FolderChoice; label: string }[] = [{ id: 'auto', label: 'Auto' }, { id: 'data', label: 'By data' }, { id: 'name', label: 'By name' }, { id: 'none', label: 'No groups' }];
-/** How the folder's files are grouped on the map, the ways they could be, and a choice for this folder. */
-function FolderGroups({ node }: { node: NodeSummary }) {
+/** Families shown before "Show all". */
+const BREAKDOWN_ROWS = 8;
+/** Which data families the code files of an area belong to; selecting one lights it on the map. */
+function DataBreakdown({ node }: { node: NodeSummary }) {
   const store = useStore();
-  const active = useAtlas(state => state.lens === 'folders' && !state.timeline.open);
-  const arrange = useAtlas(state => state.arrange);
-  const key = `${node.id}|${arrangeParam(arrange) ?? ''}`;
-  const [result, setResult] = useState<{ key: string; data?: FolderArrangement; error?: string }>();
-  useEffect(() => {
-    if (!active) return;
-    const controller = new AbortController();
-    store.api.arrangement(node.id, controller.signal).then(data => setResult({ key, data }), (error: unknown) => { if (!isAbort(error)) setResult({ key, error: error instanceof Error ? error.message : String(error) }); });
-    return () => controller.abort();
-  }, [store, node.id, key, active]);
-  if (!active) return null;
-  const current = result?.key === key ? result : undefined;
-  const data = current?.data;
-  const choice = arrange.folders[node.id] ?? (arrange.mode === 'auto' ? 'auto' : 'none');
-  const how = (by: string) => by === 'data' ? 'by data family' : by === 'name' ? 'by the first word of their names' : 'not grouped';
+  const tables = useAtlas(state => state.meta?.coverage.databaseTables ?? 0);
+  const stamp = useAtlas(() => store.viewStamp());
+  const families = useAtlas(state => state.families);
+  const dark = themeById(useAtlas(state => state.themeId)).dark;
+  const [all, setAll] = useState(false);
+  useEffect(() => { if (tables > 0) void store.ensureFamilies(); }, [store, tables, stamp]);
+  if (!tables) return null;
+  const data = families.status === 'ready' && families.viewStamp === stamp ? families.data : undefined;
+  const counts = data?.areas[node.id];
+  const total = counts ? Object.values(counts).reduce((sum, count) => sum + count, 0) : 0;
+  // An area without code files has nothing to break down.
+  if (data && !total) return null;
+  const where = node.id.startsWith('lens:domain:') ? 'feature' : node.type === 'repository' ? 'repository' : node.type === 'application' ? 'application' : 'folder';
+  const order = new Map(data?.families.map((family, index) => [family.key, index]) ?? []);
+  const rows = Object.entries(counts ?? {}).filter(([key]) => key !== NO_FAMILY).sort((a, b) => b[1] - a[1] || (order.get(a[0]) ?? 0) - (order.get(b[0]) ?? 0));
+  const without = counts?.[NO_FAMILY] ?? 0;
+  const hues = familyHues(data?.families.map(family => family.key) ?? []);
+  const shown = all ? rows : rows.slice(0, BREAKDOWN_ROWS);
   return (
-    <section className="section folder-groups">
-      <h4>Group files</h4>
-      {!current && <p className="absent">Looking at its files…</p>}
-      {current?.error && <p className="note error">{current.error}</p>}
-      {data && !data.options.length && <p className="absent">{data.files} file{data.files === 1 ? '' : 's'} directly inside: too few to group.</p>}
-      {data && data.options.length > 0 && (
+    <section className="section data-breakdown">
+      <h4>Data in this {where}</h4>
+      {!data && families.status === 'error' && <p className="note error">{families.error}</p>}
+      {!data && families.status !== 'error' && <p className="absent">Grouping the tables…</p>}
+      {data && (
         <>
-          <div className="segmented" role="group" aria-label="Group this folder's files">
-            {CHOICES.map(item => <button key={item.id} aria-pressed={choice === item.id} onClick={() => void store.setFolderArrangement(node.id, item.id)} title={item.id === 'auto' ? `As fits best: here ${how(data.auto)}${data.files < 16 ? ' (Auto groups folders of 16 files or more)' : ''}` : `Files ${how(item.id)}`}>{item.label}</button>)}
-          </div>
-          <p className="note">
-            {data.current !== 'none'
-              ? `Its ${data.files} files are drawn in dashed groups ${how(data.current)}${choice === 'auto' ? ', as Auto chose' : ''}. The groups are only spatial: every file stays in this folder.`
-              : choice === 'auto' ? `Auto leaves its ${data.files} files as they are: ${data.files < 16 ? 'it groups folders of 16 files or more' : 'neither way puts most of them in a few groups'}.` : `Its ${data.files} files are not grouped${arrange.mode === 'off' && choice === 'none' ? ' (Group files is off)' : ''}.`}
-          </p>
-          <dl className="facts">
-            {data.options.map(option => (
-              <Fragment key={option.key}>
-                <dt>{option.key === 'data' ? 'By data' : 'By name'}</dt>
-                <dd>{option.groups.length ? `${option.grouped} of ${data.files} files in ${option.groups.length} group${option.groups.length === 1 ? '' : 's'}: ${option.groups.slice(0, 6).map(group => `${group.name} ${group.files}`).join(', ')}${option.groups.length > 6 ? ', …' : ''}` : 'no two files alike'}{option.groups.length > 0 && !option.fits ? ' — Auto does not choose it' : ''}</dd>
-              </Fragment>
-            ))}
-          </dl>
+          <p className="absent">{rows.length ? `${total - without} of its ${total} code files use tables, directly or through the code they use. Select a family to light its files on the map.` : `None of its ${total} code files use a table, directly or through the code they use.`}</p>
+          <ul className="coverage-keys family-keys">
+            {shown.map(([key, count]) => {
+              const family = data.families.find(item => item.key === key);
+              return (
+                <li key={key}>
+                  <button aria-pressed={families.focus === key} onClick={() => store.focusFamily(key)} title={`Tables: ${family?.tables.join(', ') ?? key}${family?.hub ? '. Referenced by many tables, so it does not join their families.' : ''}`}>
+                    <span className="type-dot" style={{ background: familyCss(hues.get(key) ?? 'none', dark) }} />{family?.name ?? key}{family?.hub ? <span className="absent"> · hub</span> : null}<span className="count">{count}</span>
+                  </button>
+                </li>
+              );
+            })}
+            {without > 0 && (
+              <li>
+                <button aria-pressed={families.focus === NO_FAMILY} onClick={() => store.focusFamily(NO_FAMILY)} title="Code files that use no table, directly or through the code they are connected to">
+                  <span className="type-dot" style={{ background: familyCss('none', dark) }} />No tables<span className="count">{without}</span>
+                </button>
+              </li>
+            )}
+          </ul>
+          {rows.length > BREAKDOWN_ROWS && <button className="button small" onClick={() => setAll(value => !value)}>{all ? 'Show fewer' : `Show all ${rows.length}`}</button>}
         </>
       )}
     </section>

@@ -6,9 +6,7 @@
 // are canonical children of their application, so they are placed in a
 // "Routes & endpoints" district inside that application; database tables
 // declared by its migrations go to a "Database" district; Artisan commands and
-// scheduled tasks to a "Console" district. When the map is arranged, the files
-// of a large folder can also be drawn in groups inside it (by name or by data
-// family, projection/arrange.ts); they stay children of their folder.
+// scheduled tasks to a "Console" district.
 import type { SourceRange } from '../core/graph.js';
 import type { LayoutNode } from './layout.js';
 
@@ -63,8 +61,6 @@ function routeSegment(row: EntityRow): string {
 }
 /** Groups of interface entities are split by first path segment once a district holds more than this many. */
 export const ROUTE_SUBGROUP_THRESHOLD = 16;
-/** A projection group drawn inside a container around some of its children (projection/arrange.ts); their containment is unchanged. */
-export interface SpatialGroup { id: string; name: string; explanation: string; members: string[] }
 
 export class ProjectionIndex {
   readonly nodes = new Map<string, ProjectionNode>();
@@ -74,8 +70,7 @@ export class ProjectionIndex {
   readonly fileByPath = new Map<string, string>();
   readonly rootId: string;
 
-  /** `groups`: per container, groups to draw some of its children in (folders arranged by name or data family). */
-  constructor(readonly runId: string, rows: EntityRow[], relations: RelationRow[], diagnostics: DiagnosticRow[], readonly comparison = false, groups?: Map<string, SpatialGroup[]>) {
+  constructor(readonly runId: string, rows: EntityRow[], relations: RelationRow[], diagnostics: DiagnosticRow[], readonly comparison = false) {
     const root = rows.find(row => row.type === 'repository' && !row.parentId);
     if (!root) throw new Error('Projection requires a repository root');
     this.rootId = root.id;
@@ -144,16 +139,7 @@ export class ProjectionIndex {
         if (bandA === 4) return (a.sourceRange?.startLine ?? 0) - (b.sourceRange?.startLine ?? 0) || compareText(a.name, b.name) || compareText(a.id, b.id);
         return compareText(a.name, b.name) || compareText(a.id, b.id);
       });
-      const arranged = groups?.get(row.id);
-      const placed = new Set<string>();
-      for (const spec of arranged ?? []) {
-        const members = new Set(spec.members);
-        const inside = structural.filter(child => members.has(child.id) && !placed.has(child.id));
-        if (!inside.length) continue;
-        const sub = group(spec.id, spec.name, node, spec.explanation);
-        for (const child of inside) { placed.add(child.id); build(child, sub); }
-      }
-      for (const child of structural) if (!placed.has(child.id)) build(child, node);
+      for (const child of structural) build(child, node);
     };
     build(root, undefined);
     // Pre/post numbering for O(1) subtree membership; aggregate stats bottom-up.

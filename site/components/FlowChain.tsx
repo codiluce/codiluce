@@ -1,21 +1,21 @@
 /**
- * One request flow from the test fixture, drawn as lanes: a pulse runs down the chain and lights each stop,
- * like a flow playing on the map. Every stop is a real entity and every link carries evidence.
+ * An example request flow drawn as lanes: a pulse runs down the chain and lights each stop, like a flow playing
+ * on the map. On the map, every link carries its evidence.
  */
 const STOPS = [
   { lane: 'Frontend', name: 'page /account', kind: 'page', via: '' },
   { lane: '', name: 'AccountPanel', kind: 'component', via: 'renders' },
   { lane: '', name: 'handleSave', kind: 'function', via: 'onClick' },
   { lane: '', name: 'AccountService.signIn()', kind: 'method', via: 'calls' },
-  { lane: 'HTTP', name: 'POST /auth/login', kind: 'request', via: 'requests · base URL from NEXT_PUBLIC_API_URL' },
-  { lane: 'Backend', name: 'AuthController::login', kind: 'endpoint', via: 'handles' },
-  { lane: '', name: 'AuthService::authenticate', kind: 'method', via: 'calls' },
+  { lane: 'HTTP', name: 'POST /auth/login', kind: 'request', via: 'requests · base URL from API_BASE_URL' },
+  { lane: 'Backend', name: 'AuthController.login', kind: 'endpoint', via: 'handles' },
+  { lane: '', name: 'AuthService.authenticate', kind: 'method', via: 'calls' },
   { lane: 'Database', name: 'users', kind: 'table', via: 'reads · model User' },
 ];
 
 export function FlowChain() {
   return (
-    <figure className="flow-card" aria-label="A flow from a Next.js page down to a Laravel table">
+    <figure className="flow-card" aria-label="A flow from a page of the interface down to a database table">
       <figcaption className="flow-head">
         <span className="flow-dot" aria-hidden="true" />
         <span>Flow</span>

@@ -1,6 +1,6 @@
-// Arrangements of the map that need no language model. Pure and deterministic.
+// Data families, without a language model. Pure and deterministic.
 //
-// Data families: the tables the migrations declare, grouped by their foreign
+// The tables the migrations declare, grouped by their foreign
 // keys, with the code that uses them. A table that many tables reference (the
 // users table, a shared dictionary) is a hub: it has a family of its own and
 // never joins the families that reference it to each other. A table named
@@ -13,19 +13,11 @@
 // of that code is in one (a style sheet follows its component); shared code
 // stays apart. Entities outside files follow their code: an endpoint its
 // handler, a command its class.
-//
-// Folder groups: the files of a large folder can be drawn in groups, by the
-// first word of their names (ImportSongs, ImportWords → "Import…") or by data
-// family, whichever puts more of them in groups of a readable number (a fixed
-// score), or as the user chose for that folder.
 import { fileResolver } from './catalog.js';
-import type { ProjectionIndex, ProjectionNode, SpatialGroup } from './hierarchy.js';
+import type { ProjectionIndex, ProjectionNode } from './hierarchy.js';
 
 /** A table with links to at least this many other tables is a hub. */
 export const HUB_DEGREE = 6;
-/** Folders with at least this many files are grouped automatically; overrides need at least `ARRANGE_MIN`. */
-export const ARRANGE_THRESHOLD = 16;
-export const ARRANGE_MIN = 6;
 /** The family of code that reaches no table. */
 export const NO_FAMILY = 'none';
 export interface DataFamily {
@@ -234,104 +226,3 @@ export function familyName(tables: string[]): string {
 }
 function title(text: string): string { return text.charAt(0).toUpperCase() + text.slice(1); }
 function compare(a: string, b: string): number { return a < b ? -1 : a > b ? 1 : 0; }
-
-// Folder groups ---------------------------------------------------------------------
-export type ArrangeKey = 'name' | 'data';
-export type ArrangeChoice = ArrangeKey | 'none';
-/** How the user arranges folders: `auto` groups every large folder as it fits best; per folder, a choice overrides it. */
-export interface ArrangeSpec { mode: 'auto' | 'off'; folders: Record<string, ArrangeChoice | 'auto'> }
-const FOLDER_ID = /^[\w:.-]{1,200}$/;
-const CHOICES = new Set(['auto', 'name', 'data', 'none']);
-/** `auto` or `off`, then `;<folder id>=<choice>` per folder (the query parameter `arrange`). */
-export function parseArrange(text: string): ArrangeSpec {
-  if (text.length > 8000) throw new Error('arrange is too long');
-  const [mode, ...items] = text.split(';');
-  if (mode !== 'auto' && mode !== 'off') throw new Error('arrange must start with auto or off');
-  const folders: ArrangeSpec['folders'] = {};
-  for (const item of items) {
-    const at = item.lastIndexOf('=');
-    const id = item.slice(0, at), choice = item.slice(at + 1);
-    if (at < 1 || !FOLDER_ID.test(id) || !CHOICES.has(choice)) throw new Error(`Invalid arrange item ${item.slice(0, 60)}`);
-    folders[id] = choice as ArrangeChoice | 'auto';
-  }
-  return { mode, folders };
-}
-/** The canonical text of a spec (choices equal to the mode's default dropped, folders sorted); undefined when nothing is grouped. */
-export function arrangeText(spec: ArrangeSpec): string | undefined {
-  const items = Object.entries(spec.folders).filter(([, choice]) => choice !== (spec.mode === 'auto' ? 'auto' : 'none')).sort((a, b) => compare(a[0], b[0]));
-  if (spec.mode === 'off' && !items.length) return undefined;
-  return [spec.mode, ...items.map(([id, choice]) => `${id}=${choice}`)].join(';');
-}
-export interface ArrangeOption {
-  key: ArrangeKey;
-  /** Groups of at least two files, largest first. */
-  groups: { value: string; name: string; files: string[] }[];
-  /** Files in those groups. */
-  grouped: number;
-  /** Higher is better; `fits` says whether Auto may choose it. */
-  score: number; fits: boolean;
-}
-export interface FolderPlan { id: string; files: number; auto: ArrangeChoice; options: ArrangeOption[] }
-/**
- * The ways a folder's files can be grouped. Auto takes the option that puts
- * the most files in groups (data families slightly preferred, as they connect
- * to the rest of the map), when at least half of the files are grouped, in two
- * groups or more, none holding more than 60% of the files.
- */
-export function planFolder(index: ProjectionIndex, families: FamilyAssignment, folder: ProjectionNode): FolderPlan | undefined {
-  const files = folder.children.map(id => index.node(id)!).filter(node => node.kind === 'entity' && node.type === 'file' && node.change?.status !== 'removed');
-  if (files.length < ARRANGE_MIN) return undefined;
-  const names = new Map(families.families.map(family => [family.key, family.name]));
-  const option = (key: ArrangeKey, valueOf: (file: ProjectionNode) => { value: string; name: string } | undefined): ArrangeOption => {
-    const byValue = new Map<string, { value: string; name: string; files: string[] }>();
-    for (const file of files) {
-      const found = valueOf(file);
-      if (!found) continue;
-      const entry = byValue.get(found.value) ?? { ...found, files: [] };
-      entry.files.push(file.id); byValue.set(found.value, entry);
-    }
-    const groups = [...byValue.values()].filter(group => group.files.length >= 2).sort((a, b) => b.files.length - a.files.length || compare(a.name.toLowerCase(), b.name.toLowerCase()));
-    const grouped = groups.reduce((sum, group) => sum + group.files.length, 0);
-    const largest = groups[0]?.files.length ?? 0;
-    const share = grouped / files.length;
-    const fits = share >= 0.5 && groups.length >= 2 && largest <= files.length * 0.6 && groups.length <= Math.max(4, Math.ceil(files.length / 3));
-    // Many small groups read less well than a few (past 8 groups, each costs a little), and one group holding most files says little.
-    const score = share - 0.02 * Math.max(0, groups.length - 8) - Math.max(0, largest / files.length - 0.35) + (key === 'data' ? 0.05 : 0);
-    return { key, groups, grouped, score: Math.round(score * 1000) / 1000, fits };
-  };
-  // A plural meets its singular when both start names here (Song, Songs).
-  const tokens = new Map(files.map(file => [file.id, nameToken(file.name)]));
-  const words = new Set([...tokens.values()].flatMap(token => token ? [token.value] : []));
-  const singular = (word: string) => word.length > 3 && word.endsWith('s') && words.has(word.slice(0, -1)) ? word.slice(0, -1) : word;
-  const byName = option('name', file => { const token = tokens.get(file.id); return token ? { value: singular(token.value), name: `${token.value === singular(token.value) ? token.label : token.label.slice(0, -1)}…` } : undefined; });
-  const byData = option('data', file => { const key = families.of.get(file.id); return key ? { value: key, name: names.get(key) ?? key } : undefined; });
-  const options = [byName, byData];
-  const fitting = options.filter(item => item.fits).sort((a, b) => b.score - a.score);
-  return { id: folder.id, files: files.length, auto: files.length >= ARRANGE_THRESHOLD && fitting[0] ? fitting[0].key : 'none', options };
-}
-/** The groups a folder is drawn with for a choice (none when the choice groups nothing). */
-export function folderGroups(index: ProjectionIndex, families: FamilyAssignment, plan: FolderPlan, key: ArrangeKey): SpatialGroup[] {
-  const option = plan.options.find(item => item.key === key)!;
-  const folder = index.node(plan.id)!;
-  const where = folder.path ?? folder.name;
-  const tables = new Map(families.families.map(family => [family.key, family.tables]));
-  return option.groups.map(group => ({
-    id: `projection:arrange:${plan.id}:${key}:${group.value}`, name: group.name,
-    explanation: key === 'name'
-      ? `Projection grouping: the files of ${where} whose names start with "${group.name.replace(/…$/, '')}". Their folder is unchanged.`
-      : `Projection grouping: the files of ${where} that use the ${group.name} data family (${tables.get(group.value)?.slice(0, 6).join(', ') ?? group.value}${(tables.get(group.value)?.length ?? 0) > 6 ? '…' : ''}), directly or through the code they use. Their folder is unchanged.`,
-    members: group.files,
-  }));
-}
-/**
- * The first word of a file name: `ImportSongs.php` → import, `use-auth.ts` →
- * use, `create_users_table` → create. Numbers (dates) are skipped. The label
- * keeps the case.
- */
-export function nameToken(fileName: string): { value: string; label: string } | undefined {
-  const base = fileName.replace(/\.[^.]+$/, '').replace(/\.(test|spec|stories|module|d)$/i, '');
-  const words = base.split(/[^A-Za-z0-9]+/).flatMap(part => part.match(/[A-Z]+(?![a-z])|[A-Z]?[a-z]+|[0-9]+/g) ?? []).filter(word => !/^\d+$/.test(word));
-  const first = words[0];
-  if (!first || first.length < 2) return undefined;
-  return { value: first.toLowerCase(), label: first };
-}

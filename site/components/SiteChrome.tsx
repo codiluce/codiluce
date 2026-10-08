@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { GITHUB_URL, ISSUES_URL, NPM_URL, VERSION } from '../lib/site';
+import { CALL_URL, GITHUB_URL, ISSUES_URL, NPM_URL, VERSION } from '../lib/site';
 import { EclipseMark, Logo } from './EclipseMark';
 
 export function GitHubIcon() {
@@ -17,9 +17,8 @@ export function SiteHeader() {
         <Link href="/" className="brand" aria-label="Codiluce home"><Logo /></Link>
         <nav className="header-nav" aria-label="Main">
           <Link href="/docs/">Docs</Link>
-          <Link href="/#roadmap" className="hide-sm">Roadmap</Link>
-          <Link href="/#contribute" className="hide-sm">Contribute</Link>
-          <a href={GITHUB_URL} className="header-github" target="_blank" rel="noreferrer">
+          <Link href="/#contribute">Contribute</Link>
+          <a href={GITHUB_URL} className="header-github" target="_blank" rel="noreferrer" aria-label="GitHub">
             <GitHubIcon /><span className="hide-xs">GitHub</span>
           </a>
         </nav>
@@ -53,10 +52,9 @@ export function SiteFooter() {
             <Link href="/docs/cli/">CLI & API</Link>
           </div>
           <div>
-            <p>More</p>
-            <Link href="/#status">Status</Link>
-            <Link href="/#roadmap">Roadmap</Link>
+            <p>Get involved</p>
             <Link href="/#contribute">Contribute</Link>
+            <a href={CALL_URL} target="_blank" rel="noreferrer">Book a call</a>
           </div>
         </nav>
       </div>

@@ -759,8 +759,8 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .family-keys button:hover { border-color: var(--panel-border); }
 .family-keys button[aria-pressed="true"] { background: var(--chip-active); border-color: var(--accent); }
 .family-keys button .count { margin-left: auto; color: var(--subtle); font-variant-numeric: tabular-nums; }
-.folder-groups .segmented { margin-bottom: 6px; }
-.folder-groups .note { margin: 0 0 6px; }
+.data-breakdown .absent { margin: 0 0 6px; }
+.data-breakdown .coverage-keys { margin-bottom: 6px; }
 .coverage-export { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 .coverage-reason { margin: 0 0 8px; font-size: 12px; line-height: 1.45; color: var(--muted); }
 .coverage-chip { display: inline-block; margin-right: 7px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 800; color: #101422; }

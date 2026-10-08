@@ -80,7 +80,6 @@ function Shell() {
   const lens = useAtlas(state => state.lens);
   const domains = useAtlas(state => state.annotations.data?.domains.length ?? 0);
   const tables = useAtlas(state => state.meta?.coverage.databaseTables ?? 0);
-  const grouped = useAtlas(state => state.arrange.mode === 'auto');
   const lenses: { id: Lens; label: string; title: string }[] = [
     { id: 'folders', label: 'Folders', title: 'By folder: the repository as it is on disk' },
     ...(tables > 0 ? [{ id: 'data' as const, label: 'Data', title: 'By data family: tables joined by foreign keys, each with the models, migrations, services, commands, endpoints and pages that use them' }] : []),
@@ -146,7 +145,6 @@ function Shell() {
               {lenses.map(item => <button key={item.id} aria-pressed={lens === item.id} onClick={() => void store.setLens(item.id)} title={item.title}>{item.label}</button>)}
             </div>
           )}
-          {lens === 'folders' && !timelineOpen && <button className="button" aria-pressed={grouped} onClick={() => void store.setArrangeMode(grouped ? 'off' : 'auto')} title="Group the files of large folders (16 files or more) by data family or by the first word of their names, whichever reads best for each folder. Choose per folder in the inspector.">Group files</button>}
           <label className="sr-only" htmlFor="theme-select">Theme</label>
           <select id="theme-select" className="select" value={themeId} onChange={event => store.setTheme(event.target.value)}>
             {THEMES.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -200,7 +198,7 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
       <div className="card" role="dialog" aria-modal="true" aria-labelledby="help-title" onClick={event => event.stopPropagation()} style={{ textAlign: 'left' }}>
         <h2 id="help-title" style={{ marginTop: 0, fontSize: 15 }}>Keyboard and pointer</h2>
         <dl className="facts">{rows.map(([key, text]) => [<dt key={`k${key}`}><kbd>{key}</kbd></dt>, <dd key={`d${key}`}>{text}</dd>])}</dl>
-        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout and never change with selection, search or filters. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing. Dragging the timeline or pressing play shows each commit at once as a time-lapse; the full view of a commit loads when you let go or pause. When comparing, the split map shows one view on each place that changed around an overview of the whole repository, where numbered frames show what each view shows. <strong>Group files</strong> draws the files of large folders in dashed groups (by data family or by name; choose per folder in the inspector), and <strong>Data</strong> arranges the whole map by data family; both keep every file in its folder and only apply to the live map.</p>
+        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout and never change with selection, search or filters. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing. Dragging the timeline or pressing play shows each commit at once as a time-lapse; the full view of a commit loads when you let go or pause. When comparing, the split map shows one view on each place that changed around an overview of the whole repository, where numbered frames show what each view shows. <strong>Data</strong> arranges the live map by data family, each file inside its family under its folder's path; a folder's inspector shows which families its files belong to.</p>
         <button ref={close} className="button" onClick={onClose}>Close</button>
       </div>
     </div>

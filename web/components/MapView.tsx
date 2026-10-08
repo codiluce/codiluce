@@ -6,6 +6,7 @@ import { LEVELS } from '../lib/lod';
 import { coverageCss, familyCss, familyHues, themeById } from '../lib/themes';
 import { COVERAGE_HINT, COVERAGE_ORDER, COVERAGE_TEXT, NOT_MEASURED } from '../lib/coverage';
 import { impactColors } from '../lib/renderer';
+import { NO_FAMILY } from '../lib/store';
 import { useAtlas, useStore } from './context';
 
 export function MapView() {
@@ -214,7 +215,11 @@ export function FamiliesLegend() {
                 </button>
               </li>
             ))}
-            <li title="Code files that use no table, directly or through the code they are connected to"><span className="type-dot" style={{ background: familyCss('none', dark) }} />No tables<span className="count">{data.without}</span></li>
+            <li>
+              <button aria-pressed={families.focus === NO_FAMILY} onClick={() => store.focusFamily(NO_FAMILY)} title="Code files that use no table, directly or through the code they are connected to">
+                <span className="type-dot" style={{ background: familyCss('none', dark) }} />No tables<span className="count">{data.without}</span>
+              </button>
+            </li>
           </ul>
           {tablesOnly > 0 && <p className="absent">{tablesOnly} more famil{tablesOnly === 1 ? 'y has' : 'ies have'} tables but no code using them.</p>}
           <p className="absent">Closed areas show their main family. Files placed through the code they use are counted with it.</p>

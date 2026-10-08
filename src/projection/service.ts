@@ -20,11 +20,11 @@ import { computeEvolution, type EvolutionJob } from './evolution.js';
 import { lineDiff } from '../history/textdiff.js';
 import { pagination, type GraphStore } from '../storage/sqlite.js';
 import type { Entity, Relation } from '../core/graph.js';
-import { extendRegistry, LAYOUT_VERSION, TIMELINE_LAYOUT_VERSION, layoutHierarchy, placeOnTimeline, timelineLayout, type LayoutResult, type LayoutState, type Rect, type SlotEntry, type TimelineLayout, type TimelineRegistry } from './layout.js';
-import { ProjectionIndex, type EntityRow, type ProjectionNode, type RelationRow, type SpatialGroup } from './hierarchy.js';
-import { arrangeText, dataFamilies, folderGroups, NO_FAMILY, parseArrange, planFolder, type ArrangeChoice, type FamilyAssignment, type FolderPlan } from './arrange.js';
+import { extendRegistry, LAYOUT_VERSION, TIMELINE_LAYOUT_VERSION, layoutHierarchy, placeOnTimeline, timelineLayout, type LayoutResult, type LayoutState, type Rect, type TimelineLayout, type TimelineRegistry } from './layout.js';
+import { ProjectionIndex, type EntityRow, type ProjectionNode, type RelationRow } from './hierarchy.js';
+import { dataFamilies, NO_FAMILY, type FamilyAssignment } from './families.js';
 import { readSnapshotFile, readSnapshotSource, snapshotRef, SourceError, splitLines, type SourceRequest, type SourceResponse } from './source.js';
-import type { AggregateResult, ChangeRegionsResult, ChangesPage, CoverageDetail, CoverageExport, CoverageExportSymbol, CoverageResult, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, FamiliesResult, FlowList, FolderArrangement, FlowSummary, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowEdge, RequestFlowList, RequestFlowNode, RequestFlowSummary, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
+import type { AggregateResult, ChangeRegionsResult, ChangesPage, CoverageDetail, CoverageExport, CoverageExportSymbol, CoverageResult, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, FamiliesResult, FlowList, FlowSummary, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowEdge, RequestFlowList, RequestFlowNode, RequestFlowSummary, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
 import { computeImpact, DEFAULT_IMPACT_DEPTH, FILE_IMPACT_TYPES, impactPath, MAX_IMPACT_SEEDS, seedsOf, SYMBOL_IMPACT_TYPES, type ImpactComputation } from './impact.js';
 import { walkSteps } from './steps.js';
 import { changeRegions, isRegionLevel } from './regions.js';
@@ -62,16 +62,10 @@ interface View {
   catalog?: { flows: { summary: FlowSummary; members: Set<string> }[]; byEntity: Map<string, number[]>; coverage?: CoverageComputation };
   /** Endpoints serving a page (lazily): Steps stop at navigation to them. */
   pages?: Set<string>;
-  /** The live map's slot state, a starting point for its arranged variants. */
-  layoutState?: LayoutState;
-  /** Views drawn another way (folders grouped, by data family): the folder view of the same index. */
+  /** Views drawn another way (by data family): the folder view of the same index. */
   base?: View;
   /** Data families (lazily; a derived view uses its base's). */
   families?: FamilyAssignment;
-  /** How each folder's files can be grouped (lazily, folder views). */
-  plans?: Map<string, FolderPlan | undefined>;
-  /** Arranged views: the folders drawn in groups, and by what. */
-  arranged?: Map<string, ArrangeChoice>;
 }
 /** Languages whose files count as code (files of other languages are placed, not counted). */
 const CODE_LANGUAGES = new Set(['typescript', 'javascript', 'php', 'vue', 'svelte']);
@@ -178,9 +172,8 @@ export class ProjectionService {
     const live = !view.snapshot && !view.compareTo;
     // The Features view: the live index drawn by domain (only once domains are described).
     if (live && view.lens === 'domains') { const lensed = this.lensView(); if (lensed) return lensed; }
-    // By data family, and the folder view with the files of large folders in groups.
+    // By data family.
     if (live && view.lens === 'data') return this.familyView();
-    if (live && !view.lens && view.arrange) { const arranged = this.arrangedView(view.arrange); if (arranged) return arranged; }
     const { target, baseline } = this.sources(view);
     // Any snapshot parameter selects the timeline layout (when history exists); none is the live, compact map.
     const historical = !!(view.snapshot || view.compareTo) && !!this.timelineBase();
@@ -211,7 +204,7 @@ export class ProjectionService {
     if (timeline) { result = placeOnTimeline(index.layoutNodes(), index.rootId, timeline.registry, timeline.layout); layoutSource = 'timeline'; }
     else if (target.info.kind === 'working_tree' && !baseline) ({ result, persisted, layoutSource } = this.liveLayout(index, target, 'layout.json'));
     else result = layoutHierarchy(index.layoutNodes(), index.rootId);
-    const built: View = { key, target, ...(baseline ? { baseline } : {}), targetData, ...(baselineData ? { baselineData } : {}), index, rects: result.rects, persisted, holes: result.holes, layoutSource, ...(diff ? { diff } : {}), addedDiagnostics, ...(!baseline && !historical ? { layoutState: result.state } : {}) };
+    const built: View = { key, target, ...(baseline ? { baseline } : {}), targetData, ...(baselineData ? { baselineData } : {}), index, rects: result.rects, persisted, holes: result.holes, layoutSource, ...(diff ? { diff } : {}), addedDiagnostics };
     return this.cacheView(built);
   }
   private cacheView(view: View): View {
@@ -219,23 +212,13 @@ export class ProjectionService {
     if (this.views.size > VIEW_CACHE) this.views.delete(this.views.keys().next().value!);
     return view;
   }
-  /**
-   * Lay out a live map, carrying its slots forward in a state file (when there
-   * is a state directory). `fallback`: slot order for the containers the file
-   * does not know yet (an arranged map starts from the folder map's places).
-   */
-  private liveLayout(index: ProjectionIndex, target: SnapshotSource, name: string, fallback?: LayoutState): { result: LayoutResult; persisted: boolean; layoutSource: View['layoutSource'] } {
+  /** Lay out a live map, carrying its slots forward in a state file (when there is a state directory). */
+  private liveLayout(index: ProjectionIndex, target: SnapshotSource, name: string): { result: LayoutResult; persisted: boolean; layoutSource: View['layoutSource'] } {
     if (!this.options.stateDirectory || target.info.kind !== 'working_tree') return { result: layoutHierarchy(index.layoutNodes(), index.rootId), persisted: false, layoutSource: 'fresh' };
     const file = path.join(this.options.stateDirectory, name);
     const run = target.info.run;
     let previous: LayoutState | undefined;
     try { const parsed = JSON.parse(readFileSync(file, 'utf8')) as LayoutState & { repositoryId?: string }; if (parsed.version === LAYOUT_VERSION && parsed.repositoryId === run.repositoryId) previous = parsed; } catch { /* first layout or unreadable state: start fresh */ }
-    if (fallback) {
-      // Children that moved into groups are not holes: their old slots are dropped.
-      const containers: Record<string, SlotEntry[]> = {};
-      for (const [id, slots] of Object.entries(fallback.containers)) { const children = new Set(index.node(id)?.children ?? []); containers[id] = slots.filter(slot => slot[3] === 1 || children.has(slot[0])); }
-      previous = { version: LAYOUT_VERSION, containers: { ...containers, ...previous?.containers } };
-    }
     const result = layoutHierarchy(index.layoutNodes(), index.rootId, previous);
     try {
       const temporary = `${file}.${process.pid}.tmp`;
@@ -320,49 +303,11 @@ export class ProjectionService {
     return built;
   }
 
-  // Data families and folder groups (projection/arrange.ts) ---------------------------
+  // Data families (projection/families.ts) ---------------------------
   /** Data families of a view's index (a derived view uses its base's). */
   private familyAssignment(current: View): FamilyAssignment {
     if (current.base) return this.familyAssignment(current.base);
     return current.families ??= dataFamilies(current.index);
-  }
-  /** How a folder of the folder view can group its files (undefined: too few files, or not a folder). */
-  private folderPlan(base: View, id: string): FolderPlan | undefined {
-    base.plans ??= new Map();
-    if (!base.plans.has(id)) {
-      const node = base.index.node(id);
-      base.plans.set(id, node?.kind === 'entity' && node.type === 'directory' ? planFolder(base.index, this.familyAssignment(base), node) : undefined);
-    }
-    return base.plans.get(id);
-  }
-  /**
-   * The live folder view with the files of large folders drawn in groups, by
-   * name or by data family: per folder as the spec chooses, or as fits best.
-   * Its slots persist apart from the folder view's, starting from its places.
-   */
-  private arrangedView(text: string): View | undefined {
-    const spec = parseArrange(text);
-    const canonical = arrangeText(spec);
-    if (!canonical) return undefined;
-    const base = this.load({});
-    const key = `${base.key}|arrange:${canonical}`;
-    const cached = this.views.get(key);
-    if (cached) return cached;
-    const families = this.familyAssignment(base);
-    const groups = new Map<string, SpatialGroup[]>(), arranged = new Map<string, ArrangeChoice>();
-    for (const node of base.index.nodes.values()) {
-      if (node.kind !== 'entity' || node.type !== 'directory') continue;
-      const wanted = spec.folders[node.id] ?? (spec.mode === 'auto' ? 'auto' : 'none');
-      const plan = wanted === 'none' ? undefined : this.folderPlan(base, node.id);
-      const choice = !plan ? 'none' : wanted === 'auto' ? plan.auto : wanted;
-      if (!plan || choice === 'none') continue;
-      const list = folderGroups(base.index, families, plan, choice);
-      if (list.length) { groups.set(node.id, list); arranged.set(node.id, choice); }
-    }
-    const data = base.targetData;
-    const index = new ProjectionIndex(base.target.info.id, data.entities, data.relations, data.diagnostics, false, groups);
-    const { result, persisted, layoutSource } = this.liveLayout(index, base.target, 'layout-grouped.json', base.layoutState);
-    return this.cacheView({ key, target: base.target, targetData: data, index, rects: result.rects, persisted, holes: result.holes, layoutSource, addedDiagnostics: new Set(), base, arranged });
   }
   /**
    * The live index by data family: repository → family → folder → file, with
@@ -423,21 +368,6 @@ export class ProjectionService {
       for (const ancestor of index.spatialAncestors(node)) { const counts = areas[ancestor.id] ??= {}; counts[key ?? NO_FAMILY] = (counts[key ?? NO_FAMILY] ?? 0) + 1; }
     }
     return { families: assignment.families, of, inferred: [...assignment.inferred].filter(id => of[id]), without, areas };
-  }
-  /** How a folder's files can be grouped on the live map, what Auto chooses, and what the view draws. */
-  arrangement(id: string, view: ViewKey = {}): FolderArrangement {
-    if (view.snapshot || view.compareTo) throw new Error('Folders are grouped on the live map only');
-    const current = this.load(view);
-    const base = this.load({});
-    const node = this.require(base, id);
-    if (node.kind !== 'entity' || node.type !== 'directory') throw new Error('Only folders group their files');
-    const plan = this.folderPlan(base, id);
-    const files = node.children.filter(child => base.index.node(child)?.type === 'file').length;
-    if (!plan) return { id, files, auto: 'none', options: [], current: 'none' };
-    return {
-      id, files, auto: plan.auto, current: current.arranged?.get(id) ?? 'none',
-      options: plan.options.map(option => ({ key: option.key, grouped: option.grouped, fits: option.fits, groups: option.groups.map(group => ({ name: group.name, files: group.files.length })) })),
-    };
   }
   /** What the models said about the repository: its overview and domains, how much was described, and the cost. */
   annotationsOverview(): AnnotationsOverview {

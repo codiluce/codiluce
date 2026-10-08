@@ -5,17 +5,17 @@ import { DocsPager } from '../../../components/DocsNav';
 export const metadata: Metadata = { title: 'Configuration', description: 'Applications, API origins, ignore patterns and the languages and frameworks Codiluce detects.' };
 
 const ECOSYSTEMS = [
-  { eco: 'node', manifests: 'package.json', frameworks: 'nextjs, nuxt, sveltekit, astro, remix, nestjs, angular, expo, react-native, electron, express, fastify, koa, hono, inertia, react, vue, svelte…' },
-  { eco: 'php', manifests: 'composer.json', frameworks: 'laravel, symfony, cakephp, yii, drupal, inertia, livewire, slim' },
-  { eco: 'python', manifests: 'pyproject.toml, requirements*.txt, Pipfile, setup.py, manage.py', frameworks: 'django, fastapi, flask, celery' },
-  { eco: 'ruby', manifests: 'Gemfile, *.gemspec', frameworks: 'rails, hanami, jekyll, sinatra, sidekiq' },
-  { eco: 'go', manifests: 'go.mod', frameworks: 'gin, echo, chi, fiber, gorilla-mux' },
-  { eco: 'rust', manifests: 'Cargo.toml', frameworks: 'axum, actix-web, rocket, warp, tauri' },
-  { eco: 'jvm', manifests: 'pom.xml, build.gradle(.kts), build.sbt', frameworks: 'spring-boot, quarkus, micronaut, ktor, android, play…' },
-  { eco: 'dotnet', manifests: '*.csproj, *.fsproj, *.vbproj', frameworks: 'aspnetcore, blazor, maui, wpf, winforms' },
-  { eco: 'swift / xcode', manifests: 'Package.swift, *.xcodeproj', frameworks: 'vapor' },
-  { eco: 'native', manifests: 'CMakeLists.txt, meson.build', frameworks: '—' },
-  { eco: 'shopify', manifests: 'layout/theme.liquid', frameworks: 'shopify-theme' },
+  { eco: 'node', manifests: 'package.json' },
+  { eco: 'php', manifests: 'composer.json' },
+  { eco: 'python', manifests: 'pyproject.toml, requirements*.txt, Pipfile, setup.py, manage.py' },
+  { eco: 'ruby', manifests: 'Gemfile, *.gemspec' },
+  { eco: 'go', manifests: 'go.mod' },
+  { eco: 'rust', manifests: 'Cargo.toml' },
+  { eco: 'jvm', manifests: 'pom.xml, build.gradle(.kts), build.sbt' },
+  { eco: 'dotnet', manifests: '*.csproj, *.fsproj, *.vbproj' },
+  { eco: 'swift / xcode', manifests: 'Package.swift, *.xcodeproj' },
+  { eco: 'native', manifests: 'CMakeLists.txt, meson.build' },
+  { eco: 'shopify', manifests: 'layout/theme.liquid' },
 ];
 
 export default function ConfigurationDocs() {
@@ -35,18 +35,19 @@ export default function ConfigurationDocs() {
       </p>
       <div className="table-wrap">
         <table>
-          <thead><tr><th>Ecosystem</th><th>Manifests</th><th>Frameworks recognized</th></tr></thead>
+          <thead><tr><th>Ecosystem</th><th>Manifests</th></tr></thead>
           <tbody>
             {ECOSYSTEMS.map(row => (
-              <tr key={row.eco}><td><code>{row.eco}</code></td><td>{row.manifests}</td><td>{row.frameworks}</td></tr>
+              <tr key={row.eco}><td><code>{row.eco}</code></td><td>{row.manifests}</td></tr>
             ))}
           </tbody>
         </table>
       </div>
       <p>
-        <strong>Next.js, Laravel and Inertia</strong> are analyzed in depth, and TypeScript and JavaScript in any application.
-        Files in other languages are named, measured and highlighted: TypeScript, JavaScript, PHP, Python, Go, Rust, Java,
-        Kotlin, Scala, C#, F#, VB.NET, Ruby, C, C++, Objective-C, Swift, Vue, Svelte, Astro, Liquid and Razor.
+        Each manifest also names the frameworks an application is built on. TypeScript and JavaScript are analyzed down to
+        calls and requests in any application, and supported frameworks down to routes, commands and tables. Every file in
+        a known language is named, measured and highlighted: TypeScript, JavaScript, PHP, Python, Go, Rust, Java, Kotlin,
+        Scala, C#, F#, VB.NET, Ruby, C, C++, Objective-C, Swift, Vue, Svelte, Astro, Liquid and Razor.
       </p>
 
       <h2 id="config" className="anchor">config.yml</h2>
@@ -60,15 +61,15 @@ export default function ConfigurationDocs() {
           'applications:',
           '  - name: frontend',
           '    path: frontend',
-          '    frameworks: [nextjs]',
+          '    frameworks: [react]',
           '  - name: backend',
           '    path: backend',
-          '    frameworks: [laravel]',
+          '    frameworks: [express]',
           '    apiOrigins:',
           '      - https://api.example.test',
           '    # Environment variables the frontend reads its API base URL from:',
           '    apiOriginEnv:',
-          '      - NEXT_PUBLIC_API_URL',
+          '      - API_BASE_URL',
           'ignore:',
           '  - "**/custom-generated/**"',
           'maxFileBytes: 1048576',
@@ -92,8 +93,7 @@ export default function ConfigurationDocs() {
       <p>
         A dynamic value may fill a whole path segment (<code>{'users/${id}'}</code> matches only a route parameter) or sit in
         the query string. Anything else, such as a forgotten <code>http://localhost:8000</code> or an undeclared variable,
-        stays an <code>unresolved-http-call</code> finding whose reason names it. Relative requests from a Laravel
-        application’s own JavaScript reach that application.
+        stays an <code>unresolved-http-call</code> finding whose reason names it.
       </p>
 
       <div className="callout">

@@ -654,8 +654,8 @@ test('the coverage export lists unreached files with their symbols, and unused s
   }
 });
 
-// --- Data families and folder groups ------------------------------------------------
-test('data families color the map, draw the "by data" view, and arrange folders on request', async () => {
+// --- Data families -------------------------------------------------------------------
+test('data families color the map, count files per folder, and draw the "by data" view', async () => {
   const projection = new ProjectionService(store, { root, stateDirectory: state });
   const families = projection.families();
   const userModel = entityId('User.php', 'file'), profileModel = entityId('Profile.php', 'file');
@@ -665,19 +665,13 @@ test('data families color the map, draw the "by data" view, and arrange folders 
   assert.equal(families.of[profileModel], families.of[entityId('profiles', 'database_table')]);
   assert.ok(families.families.some(family => family.key === users && family.tables.includes('users')));
   assert.ok(families.areas[graph.entities.find(entity => entity.type === 'repository')!.id]![users]! > 0, 'areas count their files per family');
+  assert.ok(families.areas[entityId('Models', 'directory')]![users]! > 0, 'so does every folder (the inspector\'s breakdown)');
   // By data: repository → family → folder → file; symbols stay in their files.
   const located = projection.locate(userModel, { lens: 'data' });
   assert.equal(located.spatialAncestors[1]!.id, `lens:family:${users}`);
   assert.equal(located.spatialAncestors[2]!.name, 'backend/app/Models');
   assert.ok(projection.locate(symbolId('App\\Models\\User'), { lens: 'data' }).spatialAncestors.some(item => item.id === userModel));
   assert.ok(projection.locate(entityId('users', 'database_table'), { lens: 'data' }).spatialAncestors.some(item => item.id === `lens:family:${users}`), 'tables sit in their family\'s district');
-  // Folders below the threshold are not grouped; an arranged map still holds everything.
-  const controllers = entityId('Controllers', 'directory');
-  const plan = projection.arrangement(controllers);
-  assert.equal(plan.auto, 'none');
-  assert.deepEqual(plan.options, [], 'too few files to group');
-  assert.equal(projection.meta({ arrange: 'auto' }).root.stats.files, projection.meta().root.stats.files);
-  assert.throws(() => projection.arrangement(controllers, { snapshot: 'missing' }), /live map/);
   const server = createInspectionServer(store, { root });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const address = server.address(); assert.ok(address && typeof address !== 'string');
@@ -685,10 +679,5 @@ test('data families color the map, draw the "by data" view, and arrange folders 
   try {
     assert.equal((await fetch(`${base}/api/projection/families`)).status, 200);
     assert.equal((await fetch(`${base}/api/projection?lens=data`)).status, 200);
-    assert.equal((await fetch(`${base}/api/projection?arrange=auto`)).status, 200);
-    assert.equal((await fetch(`${base}/api/projection?arrange=sideways`)).status, 400);
-    assert.equal((await fetch(`${base}/api/projection?arrange=${encodeURIComponent('auto;../x=name')}`)).status, 400);
-    assert.equal((await fetch(`${base}/api/projection/arrangement/${encodeURIComponent(controllers)}`)).status, 200);
-    assert.equal((await fetch(`${base}/api/projection/arrangement/${encodeURIComponent(userModel)}`)).status, 400, 'only folders');
   } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
 });

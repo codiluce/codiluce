@@ -86,9 +86,10 @@ export default function GettingStarted() {
 
       <div className="callout">
         <p>
-          <strong>What is analyzed in depth?</strong> Next.js (App Router), Laravel and Inertia applications, and TypeScript and
-          JavaScript in any application. Applications in other ecosystems are detected and mapped with their files,
-          languages, lines and Git metrics. See <Link href="/docs/configuration/">Configuration</Link>.
+          <strong>How deep does it go?</strong> It depends on the stack. TypeScript and JavaScript are analyzed down to
+          calls and requests in any application, and supported frameworks down to routes, commands and tables. Every other
+          ecosystem is detected and mapped with its files, languages, lines and Git metrics.
+          See <Link href="/docs/configuration/">Configuration</Link>.
         </p>
       </div>
 

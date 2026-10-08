@@ -111,18 +111,10 @@ export interface CatalogState {
 export interface CoverageState { show: boolean; status: Status; viewStamp?: string; data?: CoverageResult; error?: string }
 /** Data families drawn over the map: files colored by the tables they use; `focus` lights one family and dims the rest. */
 export interface FamiliesState { show: boolean; status: Status; viewStamp?: string; data?: FamiliesResult; error?: string; focus?: string }
-/** How a folder's files are grouped: as fits best, by name, by data family, or not. */
-export type FolderChoice = 'auto' | 'name' | 'data' | 'none';
-/** How the live folder map groups the files of large folders: `auto` groups each as fits it best; a folder's own choice overrides. */
-export interface ArrangeState { mode: 'auto' | 'off'; folders: Record<string, FolderChoice> }
+/** The key under which areas count code files that use no table (`focus` can light them too). */
+export const NO_FAMILY = 'none';
 /** How the live map is arranged: by folder (the canonical tree), by data family, or by domain (the Features view). */
 export type Lens = 'folders' | 'data' | 'domains';
-/** The `arrange` view parameter: the mode, then each folder whose choice differs from it (sorted); undefined when nothing is grouped. */
-export function arrangeParam(arrange: ArrangeState): string | undefined {
-  const items = Object.entries(arrange.folders).filter(([, choice]) => choice !== (arrange.mode === 'auto' ? 'auto' : 'none')).sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
-  if (arrange.mode === 'off' && !items.length) return undefined;
-  return [arrange.mode, ...items.map(([id, choice]) => `${id}=${choice}`)].join(';');
-}
 /**
  * A flow shown on the map: everything it touches stays lit, the rest dims;
  * it plays branch by branch (`playback.index` is the branch), the pulse
@@ -165,7 +157,6 @@ export interface AtlasState {
   /** The repository's overview, domains and model notes, when `annotate` has run. */
   annotations: { status: Status; data?: AnnotationsOverview; error?: string };
   lens: Lens;
-  arrange: ArrangeState;
   families: FamiliesState;
 }
 export interface MapNavigator {
@@ -247,7 +238,7 @@ export class AtlasStore {
   private pendingFocus?: { node: NodeSummary; frame?: Rect };
 
   constructor(readonly api: AtlasApi, private readonly options: StoreOptions = {}) {
-    let prefs: { themeId?: string; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; arrange?: ArrangeState } = {};
+    let prefs: { themeId?: string; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel } = {};
     try { prefs = JSON.parse(options.storage?.getItem('codiluce:prefs') ?? '{}'); } catch { /* defaults */ }
     this.state = {
       status: 'loading', view: { level: 'Applications', focus: [], zoom: 1, visible: [], truncated: false },
@@ -255,7 +246,6 @@ export class AtlasStore {
       history: { entries: [], index: -1 }, showDiagnostics: prefs.showDiagnostics ?? true, themeId: prefs.themeId ?? 'midnight',
       staleIndex: false, sceneRevision: 0,
       impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '' }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, lens: 'folders', families: { show: false, status: 'idle' },
-      arrange: prefs.arrange?.mode === 'auto' || prefs.arrange?.mode === 'off' ? { mode: prefs.arrange.mode, folders: { ...prefs.arrange.folders } } : { mode: 'off', folders: {} },
       timeline: { open: false, status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true, split: prefs.split ?? true, regionLevel: prefs.regionLevel ?? 'auto', regions: { status: 'idle' } },
     };
   }
@@ -274,7 +264,7 @@ export class AtlasStore {
   }
   private bumpScene(): void { this.set(state => ({ sceneRevision: state.sceneRevision + 1 })); }
   private savePrefs(): void {
-    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, arrange: this.state.arrange })); } catch { /* preferences are optional */ }
+    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel })); } catch { /* preferences are optional */ }
   }
   dispose(): void { this.disposed = true; for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
 
@@ -438,28 +428,6 @@ export class AtlasStore {
     await this.applyView(this.state.selection?.id, false);
     this.navigator?.fitAll();
   }
-  /** Group the files of every large folder as fits each (`auto`), or only those given a choice (`off`). */
-  async setArrangeMode(mode: ArrangeState['mode']): Promise<void> {
-    if (mode !== this.state.arrange.mode) await this.changeArrangement({ ...this.state.arrange, mode });
-  }
-  /** One folder's own grouping; the map then shows that folder. */
-  async setFolderArrangement(id: string, choice: FolderChoice): Promise<void> {
-    const folders = { ...this.state.arrange.folders };
-    if (choice === (this.state.arrange.mode === 'auto' ? 'auto' : 'none')) delete folders[id]; else folders[id] = choice;
-    await this.changeArrangement({ ...this.state.arrange, folders }, id);
-  }
-  private async changeArrangement(arrange: ArrangeState, folder?: string): Promise<void> {
-    const before = arrangeParam(this.state.arrange);
-    this.set({ arrange }); this.savePrefs();
-    if (arrangeParam(arrange) === before || this.state.timeline.open || this.state.lens !== 'folders') return;
-    // Groups exist in one arrangement only: their selection does not carry over.
-    const selected = this.state.selection?.id;
-    if (selected?.startsWith('projection:arrange:')) this.clearSelection();
-    if (folder) { await this.applyView(folder, true); return; }
-    this.scene = new Scene();
-    await this.applyView(this.state.selection?.id, false);
-    this.navigator?.fitAll();
-  }
   private async loadSelectionCoverage(id: string, signal: AbortSignal): Promise<void> {
     this.set(state => state.selection?.id === id ? { selection: { ...state.selection, coverage: { status: 'loading' } } } : {});
     try {
@@ -583,11 +551,7 @@ export class AtlasStore {
   /** The snapshot/baseline pair every request reads. */
   viewKey(): ViewKey {
     const timeline = this.state.timeline;
-    if (!timeline.open) {
-      if (this.state.lens !== 'folders') return { lens: this.state.lens };
-      const arrange = arrangeParam(this.state.arrange);
-      return arrange ? { arrange } : {};
-    }
+    if (!timeline.open) return this.state.lens !== 'folders' ? { lens: this.state.lens } : {};
     // The live index is named explicitly in history mode, so it is drawn on the timeline layout like every commit.
     const snapshot = timeline.target ?? timeline.data?.workingTree?.id;
     return { ...(snapshot ? { snapshot } : {}), ...(timeline.compare && timeline.baseline ? { compareTo: timeline.baseline } : {}) };
@@ -872,7 +836,7 @@ export class AtlasStore {
 
   // Blast radius and steps ----------------------------------------------------
   /** Identity of the current view, to tell whether loaded results still belong to it. */
-  viewStamp(): string { const meta = this.state.meta; return `${meta?.snapshot.id ?? ''}|${meta?.comparison?.baseline.id ?? ''}|${this.state.timeline.open ? 'folders' : this.state.lens === 'folders' ? `folders:${arrangeParam(this.state.arrange) ?? ''}` : this.state.lens}`; }
+  viewStamp(): string { const meta = this.state.meta; return `${meta?.snapshot.id ?? ''}|${meta?.comparison?.baseline.id ?? ''}|${this.state.timeline.open ? 'folders' : this.state.lens}`; }
   /** Show what depends on an entity (the selection by default); it then follows the selection. */
   async showImpact(id = this.state.selection?.id, depth = this.state.impact.depth): Promise<void> {
     if (!id) return;
@@ -1083,6 +1047,12 @@ export class AtlasStore {
     this.set(state => ({ families: { ...state.families, show, ...(show ? {} : { focus: undefined }) }, ...(show && state.coverage.show ? { coverage: { ...state.coverage, show: false } } : {}) }));
     if (show && (this.state.families.status !== 'ready' || this.state.families.viewStamp !== this.viewStamp())) await this.loadFamilies();
   }
+  /** Families of the current view, loaded when they are not yet (the inspector reads them without coloring the map). */
+  async ensureFamilies(): Promise<void> {
+    const families = this.state.families;
+    if (families.status === 'loading' || (families.status === 'ready' && families.viewStamp === this.viewStamp())) return;
+    await this.loadFamilies();
+  }
   async loadFamilies(): Promise<void> {
     const signal = this.abortable('families');
     const viewStamp = this.viewStamp();
@@ -1091,7 +1061,7 @@ export class AtlasStore {
       const data = await this.api.families(signal);
       if (signal.aborted) return;
       // A family that no longer exists in this view is no longer lit.
-      this.set(state => ({ families: { ...state.families, status: 'ready', data, viewStamp, ...(state.families.focus && !data.families.some(family => family.key === state.families.focus) ? { focus: undefined } : {}) } }));
+      this.set(state => ({ families: { ...state.families, status: 'ready', data, viewStamp, ...(state.families.focus && state.families.focus !== NO_FAMILY && !data.families.some(family => family.key === state.families.focus) ? { focus: undefined } : {}) } }));
     } catch (error) { if (!isAbort(error)) this.set(state => ({ families: { ...state.families, status: 'error', error: error instanceof Error ? error.message : String(error) } })); }
   }
   /** Light one family on the map (again: none); the colors are shown if they were not. */

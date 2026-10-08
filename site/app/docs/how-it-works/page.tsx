@@ -8,9 +8,8 @@ export const metadata: Metadata = { title: 'How it works', description: 'The ana
 const PIPELINE = [
   { step: 'Filesystem', text: 'The tree of applications, folders and files, with language, lines, bytes and content hashes.' },
   { step: 'Git metrics', text: 'Commits, authors, churn and last change per file, from one bounded git log.' },
-  { step: 'TypeScript & Next.js', text: 'One type-checked program per application: imports, components, functions, calls, renders, references, App Router routes and handlers, HTTP requests.' },
-  { step: 'PHP & Laravel', text: 'Namespaces, classes, methods and inheritance; route files; Artisan commands and schedules; migrations replayed into tables; Eloquent models; reads and writes.' },
-  { step: 'Inertia', text: 'Visits, forms and links as requests; rendered pages linked to their components.' },
+  { step: 'TypeScript & JavaScript', text: 'One type-checked program per application: imports, components, functions, calls, renders, references, file-based routes and handlers, HTTP requests.' },
+  { step: 'Frameworks', text: 'Classes, methods and inheritance; routes; commands and schedules; migrations replayed into tables; models with their reads and writes; server-driven pages linked to their components.' },
   { step: 'API matcher', text: 'Frontend requests matched to endpoints, with ambiguity, origin, shadowing and constraint checks.' },
 ];
 
@@ -74,9 +73,9 @@ export default function HowItWorks() {
       <ul>
         <li>No runtime behavior: tables are what migrations declare, not the live database.</li>
         <li>Calls through callbacks, props, untyped values and interface dispatch stay unresolved and are counted.</li>
-        <li>Laravel middleware is drawn by name, not followed; events, listeners, observers, notifications and Eloquent relationships are not linked yet.</li>
+        <li>Middleware is drawn by name, not followed; events, listeners, observers, notifications and ORM relationships are not linked yet.</li>
         <li>Routes registered inside arbitrary service providers or conditions cannot be proven statically.</li>
-        <li>Other ecosystems are detected and mapped, but their calls are not analyzed yet. See the <Link href="/#roadmap">roadmap</Link>.</li>
+        <li>Many ecosystems are detected and mapped, but their calls are not analyzed yet. <Link href="/#contribute">Tell us which one you need</Link>.</li>
       </ul>
       <p>
         The full architecture document is in the repository: <a href={`${GITHUB_URL}/blob/main/docs/architecture-visualizer.md`} target="_blank" rel="noreferrer">docs/architecture-visualizer.md</a>.

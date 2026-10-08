@@ -1,7 +1,9 @@
 export const GITHUB_URL = 'https://github.com/ojoven/codiluce';
 export const ISSUES_URL = `${GITHUB_URL}/issues`;
 export const NPM_URL = 'https://www.npmjs.com/package/codiluce';
-export const VERSION = '0.1.0';
+export const CALL_URL = 'https://calendly.com/mikeltorresugarte-ynlf/30min';
+export const GA_ID = 'G-M9ZTKE5NLC';
+export const VERSION = '0.1.1';
 
 export const INSTALL = {
   npx: ['npx codiluce@latest start .'],

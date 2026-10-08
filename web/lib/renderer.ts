@@ -100,8 +100,8 @@ export class MapRenderer {
     const familyOf = state.families ? this.familyResolver(scene, state.families) : undefined;
     const familyLit = state.families?.focus ? this.familyLit(scene, state.families, familyOf!) : undefined;
     for (const item of items) {
-      // Outside the family in focus: receding like what a selection does not reach.
-      const dimmed = (flowSet && !flowSet.has(item.node.id)) || (!flowSet && emphasis && !emphasis.has(item.node.id)) || (!flowSet && !emphasis && !!familyLit && !familyLit(item.node));
+      // A playing flow decides what stays lit; then the family in focus (chosen on purpose, it wins over the selection); then what the selection reaches.
+      const dimmed = flowSet ? !flowSet.has(item.node.id) : familyLit ? !familyLit(item.node) : !!emphasis && !emphasis.has(item.node.id);
       // In a comparison, blocks a change reaches stay lit instead of fading with the unchanged ones.
       const reached = impactLit?.has(item.node.id) && item.node.change?.status !== 'removed';
       const alpha = item.alpha * (dimmed ? (flowSet ? theme.flow.dimAlpha : theme.dimAlpha) : 1) * (state.comparison && !reached ? this.changeAlpha(item, state.comparison) : 1) * (state.impact?.dimOthers && !reached ? theme.dimAlpha : 1);
@@ -741,7 +741,7 @@ export class MapRenderer {
     const focus = families.focus;
     if (!total || (focus && !counts[focus])) return;
     const ranked = Object.entries(counts).filter(([key]) => key !== 'none').sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
-    const name = (key: string) => families.names.get(key) ?? key;
+    const name = (key: string) => key === 'none' ? 'No tables' : families.names.get(key) ?? key;
     const text = focus ? `${name(focus)} · ${counts[focus]} file${counts[focus] === 1 ? '' : 's'}` : ranked[0] ? `${name(ranked[0][0])} ${Math.round((ranked[0][1] / total) * 100)}%` : 'No tables';
     const { x, y, w, h } = item.node.rect;
     const anchor = worldToScreen(camera, viewport, x + w * 0.5, y + h - Math.min(h, w) * 0.12, item.zTop);

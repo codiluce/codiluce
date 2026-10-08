@@ -12,8 +12,8 @@ export default function MapDocs() {
       <p className="eyebrow">Docs</p>
       <h1>Using the map</h1>
       <p className="lede">
-        The map draws the repository as an isometric city: applications, folders, files and symbols nested inside each
-        other, each sized by its code.
+        The map draws the repository in isometric 3D: applications, folders, files and symbols nested inside each other,
+        each sized by its code.
       </p>
 
       <h2 id="zoom" className="anchor">Zoom levels</h2>
@@ -25,8 +25,8 @@ export default function MapDocs() {
       </p>
       <p>
         Routes and endpoints are drawn in a <strong>Routes &amp; endpoints</strong> district inside their application,
-        Artisan commands and scheduled tasks in a <strong>Console</strong> district, and Laravel tables in
-        a <strong>Database</strong> district.
+        commands and scheduled tasks in a <strong>Console</strong> district, and tables in a <strong>Database</strong>
+        district.
       </p>
       <p>
         The layout comes from the server and is deterministic. Selecting, searching or filtering never moves anything, and
@@ -59,9 +59,9 @@ export default function MapDocs() {
         <strong>Flows</strong> in the header is one list of every flow the index can follow, filtered by where it starts:
       </p>
       <ul>
-        <li><strong>Pages</strong>: a Next.js page, or an endpoint that serves an Inertia page. Its flow is what it renders, the requests it makes and what they reach, down to the tables.</li>
+        <li><strong>Pages</strong>: a page of the interface, or an endpoint that serves one. Its flow is what it renders, the requests it makes and what they reach, down to the tables.</li>
         <li><strong>Requests</strong>: one per endpoint, plus requests that no endpoint answers, with their completeness: <em>complete</em>, <em>partial</em>, <em>no caller</em> or <em>unmatched</em>.</li>
-        <li><strong>Console</strong>: Artisan commands, with what runs them, and scheduled tasks with their cadence.</li>
+        <li><strong>Console</strong>: commands, with what runs them, and scheduled tasks with their cadence.</li>
       </ul>
       <p>
         Choose a flow and it plays <strong>on the map</strong>: what it touches stays lit, the rest dims, and a pulse runs
@@ -103,7 +103,7 @@ export default function MapDocs() {
       </p>
       <ul>
         <li><strong>▦</strong> in the map controls colors files, endpoints, commands and tables by family.</li>
-        <li><strong>Group files</strong> draws the files of large folders in groups, by data family or by the first word of their names.</li>
+        <li>The inspector of a folder shows <strong>Data in this folder</strong>: its files per family. Select one to light its files on the map.</li>
         <li><strong>Data</strong>, beside <strong>Folders</strong>, arranges the whole map by family.</li>
       </ul>
 

@@ -13,7 +13,7 @@ async function idOf(page: Page, query: string, type: string): Promise<string> {
 }
 
 for (const empty of [true, false]) {
-  test(`${empty ? 'empty' : 'populated'} Flows stays responsive through coverage, grouping and history`, async ({ page }) => {
+  test(`${empty ? 'empty' : 'populated'} Flows stays responsive through coverage, the Data view and history`, async ({ page }) => {
     if (empty) await page.route('**/api/projection/flows*', route => route.fulfill({ json: { items: [], counts: { page: 0, request: 0, command: 0, schedule: 0, unmatched: 0 } } }));
     await open(page);
     await page.getByRole('button', { name: 'Flows', exact: true }).click();
@@ -22,8 +22,8 @@ for (const empty of [true, false]) {
     await expect(loaded).toBeVisible();
     await page.getByRole('button', { name: 'Coverage', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Coverage lens' })).toBeVisible();
-    await page.getByRole('button', { name: 'Group files', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Group files', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('button', { name: 'Data', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Data', exact: true })).toHaveAttribute('aria-pressed', 'true');
     await expect(loaded).toBeVisible();
     await page.getByRole('button', { name: 'History', exact: true }).click();
     await expect(page.getByRole('region', { name: 'History' })).toContainText('No history indexed yet.');

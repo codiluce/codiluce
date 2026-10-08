@@ -4,7 +4,7 @@
 import type { Entity, Relation } from '@engine/core/graph';
 import type { EvolutionResponse } from '@engine/projection/dto';
 import type { AnnotationsOverview, EntityAnnotation } from '@engine/projection/dto';
-import type { AggregateEdgesPage, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageExport, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FamiliesResult, FlowList, FolderArrangement, ImpactResult, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
+import type { AggregateEdgesPage, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageExport, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FamiliesResult, FlowList, ImpactResult, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
 
 export class ApiError extends Error { constructor(readonly status: number, message: string, readonly body?: unknown) { super(message); } }
 export function isAbort(error: unknown): boolean { return error instanceof DOMException && error.name === 'AbortError' || (error instanceof Error && error.name === 'AbortError'); }
@@ -60,8 +60,6 @@ export interface AtlasApi {
   entityAnnotation(id: string, signal?: AbortSignal): Promise<EntityAnnotation>;
   /** Data families: tables joined by foreign keys, and the code using them (per file and per area). */
   families(signal?: AbortSignal): Promise<FamiliesResult>;
-  /** How a folder's files can be grouped on the live map, and how the view groups them. */
-  arrangement(id: string, signal?: AbortSignal): Promise<FolderArrangement>;
   clear(): void;
 }
 export interface ImpactOptions { depth?: number; type?: string; distance?: number; offset?: number; limit?: number }
@@ -80,7 +78,6 @@ export class HttpAtlasApi implements AtlasApi {
     if (this.view.snapshot) search.set('snapshot', this.view.snapshot);
     if (this.view.compareTo) search.set('compareTo', this.view.compareTo);
     if (this.view.lens) search.set('lens', this.view.lens);
-    if (this.view.arrange) search.set('arrange', this.view.arrange);
     const text = search.toString();
     return text ? `?${text}` : '';
   }
@@ -145,7 +142,6 @@ export class HttpAtlasApi implements AtlasApi {
   annotations(signal?: AbortSignal) { return this.get<AnnotationsOverview>('/api/annotations', signal, false); }
   entityAnnotation(id: string, signal?: AbortSignal) { return this.get<EntityAnnotation>(`/api/annotations/entity/${encodeURIComponent(id)}${this.q()}`, signal); }
   families(signal?: AbortSignal) { return this.get<FamiliesResult>(`/api/projection/families${this.q()}`, signal); }
-  arrangement(id: string, signal?: AbortSignal) { return this.get<FolderArrangement>(`/api/projection/arrangement/${encodeURIComponent(id)}${this.q()}`, signal); }
   async requestIndex(sha: string) {
     const response = await this.fetcher(`${this.base}/api/history/index`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Codiluce-Request': 'index' }, body: JSON.stringify({ sha }) });
     const body = await response.json().catch(() => ({})) as { error?: string; queued?: boolean; position?: number };

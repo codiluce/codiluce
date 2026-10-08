@@ -1,10 +1,10 @@
-// Arrangements without a language model (projection/arrange.ts): data families
-// from foreign keys and table access, files placed through the code they use,
-// and the groups a large folder's files are drawn in.
+// Data families without a language model (projection/families.ts): tables
+// joined by foreign keys and names, and files placed by the tables they use or
+// through the code they use.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ProjectionIndex, type EntityRow, type RelationRow } from '../src/projection/hierarchy.js';
-import { ARRANGE_THRESHOLD, arrangeText, dataFamilies, familyName, folderGroups, nameToken, parseArrange, planFolder } from '../src/projection/arrange.js';
+import { dataFamilies, familyName } from '../src/projection/families.js';
 
 /** A small Laravel-like repository: tables with foreign keys, models, services, commands, a page and shared code. */
 function repository() {
@@ -79,65 +79,4 @@ test('data families: files follow their tables, then the code they use or that u
   assert.equal(families.of.get('Mixer'), undefined, 'code using two families equally belongs to neither');
   assert.equal(families.of.get('Str'), undefined, 'a helper whose users disagree belongs to none');
   assert.equal(families.families[0]!.key, songs, 'most files first');
-});
-
-/** A folder of `names` files; `tables` gives each file the table it writes. */
-function folder(names: string[], tables: (string | undefined)[] = []) {
-  const rows: EntityRow[] = [{ id: 'r', type: 'repository', name: 'r' }, { id: 'app', type: 'application', name: 'app', parentId: 'r' }, { id: 'd', type: 'directory', name: 'Commands', path: 'app/Commands', parentId: 'app' }, { id: 'd/sub', type: 'directory', name: 'Sub', path: 'app/Commands/Sub', parentId: 'd' }];
-  const relations: RelationRow[] = [];
-  for (const table of new Set(tables)) if (table) rows.push({ id: `t:${table}`, type: 'database_table', name: table, parentId: 'app' });
-  names.forEach((name, i) => {
-    rows.push({ id: `f${i}`, type: 'file', name, path: `app/Commands/${name}`, language: 'php', parentId: 'd' });
-    if (tables[i]) relations.push({ id: `w${i}`, from: `f${i}`, to: `t:${tables[i]}`, type: 'writes' });
-  });
-  const index = new ProjectionIndex('run', rows, relations, []);
-  const families = dataFamilies(index);
-  return { index, families, plan: planFolder(index, families, index.node('d')!) };
-}
-const resources = ['Songs', 'Videos', 'Lessons', 'Tasks'];
-test('folder groups: Auto takes the option grouping more files, data first; names when there is no data; none when nothing groups well', () => {
-  const verbs = ['Import', 'Parse', 'Sync', 'Clean'];
-  const names = verbs.flatMap(verb => resources.map(resource => `${verb}${resource}.php`));
-  const both = folder(names, verbs.flatMap(() => resources.map(resource => resource.toLowerCase())));
-  assert.equal(both.plan!.files, 16);
-  assert.equal(both.plan!.auto, 'data', 'four groups of four either way: data families are preferred');
-  assert.deepEqual(both.plan!.options.find(option => option.key === 'name')!.groups.map(group => group.name).sort(), ['Clean…', 'Import…', 'Parse…', 'Sync…']);
-  const named = folder(names);
-  assert.equal(named.plan!.auto, 'name', 'no tables: by name');
-  const distinct = folder(Array.from({ length: ARRANGE_THRESHOLD }, (_, i) => `${String.fromCharCode(65 + i)}${'xyz'[i % 3]}Controller.php`));
-  assert.equal(distinct.plan!.auto, 'none', 'one file per name: no grouping reads well');
-  const dated = folder(Array.from({ length: ARRANGE_THRESHOLD }, (_, i) => `2026_01_${String(i).padStart(2, '0')}_create_t${i}_table.php`));
-  assert.equal(dated.plan!.options.find(option => option.key === 'name')!.fits, false, 'dates are skipped, and one group holding every file does not fit');
-  const small = folder(names.slice(0, 8), verbs.flatMap(() => resources.map(resource => resource.toLowerCase())).slice(0, 8));
-  assert.equal(small.plan!.auto, 'none', 'below the threshold Auto leaves the folder alone');
-  assert.ok(small.plan!.options.some(option => option.fits), 'but a choice can still group it');
-  assert.equal(folder(names.slice(0, 5)).plan, undefined, 'too few files to group at all');
-});
-test('folder groups are drawn inside the folder; files keep their folder as canonical parent', () => {
-  const verbs = ['Import', 'Parse', 'Sync', 'Clean'];
-  const { index, families, plan } = folder(verbs.flatMap(verb => resources.map(resource => `${verb}${resource}.php`)), verbs.flatMap(() => resources.map(resource => resource.toLowerCase())));
-  const groups = folderGroups(index, families, plan!, 'name');
-  const arranged = new ProjectionIndex('run', [...index.nodes.values()].filter(node => node.kind === 'entity').map(node => ({ id: node.id, type: node.type, name: node.name, ...(node.path ? { path: node.path } : {}), ...(node.canonicalParentId ? { parentId: node.canonicalParentId } : {}) })), [], [], false, new Map([['d', groups]]));
-  const group = arranged.node(groups[0]!.id)!;
-  assert.equal(group.kind, 'group');
-  assert.equal(group.spatialParentId, 'd');
-  assert.equal(group.children.length, 4);
-  const member = arranged.node(group.children[0]!)!;
-  assert.equal(member.canonicalParentId, 'd', 'containment is unchanged');
-  assert.equal(member.spatialParentId, group.id);
-  assert.ok(arranged.node('d')!.children.includes('d/sub'), 'subfolders stay beside the groups');
-  assert.match(group.explanation!, /whose names start with/);
-});
-test('arrange specs are validated and canonical', () => {
-  assert.equal(arrangeText(parseArrange('auto')), 'auto');
-  assert.equal(arrangeText(parseArrange('off')), undefined, 'nothing to group');
-  assert.equal(arrangeText(parseArrange('auto;directory:b=none;directory:a=name;directory:c=auto')), 'auto;directory:a=name;directory:b=none', 'sorted, defaults dropped');
-  assert.equal(arrangeText(parseArrange('off;directory:a=none;directory:b=data')), 'off;directory:b=data');
-  assert.throws(() => parseArrange('always'));
-  assert.throws(() => parseArrange('auto;directory:a=sideways'));
-  assert.throws(() => parseArrange('auto;../etc=name'));
-  assert.deepEqual(nameToken('ImportSongs.php'), { value: 'import', label: 'Import' });
-  assert.deepEqual(nameToken('use-auth.test.ts'), { value: 'use', label: 'use' });
-  assert.equal(nameToken('2026_01_01_000000_create_users_table.php')!.value, 'create');
-  assert.equal(nameToken('x.ts'), undefined);
 });
