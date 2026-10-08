@@ -3,9 +3,9 @@ import { hasFramework } from '../core/config.js';
 import { ANALYZER_VERSION, evidence, type Entity, type Evidence } from '../core/graph.js';
 import { compileIndexedPath, matchIndexedPath, requestPathSegments } from '../analysis/routes/pattern.js';
 import { routingContract, matchRoutePattern } from '../analysis/routes/contracts.js';
-import { configuredProxy, proxyPath, relativeApiBoundary } from '../analysis/routes/boundaries.js';
+import { configuredProxy, proxyPath, relativeApiBoundary, requestApplication } from '../analysis/routes/boundaries.js';
 export const apiMatcher: Analyzer = {
-  name: 'api-matcher', version: `${ANALYZER_VERSION}:2`,
+  name: 'api-matcher', version: `${ANALYZER_VERSION}:3`,
   async analyze(context: AnalysisContext): Promise<void> {
     const endpoints = [...context.graph.entities.values()].filter(entity => entity.type === 'api_endpoint');
     const appsById = new Map(context.config.applications.map(app => [context.applicationIds.get(app.name), app]));
@@ -39,7 +39,7 @@ export const apiMatcher: Analyzer = {
         else if (/^https?:\/\//.test(observation.url)) { const url = new URL(observation.url); pathname = url.pathname; origin = url.origin; }
         else throw new Error('Relative URLs without a leading slash require browser/base URL context');
       } catch (error) { context.graph.diagnose({ analyzer: 'api-matcher', severity: 'warning', code: 'unresolved-http-url', entityId: observation.callerId, file: observation.evidence.file, line: observation.evidence.line, reason: error instanceof Error ? error.message : String(error) }); continue; }
-      const callerApp = context.files.get(observation.evidence.file!)?.application;
+      const callerApp = requestApplication(context, observation);
       const key = JSON.stringify([observation.method, origin, callerApp?.name]);
       let eligible = literalEligible.get(key);
       if (!eligible) {
@@ -82,7 +82,7 @@ export const apiMatcher: Analyzer = {
     }
     /** A URL whose base was proven (configured origin or declared environment variable), possibly with template holes. */
     function matchResolved(observation: HttpObservation, resolved: NonNullable<HttpObservation['resolved']>): void {
-      const callerApp = context.files.get(observation.evidence.file!)?.application;
+      const callerApp = requestApplication(context, observation);
       const diagnose = (code: string, reason: string) => context.graph.diagnose({ analyzer: 'api-matcher', severity: 'warning', code, entityId: observation.callerId, file: observation.evidence.file, line: observation.evidence.line, reason });
       const key = JSON.stringify([observation.method, resolved.app, callerApp?.name]);
       let eligible = resolvedEligible.get(key);

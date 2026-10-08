@@ -143,9 +143,12 @@ try {
   await writeFile(path.join(djangoServer, 'handlers.py'), 'from django.views import View\nfrom django.views.decorators.http import require_GET\ndef PackagedDjangoLeaf():\n    return "ok"\n@require_GET\ndef PackagedDjangoHandler(request, id):\n    return PackagedDjangoLeaf()\nclass PackagedDjangoView(View):\n    def get(self, request):\n        return PackagedDjangoLeaf()\n');
   const embeddedUi = path.join(repo, 'embedded-ui');
   await mkdir(embeddedUi);
-  await writeFile(path.join(embeddedUi, 'package.json'), JSON.stringify({ dependencies: { vue: '^3.5.0', svelte: '^5.0.0', astro: '^5.0.0' } }));
+  await writeFile(path.join(embeddedUi, 'package.json'), JSON.stringify({ dependencies: { vue: '^3.5.0', 'vue-router': '^5.3.1', svelte: '^5.0.0', astro: '^5.0.0' } }));
   await writeFile(path.join(embeddedUi, 'helper.ts'), 'export function PackagedEmbeddedLeaf() { return 1; }');
-  await writeFile(path.join(embeddedUi, 'Widget.vue'), '<template><span/></template>\n<script setup lang="ts">import { PackagedEmbeddedLeaf } from "./helper";\nfunction PackagedVueSave() { return PackagedEmbeddedLeaf(); }\n</script>');
+  await writeFile(path.join(embeddedUi, 'Widget.vue'), '<template><PackagedChild/><button @click="PackagedVueSave"/></template>\n<script setup lang="ts">import PackagedChild from "./PackagedChild.vue"; import { PackagedEmbeddedLeaf } from "./helper";\nfunction PackagedVueSave() { return PackagedEmbeddedLeaf(); }\n</script>');
+  await writeFile(path.join(embeddedUi, 'PackagedChild.vue'), '<template><span/></template>');
+  await writeFile(path.join(embeddedUi, 'main.ts'), 'import {createApp} from "vue"; import Widget from "./Widget.vue"; import router from "./router"; createApp(Widget).use(router);');
+  await writeFile(path.join(embeddedUi, 'router.ts'), 'import {createRouter,createWebHistory} from "vue-router"; export default createRouter({history:createWebHistory(),routes:[{path:"/package-vue",children:[{path:"page",component:()=>import("./Widget.vue")}]}]});');
   await writeFile(path.join(embeddedUi, 'Counter.svelte'), '<script module lang="ts">import { PackagedEmbeddedLeaf } from "./helper";\nexport function PackagedSvelteShared() { return PackagedEmbeddedLeaf(); }\n</script>');
   await writeFile(path.join(embeddedUi, 'Page.astro'), '---\nimport { PackagedEmbeddedLeaf } from "./helper";\nfunction PackagedAstroLoad() { return PackagedEmbeddedLeaf(); }\n---\n<script>import { PackagedEmbeddedLeaf } from "./helper";\nfunction PackagedAstroClick() { return PackagedEmbeddedLeaf(); }\n</script>');
   await writeFile(path.join(embeddedUi, 'consumer.ts'), 'import { PackagedSvelteShared } from "./Counter.svelte"; export function PackagedSvelteConsumer() { return PackagedSvelteShared(); }');
@@ -244,6 +247,17 @@ try {
   const svelteConsumer = embeddedSymbols.find(entity => entity.name === 'PackagedSvelteConsumer'), svelteShared = embeddedSymbols.find(entity => entity.name === 'PackagedSvelteShared');
   assert.ok(svelteConsumer && svelteShared);
   assert.ok(JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', svelteConsumer.id, '--type', 'calls'], repo)).stdout).items.some(edge => edge.to === svelteShared.id), 'installed component facade retains exact public module exports');
+  const vueRoutes = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--type', 'route', '--search', '/package-vue'], repo)).stdout).items;
+  const vuePage = vueRoutes.find(entity => entity.name === '/package-vue/page'); assert.ok(vuePage, 'installed Vue Router pack expands the nested lazy route');
+  const vueTargets = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', vuePage.id, '--type', 'routes_to'], repo)).stdout).items;
+  const vueEntities = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--type', 'component'], repo)).stdout).items;
+  const vueWidget = vueEntities.find(entity => entity.path === 'embedded-ui/Widget.vue'), vueChild = vueEntities.find(entity => entity.path === 'embedded-ui/PackagedChild.vue'); assert.ok(vueWidget && vueChild);
+  assert.ok(vueTargets.some(edge => edge.to === vueWidget.id));
+  assert.ok(JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', vueWidget.id, '--type', 'renders'], repo)).stdout).items.some(edge => edge.to === vueChild.id), 'installed Vue template pack resolves its component');
+  const eventEdges = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', vueWidget.id, '--type', 'references'], repo)).stdout).items;
+  const event = eventEdges.find(edge => edge.metadata?.events?.includes('click')); assert.ok(event);
+  const eventDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', event.to], repo)).stdout); assert.equal(eventDetail.sourceRange.startLine, 1); assert.equal(eventDetail.metadata.executionContext, 'browser');
+  assert.ok(JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', event.to, '--type', 'calls'], repo)).stdout).items.some(edge => edge.to === embeddedSymbols.find(entity => entity.name === 'PackagedVueSave').id), 'installed Vue callback calls its exact original method');
   await assert.rejects(run(process.execPath, [bin, 'start', '--build-ui', '--no-open'], repo), error => error.code === 1 && /only available in a Codiluce source checkout/.test(error.stderr));
   await assert.rejects(run(process.execPath, [bin, 'unknown-command'], repo), error => error.code === 1);
   const broken = path.join(repo, 'frontend/src/broken.ts');
@@ -292,7 +306,7 @@ try {
   console.log('Checking npm exec against the tarball without a local installation…');
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
-  console.log('Package installation, seven grammars, workspace binding, Vue/Svelte/Astro embedded scripts, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
+  console.log('Package installation, seven grammars, workspace binding, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

@@ -78,7 +78,10 @@ yours? [Tell us](https://github.com/codiluce/codiluce/issues).
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original
 component source locations. Module and instance scopes stay distinct; Astro server and client scripts retain separate contexts.
-Template rendering, callbacks and framework routing conventions are the next planned layer.
+Vue 3 also links local template components and bounded event callbacks. Vue Router 4/5 manual route records resolve
+nested paths, named views, literal lazy imports, aliases and redirects after a proven app installation. Original event
+sites enter the existing flow inspector and browser proxy matching. Unsupported dynamic/plugin behavior stays visible.
+Svelte/SvelteKit, Astro and Nuxt framework conventions are the next planned packs.
 
 ## Learn more
 

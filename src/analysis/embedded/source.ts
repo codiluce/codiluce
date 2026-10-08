@@ -37,27 +37,30 @@ export function expressionEnd(text: string, start: number): number | undefined {
   }
   return undefined;
 }
-interface Tag { name: string; closing: boolean; selfClosing: boolean; end: number; attributes: Record<string, string | true>; dynamic: boolean; duplicate: boolean }
-function tagAt(text: string, start: number): Tag | undefined {
+export interface MarkupAttribute { name: string; start: number; end: number; valueStart?: number; valueEnd?: number }
+export interface Tag { name: string; rawName: string; closing: boolean; selfClosing: boolean; end: number; attributes: Record<string, string | true>; sites: MarkupAttribute[]; dynamic: boolean; duplicate: boolean }
+export function tagAt(text: string, start: number): Tag | undefined {
   const match = /^<\s*(\/?)\s*([A-Za-z][\w:.-]*)/.exec(text.slice(start, start + 256)); if (!match) return undefined;
-  const attributes: Record<string, string | true> = Object.create(null); let cursor = start + match[0].length, dynamic = false, duplicate = false, count = 0;
+  const attributes: Record<string, string | true> = Object.create(null), sites: MarkupAttribute[] = []; let cursor = start + match[0].length, dynamic = false, duplicate = false, count = 0;
   while (cursor - start < 16_384 && ++count < 128) {
     while (/\s/.test(text[cursor] ?? '') && cursor < text.length) cursor++;
-    if (text[cursor] === '>') return { name: match[2]!.toLowerCase(), closing: !!match[1], selfClosing: false, end: cursor + 1, attributes, dynamic, duplicate };
-    if (text.startsWith('/>', cursor)) return { name: match[2]!.toLowerCase(), closing: !!match[1], selfClosing: true, end: cursor + 2, attributes, dynamic, duplicate };
+    if (text[cursor] === '>') return { name: match[2]!.toLowerCase(), rawName: match[2]!, closing: !!match[1], selfClosing: false, end: cursor + 1, attributes, sites, dynamic, duplicate };
+    if (text.startsWith('/>', cursor)) return { name: match[2]!.toLowerCase(), rawName: match[2]!, closing: !!match[1], selfClosing: true, end: cursor + 2, attributes, sites, dynamic, duplicate };
     if (text[cursor] === '{') { const end = expressionEnd(text, cursor); if (!end) return undefined; dynamic = true; cursor = end; continue; }
     const name = /^[^\s=<>/{}]+/.exec(text.slice(cursor, Math.min(text.length, cursor + 512)))?.[0]; if (!name) return undefined;
+    const attributeStart = cursor; let valueStart: number | undefined, valueEnd: number | undefined;
     cursor += name.length; while (/\s/.test(text[cursor] ?? '') && cursor < text.length) cursor++;
     let value: string | true = true;
     if (text[cursor] === '=') {
       cursor++; while (/\s/.test(text[cursor] ?? '') && cursor < text.length) cursor++;
       const quote = text[cursor];
-      if (quote === '"' || quote === "'") { const end = text.indexOf(quote, ++cursor); if (end < 0) return undefined; value = text.slice(cursor, end); cursor = end + 1; }
-      else if (quote === '{') { const end = expressionEnd(text, cursor); if (!end) return undefined; value = text.slice(cursor, end); dynamic = true; cursor = end; }
-      else { const raw = /^[^\s>]+/.exec(text.slice(cursor))?.[0]; if (!raw) return undefined; value = raw.endsWith('/') && text[cursor + raw.length] === '>' ? raw.slice(0, -1) : raw; cursor += value.length; }
+      if (quote === '"' || quote === "'") { const end = text.indexOf(quote, ++cursor); if (end < 0) return undefined; valueStart = cursor; valueEnd = end; value = text.slice(cursor, end); cursor = end + 1; }
+      else if (quote === '{') { const end = expressionEnd(text, cursor); if (!end) return undefined; valueStart = cursor; valueEnd = end; value = text.slice(cursor, end); dynamic = true; cursor = end; }
+      else { const raw = /^[^\s>]+/.exec(text.slice(cursor))?.[0]; if (!raw) return undefined; valueStart = cursor; value = raw.endsWith('/') && text[cursor + raw.length] === '>' ? raw.slice(0, -1) : raw; cursor += value.length; valueEnd = cursor; }
     }
     if (Object.hasOwn(attributes, name)) duplicate = true;
     attributes[name] = value;
+    sites.push({ name, start: attributeStart, end: cursor, ...(valueStart !== undefined ? { valueStart, valueEnd } : {}) });
   }
   return undefined;
 }

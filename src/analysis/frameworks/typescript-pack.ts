@@ -11,13 +11,18 @@ export interface TypeScriptPackFile {
 }
 export interface TypeScriptPackScope {
   context: AnalysisContext; services: TypeScriptServices; files: TypeScriptPackFile[];
+  /** Original inputs include components with no script region. */
+  inputs?: ScannedFile[];
 }
 /** These hooks run inside the language cache unit, after ordinary declarations
  * and before behavior/reference extraction. Pack versions are cache inputs. */
 export interface TypeScriptFrameworkPack {
   id: string; version: string;
+  includeEmbedded?: boolean;
   applies(scope: TypeScriptPackScope): boolean;
   declare(scope: TypeScriptPackScope): void;
+  /** Optional behavior pass after language references and effects exist. */
+  finish?(scope: TypeScriptPackScope): void;
 }
 export function sourceRange(node: ts.Node): SourceRange {
   const source = node.getSourceFile(), start = source.getLineAndCharacterOfPosition(node.getStart(source)), end = source.getLineAndCharacterOfPosition(node.end);

@@ -16,6 +16,7 @@ export function valueDeclaration(expression: ts.Expression, checker: ts.TypeChec
   if (symbol?.flags && symbol.flags & ts.SymbolFlags.Alias) { try { symbol = checker.getAliasedSymbol(symbol); } catch { return undefined; } }
   const shorthand = symbol?.valueDeclaration;
   if (shorthand && ts.isShorthandPropertyAssignment(shorthand)) symbol = checker.getShorthandAssignmentValueSymbol(shorthand);
+  if (symbol?.flags && symbol.flags & ts.SymbolFlags.Alias) { try { symbol = checker.getAliasedSymbol(symbol); } catch { return undefined; } }
   return symbol?.valueDeclaration ?? symbol?.declarations?.[0];
 }
 export interface FrameworkBinding { module: string; member: string; declaration: ts.Node }

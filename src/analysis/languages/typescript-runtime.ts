@@ -2,7 +2,7 @@ import ts from 'typescript';
 
 /** The type checker deliberately resolves type-only aliases. Runtime edges
  * need an additional import/export check, including intermediate barrels. */
-export function runtimeReference(expression: ts.Node, checker: ts.TypeChecker): boolean {
+export function runtimeReference(expression: ts.Node, checker: ts.TypeChecker, member?: string): boolean {
   const seen = new Set<string>();
   const importOf = (node: ts.Node): ts.ImportDeclaration | undefined => {
     for (let current: ts.Node | undefined = node; current; current = current.parent) if (ts.isImportDeclaration(current)) return current;
@@ -18,6 +18,7 @@ export function runtimeReference(expression: ts.Node, checker: ts.TypeChecker): 
     for (const declaration of symbol.declarations ?? []) {
       if (ts.isImportEqualsDeclaration(declaration) && declaration.isTypeOnly) return false;
       if (ts.isNamespaceExport(declaration) && declaration.parent.isTypeOnly) return false;
+      if (ts.isShorthandPropertyAssignment(declaration)) return symbolValue(checker.getShorthandAssignmentValueSymbol(declaration));
       if (ts.isImportSpecifier(declaration) || ts.isImportClause(declaration) || ts.isNamespaceImport(declaration)) {
         const imported = importOf(declaration);
         if (imported?.importClause?.isTypeOnly || ts.isImportSpecifier(declaration) && declaration.isTypeOnly) return false;
@@ -103,5 +104,9 @@ export function runtimeReference(expression: ts.Node, checker: ts.TypeChecker): 
     }
     return ts.isIdentifier(node) ? symbolValue(checker.getSymbolAtLocation(node)) : true;
   };
-  try { return referenceValue(expression); } catch { return false; }
+  try {
+    if (!referenceValue(expression)) return false;
+    const source = member && namespaceSource(checker.getSymbolAtLocation(expression));
+    return !source || exportedValue(source, member!);
+  } catch { return false; }
 }

@@ -86,9 +86,12 @@ async function analyzeComponent(context: AnalysisContext, component: TypeScriptP
     }
     return { runtime, program, checker, state, urls, wrappers, analyzed };
   });
-  const scope: TypeScriptPackScope = { context, services, files: prepared.flatMap(item => item.analyzed.map(file => ({ runtime: item.runtime, file: file.file, source: file.source, state: item.state, owners: file.symbols }))) };
+  const scope: TypeScriptPackScope = { context, services, inputs: component.flatMap(runtime => runtime.inputs), files: prepared.flatMap(item => item.analyzed.map(file => ({ runtime: item.runtime, file: file.file, source: file.source, state: item.state, owners: file.symbols }))) };
   const backendScope = { ...scope, files: scope.files.filter(frame => !frame.file.embedded) };
-  for (const pack of typescriptFrameworkPacks) if (pack.applies(backendScope)) pack.declare(backendScope);
+  for (const pack of typescriptFrameworkPacks) {
+    const packScope = pack.includeEmbedded ? scope : backendScope;
+    if (pack.applies(packScope)) pack.declare(packScope);
+  }
   for (const item of prepared) for (const file of item.analyzed) file.behavior();
   // Declare every owned file before linking references across compiler programs.
   const roots = prepared.flatMap(item => item.wrappers);
@@ -108,6 +111,10 @@ async function analyzeComponent(context: AnalysisContext, component: TypeScriptP
     reportWrapper(context, root, stats);
   }
   sites.flush(context.graph);
+  for (const pack of typescriptFrameworkPacks) {
+    const packScope = pack.includeEmbedded ? scope : backendScope;
+    if (pack.finish && pack.applies(packScope)) pack.finish(packScope);
+  }
   linkNextWrappers(context, prepared.flatMap(item => item.analyzed.map(file => file.file)));
 }
 /** Next.js files that wrap or stand in for the pages below their directory. */

@@ -2,6 +2,13 @@ import type { AnalysisContext, HttpObservation } from '../../core/analyzer.js';
 import type { ApplicationConfig } from '../../core/config.js';
 import { evidence, type Evidence } from '../../core/graph.js';
 
+export function requestApplication(context: AnalysisContext, observation: HttpObservation): ApplicationConfig | undefined {
+  // Contextual callbacks can invoke a shared source outside their application.
+  // Ownership follows the caller; evidence still points to the original call.
+  const caller = context.graph.entities.get(observation.callerId);
+  return context.files.get(caller?.path ?? observation.evidence.file ?? '')?.application;
+}
+
 export function requestExecutionContext(context: AnalysisContext, observation: HttpObservation): 'browser' | 'server' | 'unknown' {
   let entity = context.graph.entities.get(observation.callerId);
   while (entity) {
