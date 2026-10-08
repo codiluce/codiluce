@@ -4,11 +4,12 @@ import type { Entity, Evidence } from '@engine/core/graph';
 import type { AggregateGroup, ChangeFacet, DiagnosticItem, NodeChange, NodeSummary, RelationItem } from '@engine/projection/dto';
 import { compactNumber, percent, relationPhrase, relativeTime, shortSha, typeLabel } from '../lib/format';
 import { entryOf, isContainer, NO_FAMILY, tourEntry, type AtlasStore } from '../lib/store';
-import { coverageCss, domainHue, familyCss, familyHues, themeById } from '../lib/themes';
+import { coverageCss, familyCss, familyHues, featureHues, personHue, themeById } from '../lib/themes';
 import { COVERAGE_TEXT, NOT_MEASURED } from '../lib/coverage';
 import { useAtlas, useStore } from './context';
 import { TypeBadge } from './TypeBadge';
 import { CallSitesSection, CommitImpactChip, EffectsSection, ImpactSection } from './Analysis';
+import { CommitList, KindTag, PersonDot, WindowPicker, windowText } from './PeoplePanel';
 
 export function Inspector({ onClose }: { onClose: () => void }) {
   const selection = useAtlas(state => state.selection);
@@ -50,6 +51,7 @@ function Overview() {
       </dl>
       {meta.snapshot.kind === 'commit' && <CommitCard sha={meta.snapshot.commitSha} />}
       <RepositoryOverview />
+      <RepositoryPeople />
       <p className="note">Search with <kbd>/</kbd>, or zoom into the map: applications open into directories, then files, then symbols. Selecting an entity shows its indexed relationships and the evidence behind each one.</p>
       <div className="inspector-actions">
         <button className="button" onClick={() => void store.select(root.id, { fly: true })}>Repository connections</button>
@@ -97,7 +99,7 @@ function Selection() {
       </div>
       <SummaryCard node={node} />
       <FamilyChip node={node} />
-      {node.kind === 'group' && !node.id.startsWith('lens:domain:') && <p className="note">{node.explanation}</p>}
+      {node.kind === 'group' && <p className="note">{node.explanation}</p>}
       {(node.type === 'api_endpoint' || node.type === 'route') && <p className="note">Shown in the <strong>Routes &amp; endpoints</strong> district of its application. That district is only a spatial grouping; the canonical parent is the application.</p>}
       {node.type === 'database_table' && <p className="note">Declared by the application's migrations, replayed in order: the schema they intend, not the live database. Shown in the <strong>Database</strong> district; the canonical parent is the application.</p>}
       {(node.type === 'command' || node.type === 'scheduled_task') && <p className="note">{node.type === 'command' ? 'An Artisan command: an entry point that runs without a request, by the scheduler, by code running it by name, or by hand.' : 'A task the Laravel scheduler runs on its own, at the cadence below.'} Shown in the <strong>Console</strong> district; the canonical parent is the application.</p>}
@@ -106,7 +108,8 @@ function Selection() {
       {selection.change && <ChangeSection node={node} />}
       <ImpactSection node={node} />
       <FlowsSection node={node} />
-      {((node.kind === 'entity' && (node.type === 'directory' || node.type === 'application' || node.type === 'repository')) || node.id.startsWith('lens:domain:')) && <DataBreakdown key={node.id} node={node} />}
+      {node.kind === 'entity' && (node.type === 'directory' || node.type === 'application' || node.type === 'repository') && <DataBreakdown key={node.id} node={node} />}
+      <PeopleSection key={`people:${node.id}`} />
       <Facts node={node} entity={entity} />
       {node.type === 'database_table' && entity && <TableSection entity={entity} />}
       <HttpCalls selectionId={node.id} file={selection.file} />
@@ -147,17 +150,16 @@ function ModelNote({ model, ste, date }: { model?: string; ste?: number; date?: 
 function SummaryCard({ node }: { node: NodeSummary }) {
   const store = useStore();
   const annotation = useAtlas(state => state.selection?.annotation);
-  const domainSummary = node.id.startsWith('lens:domain:') ? node.explanation : undefined;
   const data = annotation?.data;
-  if (!domainSummary && !data?.summary && !data?.domain) return null;
+  if (!data?.summary && !data?.domain) return null;
   return (
     <section className="summary-card">
-      {(domainSummary ?? data?.summary) && <p>{domainSummary ?? data?.summary}</p>}
+      {data?.summary && <p>{data.summary}</p>}
       {data?.outdated && <p className="note warning">The file changed after this was written; run annotate again to describe it anew.</p>}
       <div className="summary-meta">
         {data?.role && <span className="chip">{data.role}</span>}
-        {data?.domain && <button className="chip domain-chip" onClick={() => void store.setLens('domains')} title={data.domain.inferred ? 'Domain inferred from the code it is connected to' : 'Domain from the paths the model gave'}>◆ {data.domain.name}{data.domain.inferred ? ' (inferred)' : ''}</button>}
-        {(data?.summary || domainSummary) && <ModelNote model={data?.model ?? 'gpt-6.1-sol'} ste={data?.ste} date={data?.createdAt} />}
+        {data?.domain && <button className="chip domain-chip" onClick={() => void store.revealFeature(data.domain!.key)} title={`${data.domain.inferred ? 'Feature inferred from the code it is connected to' : 'Feature from the paths the model gave'}. Select to light the feature on the map.`}>◆ {data.domain.name}{data.domain.inferred ? ' (inferred)' : ''}</button>}
+        {data?.summary && <ModelNote model={data?.model ?? 'gpt-6.1-sol'} ste={data?.ste} date={data?.createdAt} />}
       </div>
     </section>
   );
@@ -195,7 +197,7 @@ function DataBreakdown({ node }: { node: NodeSummary }) {
   const total = counts ? Object.values(counts).reduce((sum, count) => sum + count, 0) : 0;
   // An area without code files has nothing to break down.
   if (data && !total) return null;
-  const where = node.id.startsWith('lens:domain:') ? 'feature' : node.type === 'repository' ? 'repository' : node.type === 'application' ? 'application' : 'folder';
+  const where = node.type === 'repository' ? 'repository' : node.type === 'application' ? 'application' : 'folder';
   const order = new Map(data?.families.map((family, index) => [family.key, index]) ?? []);
   const rows = Object.entries(counts ?? {}).filter(([key]) => key !== NO_FAMILY).sort((a, b) => b[1] - a[1] || (order.get(a[0]) ?? 0) - (order.get(b[0]) ?? 0));
   const without = counts?.[NO_FAMILY] ?? 0;
@@ -234,32 +236,109 @@ function DataBreakdown({ node }: { node: NodeSummary }) {
     </section>
   );
 }
-/** The repository as the models describe it: what it is, where to start, and its domains. */
+/** People shown before "Show all". */
+const PEOPLE_ROWS = 6;
+/** Who changed the selection (a file; a symbol's or an entry point's file; every file of an area) in the people window, and its latest commits. */
+function PeopleSection() {
+  const store = useStore();
+  const authorship = useAtlas(state => state.selection?.authorship);
+  const focus = useAtlas(state => state.people.focus);
+  const dark = themeById(useAtlas(state => state.themeId)).dark;
+  const [all, setAll] = useState(false);
+  if (!authorship) return null;
+  const data = authorship.data;
+  if (!data) return <section className="section people-section"><h4>People</h4>{authorship.status === 'error' ? <p className="note error">{authorship.error}</p> : <p className="absent">Reading the Git history…</p>}</section>;
+  // Without Git history every selection would say so; the People panel says why once.
+  if (!data.available) return null;
+  const names = new Map(data.people.map(person => [person.key, person.name]));
+  const shown = all ? data.people : data.people.slice(0, PEOPLE_ROWS);
+  const what = data.scope === 'area' ? `${compactNumber(data.changedFiles)} of its ${compactNumber(data.files)} files changed` : data.scope === 'symbol' ? `Its file${data.file ? ` (${data.file.path.split('/').at(-1)})` : ''} changed` : 'It changed';
+  return (
+    <section className="section people-section">
+      <h4>People <span className="chip"><span className="count">{data.people.length}</span></span>{authorship.status === 'loading' && <span className="spinner tiny" aria-label="Loading" />}</h4>
+      <WindowPicker />
+      <p className="absent">{data.files === 0 ? 'No file of this view stands for it, so no commit can be counted.' : data.commits ? `${what} in ${compactNumber(data.commits)} commit${data.commits === 1 ? '' : 's'} (${compactNumber(data.lines)} lines added or deleted) · ${windowText(data.window)}.` : `${data.scope === 'area' ? 'None of its files' : data.scope === 'symbol' ? 'Its file' : 'It'} changed in this window · ${windowText(data.window)}.`}</p>
+      {data.people.length > 1 && <div className="coverage-bar" aria-hidden>{data.people.map(person => <span key={person.key} style={{ flexGrow: Math.max(person.share, 0.01), background: familyCss(personHue(person.order), dark) }} title={`${person.name}: ${percent(person.share)}`} />)}</div>}
+      {data.people.length > 0 && (
+        <ul className="people-rows">
+          {shown.map(person => (
+            <li key={person.key}>
+              <button className="person-row" aria-pressed={focus === person.key} onClick={() => void store.focusPerson(person.key)} title={`${person.name}: ${person.commits} commit${person.commits === 1 ? '' : 's'}, +${person.added} −${person.deleted} lines${data.scope === 'area' ? `, ${person.files} file${person.files === 1 ? '' : 's'}` : ''}; first ${new Date(person.first).toLocaleDateString()}, last ${new Date(person.last).toLocaleDateString()}. Select to light every file they changed.`}>
+                <PersonDot order={person.order} />
+                <span className="label">{person.name}</span>
+                <KindTag kind={person.kind} />
+                <span className="count">{percent(person.share)} · {person.commits} commit{person.commits === 1 ? '' : 's'} · {relativeTime(person.last)}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {data.people.length > PEOPLE_ROWS && <button className="button small" onClick={() => setAll(value => !value)}>{all ? 'Show fewer' : `Show all ${data.people.length}`}</button>}
+      {data.recent.length > 0 && (
+        <details className="people-recent" open>
+          <summary>Latest changes</summary>
+          <CommitList commits={data.recent.slice(0, 8)} names={names} />
+        </details>
+      )}
+    </section>
+  );
+}
+/** Who changed the repository in the people window (nothing selected). */
+function RepositoryPeople() {
+  const store = useStore();
+  const people = useAtlas(state => state.people);
+  const stamp = useAtlas(() => store.peopleStamp());
+  useEffect(() => { void store.ensurePeople(); }, [store, stamp]);
+  const data = people.data;
+  if (!data?.available || !data.people.length) return null;
+  return (
+    <section className="section people-section">
+      <h4>People <span className="chip"><span className="count">{data.people.length}</span></span></h4>
+      <WindowPicker />
+      <p className="absent">{windowText(data.window)}.</p>
+      <ul className="people-rows">
+        {data.people.slice(0, PEOPLE_ROWS).map(person => (
+          <li key={person.key}>
+            <button className="person-row" aria-pressed={people.focus === person.key} onClick={() => void store.revealPeople(person.key)} title={`Light the ${person.files} files ${person.name} changed`}>
+              <PersonDot order={person.order} />
+              <span className="label">{person.name}</span>
+              <KindTag kind={person.kind} />
+              <span className="count">{compactNumber(person.commits)} commit{person.commits === 1 ? '' : 's'} · {compactNumber(person.files)} file{person.files === 1 ? '' : 's'}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button className="button small" onClick={() => void store.revealPeople()}>{data.people.length > PEOPLE_ROWS ? `All ${data.people.length} in the People panel` : 'Open the People panel'}</button>
+    </section>
+  );
+}
+/** The repository as the models describe it: what it is, where to start, and its features. */
 function RepositoryOverview() {
   const store = useStore();
   const annotations = useAtlas(state => state.annotations.data);
-  const lens = useAtlas(state => state.lens);
+  const dark = themeById(useAtlas(state => state.themeId)).dark;
   if (!annotations?.available) return null;
   const overview = annotations.overview;
+  const hues = featureHues(annotations.domains.map(domain => domain.key));
   return (
     <section className="section">
       {overview && <div className="summary-card"><p>{overview.summary}</p><div className="summary-meta"><ModelNote model={annotations.models.find(model => model.includes('sol')) ?? annotations.models[0]} /></div></div>}
       {overview?.start.length ? <><h4>Where to start</h4><ul className="start-list">{overview.start.map(tip => <li key={tip}>{tip}</li>)}</ul></> : null}
       {annotations.domains.length > 0 && (
         <>
-          <h4>Domains <span className="chip"><span className="count">{annotations.domains.length}</span></span></h4>
+          <h4>Features <span className="chip"><span className="count">{annotations.domains.length}</span></span></h4>
           <ul className="list domain-list">
             {annotations.domains.map(domain => (
               <li key={domain.key} className="row">
                 <div className="row-main">
-                  <div className="row-title"><span className="domain-dot" style={{ background: `hsl(${domainHue(domain.key)} 70% 58%)` }} /><span className="label">{domain.name}</span><span className="absent"> · {domain.files} files</span></div>
+                  <div className="row-title"><span className="domain-dot" style={{ background: familyCss(hues.get(domain.key) ?? 'none', dark) }} /><span className="label">{domain.name}</span><span className="absent"> · {domain.files} files</span></div>
                   <div className="row-sub">{domain.summary}</div>
                 </div>
-                <div className="row-actions"><button className="button small" onClick={() => void store.setLens('domains').then(() => store.select(`lens:domain:${domain.key}`, { fly: true }))}>Show</button></div>
+                <div className="row-actions"><button className="button small" onClick={() => void store.revealFeature(domain.key)}>Show</button></div>
               </li>
             ))}
           </ul>
-          {lens !== 'domains' && <button className="button small" onClick={() => void store.setLens('domains')}>Arrange the map by domain</button>}
+          <button className="button small" onClick={() => void store.revealFeature()}>Open the Features panel</button>
         </>
       )}
       {annotations.cost && <p className="absent">Descriptions written by language models for ${annotations.cost.total.toFixed(2)} in total. They describe the indexed code; check the facts and relationships for proof.</p>}

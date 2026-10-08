@@ -655,7 +655,7 @@ test('the coverage export lists unreached files with their symbols, and unused s
 });
 
 // --- Data families -------------------------------------------------------------------
-test('data families color the map, count files per folder, and draw the "by data" view', async () => {
+test('data families color the map and count files per folder', async () => {
   const projection = new ProjectionService(store, { root, stateDirectory: state });
   const families = projection.families();
   const userModel = entityId('User.php', 'file'), profileModel = entityId('Profile.php', 'file');
@@ -666,18 +666,11 @@ test('data families color the map, count files per folder, and draw the "by data
   assert.ok(families.families.some(family => family.key === users && family.tables.includes('users')));
   assert.ok(families.areas[graph.entities.find(entity => entity.type === 'repository')!.id]![users]! > 0, 'areas count their files per family');
   assert.ok(families.areas[entityId('Models', 'directory')]![users]! > 0, 'so does every folder (the inspector\'s breakdown)');
-  // By data: repository → family → folder → file; symbols stay in their files.
-  const located = projection.locate(userModel, { lens: 'data' });
-  assert.equal(located.spatialAncestors[1]!.id, `lens:family:${users}`);
-  assert.equal(located.spatialAncestors[2]!.name, 'backend/app/Models');
-  assert.ok(projection.locate(symbolId('App\\Models\\User'), { lens: 'data' }).spatialAncestors.some(item => item.id === userModel));
-  assert.ok(projection.locate(entityId('users', 'database_table'), { lens: 'data' }).spatialAncestors.some(item => item.id === `lens:family:${users}`), 'tables sit in their family\'s district');
   const server = createInspectionServer(store, { root });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const address = server.address(); assert.ok(address && typeof address !== 'string');
   const base = `http://127.0.0.1:${address.port}`;
   try {
     assert.equal((await fetch(`${base}/api/projection/families`)).status, 200);
-    assert.equal((await fetch(`${base}/api/projection?lens=data`)).status, 200);
   } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
 });

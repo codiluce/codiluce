@@ -90,12 +90,7 @@ export default function MapDocs() {
         handler answers, with the conditions read from the source.
       </p>
 
-      <h2 id="data" className="anchor">Data families and the Data view</h2>
-      <Shot
-        src="/shots/data.webp"
-        alt="The Data view of BookStack: code arranged by data family, such as Roles, Entities, Images and Comments."
-        caption="The Data view: the repository arranged by the tables its code reads and writes."
-      />
+      <h2 id="data" className="anchor">Data families</h2>
       <p>
         Without any language model, tables group into <strong>data families</strong>: tables joined by foreign keys, tables
         named after another, and tables that share a prefix. A table that many others reference, such as <code>users</code>,
@@ -104,14 +99,14 @@ export default function MapDocs() {
       <ul>
         <li><strong>▦</strong> in the map controls colors files, endpoints, commands and tables by family.</li>
         <li>The inspector of a folder shows <strong>Data in this folder</strong>: its files per family. Select one to light its files on the map.</li>
-        <li><strong>Data</strong>, beside <strong>Folders</strong>, arranges the whole map by family.</li>
       </ul>
 
-      <h2 id="descriptions" className="anchor">Descriptions and the Features view</h2>
+      <h2 id="descriptions" className="anchor">Descriptions and the Features panel</h2>
       <p>
         Optionally, a language model can describe files, folders, flows, domains and commits. Descriptions are written in
         ASD-STE100 Simplified Technical English, scored against its rules, and kept apart from the indexed facts. They add
-        a <strong>Features</strong> view: the code arranged by product domain instead of by folder.
+        a <strong>Features</strong> panel: what the product does, feature by feature. Select a feature to light its files on
+        the map and see the flows that start in it.
       </p>
       <CodeBlock
         prompt

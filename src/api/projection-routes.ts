@@ -23,15 +23,12 @@ export function viewParams(params: URLSearchParams): ViewKey {
     if (!SNAPSHOT_ID.test(value)) throw new Error(`Invalid ${name}`);
     view[name] = value;
   }
-  const lens = params.get('lens');
-  if (lens && lens !== 'domains' && lens !== 'data' && lens !== 'folders') throw new Error('lens must be folders, data or domains');
-  if (lens === 'domains' || lens === 'data') view.lens = lens;
   return view;
 }
 function impactParams(params: URLSearchParams): { depth?: number; types?: string[]; type?: string; distance?: number } {
   return { depth: numberParam(params, 'depth'), types: params.get('types')?.split(',').filter(Boolean), type: text(params, 'type'), distance: numberParam(params, 'distance') };
 }
-export function isProjectionPath(pathname: string): boolean { return pathname.startsWith('/api/projection') || pathname === '/api/source' || pathname === '/api/source/diff' || pathname === '/api/history' || pathname.startsWith('/api/history/') || pathname === '/api/annotations' || pathname.startsWith('/api/annotations/'); }
+export function isProjectionPath(pathname: string): boolean { return pathname.startsWith('/api/projection') || pathname === '/api/source' || pathname === '/api/source/diff' || pathname === '/api/history' || pathname.startsWith('/api/history/') || pathname === '/api/annotations' || pathname.startsWith('/api/annotations/') || pathname === '/api/authorship' || pathname.startsWith('/api/authorship/'); }
 
 /** Returns true when the request was handled. */
 export async function handleProjectionRoute(context: ProjectionContext, url: URL, response: ServerResponse, acceptEncoding?: string): Promise<boolean> {
@@ -70,6 +67,10 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
     else if (pathname === '/api/projection/coverage') result = projection.coverage(view);
     else if (pathname === '/api/projection/coverage/export') result = projection.coverageExport(view);
     else if (pathname === '/api/projection/families') result = projection.families(view);
+    else if (pathname === '/api/projection/features') result = projection.features(view);
+    else if (pathname === '/api/authorship') result = await projection.authorship(view, { window: text(params, 'window') });
+    else if ((match = new RegExp(`^/api/authorship/person/${ID}$`).exec(pathname))) result = await projection.personAuthorship(decodeURIComponent(match[1]!), view, { window: text(params, 'window') });
+    else if ((match = new RegExp(`^/api/authorship/entity/${ID}$`).exec(pathname))) result = await projection.entityAuthorship(decodeURIComponent(match[1]!), view, { window: text(params, 'window') });
     else if (pathname === '/api/annotations') result = projection.annotationsOverview();
     else if ((match = new RegExp(`^/api/annotations/entity/${ID}$`).exec(pathname))) result = projection.entityAnnotation(decodeURIComponent(match[1]!), view);
     else if ((match = new RegExp(`^/api/projection/coverage/${ID}$`).exec(pathname))) result = projection.coverageOf(decodeURIComponent(match[1]!), view);

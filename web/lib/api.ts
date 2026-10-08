@@ -3,8 +3,8 @@
 // be aborted by callers and aborted requests are never cached.
 import type { Entity, Relation } from '@engine/core/graph';
 import type { EvolutionResponse } from '@engine/projection/dto';
-import type { AnnotationsOverview, EntityAnnotation } from '@engine/projection/dto';
-import type { AggregateEdgesPage, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageExport, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FamiliesResult, FlowList, ImpactResult, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
+import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, PersonAuthorship } from '@engine/projection/dto';
+import type { AggregateEdgesPage, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageExport, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FamiliesResult, FeaturesResult, FlowList, ImpactResult, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
 
 export class ApiError extends Error { constructor(readonly status: number, message: string, readonly body?: unknown) { super(message); } }
 export function isAbort(error: unknown): boolean { return error instanceof DOMException && error.name === 'AbortError' || (error instanceof Error && error.name === 'AbortError'); }
@@ -60,6 +60,14 @@ export interface AtlasApi {
   entityAnnotation(id: string, signal?: AbortSignal): Promise<EntityAnnotation>;
   /** Data families: tables joined by foreign keys, and the code using them (per file and per area). */
   families(signal?: AbortSignal): Promise<FamiliesResult>;
+  /** Features (the model's domains): each with its folders, the feature of every file and entry point, and per area. */
+  features(signal?: AbortSignal): Promise<FeaturesResult>;
+  /** Who changed the view's files in a window of the Git history: people, the person who changed each file most, per area. */
+  authorship(window: AuthorshipWindowKey, signal?: AbortSignal): Promise<AuthorshipResult>;
+  /** What one person changed in the window: files, areas, folders and commits. */
+  personAuthorship(key: string, window: AuthorshipWindowKey, signal?: AbortSignal): Promise<PersonAuthorship>;
+  /** Who changed an entity (a file, a symbol's file, the files of an area) in the window, and its latest commits. */
+  entityAuthorship(id: string, window: AuthorshipWindowKey, signal?: AbortSignal): Promise<EntityAuthorship>;
   clear(): void;
 }
 export interface ImpactOptions { depth?: number; type?: string; distance?: number; offset?: number; limit?: number }
@@ -77,7 +85,6 @@ export class HttpAtlasApi implements AtlasApi {
     for (const [key, value] of Object.entries(params)) if (value !== undefined) search.set(key, String(value));
     if (this.view.snapshot) search.set('snapshot', this.view.snapshot);
     if (this.view.compareTo) search.set('compareTo', this.view.compareTo);
-    if (this.view.lens) search.set('lens', this.view.lens);
     const text = search.toString();
     return text ? `?${text}` : '';
   }
@@ -142,6 +149,10 @@ export class HttpAtlasApi implements AtlasApi {
   annotations(signal?: AbortSignal) { return this.get<AnnotationsOverview>('/api/annotations', signal, false); }
   entityAnnotation(id: string, signal?: AbortSignal) { return this.get<EntityAnnotation>(`/api/annotations/entity/${encodeURIComponent(id)}${this.q()}`, signal); }
   families(signal?: AbortSignal) { return this.get<FamiliesResult>(`/api/projection/families${this.q()}`, signal); }
+  features(signal?: AbortSignal) { return this.get<FeaturesResult>(`/api/projection/features${this.q()}`, signal); }
+  authorship(window: AuthorshipWindowKey, signal?: AbortSignal) { return this.get<AuthorshipResult>(`/api/authorship${this.q({ window })}`, signal); }
+  personAuthorship(key: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.get<PersonAuthorship>(`/api/authorship/person/${encodeURIComponent(key)}${this.q({ window })}`, signal); }
+  entityAuthorship(id: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.get<EntityAuthorship>(`/api/authorship/entity/${encodeURIComponent(id)}${this.q({ window })}`, signal); }
   async requestIndex(sha: string) {
     const response = await this.fetcher(`${this.base}/api/history/index`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Codiluce-Request': 'index' }, body: JSON.stringify({ sha }) });
     const body = await response.json().catch(() => ({})) as { error?: string; queued?: boolean; position?: number };

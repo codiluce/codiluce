@@ -32,7 +32,8 @@ export interface CoverageOverlay { files: Map<string, string>; areas: Map<string
  * one in grey); closed areas badged with their main family. With `focus`, what
  * is outside that family recedes.
  */
-export interface FamilyOverlay { of: Map<string, string>; areas: Map<string, Record<string, number>>; names: Map<string, string>; hues: Map<string, number>; focus?: string }
+export interface FamilyOverlay { of: Map<string, string>; areas: Map<string, Record<string, number>>; names: Map<string, string>; hues: Map<string, number>; focus?: string; /** What the `none` key means in badges (default: no tables). */ none?: string }
+/** A feature in focus (the Features panel) has the same shape: its files and the areas holding them stay lit, closed areas say how many. */
 /** Another view of the split map, drawn on the overview: the part of the plane it shows (so its size tells its zoom), numbered. */
 export interface FrameOverlay { key: string; number: number; bounds: Bounds; /** The view in use. */ active: boolean; /** On the current page (the others are dashed). */ shown: boolean }
 export interface SourceOverlay { nodeId: string; start: number; lines: string[]; focus?: { startLine: number; endLine: number }; /** Lines where the symbol calls, renders or references an indexed entity. */ marks?: Set<number> }
@@ -58,6 +59,11 @@ export interface RenderState {
   pins?: PinOverlay[];
   coverage?: CoverageOverlay;
   families?: FamilyOverlay;
+  feature?: FamilyOverlay;
+  /** Files colored by the person who changed each most (the `none` key: nobody in the window). */
+  people?: FamilyOverlay;
+  /** One person in focus: the files they changed and the areas holding them stay lit. */
+  person?: FamilyOverlay;
   frames?: FrameOverlay[];
   time: number;
   reducedMotion: boolean;
@@ -99,9 +105,12 @@ export class MapRenderer {
     const coverageOf = state.coverage ? this.coverageResolver(scene, state.coverage) : undefined;
     const familyOf = state.families ? this.familyResolver(scene, state.families) : undefined;
     const familyLit = state.families?.focus ? this.familyLit(scene, state.families, familyOf!) : undefined;
+    const peopleOf = state.people ? this.familyResolver(scene, state.people) : undefined;
+    const focusLit = state.feature?.focus ? this.familyLit(scene, state.feature, this.familyResolver(scene, state.feature))
+      : state.person?.focus ? this.familyLit(scene, state.person, this.familyResolver(scene, state.person)) : familyLit;
     for (const item of items) {
-      // A playing flow decides what stays lit; then the family in focus (chosen on purpose, it wins over the selection); then what the selection reaches.
-      const dimmed = flowSet ? !flowSet.has(item.node.id) : familyLit ? !familyLit(item.node) : !!emphasis && !emphasis.has(item.node.id);
+      // A playing flow decides what stays lit; then the feature or family in focus (chosen on purpose, it wins over the selection); then what the selection reaches.
+      const dimmed = flowSet ? !flowSet.has(item.node.id) : focusLit ? !focusLit(item.node) : !!emphasis && !emphasis.has(item.node.id);
       // In a comparison, blocks a change reaches stay lit instead of fading with the unchanged ones.
       const reached = impactLit?.has(item.node.id) && item.node.change?.status !== 'removed';
       const alpha = item.alpha * (dimmed ? (flowSet ? theme.flow.dimAlpha : theme.dimAlpha) : 1) * (state.comparison && !reached ? this.changeAlpha(item, state.comparison) : 1) * (state.impact?.dimOthers && !reached ? theme.dimAlpha : 1);
@@ -109,11 +118,13 @@ export class MapRenderer {
       if (theme.style?.shadow && item.parent >= 0 && item.size > SOFT_PX) this.shadow(ctx, viewport, camera, item, alpha);
       const category = coverageOf?.(item.node);
       const family = category ? undefined : familyOf?.(item.node);
-      // The Data view's family areas take the legend's hues while the families are shown.
-      const area = state.families && item.node.id.startsWith('lens:family:') ? `family-area:${this.familyHue(item.node.id.slice(12), state.families)}` : undefined;
-      this.prism(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId, category ? `coverage:${category}` : family ? `family:${this.familyHue(family, state.families!)}` : area);
+      const person = category || family ? undefined : peopleOf?.(item.node);
+      this.prism(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId, category ? `coverage:${category}` : family ? `family:${this.familyHue(family, state.families!)}` : person ? `family:${this.familyHue(person, state.people!)}` : undefined);
       if (state.coverage && !item.open && !category && state.coverage.areas.has(item.node.id)) this.coverageBadge(ctx, viewport, camera, item, alpha, state.coverage.areas.get(item.node.id)!);
       if (state.families && !item.open && !family && state.families.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.families.areas.get(item.node.id)!, state.families);
+      else if (state.feature && !state.coverage && !item.open && state.feature.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.feature.areas.get(item.node.id)!, state.feature);
+      else if (state.person && !state.coverage && !item.open && state.person.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.person.areas.get(item.node.id)!, state.person);
+      else if (state.people && !item.open && !person && state.people.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.people.areas.get(item.node.id)!, state.people);
       if (state.comparison) this.changeOverlay(ctx, viewport, camera, item, alpha, state);
       if (state.impact) this.impactOverlay(ctx, viewport, camera, item, alpha, state.impact);
       if (state.showDiagnostics && !item.open && item.node.diagnostics > 0 && item.size > 10) this.diagnosticMarker(ctx, viewport, camera, item, alpha);
@@ -701,7 +712,8 @@ export class MapRenderer {
    * and get a badge instead.
    */
   private familyResolver(scene: Scene, families: FamilyOverlay): (node: NodeSummary) => string | undefined {
-    if (this.familyCache?.key === families) return this.familyCache.resolve;
+    const cached = this.familyCache.get(families);
+    if (cached) return cached;
     const cache = new Map<string, string | undefined>();
     const resolve = (node: NodeSummary): string | undefined => {
       if (cache.has(node.id)) return cache.get(node.id);
@@ -713,15 +725,16 @@ export class MapRenderer {
       cache.set(node.id, found);
       return found;
     };
-    this.familyCache = { key: families, resolve };
+    this.familyCache.set(families, resolve);
     return resolve;
   }
-  private familyCache?: { key: FamilyOverlay; resolve: (node: NodeSummary) => string | undefined };
+  private familyCache = new WeakMap<FamilyOverlay, (node: NodeSummary) => string | undefined>();
   private familyHue(key: string, families: FamilyOverlay): string { return key === 'none' ? 'none' : String(families.hues.get(key) ?? familyHashHue(key)); }
   /** Whether a block stays lit while a family is in focus: its members, and the areas and districts holding them. */
   private familyLit(scene: Scene, families: FamilyOverlay, familyOf: (node: NodeSummary) => string | undefined): (node: NodeSummary) => boolean {
     // Districts load later than the areas counted by the server: recomputed as the scene grows.
-    if (this.familyLitCache?.key === families && this.familyLitCache.scene === scene && this.familyLitCache.size === scene.nodes.size) return this.familyLitCache.lit;
+    const cached = this.familyLitCache.get(families);
+    if (cached && cached.scene === scene && cached.size === scene.nodes.size) return cached.lit;
     const focus = families.focus!;
     const areas = new Set<string>();
     for (const [id, counts] of families.areas) if (counts[focus]) areas.add(id);
@@ -730,10 +743,10 @@ export class MapRenderer {
       for (let node = scene.nodes.get(id); node && !areas.has(node.id); node = node.spatialParentId ? scene.nodes.get(node.spatialParentId) : undefined) areas.add(node.id);
     }
     const lit = (node: NodeSummary) => areas.has(node.id) || familyOf(node) === focus;
-    this.familyLitCache = { key: families, scene, size: scene.nodes.size, lit };
+    this.familyLitCache.set(families, { scene, size: scene.nodes.size, lit });
     return lit;
   }
-  private familyLitCache?: { key: FamilyOverlay; scene: Scene; size: number; lit: (node: NodeSummary) => boolean };
+  private familyLitCache = new WeakMap<FamilyOverlay, { scene: Scene; size: number; lit: (node: NodeSummary) => boolean }>();
   /** A closed area: its main family and its share of the area's code files (in focus: the family's files there), over a bar of every family. */
   private familyBadge(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, counts: Record<string, number>, families: FamilyOverlay): void {
     if (item.size < 34) return;
@@ -741,8 +754,8 @@ export class MapRenderer {
     const focus = families.focus;
     if (!total || (focus && !counts[focus])) return;
     const ranked = Object.entries(counts).filter(([key]) => key !== 'none').sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
-    const name = (key: string) => key === 'none' ? 'No tables' : families.names.get(key) ?? key;
-    const text = focus ? `${name(focus)} · ${counts[focus]} file${counts[focus] === 1 ? '' : 's'}` : ranked[0] ? `${name(ranked[0][0])} ${Math.round((ranked[0][1] / total) * 100)}%` : 'No tables';
+    const name = (key: string) => key === 'none' ? families.none ?? 'No tables' : families.names.get(key) ?? key;
+    const text = focus ? `${name(focus)} · ${counts[focus]} file${counts[focus] === 1 ? '' : 's'}` : ranked[0] ? `${name(ranked[0][0])} ${Math.round((ranked[0][1] / total) * 100)}%` : name('none');
     const { x, y, w, h } = item.node.rect;
     const anchor = worldToScreen(camera, viewport, x + w * 0.5, y + h - Math.min(h, w) * 0.12, item.zTop);
     ctx.save();

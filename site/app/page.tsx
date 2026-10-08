@@ -117,13 +117,13 @@ export default function Home() {
               <h2 className="section-title">See the code by the data it touches.</h2>
               <p>
                 Codiluce reads the schema from your migrations. Tables group into families by their foreign keys, and code takes
-                the family of the tables it reads and writes. The Data view arranges the whole map that way, with no model
-                required.
+                the family of the tables it reads and writes. Color the map by family, or ask any folder which data its files
+                serve, with no model required.
               </p>
               <ul className="ticks">
                 <li>Blast radius of any entity, hop by hop</li>
                 <li>Steps: what a page or function sets in motion</li>
-                <li>Large folders grouped by data or by name</li>
+                <li>Any folder's files broken down by data family</li>
               </ul>
             </div>
             <Shot src="/shots/data.webp" alt="The Data view: BookStack's code arranged by data family, such as Roles, Entities, Images and Attachments, each in its own color." />

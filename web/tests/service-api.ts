@@ -1,6 +1,6 @@
 // AtlasApi backed by the server-side services (no HTTP), with optional
 // per-call delays and a call log. Shared by the store-level tests.
-import type { CatalogKind, NodeSummary, RegionLevel, SourceRequest, ViewKey } from '@engine/projection/dto';
+import type { AuthorshipWindowKey, CatalogKind, NodeSummary, RegionLevel, SourceRequest, ViewKey } from '@engine/projection/dto';
 import type { GraphStore } from '../../src/storage/sqlite.js';
 import type { ProjectionService } from '../../src/projection/service.js';
 import type { HistoryService } from '../../src/history/service.js';
@@ -69,12 +69,17 @@ export class ServiceApi implements AtlasApi {
   annotations(signal?: AbortSignal) { return this.run('annotations', '', signal, () => this.projection.annotationsOverview()); }
   entityAnnotation(id: string, signal?: AbortSignal) { return this.run('entityAnnotation', id, signal, () => this.projection.entityAnnotation(id, this.view)); }
   families(signal?: AbortSignal) { return this.run('families', '', signal, () => this.projection.families(this.view)); }
+  features(signal?: AbortSignal) { return this.run('features', '', signal, () => this.projection.features(this.view)); }
+  authorship(window: AuthorshipWindowKey, signal?: AbortSignal) { return this.run('authorship', window, signal, () => this.projection.authorship(this.view, { window })); }
+  personAuthorship(key: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.run('personAuthorship', `${key}|${window}`, signal, () => this.projection.personAuthorship(key, this.view, { window })); }
+  entityAuthorship(id: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.run('entityAuthorship', `${id}|${window}`, signal, () => this.projection.entityAuthorship(id, this.view, { window })); }
   clear() {}
 }
 export class RecordingNavigator implements MapNavigator {
   flights: { id: string; mode?: string }[] = [];
   flyTo(node: NodeSummary, options?: { mode?: 'focus' | 'enter' }) { this.flights.push({ id: node.id, mode: options?.mode }); }
-  fitNodes() {}
+  fits: string[][] = [];
+  fitNodes(nodes: NodeSummary[]) { this.fits.push(nodes.map(node => node.id)); }
   fitAll() {}
   zoomBy() {}
 }

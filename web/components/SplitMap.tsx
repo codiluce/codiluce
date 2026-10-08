@@ -9,7 +9,7 @@ import { DEFAULT_LOD, type LodConfig } from '../lib/lod';
 import { displayName } from '../lib/renderer';
 import { REGION_PAGE, sceneRegions, splitGrid, SplitCoordinator, timelapseRegions } from '../lib/split';
 import { useAtlas, useStore } from './context';
-import { CoverageLegend, HoverCard, Legend } from './MapView';
+import { CoverageLegend, HoverCard, Legend, PeopleLegend } from './MapView';
 
 /** A view is a fraction of the screen: areas open, and labels show, at smaller sizes than on the single map. */
 const REGION_LOD: LodConfig = { ...DEFAULT_LOD, openPx: 150, summaryPx: 80, detailPx: 130, sourcePx: 460, budget: 3000 };
@@ -99,6 +99,7 @@ export function SplitMap() {
       {stale && <div className="banner" role="status">A newer analysis run is available. <button className="button small primary" onClick={() => void store.reload()}>Reload map</button></div>}
       <Legend />
       <CoverageLegend />
+      <PeopleLegend />
       <HoverCard />
     </div>
   );

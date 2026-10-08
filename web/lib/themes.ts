@@ -451,8 +451,7 @@ export const THEMES: Theme[] = [
 ];
 /** Every custom property any theme sets, so switching themes can clear the ones the next theme lacks. */
 export const UI_PROPERTIES = [...new Set(THEMES.flatMap(theme => Object.keys(theme.ui)))];
-/** Palette key of a node: applications by framework, files by language (themes without those keys fall back to the type). */
-/** A stable hue per domain key, shared by the map and the panels. */
+/** A stable hue per key (a family's when the order of the families is not at hand). */
 export function domainHue(key: string): number { let hash = 0; for (const char of key) hash = (hash * 31 + char.charCodeAt(0)) >>> 0; return (hash * 137) % 360; }
 /**
  * Data families: hues spread by the golden angle in the order given (most files
@@ -460,14 +459,17 @@ export function domainHue(key: string): number { let hash = 0; for (const char o
  * without a family is grey.
  */
 export function familyHues(keys: string[]): Map<string, number> { return new Map(keys.map((key, i) => [key, Math.round((210 + i * 137.508) % 360)])); }
-/** A family's hue when the order of the families is not at hand (the Data view with the colors off). */
+/** Features: hues spread by the golden angle over their keys in alphabetical order, so every list and the map agree. */
+export function featureHues(keys: string[]): Map<string, number> { return familyHues([...keys].sort()); }
+/** People: hues spread by the golden angle over their order of first commit, so a person keeps one color in every window and view. */
+export function personHue(order: number): number { return Math.round((28 + order * 137.508) % 360); }
+export function personHues(people: { key: string; order: number }[]): Map<string, number> { return new Map(people.map(person => [person.key, personHue(person.order)])); }
+/** A family's hue when the order of the families is not at hand. */
 export function familyHashHue(key: string): number { return domainHue(`family:${key}`); }
 export function familyHsl(hue: number | 'none', dark: boolean): Hsl { return hue === 'none' ? hsl(220, 8, dark ? 34 : 78) : hsl(hue, dark ? 60 : 58, dark ? 58 : 50); }
 export function familyCss(hue: number | 'none', dark: boolean): string { const c = familyHsl(hue, dark); return `hsl(${c.h} ${c.s}% ${c.l}%)`; }
-export function paletteKey(node: { id?: string; type: string; detail?: string; language?: string }): string {
-  // The Features view: each domain has its own hue; the data view, each family.
-  if (node.id?.startsWith('lens:domain:')) return `domain:${node.id.slice(12)}`;
-  if (node.id?.startsWith('lens:family:')) { const key = node.id.slice(12); return `family-area:${key === 'none' ? 'none' : familyHashHue(key)}`; }
+/** Palette key of a node: applications by framework, files by language (themes without those keys fall back to the type). */
+export function paletteKey(node: { type: string; detail?: string; language?: string }): string {
   if (node.type === 'application' && node.detail) return `application:${node.detail}`;
   if (node.type === 'file' && node.language) return `file:${node.language}`;
   return node.type;
@@ -496,9 +498,8 @@ export class PaletteCache {
     const key = `${type}:${depth}`;
     let palette = this.cache.get(key);
     if (!palette) {
-      const base = type.startsWith('coverage:') ? coverageHsl(type.slice(9), this.theme.dark) : type.startsWith('domain:') ? { h: domainHue(type.slice(7)), s: this.theme.dark ? 42 : 46, l: this.theme.dark ? 30 : 78 }
+      const base = type.startsWith('coverage:') ? coverageHsl(type.slice(9), this.theme.dark)
         : type.startsWith('family:') ? familyHsl(type === 'family:none' ? 'none' : Number(type.slice(7)), this.theme.dark)
-        : type.startsWith('family-area:') ? (type === 'family-area:none' ? { h: 220, s: 8, l: this.theme.dark ? 24 : 84 } : { h: Number(type.slice(12)), s: this.theme.dark ? 40 : 44, l: this.theme.dark ? 28 : 80 })
         : this.theme.entity[type] ?? this.theme.entity[type.split(':')[0]!] ?? this.theme.fallbackEntity;
       const structural = type === 'directory' || type === 'group' || type.startsWith('application');
       const l = Math.max(4, Math.min(96, base.l + (structural ? depth * this.theme.depthStep : 0)));

@@ -13,7 +13,9 @@ const positions = (page: Page) => page.evaluate(() => Object.fromEntries(window.
 test('Flows stays responsive when entering, stepping and leaving indexed history', async ({ page }) => {
   await open(page);
   await page.getByRole('button', { name: 'Flows', exact: true }).click();
-  const rows = page.getByRole('complementary', { name: 'Flows' }).locator('.rf-row');
+  const panel = page.getByRole('complementary', { name: 'Flows' });
+  await panel.getByRole('button', { name: 'Expand all', exact: true }).click();
+  const rows = panel.locator('.rf-row');
   await expect(rows.first()).toBeVisible();
   await page.getByRole('button', { name: 'History', exact: true }).click();
   await expect(timeline(page)).toContainText('4 commits, 4 indexed');

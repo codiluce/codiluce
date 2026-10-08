@@ -200,3 +200,40 @@ test('the split map: the places of a comparison are placed in the scene, and a t
   atlas.setSplit(true);
   assert.equal(atlas.getState().timeline.split, true);
 });
+
+test('people: who changed the code, one coloring and one focus at a time, in a window that follows the view', async () => {
+  const { atlas } = await ready();
+  await atlas.ensurePeople();
+  const people = atlas.getState().people;
+  assert.equal(people.status, 'ready');
+  assert.deepEqual(people.data?.people.map(person => [person.name, person.kind, person.commits]), [['Fixture', 'human', 4]]);
+  const key = people.data!.people[0]!.key;
+  await atlas.toggleCoverage(true);
+  await atlas.togglePeopleColors(true);
+  assert.equal(atlas.getState().coverage.show, false, 'coloring files by person turns coverage off');
+  atlas.focusFamily('users');
+  await atlas.focusPerson(key, { fit: true });
+  assert.equal(atlas.getState().families.focus, undefined, 'lighting a person lets the family go');
+  assert.equal(atlas.getState().people.person?.status, 'ready');
+  assert.ok(Object.keys(atlas.getState().people.person!.data!.files).length > 10);
+  assert.ok((atlas.navigator as RecordingNavigator).fits.length > 0, 'the camera frames their folders');
+  // The selection says who changed it: the import, the edit and the move (renames followed).
+  const login = store.entities({ path: 'frontend/src/components/auth/LoginForm.tsx', type: 'file' }).items[0]!;
+  await atlas.select(login.id, { fly: false });
+  assert.equal(atlas.getState().selection?.authorship?.data?.commits, 3);
+  await atlas.setPeopleWindow('30d');
+  assert.equal(atlas.getState().people.data?.window?.key, '30d');
+  assert.equal(atlas.getState().people.person?.data?.window.key, '30d');
+  assert.equal(atlas.getState().selection?.authorship?.data?.window?.key, '30d');
+  // The range of a comparison: only while comparing; C compared with B counts C alone.
+  await atlas.setPeopleWindow('range');
+  assert.equal(atlas.peopleWindow(), 'all');
+  await atlas.openTimeline();
+  await atlas.setTarget(snapshotOf('C').id);
+  // Opening History compared the live index with HEAD first; the view on C follows.
+  await until(() => atlas.getState().people.data?.window?.key === 'range' && atlas.getState().people.data?.window?.anchor === fixture.commits.C);
+  assert.equal(atlas.getState().people.data?.window?.baseline, fixture.commits.B);
+  assert.equal(atlas.getState().people.data?.window?.commits, 1);
+  atlas.focusFamily('users');
+  assert.equal(atlas.getState().people.focus, undefined, 'lighting a family lets the person go');
+});

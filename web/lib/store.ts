@@ -8,7 +8,7 @@
 // the map are kept; a view epoch drops responses that belong to an old view.
 import type { Entity, Relation } from '@engine/core/graph';
 import type { AggregateEdgesPage, AggregateGroup, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FlowList, FlowSummary, ImpactItem, ImpactResult, LocateResult, NodeSummary, ProjectionMeta, Rect, RelationItem, RequestFlow, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineEntry, TimelineResponse, ViewKey } from '@engine/projection/dto';
-import type { AnnotationsOverview, EntityAnnotation, FamiliesResult, FlowStatus } from '@engine/projection/dto';
+import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, FamiliesResult, FeaturesResult, FlowStatus, PersonAuthorship } from '@engine/projection/dto';
 import type { CatalogTab } from './catalog';
 import { fromRequestFlow, fromSteps, type MapFlow } from './map-flow';
 import { isAbort, type AtlasApi } from './api';
@@ -34,6 +34,8 @@ export interface SelectionState {
   coverage?: { status: Status; data?: CoverageDetail; error?: string };
   /** What the language models said about it (`annotate`). */
   annotation?: { status: Status; data?: EntityAnnotation; error?: string };
+  /** Who changed it (the Git history), in the people window; `stamp` is the view and window of `data`. */
+  authorship?: { status: Status; stamp?: string; data?: EntityAuthorship; error?: string };
 }
 export interface RelationsState { status: Status; forId?: string; items: RelationItem[]; typeCounts: { type: string; direction: string; count: number }[]; total: number; hasMore: boolean; type?: string; direction: 'both' | 'outgoing' | 'incoming'; error?: string }
 export interface AggregateState { status: Status; forId?: string; data?: AggregateResult; error?: string; drill?: { group: AggregateGroup; status: Status; page?: AggregateEdgesPage; items: AggregateEdgesPage['items']; error?: string } }
@@ -106,6 +108,8 @@ export interface CatalogState {
   entity?: { id: string; name: string };
   /** Incremented to ask the shell to show the Flows panel. */
   reveal?: number;
+  /** Flow list groups the user opened (true) or closed (false); the others follow the list's default. */
+  open: Record<string, boolean>;
 }
 /** Which files the flows touch, drawn as a lens over the map. */
 export interface CoverageState { show: boolean; status: Status; viewStamp?: string; data?: CoverageResult; error?: string }
@@ -113,8 +117,29 @@ export interface CoverageState { show: boolean; status: Status; viewStamp?: stri
 export interface FamiliesState { show: boolean; status: Status; viewStamp?: string; data?: FamiliesResult; error?: string; focus?: string }
 /** The key under which areas count code files that use no table (`focus` can light them too). */
 export const NO_FAMILY = 'none';
-/** How the live map is arranged: by folder (the canonical tree), by data family, or by domain (the Features view). */
-export type Lens = 'folders' | 'data' | 'domains';
+/**
+ * The product's features (the model's domains) in the Features panel: `focus`
+ * lights one feature's files and dims the rest; `open` holds the expanded
+ * branches of the tree (a feature, or its `key:flows` / `key:folders` lists).
+ */
+export interface FeaturesState { status: Status; viewStamp?: string; data?: FeaturesResult; error?: string; focus?: string; open: Record<string, boolean>; reveal?: number }
+/**
+ * Who changed which code (the Git history), in a window of time kept in the
+ * preferences. The People panel lists them; `show` colors files by the person
+ * who changed each most; `focus` lights one person's files and dims the rest,
+ * with what they changed in `person`. `stamp` is the view and window of `data`.
+ */
+export interface PeopleState {
+  window: AuthorshipWindowKey;
+  show: boolean;
+  status: Status; stamp?: string; data?: AuthorshipResult; error?: string;
+  focus?: string;
+  person?: { key: string; status: Status; stamp?: string; data?: PersonAuthorship; error?: string };
+  /** People rows (and their `key:folders` / `key:commits` lists) expanded in the panel. */
+  open: Record<string, boolean>;
+  /** Incremented to ask the shell to show the People panel. */
+  reveal?: number;
+}
 /**
  * A flow shown on the map: everything it touches stays lit, the rest dims;
  * it plays branch by branch (`playback.index` is the branch), the pulse
@@ -156,8 +181,9 @@ export interface AtlasState {
   tour?: TourState;
   /** The repository's overview, domains and model notes, when `annotate` has run. */
   annotations: { status: Status; data?: AnnotationsOverview; error?: string };
-  lens: Lens;
   families: FamiliesState;
+  features: FeaturesState;
+  people: PeopleState;
 }
 export interface MapNavigator {
   flyTo(node: NodeSummary, options?: { mode?: 'focus' | 'enter' }): void;
@@ -238,14 +264,15 @@ export class AtlasStore {
   private pendingFocus?: { node: NodeSummary; frame?: Rect };
 
   constructor(readonly api: AtlasApi, private readonly options: StoreOptions = {}) {
-    let prefs: { themeId?: string; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel } = {};
+    let prefs: { themeId?: string; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey } = {};
     try { prefs = JSON.parse(options.storage?.getItem('codiluce:prefs') ?? '{}'); } catch { /* defaults */ }
     this.state = {
       status: 'loading', view: { level: 'Applications', focus: [], zoom: 1, visible: [], truncated: false },
       relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' },
       history: { entries: [], index: -1 }, showDiagnostics: prefs.showDiagnostics ?? true, themeId: prefs.themeId ?? 'midnight',
       staleIndex: false, sceneRevision: 0,
-      impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '' }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, lens: 'folders', families: { show: false, status: 'idle' },
+      impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '', open: {} }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, families: { show: false, status: 'idle' }, features: { status: 'idle', open: {} },
+      people: { window: prefs.peopleWindow ?? 'all', show: false, status: 'idle', open: {} },
       timeline: { open: false, status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true, split: prefs.split ?? true, regionLevel: prefs.regionLevel ?? 'auto', regions: { status: 'idle' } },
     };
   }
@@ -264,7 +291,7 @@ export class AtlasStore {
   }
   private bumpScene(): void { this.set(state => ({ sceneRevision: state.sceneRevision + 1 })); }
   private savePrefs(): void {
-    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel })); } catch { /* preferences are optional */ }
+    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window })); } catch { /* preferences are optional */ }
   }
   dispose(): void { this.disposed = true; for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
 
@@ -272,8 +299,6 @@ export class AtlasStore {
     this.set({ status: 'loading', error: undefined });
     const epoch = this.epoch;
     try {
-      const lens = (/(?:^#|&)lens=(domains|data)(?:&|$)/.exec(this.options.location?.hash ?? '')?.[1] as Lens | undefined) ?? this.state.lens;
-      if (lens !== this.state.lens) this.set({ lens });
       this.api.setView(this.viewKey());
       const meta = await this.api.meta();
       void this.loadAnnotations();
@@ -306,6 +331,9 @@ export class AtlasStore {
     this.set({ selection: undefined, relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' }, evidence: undefined, source: undefined });
     await this.init();
     if (selected && !this.state.selection) await this.select(selected, { fly: false, recordHistory: false }).catch(() => undefined);
+    // A new run is a new view: who changed it is read again.
+    if (this.state.people.status !== 'idle') void this.loadPeople();
+    if (this.state.people.focus) void this.loadPerson(this.state.people.focus);
   }
   /** Fetch the next page of children for each container (bounded, de-duplicated). */
   async loadChildren(ids: string[]): Promise<void> {
@@ -362,6 +390,7 @@ export class AtlasStore {
         isEntity && this.state.timeline.open && this.state.meta?.history.available ? this.loadEntityTimeline(id, signal) : Promise.resolve(),
         this.loadSelectionCoverage(id, signal),
         this.loadSelectionAnnotation(id, signal),
+        this.loadSelectionAuthorship(id, signal),
       ]);
     } catch (error) {
       if (isAbort(error)) return;
@@ -384,7 +413,6 @@ export class AtlasStore {
     const parts: string[] = [];
     if (id) parts.push(`id=${encodeURIComponent(id)}`);
     if (id && this.state.impact.open) parts.push(`impact=${this.state.impact.depth}`);
-    if (this.state.lens !== 'folders') parts.push(`lens=${this.state.lens}`);
     if (timeline.open) {
       const at = snapshotToken(timeline.data, timeline.target) ?? 'live', vs = timeline.compare ? snapshotToken(timeline.data, timeline.baseline ?? timeline.data?.workingTree?.id) : undefined;
       parts.push(`at=${at}`);
@@ -415,18 +443,6 @@ export class AtlasStore {
       const selection = this.state.selection;
       if (data.available && selection && !selection.annotation) void this.loadSelectionAnnotation(selection.id, this.aborts.get('selection')?.signal ?? new AbortController().signal);
     } catch (error) { this.set({ annotations: { status: 'error', error: error instanceof Error ? error.message : String(error) } }); }
-  }
-  /** Arrange the live map by folder, by data family or by domain; the camera starts over on the new arrangement. */
-  async setLens(lens: Lens): Promise<void> {
-    if (lens === this.state.lens) return;
-    this.set({ lens });
-    if (this.state.timeline.open) { this.writeHash(); return; }
-    // Domains and districts exist in one arrangement only: their selection does not carry over.
-    const selected = this.state.selection?.id;
-    if (selected && (selected.startsWith('lens:') || selected.startsWith('projection:'))) this.clearSelection();
-    this.scene = new Scene();
-    await this.applyView(this.state.selection?.id, false);
-    this.navigator?.fitAll();
   }
   private async loadSelectionCoverage(id: string, signal: AbortSignal): Promise<void> {
     this.set(state => state.selection?.id === id ? { selection: { ...state.selection, coverage: { status: 'loading' } } } : {});
@@ -551,7 +567,7 @@ export class AtlasStore {
   /** The snapshot/baseline pair every request reads. */
   viewKey(): ViewKey {
     const timeline = this.state.timeline;
-    if (!timeline.open) return this.state.lens !== 'folders' ? { lens: this.state.lens } : {};
+    if (!timeline.open) return {};
     // The live index is named explicitly in history mode, so it is drawn on the timeline layout like every commit.
     const snapshot = timeline.target ?? timeline.data?.workingTree?.id;
     return { ...(snapshot ? { snapshot } : {}), ...(timeline.compare && timeline.baseline ? { compareTo: timeline.baseline } : {}) };
@@ -825,6 +841,9 @@ export class AtlasStore {
       if (this.state.catalog.status !== 'idle') void this.loadCatalog();
       if (this.state.coverage.show) void this.loadCoverage();
       if (this.state.families.show) void this.loadFamilies();
+      if (this.state.features.status !== 'idle') void this.loadFeatures();
+      if (this.state.people.status !== 'idle') void this.loadPeople();
+      if (this.state.people.focus) void this.loadPerson(this.state.people.focus);
       if (this.state.requests.open) void this.openRequestFlow(this.state.requests.open.id);
       const tour = this.state.tour;
       if (tour) void this.openTour({ id: tour.id, detail: tour.detail, title: tour.title, ...(tour.subtitle ? { subtitle: tour.subtitle } : {}), ...(tour.kind ? { kind: tour.kind } : {}) }, { fit: false, play: false });
@@ -836,7 +855,7 @@ export class AtlasStore {
 
   // Blast radius and steps ----------------------------------------------------
   /** Identity of the current view, to tell whether loaded results still belong to it. */
-  viewStamp(): string { const meta = this.state.meta; return `${meta?.snapshot.id ?? ''}|${meta?.comparison?.baseline.id ?? ''}|${this.state.timeline.open ? 'folders' : this.state.lens}`; }
+  viewStamp(): string { const meta = this.state.meta; return `${meta?.snapshot.id ?? ''}|${meta?.comparison?.baseline.id ?? ''}`; }
   /** Show what depends on an entity (the selection by default); it then follows the selection. */
   async showImpact(id = this.state.selection?.id, depth = this.state.impact.depth): Promise<void> {
     if (!id) return;
@@ -924,7 +943,8 @@ export class AtlasStore {
     if (options.entity !== undefined || this.state.catalog.status === 'idle' || this.state.catalog.viewStamp !== this.viewStamp()) await this.loadCatalog(options.entity);
   }
   setCatalogKind(kind: CatalogState['kind']): void { this.setCatalog({ kind }); }
-  setCatalogQuery(query: string): void { this.setCatalog({ query }); }
+  /** Filter the Flows list; the groups follow the filter again (open while filtering). */
+  setCatalogQuery(query: string): void { this.setCatalog({ query, open: {} }); }
   setCatalogFilter(filter: FlowStatus | undefined): void { this.setCatalog(catalog => ({ filter: catalog.filter === filter ? undefined : filter })); }
   /** Open a flow of the catalog on the map. */
   openCatalogFlow(item: FlowSummary): Promise<void> { return this.openTour(tourEntry(item)); }
@@ -1029,7 +1049,7 @@ export class AtlasStore {
   /** Show or hide the coverage lens: files colored by whether flows touch them. */
   async toggleCoverage(show = !this.state.coverage.show): Promise<void> {
     // Coverage and data families both color files: one at a time.
-    this.set(state => ({ coverage: { ...state.coverage, show }, ...(show && state.families.show ? { families: { ...state.families, show: false, focus: undefined } } : {}) }));
+    this.set(state => ({ coverage: { ...state.coverage, show }, ...(show && state.families.show ? { families: { ...state.families, show: false, focus: undefined } } : {}), ...(show && state.people.show ? { people: { ...state.people, show: false } } : {}) }));
     if (show && (this.state.coverage.status !== 'ready' || this.state.coverage.viewStamp !== this.viewStamp())) await this.loadCoverage();
   }
   async loadCoverage(): Promise<void> {
@@ -1044,7 +1064,7 @@ export class AtlasStore {
   }
   /** Show or hide data families: files colored by the tables they use (or the code they use does). */
   async toggleFamilies(show = !this.state.families.show): Promise<void> {
-    this.set(state => ({ families: { ...state.families, show, ...(show ? {} : { focus: undefined }) }, ...(show && state.coverage.show ? { coverage: { ...state.coverage, show: false } } : {}) }));
+    this.set(state => ({ families: { ...state.families, show, ...(show ? {} : { focus: undefined }) }, ...(show && state.coverage.show ? { coverage: { ...state.coverage, show: false } } : {}), ...(show && state.people.show ? { people: { ...state.people, show: false } } : {}) }));
     if (show && (this.state.families.status !== 'ready' || this.state.families.viewStamp !== this.viewStamp())) await this.loadFamilies();
   }
   /** Families of the current view, loaded when they are not yet (the inspector reads them without coloring the map). */
@@ -1064,10 +1084,147 @@ export class AtlasStore {
       this.set(state => ({ families: { ...state.families, status: 'ready', data, viewStamp, ...(state.families.focus && state.families.focus !== NO_FAMILY && !data.families.some(family => family.key === state.families.focus) ? { focus: undefined } : {}) } }));
     } catch (error) { if (!isAbort(error)) this.set(state => ({ families: { ...state.families, status: 'error', error: error instanceof Error ? error.message : String(error) } })); }
   }
-  /** Light one family on the map (again: none); the colors are shown if they were not. */
+  /** Light one family on the map (again: none); the colors are shown if they were not. A lit feature lets go. */
   focusFamily(key: string | undefined): void {
-    this.set(state => ({ families: { ...state.families, focus: key === undefined || state.families.focus === key ? undefined : key } }));
+    this.set(state => ({ families: { ...state.families, focus: key === undefined || state.families.focus === key ? undefined : key }, ...(key ? { features: { ...state.features, focus: undefined }, people: { ...state.people, focus: undefined, person: undefined } } : {}) }));
     if (key && !this.state.families.show) void this.toggleFamilies(true);
+  }
+
+  // Features ---------------------------------------------------------------------
+  /** Features of the current view, loaded when they are not yet. */
+  async ensureFeatures(): Promise<void> {
+    const features = this.state.features;
+    if (features.status === 'loading' || (features.status === 'ready' && features.viewStamp === this.viewStamp())) return;
+    await this.loadFeatures();
+  }
+  async loadFeatures(): Promise<void> {
+    const signal = this.abortable('features');
+    const viewStamp = this.viewStamp();
+    this.set(state => ({ features: { ...state.features, status: 'loading', error: undefined } }));
+    try {
+      const data = await this.api.features(signal);
+      if (signal.aborted) return;
+      this.set(state => ({ features: { ...state.features, status: 'ready', data, viewStamp, ...(state.features.focus && !data.features.some(feature => feature.key === state.features.focus) ? { focus: undefined } : {}) } }));
+    } catch (error) { if (!isAbort(error)) this.set(state => ({ features: { ...state.features, status: 'error', error: error instanceof Error ? error.message : String(error) } })); }
+  }
+  /**
+   * Light one feature's files on the map and dim the rest (again: none); its
+   * branch of the tree opens and, with `fit`, the camera frames its folders.
+   * A lit family lets go: one focus at a time.
+   */
+  async focusFeature(key: string | undefined, options: { fit?: boolean } = {}): Promise<void> {
+    const focus = key === undefined || this.state.features.focus === key ? undefined : key;
+    this.set(state => ({ features: { ...state.features, focus, ...(focus ? { open: { ...state.features.open, [focus]: true } } : {}) }, ...(focus ? { families: { ...state.families, focus: undefined }, people: { ...state.people, focus: undefined, person: undefined } } : {}) }));
+    if (!focus) return;
+    await this.ensureFeatures();
+    const feature = this.state.features.data?.features.find(item => item.key === focus);
+    if (!options.fit || !feature?.folders.length) return;
+    try {
+      const { items } = await this.api.nodes(feature.folders.slice(0, 60).map(folder => folder.id));
+      if (this.state.features.focus === focus && items.length) this.navigator?.fitNodes(items);
+    } catch { /* framing is optional */ }
+  }
+  /** Open the Features panel (on one feature, lit on the map). */
+  async revealFeature(key?: string): Promise<void> {
+    this.set(state => ({ features: { ...state.features, reveal: (state.features.reveal ?? 0) + 1 } }));
+    if (key && this.state.features.focus !== key) await this.focusFeature(key, { fit: true });
+  }
+  /** Expand or collapse a branch of the Features tree (`open` undefined: toggle). */
+  setFeatureOpen(branch: string, open?: boolean): void {
+    this.set(state => ({ features: { ...state.features, open: { ...state.features.open, [branch]: open ?? !state.features.open[branch] } } }));
+  }
+  // People (who changed which code) --------------------------------------------------
+  /** The window the figures use: a comparison's range only while comparing (otherwise all of the history). */
+  peopleWindow(): AuthorshipWindowKey { const window = this.state.people.window; return window === 'range' && !this.state.meta?.comparison ? 'all' : window; }
+  /** Identity of the view and window, to tell whether loaded authorship still belongs to them. */
+  peopleStamp(): string { return `${this.viewStamp()}|${this.peopleWindow()}`; }
+  /** The people of the current view and window, loaded when they are not yet. */
+  async ensurePeople(): Promise<void> {
+    const people = this.state.people;
+    if (people.status === 'loading' || (people.status === 'ready' && people.stamp === this.peopleStamp())) return;
+    await this.loadPeople();
+  }
+  async loadPeople(): Promise<void> {
+    const signal = this.abortable('people');
+    const stamp = this.peopleStamp();
+    this.set(state => ({ people: { ...state.people, status: 'loading', error: undefined } }));
+    try {
+      const data = await this.api.authorship(this.peopleWindow(), signal);
+      if (signal.aborted) return;
+      this.set(state => ({ people: { ...state.people, status: 'ready', data, stamp } }));
+    } catch (error) { if (!isAbort(error)) this.set(state => ({ people: { ...state.people, status: 'error', error: error instanceof Error ? error.message : String(error) } })); }
+  }
+  private async loadPerson(key: string): Promise<void> {
+    const signal = this.abortable('person');
+    const stamp = this.peopleStamp();
+    // What was loaded for another window stays on screen until the new figures arrive.
+    this.set(state => ({ people: { ...state.people, person: { ...(state.people.person?.key === key ? state.people.person : { key }), status: 'loading', error: undefined } } }));
+    try {
+      const data = await this.api.personAuthorship(key, this.peopleWindow(), signal);
+      if (signal.aborted) return;
+      this.set(state => state.people.focus === key ? { people: { ...state.people, person: { key, status: 'ready', stamp, data } } } : {});
+    } catch (error) { if (!isAbort(error)) this.set(state => state.people.focus === key ? { people: { ...state.people, person: { key, status: 'error', stamp, error: error instanceof Error ? error.message : String(error) } } } : {}); }
+  }
+  private async loadSelectionAuthorship(id: string, signal: AbortSignal): Promise<void> {
+    const stamp = this.peopleStamp();
+    this.set(state => state.selection?.id === id ? { selection: { ...state.selection, authorship: { ...state.selection.authorship, status: 'loading', error: undefined } } } : {});
+    try {
+      const data = await this.api.entityAuthorship(id, this.peopleWindow(), signal);
+      this.set(state => state.selection?.id === id ? { selection: { ...state.selection, authorship: { status: 'ready', stamp, data } } } : {});
+    } catch (error) { if (!isAbort(error)) this.set(state => state.selection?.id === id ? { selection: { ...state.selection, authorship: { status: 'error', error: error instanceof Error ? error.message : String(error) } } } : {}); }
+  }
+  /** Color files by the person who changed each most (coverage and data families let go: one coloring at a time). */
+  async togglePeopleColors(show = !this.state.people.show): Promise<void> {
+    this.set(state => ({ people: { ...state.people, show }, ...(show && state.coverage.show ? { coverage: { ...state.coverage, show: false } } : {}), ...(show && state.families.show ? { families: { ...state.families, show: false, focus: undefined } } : {}) }));
+    if (show) await this.ensurePeople();
+  }
+  /**
+   * Light the files one person changed in the window and dim the rest (again:
+   * none); with `fit`, the camera frames the folders holding them. A lit
+   * feature or family lets go: one focus at a time.
+   */
+  async focusPerson(key: string | undefined, options: { fit?: boolean } = {}): Promise<void> {
+    const focus = key === undefined || this.state.people.focus === key ? undefined : key;
+    this.set(state => ({ people: { ...state.people, focus, ...(focus ? { open: { ...state.people.open, [focus]: true } } : { person: undefined }) }, ...(focus ? { families: { ...state.families, focus: undefined }, features: { ...state.features, focus: undefined } } : {}) }));
+    if (!focus) { this.aborts.get('person')?.abort(); return; }
+    await this.loadPerson(focus);
+    const folders = this.state.people.person?.key === focus ? this.state.people.person.data?.folders : undefined;
+    if (!options.fit || !folders?.length) return;
+    try {
+      const { items } = await this.api.nodes(folders.slice(0, 60).map(folder => folder.id));
+      if (this.state.people.focus === focus && items.length) this.navigator?.fitNodes(items);
+    } catch { /* framing is optional */ }
+  }
+  /** Open the People panel (on one person, lit on the map). */
+  async revealPeople(key?: string): Promise<void> {
+    this.set(state => ({ people: { ...state.people, reveal: (state.people.reveal ?? 0) + 1 } }));
+    if (key && this.state.people.focus !== key) await this.focusPerson(key, { fit: true });
+  }
+  /** Change the window of every authorship figure: the panel, the colors, the person lit and the selection. */
+  async setPeopleWindow(window: AuthorshipWindowKey): Promise<void> {
+    if (window === this.state.people.window) return;
+    this.set(state => ({ people: { ...state.people, window } }));
+    this.savePrefs();
+    const { people, selection } = this.state;
+    await Promise.all([
+      people.status !== 'idle' ? this.loadPeople() : undefined,
+      people.focus ? this.loadPerson(people.focus) : undefined,
+      selection?.authorship ? this.loadSelectionAuthorship(selection.id, this.aborts.get('selection')?.signal ?? new AbortController().signal) : undefined,
+    ]);
+  }
+  /** Expand or collapse a row of the People panel (`open` undefined: toggle). */
+  setPeopleOpen(branch: string, open?: boolean): void {
+    this.set(state => ({ people: { ...state.people, open: { ...state.people.open, [branch]: open ?? !state.people.open[branch] } } }));
+  }
+  /** Show a commit's changes in History: its snapshot compared with the commit before. */
+  async showCommit(snapshot: string): Promise<void> {
+    if (!this.state.timeline.open) await this.openTimeline();
+    if (!this.state.timeline.compare) await this.setCompare(true);
+    await this.setTarget(snapshot);
+  }
+  /** Expand or collapse groups of the Flows list (`open` undefined: toggle). */
+  setFlowGroupsOpen(keys: string[], open: boolean): void {
+    this.set(state => ({ catalog: { ...state.catalog, open: { ...state.catalog.open, ...Object.fromEntries(keys.map(key => [key, open])) } } }));
   }
 }
 /** How a catalog flow is shown on the map, and its title. */

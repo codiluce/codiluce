@@ -759,6 +759,47 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .family-keys button:hover { border-color: var(--panel-border); }
 .family-keys button[aria-pressed="true"] { background: var(--chip-active); border-color: var(--accent); }
 .family-keys button .count { margin-left: auto; color: var(--subtle); font-variant-numeric: tabular-nums; }
+.feature-legend { position: absolute; left: 12px; top: 12px; z-index: 4; display: flex; align-items: center; gap: 8px; max-width: calc(100% - 90px); padding: 5px 6px 5px 12px; border-radius: var(--radius-float, 12px); background: var(--panel); border: 1px solid var(--panel-border); box-shadow: var(--shadow); font-size: 12px; }
+.feature-legend .domain-dot { margin-right: 0; }
+.feature-legend-name { border: none; background: none; padding: 0; color: var(--text); font: inherit; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.feature-legend-name:hover { text-decoration: underline; }
+.feature-legend .absent { margin: 0; white-space: nowrap; }
+/* Collapsible trees: the Features panel and the groups of the Flows list. */
+.tree-tools { display: flex; align-items: center; gap: 6px; margin: 6px 2px; flex-wrap: wrap; }
+.tree-tools .absent { margin: 0 auto 0 0; }
+.tree-tools .button.tiny { margin-left: 0; }
+.tree-tools .button:first-of-type { margin-left: auto; }
+.tree-head { display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px 4px; margin: 0 -4px; border: 1px solid transparent; border-radius: var(--radius-chip, 6px); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.tree-head:hover { border-color: var(--panel-border); }
+.tree-head .count { margin-left: auto; color: var(--subtle); font-variant-numeric: tabular-nums; }
+.tree-chevron { width: 10px; flex: none; color: var(--subtle); font-size: 10px; }
+.tree-children { padding-left: 14px; border-left: 1px solid var(--panel-border); margin-left: 5px; }
+.rf-app { margin-top: 10px; }
+.rf-app h3 { margin: 0 0 2px; font-size: 12px; font-weight: 700; }
+.rf-group h4 .tree-head { font: inherit; color: inherit; }
+.tree { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 2px; }
+.tree-row { display: flex; align-items: center; gap: 2px; }
+.tree-toggle { flex: none; width: 22px; height: 26px; border: none; background: none; color: var(--subtle); cursor: pointer; font-size: 11px; border-radius: var(--radius-chip, 6px); }
+.tree-toggle:hover { color: var(--text); background: var(--chip); }
+.tree-label { display: flex; align-items: center; gap: 0; flex: 1; min-width: 0; padding: 4px 6px; border: 1px solid transparent; border-radius: var(--radius-chip, 6px); background: none; color: var(--text); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.tree-label .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tree-label .count { margin-left: auto; padding-left: 8px; color: var(--subtle); font-weight: 400; font-size: 11.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tree-label:hover { border-color: var(--panel-border); }
+.tree-label[aria-pressed="true"] { background: var(--chip-active); border-color: var(--accent); }
+.tree-item > .tree-children { margin: 2px 0 8px 11px; display: grid; gap: 6px; }
+.feature-summary { margin: 2px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.tree-branch { display: grid; gap: 4px; }
+.tree-branch > .tree-head { font-size: 11.5px; font-weight: 700; color: var(--muted); }
+.tree-branch > .button { justify-self: start; }
+.tree-branch .absent { margin: 0 0 0 16px; font-size: 11.5px; }
+.tree-leaves { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.tree-leaf { display: flex; align-items: center; gap: 8px; width: 100%; padding: 3px 6px; border: 1px solid transparent; border-radius: var(--radius-chip, 6px); background: none; color: var(--text); font: inherit; font-size: 11.5px; text-align: left; cursor: pointer; }
+.tree-leaf .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tree-leaf .count { margin-left: auto; color: var(--subtle); font-variant-numeric: tabular-nums; }
+.tree-leaf:hover { border-color: var(--panel-border); }
+.feature-focus { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: var(--radius-chip, 8px); background: var(--chip-active); font-size: 12px; }
+.feature-focus .domain-dot { margin-right: 0; }
+.feature-focus .button { margin-left: auto; }
 .data-breakdown .absent { margin: 0 0 6px; }
 .data-breakdown .coverage-keys { margin-bottom: 6px; }
 .coverage-export { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
@@ -781,7 +822,6 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .domain-dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; flex: none; }
 .domain-list .row-sub { white-space: normal; }
 .start-list { margin: 0 0 10px; padding-left: 18px; font-size: 12px; line-height: 1.5; color: var(--muted); }
-.lens-toggle button { padding: 4px 10px; }
 .rf-row-title { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 12.5px; line-height: 1.25; }
 .flow-actor { font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; padding: 0 5px; border-radius: 5px; background: var(--chip-active); color: var(--muted); }
 .intent-chip { display: inline-block; padding: 0 6px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #fff; background: var(--intent, var(--subtle)); vertical-align: 1px; }
@@ -794,3 +834,39 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .timeline-track .chapter.c0 { --chapter: var(--lane-client); } .timeline-track .chapter.c1 { --chapter: var(--lane-route); } .timeline-track .chapter.c2 { --chapter: var(--lane-controller); }
 .timeline-track .chapter.c3 { --chapter: var(--lane-data); } .timeline-track .chapter.c4 { --chapter: var(--lane-call); } .timeline-track .chapter.c5 { --chapter: var(--lane-return); }
 .timeline-tooltip .note-summary { white-space: normal; max-width: 300px; }
+
+/* People: who changed which code, from the Git history. */
+.people-window { margin: 2px 0 6px; max-width: 100%; flex-wrap: wrap; }
+.people-window-text { margin: 0 0 8px; font-size: 11.5px; }
+.people-colors { display: flex; align-items: center; gap: 6px; margin: 2px 0 8px; font-size: 12px; cursor: pointer; }
+.people-kinds { margin: 6px 0 4px; }
+.people-kinds .count { margin-left: 3px; color: var(--subtle); font-variant-numeric: tabular-nums; }
+.person-kind { flex: none; margin-left: 6px; padding: 0 5px; border-radius: 5px; font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; line-height: 16px; background: var(--chip-active); color: var(--muted); cursor: help; }
+.person-kind.agent { background: color-mix(in srgb, var(--accent) 24%, var(--chip)); color: var(--text); }
+.person-label { flex-wrap: wrap; row-gap: 4px; }
+.person-share { flex-basis: 100%; height: 3px; margin-left: 15px; border-radius: 999px; background: var(--chip); overflow: hidden; }
+.person-share span { display: block; height: 100%; border-radius: inherit; background: var(--subtle); }
+.person-label[aria-pressed="true"] .person-share span { background: var(--accent); }
+.person-facts { margin: 0; font-size: 11.5px; }
+.person-facts dd { overflow-wrap: anywhere; }
+.people-rows { list-style: none; margin: 6px 0; padding: 0; display: grid; gap: 1px; }
+.person-row { display: flex; align-items: center; width: calc(100% + 12px); min-width: 0; margin: 0 -6px; padding: 3px 6px; border: 1px solid transparent; border-radius: var(--radius-chip, 6px); background: none; color: var(--text); font: inherit; font-size: 12px; text-align: left; cursor: pointer; }
+.person-row .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.person-row .count { margin-left: auto; padding-left: 8px; color: var(--subtle); font-size: 11.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.person-row:hover { border-color: var(--panel-border); }
+.person-row[aria-pressed="true"] { background: var(--chip-active); border-color: var(--accent); }
+.people-section h4 .spinner { margin-left: 6px; }
+.people-section .people-window { margin: 0 0 6px; }
+.people-section > .absent { margin: 0 0 6px; font-size: 11.5px; line-height: 1.45; }
+.people-section .coverage-bar { margin: 2px 0 2px; }
+.people-recent { margin-top: 8px; }
+.people-recent > summary { cursor: pointer; font-size: 11.5px; font-weight: 700; color: var(--muted); }
+.commit-list { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 7px; }
+.commit-row { min-width: 0; font-size: 12px; line-height: 1.35; }
+.commit-subject { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.commit-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 1px 8px; color: var(--subtle); font-size: 11px; }
+.commit-meta .commit-people { color: var(--muted); }
+.commit-meta .added, .commit-meta .removed { font-weight: 600; }
+.commit-meta .button.tiny { margin-left: auto; }
+.timeline-track .tick.person line { stroke: var(--person); stroke-width: 2.2; opacity: 1; }
+.timeline-person { display: flex; align-items: center; gap: 2px; margin-top: 2px; font-size: 11px; color: var(--muted); }

@@ -16,13 +16,6 @@ export interface EntityRow {
   routePath?: string; method?: string; framework?: string; role?: string; analysisSkipped?: string;
   /** Comparison views only: how this entity differs from the baseline snapshot. */
   change?: NodeChange;
-  /**
-   * A projection group given as a row (the Features view: a domain, a folder
-   * inside it): its explanation. Such rows are spatial only, never entities.
-   */
-  group?: string;
-  /** A group row holding routes, tables and commands in districts, as an application does. */
-  districts?: boolean;
   /** Database tables of the live index: the migrations that create or change them. */
   migrations?: string[];
 }
@@ -83,8 +76,7 @@ export class ProjectionIndex {
     }
     const make = (row: EntityRow, spatialParentId: string | undefined, depth: number): ProjectionNode => {
       const node: ProjectionNode = {
-        id: row.id, kind: row.group !== undefined ? 'group' : 'entity', type: row.group !== undefined ? 'group' : row.type, name: row.name, children: [], depth, pre: 0, post: 0,
-        ...(row.group !== undefined ? { explanation: row.group } : {}),
+        id: row.id, kind: 'entity', type: row.type, name: row.name, children: [], depth, pre: 0, post: 0,
         ...(row.path ? { path: row.path } : {}), ...(row.language ? { language: row.language } : {}),
         ...(row.sourceRange ? { sourceRange: row.sourceRange } : {}), ...(row.parentId ? { canonicalParentId: row.parentId } : {}),
         ...(spatialParentId ? { spatialParentId } : {}), ...(row.loc !== undefined ? { loc: row.loc } : {}),
@@ -106,7 +98,7 @@ export class ProjectionIndex {
       const node = make(row, spatialParent?.id, spatialParent ? spatialParent.depth + 1 : 0);
       if (spatialParent) spatialParent.children.push(node.id);
       const children = canonicalChildren.get(row.id) ?? [];
-      const districtParent = row.type === 'application' || row.type === 'repository' || !!row.districts;
+      const districtParent = row.type === 'application' || row.type === 'repository';
       const structural = children.filter(child => !(districtParent && (INTERFACE_TYPES.has(child.type) || DATA_TYPES.has(child.type) || CONSOLE_TYPES.has(child.type))));
       const interfaces = children.filter(child => districtParent && INTERFACE_TYPES.has(child.type));
       const tables = children.filter(child => districtParent && DATA_TYPES.has(child.type));

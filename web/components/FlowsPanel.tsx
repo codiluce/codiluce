@@ -1,16 +1,19 @@
 'use client';
 // The Flows panel: one list of every flow of the index (pages, requests,
 // console commands and scheduled tasks), filtered by kind, completeness and
-// text, and grouped by area. Choosing one shows it on the map; "through" an
-// entity lists only the flows touching it. Everything listed is derived from
-// indexed relationships.
+// text, and grouped by application and area in collapsible branches (long
+// lists start collapsed). Choosing one shows it on the map; "through" an entity
+// lists only the flows touching it. Everything listed is derived from indexed
+// relationships.
 import { useEffect, useMemo, type CSSProperties } from 'react';
 import type { FlowSummary } from '@engine/projection/dto';
-import { CATALOG_TABS, completenessOf, KIND_HINT, KIND_TEXT, kindsOf, visibleCatalog, type CatalogTab } from '../lib/catalog';
+import { CATALOG_TABS, completenessOf, KIND_HINT, KIND_TEXT, kindsOf, visibleCatalog, type CatalogGroup, type CatalogTab } from '../lib/catalog';
 import { STATUS_HINT, STATUS_TEXT } from '../lib/request-flows';
 import { useAtlas, useStore } from './context';
 import { MethodBadge, StagePips } from './RequestFlows';
 
+/** Above this many flows shown (and without a filter), area groups start collapsed. */
+const COLLAPSE_ABOVE = 40;
 const EMPTY: Record<CatalogTab, string> = { all: 'No flows were indexed.', page: 'No pages were indexed.', request: 'No endpoints or HTTP requests were indexed.', command: 'No Artisan commands or scheduled tasks were indexed.', schedule: 'No scheduled tasks were indexed.', unmatched: 'Every indexed request has an endpoint.' };
 export function FlowsPanel({ onClose }: { onClose: () => void }) {
   const store = useStore();
@@ -27,6 +30,13 @@ export function FlowsPanel({ onClose }: { onClose: () => void }) {
   const tiles = Object.values(statusCounts).some(Boolean);
   const groups = useMemo(() => data ? visibleCatalog(data.items, { tab, query: catalog.query, status: catalog.filter }) : [], [data, tab, catalog.query, catalog.filter]);
   const shown = groups.reduce((sum, group) => sum + group.items.length, 0);
+  // Applications, then their area groups; the group holding the flow on the map starts open.
+  const apps = useMemo(() => { const byApp = new Map<string, CatalogGroup[]>(); for (const group of groups) byApp.set(group.app ?? '', [...byApp.get(group.app ?? '') ?? [], group]); return [...byApp]; }, [groups]);
+  const nested = apps.length > 1;
+  const collapsedFirst = shown > COLLAPSE_ABOVE && !catalog.query.trim();
+  const isOpen = (key: string, fallback: boolean) => catalog.open[key] ?? fallback;
+  const groupOpen = (group: CatalogGroup) => isOpen(group.key, !collapsedFirst || group.items.some(item => active === `${item.detail}:${item.id}`));
+  const branchKeys = [...(nested ? apps.map(([app]) => `app:${app}`) : []), ...groups.map(group => group.key)];
   const count = (kind: CatalogTab) => data ? kindsOf(kind).reduce((sum, item) => sum + data.counts[item], 0) : undefined;
   return (
     <>
@@ -65,15 +75,45 @@ export function FlowsPanel({ onClose }: { onClose: () => void }) {
           <>
             <label className="sr-only" htmlFor="flow-query">Filter flows</label>
             <input id="flow-query" className="text-input rf-query" placeholder={tab === 'command' ? 'Filter: command, schedule, handler…' : 'Filter: path, handler, caller, command…'} value={catalog.query} onChange={event => store.setCatalogQuery(event.target.value)} />
-            {shown !== items.length && <p className="absent" style={{ margin: '6px 2px' }}>{shown} of {items.length} shown</p>}
+            {(shown !== items.length || groups.length > 1) && (
+              <div className="tree-tools">
+                {shown !== items.length && <span className="absent">{shown} of {items.length} shown</span>}
+                {groups.length > 1 && <>
+                  <button className="button tiny" onClick={() => store.setFlowGroupsOpen(branchKeys, true)}>Expand all</button>
+                  <button className="button tiny" onClick={() => store.setFlowGroupsOpen(branchKeys, false)}>Collapse all</button>
+                </>}
+              </div>
+            )}
             {!items.length && <p className="absent">{catalog.entity ? `No flow${tab === 'all' ? '' : ' of this kind'} touches it.` : EMPTY[tab]}</p>}
             <div className="rf-groups">
-              {groups.map(group => (
-                <section key={group.key} className="rf-group" aria-label={`${group.app ?? ''} ${group.group}`}>
-                  <h4>{group.label}{group.app && <span className="chip app-chip">{group.app}</span>}<span className="count">{group.items.length}</span></h4>
-                  <ul className="rf-list">{group.items.map(item => <CatalogRow key={item.id} item={item} active={active === `${item.detail}:${item.id}`} />)}</ul>
-                </section>
-              ))}
+              {apps.map(([app, list]) => {
+                const appOpen = !nested || isOpen(`app:${app}`, true);
+                const body = list.map(group => {
+                  const open = groupOpen(group);
+                  return (
+                    <section key={group.key} className="rf-group" aria-label={`${group.app ?? ''} ${group.group}`}>
+                      <h4>
+                        <button className="tree-head" aria-expanded={open} onClick={() => store.setFlowGroupsOpen([group.key], !open)}>
+                          <span className="tree-chevron" aria-hidden>{open ? '▾' : '▸'}</span>{group.label}{group.app && !nested && <span className="chip app-chip">{group.app}</span>}<span className="count">{group.items.length}</span>
+                        </button>
+                      </h4>
+                      {open && <ul className="rf-list">{group.items.map(item => <CatalogRow key={item.id} item={item} active={active === `${item.detail}:${item.id}`} />)}</ul>}
+                    </section>
+                  );
+                });
+                if (!nested) return body;
+                const count = list.reduce((sum, group) => sum + group.items.length, 0);
+                return (
+                  <section key={`app:${app}`} className="rf-app" aria-label={app || 'Repository'}>
+                    <h3>
+                      <button className="tree-head" aria-expanded={appOpen} onClick={() => store.setFlowGroupsOpen([`app:${app}`], !appOpen)}>
+                        <span className="tree-chevron" aria-hidden>{appOpen ? '▾' : '▸'}</span>{app || 'Repository'}<span className="count">{count}</span>
+                      </button>
+                    </h3>
+                    {appOpen && <div className="tree-children">{body}</div>}
+                  </section>
+                );
+              })}
             </div>
           </>
         )}
@@ -81,7 +121,7 @@ export function FlowsPanel({ onClose }: { onClose: () => void }) {
     </>
   );
 }
-function CatalogRow({ item, active }: { item: FlowSummary; active: boolean }) {
+export function CatalogRow({ item, active }: { item: FlowSummary; active: boolean }) {
   const store = useStore();
   const size = `${item.files} file${item.files === 1 ? '' : 's'}`;
   let top: React.ReactNode, sub: string;

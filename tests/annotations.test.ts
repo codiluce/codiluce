@@ -128,7 +128,7 @@ test('domains: the longest matching path wins, connected files infer theirs, the
   assert.ok(inferred.every(id => graph.entities.some(item => item.id === id && item.type === 'file')));
 });
 
-test('the projection serves flow titles, summaries, the overview, the Features view and commit notes', async () => {
+test('the projection serves flow titles, summaries, the overview, features and commit notes', async () => {
   const fresh = new ProjectionService(store, { root, annotations: () => annotations });
   const flows = fresh.flows().items;
   assert.ok(flows.some(item => item.title?.startsWith('Do the task') && item.actor === 'user'));
@@ -141,16 +141,18 @@ test('the projection serves flow titles, summaries, the overview, the Features v
   assert.match(note.summary ?? '', /reads the users table/);
   assert.deepEqual(note.domain, { key: 'accounts', name: 'Accounts', inferred: false });
   assert.ok(!note.outdated);
-  // The Features view: repository → domain → folder → file; symbols stay in their files.
-  const lens = fresh.locate(service.id, { lens: 'domains' });
-  assert.deepEqual(lens.spatialAncestors.map(item => item.name), ['fixture', 'Accounts', 'backend/app/Services']);
-  assert.equal(lens.spatialAncestors[1]!.kind, 'group');
-  assert.ok(fresh.children(lens.spatialAncestors[1]!.id, { view: { lens: 'domains' } }).items.length > 0);
+  // Features: each domain's files, entry points and folders; a flow belongs to the feature where it starts.
+  const features = fresh.features();
+  const accounts = features.features.find(feature => feature.key === 'accounts')!;
+  assert.ok(accounts.files > 0 && accounts.folders.some(folder => folder.path === 'backend/app/Services'));
+  assert.equal(features.of[service.id], 'accounts');
   const method = graph.entities.find(item => item.metadata.qualifiedName === 'App\\Services\\AuthService::authenticate')!;
-  assert.ok(fresh.locate(method.id, { lens: 'domains' }).spatialAncestors.some(item => item.id === service.id), 'symbols stay in their files');
+  assert.equal(features.of[method.id], undefined, 'symbols take their file\'s feature');
   const login = graph.entities.find(item => item.name === 'POST /auth/login')!;
-  assert.ok(fresh.locate(login.id, { lens: 'domains' }).spatialAncestors.some(item => item.name === 'Accounts'), 'endpoints sit in their domain');
-  assert.ok(fresh.search('AuthService', { view: { lens: 'domains' } }).items.length > 0);
+  assert.equal(features.of[login.id], 'accounts', 'an endpoint follows its handler');
+  assert.ok(features.areas[graph.entities.find(item => item.type === 'repository')!.id]!.accounts! >= accounts.files, 'areas count their code files per feature');
+  assert.ok(flows.some(item => item.entry.id === login.id && item.feature === 'accounts'), 'a flow belongs to the feature where it starts');
+  assert.ok(features.features.findIndex(feature => feature.key === 'platform') === -1 || features.features.at(-1)!.key === 'platform', 'shared code comes last');
   // Commit notes and chapters join the timeline.
   annotations.put([{ kind: 'commit', target: 'abc123', contentKey: 'k', promptVersion: 'commits-1', model: 'gpt-6-luna', value: { intent: 'feature', title: 'Add login', summary: 'The commit adds the login form.', areas: ['frontend'] } }, { kind: 'chapters', target: 'repository', contentKey: 'k', promptVersion: 'chapters-1', model: 'gpt-6.1-sol', value: { chapters: [{ title: 'First steps', summary: 'The team starts the app.', from: 'abc123', to: 'abc123', areas: [] }] } }]);
   const timeline: TimelineResponse = { available: true, firstParent: true, entries: [{ sha: 'abc123', parents: [], authorName: 'A', authoredAt: '2026-01-01', committedAt: '2026-01-01', subject: 'wip', merge: false }], indexing: { enabled: false, queued: [], failed: [] } };
@@ -161,5 +163,5 @@ test('the projection serves flow titles, summaries, the overview, the Features v
   const plain = new ProjectionService(store, { root });
   assert.equal(plain.annotationsOverview().available, false);
   assert.equal(plain.annotateTimeline(timeline), timeline);
-  assert.equal(plain.locate(service.id, { lens: 'domains' }).spatialAncestors.at(-1)!.type, 'directory', 'no domains: the folder view');
+  assert.deepEqual(plain.features().features, [], 'no domains: no features');
 });

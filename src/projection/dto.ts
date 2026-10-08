@@ -9,12 +9,8 @@ import type { DiffLine, Hunk } from '../history/textdiff.js';
 import type { Rect } from './layout.js';
 
 export type { ChangeFacet, ChangeStatus, DiffLine, DiffSummary, Hunk, LineageReason, PullRequestRef, SnapshotStats };
-/**
- * Which snapshot (and baseline) a request reads; absent = the live working-tree index.
- * The live index can be drawn another way: `lens: 'domains'` by domain (the
- * Features view), `lens: 'data'` by data family (projection/families.ts).
- */
-export interface ViewKey { snapshot?: string; compareTo?: string; lens?: 'domains' | 'data' }
+/** Which snapshot (and baseline) a request reads; absent = the live working-tree index. */
+export interface ViewKey { snapshot?: string; compareTo?: string }
 export interface SnapshotRef { id: string; kind: 'working_tree' | 'commit'; commitSha?: string; dirty?: boolean; analyzedAt: string }
 export interface NodeChange {
   status: ChangeStatus; facets: ChangeFacet[];
@@ -281,6 +277,8 @@ export interface FlowSummary {
   truncated?: boolean;
   /** Language-model annotation (`annotate`): what the flow lets someone do, and who starts it. */
   title?: string; goal?: string; actor?: string;
+  /** The feature (domain key) its entry point belongs to, once domains are described. */
+  feature?: string;
 }
 export interface FlowList {
   items: FlowSummary[];
@@ -338,6 +336,117 @@ export interface FamiliesResult {
   without: number;
   /** Per area (spatial ancestors of files): files per family, code files without one as `none`. */
   areas: Record<string, Record<string, number>>;
+}
+
+// Features (the model's domains, applied to the index) ------------------------------
+export interface FeatureSummary {
+  key: string; name: string; summary: string;
+  /** Code files in the feature, in this view. */
+  files: number; color: number;
+  /** Folders (or applications) directly holding its code files, most files first. */
+  folders: { id: string; path: string; files: number }[];
+}
+export interface FeaturesResult {
+  /** Largest first; shared code (`platform`) last. Empty until domains are described. */
+  features: FeatureSummary[];
+  /** Entity → feature key: files, routes, endpoints, commands, scheduled tasks and tables (symbols take their file's). */
+  of: Record<string, string>;
+  /** Per area (spatial ancestors of code files): code files per feature. */
+  areas: Record<string, Record<string, number>>;
+}
+
+// Authorship: who changed which code (history/authors.ts, projection/authorship.ts) ------
+/** All of the history, the year / 90 / 30 days up to the commit shown, or the commits of a comparison. */
+export type AuthorshipWindowKey = 'all' | '365d' | '90d' | '30d' | 'range';
+export interface AuthorshipWindow {
+  key: AuthorshipWindowKey;
+  /** The commit the map shows (the history is read from there) and its date: windows end there. */
+  anchor: string; until: string;
+  /** Start of a time window. */
+  since?: string;
+  /** `range`: the comparison's baseline commit; the commits it already had are left out. */
+  baseline?: string;
+  /** Commits in the window that changed files. */
+  commits: number;
+}
+export type PersonKind = 'human' | 'agent' | 'bot';
+export interface PersonSummary {
+  key: string; name: string; emails: string[];
+  /** Coding agents and automation accounts are told apart from humans by name and address. */
+  kind: PersonKind;
+  /** Position by first commit in the whole history read: the same in every window, so a person keeps one color. */
+  order: number;
+  /**
+   * In the window: commits they authored or co-authored (`coauthored` of them
+   * through a Co-authored-by trailer), lines added plus deleted in those
+   * commits, files of this view they changed, and their first and last commit.
+   */
+  commits: number; coauthored: number; lines: number; files: number; first: string; last: string;
+}
+export interface AuthorshipResult {
+  available: boolean;
+  /** Why there is no authorship (no Git history, no commit indexed…). */
+  reason?: string;
+  window?: AuthorshipWindow;
+  /** History older than the commits read is left out. */
+  truncated: boolean;
+  /** The working tree has uncommitted changes: they are in no commit, so they are not counted. */
+  dirty: boolean;
+  /** People with commits in the window, most commits first. */
+  people: PersonSummary[];
+  /** File (and entry point, by the file defining it) → key of the person who changed it most in the window. Files nobody changed are absent. */
+  of: Record<string, string>;
+  /** Per area: its files by the person who changed each most, those nobody changed in the window as `none`. */
+  areas: Record<string, Record<string, number>>;
+  /** Files of the view nobody changed in the window. */
+  unchanged: number;
+}
+export interface AuthorshipCommit {
+  sha: string; subject: string; authoredAt: string;
+  /** People keys: the author first, then co-authors. */
+  people: string[];
+  /** Within what was asked about (a selection, or a person's files): files changed, lines added and deleted. */
+  files: number; added: number; deleted: number;
+  /** The history snapshot of this commit, when it is indexed. */
+  snapshot?: string;
+}
+export interface PersonAuthorship {
+  person: PersonSummary; window: AuthorshipWindow;
+  /** Files of this view they changed in the window: commits and lines added plus deleted. */
+  files: Record<string, { commits: number; lines: number }>;
+  /** Routes, endpoints, commands and scheduled tasks defined in those files. */
+  entries: string[];
+  /** Per area: how many of its files they changed. */
+  areas: Record<string, number>;
+  /** Folders (or applications) directly holding the files they changed, most files first (then most lines). */
+  folders: { id: string; path: string; files: number; lines: number }[];
+  /** Their latest commits in the window, newest first. */
+  commits: AuthorshipCommit[];
+  /** Every commit of theirs in the window (12-character SHA prefixes), to mark them on the timeline. */
+  shas: string[];
+}
+export interface EntityPerson {
+  key: string; name: string; kind: PersonKind; order: number;
+  commits: number; lines: number; added: number; deleted: number;
+  /** Files of the selection they changed. */
+  files: number;
+  /** Their part of the lines changed here (commits when no line changed, as with binary files), 0..1. Co-authors share commits, so parts can add up to more than 1. */
+  share: number;
+  first: string; last: string;
+}
+export interface EntityAuthorship {
+  id: string; available: boolean; reason?: string;
+  window?: AuthorshipWindow;
+  /** What the figures are about: the file itself, the file holding the symbol or defining the entry point, or every file inside an area. */
+  scope: 'file' | 'symbol' | 'area';
+  file?: { id: string; path: string };
+  /** Files covered, and how many of them changed in the window. */
+  files: number; changedFiles: number;
+  commits: number; lines: number;
+  /** Most lines first. */
+  people: EntityPerson[];
+  /** The latest commits that changed it, newest first. */
+  recent: AuthorshipCommit[];
 }
 
 // Annotations (language models) ----------------------------------------------------

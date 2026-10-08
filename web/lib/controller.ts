@@ -11,7 +11,7 @@ import { branchDuration, branchPosition, flowAreas, flowLit, type MapFlow } from
 import type { PlaybackState } from './playback';
 import { nodeHeight, type Scene, type VisibleSet } from './scene';
 import { isContainer, type AtlasState, type AtlasStore, type MapNavigator, type ViewState } from './store';
-import { familyHues, themeById } from './themes';
+import { familyHues, featureHues, personHue, personHues, themeById } from './themes';
 
 /** A branch with more stops than this labels only its start and the waves around the front; at most this many pins show. */
 const CALLOUT_ALL = 18, PIN_MAX = 40;
@@ -301,7 +301,7 @@ export class MapController implements MapNavigator {
       ...this.analysisOverlays(state, time),
       motion: this.motion,
       // A time-lapse frame compares with the previous commit; overlays loaded for the settled view wait until it is back.
-      ...(this.store.previewScene ? { edges: [], emphasis: undefined, lit: undefined, flow: undefined, callouts: undefined, pins: undefined, coverage: undefined, families: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
+      ...(this.store.previewScene ? { edges: [], emphasis: undefined, lit: undefined, flow: undefined, callouts: undefined, pins: undefined, coverage: undefined, families: undefined, feature: undefined, people: undefined, person: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
     };
   }
   /**
@@ -348,10 +348,34 @@ export class MapController implements MapNavigator {
       if (this.familyCache?.data !== families || this.familyCache.focus !== focus) this.familyCache = { data: families, focus, overlay: { of: new Map(Object.entries(families.of)), areas: new Map(Object.entries(families.areas)), names: new Map(families.families.map(family => [family.key, family.name])), hues: familyHues(families.families.map(family => family.key)), ...(focus ? { focus } : {}) } };
       result.families = this.familyCache.overlay;
     }
+    const features = state.features.focus && state.features.data && state.features.viewStamp === stamp ? state.features.data : undefined;
+    if (features) {
+      const focus = state.features.focus!;
+      if (this.featureCache?.data !== features || this.featureCache.focus !== focus) this.featureCache = { data: features, focus, overlay: { of: new Map(Object.entries(features.of)), areas: new Map(Object.entries(features.areas)), names: new Map(features.features.map(feature => [feature.key, feature.name])), hues: featureHues(features.features.map(feature => feature.key)), focus } };
+      result.feature = this.featureCache.overlay;
+    }
+    // People: files colored by who changed each most; one person in focus lights what they changed.
+    const peopleStamp = this.store.peopleStamp();
+    const people = state.people.show && state.people.data?.available && state.people.stamp === peopleStamp ? state.people.data : undefined;
+    if (people) {
+      if (this.peopleCache?.data !== people) this.peopleCache = { data: people, overlay: { of: new Map(Object.entries(people.of)), areas: new Map(Object.entries(people.areas)), names: new Map(people.people.map(person => [person.key, person.name])), hues: personHues(people.people), none: 'Not changed' } };
+      result.people = this.peopleCache.overlay;
+    }
+    const person = state.people.focus && state.people.person?.key === state.people.focus && state.people.person.stamp === peopleStamp ? state.people.person.data : undefined;
+    if (person) {
+      if (this.personCache?.data !== person) {
+        const key = person.person.key;
+        this.personCache = { data: person, overlay: { of: new Map([...Object.keys(person.files), ...person.entries].map(id => [id, key])), areas: new Map(Object.entries(person.areas).map(([id, count]) => [id, { [key]: count }])), names: new Map([[key, person.person.name]]), hues: new Map([[key, personHue(person.person.order)]]), focus: key, none: 'Not changed' } };
+      }
+      result.person = this.personCache.overlay;
+    }
     return result;
   }
+  private peopleCache?: { data: object; overlay: FamilyOverlay };
+  private personCache?: { data: object; overlay: FamilyOverlay };
   private coverageCache?: { data: object; overlay: CoverageOverlay };
   private familyCache?: { data: object; focus?: string; overlay: FamilyOverlay };
+  private featureCache?: { data: object; focus: string; overlay: FamilyOverlay };
   /** The flow shown on the map (opened from the Flows panel, the inspector or the lanes). */
   private shownFlow(state: AtlasState): { flow: MapFlow; playback: PlaybackState } | undefined {
     const tour = state.tour;

@@ -5,6 +5,7 @@ import { compactNumber, shortSha } from '../lib/format';
 import { entryOf, predecessor, timelineIndex, type AtlasStore } from '../lib/store';
 import { useAtlas, useStore } from './context';
 import { CommitImpactChip } from './Analysis';
+import { familyCss, personHue, themeById } from '../lib/themes';
 
 const SCRUB_MS = 140;
 const SPEEDS = [0.5, 1, 2, 4];
@@ -203,6 +204,10 @@ function Track({ data }: { data: TimelineResponse }) {
     return { points, max };
   }, [data]);
   const marks = useMemo(() => axisMarks(data.entries), [data]);
+  // The person lit on the map: their commits are marked on the track.
+  const person = useAtlas(state => state.people.focus && state.people.person?.key === state.people.focus ? state.people.person.data : undefined);
+  const dark = themeById(useAtlas(state => state.themeId)).dark;
+  const theirs = useMemo(() => person ? new Set(person.shas) : undefined, [person]);
   /** Dragging shows the time-lapse frame at once when it is loaded (otherwise the commit after a short pause); releasing settles there. */
   const choose = (index: number | undefined, release: boolean) => {
     if (index === undefined) return;
@@ -231,7 +236,7 @@ function Track({ data }: { data: TimelineResponse }) {
   return (
     <div className="timeline-track">
       <svg
-        ref={svg} width="100%" height={height} role="slider" tabIndex={0}
+        ref={svg} width="100%" height={height} role="slider" tabIndex={0} style={person ? { '--person': familyCss(personHue(person.person.order), dark) } as React.CSSProperties : undefined}
         aria-label="Commit timeline. Left and right arrows step through indexed commits; Shift with arrows moves the comparison baseline; Space plays the history."
         aria-valuemin={0} aria-valuemax={count - 1} aria-valuenow={targetIndex} aria-valuetext={label(data, timeline.target)}
         onKeyDown={onKeyDown}
@@ -247,7 +252,7 @@ function Track({ data }: { data: TimelineResponse }) {
         {data.entries.map((entry, index) => {
           const cx = x(index);
           return (
-            <g key={entry.sha} className={`tick${entry.snapshot ? ' indexed' : ''}${entry.snapshot?.stale ? ' stale' : ''}${index === hover ? ' hover' : ''}${entry.note ? ` i-${entry.note.intent}` : ''}`}>
+            <g key={entry.sha} className={`tick${entry.snapshot ? ' indexed' : ''}${entry.snapshot?.stale ? ' stale' : ''}${index === hover ? ' hover' : ''}${entry.note ? ` i-${entry.note.intent}` : ''}${theirs?.has(entry.sha.slice(0, 12)) ? ' person' : ''}`}>
               <line x1={cx} x2={cx} y1={entry.snapshot ? base - 12 : base - 5} y2={base} />
               {entry.merge && <rect className="merge" x={cx - 2.5} y={base - 19} width={5} height={5} transform={`rotate(45 ${cx} ${base - 16.5})`} />}
               {entry.pullRequest?.source === 'github' && <circle className="pr" cx={cx} cy={base - 16} r={2.5} />}
@@ -283,6 +288,7 @@ function Track({ data }: { data: TimelineResponse }) {
           ) : <div>Working tree (live index)</div>}
         </div>
       )}
+      {person && theirs && <div className="timeline-person" style={{ '--person': familyCss(personHue(person.person.order), dark) } as React.CSSProperties}><span className="domain-dot" style={{ background: 'var(--person)' }} />Marked: commits by <strong>{person.person.name}</strong> on this line ({data.entries.filter(entry => theirs.has(entry.sha.slice(0, 12))).length} of their {person.shas.length} in the window)</div>}
       {pickedEntry && (
         <div className="timeline-popover" role="dialog" aria-label="Commit not indexed" style={{ left: Math.min(Math.max(0, x(picked!) - 150), Math.max(0, width - 320)) }}>
           <div><span className="mono">{shortSha(pickedEntry.sha)}</span> · {pickedEntry.subject}</div>

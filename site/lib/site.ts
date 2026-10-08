@@ -1,4 +1,4 @@
-export const GITHUB_URL = 'https://github.com/ojoven/codiluce';
+export const GITHUB_URL = 'https://github.com/codiluce/codiluce';
 export const ISSUES_URL = `${GITHUB_URL}/issues`;
 export const NPM_URL = 'https://www.npmjs.com/package/codiluce';
 export const CALL_URL = 'https://calendly.com/mikeltorresugarte-ynlf/30min';
@@ -8,7 +8,7 @@ export const VERSION = '0.1.1';
 export const INSTALL = {
   npx: ['npx codiluce@latest start .'],
   npm: ['npm install --global codiluce', 'codiluce start .'],
-  source: ['git clone https://github.com/ojoven/codiluce.git', 'cd codiluce && npm ci', 'npm start -- /path/to/repository'],
+  source: ['git clone https://github.com/codiluce/codiluce.git', 'cd codiluce && npm ci', 'npm start -- /path/to/repository'],
 } as const;
 
 export type InstallMethod = keyof typeof INSTALL;

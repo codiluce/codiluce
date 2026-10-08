@@ -24,17 +24,20 @@ import { extendRegistry, LAYOUT_VERSION, TIMELINE_LAYOUT_VERSION, layoutHierarch
 import { ProjectionIndex, type EntityRow, type ProjectionNode, type RelationRow } from './hierarchy.js';
 import { dataFamilies, NO_FAMILY, type FamilyAssignment } from './families.js';
 import { readSnapshotFile, readSnapshotSource, snapshotRef, SourceError, splitLines, type SourceRequest, type SourceResponse } from './source.js';
-import type { AggregateResult, ChangeRegionsResult, ChangesPage, CoverageDetail, CoverageExport, CoverageExportSymbol, CoverageResult, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, FamiliesResult, FlowList, FlowSummary, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowEdge, RequestFlowList, RequestFlowNode, RequestFlowSummary, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
+import type { AggregateResult, ChangeRegionsResult, ChangesPage, CoverageDetail, CoverageExport, CoverageExportSymbol, CoverageResult, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, FamiliesResult, FeaturesResult, FlowList, FlowSummary, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowEdge, RequestFlowList, RequestFlowNode, RequestFlowSummary, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
 import { computeImpact, DEFAULT_IMPACT_DEPTH, FILE_IMPACT_TYPES, impactPath, MAX_IMPACT_SEEDS, seedsOf, SYMBOL_IMPACT_TYPES, type ImpactComputation } from './impact.js';
 import { walkSteps } from './steps.js';
 import { changeRegions, isRegionLevel } from './regions.js';
 import { commandFlow, displayName, endpointFlow, FLOW_LANES, scheduleFlow, unmatchedFlow, type FlowContext, type RawFlow } from './request-flows.js';
 import { CATALOG_KINDS, computeCoverage, fileResolver, forwardSlice, pageEndpoints, type CatalogKind, type CoverageComputation } from './catalog.js';
 import type { AnnotationStore } from '../ai/store.js';
-import { assignDomains, type DomainAssignment, type DomainRule } from '../ai/domains.js';
+import { assignDomains, PLATFORM, type DomainAssignment, type DomainRule } from '../ai/domains.js';
 import type { AnnotationsOverview, EntityAnnotation, TimelineResponse } from './dto.js';
 import { guardsAt, hintOf, phrase } from './conditions.js';
 import { SYMBOL_TYPES } from './hierarchy.js';
+import { AuthorLogs } from '../history/authors.js';
+import { authorshipResult, computeAuthorship, entityAuthorship, isAuthorshipWindow, personAuthorship, type AuthorshipComputation } from './authorship.js';
+import type { AuthorshipResult, AuthorshipWindowKey, EntityAuthorship, PersonAuthorship } from './dto.js';
 export type { NodeSummary, Page, RelationItem, ViewKey } from './dto.js';
 /** Relations that do not make their target used: structure and re-export bookkeeping. */
 const UNUSED_IGNORED = new Set(['contains', 'exports']);
@@ -62,10 +65,10 @@ interface View {
   catalog?: { flows: { summary: FlowSummary; members: Set<string> }[]; byEntity: Map<string, number[]>; coverage?: CoverageComputation };
   /** Endpoints serving a page (lazily): Steps stop at navigation to them. */
   pages?: Set<string>;
-  /** Views drawn another way (by data family): the folder view of the same index. */
-  base?: View;
-  /** Data families (lazily; a derived view uses its base's). */
+  /** Data families (lazily). */
   families?: FamilyAssignment;
+  /** Authorship by window (lazily). */
+  authorship?: Map<string, AuthorshipComputation>;
 }
 /** Languages whose files count as code (files of other languages are placed, not counted). */
 const CODE_LANGUAGES = new Set(['typescript', 'javascript', 'php', 'vue', 'svelte']);
@@ -93,7 +96,8 @@ export class ProjectionService {
   private readonly renames = new Map<string, Map<string, string>>();
   private timeline?: { stamp: string; registry: TimelineRegistry; snapshots: Set<string>; layouts: Map<string, { registry: TimelineRegistry; layout: TimelineLayout }> };
   private evolutionRun?: { key: string; job: EvolutionJob; done: Promise<void>; result?: EvolutionResponse; error?: string };
-  constructor(private readonly store: GraphStore, private readonly options: ProjectionOptions = {}) {}
+  private readonly authorLogs: AuthorLogs;
+  constructor(private readonly store: GraphStore, private readonly options: ProjectionOptions = {}) { this.authorLogs = new AuthorLogs(options.root, options.stateDirectory); }
 
   // Snapshots and views ---------------------------------------------------------------
   /** Undefined, `current` or the live run's ID: the working-tree index; otherwise a stored snapshot ID. */
@@ -169,11 +173,6 @@ export class ProjectionService {
     return entry;
   }
   private load(view: ViewKey = {}): View {
-    const live = !view.snapshot && !view.compareTo;
-    // The Features view: the live index drawn by domain (only once domains are described).
-    if (live && view.lens === 'domains') { const lensed = this.lensView(); if (lensed) return lensed; }
-    // By data family.
-    if (live && view.lens === 'data') return this.familyView();
     const { target, baseline } = this.sources(view);
     // Any snapshot parameter selects the timeline layout (when history exists); none is the live, compact map.
     const historical = !!(view.snapshot || view.compareTo) && !!this.timelineBase();
@@ -246,7 +245,7 @@ export class ProjectionService {
     return node;
   }
 
-  // Annotations and the Features view ------------------------------------------------
+  // Annotations and features --------------------------------------------------------
   private domainCache?: { key: string; assignment: DomainAssignment };
   /** Domains of the live index from the model's rules (cached until the rules or the index change). */
   private domains(): DomainAssignment | undefined {
@@ -258,98 +257,64 @@ export class ProjectionService {
     if (this.domainCache?.key !== key) this.domainCache = { key, assignment: assignDomains(base.index, rules.value.domains) };
     return this.domainCache.assignment;
   }
+  // Authorship (history/authors.ts, projection/authorship.ts) ---------------------------
   /**
-   * The live index by domain: repository → domain → folder → file. Folders
-   * are the files' directories, named by path; routes, tables and commands sit
-   * in districts of their domain. Directories and applications are not drawn.
+   * Who changed the view's files, in a window of the history up to the
+   * commit the view shows (the live index: the commit it was indexed at).
+   * Undefined with the reason when there is no Git history to read.
    */
-  private lensView(): View | undefined {
-    const assignment = this.domains();
-    if (!assignment) return undefined;
-    const target = this.snapshotSource();
-    const key = `${target.info.id}||lens:${this.domainCache!.key}`;
-    const cached = this.views.get(key);
+  private async authorshipOf(current: View, window: string | undefined): Promise<AuthorshipComputation | { reason: string }> {
+    const key: AuthorshipWindowKey = window === undefined || window === '' ? 'all' : isAuthorshipWindow(window) ? window : (() => { throw new Error('window must be all, 365d, 90d, 30d or range'); })();
+    const cached = current.authorship?.get(key);
     if (cached) return cached;
-    const data = this.snapshotData(target);
-    const rows: EntityRow[] = [];
-    const repository = data.entities.find(row => row.type === 'repository' && !row.parentId)!;
-    rows.push(repository);
-    const byId = new Map(data.entities.map(row => [row.id, row]));
-    const names = new Map(assignment.domains.map(domain => [domain.key, domain]));
-    const used = new Set<string>();
-    const folders = new Map<string, EntityRow>();
-    const domainId = (key: string) => `lens:domain:${key}`;
-    for (const row of data.entities) {
-      if (row.type === 'repository' || row.type === 'directory' || row.type === 'application') continue;
-      const parent = row.parentId ? byId.get(row.parentId) : undefined;
-      // Symbols stay in their files.
-      if (parent && parent.type !== 'directory' && parent.type !== 'application' && parent.type !== 'repository') { rows.push(row); continue; }
-      const key = assignment.of.get(row.id) ?? 'platform';
-      used.add(key);
-      if (row.type === 'file') {
-        const folder = row.path?.includes('/') ? row.path.slice(0, row.path.lastIndexOf('/')) : '(root)';
-        const id = `lens:folder:${key}:${folder}`;
-        if (!folders.has(id)) folders.set(id, { id, type: 'group', name: folder, parentId: domainId(key), group: `Folder ${folder}: its files that serve ${names.get(key)?.name ?? key}.` });
-        rows.push({ ...row, parentId: id });
-      } else rows.push({ ...row, parentId: domainId(key) });
-    }
-    for (const domain of assignment.domains) if (used.has(domain.key)) rows.push({ id: domainId(domain.key), type: 'group', name: domain.name, parentId: repository.id, group: domain.summary, districts: true });
-    rows.push(...folders.values());
-    const index = new ProjectionIndex(target.info.id, rows, data.relations, data.diagnostics);
-    const result = layoutHierarchy(index.layoutNodes(), index.rootId);
-    const built: View = { key, target, targetData: data, index, rects: result.rects, persisted: false, holes: result.holes, layoutSource: 'fresh', addedDiagnostics: new Set() };
-    this.views.set(key, built);
-    if (this.views.size > VIEW_CACHE) this.views.delete(this.views.keys().next().value!);
-    return built;
+    const anchor = current.target.info.commitSha;
+    if (!this.authorLogs.available) return { reason: 'The server does not know where the repository is, so it cannot read its Git history.' };
+    if (!anchor) return { reason: 'This index has no Git commit: the repository is not a Git repository, or nothing was committed yet.' };
+    const baseline = key === 'range' ? current.baseline?.info.commitSha : undefined;
+    if (key === 'range' && !baseline) throw new Error('The range window needs a comparison with a commit');
+    let history;
+    try { history = await this.authorLogs.containing(anchor, { persist: current.target.info.kind === 'working_tree' }); }
+    catch (error) { return { reason: `The Git history could not be read: ${error instanceof Error ? error.message : String(error)}` }; }
+    const folded = history.fold(anchor);
+    if (!folded) return { reason: `Commit ${anchor.slice(0, 12)} is not in the Git history read.` };
+    const computed = computeAuthorship(history, folded, current.index, { window: key, ...(baseline ? { baseline } : {}) });
+    (current.authorship ??= new Map()).set(key, computed);
+    return computed;
   }
-
+  /** Commit → its history snapshot, when indexed. */
+  private snapshotLookup(): (sha: string) => string | undefined {
+    const snapshots = this.options.history?.()?.snapshotsByCommit();
+    return sha => snapshots?.get(sha)?.id;
+  }
+  /** People of a view: who changed it in the window, the person who changed each file most, and the files of each area by that person. */
+  async authorship(view?: ViewKey, options: { window?: string } = {}): Promise<AuthorshipResult> {
+    const current = this.load(view);
+    const computed = await this.authorshipOf(current, options.window);
+    const dirty = current.target.info.kind === 'working_tree' && !!current.target.info.dirty;
+    if ('reason' in computed) return { available: false, reason: computed.reason, truncated: false, dirty, people: [], of: {}, areas: {}, unchanged: 0 };
+    return authorshipResult(computed, current.index, dirty);
+  }
+  /** One person in a view: the files they changed in the window, the areas and folders holding them, and their commits. */
+  async personAuthorship(key: string, view?: ViewKey, options: { window?: string } = {}): Promise<PersonAuthorship> {
+    const current = this.load(view);
+    const computed = await this.authorshipOf(current, options.window);
+    if ('reason' in computed) throw new NotFoundError(computed.reason);
+    const result = personAuthorship(computed, current.index, key, this.snapshotLookup());
+    if (!result) throw new NotFoundError(`No commits by ${key} in this window`);
+    return result;
+  }
+  /** Who changed an entity (a file; a symbol's or an entry point's file; every file in an area) in the window, and its latest commits. */
+  async entityAuthorship(id: string, view?: ViewKey, options: { window?: string } = {}): Promise<EntityAuthorship> {
+    const current = this.load(view);
+    const node = this.require(current, id);
+    const computed = await this.authorshipOf(current, options.window);
+    if ('reason' in computed) return { id, available: false, reason: computed.reason, scope: node.type === 'file' ? 'file' : 'area', files: 0, changedFiles: 0, commits: 0, lines: 0, people: [], recent: [] };
+    return entityAuthorship(computed, current.index, node, this.snapshotLookup());
+  }
   // Data families (projection/families.ts) ---------------------------
-  /** Data families of a view's index (a derived view uses its base's). */
+  /** Data families of a view's index. */
   private familyAssignment(current: View): FamilyAssignment {
-    if (current.base) return this.familyAssignment(current.base);
     return current.families ??= dataFamilies(current.index);
-  }
-  /**
-   * The live index by data family: repository → family → folder → file, with
-   * the family's tables, endpoints and commands in its districts. Code no
-   * family reaches is drawn together. Symbols stay in their files.
-   */
-  private familyView(): View {
-    const base = this.load({});
-    const key = `${base.key}|lens:data`;
-    const cached = this.views.get(key);
-    if (cached) return cached;
-    const assignment = this.familyAssignment(base);
-    const data = base.targetData;
-    const repository = data.entities.find(row => row.type === 'repository' && !row.parentId)!;
-    const byId = new Map(data.entities.map(row => [row.id, row]));
-    const families = new Map(assignment.families.map(family => [family.key, family]));
-    const familyId = (familyKey: string) => `lens:family:${familyKey}`;
-    const rows: EntityRow[] = [repository];
-    const used = new Set<string>(), folders = new Map<string, EntityRow>();
-    for (const row of data.entities) {
-      if (row.type === 'repository' || row.type === 'directory' || row.type === 'application') continue;
-      const parent = row.parentId ? byId.get(row.parentId) : undefined;
-      if (parent && parent.type !== 'directory' && parent.type !== 'application' && parent.type !== 'repository') { rows.push(row); continue; }
-      const familyKey = assignment.of.get(row.id) ?? NO_FAMILY;
-      used.add(familyKey);
-      if (row.type === 'file') {
-        const folder = row.path?.includes('/') ? row.path.slice(0, row.path.lastIndexOf('/')) : '(root)';
-        const id = `lens:folder:${familyKey}:${folder}`;
-        if (!folders.has(id)) folders.set(id, { id, type: 'group', name: folder, parentId: familyId(familyKey), group: `Folder ${folder}: its files in ${familyKey === NO_FAMILY ? 'no data family' : `the ${families.get(familyKey)?.name ?? familyKey} data family`}.` });
-        rows.push({ ...row, parentId: id });
-      } else rows.push({ ...row, parentId: familyId(familyKey) });
-    }
-    for (const family of assignment.families) {
-      if (!used.has(family.key)) continue;
-      const tables = family.tables.length > 8 ? `${family.tables.slice(0, 8).join(', ')} and ${family.tables.length - 8} more` : family.tables.join(', ');
-      rows.push({ id: familyId(family.key), type: 'group', name: family.name, parentId: repository.id, districts: true, group: `Data family ${family.name}: the table${family.tables.length === 1 ? '' : 's'} ${tables}${family.hub ? ' (referenced by many tables, so it does not join their families)' : ''}, joined by foreign keys and names, and the code that maps, declares, writes or reads them, or that uses such code.` });
-    }
-    if (used.has(NO_FAMILY)) rows.push({ id: familyId(NO_FAMILY), type: 'group', name: 'No tables', parentId: repository.id, districts: true, group: 'Code that uses no database table, directly or through the code it is connected to: shared parts, configuration, assets, and code connected to several families.' });
-    rows.push(...folders.values());
-    const index = new ProjectionIndex(base.target.info.id, rows, data.relations, data.diagnostics);
-    const { result, persisted, layoutSource } = this.liveLayout(index, base.target, 'layout-data.json');
-    return this.cacheView({ key, target: base.target, targetData: data, index, rects: result.rects, persisted, holes: result.holes, layoutSource, addedDiagnostics: new Set(), base });
   }
   /** Data families of a view: each family, the family of every file and entry point, and the families inside each area. */
   families(view?: ViewKey): FamiliesResult {
@@ -368,6 +333,38 @@ export class ProjectionService {
       for (const ancestor of index.spatialAncestors(node)) { const counts = areas[ancestor.id] ??= {}; counts[key ?? NO_FAMILY] = (counts[key ?? NO_FAMILY] ?? 0) + 1; }
     }
     return { families: assignment.families, of, inferred: [...assignment.inferred].filter(id => of[id]), without, areas };
+  }
+  /**
+   * Features of a view: the model's domains, largest first (shared code last),
+   * each with the folders holding its code; the feature of every file and entry
+   * point (symbols take their file's), and the code files per feature in each
+   * area. Domains are assigned on the live index; entity IDs are stable, so a
+   * history view keeps the features of what still exists.
+   */
+  features(view?: ViewKey): FeaturesResult {
+    const assignment = this.domains();
+    if (!assignment) return { features: [], of: {}, areas: {} };
+    const current = this.load(view);
+    const index = current.index;
+    const of: Record<string, string> = {}, areas: Record<string, Record<string, number>> = {};
+    const files = new Map<string, number>(), folders = new Map<string, Map<string, number>>();
+    for (const node of index.nodes.values()) {
+      if (node.kind !== 'entity' || SYMBOL_TYPES.has(node.type) || node.change?.status === 'removed') continue;
+      const key = assignment.of.get(node.id);
+      if (!key) continue;
+      of[node.id] = key;
+      if (node.type !== 'file' || !CODE_LANGUAGES.has(node.language ?? '')) continue;
+      files.set(key, (files.get(key) ?? 0) + 1);
+      for (const ancestor of index.spatialAncestors(node)) { const counts = areas[ancestor.id] ??= {}; counts[key] = (counts[key] ?? 0) + 1; }
+      const folder = node.canonicalParentId;
+      if (folder) { const list = folders.get(key) ?? new Map<string, number>(); list.set(folder, (list.get(folder) ?? 0) + 1); folders.set(key, list); }
+    }
+    const features = assignment.domains.filter(domain => files.get(domain.key)).map(domain => ({
+      key: domain.key, name: domain.name, summary: domain.summary, files: files.get(domain.key)!, color: domain.color,
+      folders: [...folders.get(domain.key) ?? []].map(([id, count]) => ({ id, path: index.node(id)?.path ?? index.node(id)?.name ?? id, files: count })).sort((a, b) => b.files - a.files || (a.path < b.path ? -1 : 1)),
+    }));
+    features.sort((a, b) => Number(a.key === PLATFORM) - Number(b.key === PLATFORM) || b.files - a.files || (a.name < b.name ? -1 : 1));
+    return { features, of, areas };
   }
   /** What the models said about the repository: its overview and domains, how much was described, and the cost. */
   annotationsOverview(): AnnotationsOverview {
@@ -391,7 +388,6 @@ export class ProjectionService {
     const annotations = this.options.annotations?.();
     const result: EntityAnnotation = { id };
     if (!annotations) return result;
-    if (node.kind === 'group' && id.startsWith('lens:domain:')) return { ...result, summary: node.explanation ?? '' };
     const kind = node.type === 'file' ? 'file' : node.type === 'directory' || node.type === 'application' ? 'folder' : node.type === 'repository' ? 'overview' : undefined;
     const stored = kind ? annotations.get<{ summary?: string; role?: string; hash?: string }>(kind, kind === 'overview' ? 'repository' : id) : undefined;
     if (stored) Object.assign(result, { summary: stored.value.summary ?? '', ...(stored.value.role ? { role: stored.value.role } : {}), model: stored.model, createdAt: stored.createdAt, ...(stored.ste !== undefined ? { ste: stored.ste } : {}) });
@@ -972,7 +968,15 @@ export class ProjectionService {
     const indices = options.entity ? this.flowsThrough(current, this.require(current, options.entity)) : catalog.flows.map((_, i) => i);
     const counts = Object.fromEntries(CATALOG_KINDS.map(kind => [kind, 0])) as FlowList['counts'];
     const items: FlowSummary[] = [];
-    for (const i of indices) { const summary = catalog.flows[i]!.summary; counts[summary.kind]++; if (!options.kind || summary.kind === options.kind) items.push(summary); }
+    // A flow belongs to the feature where it starts (its entry point's).
+    const domains = this.domains();
+    for (const i of indices) {
+      const summary = catalog.flows[i]!.summary;
+      counts[summary.kind]++;
+      if (options.kind && summary.kind !== options.kind) continue;
+      const feature = domains?.of.get(summary.entry.id);
+      items.push(feature ? { ...summary, feature } : summary);
+    }
     return { items, counts, ...(options.entity ? { entity: options.entity } : {}) };
   }
   private coverageOfView(current: View): CoverageComputation {

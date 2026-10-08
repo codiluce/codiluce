@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import { MapController } from '../lib/controller';
 import { typeLabel } from '../lib/format';
 import { LEVELS } from '../lib/lod';
-import { coverageCss, familyCss, familyHues, themeById } from '../lib/themes';
+import { coverageCss, familyCss, familyHues, featureHues, personHue, themeById } from '../lib/themes';
+import { KindTag, PersonDot, windowText } from './PeoplePanel';
 import { COVERAGE_HINT, COVERAGE_ORDER, COVERAGE_TEXT, NOT_MEASURED } from '../lib/coverage';
 import { impactColors } from '../lib/renderer';
 import { NO_FAMILY } from '../lib/store';
@@ -30,6 +31,9 @@ export function MapView() {
       <Legend />
       <CoverageLegend />
       <FamiliesLegend />
+      <FeatureLegend />
+      <PeopleLegend />
+      <PersonLegend />
       <HoverCard />
       <VisibleList />
       {stale && <div className="banner" role="status">A newer analysis run is available. <button className="button small primary" onClick={() => void store.reload()}>Reload map</button></div>}
@@ -228,6 +232,84 @@ export function FamiliesLegend() {
     </div>
   );
 }
+/** Shown while a feature is lit (the Features panel): which one, and a way back to every file. A flow on the map takes over. */
+function FeatureLegend() {
+  const store = useStore();
+  const data = useAtlas(state => state.features.data);
+  const focus = useAtlas(state => state.tour ? undefined : state.features.focus);
+  const dark = themeById(useAtlas(state => state.themeId)).dark;
+  const feature = focus ? data?.features.find(item => item.key === focus) : undefined;
+  if (!data || !feature) return null;
+  return (
+    <div className="feature-legend" role="status">
+      <span className="domain-dot" style={{ background: familyCss(featureHues(data.features.map(item => item.key)).get(feature.key) ?? 'none', dark) }} />
+      <button className="feature-legend-name" onClick={() => void store.revealFeature()} title="Show it in the Features panel"><strong>{feature.name}</strong></button>
+      <span className="absent">{feature.files} code file{feature.files === 1 ? '' : 's'} lit</span>
+      <button className="icon-button small" onClick={() => void store.focusFeature(undefined)} aria-label="Show every file again" title="Show every file again">✕</button>
+    </div>
+  );
+}
+/** People listed in the legend before "Show all". */
+const LEGEND_PEOPLE = 12;
+/** While files are colored by person: who changed most of the files (select one to light every file they changed), and the files nobody changed. */
+export function PeopleLegend() {
+  const store = useStore();
+  const people = useAtlas(state => state.people);
+  const rootId = useAtlas(state => state.meta?.root.id);
+  const dark = themeById(useAtlas(state => state.themeId)).dark;
+  const [all, setAll] = useState(false);
+  const stamp = useAtlas(() => store.peopleStamp());
+  useEffect(() => { if (people.show) void store.ensurePeople(); }, [store, people.show, stamp]);
+  if (!people.show) return null;
+  const data = people.data;
+  const counts = (rootId && data?.areas[rootId]) || {};
+  const ranked = (data?.people ?? []).filter(person => counts[person.key]).sort((a, b) => counts[b.key]! - counts[a.key]! || a.order - b.order);
+  return (
+    <div className="coverage-legend families-legend" role="region" aria-label="Who changed the files most">
+      <div className="coverage-legend-head">
+        <strong>Who changed it most</strong>
+        <button className="icon-button small" onClick={() => void store.togglePeopleColors(false)} aria-label="Stop coloring files by person">✕</button>
+      </div>
+      {people.status === 'loading' && !data && <p className="absent">Reading the Git history…</p>}
+      {people.status === 'error' && <p className="note error">{people.error}</p>}
+      {data && !data.available && <p className="absent">{data.reason}</p>}
+      {data?.available && (
+        <>
+          <p className="absent">{windowText(data.window)}. Each file takes the color of the person with the most lines changed in it.</p>
+          <ul className="coverage-keys family-keys">
+            {(all ? ranked : ranked.slice(0, LEGEND_PEOPLE)).map(person => (
+              <li key={person.key}>
+                <button aria-pressed={people.focus === person.key} onClick={() => void store.focusPerson(person.key)} title={`${person.name}: changed most of ${counts[person.key]} files, and ${person.files} files in all. Select to light every file they changed.`}>
+                  <PersonDot order={person.order} />{person.name}<KindTag kind={person.kind} /><span className="count">{counts[person.key]}</span>
+                </button>
+              </li>
+            ))}
+            {data.unchanged > 0 && <li title="Files nobody changed in this window"><span className="type-dot" style={{ background: familyCss('none', dark) }} />Not changed<span className="count">{data.unchanged}</span></li>}
+          </ul>
+          {ranked.length > LEGEND_PEOPLE && <button className="button tiny" onClick={() => setAll(value => !value)}>{all ? 'Show fewer' : `Show all ${ranked.length}`}</button>}
+          <p className="absent">Closed areas show who changed most of their files.</p>
+        </>
+      )}
+    </div>
+  );
+}
+/** Shown while a person is lit: who, and a way back to every file. A flow on the map takes over. */
+function PersonLegend() {
+  const store = useStore();
+  const person = useAtlas(state => state.tour || !state.people.focus || state.people.person?.key !== state.people.focus ? undefined : state.people.person);
+  const dark = themeById(useAtlas(state => state.themeId)).dark;
+  const summary = person?.data?.person;
+  if (!person || !summary) return null;
+  return (
+    <div className="feature-legend" role="status">
+      <span className="domain-dot" style={{ background: familyCss(personHue(summary.order), dark) }} />
+      <button className="feature-legend-name" onClick={() => void store.revealPeople()} title="Show them in the People panel"><strong>{summary.name}</strong></button>
+      <KindTag kind={summary.kind} />
+      <span className="absent">{Object.keys(person.data!.files).length} file{Object.keys(person.data!.files).length === 1 ? '' : 's'} they changed lit · {summary.commits} commit{summary.commits === 1 ? '' : 's'}</span>
+      <button className="icon-button small" onClick={() => void store.focusPerson(undefined)} aria-label="Show every file again" title="Show every file again">✕</button>
+    </div>
+  );
+}
 /** Shown while a blast radius is on the map. */
 function ImpactLegend() {
   const theme = themeById(useAtlas(state => state.themeId));
@@ -265,6 +347,7 @@ export function HoverCard() {
       {hover.changes && <div className="hover-change">inside: {(['added', 'modified', 'moved', 'removed'] as const).filter(key => hover.changes![key]).map(key => `${hover.changes![key]} ${key}`).join(', ')}</div>}
       <ImpactHover id={hover.id} />
       <FamilyHover id={hover.id} />
+      <PeopleHover id={hover.id} />
     </div>
   );
 }
@@ -283,6 +366,16 @@ function FamilyHover({ id }: { id: string }) {
   if (!data || !key) return null;
   const family = data.families.find(item => item.key === key);
   return <div className="hover-change">data family: {family?.name ?? key}{data.inferred.includes(id) ? ' (from the code it is connected to)' : ''}</div>;
+}
+function PeopleHover({ id }: { id: string }) {
+  const main = useAtlas(state => state.people.show && state.people.data?.available ? state.people.data.people.find(person => person.key === state.people.data!.of[id])?.name : undefined);
+  const lit = useAtlas(state => state.people.focus && state.people.person?.key === state.people.focus ? state.people.person.data : undefined);
+  const own = lit?.files[id];
+  if (!main && !own) return null;
+  return <>
+    {main && <div className="hover-change">changed most by {main}</div>}
+    {own && <div className="hover-change">{lit!.person.name}: {own.commits} commit{own.commits === 1 ? '' : 's'} · {own.lines} lines</div>}
+  </>;
 }
 /** Screen-reader/keyboard access to the most prominent visible map items. */
 function VisibleList() {

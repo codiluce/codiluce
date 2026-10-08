@@ -13,18 +13,16 @@ async function idOf(page: Page, query: string, type: string): Promise<string> {
 }
 
 for (const empty of [true, false]) {
-  test(`${empty ? 'empty' : 'populated'} Flows stays responsive through coverage, the Data view and history`, async ({ page }) => {
+  test(`${empty ? 'empty' : 'populated'} Flows stays responsive through coverage and history`, async ({ page }) => {
     if (empty) await page.route('**/api/projection/flows*', route => route.fulfill({ json: { items: [], counts: { page: 0, request: 0, command: 0, schedule: 0, unmatched: 0 } } }));
     await open(page);
     await page.getByRole('button', { name: 'Flows', exact: true }).click();
     const panel = page.getByRole('complementary', { name: 'Flows' });
+    if (!empty) await panel.getByRole('button', { name: 'Expand all', exact: true }).click();
     const loaded = empty ? panel.getByText('No flows were indexed.', { exact: true }) : panel.locator('.rf-row').first();
     await expect(loaded).toBeVisible();
     await page.getByRole('button', { name: 'Coverage', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Coverage lens' })).toBeVisible();
-    await page.getByRole('button', { name: 'Data', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Data', exact: true })).toHaveAttribute('aria-pressed', 'true');
-    await expect(loaded).toBeVisible();
     await page.getByRole('button', { name: 'History', exact: true }).click();
     await expect(page.getByRole('region', { name: 'History' })).toContainText('No history indexed yet.');
     await page.getByRole('button', { name: 'Close history', exact: true }).click();
@@ -43,8 +41,10 @@ test('one list holds every flow, filtered by kind and completeness; a request is
   await open(page);
   await page.getByRole('button', { name: 'Flows', exact: true }).click();
   const panel = page.getByRole('complementary', { name: 'Flows' });
-  await expect(panel.getByRole('tab')).toHaveText([/^All/, /^Pages/, /^Requests/, /^Console/]);
+  await expect(panel.getByRole('tablist', { name: 'Kinds of flows' }).getByRole('tab')).toHaveText([/^All/, /^Pages/, /^Requests/, /^Console/]);
   await expect(panel.getByRole('tab', { name: /^All/ })).toHaveAttribute('aria-selected', 'true');
+  await expect(panel.locator('.rf-row')).toHaveCount(0);
+  await panel.getByRole('button', { name: 'Expand all', exact: true }).click();
   // Pages, requests and the console in one list.
   await expect(panel.locator('.rf-row.k-page', { hasText: '/account' }).first()).toBeVisible();
   await expect(panel.locator('.rf-row.k-request', { hasText: '/auth/login' }).first()).toBeVisible();
@@ -58,10 +58,10 @@ test('one list holds every flow, filtered by kind and completeness; a request is
   await expect(panel.locator('.rf-row:not(.k-page)')).toHaveCount(0);
   await panel.getByRole('tab', { name: /^All/ }).click();
   // Completeness filters.
-  await panel.getByRole('button', { name: /Unmatched/ }).click();
+  await panel.getByRole('group', { name: 'Filter by completeness' }).getByRole('button', { name: /Unmatched/ }).click();
   await expect(panel.locator('.rf-row', { hasText: '/nowhere/at/all' })).toBeVisible();
   await expect(panel.locator('.rf-row:not(.s-unmatched)')).toHaveCount(0);
-  await panel.getByRole('button', { name: /Unmatched/ }).click();
+  await panel.getByRole('group', { name: 'Filter by completeness' }).getByRole('button', { name: /Unmatched/ }).click();
   await panel.getByLabel('Filter flows').fill('AuthController::login');
   await panel.locator('.rf-row', { hasText: '/auth/login' }).first().click();
   // On the map, branch by branch: one per place the request starts from, each shown wave by wave down to the table.
