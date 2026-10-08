@@ -5,7 +5,7 @@ import { compileIndexedPath, matchIndexedPath, requestPathSegments } from '../an
 import { routingContract, matchRoutePattern } from '../analysis/routes/contracts.js';
 import { configuredProxy, proxyPath, relativeApiBoundary, requestApplication } from '../analysis/routes/boundaries.js';
 export const apiMatcher: Analyzer = {
-  name: 'api-matcher', version: `${ANALYZER_VERSION}:3`,
+  name: 'api-matcher', version: `${ANALYZER_VERSION}:4`,
   async analyze(context: AnalysisContext): Promise<void> {
     const endpoints = [...context.graph.entities.values()].filter(entity => entity.type === 'api_endpoint');
     const appsById = new Map(context.config.applications.map(app => [context.applicationIds.get(app.name), app]));
@@ -32,28 +32,34 @@ export const apiMatcher: Analyzer = {
     for (const observation of context.http) {
       if (observation.url === undefined && observation.resolved && observation.method) { matchResolved(observation, observation.resolved); continue; }
       if (observation.url === undefined || !observation.method) continue;
-      let pathname: string;
+      let pathname: string; let search = '';
       let origin: string | undefined;
       try {
-        if (observation.url.startsWith('/') && !observation.url.startsWith('//')) pathname = new URL(observation.url, 'http://atlas.invalid').pathname;
-        else if (/^https?:\/\//.test(observation.url)) { const url = new URL(observation.url); pathname = url.pathname; origin = url.origin; }
+        if (observation.url.startsWith('/') && !observation.url.startsWith('//')) { const url = new URL(observation.url, 'http://atlas.invalid'); pathname = url.pathname; search = url.search; }
+        else if (/^https?:\/\//.test(observation.url)) { const url = new URL(observation.url); pathname = url.pathname; origin = url.origin; search = url.search; }
         else throw new Error('Relative URLs without a leading slash require browser/base URL context');
       } catch (error) { context.graph.diagnose({ analyzer: 'api-matcher', severity: 'warning', code: 'unresolved-http-url', entityId: observation.callerId, file: observation.evidence.file, line: observation.evidence.line, reason: error instanceof Error ? error.message : String(error) }); continue; }
       const callerApp = requestApplication(context, observation);
-      const key = JSON.stringify([observation.method, origin, callerApp?.name]);
+      const key = JSON.stringify([observation.method, origin, callerApp?.name, observation.transport]);
       let eligible = literalEligible.get(key);
       if (!eligible) {
         eligible = endpoints.filter(endpoint => {
           const app = appFor(endpoint);
           if (!app || !methodMatches(endpoint, observation.method!) || endpoint.metadata.registration === 'convention' && endpoint.metadata.framework === 'laravel') return false;
           if (origin && !app.apiOrigins?.includes(origin)) return false;
+          if (!origin && observation.transport === 'sveltekit-fetch') return app.name === callerApp?.name && endpoint.metadata.framework === 'sveltekit';
+          if (!origin && endpoint.metadata.framework === 'sveltekit' && app.name !== callerApp?.name && !callerApp?.apiProxies?.some(proxy => proxy.target === app.name)) return false;
           // Relative requests can target a local Next endpoint or a unique backend.
           return !!origin || !hasFramework(app, 'nextjs') || app.name === callerApp?.name;
         });
         literalEligible.set(key, eligible);
       }
       const proxy = !origin ? configuredProxy(callerApp, pathname) : undefined;
-      const candidates = eligible.filter(endpoint => (!proxy || appFor(endpoint)?.name === proxy.target) && matchPath(endpoint, proxy ? proxyPath(proxy, pathname) : pathname));
+      const selectors = [...new URLSearchParams(search).keys()].filter(key => key.startsWith('/'));
+      const candidates = eligible.filter(endpoint => {
+        const action = contracts.get(endpoint.id)?.action;
+        return (!action || (action.name === 'default' ? selectors.length === 0 : selectors.length === 1 && selectors[0] === `/${action.name}`)) && (!proxy || appFor(endpoint)?.name === proxy.target) && matchPath(endpoint, proxy ? proxyPath(proxy, pathname) : pathname);
+      });
       // Keep constrained candidates in ambiguity detection: ignoring one could
       // falsely select another route with the same HTTP method/path.
       if (candidates.length !== 1 || candidates[0]!.metadata.constraintsUnresolved) {
@@ -84,13 +90,15 @@ export const apiMatcher: Analyzer = {
     function matchResolved(observation: HttpObservation, resolved: NonNullable<HttpObservation['resolved']>): void {
       const callerApp = requestApplication(context, observation);
       const diagnose = (code: string, reason: string) => context.graph.diagnose({ analyzer: 'api-matcher', severity: 'warning', code, entityId: observation.callerId, file: observation.evidence.file, line: observation.evidence.line, reason });
-      const key = JSON.stringify([observation.method, resolved.app, callerApp?.name]);
+      const key = JSON.stringify([observation.method, resolved.app, callerApp?.name, observation.transport]);
       let eligible = resolvedEligible.get(key);
       if (!eligible) {
         eligible = endpoints.filter(endpoint => {
           const app = appFor(endpoint);
           if (!app || !methodMatches(endpoint, observation.method!) || endpoint.metadata.registration === 'convention' && endpoint.metadata.framework === 'laravel') return false;
           if (resolved.app) return app.name === resolved.app;
+          if (observation.transport === 'sveltekit-fetch') return app.name === callerApp?.name && endpoint.metadata.framework === 'sveltekit';
+          if (endpoint.metadata.framework === 'sveltekit' && app.name !== callerApp?.name && !callerApp?.apiProxies?.some(proxy => proxy.target === app.name)) return false;
           return !!contracts.get(endpoint.id) || app.name === callerApp?.name || (hasFramework(app, 'laravel') && !hasFramework(callerApp, 'laravel'));
         });
         resolvedEligible.set(key, eligible);
@@ -98,8 +106,9 @@ export const apiMatcher: Analyzer = {
       const proxy = !resolved.app ? configuredProxy(callerApp, resolved.pattern) : undefined;
       const pattern = proxy ? proxyPath(proxy, resolved.pattern) : resolved.pattern;
       const scoped = proxy ? eligible.filter(endpoint => appFor(endpoint)?.name === proxy.target) : eligible;
-      const strict = scoped.filter(endpoint => matchPath(endpoint, pattern));
-      const loose = scoped.filter(endpoint => matchPath(endpoint, pattern, false));
+      // A dynamic path summary does not prove a form action query selector.
+      const strict = scoped.filter(endpoint => !contracts.get(endpoint.id)?.action && matchPath(endpoint, pattern));
+      const loose = scoped.filter(endpoint => !contracts.get(endpoint.id)?.action && matchPath(endpoint, pattern, false));
       const label = `${observation.method} ${resolved.pattern}${resolved.app ? ` on ${resolved.app}` : ''}`;
       if (strict.length !== 1 || loose.length !== 1 || strict[0]!.metadata.constraintsUnresolved) {
         const reason = loose.length > strict.length ? `${label}: a dynamic segment could also equal a literal route segment (${loose.filter(item => !strict.includes(item)).map(item => item.name).join(', ')})` : `${label}: ${strict.length} eligible endpoints${strict[0]?.metadata.constraintsUnresolved ? '; route constraints unresolved' : ''}`;

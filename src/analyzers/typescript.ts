@@ -15,6 +15,7 @@ import type { NodeProject } from '../analysis/project-model.js';
 import type { ImportOutcome, ImportBinding } from '../analysis/facts.js';
 import { typescriptFrameworkPacks } from '../analysis/frameworks/index.js';
 import type { TypeScriptPackScope } from '../analysis/frameworks/typescript-pack.js';
+import { kitVirtualImport } from '../analysis/frameworks/sveltekit-config.js';
 import { EMBEDDED_VERSION, sourcePath, sourceAvailable, sourceMapped, embeddedOwner, embeddedOutcome } from '../analysis/embedded/index.js';
 
 function literal(node: ts.Node | undefined): string | undefined { return node && (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) ? node.text : undefined; }
@@ -76,7 +77,7 @@ async function analyzeComponent(context: AnalysisContext, component: TypeScriptP
     const program = runtime.program(), checker = program.getTypeChecker();
     const state: TsApplicationState = { program, checker, declarations: services.declarations, sites };
     const urls = new UrlEvaluator(checker, program, context), wrappers: WrapperRoot[] = [];
-    const analyzed: { file: ScannedFile; source: ts.SourceFile; symbols: Map<ts.Node, Entity>; behavior: () => void }[] = [];
+    const analyzed: { file: ScannedFile; source: ts.SourceFile; symbols: Map<ts.Node, Entity>; behavior: () => void; adoptHttp: (site: HttpSite) => void }[] = [];
     const initialized = new Set<string>();
     for (const file of runtime.files) {
       const source = program.getSourceFile(file.absolutePath);
@@ -86,11 +87,11 @@ async function analyzeComponent(context: AnalysisContext, component: TypeScriptP
     }
     return { runtime, program, checker, state, urls, wrappers, analyzed };
   });
-  const scope: TypeScriptPackScope = { context, services, inputs: component.flatMap(runtime => runtime.inputs), files: prepared.flatMap(item => item.analyzed.map(file => ({ runtime: item.runtime, file: file.file, source: file.source, state: item.state, owners: file.symbols }))) };
+  const scope: TypeScriptPackScope = { context, services, inputs: component.flatMap(runtime => runtime.inputs), files: prepared.flatMap(item => item.analyzed.map(file => ({ runtime: item.runtime, file: file.file, source: file.source, state: item.state, owners: file.symbols, adoptHttp: file.adoptHttp }))) };
   const backendScope = { ...scope, files: scope.files.filter(frame => !frame.file.embedded) };
   for (const pack of typescriptFrameworkPacks) {
     const packScope = pack.includeEmbedded ? scope : backendScope;
-    if (pack.applies(packScope)) pack.declare(packScope);
+    if (pack.applies(packScope)) await pack.declare(packScope);
   }
   for (const item of prepared) for (const file of item.analyzed) file.behavior();
   // Declare every owned file before linking references across compiler programs.
@@ -149,7 +150,7 @@ function linkNextWrappers(context: AnalysisContext, files: ScannedFile[]): void 
     }
   }
 }
-function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeProject, source: ts.SourceFile, state: TsApplicationState, urls: UrlEvaluator, wrappers: WrapperRoot[], services: TypeScriptServices, initialize = true): { symbols: Map<ts.Node, Entity>; behavior: () => void } | undefined {
+function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeProject, source: ts.SourceFile, state: TsApplicationState, urls: UrlEvaluator, wrappers: WrapperRoot[], services: TypeScriptServices, initialize = true): { symbols: Map<ts.Node, Entity>; behavior: () => void; adoptHttp: (site: HttpSite) => void } | undefined {
   const { graph } = context;
   const app = file.application;
   const options = services.resolver.options.get(project.id)!;
@@ -166,7 +167,7 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeP
   const exported = new Map<string, Entity>();
   const axiosNames = new Set<string>();
   const httpSites: HttpSite[] = [];
-  const result = { symbols, behavior: () => { for (const site of httpSites) httpSite(site); } };
+  const result = { symbols, adoptHttp: (site: HttpSite) => { const index = httpSites.findIndex(existing => existing.node === site.node); if (index < 0) httpSites.push(site); else if (site.transport) httpSites[index] = site; }, behavior: () => { for (const site of httpSites) httpSite(site); } };
   const modulePath = path.posix.relative(app?.path ?? project.root, file.path), scriptOwner = embeddedOwner(context, file);
   if (scriptOwner) { symbols.set(source, scriptOwner); state.declarations.set(source, scriptOwner); }
   function location(node: ts.Node) {
@@ -188,7 +189,7 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeP
     let target = relative ? context.files.get(relative) : undefined;
     let assetResolution = false;
     let isConfiguredAlias = false;
-    const candidates: string[] = [];
+    const candidates: string[] = services.resolver.assetCandidates(specifier, file.absolutePath);
     if (specifier.startsWith('.')) candidates.push(path.resolve(path.dirname(file.absolutePath), specifier));
     // Exact bundler asset imports (Sass, images, etc.) are not TS modules.
     // Resolve only existing indexed paths using explicit tsconfig path mappings.
@@ -214,7 +215,8 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeP
     if (target) {
       graph.relate(file.id, target.id, relationType, proof, { specifier, resolver: assetResolution ? 'indexed-asset' : workspace ? 'workspace' : 'typescript' });
       outcome = { status: 'resolved', targets: [target.id], proof };
-    } else if (binding?.status === 'ambiguous') outcome = { status: 'ambiguous', candidates: binding.candidates.map(project => project.id), reason: binding.reason };
+    } else if (kitVirtualImport(services.sveltekit.get(project.id), specifier, file.path)) outcome = { status: 'external', dependency: specifier, proof: [...proof, evidence('framework', 'sveltekit', file.path, location(node).startLine, 'SvelteKit virtual module; no indexed source file is invented')] };
+    else if (binding?.status === 'ambiguous') outcome = { status: 'ambiguous', candidates: binding.candidates.map(project => project.id), reason: binding.reason };
     else if (binding && ['excluded', 'unsupported'].includes(binding.status)) outcome = { status: binding.status as 'excluded' | 'unsupported', reason: 'reason' in binding ? binding.reason : 'Unavailable local dependency' };
     else if (specifier.startsWith('.') || specifier.startsWith('#') || isConfiguredAlias || binding?.status === 'resolved' || (resolved && !resolved.isExternalLibraryImport)) outcome = { status: 'unresolved', reason: `Cannot link indexed local module: ${specifier}` };
     else { outcome = { status: 'external', dependency: specifier, proof }; (fileEntity.metadata.externalImports as string[]).push(specifier); }
@@ -324,7 +326,7 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeP
       const wrapper = wrapperOf(node, outcome.parameters);
       if (wrapper) wrappers.push({ site, owner: caller, file, effect, fact, reason: outcome.reason, wrapper, entry });
       else graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'unresolved-http-call', file: file.path, line: fact.line, entityId: caller.id, reason: outcome.reason });
-    } else context.http.push({ callerId: caller.id, fileId: file.id, method: outcome.method, ...(plain !== undefined ? { url: plain } : {}), expression, evidence: fact, effect, ...(proven ? { resolved: proven } : {}) });
+    } else context.http.push({ callerId: caller.id, fileId: file.id, method: outcome.method, ...(site.transport ? { transport: site.transport } : {}), ...(plain !== undefined ? { url: plain } : {}), expression, evidence: fact, effect, ...(proven ? { resolved: proven } : {}) });
   }
   visit(source);
   fileEntity.metadata.serverModule = source.statements.some(statement => ts.isExpressionStatement(statement) && literal(statement.expression) === 'use server');

@@ -81,7 +81,10 @@ component source locations. Module and instance scopes stay distinct; Astro serv
 Vue 3 also links local template components and bounded event callbacks. Vue Router 4/5 manual route records resolve
 nested paths, named views, literal lazy imports, aliases and redirects after a proven app installation. Original event
 sites enter the existing flow inspector and browser proxy matching. Unsupported dynamic/plugin behavior stays visible.
-Svelte/SvelteKit, Astro and Nuxt framework conventions are the next planned packs.
+Svelte 4/5 links parsed local components, scoped snippets and legacy or modern browser callbacks. SvelteKit 2/3 adds
+filesystem pages/layouts, loads, HTTP handlers and named POST actions, with static configuration and distinct execution
+contexts. RequestEvent fetch and shared registrations keep the invoking application's ownership. Dynamic hooks/matchers
+and unsupported syntax retain gaps. Astro and bounded Nuxt framework conventions are next.
 
 ## Learn more
 

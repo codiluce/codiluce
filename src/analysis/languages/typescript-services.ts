@@ -8,6 +8,7 @@ import { TypeScriptResolver } from '../resolution/typescript.js';
 import { IndexedSources } from '../indexed-sources.js';
 import { createApplicationProgram } from '../../analyzers/ts-program.js';
 import { sourcePath, sourceMapped, embeddedOwner } from '../embedded/index.js';
+import { kitConfiguration, type KitConfig } from '../frameworks/sveltekit-config.js';
 
 /** A node's exact source site, not its spelling, bridges separate compiler
  * programs. Each program keeps its own options, checker and global scope. */
@@ -30,6 +31,7 @@ export interface TypeScriptServices {
   projects: TypeScriptProject[];
   declarations: DeclarationIndex;
   resolver: TypeScriptResolver;
+  sveltekit: Map<string, KitConfig>;
   projectFor(relative: string): TypeScriptProject | undefined;
   releasePrograms(): void;
 }
@@ -66,7 +68,7 @@ function restoreOwners(context: AnalysisContext, source: ts.SourceFile, declarat
 export function createTypeScriptServices(context: AnalysisContext): TypeScriptServices {
   const sources = context.sources ??= new IndexedSources(context);
   const catalog = context.projects ??= new ProjectCatalog(context, sources);
-  const resolver = new TypeScriptResolver(context, catalog, sources), declarations = new DeclarationIndex();
+  const resolver = new TypeScriptResolver(context, catalog, sources), declarations = new DeclarationIndex(), sveltekit = new Map<string, KitConfig>();
   for (const project of catalog.node) {
     const tsconfig = path.join(context.root, project.root, 'tsconfig.json');
     const configFile = sources.fileExists(tsconfig) ? tsconfig : path.join(context.root, project.root, 'jsconfig.json');
@@ -84,6 +86,11 @@ export function createTypeScriptServices(context: AnalysisContext): TypeScriptSe
         if (!project.sourceRoots.length) project.sourceRoots = [project.root];
         project.references = [...new Set((parsed.projectReferences ?? []).map(reference => inside(reference.path)).filter((root): root is string => root !== undefined))].sort();
       }
+    }
+    const kit = kitConfiguration(context, project, sources);
+    if (kit) {
+      sveltekit.set(project.id, kit); for (const file of kit.inputs) resolver.configInputs.add(file);
+      if (kit.valid) options.paths = { ...kit.aliases, ...options.paths };
     }
     resolver.options.set(project.id, options);
   }
@@ -113,7 +120,7 @@ export function createTypeScriptServices(context: AnalysisContext): TypeScriptSe
   }).filter(project => project.inputs.length);
   const byProject = new Map(projects.map(runtime => [runtime.project.id, runtime]));
   const services: TypeScriptServices = {
-    projects, declarations, resolver, projectFor: relative => byProject.get(catalog.nodeOwner(relative).id),
+    projects, declarations, resolver, sveltekit, projectFor: relative => byProject.get(catalog.nodeOwner(relative).id),
     releasePrograms() { for (const runtime of projects) runtime.releaseProgram(); declarations.clear(); },
   };
   context.typescript = services;

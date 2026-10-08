@@ -4,10 +4,13 @@ import type { AnalysisContext, ScannedFile } from '../../core/analyzer.js';
 import { declarationHashes, evidence, type Entity, type SourceRange } from '../../core/graph.js';
 import type { TypeScriptServices, TypeScriptProject } from '../languages/typescript-services.js';
 import type { TsApplicationState } from '../../analyzers/ts-references.js';
+import type { HttpSite } from '../../analyzers/ts-http.js';
 
 export interface TypeScriptPackFile {
   runtime: TypeScriptProject; file: ScannedFile; source: ts.SourceFile;
   state: TsApplicationState; owners: Map<ts.Node, Entity>;
+  /** Add only transports proven by a framework registration. */
+  adoptHttp(site: HttpSite): void;
 }
 export interface TypeScriptPackScope {
   context: AnalysisContext; services: TypeScriptServices; files: TypeScriptPackFile[];
@@ -20,7 +23,7 @@ export interface TypeScriptFrameworkPack {
   id: string; version: string;
   includeEmbedded?: boolean;
   applies(scope: TypeScriptPackScope): boolean;
-  declare(scope: TypeScriptPackScope): void;
+  declare(scope: TypeScriptPackScope): void | Promise<void>;
   /** Optional behavior pass after language references and effects exist. */
   finish?(scope: TypeScriptPackScope): void;
 }

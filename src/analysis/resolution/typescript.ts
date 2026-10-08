@@ -22,6 +22,21 @@ export class TypeScriptResolver {
   binding(specifier: string, containingFile: string): PackageBinding | undefined {
     const name = packageName(specifier); return name ? this.projects.packageBinding(this.owner(containingFile), name) : undefined;
   }
+  /** Literal Node subpath imports also identify indexed non-TS assets. Complex
+   * conditional targets stay with the compiler resolver, not a guessed path. */
+  assetCandidates(specifier: string, containingFile: string): string[] {
+    if (!specifier.startsWith('#')) return [];
+    const project = this.owner(containingFile), manifest = project.manifest && this.sources.readFile(path.resolve(this.context.root, project.manifest));
+    if (!manifest) return [];
+    try {
+      const imports: unknown = JSON.parse(manifest).imports;
+      if (!imports || typeof imports !== 'object' || Array.isArray(imports)) return [];
+      const matches = Object.entries(imports).filter(([key]) => { const star = key.indexOf('*'); return star < 0 ? specifier === key : specifier.startsWith(key.slice(0, star)) && specifier.endsWith(key.slice(star + 1)); }).sort(([a], [b]) => Number(b === specifier) - Number(a === specifier) || b.indexOf('*') - a.indexOf('*') || b.length - a.length);
+      const entry = matches[0]; if (!entry || typeof entry[1] !== 'string' || !entry[1].startsWith('./') || entry[1].includes('..') || entry[1].includes('\\')) return [];
+      const [key, target] = entry, star = key.indexOf('*'), capture = star < 0 ? '' : specifier.slice(star, specifier.length - (key.length - star - 1));
+      return [path.resolve(this.context.root, project.root, target.replaceAll('*', capture))];
+    } catch { return []; }
+  }
   private virtualHost(importer: NodeProject): ts.ModuleResolutionHost {
     const cached = this.hosts.get(importer.id); if (cached) return cached;
     const eligible = [...new Set([importer.packageName, ...Object.keys(importer.dependencies)].filter((name): name is string => !!name))].filter(name => this.projects.packageBinding(importer, name).status === 'resolved');

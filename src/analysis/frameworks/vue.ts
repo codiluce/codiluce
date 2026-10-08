@@ -5,7 +5,7 @@ import { declarationHashes, evidence, type Entity, type Evidence, type EffectFac
 import { fileAnalysis } from '../facts.js';
 import { SourceText } from '../source-map.js';
 import { sourceMapped } from '../embedded/index.js';
-import { requestExecutionContext } from '../routes/boundaries.js';
+import { browserInvocations } from './browser-invocations.js';
 import { runtimeReference } from '../languages/typescript-runtime.js';
 import { SiteCollector } from '../../analyzers/references.js';
 import { frameworkBinding, unwrap } from './typescript-binding.js';
@@ -16,7 +16,7 @@ import { vueRouters } from './vue-router.js';
 
 type Bound = { node: ts.Expression | ts.MethodDeclaration; frame: TypeScriptPackFile };
 export const vuePack: TypeScriptFrameworkPack = {
-  id: 'vue', version: '1.0.0', includeEmbedded: true,
+  id: 'vue', version: '1.0.1', includeEmbedded: true,
   applies: scope => !!scope.inputs?.some(file => file.language === 'vue') || scope.files.some(frame => frame.runtime.project.dependencies['vue-router'] !== undefined),
   declare(scope): void {
     const reader = new VueStatic(scope);
@@ -24,28 +24,7 @@ export const vuePack: TypeScriptFrameworkPack = {
     vueRouters(scope, reader);
   },
   finish(scope): void {
-    // Browser invocation is contextual. A shared method can also execute in
-    // SSR; do not relabel its declaration or its original request as browser.
-    const { context } = scope, observations = [...context.http];
-    const outgoing = new Map<string, string[]>();
-    for (const relation of context.graph.relations.values()) if (relation.type === 'calls') outgoing.set(relation.from, [...(outgoing.get(relation.from) ?? []), relation.to]);
-    for (const event of context.graph.entities.values()) {
-      if (!event.metadata.vueTemplateEvent || !scope.inputs?.some(file => file.path === event.path)) continue;
-      const seen = new Set<string>(), pending = [...(outgoing.get(event.id) ?? [])];
-      while (pending.length && seen.size < 128) {
-        const id = pending.shift()!; if (seen.has(id)) continue; seen.add(id);
-        const entity = context.graph.entities.get(id);
-        if (requestExecutionContext(context, { callerId: id, fileId: '', expression: '', evidence: event.evidence[0]! }) === 'server') continue;
-        for (const observation of observations) if (observation.callerId === id && requestExecutionContext(context, observation) === 'unknown' && (observation.url?.startsWith('/') && !observation.url.startsWith('//') || observation.resolved?.relative)) {
-          const effect: EffectFact | undefined = observation.effect && { ...observation.effect };
-          if (effect) { const effects = event.metadata.effects as EffectFact[] | undefined ?? []; if (effects.length < 40) effects.push(effect); event.metadata.effects = effects; }
-          const file = context.files.get(event.path!);
-          if (file) context.http.push({ ...observation, callerId: event.id, fileId: file.id, effect, evidence: { ...observation.evidence, explanation: `${observation.evidence.explanation ?? 'HTTP call'}; invoked by Vue ${event.metadata.event} event at ${event.path}:${event.sourceRange?.startLine}` } });
-        }
-        pending.push(...(outgoing.get(id) ?? []));
-      }
-      if (pending.length) context.graph.diagnose({ analyzer: 'vue', severity: 'warning', code: 'vue-event-call-budget', file: event.path, entityId: event.id, reason: 'Browser invocation traversal exceeded its 128-callable budget' });
-    }
+    browserInvocations(scope, 'vue', 'vueTemplateEvent');
   },
 };
 

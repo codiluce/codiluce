@@ -15,6 +15,8 @@ export interface HttpObservation {
   resolved?: { app?: string; relative: boolean; pattern: string; holes: number; proof: Evidence[]; display: string };
   /** The caller's network effect; the matcher records the endpoint it reaches. */
   effect?: EffectFact;
+  /** Relative fetch is supported by the proven SvelteKit RequestEvent API. */
+  transport?: 'sveltekit-fetch';
 }
 export interface AnalysisContext {
   root: string; config: AtlasConfig; graph: GraphBuilder; repositoryId: string;

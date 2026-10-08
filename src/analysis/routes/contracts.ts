@@ -3,7 +3,7 @@
 export type RoutePart = { kind: 'literal'; value: string } | { kind: 'parameter'; name: string; converter?: 'int' | 'float' | 'uuid' | 'slug' };
 export type RouteSegment = { kind: 'segment'; parts: RoutePart[] } | { kind: 'rest'; name: string; minimum: 0 | 1 };
 export interface RoutePattern {
-  version: 1; dialect: 'express-common' | 'express-4' | 'express-5' | 'starlette' | 'werkzeug' | 'django-path' | 'django-re-path'; original: string;
+  version: 1; dialect: 'express-common' | 'express-4' | 'express-5' | 'starlette' | 'werkzeug' | 'django-path' | 'django-re-path' | 'sveltekit'; original: string;
   status: 'exact' | 'partial'; reason?: string; alternatives: RouteSegment[][];
   prefix?: string;
   caseSensitive: boolean; strict: boolean;
@@ -14,6 +14,8 @@ export interface RoutingContract {
   registration: { file: string; line: number; receiver: string };
   mounts: { id: string; file: string; line: number; prefix: string }[];
   middleware: string[]; conditions: string[];
+  /** Form actions share a page URL; the query selector chooses an operation. */
+  action?: { name: string };
 }
 export interface RouterOptions { caseSensitive?: boolean; strict?: boolean }
 const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -154,6 +156,10 @@ export function djangoRegexRoute(original: string, include = false): string | un
   return route;
 }
 export function matchRoutePattern(pattern: RoutePattern, pathname: string, strictHoles = true): boolean {
+  if (pattern.dialect === 'sveltekit') {
+    try { pathname = pathname.split('/').map(segment => decodeURIComponent(segment)).join('/'); }
+    catch { return false; }
+  }
   if (pattern.status === 'partial') return !pattern.prefix || pathname.includes('{*}') || pathname.startsWith(pattern.prefix);
   const django = pattern.dialect.startsWith('django-');
   const parameter = (part: RoutePart) => part.kind === 'literal' ? escaped(part.value) : part.converter === 'int' ? '[0-9]+' : part.converter === 'float' ? pattern.dialect === 'werkzeug' ? '[0-9]+\\.[0-9]+' : '[0-9]+(?:\\.[0-9]+)?' : part.converter === 'slug' ? '[-a-zA-Z0-9_]+' : part.converter === 'uuid' ? django ? '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' : '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}' : '[^/]+';

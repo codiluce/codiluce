@@ -38,6 +38,7 @@ const INERTIA_VERBS = new Set(['get', 'post', 'put', 'patch', 'delete']);
 const MAX_WRAPPER_DEPTH = 4, MAX_CALL_SITES = 300, MAX_PROOF = 12;
 
 export interface HttpSite {
+  transport?: 'sveltekit-fetch';
   /** The call (or, for Inertia's `<Link>` and `<Form>`, the JSX element) making the request. */
   node: ts.Node;
   client: 'fetch' | 'axios' | 'axios-instance' | 'inertia';
@@ -460,7 +461,7 @@ export function expandWrappers(input: WrapperContext, roots: WrapperRoot[]): Map
         const resolvedUrl: ResolvedUrl | undefined = outcome.resolved ? { ...outcome.resolved, proof } : undefined;
         const file = context.files.get(relative(outerCall.getSourceFile().fileName));
         if (!file) continue;
-        const observation: HttpObservation = { callerId: caller.id, fileId: file.id, method: outcome.method, expression: short(outerCall, 120), evidence: callFact, effect, ...(resolvedUrl ? { resolved: resolvedUrl } : outcome.url !== undefined ? { url: outcome.url } : {}) };
+        const observation: HttpObservation = { callerId: caller.id, fileId: file.id, method: outcome.method, expression: short(outerCall, 120), evidence: callFact, effect, ...(root.site.transport ? { transport: root.site.transport } : {}), ...(resolvedUrl ? { resolved: resolvedUrl } : outcome.url !== undefined ? { url: outcome.url } : {}) };
         context.http.push(observation);
         metadataOf(outerCall)?.list.push({ callerId: caller.id, method: outcome.method, url: display, expression: short(outerCall, 120), line: callFact.line, resolution: 'wrapper', wrapper: callee });
       }
