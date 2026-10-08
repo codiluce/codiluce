@@ -7,6 +7,8 @@ import { STRUCTURE_VERSION } from '../tree-sitter/analyzer.js';
 import { PythonImportBindings } from './python-bindings.js';
 import { PythonSymbols } from './python-symbols.js';
 import { FASTAPI_VERSION, FastAPIRegistrations } from '../frameworks/fastapi.js';
+import { FLASK_VERSION, FlaskRegistrations } from '../frameworks/flask.js';
+import { DJANGO_VERSION, DjangoRegistrations } from '../frameworks/django.js';
 
 export const PYTHON_IMPORT_VERSION = `${ANALYZER_VERSION}:python-imports:8`;
 export const pythonAnalyzer: Analyzer = {
@@ -23,10 +25,12 @@ export const pythonAnalyzer: Analyzer = {
       for (const file of files) analyzeFile(context, resolver, file, directories);
       const symbols = new PythonSymbols(context, resolver);
       new FastAPIRegistrations(context, symbols).run();
+      new FlaskRegistrations(context, symbols).run();
+      new DjangoRegistrations(context, symbols).run();
       symbols.analyze();
     };
     if (context.cache) await context.cache.unit(context, this.name, 'repository', {
-      version: PYTHON_IMPORT_VERSION, syntax: STRUCTURE_VERSION, packs: { fastapi: FASTAPI_VERSION }, config: context.config, projects: resolver.describe(),
+      version: PYTHON_IMPORT_VERSION, syntax: STRUCTURE_VERSION, packs: { fastapi: FASTAPI_VERSION, flask: FLASK_VERSION, django: DJANGO_VERSION }, config: context.config, projects: resolver.describe(),
       inputs: [...context.files.values()].filter(file => file.language === 'python' || /(?:^|\/)(?:pyproject\.toml|setup\.cfg|setup\.py|Pipfile|requirements[\w.-]*\.txt)$/.test(file.path)).sort((a, b) => a.path.localeCompare(b.path, 'en')).map(file => fileKey(context, file.path)),
       availability: files.map(file => [file.path, fileAnalysis(context.graph.entities.get(file.id)!.metadata.analysis)?.features.structure]),
     }, work);

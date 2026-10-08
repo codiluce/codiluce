@@ -20,6 +20,8 @@ import { typescriptFrameworkPacks } from '../analysis/frameworks/index.js';
 import { typescriptServicesRelease } from '../analysis/languages/typescript-services.js';
 import { pythonAnalyzer } from '../analysis/languages/python.js';
 import { FASTAPI_VERSION } from '../analysis/frameworks/fastapi.js';
+import { FLASK_VERSION } from '../analysis/frameworks/flask.js';
+import { DJANGO_VERSION } from '../analysis/frameworks/django.js';
 
 const execute = promisify(execFile);
 export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, structureAnalyzer, pythonAnalyzer, typescriptAnalyzer, typescriptServicesRelease, laravelAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
@@ -50,6 +52,6 @@ export async function indexRepository(repository: string, options: IndexOptions 
     graph.diagnose({ analyzer: 'indexer', severity: 'info', code: 'git-metadata-unavailable', reason: 'No readable Git HEAD/status; this is still a valid working-tree scan' });
   }
   for (const analyzer of analyzers) { options.onProgress?.(analyzer.name); await analyzer.analyze(context); }
-  const run: AnalysisRun = { id: randomUUID(), repositoryId, repositoryName: config.repository.name, ...(commitSha ? { commitSha } : {}), ...(dirty !==undefined ? { dirty } : {}), analyzedAt: new Date().toISOString(), configDigest: createHash('sha256').update(JSON.stringify(config)).digest('hex'), schemaVersion: SCHEMA_VERSION, analyzerVersions: Object.fromEntries([...analyzers.map(analyzer => [analyzer.name, analyzer.version]), ...typescriptFrameworkPacks.map(pack => [pack.id, pack.version]), ['fastapi', FASTAPI_VERSION]]) };
+  const run: AnalysisRun = { id: randomUUID(), repositoryId, repositoryName: config.repository.name, ...(commitSha ? { commitSha } : {}), ...(dirty !==undefined ? { dirty } : {}), analyzedAt: new Date().toISOString(), configDigest: createHash('sha256').update(JSON.stringify(config)).digest('hex'), schemaVersion: SCHEMA_VERSION, analyzerVersions: Object.fromEntries([...analyzers.map(analyzer => [analyzer.name, analyzer.version]), ...typescriptFrameworkPacks.map(pack => [pack.id, pack.version]), ['fastapi', FASTAPI_VERSION], ['flask', FLASK_VERSION], ['django', DJANGO_VERSION]]) };
   return graph.finish(run);
 }

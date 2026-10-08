@@ -5,7 +5,7 @@ import { compileIndexedPath, matchIndexedPath, requestPathSegments } from '../an
 import { routingContract, matchRoutePattern } from '../analysis/routes/contracts.js';
 import { configuredProxy, proxyPath, relativeApiBoundary } from '../analysis/routes/boundaries.js';
 export const apiMatcher: Analyzer = {
-  name: 'api-matcher', version: ANALYZER_VERSION,
+  name: 'api-matcher', version: `${ANALYZER_VERSION}:2`,
   async analyze(context: AnalysisContext): Promise<void> {
     const endpoints = [...context.graph.entities.values()].filter(entity => entity.type === 'api_endpoint');
     const appsById = new Map(context.config.applications.map(app => [context.applicationIds.get(app.name), app]));
@@ -20,7 +20,8 @@ export const apiMatcher: Analyzer = {
       return matchIndexedPath(patterns.get(endpoint.id)!, segments, strict);
     };
     const methodMatches = (endpoint: Entity, method: string): boolean => {
-      const methods = contracts.get(endpoint.id)?.methods;
+      const contract = contracts.get(endpoint.id), methods = contract?.methods;
+      if (contract?.excludedMethods?.includes(method)) return false;
       return endpoint.metadata.method === method || methods === '*' || Array.isArray(methods) && methods.includes(method);
     };
     const literalEligible = new Map<string, Entity[]>(), resolvedEligible = new Map<string, Entity[]>();

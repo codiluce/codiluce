@@ -19,6 +19,7 @@ export class PythonSymbols {
   private readonly active = new Set<string>();
   private readonly invalidClasses = new Set<string>();
   private readonly invalidMembers = new Map<string, Set<string>>();
+  private readonly mutatedAttributes = new Map<string, Set<string>>();
   private steps = 0;
   constructor(readonly context: AnalysisContext, readonly resolver: PythonResolver) {
     const mutations: { receiver: PythonBound; name: string }[] = [];
@@ -28,11 +29,14 @@ export class PythonSymbols {
       mutations.push({ receiver: this.name(file, parts.join('.'), write.scope, write.start), name });
     }
     for (const mutation of mutations) {
+      if (mutation.receiver.kind === 'symbol') { const names = this.mutatedAttributes.get(mutation.receiver.id) ?? new Set<string>(); names.add(mutation.name); this.mutatedAttributes.set(mutation.receiver.id, names); }
       if (mutation.receiver.kind === 'symbol' && mutation.receiver.declaration.kind === 'class') this.invalidClasses.add(mutation.receiver.id);
       if (mutation.receiver.kind === 'module') for (const module of mutation.receiver.modules) if (module.file) { const names = this.invalidMembers.get(module.file.path) ?? new Set<string>(); names.add(mutation.name); this.invalidMembers.set(module.file.path, names); }
     }
   }
   facts(file: string): StructureFacts | undefined { return this.context.syntax?.get(file)?.facts; }
+  attributeWrites(id: string): string[] { return [...this.mutatedAttributes.get(id) ?? []]; }
+  moduleAttributeWritten(file: string, name: string): boolean { return this.invalidMembers.get(file)?.has(name) ?? false; }
   private deferred(facts: StructureFacts, scope?: string): boolean {
     while (scope) { const item = facts.declarations.find(item => item.key === scope) ?? facts.python?.scopes.find(item => item.key === scope); if (!item) break; if (['function', 'method', 'lambda'].includes(item.kind)) return true; scope = item.parent; }
     return false;
@@ -60,6 +64,7 @@ export class PythonSymbols {
         if (imports.length) return this.imported(file, imports[0]!, name, before, depth + 1);
         const write = writes[0]!;
         if (write.kind === 'parameter') return missing(`Parameter ${name} has no proven runtime type`);
+        if (write.kind === 'augmentation') return missing(`Augmented binding ${name} requires runtime evaluation`);
         const deferred = this.deferred(facts, scope);
         if (write.start >= before && !deferred) return missing(`Binding ${name} is not yet defined`);
         if (write.kind === 'declaration') {
@@ -104,7 +109,7 @@ export class PythonSymbols {
     const assignments = syntax.assignments.filter(item => !item.scope && item.name === '__all__' && !item.conditions.length);
     if (writes.length !== 1 || assignments.length !== 1 || syntax.calls.some(item => !item.scope && item.callee.startsWith('__all__.'))) return undefined;
     const value = assignments[0]!.value;
-    return value.kind === 'sequence' && value.items.every(item => item.kind === 'literal' && typeof item.value === 'string') ? value.items.map(item => (item as { value: string }).value) : undefined;
+    return value.kind === 'sequence' && value.container !== 'set' && value.items.every(item => item.kind === 'literal' && typeof item.value === 'string') ? value.items.map(item => (item as { value: string }).value) : undefined;
   }
   private exported(file: string, name: string, depth: number): PythonBound {
     const syntax = this.facts(file)?.python;

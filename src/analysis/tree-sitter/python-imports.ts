@@ -21,12 +21,14 @@ function expression(node: Node | null, depth = 0): PythonExpression {
   }
   if (node.type === 'parenthesized_expression') return next(node.namedChildren[0] ?? null);
   if (node.type === 'type') return next(node.namedChildren[0] ?? null);
-  if (['list', 'tuple', 'set', 'type_parameter'].includes(node.type)) return { kind: 'sequence', items: node.namedChildren.map(next) };
+  if (['list', 'tuple', 'set', 'type_parameter'].includes(node.type)) return { kind: 'sequence', items: node.namedChildren.filter(child => child.type !== 'comment').map(next), ...(node.type !== 'type_parameter' ? { container: node.type as 'list' | 'tuple' | 'set' } : {}) };
+  if (node.type === 'dictionary' && node.namedChildren.every(child => child.type === 'pair' || child.type === 'comment')) return { kind: 'mapping', items: node.namedChildren.filter(child => child.type === 'pair').map(child => ({ key: next(child.childForFieldName('key')), value: next(child.childForFieldName('value')) })) };
+  if (node.type === 'binary_operator') return { kind: 'binary', operator: node.childForFieldName('operator')?.text ?? '', left: next(node.childForFieldName('left')), right: next(node.childForFieldName('right')) };
   if (node.type === 'subscript' || node.type === 'generic_type') {
     const items = node.type === 'generic_type' ? node.namedChildren[1]?.namedChildren ?? [] : node.childrenForFieldName('subscript');
     return { kind: 'subscript', object: next(node.childForFieldName('value') ?? node.namedChildren[0] ?? null), items: items.flatMap(item => item.type === 'tuple' ? item.namedChildren : [item]).map(next) };
   }
-  if (node.type === 'call') return { kind: 'call', callee: next(node.childForFieldName('function')), args: (node.childForFieldName('arguments')?.namedChildren ?? []).map(arg => arg.type === 'keyword_argument' ? { name: arg.childForFieldName('name')?.text, value: next(arg.childForFieldName('value')) } : { value: next(arg), ...(/splat/.test(arg.type) ? { spread: true } : {}) }) };
+  if (node.type === 'call') return { kind: 'call', start: node.startIndex, range: { startLine: node.startPosition.row + 1, endLine: node.endPosition.row + 1 }, callee: next(node.childForFieldName('function')), args: (node.childForFieldName('arguments')?.namedChildren ?? []).filter(arg => arg.type !== 'comment').map(arg => arg.type === 'keyword_argument' ? { name: arg.childForFieldName('name')?.text, value: next(arg.childForFieldName('value')) } : { value: next(arg), ...(/splat/.test(arg.type) ? { spread: true } : {}) }) };
   return unknown;
 }
 /** Extract imports from grammar nodes, retaining lexical owners and branch
@@ -58,11 +60,13 @@ export function extractPythonImports(root: Node, declarations: DeclarationFact[]
         scope = declaration.key;
         const definition = node.type === 'decorated_definition' ? node.childForFieldName('definition') ?? node.namedChildren.at(-1) : node;
         const parameters = definition?.childForFieldName('parameters');
-        facts.definitions.push({ key: declaration.key, conditions: frame.conditions, decorators: node.type === 'decorated_definition' ? node.namedChildren.filter(child => child.type === 'decorator').map(child => expression(child.namedChildren[0] ?? null)) : [], bases: (definition?.childForFieldName('superclasses')?.namedChildren ?? []).map(child => expression(child)), parameters: (parameters?.namedChildren ?? []).filter(child => !['positional_separator', 'keyword_separator'].includes(child.type)).map(parameter => {
+        const positionalEnd = parameters?.namedChildren.find(child => child.type === 'positional_separator')?.startIndex;
+        const keywordStart = parameters?.namedChildren.find(child => child.type === 'keyword_separator' || child.type === 'list_splat_pattern' || child.namedChildren.some(item => item.type === 'list_splat_pattern'))?.startIndex;
+        facts.definitions.push({ key: declaration.key, conditions: frame.conditions, decorators: node.type === 'decorated_definition' ? node.namedChildren.filter(child => child.type === 'decorator').map(child => expression(child.namedChildren[0] ?? null)) : [], bases: (definition?.childForFieldName('superclasses')?.namedChildren ?? []).filter(child => child.type !== 'comment').map(child => expression(child)), parameters: (parameters?.namedChildren ?? []).filter(child => !['positional_separator', 'keyword_separator', 'comment'].includes(child.type)).map(parameter => {
           const name = parameter.type === 'identifier' ? parameter : parameter.childForFieldName('name') ?? parameter.namedChildren.find(child => child.type === 'identifier' || /splat_pattern$/.test(child.type));
           const actualName = name && /splat_pattern$/.test(name.type) ? name.namedChildren[0] : name;
           const value = parameter.childForFieldName('value'), annotation = parameter.childForFieldName('type');
-          return { name: actualName?.text ?? '', ...(value ? { default: expression(value) } : {}), ...(annotation ? { annotation: expression(annotation) } : {}), ...(/splat/.test(parameter.type) || !!name && /splat/.test(name.type) ? { variadic: true } : {}) };
+          return { name: actualName?.text ?? '', ...(value ? { default: expression(value) } : {}), ...(annotation ? { annotation: expression(annotation) } : {}), ...(positionalEnd !== undefined && parameter.startIndex < positionalEnd ? { kind: 'positional-only' as const } : keywordStart !== undefined && parameter.startIndex > keywordStart ? { kind: 'keyword-only' as const } : {}), ...(/splat/.test(parameter.type) || !!name && /splat/.test(name.type) ? { variadic: true } : {}) };
         }) });
         for (const parameter of parameters?.namedChildren ?? []) {
           const name = parameter.type === 'identifier' ? parameter : parameter.childForFieldName('name') ?? parameter.namedChildren.find(child => child.type === 'identifier' || /splat_pattern$/.test(child.type)) ?? null;
@@ -93,7 +97,7 @@ export function extractPythonImports(root: Node, declarations: DeclarationFact[]
       if (node.type === 'named_expression') while (bindingScope && lexical.get(bindingScope)?.kind === 'comprehension') bindingScope = lexical.get(bindingScope)?.parent;
       write(node.childForFieldName('left') ?? node.childForFieldName('name'), bindingScope, node.type === 'augmented_assignment' ? 'augmentation' : 'assignment');
       const left = node.childForFieldName('left'), right = node.childForFieldName('right');
-      if (node.type === 'assignment' && left?.type === 'identifier' && right) facts.assignments.push({ name: left.text, value: expression(right), start: left.startIndex, range: source.range(node.startIndex, node.endIndex), conditions: frame.conditions, ...(bindingScope ? { scope: bindingScope } : {}) });
+      if (['assignment', 'augmented_assignment'].includes(node.type) && left?.type === 'identifier' && right) facts.assignments.push({ name: left.text, value: expression(right), start: left.startIndex, range: source.range(node.startIndex, node.endIndex), conditions: frame.conditions, ...(node.type === 'augmented_assignment' ? { augmentation: node.childForFieldName('operator')?.text ?? node.children.find(child => !child.isNamed && child.text.endsWith('='))?.text ?? '<unknown>' } : {}), ...(bindingScope ? { scope: bindingScope } : {}) });
     }
     if (node.type === 'as_pattern') {
       const alias = node.childForFieldName('alias');

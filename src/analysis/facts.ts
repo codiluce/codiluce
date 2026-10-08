@@ -33,16 +33,18 @@ export interface PythonBindingWrite { name: string; scope?: string; start: numbe
 export type PythonExpression =
   | { kind: 'name'; name: string }
   | { kind: 'literal'; value: string | number | boolean | null }
-  | { kind: 'sequence'; items: PythonExpression[] }
+  | { kind: 'sequence'; items: PythonExpression[]; container?: 'list' | 'tuple' | 'set' }
+  | { kind: 'mapping'; items: { key: PythonExpression; value: PythonExpression }[] }
+  | { kind: 'binary'; operator: string; left: PythonExpression; right: PythonExpression }
   | { kind: 'subscript'; object: PythonExpression; items: PythonExpression[] }
   | { kind: 'member'; object: PythonExpression; name: string }
-  | { kind: 'call'; callee: PythonExpression; args: PythonArgument[] }
+  | { kind: 'call'; callee: PythonExpression; args: PythonArgument[]; start?: number; range?: SourceRange }
   | { kind: 'unknown'; text: string };
 export interface PythonArgument { name?: string; value: PythonExpression; spread?: boolean }
 export interface PythonCallFact { callee: string; expression: PythonExpression; standalone: boolean; conditions: string[]; scope?: string; start: number; range: SourceRange }
-export interface PythonAssignmentFact { name: string; value: PythonExpression; scope?: string; start: number; range: SourceRange; conditions: string[] }
+export interface PythonAssignmentFact { name: string; value: PythonExpression; scope?: string; start: number; range: SourceRange; conditions: string[]; augmentation?: string }
 export interface PythonReturnFact { value: PythonExpression; scope?: string; start: number; conditions: string[] }
-export interface PythonDefinitionFact { key: string; conditions: string[]; decorators: PythonExpression[]; bases: PythonExpression[]; parameters: { name: string; default?: PythonExpression; annotation?: PythonExpression; variadic?: boolean }[] }
+export interface PythonDefinitionFact { key: string; conditions: string[]; decorators: PythonExpression[]; bases: PythonExpression[]; parameters: { name: string; default?: PythonExpression; annotation?: PythonExpression; variadic?: boolean; kind?: 'positional-only' | 'keyword-only' }[] }
 export interface PythonReferenceFact { name: string; scope?: string; start: number; range: SourceRange }
 export interface PythonScopeFact { key: string; parent?: string; kind: 'comprehension' | 'lambda'; start: number; end: number }
 export interface PythonSyntaxFacts { imports: PythonImportFact[]; writes: PythonBindingWrite[]; calls: PythonCallFact[]; assignments: PythonAssignmentFact[]; returns: PythonReturnFact[]; definitions: PythonDefinitionFact[]; references: PythonReferenceFact[]; scopes: PythonScopeFact[]; opaqueScopes: string[]; opaqueModule: boolean }

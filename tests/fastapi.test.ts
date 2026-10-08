@@ -149,3 +149,12 @@ test('FastAPI reviewed live inclusion sees later routes and mounts; broad/unvers
   await writeFile(path.join(root, 'requirements.txt'), 'fastapi==0.115.0\n');
   assert.equal(endpoints(await index(root)).length, 0, 'snapshot includes precede all child routes; APIRouter mounts are not copied');
 });
+
+test('FastAPI factory binding honors Python parameter kinds and rejects incompatible invocations', async () => {
+  const source = 'from fastapi import FastAPI\ndef make(prefix, /, *, path="/one"):\n    app = FastAPI()\n    @app.get(path)\n    def one():\n        return 1\n    return app\n';
+  const root = await repository({ 'main.py': `${source}\napp = make("p", path="/valid")\n` }); assert.deepEqual(endpoints(await index(root)).map(item => item.name), ['GET /valid']);
+  for (const invocation of ['make(prefix="p")', 'make("p", "/invalid")', 'make("p", path="/a", path="/b")']) {
+    await writeFile(path.join(root, 'main.py'), `${source}\napp = ${invocation}\n`);
+    const graph = await index(root); assert.equal(endpoints(graph).length, 0); assert.ok(graph.diagnostics.some(item => item.code === 'fastapi-factory-arguments'));
+  }
+});

@@ -70,8 +70,8 @@ TypeScript and JavaScript are analyzed down to calls and requests across applica
 routes, commands and tables. Express and Nest have static routing packs for mounted routers and registered controllers,
 with handler links and visible gaps. Python, Go, Ruby, Rust, Java, C# and Kotlin also have declaration maps, with source ranges
 and nested types/functions. Python also resolves static imports across packages, namespace portions and configured or
-manifest source roots, binds local/imported calls and bounded re-exports, and has an initial FastAPI pack for
-registered routes, included routers, factories and dependency references. Conditional/type-only bindings and dynamic
+manifest source roots, binds local/imported calls and bounded re-exports, and has initial FastAPI, Flask and Django packs for
+registered routes, routers/blueprints, URL includes/namespaces, invoked or configured entrypoints, exact function/class view handlers and framework references. Conditional/type-only bindings and dynamic
 registration retain visible gaps. The inspector shows which analysis features are available for each file. Other ecosystems
 are detected and mapped with their files, lines and Git metrics. Missing
 yours? [Tell us](https://github.com/codiluce/codiluce/issues).

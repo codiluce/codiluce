@@ -130,6 +130,17 @@ try {
   await writeFile(path.join(pythonPackage, '__init__.py'), '');
   await writeFile(path.join(pythonPackage, 'main.py'), 'from fastapi import FastAPI\nfrom .handler import PackagedPythonHandler as handler\napp = FastAPI()\napp.add_api_route("/package-python/{id:int}", handler, methods=["GET"])\n');
   await writeFile(path.join(pythonPackage, 'handler.py'), 'def PackagedPythonLeaf():\n    return "ok"\ndef PackagedPythonHandler():\n    return PackagedPythonLeaf()\n');
+  const flaskServer = path.join(repo, 'flask-server');
+  await mkdir(flaskServer);
+  await writeFile(path.join(flaskServer, 'requirements.txt'), 'Flask==3.1.2\n');
+  await writeFile(path.join(flaskServer, 'main.py'), 'from flask import Flask, Blueprint\nfrom handlers import PackagedFlaskHandler\nbp = Blueprint("package", __name__, url_prefix="/ignored")\nbp.add_url_rule("/<int:id>", view_func=PackagedFlaskHandler)\napp = Flask(__name__, static_folder=None)\napp.register_blueprint(bp, url_prefix="/package-flask")\n');
+  await writeFile(path.join(flaskServer, 'handlers.py'), 'def PackagedFlaskLeaf():\n    return "ok"\ndef PackagedFlaskHandler(id):\n    return PackagedFlaskLeaf()\n');
+  const djangoServer = path.join(repo, 'django-server');
+  await mkdir(djangoServer);
+  await writeFile(path.join(djangoServer, 'requirements.txt'), 'Django==5.2.7\n');
+  await writeFile(path.join(djangoServer, 'settings.py'), 'ROOT_URLCONF = "urls"\n');
+  await writeFile(path.join(djangoServer, 'urls.py'), 'from django.urls import path, include\nfrom handlers import PackagedDjangoHandler, PackagedDjangoView\nurlpatterns = [path("package-django/", include(([path("items/<int:id>/", PackagedDjangoHandler, name="item"), path("class/", PackagedDjangoView.as_view())], "package"), namespace="installed"))]\n');
+  await writeFile(path.join(djangoServer, 'handlers.py'), 'from django.views import View\nfrom django.views.decorators.http import require_GET\ndef PackagedDjangoLeaf():\n    return "ok"\n@require_GET\ndef PackagedDjangoHandler(request, id):\n    return PackagedDjangoLeaf()\nclass PackagedDjangoView(View):\n    def get(self, request):\n        return PackagedDjangoLeaf()\n');
   console.log('Starting the installed executable from a repository with spaces…');
   await checkSession(bin, repo);
   assert.ok((await readdir(path.join(repo, '.codiluce'))).includes('codiluce.db'));
@@ -171,6 +182,44 @@ try {
   const pythonCalls = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', pythonHandlers[0].to, '--type', 'calls'], repo)).stdout).items;
   const pythonSymbols = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'PackagedPythonLeaf'], repo)).stdout).items;
   assert.ok(pythonCalls.some(relation => relation.from === pythonHandlers[0].to && relation.to === pythonSymbols.find(entity => entity.name === 'PackagedPythonLeaf')?.id), 'installed Python handler owns its exact local call');
+  const flaskEntities = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', '/package-flask'], repo)).stdout).items;
+  const flaskEndpoint = flaskEntities.find(entity => entity.type === 'api_endpoint' && entity.name === 'GET /package-flask/<int:id>');
+  assert.ok(flaskEndpoint, 'installed Flask pack composes the blueprint prefix override');
+  const flaskDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', flaskEndpoint.id], repo)).stdout);
+  assert.equal(flaskDetail.metadata.constraintsUnresolved, undefined);
+  assert.deepEqual(flaskDetail.metadata.routing.methods, ['GET', 'HEAD']);
+  const flaskHandlers = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', flaskEndpoint.id, '--type', 'handles'], repo)).stdout).items;
+  assert.equal(flaskHandlers.length, 1);
+  const flaskSymbols = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'PackagedFlask'], repo)).stdout).items;
+  const flaskCalls = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', flaskHandlers[0].to, '--type', 'calls'], repo)).stdout).items;
+  assert.ok(flaskCalls.some(relation => relation.to === flaskSymbols.find(entity => entity.name === 'PackagedFlaskLeaf')?.id), 'installed Flask handler owns its exact local call');
+  const flaskOptions = flaskEntities.find(entity => entity.type === 'api_endpoint' && entity.name === 'OPTIONS /package-flask/<int:id>');
+  assert.ok(flaskOptions);
+  assert.equal(JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', flaskOptions.id, '--type', 'handles'], repo)).stdout).items.length, 0, 'automatic OPTIONS does not claim to execute the view');
+  const djangoEntities = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', '/package-django'], repo)).stdout).items;
+  const djangoEndpoint = djangoEntities.find(entity => entity.type === 'api_endpoint' && entity.name === 'GET /package-django/items/<int:id>/');
+  assert.ok(djangoEndpoint, 'installed Django pack expands its namespaced URL include');
+  const djangoDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', djangoEndpoint.id], repo)).stdout);
+  assert.equal(djangoDetail.metadata.constraintsUnresolved, undefined);
+  assert.equal(djangoDetail.metadata.urlName, 'installed:item');
+  assert.deepEqual(djangoDetail.metadata.routing.methods, ['GET']);
+  const djangoHandlers = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', djangoEndpoint.id, '--type', 'handles'], repo)).stdout).items;
+  assert.equal(djangoHandlers.length, 1);
+  const djangoSymbols = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'PackagedDjango'], repo)).stdout).items;
+  const djangoCalls = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', djangoHandlers[0].to, '--type', 'calls'], repo)).stdout).items;
+  assert.ok(djangoCalls.some(relation => relation.to === djangoSymbols.find(entity => entity.name === 'PackagedDjangoLeaf')?.id), 'installed Django view owns its exact local call');
+  const djangoClassGet = djangoEntities.find(entity => entity.type === 'api_endpoint' && entity.name === 'GET /package-django/class/');
+  const djangoClassHead = djangoEntities.find(entity => entity.type === 'api_endpoint' && entity.name === 'HEAD /package-django/class/');
+  assert.ok(djangoClassGet && djangoClassHead);
+  for (const endpoint of [djangoClassGet, djangoClassHead]) {
+    const edges = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', endpoint.id, '--type', 'handles'], repo)).stdout).items;
+    assert.equal(edges.length, 1);
+    const method = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', edges[0].to], repo)).stdout);
+    assert.equal(method.metadata.qualifiedName, 'PackagedDjangoView.get');
+  }
+  const djangoOptions = djangoEntities.find(entity => entity.type === 'api_endpoint' && entity.name === 'OPTIONS /package-django/class/');
+  assert.ok(djangoOptions);
+  assert.equal(JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', djangoOptions.id, '--type', 'handles'], repo)).stdout).items.length, 0, 'Django default OPTIONS carries no view handler');
   await assert.rejects(run(process.execPath, [bin, 'start', '--build-ui', '--no-open'], repo), error => error.code === 1 && /only available in a Codiluce source checkout/.test(error.stderr));
   await assert.rejects(run(process.execPath, [bin, 'unknown-command'], repo), error => error.code === 1);
   const broken = path.join(repo, 'frontend/src/broken.ts');
@@ -219,7 +268,7 @@ try {
   console.log('Checking npm exec against the tarball without a local installation…');
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
-  console.log('Package installation, seven grammars, workspace binding, Express/Nest/FastAPI registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
+  console.log('Package installation, seven grammars, workspace binding, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

@@ -25,6 +25,8 @@ export interface ApplicationConfig {
   apiProxies?: { target: string; pathPrefix: string; targetPrefix?: string }[];
   /** Static language source roots, relative to this application's path. */
   sourceRoots?: Record<string, string[]>;
+  /** Explicit framework entry modules/factories (e.g. flask: ["shop:create_app"]). */
+  entrypoints?: Record<string, string[]>;
 }
 /** An application as configuration may give it: frameworks and ecosystems are completed from its manifests. */
 export type ApplicationInput = Omit<ApplicationConfig, 'frameworks' | 'ecosystems'> & {
@@ -212,6 +214,7 @@ export async function resolveConfig(root: string, raw: RawConfig): Promise<Atlas
       if (!app.sourceRoots || typeof app.sourceRoots !== 'object' || Array.isArray(app.sourceRoots) || !Object.entries(app.sourceRoots).every(([language, roots]) => IDENTIFIER.test(language) && Array.isArray(roots) && roots.length > 0 && roots.every(root => typeof root === 'string' && !path.isAbsolute(root) && !/^[A-Za-z]:/.test(root) && !/[\\\0]/.test(root)))) throw new Error('sourceRoots must map language names to nonempty lists of repository-relative paths');
       for (const roots of Object.values(app.sourceRoots)) for (const sourceRoot of roots) repoPath(root, path.posix.join(app.path, sourceRoot));
     }
+    if (app.entrypoints !== undefined && (!app.entrypoints || typeof app.entrypoints !== 'object' || Array.isArray(app.entrypoints) || !Object.entries(app.entrypoints).every(([framework, entries]) => IDENTIFIER.test(framework) && Array.isArray(entries) && entries.length > 0 && entries.length <= 64 && new Set(entries).size === entries.length && entries.every(entry => typeof entry === 'string' && entry.length <= 512 && /^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*(?::[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)?$/.test(entry))))) throw new Error('entrypoints must map framework names to unique Python module[:attribute] entries');
   }
   const envOwners = new Map<string, string>();
   for (const app of config.applications) for (const name of app.apiOriginEnv ?? []) { if (envOwners.has(name) && envOwners.get(name) !== app.name) throw new Error(`apiOriginEnv ${name} is declared for more than one application`); envOwners.set(name, app.name); }

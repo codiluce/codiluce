@@ -6,9 +6,10 @@ import { IndexedSources } from '../indexed-sources.js';
 import { evidence, type Entity, type Evidence, type SourceRange } from '../../core/graph.js';
 import { fileAnalysis, type PythonArgument, type PythonExpression } from '../facts.js';
 import { PythonSymbols, type PythonBound } from '../languages/python-symbols.js';
+import { bindPythonArguments } from '../languages/python-arguments.js';
 import { compileStarlettePath, composeRoutePath, type RoutingContract } from '../routes/contracts.js';
 
-export const FASTAPI_VERSION = '1.0.0';
+export const FASTAPI_VERSION = '1.0.1';
 interface Site { file: string; start: number; range: SourceRange }
 interface Environment { file: string; scope?: string; instance: string; parameters: Map<string, Value>; conditions: string[]; stack: string[] }
 interface Receiver { kind: 'receiver'; type: 'app' | 'router'; id: string; site: Site; prefix: string; profile: 'snapshot' | 'live' | 'unknown'; conditions: string[]; dependencies: string[]; entries: Entry[]; exposed: boolean }
@@ -82,6 +83,7 @@ export class FastAPIRegistrations {
     }
   }
   run(): void {
+    if (![...this.context.syntax?.values() ?? []].some(parsed => parsed.facts.python?.imports.some(item => item.specifier === 'fastapi' || item.specifier.startsWith('fastapi.')))) return;
     for (const file of [...this.context.files.values()].sort((a, b) => a.path.localeCompare(b.path, 'en'))) {
       if (file.language === 'python' && file.path.endsWith('.py') && file.analyzable && !/(?:^|\/)(?:tests?|fixtures|__fixtures__|testdata)(?:\/|$)/.test(file.path)) this.module(file.path);
     }
@@ -110,6 +112,7 @@ export class FastAPIRegistrations {
       if (++this.steps > 30_000) { if (this.steps === 30_001) this.issue({ file: env.file, start: event.start, range: { startLine: 1, endLine: 1 } }, 'fastapi-registration-limit', 'Static registration exceeded 30,000 steps'); return undefined; }
       const site: Site = { file: env.file, start: event.start, range: 'range' in event.item ? event.item.range : { startLine: 1, endLine: 1 } };
       if (event.kind === 'assignment') {
+        if (event.item.augmentation) continue;
         const writes = syntax.writes.filter(write => write.scope === env.scope && write.name === event.item.name);
         if (writes.length !== 1 || event.item.conditions.length) continue;
         const value = this.evaluate(event.item.value, env, site);
@@ -214,11 +217,11 @@ export class FastAPIRegistrations {
     if (callable.kind === 'symbol' && callable.declaration.kind === 'function' && this.symbols.callable(callable)) {
       if (env.stack.includes(callable.id) || env.stack.length >= 12) { this.issue(site, 'fastapi-factory-limit', 'Recursive or deep registration factory'); return undefined; }
       const definition = this.symbols.facts(callable.file)?.python?.definitions.find(item => item.key === callable.declaration.key);
-      if (!definition || expression.args.some(arg => arg.spread) || definition.parameters.some(param => param.variadic)) return undefined;
+      const supplied = definition && bindPythonArguments(definition, expression.args);
+      if (!definition || !supplied) { this.issue(site, 'fastapi-factory-arguments', 'Factory arguments are missing, duplicate, expanded or incompatible with parameter kinds'); return undefined; }
       const parameters = new Map<string, Value>();
-      const positional = expression.args.filter(arg => !arg.name);
-      for (const [index, parameter] of definition.parameters.entries()) {
-        const argument = expression.args.find(arg => arg.name === parameter.name)?.value ?? positional[index]?.value;
+      for (const parameter of definition.parameters) {
+        const argument = supplied.get(parameter.name);
         parameters.set(parameter.name, argument ? this.evaluate(argument, env, site) : parameter.default ? this.evaluate(parameter.default, { ...env, file: callable.file, scope: callable.declaration.parent }, { ...site, file: callable.file, start: callable.declaration.start }) : undefined);
       }
       const instanceKey = JSON.stringify(['factory', env.instance, callable.id]), ordinal = this.ordinals.get(instanceKey) ?? 0;
