@@ -111,6 +111,17 @@ controller/action/area tokens, ActionName/Async naming, literal route defaults a
 handler IDs and source proof. Custom application parts, model/parameter/result metadata, filters, activation and executable
 MVC options remain candidates. P8e1 adds eleven mixed Java/Kotlin/Spring/ASP.NET profiles, original frontend-to-handler/source-leaf projections, cache invalidation checks and eight pinned upstream source scans. Local Linux performance passes the cold-time/RSS comparison against P8d2. Native Windows/macOS and broad production recall remain P8e2/P10 gates. See the [source portfolio](docs/jvm-dotnet-source-qualification.html) and [performance report](docs/jvm-dotnet-compatibility-performance.html). No target .NET/MSBuild toolchain runs.
 
+Rust now resolves original Cargo packages/workspaces, separate library/binary/example/test/bench targets, declared local
+path dependencies and renamed crates. Inline/out-of-line modules, native filename and `#[path]` rules, scoped grouped/aliased
+imports, source globs, re-exports, namespaces and privacy retain original declaration IDs and ranges. Both `rust.features`
+and `rust.defaultFeatures` record a closed feature selection; `rust.cfg` records a complete flag/value set, and
+`rust.targetTriple` selects literal Cargo target tables without inferring host cfg. `rust.package` selects an original
+manifest relative to the application, `rust.target` selects its kind/name, and `rust.includeTests` includes integration
+tests/benches. Unselected conditions stay uncertain. Registry/Git crates retain external identities; binary exports,
+build scripts, source overrides, proc macros, generated items, resolver 1 feature unification and unreviewed effective
+configuration retain gaps. P9a import support has conformance, installed CLI/API and [pinned source checks](docs/rust-source-qualification.html).
+Rust references/direct calls and Axum/Actix/Rocket/Warp routing remain P9b–P9e work. No Cargo/rustc or target code runs.
+
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original
 component source locations. Module and instance scopes stay distinct; Astro server and client scripts retain separate contexts.
 Vue 3 also links local template components and bounded event callbacks. Vue Router 4/5 manual route records resolve

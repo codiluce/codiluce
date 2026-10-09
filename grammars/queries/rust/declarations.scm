@@ -5,3 +5,7 @@
 (type_item name: (type_identifier) @name) @declaration.type
 (function_item name: (identifier) @name) @declaration.function
 (function_signature_item name: (identifier) @name) @declaration.method
+(const_item name: (identifier) @name) @declaration.constant
+(static_item name: (identifier) @name) @declaration.static
+(macro_definition name: (identifier) @name) @declaration.macro
+(enum_variant name: (identifier) @name) @declaration.variant

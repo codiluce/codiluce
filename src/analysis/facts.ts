@@ -155,7 +155,11 @@ export interface CsharpDefinitionFact extends CsharpSite {key:string;name:string
 export interface CsharpBindingFact extends CsharpSite {name:string;scope:string;kind:'parameter'|'local'|'loop'|'catch'|'pattern';type?:string;value?:CsharpExpression;modifiers:string[]}
 export interface CsharpSemanticFacts {attributes?: (CsharpAttribute&{scope:string})[];scopes:CsharpScope[];definitions:CsharpDefinitionFact[];bindings:CsharpBindingFact[];writes:(CsharpSite&{scope:string;target:CsharpExpression;operator:string;value?:CsharpExpression})[];references:(CsharpSite&{scope:string;expression:CsharpExpression;kind:'type'|'attribute'|'value'})[];calls:(CsharpSite&{scope:string;expression:CsharpExpression})[];returns:(CsharpSite&{scope:string;value:CsharpExpression})[];complete:boolean;gaps:string[]}
 export interface CsharpSyntaxFacts { imports: CsharpImportFact[]; declarations: CsharpDeclarationFact[]; namespaces: {name: string; start: number; range: SourceRange}[]; complete: boolean; gaps: string[]; semantic?:CsharpSemanticFacts }
-export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts; csharp?: CsharpSyntaxFacts }
+export interface RustScopeFact {key:string;parent?:string;module:string;kind:'file'|'module'|'block'|'enum';start:number;end:number;range:SourceRange;attributes:string[];gaps:string[]}
+export interface RustImportFact {scope:string;specifier:string;segments:string[];absolute:boolean;alias?:string;glob:boolean;selfOnly:boolean;visibility:string;attributes:string[];kind:'use'|'extern';start:number;end:number;range:SourceRange;gaps:string[]}
+export interface RustItemFact {key:string;scope:string;name:string;kind:string;namespaces:('type'|'value'|'macro')[];visibility:string;attributes:string[];memberScope?:string;body?:string;start:number;end:number;range:SourceRange;gaps:string[]}
+export interface RustSyntaxFacts {scopes:RustScopeFact[];items:RustItemFact[];imports:RustImportFact[];complete:boolean;gaps:string[]}
+export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts; csharp?: CsharpSyntaxFacts; rust?:RustSyntaxFacts }
 export interface ImportBinding { imported: string; local: string; typeOnly?: boolean }
 export type ImportOutcome =
   | { status: 'resolved'; targets: string[]; proof: Evidence[] }

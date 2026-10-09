@@ -38,6 +38,9 @@ export interface JvmConfig { sourceSet?: 'main' | 'test'; profiles?: string[]; d
 /** Recorded MSBuild compilation inputs. Values never come from the host SDK/environment. */
 export interface AspNetConfig {version?:string;pathBase?:string}
 export interface DotnetConfig {aspnet?:AspNetConfig; project?: string; targetFramework?: string; configuration?: string; platform?: string; properties?: Record<string,string> }
+/** Recorded rustc cfg set; absent configuration is unknown, never a host lookup. */
+export interface RustCfgInput { flags?: string[]; values?: Record<string,string[]> }
+export interface RustConfig { package?: string; target?: {kind:'lib'|'bin'|'test'|'example'|'bench';name:string}; targetTriple?:string; features?:string[]; defaultFeatures?:boolean; cfg?:RustCfgInput; includeTests?:boolean }
 
 export interface ApplicationConfig {
   name: string; path: string;
@@ -62,6 +65,7 @@ export interface ApplicationConfig {
   ruby?: RubyRuntimeConfig;
   jvm?: JvmConfig;
   dotnet?: DotnetConfig;
+  rust?: RustConfig;
 }
 /** An application as configuration may give it: frameworks and ecosystems are completed from its manifests. */
 export type ApplicationInput = Omit<ApplicationConfig, 'frameworks' | 'ecosystems'> & {
@@ -250,6 +254,17 @@ export async function resolveConfig(root: string, raw: RawConfig): Promise<Atlas
   const names = new Set<string>();
   const paths = new Set<string>();
   for (const app of config.applications) {
+    if (app.rust !== undefined) {
+      const value=app.rust, list=(items:unknown)=>Array.isArray(items)&&items.length<=256&&new Set(items).size===items.length&&items.every(item=>typeof item==='string'&&item.length>0&&item.length<=256&&!/[\0\r\n]/.test(item));
+      if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(key=>!['package','target','targetTriple','features','defaultFeatures','cfg','includeTests'].includes(key))
+        ||value.targetTriple!==undefined&&(typeof value.targetTriple!=='string'||!/^[A-Za-z0-9_][A-Za-z0-9_.-]{0,255}$/.test(value.targetTriple))
+        ||value.package!==undefined&&(typeof value.package!=='string'||!value.package.endsWith('Cargo.toml')||value.package.length>2048||/[\\\0*?{}\[\]]/.test(value.package)||path.isAbsolute(value.package)||/^[A-Za-z]:/.test(value.package))
+        ||value.target!==undefined&&(!value.target||typeof value.target!=='object'||Array.isArray(value.target)||Object.keys(value.target).some(key=>!['kind','name'].includes(key))||!['lib','bin','test','example','bench'].includes(value.target.kind)||typeof value.target.name!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(value.target.name))
+        ||value.features!==undefined&&(!list(value.features)||value.features.some(item=>!/^[\p{L}\p{N}_][\p{L}\p{N}_.+-]*$/u.test(item)))
+        ||[value.defaultFeatures,value.includeTests].some(item=>item!==undefined&&typeof item!=='boolean'))throw new Error('Invalid Rust compilation configuration');
+      if(value.package)repoPath(root,path.posix.join(app.path,value.package));
+      const cfg=value.cfg;if(cfg!==undefined&&(!cfg||typeof cfg!=='object'||Array.isArray(cfg)||Object.keys(cfg).some(key=>!['flags','values'].includes(key))||cfg.flags!==undefined&&(!list(cfg.flags)||cfg.flags.some(item=>!/^[A-Za-z_][A-Za-z0-9_]*$/.test(item)||['test','feature'].includes(item)))||cfg.values!==undefined&&(!cfg.values||typeof cfg.values!=='object'||Array.isArray(cfg.values)||Object.keys(cfg.values).length>128||Object.entries(cfg.values).some(([key,items])=>!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)||['test','feature'].includes(key)||!list(items)))))throw new Error('Invalid Rust cfg configuration');
+    }
     if (app.dotnet !== undefined) {
       const value = app.dotnet, scalar = (item: unknown) => typeof item === 'string' && /^[A-Za-z0-9_. +;-]{1,512}$/.test(item);
       if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key=>!['project','targetFramework','configuration','platform','properties','aspnet'].includes(key))

@@ -30,7 +30,7 @@ const EXTENSIONS: Record<string, string> = {
 const NAMES: Record<string, string> = {
   Gemfile: 'ruby', 'Gemfile.lock': 'ruby-lock', Rakefile: 'ruby', Podfile: 'ruby', Fastfile: 'ruby', Appfile: 'ruby', Brewfile: 'ruby', Guardfile: 'ruby', Vagrantfile: 'ruby',
   Makefile: 'makefile', GNUmakefile: 'makefile', makefile: 'makefile', 'CMakeLists.txt': 'cmake', Jenkinsfile: 'groovy', Pipfile: 'toml', 'go.mod': 'go-module', 'go.work': 'go-workspace',
-  'setup.cfg': 'ini',
+  'setup.cfg': 'ini', 'Cargo.lock': 'toml',
 };
 /** Languages whose files are code (the others: styles, data, configuration, documents). */
 export const CODE_LANGUAGES = new Set([
@@ -43,6 +43,7 @@ export const FLOW_LANGUAGES = new Set(['typescript', 'javascript', 'php']);
 export function languageOf(relative: string): string | undefined {
   const name = relative.slice(relative.lastIndexOf('/') + 1);
   if (NAMES[name]) return NAMES[name];
+  if (/(?:^|\/)\.cargo\/config$/.test(relative)) return 'toml';
   if (/^requirements[\w.-]*\.txt$/.test(name)) return 'pip-requirements';
   if (/^Dockerfile(\..+)?$/.test(name) || name.endsWith('.dockerfile')) return 'dockerfile';
   const dot = name.lastIndexOf('.');

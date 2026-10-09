@@ -10,7 +10,7 @@ Codiluce supports repositories containing Next.js and Laravel applications. A ty
 - `backend/`: Laravel / PHP, Composer PSR-4 `App\\` → `app/`. Routes under `routes/`; controllers in `app/Http/Controllers`, Eloquent models in `app/Models`, services in `app/Services`, migrations in `database/migrations`.
 - Laravel applications may also contain Inertia/React/Vite assets under `resources/`. Those files remain part of the Laravel application.
 - `backend/bootstrap/app.php` can register API routes with a custom prefix, including **`apiPrefix: ''`**. The analyzer reads the configured prefix rather than assuming `/api`.
-- Other ecosystems (Python, Ruby, Go, Rust, JVM, .NET, Swift/Xcode, C/C++ with CMake, Shopify themes) are detected from their manifests (`src/core/manifests.ts`): the application, its ecosystems and the frameworks its dependencies name. Their files are named by language, measured and highlighted, and TypeScript/JavaScript is analyzed in any application. Next.js/Laravel retain their existing framework analysis; Express/Nest add static registration packs. Python, Go, Ruby, Rust, Java, C# and Kotlin get Tree-sitter declaration extraction, including outside detected applications. Python adds static package/import resolution, lexical references/calls and initial FastAPI, Flask and Django registration packs; Go adds indexed module/workspace/package imports, recorded build contexts, bounded lexical/package references and calls, and initial net/http/Chi/Gin/Echo/Fiber/Gorilla Mux registration packs. Ruby adds original scoped syntax facts and literal source-load dependencies with recorded ordered load roots/cwd and runtime boundary diagnostics; Ruby adds scoped constants/direct methods and Rails/Zeitwerk autoload contracts; Rails adds initial source routing, resource expansion, original actions and callback references; Java/Kotlin add selected Maven/Gradle/configured roots, original imports, bounded scoped references/direct calls and initial Spring MVC and WebFlux registration/handler/path contracts; C# adds indexed MSBuild source compilations, scoped references/direct calls and logical partial types; ASP.NET adds initial serving-reachable minimal API registration/handler/path contracts; ASP.NET MVC and Rust resolution remain separate work.
+- Other ecosystems (Python, Ruby, Go, Rust, JVM, .NET, Swift/Xcode, C/C++ with CMake, Shopify themes) are detected from their manifests (`src/core/manifests.ts`): the application, its ecosystems and the frameworks its dependencies name. Their files are named by language, measured and highlighted, and TypeScript/JavaScript is analyzed in any application. Next.js/Laravel retain their existing framework analysis; Express/Nest add static registration packs. Python, Go, Ruby, Rust, Java, C# and Kotlin get Tree-sitter declaration extraction, including outside detected applications. Python adds static package/import resolution, lexical references/calls and initial FastAPI, Flask and Django registration packs; Go adds indexed module/workspace/package imports, recorded build contexts, bounded lexical/package references and calls, and initial net/http/Chi/Gin/Echo/Fiber/Gorilla Mux registration packs. Ruby adds original scoped syntax facts and literal source-load dependencies with recorded ordered load roots/cwd and runtime boundary diagnostics; Ruby adds scoped constants/direct methods and Rails/Zeitwerk autoload contracts; Rails adds initial source routing, resource expansion, original actions and callback references; Java/Kotlin add selected Maven/Gradle/configured roots, original imports, bounded scoped references/direct calls and initial Spring MVC and WebFlux registration/handler/path contracts; C# adds indexed MSBuild source compilations, scoped references/direct calls and logical partial types; ASP.NET adds initial serving-reachable minimal API registration/handler/path contracts; ASP.NET MVC adds original controller/action and conventional routing contracts; Rust adds original Cargo/workspace/module/scoped import inputs, while Rust references/calls and routers remain separate work.
 - Analysis does not read credentials, connect to the application database, or invoke target application scripts. The index describes the working tree, with HEAD and dirty state recorded separately.
 - The test fixture proves a login chain from page to table: page `/account` → `AccountPanel` → `handleSave` → `AccountService.signIn()` (base URL built in code) → `POST /auth/login` → `AuthController::login` → `AuthService::authenticate` → reads table `users` (Eloquent model `User`, `$table = 'users'`, declared by a migration).
 
@@ -351,3 +351,51 @@ P8e1 qualification uses the shared `scripts/fixtures/jvm-dotnet-workload.ts` sou
 The benchmark runs archived P8d2 and current indexing in alternating fresh processes with identical installed dependencies. External cache directories hold the source inventory fixed. It checks expected endpoint/handler/request counts and exact before/after and cold/warm graph fingerprints. An independent driver samples recursive worker/parser RSS every 25 ms, retaining parent high-water, child/tree peaks and actual cache counts. The three-size cold-time/RSS guardrail passes locally; large warm replay retains about 1.32 GiB sampled tree RSS after cold/population, outside the cold guardrail. `docs/jvm-dotnet-compatibility-performance.html` contains all measurements.
 
 `scripts/qualify-jvm-dotnet-sources.mjs` reproduces eight original pinned Spring/Microsoft source snapshots and renders `docs/jvm-dotnet-source-qualification.html`. Spring dual Maven/Gradle or opaque build/plugin models yield no certified endpoints; .NET filters/custom services/binary metadata retain their gaps. Recorded Spring routing-family/scans are qualification assumptions, not restored BOM/classpath facts. No target JVM/.NET/toolchain/configuration/dependency/generator runs and no upstream input changes. P8e1 is the completed initial mixed-stack/source/version/local Linux qualification slice; P8e2 native OS and broader accuracy remain P10 release gates.
+
+
+## 24. Rust source inputs and scoped imports (P9a)
+
+`src/analysis/tree-sitter/rust-syntax.ts` stores original module/enum/lexical-block scopes, visibility, attributes,
+grouped/aliased/glob/self imports, extern crates and source item namespaces. Expanded constant/static/macro/variant
+queries use the existing original declaration identities. UTF-16 columns, CRLF/emoji ranges, partial parse boundaries
+and parser provenance remain shared with the structural adapter. Associated items are outside import namespaces.
+
+`src/analysis/resolution/rust-projects.ts` reads indexed Cargo TOML and recorded application inputs without Cargo or rustc.
+It discovers original library/binary/example/test/bench targets, native automatic discovery and required features;
+resolves workspace package/dependency inheritance, implicit path members, renamed crates and literal local package
+version requirements; and separates every root invocation/target compilation. Normal/dev/build dependencies remain
+separate. Optional/default/strong/weak dependency features unify within an invocation, preserving uncertainty rather
+than borrowing a sibling application's selected features. Root `features` and `defaultFeatures` must both be recorded
+for a closed feature model. Absent `cfg` remains unknown; a provided cfg object is a complete set (missing flags/values
+are false). `test` is supplied by the selected integration-test/bench context and `feature` by the feature model, so
+configuration cannot override them. Unit-test library harnesses and resolver 1 build/dev/platform feature unification
+remain unqualified. Literal target tables use an independently recorded `targetTriple`; it never supplies derived cfg.
+
+`src/analysis/resolution/rust.ts` follows only original `mod` trees and `#[path]` inputs. Both filename candidates,
+pruned/symlinked alternatives, file cycles and denied original roots refuse winners. Edition 2015 root imports and
+2018+ lexical/extern paths retain separate rules. Type/value/macro namespaces, source re-exports and globs preserve
+original targets. Private, self/super/crate/ancestor restrictions and crate boundaries govern aliases as well as direct
+items. Root extern declarations populate the 2018+ extern prelude; no_std and no_implicit_prelude remain explicit.
+Binary exports and general macro expansion are never synthesized. Unknown attributes/scoped macro invocations,
+source overrides, build scripts, unsupported configuration and compiler/model gaps prevent certified source winners.
+Only literal Cargo aliases and registry incompatible-rust-versions selection are reviewed as source-neutral config;
+their original inputs/proof remain visible and binary dependency selection remains unavailable. Budgets cap package,
+target, compilation, scope, import, feature and recursive traversal work.
+
+`src/analysis/languages/rust.ts` emits original imports with compilation/crate/scope/module IDs, declaration sets,
+original use/module ranges, path/manifest/source proof and explicit failed/excluded/unresolved/unsupported/ambiguous or
+external outcomes. Repository metadata exposes rustManifestOutcomes, rustProjects and rustCompilations; file metadata
+exposes rustCompilationContexts and importOutcomes. Orphan/denied sources never infer a crate from nearby filenames.
+Warm replay reconstructs the resolver, while original Rust/Cargo/config hashes, syntax availability, recorded inputs
+and denied inventory constrain cached graph patches. History records the Rust analyzer version.
+
+The 34 conformance cases check these rules, privacy/namespace failures, target/source isolation and source/feature/
+config/manifest/range/ignore edits. The production-only installed tarball checks original shared-crate imports, alias
+proof, CRLF/emoji declaration ranges and separate compilation identity through CLI and HTTP/source APIs. The two
+qualification scripts reproduce four immutable mini-redis/env_logger profiles, with tracked path/mode/blob digests,
+checked original ranges, actual Rust cache hits and exact cold/warm/revision graphs. `docs/rust-source-qualification.html`
+retains inputs and gaps: mini-redis has no certified source winners under its resolver/macro boundary; env_logger's
+recorded no-default/default profiles have 404/440 compilation-scoped original source import edges. These counts do
+not qualify runtime behavior, routers, production recall, performance or native operating systems. P9a is the initial
+completed import foundation; P9b scoped references/direct callbacks, P9c Axum/Actix, P9d Rocket/Warp and P9e mixed-stack/
+source/version/performance qualification remain open, with P10 release gates.

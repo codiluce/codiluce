@@ -7,6 +7,7 @@ import { extractGoSemantic } from './go-syntax.js';
 import { extractRubySemantic } from './ruby-syntax.js';
 import { extractJvm } from './jvm-syntax.js';
 import { extractCsharp } from './csharp-syntax.js';
+import { extractRust } from './rust-syntax.js';
 
 const MAX_DECLARATIONS = 20_000, MAX_ISSUES = 100, MAX_NODES = 200_000;
 const compact = (text: string) => text.replace(/\s+/g, ' ').trim();
@@ -168,10 +169,12 @@ export function extractStructure(root: Node, query: Query, language: string, con
   const ruby = language === 'ruby' ? extractRubySemantic(root, declarations, source) : undefined;
   const jvm = ['java','kotlin'].includes(language) ? extractJvm(root, language, declarations, source) : undefined;
   const csharp = language === 'csharp' ? extractCsharp(root, declarations, source) : undefined;
+  const rust = language === 'rust' ? extractRust(root,declarations,source) : undefined;
   if (go && goSemantic) go.facts.semantic = goSemantic.facts;
   truncated ||= (python?.truncated ?? false) || (go?.truncated ?? false) || (goSemantic?.truncated ?? false) || (ruby?.truncated ?? false);
   if (jvm && truncated) jvm.complete = false;
   if (csharp && truncated) csharp.complete = false;
+  if (rust && truncated) rust.complete = false;
   if (truncated) issues.push({ code: 'syntax-budget-exceeded', reason: 'Structural extraction reached its node, declaration, diagnostic or query limit' });
-  return { declarations, issues, truncated, ...(python ? { python: python.facts } : {}), ...(go ? { go: go.facts } : {}), ...(ruby ? { ruby: ruby.facts } : {}), ...(jvm ? {jvm} : {}), ...(csharp ? {csharp} : {}) };
+  return { declarations, issues, truncated, ...(python ? { python: python.facts } : {}), ...(go ? { go: go.facts } : {}), ...(ruby ? { ruby: ruby.facts } : {}), ...(jvm ? {jvm} : {}), ...(csharp ? {csharp} : {}), ...(rust?{rust}:{}) };
 }

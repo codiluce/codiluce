@@ -17,6 +17,7 @@ import type { JvmResolver } from '../analysis/resolution/jvm.js';
 import type { JvmSymbols } from '../analysis/languages/jvm-symbols.js';
 import type {CsharpSymbols} from '../analysis/languages/csharp-symbols.js';
 import type { CsharpResolver } from '../analysis/resolution/csharp.js';
+import type { RustResolver } from '../analysis/resolution/rust.js';
 export interface ScannedFile { path: string; absolutePath: string; id: string; language?: string; analyzable: boolean; application?: ApplicationConfig; embedded?: EmbeddedRegion }
 export interface HttpObservation {
   callerId: string; fileId: string; method?: string; url?: string; expression: string; evidence: Evidence;
@@ -50,6 +51,7 @@ export interface AnalysisContext {
   jvmSymbols?: JvmSymbols;
   csharp?: CsharpResolver;
   csharpSymbols?:CsharpSymbols;
+  rust?:RustResolver;
   /** Directory entries observed by the scanner, including pruned roots; their
    * contents are never read through the indexed source boundary. */
   directoryInventory?: Set<string>;
