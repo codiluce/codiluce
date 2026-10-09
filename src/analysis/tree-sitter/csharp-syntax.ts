@@ -1,5 +1,6 @@
 import type { Node } from 'web-tree-sitter';
 import type { CsharpSyntaxFacts, DeclarationFact } from '../facts.js';
+import { extractCsharpSemantic } from './csharp-semantic.js';
 import type { SourceText } from '../source-map.js';
 const types = new Set(['class', 'interface', 'struct', 'enum', 'record', 'type']);
 const name = (text: string) => text.replace(/\s+/g, '').replace(/@([\p{L}_][\p{L}\p{N}_]*)/gu, '$1');
@@ -79,8 +80,10 @@ export function extractCsharp(root: Node, declarations: DeclarationFact[], sourc
         const parent = declaration.parent ? byKey.get(declaration.parent) : undefined, parentType = parent && types.has(parent.kind), type = types.has(declaration.kind), modifiers = declaration.modifiers ?? [];
         const parameters = node.namedChildren.find(child => child.type === 'type_parameter_list')?.namedChildren.filter(child => child.type === 'type_parameter').length ?? 0;
         const namespace = namespaceAt(node), visibility = modifiers.includes('protected') ? modifiers.includes('private') ? 'private protected' : modifiers.includes('internal') ? 'protected internal' : 'protected' : declaration.visibility ?? (parentType ? ['interface', 'enum'].includes(parent.kind) ? 'public' : 'private' : 'internal');
-        facts.declarations.push({ key: declaration.key, name: name(declaration.name), qualifiedName: name(declaration.qualifiedName), namespace, ...(parentType ? { parent: parent.key } : {}), type, arity: parameters, partial: modifiers.includes('partial'), static: modifiers.includes('static') || modifiers.includes('const'), visibility, fileLocal: modifiers.includes('file'), bases: node.namedChildren.find(child => child.type === 'base_list')?.namedChildren.map(child => name(child.text)) ?? [] });
+        facts.declarations.push({ key: declaration.key, name: name(declaration.name), qualifiedName: name(declaration.qualifiedName), namespace, ...(parentType ? { parent: parent.key } : {}), type, arity: parameters, partial: modifiers.includes('partial'), static: modifiers.includes('static') || modifiers.includes('const'), visibility, fileLocal: modifiers.includes('file'), flavor: declaration.kind === 'record' ? (node.children.some(child => child.type === 'struct') ? 'record-struct' : 'record-class') : declaration.kind, typeParameters: node.namedChildren.find(child => child.type === 'type_parameter_list')?.namedChildren.map(child => name(child.childForFieldName('name')?.text ?? child.text)) ?? [], constraints: node.namedChildren.filter(child => child.type === 'type_parameter_constraints_clause').map(child => name(child.text)), bases: node.namedChildren.find(child => child.type === 'base_list')?.namedChildren.map(child => name(child.text)) ?? [] });
     }
     facts.gaps = [...new Set(facts.gaps)].sort();
+    facts.semantic = extractCsharpSemantic(root, declarations, source);
+    facts.complete &&= facts.semantic.complete;
     return facts;
 }

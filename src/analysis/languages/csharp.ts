@@ -4,13 +4,15 @@ import { fileAnalysis } from '../facts.js';
 import { CsharpResolver, CSHARP_RESOLVER_VERSION } from '../resolution/csharp.js';
 import { DOTNET_PROJECT_VERSION } from '../resolution/dotnet-projects.js';
 import { STRUCTURE_VERSION } from '../tree-sitter/analyzer.js';
+import { CsharpSymbols, CSHARP_SYMBOL_VERSION } from './csharp-symbols.js';
+import { CSHARP_TYPE_VERSION } from './csharp-types.js';
 import { fileKey } from '../../pipeline/cache.js';
-export const CSHARP_IMPORT_VERSION = '1';
+export const CSHARP_IMPORT_VERSION = '2';
 export const csharpAnalyzer: Analyzer = { name: 'csharp-imports', version: CSHARP_IMPORT_VERSION, async analyze(context: AnalysisContext) {
         const files = [...context.files.values()].filter(file => file.language === 'csharp' && file.analyzable).sort((a, b) => a.path.localeCompare(b.path, 'en'));
         if (!files.length)
             return;
-        const resolver = context.csharp = new CsharpResolver(context), run = async () => {
+        const resolver = context.csharp = new CsharpResolver(context), symbols = context.csharpSymbols = new CsharpSymbols(context, resolver), run = async () => {
             context.graph.entities.get(context.repositoryId)!.metadata.dotnetProjects = resolver.projects.describe();
             for (const file of files) {
                 const entity = context.graph.entities.get(file.id)!, analysis = fileAnalysis(entity.metadata.analysis), syntax = resolver.facts(file.path);
@@ -42,9 +44,10 @@ export const csharpAnalyzer: Analyzer = { name: 'csharp-imports', version: CSHAR
                 for (const reason of new Set([...syntax.gaps, ...selection.project?.gaps ?? [], ...selection.project?.blockers ?? []]))
                     context.graph.diagnose({ analyzer: 'csharp-imports', severity: 'warning', code: 'csharp-project-gap', file: file.path, entityId: file.id, reason });
             }
+            symbols.analyze(files);
         };
         if (context.cache)
-            await context.cache.unit(context, this.name, 'repository', { version: CSHARP_IMPORT_VERSION, resolver: CSHARP_RESOLVER_VERSION, projects: DOTNET_PROJECT_VERSION, syntax: STRUCTURE_VERSION, config: context.config, model: resolver.projects.describe(), availability: files.map(file => [file.path, resolver.facts(file.path)?.complete, context.graph.entities.get(file.id)?.metadata.analysis]), files: [...context.files.values()].map(file => fileKey(context, file.path)), paths: [...context.files.values()].map(file => [file.path, file.language, file.analyzable]), observed: [...context.fileInventory ?? []].sort(), directories: [...context.directoryInventory ?? []].sort() }, run);
+            await context.cache.unit(context, this.name, 'repository', { version: CSHARP_IMPORT_VERSION, symbols: CSHARP_SYMBOL_VERSION, types: CSHARP_TYPE_VERSION, resolver: CSHARP_RESOLVER_VERSION, projects: DOTNET_PROJECT_VERSION, syntax: STRUCTURE_VERSION, config: context.config, model: resolver.projects.describe(), availability: files.map(file => [file.path, resolver.facts(file.path)?.complete, context.graph.entities.get(file.id)?.metadata.analysis]), files: [...context.files.values()].map(file => fileKey(context, file.path)), paths: [...context.files.values()].map(file => [file.path, file.language, file.analyzable]), observed: [...context.fileInventory ?? []].sort(), directories: [...context.directoryInventory ?? []].sort() }, run);
         else
             await run();
     } };

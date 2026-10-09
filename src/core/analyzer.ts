@@ -15,6 +15,7 @@ import type { RubySymbols } from '../analysis/languages/ruby-symbols.js';
 import type { RubyAutoloadCatalog } from '../analysis/resolution/ruby-autoload.js';
 import type { JvmResolver } from '../analysis/resolution/jvm.js';
 import type { JvmSymbols } from '../analysis/languages/jvm-symbols.js';
+import type {CsharpSymbols} from '../analysis/languages/csharp-symbols.js';
 import type { CsharpResolver } from '../analysis/resolution/csharp.js';
 export interface ScannedFile { path: string; absolutePath: string; id: string; language?: string; analyzable: boolean; application?: ApplicationConfig; embedded?: EmbeddedRegion }
 export interface HttpObservation {
@@ -48,6 +49,7 @@ export interface AnalysisContext {
   jvm?: JvmResolver;
   jvmSymbols?: JvmSymbols;
   csharp?: CsharpResolver;
+  csharpSymbols?:CsharpSymbols;
   /** Directory entries observed by the scanner, including pruned roots; their
    * contents are never read through the indexed source boundary. */
   directoryInventory?: Set<string>;

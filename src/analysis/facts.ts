@@ -129,8 +129,29 @@ export interface JvmReturnFact extends JvmSite { scope: string; value: JvmExpres
 export interface JvmSemanticFacts { scopes: JvmScopeFact[]; definitions: JvmDefinitionFact[]; bindings: JvmBindingFact[]; writes: JvmWriteFact[]; references: JvmReferenceFact[]; calls: JvmCallFact[]; returns: JvmReturnFact[]; complete: boolean; gaps: string[] }
 export interface JvmSyntaxFacts { package: string; imports: JvmImportFact[]; declarations: JvmDeclarationFact[]; complete: boolean; module?: string; gaps: string[]; semantic?: JvmSemanticFacts }
 export interface CsharpImportFact { specifier: string; kind: 'namespace'|'static'|'alias'; alias?: string; global: boolean; namespace: string; scopeStart: number; scopeEnd: number; start: number; end: number; range: SourceRange }
-export interface CsharpDeclarationFact { key: string; name: string; qualifiedName: string; namespace: string; parent?: string; type: boolean; arity: number; partial: boolean; static: boolean; visibility: string; fileLocal: boolean; bases: string[] }
-export interface CsharpSyntaxFacts { imports: CsharpImportFact[]; declarations: CsharpDeclarationFact[]; namespaces: {name: string; start: number; range: SourceRange}[]; complete: boolean; gaps: string[] }
+export interface CsharpDeclarationFact { key: string; name: string; qualifiedName: string; namespace: string; parent?: string; type: boolean; arity: number; partial: boolean; static: boolean; visibility: string; fileLocal: boolean; bases: string[]; flavor?: string; typeParameters?:string[]; constraints?:string[] }
+export interface CsharpSite { start:number; end:number; range:SourceRange }
+export type CsharpExpression = CsharpSite & (
+  | {kind:'name';name:string}
+  | {kind:'literal';value:string|number|boolean|null;type:string}
+  | {kind:'member';object:CsharpExpression;name:string;conditional?:boolean}
+  | {kind:'call';callee:CsharpExpression;args:CsharpArgument[]}
+  | {kind:'new';type:string;args:CsharpArgument[];initializer?:boolean}
+  | {kind:'lambda';key:string}
+  | {kind:'binary';operator:string;left:CsharpExpression;right:CsharpExpression}
+  | {kind:'unary';operator:string;value:CsharpExpression}
+  | {kind:'cast';type:string;value:CsharpExpression}
+  | {kind:'typeof';type:string}
+  | {kind:'unknown';text:string}
+);
+export interface CsharpArgument {name?:string;modifier?:string;value:CsharpExpression}
+export interface CsharpParameter {name:string;type?:string;modifiers:string[];default?:CsharpExpression}
+export interface CsharpAttribute extends CsharpSite {type:string;args:CsharpArgument[];target?:string}
+export interface CsharpScope extends CsharpSite {key:string;parent?:string;owner?:string;namespace:string;kind:'file'|'namespace'|'type'|'function'|'lambda'|'block'|'control'|'initializer'|'opaque';gaps:string[];deferred?:boolean}
+export interface CsharpDefinitionFact extends CsharpSite {key:string;name:string;kind:string;scope:string;parent?:string;bodyScope?:string;typeScope?:string;parameters:CsharpParameter[];returnType?:string;modifiers:string[];typeParameters:string[];attributes:CsharpAttribute[];value?:CsharpExpression;gaps:string[];hasBody:boolean}
+export interface CsharpBindingFact extends CsharpSite {name:string;scope:string;kind:'parameter'|'local'|'loop'|'catch'|'pattern';type?:string;value?:CsharpExpression;modifiers:string[]}
+export interface CsharpSemanticFacts {scopes:CsharpScope[];definitions:CsharpDefinitionFact[];bindings:CsharpBindingFact[];writes:(CsharpSite&{scope:string;target:CsharpExpression;operator:string;value?:CsharpExpression})[];references:(CsharpSite&{scope:string;expression:CsharpExpression;kind:'type'|'attribute'|'value'})[];calls:(CsharpSite&{scope:string;expression:CsharpExpression})[];returns:(CsharpSite&{scope:string;value:CsharpExpression})[];complete:boolean;gaps:string[]}
+export interface CsharpSyntaxFacts { imports: CsharpImportFact[]; declarations: CsharpDeclarationFact[]; namespaces: {name: string; start: number; range: SourceRange}[]; complete: boolean; gaps: string[]; semantic?:CsharpSemanticFacts }
 export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts; csharp?: CsharpSyntaxFacts }
 export interface ImportBinding { imported: string; local: string; typeOnly?: boolean }
 export type ImportOutcome =

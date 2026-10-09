@@ -9,3 +9,4 @@
 (constructor_declaration name: (identifier) @name) @declaration.constructor
 (property_declaration name: (identifier) @name) @declaration.property
 (field_declaration (variable_declaration (variable_declarator name: (identifier) @name) @declaration.property))
+(local_function_statement name: (identifier) @name) @declaration.function

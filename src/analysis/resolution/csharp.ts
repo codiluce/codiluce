@@ -1,8 +1,9 @@
 import type { AnalysisContext, ScannedFile } from '../../core/analyzer.js';
 import { evidence, type Evidence } from '../../core/graph.js';
 import type { CsharpDeclarationFact, CsharpImportFact, CsharpSyntaxFacts, DeclarationFact } from '../facts.js';
+import { CsharpTypes } from '../languages/csharp-types.js';
 import { DotnetProjects, type DotnetProject } from './dotnet-projects.js';
-export const CSHARP_RESOLVER_VERSION = '1';
+export const CSHARP_RESOLVER_VERSION = '2';
 export interface CsharpSymbol {
     id: string;
     file: ScannedFile;
@@ -46,6 +47,7 @@ export type CsharpEnvironment = {
 export class CsharpResolver {
     readonly projects: DotnetProjects;
     readonly symbols: CsharpSymbol[] = [];
+    readonly types: CsharpTypes;
     private readonly environments = new Map<string, CsharpEnvironment>();
     constructor(readonly context: AnalysisContext) {
         this.projects = new DotnetProjects(context);
@@ -64,12 +66,17 @@ export class CsharpResolver {
                     this.symbols.push({ id, file, project, syntax: fact, declaration, proof: [...project.proof, { ...evidence('syntax', 'csharp-resolver', path, declaration.range.startLine, 'Original C# declaration fragment'), analyzerVersion: CSHARP_RESOLVER_VERSION, endLine: declaration.range.endLine }] });
                 }
             }
+        this.types = new CsharpTypes(context, this.symbols);
     }
     facts(file: string): CsharpSyntaxFacts | undefined { return this.context.syntax?.get(file)?.facts.csharp; }
-    environment(file: string): CsharpEnvironment { let environment = this.environments.get(file); if (!environment) {
-        environment = this.prepare(file);
-        this.environments.set(file, environment);
-    } return environment; }
+    environment(file: string): CsharpEnvironment {
+        let environment = this.environments.get(file);
+        if (!environment) {
+            environment = this.prepare(file);
+            this.environments.set(file, environment);
+        }
+        return environment;
+    }
     private prepare(file: string): CsharpEnvironment {
         const origin = this.context.files.get(file), syntax = this.facts(file), selection = this.projects.selection(file);
         if (!origin || !syntax?.complete)
@@ -92,28 +99,40 @@ export class CsharpResolver {
     }
     accessible(symbol: CsharpSymbol, environment: Extract<CsharpEnvironment, {
         status: 'resolved';
-    }>): boolean { let current: CsharpSymbol | undefined = symbol; const seen = new Set<string>(); while (current) {
-        if (seen.has(current.id))
-            return false;
-        seen.add(current.id);
-        const visibility = current.syntax.visibility;
-        if (current.syntax.fileLocal && current.file.path !== environment.origin.path)
-            return false;
-        if (visibility !== 'public' && !((visibility === 'internal' || visibility === 'protected internal') && current.project.id === environment.project.id))
-            return false;
-        if (!current.syntax.parent)
-            return true;
-        const parent: string = current.syntax.parent, currentFile: string = current.file.path, currentProject: string = current.project.id;
-        current = this.symbols.find(candidate => candidate.file.path === currentFile && candidate.project.id === currentProject && candidate.syntax.key === parent);
-        if (!current)
-            return false;
-    } return false; }
+    }>): boolean {
+        let current: CsharpSymbol | undefined = symbol;
+        const seen = new Set<string>();
+        while (current) {
+            if (seen.has(current.id))
+                return false;
+            seen.add(current.id);
+            const type = this.types.type(current);
+            if (current.syntax.type && type?.gaps.length)
+                return false;
+            const visibility = current.syntax.type ? type?.visibility ?? current.syntax.visibility : current.syntax.visibility;
+            if (current.syntax.fileLocal && current.file.path !== environment.origin.path)
+                return false;
+            if (visibility !== 'public' && !((visibility === 'internal' || visibility === 'protected internal') && current.project.id === environment.project.id))
+                return false;
+            if (!current.syntax.parent)
+                return true;
+            const parent: string = current.syntax.parent, currentFile: string = current.file.path, currentProject: string = current.project.id;
+            current = this.symbols.find(candidate => candidate.file.path === currentFile && candidate.project.id === currentProject && candidate.syntax.key === parent);
+            if (!current)
+                return false;
+        }
+        return false;
+    }
     globalImports(file: string): {
         file: string;
         fact: CsharpImportFact;
         proof: Evidence[];
-    }[] { const selection = this.projects.selection(file); if (!selection.project)
-        return []; return [...selection.project.using, ...selection.project.sources.flatMap(source => (this.facts(source)?.imports ?? []).filter(fact => fact.global).map(fact => ({ file: source, fact, proof: [{ ...evidence('syntax', 'csharp-resolver', source, fact.range.startLine, 'Original global using in the same compilation'), analyzerVersion: CSHARP_RESOLVER_VERSION, endLine: fact.range.endLine }] })))]; }
+    }[] {
+        const selection = this.projects.selection(file);
+        if (!selection.project)
+            return [];
+        return [...selection.project.using, ...selection.project.sources.flatMap(source => (this.facts(source)?.imports ?? []).filter(fact => fact.global).map(fact => ({ file: source, fact, proof: [{ ...evidence('syntax', 'csharp-resolver', source, fact.range.startLine, 'Original global using in the same compilation'), analyzerVersion: CSHARP_RESOLVER_VERSION, endLine: fact.range.endLine }] })))];
+    }
     resolve(file: string, fact: CsharpImportFact): CsharpResolution {
         const environment = this.environment(file);
         if (environment.status !== 'resolved')
@@ -144,8 +163,8 @@ export class CsharpResolver {
                 }
             }
         // Source namespaces are case-sensitive; a using cannot chain through a
-        // sibling using alias. Alias/member reference binding is the next phase.
-        const conditions = ['Indexed original source compilation; binary/SDK-generated exports are not compiler-validated', 'Partial declarations retain distinct original fragments; no arbitrary fragment selection'];
+        // sibling using alias. Member references use the separate scoped service.
+        const conditions = ['Indexed original source compilation; binary/SDK-generated exports are not compiler-validated', 'Compatible partial types retain every original fragment; no fabricated declaration or arbitrary fragment selection'];
         for (const prefix of prefixes) {
             const target = prefix + specifier, types = environment.symbols.filter(symbol => symbol.syntax.type && symbol.syntax.qualifiedName === target && symbol.syntax.arity === 0 && this.accessible(symbol, environment)), namespaceProof = namespaces.get(target);
             if (types.length && namespaceProof)
@@ -159,10 +178,13 @@ export class CsharpResolver {
                 return { status: 'resolved', symbols, namespace: target, proof: [...environment.proof, ...namespaceProof, ...symbols.flatMap(symbol => symbol.proof)], conditions };
             }
             if (types.length) {
-                if (types.length !== 1)
-                    return { status: 'ambiguous', candidates: [...new Set(types.map(symbol => symbol.id))], reason: 'Several original type/partial fragments compete; logical partial binding remains unreviewed: ' + target };
-                const type = types[0]!;
-                const symbols = fact.kind === 'static' ? [type, ...environment.symbols.filter(symbol => symbol.file.path === type.file.path && symbol.project.id === type.project.id && symbol.syntax.parent === type.syntax.key && (symbol.syntax.type || symbol.syntax.static) && this.accessible(symbol, environment))] : types;
+                const logical = [...new Set(types.map(symbol => this.types.type(symbol)?.id))];
+                if (logical.length !== 1 || !logical[0])
+                    return { status: 'ambiguous', candidates: [...new Set(types.map(symbol => symbol.id))], reason: 'Several logical source types compete: ' + target };
+                const type = this.types.type(types[0]!)!;
+                if (type.gaps.length)
+                    return { status: 'ambiguous', candidates: types.map(symbol => symbol.id), reason: type.gaps.join('; ') };
+                const symbols = fact.kind === 'static' ? [...types, ...this.types.members(type).filter(symbol => (symbol.syntax.type || symbol.syntax.static) && this.accessible(symbol, environment))] : types;
                 return { status: 'resolved', symbols, proof: [...environment.proof, ...symbols.flatMap(symbol => symbol.proof)], conditions };
             }
             const head = prefix + specifier.split('.')[0]!;

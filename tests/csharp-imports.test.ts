@@ -89,7 +89,7 @@ test('SDK compile globs expose original namespace types but no nested namespaces
     assert.deepEqual(names(graph, imports(graph, 'app/Use.cs')[0]!).sort(), ['Demo.Local', 'Demo.One', 'Demo.Outer']);
     assert.equal(imports(graph, 'app/Use.cs')[0]!.range.startLine, 2);
     assert.ok(graph.relations.some(edge => edge.type === 'imports' && edge.from === unit(graph, 'app/Use.cs').id && edge.to === unit(graph, 'app/Types.cs').id));
-    assert.equal((unit(graph, 'app/Use.cs').metadata.analysis as any).features.references.status, 'unsupported');
+    assert.equal((unit(graph, 'app/Use.cs').metadata.analysis as any).features.references.status, 'partial');
     assert.equal(graph.relations.filter(edge => edge.type === 'calls').length, 0);
 });
 test('C# aliases and static usings retain original type/member overload sets without inherited members', async () => {
@@ -213,9 +213,9 @@ test('Pruned and symlinked compilation roots remain excluded without reading out
     await symlink(outside, path.join(root, 'linked'));
     assert.deepEqual(statuses(await index(root), 'Use.cs'), ['unsupported']);
 });
-test('Partial/duplicate type aliases remain ambiguous while namespace imports retain all original fragments', async () => {
+test('Compatible partial aliases and namespace imports retain all original fragments', async () => {
     const root = await repository({ 'A.csproj': sdk(), 'One.cs': 'namespace Demo; public partial class Type{}', 'Two.cs': 'namespace Demo; public partial class Type{}', 'Use.cs': 'using Demo; using Alias=Demo.Type; using static Demo.Type; public class Use{}' }), graph = await index(root);
-    assert.deepEqual(statuses(graph, 'Use.cs'), ['resolved', 'ambiguous', 'ambiguous']);
+    assert.deepEqual(statuses(graph, 'Use.cs'), ['resolved', 'resolved', 'resolved']);
     assert.equal(imports(graph, 'Use.cs')[0]!.outcome.declarations?.length, 2);
     assert.equal(graph.entities.filter(entity => entity.metadata.qualifiedName === 'Demo.Type').length, 2);
 });

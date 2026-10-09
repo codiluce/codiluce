@@ -92,10 +92,13 @@ select original Boot or Configuration/EnableWebFlux roots. Unknown predicates, f
 configuration remain visible candidates. No target JVM compiler, build, dependency, plugin or application runs.
 C# now resolves original namespace, static, alias and global using directives within indexed SDK/MSBuild compile items,
 linked source files and local project references. Literal props/targets imports, recorded target/configuration selections
-and original XML `Using` items retain source evidence. Overlapping compilations, partial-type ambiguity, conditional
-preprocessing, denied sources and executable build behavior remain explicit. `applications[].dotnet` records the selected
+and original XML `Using` items retain source evidence. Compatible partial types combine member lookup while retaining every
+original fragment and compilation identity. Scoped references, exact overloads, direct nonvirtual/concrete calls, original
+lambdas, local functions and top-level bodies now retain source proof and call coverage. Overlapping compilations,
+conflicting partial declarations, conditional preprocessing, denied sources and executable build behavior remain explicit. `applications[].dotnet` records the selected
 project and compilation inputs; `sourceRoots.csharp` can define a compilation when no project is available.
-C# direct references/handlers and ASP.NET routing are the next planned subphases. No target .NET/MSBuild toolchain runs.
+Inherited/generic/dynamic dispatch, conversions, generated constructors, accessors and compiler delegate/task behavior
+retain explicit gaps. ASP.NET routing is the next planned subphase. No target .NET/MSBuild toolchain runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original
 component source locations. Module and instance scopes stay distinct; Astro server and client scripts retain separate contexts.

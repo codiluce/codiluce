@@ -44,7 +44,7 @@ test('seven language grammars extract evidenced declarations outside detected ap
     assert.deepEqual(symbols.map(entity => entity.name).sort(), [...item.names].sort(), language);
     const file = graph.entities.find(entity => entity.path === item.file && entity.type === 'file')!;
     assert.equal(fileAnalysis(file.metadata.analysis)?.features.structure.status, 'supported', `${language}: ${JSON.stringify(graph.diagnostics.filter(d => d.file === item.file))}`);
-    assert.equal(fileAnalysis(file.metadata.analysis)?.features.references.status, ['python', 'go', 'ruby'].includes(language) ? 'partial' : 'unsupported');
+    assert.equal(fileAnalysis(file.metadata.analysis)?.features.references.status, ['python', 'go', 'ruby'].includes(language) ? 'partial' : language==='csharp'?'disabled':'unsupported');
     for (const entity of symbols) {
       assert.equal(entity.language, language);
       assert.ok(entity.metadata.bodyHash && entity.metadata.contentHash);

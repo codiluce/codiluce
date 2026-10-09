@@ -58,7 +58,7 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
       assert.equal(source.focus.startLine, entity.sourceRange.startLine);
       const file = await (await fetch(`${url}api/projection/locate/${source.file.id}`)).json();
       assert.equal(file.node.analysis.features.structure.status, 'supported');
-      assert.equal(file.node.analysis.features.references.status, ['python', 'go', 'ruby'].includes(language) ? 'partial' : 'unsupported');
+      assert.equal(file.node.analysis.features.references.status, ['python', 'go', 'ruby'].includes(language) ? 'partial' : language === 'csharp' ? 'disabled' : 'unsupported');
     }
     for (const name of ['PackagedJavaUse','PackagedKotlinUse']) {
       const search=await(await fetch(`${url}api/projection/search?q=${name}`)).json(), symbol=search.items.find(item=>item.name===name&&item.type==='class');assert.ok(symbol);
@@ -76,6 +76,22 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
       const original = await (await fetch(`${url}api/entities/${id}`)).json();
       assert.ok(original.path.startsWith('dotnet-source/lib/')); assert.ok(original.sourceRange.startLine > 0);
     }
+    assert.equal(csharpFile.metadata.analysis.features.references.status, 'partial');
+    assert.equal(csharpFile.metadata.csharpCallOutcomes.length, 5);
+    assert.ok(csharpFile.metadata.csharpCallOutcomes.every(item => item.status === 'resolved'));
+    for (const site of csharpFile.metadata.csharpCallOutcomes) {
+      const target = await (await fetch(`${url}api/entities/${site.target}`)).json();
+      const source = await (await fetch(`${url}api/source?entity=${site.target}`)).json();
+      assert.equal(source.focus.startLine, target.sourceRange.startLine);
+      assert.ok(target.language === 'csharp' && target.sourceRange.startLine > 0);
+      assert.ok(site.proof.some(item => item.file === 'dotnet-source/app/Use.cs' && item.line === 4));
+    }
+    const partialSearch = await (await fetch(`${url}api/projection/search?q=PackagedCsharpTools`)).json();
+    const fragments = partialSearch.items.filter(item => item.name === 'PackagedCsharpTools' && item.type === 'class');
+    assert.equal(fragments.length, 2);
+    const partials = await Promise.all(fragments.map(async item => (await fetch(`${url}api/entities/${item.id}`)).json()));
+    assert.equal(partials[0].metadata.csharpType.id, partials[1].metadata.csharpType.id);
+    assert.equal(partials[0].metadata.csharpType.parts.length, 2);
     for (const [name, handlerPath, line] of [
       ['GET /package-svelte-api', 'svelte-ui/src/routes/package-svelte-api/+server.ts', 1],
       ['POST /package-svelte?/save', 'svelte-ui/src/routes/(app)/package-svelte/+page.server.ts', 1],
@@ -176,8 +192,9 @@ try {
   for (const module of ['app', 'lib']) await mkdir(path.join(dotnetSource, module), {recursive: true});
   await writeFile(path.join(dotnetSource, 'lib/Library.csproj'), '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup></Project>');
   await writeFile(path.join(dotnetSource, 'app/Application.csproj'), '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><ProjectReference Include="../lib/Library.csproj"/><Using Include="Packaged.Csharp"/></ItemGroup></Project>');
-  await writeFile(path.join(dotnetSource, 'lib/Tools.cs'), 'namespace Packaged.Csharp; public class PackagedCsharpTools { public static int VALUE=1; public static void Run(){} }');
-  await writeFile(path.join(dotnetSource, 'app/Use.cs'), '// 😀 original\r\nusing Alias=global::Packaged.Csharp.PackagedCsharpTools;\r\nusing static Packaged.Csharp.PackagedCsharpTools;\r\npublic class PackagedCsharpUse {}');
+  await writeFile(path.join(dotnetSource, 'lib/Tools.cs'), 'namespace Packaged.Csharp; public partial class PackagedCsharpTools { public static int VALUE=1; public static void Run(){} public static string Read(int n)=>Hidden(n); }');
+  await writeFile(path.join(dotnetSource, 'lib/Tools.Partial.cs'), 'namespace Packaged.Csharp; partial class PackagedCsharpTools { private static string Hidden(int n)=>"ok"; public PackagedCsharpTools(){} public string Get(int n)=>Read(n); }');
+  await writeFile(path.join(dotnetSource, 'app/Use.cs'), '// 😀 original\r\nusing Alias=global::Packaged.Csharp.PackagedCsharpTools;\r\nusing static Packaged.Csharp.PackagedCsharpTools;\r\npublic class PackagedCsharpUse { public string CsharpPackagedRun(){ var value=new Alias(); var f=(int n)=>Alias.Read(n); Run(); f(1); return value.Get(2); } }');
   const jvmSource = path.join(repo, 'jvm-source');
   const jvmPom = (name, body='') => `<project><modelVersion>4.0.0</modelVersion><groupId>packaged</groupId><artifactId>${name}</artifactId><version>1.0</version>${body}</project>`;
   const kotlinPlugin = '<build><plugins><plugin><groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-maven-plugin</artifactId><version>2.2.0</version></plugin></plugins></build>';
@@ -372,18 +389,29 @@ class PackagedWebFluxKotlin {
   const csharpUse = csharpFiles.find(item => item.type === 'file' && item.path === 'dotnet-source/app/Use.cs'); assert.ok(csharpUse);
   const csharpDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', csharpUse.id], repo)).stdout);
   assert.equal(csharpDetail.metadata.analysis.features.imports.status, 'partial');
-  assert.equal(csharpDetail.metadata.analysis.features.references.status, 'unsupported');
+  assert.equal(csharpDetail.metadata.analysis.features.references.status, 'partial');
   assert.deepEqual(csharpDetail.metadata.importOutcomes.map(item => item.outcome.status), ['resolved', 'resolved', 'resolved']);
   const csharpEdges = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', csharpUse.id, '--type', 'imports'], repo)).stdout).items;
-  assert.equal(csharpEdges.length, 3);
+  assert.equal(csharpEdges.length, 6);
   for (const edge of csharpEdges) {
-    assert.equal(edge.to, csharpFiles.find(item => item.type === 'file' && item.path === 'dotnet-source/lib/Tools.cs').id);
+    assert.ok(['dotnet-source/lib/Tools.cs','dotnet-source/lib/Tools.Partial.cs'].includes(csharpFiles.find(item => item.id === edge.to)?.path));
     const detail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relation', '--id', edge.id], repo)).stdout);
     assert.ok(detail.evidence.some(item => item.file === 'dotnet-source/lib/Tools.cs' && item.line === 1));
     for (const id of detail.metadata.declarations) {
       const original = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', id], repo)).stdout);
-      assert.equal(original.path, 'dotnet-source/lib/Tools.cs'); assert.ok(original.sourceRange.startLine > 0);
+      assert.ok(['dotnet-source/lib/Tools.cs','dotnet-source/lib/Tools.Partial.cs'].includes(original.path)); assert.ok(original.sourceRange.startLine > 0);
     }
+  }
+  assert.equal(csharpDetail.metadata.csharpCallOutcomes.length, 5);
+  assert.ok(csharpDetail.metadata.csharpCallOutcomes.every(item => item.status === 'resolved'));
+  const csharpRun = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'CsharpPackagedRun'], repo)).stdout).items.find(item => item.name === 'CsharpPackagedRun');
+  assert.ok(csharpRun);
+  const directEdges = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', csharpRun.id, '--type', 'calls'], repo)).stdout).items;
+  assert.equal(directEdges.length, 4);
+  for (const edge of directEdges) {
+    const detail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relation', '--id', edge.id], repo)).stdout);
+    assert.equal(detail.metadata.dispatch, 'direct');
+    assert.ok(detail.evidence.some(item => item.file === 'dotnet-source/app/Use.cs' && item.line === 4));
   }
   const jvmFiles = JSON.parse((await run(process.execPath,[bin,'inspect','entities','--search','jvm-source'],repo)).stdout).items;
   for (const [sourcePath, targetSuffixes] of [
@@ -621,7 +649,7 @@ class PackagedWebFluxKotlin {
   console.log('Checking npm exec against the tarball without a local installation…');
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
-  console.log('Package installation, seven grammars, workspace binding, original C# MSBuild project references/namespace/static/alias/global Using items/declaration proofs through CLI/API, original Java/Kotlin Maven imports/static members/aliases/declaration proofs, scoped direct JVM calls and original Spring MVC/WebFlux Java/Kotlin handler/request flows through CLI/API, Ruby literal loads/scopes/original paths, namespace reopenings/direct methods/initializers and lazy Rails/Zeitwerk original autoload/inflection evidence, Rails resources/original controller actions/private callback references/HTTP request flows/source proofs and inflection license, dynamic/conditional gaps, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin/Echo 4–5/Fiber 2–3/Gorilla router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
+  console.log('Package installation, seven grammars, workspace binding, original C# MSBuild project references/namespace/static/alias/global Using items, logical partial fragments, direct calls/lambdas and original declaration/source proofs through CLI/API, original Java/Kotlin Maven imports/static members/aliases/declaration proofs, scoped direct JVM calls and original Spring MVC/WebFlux Java/Kotlin handler/request flows through CLI/API, Ruby literal loads/scopes/original paths, namespace reopenings/direct methods/initializers and lazy Rails/Zeitwerk original autoload/inflection evidence, Rails resources/original controller actions/private callback references/HTTP request flows/source proofs and inflection license, dynamic/conditional gaps, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin/Echo 4–5/Fiber 2–3/Gorilla router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }
