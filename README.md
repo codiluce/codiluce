@@ -85,7 +85,12 @@ The initial Spring MVC pack supports selected Spring 6.2/7.0 and Boot 3.5/4.0 pr
 class/method path arrays, original constant paths, recorded or entry-configuration component scans, direct original handlers,
 literal servlet prefixes and bounded PathPattern matching. Parameter restrictions and HTTP HEAD/OPTIONS remain distinct;
 unknown headers, negotiation, profiles, custom configuration and registrations stay constrained. Plain Spring is detected
-alongside Boot. No target JVM compiler, build, dependency, plugin or application runs. WebFlux and C#/ASP.NET remain planned.
+alongside Boot. The initial WebFlux.fn pack adds Java builder chains, Kotlin `router`/`coRouter`, nested/composed routes,
+original functional handlers and first-match dispatch under selected reactive profiles and bean registrations.
+`jvm.spring.stack: webflux` with `componentScan` or `routers` records a deployment selection; `entrypoints.spring` can
+select original Boot or Configuration/EnableWebFlux roots. Unknown predicates, filters, bean ordering and custom
+configuration remain visible candidates. No target JVM compiler, build, dependency, plugin or application runs.
+C#/ASP.NET remains planned.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original
 component source locations. Module and instance scopes stay distinct; Astro server and client scripts retain separate contexts.

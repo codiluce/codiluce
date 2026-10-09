@@ -29,7 +29,15 @@ test('Kotlin nested functions, immutable locals, lambdas and conditional writes 
  const {semantic}=await parse('kotlin',text);assert.ok(semantic.definitions.some(def=>def.kind==='lambda'&&def.parameters[0]?.name==='x'));assert.ok(semantic.definitions.some(def=>def.name==='nested'&&def.parent));assert.ok(semantic.bindings.some(binding=>binding.name==='local'&&binding.immutable));assert.ok(semantic.bindings.some(binding=>binding.name==='changed'&&!binding.immutable));assert.ok(semantic.writes.some(write=>write.target.kind==='name'&&write.target.name==='changed'));assert.ok(semantic.scopes.some(scope=>scope.kind==='lambda'&&scope.deferred));
 });
 
-test('Nullable, generic, anonymous and labeled receivers stay opaque without fake type values',async()=>{
+test('Generic type arguments remain syntax data; nullable, anonymous and labeled receivers stay opaque',async()=>{
  const text='package demo\nclass Api {\n fun run(value: Service?, generic: List<String>){\n  value?.work()\n  val anon = object {\n   fun work() {}\n  }\n  anon.work()\n }\n}\n';
- const {semantic}=await parse('kotlin',text),run=semantic.definitions.find(def=>def.name==='run')!;assert.equal(run.parameters[0]?.type?.kind,'unknown');assert.equal(run.parameters[1]?.type?.kind,'unknown');assert.ok(semantic.scopes.some(scope=>scope.kind==='opaque'&&scope.gaps.length));assert.ok(semantic.calls.some(call=>call.expression.kind==='call'&&call.expression.callee.kind==='member'&&call.expression.callee.safe));
+ const {semantic}=await parse('kotlin',text),run=semantic.definitions.find(def=>def.name==='run')!;assert.equal(run.parameters[0]?.type?.kind,'unknown');assert.equal(run.parameters[1]?.type?.kind,'generic-type');assert.ok(semantic.scopes.some(scope=>scope.kind==='opaque'&&scope.gaps.length));assert.ok(semantic.calls.some(call=>call.expression.kind==='call'&&call.expression.callee.kind==='member'&&call.expression.callee.safe));
+});
+
+test('Java functional expected-type syntax keeps generic results, single lambda parameters and bare Kotlin callable references original',async()=>{
+ const java=await parse('java','class Api { Mono<ServerResponse> show(ServerRequest request){return null;} Object router(){return route().GET("/x",request -> response());} }'),show=java.semantic.definitions.find(def=>def.name==='show')!,lambda=java.semantic.definitions.find(def=>def.kind==='lambda')!;
+ assert.equal(show.returnType?.kind,'generic-type');assert.equal(lambda.parameters[0]?.name,'request');
+ const kotlin=await parse('kotlin','@Configuration(proxyBeanMethods=false)\nclass Api {\n fun routes() = router {\n  POST("/x") { request -> response() }\n  GET("/y", ::show)\n  (GET("/a") or GET("/b")) { response() }\n }\n}');
+ assert.equal(kotlin.semantic.definitions[0]?.annotations[0]?.args[0]?.value.kind,'literal');assert.ok(kotlin.semantic.returns.some(item=>item.value.kind==='call'));assert.ok(kotlin.semantic.references.some(item=>item.expression.kind==='method-reference'&&!item.expression.object&&item.expression.name==='show'));
+ const post=kotlin.semantic.calls.filter(item=>item.expression.kind==='call'&&item.expression.callee.kind==='name'&&item.expression.callee.name==='POST');assert.equal(post.length,1);assert.equal(post[0]?.expression.kind==='call'&&post[0].expression.args.length,2);
 });

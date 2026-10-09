@@ -6,9 +6,10 @@ import { routingContract, matchRoutePattern } from '../analysis/routes/contracts
 import { configuredProxy, proxyPath, relativeApiBoundary, requestApplication } from '../analysis/routes/boundaries.js';
 import { preferGoRoutes } from '../analysis/routes/go-patterns.js';
 import { preferRailsRoutes } from '../analysis/routes/rails-patterns.js';
+import { preferWebFluxRoutes } from '../analysis/routes/webflux-order.js';
 import { preferSpringRoutes, matchSpringParams } from '../analysis/routes/spring-patterns.js';
 export const apiMatcher: Analyzer = {
-  name: 'api-matcher', version: `${ANALYZER_VERSION}:10`,
+  name: 'api-matcher', version: `${ANALYZER_VERSION}:11`,
   async analyze(context: AnalysisContext): Promise<void> {
     const endpoints = [...context.graph.entities.values()].filter(entity => entity.type === 'api_endpoint');
     const appsById = new Map(context.config.applications.map(app => [context.applicationIds.get(app.name), app]));
@@ -73,6 +74,7 @@ export const apiMatcher: Analyzer = {
         return observedConstraints(endpoint, origin, new URLSearchParams(search)) && (!action || (action.name === 'default' ? selectors.length === 0 : selectors.length === 1 && selectors[0] === `/${action.name}`)) && (!proxy || appFor(endpoint)?.name === proxy.target) && matchPath(endpoint, proxy ? proxyPath(proxy, pathname) : pathname);
       });
       if (origin || !candidates.some(needsOrigin)) candidates = preferSpringRoutes(preferRailsRoutes(preferGoRoutes(candidates, endpoint => contracts.get(endpoint.id), observation.method), endpoint => contracts.get(endpoint.id), observation.method),endpoint=>contracts.get(endpoint.id),observation.method);
+      if (origin || !candidates.some(needsOrigin)) candidates = preferWebFluxRoutes(candidates,endpoint=>contracts.get(endpoint.id));
       // Keep constrained candidates in ambiguity detection: ignoring one could
       // falsely select another route with the same HTTP method/path.
       if (candidates.length !== 1 || candidates[0]!.metadata.constraintsUnresolved || !origin && needsOrigin(candidates[0]!)) {
@@ -127,6 +129,7 @@ export const apiMatcher: Analyzer = {
       let strict = candidates.filter(endpoint => !contracts.get(endpoint.id)?.action && matchPath(endpoint, pattern));
       let loose = candidates.filter(endpoint => !contracts.get(endpoint.id)?.action && matchPath(endpoint, pattern, false));
       if (!pattern.includes('{*}') && loose.every(hostKnown)) { strict = preferSpringRoutes(preferRailsRoutes(preferGoRoutes(strict, endpoint => contracts.get(endpoint.id), observation.method), endpoint => contracts.get(endpoint.id), observation.method),endpoint=>contracts.get(endpoint.id),observation.method); loose = preferSpringRoutes(preferRailsRoutes(preferGoRoutes(loose, endpoint => contracts.get(endpoint.id), observation.method), endpoint => contracts.get(endpoint.id), observation.method),endpoint=>contracts.get(endpoint.id),observation.method); }
+      if (!resolved.holes && !pattern.includes('{*}') && loose.every(hostKnown)) { strict = preferWebFluxRoutes(strict,endpoint=>contracts.get(endpoint.id)); loose = preferWebFluxRoutes(loose,endpoint=>contracts.get(endpoint.id)); }
       const label = `${observation.method} ${resolved.pattern}${resolved.app ? ` on ${resolved.app}` : ''}`;
       if (strict.length !== 1 || loose.length !== 1 || strict[0]!.metadata.constraintsUnresolved || strict[0] && !hostKnown(strict[0])) {
         const reason = loose.length > strict.length ? `${label}: a dynamic segment could also equal a literal route segment (${loose.filter(item => !strict.includes(item)).map(item => item.name).join(', ')})` : `${label}: ${strict.length} eligible endpoints${strict[0]?.metadata.constraintsUnresolved ? '; route constraints unresolved' : ''}`;

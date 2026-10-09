@@ -3,7 +3,7 @@ import { declarationHashes, evidence, type CallSites, type Evidence } from '../.
 import { fileAnalysis, type JvmBindingFact, type JvmDefinitionFact, type JvmExpression, type JvmSemanticFacts } from '../facts.js';
 import { JvmResolver, type JvmResolution, type JvmSymbol } from '../resolution/jvm.js';
 
-export const JVM_SYMBOL_VERSION = '1';
+export const JVM_SYMBOL_VERSION = '2';
 const TYPE_KINDS = new Set(['class', 'interface', 'enum', 'record', 'annotation', 'object', 'typealias']);
 const CALLABLE_KINDS = new Set(['method', 'function', 'constructor', 'lambda']);
 const PRIMITIVES = new Set(['byte', 'short', 'char', 'int', 'long', 'float', 'double', 'boolean', 'void']);
@@ -38,6 +38,7 @@ export class JvmSymbols {
   private readonly memberNames = new Map<string, Map<string, JvmDefinition[]>>();
   private operations = 0;
   private inferenceDepth = 0;
+  private selectedCallableScopes = new Set<string>();
   constructor(readonly context: AnalysisContext, readonly resolver: JvmResolver) {
     const symbols = new Map(resolver.symbols.map(symbol => [symbol.id, symbol]));
     for (const file of context.files.values()) {
@@ -90,7 +91,7 @@ export class JvmSymbols {
     return result;
   }
   private scopeGap(unit: Unit, scope: string): string | undefined {
-    return this.chain(unit, scope).flatMap(item => item.gaps)[0];
+    return this.chain(unit, scope).flatMap(item => item.gaps.filter(gap=>!(this.selectedCallableScopes.has(item.key)&&gap==='Implicit Kotlin lambda parameter/receiver requires a selected callable type')))[0];
   }
   private owner(unit: Unit, scope: string): string {
     for (const item of this.chain(unit, scope)) if (item.owner) return unit.definitions.get(item.owner)?.id ?? this.context.syntax?.get(unit.file.path)?.declarations.get(item.owner) ?? unit.file.id;
@@ -167,8 +168,8 @@ export class JvmSymbols {
     if (definition.fact.kind === 'property') return { kind: 'property', definition, proof: facts };
     return unknown('Declaration kind is not a reviewed JVM value', facts);
   }
-  private direct(definition: JvmDefinition, exact: boolean): boolean {
-    if (definition.fact.gaps.length || definition.fact.typeParameters.length || definition.fact.modifiers.some(modifier => ['abstract', 'native', 'external', 'expect', 'actual', 'suspend'].includes(modifier))) return false;
+  private direct(definition: JvmDefinition, exact: boolean, suspend = false): boolean {
+    if (definition.fact.gaps.length || definition.fact.typeParameters.length || definition.fact.modifiers.some(modifier => ['abstract', 'native', 'external', 'expect', 'actual', ...suspend?[]:['suspend']].includes(modifier))) return false;
     if (['function', 'lambda', 'constructor'].includes(definition.fact.kind) && (!definition.fact.parent || definition.fact.kind !== 'function' || !TYPE_KINDS.has(definition.unit.definitions.get(definition.fact.parent)?.fact.kind ?? ''))) return true;
     const owner = definition.fact.parent ? definition.unit.definitions.get(definition.fact.parent) : undefined;
     if (owner?.fact.kind === 'interface' || owner?.fact.kind === 'annotation') return false;
@@ -339,10 +340,60 @@ export class JvmSymbols {
     const selected = this.select(unit, scope, expression, { kind: 'callable', definitions: constructors.length ? constructors : [definition], direct: true, proof: [] });
     return selected.kind === 'callable' && selected.definitions.length === 1;
   }
-  bound(file: string, scope: string, expression: JvmExpression, typeOnly = false): JvmBoundValue {
+  bound(file: string, scope: string, expression: JvmExpression, typeOnly = false, selectedCallableScopes: string[] = []): JvmBoundValue {
     this.operations = 0;
     const unit = this.units.get(file);
-    return unit ? typeOnly ? this.typeName(unit, scope, expression) : this.value(unit, scope, expression) : unknown('Complete selected JVM semantic facts are unavailable');
+    this.selectedCallableScopes=new Set(selectedCallableScopes);
+    try{return unit ? typeOnly ? this.typeName(unit, scope, expression) : this.value(unit, scope, expression) : unknown('Complete selected JVM semantic facts are unavailable');}
+    finally{this.selectedCallableScopes.clear();}
+  }
+  /** Pack-specific syntax propagation. A declared external/generic type is kept
+   * as data for the pack to validate; it is never generalized to JVM typing. */
+  initialized(file:string,scope:string,expression:JvmExpression,selectedCallableScopes:string[]=[]):{file:string;scope:string;expression:JvmExpression;type?:JvmExpression;storage:'local'|'property';proof:Evidence[]}|undefined{
+    this.operations=0;const unit=this.units.get(file);if(!unit||this.resolver.environment(file).status!=='resolved')return;
+    this.selectedCallableScopes=new Set(selectedCallableScopes);
+    try{
+      if(this.scopeGap(unit,scope))return;
+      if(expression.kind==='name'){
+        const entries=this.lexical(unit,scope,expression.name,expression.start);
+        if(entries?.length===1&&!('id'in entries[0]!)){
+          const binding=entries[0] as Binding,fact=binding.fact;
+          if(fact.kind!=='local'||!fact.value||fact.end>expression.start||this.changed(binding)||unit.file.language==='kotlin'&&!fact.immutable)return;
+          return {file,scope:fact.scope,expression:fact.value,type:fact.type,storage:'local',proof:this.proof(unit,fact,'Original unchanged local initializer under the selected functional API')};
+        }
+      }
+      const value=this.value(unit,scope,expression);
+      if(value.kind!=='property')return;
+      const definition=value.definition,fact=definition.fact;
+      if(!fact.immutable||!fact.value||fact.gaps.length||fact.modifiers.some(item=>['open','override','lateinit','expect','actual'].includes(item)))return;
+      if(definition.unit.facts.writes.some(write=>write.target.kind==='name'&&write.target.name===fact.name||write.target.kind==='member'&&write.target.name===fact.name))return;
+      return {file:definition.unit.file.path,scope:fact.scope,expression:fact.value,type:fact.returnType,storage:'property',proof:value.proof};
+    }finally{this.selectedCallableScopes.clear();}
+  }
+  /** Known functional API expected type only. No registration-time invocation
+   * or general SAM/overload inference is added to the call graph. */
+  functionalHandler(file:string,scope:string,expression:JvmExpression,requestType:string,resultType:string,resultArgument?:string,suspend=false,selectedScopes:string[]=[]):{definition?:JvmDefinition;reason?:string;proof:Evidence[]}{
+    const matches=(definition:JvmDefinition,where:string,type:JvmExpression|undefined,name:string,argument?:string):boolean=>{
+      if(!type)return false;
+      const base=type.kind==='generic-type'?type.name:type,bound=this.bound(definition.unit.file.path,where,base,true,selectedScopes);
+      if(bound.kind!=='external'||bound.name!==name)return false;
+      return argument?type.kind==='generic-type'&&type.arguments.length===1&&matches(definition,where,type.arguments[0],argument):type.kind!=='generic-type';
+    };
+    if(expression.kind==='lambda'){
+      const definition=this.definition(file,expression.key);
+      if(!definition||definition.fact.parameters.length!==1&&!(definition.unit.file.language==='kotlin'&&!definition.fact.parameters.length))return{reason:'Functional handler lambda requires one original request parameter',proof:[]};
+      if(definition.fact.parameters.some(parameter=>parameter.type&&!matches(definition,definition.fact.scope,parameter.type,requestType)))return{reason:'Functional handler lambda has a competing explicit parameter type',proof:[]};
+      return{definition,proof:this.proof(definition.unit,expression,'Original lambda under the selected WebFlux handler expected type')};
+    }
+    if(expression.kind!=='method-reference')return{reason:'Functional handler value is not an original reviewed lambda/method reference',proof:[]};
+    const selector:JvmExpression=expression.object?{...expression,kind:'member',object:expression.object,name:expression.name}:{...expression,kind:'name',name:expression.name};
+    const bound=this.bound(file,scope,selector,false,selectedScopes);
+    if(bound.kind!=='callable')return{reason:bound.kind==='unknown'?bound.reason:'Method reference does not bind an original callable',proof:bound.proof};
+    const candidates=bound.definitions.filter(definition=>definition.fact.parameters.length===1&&!definition.fact.parameters[0]?.variadic&&!definition.fact.parameters[0]?.default&&matches(definition,definition.fact.scope,definition.fact.parameters[0]?.type,requestType)&&matches(definition,definition.fact.scope,definition.fact.returnType,resultType,resultArgument)&&definition.fact.modifiers.includes('suspend')===suspend);
+    if(candidates.length!==1)return{reason:'Functional handler expected request/result types do not select one reviewed original overload',proof:bound.proof};
+    const definition=candidates[0]!;
+    if(!bound.direct&&!(suspend&&this.direct(definition,false,true)))return{reason:bound.reason??'Functional receiver dispatch is not a proven original method',proof:bound.proof};
+    return{definition,proof:bound.proof};
   }
   constant(file: string, scope: string, expression: JvmExpression): JvmConstant {
     this.operations = 0;

@@ -101,6 +101,7 @@ export interface JvmDeclarationFact { key: string; name: string; qualifiedName: 
 export interface JvmSite { start: number; end: number; range: SourceRange }
 export type JvmExpression = JvmSite & (
   | { kind: 'name'; name: string }
+  | { kind: 'generic-type'; name: JvmExpression; arguments: JvmExpression[] }
   | { kind: 'literal'; value: string | number | boolean | null; literalType?: string }
   | { kind: 'member'; object: JvmExpression; name: string; safe?: boolean }
   | { kind: 'call'; callee: JvmExpression; args: JvmArgument[]; typeArguments?: boolean }

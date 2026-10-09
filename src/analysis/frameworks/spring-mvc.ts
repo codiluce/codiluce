@@ -99,6 +99,7 @@ export class SpringMvc {
   run(files:ScannedFile[]):void{
     const repository=this.context.graph.entities.get(this.context.repositoryId)!,profiles:unknown[]=[];
     for(const app of this.context.config.applications){
+      if(app.jvm?.spring?.stack==='webflux')continue;
       const selected=files.filter(file=>file.application?.name===app.name),definitions=selected.flatMap(file=>this.symbols.definitions(file.path)),controllers=definitions.filter(definition=>definition.fact.kind==='class'&&definition.fact.annotations.some(annotation=>['org.springframework.stereotype.Controller',WEB+'RestController'].includes(this.identity(definition,annotation).name??'')));
       if(!controllers.length&&!app.frameworks.some(name=>['spring','spring-boot'].includes(name))&&!app.jvm?.spring)continue;
       const projects=[...new Set(selected.map(file=>this.symbols.resolver.projects.selection(file.path).project).filter(Boolean))];

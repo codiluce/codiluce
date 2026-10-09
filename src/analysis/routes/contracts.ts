@@ -22,7 +22,7 @@ export interface RoutingContract {
   middleware: string[]; conditions: string[];
   host?: string;
   hostAuthority?: boolean;
-  dispatch?: { dialect: 'go-servemux' | 'chi' | 'gin' | 'echo' | 'fiber' | 'gorilla' | 'rails' | 'spring'; root: string; order: number };
+  dispatch?: { dialect: 'go-servemux' | 'chi' | 'gin' | 'echo' | 'fiber' | 'gorilla' | 'rails' | 'spring' | 'spring-webflux'; root: string; order: number };
   spring?: { params: SpringNameCondition[]; headers: SpringNameCondition[]; consumes: string[]; produces: string[]; declaredMethods?: string[] };
   excludedHosts?: string[];
   queries?: { name: string; value?: string }[];

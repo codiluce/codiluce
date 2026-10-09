@@ -36,7 +36,7 @@ test('Java MVC class/method path arrays and original constants produce original 
  assert.ok(routes.every(route=>(route.metadata.routing as any).methods.join(',')==='GET,POST,HEAD'));
  const handler=graph.entities.find(entity=>entity.name==='create')!;assert.ok(routes.every(route=>graph.relations.some(edge=>edge.from===route.id&&edge.to===handler.id&&edge.type==='handles')));
  assert.ok(graph.relations.some(edge=>edge.type==='calls'&&edge.from===handler.id&&graph.entities.find(entity=>entity.id===edge.to)?.name==='helper'));
- assert.equal(routes[0]?.sourceRange?.startLine,7);assert.ok(routes.some(route=>route.evidence.some(item=>item.file==='java/demo/Paths.java')));assert.equal(graph.run.analyzerVersions['spring-mvc'],'1');
+ assert.equal(routes[0]?.sourceRange?.startLine,7);assert.ok(routes.some(route=>route.evidence.some(item=>item.file==='java/demo/Paths.java')));assert.equal(graph.run.analyzerVersions['spring-mvc'],'2');
 });
 
 test('Kotlin annotation aliases and declared Spring Boot entry scan retain original endpoints without injected calls',async()=>{

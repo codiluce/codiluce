@@ -80,6 +80,8 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
       ['GET /package-rails/:id', 'ruby-autoload/app/controllers/admin/users_controller.rb', 2],
       ['GET|HEAD /package-spring-java/{id}', 'jvm-source/app/src/main/java/packaged/PackagedSpringJava.java', 1],
       ['GET|HEAD /package-spring-kotlin', 'jvm-source/app/src/main/kotlin/packaged/PackagedSpringKotlin.kt', 6],
+      ['GET /package-webflux-java/{id}', 'jvm-source/flux/src/main/java/packaged/PackagedWebFluxJava.java', 1],
+      ['GET /package-webflux-kotlin', 'jvm-source/flux/src/main/kotlin/packaged/PackagedWebFluxKotlin.kt', 13],
     ]) {
       const found = await (await fetch(`${url}api/entities?search=${encodeURIComponent(name)}&type=api_endpoint`)).json();
       const endpoint = found.items.find(item => item.name === name); assert.ok(endpoint);
@@ -163,7 +165,7 @@ try {
   const jvmPom = (name, body='') => `<project><modelVersion>4.0.0</modelVersion><groupId>packaged</groupId><artifactId>${name}</artifactId><version>1.0</version>${body}</project>`;
   const kotlinPlugin = '<build><plugins><plugin><groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-maven-plugin</artifactId><version>2.2.0</version></plugin></plugins></build>';
   await mkdir(jvmSource, {recursive:true});
-  await writeFile(path.join(jvmSource,'pom.xml'),jvmPom('root','<packaging>pom</packaging><modules><module>app</module><module>lib</module></modules>'));
+  await writeFile(path.join(jvmSource,'pom.xml'),jvmPom('root','<packaging>pom</packaging><modules><module>app</module><module>lib</module><module>flux</module></modules>'));
   for (const module of ['app','lib']) {
     await mkdir(path.join(jvmSource,module,'src/main/java/packaged'),{recursive:true});
     await mkdir(path.join(jvmSource,module,'src/main/kotlin/packaged'),{recursive:true});
@@ -176,6 +178,26 @@ try {
   await writeFile(path.join(jvmSource,'app/src/main/java/packaged/PackagedSpringJava.java'),'package packaged; import org.springframework.web.bind.annotation.RestController; import org.springframework.web.bind.annotation.GetMapping; @RestController public class PackagedSpringJava { @GetMapping("/package-spring-java/{id}") public String PackagedSpringJavaHandler(String id){PackagedWidget.run();return id;} }');
   await writeFile(path.join(jvmSource,'app/src/main/kotlin/packaged/PackagedSpringKotlin.kt'),'package packaged\nimport org.springframework.web.bind.annotation.RestController\nimport org.springframework.web.bind.annotation.GetMapping as Get\n@RestController\nclass PackagedSpringKotlin {\n @Get("/package-spring-kotlin")\n fun PackagedSpringKotlinHandler(){packagedHelp()}\n}\n');
   await writeFile(path.join(jvmSource,'app/client.ts'),'export async function PackagedSpringRequest(){await fetch("https://packaged-spring.test/package-spring-java/12");await fetch("https://packaged-spring.test/package-spring-kotlin");}\n');
+  await mkdir(path.join(jvmSource,'flux/src/main/java/packaged'),{recursive:true});
+  await mkdir(path.join(jvmSource,'flux/src/main/kotlin/packaged'),{recursive:true});
+  await writeFile(path.join(jvmSource,'flux/pom.xml'),jvmPom('flux',kotlinPlugin+'<dependencies><dependency><groupId>packaged</groupId><artifactId>lib</artifactId><version>1.0</version></dependency><dependency><groupId>org.springframework</groupId><artifactId>spring-webflux</artifactId><version>6.2.19</version></dependency></dependencies>'));
+  await writeFile(path.join(jvmSource,'flux/src/main/java/packaged/PackagedWebFluxJava.java'),'package packaged; import org.springframework.context.annotation.Configuration; import org.springframework.context.annotation.Bean; import org.springframework.core.annotation.Order; import org.springframework.web.reactive.function.server.RouterFunctions; import org.springframework.web.reactive.function.server.RouterFunction; import org.springframework.web.reactive.function.server.ServerRequest; import org.springframework.web.reactive.function.server.ServerResponse; import reactor.core.publisher.Mono; @Configuration(proxyBeanMethods=false) public final class PackagedWebFluxJava { @Bean @Order(1) public RouterFunction<ServerResponse> routes(){return RouterFunctions.route().GET("/package-webflux-java/{id}",this::PackagedWebFluxJavaHandler).build();} private Mono<ServerResponse> PackagedWebFluxJavaHandler(ServerRequest request){PackagedWidget.run();return Mono.empty();} }');
+  await writeFile(path.join(jvmSource,'flux/src/main/kotlin/packaged/PackagedWebFluxKotlin.kt'),`package packaged
+import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Bean
+import org.springframework.core.annotation.Order
+import org.springframework.web.reactive.function.server.router
+import org.springframework.web.reactive.function.server.ServerRequest
+import org.springframework.web.reactive.function.server.ServerResponse
+import reactor.core.publisher.Mono
+@Configuration(proxyBeanMethods=false)
+class PackagedWebFluxKotlin {
+ @Bean @Order(2)
+ fun routesKotlin() = router { GET("/package-webflux-kotlin", ::PackagedWebFluxKotlinHandler) }
+ private fun PackagedWebFluxKotlinHandler(request: ServerRequest): Mono<ServerResponse> { packagedHelp(); return Mono.empty() }
+}
+`);
+  await writeFile(path.join(jvmSource,'flux/client.ts'),'export async function PackagedWebFluxRequest(){await fetch("https://packaged-webflux.test/package-webflux-java/12");await fetch("https://packaged-webflux.test/package-webflux-kotlin");}');
   const rubySource = path.join(repo, 'ruby-source');
   await mkdir(path.join(rubySource, 'lib'), { recursive: true });
   await writeFile(path.join(rubySource, 'Gemfile'), 'gem "rails", "~> 8.1"\n');
@@ -277,6 +299,7 @@ try {
   const applications = await detectApplications(repo);
   const railsApplication = applications.find(app => app.path === 'ruby-autoload'); assert.ok(railsApplication); railsApplication.apiOrigins = ['https://packaged-rails.test'];
   const springApplication = applications.find(app => app.path === 'jvm-source/app'); assert.ok(springApplication); springApplication.apiOrigins = ['https://packaged-spring.test']; springApplication.jvm = {spring:{componentScan:['packaged']}};
+  const webFluxApplication = applications.find(app => app.path === 'jvm-source/flux'); assert.ok(webFluxApplication); webFluxApplication.apiOrigins = ['https://packaged-webflux.test']; webFluxApplication.jvm = {spring:{stack:'webflux',componentScan:['packaged']}};
   await mkdir(path.join(repo, '.codiluce'), { recursive: true });
   await writeFile(path.join(repo, '.codiluce/config.yml'), JSON.stringify({ applications }));
   console.log('Starting the installed executable from a repository with spaces…');
@@ -347,6 +370,14 @@ try {
     const detail=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',route.id],repo)).stdout);assert.equal(detail.metadata.framework,'spring-mvc');assert.equal(detail.metadata.constraintsUnresolved,false);
     const handles=JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',route.id,'--type','handles'],repo)).stdout).items;assert.equal(handles.length,1);
     const handler=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',handles[0].to],repo)).stdout);assert.ok(handler.path.startsWith('jvm-source/app/src/main/'));assert.ok(handler.sourceRange.startLine>0);
+    const calls=JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',handler.id,'--type','calls'],repo)).stdout).items;assert.equal(calls.length,1);const leaf=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',calls[0].to],repo)).stdout);assert.ok(leaf.path.startsWith('jvm-source/lib/'));
+    const requests=JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',route.id,'--type','requests'],repo)).stdout).items;assert.equal(requests.length,1);
+  }
+  const webFluxRoutes = JSON.parse((await run(process.execPath,[bin,'inspect','entities','--search','/package-webflux-'],repo)).stdout).items.filter(item=>item.type==='api_endpoint');assert.equal(webFluxRoutes.length,2);
+  for(const route of webFluxRoutes){
+    const detail=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',route.id],repo)).stdout);assert.equal(detail.metadata.framework,'spring-webflux');assert.equal(detail.metadata.constraintsUnresolved,false);
+    const handles=JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',route.id,'--type','handles'],repo)).stdout).items;assert.equal(handles.length,1);
+    const handler=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',handles[0].to],repo)).stdout);assert.ok(handler.path.startsWith('jvm-source/flux/src/main/'));assert.ok(handler.sourceRange.startLine>0);
     const calls=JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',handler.id,'--type','calls'],repo)).stdout).items;assert.equal(calls.length,1);const leaf=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',calls[0].to],repo)).stdout);assert.ok(leaf.path.startsWith('jvm-source/lib/'));
     const requests=JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',route.id,'--type','requests'],repo)).stdout).items;assert.equal(requests.length,1);
   }
@@ -556,7 +587,7 @@ try {
   console.log('Checking npm exec against the tarball without a local installation…');
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
-  console.log('Package installation, seven grammars, workspace binding, original Java/Kotlin Maven imports/static members/aliases/declaration proofs, scoped direct JVM calls and original Spring MVC handler/request flows through CLI/API, Ruby literal loads/scopes/original paths, namespace reopenings/direct methods/initializers and lazy Rails/Zeitwerk original autoload/inflection evidence, Rails resources/original controller actions/private callback references/HTTP request flows/source proofs and inflection license, dynamic/conditional gaps, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin/Echo 4–5/Fiber 2–3/Gorilla router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
+  console.log('Package installation, seven grammars, workspace binding, original Java/Kotlin Maven imports/static members/aliases/declaration proofs, scoped direct JVM calls and original Spring MVC/WebFlux Java/Kotlin handler/request flows through CLI/API, Ruby literal loads/scopes/original paths, namespace reopenings/direct methods/initializers and lazy Rails/Zeitwerk original autoload/inflection evidence, Rails resources/original controller actions/private callback references/HTTP request flows/source proofs and inflection license, dynamic/conditional gaps, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin/Echo 4–5/Fiber 2–3/Gorilla router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

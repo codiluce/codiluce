@@ -25,11 +25,14 @@ export interface RubyRuntimeConfig { cwd?: string; environment?: string; autoloa
 /** Recorded JVM compilation inputs; target Maven/Gradle/compiler never runs. */
 export interface SpringMvcConfig {
   version?: string; bootVersion?: string;
+  stack?: 'mvc' | 'webflux'; basePath?: string;
   /** Selected servlet context; explicit values are recorded assumptions. */
   contextPath?: string; servletPath?: string;
   matchingStrategy?: 'path-pattern' | 'ant';
   /** Explicitly selected scan packages/controller beans, never host defaults. */
   componentScan?: string[]; controllers?: string[];
+  /** Explicit original configuration bean factories, Class.method. */
+  routers?: string[];
 }
 export interface JvmConfig { sourceSet?: 'main' | 'test'; profiles?: string[]; dependencies?: string[]; spring?: SpringMvcConfig }
 
@@ -253,11 +256,12 @@ export async function resolveConfig(root: string, raw: RawConfig): Promise<Atlas
         const spring = value.spring, qualified = (item: unknown) => typeof item === 'string' && item.length <= 512 && /^[\p{L}_$][\p{L}\p{N}_$]*(?:\.[\p{L}_$][\p{L}\p{N}_$]*)*$/u.test(item);
         const list = (items: unknown) => Array.isArray(items) && items.length <= 128 && new Set(items).size === items.length && items.every(qualified);
         const prefix = (item: unknown) => typeof item === 'string' && item.length <= 2048 && (item === '' || item.startsWith('/') && item !== '/' && !item.endsWith('/')) && !/[\\\0?#{}*;]/.test(item) && !item.includes('//') && !item.split('/').some(segment => segment === '.' || segment === '..');
-        if (!spring || typeof spring !== 'object' || Array.isArray(spring) || Object.keys(spring).some(key => !['version','bootVersion','contextPath','servletPath','matchingStrategy','componentScan','controllers'].includes(key))
+        if (!spring || typeof spring !== 'object' || Array.isArray(spring) || Object.keys(spring).some(key => !['version','bootVersion','stack','basePath','contextPath','servletPath','matchingStrategy','componentScan','controllers','routers'].includes(key))
           || [spring.version,spring.bootVersion].some(item => item !== undefined && (typeof item !== 'string' || !/^\d+\.\d+\.\d+$/.test(item)))
-          || [spring.contextPath,spring.servletPath].some(item => item !== undefined && !prefix(item))
+          || [spring.contextPath,spring.servletPath,spring.basePath].some(item => item !== undefined && !prefix(item))
+          || spring.stack !== undefined && !['mvc','webflux'].includes(spring.stack)
           || spring.matchingStrategy !== undefined && !['path-pattern','ant'].includes(spring.matchingStrategy)
-          || [spring.componentScan,spring.controllers].some(items => items !== undefined && !list(items))) throw new Error('Invalid Spring MVC configuration');
+          || [spring.componentScan,spring.controllers,spring.routers].some(items => items !== undefined && !list(items))) throw new Error('Invalid Spring configuration');
       }
     }
     if (app.ruby !== undefined) {

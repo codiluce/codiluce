@@ -35,6 +35,11 @@ export function extractJvmSemantic(root: Node, language: string, declarations: D
   const expression = (node: Node, depth=0): JvmExpression => {
     if(++expressionNodes>MAX_NODES||depth>32){facts.complete=false;return unknown(node);}
     const base=site(node), parts=node.namedChildren.filter(part=>part.type!=='comment');
+    if(node.type==='identifier'&&['true','false'].includes(node.text))return{...base,kind:'literal',value:node.text==='true',literalType:'boolean'};
+    if(node.type==='generic_type'||node.type==='user_type'&&parts.some(part=>part.type==='type_arguments')){
+      const container=child(node,'type_arguments'), names=parts.filter(part=>part!==container), text=names.map(part=>part.text).join('.');
+      return container&&names.length?{...base,kind:'generic-type',name:{...base,kind:'name',name:unescapeName(text)},arguments:container.namedChildren.map(part=>expression(part.type==='type_projection'&&part.namedChildren.length===1&&!/^(?:in|out)\b/.test(part.text)?part.namedChildren[0]!:part,depth+1))}:unknown(node);
+    }
     if(['identifier','type_identifier','scoped_identifier','scoped_type_identifier','qualified_identifier','user_type','integral_type','floating_point_type','boolean_type','void_type'].includes(node.type)) {
       if(node.type==='user_type'&&parts.some(part=>part.type==='type_arguments'))return unknown(node);
       return {...base,kind:'name',name:unescapeName(node.text)};
@@ -73,18 +78,21 @@ export function extractJvmSemantic(root: Node, language: string, declarations: D
     if(node.type==='call_expression'){
       const callee=parts[0], argumentList=child(node,'value_arguments'), lambda=child(node,'annotated_lambda','lambda_literal');if(!callee)return unknown(node);
       const values=args(argumentList,depth+1);if(lambda)values.push({value:expression(lambda,depth+1)});
+      if(lambda&&!argumentList&&callee.type==='call_expression'){
+        const target=expression(callee,depth+1);if(target.kind==='call')return{...base,...target,start:base.start,end:base.end,range:base.range,args:[...target.args,...values]};
+      }
       return {...base,kind:'call',callee:expression(callee,depth+1),args:values,...parts.some(part=>part.type==='type_arguments')?{typeArguments:true}:{}};
     }
     if(node.type==='object_creation_expression'||node.type==='constructor_invocation'){
       const type=named(node,'type','user_type'), argumentsNode=named(node,'arguments','value_arguments');return type?{...base,kind:'new',type:expression(type,depth+1),args:args(argumentsNode,depth+1),...child(node,'class_body')?{anonymous:true}:{}}:unknown(node);
     }
-    if(node.type==='method_reference'){
+    if(node.type==='method_reference'||node.type==='callable_reference'){
       const name=parts.at(-1), object=parts.length>1?parts[0]:undefined;return name?{...base,kind:'method-reference',...object?{object:expression(object,depth+1)}:{},name:unescapeName(name.text)}:unknown(node);
     }
     if(['lambda_expression','lambda_literal'].includes(node.type))return {...base,kind:'lambda',key:lambdaKey(node)};
     if(node.type==='annotated_lambda'){const lambda=child(node,'lambda_literal');return lambda?expression(lambda,depth+1):unknown(node);}
     if(['binary_expression','infix_expression','additive_expression','multiplicative_expression','comparison_expression','equality_expression','conjunction_expression','disjunction_expression','elvis_expression','range_expression'].includes(node.type)&&parts.length>=2){
-      const left=node.childForFieldName('left')??parts[0]!,right=node.childForFieldName('right')??parts.at(-1)!, operator=node.childForFieldName('operator')?.text??node.children.find(part=>!part.isNamed)?.text??'';return {...base,kind:'binary',operator,left:expression(left,depth+1),right:expression(right,depth+1)};
+      const left=node.childForFieldName('left')??parts[0]!,right=node.childForFieldName('right')??parts.at(-1)!, operator=node.childForFieldName('operator')?.text??node.children.find(part=>!part.isNamed)?.text??(node.type==='infix_expression'?parts.slice(1,-1).find(part=>part.type==='identifier')?.text:undefined)??'';return {...base,kind:'binary',operator,left:expression(left,depth+1),right:expression(right,depth+1)};
     }
     if(['unary_expression','prefix_expression','postfix_expression'].includes(node.type)&&parts[0])return {...base,kind:'unary',operator:node.children.find(part=>!part.isNamed)?.text??'',object:expression(parts[0],depth+1)};
     if(['array_access','indexing_expression'].includes(node.type)){const object=node.childForFieldName('array')??parts[0],index=node.childForFieldName('index')??parts[1];return object?{...base,kind:'index',object:expression(object,depth+1),...index?{index:expression(index,depth+1)}:{}}:unknown(node);}
@@ -108,11 +116,12 @@ export function extractJvmSemantic(root: Node, language: string, declarations: D
   const parameters=(node:Node, container:Node|undefined):JvmParameterFact[] => {
     if(!container)return [];
     const values:JvmParameterFact[]=[];
-    for(let i=0;i<container.namedChildren.length;i++){
-      const parameter=container.namedChildren[i]!;
+    const entries=container.type==='identifier'?[container]:container.namedChildren;
+    for(let i=0;i<entries.length;i++){
+      const parameter=entries[i]!;
       if(!['formal_parameter','spread_parameter','parameter','class_parameter','variable_declaration','identifier','receiver_parameter'].includes(parameter.type))continue;
       const name=parameter.childForFieldName('name')??child(parameter,'identifier'), type=parameter.childForFieldName('type')??parameter.namedChildren.find(part=>typeNodes.has(part.type));
-      const next=container.namedChildren[i+1], isDefault=next&&!['parameter','parameter_modifiers','formal_parameter'].includes(next.type)&&container.text.slice(parameter.endIndex-container.startIndex,next.startIndex-container.startIndex).includes('=');
+      const next=entries[i+1], isDefault=next&&!['parameter','parameter_modifiers','formal_parameter'].includes(next.type)&&container.text.slice(parameter.endIndex-container.startIndex,next.startIndex-container.startIndex).includes('=');
       values.push({name:unescapeName(name?.text??(parameter.type==='identifier'?parameter.text:''))||undefined,...type?{type:expression(type)}:{},...isDefault?{default:expression(next!)}:{},...parameter.type==='spread_parameter'||/\bvararg\b/.test(parameter.text)?{variadic:true}:{},...parameter.type==='class_parameter'&&parameter.children.some(part=>['val','var'].includes(part.type))?{property:true}:{},annotations:[...annotations(parameter),...language==='kotlin'&&container.namedChildren[i-1]?.type==='parameter_modifiers'?annotations(container.namedChildren[i-1]!):[]]});
       if(isDefault)i++;
     }
@@ -150,7 +159,10 @@ export function extractJvmSemantic(root: Node, language: string, declarations: D
       if(def.kind==='property'&&!['file','type','opaque'].includes(where.kind))facts.bindings.push({...site(node),scope:where.key,declaration:def.key,kind:'local',name:def.name,...def.returnType?{type:def.returnType}:{},...def.value?{value:def.value}:{},immutable:node.children.some(part=>part.type==='val')});
       if(bodyScope){
         for(const parameter of def.parameters){if(parameter.name)facts.bindings.push({...site(node),name:parameter.name,scope:bodyScope.key,kind:'parameter',...parameter.type?{type:parameter.type}:{},immutable:language==='kotlin'});}
-        if(body)visitChildren(body,bodyScope);
+        if(body){
+          if(language==='kotlin'&&body.type==='function_body'&&body.children.some(part=>part.type==='=')&&body.namedChildren.length===1)facts.returns.push({...site(body),scope:bodyScope.key,value:expression(body.namedChildren[0]!)});
+          visitChildren(body,bodyScope);
+        }
       }
       // Initializers are evaluated in the declaration's original scope; their
       // nested lambdas retain separate deferred ownership.
@@ -198,9 +210,12 @@ export function extractJvmSemantic(root: Node, language: string, declarations: D
     if(['method_invocation','call_expression','object_creation_expression','explicit_constructor_invocation'].includes(node.type)){
       facts.calls.push({...site(node),scope:where.key,expression:expression(node),kind:node.type==='object_creation_expression'?'new':node.type==='explicit_constructor_invocation'?node.children.some(part=>part.type==='super')?'super':'this':'call'});
       // Arguments, receiver expressions and nested calls execute independently.
-      const name=node.childForFieldName('name');for(const part of node.namedChildren)if(part.id!==name?.id)visit(part,where,!['argument_list','value_arguments','annotated_lambda','lambda_literal'].includes(part.type));return;
+      const name=node.childForFieldName('name');for(const part of node.namedChildren)if(part.id!==name?.id){
+        if(node.type==='call_expression'&&!child(node,'value_arguments')&&child(node,'annotated_lambda','lambda_literal')&&part===node.namedChildren[0]&&part.type==='call_expression')visitChildren(part,where,true);
+        else visit(part,where,!['argument_list','value_arguments','annotated_lambda','lambda_literal'].includes(part.type));
+      }return;
     }
-    if(node.type==='method_reference'||node.type==='navigation_expression'&&node.children.some(part=>part.type==='::')){reference(node,where,'method-reference');return;}
+    if(node.type==='method_reference'||node.type==='callable_reference'||node.type==='navigation_expression'&&node.children.some(part=>part.type==='::')){reference(node,where,'method-reference');return;}
     if(typeNodes.has(node.type)){reference(node,where,'type');return;}
     if(node.type==='field_access'||node.type==='navigation_expression'){if(!suppressed)reference(node,where);for(const part of node.namedChildren.slice(0,-1))visit(part,where,true);return;}
     if(node.type==='identifier'&&!suppressed){reference(node,where);return;}

@@ -7,6 +7,7 @@ import { STRUCTURE_VERSION } from '../tree-sitter/analyzer.js';
 import { fileKey } from '../../pipeline/cache.js';
 import { JvmSymbols, JVM_SYMBOL_VERSION } from './jvm-symbols.js';
 import { SpringMvc } from '../frameworks/spring-mvc.js';
+import { SpringWebFlux, WEBFLUX_VERSION } from '../frameworks/spring-webflux.js';
 import { SPRING_VERSION } from '../frameworks/spring-profile.js';
 export const JVM_IMPORT_VERSION = '2';
 export const jvmAnalyzer: Analyzer = { name: 'jvm-imports', version: JVM_IMPORT_VERSION, async analyze(context: AnalysisContext) {
@@ -47,9 +48,10 @@ export const jvmAnalyzer: Analyzer = { name: 'jvm-imports', version: JVM_IMPORT_
             }
             symbols.analyze(files);
             new SpringMvc(context,symbols).run(files);
+            new SpringWebFlux(context,symbols).run(files);
         };
         if (context.cache)
-            await context.cache.unit(context, this.name, 'repository', { version: JVM_IMPORT_VERSION, symbols: JVM_SYMBOL_VERSION, spring:SPRING_VERSION, syntax: STRUCTURE_VERSION, resolver: JVM_RESOLVER_VERSION, projects: JVM_PROJECT_VERSION, config: context.config, model: resolver.projects.describe(), availability: files.map(file => [file.path, resolver.facts(file.path)?.complete, context.graph.entities.get(file.id)?.metadata.analysis]), files: [...context.files.values()].filter(file => ['java', 'kotlin', 'xml', 'groovy', 'properties', 'toml','yaml'].includes(file.language ?? '')).map(file => fileKey(context, file.path)), paths: [...context.files.values()].map(file => [file.path, file.language, file.analyzable]), observed: [...context.fileInventory ?? []].sort(), directories: [...context.directoryInventory ?? []].sort() }, run);
+            await context.cache.unit(context, this.name, 'repository', { version: JVM_IMPORT_VERSION, symbols: JVM_SYMBOL_VERSION, spring:SPRING_VERSION, webflux:WEBFLUX_VERSION, syntax: STRUCTURE_VERSION, resolver: JVM_RESOLVER_VERSION, projects: JVM_PROJECT_VERSION, config: context.config, model: resolver.projects.describe(), availability: files.map(file => [file.path, resolver.facts(file.path)?.complete, context.graph.entities.get(file.id)?.metadata.analysis]), files: [...context.files.values()].filter(file => ['java', 'kotlin', 'xml', 'groovy', 'properties', 'toml','yaml'].includes(file.language ?? '')).map(file => fileKey(context, file.path)), paths: [...context.files.values()].map(file => [file.path, file.language, file.analyzable]), observed: [...context.fileInventory ?? []].sort(), directories: [...context.directoryInventory ?? []].sort() }, run);
         else
             await run();
     } };
