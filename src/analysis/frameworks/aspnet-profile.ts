@@ -2,7 +2,7 @@ import type { AnalysisContext } from '../../core/analyzer.js';
 import type { ApplicationConfig } from '../../core/config.js';
 import { evidence, type Evidence } from '../../core/graph.js';
 import type { DotnetProject } from '../resolution/dotnet-projects.js';
-export const ASPNET_VERSION = '1';
+export const ASPNET_VERSION = '2';
 export interface AspNetProfile {
     major?: 8 | 9 | 10;
     version?: string;

@@ -3,7 +3,7 @@ import { declarationHashes, evidence, type CallSites, type Evidence } from '../.
 import { fileAnalysis, type CsharpBindingFact, type CsharpDefinitionFact, type CsharpExpression, type CsharpImportFact, type CsharpScope, type CsharpSemanticFacts } from '../facts.js';
 import { CsharpResolver, type CsharpEnvironment, type CsharpSymbol } from '../resolution/csharp.js';
 import type { CsharpType } from './csharp-types.js';
-export const CSHARP_SYMBOL_VERSION = '2';
+export const CSHARP_SYMBOL_VERSION = '3';
 const typeKinds = new Set(['class', 'interface', 'struct', 'enum', 'record', 'type']), callableKinds = new Set(['method', 'constructor', 'function', 'lambda', 'top-level']);
 const primitives: Record<string, string> = { bool: 'System.Boolean', byte: 'System.Byte', sbyte: 'System.SByte', char: 'System.Char', decimal: 'System.Decimal', double: 'System.Double', float: 'System.Single', int: 'System.Int32', uint: 'System.UInt32', long: 'System.Int64', ulong: 'System.UInt64', short: 'System.Int16', ushort: 'System.UInt16', string: 'System.String', object: 'System.Object', void: 'System.Void' };
 interface Unit {
@@ -73,7 +73,7 @@ export class CsharpSymbols {
     private readonly conflictingContracts = new Set<string>();
     private readonly frameworkTypes = new Map<string, {
         names: Set<string>;
-        implicit: boolean;
+        implicit: Set<string>;
         proof: Evidence[];
     }>();
     private operations = 0;
@@ -403,7 +403,7 @@ export class CsharpSymbols {
         const profile = this.frameworkTypes.get(this.resolver.projects.selection(unit.file.path).project?.id ?? '');
         if (profile && value.kind === 'unknown' && value.reason.startsWith('No original lexical/namespace/import binding for ')) {
             const clean = name.replace(/^global::/, ''), head = clean.split('.')[0]!;
-            const candidates = profile.names.has(clean) ? [clean] : profile.implicit && !clean.includes('.') ? [...profile.names].filter(type => type.endsWith('.' + clean)) : [];
+            const candidates = profile.names.has(clean) ? [clean] : !clean.includes('.') ? [...profile.implicit].filter(type => type.endsWith('.' + clean)) : [];
             if (candidates.length === 1 && value.reason === 'No original lexical/namespace/import binding for ' + head)
                 value = { kind: 'external', names: candidates, proof: [...value.proof, ...profile.proof] };
         }
@@ -671,8 +671,8 @@ export class CsharpSymbols {
     }
     /** Reviewed framework type identities remain external and compilation-scoped;
      * original declarations, aliases and shadows always take precedence. */
-    registerFrameworkTypes(project: string, names: string[], implicit: boolean, proof: Evidence[]): void {
-        this.frameworkTypes.set(project, { names: new Set(names), implicit, proof });
+    registerFrameworkTypes(project: string, names: string[], implicit: boolean | string[], proof: Evidence[]): void {
+        this.frameworkTypes.set(project, { names: new Set(names), implicit: new Set(Array.isArray(implicit) ? implicit : implicit ? names : []), proof });
     }
     constant(file: string, scope: string, expression: CsharpExpression): {
         status: 'resolved';
@@ -773,7 +773,59 @@ export class CsharpSymbols {
         if (!unit || environment.status !== 'resolved')
             return unknown(environment.status === 'resolved' ? 'Original semantic syntax unavailable' : environment.reason);
         const gap = this.scopeGap(unit, scope);
-        return gap ? unknown(gap) : this.typeValue(unit, scope, type, site);
+        if (gap)
+            return unknown(gap);
+        const value = this.typeValue(unit, scope, type, site);
+        const outer = value.kind === 'unknown' && value.reason === 'Inherited member/type lookup is unreviewed' ? this.originalAttributeScope(unit, scope, type) : undefined;
+        return outer ? this.typeValue(unit, outer, type, site) : value;
+    }
+    /** A type/attribute name may fall through a reviewed source hierarchy only
+     * when no inherited original member can mask it. This does not infer calls
+     * or inherited exports. Controller/ControllerBase have no nested types. */
+    private originalAttributeScope(unit: Unit, scope: string, name: string): string | undefined {
+        const head = name.replace(/^global::/, '').split(/\.|::/)[0]!, seen = new Set<string>();
+        const check = (type: CsharpType): boolean => {
+            if (seen.has(type.id) || seen.size >= 32 || type.gaps.length)
+                return false;
+            seen.add(type.id);
+            if (this.resolver.types.members(type).some(member => [head, head + 'Attribute'].includes(member.syntax.name)))
+                return false;
+            for (const part of type.parts) {
+                const d = this.definition(part.file.path, part.syntax.key);
+                if (!d)
+                    return false;
+                for (const base of part.syntax.bases) {
+                    const value = this.typeValue(d.unit, d.fact.scope, base, d.fact);
+                    if (value.kind === 'type') {
+                        if (!check(value.type))
+                            return false;
+                    }
+                    else if (!(value.kind === 'external' && value.names.filter(name => ['Microsoft.AspNetCore.Mvc.Controller', 'Microsoft.AspNetCore.Mvc.ControllerBase', 'System.Object'].includes(name)).length === 1))
+                        return false;
+                }
+            }
+            return true;
+        };
+        for (const item of this.chain(unit, scope))
+            if (item.kind === 'type' && item.owner) {
+                const d = unit.definitions.get(item.owner), type = d?.symbol && this.resolver.types.type(d.symbol);
+                if (!d || !type || !check(type))
+                    return;
+                return this.originalAttributeScope(unit, d.fact.scope, name) ?? d.fact.scope;
+            }
+    }
+    attribute(file: string, scope: string, attribute: import('../facts.js').CsharpAttribute): CsharpValue {
+        const unit = this.units.get(file), environment = this.resolver.environment(file);
+        if (!unit || environment.status !== 'resolved')
+            return unknown(environment.status === 'resolved' ? 'Original attribute syntax unavailable' : environment.reason);
+        const gap = this.scopeGap(unit, scope);
+        if (gap)
+            return unknown(gap);
+        const expression: CsharpExpression = { ...attribute, kind: 'name', name: attribute.type }, value = this.attributeType(unit, scope, expression);
+        const original = this.typeValue(unit, scope, attribute.type, attribute), suffix = this.typeValue(unit, scope, attribute.type + 'Attribute', attribute);
+        const inherited = (v: CsharpValue) => v.kind === 'unknown' && v.reason === 'Inherited member/type lookup is unreviewed';
+        const outer = inherited(original) || inherited(suffix) ? this.originalAttributeScope(unit, scope, attribute.type) : undefined;
+        return outer ? this.attributeType(unit, outer, expression) : value;
     }
     private attributeType(unit: Unit, scope: string, expression: CsharpExpression): CsharpValue {
         if (expression.kind !== 'name')
@@ -787,6 +839,9 @@ export class CsharpSymbols {
         if (original.kind === 'type')
             return original;
         if (suffix.kind === 'type')
+            return suffix;
+        const profile = this.frameworkTypes.get(this.resolver.projects.selection(unit.file.path).project?.id ?? '');
+        if (original.kind === 'external' && suffix.kind === 'external' && !original.names.some(name => profile?.names.has(name) && name.endsWith('Attribute')) && suffix.names.some(name => profile?.names.has(name)))
             return suffix;
         return original.kind === 'external' ? original : suffix;
     }

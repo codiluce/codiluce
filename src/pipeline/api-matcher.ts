@@ -10,7 +10,7 @@ import {preferAspNetRoutes,matchAspNetHosts,reviewedAspNetRequest} from '../anal
 import { preferWebFluxRoutes } from '../analysis/routes/webflux-order.js';
 import { preferSpringRoutes, matchSpringParams } from '../analysis/routes/spring-patterns.js';
 export const apiMatcher: Analyzer = {
-  name: 'api-matcher', version: `${ANALYZER_VERSION}:12`,
+  name: 'api-matcher', version: `${ANALYZER_VERSION}:13`,
   async analyze(context: AnalysisContext): Promise<void> {
     const endpoints = [...context.graph.entities.values()].filter(entity => entity.type === 'api_endpoint');
     const appsById = new Map(context.config.applications.map(app => [context.applicationIds.get(app.name), app]));

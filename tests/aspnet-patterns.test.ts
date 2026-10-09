@@ -1,7 +1,39 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { compileAspNetPath, matchAspNetPath, matchAspNetHosts, validAspNetHost, reviewedAspNetRequest } from '../src/analysis/routes/aspnet-patterns.js';
+import { compileAspNetPath, compileAspNetMvcPath, matchAspNetPath, matchAspNetHosts, validAspNetHost, reviewedAspNetRequest } from '../src/analysis/routes/aspnet-patterns.js';
 const match = (template: string, url: string) => matchAspNetPath(compileAspNetPath(template, 10), url);
+test('MVC conventional required values remove only conflicting parameter defaults and constrain native captures', () => {
+    const pattern = compileAspNetMvcPath('/{controller=Home}/{action=Index}/{id?}', 10, { kind: 'conventional', requiredValues: { controller: 'Home', action: 'About' } })!;
+    assert.ok(matchAspNetPath(pattern, '/home/About'));
+    assert.ok(!matchAspNetPath(pattern, '/'));
+    assert.ok(!matchAspNetPath(pattern, '/Home'));
+    assert.ok(!matchAspNetPath(pattern, '/Home/Index'));
+    assert.deepEqual(pattern.aspnet!.precedence, [1, 1, 3]);
+    const other = compileAspNetMvcPath('/{controller=Home}/{action=Index}/{id?}', 10, { kind: 'conventional', requiredValues: { controller: 'Items', action: 'Index' } })!;
+    assert.ok(matchAspNetPath(other, '/Items'));
+    assert.ok(!matchAspNetPath(other, '/'));
+    assert.ok(!matchAspNetPath(other, '/Home'));
+});
+test('MVC dedicated routes require matching nonparameter defaults and never leak non-area actions', () => {
+    const pattern = compileAspNetMvcPath('/start/{id?}', 9, { kind: 'conventional', requiredValues: { controller: 'Home', action: 'Index', area: null }, defaults: { controller: 'Home', action: 'Index' } })!;
+    assert.ok(matchAspNetPath(pattern, '/start'));
+    assert.equal(compileAspNetMvcPath('/start/{id?}', 9, { kind: 'conventional', requiredValues: { controller: 'Home', action: 'About' }, defaults: { controller: 'Home', action: 'Index' } }), undefined);
+    assert.equal(compileAspNetMvcPath('/{area?}/{controller}/{action}', 10, { kind: 'conventional', requiredValues: { controller: 'Home', action: 'Index', area: null } }), undefined);
+    assert.equal(compileAspNetMvcPath('/{controller}/{action}', 10, { kind: 'conventional', requiredValues: { controller: 'Home', action: 'Index', area: null }, defaults: { area: 'Admin' } }), undefined);
+});
+test('MVC attribute reserved parameters select action values while ordinary nonparameter route values become defaults', () => {
+    const pattern = compileAspNetMvcPath('/api/{action}', 8, { kind: 'attribute', requiredValues: { controller: 'Items', action: 'Show', area: null } })!;
+    assert.ok(matchAspNetPath(pattern, '/api/show'));
+    assert.ok(!matchAspNetPath(pattern, '/api/other'));
+    assert.equal(compileAspNetMvcPath('/api/{action:int}', 8, { kind: 'attribute', requiredValues: { controller: 'Items', action: 'Show' } }), undefined);
+});
+test('MVC object constraints stay CLR regex candidates instead of borrowing inline policy names', () => {
+    const pattern = compileAspNetMvcPath('/{controller}/{action}/{id}', 10, { kind: 'conventional', requiredValues: { controller: 'Home', action: 'Index' }, constraints: { id: 'int' } })!;
+    assert.equal(pattern.status, 'partial');
+    assert.match(pattern.reason!, /CLR regex/);
+    assert.ok(matchAspNetPath(pattern, '/Home/Index/int'));
+    assert.ok(matchAspNetPath(pattern, '/Home/Index/12'));
+});
 test('ASP.NET inbound literals are ASCII case-insensitive and ignore one trailing separator', () => {
     assert.ok(match('/Items', '/items/'));
     assert.ok(!match('/items', '/items%00'));

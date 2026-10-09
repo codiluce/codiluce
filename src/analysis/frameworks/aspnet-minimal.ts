@@ -4,9 +4,10 @@ import { evidence, type Evidence } from '../../core/graph.js';
 import { fileAnalysis, type CsharpExpression, type CsharpStatement, type CsharpBindingFact } from '../facts.js';
 import type { CsharpSymbols, CsharpDefinition } from '../languages/csharp-symbols.js';
 import type { DotnetProject } from '../resolution/dotnet-projects.js';
-import { compileAspNetPath, validAspNetHost, type AspNetEndpointData } from '../routes/aspnet-patterns.js';
+import { compileAspNetPath, compileAspNetMvcPath, validAspNetHost, type AspNetEndpointData, type AspNetMvcPattern } from '../routes/aspnet-patterns.js';
 import type { RoutingContract } from '../routes/contracts.js';
 import { aspNetProfile, ASPNET_VERSION, type AspNetProfile } from './aspnet-profile.js';
+import { AspNetMvc, mvcFrameworkTypes, type MvcAction } from './aspnet-mvc.js';
 const BUILDER = 'Microsoft.AspNetCore.Builder.', HTTP = 'Microsoft.AspNetCore.Http.', ROUTING = 'Microsoft.AspNetCore.Routing.';
 const knownTypes = new Set([BUILDER + 'WebApplication', BUILDER + 'WebApplicationBuilder', ROUTING + 'RouteGroupBuilder', ROUTING + 'IEndpointRouteBuilder', BUILDER + 'IApplicationBuilder', HTTP + 'HttpContext', HTTP + 'IResult', HTTP + 'EndpointFilterInvocationContext', HTTP + 'EndpointFilterDelegate', 'System.Threading.Tasks.Task', 'System.Threading.Tasks.ValueTask']);
 const implicitNamespaces = [BUILDER.slice(0, -1), ROUTING.slice(0, -1), HTTP.slice(0, -1), 'Microsoft.AspNetCore.Hosting', 'Microsoft.Extensions.DependencyInjection', 'Microsoft.Extensions.Hosting', 'System.Threading.Tasks'];
@@ -48,7 +49,23 @@ interface Root {
     dispatchGaps: string[];
     routes: Registration[];
     proof: Evidence[];
+    mvc: MvcServices;
+    mvcSources: Map<string, MvcSource>;
+    mvcOrder: number;
 }
+interface MvcServices {
+    installed: boolean;
+    suppressAsync: boolean;
+    gaps: string[];
+    proof: Evidence[];
+}
+interface MvcSource {
+    conventions: Conventions;
+    actions: MvcAction[];
+    origin: Origin;
+    attributes: Registration[];
+}
+const mvcServices = (): MvcServices => ({ installed: false, suppressAsync: true, gaps: [], proof: [] });
 interface Registration {
     id: string;
     root: Root;
@@ -62,11 +79,28 @@ interface Registration {
     dispatchGaps: string[];
     proof: Evidence[];
     conditional: boolean;
+    mvc?: {
+        action: MvcAction;
+        pattern: AspNetMvcPattern;
+        routeName?: string;
+    };
+    inheritedConventions?: Conventions[];
+    registrationOrigin?: Origin;
+    nativeOrder?: number;
+    pack?: 'aspnet-mvc';
 }
 type Value = {
     kind: 'builder';
     id: string;
     gaps: string[];
+    proof: Evidence[];
+    mvc: MvcServices;
+    built?: boolean;
+} | {
+    kind: 'services' | 'mvc-builder';
+    builder: Extract<Value, {
+        kind: 'builder';
+    }>;
     proof: Evidence[];
 } | {
     kind: 'router';
@@ -77,6 +111,7 @@ type Value = {
     kind: 'endpoint';
     routes: Registration[];
     proof: Evidence[];
+    records?: Conventions[];
 } | {
     kind: 'constant';
     value: string | number | boolean | null | (string | number | boolean | null)[];
@@ -228,6 +263,11 @@ export class AspNetMinimal {
         if (expression.kind === 'call')
             return this.call(origin, state);
         if (expression.kind === 'member') {
+            if (expression.name === 'Services') {
+                const object = this.value({ ...origin, expression: expression.object }, state);
+                if (object.kind === 'builder')
+                    return { kind: 'services', builder: object, proof: [...object.proof, ...proof] };
+            }
             const constant = this.symbols.constant(origin.file, origin.scope, expression);
             if (constant.status === 'resolved')
                 return { kind: 'constant', value: constant.value, proof: constant.proof };
@@ -352,7 +392,7 @@ export class AspNetMinimal {
     private convention(target: Extract<Value, {
         kind: 'router' | 'endpoint';
     }>, origin: Origin, state: State, name: string, args: CsharpExpression[]): Value {
-        const records = target.kind === 'router' ? [target.group.conventions] : target.routes.map(route => route.conventions), values = args.map(expression => this.value({ ...origin, expression }, state)), strings = values.flatMap(value => this.strings(value) ?? []);
+        const records = target.kind === 'router' ? [target.group.conventions] : target.records ?? target.routes.map(route => route.conventions), values = args.map(expression => this.value({ ...origin, expression }, state)), strings = values.flatMap(value => this.strings(value) ?? []);
         for (const record of records) {
             record.proof.push(...this.proof(origin, 'Original endpoint/group ' + name + ' convention'));
             if (name === 'WithOrder') {
@@ -406,7 +446,7 @@ export class AspNetMinimal {
         if (expression.kind !== 'call')
             return unknown('Opaque call');
         const callee = expression.callee, args = expression.args.map(argument => argument.value), proof = this.proof(origin, 'Original minimal API call');
-        if (expression.args.some(argument => argument.modifier || argument.name)) {
+        if (expression.args.some(argument => argument.modifier || argument.name && !(callee.kind === 'member' && ['MapControllerRoute', 'MapAreaControllerRoute'].includes(callee.name)))) {
             this.rootGap(state, 'Named/ref arguments in startup need a reviewed invocation summary', true);
             return unknown('Unreviewed startup arguments', proof);
         }
@@ -416,12 +456,35 @@ export class AspNetMinimal {
                 const argv = args.length === 0 || args.length === 1 && args[0]?.kind === 'name' && args[0].name === 'args' && (state.definition.fact.kind === 'top-level' && !this.binding({ ...origin, expression: args[0] }) || state.definition.fact.name === 'Main' && state.definition.fact.parameters.some(parameter => parameter.name === 'args' && parameter.type === 'string[]'));
                 const gaps = [...state.gaps, ...argv ? [] : ['WebApplication factory has opaque options/arguments']], id = this.context.graph.id('aspnet-allocation', state.project.id, ...state.chain, this.siteKey(origin, state));
                 if (callee.name !== 'Create')
-                    return { kind: 'builder', id, gaps, proof: [...state.profile.proof, ...proof] };
+                    return { kind: 'builder', id, gaps, mvc: mvcServices(), proof: [...state.profile.proof, ...proof] };
                 return this.newRoot(id, origin, state, gaps, proof);
             }
             const receiver = this.value({ ...origin, expression: callee.object }, state);
-            if (receiver.kind === 'builder' && callee.name === 'Build' && !args.length)
-                return this.newRoot(receiver.id, origin, state, receiver.gaps, receiver.proof);
+            if (receiver.kind === 'builder' && callee.name === 'Build' && !args.length) {
+                if (receiver.built)
+                    receiver.gaps.push('Hosting builder is built more than once');
+                receiver.built = true;
+                return this.newRoot(receiver.id, origin, state, receiver.gaps, receiver.proof, receiver.mvc);
+            }
+            if (receiver.kind === 'services' || receiver.kind === 'mvc-builder') {
+                const mvc = receiver.builder.mvc;
+                if (receiver.builder.built)
+                    this.rootGap(state, 'Service collection changes after Build are unreviewed/invalid', true);
+                if (receiver.kind === 'services' && ['AddControllers', 'AddControllersWithViews', 'AddMvc', 'AddMvcCore'].includes(callee.name) && !this.extensions(origin, state, callee.name).length) {
+                    mvc.installed = true;
+                    mvc.proof.push(...proof);
+                    if (state.conditional)
+                        mvc.gaps.push('Conditional MVC service registration');
+                    if (callee.name === 'AddMvcCore')
+                        mvc.gaps.push('AddMvcCore needs explicit controller/action/binding service composition');
+                    if (args.length)
+                        this.mvcOptions(origin, state, args, mvc);
+                    return { kind: 'mvc-builder', builder: receiver.builder, proof: [...receiver.proof, ...proof] };
+                }
+                mvc.gaps.push('Unreviewed MVC/service/application-part configuration: ' + callee.name);
+                receiver.builder.gaps.push('Unreviewed service registration can customize routing or activation');
+                return receiver;
+            }
             if (receiver.kind === 'router' || receiver.kind === 'endpoint') {
                 const extensions = this.extensions(origin, state, callee.name);
                 if (extensions.length)
@@ -429,6 +492,8 @@ export class AspNetMinimal {
                 if (receiver.kind === 'endpoint')
                     return this.convention(receiver, origin, state, callee.name, args);
                 const root = receiver.root;
+                if (['MapControllers', 'MapControllerRoute', 'MapDefaultControllerRoute', 'MapAreaControllerRoute'].includes(callee.name))
+                    return this.mvcRegistration(receiver, origin, state, callee.name);
                 if (callee.name === 'MapGroup') {
                     const prefix = args.length === 1 ? this.value({ ...origin, expression: args[0]! }, state) : unknown('Invalid MapGroup arguments'), text = this.scalar(prefix);
                     const group: Group = { id: this.stable('aspnet-group', root.id, receiver.group.id, ...state.chain, this.siteKey(origin, state)), prefix: text ?? '/{**unresolved}', parent: receiver.group, proof: [...receiver.proof, ...prefix.proof, ...proof], conventions: conventions() };
@@ -513,8 +578,152 @@ export class AspNetMinimal {
         }
         return { kind: 'source', origin, proof };
     }
-    private newRoot(id: string, origin: Origin, state: State, gaps: string[], proof: Evidence[]): Value {
-        const group: Group = { id, prefix: '', proof, conventions: conventions() }, root: Root = { id, project: state.project, app: state.app, profile: state.profile, origin, group, served: false, started: false, gaps: [...gaps], dispatchGaps: [], routes: [], proof: [...proof] };
+    private mvcOptions(origin: Origin, state: State, args: CsharpExpression[], mvc: MvcServices): void {
+        const expression = args[0], definition = expression?.kind === 'lambda' ? this.symbols.definition(origin.file, expression.key) : undefined;
+        if (args.length !== 1 || !definition || definition.fact.parameters.length !== 1 || definition.fact.parameters[0]?.type || !definition.fact.statements?.length || definition.fact.statements.some(s => !['expression', 'return'].includes(s.kind)) || definition.unit.facts.calls.some(c => this.symbols.owns(definition, c.scope))) {
+            mvc.gaps.push('Opaque MVC options/application-model configuration');
+            return;
+        }
+        const writes = definition.unit.facts.writes.filter(w => this.symbols.owns(definition, w.scope)), parameter = definition.fact.parameters[0]!.name;
+        if (writes.length !== definition.fact.statements.length || writes.some(w => w.operator !== '=' || w.target.kind !== 'member' || w.target.object.kind !== 'name' || w.target.object.name !== parameter || w.target.name !== 'SuppressAsyncSuffixInActionNames' || w.value?.kind !== 'literal' || typeof w.value.value !== 'boolean')) {
+            mvc.gaps.push('Unreviewed MVC options can alter routing/discovery');
+            return;
+        }
+        mvc.suppressAsync = (writes.at(-1)!.value as Extract<CsharpExpression, {
+            kind: 'literal';
+        }>).value as boolean;
+        mvc.proof.push(...this.proof({ ...origin, expression: expression! }, 'Original literal SuppressAsyncSuffixInActionNames option'));
+    }
+    private mvcDictionary(origin: Origin, state: State, expression: CsharpExpression | undefined, proof: Evidence[], seen = new Set<string>()): Record<string, string | number | boolean | null> | undefined {
+        if (!expression || expression.kind === 'literal' && expression.value === null)
+            return {};
+        if (expression.kind === 'name') {
+            const binding = this.binding({ ...origin, expression }), key = binding && origin.file + ':' + binding.scope + ':' + binding.name;
+            if (!binding?.value || !key || seen.has(key) || seen.size > 32 || this.mutated({ ...origin, expression }, binding) || expression.start <= binding.end)
+                return;
+            seen.add(key);
+            return this.mvcDictionary({ ...origin, scope: binding.scope }, state, binding.value, proof, seen);
+        }
+        if (expression.kind !== 'object')
+            return;
+        proof.push(...this.proof({ ...origin, expression }, 'Original literal MVC route-value object'));
+        const result: Record<string, string | number | boolean | null> = Object.create(null);
+        for (const property of expression.properties) {
+            const key = property.name.toLowerCase(), value = this.value({ ...origin, expression: property.value }, state);
+            if (Object.hasOwn(result, key) || value.kind !== 'constant' || Array.isArray(value.value))
+                return;
+            proof.push(...value.proof);
+            result[key] = value.value;
+        }
+        return result;
+    }
+    private mvcRegistration(receiver: Extract<Value, {
+        kind: 'router';
+    }>, origin: Origin, state: State, name: string): Value {
+        const root = receiver.root, call = origin.expression as Extract<CsharpExpression, {
+            kind: 'call';
+        }>, proof = this.proof(origin, 'Original MVC endpoint datasource registration ' + name);
+        let source = root.mvcSources.get(receiver.group.id);
+        const create = (action: MvcAction, path: string, pattern: AspNetMvcPattern, order: number, routeName: string | undefined, record: Conventions, localGaps: string[]): Registration => {
+            const route: Registration = { id: this.stable('endpoint', root.id, receiver.group.id, 'mvc', action.controller.id, action.handler.id, path, action.methods === '*' ? '*' : action.methods.join('|')), root, group: receiver.group, origin: { file: action.handler.unit.file.path, scope: action.handler.fact.scope, expression: { ...action.handler.fact, kind: 'name', name: action.handler.fact.name } }, registrationOrigin: origin, path, methods: action.methods, handler: action.handler, conventions: record, inheritedConventions: [source!.conventions], gaps: [...state.gaps, ...action.gaps, ...localGaps], dispatchGaps: [...action.dispatchGaps, ...root.started ? ['MVC registration occurs after host startup'] : []], proof: [...receiver.proof, ...root.mvc.proof, ...proof, ...action.proof], conditional: state.conditional, mvc: { action, pattern, ...routeName !== undefined ? { routeName } : {} } };
+            route.nativeOrder = order;
+            root.routes.push(route);
+            return route;
+        };
+        if (!source) {
+            const model = new AspNetMvc(this.context, this.symbols).model(root.project, root.profile.major ?? 8, root.mvc.suppressAsync);
+            source = { conventions: conventions(), actions: model.actions, origin, attributes: [] };
+            root.mvcSources.set(receiver.group.id, source);
+            const gaps = [...root.mvc.gaps, ...model.gaps, ...root.mvc.installed ? [] : ['MapControllers/controller routes require original MVC service registration before Build']];
+            root.gaps.push(...gaps);
+            root.dispatchGaps.push(...gaps);
+            for (const action of source.actions)
+                if (action.path !== undefined) {
+                    const record = conventions();
+                    record.authorization = [...action.authorization];
+                    record.anonymous = action.anonymous;
+                    record.filters = [...action.filters];
+                    source.attributes.push(create(action, action.path, action.pattern, action.order, action.name, record, []));
+                }
+            if (gaps.length) {
+                root.routes.push({ id: this.stable('endpoint', root.id, receiver.group.id, 'mvc-unresolved'), root, group: receiver.group, origin, path: '/{**unresolved}', methods: '*', conventions: conventions(), gaps, dispatchGaps: ['Unreviewed MVC model/discovery may supply competing endpoints'], proof: [...proof, ...model.proof], conditional: state.conditional, pack: 'aspnet-mvc' });
+            }
+        }
+        if (name === 'MapControllers') {
+            if (call.args.length)
+                source.conventions.dispatchGaps.push('Unreviewed MapControllers overload');
+            source.conventions.proof.push(...proof);
+            if (state.conditional)
+                source.conventions.dispatchGaps.push('Conditional MVC datasource registration');
+            return { kind: 'endpoint', routes: source.attributes, records: [source.conventions], proof };
+        }
+        const parameters = name === 'MapAreaControllerRoute' ? ['name', 'areaName', 'pattern', 'defaults', 'constraints', 'dataTokens'] : ['name', 'pattern', 'defaults', 'constraints', 'dataTokens'], bound = new Map<string, CsharpExpression>(), gaps: string[] = [];
+        if (name === 'MapDefaultControllerRoute') {
+            if (call.args.length)
+                gaps.push('Unreviewed MapDefaultControllerRoute overload');
+        }
+        else
+            call.args.forEach((arg, index) => {
+                const key = arg.name ?? parameters[index];
+                if (!key || !parameters.includes(key) || bound.has(key))
+                    gaps.push('Unreviewed named/positional MVC route arguments');
+                else
+                    bound.set(key, arg.value);
+            });
+        const patternValue = bound.get('pattern') ? this.value({ ...origin, expression: bound.get('pattern')! }, state) : undefined, nameValue = bound.get('name') ? this.value({ ...origin, expression: bound.get('name')! }, state) : undefined;
+        const patternText = name === 'MapDefaultControllerRoute' ? '{controller=Home}/{action=Index}/{id?}' : patternValue ? this.scalar(patternValue) : undefined;
+        const routeName = name === 'MapDefaultControllerRoute' ? 'default' : nameValue ? this.scalar(nameValue) : undefined;
+        if (patternText === undefined || routeName === undefined)
+            gaps.push('Opaque/missing MVC conventional route pattern or name');
+        const valueProof: Evidence[] = [...patternValue?.proof ?? [], ...nameValue?.proof ?? []], defaults = this.mvcDictionary(origin, state, bound.get('defaults'), valueProof), constraints = this.mvcDictionary(origin, state, bound.get('constraints'), valueProof), dataTokens = this.mvcDictionary(origin, state, bound.get('dataTokens'), valueProof);
+        if (!defaults || !constraints || !dataTokens)
+            gaps.push('Opaque MVC route defaults/constraints/data tokens');
+        if (name === 'MapAreaControllerRoute') {
+            const area = bound.get('areaName') && this.scalar(this.value({ ...origin, expression: bound.get('areaName')! }, state));
+            if (area === undefined || !area)
+                gaps.push('Opaque/empty MVC area name');
+            else if (defaults) {
+                if (!/^[\x00-\x7f]*$/.test(area))
+                    gaps.push('Unicode MVC area constraint needs a reviewed ordinal case profile');
+                defaults.area = defaults.area ?? area;
+                if (constraints && constraints.area !== undefined && constraints.area !== null)
+                    gaps.push('Custom MapAreaControllerRoute area constraint');
+                else if (constraints)
+                    constraints.area = area;
+            }
+        }
+        const order = ++root.mvcOrder, record = conventions(), routes: Registration[] = [];
+        record.dispatchGaps.push(...gaps);
+        record.proof.push(...proof, ...valueProof);
+        for (const action of source.actions)
+            if (action.path === undefined) {
+                // MapAreaControllerRoute installs StringRouteConstraint on area;
+                // select it as a required-value filter, never as CLR regex.
+                if (name === 'MapAreaControllerRoute' && typeof constraints?.area === 'string' && constraints.area.toLowerCase() !== action.area?.toLowerCase() && !gaps.length)
+                    continue;
+                const actualConstraints = { ...constraints };
+                if (name === 'MapAreaControllerRoute')
+                    delete actualConstraints.area;
+                const pattern: AspNetMvcPattern = { kind: 'conventional', requiredValues: action.pattern.requiredValues, defaults: defaults ?? {}, constraints: actualConstraints };
+                const compiled = patternText !== undefined ? compileAspNetMvcPath(patternText, root.profile.major ?? 8, pattern) : undefined;
+                if (compiled?.reason?.includes('MVC explicit defaults conflict')) {
+                    root.gaps.push(compiled.reason);
+                    root.dispatchGaps.push(compiled.reason);
+                }
+                if (patternText !== undefined && !compiled)
+                    continue;
+                const route = create(action, patternText ?? '/{**unresolved}', pattern, order, routeName, record, gaps);
+                routes.push(route);
+                route.inheritedConventions = [source.conventions, { ...conventions(), authorization: action.authorization, anonymous: action.anonymous, filters: action.filters }];
+            }
+        if (gaps.length) {
+            root.dispatchGaps.push(...gaps);
+            root.routes.push({ id: this.stable('endpoint', root.id, 'mvc-route-gap', this.siteKey(origin, state)), root, group: receiver.group, origin, path: '/{**unresolved}', methods: '*', conventions: record, gaps, dispatchGaps: gaps, proof, conditional: state.conditional, pack: 'aspnet-mvc' });
+        }
+        return { kind: 'endpoint', routes, records: [record], proof };
+    }
+    private newRoot(id: string, origin: Origin, state: State, gaps: string[], proof: Evidence[], services: MvcServices = mvcServices()): Value {
+        const group: Group = { id, prefix: '', proof, conventions: conventions() }, root: Root = { id, project: state.project, app: state.app, profile: state.profile, origin, group, served: false, started: false, gaps: [...gaps], dispatchGaps: [], routes: [], proof: [...proof], mvc: { ...services, gaps: [...services.gaps], proof: [...services.proof] }, mvcSources: new Map(), mvcOrder: 0 };
         state.roots.push(root);
         return { kind: 'router', root, group, proof: [...proof, ...this.proof(origin, 'Original WebApplication allocation')] };
     }
@@ -601,25 +810,25 @@ export class AspNetMinimal {
         };
         const nameCounts = new Map<string, number>();
         for (const route of root.routes) {
-            const records = [...inherited(route.group).map(group => group.conventions), route.conventions], name = records.filter(record => record.name !== undefined).at(-1)?.name;
+            const records = [...inherited(route.group).map(group => group.conventions), ...route.inheritedConventions ?? [], route.conventions], name = records.filter(record => record.name !== undefined).at(-1)?.name;
             if (name)
                 nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
         }
         for (const route of root.routes.slice(0, 20000)) {
-            const groups = inherited(route.group), records = [...groups.map(group => group.conventions), route.conventions], prefix = groups.map(group => group.prefix).filter(Boolean).map(value => value.replace(/^~?\//, '').replace(/\/$/, '')).filter(Boolean).join('/'), local = route.path.replace(/^~?\//, '').replace(/\/$/, ''), path = root.profile.pathBase + '/' + [prefix, local].filter(Boolean).join('/'), pattern = compileAspNetPath(path, root.profile.major ?? 8);
+            const groups = inherited(route.group), records = [...groups.map(group => group.conventions), ...route.inheritedConventions ?? [], route.conventions], prefix = groups.map(group => group.prefix).filter(Boolean).map(value => value.replace(/^~?\//, '').replace(/\/$/, '')).filter(Boolean).join('/'), local = route.path.replace(/^~?\//, '').replace(/\/$/, ''), path = root.profile.pathBase + '/' + [prefix, local].filter(Boolean).join('/'), pattern = route.mvc ? compileAspNetMvcPath(path, root.profile.major ?? 8, route.mvc.pattern) ?? { ...compileAspNetPath(path, root.profile.major ?? 8), status: 'partial' as const, reason: 'MVC required values invalidate endpoint construction' } : compileAspNetPath(path, root.profile.major ?? 8);
             const gaps = [...root.profile.gaps, ...root.gaps, ...route.gaps, ...records.flatMap(record => record.gaps)], dispatchGaps = [...root.dispatchGaps, ...route.dispatchGaps, ...records.flatMap(record => record.dispatchGaps), ...pattern.status === 'partial' ? [pattern.reason!] : [], ...root.served ? [] : ['No original serving call reaches this WebApplication'], ...route.conditional ? ['Conditional endpoint registration'] : []];
             const authorization = records.flatMap(record => record.authorization), anonymous = records.some(record => record.anonymous), filters = records.flatMap(record => record.filters), name = records.filter(record => record.name !== undefined).at(-1)?.name;
             if (authorization.length && !anonymous)
                 gaps.push('Authorization continuation/user policy outcome is unresolved');
             if (name && (nameCounts.get(name) ?? 0) > 1)
                 gaps.push('Duplicate endpoint names can invalidate endpoint/link registration');
-            const conditions = [...new Set([...gaps, ...dispatchGaps])], data: AspNetEndpointData = { order: records.filter(record => record.order !== undefined).at(-1)?.order ?? 0, hosts: records.filter(record => record.hosts !== undefined).at(-1)?.hosts, registrationKnown: root.served && !route.conditional && !root.profile.gaps.length && !root.dispatchGaps.length, dispatchKnown: !dispatchGaps.length, authorization, anonymous, filters, ...name ? { name } : {} };
-            const proof = [...root.profile.proof, ...root.proof, ...route.proof, ...records.flatMap(record => record.proof)], contract: RoutingContract = { version: 1, pattern, methods: route.methods, executionContext: 'server', registration: { file: route.origin.file, line: route.origin.expression.range.startLine, receiver: root.id }, mounts: groups.filter(group => group.parent).map(group => ({ id: group.id, file: route.origin.file, line: group.proof.find(fact => fact.line)?.line ?? route.origin.expression.range.startLine, prefix: group.prefix })), middleware: filters, conditions, dispatch: { dialect: 'aspnet', root: root.id, order: data.order ?? 0 }, aspnet: data };
-            this.context.graph.contain({ id: route.id, type: 'api_endpoint', name: `${route.methods === '*' ? 'ANY' : route.methods.join('|')} ${path}`, path: route.origin.file, language: 'csharp', parentId: this.context.applicationIds.get(root.app.name), sourceRange: route.origin.expression.range, metadata: { framework: 'aspnetcore', frameworkPack: 'aspnet-minimal', packVersion: ASPNET_VERSION, frameworkVersion: root.profile.version ?? `${root.profile.major ?? 'unknown'}.0`, routePath: path, method: route.methods === '*' ? 'ANY' : route.methods.length === 1 ? route.methods[0] : 'ANY', routing: contract, executionContext: 'server', registration: conditions.length ? 'candidate' : 'selected', constraintsUnresolved: conditions.length > 0, handler: route.handler?.id, aspnetRoot: root.id }, evidence: proof });
+            const conditions = [...new Set([...gaps, ...dispatchGaps])], data: AspNetEndpointData = { order: records.filter(record => record.order !== undefined).at(-1)?.order ?? route.nativeOrder ?? 0, hosts: records.filter(record => record.hosts !== undefined).at(-1)?.hosts, registrationKnown: root.served && !route.conditional && !root.profile.gaps.length && !root.dispatchGaps.length, dispatchKnown: !dispatchGaps.length, authorization, anonymous, filters, ...name ? { name } : {} };
+            const proof = [...root.profile.proof, ...root.proof, ...route.proof, ...records.flatMap(record => record.proof)], contract: RoutingContract = { version: 1, pattern, methods: route.methods, executionContext: 'server', registration: { file: (route.registrationOrigin ?? route.origin).file, line: (route.registrationOrigin ?? route.origin).expression.range.startLine, receiver: root.id }, mounts: groups.filter(group => group.parent).map(group => ({ id: group.id, file: route.origin.file, line: group.proof.find(fact => fact.line)?.line ?? route.origin.expression.range.startLine, prefix: group.prefix })), middleware: filters, conditions, dispatch: { dialect: 'aspnet', root: root.id, order: data.order ?? 0 }, aspnet: data };
+            this.context.graph.contain({ id: route.id, type: 'api_endpoint', name: `${route.methods === '*' ? 'ANY' : route.methods.join('|')} ${path}`, path: route.origin.file, language: 'csharp', parentId: this.context.applicationIds.get(root.app.name), sourceRange: route.origin.expression.range, metadata: { framework: 'aspnetcore', frameworkPack: route.mvc ? 'aspnet-mvc' : route.pack ?? 'aspnet-minimal', packVersion: ASPNET_VERSION, frameworkVersion: root.profile.version ?? `${root.profile.major ?? 'unknown'}.0`, routePath: path, method: route.methods === '*' ? 'ANY' : route.methods.length === 1 ? route.methods[0] : 'ANY', routing: contract, executionContext: 'server', registration: conditions.length ? 'candidate' : 'selected', constraintsUnresolved: conditions.length > 0, handler: route.handler?.id, aspnetRoot: root.id, ...route.mvc ? { mvc: { controller: route.mvc.action.controller.id, controllerName: route.mvc.action.controllerName, actionName: route.mvc.action.actionName, area: route.mvc.action.area, routing: route.mvc.pattern.kind, routeName: route.mvc.routeName } } : {} }, evidence: proof });
             if (route.handler)
                 this.context.graph.relate(route.id, route.handler.id, 'handles', proof, { framework: 'aspnetcore', version: ASPNET_VERSION, conditions });
             for (const filter of filters)
-                this.context.graph.relate(route.id, filter, 'references', proof, { framework: 'aspnetcore', role: 'endpoint-filter', conditions });
+                this.context.graph.relate(route.id, filter, 'references', proof, { framework: 'aspnetcore', role: route.mvc ? 'mvc-filter' : 'endpoint-filter', conditions });
             for (const reason of conditions)
                 this.context.graph.diagnose({ analyzer: 'aspnet', severity: 'warning', code: 'aspnet-registration-gap', file: route.origin.file, line: route.origin.expression.range.startLine, entityId: route.id, reason });
             this.seenFiles.add(route.origin.file);
@@ -641,7 +850,7 @@ export class AspNetMinimal {
                 if (roots.length !== 1)
                     profile.gaps.push('ASP.NET hosting requires one selected original top-level/Main entrypoint');
                 if (!profile.gaps.length)
-                    this.symbols.registerFrameworkTypes(project.id, [...knownTypes], profile.implicitUsings, profile.proof);
+                    this.symbols.registerFrameworkTypes(project.id, [...knownTypes, ...mvcFrameworkTypes], profile.implicitUsings ? [...knownTypes] : [], profile.proof);
                 if (!entries.length && mains.some(definition => definition.fact.kind === 'method' && !['void', 'int', 'Task', 'System.Threading.Tasks.Task', 'global::System.Threading.Tasks.Task', 'Task<int>', 'System.Threading.Tasks.Task<int>', 'global::System.Threading.Tasks.Task<int>'].includes(definition.fact.returnType ?? '') || definition.fact.modifiers.includes('async') && ['void', 'int'].includes(definition.fact.returnType ?? '')))
                     profile.gaps.push('Original Main return signature is outside reviewed entrypoint selection');
                 if (project.properties.outputtype?.toLowerCase() === 'library' && !entries.length)
@@ -672,7 +881,7 @@ export class AspNetMinimal {
         for (const path of this.seenFiles) {
             const file = this.context.files.get(path), analysis = file && fileAnalysis(this.context.graph.entities.get(file.id)?.metadata.analysis);
             if (analysis)
-                analysis.features.framework = { status: 'partial', reason: 'Serving-reachable original minimal hosting, groups/source helpers/delegates and bounded ASP.NET 8–10 routing; MVC, middleware, custom metadata and runtime configuration retain gaps' };
+                analysis.features.framework = { status: 'partial', reason: 'Serving-reachable original minimal hosting, groups/source helpers/delegates and bounded ASP.NET 8–10 routing; MVC attributes/conventional routes and original actions; middleware, custom metadata and runtime configuration retain gaps' };
         }
     }
 }

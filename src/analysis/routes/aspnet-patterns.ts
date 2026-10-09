@@ -18,6 +18,13 @@ export type AspNetPart = {
 export interface AspNetPathData {
     segments: AspNetPart[][];
     precedence: number[];
+    requiredValues?: Record<string, string | null>;
+}
+export interface AspNetMvcPattern {
+    kind: 'attribute' | 'conventional';
+    requiredValues: Record<string, string | null>;
+    defaults?: Record<string, string | number | boolean | null>;
+    constraints?: Record<string, string | number | boolean | null>;
 }
 export interface AspNetEndpointData {
     order?: number;
@@ -154,6 +161,61 @@ function validPolicy(policy: AspNetParameter['policies'][number]): boolean {
         return policy.arguments.length === 0;
     return policy.arguments.length === count && policy.arguments.every(value => /^-?\d+$/.test(value) && Number.isSafeInteger(Number(value))) && (!['length', 'minlength', 'maxlength'].includes(policy.name) || policy.arguments.every(value => Number(value) >= 0)) && (!(policy.name === 'range' || policy.name === 'length' && count === 2) || Number(policy.arguments[0]) <= Number(policy.arguments[1]));
 }
+/** Native MVC required-value substitution. A conflicting parameter default is
+ * removed; a required nonparameter value must agree with the route's defaults.
+ * Attribute routing first fills nonparameter defaults from the action. */
+export function compileAspNetMvcPath(original: string, major: 8 | 9 | 10, mvc: AspNetMvcPattern): RoutePattern | undefined {
+    const pattern = compileAspNetPath(original, major), data = pattern.aspnet!;
+    const parameters = new Map(data.segments.flat().filter((part): part is AspNetParameter => part.kind === 'parameter').map(part => [part.name.toLowerCase(), part]));
+    const defaults = new Map(Object.entries(mvc.defaults ?? {}).map(([key, value]) => [key.toLowerCase(), value === null ? null : String(value)]));
+    const gap = (reason: string) => { pattern.status = 'partial'; pattern.reason = [pattern.reason, reason].filter(Boolean).join('; '); };
+    for (const part of parameters.values()) {
+        if (defaults.has(part.name.toLowerCase())) {
+            const original = Object.entries(mvc.defaults ?? {}).find(([name]) => name.toLowerCase() === part.name.toLowerCase())?.[1];
+            if (part.optional || part.default !== undefined && original !== part.default)
+                gap('MVC explicit defaults conflict with inline/optional route parameters');
+            part.default = defaults.get(part.name.toLowerCase()) ?? undefined;
+        }
+        else if (part.default !== undefined)
+            defaults.set(part.name.toLowerCase(), part.default);
+    }
+    for (const [key, value] of Object.entries(mvc.constraints ?? {})) {
+        // MVC object constraints reach Constraint(object): strings are CLR
+        // regex, unlike inline '{id:int}' parameter policy names.
+        gap(typeof value === 'string' ? 'Unreviewed MVC external CLR regex constraint: ' + key : 'Nonparameter/custom MVC constraint: ' + key);
+    }
+    const required: Record<string, string | null> = {};
+    for (const [key, originalValue] of Object.entries(mvc.requiredValues)) {
+        const name = key.toLowerCase(), parameter = parameters.get(name), value = originalValue || null;
+        if (mvc.kind === 'attribute') {
+            if (!value && parameter)
+                continue;
+            if (value && !parameter)
+                defaults.set(name, value);
+        }
+        if (!value) {
+            if (parameter || defaults.has(name) && !!defaults.get(name))
+                return;
+        }
+        else if (parameter) {
+            if (!ascii(value))
+                gap('Non-ASCII MVC required-value matching');
+            if (!accepts(parameter, value))
+                return;
+            if (parameter.default !== undefined && !equal(parameter.default, value))
+                delete parameter.default;
+        }
+        else if (!defaults.has(name) || !equal(defaults.get(name) ?? '', value))
+            return;
+        required[name] = value;
+    }
+    data.requiredValues = required;
+    data.precedence = data.segments.map(parts => {
+        const single = parts.length === 1 ? parts[0] : undefined;
+        return !single ? 2 : single.kind === 'literal' ? 1 : required[single.name.toLowerCase()] ? 1 : single.catchAll ? single.policies.length ? 4 : 5 : single.policies.length ? 2 : 3;
+    });
+    return pattern;
+}
 /** CLR Guid.TryParse N/D/B/P/X, including its documented compatibility prefixes.
  * ASCII subset only; request matching separately retains ordinal Unicode gaps. */
 function guid(original: string): boolean {
@@ -270,6 +332,11 @@ export function matchAspNetPath(pattern: RoutePattern, pathname: string, strictH
     if (raw.endsWith('/'))
         raw = raw.slice(0, -1);
     const values = raw ? raw.split('/') : [];
+    const required = data.requiredValues ?? {};
+    const matchesRequired = (parameter: AspNetParameter, value: string | undefined) => {
+        const expected = required[parameter.name.toLowerCase()];
+        return !expected || value !== undefined && (!ascii(value) || !ascii(expected) || equal(value, expected));
+    };
     let cursor = 0;
     for (const parts of data.segments) {
         const single = parts.length === 1 ? parts[0] : undefined;
@@ -281,11 +348,11 @@ export function matchAspNetPath(pattern: RoutePattern, pathname: string, strictH
             catch {
                 return false;
             }
-            return captured.includes('{*}') || accepts(single, captured || (single.default ?? ''));
+            return captured.includes('{*}') || accepts(single, captured || (single.default ?? '')) && matchesRequired(single, captured || single.default);
         }
         const encoded = values[cursor++];
         if (encoded === undefined) {
-            if (single?.kind === 'parameter' && (single.optional || single.default !== undefined) && (!single.policies.length || single.optional || accepts(single, single.default!)))
+            if (single?.kind === 'parameter' && (single.optional || single.default !== undefined) && matchesRequired(single, single.default) && (!single.policies.length || single.optional || accepts(single, single.default!)))
                 continue;
             return false;
         }
@@ -311,7 +378,7 @@ export function matchAspNetPath(pattern: RoutePattern, pathname: string, strictH
             continue;
         }
         if (single?.kind === 'parameter') {
-            if (!accepts(single, value))
+            if (!accepts(single, value) || !matchesRequired(single, value))
                 return false;
             continue;
         }
@@ -326,7 +393,7 @@ export function matchAspNetPath(pattern: RoutePattern, pathname: string, strictH
                 continue;
             return false;
         }
-        if (parts.some(part => part.kind === 'parameter' && captures!.has(part.name) && !accepts(part, captures!.get(part.name)!)))
+        if (parts.some(part => part.kind === 'parameter' && (captures!.has(part.name) && !accepts(part, captures!.get(part.name)!) || !matchesRequired(part, captures!.get(part.name) ?? part.default))))
             return false;
     }
     return cursor >= values.length;

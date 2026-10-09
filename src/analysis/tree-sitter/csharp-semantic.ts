@@ -100,6 +100,23 @@ export function extractCsharpSemantic(root: Node, declarations: DeclarationFact[
             const type = node.childForFieldName('type');
             return type ? { ...base, kind: 'new', type: name(type.text), args: args(node.childForFieldName('arguments') ?? undefined, depth + 1), ...parts.some(child => child.type === 'initializer_expression') ? { initializer: true } : {} } : unknown(node);
         }
+        if (node.type === 'anonymous_object_creation_expression') {
+            const properties: {
+                name: string;
+                value: CsharpExpression;
+            }[] = [], entries = node.children;
+            // This grammar exposes original name, '=' and value as siblings.
+            for (let i = 0; i < entries.length; i++) {
+                const item = entries[i]!;
+                if (!item.isNamed || item.type === 'comment')
+                    continue;
+                if (item.type !== 'identifier' || entries[i + 1]?.type !== '=' || !entries[i + 2]?.isNamed || properties.length >= 128)
+                    return unknown(node);
+                properties.push({ name: name(item.text), value: expression(entries[i + 2]!, depth + 1) });
+                i += 2;
+            }
+            return { ...base, kind: 'object', properties };
+        }
         if (['lambda_expression', 'anonymous_method_expression'].includes(node.type))
             return { ...base, kind: 'lambda', key: lambdaKey(node) };
         if (node.type === 'binary_expression') {
@@ -125,7 +142,7 @@ export function extractCsharpSemantic(root: Node, declarations: DeclarationFact[
             return [];
         if (node.type === 'implicit_parameter' || node.type === 'identifier')
             return [{ name: name(node.text), modifiers: [] }];
-        return children(node).filter(child => ['parameter', 'implicit_parameter', 'identifier'].includes(child.type)).map(parameter => { const identifier = parameter.childForFieldName('name') ?? (parameter.type === 'identifier' || parameter.type === 'implicit_parameter' ? parameter : undefined), type = parameter.childForFieldName('type'), value = children(parameter).find(child => child.id !== identifier?.id && child.id !== type?.id && !['modifier', 'attribute_list'].includes(child.type)); return { name: name(identifier?.text ?? ''), ...type ? { type: name(type.text) } : {}, modifiers: parameter.children.filter(child => ['ref', 'out', 'in', 'params', 'this', 'scoped'].includes(child.type) || child.type === 'modifier').map(child => child.text), ...parameter.children.some(child => child.type === '=') && value ? { default: expression(value) } : {} }; });
+        return children(node).filter(child => ['parameter', 'implicit_parameter', 'identifier'].includes(child.type)).map(parameter => { const identifier = parameter.childForFieldName('name') ?? (parameter.type === 'identifier' || parameter.type === 'implicit_parameter' ? parameter : undefined), type = parameter.childForFieldName('type'), value = children(parameter).find(child => child.id !== identifier?.id && child.id !== type?.id && !['modifier', 'attribute_list'].includes(child.type)); return { name: name(identifier?.text ?? ''), ...attributes(parameter).length ? { attributes: attributes(parameter) } : {}, ...type ? { type: name(type.text) } : {}, modifiers: parameter.children.filter(child => ['ref', 'out', 'in', 'params', 'this', 'scoped'].includes(child.type) || child.type === 'modifier').map(child => child.text), ...parameter.children.some(child => child.type === '=') && value ? { default: expression(value) } : {} }; });
     };
     const scope = (node: Node, kind: CsharpScope['kind'], parent?: CsharpScope, owner?: string, namespace = parent?.namespace ?? ''): CsharpScope => { const value: CsharpScope = { ...site(node), key: 'csharp-scope:' + scopeOrdinal++, kind, namespace, ...parent ? { parent: parent.key } : {}, ...owner ? { owner } : {}, gaps: [], ...kind === 'lambda' ? { deferred: true } : {} }; facts.scopes.push(value); nodeScopes.set(node.id, value); return value; };
     const fileScope = scope(root, 'file'), fileNamespace = root.namedChildren.find(child => child.type === 'file_scoped_namespace_declaration'), namespaceScope = fileNamespace ? scope(root, 'namespace', fileScope, undefined, name(fileNamespace.childForFieldName('name')?.text ?? '')) : undefined;
@@ -203,6 +220,14 @@ export function extractCsharpSemantic(root: Node, declarations: DeclarationFact[
     const walk = (node: Node, current: CsharpScope): void => {
         if (++nodes > 200000 || facts.calls.length + facts.references.length + facts.bindings.length > 50000) {
             facts.complete = false;
+            return;
+        }
+        if (node.type === 'global_attribute') {
+            for (const child of children(node).filter(child => child.type === 'attribute')) {
+                const annotation = attribute(child, node.children.find(child => child.type === 'assembly' || child.type === 'module')?.text);
+                (facts.attributes ??= []).push({ ...annotation, scope: current.key });
+                facts.references.push({ ...annotation, scope: current.key, expression: { ...annotation, kind: 'name', name: annotation.type }, kind: 'attribute' });
+            }
             return;
         }
         if (['comment', 'using_directive', 'file_scoped_namespace_declaration', 'attribute_list'].includes(node.type) || node.type.startsWith('preproc_'))

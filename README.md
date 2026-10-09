@@ -104,7 +104,12 @@ reviewed family; SDK implicit namespaces require original `ImplicitUsings` selec
 original startup method, and `dotnet.aspnet` records a runtime `version` or external deployment `pathBase`.
 Route contracts retain optional/default/catch-all/complex segments, reviewed constraints, order, hosts and explicit methods.
 GET does not imply HEAD. Authorization, filters, middleware, custom binding/metadata, changed/escaped hosting values and
-conditional startup retain gaps. MVC/controller routing remains the next subphase. No target .NET/MSBuild toolchain runs.
+conditional startup retain gaps. MVC now adds serving-reachable controller registration through original AddControllers,
+AddControllersWithViews/AddMvc and MapControllers/MapControllerRoute/MapDefaultControllerRoute/MapAreaControllerRoute calls.
+Original public controller/action discovery, compatible partial fragments, bounded source inheritance, attribute selectors,
+controller/action/area tokens, ActionName/Async naming, literal route defaults and native conventional order retain original
+handler IDs and source proof. Custom application parts, model/parameter/result metadata, filters, activation and executable
+MVC options remain candidates. Wider JVM/.NET qualification is next. No target .NET/MSBuild toolchain runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original
 component source locations. Module and instance scopes stay distinct; Astro server and client scripts retain separate contexts.
