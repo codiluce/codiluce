@@ -121,6 +121,8 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
       ['GET /package-mvc/{id:int}', 'aspnet-server/Controller.cs', 3],
       ['GET|HEAD /package-mvc-head', 'aspnet-server/Controller.Partial.cs', 3],
       ['ANY /package-mvc-conventional/{controller=Home}/{action=Index}/{id?}', 'aspnet-server/HomeController.cs', 3],
+      ['GET|HEAD /package-axum/{id}', 'axum-server/src/handlers.rs', 3],
+      ['GET /package-actix/{id:[0-9]+}', 'actix-server/src/handlers.rs', 3],
     ]) {
       const found = await (await fetch(`${url}api/entities?search=${encodeURIComponent(name)}&type=api_endpoint`)).json();
       const endpoint = found.items.find(item => item.name === name); assert.ok(endpoint);
@@ -128,6 +130,7 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
       const flow = await response.json(); assert.equal(flow.stages.handler, true, `${name} reaches its original server callback`);
       const handler = flow.nodes.find(item => item.kind === 'handler'); assert.ok(handler);
       assert.equal(handler.node.path, handlerPath); assert.equal(handler.node.sourceRange.startLine, line);
+      const originalSource = await (await fetch(`${url}api/source?entity=${handler.node.id}`)).json(); assert.equal(originalSource.file.path,handlerPath);assert.equal(originalSource.focus.startLine,line);
       assert.ok(flow.edges.some(edge => edge.kind === 'handles' && edge.hops.some(hop => hop.type === 'handles' && hop.to === handler.node.id)));
     }
     assert.equal((await fetch(`${url}licenses/fontsource-variable-nunito.txt`)).status, 200);
@@ -207,6 +210,16 @@ try {
   await writeFile(path.join(rustSource,'shared/src/lib.rs'),'mod model;pub use crate::model::{PackagedRustPublic,packaged_rust_handler};');
   await writeFile(path.join(rustSource,'shared/src/model.rs'),'// 😀 original\r\npub struct PackagedRustPublic;\r\npub fn packaged_rust_leaf(){}\r\npub fn packaged_rust_handler(){packaged_rust_leaf();}\r\nimpl PackagedRustPublic{pub fn callback(){packaged_rust_handler();}}');
   await writeFile(path.join(rustSource,'app/src/lib.rs'),'// 😀 original\r\nuse shared::PackagedRustPublic as Original;\r\nuse external::Binary;\r\nuse shared::packaged_rust_handler as direct;\r\npub fn packaged_rust_run(){direct();let cb=||direct();cb();Original::callback();}');
+  for(const [directory,dependencies,source,handler]of [
+    ['axum-server','http={package="axum",version="0.8.9"}\ntokio={version="1.53.2",features=["full"]}', 'use http::{Router,routing::get};mod handlers;use handlers::PackagedAxumHandler as handler;#[tokio::main]async fn main(){let child=Router::new().route("/{id}",get(handler));let app=Router::new().nest("/package-axum",child);let listener=tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();let future=http::serve(listener,app);future.await.unwrap();}', 'PackagedAxumHandler'],
+    ['actix-server','actix-web="4.15.0"','use actix_web::{web,App,HttpServer};mod handlers;#[actix_web::main]async fn main(){HttpServer::new(||App::new().service(web::scope("/package-actix").service(handlers::PackagedActixHandler))).bind("127.0.0.1:3000").unwrap().run().await.unwrap();}', 'PackagedActixHandler'],
+  ]){
+    await mkdir(path.join(repo,directory,'src'),{recursive:true});
+    await writeFile(path.join(repo,directory,'Cargo.toml'),`[package]\nname="${directory}"\nversion="1.0.0"\nedition="2021"\n[dependencies]\n${dependencies}\n`);
+    await writeFile(path.join(repo,directory,'src/main.rs'),source);
+    await writeFile(path.join(repo,directory,'src/handlers.rs'),`// 😀 original handler\r\nfn packaged_router_leaf(){}\r\n${directory==='actix-server'?'#[actix_web::get("/{id:[0-9]+}")]':''}pub async fn ${handler}(){packaged_router_leaf();}\r\n`);
+  }
+  await writeFile(path.join(repo,'frontend/rust-router-api.ts'),'export async function PackagedAxumRequest(){await fetch("https://packaged-axum.test/package-axum/42");}export async function PackagedActixRequest(){await fetch("https://packaged-actix.test/package-actix/42");}');
   const dotnetSource = path.join(repo, 'dotnet-source');
   for (const module of ['app', 'lib']) await mkdir(path.join(dotnetSource, module), {recursive: true});
   await writeFile(path.join(dotnetSource, 'lib/Library.csproj'), '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup></Project>');
@@ -364,6 +377,7 @@ class PackagedWebFluxKotlin {
   const webFluxApplication = applications.find(app => app.path === 'jvm-source/flux'); assert.ok(webFluxApplication); webFluxApplication.apiOrigins = ['https://packaged-webflux.test']; webFluxApplication.jvm = {spring:{stack:'webflux',componentScan:['packaged']}};
   const aspnetApplication=applications.find(app=>app.path==='aspnet-server');assert.ok(aspnetApplication);aspnetApplication.apiOrigins=['https://packaged-aspnet.test'];
   for(const app of applications.filter(app=>app.path.startsWith('rust-source')))app.rust={features:[],defaultFeatures:false};
+  for(const [directory,origin]of [['axum-server','https://packaged-axum.test'],['actix-server','https://packaged-actix.test']]){const app=applications.find(app=>app.path===directory);assert.ok(app);app.rust={features:[],defaultFeatures:false};app.apiOrigins=[origin];}
   await mkdir(path.join(repo, '.codiluce'), { recursive: true });
   await writeFile(path.join(repo, '.codiluce/config.yml'), JSON.stringify({ applications }));
   console.log('Starting the installed executable from a repository with spaces…');
@@ -426,6 +440,13 @@ class PackagedWebFluxKotlin {
   const rustLeaf=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',rustHandlerCalls[0].to],repo)).stdout);assert.equal(rustLeaf.name,'packaged_rust_leaf');assert.equal(rustLeaf.sourceRange.startLine,3);
   const rustClosure=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',rustDetail.metadata.rustCallOutcomes.find(c=>c.name==='cb').target],repo)).stdout);assert.equal(rustClosure.metadata.declarationKind,'closure');assert.equal(rustClosure.sourceRange.startLine,5);assert.ok(rustClosure.parentId);
   const rustBodyCalls=JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',rustClosure.id,'--type','calls'],repo)).stdout).items.filter(edge=>edge.from===rustClosure.id);assert.equal(rustBodyCalls[0].to,rustHandler.id);const rustClosureProof=JSON.parse((await run(process.execPath,[bin,'inspect','relation','--id',rustBodyCalls[0].id],repo)).stdout);assert.ok(rustClosureProof.evidence.some(p=>p.file==='rust-source/shared/src/model.rs'&&p.line===4));
+  for(const [name,directory,framework]of [['GET|HEAD /package-axum/{id}','axum-server','axum'],['GET /package-actix/{id:[0-9]+}','actix-server','actix-web']]){
+    const items=JSON.parse((await run(process.execPath,[bin,'inspect','entities','--search',name],repo)).stdout).items,endpoint=items.find(item=>item.name===name&&item.type==='api_endpoint');assert.ok(endpoint);
+    const detail=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',endpoint.id],repo)).stdout);assert.equal(detail.metadata.framework,framework);assert.ok(!detail.metadata.constraintsUnresolved);assert.ok(detail.metadata.routing.mounts.length);assert.ok(detail.evidence.some(fact=>fact.file===`${directory}/Cargo.toml`));
+    const handles=JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',endpoint.id,'--type','handles'],repo)).stdout).items;assert.equal(handles.length,1);const callback=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',handles[0].to],repo)).stdout);assert.equal(callback.path,`${directory}/src/handlers.rs`);assert.equal(callback.sourceRange.startLine,3);
+    const calls=JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',callback.id,'--type','calls'],repo)).stdout).items.filter(edge=>edge.from===callback.id&&edge.metadata.adapter==='rust-routers');assert.equal(calls.length,1);const leaf=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',calls[0].to],repo)).stdout);assert.equal(leaf.path,callback.path);assert.equal(leaf.sourceRange.startLine,2);
+    const requests=JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',endpoint.id,'--type','requests'],repo)).stdout).items;assert.equal(requests.length,1);const proof=JSON.parse((await run(process.execPath,[bin,'inspect','relation','--id',handles[0].id],repo)).stdout);assert.ok(proof.evidence.some(fact=>fact.file===callback.path&&fact.line===3));
+  }
   const csharpFiles = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'dotnet-source'], repo)).stdout).items;
   const csharpUse = csharpFiles.find(item => item.type === 'file' && item.path === 'dotnet-source/app/Use.cs'); assert.ok(csharpUse);
   const csharpDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', csharpUse.id], repo)).stdout);
@@ -600,7 +621,7 @@ class PackagedWebFluxKotlin {
   const djangoOptions = djangoEntities.find(entity => entity.type === 'api_endpoint' && entity.name === 'OPTIONS /package-django/class/');
   assert.ok(djangoOptions);
   assert.equal(JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', djangoOptions.id, '--type', 'handles'], repo)).stdout).items.length, 0, 'Django default OPTIONS carries no view handler');
-  const embeddedSymbols = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'Packaged'], repo)).stdout).items;
+  const embeddedSymbols = (await Promise.all(['PackagedEmbedded','PackagedVue','PackagedSvelte','PackagedAstro'].map(async prefix=>JSON.parse((await run(process.execPath,[bin,'inspect','entities','--search',prefix],repo)).stdout).items))).flat();
   const embeddedLeaf = embeddedSymbols.find(entity => entity.name === 'PackagedEmbeddedLeaf');
   assert.ok(embeddedLeaf);
   for (const [name, file, line, context] of [['PackagedVueSave', 'Widget.vue', 3, 'unknown'], ['PackagedSvelteShared', 'Counter.svelte', 2, 'unknown'], ['PackagedAstroLoad', 'Page.astro', 3, 'server'], ['PackagedAstroClick', 'Page.astro', 6, 'browser']]) {
@@ -706,7 +727,7 @@ class PackagedWebFluxKotlin {
   console.log('Checking npm exec against the tarball without a local installation…');
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
-  console.log('Package installation, seven grammars, workspace binding, original Rust Cargo/workspace/shared-crate imports, scoped aliases, direct functions/inherent methods/callbacks and source closure ownership, separate compilation identities and CRLF/emoji declaration/source proofs through CLI/API, original C# MSBuild project references/namespace/static/alias/global Using items, logical partial fragments, direct calls/lambdas and original declaration/source proofs, ASP.NET 8–10 minimal hosting/groups/source helpers/method arrays, MVC attributes/conventional routes/partial original actions and original handler leaves and request-flow projections through CLI/API, original Java/Kotlin Maven imports/static members/aliases/declaration proofs, scoped direct JVM calls and original Spring MVC/WebFlux Java/Kotlin handler/request flows through CLI/API, Ruby literal loads/scopes/original paths, namespace reopenings/direct methods/initializers and lazy Rails/Zeitwerk original autoload/inflection evidence, Rails resources/original controller actions/private callback references/HTTP request flows/source proofs and inflection license, dynamic/conditional gaps, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin/Echo 4–5/Fiber 2–3/Gorilla router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
+  console.log('Package installation, seven grammars, workspace binding, original Rust Cargo/workspace/shared-crate imports, scoped aliases, direct functions/inherent methods/callbacks and source closure ownership, separate compilation identities and CRLF/emoji declaration/source proofs through CLI/API, Axum 0.7/0.8 and Actix Web 4 native routes/mounts/attributes/original handlers/leaves/request flows through CLI/API, original C# MSBuild project references/namespace/static/alias/global Using items, logical partial fragments, direct calls/lambdas and original declaration/source proofs, ASP.NET 8–10 minimal hosting/groups/source helpers/method arrays, MVC attributes/conventional routes/partial original actions and original handler leaves and request-flow projections through CLI/API, original Java/Kotlin Maven imports/static members/aliases/declaration proofs, scoped direct JVM calls and original Spring MVC/WebFlux Java/Kotlin handler/request flows through CLI/API, Ruby literal loads/scopes/original paths, namespace reopenings/direct methods/initializers and lazy Rails/Zeitwerk original autoload/inflection evidence, Rails resources/original controller actions/private callback references/HTTP request flows/source proofs and inflection license, dynamic/conditional gaps, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin/Echo 4–5/Fiber 2–3/Gorilla router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

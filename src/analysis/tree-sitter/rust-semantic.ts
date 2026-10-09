@@ -4,7 +4,7 @@ import type { SourceText } from '../source-map.js';
 import { rustName, rustString } from '../languages/rust-cfg.js';
 /** Original syntax only. No compiler type inference, macro expansion or target execution. */
 export function extractRustSemantic(root: Node, declarations: DeclarationFact[], source: SourceText, syntax: RustSyntaxFacts): RustSemanticFacts {
-    const facts: RustSemanticFacts = { definitions: [], impls: [], bindings: [], references: [], calls: [], writes: [], returns: [], complete: syntax.complete, gaps: [] };
+    const facts: RustSemanticFacts = { definitions: [], impls: [], bindings: [], references: [], calls: [], statements: [], writes: [], returns: [], complete: syntax.complete, gaps: [] };
     const byStart = new Map(declarations.map(d => [d.start, d])), byScope = new Map(syntax.scopes.map(s => [s.key, s]));
     let visits = 0;
     const site = (node: Node): RustSite => ({ start: node.startIndex, end: node.endIndex, range: source.range(node.startIndex, node.endIndex) });
@@ -16,7 +16,10 @@ export function extractRustSemantic(root: Node, declarations: DeclarationFact[],
     };
     const visibility = (node: Node) => node.namedChildren.find(n => n.type === 'visibility_modifier')?.text.replace(/\s+/g, '') ?? 'private';
     const typeParameters = (node: Node) => node.childForFieldName('type_parameters')?.namedChildren.map(n => n.childForFieldName('name')?.text).filter((name): name is string => !!name).map(rustName) ?? [];
-    const scopeAt = (node: Node, current: RustScopeFact) => syntax.scopes.find(s => s.start === node.startIndex && s.end === node.endIndex && s.kind !== 'file') ?? current;
+    const scopeAt = (node: Node, current: RustScopeFact) => {
+        const kinds:RustScopeFact['kind'][]=node.type==='block'?['block']:['closure_expression','async_block'].includes(node.type)?['lambda']:['if_expression','while_expression','for_expression','match_arm'].includes(node.type)?['control']:node.type==='impl_item'?['impl']:node.type==='trait_item'?['trait']:['declaration_list','enum_variant_list'].includes(node.type)?['module','enum']:[];
+        return syntax.scopes.find(scope=>kinds.includes(scope.kind)&&scope.start===node.startIndex&&scope.end===node.endIndex)??current;
+    };
     const textPath = (node: Node) => { const text = node.text.replace(/\s+/g, ''), valid = /^(?:::)?(?:r#)?[_\p{ID_Start}][_\p{ID_Continue}]*(?:::(?:r#)?[_\p{ID_Start}][_\p{ID_Continue}]*)*$/u.test(text); return valid ? { segments: text.split('::').filter(Boolean).map(rustName), absolute: text.startsWith('::') } : undefined; };
     function type(node: Node | null | undefined, depth = 0): RustTypeFact | undefined {
         if (!node)
@@ -61,8 +64,8 @@ export function extractRustSemantic(root: Node, declarations: DeclarationFact[],
             return { ...at, kind: 'reference', value: next(node.childForFieldName('value')), mutable: node.namedChildren.some(n => n.type === 'mutable_specifier') };
         if (node.type === 'unary_expression' && node.text.trimStart().startsWith('*'))
             return { ...at, kind: 'deref', value: next(node.namedChildren.at(-1)) };
-        if (['await_expression', 'parenthesized_expression'].includes(node.type))
-            return { ...at, kind: node.type === 'await_expression' ? 'await' : 'paren', value: next(node.namedChildren[0]) };
+        if (['await_expression', 'parenthesized_expression', 'try_expression'].includes(node.type))
+            return { ...at, kind: node.type === 'await_expression' ? 'await' : node.type === 'try_expression' ? 'try' : 'paren', value: next(node.namedChildren[0]) };
         if (node.type === 'type_cast_expression')
             return { ...at, kind: 'cast', value: next(node.childForFieldName('value')), type: type(node.childForFieldName('type'))! };
         if (node.type === 'struct_expression')
@@ -173,6 +176,8 @@ export function extractRustSemantic(root: Node, declarations: DeclarationFact[],
         if (['attribute_item', 'inner_attribute_item', 'comment', 'line_comment', 'block_comment', 'use_declaration', 'extern_crate_declaration', 'macro_definition', 'macro_invocation'].includes(node.type))
             return;
         const scope = scopeAt(node, current), attrs = [...inherited, ...attributes(node)];
+        if (node.type === 'expression_statement' && node.namedChildren[0])
+            facts.statements.push({ ...site(node), scope: scope.key, expression: expression(node.namedChildren[0]), attributes: attrs });
         if (node.type === 'impl_item') {
             const selected = type(node.childForFieldName('type'));
             if (selected)
@@ -261,10 +266,9 @@ export function extractRustSemantic(root: Node, declarations: DeclarationFact[],
             return;
         }
         if (['assignment_expression', 'compound_assignment_expr'].includes(node.type)) {
-            const left = node.childForFieldName('left');
+            const left = node.childForFieldName('left'), right = node.childForFieldName('right');
             if (left)
-                facts.writes.push({ ...site(node), scope: scope.key, target: expression(left), kind: 'assignment' });
-            const right = node.childForFieldName('right');
+                facts.writes.push({ ...site(node), scope: scope.key, target: expression(left), ...right && node.type === 'assignment_expression' ? { value: expression(right) } : {}, kind: 'assignment' });
             if (right)
                 walk(right, scope, attrs);
             return;

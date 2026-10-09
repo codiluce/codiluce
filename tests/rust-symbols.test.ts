@@ -234,3 +234,6 @@ test('Inactive local cfg bindings leave outer names available and explicit boxed
   const g = await index(await repo('fn cb(){}struct State;impl State{fn run(self:Box<Self>){self.run();}}fn entry(){#[cfg(feature="api")]let cb=||{};cb();}', {}, '[features]\napi=[]'));
   assert.equal(call(g, 'cb')[0]!.target, entity(g, 'cb').id); assert.equal(call(g, 'self.run')[0]!.status, 'unresolved');
 });
+test('Tail async expression-statement wrappers preserve source closure ownership without containment cycles',async()=>{
+  const g=await index(await repo('fn leaf(){}fn entry(){let factory=||{async{leaf();}};let inline=||async{leaf();};}')),closures=g.entities.filter(entity=>entity.metadata.declarationKind==='closure'),blocks=g.entities.filter(entity=>entity.metadata.declarationKind==='async');assert.equal(closures.length,2);assert.equal(blocks.length,2);assert.ok(blocks.every(block=>closures.some(closure=>closure.id===block.parentId)));assert.ok(blocks.every(block=>g.relations.some(relation=>relation.type==='calls'&&relation.from===block.id&&g.entities.find(entity=>entity.id===relation.to)?.name==='leaf')));assert.ok(blocks.every(block=>block.id!==block.parentId));
+});

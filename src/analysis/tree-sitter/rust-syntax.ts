@@ -4,7 +4,7 @@ import type { SourceText } from '../source-map.js';
 import { rustName, rustIdentifier } from '../languages/rust-cfg.js';
 import { extractRustSemantic } from './rust-semantic.js';
 export function extractRust(root: Node, declarations: DeclarationFact[], source: SourceText): RustSyntaxFacts {
-    const facts: RustSyntaxFacts = { scopes: [], items: [], imports: [], complete: !root.hasError, gaps: [] };
+    const facts: RustSyntaxFacts = { scopes: [], items: [], imports: [], macros: [], complete: !root.hasError, gaps: [] };
     let visits = 0;
     const byStart = new Map(declarations.map(item => [item.start, item]));
     const site = (node: Node) => ({ start: node.startIndex, end: node.endIndex, range: source.range(node.startIndex, node.endIndex) });
@@ -79,6 +79,8 @@ export function extractRust(root: Node, declarations: DeclarationFact[], source:
         if (['attribute_item', 'inner_attribute_item', 'comment', 'line_comment', 'block_comment'].includes(node.type))
             return;
         if (node.type === 'macro_invocation') {
+            const head=node.text.slice(0,node.text.indexOf('!')).replace(/\s+/g,''),tree=node.namedChildren.find(child=>child.type==='token_tree');
+            facts.macros!.push({...site(node),scope:current.key,path:head.split('::').filter(Boolean).map(rustName),tokens:tree?.text.slice(0,8193)??'',attributes:attributes(node)});
             current.gaps.push('Rust macro invocation can supply generated/scoped items; expansion is unavailable');
             return;
         }

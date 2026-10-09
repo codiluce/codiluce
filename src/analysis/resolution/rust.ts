@@ -87,12 +87,15 @@ export class RustResolver {
     readonly membership = new Map<string, RustScope[]>();
     private readonly loading = new Set<string>();
     private readonly resolved = new Map<string, RustResolution>();
-    constructor(readonly context: AnalysisContext) {
+    constructor(readonly context: AnalysisContext, private readonly attributeReader?: (attributes: string[], compilation: RustCompilation, file: string, scope: string) => RustAttributes, private readonly scopeGapReader?: (fact: RustScopeFact, compilation: RustCompilation, file: string) => string[]) {
         this.projects = new RustProjects(context);
         for (const compilation of this.projects.compilations)
             this.root(compilation);
     }
     syntax(file: string): RustSyntaxFacts | undefined { return this.context.syntax?.get(file)?.facts.rust; }
+    attributes(attributes: string[], compilation: RustCompilation, file: string, scope: string): RustAttributes {
+        return this.attributeReader?.(attributes, compilation, file, scope) ?? rustAttributes(attributes, compilation.environment);
+    }
     private proof(file: string, line: number, text: string): Evidence[] { return [{ ...evidence('syntax', 'rust-imports', file, line, text), analyzerVersion: RUST_RESOLVER_VERSION }]; }
     private root(compilation: RustCompilation): RustScope | undefined {
         const known = this.roots.get(compilation.id);
@@ -108,13 +111,13 @@ export class RustResolver {
         return result;
     }
     private load(comp: RustCompilation, file: ScannedFile, fact: RustScopeFact, parent: RustScope | undefined, logicalPath: string[], directory: string, active: RustTruth, gaps: string[], seen: Set<string>, pathBase?: string): RustScope {
-        const syntax = this.syntax(file.path)!, attrs = rustAttributes(fact.attributes, comp.environment), selected = rustAnd([active, attrs.active]);
-        const scope: RustScope = { id: this.context.graph.id('rust-scope', comp.id, file.path, fact.key, logicalPath.join('::')), fact, file, compilation: comp, ...(parent ? { parent } : {}), module: undefined!, logicalPath, directory, pathBase: pathBase ?? (fact.kind === 'file' ? path.posix.dirname(file.path) : directory), active: selected, gaps: unique([...gaps, ...fact.gaps, ...attrs.gaps, ...!syntax.complete ? syntax.gaps : []]), attributes: attrs, items: [], imports: [] };
+        const syntax = this.syntax(file.path)!, attrs = this.attributes(fact.attributes, comp, file.path, fact.owner ? fact.parent ?? fact.key : fact.key), selected = rustAnd([active, attrs.active]);
+        const scope: RustScope = { id: this.context.graph.id('rust-scope', comp.id, file.path, fact.key, logicalPath.join('::')), fact, file, compilation: comp, ...(parent ? { parent } : {}), module: undefined!, logicalPath, directory, pathBase: pathBase ?? (fact.kind === 'file' ? path.posix.dirname(file.path) : directory), active: selected, gaps: unique([...gaps, ...this.scopeGapReader?.(fact,comp,file.path)??fact.gaps, ...attrs.gaps, ...!syntax.complete ? syntax.gaps : []]), attributes: attrs, items: [], imports: [] };
         scope.module = ['file', 'module'].includes(fact.kind) ? scope : parent!.module;
         if (['file', 'module'].includes(fact.kind) && parent)
             scope.moduleParent = parent.module;
         for (const item of syntax.items.filter(i => i.scope === fact.key)) {
-            const attributes = rustAttributes(item.attributes, comp.environment);
+            const attributes = this.attributes(item.attributes, comp, file.path, fact.key);
             if (rustAnd([selected, attributes.active]) !== false)
                 scope.gaps.push(...attributes.gaps.filter(gap => gap.startsWith('Unreviewed Rust attribute')));
         }
@@ -127,12 +130,12 @@ export class RustResolver {
         }
         for (const [index, import_] of syntax.imports.entries())
             if (import_.scope === fact.key) {
-                const attributes = rustAttributes(import_.attributes, comp.environment), site: RustImportSite = { scope, fact: import_, active: rustAnd([selected, attributes.active]), gaps: unique([...scope.gaps, ...import_.gaps, ...attributes.gaps]), index };
+                const attributes = this.attributes(import_.attributes, comp, file.path, fact.key), site: RustImportSite = { scope, fact: import_, active: rustAnd([selected, attributes.active]), gaps: unique([...scope.gaps, ...import_.gaps, ...attributes.gaps]), index };
                 scope.imports.push(site);
                 this.imports.push(site);
             }
         for (const item of syntax.items.filter(item => item.scope === fact.key)) {
-            const attributes = rustAttributes(item.attributes, comp.environment), itemActive = rustAnd([selected, attributes.active]), id = this.context.syntax?.get(file.path)?.declarations.get(item.key);
+            const attributes = this.attributes(item.attributes, comp, file.path, fact.key), itemActive = rustAnd([selected, attributes.active]), id = this.context.syntax?.get(file.path)?.declarations.get(item.key);
             if (!id) {
                 scope.gaps.push('Original Rust declaration identity is unavailable');
                 continue;

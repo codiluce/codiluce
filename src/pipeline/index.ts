@@ -37,9 +37,10 @@ import {ASPNET_VERSION} from '../analysis/frameworks/aspnet-profile.js';
 import { csharpAnalyzer } from '../analysis/languages/csharp.js';
 import { rustAnalyzer } from '../analysis/languages/rust.js';
 import {rustSymbolsAnalyzer} from '../analysis/languages/rust-symbols.js';
+import {rustRoutersAnalyzer} from '../analysis/frameworks/rust-routers.js';
 
 const execute = promisify(execFile);
-export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, structureAnalyzer, pythonAnalyzer, goAnalyzer, rubyAnalyzer, jvmAnalyzer, csharpAnalyzer, rustAnalyzer, rustSymbolsAnalyzer, embeddedAnalyzer, typescriptAnalyzer, typescriptServicesRelease, laravelAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
+export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, structureAnalyzer, pythonAnalyzer, goAnalyzer, rubyAnalyzer, jvmAnalyzer, csharpAnalyzer, rustAnalyzer, rustSymbolsAnalyzer, rustRoutersAnalyzer, embeddedAnalyzer, typescriptAnalyzer, typescriptServicesRelease, laravelAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
 export interface IndexOptions {
   stateDirectory?: string; config?: AtlasConfig; onProgress?: (name: string) => void;
   /** Index a materialized commit tree: Git is not consulted and the run records this commit, clean. */

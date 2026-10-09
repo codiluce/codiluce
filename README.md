@@ -123,7 +123,17 @@ configuration retain gaps. P9a import support has conformance, installed CLI/API
 Rust now adds compilation-scoped references and direct source function/inherent-method calls, immutable callback aliases,
 original closure/async-block ownership and bounded source callback-return summaries. Original paths, caller/target IDs and
 proof remain visible through the CLI/API and warm/history replay. Trait/generic dispatch, arbitrary receiver coercion,
-mutable callbacks and compiler/borrow inference retain gaps. Axum/Actix/Rocket/Warp routing remains P9c–P9e work.
+mutable callbacks and compiler/borrow inference retain gaps.
+P9c now adds initial Axum 0.7/0.8 and Actix Web 4 packs under original registry/version/feature identities. Selected bin
+entries follow bounded source factories/helpers, source closures, consuming builders and awaited server futures.
+Axum route/method routers, nest/merge, fallback, HEAD and layer order retain native raw-path and path-before-method rules.
+Actix App/scope/resource/service/configure, literal HTTP service attributes, empty resource paths and inherited defaults
+retain ordered resource/route guards and selective percent decoding. Original endpoints, callbacks, handler leaves,
+Cargo/mount/serving proof and request flows survive installed CLI/API and cache/history replay. Wide backend defaults
+require an application boundary before competing with frontend requests. Unreviewed versions, macros, custom regexes,
+guards, middleware, conditional setup and generic/native trait inference retain gaps. Literal log 0.4 messages and the
+default Actix Logger have narrow reviewed contracts. See the [unchanged Actix source profiles](docs/rust-router-source-qualification.html).
+Rocket/Warp remains P9d; broader source/version/target/performance qualification remains P9e/P10.
 No Cargo/rustc or target code runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original

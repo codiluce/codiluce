@@ -167,7 +167,7 @@ export type RustExpression=RustSite & (
   | {kind:'closure'|'async';key:string}
   | {kind:'literal';value:string|number|boolean|null}
   | {kind:'reference';value:RustExpression;mutable:boolean}
-  | {kind:'deref'|'await'|'paren';value:RustExpression}
+  | {kind:'deref'|'await'|'paren'|'try';value:RustExpression}
   | {kind:'cast';value:RustExpression;type:RustTypeFact}
   | {kind:'struct';type:RustTypeFact;fields:{name:string;value:RustExpression}[]}
   | {kind:'tuple'|'array';values:RustExpression[]}
@@ -178,8 +178,8 @@ export interface RustParameter extends RustSite {name?:string;type?:RustTypeFact
 export interface RustDefinitionFact extends RustSite {key:string;name:string;kind:string;scope:string;body?:string;parameters:RustParameter[];returnType?:RustTypeFact;value?:RustExpression;visibility:string;attributes:string[];generics:boolean;typeParameters?:string[];async:boolean;impl?:string;parent?:string;gaps:string[]}
 export interface RustImplFact extends RustSite {key:string;scope:string;parent:string;type:RustTypeFact;trait?:RustTypeFact;generics:boolean;typeParameters?:string[];attributes:string[];gaps:string[]}
 export interface RustBindingFact extends RustSite {name:string;scope:string;activation:number;kind:'parameter'|'local'|'pattern';type?:RustTypeFact;value?:RustExpression;mutable:boolean;attributes:string[];gaps:string[]}
-export interface RustSemanticFacts {definitions:RustDefinitionFact[];impls:RustImplFact[];bindings:RustBindingFact[];references:(RustSite&{scope:string;expression:RustExpression;kind:'type'|'value';attributes:string[]})[];calls:(RustSite&{scope:string;expression:RustExpression&{kind:'call'};attributes:string[];awaited:boolean})[];writes:(RustSite&{scope:string;target:RustExpression;kind:'assignment'|'mutable-borrow'})[];returns:(RustSite&{scope:string;owner:string;value:RustExpression;conditional:boolean})[];complete:boolean;gaps:string[]}
-export interface RustSyntaxFacts {scopes:RustScopeFact[];items:RustItemFact[];imports:RustImportFact[];complete:boolean;gaps:string[];semantic?:RustSemanticFacts}
+export interface RustSemanticFacts {definitions:RustDefinitionFact[];impls:RustImplFact[];bindings:RustBindingFact[];references:(RustSite&{scope:string;expression:RustExpression;kind:'type'|'value';attributes:string[]})[];calls:(RustSite&{scope:string;expression:RustExpression&{kind:'call'};attributes:string[];awaited:boolean})[];statements:(RustSite&{scope:string;expression:RustExpression;attributes:string[]})[];writes:(RustSite&{scope:string;target:RustExpression;value?:RustExpression;kind:'assignment'|'mutable-borrow'})[];returns:(RustSite&{scope:string;owner:string;value:RustExpression;conditional:boolean})[];complete:boolean;gaps:string[]}
+export interface RustSyntaxFacts {scopes:RustScopeFact[];items:RustItemFact[];imports:RustImportFact[];macros?: (RustSite&{scope:string;path:string[];tokens:string;attributes:string[]})[];complete:boolean;gaps:string[];semantic?:RustSemanticFacts}
 export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts; csharp?: CsharpSyntaxFacts; rust?:RustSyntaxFacts }
 export interface ImportBinding { imported: string; local: string; typeOnly?: boolean }
 export type ImportOutcome =

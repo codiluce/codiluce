@@ -125,7 +125,7 @@ export class RustSymbols {
         return result;
     }
     private proof(file: string, site: RustSite, reason: string): Evidence[] { return [{ ...evidence('syntax', 'rust-symbols', file, site.range.startLine, reason), analyzerVersion: RUST_SYMBOL_VERSION, endLine: site.range.endLine }]; }
-    private attributes(scope: RustScope, attributes: string[]) { const attrs = rustAttributes(attributes, scope.compilation.environment); return { active: rustAnd([scope.active, attrs.active]), gaps: unique([...scope.gaps, ...attrs.gaps]) }; }
+    private attributes(scope: RustScope, attributes: string[]) { const attrs = this.resolver.attributes(attributes, scope.compilation, scope.file.path, scope.fact.key); return { active: rustAnd([scope.active, attrs.active]), gaps: unique([...scope.gaps, ...attrs.gaps]) }; }
     private definitionScope(def: RustDefinition, from: RustScope): RustScope | undefined { return this.scope(def.unit.file.path, def.fact.scope, from.compilation.id); }
     private sourceSymbol(def: RustDefinition, scope: RustScope): RustSymbol {
         const attrs = this.attributes(scope, def.fact.attributes);

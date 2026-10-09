@@ -441,4 +441,57 @@ unqualified outcomes, require actual symbol cache hits and compare full cold/war
 mini-redis/env_logger profiles. Current profiles retain 440/476 env_logger import edges, 294/303 original call edges
 and 2,859/3,129 original reference edges; mini-redis retains zero certified calls/references under resolver/macro gaps.
 These counts do not establish recall, compiler/runtime correctness, router, performance or native-platform coverage.
-Next is P9c initial Axum/Actix registration/composition/handler contracts; P9d/P9e and P10 release gates remain open.
+P9c now adds the initial Axum/Actix contracts below. P9d/P9e and P10 release gates remain open.
+
+## 26. Rust Axum/Actix registrations and native contracts (P9c)
+
+`rust-profile.ts` qualifies canonical crates.io identities through original Cargo aliases/imports/re-exports and closed
+feature/cfg inputs. Axum 0.7 and 0.8 requirements select separate path dialects; Actix Web 4 and Tokio 1 have bounded
+native contracts. Requirements crossing a family, alternate registries, Git/path forks and unavailable selections do
+not borrow the native profile. A framework-only resolver recognizes exact runtime and Actix HTTP service attributes,
+including selected cfg_attr branches. Its original source function/body identities do not depend on expanding a macro.
+The general Rust import/call service retains its existing unknown-macro outcomes. Service-decorated functions are
+framework factories rather than ordinary `.to` callbacks. Competing attributes and opaque options retain conditions.
+
+`rust-routers.ts` interprets registrations reached from original selected bin main bodies, bounded source helpers and
+source closures. It follows immutable aliases, callback-return/source-builder factories, explicit consuming builder
+steps, clones, ServiceConfig borrows and linear mutable router assignments. Constructing a Router/App/server is
+separate from awaiting a native serving future. Listener/bind success paths, Cargo context, source invocation,
+registration ranges and mount/default/layer order stay in proof. Endpoint application identity follows the originating
+bin even when a helper belongs to another source crate. Fifty thousand summary steps, twenty-four invocation frames
+and thirty-two composition levels cap work. Unknown escapes, control flow, generics, service implementations and
+middleware remain constrained candidates or unavailable registrations. Handler/Future/extractor/compiler validity is
+a native source contract, not execution or compiler inference.
+
+Axum supports original Router/MethodRouter constructors, common method builders, on/MethodFilter operands, route,
+nest/merge, path/method fallbacks, method-not-allowed fallbacks, with_state, serving adapters and layer metadata. Literal
+paths outrank captures/wildcards before HTTP methods; a method miss cannot select a lower path or not-found fallback.
+GET supplies HEAD unless an explicit HEAD exists. Duplicate native methods/path shapes and competing fallbacks retain
+panic conditions. Modern legacy-check opt-out keeps colon/star paths literal. Nest roots, slash roots, nonempty tails,
+nested fallbacks and parent defaults stay distinct. Opaque layers constrain routes present at that builder step.
+
+Actix supports App, scope, resource, tuple/array services, source ServiceConfig/configure callbacks, common route/to/
+method/guard builders, literal HTTP attributes and original default services. App.route method guards select resources;
+Resource.route guards select routes within the first matching resource. Earlier scopes retain their prefix/default
+boundary. Empty resource paths match scope roots and slash paths remain separate. Known GET does not synthesize HEAD.
+Fixed reviewed constraints compile into our own bounded regex translations; arbitrary target regexes never run.
+Actix percent quoting preserves percent/slash/plus, decodes other bytes once and converts invalid UTF-8 lossily.
+Axum uses the original raw URI path. Case, trailing slash and unsupported syntax remain native/constrained facts.
+
+Original literal log 0.4 messages without format operands/custom logger/target clauses and the default Actix Logger have
+narrow item/routing-neutral contracts. The syntax facts retain original macro sites; other macros stay gaps. Async
+expression-statement wrappers only acquire a scope when their AST kind owns it, preventing a tail async block from
+becoming its own parent. Original handler leaf calls under reviewed attributes retain a separate rust-routers adapter
+and source proof; general Rust call outcomes are not rewritten. Unknown dynamic path/fallback dispatch remains bounded.
+
+`rust-routers` cache units include Rust/Cargo/config hashes, syntax availability, source inventory, recorded selection
+and denied directory/file inventory. Warm/history replay retains original endpoint/handler/call identities. The API
+matcher uses native resource/path decisions before method fallback and requires a recorded boundary for wide Rust
+backend defaults to compete across applications. Installed production package tests verify original CRLF/emoji handler
+ranges, Cargo/registration/serving proof, handler leaves and frontend request-flow projections through CLI/HTTP/source
+APIs. The unchanged-source driver selects original hello-world and nested-routing bins from pinned actix/examples
+e7883efe44988509a7a24a9d6c1e48bcc3670c7c. Both retain 154 original Rust files/1,475 declarations, tracked blob digests,
+original handler/range/proof checks, actual router cache hits and exact cold/warm/revision fingerprints. Its two/eight
+declared registrations retain two/eight original handler links and native defaults. Tracked Rust symlinks stay unread.
+The HTML evidence is `docs/rust-router-source-qualification.html`. These checks qualify initial bounded integration;
+Rocket/Warp remains P9d and broad source/version/target/performance/native-platform accuracy remains P9e/P10.
