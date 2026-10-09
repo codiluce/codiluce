@@ -101,11 +101,13 @@ test('steps open for an entity and carry ancestors for the map; focus highlights
   atlas.focusStep(save.id);
   assert.equal(atlas.getState().steps!.focus, save.id);
   assert.equal(atlas.getState().center, 'flow', 'steps open in the middle');
-  assert.deepEqual({ ...atlas.getState().flowView, title: undefined }, { id: id('/account', 'route'), title: undefined, lanes: false, layout: 'outline' });
-  // The diagram of the same steps needs nothing more.
-  await atlas.setFlowLayout('diagram');
+  assert.deepEqual({ ...atlas.getState().flowView, title: undefined }, { id: id('/account', 'route'), title: undefined, lanes: false });
+  assert.equal(atlas.getState().tour?.key, `steps:${id('/account', 'route')}`, 'and on the map, made from the same steps');
+  // The diagram alone needs nothing more.
+  atlas.setFlowPane('diagram');
+  assert.equal(atlas.getState().flowView?.pane, 'diagram');
   assert.equal(atlas.getState().steps?.status, 'ready');
-  atlas.closeSteps();
+  atlas.closeFlowView();
   assert.equal(atlas.getState().steps, undefined);
   assert.equal(atlas.getState().flowView, undefined);
   assert.equal(atlas.getState().center, 'map');

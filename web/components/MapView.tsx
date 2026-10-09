@@ -61,6 +61,7 @@ function MapControls() {
   const diagnostics = useAtlas(state => state.showDiagnostics);
   const coverage = useAtlas(state => state.coverage.show);
   const families = useAtlas(state => state.families.show);
+  const rails = useAtlas(state => state.connections === 'rails');
   const tables = useAtlas(state => state.meta?.coverage.databaseTables ?? 0);
   return (
     <div className="map-controls">
@@ -74,6 +75,7 @@ function MapControls() {
         <button onClick={() => store.toggleDiagnostics()} aria-pressed={diagnostics} aria-label="Show unresolved findings on the map" title="Unresolved findings">⚠</button>
         <button onClick={() => void store.toggleCoverage()} aria-pressed={coverage} aria-label="Color files by flow coverage" title="Coverage: which files flows touch">◑</button>
         {tables > 0 && <button onClick={() => void store.toggleFamilies()} aria-pressed={families} aria-label="Color files by data family" title="Data families: color files by the tables they use">▦</button>}
+        <button onClick={() => store.setConnections(rails ? 'arcs' : 'rails')} aria-pressed={rails} aria-label="Draw links as rails along the floor" title={rails ? 'Links run as rails along the floors, at right angles (click for arcs over the blocks)' : 'Links arc over the blocks (click for rails along the floors, at right angles)'}>⌐</button>
       </div>
     </div>
   );

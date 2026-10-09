@@ -1,8 +1,9 @@
 'use client';
-// The lanes of a flow (the theater over the map): one request, command or
-// scheduled task left to right, with a request travelling through it — the
-// schematic of what the map shows in place. Everything drawn comes from
-// indexed relationships and effects; gaps say what the index could not see.
+// The lanes of a flow: one request, command or scheduled task left to right,
+// its links streaming from where they start to where they lead (the way back
+// too) — the schematic of what the map shows in place. Everything drawn comes
+// from indexed relationships and effects; gaps say what the index could not
+// see, and nothing streams past them.
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { FlowLane, FlowStages, RequestFlow, RequestFlowEdge, RequestFlowNode } from '@engine/projection/dto';
 import { typeLabel } from '../lib/format';
@@ -14,21 +15,6 @@ const KIND_ICON: Record<string, string> = { page: '▦', entry: '◆', trigger: 
 const KIND_TEXT: Record<string, string> = { page: 'page', entry: 'entry point', trigger: 'event handler', caller: 'makes the request', endpoint: 'endpoint', command: 'Artisan command', schedule: 'scheduled task', middleware: 'middleware', validation: 'validation', handler: 'handler', method: 'method', model: 'model', table: 'table', effect: 'side effect', response: 'response', receive: 'receives the response', continuation: 'then, on the client', gap: 'gap' };
 const LANE_ICON: Record<FlowLane, string> = { client: '▦', call: '↗', route: '⇥', gate: '◈', controller: '⚙', service: 'ƒ', data: '⛁', response: '↩', return: '↘' };
 const STAGE_LANE: Record<string, FlowLane> = { client: 'client', call: 'call', handler: 'controller', data: 'data', response: 'response', returns: 'return' };
-/** Seconds the request takes to cross one column of the theater. */
-const COLUMN_SECONDS = 0.55, REST_SECONDS = 1.3;
-
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    const query = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    if (!query) return;
-    setReduced(query.matches);
-    const change = () => setReduced(query.matches);
-    query.addEventListener?.('change', change);
-    return () => query.removeEventListener?.('change', change);
-  }, []);
-  return reduced;
-}
 const clip = (text: string, max: number) => text.length > max ? `${text.slice(0, max - 1)}…` : text;
 /** `AuthController::login` / `AccountService.signIn` → its class and member. */
 function memberOf(label: string): { owner: string; name: string } | undefined {
@@ -64,13 +50,10 @@ export function LanesBadge({ data }: { data?: RequestFlow }) {
 export function LanesStatus({ data }: { data: RequestFlow }) {
   return <span className={`rf-status s-${data.status}`} title={STATUS_HINT[data.status]}>{STATUS_TEXT[data.status]}{data.gaps ? ` · ${data.gaps} gap${data.gaps === 1 ? '' : 's'}` : ''}</span>;
 }
-/** Whether the request travelling through the lanes moves (not with reduced motion). */
-export function useLanesMotion(): boolean { return !usePrefersReducedMotion(); }
-/** A flow in lanes, left to right: the stages found, the diagram with the focused step's details, and the legend. */
+/** A flow in lanes, left to right: the diagram with the focused step's details, and the legend. */
 export function LanesBody() {
   const store = useStore();
   const open = useAtlas(state => state.requests.open);
-  const animate = useLanesMotion();
   useEffect(() => {
     if (!open?.focus) return;
     const onKey = (event: KeyboardEvent) => {
@@ -84,12 +67,11 @@ export function LanesBody() {
   const data = open.data;
   return (
     <div className="lanes-body">
-      {data && <div className="rf-stagebar"><StagePips stages={data.stages} labels /></div>}
       {open.status === 'loading' && !data && <div className="rf-loading big"><span className="rf-spark" />Following the request…</div>}
       {open.status === 'error' && <p className="note error" style={{ margin: 16 }}>{open.error}</p>}
       {data && (
         <div className="rf-body">
-          <FlowDiagram flow={data} focus={open.focus} playing={open.playing && animate} animate={animate} />
+          <FlowDiagram flow={data} focus={open.focus} />
           {open.focus && <FlowDetail flow={data} focus={open.focus} />}
         </div>
       )}
@@ -100,7 +82,7 @@ export function LanesBody() {
 function FlowFooter({ flow }: { flow: RequestFlow }) {
   return (
     <footer className="rf-foot">
-      <span className="rf-foot-item"><span className="rf-legend-line" /> indexed relationship</span>
+      <span className="rf-foot-item"><span className="rf-legend-line" /> indexed relationship, streaming the way it runs</span>
       <span className="rf-foot-item"><span className="rf-legend-line returns" /> response going back</span>
       <span className="rf-foot-item"><span className="rf-legend-line gap" /> gap: the index cannot see further</span>
       <span className="rf-foot-item"><span className="rf-legend-when" /> conditional</span>
@@ -114,14 +96,13 @@ function FlowFooter({ flow }: { flow: RequestFlow }) {
   );
 }
 
-function FlowDiagram({ flow, focus, playing, animate }: { flow: RequestFlow; focus?: string; playing: boolean; animate: boolean }) {
+function FlowDiagram({ flow, focus }: { flow: RequestFlow; focus?: string }) {
   const store = useStore();
   const svg = useRef<SVGSVGElement>(null);
   const canvas = useRef<HTMLDivElement>(null);
   const layout = useMemo(() => layoutRequestFlow(flow.lanes, flow.nodes, flow.edges), [flow]);
   const byId = useMemo(() => new Map(flow.nodes.map(node => [node.id, node])), [flow]);
   const edges = useMemo(() => new Map(flow.edges.map(edge => [edge.id, edge])), [flow]);
-  const cycle = layout.columns * COLUMN_SECONDS + REST_SECONDS;
   // Fit the flow to the canvas; the zoom buttons override it until another flow opens.
   const [view, setView] = useState({ w: 0, h: 0 });
   const [zoom, setZoom] = useState<number | undefined>();
@@ -134,7 +115,6 @@ function FlowDiagram({ flow, focus, playing, animate }: { flow: RequestFlow; foc
     return () => observer.disconnect();
   }, []);
   const scale = zoom ?? fitScale(layout, view);
-  useEffect(() => { const element = svg.current; if (!element?.pauseAnimations) return; if (playing) element.unpauseAnimations(); else element.pauseAnimations(); }, [playing, flow]);
   // Drag the background to pan.
   const drag = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
   const lit = useMemo(() => {
@@ -165,10 +145,10 @@ function FlowDiagram({ flow, focus, playing, animate }: { flow: RequestFlow; foc
             <text x={band.x + band.w} y={30} textAnchor="end" className="rf-lane-count">{counts.get(band.lane) ?? 0}</text>
           </g>
         ))}
-        {layout.edges.map(placed => <FlowEdge key={placed.id} placed={placed} edge={edges.get(placed.id)!} from={byId.get(placed.from)!} cycle={cycle} lit={!lit || lit.has(placed.id)} labelled={!!lit?.has(placed.id)} animate={animate} />)}
+        {layout.edges.map(placed => <FlowEdge key={placed.id} placed={placed} edge={edges.get(placed.id)!} from={byId.get(placed.from)!} lit={!lit || lit.has(placed.id)} labelled={!!lit?.has(placed.id)} />)}
         {layout.nodes.map(box => {
           const node = byId.get(box.id)!;
-          return <FlowNodeBox key={box.id} node={node} box={box} focused={focus === node.id} dimmed={!!lit && !lit.has(node.id)} cycle={cycle} animate={animate} onFocus={() => store.focusRequestNode(focus === node.id ? undefined : node.id)} />;
+          return <FlowNodeBox key={box.id} node={node} box={box} focused={focus === node.id} dimmed={!!lit && !lit.has(node.id)} onFocus={() => store.focusRequestNode(focus === node.id ? undefined : node.id)} />;
         })}
       </svg>
     </div>
@@ -180,12 +160,14 @@ function FlowDiagram({ flow, focus, playing, animate }: { flow: RequestFlow; foc
     </>
   );
 }
-function FlowEdge({ placed, edge, from, cycle, lit, labelled, animate }: { placed: PlacedFlowEdge; edge: RequestFlowEdge; from: RequestFlowNode; cycle: number; lit: boolean; labelled: boolean; animate: boolean }) {
+/**
+ * A link between two steps: the line, and dashes streaming along it from where
+ * it starts to where it leads, all the time. The way back (a response to its
+ * caller, what the client does then) streams in its own color; nothing
+ * streams into a gap, since what lies beyond is not known.
+ */
+function FlowEdge({ placed, edge, from, lit, labelled }: { placed: PlacedFlowEdge; edge: RequestFlowEdge; from: RequestFlowNode; lit: boolean; labelled: boolean }) {
   const label = edge.label ?? edge.when[0]?.phrase;
-  const start = (placed.column * COLUMN_SECONDS) / cycle;
-  // A request stops halfway into a gap: what lies beyond is not known.
-  const end = Math.min(0.999, ((placed.column + placed.span * (edge.kind === 'gap' ? 0.5 : 1)) * COLUMN_SECONDS) / cycle);
-  const fade = Math.min(0.02, (end - start) / 4);
   const text = label ? clip(label, labelled ? 34 : 24) : '';
   const width = text.length * 6.1 + 14;
   // Labels show where they fit between the boxes, and on the focused step's links.
@@ -195,12 +177,7 @@ function FlowEdge({ placed, edge, from, cycle, lit, labelled, animate }: { place
     <g className={`rf-edge k-${edge.kind}${placed.back ? ' back' : ''}${lit ? '' : ' dim'}`} style={{ '--lane': `var(--lane-${from.lane})` } as CSSProperties}>
       <path d={placed.path} className="rf-edge-glow" />
       <path d={placed.path} className="rf-edge-line" markerEnd="url(#rf-arrow)" />
-      {animate && !placed.back && (
-        <circle r={edge.kind === 'returns' ? 4 : 4.5} className="rf-particle" opacity={0}>
-          <animateMotion dur={`${cycle}s`} repeatCount="indefinite" path={placed.path} keyPoints="0;0;1;1" keyTimes={`0;${start.toFixed(4)};${end.toFixed(4)};1`} calcMode="linear" />
-          <animate attributeName="opacity" dur={`${cycle}s`} repeatCount="indefinite" values="0;0;1;1;0;0" keyTimes={`0;${start.toFixed(4)};${(start + fade).toFixed(4)};${(end - fade).toFixed(4)};${end.toFixed(4)};1`} />
-        </circle>
-      )}
+      {edge.kind !== 'gap' && <path d={placed.path} className="rf-edge-flow" />}
       {showLabel ? (
         <g className={`rf-edge-label${edge.when.length ? ' when' : ''}`} transform={`translate(${placed.label.x},${placed.label.y})`}>
           <rect x={-width / 2} y={-9} width={width} height={18} rx={9} />
@@ -211,23 +188,19 @@ function FlowEdge({ placed, edge, from, cycle, lit, labelled, animate }: { place
     </g>
   );
 }
-function FlowNodeBox({ node, box, focused, dimmed, cycle, animate, onFocus }: { node: RequestFlowNode; box: RequestFlowLayout['nodes'][number]; focused: boolean; dimmed: boolean; cycle: number; animate: boolean; onFocus: () => void }) {
+function FlowNodeBox({ node, box, focused, dimmed, onFocus }: { node: RequestFlowNode; box: RequestFlowLayout['nodes'][number]; focused: boolean; dimmed: boolean; onFocus: () => void }) {
   const store = useStore();
-  const arrive = (box.column * COLUMN_SECONDS) / cycle;
-  const peak = Math.min(0.98, arrive + 0.35 / cycle), after = Math.min(0.995, arrive + 1.1 / cycle);
   const status = node.kind === 'response' ? statusClass(node.status) : undefined;
   // Methods read as `name()` over their class: a column of one class's helpers stays legible.
   const member = node.node?.type === 'method' ? memberOf(node.label) : undefined;
   const title = member ? `${member.name}()` : node.label;
   const sub = (member && ['handler', 'method', 'model'].includes(node.kind) ? member.owner : node.gap ? node.detail ?? KIND_TEXT.gap : node.detail ?? (node.node ? typeLabel(node.node.type, node.node.role) : KIND_TEXT[node.kind])) ?? '';
-  const open = () => { const id = node.node?.id ?? node.effect?.owner; if (!id) return; store.traceRequestFlow({ play: false }); void store.select(id, { fly: true }); };
+  const open = () => { const id = node.node?.id ?? node.effect?.owner; if (id) store.showInFlowMap(id); };
   return (
     <g className={`rf-node k-${node.kind}${status ? ` st-${status}` : ''}${focused ? ' focused' : ''}${dimmed ? ' dim' : ''}`} style={{ '--lane': `var(--lane-${node.lane})` } as CSSProperties} transform={`translate(${box.x},${box.y})`}
       tabIndex={0} role="button" aria-label={`${KIND_TEXT[node.kind]}: ${node.label}`} aria-pressed={focused}
       onClick={onFocus} onDoubleClick={open} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onFocus(); } }}>
-      <rect className="rf-halo" x={-5} y={-5} width={box.w + 10} height={box.h + 10} rx={16} opacity={0}>
-        {animate && <animate attributeName="opacity" dur={`${cycle}s`} repeatCount="indefinite" values="0;0;0.95;0;0" keyTimes={`0;${arrive.toFixed(4)};${peak.toFixed(4)};${after.toFixed(4)};1`} />}
-      </rect>
+      <rect className="rf-halo" x={-5} y={-5} width={box.w + 10} height={box.h + 10} rx={16} />
       <rect className="rf-card" width={box.w} height={box.h} rx={13} filter="url(#rf-soft)" />
       <rect className="rf-accent" x={0} y={0} width={5} height={box.h} rx={2.5} />
       <circle className="rf-icon-bg" cx={22} cy={box.h / 2} r={13} />
@@ -262,7 +235,7 @@ function FlowDetail({ flow, focus }: { flow: RequestFlow; focus?: string }) {
       {at && <div className="row-sub"><TypeBadge type={at.type} role={at.role} /> <span className="mono">{at.path ?? ''}</span></div>}
       {node.effect && <div className="row-sub">in {node.effect.ownerName}{node.effect.ownerPath ? <span className="mono"> · {node.effect.ownerPath}:{node.effect.line}</span> : null} · matched on {node.effect.via}</div>}
       <div className="inspector-actions">
-        {node.node && <button className="button small primary" onClick={() => { store.traceRequestFlow({ play: false }); void store.select(node.node!.id, { fly: true }); }}>Show on map</button>}
+        {node.node && <button className="button small primary" onClick={() => store.showInFlowMap(node.node!.id)}>Show on map</button>}
         {node.node && node.node.path && <button className="button small" onClick={() => void store.openSource({ entity: node.node!.id }, node.label)}>Source</button>}
         {node.effect && <button className="button small" onClick={() => void store.openSource({ entity: node.effect!.owner, start: Math.max(1, node.effect!.line - 12), end: node.effect!.line + 12 }, `${node.label} · ${node.effect!.ownerName}:${node.effect!.line}`)}>Source</button>}
         {node.node && node.node.type !== 'database_table' && <button className="button small" onClick={() => void store.openSteps(node.node!.id)}>What happens from here</button>}

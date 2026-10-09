@@ -1,6 +1,7 @@
 'use client';
 // "What happens from here": the steps an anchor sets in motion, as an outline
-// and as a layered diagram (the flow view in the middle shows either). Every link is a chain of indexed
+// and as a layered diagram (the flow in the middle shows both, its links
+// streaming the way they run). Every link is a chain of indexed
 // relationships (each with Why?); folded entities are listed as "via"; the
 // conditions on a link are read from the source of the step it leaves.
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -142,6 +143,7 @@ export function StepsDiagram({ data }: { data: StepsResult }) {
             return (
               <g key={edge.id} className={`steps-edge${edge.back ? ' back' : ''}${lit ? ' lit' : ''}`}>
                 <path d={edge.path} markerEnd="url(#steps-arrow)" />
+                <path d={edge.path} className="steps-edge-flow" />
                 {labels.length > 0 && <text x={edge.label.x} y={edge.label.y} textAnchor="middle">{labels[0]!.length > 30 ? `${labels[0]!.slice(0, 29)}…` : labels[0]}</text>}
                 <title>{[...labels, link.via.length ? `via ${link.via.map(item => item.name).join(' › ')}` : ''].filter(Boolean).join('\n') || link.hops.map(hop => hop.type).join(' → ')}</title>
               </g>
@@ -154,7 +156,7 @@ export function StepsDiagram({ data }: { data: StepsResult }) {
             return (
               <g key={box.id} className={`steps-box kind-${step.kind}${focus === step.id ? ' focused' : ''}`} transform={`translate(${box.x},${box.y})`} tabIndex={0} role="button" aria-label={`${KIND_TEXT[step.kind]} ${title}`}
                 onClick={() => { store.focusStep(step.id); if (step.node) void store.select(step.node.id, { fly: true }); else if (step.effect) void store.select(step.effect.owner, { fly: true }); }}
-                onDoubleClick={() => step.node && void store.openSteps(step.node.id, 'diagram')}
+                onDoubleClick={() => step.node && void store.openSteps(step.node.id)}
                 onKeyDown={event => { if (event.key === 'Enter' && step.node) void store.select(step.node.id, { fly: true }); }}>
                 <rect width={box.w} height={box.h} rx={9} />
                 <text x={10} y={18} className="steps-box-kind">{(step.effect ? `${EFFECT_ICON[step.effect.category] ?? '•'} ` : '') + KIND_TEXT[step.kind]}{step.app ? ` · ${step.app}` : ''}</text>

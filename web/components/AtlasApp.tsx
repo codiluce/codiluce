@@ -182,6 +182,7 @@ const TAB_TEXT = { features: 'Features', flows: 'Flows', people: 'People' } as c
 function SettingsDialog({ onClose }: { onClose: () => void }) {
   const store = useStore();
   const moreThemes = useAtlas(state => state.moreThemes);
+  const connections = useAtlas(state => state.connections);
   const close = useRef<HTMLButtonElement>(null);
   useEffect(() => { close.current?.focus(); const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, [onClose]);
   return (
@@ -190,6 +191,11 @@ function SettingsDialog({ onClose }: { onClose: () => void }) {
         <h2 id="settings-title" style={{ marginTop: 0, fontSize: 15 }}>Settings</h2>
         <label className="toggle"><input type="checkbox" checked={moreThemes} onChange={event => store.setMoreThemes(event.target.checked)} /> More themes</label>
         <p className="note">The theme menu offers Codiluce Dusk and Codiluce Dawn. With more themes on, it also offers {THEMES.filter(item => !MAIN_THEMES.includes(item.id)).map(item => item.name).join(', ')}.</p>
+        <div className="segmented" role="group" aria-label="Links on the map">
+          <button aria-pressed={connections === 'arcs'} onClick={() => store.setConnections('arcs')}>Arcs</button>
+          <button aria-pressed={connections === 'rails'} onClick={() => store.setConnections('rails')}>Rails</button>
+        </div>
+        <p className="note">Links on the map (relationships, flows): arcs over the blocks, or rails along the floors at right angles, round the blocks and out through the edge of each area. The map's ⌐ button switches too.</p>
         <button ref={close} className="button" onClick={onClose}>Close</button>
       </div>
     </div>

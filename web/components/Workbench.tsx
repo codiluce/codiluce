@@ -1,13 +1,14 @@
 'use client';
 // The middle of the screen: the map, or one of the tools open beside it (a
-// flow, a blast radius, a list of the files lit). With a tool in the middle,
-// the map stays as a small overview in a corner, showing what the tool lights;
-// tabs switch between them, and a click on the overview brings the map back.
-import { useState } from 'react';
+// flow, a blast radius, a list of the files lit). A flow shares the middle
+// between the map, its lanes (or layers) and its outline, any of which can
+// have it whole. With another tool in the middle, the map stays as a small
+// overview in a corner, showing what the tool lights; tabs switch between
+// them, and a click on the overview brings the map back.
+import { useState, type CSSProperties } from 'react';
 import { useAtlas, useStore } from './context';
 import { FilesView, filesTitle } from './FilesView';
-import { FlowBar } from './FlowBar';
-import { FlowView } from './FlowView';
+import { FlowHead, FlowMapBar, FlowPanes } from './FlowView';
 import { ImpactView, impactOriginName } from './ImpactView';
 import { MapView } from './MapView';
 import { SourcePanel } from './SourcePanel';
@@ -16,22 +17,29 @@ import { SplitMap } from './SplitMap';
 export function Workbench({ split }: { split: boolean }) {
   const store = useStore();
   const center = useAtlas(state => state.center);
-  const small = center !== 'map';
+  const flow = useAtlas(state => state.center === 'flow' ? state.flowView : undefined);
+  const shares = useAtlas(state => state.flowSplit);
+  // The map is in the middle on its tab, and beside a flow's other views (or alone) when a flow is open.
+  const mapShown = center === 'map' || (!!flow && (!flow.pane || flow.pane === 'map'));
+  // Another tool in the middle: the map is an overview in a corner.
+  const corner = !mapShown && !flow;
   const [overview, setOverview] = useState(true);
+  const style = flow ? { '--flow-side': `${shares.side}fr`, '--flow-main': `${1 - shares.side}fr`, '--flow-bottom': `${shares.bottom}fr`, '--flow-top': `${1 - shares.bottom}fr` } as CSSProperties : undefined;
   return (
-    <section className={`map-area${small ? ' tool-open' : ''}`}>
+    <section className={`map-area${corner ? ' tool-open' : ''}`}>
       <CenterTabs />
-      <div className="center-body">
-        {center === 'flow' && <FlowView />}
+      <div className={`center-body${flow ? ` flow-split${flow.pane ? ` max-${flow.pane}` : ''}` : ''}`} style={style}>
+        {flow && <FlowHead />}
         {center === 'impact' && <ImpactView />}
         {center === 'files' && <FilesView />}
-        <div className={`map-holder${small ? ' small' : ''}${small && !overview ? ' hidden' : ''}`} aria-hidden={small || undefined}>
-          {split && !small ? <SplitMap /> : <MapView />}
-          {!small && <FlowBar />}
-          {small && <button className="overview-open" onClick={() => store.setCenter('map')} aria-label="Back to the map" title="Back to the map" tabIndex={-1} />}
-          {small && <button className="icon-button tiny overview-hide" onClick={() => setOverview(false)} aria-label="Hide the overview map" title="Hide the overview" tabIndex={-1}>–</button>}
+        <div className={`map-holder${corner ? ' small' : ''}${(corner && !overview) || (flow && !mapShown) ? ' hidden' : ''}`} aria-hidden={corner || (!!flow && !mapShown) || undefined}>
+          {flow && mapShown && <FlowMapBar />}
+          {split && center === 'map' ? <SplitMap /> : <MapView />}
+          {corner && <button className="overview-open" onClick={() => store.setCenter('map')} aria-label="Back to the map" title="Back to the map" tabIndex={-1} />}
+          {corner && <button className="icon-button tiny overview-hide" onClick={() => setOverview(false)} aria-label="Hide the overview map" title="Hide the overview" tabIndex={-1}>–</button>}
         </div>
-        {small && !overview && <button className="button small overview-show" onClick={() => setOverview(true)} title="Show the map as an overview in this corner">Overview map</button>}
+        {corner && !overview && <button className="button small overview-show" onClick={() => setOverview(true)} title="Show the map as an overview in this corner">Overview map</button>}
+        {flow && <FlowPanes />}
       </div>
       <SourcePanel />
     </section>
@@ -56,7 +64,7 @@ function CenterTabs() {
   return (
     <div className="center-tabs" role="tablist" aria-label="Map and tools">
       {tab('map', 'Map', 'The map of the repository')}
-      {flow && tab('flow', `Flow · ${lanes && flow.lanes ? (lanes.kind === 'command' || lanes.kind === 'schedule' ? lanes.name : `${lanes.method} ${lanes.path}`) : flow.title}`, `${flow.layout === 'outline' ? 'Outline' : flow.lanes ? 'Lanes' : 'Diagram'} of ${flow.title}`, { text: 'Close the flow tab', run: () => store.closeFlowView() })}
+      {flow && tab('flow', `Flow · ${lanes && flow.lanes ? (lanes.kind === 'command' || lanes.kind === 'schedule' ? lanes.name : `${lanes.method} ${lanes.path}`) : flow.title}`, `${flow.title} on the map, ${flow.lanes ? 'in lanes' : 'in layers'} and as an outline`, { text: 'Close the flow tab', run: () => store.closeFlowView() })}
       {impact && tab('impact', impact.forId ? `Impact · ${impactOriginName(impact.forId, impact.data, known)}` : 'Impact', 'What depends on it, hop by hop', { text: 'Close the impact tab', run: () => store.hideImpact() })}
       {files && tab('files', filesTitle(files, files.data), 'The files lit on the map, as a list', { text: 'Close the files tab', run: () => store.closeFiles() })}
     </div>

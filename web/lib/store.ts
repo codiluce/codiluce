@@ -13,7 +13,6 @@ import type { CatalogTab } from './catalog';
 import { fromRequestFlow, fromSteps, type MapFlow } from './map-flow';
 import { isAbort, type AtlasApi } from './api';
 import type { Level } from './lod';
-import { initialPlayback, playback, type PlaybackAction, type PlaybackState } from './playback';
 import { Scene } from './scene';
 import { Evolution } from './evolution';
 import { DEFAULT_THEME } from './themes';
@@ -95,12 +94,20 @@ export interface ImpactState {
 }
 /** What the middle of the screen shows: the map, or a tool with the map as a small overview in a corner. */
 export type CenterView = 'map' | 'flow' | 'impact' | 'files';
+/** A view of the flow open in the middle: the map, its lanes (or layers), its outline. */
+export type FlowPane = 'map' | 'diagram' | 'outline';
 /**
  * A flow open in the middle: one subject (a request, command, task, page or
- * any code that runs) as a diagram (`lanes`: in lanes, left to right;
- * otherwise in layers) or as an outline of steps.
+ * any code that runs) on the map, as a diagram (`lanes`: in lanes, left to
+ * right; otherwise in layers) and as an outline of steps, side by side.
+ * `pane` gives one of them the whole middle.
  */
-export interface FlowViewState { id: string; title: string; subtitle?: string; lanes: boolean; layout: 'diagram' | 'outline' }
+export interface FlowViewState { id: string; title: string; subtitle?: string; kind?: CatalogKind; lanes: boolean; pane?: FlowPane }
+/** How a flow shares the middle: the outline's share of the width beside the map, the lanes' share of the height below both. */
+export interface FlowSplit { side: number; bottom: number }
+export const FLOW_SPLIT: FlowSplit = { side: 0.3, bottom: 0.42 };
+/** How links are drawn on the map: arcs over the blocks, or rails along the floor, at right angles. */
+export type Connections = 'arcs' | 'rails';
 /** What a list of files is of: a feature, a data family, a coverage category or a person (the highlight on the map). */
 export interface FileSubject { kind: 'feature' | 'family' | 'coverage' | 'person'; key: string }
 export interface FilesState extends FileSubject { status: Status; stamp: string; data?: FileListResult; error?: string }
@@ -114,8 +121,6 @@ export interface OpenRequestFlow {
   id: string; status: Status; viewStamp: string; data?: RequestFlow; error?: string;
   /** Focused node of the flow (its details are shown). */
   focus?: string;
-  /** The request is animated along the lanes. */
-  playing: boolean;
 }
 /** Every flow of the view by entry point (pages, requests, console, unmatched), as the Flows panel lists them. */
 export interface CatalogState {
@@ -162,17 +167,16 @@ export interface PeopleState {
   reveal?: number;
 }
 /**
- * A flow shown on the map: everything it touches stays lit, the rest dims;
- * it plays branch by branch (`playback.index` is the branch), the pulse
- * flowing along the branch's edges wave by wave.
+ * The flow open in the middle, on the map: everything it touches stays lit,
+ * the rest dims, and its links stream from where they start to where they
+ * lead. `branch` shows one branch on its own (an index into `flow.branches`);
+ * every branch shows when it is unset.
  */
 export interface TourState {
   key: string; id: string; detail: 'lanes' | 'steps';
-  title: string; subtitle?: string; kind?: CatalogKind;
   status: Status; error?: string; viewStamp: string;
-  flow?: MapFlow; playback: PlaybackState;
-  /** While playing, the camera frames each branch as it starts. */
-  follow: boolean;
+  flow?: MapFlow;
+  branch?: number;
 }
 export interface ViewState { level: Level; focus: { id: string; name: string; type: string }[]; zoom: number; visible: { id: string; name: string; type: string }[]; truncated: boolean }
 export interface AtlasState {
@@ -209,6 +213,8 @@ export interface AtlasState {
   people: PeopleState;
   center: CenterView;
   flowView?: FlowViewState;
+  flowSplit: FlowSplit;
+  connections: Connections;
   files?: FilesState;
 }
 export interface MapNavigator {
@@ -290,7 +296,7 @@ export class AtlasStore {
   private pendingFocus?: { node: NodeSummary; frame?: Rect };
 
   constructor(readonly api: AtlasApi, private readonly options: StoreOptions = {}) {
-    let prefs: { themeId?: string; moreThemes?: boolean; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey } = {};
+    let prefs: { themeId?: string; moreThemes?: boolean; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey; flowSplit?: FlowSplit; connections?: Connections } = {};
     try { prefs = JSON.parse(options.storage?.getItem('codiluce:prefs') ?? '{}'); } catch { /* defaults */ }
     this.state = {
       status: 'loading', view: { level: 'Applications', focus: [], zoom: 1, visible: [], truncated: false },
@@ -299,6 +305,7 @@ export class AtlasStore {
       staleIndex: false, sceneRevision: 0,
       impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '', open: {} }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, families: { show: false, status: 'idle' }, features: { status: 'idle', open: {} },
       people: { window: prefs.peopleWindow ?? 'all', show: false, status: 'idle', open: {} }, center: 'map',
+      flowSplit: clampSplit(prefs.flowSplit ?? FLOW_SPLIT), connections: prefs.connections === 'rails' ? 'rails' : 'arcs',
       timeline: { open: false, status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true, split: prefs.split ?? true, regionLevel: prefs.regionLevel ?? 'auto', regions: { status: 'idle' } },
     };
   }
@@ -317,7 +324,7 @@ export class AtlasStore {
   }
   private bumpScene(): void { this.set(state => ({ sceneRevision: state.sceneRevision + 1 })); }
   private savePrefs(): void {
-    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, moreThemes: this.state.moreThemes, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window })); } catch { /* preferences are optional */ }
+    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, moreThemes: this.state.moreThemes, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window, flowSplit: this.state.flowSplit, connections: this.state.connections })); } catch { /* preferences are optional */ }
   }
   dispose(): void { this.disposed = true; for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
 
@@ -385,9 +392,7 @@ export class AtlasStore {
     this.scene.upsert(located.node);
     this.bumpScene();
   }
-  async select(id: string, options: { fly?: boolean; recordHistory?: boolean; mode?: 'focus' | 'enter'; byPlayback?: boolean } = {}): Promise<void> {
-    // Choosing something yourself pauses a flow that is playing: its next stop must not take the selection away.
-    if (!options.byPlayback) this.pausePlayback();
+  async select(id: string, options: { fly?: boolean; recordHistory?: boolean; mode?: 'focus' | 'enter' } = {}): Promise<void> {
     const signal = this.abortable('selection');
     const epoch = this.epoch;
     const known = this.scene.nodes.get(id);
@@ -421,10 +426,6 @@ export class AtlasStore {
       if (isAbort(error)) return;
       this.set(state => state.selection?.id === id ? { selection: { ...state.selection, entityStatus: 'error', error: error instanceof Error ? error.message : String(error) } } : {});
     }
-  }
-  /** Pause the flow playing on the map. */
-  private pausePlayback(): void {
-    if (this.state.tour?.playback.status === 'playing') this.setTour(tour => ({ playback: { ...tour.playback, status: 'paused' } }));
   }
   clearSelection(): void {
     this.aborts.get('selection')?.abort();
@@ -588,6 +589,8 @@ export class AtlasStore {
   setTheme(themeId: string): void { this.set({ themeId }); this.savePrefs(); }
   /** Settings: offer every theme in the theme menu (otherwise Dusk and Dawn, and the theme in use). */
   setMoreThemes(moreThemes: boolean): void { this.set({ moreThemes }); this.savePrefs(); }
+  /** Draw the links on the map as arcs over the blocks or as rails along the floor. */
+  setConnections(connections: Connections): void { this.set({ connections }); this.savePrefs(); }
 
   // History -----------------------------------------------------------------
   private setTimeline(patch: Partial<TimelineState>): void { this.set(state => ({ timeline: { ...state.timeline, ...patch } })); }
@@ -875,8 +878,6 @@ export class AtlasStore {
       if (this.state.steps) void this.loadSteps(this.state.steps.anchor);
       if (this.state.impact.open && this.state.impact.forId) void this.loadImpact(this.state.impact.forId);
       if (this.state.files) void this.loadFiles();
-      const tour = this.state.tour;
-      if (tour) void this.openTour({ id: tour.id, detail: tour.detail, title: tour.title, ...(tour.subtitle ? { subtitle: tour.subtitle } : {}), ...(tour.kind ? { kind: tour.kind } : {}) }, { fit: false, play: false });
     } catch (error) {
       if (isAbort(error) || epoch !== this.epoch) return;
       this.setTimeline({ switching: false, error: error instanceof Error ? error.message : String(error) });
@@ -955,11 +956,11 @@ export class AtlasStore {
     } catch (error) { if (!isAbort(error)) this.set(state => ({ commitImpact: { ...state.commitImpact, status: 'error', error: error instanceof Error ? error.message : String(error) } })); }
   }
   toggleCommitImpact(): void { this.set(state => ({ commitImpact: { ...state.commitImpact, show: !state.commitImpact.show } })); }
-  /** Open "what happens from here" for an entity (the selection by default): the flow view in the middle, as an outline (or a diagram). */
-  async openSteps(id = this.state.selection?.id, layout: FlowViewState['layout'] = 'outline'): Promise<void> {
+  /** Open "what happens from here" for an entity (the selection by default): the flow view in the middle. */
+  async openSteps(id = this.state.selection?.id, options: { pane?: FlowPane | null } = {}): Promise<void> {
     if (!id || id.startsWith('projection:')) return;
     const node = this.scene.nodes.get(id) ?? (this.state.selection?.id === id ? this.state.selection.node : undefined);
-    await this.openFlowView({ id, title: node?.name ?? 'What happens from here', lanes: LANES_TYPES.has(node?.type ?? '') }, layout);
+    await this.openFlowView({ id, title: node?.name ?? 'What happens from here', lanes: LANES_TYPES.has(node?.type ?? '') }, options);
   }
   private async loadSteps(id: string): Promise<void> {
     const signal = this.abortable('steps');
@@ -970,39 +971,53 @@ export class AtlasStore {
       if (signal.aborted) return;
       for (const step of data.steps) if (step.node) this.scene.upsert(step.node);
       this.set(state => state.steps?.anchor === id ? { steps: { ...state.steps, status: 'ready', data }, sceneRevision: state.sceneRevision + 1 } : {});
+      void this.showFlowOnMap();
     } catch (error) { if (!isAbort(error)) this.set(state => state.steps?.anchor === id ? { steps: { ...state.steps, status: 'error', error: error instanceof Error ? error.message : String(error) } } : {}); }
   }
-  closeSteps(): void { this.closeFlowView(); }
   /**
-   * Open a flow in the middle: the lanes of a request, command or task (or the
-   * layers of anything else that runs), or the outline of its steps.
+   * Open a flow in the middle: on the map, in lanes (a request, command or
+   * task) or in layers (anything else that runs), and as an outline of its
+   * steps, side by side. A flow already open keeps the view that has the whole
+   * middle, unless `pane` says which (`null`: all of them side by side).
    */
-  async openFlowView(entry: { id: string; title: string; subtitle?: string; lanes: boolean }, layout: FlowViewState['layout'] = entry.lanes ? 'diagram' : 'outline'): Promise<void> {
-    if (this.state.flowView?.id !== entry.id) {
-      this.aborts.get('steps')?.abort(); this.aborts.get('request-flow')?.abort();
-      this.set(state => ({ steps: undefined, requests: state.requests.open?.id === entry.id ? state.requests : {} }));
+  async openFlowView(entry: { id: string; title: string; subtitle?: string; kind?: CatalogKind; lanes: boolean }, options: { pane?: FlowPane | null } = {}): Promise<void> {
+    const current = this.state.flowView;
+    if (current?.id !== entry.id) {
+      for (const key of ['steps', 'request-flow', 'tour']) this.aborts.get(key)?.abort();
+      this.tourSource = undefined;
+      this.set(state => ({ steps: undefined, requests: state.requests.open?.id === entry.id ? state.requests : {}, tour: undefined }));
     }
-    this.set({ center: 'flow', flowView: { id: entry.id, title: entry.title, ...(entry.subtitle ? { subtitle: entry.subtitle } : {}), lanes: entry.lanes, layout } });
-    await this.loadFlowLayout();
+    const pane = options.pane === undefined ? current?.pane : options.pane ?? undefined;
+    this.set({ center: 'flow', flowView: { id: entry.id, title: entry.title, ...(entry.subtitle ? { subtitle: entry.subtitle } : {}), ...(entry.kind ? { kind: entry.kind } : {}), lanes: entry.lanes, ...(pane ? { pane } : {}) } });
+    const view = this.state.flowView!, stamp = this.viewStamp();
+    const open = this.state.requests.open, steps = this.state.steps;
+    await Promise.all([
+      view.lanes && (open?.id !== view.id || open.status === 'error' || open.viewStamp !== stamp) ? this.loadRequestFlow(view.id) : undefined,
+      steps?.anchor !== view.id || steps.status === 'error' || steps.viewStamp !== stamp ? this.loadSteps(view.id) : undefined,
+    ]);
+    await this.showFlowOnMap();
   }
-  /** Draw the flow open in the middle as a diagram or an outline. */
-  async setFlowLayout(layout: FlowViewState['layout']): Promise<void> {
-    if (!this.state.flowView || this.state.flowView.layout === layout) return;
-    this.set(state => ({ flowView: { ...state.flowView!, layout } }));
-    await this.loadFlowLayout();
-  }
-  private async loadFlowLayout(): Promise<void> {
+  /** Give one view of the open flow the whole middle (undefined: they share it again). */
+  setFlowPane(pane: FlowPane | undefined): void {
     const view = this.state.flowView;
-    if (!view) return;
-    if (view.layout === 'diagram' && view.lanes) { if (this.state.requests.open?.id !== view.id || this.state.requests.open.status === 'error') await this.loadRequestFlow(view.id); }
-    else if (this.state.steps?.anchor !== view.id || this.state.steps.status === 'error') await this.loadSteps(view.id);
+    if (!view || view.pane === pane) return;
+    this.set({ center: 'flow', flowView: { id: view.id, title: view.title, ...(view.subtitle ? { subtitle: view.subtitle } : {}), ...(view.kind ? { kind: view.kind } : {}), lanes: view.lanes, ...(pane ? { pane } : {}) } });
   }
+  /** Resize the views of an open flow (shares of the middle, kept in the preferences). */
+  setFlowSplit(split: Partial<FlowSplit>): void { this.set(state => ({ flowSplit: clampSplit({ ...state.flowSplit, ...split }) })); this.savePrefs(); }
   closeFlowView(): void {
-    this.aborts.get('steps')?.abort(); this.aborts.get('request-flow')?.abort();
-    this.set({ ...this.leaveCenter('flow'), flowView: undefined, steps: undefined, requests: {} });
+    for (const key of ['steps', 'request-flow', 'tour']) this.aborts.get(key)?.abort();
+    this.tourSource = undefined;
+    this.set({ ...this.leaveCenter('flow'), flowView: undefined, steps: undefined, requests: {}, tour: undefined });
   }
   /** Highlight one step (and its links) on the map. */
   focusStep(id: string | undefined): void { this.set(state => state.steps ? { steps: { ...state.steps, focus: id } } : {}); }
+  /** Select an entity of the open flow and fly the map to it; the map comes back beside the flow if another view had the whole middle. */
+  showInFlowMap(id: string): void {
+    const pane = this.state.flowView?.pane;
+    if (pane && pane !== 'map') this.setFlowPane(undefined);
+    void this.select(id, { fly: true });
+  }
 
   // Flows: the catalog, flows on the map, the lanes, coverage -------------------------
   private setCatalog(patch: Partial<CatalogState> | ((catalog: CatalogState) => Partial<CatalogState>)): void {
@@ -1030,32 +1045,42 @@ export class AtlasStore {
   /** Filter the Flows list; the groups follow the filter again (open while filtering). */
   setCatalogQuery(query: string): void { this.setCatalog({ query, open: {} }); }
   setCatalogFilter(filter: FlowStatus | undefined): void { this.setCatalog(catalog => ({ filter: catalog.filter === filter ? undefined : filter })); }
-  /** Open a flow of the catalog on the map. */
-  openCatalogFlow(item: FlowSummary): Promise<void> { this.setCenter('map'); return this.openTour(tourEntry(item)); }
+  /** Open a flow of the catalog in the middle. */
+  openCatalogFlow(item: FlowSummary, options: { pane?: FlowPane | null } = {}): Promise<void> {
+    const entry = flowEntry(item);
+    return this.openFlowView({ id: entry.id, title: entry.title, ...(entry.subtitle ? { subtitle: entry.subtitle } : {}), kind: entry.kind, lanes: entry.detail === 'lanes' }, options);
+  }
 
   private setTour(patch: Partial<TourState> | ((tour: TourState) => Partial<TourState>)): void {
     this.set(state => state.tour ? { tour: { ...state.tour, ...(typeof patch === 'function' ? patch(state.tour) : patch) } } : {});
   }
+  /** What the flow on the map was made from (its lanes or its steps), so the same data is not placed twice. */
+  private tourSource?: object;
   /**
-   * Show a flow on the map: a request's lanes (`lanes`, by endpoint, command,
-   * task or unmatched caller) or a page's Steps (`steps`, by page route). Its
-   * stops and their areas are placed in the scene, so the map can open them.
+   * The open flow on the map, made from its lanes (a request, command or task)
+   * or its steps (anything else). Its stops, pin owners and the areas holding
+   * them are placed in the scene, so the map can open them.
    */
-  async openTour(entry: { id: string; detail: 'lanes' | 'steps'; title: string; subtitle?: string; kind?: CatalogKind }, options: { play?: boolean; fit?: boolean } = {}): Promise<void> {
+  private async showFlowOnMap(): Promise<void> {
+    const view = this.state.flowView;
+    if (!view) return;
+    const stamp = this.viewStamp(), open = this.state.requests.open, steps = this.state.steps;
+    const lanes = view.lanes && open?.id === view.id && open.status === 'ready' && open.viewStamp === stamp ? open.data : undefined;
+    const layers = !view.lanes && steps?.anchor === view.id && steps.status === 'ready' && steps.viewStamp === stamp ? steps.data : undefined;
+    const source = lanes ?? layers;
+    if (!source || source === this.tourSource) return;
+    this.tourSource = source;
+    const key = `${view.lanes ? 'lanes' : 'steps'}:${view.id}`;
+    const before = this.state.tour?.key === key ? this.state.tour : undefined;
     const signal = this.abortable('tour');
-    const viewStamp = this.viewStamp();
-    const key = `${entry.detail}:${entry.id}`;
-    this.set(state => ({
-      tour: { key, id: entry.id, detail: entry.detail, title: entry.title, ...(entry.subtitle ? { subtitle: entry.subtitle } : {}), ...(entry.kind ? { kind: entry.kind } : {}), status: 'loading', viewStamp, playback: initialPlayback(), follow: state.tour?.follow ?? true, ...(state.tour?.key === key && state.tour.flow ? { flow: state.tour.flow } : {}) },
-    }));
+    this.set({ tour: { key, id: view.id, detail: view.lanes ? 'lanes' : 'steps', status: 'loading', viewStamp: stamp, ...(before?.flow ? { flow: before.flow } : {}), ...(before?.branch !== undefined ? { branch: before.branch } : {}) } });
     try {
-      const flow = entry.detail === 'lanes' ? fromRequestFlow(await this.api.requestFlow(entry.id, signal)) : fromSteps(await this.api.steps(entry.id, signal));
-      if (signal.aborted) return;
+      const flow = lanes ? fromRequestFlow(lanes) : fromSteps(layers!);
       await this.placeFlow(flow, signal);
       if (signal.aborted) return;
-      const playback = initialPlayback(flow.branches.map(() => false));
-      this.set(state => state.tour?.key === key ? { tour: { ...state.tour, status: 'ready', viewStamp, flow, playback: options.play === false ? playback : { ...playback, status: 'playing' } }, sceneRevision: state.sceneRevision + 1 } : {});
-      if (options.fit !== false) { if (this.state.tour?.follow && options.play !== false) this.followBranch(0); else this.fitTour(); }
+      this.set(state => state.tour?.key === key ? { tour: { ...state.tour, status: 'ready', viewStamp: stamp, flow, branch: state.tour.branch !== undefined && state.tour.branch < flow.branches.length ? state.tour.branch : undefined }, sceneRevision: state.sceneRevision + 1 } : {});
+      // A new flow is framed; the same one reloaded (another snapshot) keeps the camera.
+      if (!before) this.fitTour();
     } catch (error) { if (!isAbort(error)) this.setTour(tour => tour.key === key ? { status: 'error', error: error instanceof Error ? error.message : String(error) } : {}); }
   }
   /** Insert a flow's stops, pin owners and their areas into the scene, outermost first. */
@@ -1072,70 +1097,39 @@ export class AtlasStore {
     for (const stop of flow.stops) if (stop.node) this.scene.upsert(stop.node);
     this.bumpScene();
   }
-  closeTour(): void { this.aborts.get('tour')?.abort(); this.set({ tour: undefined }); }
-  /** Move through the flow on the map branch by branch: play, pause, step, seek; a branch's choice is selected as it starts. */
-  tourAction(action: PlaybackAction): void {
+  /** Show one branch of the flow on the map on its own (undefined: every branch); its choice is selected and the map frames it. */
+  setTourBranch(index: number | undefined): void {
     const tour = this.state.tour;
     if (!tour?.flow) return;
-    const after = playback(tour.playback, action);
-    if (after === tour.playback) return;
-    this.setTour({ playback: after });
-    if (after.index === tour.playback.index && action.type !== 'restart' && action.type !== 'seek') return;
-    const branch = tour.flow.branches[after.index];
+    if (tour.branch !== index) this.setTour({ branch: index });
+    const branch = index === undefined ? undefined : tour.flow.branches[index];
     const head = branch ? tour.flow.stops[branch.head] : undefined;
-    if (!head?.node) return;
-    void this.select(head.entityId, { fly: false, recordHistory: false, byPlayback: true });
-    if (tour.follow) this.followBranch(after.index);
+    if (head?.node) void this.select(head.entityId, { fly: false, recordHistory: false });
+    this.fitTour();
   }
-  /** Frame every stop of a branch, so its whole flow is seen. */
-  private followBranch(index: number): void {
-    const flow = this.state.tour?.flow;
-    const branch = flow?.branches[index];
-    const nodes = branch ? branch.waves.flat().flatMap(stop => flow!.stops[stop]?.node ? [flow!.stops[stop]!.node!] : []) : [];
-    if (nodes.length) this.navigator?.fitNodes(nodes);
-  }
-  /** A stop of the flow, chosen in the bar: selected and flown to (playback pauses, as for any selection). */
-  focusTourStop(index: number): void {
-    const stop = this.state.tour?.flow?.stops[index];
-    if (!stop?.node) return;
-    this.navigator?.flyTo(stop.node);
-    void this.select(stop.entityId, { fly: false });
-  }
-  /** Fit every stop of the flow on the map in view. */
-  fitTour(): void { const flow = this.state.tour?.flow; if (flow) this.navigator?.fitNodes(flow.stops.flatMap(stop => stop.node ? [stop.node] : [])); }
-  setTourFollow(follow: boolean): void { this.setTour({ follow }); }
-  /** The lanes of a request flow, in the middle. */
-  async openRequestFlow(id: string): Promise<void> {
-    const tour = this.state.tour?.id === id ? this.state.tour : undefined;
-    const known = this.state.flowView?.id === id ? this.state.flowView : undefined;
-    await this.openFlowView({ id, title: known?.title ?? tour?.title ?? this.scene.nodes.get(id)?.name ?? 'Request flow', ...(known?.subtitle ?? tour?.subtitle ? { subtitle: known?.subtitle ?? tour?.subtitle } : {}), lanes: true }, 'diagram');
+  /** Frame the flow on the map (the branch shown, or all of it). */
+  fitTour(): void {
+    const tour = this.state.tour, flow = tour?.flow;
+    if (!flow) return;
+    const branch = tour.branch === undefined ? undefined : flow.branches[tour.branch];
+    const stops = branch ? branch.waves.flat().map(index => flow.stops[index]!) : flow.stops;
+    this.navigator?.fitNodes(stops.flatMap(stop => stop.node ? [stop.node] : []));
   }
   /** Load a request flow's lanes; its entities are placed in the scene. */
   private async loadRequestFlow(id: string): Promise<void> {
     const signal = this.abortable('request-flow');
     const viewStamp = this.viewStamp();
-    this.set(state => ({ requests: { open: { id, status: 'loading', viewStamp, playing: state.requests.open?.playing ?? true } } }));
+    this.set(state => ({ requests: { open: { id, status: 'loading', viewStamp, ...(state.requests.open?.id === id && state.requests.open.focus ? { focus: state.requests.open.focus } : {}) } } }));
     try {
       const data = await this.api.requestFlow(id, signal);
       if (signal.aborted) return;
       for (const node of data.nodes) if (node.node) this.scene.upsert(node.node);
       this.set(state => state.requests.open?.id === id ? { requests: { open: { ...state.requests.open, status: 'ready', data, viewStamp } } } : {});
       this.bumpScene();
+      void this.showFlowOnMap();
     } catch (error) { if (!isAbort(error)) this.set(state => state.requests.open?.id === id ? { requests: { open: { ...state.requests.open, status: 'error', error: error instanceof Error ? error.message : String(error) } } } : {}); }
   }
-  closeRequestFlow(): void { this.closeFlowView(); }
   focusRequestNode(id: string | undefined): void { this.set(state => state.requests.open ? { requests: { open: { ...state.requests.open, focus: id } } } : {}); }
-  toggleRequestFlowPlaying(): void { this.set(state => state.requests.open ? { requests: { open: { ...state.requests.open, playing: !state.requests.open.playing } } } : {}); }
-  /** The flow open in the middle, shown on the map instead (the flow stays open, a click away). */
-  traceRequestFlow(options: { play?: boolean } = {}): void {
-    const view = this.state.flowView;
-    if (!view) return;
-    const data = this.state.requests.open?.id === view.id ? this.state.requests.open.data : undefined;
-    this.set({ center: 'map' });
-    if (this.state.tour?.id === view.id) { if (options.play !== false) this.tourAction({ type: 'play' }); return; }
-    const title = data ? (data.kind === 'command' || data.kind === 'schedule' ? data.name : `${data.method} ${data.path}`) : view.title;
-    void this.openTour({ id: view.id, detail: view.lanes ? 'lanes' : 'steps', title, ...(data?.handler ? { subtitle: `handled by ${data.handler}` } : view.subtitle ? { subtitle: view.subtitle } : {}) }, options);
-  }
   /** Show or hide the coverage lens: files colored by whether flows touch them. */
   async toggleCoverage(show = !this.state.coverage.show): Promise<void> {
     // Coverage and data families both color files: one at a time.
@@ -1358,11 +1352,16 @@ export class AtlasStore {
     this.set(state => ({ catalog: { ...state.catalog, open: { ...state.catalog.open, ...Object.fromEntries(keys.map(key => [key, open])) } } }));
   }
 }
-/** How a catalog flow is shown on the map, and its title. */
-export function tourEntry(item: FlowSummary): { id: string; detail: 'lanes' | 'steps'; title: string; subtitle?: string; kind: CatalogKind } {
+/** How a catalog flow is opened (in lanes, or by its steps), and its title. */
+export function flowEntry(item: FlowSummary): { id: string; detail: 'lanes' | 'steps'; title: string; subtitle?: string; kind: CatalogKind } {
   const technical = item.kind === 'command' || item.kind === 'schedule' || item.detail === 'steps' ? item.name : `${item.method ?? ''} ${item.path ?? item.name}`.trim();
   const context = item.kind === 'schedule' ? item.cadence : item.kind === 'command' ? (item.handler ? `runs ${item.handler}` : undefined) : item.detail === 'steps' ? 'page' : item.handler ? `handled by ${item.handler}` : undefined;
   // A title the models gave reads first; the technical name stays beside it.
   const subtitle = item.title ? [technical, context].filter(Boolean).join(' · ') : context;
   return { id: item.id, detail: item.detail, title: item.title ?? technical, ...(subtitle ? { subtitle } : {}), kind: item.kind };
+}
+/** Shares of the middle that leave every view of a flow usable. */
+export function clampSplit(split: FlowSplit): FlowSplit {
+  const clamp = (value: number, min: number, max: number, fallback: number) => Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
+  return { side: clamp(split.side, 0.16, 0.6, FLOW_SPLIT.side), bottom: clamp(split.bottom, 0.16, 0.76, FLOW_SPLIT.bottom) };
 }

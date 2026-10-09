@@ -7,16 +7,14 @@ import { LANES_TYPES, type AtlasStore } from '../lib/store';
 import { useStore } from './context';
 import { TypeBadge } from './TypeBadge';
 
-/** What a search result can be opened as, besides selecting it on the map: its flow (on the map, in lanes, as steps) and what depends on it. */
+/** What a search result can be opened as, besides selecting it on the map: its flow (on the map, in lanes or layers, as an outline) and what depends on it. */
 interface SearchAction { key: string; text: string; title: string; run: (store: AtlasStore, item: NodeSummary) => void }
-const ON_MAP: SearchAction = { key: 'map', text: 'On map', title: 'Play the flow that starts here on the map', run: (store, item) => { store.setCenter('map'); void store.openTour({ id: item.id, detail: item.type === 'route' ? 'steps' : 'lanes', title: item.name }); } };
-const LANES: SearchAction = { key: 'lanes', text: 'Lanes', title: 'The flow that starts here in lanes, left to right', run: (store, item) => { void store.select(item.id, { fly: false }); void store.openFlowView({ id: item.id, title: item.name, lanes: true }, 'diagram'); } };
-const STEPS: SearchAction = { key: 'steps', text: 'What happens', title: 'What it sets in motion, as an outline of steps', run: (store, item) => { void store.select(item.id, { fly: false }); void store.openFlowView({ id: item.id, title: item.name, lanes: LANES_TYPES.has(item.type) }, 'outline'); } };
+const FLOW: SearchAction = { key: 'flow', text: 'Flow', title: 'The flow that starts here: on the map, in lanes (or layers) and as an outline', run: (store, item) => { void store.select(item.id, { fly: false }); void store.openFlowView({ id: item.id, title: item.name, lanes: LANES_TYPES.has(item.type) }); } };
+const STEPS: SearchAction = { key: 'steps', text: 'What happens', title: 'What it sets in motion: on the map, in layers and as an outline of steps', run: (store, item) => { void store.select(item.id, { fly: false }); void store.openFlowView({ id: item.id, title: item.name, lanes: false }); } };
 const IMPACT: SearchAction = { key: 'impact', text: 'Impact', title: 'What depends on it, hop by hop', run: (store, item) => { void store.select(item.id, { fly: false }); void store.showImpact(item.id); } };
 function actionsOf(item: NodeSummary): SearchAction[] {
   if (item.kind !== 'entity') return [];
-  if (LANES_TYPES.has(item.type)) return [ON_MAP, LANES, STEPS, IMPACT];
-  if (item.type === 'route') return [ON_MAP, STEPS, IMPACT];
+  if (LANES_TYPES.has(item.type) || item.type === 'route') return [FLOW, IMPACT];
   if (['repository', 'application', 'directory', 'file', 'database_table'].includes(item.type)) return [IMPACT];
   return [STEPS, IMPACT];
 }

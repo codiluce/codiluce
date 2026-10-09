@@ -4,7 +4,7 @@ import type { Entity, Evidence } from '@engine/core/graph';
 import { fileAnalysis } from '@engine/analysis/facts';
 import type { AggregateGroup, ChangeFacet, DiagnosticItem, NodeChange, NodeSummary, RelationItem } from '@engine/projection/dto';
 import { compactNumber, percent, relationPhrase, relativeTime, shortSha, typeLabel } from '../lib/format';
-import { entryOf, isContainer, LANES_TYPES, NO_FAMILY, tourEntry, type AtlasStore } from '../lib/store';
+import { entryOf, flowEntry, isContainer, LANES_TYPES, NO_FAMILY, type AtlasStore } from '../lib/store';
 import { coverageCss, familyCss, familyHues, featureHues, personHue, themeById } from '../lib/themes';
 import { COVERAGE_TEXT, NOT_MEASURED } from '../lib/coverage';
 import { useAtlas, useStore } from './context';
@@ -130,19 +130,17 @@ function Selection() {
     </div>
   );
 }
-/** Blast radius, "what happens from here" for entities that run code or serve requests, and their flow in lanes or on the map. */
+/** Blast radius, and the flow of entities that run code or serve requests: "what happens from here", or for a request, command or task its flow in lanes. */
 function AnalysisButtons({ node }: { node: NodeSummary }) {
   const store = useStore();
   const impactOpen = useAtlas(state => state.impact.open && state.impact.forId === node.id);
-  const flow = useAtlas(state => state.flowView?.id === node.id ? state.flowView.layout : undefined);
+  const flowOpen = useAtlas(state => state.flowView?.id === node.id);
   const runs = node.kind === 'entity' && !['repository', 'application', 'directory', 'file', 'database_table'].includes(node.type);
   const lanes = LANES_TYPES.has(node.type);
   return (
     <>
       {node.kind === 'entity' && <button className="button small" aria-pressed={impactOpen} onClick={() => impactOpen ? store.hideImpact() : void store.showImpact(node.id)} title="What depends on this, hop by hop (in the middle of the screen)">{impactOpen ? 'Hide impact' : 'Impact'}</button>}
-      {runs && <button className="button small" aria-pressed={flow === 'outline'} onClick={() => flow === 'outline' ? store.closeFlowView() : void store.openSteps(node.id)} title="What this sets in motion: handlers, requests, endpoints and effects, as an outline">What happens from here</button>}
-      {lanes && <button className="button small" aria-pressed={flow === 'diagram'} onClick={() => flow === 'diagram' ? store.closeFlowView() : void store.openFlowView({ id: node.id, title: node.name, lanes: true }, 'diagram')} title="The flow that starts here in lanes, left to right">Lanes</button>}
-      {lanes && <button className="button small" onClick={() => { store.setCenter('map'); void store.openTour({ id: node.id, detail: 'lanes', title: node.name }); }} title="Show the flow that starts here on the map">Show flow on map</button>}
+      {runs && <button className="button small" aria-pressed={flowOpen} onClick={() => flowOpen ? store.closeFlowView() : void store.openSteps(node.id)} title={lanes ? 'The flow that starts here: on the map, in lanes and as an outline of steps' : 'What this sets in motion: handlers, requests, endpoints and effects, on the map, in layers and as an outline'}>{lanes ? 'Flow' : 'What happens from here'}</button>}
     </>
   );
 }
@@ -355,7 +353,7 @@ function FlowsSection({ node }: { node: NodeSummary }) {
   const store = useStore();
   const coverage = useAtlas(state => state.selection?.coverage);
   const dark = themeById(useAtlas(state => state.themeId)).dark;
-  const active = useAtlas(state => state.tour?.key);
+  const active = useAtlas(state => state.flowView ? `${state.flowView.lanes ? 'lanes' : 'steps'}:${state.flowView.id}` : undefined);
   if (!coverage || coverage.status === 'idle') return null;
   if (coverage.status === 'loading' && !coverage.data) return <section className="section"><h4>Flows</h4><p className="absent">Finding the flows through here…</p></section>;
   if (coverage.status === 'error') return <section className="section"><h4>Flows</h4><p className="note error">{coverage.error}</p></section>;
@@ -379,8 +377,8 @@ function FlowsSection({ node }: { node: NodeSummary }) {
         <ul className="rf-list">
           {data.flows.slice(0, 8).map(item => (
             <li key={item.id}>
-              <button className={`rf-row compact${active === `${item.detail}:${item.id}` ? ' active' : ''}`} onClick={() => void store.openCatalogFlow(item)} title="Show this flow on the map">
-                <span className="rf-row-top"><span className="flow-kind-tag">{item.kind === 'request' ? item.method : item.kind === 'unmatched' ? '?' : item.kind}</span><span className="rf-row-path mono">{tourEntry(item).title}</span></span>
+              <button className={`rf-row compact${active === `${item.detail}:${item.id}` ? ' active' : ''}`} onClick={() => void store.openCatalogFlow(item)} title="Open this flow: on the map, in lanes or layers, and as an outline">
+                <span className="rf-row-top"><span className="flow-kind-tag">{item.kind === 'request' ? item.method : item.kind === 'unmatched' ? '?' : item.kind}</span><span className="rf-row-path mono">{flowEntry(item).title}</span></span>
               </button>
             </li>
           ))}

@@ -425,7 +425,7 @@ details[open].section > summary::before { transform: rotate(90deg); }
 [data-theme="brutal"] .brand small, [data-theme="brutal"] .run-info small, [data-theme="brutal"] .breadcrumbs .crumb, [data-theme="brutal"] .breadcrumbs .hint, [data-theme="brutal"] .breadcrumbs .sep { color: var(--text); font-weight: 600; }
 [data-theme="brutal"] .button, [data-theme="brutal"] .icon-button { font-weight: 700; }
 [data-theme="brutal"] .topbar .button:active:not(:disabled), [data-theme="brutal"] .topbar .icon-button:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: none; }
-[data-theme="brutal"] .control-group, [data-theme="brutal"] .status-bar, [data-theme="brutal"] .legend, [data-theme="brutal"] .hover-card, [data-theme="brutal"] .search-results, [data-theme="brutal"] .flow-bar, [data-theme="brutal"] .coverage-legend, [data-theme="brutal"] .banner, [data-theme="brutal"] .split-tile, [data-theme="brutal"] .center-state .card { border-width: 2px; border-color: var(--text); }
+[data-theme="brutal"] .control-group, [data-theme="brutal"] .status-bar, [data-theme="brutal"] .legend, [data-theme="brutal"] .hover-card, [data-theme="brutal"] .search-results, [data-theme="brutal"] .coverage-legend, [data-theme="brutal"] .banner, [data-theme="brutal"] .split-tile, [data-theme="brutal"] .center-state .card { border-width: 2px; border-color: var(--text); }
 [data-theme="brutal"] .segmented button[aria-pressed="true"], [data-theme="brutal"] .breadcrumbs .crumb[aria-current="true"] { background: var(--text); color: var(--accent-ink); box-shadow: none; }
 [data-theme="brutal"] .type-dot { transform: none; width: 10px; height: 10px; border-radius: 0; box-shadow: inset 0 0 0 1.5px var(--text); }
 [data-theme="brutal"] .inspector-title h3 { font-stretch: 112%; font-weight: 800; }
@@ -511,6 +511,9 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .steps-edge path { fill: none; stroke: var(--subtle); stroke-width: 1.4; }
 .steps-edge.back path { stroke-dasharray: 5 4; }
 .steps-edge.lit path { stroke: var(--accent); stroke-width: 2.2; }
+.steps-edge path.steps-edge-flow { stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 3 19; opacity: 0.45; animation: rf-stream 0.44s linear infinite; }
+.steps-edge.lit path.steps-edge-flow { stroke-width: 2.4; opacity: 1; }
+.steps-edge.back path.steps-edge-flow { opacity: 0.3; }
 .steps-edge text { fill: var(--warning); font-size: 10.5px; paint-order: stroke; stroke: var(--panel-solid); stroke-width: 3px; }
 .steps-arrowhead { fill: var(--subtle); }
 .steps-box { cursor: pointer; }
@@ -602,13 +605,50 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .rf-loading.big { padding: 40px; justify-content: center; font-size: 14px; }
 .rf-spark { width: 18px; height: 18px; border-radius: 50%; background: conic-gradient(var(--lane-client), var(--lane-route), var(--lane-controller), var(--lane-data), var(--lane-return), var(--lane-client)); -webkit-mask: radial-gradient(circle, transparent 5px, #000 6px); mask: radial-gradient(circle, transparent 5px, #000 6px); animation: spin 0.9s linear infinite; }
 
-/* A flow in the middle: in lanes (or layers), or as an outline */
-.tool-view.flow-view { display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden;
+/* A flow in the middle: the map and the outline side by side over the lanes (or layers); any of them can have the whole middle */
+.center-body.flow-split { display: grid; background: var(--panel-solid);
+  grid-template-columns: minmax(0, var(--flow-main, 0.7fr)) 7px minmax(0, var(--flow-side, 0.3fr));
+  grid-template-rows: auto minmax(0, var(--flow-top, 0.58fr)) 7px minmax(0, var(--flow-bottom, 0.42fr));
+  grid-template-areas: "head head head" "map side outline" "bottom bottom bottom" "lanes lanes lanes"; }
+.flow-split > .flow-head { grid-area: head; }
+.flow-split > .map-holder { position: relative; inset: auto; grid-area: map; grid-template-rows: auto minmax(0, 1fr); }
+.flow-split > .flow-pane-outline { grid-area: outline; }
+.flow-split > .flow-pane-diagram { grid-area: lanes;
   background:
-    radial-gradient(900px 420px at 0% 0%, color-mix(in srgb, var(--lane-client) 13%, transparent), transparent 70%),
-    radial-gradient(900px 480px at 55% 115%, color-mix(in srgb, var(--lane-controller) 12%, transparent), transparent 70%),
-    radial-gradient(800px 420px at 100% 0%, color-mix(in srgb, var(--lane-data) 12%, transparent), transparent 70%),
+    radial-gradient(900px 420px at 0% 0%, color-mix(in srgb, var(--lane-client) 11%, transparent), transparent 70%),
+    radial-gradient(900px 480px at 55% 115%, color-mix(in srgb, var(--lane-controller) 10%, transparent), transparent 70%),
+    radial-gradient(800px 420px at 100% 0%, color-mix(in srgb, var(--lane-data) 10%, transparent), transparent 70%),
     var(--panel-solid); }
+.flow-split.max-map { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "head" "map"; }
+.flow-split.max-diagram { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "head" "lanes"; }
+.flow-split.max-outline { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "head" "outline"; }
+.flow-split.max-map > .flow-pane, .flow-split.max-map > .flow-split-bar, .flow-split.max-diagram > .flow-split-bar, .flow-split.max-outline > .flow-split-bar,
+.flow-split.max-diagram > .flow-pane-outline, .flow-split.max-outline > .flow-pane-diagram { display: none; }
+.flow-split-bar { position: relative; z-index: 4; background: var(--panel-border); touch-action: none; transition: background 0.15s; }
+.flow-split-bar.side { grid-area: side; cursor: col-resize; }
+.flow-split-bar.bottom { grid-area: bottom; cursor: row-resize; }
+.flow-split-bar::after { content: ''; position: absolute; inset: 50% auto auto 50%; width: 22px; height: 3px; border-radius: 2px; transform: translate(-50%, -50%); background: color-mix(in srgb, var(--muted) 55%, transparent); }
+.flow-split-bar.side::after { width: 3px; height: 22px; }
+.flow-split-bar:hover, .flow-split-bar:focus-visible { background: color-mix(in srgb, var(--accent) 55%, var(--panel-border)); outline: none; }
+.flow-pane { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; min-height: 0; overflow: hidden; background: var(--panel-solid); }
+.flow-pane-head { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 32px; padding: 3px 6px 3px 12px; border-bottom: 1px solid var(--panel-border); background: var(--panel-solid); }
+.flow-pane-title { flex: none; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.flow-pane-toggle { flex: none; margin-left: auto; }
+.flow-pane-head .rf-pips { min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.flow-pane-body { min-height: 0; overflow: auto; padding: 10px 14px; }
+.flow-pane-diagram .lanes-body { min-height: 0; }
+.flow-map-bar { z-index: 3; }
+.flow-map-bar .flow-branches { flex: 1; min-width: 0; padding: 2px 0; }
+.flow-map-bar .button.tiny { flex: none; margin-left: auto; }
+.flow-map-bar .button.tiny + .flow-pane-toggle { margin-left: 0; }
+.flow-map-summary { flex: none; max-width: 28%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; }
+.flow-branch.all { padding: 2px 9px; font-weight: 700; flex: none; --tone: var(--accent); }
+.flow-head { flex-wrap: wrap; }
+.flow-head .segmented { flex: none; }
+@media (max-width: 860px) {
+  .center-body.flow-split:not(.max-map):not(.max-diagram):not(.max-outline) { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) 7px minmax(0, var(--flow-bottom, 0.42fr)) minmax(0, 0.5fr); grid-template-areas: "head" "map" "bottom" "lanes" "outline"; }
+  .flow-split-bar.side { display: none; }
+}
 .rf-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px 10px; border-bottom: 1px solid var(--panel-border); min-width: 0; }
 .rf-head .rf-method { font-size: 12px; min-width: 52px; padding: 3px 8px; border-radius: 8px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18); }
 .rf-head-title { display: grid; min-width: 0; }
@@ -637,7 +677,10 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .rf-edge path { fill: none; }
 .rf-edge-line { stroke: color-mix(in srgb, var(--lane) 75%, var(--muted)); stroke-width: 1.8; }
 .rf-edge-glow { stroke: var(--lane); stroke-width: 7; opacity: 0.1; }
-.rf-edge.k-returns .rf-edge-line, .rf-edge.k-then .rf-edge-line { stroke-dasharray: 7 5; animation: rf-march 1.1s linear infinite; }
+.rf-edge.k-returns .rf-edge-line, .rf-edge.k-then .rf-edge-line { stroke: color-mix(in srgb, var(--lane-return) 70%, var(--muted)); stroke-dasharray: 7 5; }
+.rf-edge-flow { fill: none; stroke: color-mix(in srgb, var(--lane) 50%, var(--text)); stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 3 19; animation: rf-stream 0.44s linear infinite; }
+.rf-edge.k-returns .rf-edge-flow, .rf-edge.k-then .rf-edge-flow { stroke: color-mix(in srgb, var(--lane-return) 55%, var(--text)); }
+.rf-edge.back .rf-edge-flow { stroke-width: 2; }
 .rf-edge.k-gap .rf-edge-line { stroke: var(--rf-gap); stroke-dasharray: 3 5; }
 .rf-edge.k-gap .rf-edge-glow { stroke: var(--rf-gap); }
 .rf-edge.back { opacity: 0.45; }
@@ -645,10 +688,8 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .rf-edge.back .rf-edge-glow { display: none; }
 .rf-edge.dim { opacity: 0.16; }
 .rf-arrowhead { fill: color-mix(in srgb, var(--muted) 80%, transparent); }
-@keyframes rf-march { to { stroke-dashoffset: -24; } }
-.rf-particle { fill: #fff; stroke: var(--lane); stroke-width: 3; filter: url(#rf-glow); }
-.rf-edge.k-returns .rf-particle { stroke: var(--lane-return); }
-.rf-edge.k-gap .rf-particle { stroke: var(--rf-gap); }
+/* Dashes streaming from where a link starts to where it leads: the pattern (3 + 19) moves one period forward per cycle. */
+@keyframes rf-stream { from { stroke-dashoffset: 22; } to { stroke-dashoffset: 0; } }
 .rf-edge-label rect { fill: var(--panel-solid); stroke: color-mix(in srgb, var(--lane) 35%, transparent); stroke-width: 1; }
 .rf-edge-label text { fill: color-mix(in srgb, var(--lane) 65%, var(--text)); font-size: 10.5px; font-weight: 700; }
 .rf-edge.k-responds .rf-edge-label text, .rf-edge.k-then .rf-edge-label text { fill: var(--warning); }
@@ -658,7 +699,7 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .rf-node:hover .rf-card, .rf-node:focus-visible .rf-card { stroke: var(--lane); stroke-width: 2; }
 .rf-node.focused .rf-card { stroke: var(--lane); stroke-width: 2.6; }
 .rf-node.focused .rf-halo { opacity: 0.55; }
-.rf-halo { fill: none; stroke: var(--lane); stroke-width: 6; filter: url(#rf-glow); }
+.rf-halo { fill: none; stroke: var(--lane); stroke-width: 6; filter: url(#rf-glow); opacity: 0; }
 .rf-accent { fill: var(--lane); }
 .rf-icon-bg { fill: color-mix(in srgb, var(--lane) 16%, transparent); stroke: color-mix(in srgb, var(--lane) 45%, transparent); }
 .rf-icon { fill: var(--lane); font-size: 14px; font-weight: 800; }
@@ -700,15 +741,6 @@ details[open].section > summary::before { transform: rotate(90deg); }
 /* A flow on the map: the player over the map, its stops in travel order. */
 .codiluce { --tone-client: var(--lane-client); --tone-call: var(--lane-call); --tone-route: var(--lane-route); --tone-server: var(--lane-controller); --tone-data: var(--lane-data); --tone-response: var(--lane-response); --tone-return: var(--lane-return); --tone-console: var(--lane-gate);
   --kind-page: var(--lane-client); --kind-request: var(--lane-route); --kind-command: var(--lane-gate); --kind-schedule: var(--lane-gate); --kind-unmatched: var(--rf-gap); }
-.flow-bar { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 6; width: min(920px, calc(100% - 120px)); display: grid; gap: 6px; padding: 8px 10px; border-radius: var(--radius-float, 14px); background: var(--panel-solid); border: 1px solid color-mix(in srgb, var(--lane-route) 35%, var(--panel-border)); box-shadow: var(--shadow), 0 0 26px color-mix(in srgb, var(--lane-route) 18%, transparent); }
-.flow-bar-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.flow-bar-badge { flex: none; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #fff; background: linear-gradient(135deg, var(--lane-client), var(--lane-route)); }
-.flow-bar-title { display: grid; min-width: 0; flex: 1; line-height: 1.25; }
-.flow-bar-title strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; }
-.flow-bar-title .absent { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; }
-.flow-bar-controls, .flow-bar-actions { display: flex; align-items: center; gap: 5px; flex: none; }
-.flow-bar-position { font-size: 11px; font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 34px; text-align: center; }
-.flow-bar .toggle { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--muted); cursor: pointer; }
 .flow-branches { display: flex; gap: 10px; overflow-x: auto; padding: 2px 0 4px; scrollbar-width: thin; }
 .flow-branch-group { display: flex; align-items: center; gap: 4px; flex: none; padding-left: 8px; border-left: 2px solid var(--panel-border); }
 .flow-branch-group:first-child { padding-left: 0; border-left: 0; }
@@ -719,17 +751,6 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .flow-branch-event { padding: 1px 6px; border-radius: 999px; background: var(--tone); color: #fff; font-size: 9.5px; font-weight: 800; }
 .flow-branch-label { overflow: hidden; text-overflow: ellipsis; }
 .flow-branch-reach { font-size: 10px; font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; }
-.flow-waves { list-style: none; margin: 0; padding: 2px 0; display: flex; align-items: flex-start; gap: 4px; overflow-x: auto; scrollbar-width: thin; }
-.flow-wave { display: flex; align-items: flex-start; gap: 5px; flex: none; padding: 3px 6px 3px 3px; border-radius: 10px; opacity: 0.55; transition: opacity 0.2s, background 0.2s; }
-.flow-wave + .flow-wave::before { content: '→'; align-self: center; margin: 0 2px 0 -4px; color: var(--muted); font-size: 12px; }
-.flow-wave.reached { opacity: 1; }
-.flow-wave.current { background: color-mix(in srgb, var(--lane-route) 12%, transparent); }
-.flow-wave-number { display: inline-grid; place-items: center; flex: none; min-width: 18px; height: 18px; margin-top: 2px; border-radius: 50%; background: var(--lane-route); color: #fff; font-size: 10px; font-weight: 800; }
-.flow-wave-stops { display: grid; gap: 3px; max-height: 96px; overflow-y: auto; scrollbar-width: thin; padding-right: 2px; }
-.flow-stop { display: inline-flex; align-items: center; gap: 6px; max-width: 200px; padding: 2px 9px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--tone) 45%, var(--panel-border)); background: color-mix(in srgb, var(--tone) 9%, transparent); color: inherit; font: inherit; font-size: 11.5px; cursor: pointer; white-space: nowrap; }
-.flow-stop:hover { background: color-mix(in srgb, var(--tone) 18%, transparent); }
-.flow-stop.current { background: color-mix(in srgb, var(--tone) 26%, transparent); border-color: var(--tone); box-shadow: 0 0 10px color-mix(in srgb, var(--tone) 40%, transparent); font-weight: 800; }
-.flow-stop-label { overflow: hidden; text-overflow: ellipsis; }
 /* Flows panel */
 .flow-kinds { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 10px; }
 .flow-kinds button { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 4px 2px; line-height: 1.2; min-width: 0; }
@@ -805,10 +826,10 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .coverage-chip { display: inline-block; margin-right: 7px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 800; color: #101422; }
 .coverage-counts { display: grid; gap: 4px; margin-bottom: 8px; font-size: 11.5px; }
 .flows-section .rf-list { margin-bottom: 8px; }
-[data-floating="true"] .flow-bar, [data-floating="true"] .coverage-legend { border-radius: var(--radius-float, 18px); -webkit-backdrop-filter: blur(var(--blur)); backdrop-filter: blur(var(--blur)); }
-@media (max-width: 700px) { .flow-bar { width: calc(100% - 24px); } .flow-bar-actions .toggle, .flow-bar-badge { display: none; } .coverage-legend { width: calc(100% - 24px); bottom: 100px; } }
+[data-floating="true"] .coverage-legend { border-radius: var(--radius-float, 18px); -webkit-backdrop-filter: blur(var(--blur)); backdrop-filter: blur(var(--blur)); }
+@media (max-width: 700px) { .coverage-legend { width: calc(100% - 24px); bottom: 100px; } }
 @media (max-width: 700px) { .rf-head { flex-wrap: wrap; } .rf-head-actions { margin-left: 0; } .rf-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (prefers-reduced-motion: reduce) { .rf-detail, .rf-edge-line, .rf-node.k-gap .rf-icon, .rf-spark { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .rf-detail, .rf-edge-line, .rf-edge-flow, .steps-edge-flow, .rf-node.k-gap .rf-icon, .rf-spark { animation: none !important; } }
 
 /* Language-model notes: always set apart from indexed facts, with where they came from. */
 .codiluce { --intent-feature: #22c55e; --intent-fix: #ef4444; --intent-refactor: #8b5cf6; --intent-style: #ec4899; --intent-content: #06b6d4; --intent-data: #f59e0b; --intent-test: #14b8a6; --intent-docs: #64748b; --intent-build: #a16207; --intent-chore: #94a3b8; }
@@ -894,13 +915,10 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .tool-actions { display: flex; align-items: center; gap: 6px; flex: none; }
 .tool-body { flex: 1; min-height: 0; overflow: auto; padding: 12px 16px 24px; }
 .tool-body > * { max-width: 980px; }
-.tool-open .tool-body, .tool-open .flow-steps { padding-bottom: 240px; }
-.flow-view .rf-head { flex-wrap: wrap; }
-.flow-view .rf-head .segmented { flex: none; }
+.tool-open .tool-body { padding-bottom: 240px; }
 .lanes-body { display: flex; flex-direction: column; min-height: 0; }
-.lanes-body .rf-body { flex: 1; }
-.flow-steps { min-height: 0; overflow: auto; padding: 12px 16px; }
-.flow-outline { max-width: 860px; }
+.lanes-body .rf-body { flex: 1; min-height: 0; }
+.flow-outline > * { max-width: 860px; }
 .impact-origins { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .impact-origin { margin: 0 0 8px; }
 .impact-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 10px 0 6px; }

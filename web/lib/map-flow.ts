@@ -4,14 +4,13 @@
 // validation, responses, effects, gaps) attached to the block they belong to,
 // and *members*: every entity the flow touches, folded ones included.
 //
-// A flow is played by *branches*, not as one list: each choice it offers (an
+// A flow is read by *branches*, not as one list: each choice it offers (an
 // event a page binds, an action it runs on load, a caller of an endpoint)
-// is a branch, played from where the flow starts along real edges only, in
+// is a branch, followed from where the flow starts along real edges only, in
 // *waves*: the stops one edge further are reached together, so siblings show
-// as alternatives at the same moment, and the way back (a response returning
+// as alternatives at the same depth, and the way back (a response returning
 // to its caller) comes last. Pure.
 import type { FoldedEntity, FlowLane, NodeSummary, RequestFlow, RequestFlowNode, StepsResult } from '@engine/projection/dto';
-import type { PlaybackState } from './playback';
 
 export type StopTone = 'client' | 'call' | 'route' | 'server' | 'data' | 'response' | 'return' | 'console';
 export interface MapStop {
@@ -31,14 +30,14 @@ export interface MapEdge {
   event?: string;
   /** Entities folded into it, in order. */
   via?: { name: string; type: string }[];
-  /** The way back (a response to its caller): played after the way there. */
+  /** The way back (a response to its caller): it follows the way there. */
   back?: boolean;
 }
 /** An entity the flow touches, with its spatial ancestors (root first). */
 export interface MapMember { id: string; ancestors: string[] }
 export interface MapBranch {
   key: string;
-  /** Index of the stop the branch is about (the choice it plays). */
+  /** Index of the stop the branch is about (the choice it follows). */
   head: number;
   label: string; event?: string;
   /** Where the choice is made (the component binding it, or its file; for a request, where it comes from): the list groups by it. */
@@ -193,7 +192,7 @@ function membersOf(items: (MapMember | FoldedEntity)[]): MapMember[] {
 
 // Branches ---------------------------------------------------------------------
 /**
- * The choices a flow offers, each played from where the flow starts. With one
+ * The choices a flow offers, each followed from where the flow starts. With one
  * starting stop (a page, an endpoint's only caller), every stop it leads to
  * directly is a branch; with several (an endpoint called from many places),
  * each start is a branch. Waves follow forward edges breadth-first; edges
@@ -265,7 +264,7 @@ interface RequestShape {
   rendered: Set<number>;
   /** Where a request made from a page or entry stop comes from. */
   origin: Map<number, Origin>;
-  /** The endpoint serves a page: opening it directly is a branch of its own, played first. */
+  /** The endpoint serves a page: opening it directly is a branch of its own, listed first. */
   page: boolean;
 }
 /**
@@ -273,7 +272,7 @@ interface RequestShape {
  * request alone when nothing indexed makes it), then one per place it is made
  * from — a caller and the choice leading to it (a control on a page, work on
  * load) — grouped by where that is: this page, another page, the scheduler.
- * A branch plays its own choice on the client and nothing else the page
+ * A branch follows its own choice on the client and nothing else the page
  * offers, then the request through the server; the page a response renders
  * comes once the server is done, the way back to the caller last.
  */
@@ -353,19 +352,11 @@ function requestBranches(flow: Pick<MapFlow, 'stops' | 'edges'>, shape: RequestS
   const compare = (a: number[], b: number[]) => { for (let i = 0; i < Math.max(a.length, b.length); i++) if ((a[i] ?? -1) !== (b[i] ?? -1)) return (a[i] ?? -1) - (b[i] ?? -1); return 0; };
   return found.sort((a, b) => a.rank - b.rank || compare(a.order, b.order)).map(item => item.branch);
 }
-/** How long a branch plays: one wave per edge step, and a last one to stay on the result. */
-export const WAVE_MS = 1100;
-export function branchWaves(branch: MapBranch): number { return Math.max(0, ...branch.links.map(link => link.wave + 1)); }
-export function branchDuration(branch: MapBranch | undefined): number { return WAVE_MS * ((branch ? branchWaves(branch) : 0) + 1); }
-/**
- * Where the flow is in a branch, in waves: `position` (0 → the start, n → every
- * edge has flowed) and `front`, the wave whose stops were reached last. Before
- * playing and after the end, the whole branch shows.
- */
-export function branchPosition(branch: MapBranch, playback: Pick<PlaybackState, 'status' | 'progress'>): { position: number; front: number } {
-  const waves = branchWaves(branch);
-  const position = playback.status === 'playing' || playback.status === 'paused' ? Math.min(waves, playback.progress * (waves + 1)) : waves;
-  return { position, front: Math.min(branch.waves.length - 1, Math.floor(position)) };
+/** How far each stop is from where the flow starts: its earliest wave in any branch (a stop no branch reaches has none). */
+export function flowDepths(flow: Pick<MapFlow, 'branches'>): Map<number, number> {
+  const depths = new Map<number, number>();
+  for (const branch of flow.branches) branch.waves.forEach((wave, depth) => { for (const stop of wave) if ((depths.get(stop) ?? Infinity) > depth) depths.set(stop, depth); });
+  return depths;
 }
 /** Branches grouped where their choice is made, in first-seen order. */
 export function groupBranches(branches: MapBranch[]): { label: string; title: string; items: { branch: MapBranch; index: number }[] }[] {
@@ -374,7 +365,7 @@ export function groupBranches(branches: MapBranch[]): { label: string; title: st
   return [...groups.values()];
 }
 
-/** Every area holding a stop of the branch (or a pin shown with it): opened on the map while it plays. */
+/** Every area holding a stop of the branch (or a pin shown with it): opened on the map whatever the zoom. */
 export function flowAreas(flow: MapFlow, branch?: MapBranch): Set<string> {
   const areas = new Set<string>();
   const stops = branch ? branch.waves.flat().map(index => flow.stops[index]!) : flow.stops;

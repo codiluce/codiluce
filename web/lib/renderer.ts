@@ -3,7 +3,8 @@
 import type { NodeSummary } from '@engine/projection/dto';
 import { ISO_X, ISO_Y, toScreen, worldToScreen, type Bounds, type Camera, type Point, type Viewport } from './camera';
 import type { LodConfig } from './lod';
-import type { Scene, VisibleItem, VisibleSet } from './scene';
+import { nodeHeight, type Scene, type VisibleItem, type VisibleSet } from './scene';
+import { RailCache, type Rail, type RailWorld } from './rails';
 import { familyHashHue, PaletteCache, paletteKey, type Theme } from './themes';
 import type { StopTone } from './map-flow';
 import { compactNumber, typeLabel } from './format';
@@ -11,14 +12,14 @@ import { NOT_MEASURED } from './coverage';
 
 export interface EdgeOverlay { key: string; from: string; to: string; fromAncestors: string[]; toAncestors: string[]; type: string; count: number; emphasized?: boolean; change?: 'added' | 'removed' }
 /**
- * The branch of a flow being played: its links with how far the pulse has
- * flowed along each (0 not yet, 1 all the way), and its stops — reached, at
- * the front (reached last), or still ahead.
+ * A flow on the map (all of it, or one branch): its links, streaming from
+ * where they start to where they lead (the way back in its own color), and
+ * its stops, the ones where it starts ringed.
  */
 export interface FlowOverlay {
-  links: { from: string; fromAncestors: string[]; to: string; toAncestors: string[]; fill: number; back: boolean }[];
-  stops: { entityId: string; ancestors: string[]; state: 'reached' | 'front' | 'ahead' }[];
-  /** The pulse streams while the flow plays. */
+  links: { from: string; fromAncestors: string[]; to: string; toAncestors: string[]; back: boolean }[];
+  stops: { entityId: string; ancestors: string[]; start: boolean }[];
+  /** The links stream (not with reduced motion). */
   moving: boolean;
 }
 /** A flow's stop labelled on screen next to its block (whatever the zoom), with its number. */
@@ -65,6 +66,8 @@ export interface RenderState {
   /** One person in focus: the files they changed and the areas holding them stay lit. */
   person?: FamilyOverlay;
   frames?: FrameOverlay[];
+  /** Links drawn as arcs over the blocks (the default) or as rails along the floors. */
+  connections?: 'arcs' | 'rails';
   time: number;
   reducedMotion: boolean;
 }
@@ -82,11 +85,29 @@ const MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
 export const RISE_MS = 520, FLASH_MS = 900;
 /** Rounded corners and gradients are skipped below this on-screen size, where they would not show. */
 const SOFT_PX = 16;
+/** A flow's links stream at this speed (CSS pixels per millisecond), in dashes this long and this far apart. */
+const STREAM_SPEED = 0.05, STREAM_DASH = [9, 13];
+/** Time a frame may spend routing rails; the rest is routed on the next frames. */
+const RAIL_BUDGET_MS = 10;
+/** A relationship resolved to the blocks drawn at this level of detail (those meeting the same blocks merged). */
+interface DrawnEdge { from: VisibleItem; to: VisibleItem; ends: [string, string]; count: number; color: string; hidden: boolean; emphasized: boolean; change?: 'added' | 'removed' }
+/** A flow's link resolved to the blocks drawn. */
+interface DrawnLink { from: VisibleItem; to: VisibleItem; ends: [string, string]; back: boolean }
+/** A rail on screen: its points, length so far at each, and its runs (straight on, drawn with one block in the painter's order). */
+interface RailStroke {
+  points: Point[]; lengths: number[]; runs: { host: number; from: number; to: number }[];
+  color: string; width: number; alpha: number; dash?: number[]; stream?: string; count?: number; halo?: string;
+}
+/** Rails of a frame: strokes, their runs by the block drawn before them, and what still goes as an arc. */
+interface RailPlan { strokes: RailStroke[]; byHost: Map<number, { stroke: RailStroke; run: RailStroke['runs'][number] }[]>; edges: DrawnEdge[]; links: DrawnLink[] }
 
 export class MapRenderer {
   private palettes: PaletteCache;
   private font = FONT;
   private dpr = 1;
+  private readonly rails = new RailCache();
+  /** Rails left to route after the last frame: the map asks for another one. */
+  railsPending = false;
   constructor(private theme: Theme) { this.palettes = new PaletteCache(theme); this.font = theme.style?.font ?? FONT; }
   setTheme(theme: Theme): void { this.theme = theme; this.palettes = new PaletteCache(theme); this.font = theme.style?.font ?? FONT; }
 
@@ -108,13 +129,18 @@ export class MapRenderer {
     const peopleOf = state.people ? this.familyResolver(scene, state.people) : undefined;
     const focusLit = state.feature?.focus ? this.familyLit(scene, state.feature, this.familyResolver(scene, state.feature))
       : state.person?.focus ? this.familyLit(scene, state.person, this.familyResolver(scene, state.person)) : familyLit;
-    for (const item of items) {
+    const edges = this.resolveEdges(scene, set, state.edges);
+    const links = state.flow ? this.resolveLinks(scene, set, state.flow) : [];
+    this.railsPending = false;
+    const rails = state.connections === 'rails' && (edges.length || links.length) ? this.planRails(viewport, camera, scene, set, edges, links, state) : undefined;
+    for (let index = 0; index < items.length; index++) {
+      const item = items[index]!;
       // A playing flow decides what stays lit; then the feature or family in focus (chosen on purpose, it wins over the selection); then what the selection reaches.
       const dimmed = flowSet ? !flowSet.has(item.node.id) : focusLit ? !focusLit(item.node) : !!emphasis && !emphasis.has(item.node.id);
       // In a comparison, blocks a change reaches stay lit instead of fading with the unchanged ones.
       const reached = impactLit?.has(item.node.id) && item.node.change?.status !== 'removed';
       const alpha = item.alpha * (dimmed ? (flowSet ? theme.flow.dimAlpha : theme.dimAlpha) : 1) * (state.comparison && !reached ? this.changeAlpha(item, state.comparison) : 1) * (state.impact?.dimOthers && !reached ? theme.dimAlpha : 1);
-      if (alpha <= 0.01) continue;
+      if (alpha <= 0.01) { if (rails) this.railRuns(ctx, rails, index, state); continue; }
       if (theme.style?.shadow && item.parent >= 0 && item.size > SOFT_PX) this.shadow(ctx, viewport, camera, item, alpha);
       const category = coverageOf?.(item.node);
       const family = category ? undefined : familyOf?.(item.node);
@@ -128,6 +154,7 @@ export class MapRenderer {
       if (state.comparison) this.changeOverlay(ctx, viewport, camera, item, alpha, state);
       if (state.impact) this.impactOverlay(ctx, viewport, camera, item, alpha, state.impact);
       if (state.showDiagnostics && !item.open && item.node.diagnostics > 0 && item.size > 10) this.diagnosticMarker(ctx, viewport, camera, item, alpha);
+      if (rails) this.railRuns(ctx, rails, index, state);
       this.collectLabel(labels, viewport, camera, item, state, alpha, dimmed ?? false);
     }
     const selected = state.selectedId ? items[set.index.get(state.selectedId) ?? -1] : undefined;
@@ -140,9 +167,10 @@ export class MapRenderer {
     const hovered = state.hoveredId ? items[set.index.get(state.hoveredId) ?? -1] : undefined;
     if (hovered && hovered !== selected) this.outline(ctx, viewport, camera, hovered, theme.hover, 1.5, false);
     if (state.source && selected && selected.node.id === state.source.nodeId && selected.size >= lod.sourcePx) this.sourceFace(ctx, viewport, camera, selected, state.source);
-    this.edges(ctx, viewport, camera, set, state.edges);
+    if (rails) this.railTops(ctx, rails);
+    this.edges(ctx, viewport, camera, rails ? rails.edges : edges);
     if (state.unresolved && state.unresolved.count > 0) this.unresolvedStub(ctx, viewport, camera, scene, set, state.unresolved);
-    if (state.flow) this.flow(ctx, viewport, camera, set, state.flow, state);
+    if (state.flow) { this.flowArcs(ctx, viewport, camera, rails ? rails.links : links, state); this.flowStops(ctx, viewport, camera, set, state.flow); }
     this.labels(ctx, labels);
     if (state.pins?.length) this.pins(ctx, viewport, camera, set, state.pins);
     if (state.callouts?.length) this.callouts(ctx, viewport, camera, set, state.callouts);
@@ -542,6 +570,17 @@ export class MapRenderer {
     const { x, y, w, h } = item.node.rect;
     return worldToScreen(camera, viewport, x + w / 2, y + h / 2, item.zTop);
   }
+  /**
+   * Where a rail ends for an entity resolved to `at`: the entity itself (or
+   * its deepest known area) when it is only out of view, inside an open area;
+   * the block drawn for it when it is inside a closed one.
+   */
+  private railEnd(scene: Scene, at: { item: VisibleItem; hidden: boolean }, id: string, ancestors: string[]): string {
+    if (!at.hidden || !at.item.open) return at.item.node.id;
+    if (scene.nodes.has(id)) return id;
+    for (let i = ancestors.length - 1; i >= 0; i--) if (scene.nodes.has(ancestors[i]!)) return ancestors[i]!;
+    return at.item.node.id;
+  }
   private resolve(set: VisibleSet, id: string, ancestors: string[]): { item: VisibleItem; hidden: boolean } | undefined {
     const direct = set.index.get(id);
     if (direct !== undefined) return { item: set.items[direct]!, hidden: false };
@@ -551,49 +590,155 @@ export class MapRenderer {
     }
     return undefined;
   }
-  private edges(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, set: VisibleSet, edges: EdgeOverlay[]): void {
-    const drawn = new Map<string, { from: Point; to: Point; count: number; color: string; hidden: boolean; emphasized: boolean; change?: 'added' | 'removed' }>();
+  /** Relationships resolved to the blocks drawn; those meeting the same blocks at this level of detail are merged. */
+  private resolveEdges(scene: Scene, set: VisibleSet, edges: EdgeOverlay[]): DrawnEdge[] {
+    const drawn = new Map<string, DrawnEdge>();
     for (const edge of edges) {
       const from = this.resolve(set, edge.from, edge.fromAncestors), to = this.resolve(set, edge.to, edge.toAncestors);
       if (!from || !to || from.item === to.item) continue;
-      // Merge edges that collapse onto the same visible endpoints at this LOD.
       const key = `${from.item.node.id}>${to.item.node.id}>${edge.type}>${edge.change ?? ''}`;
       const existing = drawn.get(key);
       if (existing) { existing.count += edge.count; existing.emphasized ||= !!edge.emphasized; continue; }
-      drawn.set(key, { from: this.anchor(viewport, camera, from.item), to: this.anchor(viewport, camera, to.item), count: edge.count, color: this.theme.relation[edge.type] ?? this.theme.fallbackRelation, hidden: from.hidden || to.hidden, emphasized: !!edge.emphasized, ...(edge.change ? { change: edge.change } : {}) });
+      drawn.set(key, { from: from.item, to: to.item, ends: [this.railEnd(scene, from, edge.from, edge.fromAncestors), this.railEnd(scene, to, edge.to, edge.toAncestors)], count: edge.count, color: edge.change === 'removed' ? this.theme.change.removed : this.theme.relation[edge.type] ?? this.theme.fallbackRelation, hidden: from.hidden || to.hidden, emphasized: !!edge.emphasized, ...(edge.change ? { change: edge.change } : {}) });
     }
-    for (const edge of drawn.values()) {
-      const { from, to } = edge;
+    return [...drawn.values()];
+  }
+  private edgeWidth(edge: DrawnEdge): number { return Math.min(5, 1.4 + Math.log2(edge.count) * 0.8) + (edge.emphasized ? 1.2 : 0); }
+  /** Relationships as arcs over the blocks, from the top of one to the top of the other. */
+  private edges(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, edges: DrawnEdge[]): void {
+    for (const edge of edges) {
+      const from = this.anchor(viewport, camera, edge.from), to = this.anchor(viewport, camera, edge.to);
       const control = curveControl(from, to);
       ctx.save();
       if (this.theme.style?.rounding) ctx.lineCap = 'round';
-      if (this.theme.style?.edgeGlow) { ctx.shadowColor = edge.change === 'removed' ? this.theme.change.removed : edge.color; ctx.shadowBlur = this.theme.style.edgeGlow; }
-      const width = Math.min(5, 1.4 + Math.log2(edge.count) * 0.8) + (edge.emphasized ? 1.2 : 0);
+      if (this.theme.style?.edgeGlow) { ctx.shadowColor = edge.color; ctx.shadowBlur = this.theme.style.edgeGlow; }
+      const width = this.edgeWidth(edge);
       if (edge.change === 'added') {
         // Added since the baseline: a halo in the added color under the typed edge.
         ctx.strokeStyle = this.theme.change.added; ctx.globalAlpha = 0.45; ctx.lineWidth = width + 5;
         ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.quadraticCurveTo(control.x, control.y, to.x, to.y); ctx.stroke();
       }
-      ctx.strokeStyle = edge.change === 'removed' ? this.theme.change.removed : edge.color; ctx.globalAlpha = edge.change === 'removed' ? 0.75 : edge.emphasized ? 1 : 0.85;
+      ctx.strokeStyle = edge.color; ctx.globalAlpha = edge.change === 'removed' ? 0.75 : edge.emphasized ? 1 : 0.85;
       ctx.lineWidth = width;
       if (edge.hidden || edge.change === 'removed') ctx.setLineDash(edge.change === 'removed' ? [3, 5] : [6, 5]);
       ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.quadraticCurveTo(control.x, control.y, to.x, to.y); ctx.stroke();
       ctx.setLineDash([]);
-      if (edge.change === 'removed') edge.color = this.theme.change.removed;
-      // Arrowhead along the curve tangent at the target.
-      const angle = Math.atan2(to.y - control.y, to.x - control.x), size = 7 + ctx.lineWidth;
-      ctx.fillStyle = edge.color; ctx.beginPath();
-      ctx.moveTo(to.x, to.y); ctx.lineTo(to.x - size * Math.cos(angle - 0.4), to.y - size * Math.sin(angle - 0.4)); ctx.lineTo(to.x - size * Math.cos(angle + 0.4), to.y - size * Math.sin(angle + 0.4)); ctx.closePath(); ctx.fill();
+      this.arrowhead(ctx, to, Math.atan2(to.y - control.y, to.x - control.x), 7 + width, edge.color);
       ctx.beginPath(); ctx.arc(from.x, from.y, 3, 0, Math.PI * 2); ctx.fill();
-      if (edge.count > 1) {
-        const mid = { x: 0.25 * from.x + 0.5 * control.x + 0.25 * to.x, y: 0.25 * from.y + 0.5 * control.y + 0.25 * to.y };
-        const text = compactNumber(edge.count);
-        ctx.font = `700 10px ${this.font}`; const width = ctx.measureText(text).width + 10;
-        ctx.fillStyle = edge.color; roundRect(ctx, mid.x - width / 2, mid.y - 8, width, 16, 8); ctx.fill();
-        ctx.fillStyle = this.theme.dark ? '#0b1020' : '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, mid.x, mid.y + 0.5);
-      }
+      if (edge.count > 1) this.countBadge(ctx, { x: 0.25 * from.x + 0.5 * control.x + 0.25 * to.x, y: 0.25 * from.y + 0.5 * control.y + 0.25 * to.y }, edge.count, edge.color);
       ctx.restore();
     }
+  }
+  private arrowhead(ctx: CanvasRenderingContext2D, at: Point, angle: number, size: number, color: string): void {
+    ctx.fillStyle = color; ctx.beginPath();
+    ctx.moveTo(at.x, at.y); ctx.lineTo(at.x - size * Math.cos(angle - 0.4), at.y - size * Math.sin(angle - 0.4)); ctx.lineTo(at.x - size * Math.cos(angle + 0.4), at.y - size * Math.sin(angle + 0.4)); ctx.closePath(); ctx.fill();
+  }
+  private countBadge(ctx: CanvasRenderingContext2D, at: Point, count: number, color: string): void {
+    const text = compactNumber(count);
+    ctx.font = `700 10px ${this.font}`; const width = ctx.measureText(text).width + 10;
+    ctx.globalAlpha = 1; ctx.setLineDash([]); ctx.fillStyle = color; roundRect(ctx, at.x - width / 2, at.y - 8, width, 16, 8); ctx.fill();
+    ctx.fillStyle = this.theme.dark ? '#0b1020' : '#ffffff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, at.x, at.y + 0.5);
+  }
+  /** The scene as the rail router reads it. */
+  private railWorld(scene: Scene): RailWorld {
+    if (this.railWorldCache?.scene === scene) return this.railWorldCache.world;
+    const world: RailWorld = {
+      rect: id => scene.nodes.get(id)?.rect,
+      parent: id => scene.nodes.get(id)?.spatialParentId,
+      children: id => scene.children.get(id)?.ids ?? [],
+      top: id => { const node = scene.nodes.get(id); return node ? scene.zBase(id) + nodeHeight(node) : 0; },
+    };
+    this.railWorldCache = { scene, world };
+    return world;
+  }
+  private railWorldCache?: { scene: Scene; world: RailWorld };
+  /**
+   * Rails for the links of this frame, projected on screen, with each run
+   * kept for the block it is drawn after (so the blocks in front hide it).
+   * Links without a rail (one block holds the other, no street, or not routed
+   * yet) stay arcs.
+   */
+  private planRails(viewport: Viewport, camera: Camera, scene: Scene, set: VisibleSet, edges: DrawnEdge[], links: DrawnLink[], state: RenderState): RailPlan {
+    const world = this.railWorld(scene);
+    const deadline = performance.now() + RAIL_BUDGET_MS;
+    // A route stays valid while the areas holding its ends hold the same blocks.
+    const stamp = (id: string) => { const parts: string[] = []; for (let area = scene.nodes.get(id)?.spatialParentId; area; area = scene.nodes.get(area)?.spatialParentId) parts.push(String(scene.children.get(area)?.ids.length ?? 0)); return parts.join('.'); };
+    const plan: RailPlan = { strokes: [], byHost: new Map(), edges: [], links: [] };
+    const route = ([from, to]: [string, string]): Rail | undefined => {
+      const rail = this.rails.get(scene, world, from, to, `${stamp(from)}|${stamp(to)}`, deadline);
+      if (rail === undefined) this.railsPending = true;
+      return rail ?? undefined;
+    };
+    // A run on a floor out of view is drawn with the nearest area in view (it is off screen anyway).
+    const drawnWith = (id: string): number | undefined => { for (let area: string | undefined = id; area; area = scene.nodes.get(area)?.spatialParentId) { const index = set.index.get(area); if (index !== undefined) return index; } return undefined; };
+    const add = (rail: Rail, style: Omit<RailStroke, 'points' | 'lengths' | 'runs'>): boolean => {
+      const hosts = rail.hosts.map(drawnWith);
+      if (hosts.some(host => host === undefined)) return false;
+      const points = rail.points.map(point => worldToScreen(camera, viewport, point.x, point.y, point.z));
+      const lengths = [0];
+      for (let i = 1; i < points.length; i++) lengths.push(lengths[i - 1]! + Math.hypot(points[i]!.x - points[i - 1]!.x, points[i]!.y - points[i - 1]!.y));
+      const runs: RailStroke['runs'] = [];
+      hosts.forEach((host, i) => { const last = runs.at(-1); if (last && last.host === host) last.to = i + 1; else runs.push({ host: host!, from: i, to: i + 1 }); });
+      const stroke: RailStroke = { ...style, points, lengths, runs };
+      plan.strokes.push(stroke);
+      for (const run of runs) { const list = plan.byHost.get(run.host) ?? []; list.push({ stroke, run }); plan.byHost.set(run.host, list); }
+      return true;
+    };
+    for (const edge of edges) {
+      const rail = route(edge.ends);
+      if (!rail || !add(rail, { color: edge.color, width: this.edgeWidth(edge), alpha: edge.change === 'removed' ? 0.75 : edge.emphasized ? 1 : 0.9, ...(edge.hidden || edge.change === 'removed' ? { dash: edge.change === 'removed' ? [3, 5] : [6, 5] } : {}), ...(edge.count > 1 ? { count: edge.count } : {}), ...(edge.change === 'added' ? { halo: this.theme.change.added } : {}) })) plan.edges.push(edge);
+    }
+    for (const link of links) {
+      const rail = route(link.ends);
+      const color = link.back ? this.toneColor('return') : this.theme.flow.step;
+      if (!rail || !add(rail, { color, width: 3, alpha: 0.95, stream: this.theme.flow.indicator })) plan.links.push(link);
+    }
+    return plan;
+  }
+  /** The runs of rails drawn with one block: on its floor, or down its wall. */
+  private railRuns(ctx: CanvasRenderingContext2D, plan: RailPlan, host: number, state: RenderState): void {
+    const runs = plan.byHost.get(host);
+    if (!runs) return;
+    ctx.save();
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const phase = streamPhase(state);
+    for (const { stroke, run } of runs) {
+      const points = stroke.points.slice(run.from, run.to + 1);
+      // A dark casing under the rail keeps it apart from the floor it runs on.
+      ctx.setLineDash([]); ctx.globalAlpha = 0.7; ctx.strokeStyle = this.theme.text.halo; ctx.lineWidth = stroke.width + 3;
+      polyline(ctx, points); ctx.stroke();
+      if (stroke.halo) { ctx.globalAlpha = 0.45; ctx.strokeStyle = stroke.halo; ctx.lineWidth = stroke.width + 5; polyline(ctx, points); ctx.stroke(); }
+      ctx.globalAlpha = stroke.alpha; ctx.strokeStyle = stroke.color; ctx.lineWidth = stroke.width;
+      if (stroke.dash) { ctx.setLineDash(stroke.dash); ctx.lineDashOffset = stroke.lengths[run.from]!; }
+      polyline(ctx, points); ctx.stroke();
+      if (stroke.stream) {
+        // Dashes streaming toward the end, continuous from one run to the next.
+        ctx.setLineDash(STREAM_DASH); ctx.lineDashOffset = phase + stroke.lengths[run.from]!; ctx.strokeStyle = stroke.stream; ctx.lineWidth = Math.max(1.6, stroke.width - 0.8); ctx.globalAlpha = 1;
+        polyline(ctx, points); ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+  /** Over everything: where the rails go behind blocks (faint), their arrowheads, start dots and counts. */
+  private railTops(ctx: CanvasRenderingContext2D, plan: RailPlan): void {
+    ctx.save();
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const stroke of plan.strokes) {
+      const { points } = stroke;
+      ctx.globalAlpha = 0.22; ctx.strokeStyle = stroke.color; ctx.lineWidth = 1.4; ctx.setLineDash([2, 4]);
+      polyline(ctx, points); ctx.stroke();
+      ctx.setLineDash([]); ctx.globalAlpha = 1;
+      const end = points.at(-1)!, before = points.at(-2)!, start = points[0]!;
+      this.arrowhead(ctx, end, Math.atan2(end.y - before.y, end.x - before.x), 6 + stroke.width, stroke.color);
+      ctx.beginPath(); ctx.arc(start.x, start.y, 2.6 + stroke.width * 0.3, 0, Math.PI * 2); ctx.fill();
+      if (stroke.count) {
+        const half = stroke.lengths.at(-1)! / 2;
+        const i = Math.max(1, stroke.lengths.findIndex(length => length >= half));
+        const a = points[i - 1]!, b = points[i]!, span = stroke.lengths[i]! - stroke.lengths[i - 1]!, t = span > 0 ? (half - stroke.lengths[i - 1]!) / span : 0;
+        this.countBadge(ctx, { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }, stroke.count, stroke.color);
+      }
+    }
+    ctx.restore();
   }
   private unresolvedStub(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, scene: Scene, set: VisibleSet, unresolved: { nodeId: string; count: number }): void {
     const node = scene.nodes.get(unresolved.nodeId);
@@ -611,74 +756,61 @@ export class MapRenderer {
     ctx.strokeText(text, to.x + 13, to.y); ctx.fillStyle = this.theme.diagnostic; ctx.fillText(text, to.x + 13, to.y);
     ctx.restore();
   }
-  /**
-   * The branch being played: a faint track where the flow goes, and along the
-   * part it has reached a glowing line with dashes streaming from source to
-   * target, brightest at the front. Links joining the same visible blocks
-   * (zoomed out) are drawn once. Stops are marked by state.
-   */
-  private flow(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, set: VisibleSet, flow: FlowOverlay, state: RenderState): void {
-    const color = this.theme.flow.step, bright = this.theme.flow.indicator;
-    const moving = flow.moving && !state.reducedMotion;
-    const links = new Map<string, { a: Point; b: Point; fill: number }>();
+  /** A flow's links resolved to the blocks drawn; links meeting the same blocks at this level of detail are drawn once. */
+  private resolveLinks(scene: Scene, set: VisibleSet, flow: FlowOverlay): DrawnLink[] {
+    const links = new Map<string, DrawnLink>();
     for (const link of flow.links) {
       const from = this.resolve(set, link.from, link.fromAncestors), to = this.resolve(set, link.to, link.toAncestors);
       if (!from || !to || from.item === to.item) continue;
-      const key = `${from.item.node.id}>${to.item.node.id}`;
-      const existing = links.get(key);
-      if (existing) { existing.fill = Math.max(existing.fill, link.fill); continue; }
-      links.set(key, { a: this.anchor(viewport, camera, from.item), b: this.anchor(viewport, camera, to.item), fill: link.fill });
+      const key = `${from.item.node.id}>${to.item.node.id}>${link.back ? 'back' : ''}`;
+      if (!links.has(key)) links.set(key, { from: from.item, to: to.item, ends: [this.railEnd(scene, from, link.from, link.fromAncestors), this.railEnd(scene, to, link.to, link.toAncestors)], back: link.back });
     }
+    return [...links.values()];
+  }
+  /**
+   * A flow's links as arcs: a soft glow, the line, and dashes streaming from
+   * where each link starts to where it leads, all the time. The way back (a
+   * response to its caller) runs on a lower arc in its own color, so it never
+   * covers the way there.
+   */
+  private flowArcs(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, links: DrawnLink[], state: RenderState): void {
+    const bright = this.theme.flow.indicator;
+    const phase = streamPhase(state);
     ctx.save();
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    for (const { a, b, fill } of links.values()) {
-      const c = curveControl(a, b);
-      // The track.
-      ctx.setLineDash([2, 6]); ctx.lineDashOffset = 0; ctx.strokeStyle = color; ctx.globalAlpha = fill > 0 ? 0.4 : 0.25; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(c.x, c.y, b.x, b.y); ctx.stroke();
-      if (fill <= 0) continue;
-      const points = sampleQuadratic(a, c, b, fill);
-      // The flow: a soft glow, then dashes streaming toward the target.
-      ctx.setLineDash([]); ctx.globalAlpha = 0.3; ctx.lineWidth = 9;
-      polyline(ctx, points); ctx.stroke();
-      ctx.globalAlpha = 1; ctx.lineWidth = 3; ctx.strokeStyle = color;
-      polyline(ctx, points); ctx.stroke();
-      ctx.setLineDash([9, 13]); ctx.lineDashOffset = moving ? -((state.time * 0.045) % 22) : 0; ctx.strokeStyle = bright; ctx.lineWidth = 2.2;
-      polyline(ctx, points); ctx.stroke();
+    for (const link of links) {
+      const a = this.anchor(viewport, camera, link.from), b = this.anchor(viewport, camera, link.to);
+      const c = curveControl(a, b, link.back ? 0.45 : 1);
+      const color = link.back ? this.toneColor('return') : this.theme.flow.step;
+      const path = () => { ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(c.x, c.y, b.x, b.y); };
+      ctx.setLineDash([]); ctx.strokeStyle = color; ctx.globalAlpha = 0.2; ctx.lineWidth = 9; path(); ctx.stroke();
+      ctx.globalAlpha = 0.9; ctx.lineWidth = 2.8; path(); ctx.stroke();
+      ctx.setLineDash(STREAM_DASH); ctx.lineDashOffset = phase; ctx.strokeStyle = bright; ctx.globalAlpha = 1; ctx.lineWidth = 2;
+      path(); ctx.stroke();
       ctx.setLineDash([]);
-      if (fill < 1) {
-        // The front: the newest stretch of the flow, brightening toward its edge.
-        const tail = sampleQuadratic(a, c, b, fill, Math.max(0, fill - 0.18));
-        const start = tail[0]!, end = tail.at(-1)!;
-        const gradient = ctx.createLinearGradient(start.x, start.y, end.x, end.y);
-        gradient.addColorStop(0, transparent(bright)); gradient.addColorStop(1, bright);
-        ctx.strokeStyle = gradient; ctx.lineWidth = 5; ctx.shadowColor = color; ctx.shadowBlur = 14;
-        polyline(ctx, tail); ctx.stroke();
-        ctx.shadowBlur = 0;
-      } else {
-        // Arrived: an arrowhead along the curve's tangent at the target.
-        const angle = Math.atan2(b.y - c.y, b.x - c.x), size = 9;
-        ctx.fillStyle = color; ctx.beginPath();
-        ctx.moveTo(b.x, b.y); ctx.lineTo(b.x - size * Math.cos(angle - 0.42), b.y - size * Math.sin(angle - 0.42)); ctx.lineTo(b.x - size * Math.cos(angle + 0.42), b.y - size * Math.sin(angle + 0.42)); ctx.closePath(); ctx.fill();
-      }
+      this.arrowhead(ctx, b, Math.atan2(b.y - c.y, b.x - c.x), 10, color);
     }
-    // Stops: one mark per visible block, the most advanced state winning.
-    const rank = { front: 0, reached: 1, ahead: 2 } as const;
-    const marks = new Map<string, { at: Point; state: keyof typeof rank }>();
-    for (const stop of [...flow.stops].sort((x, y) => rank[x.state] - rank[y.state])) {
+    ctx.restore();
+  }
+  /** A flow's stops: a dot on each block it passes (one per block drawn), ringed where it starts. */
+  private flowStops(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, set: VisibleSet, flow: FlowOverlay): void {
+    const color = this.theme.flow.step, bright = this.theme.flow.indicator;
+    const marks = new Map<string, { at: Point; start: boolean }>();
+    for (const stop of flow.stops) {
       const at = this.resolve(set, stop.entityId, stop.ancestors);
-      if (!at || marks.has(at.item.node.id)) continue;
-      marks.set(at.item.node.id, { at: this.anchor(viewport, camera, at.item), state: stop.state });
+      if (!at) continue;
+      const mark = marks.get(at.item.node.id);
+      if (mark) { mark.start ||= stop.start; continue; }
+      marks.set(at.item.node.id, { at: this.anchor(viewport, camera, at.item), start: stop.start });
     }
-    for (const { at, state: mark } of [...marks.values()].reverse()) {
-      if (mark === 'ahead') { ctx.globalAlpha = 0.7; ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.fillStyle = this.theme.dark ? '#141a30' : '#ffffff'; ctx.beginPath(); ctx.arc(at.x, at.y, 4.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); continue; }
-      if (mark === 'front' && !state.reducedMotion) {
-        const pulse = (state.time % 1400) / 1400;
-        ctx.globalAlpha = 1 - pulse; ctx.strokeStyle = color; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(at.x, at.y, 8 + pulse * 16, 0, Math.PI * 2); ctx.stroke();
+    ctx.save();
+    for (const { at, start } of marks.values()) {
+      if (start) {
+        ctx.globalAlpha = 0.9; ctx.strokeStyle = color; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(at.x, at.y, 10.5, 0, Math.PI * 2); ctx.stroke();
       }
       ctx.globalAlpha = 1; ctx.fillStyle = color; ctx.strokeStyle = bright; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(at.x, at.y, mark === 'front' ? 7 : 5.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(at.x, at.y, start ? 6.5 : 5.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     }
     ctx.restore();
   }
@@ -911,20 +1043,14 @@ export class MapRenderer {
     ctx.restore();
   }
 }
-/** The control point of the arc drawn between two blocks (relationships and flows share it). */
-function curveControl(from: Point, to: Point): Point {
-  const distance = Math.hypot(to.x - from.x, to.y - from.y);
-  return { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 - Math.min(220, distance * 0.35 + 20) };
+/** Where the streaming dashes of a flow are: they move toward the end of each link while the flow streams. */
+function streamPhase(state: RenderState): number {
+  return state.reducedMotion || !state.flow?.moving ? 0 : -((state.time * STREAM_SPEED) % (STREAM_DASH[0]! + STREAM_DASH[1]!));
 }
-/** Points along a quadratic curve from `start` to `end` (0..1). */
-function sampleQuadratic(a: Point, c: Point, b: Point, end: number, start = 0, segments = 28): Point[] {
-  const points: Point[] = [];
-  const count = Math.max(2, Math.ceil(segments * (end - start)));
-  for (let i = 0; i <= count; i++) {
-    const t = start + ((end - start) * i) / count;
-    points.push({ x: (1 - t) ** 2 * a.x + 2 * (1 - t) * t * c.x + t * t * b.x, y: (1 - t) ** 2 * a.y + 2 * (1 - t) * t * c.y + t * t * b.y });
-  }
-  return points;
+/** The control point of the arc drawn between two blocks (relationships and flows share it); `lift` lowers it (the way back). */
+function curveControl(from: Point, to: Point, lift = 1): Point {
+  const distance = Math.hypot(to.x - from.x, to.y - from.y);
+  return { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 - Math.min(220, distance * 0.35 + 20) * lift };
 }
 function polyline(ctx: CanvasRenderingContext2D, points: Point[]): void {
   ctx.beginPath(); ctx.moveTo(points[0]!.x, points[0]!.y);
