@@ -228,14 +228,22 @@ test('the store lists every flow, shows one on the map, steps through it, and li
   atlas.focusTourStop(table);
   await new Promise(resolve => setTimeout(resolve, 0));
   assert.equal(atlas.getState().selection?.id, tour.flow!.stops[table]!.entityId);
-  // The lanes of a flow, then the same flow on the map.
+  // The lanes of a flow in the middle, as an outline too, then the same flow on the map.
   await atlas.openRequestFlow(login.id);
+  assert.equal(atlas.getState().center, 'flow');
   assert.equal(atlas.getState().requests.open?.status, 'ready');
   atlas.focusRequestNode(atlas.getState().requests.open!.data!.nodes[0]!.id);
   assert.ok(atlas.getState().requests.open?.focus);
+  await atlas.setFlowLayout('outline');
+  assert.equal(atlas.getState().steps?.anchor, login.id, 'the outline starts where the lanes do');
+  assert.equal(atlas.getState().steps?.status, 'ready');
+  await atlas.setFlowLayout('diagram');
   atlas.traceRequestFlow();
-  assert.equal(atlas.getState().requests.open, undefined, 'the lanes give way to the map');
+  assert.equal(atlas.getState().center, 'map', 'the map comes back to the middle');
+  assert.equal(atlas.getState().flowView?.id, login.id, 'the lanes stay open, a tab away');
   assert.equal(atlas.getState().tour?.key, `lanes:${login.id}`);
+  atlas.closeFlowView();
+  assert.equal(atlas.getState().requests.open, undefined);
   atlas.closeTour();
   assert.equal(atlas.getState().tour, undefined);
   // The flows through an entity: requests and the page journeys reaching it.

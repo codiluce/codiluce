@@ -4,8 +4,8 @@
 // caller of an endpoint), from where the flow starts along real edges. The
 // bar lists the branches, grouped where the choice is made, and the current
 // branch in waves: the stops in one wave are reached at the same moment
-// (alternatives, or work done side by side). The lanes (schematic) and Steps
-// (outline) are one click away.
+// (alternatives, or work done side by side). The same flow in lanes (or
+// layers) and as an outline of steps are one click away, in the middle.
 import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { KIND_TEXT } from '../lib/catalog';
 import { branchPosition, groupBranches, type MapBranch, type MapStop } from '../lib/map-flow';
@@ -47,8 +47,8 @@ export function FlowBar() {
         <div className="flow-bar-actions">
           <label className="toggle" title="While playing, the camera frames each branch as it starts"><input type="checkbox" checked={tour.follow} onChange={event => store.setTourFollow(event.target.checked)} /> Follow</label>
           <button className="button small" onClick={() => store.fitTour()} disabled={!flow?.stops.length} title="Fit the whole flow on the map">Fit</button>
-          {tour.detail === 'lanes' && <button className="button small" onClick={() => void store.openRequestFlow(tour.id)} title="The same flow as a diagram in lanes, left to right">Lanes</button>}
-          {tour.detail === 'steps' && <button className="button small" onClick={() => void store.openSteps(tour.id)} title="The same flow as an outline of steps, with conditions">Outline</button>}
+          <button className="button small" onClick={() => void store.openFlowView({ id: tour.id, title: tour.title, ...(tour.subtitle ? { subtitle: tour.subtitle } : {}), lanes: tour.detail === 'lanes' }, 'diagram')} title={tour.detail === 'lanes' ? 'The same flow in lanes, left to right' : 'The same steps in layers, top down'}>{tour.detail === 'lanes' ? 'Lanes' : 'Diagram'}</button>
+          <button className="button small" onClick={() => void store.openFlowView({ id: tour.id, title: tour.title, ...(tour.subtitle ? { subtitle: tour.subtitle } : {}), lanes: tour.detail === 'lanes' }, 'outline')} title="The same flow as an outline of steps, with conditions">Outline</button>
           <button className="icon-button small" onClick={() => store.closeTour()} aria-label="Stop showing this flow on the map">✕</button>
         </div>
       </div>

@@ -3,22 +3,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { HttpAtlasApi } from '../lib/api';
 import { shortSha, relativeTime } from '../lib/format';
 import { AtlasStore } from '../lib/store';
-import { THEMES, themeById, UI_PROPERTIES } from '../lib/themes';
+import { MAIN_THEMES, THEMES, themeById, UI_PROPERTIES } from '../lib/themes';
 import { Breadcrumbs } from './Breadcrumbs';
 import { AtlasContext, useAtlas, useStore } from './context';
 import { EclipseMark } from './EclipseMark';
 import { FeaturesPanel } from './FeaturesPanel';
-import { FlowBar } from './FlowBar';
 import { FlowsPanel } from './FlowsPanel';
 import { PeoplePanel } from './PeoplePanel';
-import { RequestFlowTheater } from './RequestFlows';
-import { StepsPanel } from './StepsPanel';
 import { Inspector } from './Inspector';
-import { MapView } from './MapView';
 import { SearchBox } from './SearchBox';
-import { SourcePanel } from './SourcePanel';
-import { SplitMap } from './SplitMap';
 import { Timeline } from './Timeline';
+import { Workbench } from './Workbench';
 
 function createStore(): AtlasStore {
   const storage = (() => { try { return window.localStorage; } catch { return undefined; } })();
@@ -72,10 +67,8 @@ function Shell() {
   const [flowWidth, setFlowWidth] = usePanelWidth('codiluce:flow-width', 300);
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [leftOpen, setLeftOpen] = useState(false);
-  // The left panel holds the features (once described), every flow (pages, requests, console), the people who changed the code and, once opened, Steps.
-  const stepsAnchor = useAtlas(state => state.steps?.anchor);
-  const [leftTab, setLeftTab] = useState<'features' | 'flows' | 'people' | 'steps'>('flows');
-  useEffect(() => { if (stepsAnchor) { setLeftOpen(true); setLeftTab('steps'); } else setLeftTab(tab => tab === 'steps' ? 'flows' : tab); }, [stepsAnchor]);
+  // The left panel holds the features (once described), every flow (pages, requests, console) and the people who changed the code.
+  const [leftTab, setLeftTab] = useState<'features' | 'flows' | 'people'>('flows');
   const reveal = useAtlas(state => state.catalog.reveal);
   useEffect(() => { if (reveal) { setLeftOpen(true); setLeftTab('flows'); } }, [reveal]);
   const featureReveal = useAtlas(state => state.features.reveal);
@@ -87,8 +80,13 @@ function Shell() {
   // Comparing in History: one view per place that changed, around an overview (unless the single map is chosen).
   const split = useAtlas(state => state.timeline.open && state.timeline.compare && state.timeline.split && (!!state.meta?.comparison || state.timeline.preview !== undefined));
   const showLeft = (tab: 'features' | 'flows' | 'people') => { if (leftOpen && leftTab === tab) setLeftOpen(false); else { setLeftOpen(true); setLeftTab(tab); } };
-  const tabs = [...(features > 0 ? ['features' as const] : []), 'flows' as const, 'people' as const, ...(stepsAnchor ? ['steps' as const] : [])];
+  const tabs = [...(features > 0 ? ['features' as const] : []), 'flows' as const, 'people' as const];
+  const impactOpen = useAtlas(state => state.impact.open && state.center === 'impact');
+  const moreThemes = useAtlas(state => state.moreThemes);
+  // The theme menu: Dusk and Dawn, the theme in use, and every other once "More themes" is on in Settings.
+  const themes = THEMES.filter(item => moreThemes || MAIN_THEMES.includes(item.id) || item.id === theme.id);
   const [help, setHelp] = useState(false);
+  const [settings, setSettings] = useState(false);
   // Floating themes paint a backdrop behind panels held apart by the theme's gap; the others dock panels on a flat background.
   const style = useMemo(() => ({ ...theme.ui, background: theme.style?.floating ? theme.ui['--app-bg'] ?? theme.ui['--bg'] : theme.ui['--bg'] }) as React.CSSProperties, [theme]);
   useEffect(() => {
@@ -141,11 +139,13 @@ function Shell() {
           {features > 0 && <button className="button" onClick={() => showLeft('features')} aria-pressed={leftOpen && leftTab === 'features'} aria-controls="left-panel" title={`The ${features} features of the product, as the model described them: select one to light its files and see its flows`}>Features</button>}
           <button className="button rf-top" onClick={() => showLeft('flows')} aria-pressed={leftOpen && leftTab === 'flows'} aria-controls="left-panel" title="Every flow of the code in one list: pages, requests, console commands and scheduled tasks">Flows</button>
           <button className="button" onClick={() => showLeft('people')} aria-pressed={leftOpen && leftTab === 'people'} aria-controls="left-panel" title="Who changed which code, from the Git history: select a person to light the files they changed">People</button>
+          <button className="button" onClick={() => impactOpen ? store.setCenter('map') : store.openImpactTool()} aria-pressed={impactOpen} title="What depends on the selection, or on your uncommitted changes, hop by hop">Impact</button>
           <button className="button" onClick={() => void store.toggleCoverage()} aria-pressed={coverage} title="Color every file by whether flows touch it: entry points, in flows, supporting, not reached">Coverage</button>
           <label className="sr-only" htmlFor="theme-select">Theme</label>
           <select id="theme-select" className="select" value={themeId} onChange={event => store.setTheme(event.target.value)}>
-            {THEMES.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+            {themes.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
           </select>
+          <button className="icon-button" onClick={() => setSettings(open => !open)} aria-expanded={settings} aria-label="Settings" title="Settings">⚙</button>
           <button className="icon-button" onClick={() => setHelp(open => !open)} aria-expanded={help} aria-label="Keyboard shortcuts">?</button>
         </div>
       </header>
@@ -158,32 +158,43 @@ function Shell() {
                 {tabs.map(tab => <button key={tab} role="tab" aria-selected={leftTab === tab} aria-pressed={leftTab === tab} onClick={() => setLeftTab(tab)}>{TAB_TEXT[tab]}</button>)}
               </div>
             )}
-            {leftTab === 'steps' && stepsAnchor ? <StepsPanel onClose={() => setLeftTab('flows')} />
-              : leftTab === 'features' && features > 0 ? <FeaturesPanel onClose={() => setLeftOpen(false)} />
+            {leftTab === 'features' && features > 0 ? <FeaturesPanel onClose={() => setLeftOpen(false)} />
               : leftTab === 'people' ? <PeoplePanel onClose={() => setLeftOpen(false)} />
               : <FlowsPanel onClose={() => setLeftOpen(false)} />}
             <ResizeHandle side="left" width={flowWidth} onResize={setFlowWidth} label="Resize the left panel" />
           </aside>
         ) : <div />}
-        <section className="map-area">
-          {split ? <SplitMap /> : <MapView />}
-          <FlowBar />
-          <SourcePanel />
-        </section>
+        <Workbench split={split} />
         {inspectorOpen ? (
           <aside className="panel" style={{ width: inspectorWidth }} aria-label="Inspector">
             <ResizeHandle side="right" width={inspectorWidth} onResize={setInspectorWidth} label="Resize inspector" />
             <Inspector onClose={() => setInspectorOpen(false)} />
           </aside>
         ) : <button className="panel-collapsed right" onClick={() => setInspectorOpen(true)}>Inspector</button>}
-        <RequestFlowTheater />
       </main>
       {timelineOpen && <Timeline />}
       {help && <HelpDialog onClose={() => setHelp(false)} />}
+      {settings && <SettingsDialog onClose={() => setSettings(false)} />}
     </div>
   );
 }
-const TAB_TEXT = { features: 'Features', flows: 'Flows', people: 'People', steps: 'Steps' } as const;
+const TAB_TEXT = { features: 'Features', flows: 'Flows', people: 'People' } as const;
+function SettingsDialog({ onClose }: { onClose: () => void }) {
+  const store = useStore();
+  const moreThemes = useAtlas(state => state.moreThemes);
+  const close = useRef<HTMLButtonElement>(null);
+  useEffect(() => { close.current?.focus(); const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, [onClose]);
+  return (
+    <div className="center-state" style={{ pointerEvents: 'auto', background: 'rgba(0,0,0,0.35)', zIndex: 30 }} onClick={onClose}>
+      <div className="card" role="dialog" aria-modal="true" aria-labelledby="settings-title" onClick={event => event.stopPropagation()} style={{ textAlign: 'left' }}>
+        <h2 id="settings-title" style={{ marginTop: 0, fontSize: 15 }}>Settings</h2>
+        <label className="toggle"><input type="checkbox" checked={moreThemes} onChange={event => store.setMoreThemes(event.target.checked)} /> More themes</label>
+        <p className="note">The theme menu offers Codiluce Dusk and Codiluce Dawn. With more themes on, it also offers {THEMES.filter(item => !MAIN_THEMES.includes(item.id)).map(item => item.name).join(', ')}.</p>
+        <button ref={close} className="button" onClick={onClose}>Close</button>
+      </div>
+    </div>
+  );
+}
 function HelpDialog({ onClose }: { onClose: () => void }) {
   const close = useRef<HTMLButtonElement>(null);
   useEffect(() => { close.current?.focus(); const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, [onClose]);
@@ -198,7 +209,7 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
       <div className="card" role="dialog" aria-modal="true" aria-labelledby="help-title" onClick={event => event.stopPropagation()} style={{ textAlign: 'left' }}>
         <h2 id="help-title" style={{ marginTop: 0, fontSize: 15 }}>Keyboard and pointer</h2>
         <dl className="facts">{rows.map(([key, text]) => [<dt key={`k${key}`}><kbd>{key}</kbd></dt>, <dd key={`d${key}`}>{text}</dd>])}</dl>
-        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout and never change with selection, search or filters. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing. Dragging the timeline or pressing play shows each commit at once as a time-lapse; the full view of a commit loads when you let go or pause. When comparing, the split map shows one view on each place that changed around an overview of the whole repository, where numbered frames show what each view shows. <strong>Features</strong> (once the code is described) lists what the product does: selecting a feature lights its files on the map, with the flows that start in it; a folder's inspector shows which data families its files belong to. <strong>People</strong> lists who changed the code, from the Git history (authors and co-authors, agents and bots told apart), in a window of time ending at the commit shown: selecting a person lights the files they changed, and every inspector says who changed its selection and when.</p>
+        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout and never change with selection, search or filters. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing. Dragging the timeline or pressing play shows each commit at once as a time-lapse; the full view of a commit loads when you let go or pause. When comparing, the split map shows one view on each place that changed around an overview of the whole repository, where numbered frames show what each view shows. Flows, steps, a blast radius (<strong>Impact</strong>, also of your uncommitted changes) and the files a highlight lights open in the middle of the screen as tabs beside <strong>Map</strong>; the map then stays in a corner as an overview of what they light, and a click on it brings it back. Search results offer the same: a flow on the map or in lanes, what happens from it, its impact (<kbd>Tab</kbd> reaches them). <strong>Features</strong> (once the code is described) lists what the product does: selecting a feature lights its files on the map, with the flows that start in it; a folder's inspector shows which data families its files belong to. <strong>People</strong> lists who changed the code, from the Git history (authors and co-authors, agents and bots told apart), in a window of time ending at the commit shown: selecting a person lights the files they changed, and every inspector says who changed its selection and when.</p>
         <button ref={close} className="button" onClick={onClose}>Close</button>
       </div>
     </div>

@@ -8,7 +8,7 @@
 // the map are kept; a view epoch drops responses that belong to an old view.
 import type { Entity, Relation } from '@engine/core/graph';
 import type { AggregateEdgesPage, AggregateGroup, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FlowList, FlowSummary, ImpactItem, ImpactResult, LocateResult, NodeSummary, ProjectionMeta, Rect, RelationItem, RequestFlow, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineEntry, TimelineResponse, ViewKey } from '@engine/projection/dto';
-import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, FamiliesResult, FeaturesResult, FlowStatus, PersonAuthorship } from '@engine/projection/dto';
+import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, FamiliesResult, FeaturesResult, FileListResult, FlowStatus, ImpactGroupBy, PersonAuthorship } from '@engine/projection/dto';
 import type { CatalogTab } from './catalog';
 import { fromRequestFlow, fromSteps, type MapFlow } from './map-flow';
 import { isAbort, type AtlasApi } from './api';
@@ -16,8 +16,11 @@ import type { Level } from './lod';
 import { initialPlayback, playback, type PlaybackAction, type PlaybackState } from './playback';
 import { Scene } from './scene';
 import { Evolution } from './evolution';
+import { DEFAULT_THEME } from './themes';
 
 export const CHILD_PAGE = 500;
+/** Entry points whose flow is drawn in lanes (requests, commands, scheduled tasks); other code that runs is drawn in layers. */
+export const LANES_TYPES = new Set(['api_endpoint', 'command', 'scheduled_task']);
 /** Children beyond this many per container are not fetched; the inspector says so. */
 export const CHILD_CAP = 3000;
 type Status = 'idle' | 'loading' | 'ready' | 'error';
@@ -75,14 +78,32 @@ export interface TimelineState {
   /** The places of the settled comparison (time-lapse frames are grouped in the browser). */
   regions: { status: Status; viewStamp?: string; data?: ChangeRegionsResult; error?: string };
 }
-/** Blast radius of the selection. While `open`, it follows the selection. */
+/** The origin of a blast radius that is the uncommitted changes of the live index, not an entity. */
+export const WORKING_CHANGES = 'working';
+/**
+ * Blast radius of an entity (`forId`), or of the uncommitted changes
+ * (`WORKING_CHANGES`). It stays on its origin while the selection moves; the
+ * map colors it while `open`. `group` lists it by application, feature or folder.
+ */
 export interface ImpactState {
   open: boolean; status: Status; forId?: string;
   /** The view (snapshot|baseline) the data was computed for. */
   viewStamp?: string;
-  depth: number; filter: { type?: string; distance?: number };
+  depth: number; filter: { type?: string; distance?: number; groupKey?: string };
+  group?: ImpactGroupBy;
   data?: ImpactResult; items: ImpactItem[]; error?: string;
 }
+/** What the middle of the screen shows: the map, or a tool with the map as a small overview in a corner. */
+export type CenterView = 'map' | 'flow' | 'impact' | 'files';
+/**
+ * A flow open in the middle: one subject (a request, command, task, page or
+ * any code that runs) as a diagram (`lanes`: in lanes, left to right;
+ * otherwise in layers) or as an outline of steps.
+ */
+export interface FlowViewState { id: string; title: string; subtitle?: string; lanes: boolean; layout: 'diagram' | 'outline' }
+/** What a list of files is of: a feature, a data family, a coverage category or a person (the highlight on the map). */
+export interface FileSubject { kind: 'feature' | 'family' | 'coverage' | 'person'; key: string }
+export interface FilesState extends FileSubject { status: Status; stamp: string; data?: FileListResult; error?: string }
 /** What the viewed comparison's changes reach (history). */
 export interface CommitImpactState { status: Status; viewStamp?: string; data?: ImpactResult; error?: string; show: boolean }
 /** "What happens from here": typed steps from an anchor entity. */
@@ -170,6 +191,8 @@ export interface AtlasState {
   timeline: TimelineState;
   showDiagnostics: boolean;
   themeId: string;
+  /** Settings: the theme menu offers every theme, not only Dusk and Dawn. */
+  moreThemes: boolean;
   staleIndex: boolean;
   sceneRevision: number;
   impact: ImpactState;
@@ -184,6 +207,9 @@ export interface AtlasState {
   families: FamiliesState;
   features: FeaturesState;
   people: PeopleState;
+  center: CenterView;
+  flowView?: FlowViewState;
+  files?: FilesState;
 }
 export interface MapNavigator {
   flyTo(node: NodeSummary, options?: { mode?: 'focus' | 'enter' }): void;
@@ -264,15 +290,15 @@ export class AtlasStore {
   private pendingFocus?: { node: NodeSummary; frame?: Rect };
 
   constructor(readonly api: AtlasApi, private readonly options: StoreOptions = {}) {
-    let prefs: { themeId?: string; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey } = {};
+    let prefs: { themeId?: string; moreThemes?: boolean; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey } = {};
     try { prefs = JSON.parse(options.storage?.getItem('codiluce:prefs') ?? '{}'); } catch { /* defaults */ }
     this.state = {
       status: 'loading', view: { level: 'Applications', focus: [], zoom: 1, visible: [], truncated: false },
       relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' },
-      history: { entries: [], index: -1 }, showDiagnostics: prefs.showDiagnostics ?? true, themeId: prefs.themeId ?? 'midnight',
+      history: { entries: [], index: -1 }, showDiagnostics: prefs.showDiagnostics ?? true, themeId: prefs.themeId ?? DEFAULT_THEME, moreThemes: prefs.moreThemes ?? false,
       staleIndex: false, sceneRevision: 0,
       impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '', open: {} }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, families: { show: false, status: 'idle' }, features: { status: 'idle', open: {} },
-      people: { window: prefs.peopleWindow ?? 'all', show: false, status: 'idle', open: {} },
+      people: { window: prefs.peopleWindow ?? 'all', show: false, status: 'idle', open: {} }, center: 'map',
       timeline: { open: false, status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true, split: prefs.split ?? true, regionLevel: prefs.regionLevel ?? 'auto', regions: { status: 'idle' } },
     };
   }
@@ -291,7 +317,7 @@ export class AtlasStore {
   }
   private bumpScene(): void { this.set(state => ({ sceneRevision: state.sceneRevision + 1 })); }
   private savePrefs(): void {
-    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window })); } catch { /* preferences are optional */ }
+    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, moreThemes: this.state.moreThemes, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window })); } catch { /* preferences are optional */ }
   }
   dispose(): void { this.disposed = true; for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
 
@@ -312,8 +338,8 @@ export class AtlasStore {
       const deepLink = param('id'), at = param('at'), vs = param('vs');
       if ((at || vs) && meta.history.available) await this.openTimeline({ at, vs, select: deepLink });
       else if (deepLink) await this.select(deepLink, { fly: true });
-      const impactDepth = Number(param('impact'));
-      if (deepLink && this.state.selection && Number.isInteger(impactDepth) && impactDepth >= 1 && impactDepth <= 10) void this.showImpact(this.state.selection.id, impactDepth);
+      const impactDepth = Number(param('impact')), impactOf = param('impactOf') ?? (this.state.selection ? deepLink : undefined);
+      if (impactOf && Number.isInteger(impactDepth) && impactDepth >= 1 && impactDepth <= 10) void this.showImpact(impactOf, impactDepth);
     } catch (error) {
       this.set({ status: 'error', error: error instanceof Error ? error.message : String(error) });
     }
@@ -371,7 +397,6 @@ export class AtlasStore {
       history: options.recordHistory === false || state.history.entries[state.history.index] === id ? state.history : { entries: [...state.history.entries.slice(0, state.history.index + 1), id].slice(-100), index: Math.min(state.history.index + 1, 99) },
     }));
     this.writeHash(id);
-    if (this.state.impact.open) void this.loadImpact(id);
     try {
       const located = await this.api.locate(id, signal);
       if (signal.aborted) return;
@@ -403,7 +428,6 @@ export class AtlasStore {
   }
   clearSelection(): void {
     this.aborts.get('selection')?.abort();
-    if (this.state.impact.open) this.hideImpact();
     this.set({ selection: undefined, relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' }, evidence: undefined });
     this.writeHash(undefined);
   }
@@ -412,7 +436,8 @@ export class AtlasStore {
     const timeline = this.state.timeline;
     const parts: string[] = [];
     if (id) parts.push(`id=${encodeURIComponent(id)}`);
-    if (id && this.state.impact.open) parts.push(`impact=${this.state.impact.depth}`);
+    const impact = this.state.impact;
+    if (impact.open && impact.forId) { parts.push(`impact=${impact.depth}`); if (impact.forId !== id) parts.push(`impactOf=${encodeURIComponent(impact.forId)}`); }
     if (timeline.open) {
       const at = snapshotToken(timeline.data, timeline.target) ?? 'live', vs = timeline.compare ? snapshotToken(timeline.data, timeline.baseline ?? timeline.data?.workingTree?.id) : undefined;
       parts.push(`at=${at}`);
@@ -561,6 +586,8 @@ export class AtlasStore {
   setDiffWhitespace(ignoreWhitespace: boolean): void { const diff = this.state.diff; if (diff) void this.openDiff(diff.entity, diff.title, { ignoreWhitespace }); }
   toggleDiagnostics(): void { this.set(state => ({ showDiagnostics: !state.showDiagnostics })); this.savePrefs(); }
   setTheme(themeId: string): void { this.set({ themeId }); this.savePrefs(); }
+  /** Settings: offer every theme in the theme menu (otherwise Dusk and Dawn, and the theme in use). */
+  setMoreThemes(moreThemes: boolean): void { this.set({ moreThemes }); this.savePrefs(); }
 
   // History -----------------------------------------------------------------
   private setTimeline(patch: Partial<TimelineState>): void { this.set(state => ({ timeline: { ...state.timeline, ...patch } })); }
@@ -844,7 +871,10 @@ export class AtlasStore {
       if (this.state.features.status !== 'idle') void this.loadFeatures();
       if (this.state.people.status !== 'idle') void this.loadPeople();
       if (this.state.people.focus) void this.loadPerson(this.state.people.focus);
-      if (this.state.requests.open) void this.openRequestFlow(this.state.requests.open.id);
+      if (this.state.requests.open) void this.loadRequestFlow(this.state.requests.open.id);
+      if (this.state.steps) void this.loadSteps(this.state.steps.anchor);
+      if (this.state.impact.open && this.state.impact.forId) void this.loadImpact(this.state.impact.forId);
+      if (this.state.files) void this.loadFiles();
       const tour = this.state.tour;
       if (tour) void this.openTour({ id: tour.id, detail: tour.detail, title: tour.title, ...(tour.subtitle ? { subtitle: tour.subtitle } : {}), ...(tour.kind ? { kind: tour.kind } : {}) }, { fit: false, play: false });
     } catch (error) {
@@ -856,17 +886,38 @@ export class AtlasStore {
   // Blast radius and steps ----------------------------------------------------
   /** Identity of the current view, to tell whether loaded results still belong to it. */
   viewStamp(): string { const meta = this.state.meta; return `${meta?.snapshot.id ?? ''}|${meta?.comparison?.baseline.id ?? ''}`; }
-  /** Show what depends on an entity (the selection by default); it then follows the selection. */
+  // The middle of the screen ---------------------------------------------------
+  /** Bring the map, or an open tool, to the middle (the map then shows as an overview in a corner). */
+  setCenter(view: CenterView): void {
+    const state = this.state;
+    if (view !== 'map' && !(view === 'flow' ? state.flowView : view === 'impact' ? state.impact.open : state.files)) return;
+    if (state.center !== view) this.set({ center: view });
+  }
+  /** A tool closed: the map comes back to the middle if the tool was there. */
+  private leaveCenter(view: CenterView): Partial<AtlasState> { return this.state.center === view ? { center: 'map' } : {}; }
+  /** Show what depends on an entity (the selection by default) or on the uncommitted changes (`WORKING_CHANGES`) in the middle; it stays on that origin. */
   async showImpact(id = this.state.selection?.id, depth = this.state.impact.depth): Promise<void> {
     if (!id) return;
-    this.set(state => ({ impact: { ...state.impact, open: true, depth, filter: {}, ...(state.impact.forId !== id || state.impact.depth !== depth ? { data: undefined, items: [] } : {}) } }));
+    this.set(state => ({ center: 'impact', impact: { ...state.impact, open: true, forId: id, depth, filter: {}, ...(state.impact.forId !== id || state.impact.depth !== depth ? { data: undefined, items: [] } : {}) } }));
     this.writeHash();
     await this.loadImpact(id);
   }
+  /** What the uncommitted changes of the live index affect. */
+  showWorkingImpact(): Promise<void> { return this.showImpact(WORKING_CHANGES); }
+  /** Open the Impact tool on nothing yet: it offers the selection and the uncommitted changes. */
+  openImpactTool(): void {
+    if (this.state.impact.open) { this.setCenter('impact'); return; }
+    this.set(state => ({ center: 'impact', impact: { ...state.impact, open: true, status: 'idle', forId: undefined, data: undefined, items: [], filter: {}, error: undefined } }));
+  }
   hideImpact(): void {
     this.aborts.get('impact')?.abort();
-    this.set(state => ({ impact: { ...state.impact, open: false, status: 'idle', forId: undefined, data: undefined, items: [], error: undefined } }));
+    this.set(state => ({ ...this.leaveCenter('impact'), impact: { ...state.impact, open: false, status: 'idle', forId: undefined, data: undefined, items: [], error: undefined } }));
     this.writeHash();
+  }
+  /** List the blast radius by application, feature or folder (undefined: by hops). */
+  async setImpactGroup(group: ImpactGroupBy | undefined): Promise<void> {
+    this.set(state => ({ impact: { ...state.impact, group, filter: { ...state.impact.filter, groupKey: undefined } } }));
+    if (this.state.impact.forId) await this.loadImpact(this.state.impact.forId);
   }
   async setImpactDepth(depth: number): Promise<void> {
     this.set(state => ({ impact: { ...state.impact, depth, data: undefined, items: [] } }));
@@ -882,7 +933,8 @@ export class AtlasStore {
     const current = this.state.impact, viewStamp = this.viewStamp();
     this.set(state => ({ impact: { ...state.impact, status: 'loading', forId: id, viewStamp, ...(state.impact.forId !== id ? { data: undefined, items: [] } : {}) } }));
     try {
-      const data = await this.api.impact(id, { depth: current.depth, ...current.filter, offset: append ? current.items.length : 0, limit: 100 }, signal);
+      const options = { depth: current.depth, ...current.filter, ...(current.group ? { group: current.group } : {}), offset: append ? current.items.length : 0, limit: 100 };
+      const data = await this.api.impact(id === WORKING_CHANGES ? { working: true } : id, options, signal);
       if (signal.aborted) return;
       for (const item of data.items.items) this.scene.upsert(item);
       this.set(state => state.impact.forId === id && state.impact.open ? { impact: { ...state.impact, status: 'ready', data, viewStamp, items: append ? [...state.impact.items, ...data.items.items] : data.items.items, error: undefined } } : {});
@@ -903,9 +955,13 @@ export class AtlasStore {
     } catch (error) { if (!isAbort(error)) this.set(state => ({ commitImpact: { ...state.commitImpact, status: 'error', error: error instanceof Error ? error.message : String(error) } })); }
   }
   toggleCommitImpact(): void { this.set(state => ({ commitImpact: { ...state.commitImpact, show: !state.commitImpact.show } })); }
-  /** Open "what happens from here" for an entity (the selection by default). */
-  async openSteps(id = this.state.selection?.id): Promise<void> {
+  /** Open "what happens from here" for an entity (the selection by default): the flow view in the middle, as an outline (or a diagram). */
+  async openSteps(id = this.state.selection?.id, layout: FlowViewState['layout'] = 'outline'): Promise<void> {
     if (!id || id.startsWith('projection:')) return;
+    const node = this.scene.nodes.get(id) ?? (this.state.selection?.id === id ? this.state.selection.node : undefined);
+    await this.openFlowView({ id, title: node?.name ?? 'What happens from here', lanes: LANES_TYPES.has(node?.type ?? '') }, layout);
+  }
+  private async loadSteps(id: string): Promise<void> {
     const signal = this.abortable('steps');
     const viewStamp = this.viewStamp();
     this.set({ steps: { anchor: id, status: 'loading', viewStamp } });
@@ -916,7 +972,35 @@ export class AtlasStore {
       this.set(state => state.steps?.anchor === id ? { steps: { ...state.steps, status: 'ready', data }, sceneRevision: state.sceneRevision + 1 } : {});
     } catch (error) { if (!isAbort(error)) this.set(state => state.steps?.anchor === id ? { steps: { ...state.steps, status: 'error', error: error instanceof Error ? error.message : String(error) } } : {}); }
   }
-  closeSteps(): void { this.aborts.get('steps')?.abort(); this.set({ steps: undefined }); }
+  closeSteps(): void { this.closeFlowView(); }
+  /**
+   * Open a flow in the middle: the lanes of a request, command or task (or the
+   * layers of anything else that runs), or the outline of its steps.
+   */
+  async openFlowView(entry: { id: string; title: string; subtitle?: string; lanes: boolean }, layout: FlowViewState['layout'] = entry.lanes ? 'diagram' : 'outline'): Promise<void> {
+    if (this.state.flowView?.id !== entry.id) {
+      this.aborts.get('steps')?.abort(); this.aborts.get('request-flow')?.abort();
+      this.set(state => ({ steps: undefined, requests: state.requests.open?.id === entry.id ? state.requests : {} }));
+    }
+    this.set({ center: 'flow', flowView: { id: entry.id, title: entry.title, ...(entry.subtitle ? { subtitle: entry.subtitle } : {}), lanes: entry.lanes, layout } });
+    await this.loadFlowLayout();
+  }
+  /** Draw the flow open in the middle as a diagram or an outline. */
+  async setFlowLayout(layout: FlowViewState['layout']): Promise<void> {
+    if (!this.state.flowView || this.state.flowView.layout === layout) return;
+    this.set(state => ({ flowView: { ...state.flowView!, layout } }));
+    await this.loadFlowLayout();
+  }
+  private async loadFlowLayout(): Promise<void> {
+    const view = this.state.flowView;
+    if (!view) return;
+    if (view.layout === 'diagram' && view.lanes) { if (this.state.requests.open?.id !== view.id || this.state.requests.open.status === 'error') await this.loadRequestFlow(view.id); }
+    else if (this.state.steps?.anchor !== view.id || this.state.steps.status === 'error') await this.loadSteps(view.id);
+  }
+  closeFlowView(): void {
+    this.aborts.get('steps')?.abort(); this.aborts.get('request-flow')?.abort();
+    this.set({ ...this.leaveCenter('flow'), flowView: undefined, steps: undefined, requests: {} });
+  }
   /** Highlight one step (and its links) on the map. */
   focusStep(id: string | undefined): void { this.set(state => state.steps ? { steps: { ...state.steps, focus: id } } : {}); }
 
@@ -947,7 +1031,7 @@ export class AtlasStore {
   setCatalogQuery(query: string): void { this.setCatalog({ query, open: {} }); }
   setCatalogFilter(filter: FlowStatus | undefined): void { this.setCatalog(catalog => ({ filter: catalog.filter === filter ? undefined : filter })); }
   /** Open a flow of the catalog on the map. */
-  openCatalogFlow(item: FlowSummary): Promise<void> { return this.openTour(tourEntry(item)); }
+  openCatalogFlow(item: FlowSummary): Promise<void> { this.setCenter('map'); return this.openTour(tourEntry(item)); }
 
   private setTour(patch: Partial<TourState> | ((tour: TourState) => Partial<TourState>)): void {
     this.set(state => state.tour ? { tour: { ...state.tour, ...(typeof patch === 'function' ? patch(state.tour) : patch) } } : {});
@@ -963,8 +1047,6 @@ export class AtlasStore {
     const key = `${entry.detail}:${entry.id}`;
     this.set(state => ({
       tour: { key, id: entry.id, detail: entry.detail, title: entry.title, ...(entry.subtitle ? { subtitle: entry.subtitle } : {}), ...(entry.kind ? { kind: entry.kind } : {}), status: 'loading', viewStamp, playback: initialPlayback(), follow: state.tour?.follow ?? true, ...(state.tour?.key === key && state.tour.flow ? { flow: state.tour.flow } : {}) },
-      // The lanes of another flow give way to this one.
-      ...(state.requests.open && state.requests.open.id !== entry.id ? { requests: { open: undefined } } : {}),
     }));
     try {
       const flow = entry.detail === 'lanes' ? fromRequestFlow(await this.api.requestFlow(entry.id, signal)) : fromSteps(await this.api.steps(entry.id, signal));
@@ -1022,8 +1104,14 @@ export class AtlasStore {
   /** Fit every stop of the flow on the map in view. */
   fitTour(): void { const flow = this.state.tour?.flow; if (flow) this.navigator?.fitNodes(flow.stops.flatMap(stop => stop.node ? [stop.node] : [])); }
   setTourFollow(follow: boolean): void { this.setTour({ follow }); }
-  /** The lanes of a request flow (the theater over the map). Its entities are placed in the scene. */
+  /** The lanes of a request flow, in the middle. */
   async openRequestFlow(id: string): Promise<void> {
+    const tour = this.state.tour?.id === id ? this.state.tour : undefined;
+    const known = this.state.flowView?.id === id ? this.state.flowView : undefined;
+    await this.openFlowView({ id, title: known?.title ?? tour?.title ?? this.scene.nodes.get(id)?.name ?? 'Request flow', ...(known?.subtitle ?? tour?.subtitle ? { subtitle: known?.subtitle ?? tour?.subtitle } : {}), lanes: true }, 'diagram');
+  }
+  /** Load a request flow's lanes; its entities are placed in the scene. */
+  private async loadRequestFlow(id: string): Promise<void> {
     const signal = this.abortable('request-flow');
     const viewStamp = this.viewStamp();
     this.set(state => ({ requests: { open: { id, status: 'loading', viewStamp, playing: state.requests.open?.playing ?? true } } }));
@@ -1035,16 +1123,18 @@ export class AtlasStore {
       this.bumpScene();
     } catch (error) { if (!isAbort(error)) this.set(state => state.requests.open?.id === id ? { requests: { open: { ...state.requests.open, status: 'error', error: error instanceof Error ? error.message : String(error) } } } : {}); }
   }
-  closeRequestFlow(): void { this.aborts.get('request-flow')?.abort(); this.set({ requests: {} }); }
+  closeRequestFlow(): void { this.closeFlowView(); }
   focusRequestNode(id: string | undefined): void { this.set(state => state.requests.open ? { requests: { open: { ...state.requests.open, focus: id } } } : {}); }
   toggleRequestFlowPlaying(): void { this.set(state => state.requests.open ? { requests: { open: { ...state.requests.open, playing: !state.requests.open.playing } } } : {}); }
-  /** Leave the lanes for the same flow on the map. */
+  /** The flow open in the middle, shown on the map instead (the flow stays open, a click away). */
   traceRequestFlow(options: { play?: boolean } = {}): void {
-    const open = this.state.requests.open;
-    if (!open) return;
-    const data = open.data;
-    this.set({ requests: {} });
-    void this.openTour({ id: open.id, detail: 'lanes', title: data ? (data.kind === 'command' || data.kind === 'schedule' ? data.name : `${data.method} ${data.path}`) : 'Request flow', ...(data?.handler ? { subtitle: `handled by ${data.handler}` } : {}) }, options);
+    const view = this.state.flowView;
+    if (!view) return;
+    const data = this.state.requests.open?.id === view.id ? this.state.requests.open.data : undefined;
+    this.set({ center: 'map' });
+    if (this.state.tour?.id === view.id) { if (options.play !== false) this.tourAction({ type: 'play' }); return; }
+    const title = data ? (data.kind === 'command' || data.kind === 'schedule' ? data.name : `${data.method} ${data.path}`) : view.title;
+    void this.openTour({ id: view.id, detail: view.lanes ? 'lanes' : 'steps', title, ...(data?.handler ? { subtitle: `handled by ${data.handler}` } : view.subtitle ? { subtitle: view.subtitle } : {}) }, options);
   }
   /** Show or hide the coverage lens: files colored by whether flows touch them. */
   async toggleCoverage(show = !this.state.coverage.show): Promise<void> {
@@ -1088,6 +1178,7 @@ export class AtlasStore {
   focusFamily(key: string | undefined): void {
     this.set(state => ({ families: { ...state.families, focus: key === undefined || state.families.focus === key ? undefined : key }, ...(key ? { features: { ...state.features, focus: undefined }, people: { ...state.people, focus: undefined, person: undefined } } : {}) }));
     if (key && !this.state.families.show) void this.toggleFamilies(true);
+    this.followHighlight('family', this.state.families.focus);
   }
 
   // Features ---------------------------------------------------------------------
@@ -1116,6 +1207,7 @@ export class AtlasStore {
     const focus = key === undefined || this.state.features.focus === key ? undefined : key;
     this.set(state => ({ features: { ...state.features, focus, ...(focus ? { open: { ...state.features.open, [focus]: true } } : {}) }, ...(focus ? { families: { ...state.families, focus: undefined }, people: { ...state.people, focus: undefined, person: undefined } } : {}) }));
     if (!focus) return;
+    this.followHighlight('feature', focus);
     await this.ensureFeatures();
     const feature = this.state.features.data?.features.find(item => item.key === focus);
     if (!options.fit || !feature?.folders.length) return;
@@ -1187,6 +1279,7 @@ export class AtlasStore {
     const focus = key === undefined || this.state.people.focus === key ? undefined : key;
     this.set(state => ({ people: { ...state.people, focus, ...(focus ? { open: { ...state.people.open, [focus]: true } } : { person: undefined }) }, ...(focus ? { families: { ...state.families, focus: undefined }, features: { ...state.features, focus: undefined } } : {}) }));
     if (!focus) { this.aborts.get('person')?.abort(); return; }
+    this.followHighlight('person', focus);
     await this.loadPerson(focus);
     const folders = this.state.people.person?.key === focus ? this.state.people.person.data?.folders : undefined;
     if (!options.fit || !folders?.length) return;
@@ -1210,6 +1303,7 @@ export class AtlasStore {
       people.status !== 'idle' ? this.loadPeople() : undefined,
       people.focus ? this.loadPerson(people.focus) : undefined,
       selection?.authorship ? this.loadSelectionAuthorship(selection.id, this.aborts.get('selection')?.signal ?? new AbortController().signal) : undefined,
+      this.state.files?.kind === 'person' ? this.loadFiles() : undefined,
     ]);
   }
   /** Expand or collapse a row of the People panel (`open` undefined: toggle). */
@@ -1221,6 +1315,43 @@ export class AtlasStore {
     if (!this.state.timeline.open) await this.openTimeline();
     if (!this.state.timeline.compare) await this.setCompare(true);
     await this.setTarget(snapshot);
+  }
+  // Lists of what is lit -------------------------------------------------------------
+  /**
+   * List the files a highlight lights, in the middle: a feature, a data family,
+   * a coverage category or a person. The highlight is turned on if it was not,
+   * so the overview map shows the same files.
+   */
+  async openFiles(subject: FileSubject): Promise<void> {
+    const { kind, key } = subject;
+    this.set({ center: 'files', files: { kind, key, status: 'loading', stamp: this.filesStamp(subject) } });
+    if (kind === 'feature' && this.state.features.focus !== key) void this.focusFeature(key);
+    if (kind === 'family' && this.state.families.focus !== key) this.focusFamily(key);
+    if (kind === 'person' && this.state.people.focus !== key) void this.focusPerson(key);
+    if (kind === 'coverage' && !this.state.coverage.show) void this.toggleCoverage(true);
+    await this.loadFiles();
+  }
+  closeFiles(): void { this.aborts.get('files')?.abort(); this.set({ ...this.leaveCenter('files'), files: undefined }); }
+  /** The view (and, for a person, the window) a list of files belongs to. */
+  private filesStamp(subject: FileSubject): string { return `${subject.kind}:${subject.key}|${subject.kind === 'person' ? this.peopleStamp() : this.viewStamp()}`; }
+  async loadFiles(): Promise<void> {
+    const files = this.state.files;
+    if (!files) return;
+    const subject = { kind: files.kind, key: files.key }, stamp = this.filesStamp(subject);
+    const signal = this.abortable('files');
+    this.set(state => state.files ? { files: { ...state.files, status: 'loading', stamp, error: undefined } } : {});
+    try {
+      const data = await this.api.files(files.kind === 'person' ? { person: files.key, window: this.peopleWindow() } : { [files.kind]: files.key }, signal);
+      if (signal.aborted) return;
+      this.set(state => state.files?.stamp === stamp ? { files: { ...state.files, status: 'ready', data } } : {});
+    } catch (error) { if (!isAbort(error)) this.set(state => state.files?.stamp === stamp ? { files: { ...state.files, status: 'error', error: error instanceof Error ? error.message : String(error) } } : {}); }
+  }
+  /** A highlight of the same kind as the open list moved to another key: the list follows it. */
+  private followHighlight(kind: FileSubject['kind'], key: string | undefined): void {
+    const files = this.state.files;
+    if (!files || files.kind !== kind || !key || files.key === key) return;
+    this.set({ files: { kind, key, status: 'loading', stamp: this.filesStamp({ kind, key }) } });
+    void this.loadFiles();
   }
   /** Expand or collapse groups of the Flows list (`open` undefined: toggle). */
   setFlowGroupsOpen(keys: string[], open: boolean): void {

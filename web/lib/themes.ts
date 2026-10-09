@@ -72,7 +72,7 @@ function fileLanguages(l: number, s = 0): Record<string, Hsl> {
     'file:vue': tone(156, 70), 'file:svelte': tone(18, 100, l + 2), 'file:astro': tone(292, 86, l + 2), 'file:liquid': tone(80, 70), 'file:razor': tone(276, 60),
   };
 }
-export const THEMES: Theme[] = [
+const DEFINED: Theme[] = [
   {
     id: 'midnight', name: 'Midnight', dark: true,
     background: ['#0b1020', '#111a33'], grid: 'rgba(120,150,255,0.05)',
@@ -449,6 +449,10 @@ export const THEMES: Theme[] = [
     },
   },
 ];
+/** The brand themes, offered first: Dusk (the default), then Dawn. The others are offered once "More themes" is on in Settings. */
+export const MAIN_THEMES = ['codiluce-dusk', 'codiluce-dawn'];
+export const DEFAULT_THEME = MAIN_THEMES[0]!;
+export const THEMES: Theme[] = [...MAIN_THEMES.map(id => DEFINED.find(theme => theme.id === id)!), ...DEFINED.filter(theme => !MAIN_THEMES.includes(theme.id))];
 /** Every custom property any theme sets, so switching themes can clear the ones the next theme lacks. */
 export const UI_PROPERTIES = [...new Set(THEMES.flatMap(theme => Object.keys(theme.ui)))];
 /** A stable hue per key (a family's when the order of the families is not at hand). */

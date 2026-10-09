@@ -4,7 +4,7 @@
 import type { Entity, Relation } from '@engine/core/graph';
 import type { EvolutionResponse } from '@engine/projection/dto';
 import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, PersonAuthorship } from '@engine/projection/dto';
-import type { AggregateEdgesPage, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageExport, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FamiliesResult, FeaturesResult, FlowList, ImpactResult, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
+import type { AggregateEdgesPage, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageExport, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FamiliesResult, FeaturesResult, FileListResult, FlowList, ImpactGroupBy, ImpactResult, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
 
 export class ApiError extends Error { constructor(readonly status: number, message: string, readonly body?: unknown) { super(message); } }
 export function isAbort(error: unknown): boolean { return error instanceof DOMException && error.name === 'AbortError' || (error instanceof Error && error.name === 'AbortError'); }
@@ -40,7 +40,8 @@ export interface AtlasApi {
   sourceDiff(entity: string, options: { ignoreWhitespace?: boolean }, signal?: AbortSignal): Promise<SourceDiffResponse>;
   requestIndex(sha: string): Promise<{ queued: boolean; position: number }>;
   /** Blast radius of an entity; `comparison` asks for what the viewed comparison's changes reach. */
-  impact(id: string | { comparison: true }, options: ImpactOptions, signal?: AbortSignal): Promise<ImpactResult>;
+  /** What depends on an entity, on the viewed comparison's changes, or on the uncommitted changes of the live index. */
+  impact(id: string | { comparison: true } | { working: true }, options: ImpactOptions, signal?: AbortSignal): Promise<ImpactResult>;
   steps(id: string, signal?: AbortSignal): Promise<StepsResult>;
   /** Request flows of the view (`entity`: only those that draw it). */
   requestFlows(entity?: string, signal?: AbortSignal): Promise<RequestFlowList>;
@@ -62,6 +63,8 @@ export interface AtlasApi {
   families(signal?: AbortSignal): Promise<FamiliesResult>;
   /** Features (the model's domains): each with its folders, the feature of every file and entry point, and per area. */
   features(signal?: AbortSignal): Promise<FeaturesResult>;
+  /** The files a highlight lights: a feature, a data family, a coverage category or a person (in a window). */
+  files(query: FileQuery, signal?: AbortSignal): Promise<FileListResult>;
   /** Who changed the view's files in a window of the Git history: people, the person who changed each file most, per area. */
   authorship(window: AuthorshipWindowKey, signal?: AbortSignal): Promise<AuthorshipResult>;
   /** What one person changed in the window: files, areas, folders and commits. */
@@ -70,7 +73,8 @@ export interface AtlasApi {
   entityAuthorship(id: string, window: AuthorshipWindowKey, signal?: AbortSignal): Promise<EntityAuthorship>;
   clear(): void;
 }
-export interface ImpactOptions { depth?: number; type?: string; distance?: number; offset?: number; limit?: number }
+export interface ImpactOptions { depth?: number; type?: string; distance?: number; offset?: number; limit?: number; group?: ImpactGroupBy; groupKey?: string }
+export interface FileQuery { feature?: string; family?: string; coverage?: string; person?: string; window?: string }
 const MAX_CACHE = 800;
 
 export class HttpAtlasApi implements AtlasApi {
@@ -135,8 +139,10 @@ export class HttpAtlasApi implements AtlasApi {
   entityHistory(id: string, signal?: AbortSignal) { return this.get<EntityHistoryResponse>(`/api/history/entity/${encodeURIComponent(id)}`, signal, false); }
   evolution(signal?: AbortSignal) { return this.get<EvolutionResponse>('/api/history/evolution', signal, false); }
   sourceDiff(entity: string, options: { ignoreWhitespace?: boolean }, signal?: AbortSignal) { return this.get<SourceDiffResponse>(`/api/source/diff${this.q({ entity, whitespace: options.ignoreWhitespace ? 'ignore' : undefined })}`, signal); }
-  impact(id: string | { comparison: true }, options: ImpactOptions, signal?: AbortSignal) {
-    const params = { depth: options.depth, type: options.type, distance: options.distance, offset: options.offset ?? 0, limit: options.limit ?? 100 };
+  impact(id: string | { comparison: true } | { working: true }, options: ImpactOptions, signal?: AbortSignal) {
+    const params = { depth: options.depth, type: options.type, distance: options.distance, offset: options.offset ?? 0, limit: options.limit ?? 100, group: options.group, groupKey: options.groupKey };
+    // Uncommitted changes are read from Git on each request: never cached.
+    if (typeof id !== 'string' && 'working' in id) return this.get<ImpactResult>(`/api/projection/impact-working${this.q(params)}`, signal, false);
     return this.get<ImpactResult>(typeof id === 'string' ? `/api/projection/impact/${encodeURIComponent(id)}${this.q(params)}` : `/api/history/impact${this.q(params)}`, signal);
   }
   steps(id: string, signal?: AbortSignal) { return this.get<StepsResult>(`/api/projection/steps/${encodeURIComponent(id)}${this.q()}`, signal); }
@@ -150,6 +156,7 @@ export class HttpAtlasApi implements AtlasApi {
   entityAnnotation(id: string, signal?: AbortSignal) { return this.get<EntityAnnotation>(`/api/annotations/entity/${encodeURIComponent(id)}${this.q()}`, signal); }
   families(signal?: AbortSignal) { return this.get<FamiliesResult>(`/api/projection/families${this.q()}`, signal); }
   features(signal?: AbortSignal) { return this.get<FeaturesResult>(`/api/projection/features${this.q()}`, signal); }
+  files(query: FileQuery, signal?: AbortSignal) { return this.get<FileListResult>(`/api/projection/files${this.q({ ...query })}`, signal); }
   authorship(window: AuthorshipWindowKey, signal?: AbortSignal) { return this.get<AuthorshipResult>(`/api/authorship${this.q({ window })}`, signal); }
   personAuthorship(key: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.get<PersonAuthorship>(`/api/authorship/person/${encodeURIComponent(key)}${this.q({ window })}`, signal); }
   entityAuthorship(id: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.get<EntityAuthorship>(`/api/authorship/entity/${encodeURIComponent(id)}${this.q({ window })}`, signal); }

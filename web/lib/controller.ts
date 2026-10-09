@@ -5,7 +5,7 @@
 // all drawing the same scene from their own camera.
 import type { NodeSummary, Rect, SourceResponse } from '@engine/projection/dto';
 import { easeInOut, fitBounds, fromScreen, panBy, projectedBounds, visibleBounds, worldToScreen, zoomAround, zoomPath, type Bounds, type Camera, type Point, type Viewport, type ZoomLimits } from './camera';
-import { DEFAULT_LOD, abstractionLevel, screenSize, type LodConfig } from './lod';
+import { CORNER_LOD, DEFAULT_LOD, abstractionLevel, screenSize, type LodConfig } from './lod';
 import { FLASH_MS, MapRenderer, RISE_MS, type CalloutOverlay, type CoverageOverlay, type EdgeOverlay, type FamilyOverlay, type FlowOverlay, type FrameOverlay, type MotionState, type RenderState } from './renderer';
 import { branchDuration, branchPosition, flowAreas, flowLit, type MapFlow } from './map-flow';
 import type { PlaybackState } from './playback';
@@ -48,7 +48,9 @@ export interface MapControllerOptions {
 export class MapController implements MapNavigator {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly renderer: MapRenderer;
-  private readonly lod: LodConfig;
+  private readonly lodConfig: LodConfig;
+  /** Level of detail: the map's own, or the corner overview's while a tool is in the middle. */
+  private get lod(): LodConfig { return this.small ? CORNER_LOD : this.lodConfig; }
   private readonly role: NonNullable<MapControllerOptions['role']>;
   private lastCamera = '';
   private camera: Camera = { x: 0, y: 0, scale: 0.05 };
@@ -77,13 +79,19 @@ export class MapController implements MapNavigator {
   private drawnScene?: Scene;
   /** Where recent time-lapse frames changed something, for the follow camera. */
   private recentChanges: { bounds: Bounds; at: number }[] = [];
+  /**
+   * While a tool is in the middle, the main map is a small overview of the
+   * whole repository: the camera it had is kept, and the last move asked of it
+   * (a flight, a fit) waits until the map is back.
+   */
+  private overview?: { camera: Camera; autoFit: boolean; pending?: () => void };
 
   constructor(private readonly canvas: HTMLCanvasElement, private readonly store: AtlasStore, private readonly options: MapControllerOptions = {}) {
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) throw new Error('Canvas 2D is unavailable in this browser');
     this.ctx = ctx;
     this.role = options.role ?? 'main';
-    this.lod = options.lod ?? DEFAULT_LOD;
+    this.lodConfig = options.lod ?? DEFAULT_LOD;
     this.renderer = new MapRenderer(themeById(store.getState().themeId));
     this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     if (this.role === 'main') {
@@ -153,8 +161,25 @@ export class MapController implements MapNavigator {
     this.viewport = { width, height };
     this.canvas.width = Math.round(width * this.dpr); this.canvas.height = Math.round(height * this.dpr);
     this.setKey = '';
-    if (this.autoFit && this.fitted) { this.updateLimits(); const target = this.homeCamera(); if (target) this.camera = target; }
+    if (this.small) {
+      this.overview ??= { camera: this.camera, autoFit: this.autoFit };
+      this.updateLimits(); const target = this.homeCamera(); if (target) { this.camera = target; this.animation = undefined; }
+    } else if (this.overview) {
+      const { camera, autoFit, pending } = this.overview;
+      this.overview = undefined;
+      this.camera = camera; this.autoFit = autoFit; this.animation = undefined; this.updateLimits();
+      pending?.();
+    } else if (this.autoFit && this.fitted) { this.updateLimits(); const target = this.homeCamera(); if (target) this.camera = target; }
     this.request();
+  }
+  /** The main map is the overview in a corner (a tool is in the middle). */
+  private get small(): boolean { return this.role === 'main' && this.store.getState().center !== 'map'; }
+  /** Whether a camera move must wait for the map to be back in the middle (it is kept as the one to make then). */
+  private deferred(move: () => void): boolean {
+    // Also while the map grows back (the middle changed, the canvas is not resized yet).
+    if (!this.small && !this.overview) return false;
+    (this.overview ??= { camera: this.camera, autoFit: this.autoFit }).pending = move;
+    return true;
   }
   private rootBounds() {
     const root = this.scene.rootId ? this.scene.nodes.get(this.scene.rootId) : undefined;
@@ -185,13 +210,14 @@ export class MapController implements MapNavigator {
     if (target) this.animateTo(target);
   }
   fitNodes(nodes: NodeSummary[]): void {
-    if (!nodes.length) return;
+    if (!nodes.length || this.deferred(() => this.fitNodes(nodes))) return;
     const bounds = nodes.map(node => { const z = this.scene.nodes.has(node.id) ? this.scene.zBase(node.id) : 0; return projectedBounds(node.rect, z, z + nodeHeight(node)); })
       .reduce((a, b) => ({ minX: Math.min(a.minX, b.minX), minY: Math.min(a.minY, b.minY), maxX: Math.max(a.maxX, b.maxX), maxY: Math.max(a.maxY, b.maxY) }));
     this.animateTo(fitBounds(bounds, this.viewport, 72, this.limits));
   }
-  zoomBy(factor: number): void { this.animateTo(zoomAround(this.camera, this.viewport, this.viewport.width / 2, this.viewport.height / 2, factor, this.limits), 260); }
+  zoomBy(factor: number): void { if (this.deferred(() => this.zoomBy(factor))) return; this.animateTo(zoomAround(this.camera, this.viewport, this.viewport.width / 2, this.viewport.height / 2, factor, this.limits), 260); }
   flyTo(node: NodeSummary, options: { mode?: 'focus' | 'enter' } = {}): void {
+    if (this.deferred(() => this.flyTo(node, options))) return;
     const zBase = this.scene.nodes.has(node.id) ? this.scene.zBase(node.id) : 0;
     const bounds = projectedBounds(node.rect, zBase, zBase + nodeHeight(node));
     let target = fitBounds(bounds, this.viewport, 48, this.limits);
@@ -312,13 +338,23 @@ export class MapController implements MapNavigator {
   private analysisOverlays(state: AtlasState, time: number): Partial<RenderState> {
     const result: Partial<RenderState> = {};
     const stamp = this.store.viewStamp();
-    const impact = state.impact.open && state.impact.data && state.impact.viewStamp === stamp ? state.impact.data
+    // With a tool in the middle, the overview shows what that tool lights, and nothing else.
+    const tool = this.role === 'main' ? state.center : 'map';
+    const impact = tool !== 'map' && tool !== 'impact' ? undefined : state.impact.open && state.impact.data && state.impact.viewStamp === stamp ? state.impact.data
       : state.commitImpact.show && state.commitImpact.data && state.commitImpact.viewStamp === stamp ? state.commitImpact.data : undefined;
     if (impact) {
       if (this.impactCache?.data !== impact) this.impactCache = { data: impact, overlay: { distances: new Map(Object.entries(impact.distances)), areas: new Map(Object.entries(impact.areas)), depth: impact.depth, dimOthers: !state.meta?.comparison } };
       result.impact = this.impactCache.overlay;
     }
-    const steps = state.steps?.status === 'ready' && state.steps.viewStamp === stamp ? state.steps.data : undefined;
+    const steps = (tool === 'map' || tool === 'flow') && state.steps?.status === 'ready' && state.steps.viewStamp === stamp ? state.steps.data : undefined;
+    // A flow in lanes in the middle: the overview lights what it passes.
+    const lanes = tool === 'flow' && state.flowView?.layout === 'diagram' && state.requests.open?.id === state.flowView.id && state.requests.open.viewStamp === stamp ? state.requests.open.data : undefined;
+    if (lanes && !steps) {
+      const emphasis = new Set<string>();
+      for (const node of lanes.nodes) { for (const id of node.ancestors) emphasis.add(id); if (node.node) emphasis.add(node.node.id); }
+      result.emphasis = emphasis;
+      result.edges = [];
+    }
     if (steps) {
       const byId = new Map(steps.steps.map(step => [step.id, step]));
       const emphasis = new Set<string>();
@@ -337,6 +373,9 @@ export class MapController implements MapNavigator {
     }
     const shown = this.shownFlow(state);
     if (shown) Object.assign(result, this.mapFlowOverlay(shown));
+    // Too small for the labels of a flow's stops.
+    if (this.small) { result.callouts = undefined; result.pins = undefined; }
+    if (tool !== 'map' && tool !== 'files') return result;
     const coverage = state.coverage.show && state.coverage.data && state.coverage.viewStamp === stamp ? state.coverage.data : undefined;
     if (coverage) {
       if (this.coverageCache?.data !== coverage) this.coverageCache = { data: coverage, overlay: { files: new Map(Object.entries(coverage.files).map(([id, item]) => [id, item.category])), areas: new Map(Object.entries(coverage.areas)) } };
@@ -379,6 +418,8 @@ export class MapController implements MapNavigator {
   /** The flow shown on the map (opened from the Flows panel, the inspector or the lanes). */
   private shownFlow(state: AtlasState): { flow: MapFlow; playback: PlaybackState } | undefined {
     const tour = state.tour;
+    // A tool in the middle hides it from the overview, unless the tool is the same flow.
+    if (this.role === 'main' && state.center !== 'map' && !(state.center === 'flow' && state.flowView?.id === tour?.id)) return undefined;
     return tour?.flow && tour.viewStamp === this.store.viewStamp() ? { flow: tour.flow, playback: tour.playback } : undefined;
   }
   /** The areas the current branch passes: opened whatever the zoom while it plays. */

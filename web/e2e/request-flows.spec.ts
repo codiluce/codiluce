@@ -84,9 +84,9 @@ test('one list holds every flow, filtered by kind and completeness; a request is
   await player.getByRole('button', { name: 'Pause' }).click();
   await player.locator('.flow-stop', { hasText: 'users' }).click();
   await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('heading', { name: 'users', exact: true })).toBeVisible();
-  // The same flow as lanes: one per layer the request passes, in order.
+  // The same flow as lanes, in the middle: one per layer the request passes, in order.
   await player.getByRole('button', { name: 'Lanes' }).click();
-  const theater = page.getByRole('dialog', { name: 'Request flow POST /auth/login' });
+  const theater = page.getByRole('region', { name: 'Request flow POST /auth/login' });
   await expect(theater).toBeVisible();
   await expect(theater.locator('.rf-lane-title')).toHaveText(['▦ Client', '↗ HTTP call', '⇥ Route', '◈ Middleware', '⚙ Controller', 'ƒ Services', '⛁ Models & data', '↩ Response', '↘ Back on the client']);
   await expect(theater.locator('.rf-node.k-page', { hasText: '/account' })).toBeVisible();
@@ -98,10 +98,17 @@ test('one list holds every flow, filtered by kind and completeness; a request is
   await expect(detail).toContainText('when response.ok');
   await expect(detail).toContainText('in handleSave');
   await detail.getByRole('button', { name: 'Close step details' }).click();
-  // Back on the map.
+  // The same flow as an outline of steps.
+  await theater.getByRole('group', { name: 'Layout' }).getByRole('button', { name: 'Outline' }).click();
+  await expect(theater.getByRole('list', { name: 'Steps' }).locator('.step-card.kind-handler', { hasText: 'login' }).first()).toBeVisible();
+  await theater.getByRole('group', { name: 'Layout' }).getByRole('button', { name: 'Lanes' }).click();
+  // Back on the map; the lanes stay a tab away.
   await theater.getByRole('button', { name: 'Show on map', exact: true }).click();
   await expect(theater).toHaveCount(0);
   await expect(player).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Flow · POST /auth/login' })).toBeVisible();
+  await page.getByRole('button', { name: 'Close the flow tab' }).click();
+  await expect(page.getByRole('tab', { name: 'Map' })).toHaveCount(0);
   await player.getByRole('button', { name: 'Stop showing this flow on the map' }).click();
   await expect(player).toHaveCount(0);
 });
@@ -114,11 +121,11 @@ test('the inspector shows an endpoint\'s flow on the map, and lists the flows th
   const player = page.getByRole('region', { name: 'Flow on the map: PUT /profiles/{id}' });
   await expect(player.locator('.flow-stop', { hasText: 'ProfileController::update' })).toBeVisible();
   await player.getByRole('button', { name: 'Lanes' }).click();
-  const theater = page.getByRole('dialog', { name: 'Request flow PUT /profiles/{id}' });
+  const theater = page.getByRole('region', { name: 'Request flow PUT /profiles/{id}' });
   await expect(theater.locator('.rf-node.k-validation', { hasText: 'UpdateProfileRequest' })).toBeVisible();
   await expect(theater.locator('.rf-node.k-response')).toHaveCount(3);
   await expect(theater.locator('.rf-node.k-gap', { hasText: 'record()' })).toBeVisible();
-  await theater.getByRole('button', { name: 'Close request flow', exact: true }).click();
+  await theater.getByRole('button', { name: 'Close this flow', exact: true }).click();
   await page.getByRole('combobox', { name: 'Search the indexed graph' }).fill('users');
   await page.keyboard.press('Enter');
   await expect(inspector.getByRole('heading', { name: 'users', exact: true })).toBeVisible();
@@ -145,4 +152,45 @@ test('a file says whether flows touch it and why; the coverage lens colors the m
   await expect(legend).toContainText('Entry point');
   await legend.getByRole('button', { name: 'Hide coverage' }).click();
   await expect(legend).toHaveCount(0);
+});
+test('search opens a result as its flow, its steps or its impact; a highlight lists its files', async ({ page }) => {
+  await open(page);
+  const box = page.getByRole('combobox', { name: 'Search the indexed graph' });
+  await box.fill('POST /auth/login');
+  const result = page.getByRole('option').filter({ hasText: 'POST /auth/login' }).first();
+  await result.hover();
+  await expect(result.getByRole('group', { name: /^Open .* as$/ }).getByRole('button')).toHaveText(['On map', 'Lanes', 'What happens', 'Impact']);
+  await result.getByRole('button', { name: 'Lanes' }).click();
+  const lanes = page.getByRole('region', { name: 'Request flow POST /auth/login' });
+  await expect(lanes.locator('.rf-node.k-table', { hasText: 'users' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Flow · POST /auth/login' })).toHaveAttribute('aria-selected', 'true');
+  // The keyboard reaches the actions too: Tab from the box, then Enter.
+  await box.fill('AuthService::authenticate');
+  await expect(page.getByRole('option').first()).toContainText('authenticate');
+  await box.press('Tab');
+  await expect(page.getByRole('option').first().getByRole('button', { name: 'What happens' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('region', { name: 'Blast radius' }).locator('h2')).toHaveText('Impact of authenticate');
+  // Coverage lists the files of a category, to copy.
+  await page.getByRole('tab', { name: 'Map', exact: true }).click();
+  await page.getByRole('button', { name: 'Coverage', exact: true }).click();
+  await page.getByRole('region', { name: 'Coverage lens' }).getByRole('button', { name: /^In flows/ }).click();
+  const files = page.getByRole('region', { name: 'Files lit: Coverage: In flows' });
+  await expect(files.locator('.files-file', { hasText: 'AuthService.php' })).toBeVisible();
+  await files.getByPlaceholder('Filter by path…').fill('Services');
+  await expect(files.getByRole('button', { name: /^Copy \d+ paths$/ })).toBeVisible();
+  await files.getByRole('button', { name: 'Close the list of files' }).click();
+  await expect(files).toHaveCount(0);
+});
+test('Dusk is the default theme, Dawn the other; Settings offers the rest', async ({ page }) => {
+  await open(page);
+  const themes = page.getByRole('combobox', { name: 'Theme' });
+  await expect(themes).toHaveValue('codiluce-dusk');
+  await expect(themes.locator('option')).toHaveText(['Codiluce Dusk', 'Codiluce Dawn']);
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('dialog', { name: 'Settings' }).getByLabel('More themes').check();
+  await page.getByRole('dialog', { name: 'Settings' }).getByRole('button', { name: 'Close' }).click();
+  await expect(themes.locator('option')).toHaveCount(12);
+  await expect(themes.locator('option').nth(2)).toHaveText('Midnight');
 });

@@ -19,6 +19,8 @@ export interface LodConfig {
   budget: number;
 }
 export const DEFAULT_LOD: LodConfig = { openPx: 210, fadeRange: 0.45, labelPx: 30, summaryPx: 90, detailPx: 150, sourcePx: 560, budget: 7000 };
+/** The map as a small overview in a corner (a tool in the middle): areas open early, names only, no source. */
+export const CORNER_LOD: LodConfig = { ...DEFAULT_LOD, openPx: 70, labelPx: 46, summaryPx: 1e9, detailPx: 1e9, sourcePx: 1e9, budget: 2500 };
 
 export function screenSize(rect: Rect, scale: number): number { return Math.sqrt(rect.w * rect.h) * scale; }
 export function shouldOpen(node: Pick<NodeSummary, 'childCount' | 'rect'>, scale: number, config: LodConfig = DEFAULT_LOD): boolean {

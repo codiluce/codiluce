@@ -1,10 +1,25 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import type { SearchPage } from '@engine/projection/dto';
+import type { NodeSummary, SearchPage } from '@engine/projection/dto';
 import { isAbort } from '../lib/api';
 import { typeLabel } from '../lib/format';
+import { LANES_TYPES, type AtlasStore } from '../lib/store';
 import { useStore } from './context';
 import { TypeBadge } from './TypeBadge';
+
+/** What a search result can be opened as, besides selecting it on the map: its flow (on the map, in lanes, as steps) and what depends on it. */
+interface SearchAction { key: string; text: string; title: string; run: (store: AtlasStore, item: NodeSummary) => void }
+const ON_MAP: SearchAction = { key: 'map', text: 'On map', title: 'Play the flow that starts here on the map', run: (store, item) => { store.setCenter('map'); void store.openTour({ id: item.id, detail: item.type === 'route' ? 'steps' : 'lanes', title: item.name }); } };
+const LANES: SearchAction = { key: 'lanes', text: 'Lanes', title: 'The flow that starts here in lanes, left to right', run: (store, item) => { void store.select(item.id, { fly: false }); void store.openFlowView({ id: item.id, title: item.name, lanes: true }, 'diagram'); } };
+const STEPS: SearchAction = { key: 'steps', text: 'What happens', title: 'What it sets in motion, as an outline of steps', run: (store, item) => { void store.select(item.id, { fly: false }); void store.openFlowView({ id: item.id, title: item.name, lanes: LANES_TYPES.has(item.type) }, 'outline'); } };
+const IMPACT: SearchAction = { key: 'impact', text: 'Impact', title: 'What depends on it, hop by hop', run: (store, item) => { void store.select(item.id, { fly: false }); void store.showImpact(item.id); } };
+function actionsOf(item: NodeSummary): SearchAction[] {
+  if (item.kind !== 'entity') return [];
+  if (LANES_TYPES.has(item.type)) return [ON_MAP, LANES, STEPS, IMPACT];
+  if (item.type === 'route') return [ON_MAP, STEPS, IMPACT];
+  if (['repository', 'application', 'directory', 'file', 'database_table'].includes(item.type)) return [IMPACT];
+  return [STEPS, IMPACT];
+}
 
 export function SearchBox() {
   const store = useStore();
@@ -18,6 +33,7 @@ export function SearchBox() {
   const [resultsKey, setResultsKey] = useState('');
   const pendingChoice = useRef(false);
   const input = useRef<HTMLInputElement>(null);
+  const box = useRef<HTMLDivElement>(null);
   const abort = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -48,25 +64,41 @@ export function SearchBox() {
     pendingChoice.current = false;
     setOpen(false);
     input.current?.blur();
+    store.setCenter('map');
     void store.select(item.id, { fly: true });
+  };
+  const act = (action: SearchAction, index: number) => {
+    const item = results?.items[index];
+    if (!item) return;
+    pendingChoice.current = false;
+    setOpen(false);
+    input.current?.blur();
+    action.run(store, item);
   };
   // Enter pressed while results for the typed query are still loading picks the first fresh result.
   useEffect(() => { if (fresh && pendingChoice.current) choose(0); });
+  const showPanel = open && query.trim().length > 0;
   const onKeyDown = (event: React.KeyboardEvent) => {
     const count = results?.items.length ?? 0;
     if (event.key === 'ArrowDown') { event.preventDefault(); setOpen(true); setActive(index => Math.min(count - 1, index + 1)); }
     else if (event.key === 'ArrowUp') { event.preventDefault(); setActive(index => Math.max(0, index - 1)); }
     else if (event.key === 'Enter') { event.preventDefault(); if (fresh) choose(active); else if (query.trim()) pendingChoice.current = true; }
     else if (event.key === 'Escape') { setOpen(false); input.current?.blur(); }
+    // Tab reaches the actions of the result chosen with the arrows (Escape comes back).
+    else if (event.key === 'Tab' && !event.shiftKey && showPanel && fresh && results?.items[active] && actionsOf(results.items[active]!).length) {
+      event.preventDefault();
+      box.current?.querySelector<HTMLButtonElement>(`#result-${active} .search-action`)?.focus();
+    }
   };
-  const showPanel = open && query.trim().length > 0;
+  // Leaving the search for one of its own controls (a facet, an action) keeps the results open.
+  const onBlur = (event: React.FocusEvent) => { if (!box.current?.contains(event.relatedTarget as Node | null)) setTimeout(() => setOpen(false), 150); };
   return (
-    <div className="search" role="search">
+    <div className="search" role="search" ref={box} onBlur={onBlur}>
       <span className="search-icon" aria-hidden>⌕</span>
       <input
         ref={input} type="search" value={query} placeholder="Search files, symbols, routes, controllers…" aria-label="Search the indexed graph"
         role="combobox" aria-expanded={showPanel} aria-controls="search-results" aria-autocomplete="list" aria-activedescendant={showPanel && results?.items[active] ? `result-${active}` : undefined}
-        onChange={event => { setQuery(event.target.value); setOpen(true); pendingChoice.current = false; }} onFocus={() => setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 150)} onKeyDown={onKeyDown}
+        onChange={event => { setQuery(event.target.value); setOpen(true); pendingChoice.current = false; }} onFocus={() => setOpen(true)} onKeyDown={onKeyDown}
       />
       {!query && <kbd aria-hidden>/</kbd>}
       {showPanel && (
@@ -88,6 +120,15 @@ export function SearchBox() {
                 <TypeBadge type={item.type} role={item.role} />
                 <span className="name">{item.change && item.change.status !== 'unchanged' && <span className={`change-badge ${item.change.status}`} style={{ marginRight: 6 }}>{item.change.status}</span>}{item.name}</span>
                 <span className="where">{item.qualifiedName && item.qualifiedName !== item.name ? `${item.qualifiedName} · ` : ''}{item.breadcrumb || item.path}</span>
+                {actionsOf(item).length > 0 && (
+                  <span className="search-actions" role="group" aria-label={`Open ${item.name} as`}>
+                    {actionsOf(item).map(action => (
+                      <button key={action.key} className="search-action" title={action.title} tabIndex={index === active ? 0 : -1}
+                        onMouseDown={event => event.preventDefault()} onClick={event => { event.stopPropagation(); act(action, index); }}
+                        onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); input.current?.focus(); } }}>{action.text}</button>
+                    ))}
+                  </span>
+                )}
               </div>
             ))}
           </div>

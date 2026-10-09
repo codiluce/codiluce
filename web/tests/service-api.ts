@@ -4,7 +4,7 @@ import type { AuthorshipWindowKey, CatalogKind, NodeSummary, RegionLevel, Source
 import type { GraphStore } from '../../src/storage/sqlite.js';
 import type { ProjectionService } from '../../src/projection/service.js';
 import type { HistoryService } from '../../src/history/service.js';
-import { ApiError, type AtlasApi, type ImpactOptions } from '../lib/api';
+import { ApiError, type AtlasApi, type FileQuery, type ImpactOptions } from '../lib/api';
 import type { MapNavigator } from '../lib/store';
 
 export class ServiceApi implements AtlasApi {
@@ -56,7 +56,8 @@ export class ServiceApi implements AtlasApi {
       return this.projection.awaitEvolution(timeline.entries.flatMap(entry => entry.snapshot ? [entry.snapshot.id] : []));
     });
   }
-  impact(id: string | { comparison: true }, options: ImpactOptions, signal?: AbortSignal) {
+  impact(id: string | { comparison: true } | { working: true }, options: ImpactOptions, signal?: AbortSignal) {
+    if (typeof id !== 'string' && 'working' in id) return this.run('impact', 'working', signal, () => this.projection.workingImpact(options));
     return this.run('impact', typeof id === 'string' ? id : 'comparison', signal, () => typeof id === 'string' ? this.projection.impact(id, { ...options, view: this.view }) : this.projection.commitImpact(this.view, options));
   }
   steps(id: string, signal?: AbortSignal) { return this.run('steps', id, signal, () => this.projection.steps(id, { view: this.view, maxFileBytes: this.options.maxFileBytes ?? 1024 * 1024 })); }
@@ -70,6 +71,7 @@ export class ServiceApi implements AtlasApi {
   entityAnnotation(id: string, signal?: AbortSignal) { return this.run('entityAnnotation', id, signal, () => this.projection.entityAnnotation(id, this.view)); }
   families(signal?: AbortSignal) { return this.run('families', '', signal, () => this.projection.families(this.view)); }
   features(signal?: AbortSignal) { return this.run('features', '', signal, () => this.projection.features(this.view)); }
+  files(query: FileQuery, signal?: AbortSignal) { return this.run('files', JSON.stringify(query), signal, () => this.projection.fileList(this.view, query)); }
   authorship(window: AuthorshipWindowKey, signal?: AbortSignal) { return this.run('authorship', window, signal, () => this.projection.authorship(this.view, { window })); }
   personAuthorship(key: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.run('personAuthorship', `${key}|${window}`, signal, () => this.projection.personAuthorship(key, this.view, { window })); }
   entityAuthorship(id: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.run('entityAuthorship', `${id}|${window}`, signal, () => this.projection.entityAuthorship(id, this.view, { window })); }

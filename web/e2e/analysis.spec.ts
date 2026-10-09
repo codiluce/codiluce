@@ -43,11 +43,13 @@ test('structural-only languages show their declarations and analysis limits', as
   await expect(coverage).toContainText('extracts declarations only');
 });
 
-test('impact shows what depends on a method across the stack and survives in the link', async ({ page }) => {
+test('impact shows what depends on a method across the stack, by hops or by application, and survives in the link', async ({ page }) => {
   await open(page);
   await select(page, 'AuthService::authenticate', 'authenticate');
   await inspector(page).getByRole('button', { name: 'Impact', exact: true }).click();
-  const section = inspector(page).getByRole('region', { name: 'Blast radius' });
+  // In the middle of the screen, with the map as an overview in a corner.
+  const section = page.getByRole('region', { name: 'Blast radius' });
+  await expect(page.getByRole('tab', { name: 'Impact · authenticate' })).toHaveAttribute('aria-selected', 'true');
   await expect(section.locator('.impact-bars')).toBeVisible();
   await expect(section).toContainText(/Reaches \d+ endpoints\. Affected: \d+ in (backend|frontend), \d+ in (backend|frontend)\./);
   await expect(section).toContainText('Lower bound');
@@ -60,6 +62,21 @@ test('impact shows what depends on a method across the stack and survives in the
   await signIn.getByRole('button', { name: /^Why does/ }).first().click();
   await expect(page.getByRole('dialog', { name: 'Why is this connected?' })).toBeVisible();
   await page.getByRole('button', { name: 'Close evidence' }).click();
+  // Selecting what it lists leaves the radius on its origin.
+  await signIn.locator('.row-title').click();
+  await expect(inspector(page).getByRole('heading', { name: 'signIn', exact: true })).toBeVisible();
+  await expect(section.locator('h2')).toHaveText('Impact of authenticate');
+  // By application: the frontend lists only its own.
+  await section.getByRole('group', { name: 'List by' }).getByRole('button', { name: 'Application' }).click();
+  const groups = section.locator('.impact-groups');
+  await expect(groups.locator('.tree-label', { hasText: 'frontend' })).toBeVisible();
+  await expect(groups.locator('.tree-label', { hasText: 'backend' })).toBeVisible();
+  await groups.locator('.tree-label', { hasText: 'frontend' }).click();
+  await expect(groups.locator('.impact-row .row-title .label', { hasText: /^signIn$/ })).toBeVisible();
+  await expect(groups.locator('.impact-row .row-title .label', { hasText: /AuthController/ })).toHaveCount(0);
+  await section.getByRole('group', { name: 'List by' }).getByRole('button', { name: 'Hops' }).click();
+  await select(page, 'AuthService::authenticate', 'authenticate');
+  await page.getByRole('tab', { name: 'Impact · authenticate' }).click();
   // Deeper walks reach the pages.
   await section.getByLabel('Hops').selectOption('6');
   await expect(row('/account').locator('.impact-distance')).toHaveText('6');
@@ -69,14 +86,15 @@ test('impact shows what depends on a method across the stack and survives in the
   await page.reload();
   await expect(row('/account')).toBeVisible();
   await inspector(page).getByRole('button', { name: 'Hide impact' }).click();
-  await expect(inspector(page).getByRole('region', { name: 'Blast radius' })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Blast radius' })).toHaveCount(0);
+  await expect(page.getByRole('tab', { name: /^Impact/ })).toHaveCount(0);
   await expect.poll(() => page.url()).not.toContain('impact=');
 });
 test('impact reports name-only possible callers instead of linking them', async ({ page }) => {
   await open(page);
   await select(page, 'AuditLog::record', 'record');
   await inspector(page).getByRole('button', { name: 'Impact', exact: true }).click();
-  const section = inspector(page).getByRole('region', { name: 'Blast radius' });
+  const section = page.getByRole('region', { name: 'Blast radius' });
   await expect(section).toContainText('Nothing indexed depends on this');
   await expect(section).toContainText('1 unresolved call site in 1 entity call something named record');
 });
@@ -84,7 +102,8 @@ test('steps draw what happens from a page, with events, conditions, endpoints an
   await open(page);
   await select(page, '/account', '/account');
   await inspector(page).getByRole('button', { name: 'What happens from here' }).click();
-  const panel = page.getByRole('complementary', { name: 'Steps' });
+  // In the middle of the screen, as an outline.
+  const panel = page.getByRole('region', { name: 'What happens from /account' });
   const outline = panel.getByRole('list', { name: 'Steps' });
   await expect(outline).toBeVisible();
   await expect(outline.locator('.step-card.kind-trigger', { hasText: 'handleSave' })).toBeVisible();
@@ -104,13 +123,12 @@ test('steps draw what happens from a page, with events, conditions, endpoints an
   await outline.locator('.step-card', { hasText: 'signIn' }).first().getByRole('button').first().click();
   await expect(inspector(page).getByRole('heading', { name: 'signIn', exact: true })).toBeVisible();
   // The diagram lays out the same steps.
-  await panel.getByRole('button', { name: 'Diagram' }).click();
-  const diagram = page.getByRole('dialog', { name: 'What happens from /account' });
-  await expect(diagram.locator('.steps-box').first()).toBeVisible();
-  expect(await diagram.locator('.steps-box').count()).toBeGreaterThan(8);
-  await diagram.getByRole('button', { name: 'Close diagram' }).click();
-  await panel.getByRole('button', { name: 'Close steps' }).click();
-  await expect(page.getByRole('complementary', { name: 'Steps' })).toHaveCount(0);
+  await panel.getByRole('group', { name: 'Layout' }).getByRole('button', { name: 'Diagram' }).click();
+  await expect(panel.locator('.steps-box').first()).toBeVisible();
+  expect(await panel.locator('.steps-box').count()).toBeGreaterThan(8);
+  await panel.getByRole('button', { name: 'Close this flow' }).click();
+  await expect(page.getByRole('region', { name: 'What happens from /account' })).toHaveCount(0);
+  await expect(page.getByRole('tab', { name: 'Map' })).toHaveCount(0);
 });
 test('effects and call sites explain what a symbol does and what could not be resolved', async ({ page }) => {
   await open(page);

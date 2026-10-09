@@ -8,11 +8,12 @@
 // comparison) use the timeline layout (projection/layout.ts): one union of
 // every slot in history, so nothing moves while moving through commits, and
 // comparison views keep removed entities in their places as ghosts.
+import { createHash } from 'node:crypto';
 import { readFileSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { computeDiff, type EntityChange, type SnapshotDiff } from '../history/diff.js';
 import { canonicalJson, withoutPositions } from '../history/fingerprint.js';
-import { renamedPaths } from '../history/git.js';
+import { git, renamedPaths } from '../history/git.js';
 import { CommitSnapshot, WorkingTreeSnapshot, type SnapshotData, type SnapshotSource } from '../history/snapshot.js';
 import type { EntityHistoryRow, HistoryStore, SnapshotRecord } from '../history/store.js';
 import type { EvolutionResponse } from './dto.js';
@@ -25,7 +26,7 @@ import { extendRegistry, LAYOUT_VERSION, TIMELINE_LAYOUT_VERSION, layoutHierarch
 import { ProjectionIndex, type EntityRow, type ProjectionNode, type RelationRow } from './hierarchy.js';
 import { dataFamilies, NO_FAMILY, type FamilyAssignment } from './families.js';
 import { readSnapshotFile, readSnapshotSource, snapshotRef, SourceError, splitLines, type SourceRequest, type SourceResponse } from './source.js';
-import type { AggregateResult, ChangeRegionsResult, ChangesPage, CoverageDetail, CoverageExport, CoverageExportSymbol, CoverageResult, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, FamiliesResult, FeaturesResult, FlowList, FlowSummary, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowEdge, RequestFlowList, RequestFlowNode, RequestFlowSummary, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
+import type { AggregateResult, ChangeRegionsResult, ChangesPage, CoverageDetail, CoverageExport, CoverageExportSymbol, CoverageResult, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, FamiliesResult, FeaturesResult, FileListResult, FlowList, FlowSummary, ImpactGroup, ImpactGroupBy, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowEdge, RequestFlowList, RequestFlowNode, RequestFlowSummary, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
 import { computeImpact, DEFAULT_IMPACT_DEPTH, FILE_IMPACT_TYPES, impactPath, MAX_IMPACT_SEEDS, seedsOf, SYMBOL_IMPACT_TYPES, type ImpactComputation } from './impact.js';
 import { walkSteps } from './steps.js';
 import { changeRegions, isRegionLevel } from './regions.js';
@@ -33,7 +34,7 @@ import { commandFlow, displayName, endpointFlow, FLOW_LANES, scheduleFlow, unmat
 import { CATALOG_KINDS, computeCoverage, fileResolver, forwardSlice, pageEndpoints, type CatalogKind, type CoverageComputation } from './catalog.js';
 import type { AnnotationStore } from '../ai/store.js';
 import { assignDomains, PLATFORM, type DomainAssignment, type DomainRule } from '../ai/domains.js';
-import type { AnnotationsOverview, EntityAnnotation, TimelineResponse } from './dto.js';
+import type { AnnotationsOverview, EntityAnnotation, TimelineResponse, WorkingOrigin } from './dto.js';
 import { guardsAt, hintOf, phrase } from './conditions.js';
 import { SYMBOL_TYPES } from './hierarchy.js';
 import { AuthorLogs } from '../history/authors.js';
@@ -366,6 +367,44 @@ export class ProjectionService {
     features.sort((a, b) => Number(a.key === PLATFORM) - Number(b.key === PLATFORM) || b.files - a.files || (a.name < b.name ? -1 : 1));
     return { features, of, areas };
   }
+  /**
+   * The files a highlight lights, as a list sorted by path: a feature's code
+   * files, a data family's files (`none`: code files using no table), the code
+   * files of a coverage category, or the files a person changed in a window.
+   */
+  async fileList(view: ViewKey | undefined, query: { feature?: string; family?: string; coverage?: string; person?: string; window?: string }): Promise<FileListResult> {
+    const current = this.load(view);
+    const index = current.index;
+    let ids: string[], title: string, codeOnly = false;
+    if (query.feature !== undefined) {
+      const result = this.features(view);
+      const feature = result.features.find(item => item.key === query.feature);
+      if (!feature) throw new NotFoundError(`Unknown feature ${query.feature}`);
+      ids = Object.keys(result.of).filter(id => result.of[id] === query.feature); title = feature.name; codeOnly = true;
+    } else if (query.family !== undefined) {
+      const result = this.families(view);
+      if (query.family === NO_FAMILY) {
+        ids = [...index.nodes.values()].filter(node => node.kind === 'entity' && node.type === 'file' && node.change?.status !== 'removed' && CODE_LANGUAGES.has(node.language ?? '') && !result.of[node.id]).map(node => node.id); title = 'No tables';
+      } else {
+        const family = result.families.find(item => item.key === query.family);
+        if (!family) throw new NotFoundError(`Unknown data family ${query.family}`);
+        ids = Object.keys(result.of).filter(id => result.of[id] === query.family); title = family.name;
+      }
+    } else if (query.coverage !== undefined) {
+      const files = this.coverageOfView(current).files;
+      ids = [...files].filter(([, item]) => item.category === query.coverage).map(([id]) => id); title = query.coverage;
+    } else if (query.person !== undefined) {
+      const result = await this.personAuthorship(query.person, view, { window: query.window });
+      ids = Object.keys(result.files); title = result.person.name;
+    } else throw new Error('feature, family, coverage or person is required');
+    const files = ids.flatMap(id => {
+      const node = index.node(id);
+      if (!node || node.type !== 'file' || !node.path || node.change?.status === 'removed' || (codeOnly && !CODE_LANGUAGES.has(node.language ?? ''))) return [];
+      return [{ id: node.id, name: node.name, path: node.path, ...(node.language ? { language: node.language } : {}) }];
+    });
+    files.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
+    return { title, files };
+  }
   /** What the models said about the repository: its overview and domains, how much was described, and the cost. */
   annotationsOverview(): AnnotationsOverview {
     const annotations = this.options.annotations?.();
@@ -656,7 +695,7 @@ export class ProjectionService {
 
   // Impact and steps ---------------------------------------------------------------
   /** Blast radius of an entity (or everything inside a container): what depends on it, hop by hop. */
-  impact(id: string, options: { depth?: number; types?: string[]; type?: string; distance?: number; limit?: number; offset?: number; view?: ViewKey }): ImpactResult {
+  impact(id: string, options: ImpactQuery & { view?: ViewKey }): ImpactResult {
     const current = this.load(options.view);
     const node = this.require(current, id);
     const depth = impactDepth(options.depth);
@@ -666,28 +705,55 @@ export class ProjectionService {
     return this.impactResult(current, computation, { kind: 'entity', node: this.summary(current, node) }, depth, types, options);
   }
   /** Blast radius of a comparison: what depends on the entities the target changed or removed since the baseline. */
-  commitImpact(view: ViewKey, options: { depth?: number; types?: string[]; type?: string; distance?: number; limit?: number; offset?: number }): ImpactResult {
+  commitImpact(view: ViewKey, options: ImpactQuery): ImpactResult {
     const current = this.comparison(view);
     const depth = impactDepth(options.depth);
     const types = impactTypes(options.types);
-    const byStatus: Record<string, number> = {};
     const key = `comparison:${depth}:${[...types].sort().join(',')}`;
-    const computation = this.cachedImpact(current, key, () => {
-      const changed: ProjectionNode[] = [];
-      for (const [changedId, change] of current.diff.changes) {
-        if (change.status === 'added' || change.status === 'unchanged') continue;
-        if (change.status !== 'removed' && !change.facets.some(facet => OWN_CHANGE.has(facet))) continue;
-        const changedNode = current.index.node(changedId);
-        if (!changedNode || changedNode.kind !== 'entity' || !(SYMBOL_TYPES.has(changedNode.type) || ['file', 'route', 'api_endpoint'].includes(changedNode.type))) continue;
-        changed.push(changedNode);
-      }
-      // A changed file seeds its importers only when no symbol inside it changed (a module-level change).
-      const symbolFiles = new Set(changed.filter(item => item.type !== 'file').map(item => item.path));
-      const seeds = changed.filter(item => item.type !== 'file' || !symbolFiles.has(item.path)).map(item => item.id).sort().slice(0, MAX_IMPACT_SEEDS);
-      return computeImpact(current.index, seeds, { depth, types, includeRemoved: true });
+    const computation = this.cachedImpact(current, key, () => computeImpact(current.index, comparisonSeeds(current), { depth, types, includeRemoved: true }));
+    return this.impactResult(current, computation, { kind: 'comparison', byStatus: seedStatus(current, computation.seeds) }, depth, types, options);
+  }
+  /**
+   * Blast radius of the uncommitted changes of the live index. When History
+   * has the HEAD commit the index was taken at, the walk starts from the
+   * entities that changed since it (as a comparison would); otherwise from
+   * everything in the files Git reports as changed or new.
+   */
+  async workingImpact(options: ImpactQuery): Promise<ImpactResult> {
+    const live = this.load({});
+    const depth = impactDepth(options.depth);
+    const types = impactTypes(options.types);
+    const info = live.target.info;
+    const empty = (origin: WorkingOrigin): ImpactResult => this.impactResult(live, { seeds: [], distance: new Map(), via: new Map(), truncated: false, seedsTruncated: false }, origin, depth, types, options);
+    const head = info.commitSha ? this.options.history?.()?.snapshotsByCommit().get(info.commitSha) : undefined;
+    if (head) {
+      if (info.dirty === false) return empty({ kind: 'working', method: 'comparison', files: 0, missing: 0, head: info.commitSha, reason: 'The code had no uncommitted changes when it was indexed. Index again to include later changes.' });
+      const view = { compareTo: head.id };
+      await this.prepare(view);
+      const current = this.comparison(view);
+      const key = `comparison:${depth}:${[...types].sort().join(',')}`;
+      const computation = this.cachedImpact(current, key, () => computeImpact(current.index, comparisonSeeds(current), { depth, types, includeRemoved: true }));
+      const files = new Set(computation.seeds.map(id => current.index.node(id)?.path).filter(Boolean)).size;
+      return this.impactResult(current, computation, { kind: 'working', method: 'comparison', files, missing: 0, head: info.commitSha, byStatus: seedStatus(current, computation.seeds) }, depth, types, options);
+    }
+    const root = this.options.root;
+    if (!root) return empty({ kind: 'working', method: 'files', files: 0, missing: 0, reason: 'The repository folder is not known to the server.' });
+    let paths: string[];
+    try {
+      const [changed, untracked] = await Promise.all([git(root, ['diff', '--name-only', '--relative', '-z', 'HEAD']), git(root, ['ls-files', '--others', '--exclude-standard', '-z'])]);
+      paths = [...new Set([...changed.split('\0'), ...untracked.split('\0')].filter(Boolean))].sort();
+    } catch (error) { return empty({ kind: 'working', method: 'files', files: 0, missing: 0, reason: `Git could not list the changes: ${error instanceof Error ? error.message : String(error)}` }); }
+    const index = live.index;
+    const found = paths.flatMap(item => { const id = index.fileByPath.get(item); const node = id ? index.node(id) : undefined; return node ? [node] : []; });
+    const origin: WorkingOrigin = { kind: 'working', method: 'files', files: found.length, missing: paths.length - found.length, ...(info.commitSha ? { head: info.commitSha } : {}) };
+    if (!paths.length) return empty({ ...origin, reason: 'Git reports no uncommitted changes.' });
+    const key = `working:${createHash('sha1').update(paths.join('\0')).digest('hex')}:${depth}:${[...types].sort().join(',')}`;
+    const computation = this.cachedImpact(live, key, () => {
+      const seeds = new Set<string>();
+      for (const node of found) for (const id of seedsOf(index, node).seeds) { if (seeds.size >= MAX_IMPACT_SEEDS) break; seeds.add(id); }
+      return { ...computeImpact(index, [...seeds].sort(), { depth, types }), seedsTruncated: seeds.size >= MAX_IMPACT_SEEDS };
     });
-    for (const seed of computation.seeds) { const status = current.index.node(seed)?.change?.status ?? 'modified'; byStatus[status] = (byStatus[status] ?? 0) + 1; }
-    return this.impactResult(current, computation, { kind: 'comparison', byStatus }, depth, types, options);
+    return this.impactResult(live, computation, origin, depth, types, options);
   }
   private cachedImpact(current: View, key: string, compute: () => ImpactComputation): ImpactComputation {
     current.impacts ??= new Map();
@@ -695,7 +761,7 @@ export class ProjectionService {
     if (!result) { result = compute(); current.impacts.set(key, result); if (current.impacts.size > 8) current.impacts.delete(current.impacts.keys().next().value!); }
     return result;
   }
-  private impactResult(current: View, computation: ImpactComputation, origin: ImpactResult['origin'], depth: number, types: Set<string>, options: { type?: string; distance?: number; limit?: number; offset?: number }): ImpactResult {
+  private impactResult(current: View, computation: ImpactComputation, origin: ImpactResult['origin'], depth: number, types: Set<string>, options: ImpactQuery): ImpactResult {
     const { limit, offset } = pagination(options);
     const index = current.index;
     const affected: ProjectionNode[] = [];
@@ -719,7 +785,19 @@ export class ProjectionService {
         if (ancestor.type === 'application') applications.set(ancestor.id, (applications.get(ancestor.id) ?? 0) + 1);
       }
     }
-    const filtered = affected.filter(node => (!options.type || node.type === options.type) && (!options.distance || computation.distance.get(node.id) === options.distance));
+    const typed = affected.filter(node => (!options.type || node.type === options.type) && (!options.distance || computation.distance.get(node.id) === options.distance));
+    const groupOf = options.group ? this.impactGrouper(current, options.group) : undefined;
+    let groups: ImpactGroup[] | undefined;
+    if (groupOf) {
+      const byKey = new Map<string, ImpactGroup>();
+      for (const node of typed) {
+        const { key, name } = groupOf(node), distance = computation.distance.get(node.id)!;
+        const group = byKey.get(key);
+        if (group) { group.count++; group.distance = Math.min(group.distance, distance); } else byKey.set(key, { key, name, count: 1, distance });
+      }
+      groups = [...byKey.values()].sort((a, b) => b.count - a.count || a.distance - b.distance || (a.name < b.name ? -1 : 1));
+    }
+    const filtered = groupOf && options.groupKey !== undefined ? typed.filter(node => groupOf(node).key === options.groupKey) : typed;
     filtered.sort((a, b) => computation.distance.get(a.id)! - computation.distance.get(b.id)! || (IMPACT_TYPE_ORDER[a.type] ?? 8) - (IMPACT_TYPE_ORDER[b.type] ?? 8) || compareNames(current, a.id, b.id) || (a.id < b.id ? -1 : 1));
     const hop = (relationIndex: number): ImpactHop => {
       const relation = index.relations[relationIndex]!, from = index.node(relation.from)!, to = index.node(relation.to)!;
@@ -744,7 +822,27 @@ export class ProjectionService {
       items: { items, limit, offset, total: filtered.length, hasMore: offset + limit < filtered.length },
       truncated: computation.truncated,
       highlights: { endpoints, routes, applications: [...applications].map(([id, count]) => ({ id, name: index.node(id)!.name, count })).sort((a, b) => b.count - a.count) },
+      ...(groups ? { groups } : {}),
       unknowns: { unresolvedHttpCalls, possibleCallers: possibleCallers.slice(0, 10) },
+    };
+  }
+  /** Where an affected entity belongs: its application, its feature (symbols take their file's) or the folder holding it. */
+  private impactGrouper(current: View, by: ImpactGroupBy): (node: ProjectionNode) => { key: string; name: string } {
+    const index = current.index;
+    const root = index.node(index.rootId);
+    const outside = { key: index.rootId, name: root ? `${root.name} (outside the applications)` : 'Outside the applications' };
+    if (by === 'app') return node => { const app = [...index.canonicalAncestors(node)].reverse().find(item => item.type === 'application'); return app ? { key: app.id, name: app.name } : outside; };
+    if (by === 'folder') return node => {
+      const folder = [...index.canonicalAncestors(node)].reverse().find(item => item.type === 'directory' || item.type === 'application' || item.type === 'repository');
+      return folder ? { key: folder.id, name: folder.type === 'repository' ? `${folder.name} (top level)` : folder.path ?? folder.name } : outside;
+    };
+    const assignment = this.domains();
+    const names = new Map(assignment?.domains.map(domain => [domain.key, domain.name]) ?? []);
+    const none = { key: 'none', name: 'No feature' };
+    return node => {
+      let key = assignment?.of.get(node.id);
+      if (!key && node.path) { const file = index.fileByPath.get(node.path); if (file) key = assignment?.of.get(file); }
+      return key ? { key, name: names.get(key) ?? key } : none;
     };
   }
   private unresolvedNames(current: View): Map<string, { sites: number; entities: Set<string> }> {
@@ -1238,6 +1336,25 @@ function nodeChange(change: EntityChange, current: { name: string; path?: string
     ...(change.previousId ? { previousId: change.previousId, ...(change.lineage ? { lineage: change.lineage } : {}) } : {}),
     ...(previous && previous.name !== current.name ? { previousName: previous.name } : {}), ...(previous?.path && previous.path !== current.path ? { previousPath: previous.path } : {}),
   };
+}
+export interface ImpactQuery { depth?: number; types?: string[]; type?: string; distance?: number; limit?: number; offset?: number; group?: ImpactGroupBy; groupKey?: string }
+/** A comparison's changed and removed entities a walk starts from; a changed file only when no symbol inside it changed (a module-level change). */
+function comparisonSeeds(current: View & { diff: SnapshotDiff }): string[] {
+  const changed: ProjectionNode[] = [];
+  for (const [changedId, change] of current.diff.changes) {
+    if (change.status === 'added' || change.status === 'unchanged') continue;
+    if (change.status !== 'removed' && !change.facets.some(facet => OWN_CHANGE.has(facet))) continue;
+    const changedNode = current.index.node(changedId);
+    if (!changedNode || changedNode.kind !== 'entity' || !(SYMBOL_TYPES.has(changedNode.type) || ['file', 'route', 'api_endpoint'].includes(changedNode.type))) continue;
+    changed.push(changedNode);
+  }
+  const symbolFiles = new Set(changed.filter(item => item.type !== 'file').map(item => item.path));
+  return changed.filter(item => item.type !== 'file' || !symbolFiles.has(item.path)).map(item => item.id).sort().slice(0, MAX_IMPACT_SEEDS);
+}
+function seedStatus(current: View, seeds: string[]): Record<string, number> {
+  const byStatus: Record<string, number> = {};
+  for (const seed of seeds) { const status = current.index.node(seed)?.change?.status ?? 'modified'; byStatus[status] = (byStatus[status] ?? 0) + 1; }
+  return byStatus;
 }
 function impactDepth(depth: number | undefined): number {
   const value = depth ?? DEFAULT_IMPACT_DEPTH;

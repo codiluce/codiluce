@@ -1,6 +1,6 @@
 'use client';
 // "What happens from here": the steps an anchor sets in motion, as an outline
-// (left panel) and as a layered diagram. Every link is a chain of indexed
+// and as a layered diagram (the flow view in the middle shows either). Every link is a chain of indexed
 // relationships (each with Why?); folded entities are listed as "via"; the
 // conditions on a link are read from the source of the step it leaves.
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -24,38 +24,16 @@ function linkLabel(link: StepLink): string[] {
   return parts;
 }
 
-export function StepsPanel({ onClose }: { onClose: () => void }) {
-  const store = useStore();
-  const steps = useAtlas(state => state.steps);
-  const [diagram, setDiagram] = useState(false);
-  if (!steps) return null;
-  const data = steps.data;
+/** How to read the steps: drawn from the index, not observed; plus what the walk had to leave out. */
+export function StepsNotes({ data }: { data: StepsResult }) {
   return (
     <>
-      <div className="panel-header">
-        <h2>What happens from here</h2>
-        <button className="icon-button small" onClick={() => { store.closeSteps(); onClose(); }} aria-label="Close steps">✕</button>
-      </div>
-      <div className="panel-body steps-panel">
-        {steps.status === 'loading' && <p className="absent">Following calls, handlers and requests…</p>}
-        {steps.status === 'error' && <p className="note error">{steps.error}</p>}
-        {data && (
-          <>
-            <p className="note">Steps are drawn from indexed relationships and effects, not observed at runtime. Plumbing in between is folded into each link as <em>via</em>; conditions are read from the source.</p>
-            <div className="inspector-actions">
-              <button className="button small primary" onClick={() => setDiagram(true)}>Diagram</button>
-              <button className="button small" onClick={() => store.navigator?.fitNodes(data.steps.flatMap(step => step.node ? [step.node] : []))}>Fit on map</button>
-            </div>
-            {data.notices.map(notice => <p key={notice} className="absent">{notice}</p>)}
-            <StepsOutline data={data} />
-            {diagram && <StepsDiagram data={data} onClose={() => setDiagram(false)} />}
-          </>
-        )}
-      </div>
+      <p className="note">Steps are drawn from indexed relationships and effects, not observed at runtime. Plumbing in between is folded into each link as <em>via</em>; conditions are read from the source.</p>
+      {data.notices.map(notice => <p key={notice} className="absent">{notice}</p>)}
     </>
   );
 }
-function StepsOutline({ data }: { data: StepsResult }) {
+export function StepsOutline({ data }: { data: StepsResult }) {
   const byId = useMemo(() => new Map(data.steps.map(step => [step.id, step])), [data]);
   const outgoing = useMemo(() => {
     const map = new Map<string, StepLink[]>();
@@ -139,8 +117,8 @@ function LinkLine({ link }: { link: StepLink }) {
     </li>
   );
 }
-/** The same steps laid out in layers, over the map area. */
-function StepsDiagram({ data, onClose }: { data: StepsResult; onClose: () => void }) {
+/** The same steps laid out in layers, top down from where they start. */
+export function StepsDiagram({ data }: { data: StepsResult }) {
   const store = useStore();
   const focus = useAtlas(state => state.steps?.focus);
   const layout = useMemo(() => layoutSteps(data.steps.map(step => ({ id: step.id, layer: step.layer })), data.links.map(link => ({ id: link.id, from: link.from, to: link.to, back: link.back }))), [data]);
@@ -153,11 +131,7 @@ function StepsDiagram({ data, onClose }: { data: StepsResult; onClose: () => voi
     if (anchor && element) element.scrollLeft = Math.max(0, anchor.x + anchor.w / 2 - element.clientWidth / 2);
   }, [layout, data]);
   return (
-    <div className="steps-diagram" role="dialog" aria-label={`What happens from ${data.anchor.name}`} onKeyDown={event => { if (event.key === 'Escape') onClose(); }}>
-      <div className="panel-header">
-        <h2>What happens from {data.anchor.name}</h2>
-        <button className="icon-button small" onClick={onClose} aria-label="Close diagram" autoFocus>✕</button>
-      </div>
+    <div className="steps-diagram">
       <div className="steps-diagram-body" ref={scroller}>
         <svg width={layout.width} height={layout.height} viewBox={`0 0 ${layout.width} ${layout.height}`} role="img" aria-label="Steps diagram">
           <defs><marker id="steps-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" className="steps-arrowhead" /></marker></defs>
@@ -180,7 +154,7 @@ function StepsDiagram({ data, onClose }: { data: StepsResult; onClose: () => voi
             return (
               <g key={box.id} className={`steps-box kind-${step.kind}${focus === step.id ? ' focused' : ''}`} transform={`translate(${box.x},${box.y})`} tabIndex={0} role="button" aria-label={`${KIND_TEXT[step.kind]} ${title}`}
                 onClick={() => { store.focusStep(step.id); if (step.node) void store.select(step.node.id, { fly: true }); else if (step.effect) void store.select(step.effect.owner, { fly: true }); }}
-                onDoubleClick={() => step.node && void store.openSteps(step.node.id)}
+                onDoubleClick={() => step.node && void store.openSteps(step.node.id, 'diagram')}
                 onKeyDown={event => { if (event.key === 'Enter' && step.node) void store.select(step.node.id, { fly: true }); }}>
                 <rect width={box.w} height={box.h} rx={9} />
                 <text x={10} y={18} className="steps-box-kind">{(step.effect ? `${EFFECT_ICON[step.effect.category] ?? '•'} ` : '') + KIND_TEXT[step.kind]}{step.app ? ` · ${step.app}` : ''}</text>

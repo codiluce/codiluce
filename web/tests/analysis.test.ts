@@ -39,7 +39,7 @@ async function ready(hash = '') {
   return { atlas, replaced };
 }
 
-test('impact follows the selection, pages its items and writes the depth into the link', async () => {
+test('impact stays on its origin while the selection moves, pages its items, groups them and writes itself into the link', async () => {
   const { atlas, replaced } = await ready();
   const authenticate = symbol('App\\Services\\AuthService::authenticate');
   await atlas.select(authenticate, { fly: false });
@@ -47,20 +47,37 @@ test('impact follows the selection, pages its items and writes the depth into th
   let impact = atlas.getState().impact;
   assert.equal(impact.status, 'ready');
   assert.equal(impact.forId, authenticate);
+  assert.equal(atlas.getState().center, 'impact', 'the blast radius opens in the middle');
   assert.ok(impact.data!.distances[id('signIn')] === 3);
   assert.ok(impact.items.length > 0 && impact.items.every((item, i, all) => i === 0 || all[i - 1]!.distance <= item.distance));
   assert.match(replaced.at(-1)!, /impact=6/);
+  assert.doesNotMatch(replaced.at(-1)!, /impactOf=/, 'the origin is the selection');
   // Filters reload the list, not the radius.
   await atlas.setImpactFilter({ type: 'route' });
   assert.ok(atlas.getState().impact.items.every(item => item.type === 'route'));
-  // Selecting another entity moves the radius with it.
+  await atlas.setImpactFilter({});
+  // Selecting what it lists leaves the radius where it is.
   await atlas.select(id('signIn'), { fly: false });
-  await new Promise(resolve => setTimeout(resolve, 20));
   impact = atlas.getState().impact;
-  assert.equal(impact.forId, id('signIn'));
-  assert.equal(impact.data!.distances[id('signIn')], 0);
+  assert.equal(impact.forId, authenticate);
+  assert.match(replaced.at(-1)!, new RegExp(`impactOf=${encodeURIComponent(authenticate).replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')}`));
+  // By application: every affected entity in one group, and a group lists its own.
+  await atlas.setImpactGroup('app');
+  impact = atlas.getState().impact;
+  const groups = impact.data!.groups!;
+  assert.deepEqual(new Set(groups.map(group => group.name)), new Set(['frontend', 'backend']));
+  assert.equal(groups.reduce((sum, group) => sum + group.count, 0), impact.data!.total);
+  const frontend = groups.find(group => group.name === 'frontend')!;
+  await atlas.setImpactFilter({ ...impact.filter, groupKey: frontend.key });
+  impact = atlas.getState().impact;
+  assert.equal(impact.data!.items.total, frontend.count);
+  assert.ok(impact.items.some(item => item.id === id('signIn')));
+  // Clearing the selection keeps it; closing it brings the map back.
   atlas.clearSelection();
+  assert.equal(atlas.getState().impact.open, true);
+  atlas.hideImpact();
   assert.equal(atlas.getState().impact.open, false);
+  assert.equal(atlas.getState().center, 'map');
   assert.doesNotMatch(replaced.at(-1)!, /impact=/);
 });
 test('a deep link with impact= reopens the blast radius', async () => {
@@ -83,8 +100,15 @@ test('steps open for an entity and carry ancestors for the map; focus highlights
   assert.ok(atlas.scene.nodes.has(save.node!.id), 'step entities are placed in the scene');
   atlas.focusStep(save.id);
   assert.equal(atlas.getState().steps!.focus, save.id);
+  assert.equal(atlas.getState().center, 'flow', 'steps open in the middle');
+  assert.deepEqual({ ...atlas.getState().flowView, title: undefined }, { id: id('/account', 'route'), title: undefined, lanes: false, layout: 'outline' });
+  // The diagram of the same steps needs nothing more.
+  await atlas.setFlowLayout('diagram');
+  assert.equal(atlas.getState().steps?.status, 'ready');
   atlas.closeSteps();
   assert.equal(atlas.getState().steps, undefined);
+  assert.equal(atlas.getState().flowView, undefined);
+  assert.equal(atlas.getState().center, 'map');
 });
 test('steps diagram layout is layered, ordered by parents and non-overlapping', () => {
   const nodes = [{ id: 'a', layer: 0 }, { id: 'b', layer: 1 }, { id: 'c', layer: 1 }, { id: 'd', layer: 2 }, { id: 'e', layer: 2 }];

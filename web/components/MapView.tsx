@@ -177,10 +177,16 @@ export function CoverageLegend() {
         <>
           <p className="coverage-headline"><span className="big">{data.codeFiles ? Math.round((touched / data.codeFiles) * 100) : 0}%</span> of {data.codeFiles} code files are entry points or in one of {data.flows} flows</p>
           <div className="coverage-bar wide">{COVERAGE_ORDER.filter(key => !NOT_MEASURED.has(key) && data.totals[key]).map(key => <span key={key} style={{ flexGrow: data.totals[key], background: coverageCss(key, dark) }} />)}</div>
-          <ul className="coverage-keys">
-            {COVERAGE_ORDER.filter(key => data.totals[key]).map(key => <li key={key} title={COVERAGE_HINT[key]}><span className="type-dot" style={{ background: coverageCss(key, dark) }} />{COVERAGE_TEXT[key]}<span className="count">{data.totals[key]}</span></li>)}
+          <ul className="coverage-keys family-keys">
+            {COVERAGE_ORDER.filter(key => data.totals[key]).map(key => (
+              <li key={key}>
+                <button onClick={() => void store.openFiles({ kind: 'coverage', key })} title={`${COVERAGE_HINT[key]}. Select to list these files.`}>
+                  <span className="type-dot" style={{ background: coverageCss(key, dark) }} />{COVERAGE_TEXT[key]}<span className="count">{data.totals[key]}</span>
+                </button>
+              </li>
+            ))}
           </ul>
-          <p className="absent">Closed areas show the share of their code files in flows. Select a file to see why.</p>
+          <p className="absent">Closed areas show the share of their code files in flows. Select a category to list its files, or a file to see why.</p>
           <div className="coverage-export">
             <button className="button" onClick={() => void exportUnused()} disabled={exporting === 'busy'} title="Download the files no flow reaches and the unused symbols of reached files, with the reasons, as JSON to review">{exporting === 'busy' ? 'Exporting…' : 'Export unused (JSON)'}</button>
             {exporting === 'error' && <span className="note error">Export failed</span>}
@@ -225,6 +231,7 @@ export function FamiliesLegend() {
               </button>
             </li>
           </ul>
+          {families.focus && <button className="button small" onClick={() => void store.openFiles({ kind: 'family', key: families.focus! })} title="The files of the lit family, as a list">List the lit files</button>}
           {tablesOnly > 0 && <p className="absent">{tablesOnly} more famil{tablesOnly === 1 ? 'y has' : 'ies have'} tables but no code using them.</p>}
           <p className="absent">Closed areas show their main family. Files placed through the code they use are counted with it.</p>
         </>
@@ -245,6 +252,7 @@ function FeatureLegend() {
       <span className="domain-dot" style={{ background: familyCss(featureHues(data.features.map(item => item.key)).get(feature.key) ?? 'none', dark) }} />
       <button className="feature-legend-name" onClick={() => void store.revealFeature()} title="Show it in the Features panel"><strong>{feature.name}</strong></button>
       <span className="absent">{feature.files} code file{feature.files === 1 ? '' : 's'} lit</span>
+      <button className="button tiny" onClick={() => void store.openFiles({ kind: 'feature', key: feature.key })} title="The files lit, as a list">List</button>
       <button className="icon-button small" onClick={() => void store.focusFeature(undefined)} aria-label="Show every file again" title="Show every file again">✕</button>
     </div>
   );
@@ -306,6 +314,7 @@ function PersonLegend() {
       <button className="feature-legend-name" onClick={() => void store.revealPeople()} title="Show them in the People panel"><strong>{summary.name}</strong></button>
       <KindTag kind={summary.kind} />
       <span className="absent">{Object.keys(person.data!.files).length} file{Object.keys(person.data!.files).length === 1 ? '' : 's'} they changed lit · {summary.commits} commit{summary.commits === 1 ? '' : 's'}</span>
+      <button className="button tiny" onClick={() => void store.openFiles({ kind: 'person', key: summary.key })} title="The files lit, as a list">List</button>
       <button className="icon-button small" onClick={() => void store.focusPerson(undefined)} aria-label="Show every file again" title="Show every file again">✕</button>
     </div>
   );

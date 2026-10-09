@@ -65,8 +65,12 @@ export default function MapDocs() {
       </ul>
       <p>
         Choose a flow and it plays <strong>on the map</strong>: what it touches stays lit, the rest dims, and a pulse runs
-        along its links branch by branch, in waves. <strong>Lanes</strong> shows the same flow as a diagram, left to right,
-        with conditions and evidence on every step. The inspector of any file or folder lists the flows that touch it.
+        along its links branch by branch, in waves. <strong>Lanes</strong> and <strong>Outline</strong> open the same flow in
+        the middle of the screen, as a diagram left to right or as an outline of its steps, with conditions and evidence on
+        every step; the map stays in a corner as an overview. The inspector of any file or folder lists the flows that touch it.
+      </p>
+      <p>
+        Search offers the same for any result: its flow on the map or in lanes, what happens from it, and its impact.
       </p>
 
       <h2 id="coverage" className="anchor">Coverage</h2>
@@ -74,15 +78,17 @@ export default function MapDocs() {
         <strong>Coverage</strong> colors every file by what the flows say about it: <em>entry point</em>, <em>in
         flows</em>, <em>supports flows</em>, <em>possibly reached</em>, <em>not reached</em> (candidate dead code), tests and
         tooling, configuration, and files in languages whose calls are not analyzed yet. A file’s inspector says why it is
-        where it is.
+        where it is. Select a category in the legend to list its files, ready to copy. A lit feature, person or data family
+        lists its files the same way.
       </p>
 
       <h2 id="impact" className="anchor">Blast radius and steps</h2>
       <p>
         <strong>Impact</strong> on any entity or area walks what depends on it, hop by hop, over calls, renders, references,
-        handlers, routes, requests and inheritance. The map tints what it reaches by distance; the inspector lists the
-        endpoints, pages and applications reached, each with the chain that reaches it. The result is a lower bound and says
-        so: it tells you which unresolved calls might reach further.
+        handlers, routes, requests and inheritance. It opens in the middle of the screen, listed by hops or grouped by
+        application, feature or folder, each entity with the chain that reaches it; the map tints what it reaches by distance.
+        <strong>Impact</strong> in the header also shows what your <strong>uncommitted changes</strong> affect. The result is a
+        lower bound and says so: it tells you which unresolved calls might reach further.
       </p>
       <p>
         <strong>What happens from here</strong> opens the <strong>Steps</strong> of a page, endpoint, component or function:
@@ -127,7 +133,8 @@ export default function MapDocs() {
 
       <h2 id="themes" className="anchor">Themes and keyboard</h2>
       <p>
-        Pick a theme in the header: Codiluce Dusk and Dawn, Midnight, Paper, Sorbet and others. Useful keys:
+        Pick Codiluce Dusk (the default) or Dawn in the header; <strong>More themes</strong> in Settings adds Midnight, Paper,
+        Sorbet and others. Useful keys:
         <kbd>/</kbd> search, <kbd>F</kbd> fit, <kbd>Alt</kbd> + <kbd>←</kbd> / <kbd>→</kbd> back and forward,
         double-click to zoom into an area. Links carry the view (<code>#id=…</code>), so you can share an exact place.
         History has its own keys: see <Link href="/docs/history/">History</Link>.

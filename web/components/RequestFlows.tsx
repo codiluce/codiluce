@@ -6,7 +6,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { FlowLane, FlowStages, RequestFlow, RequestFlowEdge, RequestFlowNode } from '@engine/projection/dto';
 import { typeLabel } from '../lib/format';
-import { visibleCatalog } from '../lib/catalog';
 import { fitScale, layoutRequestFlow, LANE_TEXT, STAGES, statusClass, STATUS_HINT, STATUS_TEXT, type PlacedFlowEdge, type RequestFlowLayout } from '../lib/request-flows';
 import { useAtlas, useStore } from './context';
 import { TypeBadge } from './TypeBadge';
@@ -53,55 +52,44 @@ export function StagePips({ stages, labels }: { stages: FlowStages; labels?: boo
   );
 }
 
-// Theater --------------------------------------------------------------------
-export function RequestFlowTheater() {
+// Lanes ------------------------------------------------------------------------
+/** The heading of a flow drawn in lanes: a request's path, or a command's or task's name. */
+export function lanesTitle(data: RequestFlow): string { return data.kind === 'command' || data.kind === 'schedule' ? data.name : data.path; }
+export function lanesSubtitle(data: RequestFlow): string {
+  return `${data.kind === 'unmatched' ? `requested by ${data.caller}` : data.kind === 'schedule' ? data.path : data.handler ? `${data.kind === 'command' ? 'runs' : 'handled by'} ${data.handler}` : 'no handler resolved'}${data.app ? ` · ${data.app}` : ''}`;
+}
+export function LanesBadge({ data }: { data?: RequestFlow }) {
+  return data ? (data.kind === 'command' ? <span className="rf-method m-other">⌘</span> : data.kind === 'schedule' ? <span className="rf-method m-other">⏱</span> : <MethodBadge method={data.method} />) : <span className="rf-method m-other">…</span>;
+}
+export function LanesStatus({ data }: { data: RequestFlow }) {
+  return <span className={`rf-status s-${data.status}`} title={STATUS_HINT[data.status]}>{STATUS_TEXT[data.status]}{data.gaps ? ` · ${data.gaps} gap${data.gaps === 1 ? '' : 's'}` : ''}</span>;
+}
+/** Whether the request travelling through the lanes moves (not with reduced motion). */
+export function useLanesMotion(): boolean { return !usePrefersReducedMotion(); }
+/** A flow in lanes, left to right: the stages found, the diagram with the focused step's details, and the legend. */
+export function LanesBody() {
   const store = useStore();
   const open = useAtlas(state => state.requests.open);
-  const catalog = useAtlas(state => state.catalog);
-  const reduced = usePrefersReducedMotion();
-  const visible = !!open;
-  // Previous / next flow drawn in lanes, in the list as filtered in the Flows panel.
-  const order = useMemo(() => catalog.data ? visibleCatalog(catalog.data.items, { tab: catalog.kind, query: catalog.query, status: catalog.filter }).flatMap(group => group.items.filter(item => item.detail === 'lanes').map(item => item.id)) : [], [catalog.data, catalog.kind, catalog.query, catalog.filter]);
-  const position = open ? order.indexOf(open.id) : -1;
-  const step = (delta: number) => { const id = order[position + delta]; if (id) void store.openRequestFlow(id); };
+  const animate = useLanesMotion();
   useEffect(() => {
-    if (!visible) return;
+    if (!open?.focus) return;
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
-      if (event.key === 'Escape') { if (store.getState().requests.open?.focus) store.focusRequestNode(undefined); else store.closeRequestFlow(); }
+      if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) && event.key === 'Escape') store.focusRequestNode(undefined);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [store, visible]);
-  if (!open || !visible) return null;
+  }, [store, open?.focus]);
+  if (!open) return null;
   const data = open.data;
-  const playing = open.playing && !reduced;
   return (
-    <div className="rf-theater" role="dialog" aria-label={data ? `Request flow ${data.name}` : 'Request flow'}>
-      <header className="rf-head">
-        <div className="rf-nav">
-          <button className="icon-button small" onClick={() => step(-1)} disabled={position <= 0} aria-label="Previous request flow" title="Previous in the list">‹</button>
-          <button className="icon-button small" onClick={() => step(1)} disabled={position < 0 || position >= order.length - 1} aria-label="Next request flow" title="Next in the list">›</button>
-        </div>
-        {data ? (data.kind === 'command' ? <span className="rf-method m-other">⌘</span> : data.kind === 'schedule' ? <span className="rf-method m-other">⏱</span> : <MethodBadge method={data.method} />) : <span className="rf-method m-other">…</span>}
-        <div className="rf-head-title">
-          <h2 className="mono">{data ? (data.kind === 'command' || data.kind === 'schedule' ? data.name : data.path) : 'Loading…'}</h2>
-          {data && <span className="rf-head-sub">{data.kind === 'unmatched' ? `requested by ${data.caller}` : data.kind === 'schedule' ? data.path : data.handler ? `${data.kind === 'command' ? 'runs' : 'handled by'} ${data.handler}` : 'no handler resolved'}{data.app ? ` · ${data.app}` : ''}{position >= 0 ? ` · ${position + 1} of ${order.length}` : ''}</span>}
-        </div>
-        {data && <span className={`rf-status s-${data.status}`} title={STATUS_HINT[data.status]}>{STATUS_TEXT[data.status]}{data.gaps ? ` · ${data.gaps} gap${data.gaps === 1 ? '' : 's'}` : ''}</span>}
-        <div className="rf-head-actions">
-          {!reduced && <button className="button small" onClick={() => store.toggleRequestFlowPlaying()} aria-pressed={open.playing} disabled={!data}>{open.playing ? '❚❚ Pause' : '▶ Play'}</button>}
-          <button className="button small primary" onClick={() => store.traceRequestFlow()} disabled={!data} title="Show this flow on the map: its areas open and a request travels through them">Show on map</button>
-          <button className="icon-button small" onClick={() => store.closeRequestFlow()} aria-label="Close request flow" autoFocus>✕</button>
-        </div>
-      </header>
+    <div className="lanes-body">
       {data && <div className="rf-stagebar"><StagePips stages={data.stages} labels /></div>}
       {open.status === 'loading' && !data && <div className="rf-loading big"><span className="rf-spark" />Following the request…</div>}
       {open.status === 'error' && <p className="note error" style={{ margin: 16 }}>{open.error}</p>}
       {data && (
         <div className="rf-body">
-          <FlowDiagram flow={data} focus={open.focus} playing={playing} animate={!reduced} />
+          <FlowDiagram flow={data} focus={open.focus} playing={open.playing && animate} animate={animate} />
           {open.focus && <FlowDetail flow={data} focus={open.focus} />}
         </div>
       )}

@@ -104,6 +104,7 @@ export function PeoplePanel({ onClose }: { onClose: () => void }) {
               <div className="feature-focus" role="status">
                 <PersonDot order={focused.order} />
                 <span>Lit: <strong>{focused.name}</strong></span>
+                <button className="button tiny" onClick={() => void store.openFiles({ kind: 'person', key: focused.key })} title="The files they changed in this window, as a list">List files</button>
                 <button className="button tiny" onClick={() => void store.focusPerson(undefined)}>✕ Show all</button>
               </div>
             )}

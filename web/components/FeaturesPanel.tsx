@@ -48,6 +48,7 @@ export function FeaturesPanel({ onClose }: { onClose: () => void }) {
           <div className="feature-focus" role="status">
             <span className="domain-dot" style={{ background: color(focused.key) }} />
             <span>Lit: <strong>{focused.name}</strong></span>
+            <button className="button tiny" onClick={() => void store.openFiles({ kind: 'feature', key: focused.key })} title="Its code files, as a list">List files</button>
             <button className="button tiny" onClick={() => void store.focusFeature(undefined)}>✕ Show all</button>
           </div>
         )}

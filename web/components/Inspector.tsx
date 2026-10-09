@@ -4,13 +4,13 @@ import type { Entity, Evidence } from '@engine/core/graph';
 import { fileAnalysis } from '@engine/analysis/facts';
 import type { AggregateGroup, ChangeFacet, DiagnosticItem, NodeChange, NodeSummary, RelationItem } from '@engine/projection/dto';
 import { compactNumber, percent, relationPhrase, relativeTime, shortSha, typeLabel } from '../lib/format';
-import { entryOf, isContainer, NO_FAMILY, tourEntry, type AtlasStore } from '../lib/store';
+import { entryOf, isContainer, LANES_TYPES, NO_FAMILY, tourEntry, type AtlasStore } from '../lib/store';
 import { coverageCss, familyCss, familyHues, featureHues, personHue, themeById } from '../lib/themes';
 import { COVERAGE_TEXT, NOT_MEASURED } from '../lib/coverage';
 import { useAtlas, useStore } from './context';
 import { TypeBadge } from './TypeBadge';
 import { AnalysisSupport } from './AnalysisSupport';
-import { CallSitesSection, CommitImpactChip, EffectsSection, ImpactSection } from './Analysis';
+import { CallSitesSection, CommitImpactChip, EffectsSection } from './Analysis';
 import { CommitList, KindTag, PersonDot, WindowPicker, windowText } from './PeoplePanel';
 
 export function Inspector({ onClose }: { onClose: () => void }) {
@@ -96,7 +96,7 @@ function Selection() {
       </div>
       <div className="inspector-actions">
         {sourceable && <button className="button primary small" onClick={() => void store.openSource({ entity: node.id }, `${typeLabel(node.type, node.role)} ${node.name}`)}>Open source</button>}
-        <button className="button small" onClick={() => store.navigator?.flyTo(node, { mode: container ? 'enter' : 'focus' })}>Zoom to</button>
+        <button className="button small" onClick={() => { store.setCenter('map'); store.navigator?.flyTo(node, { mode: container ? 'enter' : 'focus' }); }}>Zoom to</button>
         <AnalysisButtons node={node} />
       </div>
       <SummaryCard node={node} />
@@ -108,7 +108,6 @@ function Selection() {
       {selection.entityStatus === 'error' && <p className="note error">{selection.error}</p>}
       {node.change?.status === 'removed' && <p className="note">This entity existed in the baseline and was removed. It is shown as a ghost where it used to be; its facts below are from the baseline.</p>}
       {selection.change && <ChangeSection node={node} />}
-      <ImpactSection node={node} />
       <FlowsSection node={node} />
       {node.kind === 'entity' && (node.type === 'directory' || node.type === 'application' || node.type === 'repository') && <DataBreakdown key={node.id} node={node} />}
       <PeopleSection key={`people:${node.id}`} />
@@ -131,17 +130,19 @@ function Selection() {
     </div>
   );
 }
-/** Blast radius toggle, and "what happens from here" for entities that run code or serve requests. */
+/** Blast radius, "what happens from here" for entities that run code or serve requests, and their flow in lanes or on the map. */
 function AnalysisButtons({ node }: { node: NodeSummary }) {
   const store = useStore();
   const impactOpen = useAtlas(state => state.impact.open && state.impact.forId === node.id);
-  const stepsAnchor = useAtlas(state => state.steps?.anchor);
+  const flow = useAtlas(state => state.flowView?.id === node.id ? state.flowView.layout : undefined);
   const runs = node.kind === 'entity' && !['repository', 'application', 'directory', 'file', 'database_table'].includes(node.type);
+  const lanes = LANES_TYPES.has(node.type);
   return (
     <>
-      <button className="button small" aria-pressed={impactOpen} onClick={() => impactOpen ? store.hideImpact() : void store.showImpact(node.id)} title="What depends on this, hop by hop">{impactOpen ? 'Hide impact' : 'Impact'}</button>
-      {runs && <button className="button small" aria-pressed={stepsAnchor === node.id} onClick={() => stepsAnchor === node.id ? store.closeSteps() : void store.openSteps(node.id)} title="What this sets in motion: handlers, requests, endpoints and effects">What happens from here</button>}
-      {['api_endpoint', 'command', 'scheduled_task'].includes(node.type) && <button className="button small" onClick={() => void store.openTour({ id: node.id, detail: 'lanes', title: node.name })} title="Show the flow that starts here on the map">Show flow on map</button>}
+      {node.kind === 'entity' && <button className="button small" aria-pressed={impactOpen} onClick={() => impactOpen ? store.hideImpact() : void store.showImpact(node.id)} title="What depends on this, hop by hop (in the middle of the screen)">{impactOpen ? 'Hide impact' : 'Impact'}</button>}
+      {runs && <button className="button small" aria-pressed={flow === 'outline'} onClick={() => flow === 'outline' ? store.closeFlowView() : void store.openSteps(node.id)} title="What this sets in motion: handlers, requests, endpoints and effects, as an outline">What happens from here</button>}
+      {lanes && <button className="button small" aria-pressed={flow === 'diagram'} onClick={() => flow === 'diagram' ? store.closeFlowView() : void store.openFlowView({ id: node.id, title: node.name, lanes: true }, 'diagram')} title="The flow that starts here in lanes, left to right">Lanes</button>}
+      {lanes && <button className="button small" onClick={() => { store.setCenter('map'); void store.openTour({ id: node.id, detail: 'lanes', title: node.name }); }} title="Show the flow that starts here on the map">Show flow on map</button>}
     </>
   );
 }
@@ -234,6 +235,7 @@ function DataBreakdown({ node }: { node: NodeSummary }) {
             )}
           </ul>
           {rows.length > BREAKDOWN_ROWS && <button className="button small" onClick={() => setAll(value => !value)}>{all ? 'Show fewer' : `Show all ${rows.length}`}</button>}
+          {families.focus && <button className="button small" onClick={() => void store.openFiles({ kind: 'family', key: families.focus! })} title="Every file of the lit family, as a list">List the lit files</button>}
         </>
       )}
     </section>

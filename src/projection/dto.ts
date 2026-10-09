@@ -151,8 +151,18 @@ export type EvolutionResponse = { status: 'computing'; progress: number } | { st
 export interface ImpactHop { relationId: string; type: string; from: { id: string; name: string; type: string }; to: { id: string; name: string; type: string } }
 /** An affected entity: hops from the origin, and the chain of relations that reaches it (origin first). */
 export type ImpactItem = NodeSummary & { distance: number; breadcrumb: string; chain: ImpactHop[] };
+/**
+ * Uncommitted changes as an origin: compared with the indexed HEAD commit when
+ * History has it (`comparison`: the entities that changed), otherwise every
+ * entity in the changed files Git reports (`files`). `missing`: changed paths
+ * the index has no file for (deleted, or not analyzed).
+ */
+export interface WorkingOrigin { kind: 'working'; method: 'comparison' | 'files'; files: number; missing: number; head?: string; byStatus?: Record<string, number>; reason?: string }
+export type ImpactGroupBy = 'app' | 'feature' | 'folder';
+/** Affected entities in one application, feature or folder (with the type and hop filters applied). */
+export interface ImpactGroup { key: string; name: string; count: number; distance: number }
 export interface ImpactResult {
-  origin: { kind: 'entity'; node: NodeSummary } | { kind: 'comparison'; byStatus: Record<string, number> };
+  origin: { kind: 'entity'; node: NodeSummary } | { kind: 'comparison'; byStatus: Record<string, number> } | WorkingOrigin;
   depth: number; types: string[];
   /** Entities the walk starts from (the origin and everything inside it, or a comparison's changed entities). */
   seeds: number; seedsTruncated: boolean;
@@ -168,6 +178,8 @@ export interface ImpactResult {
   items: Page<ImpactItem>;
   truncated: boolean;
   highlights: { endpoints: number; routes: number; applications: { id: string; name: string; count: number }[] };
+  /** With `group`: the affected entities by application, feature or folder, most first (`items` then holds those of `groupKey` only, when given). */
+  groups?: ImpactGroup[];
   /** What the radius cannot see; the result is a lower bound. */
   unknowns: { unresolvedHttpCalls: number; possibleCallers: { name: string; sites: number; entities: number }[] };
 }
@@ -349,6 +361,8 @@ export interface FeatureSummary {
   /** Folders (or applications) directly holding its code files, most files first. */
   folders: { id: string; path: string; files: number }[];
 }
+/** The code files a highlight lights on the map (a feature, a data family, a coverage category, a person), as a list. */
+export interface FileListResult { title: string; files: { id: string; name: string; path: string; language?: string }[] }
 export interface FeaturesResult {
   /** Largest first; shared code (`platform`) last. Empty until domains are described. */
   features: FeatureSummary[];
