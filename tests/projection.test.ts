@@ -592,7 +592,7 @@ test('a command flow shows what runs it, and a scheduled task what it runs', asy
   assert.ok(admin.edges.some(item => item.kind === 'renders' && item.to === page.id));
   // A visit made by an Inertia page enters through the endpoint serving it.
   const rebuild = await projection.requestFlow(entityId('POST /admin/rebuild', 'api_endpoint'), { maxFileBytes: 1 << 20 });
-  assert.ok(rebuild.nodes.some(item => item.kind === 'page' && item.lane === 'client' && item.label === 'GET /admin'));
+  assert.ok(rebuild.nodes.some(item => item.kind === 'page' && item.lane === 'client' && item.label === 'GET /admin' && item.page?.node.name === 'Dashboard'), 'with the component it renders, where the page lives');
 });
 test('coverage classifies every file by the flows touching it, and says why', () => {
   const projection = new ProjectionService(store, { root });

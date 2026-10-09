@@ -886,12 +886,14 @@ export class ProjectionService {
     const nodes: RequestFlowNode[] = flow.nodes.map(item => {
       const node = item.entityId ? current.index.node(item.entityId) : undefined;
       const owner = item.effect ? current.index.node(item.effect.owner) : undefined;
+      const page = item.page ? current.index.node(item.page) : undefined;
       return {
         id: item.id, lane: item.lane, kind: item.kind, depth: item.depth, label: item.label, ...(item.detail ? { detail: item.detail } : {}),
         ...(node ? { node: this.summary(current, node) } : {}),
         ancestors: node ? ancestorsOf(node.id) : owner ? [...ancestorsOf(owner.id), owner.id] : [],
         ...(item.effect ? { effect: { ...item.effect, ownerName: owner ? displayName(owner) : item.effect.owner, ...(owner?.path ? { ownerPath: owner.path } : {}) } } : {}),
         ...(item.status !== undefined ? { status: item.status } : {}), ...(item.event ? { event: item.event } : {}), ...(item.gap ? { gap: item.gap } : {}),
+        ...(page ? { page: { node: this.summary(current, page), ancestors: ancestorsOf(page.id) } } : {}),
       };
     });
     const edges: RequestFlowEdge[] = await Promise.all(flow.edges.map(async edge => ({

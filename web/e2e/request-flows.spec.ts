@@ -64,19 +64,21 @@ test('one list holds every flow, filtered by kind and completeness; a request is
   await panel.getByRole('group', { name: 'Filter by completeness' }).getByRole('button', { name: /Unmatched/ }).click();
   await panel.getByLabel('Filter flows').fill('AuthController::login');
   await panel.locator('.rf-row', { hasText: '/auth/login' }).first().click();
-  // On the map, branch by branch: one per place the request starts from, each shown wave by wave down to the table.
+  // On the map, branch by branch: one per place the request is made from, grouped by where that is, each shown wave by wave down to the table.
   const player = page.getByRole('region', { name: 'Flow on the map: POST /auth/login' });
   const branches = player.getByRole('group', { name: 'Branches' });
-  await expect(branches.locator('.flow-branch')).toHaveCount(3);
-  await expect(branches.locator('.flow-branch.current')).toContainText('/account');
+  await expect(branches.locator('.flow-branch')).toHaveCount(4);
+  await expect(branches.locator('.flow-branch-group-label')).toHaveText(['From /account', 'From /login', 'No indexed trigger']);
+  await expect(branches.locator('.flow-branch.current')).toContainText('handleSave');
   const waves = player.getByRole('list', { name: 'This branch, wave by wave' });
-  await expect(waves.locator('.flow-wave', { hasText: 'handleSave' })).toContainText('login', { useInnerText: true });
+  await expect(waves.locator('.flow-stop', { hasText: 'handleSave' })).toBeVisible();
+  await expect(waves.locator('.flow-stop').filter({ hasText: /^login$/ })).toHaveCount(0);
   await expect(waves.locator('.flow-stop', { hasText: 'users' })).toBeVisible();
-  await branches.locator('.flow-branch', { hasText: '/login' }).click();
-  await expect(branches.locator('.flow-branch.current')).toContainText('/login');
-  await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('heading', { name: '/login', exact: true })).toBeVisible();
+  await branches.getByRole('group', { name: 'Made on the page /login' }).locator('.flow-branch').click();
+  await expect(branches.locator('.flow-branch.current')).toContainText('login');
+  await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('heading', { name: 'login', exact: true })).toBeVisible();
   await expect(waves.locator('.flow-stop', { hasText: 'handleSave' })).toHaveCount(0);
-  await branches.locator('.flow-branch', { hasText: '/account' }).click();
+  await branches.locator('.flow-branch', { hasText: 'handleSave' }).click();
   const users = await idOf(page, 'users', 'database_table');
   await expect.poll(() => page.evaluate(visibleIds), { timeout: 10000 }).toContain(users);
   await player.getByRole('button', { name: 'Pause' }).click();

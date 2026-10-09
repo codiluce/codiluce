@@ -55,8 +55,8 @@ export function FlowBar() {
       {branches.length > 1 && (
         <div className="flow-branches" role="group" aria-label="Branches" ref={list}>
           {groups.map(group => (
-            <div key={group.label} className="flow-branch-group" role="group" aria-label={`In ${group.label}`}>
-              <span className="flow-branch-group-label" title={`Chosen in ${group.label}`}>{group.label}</span>
+            <div key={group.label} className="flow-branch-group" role="group" aria-label={group.title}>
+              <span className="flow-branch-group-label" title={group.title}>{group.label}</span>
               {group.items.map(({ branch: item, index }) => (
                 <BranchButton key={item.key} branch={item} index={index} current={index === playback.index} stops={flow!.stops} />
               ))}

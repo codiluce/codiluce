@@ -217,6 +217,8 @@ export interface RequestFlowNode {
   effect?: import('../core/graph.js').EffectFact & { owner: string; ownerName: string; ownerPath?: string };
   status?: number; event?: string;
   gap?: import('./request-flows.js').FlowGap;
+  /** An Inertia page entered through the endpoint serving it: the component that endpoint renders (where the page lives on the client), with its spatial ancestors. */
+  page?: { node: NodeSummary; ancestors: string[] };
 }
 export interface RequestFlowEdge {
   id: string; from: string; to: string; kind: import('./request-flows.js').FlowEdgeKind; label?: string;

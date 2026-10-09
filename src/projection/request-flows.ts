@@ -56,6 +56,8 @@ export interface RawFlowNode {
   effect?: EffectFact & { owner: string };
   status?: number; event?: string;
   gap?: FlowGap;
+  /** An Inertia page entered through the endpoint serving it: the component that endpoint renders, where the page lives on the client. */
+  page?: string;
 }
 export interface RawFlowEdge {
   id: string; from: string; to: string; kind: FlowEdgeKind; label?: string;
@@ -210,7 +212,9 @@ class FlowWalker {
       const entry = chain.nodes[0]!;
       const entryNode = this.index.node(entry)!;
       const page = entryNode.type === 'route' || entryNode.type === 'api_endpoint';
-      const start = builder.add({ id: `client:${entry}`, lane: 'client', kind: page ? 'page' : 'entry', depth: 0, entityId: entry, label: displayName(entryNode), ...(entryNode.type === 'route' ? { detail: 'page' } : entryNode.type === 'api_endpoint' ? { detail: 'serves the page (Inertia)' } : {}) });
+      // The component the endpoint's handler renders on the way to the caller.
+      const component = entryNode.type === 'api_endpoint' ? chain.relations.map(i => this.index.relations[i]!).find(relation => relation.type === 'renders')?.to : undefined;
+      const start = builder.add({ id: `client:${entry}`, lane: 'client', kind: page ? 'page' : 'entry', depth: 0, entityId: entry, label: displayName(entryNode), ...(entryNode.type === 'route' ? { detail: 'page' } : entryNode.type === 'api_endpoint' ? { detail: 'serves the page (Inertia)' } : {}), ...(component ? { page: component } : {}) });
       // The binding that fires the request: the event relation closest to the caller.
       let bound = -1;
       for (let i = chain.relations.length - 1; i >= 0; i--) if (this.events(chain.relations[i]!).length) { bound = i; break; }

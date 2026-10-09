@@ -12,7 +12,7 @@ import { indexRepository } from '../../src/pipeline/index.js';
 import { GraphStore } from '../../src/storage/sqlite.js';
 import { ProjectionService } from '../../src/projection/service.js';
 import type { SoftwareGraph } from '../../src/core/graph.js';
-import type { FlowSummary } from '../../src/projection/dto.js';
+import type { FlowSummary, NodeSummary, RequestFlow, RequestFlowEdge, RequestFlowNode } from '../../src/projection/dto.js';
 import { layoutRequestFlow, statusClass } from '../lib/request-flows';
 import { groupCatalog, kindsOf, visibleCatalog } from '../lib/catalog';
 import { branchDuration, branchesOf, branchPosition, flowAreas, flowLit, fromRequestFlow, fromSteps, groupBranches, WAVE_MS, type MapEdge, type MapStop } from '../lib/map-flow';
@@ -93,15 +93,15 @@ test('a flow on the map: stops in the order a request passes them, links between
   assert.equal(middleware.ownerId, id('POST /auth/login', 'api_endpoint'), 'middleware is pinned to its endpoint');
   assert.ok(map.pins.some(pin => pin.kind === 'response' && pin.tone === 'ok'));
   assert.ok(map.edges.every(edge => edge.from !== edge.to));
-  // Three places start it (two pages, and a caller nothing indexed calls): a branch each, from there to the table.
-  assert.deepEqual(map.branches.map(branch => branch.label), ['/account', '/login', 'signInJson']);
-  const [login] = map.branches;
-  const waveOf = (label: string) => login!.waves.findIndex(wave => wave.some(index => map.stops[index]!.label === label));
-  assert.ok(waveOf('/account') === 0 && waveOf('AuthController::login') === waveOf('POST /auth/login') + 1 && waveOf('users') > waveOf('AuthController::login'), 'through the middleware to the handler');
-  assert.equal(waveOf('handleSave'), waveOf('login'), 'two choices on the page, reached at the same moment');
-  assert.ok(login!.links.every(link => !map.edges[link.edge]!.back || link.wave === login!.waves.length), 'the way back flows after the way there');
-  const areas = flowAreas(map, login);
-  assert.ok(login!.waves.flat().every(index => map.stops[index]!.ancestors.every(ancestor => areas.has(ancestor))), 'every area holding a stop of the branch opens');
+  // A branch per place it is made from (each choice on a page, a caller nothing indexed calls), grouped by where that is.
+  assert.deepEqual(map.branches.map(branch => [branch.group, branch.label]), [['From /account', 'handleSave'], ['From /account', 'login'], ['From /login', 'login'], ['No indexed trigger', 'signInJson']]);
+  const [fromAccount] = map.branches;
+  const waveOf = (label: string) => fromAccount!.waves.findIndex(wave => wave.some(index => map.stops[index]!.label === label));
+  assert.ok(waveOf('/account') === 0 && waveOf('handleSave') === 1 && waveOf('AuthController::login') === waveOf('POST /auth/login') + 1 && waveOf('users') > waveOf('AuthController::login'), 'from the choice on the page, through the middleware to the handler');
+  assert.equal(waveOf('login'), -1, 'another choice on the same page is a branch of its own');
+  assert.ok(fromAccount!.links.every(link => !map.edges[link.edge]!.back || link.wave === fromAccount!.waves.length), 'the way back flows after the way there');
+  const areas = flowAreas(map, fromAccount);
+  assert.ok(fromAccount!.waves.flat().every(index => map.stops[index]!.ancestors.every(ancestor => areas.has(ancestor))), 'every area holding a stop of the branch opens');
   // What stays lit: every entity the flow touches, folded ones included, and their areas.
   const lit = flowLit(map);
   assert.ok(map.stops.every(stop => lit.has(stop.entityId) && stop.ancestors.every(ancestor => lit.has(ancestor))));
@@ -115,6 +115,59 @@ test('a flow on the map: stops in the order a request passes them, links between
   assert.equal(save.group, 'AccountPanel', 'grouped by the component binding it');
   assert.ok(steps.members.some(member => member.id === id('AccountPanel', 'component')), 'folded components are members');
   assert.ok(steps.pins.length > 0, 'effects are pins');
+});
+test('a page on the map: opened directly first, then each control requesting it, from this page and from others', async () => {
+  // An Inertia page is drawn where its component lives, apart from the endpoint serving it.
+  const rebuild = fromRequestFlow(await projection.requestFlow(id('POST /admin/rebuild', 'api_endpoint'), { maxFileBytes: 1 << 20 }));
+  assert.ok(!rebuild.stops.some(stop => stop.entityId === id('GET /admin', 'api_endpoint')), 'the page is not drawn on the endpoint serving it');
+  assert.ok(rebuild.branches.every(branch => branch.group === 'From /admin' && rebuild.stops[branch.waves[0]![0]!]!.entityId === id('Dashboard', 'component')), 'every branch starts at the page component');
+  assert.deepEqual(rebuild.branches.map(branch => [branch.event, branch.label]), [[undefined, 'Dashboard'], ['onClick', 'again'], ['onClick', 'rebuild'], ['onClick', 'third']], 'its own requests, then each control (the event bound in the page itself)');
+  // A page nothing indexed visits: the visit, its page rendered once the server is done.
+  const admin = fromRequestFlow(await projection.requestFlow(id('GET /admin', 'api_endpoint'), { maxFileBytes: 1 << 20 }));
+  assert.deepEqual(admin.branches.map(branch => branch.group), ['Direct visit']);
+  assert.deepEqual(admin.branches[0]!.waves.map(wave => wave.map(index => admin.stops[index]!.label)), [['GET /admin'], ['AdminController::index'], ['User'], ['users'], ['Dashboard']]);
+
+  // A page requesting itself (filters, search, sorting) and visited from another page.
+  const at = (key: string, type: string, name: string) => ({ id: key, kind: 'entity', type, name, depth: 0, rect: { x: 0, y: 0, w: 1, h: 1 }, childCount: 0 }) as unknown as NodeSummary;
+  const endpoint = at('ep', 'api_endpoint', 'GET /words'), handler = at('index', 'method', 'WordController::index'), model = at('Word', 'model', 'Word'), table = at('words', 'database_table', 'words');
+  const page = at('WordsIndex', 'component', 'WordsIndex'), search = at('handleSearch', 'function', 'handleSearch'), sort = at('handleSort', 'function', 'handleSort');
+  const other = at('ep2', 'api_endpoint', 'GET /lists'), otherPage = at('ListsIndex', 'component', 'ListsIndex'), tab = at('handleTab', 'function', 'handleTab');
+  const node = (key: string, lane: RequestFlowNode['lane'], kind: RequestFlowNode['kind'], summary?: NodeSummary, extra: Partial<RequestFlowNode> = {}): RequestFlowNode => ({ id: key, lane, kind, depth: 0, label: summary?.name ?? key, ancestors: ['area'], ...(summary ? { node: summary } : {}), ...extra });
+  const edge = (from: string, to: string, kind: RequestFlowEdge['kind'], extra: Partial<RequestFlowEdge> = {}): RequestFlowEdge => ({ id: `${from}>${to}`, from, to, kind, hops: [], via: [], when: [], ...extra });
+  const response = { category: 'response', operation: 'inertia', detail: '', line: 9, status: 200, owner: 'index', ownerName: 'WordController::index' } as unknown as RequestFlowNode['effect'];
+  const flow = {
+    id: 'ep', kind: 'endpoint', name: 'GET /words', method: 'GET', path: '/words', group: '/words', status: 'complete', gaps: 0, callers: 3, tables: 1, responses: [200], anchor: endpoint, lanes: [], notices: [],
+    stages: { client: true, call: true, handler: true, data: true, response: true, returns: true },
+    nodes: [
+      node('ep:ep', 'route', 'endpoint', endpoint), node('mw', 'gate', 'middleware', undefined, { label: 'web' }), node('srv:index', 'controller', 'handler', handler),
+      node('data:Word', 'data', 'model', model), node('data:words', 'data', 'table', table), node('res', 'response', 'response', undefined, { effect: response, status: 200 }),
+      node('page:WordsIndex', 'return', 'page', page),
+      node('client:ep', 'client', 'page', endpoint, { page: { node: page, ancestors: ['area'] } }), node('call:handleSearch', 'call', 'caller', search), node('call:handleSort', 'call', 'caller', sort),
+      node('client:ep2', 'client', 'page', other, { page: { node: otherPage, ancestors: ['area'] } }), node('call:handleTab', 'call', 'caller', tab),
+      node('ret:handleSearch', 'return', 'receive', search), node('ret:handleSort', 'return', 'receive', sort), node('ret:handleTab', 'return', 'receive', tab),
+    ],
+    edges: [
+      edge('ep:ep', 'mw', 'routes'), edge('mw', 'srv:index', 'handles'), edge('srv:index', 'data:Word', 'reads'), edge('data:Word', 'data:words', 'maps'), edge('srv:index', 'res', 'responds'), edge('res', 'page:WordsIndex', 'renders'),
+      edge('client:ep', 'call:handleSearch', 'triggers', { label: 'onClick · WordsIndex', via: [{ id: 'index', name: 'WordController::index', type: 'method', ancestors: [] }, { id: 'WordsIndex', name: 'WordsIndex', type: 'component', ancestors: [] }] }),
+      edge('client:ep', 'call:handleSort', 'triggers', { label: 'onClick · WordsIndex' }), edge('client:ep2', 'call:handleTab', 'triggers', { label: 'onValueChange · ListsIndex' }),
+      edge('call:handleSearch', 'ep:ep', 'requests'), edge('call:handleSort', 'ep:ep', 'requests'), edge('call:handleTab', 'ep:ep', 'requests'),
+      edge('res', 'ret:handleSearch', 'returns'), edge('res', 'ret:handleSort', 'returns'), edge('res', 'ret:handleTab', 'returns'),
+    ],
+  } as RequestFlow;
+  const map = fromRequestFlow(flow);
+  assert.equal(new Set(map.stops.map(stop => stop.entityId)).size, map.stops.length);
+  assert.equal(map.stops.filter(stop => stop.entityId === 'ep').length, 1, 'the endpoint is one stop, apart from the page');
+  assert.equal(map.edges.find(item => item.to === 'handleSearch')!.via, undefined, 'what leads to the component is behind the page stop');
+  assert.deepEqual(map.branches.map(branch => [branch.group, branch.event, branch.label]), [['Direct visit', undefined, 'GET /words'], ['From this page', 'onClick', 'handleSearch'], ['From this page', 'onClick', 'handleSort'], ['From /lists', 'onValueChange', 'handleTab']]);
+  const waves = (index: number) => map.branches[index]!.waves.map(wave => wave.map(stop => map.stops[stop]!.label));
+  const back = (index: number) => { const branch = map.branches[index]!; return branch.links.filter(link => link.wave >= branch.waves.length).map(link => map.edges[link.edge]!.to).sort(); };
+  assert.deepEqual(waves(0), [['GET /words'], ['WordController::index'], ['Word'], ['words'], ['WordsIndex']], 'opening the page: the server, then the page it renders');
+  assert.deepEqual(back(0), []);
+  assert.deepEqual(waves(1), [['WordsIndex'], ['handleSearch'], ['GET /words'], ['WordController::index'], ['Word'], ['words']], 'one control: never the others on the page, never mixed with the server');
+  assert.deepEqual(back(1), ['WordsIndex', 'handleSearch'], 'the page renders again and the caller has its answer, last');
+  assert.deepEqual(waves(3), [['ListsIndex'], ['handleTab'], ['GET /words'], ['WordController::index'], ['Word'], ['words'], ['WordsIndex']], 'from another page: to the page rendered');
+  assert.deepEqual(back(3), ['handleTab']);
+  assert.deepEqual(groupBranches(map.branches).map(group => [group.label, group.title]), [['Direct visit', 'Opening the page: what the server does, then the page it renders'], ['From this page', 'Controls on this page that request it again'], ['From /lists', 'Made on the page /lists']]);
 });
 test('branches play from the start along real edges, in waves; siblings share a wave, the way back comes last', () => {
   const stop = (key: string): MapStop => ({ key, entityId: key, ancestors: ['area'], label: key, kind: 'method', tone: 'server' });
@@ -167,7 +220,7 @@ test('the store lists every flow, shows one on the map, steps through it, and li
   atlas.tourAction({ type: 'play' });
   assert.equal(atlas.getState().tour!.playback.status, 'playing');
   // Played branch by branch to the end.
-  assert.equal(tour.flow!.branches.length, 3);
+  assert.equal(tour.flow!.branches.length, 4);
   atlas.tourAction({ type: 'tick', elapsedMs: 100_000, stepMs: 1000 });
   assert.equal(atlas.getState().tour!.playback.status, 'finished');
   // A stop chosen in the bar is selected.
