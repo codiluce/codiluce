@@ -22,7 +22,7 @@ const nameOf = (node: Js | undefined): string | undefined => !node ? undefined :
 function names(value: unknown): string[] { const node = js(value); if (!node) return []; if (node.type === 'Identifier') return [String(node.name)]; if (node.type === 'RestElement') return names(node.argument); if (node.type === 'AssignmentPattern') return names(node.left); if (node.type === 'ObjectPattern') return (node.properties as unknown[]).flatMap(item => names(js(item)?.value ?? js(item)?.argument)); if (node.type === 'ArrayPattern') return (node.elements as unknown[]).flatMap(names); return []; }
 
 export const astroPack: TypeScriptFrameworkPack = {
-  id: 'astro', version: '1.0.0:parser-0.5.1', includeEmbedded: true,
+  id: 'astro', version: '1.0.1:parser-0.5.1', includeEmbedded: true,
   applies: scope => !!scope.inputs?.some(file => file.language === 'astro') || scope.files.some(frame => frame.runtime.project.dependencies.astro !== undefined),
   async declare(scope) {
     const reader = new TypeScriptStatic(scope, 'astro', ['astro/config', 'astro:middleware']);

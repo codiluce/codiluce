@@ -60,6 +60,19 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
       assert.equal(file.node.analysis.features.structure.status, 'supported');
       assert.equal(file.node.analysis.features.references.status, language === 'python' ? 'partial' : 'unsupported');
     }
+    for (const [name, handlerPath, line] of [
+      ['GET /package-svelte-api', 'svelte-ui/src/routes/package-svelte-api/+server.ts', 1],
+      ['POST /package-svelte?/save', 'svelte-ui/src/routes/(app)/package-svelte/+page.server.ts', 1],
+      ['GET /package-astro-api', 'astro-ui/src/pages/package-astro-api.ts', 2],
+    ]) {
+      const found = await (await fetch(`${url}api/entities?search=${encodeURIComponent(name)}&type=api_endpoint`)).json();
+      const endpoint = found.items.find(item => item.name === name); assert.ok(endpoint);
+      const response = await fetch(`${url}api/projection/request-flows/${endpoint.id}`); assert.equal(response.status, 200);
+      const flow = await response.json(); assert.equal(flow.stages.handler, true, `${name} reaches its original server callback`);
+      const handler = flow.nodes.find(item => item.kind === 'handler'); assert.ok(handler);
+      assert.equal(handler.node.path, handlerPath); assert.equal(handler.node.sourceRange.startLine, line);
+      assert.ok(flow.edges.some(edge => edge.kind === 'handles' && edge.hops.some(hop => hop.type === 'handles' && hop.to === handler.node.id)));
+    }
     assert.equal((await fetch(`${url}licenses/fontsource-variable-nunito.txt`)).status, 200);
     child.kill(signal);
     assert.deepEqual(await exited, [0, null], output);
@@ -301,6 +314,7 @@ try {
   const astroPage = astroEntities.find(entity => entity.type === 'route' && entity.name === '/package-astro'), astroEndpoint = astroEntities.find(entity => entity.type === 'api_endpoint' && entity.name === 'GET /package-astro-api'), astroStatic = astroEntities.find(entity => entity.type === 'route' && entity.name === 'GET /package-astro-static.json');
   assert.ok(astroPage && astroEndpoint && astroStatic, 'installed Astro parser preserves pages, runtime APIs and separate static build operations');
   const astroStaticDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', astroStatic.id], repo)).stdout); assert.equal(astroStaticDetail.metadata.operationKind, 'static-endpoint');
+  assert.equal(JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', astroStatic.id, '--type', 'handles'], repo)).stdout).items.length, 0, 'Astro static output is not a runtime server handler');
   const astroPageTargets = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', astroPage.id, '--type', 'routes_to'], repo)).stdout).items; assert.equal(astroPageTargets.length, 1);
   const astroReferences = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', astroPageTargets[0].to, '--type', 'references'], repo)).stdout).items, astroIsland = astroReferences.find(edge => edge.metadata?.role === 'hydrated-island'); assert.ok(astroIsland);
   const astroIslandDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', astroIsland.to], repo)).stdout); assert.equal(astroIslandDetail.sourceRange.startLine, 4); assert.equal(astroIslandDetail.metadata.executionContext, 'browser'); assert.equal(astroIslandDetail.metadata.renderer, 'svelte');

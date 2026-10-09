@@ -30,7 +30,7 @@ const names = (value: unknown): string[] => {
 const nameOf = (node: Js | undefined): string | undefined => !node ? undefined : node.type === 'Identifier' ? String(node.name) : node.type === 'MemberExpression' ? nameOf(js(node.object)) && (node.computed ? js(node.property)?.type === 'Literal' && typeof js(node.property)?.value === 'string' ? `${nameOf(js(node.object))}.${js(node.property)!.value}` : undefined : `${nameOf(js(node.object))}.${js(node.property)?.name}`) : node.type === 'ChainExpression' ? nameOf(js(node.expression)) : undefined;
 
 export const sveltePack: TypeScriptFrameworkPack = {
-  id: 'svelte-sveltekit', version: '1.0.0:parser-5.57.2', includeEmbedded: true,
+  id: 'svelte-sveltekit', version: '1.0.1:parser-5.57.2', includeEmbedded: true,
   applies: scope => !!scope.inputs?.some(file => file.language === 'svelte') || scope.files.some(frame => frame.runtime.project.dependencies['@sveltejs/kit'] !== undefined),
   async declare(scope) {
     const reader = new TypeScriptStatic(scope, 'svelte', ['svelte', '@sveltejs/kit', '@sveltejs/kit/vite']);

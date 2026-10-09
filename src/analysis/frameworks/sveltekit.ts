@@ -186,7 +186,7 @@ class KitRoutes {
     const routing: RoutingContract = { version: 1, pattern: route.pattern, methods, ...(excludedMethods ? { excludedMethods } : {}), executionContext: 'server', registration: { file: module.frame.file.path, line: range.startLine, receiver: 'SvelteKit filesystem' }, mounts: [], middleware: [], conditions, ...(action ? { action: { name: action } } : {}) };
     const entity = context.graph.contain({ id: context.graph.id('sveltekit-endpoint', this.config.project.id, module.directory, method, action ?? ''), type: 'api_endpoint', name: `${method} ${route.path}${action && action !== 'default' ? `?/${action}` : ''}`, path: module.frame.file.path, language: module.frame.file.language, parentId, sourceRange: range, metadata: { framework: 'sveltekit', profile: this.config.profile, method, routePath: route.path, routeId: `/${module.directory}`, registration: 'filesystem', routing, groups: route.groups, parameterMatchers: route.matchers, executionContext: 'server', constraintsUnresolved: conditions.length > 0 || route.pattern.status === 'partial', ...(action ? { operationKind: 'form-action', actionName: action } : {}) }, evidence: [fact] });
     const registered = this.registeredTarget(module, target, action ? `${action} action` : method, 'server');
-    context.graph.relate(entity.id, registered.id, 'routes_to', [fact], { role: action ? 'form-action' : 'handler' });
+    context.graph.relate(entity.id, registered.id, 'handles', [fact], { role: action ? 'form-action' : 'handler' });
   }
   private ancestor(parent: string, child: string): boolean { return !parent || parent === child || child.startsWith(`${parent}/`); }
   private layouts(page: View, conditions: string[]): { views: View[]; directories: Set<string> } {
