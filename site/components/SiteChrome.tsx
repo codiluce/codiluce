@@ -48,6 +48,7 @@ export function SiteFooter() {
           <div>
             <p>Docs</p>
             <Link href="/docs/">Getting started</Link>
+            <Link href="/docs/stacks/">Languages & frameworks</Link>
             <Link href="/docs/map/">Using the map</Link>
             <Link href="/docs/cli/">CLI & API</Link>
           </div>

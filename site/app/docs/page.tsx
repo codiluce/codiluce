@@ -89,7 +89,7 @@ export default function GettingStarted() {
           <strong>How deep does it go?</strong> It depends on the stack. TypeScript and JavaScript are analyzed down to
           calls and requests in any application, and supported frameworks down to routes, commands and tables. Every other
           ecosystem is detected and mapped with its files, languages, lines and Git metrics.
-          See <Link href="/docs/configuration/">Configuration</Link>.
+          See <Link href="/docs/stacks/">Languages &amp; frameworks</Link>.
         </p>
       </div>
 

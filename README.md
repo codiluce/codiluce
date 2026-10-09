@@ -84,8 +84,8 @@ How far Codiluce follows the code depends on the stack:
 - **Flows to the data:** React and Next.js with Laravel and Inertia, from the click through the request to the
   handler and the tables it reads and writes.
 - **Routes and handlers:** Express, NestJS, Vue Router, Nuxt, SvelteKit and Astro; Django, FastAPI and Flask; Spring
-  MVC and WebFlux; ASP.NET Core; Ruby on Rails; Gin, Echo, Fiber, Chi, Gorilla Mux and net/http; Axum, Actix Web and
-  Rocket. Every route links to the exact handler that serves it.
+  MVC and WebFlux; ASP.NET Core; Ruby on Rails; Gin, Echo, Fiber, Chi, Gorilla Mux and net/http; Axum, Actix Web,
+  Rocket and Warp. Every route links to the exact handler that serves it.
 - **Structure:** TypeScript, JavaScript, PHP, Python, Go, Ruby, Java, Kotlin, C# and Rust get declarations, imports,
   references and direct calls.
 - **Map:** Angular, Remix, Fastify, Symfony, Quarkus, Blazor and every other language and framework are detected and
@@ -171,8 +171,11 @@ default Actix Logger have narrow reviewed contracts. See the [unchanged Actix so
 P9d1 adds initial Rocket 0.5 attributes, literal `routes!` source lists, macro imports, mount prefixes and selected
 launch/main entrypoints. Original factories and handlers retain native default/manual ranks, HEAD fallback, decoded
 segments, literal queries and fixed-width integer/bool/string parameter guards. Unknown request/body/query guards,
-fairings, catchers and conversion/compiler contracts retain conditions. Warp remains P9d2; broader
-source/version/target/performance qualification remains P9e/P10.
+fairings, catchers and conversion/compiler contracts retain conditions. P9d2 adds initial Warp 0.3/0.4 raw
+path/method filters, typed captures, literal/type `path!` syntax, prefix composition and original map/then/and_then
+handlers. Full filter trees preserve ordered rejection and cursor reset; separate native bind/run contracts require
+awaited serving. Unknown extraction, fallible handler success, recovery/wrappers and compiler/Reply inference keep
+gaps. Broader source/version/target/performance qualification remains P9e/P10.
 No Cargo/rustc or target code runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original

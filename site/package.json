@@ -7,7 +7,8 @@
     "dev": "next dev --port 4320",
     "build": "next build",
     "preview": "npx --yes serve out -l 4321",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "graphics": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/readme-graphics.ts"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",

@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import { ComprehensionGap } from '../components/ComprehensionGap';
 import { EclipseMark } from '../components/EclipseMark';
 import { FlowChain } from '../components/FlowChain';
 import { HeroShader } from '../components/HeroShader';
 import { InstallCommand } from '../components/InstallCommand';
 import { Shot } from '../components/Shot';
+import { Stacks } from '../components/Stacks';
 import { GitHubIcon } from '../components/SiteChrome';
 import { CALL_URL, GITHUB_URL, ISSUES_URL, VERSION } from '../lib/site';
 
@@ -54,13 +56,19 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="section gap-section" id="why" aria-labelledby="gap-title">
+        <div className="container">
+          <ComprehensionGap />
+        </div>
+      </section>
+
       <section className="section" id="goal" aria-labelledby="goal-title">
         <div className="container">
           <p className="eyebrow">Goal</p>
           <h2 id="goal-title" className="section-title">Agents keep changing the code. Humans should still understand it.</h2>
           <p className="section-lede">
-            Agents write and change code faster than anyone can review it line by line. Codiluce exists so the people
-            responsible for a system still understand its code and architecture, whoever made the last commit.
+            Codiluce exists so the people responsible for a system still understand its code and architecture, whoever made
+            the last commit. It answers the questions a diff cannot.
           </p>
           <div className="questions">
             {QUESTIONS.map((item, index) => (
@@ -128,6 +136,18 @@ export default function Home() {
             </div>
             <Shot src="/shots/data.webp" alt="The Data view: BookStack's code arranged by data family, such as Roles, Entities, Images and Attachments, each in its own color." />
           </div>
+        </div>
+      </section>
+
+      <section className="section stacks-section" id="stacks" aria-labelledby="stacks-title">
+        <div className="container">
+          <p className="eyebrow">Stacks</p>
+          <h2 id="stacks-title" className="section-title">Reads the stacks your team ships.</h2>
+          <p className="section-lede">
+            Codiluce maps any repository, and follows routes, handlers and calls through the languages and frameworks
+            below. Every link carries its evidence; what it cannot prove stays visible.
+          </p>
+          <Stacks />
         </div>
       </section>
 

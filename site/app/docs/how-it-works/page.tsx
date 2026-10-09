@@ -75,7 +75,7 @@ export default function HowItWorks() {
         <li>Calls through callbacks, props, untyped values and interface dispatch stay unresolved and are counted.</li>
         <li>Middleware is drawn by name, not followed; events, listeners, observers, notifications and ORM relationships are not linked yet.</li>
         <li>Routes registered inside arbitrary service providers or conditions cannot be proven statically.</li>
-        <li>Many ecosystems are detected and mapped, but their calls are not analyzed yet. <Link href="/#contribute">Tell us which one you need</Link>.</li>
+        <li>Many ecosystems are detected and mapped, but their calls are not analyzed yet: see <Link href="/docs/stacks/">Languages &amp; frameworks</Link>, and <Link href="/#contribute">tell us which one you need</Link>.</li>
       </ul>
       <p>
         The full architecture document is in the repository: <a href={`${GITHUB_URL}/blob/main/docs/architecture-visualizer.md`} target="_blank" rel="noreferrer">docs/architecture-visualizer.md</a>.
