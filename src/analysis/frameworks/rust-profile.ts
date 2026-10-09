@@ -7,7 +7,7 @@ import { rustAttributes, rustCfg, rustSplit, rustString } from '../languages/rus
 import type { RustRouteDialect } from '../routes/rust-patterns.js';
 import type { RustScopeFact } from '../facts.js';
 import { warpPathSyntax } from './warp-syntax.js';
-export const RUST_ROUTER_VERSION = '3';
+export const RUST_ROUTER_VERSION = '4';
 export interface RustWebProfile {
     framework: 'axum' | 'actix-web' | 'tokio' | 'rocket' | 'warp';
     dialect?: RustRouteDialect;

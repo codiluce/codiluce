@@ -131,6 +131,9 @@ const is = <K extends 'native' | 'callback' | 'router' | 'method' | 'server' | '
     kind: K;
 }> => !!value && typeof value === 'object' && !Array.isArray(value) && value.kind === kind;
 const unique = <T>(values: T[]) => [...new Set(values)];
+// Builder composition reuses the same original Cargo, scope and macro proof.
+// Keep each complete evidence fact once while retaining its first source order.
+const uniqueProof = (...groups: Evidence[][]): Evidence[] => [...new Map(groups.flat().map(fact => [JSON.stringify(fact), fact])).values()];
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'CONNECT', 'TRACE'];
 const intersect = (a: Methods, b: Methods): Methods => a === '*' ? b : b === '*' ? a : a.filter(method => b.includes(method));
 const union = (a: Methods, b: Methods): Methods => a === '*' || b === '*' ? '*' : unique([...a, ...b]);
@@ -222,7 +225,7 @@ export class RustRegistrations {
     }
     private makeRouter(env: Environment, site: Site, profile: RustWebProfile, mode: Router['mode'], paths: string[] = []): Router {
         const framework = profile.framework as Framework, identity = JSON.stringify([env.runtime, env.frame, env.owner, site.file, framework, mode]), id = this.context.graph.id('router', 'rust', identity, String(this.ordinal(identity)));
-        const router: Router = { kind: 'router', framework, dialect: profile.dialect!, mode, id, site, entries: [], paths, routes: [], methods: '*', conditions: unique([...this.conditions(env, env.scope), ...profile.conditions]), proof: [...env.proof, ...this.macros.proof(env.scope), ...profile.proof, this.fact(site, `Qualified original ${framework} ${mode} constructor`)], middleware: [], legacy: false };
+        const router: Router = { kind: 'router', framework, dialect: profile.dialect!, mode, id, site, entries: [], paths, routes: [], methods: '*', conditions: unique([...this.conditions(env, env.scope), ...profile.conditions]), proof: uniqueProof(env.proof, this.macros.proof(env.scope), profile.proof, [this.fact(site, `Qualified original ${framework} ${mode} constructor`)]), middleware: [], legacy: false };
         this.builders.push({ router, env });
         this.touch(site, framework);
         return router;
@@ -643,6 +646,8 @@ export class RustRegistrations {
             if (node.kind === 'and' || node.kind === 'or') pending.push({node:node.left,depth:depth+1},{node:node.right,depth:depth+1});
             else if (node.kind === 'handler' || node.kind === 'mount' || node.kind === 'opaque' && node.input) pending.push({node:node.input!,depth:depth+1});
         }
+        result.proof = uniqueProof(result.proof);
+        result.conditions = unique(result.conditions);
         return result;
     }
     private warpAddress(value: Value): boolean {
@@ -699,7 +704,7 @@ export class RustRegistrations {
             this.gap(env, site, 'Original Rust consuming builder is reused after move');
         if (consuming)
             router.consumed = true;
-        const next: Router = { ...router, consumed: false, ...router.warp ? {warp:{...router.warp,handlers:new Map(router.warp.handlers)}} : {}, entries: router.entries.map(entry => ({ ...entry, routes: entry.routes.map(cloneRoute), conditions: [...entry.conditions], middleware: [...entry.middleware] })), routes: router.routes.map(cloneRoute), conditions: unique([...router.conditions, ...this.conditions(env, env.scope), ...router.consumed && clone ? ['Cloned Rust builder was already consumed'] : []]), proof: [...router.proof, this.fact(site, clone ? 'Original explicit builder clone' : 'Original consuming builder step')], middleware: [...router.middleware] };
+        const next: Router = { ...router, consumed: false, ...router.warp ? {warp:{...router.warp,handlers:new Map(router.warp.handlers)}} : {}, entries: router.entries.map(entry => ({ ...entry, routes: entry.routes.map(cloneRoute), conditions: [...entry.conditions], middleware: [...entry.middleware] })), routes: router.routes.map(cloneRoute), conditions: unique([...router.conditions, ...this.conditions(env, env.scope), ...router.consumed && clone ? ['Cloned Rust builder was already consumed'] : []]), proof: uniqueProof(router.proof, [this.fact(site, clone ? 'Original explicit builder clone' : 'Original consuming builder step')]), middleware: [...router.middleware] };
         return next;
     }
     private method(value: Value, name: string, args: Value[], env: Environment, site: Site, expression: RustExpression & {
@@ -1133,12 +1138,12 @@ export class RustRegistrations {
         const application = env.origin.file.application?.name, parentId = application && this.context.applicationIds.get(application);
         if (!parentId)
             return;
-        const constraints = unique([...conditions, ...entry.conditions, ...route.conditions, ...this.runtimeGaps.get(env.runtime) ?? [], ...pattern.status === 'partial' ? [pattern.reason ?? 'Unreviewed Rust native route syntax'] : []]), method = route.methods === '*' ? 'ALL' : route.methods.join('|'), id = this.context.graph.id('endpoint', 'rust', root, rust.resource, String(rust.routeOrder), method, pattern.original), facts = [...proof, ...entry.proof, ...route.proof, this.fact(route.site, `Original ${router.framework} ${method} ${pattern.original} under selected Cargo source context`)];
+        const constraints = unique([...conditions, ...entry.conditions, ...route.conditions, ...this.runtimeGaps.get(env.runtime) ?? [], ...pattern.status === 'partial' ? [pattern.reason ?? 'Unreviewed Rust native route syntax'] : []]), method = route.methods === '*' ? 'ALL' : route.methods.join('|'), id = this.context.graph.id('endpoint', 'rust', root, rust.resource, String(rust.routeOrder), method, pattern.original), facts = uniqueProof(proof, entry.proof, route.proof, [this.fact(route.site, `Original ${router.framework} ${method} ${pattern.original} under selected Cargo source context`)]);
         const contract: RoutingContract = { version: 1, pattern, methods: route.methods, ...excludedMethods?.length ? { excludedMethods: unique(excludedMethods) } : {}, executionContext: 'server', registration: { file: route.site.file, line: route.site.range.startLine, receiver: router.id }, mounts: entry.mounts, middleware: unique([...entry.middleware, ...route.middleware]), conditions: constraints, dispatch: { dialect: router.framework, root, order: rust.routeOrder }, rust, ...warp ? {warp} : {} };
         this.context.graph.contain({ id, type: 'api_endpoint', name: `${method} ${pattern.original}`, path: route.site.file, language: 'rust', parentId, sourceRange: route.site.range, metadata: { framework: router.framework, registration: status ? 'implicit' : 'explicit', method, routePath: pattern.original, routing: contract, executionContext: 'server', compilation: env.origin.compilation.id, crate: env.origin.compilation.target.id, invocation: env.origin.compilation.invocation, qualification: 'bounded-native-source-contract', ...status ? { status, role: status === 405 ? 'method-not-allowed' : 'not-found' } : {}, ...constraints.length ? { constraintsUnresolved: true, constraints } : {} }, evidence: facts });
         this.context.graph.relate(this.context.files.get(route.site.file)!.id, id, 'routes_to', facts, { framework: router.framework, role: 'registration', compilation: env.scope.compilation.id });
         if (route.callback) {
-            this.context.graph.relate(id, route.callback.definition.id, 'handles', [...facts, ...route.callback.proof], { framework: router.framework, role: 'handler', compilation: env.scope.compilation.id });
+            this.context.graph.relate(id, route.callback.definition.id, 'handles', uniqueProof(facts, route.callback.proof), { framework: router.framework, role: 'handler', compilation: env.scope.compilation.id });
             this.sourceHandlerCalls(route.callback, facts);
         }
         for (const target of contract.middleware)

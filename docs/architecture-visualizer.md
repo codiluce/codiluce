@@ -581,3 +581,40 @@ Cold/warm/revision conformance checks include actual router cache hits and manif
 These are bounded native source contracts without Cargo/rustc, target code, dependency, configuration or macro
 execution. Broader immutable application recall, versions, target contexts and performance remain P9e; native OS
 release gates, compiler/runtime correctness and broad production accuracy remain P10 and follow-on scope.
+
+## 29. Mixed Rust/component qualification (P9e1)
+
+`scripts/fixtures/rust-workload.ts` generates original source-contract inputs for all six reviewed native version
+profiles: Axum 0.7/0.8, Actix Web 4, Rocket 0.5 and Warp 0.3/0.4. Original source helper factories and mounts connect
+TS/Vue/Svelte/Astro requests to their original module handlers and a shared local Cargo crate. Feature and target
+selections are explicit; cfg flags and triples never come from the host. Concurrent Unix/Windows consumers of the
+same source crate retain compilation-specific calls to their selected original declarations.
+
+`tests/rust-qualification.test.ts` checks original source coordinates, native HEAD/slash/default responses, recorded
+proxy/origin boundaries, cross-pack ambiguity, missing targets, dependency version/feature/path changes, inactive
+modules, source denial and source shifts. Cold/warm/materialized-revision fingerprints agree, and cache-hit assertions
+require actual import, symbol, router, component and TypeScript replay. Native 404/405 response links have no invented
+source handler. A 192-source-route/768-request workload must serialize below 16 MiB while preserving its original
+callbacks, mounts and exact replay.
+
+Rust builder composition can repeatedly inherit the same Cargo/scope/macro proof. The router interpreter retains
+each complete evidence fact once at construction, consumption, Warp composition and graph emission. This preserves
+all distinct original evidence, IDs and native routing decisions while bounding repeated proof payload. The native
+router cache version changes when this serialization changes.
+
+Run `node --import tsx scripts/benchmark-rust-compatibility.mjs --baseline-ref 011b5ae --repetitions 3` for fixed
+small/medium/large samples of 3/12/32 resources per version profile. It archives Codiluce's pre-router P9b implementation
+and shares the same installed parser/compiler dependencies. Alternating fresh processes compare unchanged frontend
+controls and the cost of additional Rust native routing. Frontend controls must retain exact before/after graph
+fingerprints and meet suggested 10% cold-time/process-tree RSS guardrails. The Rust baseline resolves original Cargo,
+symbols and imports but has no native routes; its different graph is expected, so an equal-work guardrail is not
+claimed for those rows. Every current native source route has its original handler and all expected requests link.
+An independent Linux driver samples parent/parser-child RSS every 25 ms and keeps exact parent high-water memory,
+cold/warm graph digests, actual cache hits, implementation/fixture digests and raw repetitions in a browser-accessible
+HTML report. Short memory spikes between samples can be missed; warm memory includes retained cold/population state.
+The recorded report is [Rust and component compatibility performance](rust-compatibility-performance.html).
+
+Only Codiluce's Node/TS/WASM code executes. Generated source fixtures and recorded compilation alternatives establish
+bounded source integration, not compiler/runtime correctness or native OS execution. Stratified unchanged-source
+accuracy and broader version qualification remain P9e2. Native OS, grammar/history performance and broad release
+gates remain P10; the complete P0–P10 objective is still active.

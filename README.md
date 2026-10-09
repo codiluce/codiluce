@@ -175,7 +175,12 @@ fairings, catchers and conversion/compiler contracts retain conditions. P9d2 add
 path/method filters, typed captures, literal/type `path!` syntax, prefix composition and original map/then/and_then
 handlers. Full filter trees preserve ordered rejection and cursor reset; separate native bind/run contracts require
 awaited serving. Unknown extraction, fallible handler success, recovery/wrappers and compiler/Reply inference keep
-gaps. Broader source/version/target/performance qualification remains P9e/P10.
+gaps. P9e1 adds mixed-stack conformance for all six Rust version profiles with TS/Vue/Svelte/Astro requests,
+shared original Cargo source, concurrent recorded Unix/Windows contexts, native default responses, source proof,
+cache/history replay and invalidation. Repeated identical registration proof is deduplicated; a 192-route and
+768-request source portfolio fits a 16 MiB graph serialization budget. The [local performance comparison](docs/rust-compatibility-performance.html)
+records unchanged frontend controls and the cost of adding native Rust routing against P9b. Broader unchanged-source accuracy/version
+qualification remains P9e2, and native OS release checks remain P10.
 No Cargo/rustc or target code runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original
