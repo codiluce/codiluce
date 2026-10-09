@@ -3,7 +3,8 @@
 //   --source /path/to/unchanged/checkout --commit PIN --output /tmp/jvm-source.json
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { cp, lstat, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { indexRepository } from '../src/pipeline/index.ts';
@@ -15,21 +16,33 @@ const args = process.argv.slice(2);
 const option = name => args.includes(name) ? args[args.indexOf(name) + 1] : undefined;
 assert.ok(option('--source') && option('--commit'), '--source and --commit are required');
 const source = path.resolve(option('--source'));
-const git = params => execFileSync('git', params, { cwd: source, encoding: 'utf8', maxBuffer: 16 << 20 });
-const commit = git(['rev-parse', '--verify', `${option('--commit')}^{commit}`]).trim();
-assert.equal(git(['rev-parse', 'HEAD']).trim(), commit, 'checkout must match the pinned commit');
-const files = git(['ls-files', '-z']).split('\0').filter(file => /\.(?:java|kt|kts|gradle|xml|properties|toml|ya?ml)$/.test(file));
+const git = params => execFileSync('git', params, { cwd: source, maxBuffer: 16 << 20 });
+const commit = git(['rev-parse', '--verify', `${option('--commit')}^{commit}`]).toString().trim();
+assert.equal(git(['rev-parse', 'HEAD']).toString().trim(), commit, 'checkout must match the pinned commit');
+const prefix = option('--prefix') ?? '.';
+assert.ok(!path.posix.isAbsolute(prefix) && !prefix.split('/').includes('..'), 'prefix must stay within the repository');
+const ancestors = new Set(); let directory = prefix;
+while (true) {
+  for (const name of ['pom.xml', 'settings.gradle', 'settings.gradle.kts', 'build.gradle', 'build.gradle.kts', 'gradle.properties', 'gradle/libs.versions.toml']) ancestors.add(path.posix.join(directory, name));
+  if (directory === '.') break; directory = path.posix.dirname(directory);
+}
+const entries = git(['ls-tree', '-r', '-z', commit]).toString().split('\0').filter(Boolean).map(value => { const [header, file] = value.split('\t'); return { mode: header.split(' ')[0], file }; });
+const selected = entries.filter(entry => (prefix === '.' || entry.file.startsWith(prefix + '/') || ancestors.has(entry.file)) && /\.(?:java|kt|kts|gradle|xml|properties|toml|ya?ml)$/.test(entry.file));
+const files = selected.map(entry => entry.file);
 assert.ok(files.some(file => /\.(?:java|kt)$/.test(file)), 'tracked JVM sources are required');
 git(['diff', '--exit-code', commit, '--', ...files]);
 const temporary = await mkdtemp(path.join(tmpdir(), 'codiluce-jvm-source-'));
 try {
   const root = path.join(temporary, 'source'), state = path.join(temporary, 'cache');
-  for (const file of files) {
+  const blobs = new Map(), digest = createHash('sha256');
+  for (const {file, mode} of selected) {
     const target = path.join(root, file);
-    assert.ok(target.startsWith(root + path.sep));
-    assert.ok((await lstat(path.join(source, file))).isFile(), 'qualification inputs must be regular tracked files');
+    assert.ok(target.startsWith(root + path.sep) && !file.split('/').includes('..'));
+    assert.ok(['100644','100755'].includes(mode), 'qualification inputs must be regular tracked blobs');
+    const blob = git(['cat-file', 'blob', `${commit}:${file}`]); blobs.set(file, blob.toString('utf8'));
+    digest.update(file + '\0' + mode + '\0').update(blob).update('\0');
     await mkdir(path.dirname(target), { recursive: true });
-    await cp(path.join(source, file), target);
+    await writeFile(target, blob);
   }
   // Optional selections are labeled qualification inputs, never executed or
   // written into upstream Maven/Gradle manifests.
@@ -46,6 +59,11 @@ try {
   const imports = cold.relations.filter(edge => edge.type === 'imports' && ['java','kotlin'].includes(identities.get(edge.from)?.language));
   const calls = cold.relations.filter(edge => edge.type === 'calls' && edge.metadata?.adapter === 'jvm');
   const endpoints = cold.entities.filter(entity => entity.type === 'api_endpoint' && ['spring-mvc','spring-webflux'].includes(entity.metadata.framework));
+  const handlers = cold.relations.filter(edge => edge.type === 'handles' && endpoints.some(endpoint => endpoint.id === edge.from));
+  for (const entity of cold.entities.filter(entity => ['java','kotlin'].includes(entity.language) && entity.sourceRange)) {
+    assert.ok(blobs.has(entity.path)); const lines = blobs.get(entity.path).split('\n').length;
+    assert.ok(entity.sourceRange.startLine > 0 && entity.sourceRange.endLine >= entity.sourceRange.startLine && entity.sourceRange.endLine <= lines, `original source range: ${entity.path}:${entity.sourceRange.startLine}`);
+  }
   for (const edge of calls) { assert.ok(files.includes(identities.get(edge.from)?.path));assert.ok(files.includes(identities.get(edge.to)?.path));assert.ok(edge.evidence.some(fact=>fact.analyzer==='jvm-symbols'&&files.includes(fact.file)&&fact.line>0)); }
   for (const endpoint of endpoints) { assert.ok(files.includes(endpoint.path));if(!endpoint.metadata.constraintsUnresolved)assert.ok(cold.relations.some(edge=>edge.from===endpoint.id&&edge.type==='handles'&&files.includes(identities.get(edge.to)?.path)));for(const edge of cold.relations.filter(edge=>edge.from===endpoint.id&&edge.type==='handles'))assert.ok(files.includes(identities.get(edge.to)?.path)); }
   for (const edge of imports) {
@@ -59,7 +77,7 @@ try {
   }
   const count = values => values.reduce((counts,value) => ({...counts,[value]:(counts[value] ?? 0)+1}),{});
   const result = {
-    source, commit, copiedFiles:files.length, qualificationInputs:inputs,
+    source, commit, prefix, copiedFiles:files.length, trackedBlobDigest:digest.digest('hex'), qualificationInputs:inputs,
     files:count(units.map(unit=>unit.language)),
     declarations:cold.entities.filter(entity=>['java','kotlin'].includes(entity.language)&&['class','method','function'].includes(entity.type)).length,
     structure:count(units.map(unit=>unit.metadata.analysis?.features.structure.status)),
@@ -68,6 +86,8 @@ try {
     callOutcomes:count(units.flatMap(unit=>(unit.metadata.jvmCallOutcomes??[]).map(item=>item.status))),callEdges:calls.length,
     springEndpoints:endpoints.length,constrainedSpringEndpoints:endpoints.filter(endpoint=>endpoint.metadata.constraintsUnresolved).length,
     springMvcEndpoints:endpoints.filter(endpoint=>endpoint.metadata.framework==='spring-mvc').length,springWebFluxEndpoints:endpoints.filter(endpoint=>endpoint.metadata.framework==='spring-webflux').length,
+    springHandlers:handlers.length, springRegistrations:count(endpoints.map(endpoint=>endpoint.metadata.registration)),
+    routeSamples:endpoints.map(endpoint=>({file:endpoint.path,line:endpoint.sourceRange?.startLine,framework:endpoint.metadata.framework,route:endpoint.metadata.routePath,methods:endpoint.metadata.routing?.methods,registration:endpoint.metadata.registration,handler:identities.get(handlers.find(edge=>edge.from===endpoint.id)?.to)?.path,gaps:endpoint.metadata.routing?.conditions})),
     springWebFluxProfiles:cold.entities.find(entity=>entity.type==='repository').metadata.springWebFluxProfiles,
     springProfiles:cold.entities.find(entity=>entity.type==='repository').metadata.springMvcProfiles,
     projects:cold.entities.find(entity=>entity.type==='repository').metadata.jvmProjects,

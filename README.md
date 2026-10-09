@@ -109,7 +109,7 @@ AddControllersWithViews/AddMvc and MapControllers/MapControllerRoute/MapDefaultC
 Original public controller/action discovery, compatible partial fragments, bounded source inheritance, attribute selectors,
 controller/action/area tokens, ActionName/Async naming, literal route defaults and native conventional order retain original
 handler IDs and source proof. Custom application parts, model/parameter/result metadata, filters, activation and executable
-MVC options remain candidates. Wider JVM/.NET qualification is next. No target .NET/MSBuild toolchain runs.
+MVC options remain candidates. P8e1 adds eleven mixed Java/Kotlin/Spring/ASP.NET profiles, original frontend-to-handler/source-leaf projections, cache invalidation checks and eight pinned upstream source scans. Local Linux performance passes the cold-time/RSS comparison against P8d2. Native Windows/macOS and broad production recall remain P8e2/P10 gates. See the [source portfolio](docs/jvm-dotnet-source-qualification.html) and [performance report](docs/jvm-dotnet-compatibility-performance.html). No target .NET/MSBuild toolchain runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original
 component source locations. Module and instance scopes stay distinct; Astro server and client scripts retain separate contexts.
