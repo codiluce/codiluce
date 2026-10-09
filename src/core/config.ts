@@ -23,7 +23,15 @@ export interface RubyAutoloadConfig {
 }
 export interface RubyRuntimeConfig { cwd?: string; environment?: string; autoload?: RubyAutoloadConfig }
 /** Recorded JVM compilation inputs; target Maven/Gradle/compiler never runs. */
-export interface JvmConfig { sourceSet?: 'main' | 'test'; profiles?: string[]; dependencies?: string[] }
+export interface SpringMvcConfig {
+  version?: string; bootVersion?: string;
+  /** Selected servlet context; explicit values are recorded assumptions. */
+  contextPath?: string; servletPath?: string;
+  matchingStrategy?: 'path-pattern' | 'ant';
+  /** Explicitly selected scan packages/controller beans, never host defaults. */
+  componentScan?: string[]; controllers?: string[];
+}
+export interface JvmConfig { sourceSet?: 'main' | 'test'; profiles?: string[]; dependencies?: string[]; spring?: SpringMvcConfig }
 
 export interface ApplicationConfig {
   name: string; path: string;
@@ -237,10 +245,20 @@ export async function resolveConfig(root: string, raw: RawConfig): Promise<Atlas
   for (const app of config.applications) {
     if (app.jvm !== undefined) {
       const value = app.jvm;
-      if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key => !['sourceSet','profiles','dependencies'].includes(key)) || value.sourceSet !== undefined && !['main','test'].includes(value.sourceSet)
+      if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key => !['sourceSet','profiles','dependencies','spring'].includes(key)) || value.sourceSet !== undefined && !['main','test'].includes(value.sourceSet)
         || value.profiles !== undefined && (!Array.isArray(value.profiles) || value.profiles.length > 128 || new Set(value.profiles).size !== value.profiles.length || value.profiles.some(item => typeof item !== 'string' || !/^[\w.-]{1,128}$/.test(item)))
         || value.dependencies !== undefined && (!Array.isArray(value.dependencies) || value.dependencies.length > 128 || new Set(value.dependencies).size !== value.dependencies.length || value.dependencies.some(item => typeof item !== 'string' || !item || item.length > 2048 || /[\\\0$*?{}\[\]]/.test(item) || path.isAbsolute(item) || /^[A-Za-z]:/.test(item)))) throw new Error('Invalid JVM compilation configuration');
       for (const dependency of value.dependencies ?? []) repoPath(root,path.posix.join(app.path,dependency));
+      if (value.spring !== undefined) {
+        const spring = value.spring, qualified = (item: unknown) => typeof item === 'string' && item.length <= 512 && /^[\p{L}_$][\p{L}\p{N}_$]*(?:\.[\p{L}_$][\p{L}\p{N}_$]*)*$/u.test(item);
+        const list = (items: unknown) => Array.isArray(items) && items.length <= 128 && new Set(items).size === items.length && items.every(qualified);
+        const prefix = (item: unknown) => typeof item === 'string' && item.length <= 2048 && (item === '' || item.startsWith('/') && item !== '/' && !item.endsWith('/')) && !/[\\\0?#{}*;]/.test(item) && !item.includes('//') && !item.split('/').some(segment => segment === '.' || segment === '..');
+        if (!spring || typeof spring !== 'object' || Array.isArray(spring) || Object.keys(spring).some(key => !['version','bootVersion','contextPath','servletPath','matchingStrategy','componentScan','controllers'].includes(key))
+          || [spring.version,spring.bootVersion].some(item => item !== undefined && (typeof item !== 'string' || !/^\d+\.\d+\.\d+$/.test(item)))
+          || [spring.contextPath,spring.servletPath].some(item => item !== undefined && !prefix(item))
+          || spring.matchingStrategy !== undefined && !['path-pattern','ant'].includes(spring.matchingStrategy)
+          || [spring.componentScan,spring.controllers].some(items => items !== undefined && !list(items))) throw new Error('Invalid Spring MVC configuration');
+      }
     }
     if (app.ruby !== undefined) {
       const ruby = app.ruby;

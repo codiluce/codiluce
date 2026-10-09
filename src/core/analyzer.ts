@@ -14,6 +14,7 @@ import type { RubyResolver } from '../analysis/resolution/ruby.js';
 import type { RubySymbols } from '../analysis/languages/ruby-symbols.js';
 import type { RubyAutoloadCatalog } from '../analysis/resolution/ruby-autoload.js';
 import type { JvmResolver } from '../analysis/resolution/jvm.js';
+import type { JvmSymbols } from '../analysis/languages/jvm-symbols.js';
 export interface ScannedFile { path: string; absolutePath: string; id: string; language?: string; analyzable: boolean; application?: ApplicationConfig; embedded?: EmbeddedRegion }
 export interface HttpObservation {
   callerId: string; fileId: string; method?: string; url?: string; expression: string; evidence: Evidence;
@@ -44,6 +45,7 @@ export interface AnalysisContext {
   rubySymbols?: RubySymbols;
   rubyAutoload?: RubyAutoloadCatalog;
   jvm?: JvmResolver;
+  jvmSymbols?: JvmSymbols;
   /** Directory entries observed by the scanner, including pruned roots; their
    * contents are never read through the indexed source boundary. */
   directoryInventory?: Set<string>;

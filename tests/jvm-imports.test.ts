@@ -60,7 +60,7 @@ test('Configured Java imports bind nested types and static overload sets with or
     assert.equal(graph.entities.find(entity => entity.id === edge.to)?.path, 'java/demo/Outer.java');
     assert.ok(edge.evidence.some(item => item.file === 'java/client/Use.java' && item.line === 6));
     assert.ok(edge.evidence.some(item => item.file === 'java/demo/Outer.java' && item.line === 1));
-    assert.equal((unit(graph, 'java/client/Use.java').metadata.analysis as any).features.references.status, 'unsupported');
+    assert.equal((unit(graph, 'java/client/Use.java').metadata.analysis as any).features.references.status, 'partial');
     assert.equal(graph.relations.filter(edge => edge.type === 'calls').length, 0);
 });
 test('Kotlin aliases, top-level functions/properties/typealiases and Java interop use original declarations', async () => {

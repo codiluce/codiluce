@@ -3,7 +3,7 @@ import type { AnalysisContext, ScannedFile } from '../../core/analyzer.js';
 import { evidence, type Evidence } from '../../core/graph.js';
 import type { DeclarationFact, JvmDeclarationFact, JvmImportFact, JvmSyntaxFacts } from '../facts.js';
 import { JvmProjects, type JvmProject } from './jvm-projects.js';
-export const JVM_RESOLVER_VERSION = '1';
+export const JVM_RESOLVER_VERSION = '2';
 export interface JvmSymbol {
     id: string;
     file: ScannedFile;
@@ -31,10 +31,14 @@ export type JvmResolution = {
     status: 'unsupported' | 'excluded' | 'unresolved';
     reason: string;
 };
+export type JvmEnvironment = {status:'resolved'; origin:ScannedFile; syntax:JvmSyntaxFacts; project:JvmProject; symbols:JvmSymbol[]; proof:Evidence[]; conditions:string[]} | {status:'unsupported'|'excluded';reason:string};
 const types = new Set(['class', 'interface', 'enum', 'record', 'annotation', 'object', 'typealias']);
 export class JvmResolver {
     readonly projects: JvmProjects;
     readonly symbols: JvmSymbol[] = [];
+    private readonly environments = new Map<string,JvmEnvironment>();
+    private readonly qualifiedNames = new Map<string,Map<string,JvmSymbol[]>>();
+    private readonly packages = new Map<string,Set<string>>();
     constructor(readonly context: AnalysisContext) {
         this.projects = new JvmProjects(context);
         for (const file of context.files.values()) {
@@ -68,7 +72,7 @@ export class JvmResolver {
         }
         return true;
     }
-    resolve(file: string, fact: JvmImportFact): JvmResolution {
+    private environmentFor(file: string): JvmEnvironment {
         const origin = this.context.files.get(file), syntax = this.facts(file), selection = this.projects.selection(file);
         if (!origin || !syntax?.complete)
             return { status: 'unsupported', reason: 'Complete original JVM compilation-unit syntax is required' };
@@ -102,7 +106,32 @@ export class JvmResolver {
                 if (chosen.project && projects.has(chosen.project.id) && !chosen.reason && (!candidate.analyzable || !this.facts(candidate.path)?.complete || this.facts(candidate.path)?.gaps.length || this.facts(candidate.path)?.module))
                     return { status: 'unsupported', reason: `Visible JVM source has unavailable syntax or an unreviewed compilation/lexical boundary: ${candidate.path}` };
             }
-        const visible = this.symbols.filter(symbol => sourceVisible(symbol.file.path) && symbol.syntax.importable);
+        return {status:'resolved',origin,syntax,project:selection.project,symbols:this.symbols.filter(symbol=>sourceVisible(symbol.file.path)),proof:[...selection.proof,...classpath.proof],conditions:['Indexed source/classpath contract; binary dependencies, compiler-generated declarations and runtime classloading are not executed']};
+    }
+    environment(file:string):JvmEnvironment {
+        let environment=this.environments.get(file);
+        if(!environment){
+            environment=this.environmentFor(file);this.environments.set(file,environment);
+            if(environment.status==='resolved'){
+                const names=new Map<string,JvmSymbol[]>(),packages=new Set<string>();
+                for(const symbol of environment.symbols){const declarations=names.get(symbol.syntax.qualifiedName)??[];declarations.push(symbol);names.set(symbol.syntax.qualifiedName,declarations);if(symbol.package)packages.add(symbol.package);}
+                this.qualifiedNames.set(file,names);this.packages.set(file,packages);
+            }
+        }
+        return environment;
+    }
+    /** Source-qualified lookup does not invent an explicit import or bypass the
+     * indexed compilation boundary. Reference consumers enforce lexical access. */
+    qualified(file:string,name:string,accept:(symbol:JvmSymbol)=>boolean=()=>true):JvmResolution {
+        const environment=this.environment(file);if(environment.status!=='resolved')return environment;
+        const symbols=(this.qualifiedNames.get(file)?.get(name)??[]).filter(accept);
+        if(symbols.length)return {status:'resolved',symbols,proof:[...environment.proof,...symbols.flatMap(symbol=>symbol.proof)],conditions:environment.conditions};
+        if([...this.packages.get(file)??[]].some(pkg=>name.startsWith(pkg+'.')))return{status:'unresolved',reason:'No original declaration matches the source-qualified JVM name'};
+        return{status:'external',dependency:name,proof:environment.proof,conditions:[...environment.conditions,'External spelling only; binary identity remains unverified']};
+    }
+    resolve(file: string, fact: JvmImportFact): JvmResolution {
+        const environment=this.environment(file);if(environment.status!=='resolved')return environment;
+        const {origin,syntax,project}=environment, visible=environment.symbols.filter(symbol=>symbol.syntax.importable);
         if (origin.language === 'kotlin' && fact.kind === 'star' && visible.some(symbol => symbol.declaration.kind === 'object' && symbol.syntax.qualifiedName === fact.specifier))
             return { status: 'unresolved', reason: 'Kotlin object members cannot be imported with a star import' };
         const qualified = fact.specifier, wildcard = fact.kind === 'star' || fact.kind === 'static-star', isStatic = fact.kind.startsWith('static');
@@ -120,7 +149,7 @@ export class JvmResolver {
         }
         else
             possible = visible.filter(symbol => symbol.syntax.qualifiedName === qualified && (!isStatic || symbol.syntax.static) && (!(origin.language === 'java' && !isStatic) || types.has(symbol.declaration.kind) && symbol.declaration.kind !== 'typealias'));
-        const targets = possible.filter(symbol => this.accessible(symbol, origin, selection.project!, syntax.package));
+        const targets = possible.filter(symbol => this.accessible(symbol, origin, project, syntax.package));
         if (possible.length && !targets.length)
             return { status: 'unresolved', reason: 'Original JVM declaration is not accessible from this compilation unit/module' };
         const groups = new Map<string, JvmSymbol[]>();
@@ -142,7 +171,7 @@ export class JvmResolver {
             if (syntax.declarations.some(declaration => !declaration.parent && declaration.name === local && declaration.qualifiedName !== qualified))
                 return { status: 'ambiguous', candidates: targets.map(symbol => symbol.id), reason: 'Top-level source declaration competes with the imported simple name' };
         }
-        const proof = [...selection.proof, ...classpath.proof, ...targets.flatMap(symbol => symbol.proof)], conditions = ['Indexed source/classpath contract; binary dependencies, compiler-generated declarations and runtime classloading are not executed'];
+        const proof = [...environment.proof, ...targets.flatMap(symbol => symbol.proof)], conditions = environment.conditions;
         if (targets.length)
             return { status: 'resolved', symbols: targets.sort((a, b) => a.id.localeCompare(b.id)), proof, conditions };
         // Local source packages do not prove an absent member is an external export.

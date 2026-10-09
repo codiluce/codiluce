@@ -5,12 +5,15 @@ import { JvmResolver, JVM_RESOLVER_VERSION } from '../resolution/jvm.js';
 import { JVM_PROJECT_VERSION } from '../resolution/jvm-projects.js';
 import { STRUCTURE_VERSION } from '../tree-sitter/analyzer.js';
 import { fileKey } from '../../pipeline/cache.js';
-export const JVM_IMPORT_VERSION = '1';
+import { JvmSymbols, JVM_SYMBOL_VERSION } from './jvm-symbols.js';
+import { SpringMvc } from '../frameworks/spring-mvc.js';
+import { SPRING_VERSION } from '../frameworks/spring-profile.js';
+export const JVM_IMPORT_VERSION = '2';
 export const jvmAnalyzer: Analyzer = { name: 'jvm-imports', version: JVM_IMPORT_VERSION, async analyze(context: AnalysisContext) {
         const files = [...context.files.values()].filter(file => ['java', 'kotlin'].includes(file.language ?? '') && file.analyzable).sort((a, b) => a.path.localeCompare(b.path, 'en'));
         if (!files.length)
             return;
-        const resolver = context.jvm = new JvmResolver(context), run = async () => {
+        const resolver = context.jvm = new JvmResolver(context), symbols = context.jvmSymbols = new JvmSymbols(context, resolver), run = async () => {
             context.graph.entities.get(context.repositoryId)!.metadata.jvmProjects = resolver.projects.describe();
             for (const file of files) {
                 const entity = context.graph.entities.get(file.id)!, analysis = fileAnalysis(entity.metadata.analysis), syntax = resolver.facts(file.path);
@@ -42,9 +45,11 @@ export const jvmAnalyzer: Analyzer = { name: 'jvm-imports', version: JVM_IMPORT_
                 for (const reason of new Set([...syntax.gaps, ...selection.project?.gaps ?? []]))
                     context.graph.diagnose({ analyzer: 'jvm-imports', severity: 'warning', code: 'jvm-project-gap', file: file.path, entityId: file.id, reason });
             }
+            symbols.analyze(files);
+            new SpringMvc(context,symbols).run(files);
         };
         if (context.cache)
-            await context.cache.unit(context, this.name, 'repository', { version: JVM_IMPORT_VERSION, syntax: STRUCTURE_VERSION, resolver: JVM_RESOLVER_VERSION, projects: JVM_PROJECT_VERSION, config: context.config, model: resolver.projects.describe(), availability: files.map(file => [file.path, resolver.facts(file.path)?.complete, context.graph.entities.get(file.id)?.metadata.analysis]), files: [...context.files.values()].filter(file => ['java', 'kotlin', 'xml', 'groovy', 'properties', 'toml'].includes(file.language ?? '')).map(file => fileKey(context, file.path)), paths: [...context.files.values()].map(file => [file.path, file.language, file.analyzable]), observed: [...context.fileInventory ?? []].sort(), directories: [...context.directoryInventory ?? []].sort() }, run);
+            await context.cache.unit(context, this.name, 'repository', { version: JVM_IMPORT_VERSION, symbols: JVM_SYMBOL_VERSION, spring:SPRING_VERSION, syntax: STRUCTURE_VERSION, resolver: JVM_RESOLVER_VERSION, projects: JVM_PROJECT_VERSION, config: context.config, model: resolver.projects.describe(), availability: files.map(file => [file.path, resolver.facts(file.path)?.complete, context.graph.entities.get(file.id)?.metadata.analysis]), files: [...context.files.values()].filter(file => ['java', 'kotlin', 'xml', 'groovy', 'properties', 'toml','yaml'].includes(file.language ?? '')).map(file => fileKey(context, file.path)), paths: [...context.files.values()].map(file => [file.path, file.language, file.analyzable]), observed: [...context.fileInventory ?? []].sort(), directories: [...context.directoryInventory ?? []].sort() }, run);
         else
             await run();
     } };

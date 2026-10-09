@@ -4,7 +4,7 @@ import { applicationAt } from '../../core/config.js';
 import { evidence, type Evidence } from '../../core/graph.js';
 import { IndexedSources } from '../indexed-sources.js';
 import { readPomXml, xmlChild, xmlChildren, xmlValue, jvmPath, gradleTokens, readGradleSettings, readGradleBuild, type XmlNode } from './jvm-manifest.js';
-export const JVM_PROJECT_VERSION = '1';
+export const JVM_PROJECT_VERSION = '2';
 export interface JvmDependency {
     path?: string;
     coordinate?: string;
@@ -424,10 +424,11 @@ export class JvmProjects {
     }
     classpath(project: JvmProject): {
         projects: JvmProject[];
+        artifacts: JvmDependency[];
         gaps: string[];
         proof: Evidence[];
     } {
-        const result = [project], gaps = [...project.gaps], proof = [...project.proof], queue = [{ project, depth: 0, excluded: [] as string[] }], seen = new Set([JSON.stringify([project.root, []])]), versions = new Map<string, string>();
+        const result = [project], artifacts: JvmDependency[] = [], gaps = [...project.gaps], proof = [...project.proof], queue = [{ project, depth: 0, excluded: [] as string[] }], seen = new Set([JSON.stringify([project.root, []])]), versions = new Map<string, string>();
         let steps = 0;
         while (queue.length) {
             const current = queue.shift()!;
@@ -453,6 +454,7 @@ export class JvmProjects {
                 }
                 if (dep.coordinate && current.excluded.includes(dep.coordinate.split(':').slice(0, 2).join(':')))
                     continue;
+                if (dep.coordinate && !dep.path) artifacts.push(dep);
                 if (!dep.path)
                     continue;
                 const target = this.at(dep.path);
@@ -471,7 +473,7 @@ export class JvmProjects {
                 queue.push({ project: target, depth: current.depth + 1, excluded });
             }
         }
-        return { projects: result, gaps: [...new Set(gaps)], proof };
+        return { projects: result, artifacts, gaps: [...new Set(gaps)], proof };
     }
     describe() { return this.projects.map(project => ({ ...project, managed: Object.fromEntries(project.managed), gaps: [...new Set(project.gaps)] })); }
 }

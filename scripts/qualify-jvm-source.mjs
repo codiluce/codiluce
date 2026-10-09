@@ -18,7 +18,7 @@ const source = path.resolve(option('--source'));
 const git = params => execFileSync('git', params, { cwd: source, encoding: 'utf8', maxBuffer: 16 << 20 });
 const commit = git(['rev-parse', '--verify', `${option('--commit')}^{commit}`]).trim();
 assert.equal(git(['rev-parse', 'HEAD']).trim(), commit, 'checkout must match the pinned commit');
-const files = git(['ls-files', '-z']).split('\0').filter(file => /\.(?:java|kt|kts|gradle|xml|properties|toml)$/.test(file));
+const files = git(['ls-files', '-z']).split('\0').filter(file => /\.(?:java|kt|kts|gradle|xml|properties|toml|ya?ml)$/.test(file));
 assert.ok(files.some(file => /\.(?:java|kt)$/.test(file)), 'tracked JVM sources are required');
 git(['diff', '--exit-code', commit, '--', ...files]);
 const temporary = await mkdtemp(path.join(tmpdir(), 'codiluce-jvm-source-'));
@@ -44,6 +44,10 @@ try {
   const identities = new Map(cold.entities.map(entity => [entity.id,entity]));
   const outcomes = units.flatMap(unit => (unit.metadata.importOutcomes ?? []).map(item => ({file:unit.path,...item})));
   const imports = cold.relations.filter(edge => edge.type === 'imports' && ['java','kotlin'].includes(identities.get(edge.from)?.language));
+  const calls = cold.relations.filter(edge => edge.type === 'calls' && edge.metadata?.adapter === 'jvm');
+  const endpoints = cold.entities.filter(entity => entity.type === 'api_endpoint' && entity.metadata.framework === 'spring-mvc');
+  for (const edge of calls) { assert.ok(files.includes(identities.get(edge.from)?.path));assert.ok(files.includes(identities.get(edge.to)?.path));assert.ok(edge.evidence.some(fact=>fact.analyzer==='jvm-symbols'&&files.includes(fact.file)&&fact.line>0)); }
+  for (const endpoint of endpoints) { assert.ok(files.includes(endpoint.path));assert.ok(cold.relations.some(edge=>edge.from===endpoint.id&&edge.type==='handles'&&files.includes(identities.get(edge.to)?.path))); }
   for (const edge of imports) {
     assert.ok(files.includes(identities.get(edge.to)?.path));
     assert.ok(edge.evidence.some(fact => fact.analyzer === 'jvm-imports' && files.includes(fact.file) && fact.line > 0));
@@ -60,11 +64,15 @@ try {
     declarations:cold.entities.filter(entity=>['java','kotlin'].includes(entity.language)&&['class','method','function'].includes(entity.type)).length,
     structure:count(units.map(unit=>unit.metadata.analysis?.features.structure.status)),
     imports:count(outcomes.map(item=>item.outcome.status)), importEdges:imports.length,
+    references:count(units.map(unit=>unit.metadata.analysis?.features.references.status)),
+    callOutcomes:count(units.flatMap(unit=>(unit.metadata.jvmCallOutcomes??[]).map(item=>item.status))),callEdges:calls.length,
+    springEndpoints:endpoints.length,constrainedSpringEndpoints:endpoints.filter(endpoint=>endpoint.metadata.constraintsUnresolved).length,
+    springProfiles:cold.entities.find(entity=>entity.type==='repository').metadata.springMvcProfiles,
     projects:cold.entities.find(entity=>entity.type==='repository').metadata.jvmProjects,
     diagnostics:count(cold.diagnostics.filter(item=>item.analyzer==='jvm-imports').map(item=>item.reason)),
     samples:outcomes.slice(0,40).map(item=>({file:item.file,line:item.range.startLine,specifier:item.specifier,status:item.outcome.status,reason:item.outcome.reason})),
     cacheEqual:true, revisionEqual:true,
-    boundary:'Unchanged tracked source integration under recorded inputs; no binary resolution, target builds/plugins, call/routing accuracy or runtime certification',
+    boundary:'Unchanged tracked source integration under recorded inputs; counts do not certify general compiler/call/routing accuracy, binary resolution or runtime behavior; target builds/plugins never execute',
   };
   const json = JSON.stringify(result,null,2);
   if (option('--output')) await writeFile(path.resolve(option('--output')),json+'\n');

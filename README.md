@@ -79,7 +79,13 @@ yours? [Tell us](https://github.com/codiluce/codiluce/issues).
 Java and Kotlin now resolve original local import declarations within selected Maven reactors, literal Gradle projects
 and recorded source/classpath inputs. Explicit, wildcard, static and alias imports retain source evidence and visibility
 constraints. Unknown build configuration, excluded sources, binary classpaths and competing declarations stay visible.
-JVM calls, Spring routing and C#/ASP.NET import/routing analysis remain planned.
+Scoped Java/Kotlin references now bind original types and exact signatures for direct static/private/final/concrete calls,
+with separate original lambda ownership. Virtual/inherited/generic dispatch, generated constructors and injection retain gaps.
+The initial Spring MVC pack supports selected Spring 6.2/7.0 and Boot 3.5/4.0 profiles, resolved controller/mapping annotations,
+class/method path arrays, original constant paths, recorded or entry-configuration component scans, direct original handlers,
+literal servlet prefixes and bounded PathPattern matching. Parameter restrictions and HTTP HEAD/OPTIONS remain distinct;
+unknown headers, negotiation, profiles, custom configuration and registrations stay constrained. Plain Spring is detected
+alongside Boot. No target JVM compiler, build, dependency, plugin or application runs. WebFlux and C#/ASP.NET remain planned.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original
 component source locations. Module and instance scopes stay distinct; Astro server and client scripts retain separate contexts.

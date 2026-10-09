@@ -1,3 +1,4 @@
+import { extractJvmSemantic } from './jvm-semantic.js';
 import type { Node } from 'web-tree-sitter';
 import type { DeclarationFact, JvmSyntaxFacts } from '../facts.js';
 import type { SourceText } from '../source-map.js';
@@ -43,5 +44,7 @@ export function extractJvm(root: Node, language: string, declarations: Declarati
         const qualifiedName = path(declaration.qualifiedName);
         facts.declarations.push({ key: declaration.key, name: path(declaration.name), qualifiedName, ...(declaration.parent ? { parent: declaration.parent } : {}), importable, static: isStatic, visibility, ...(local ? { reason: 'Local declaration is outside package import scope' } : companion ? { reason: 'Companion/JVM bridge import requires a reviewed interop summary' } : {}) });
     }
+    facts.semantic = extractJvmSemantic(root,language,declarations,source);
+    facts.complete &&= facts.semantic.complete;
     return facts;
 }

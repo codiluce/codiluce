@@ -53,7 +53,7 @@ const TOOLING_GEMS = /^(fastlane|cocoapods(-.+)?|danger|xcpretty|xcodeproj|xcov|
 const GO: Record<string, string> = { 'github.com/gin-gonic/gin': 'gin', 'github.com/labstack/echo': 'echo', 'github.com/go-chi/chi': 'chi', 'github.com/gofiber/fiber': 'fiber', 'github.com/gorilla/mux': 'gorilla-mux' };
 const RUST: Record<string, string> = { axum: 'axum', 'actix-web': 'actix-web', rocket: 'rocket', warp: 'warp', tauri: 'tauri' };
 const JVM: [RegExp, string][] = [
-  [/org\.springframework\.boot/, 'spring-boot'], [/io\.quarkus/, 'quarkus'], [/io\.micronaut/, 'micronaut'], [/io\.ktor/, 'ktor'],
+  [/org\.springframework\.boot/, 'spring-boot'], [/org\.springframework(?=[:'"<\s])/, 'spring'], [/io\.quarkus/, 'quarkus'], [/io\.micronaut/, 'micronaut'], [/io\.ktor/, 'ktor'],
   [/com\.android\.(application|library)|plugins\.android\.(application|library)/, 'android'], [/com\.typesafe\.play|org\.playframework/, 'play'],
   [/akka-http/, 'akka-http'], [/http4s/, 'http4s'],
 ];

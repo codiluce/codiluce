@@ -6,8 +6,9 @@ import { routingContract, matchRoutePattern } from '../analysis/routes/contracts
 import { configuredProxy, proxyPath, relativeApiBoundary, requestApplication } from '../analysis/routes/boundaries.js';
 import { preferGoRoutes } from '../analysis/routes/go-patterns.js';
 import { preferRailsRoutes } from '../analysis/routes/rails-patterns.js';
+import { preferSpringRoutes, matchSpringParams } from '../analysis/routes/spring-patterns.js';
 export const apiMatcher: Analyzer = {
-  name: 'api-matcher', version: `${ANALYZER_VERSION}:9`,
+  name: 'api-matcher', version: `${ANALYZER_VERSION}:10`,
   async analyze(context: AnalysisContext): Promise<void> {
     const endpoints = [...context.graph.entities.values()].filter(entity => entity.type === 'api_endpoint');
     const appsById = new Map(context.config.applications.map(app => [context.applicationIds.get(app.name), app]));
@@ -18,7 +19,7 @@ export const apiMatcher: Analyzer = {
     const layers = (endpoint: Entity) => { const contract = contracts.get(endpoint.id); return contract ? [contract, ...contract.guards ?? []] : []; };
     const observedConstraints = (endpoint: Entity, origin?: string, query?: URLSearchParams): boolean => layers(endpoint).every(contract => {
       if (origin) { const url = new URL(origin), host = contract.hostAuthority ? url.host : url.hostname; if (contract.host && contract.host !== host || contract.excludedHosts?.includes(host) || contract.schemes && !contract.schemes.includes(url.protocol.slice(0, -1))) return false; }
-      return !query || (contract.queries ?? []).every(item => query.has(item.name) && (item.value === undefined || query.get(item.name) === item.value));
+      return !query || (contract.queries ?? []).every(item => query.has(item.name) && (item.value === undefined || query.get(item.name) === item.value)) && matchSpringParams(contract,query);
     });
     const needsOrigin = (endpoint: Entity) => layers(endpoint).some(contract => contract.host || contract.excludedHosts?.length || contract.schemes?.length);
     const matchPath = (endpoint: Entity, path: string, strict = true): boolean => {
@@ -71,7 +72,7 @@ export const apiMatcher: Analyzer = {
         const action = contracts.get(endpoint.id)?.action;
         return observedConstraints(endpoint, origin, new URLSearchParams(search)) && (!action || (action.name === 'default' ? selectors.length === 0 : selectors.length === 1 && selectors[0] === `/${action.name}`)) && (!proxy || appFor(endpoint)?.name === proxy.target) && matchPath(endpoint, proxy ? proxyPath(proxy, pathname) : pathname);
       });
-      if (origin || !candidates.some(needsOrigin)) candidates = preferRailsRoutes(preferGoRoutes(candidates, endpoint => contracts.get(endpoint.id), observation.method), endpoint => contracts.get(endpoint.id), observation.method);
+      if (origin || !candidates.some(needsOrigin)) candidates = preferSpringRoutes(preferRailsRoutes(preferGoRoutes(candidates, endpoint => contracts.get(endpoint.id), observation.method), endpoint => contracts.get(endpoint.id), observation.method),endpoint=>contracts.get(endpoint.id),observation.method);
       // Keep constrained candidates in ambiguity detection: ignoring one could
       // falsely select another route with the same HTTP method/path.
       if (candidates.length !== 1 || candidates[0]!.metadata.constraintsUnresolved || !origin && needsOrigin(candidates[0]!)) {
@@ -121,11 +122,11 @@ export const apiMatcher: Analyzer = {
       const pattern = proxy ? proxyPath(proxy, resolved.pattern) : resolved.pattern;
       const scoped = proxy ? eligible.filter(endpoint => appFor(endpoint)?.name === proxy.target) : eligible;
       // A dynamic path summary does not prove a form action query selector.
-      const hostKnown = (endpoint: Entity) => { if (layers(endpoint).some(contract => contract.queries?.length)) return false; if (!needsOrigin(endpoint)) return true; const origins = resolved.app ? appFor(endpoint)?.apiOrigins : undefined; return !!origins?.length && origins.every(origin => observedConstraints(endpoint, origin)); };
+      const hostKnown = (endpoint: Entity) => { if (layers(endpoint).some(contract => contract.queries?.length||contract.spring?.params.length)) return false; if (!needsOrigin(endpoint)) return true; const origins = resolved.app ? appFor(endpoint)?.apiOrigins : undefined; return !!origins?.length && origins.every(origin => observedConstraints(endpoint, origin)); };
       const candidates = scoped.filter(endpoint => !needsOrigin(endpoint) || !resolved.app || !appFor(endpoint)?.apiOrigins?.length || appFor(endpoint)!.apiOrigins!.some(origin => observedConstraints(endpoint, origin)));
       let strict = candidates.filter(endpoint => !contracts.get(endpoint.id)?.action && matchPath(endpoint, pattern));
       let loose = candidates.filter(endpoint => !contracts.get(endpoint.id)?.action && matchPath(endpoint, pattern, false));
-      if (!pattern.includes('{*}') && loose.every(hostKnown)) { strict = preferRailsRoutes(preferGoRoutes(strict, endpoint => contracts.get(endpoint.id), observation.method), endpoint => contracts.get(endpoint.id), observation.method); loose = preferRailsRoutes(preferGoRoutes(loose, endpoint => contracts.get(endpoint.id), observation.method), endpoint => contracts.get(endpoint.id), observation.method); }
+      if (!pattern.includes('{*}') && loose.every(hostKnown)) { strict = preferSpringRoutes(preferRailsRoutes(preferGoRoutes(strict, endpoint => contracts.get(endpoint.id), observation.method), endpoint => contracts.get(endpoint.id), observation.method),endpoint=>contracts.get(endpoint.id),observation.method); loose = preferSpringRoutes(preferRailsRoutes(preferGoRoutes(loose, endpoint => contracts.get(endpoint.id), observation.method), endpoint => contracts.get(endpoint.id), observation.method),endpoint=>contracts.get(endpoint.id),observation.method); }
       const label = `${observation.method} ${resolved.pattern}${resolved.app ? ` on ${resolved.app}` : ''}`;
       if (strict.length !== 1 || loose.length !== 1 || strict[0]!.metadata.constraintsUnresolved || strict[0] && !hostKnown(strict[0])) {
         const reason = loose.length > strict.length ? `${label}: a dynamic segment could also equal a literal route segment (${loose.filter(item => !strict.includes(item)).map(item => item.name).join(', ')})` : `${label}: ${strict.length} eligible endpoints${strict[0]?.metadata.constraintsUnresolved ? '; route constraints unresolved' : ''}`;

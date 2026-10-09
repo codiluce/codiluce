@@ -98,7 +98,35 @@ export interface RubyGapFact extends RubySite { scope: string; kind: 'path' | 'l
 export interface RubySyntaxFacts { scopes: RubyScopeFact[]; definitions: RubyDefinitionFact[]; calls: RubyCallFact[]; locals: RubyLocalFact[]; assignments: RubyAssignmentFact[]; references: RubyReferenceFact[]; gaps: RubyGapFact[]; complete: boolean }
 export interface JvmImportFact { specifier: string; kind: 'single' | 'star' | 'static' | 'static-star'; alias?: string; start: number; end: number; range: SourceRange }
 export interface JvmDeclarationFact { key: string; name: string; qualifiedName: string; parent?: string; importable: boolean; static: boolean; visibility: string; reason?: string }
-export interface JvmSyntaxFacts { package: string; imports: JvmImportFact[]; declarations: JvmDeclarationFact[]; complete: boolean; module?: string; gaps: string[] }
+export interface JvmSite { start: number; end: number; range: SourceRange }
+export type JvmExpression = JvmSite & (
+  | { kind: 'name'; name: string }
+  | { kind: 'literal'; value: string | number | boolean | null; literalType?: string }
+  | { kind: 'member'; object: JvmExpression; name: string; safe?: boolean }
+  | { kind: 'call'; callee: JvmExpression; args: JvmArgument[]; typeArguments?: boolean }
+  | { kind: 'new'; type: JvmExpression; args: JvmArgument[]; anonymous?: boolean }
+  | { kind: 'array'; items: JvmExpression[] }
+  | { kind: 'binary'; operator: string; left: JvmExpression; right: JvmExpression }
+  | { kind: 'unary'; operator: string; object: JvmExpression }
+  | { kind: 'index'; object: JvmExpression; index?: JvmExpression }
+  | { kind: 'cast'; type: JvmExpression; value: JvmExpression }
+  | { kind: 'class'; type: JvmExpression }
+  | { kind: 'method-reference'; object?: JvmExpression; name: string }
+  | { kind: 'lambda'; key: string }
+  | { kind: 'unknown'; text: string }
+);
+export interface JvmArgument { name?: string; value: JvmExpression; spread?: boolean }
+export interface JvmAnnotationFact extends JvmSite { type: JvmExpression; args: JvmArgument[]; target?: string }
+export interface JvmScopeFact extends JvmSite { key: string; parent?: string; owner?: string; kind: 'file'|'type'|'function'|'initializer'|'lambda'|'block'|'control'|'opaque'; conditional?: string; deferred?: boolean; gaps: string[] }
+export interface JvmParameterFact { name?: string; type?: JvmExpression; default?: JvmExpression; variadic?: boolean; property?: boolean; annotations: JvmAnnotationFact[] }
+export interface JvmDefinitionFact extends JvmSite { key: string; name: string; kind: string; scope: string; bodyScope?: string; typeScope?: string; parent?: string; parameters: JvmParameterFact[]; returnType?: JvmExpression; receiverType?: JvmExpression; bases: JvmExpression[]; typeParameters: string[]; annotations: JvmAnnotationFact[]; value?: JvmExpression; immutable?: boolean; modifiers: string[]; gaps: string[] }
+export interface JvmBindingFact extends JvmSite { name: string; scope: string; declaration?: string; kind: 'parameter'|'local'|'loop'|'catch'|'pattern'; type?: JvmExpression; value?: JvmExpression; immutable: boolean }
+export interface JvmWriteFact extends JvmSite { scope: string; target: JvmExpression; value?: JvmExpression; operator: string }
+export interface JvmReferenceFact extends JvmSite { scope: string; expression: JvmExpression; kind: 'value'|'type'|'method-reference' }
+export interface JvmCallFact extends JvmSite { scope: string; expression: JvmExpression; kind: 'call'|'new'|'super'|'this' }
+export interface JvmReturnFact extends JvmSite { scope: string; value: JvmExpression }
+export interface JvmSemanticFacts { scopes: JvmScopeFact[]; definitions: JvmDefinitionFact[]; bindings: JvmBindingFact[]; writes: JvmWriteFact[]; references: JvmReferenceFact[]; calls: JvmCallFact[]; returns: JvmReturnFact[]; complete: boolean; gaps: string[] }
+export interface JvmSyntaxFacts { package: string; imports: JvmImportFact[]; declarations: JvmDeclarationFact[]; complete: boolean; module?: string; gaps: string[]; semantic?: JvmSemanticFacts }
 export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts }
 export interface ImportBinding { imported: string; local: string; typeOnly?: boolean }
 export type ImportOutcome =
