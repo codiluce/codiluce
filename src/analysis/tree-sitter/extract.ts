@@ -6,12 +6,13 @@ import { extractGoImports } from './go-imports.js';
 import { extractGoSemantic } from './go-syntax.js';
 import { extractRubySemantic } from './ruby-syntax.js';
 import { extractJvm } from './jvm-syntax.js';
+import { extractCsharp } from './csharp-syntax.js';
 
 const MAX_DECLARATIONS = 20_000, MAX_ISSUES = 100, MAX_NODES = 200_000;
 const compact = (text: string) => text.replace(/\s+/g, ' ').trim();
 const FIELD_BODIES = new Set(['block', 'body_statement', 'class_body', 'declaration_list', 'field_declaration_list', 'enum_body', 'function_body', 'arrow_expression_clause', 'constructor_body', 'accessor_list']);
 const CALLABLES = new Set(['function', 'method', 'constructor']);
-class GoOriginalSource extends SourceText {
+class ParserOriginalSource extends SourceText {
   override range(start: number, end: number) {
     // Only the parser's optional one-character EOF suffix is permitted.
     if (start > this.text.length + 1 || end > this.text.length + 1) return super.range(start, end);
@@ -55,6 +56,7 @@ function signature(node: Node, name: Node, kind: string): string {
   return compact(node.text.slice(name.endIndex - node.startIndex, end - node.startIndex)).slice(0, 1200);
 }
 function modifiers(node: Node): string[] {
+  if (node.type === 'variable_declarator' && node.parent?.type === 'variable_declaration' && node.parent.parent?.type === 'field_declaration') return modifiers(node.parent.parent);
   if (node.type === 'variable_declarator' && ['field_declaration','constant_declaration'].includes(node.parent?.type ?? '')) return modifiers(node.parent!);
   const values = node.namedChildren.filter(item => ['modifiers', 'modifier', 'visibility_modifier'].includes(item.type));
   return [...values.flatMap(item => (item.type === 'modifiers' ? item.children : [item])).filter(item => !/annotation|attribute/.test(item.type)).map(item => compact(item.text)),
@@ -76,7 +78,7 @@ function annotations(node: Node): string[] {
 interface Captured { node: Node; name: Node; kind: string }
 
 export function extractStructure(root: Node, query: Query, language: string, content: string): StructureFacts {
-  const source = language === 'go' ? new GoOriginalSource(content) : new SourceText(content), issues: ParseIssue[] = [];
+  const source = ['go','csharp'].includes(language) ? new ParserOriginalSource(content) : new SourceText(content), issues: ParseIssue[] = [];
   const damaged: { start: number; end: number }[] = [];
   let truncated = false, visited = 0;
   const queue = [root];
@@ -165,9 +167,11 @@ export function extractStructure(root: Node, query: Query, language: string, con
   const goSemantic = language === 'go' ? extractGoSemantic(root, declarations, source) : undefined;
   const ruby = language === 'ruby' ? extractRubySemantic(root, declarations, source) : undefined;
   const jvm = ['java','kotlin'].includes(language) ? extractJvm(root, language, declarations, source) : undefined;
+  const csharp = language === 'csharp' ? extractCsharp(root, declarations, source) : undefined;
   if (go && goSemantic) go.facts.semantic = goSemantic.facts;
   truncated ||= (python?.truncated ?? false) || (go?.truncated ?? false) || (goSemantic?.truncated ?? false) || (ruby?.truncated ?? false);
   if (jvm && truncated) jvm.complete = false;
+  if (csharp && truncated) csharp.complete = false;
   if (truncated) issues.push({ code: 'syntax-budget-exceeded', reason: 'Structural extraction reached its node, declaration, diagnostic or query limit' });
-  return { declarations, issues, truncated, ...(python ? { python: python.facts } : {}), ...(go ? { go: go.facts } : {}), ...(ruby ? { ruby: ruby.facts } : {}), ...(jvm ? {jvm} : {}) };
+  return { declarations, issues, truncated, ...(python ? { python: python.facts } : {}), ...(go ? { go: go.facts } : {}), ...(ruby ? { ruby: ruby.facts } : {}), ...(jvm ? {jvm} : {}), ...(csharp ? {csharp} : {}) };
 }

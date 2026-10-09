@@ -128,7 +128,10 @@ export interface JvmCallFact extends JvmSite { scope: string; expression: JvmExp
 export interface JvmReturnFact extends JvmSite { scope: string; value: JvmExpression }
 export interface JvmSemanticFacts { scopes: JvmScopeFact[]; definitions: JvmDefinitionFact[]; bindings: JvmBindingFact[]; writes: JvmWriteFact[]; references: JvmReferenceFact[]; calls: JvmCallFact[]; returns: JvmReturnFact[]; complete: boolean; gaps: string[] }
 export interface JvmSyntaxFacts { package: string; imports: JvmImportFact[]; declarations: JvmDeclarationFact[]; complete: boolean; module?: string; gaps: string[]; semantic?: JvmSemanticFacts }
-export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts }
+export interface CsharpImportFact { specifier: string; kind: 'namespace'|'static'|'alias'; alias?: string; global: boolean; namespace: string; scopeStart: number; scopeEnd: number; start: number; end: number; range: SourceRange }
+export interface CsharpDeclarationFact { key: string; name: string; qualifiedName: string; namespace: string; parent?: string; type: boolean; arity: number; partial: boolean; static: boolean; visibility: string; fileLocal: boolean; bases: string[] }
+export interface CsharpSyntaxFacts { imports: CsharpImportFact[]; declarations: CsharpDeclarationFact[]; namespaces: {name: string; start: number; range: SourceRange}[]; complete: boolean; gaps: string[] }
+export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts; csharp?: CsharpSyntaxFacts }
 export interface ImportBinding { imported: string; local: string; typeOnly?: boolean }
 export type ImportOutcome =
   | { status: 'resolved'; targets: string[]; proof: Evidence[] }

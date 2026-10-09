@@ -35,6 +35,8 @@ export interface SpringMvcConfig {
   routers?: string[];
 }
 export interface JvmConfig { sourceSet?: 'main' | 'test'; profiles?: string[]; dependencies?: string[]; spring?: SpringMvcConfig }
+/** Recorded MSBuild compilation inputs. Values never come from the host SDK/environment. */
+export interface DotnetConfig { project?: string; targetFramework?: string; configuration?: string; platform?: string; properties?: Record<string,string> }
 
 export interface ApplicationConfig {
   name: string; path: string;
@@ -58,6 +60,7 @@ export interface ApplicationConfig {
   go?: GoBuildConfig;
   ruby?: RubyRuntimeConfig;
   jvm?: JvmConfig;
+  dotnet?: DotnetConfig;
 }
 /** An application as configuration may give it: frameworks and ecosystems are completed from its manifests. */
 export type ApplicationInput = Omit<ApplicationConfig, 'frameworks' | 'ecosystems'> & {
@@ -246,6 +249,15 @@ export async function resolveConfig(root: string, raw: RawConfig): Promise<Atlas
   const names = new Set<string>();
   const paths = new Set<string>();
   for (const app of config.applications) {
+    if (app.dotnet !== undefined) {
+      const value = app.dotnet, scalar = (item: unknown) => typeof item === 'string' && /^[A-Za-z0-9_. +;-]{1,512}$/.test(item);
+      if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key=>!['project','targetFramework','configuration','platform','properties'].includes(key))
+        || value.project !== undefined && (typeof value.project !== 'string' || !value.project.endsWith('.csproj') || value.project.length > 2048 || /[\\\0$*?{}\[\]]/.test(value.project) || path.isAbsolute(value.project) || /^[A-Za-z]:/.test(value.project))
+        || value.targetFramework !== undefined && (typeof value.targetFramework !== 'string' || !/^net(?:standard|coreapp)?\d+(?:\.\d+)?(?:-[a-z0-9.]+)?$/.test(value.targetFramework))
+        || [value.configuration,value.platform].some(item=>item!==undefined&&!scalar(item))
+        || value.properties !== undefined && (!value.properties || typeof value.properties !== 'object' || Array.isArray(value.properties) || Object.keys(value.properties).length > 128 || Object.entries(value.properties).some(([key,item])=>!/^\w{1,128}$/.test(key)||/^MSBuild|^TargetFrameworks?$|^Configuration$|^Platform$/i.test(key)||!scalar(item)))) throw new Error('Invalid .NET compilation configuration');
+      if (value.project) repoPath(root,path.posix.join(app.path,value.project));
+    }
     if (app.jvm !== undefined) {
       const value = app.jvm;
       if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key => !['sourceSet','profiles','dependencies','spring'].includes(key)) || value.sourceSet !== undefined && !['main','test'].includes(value.sourceSet)

@@ -31,9 +31,10 @@ import { jvmAnalyzer } from '../analysis/languages/jvm.js';
 import { WEBFLUX_VERSION } from '../analysis/frameworks/spring-webflux.js';
 import { SPRING_VERSION } from '../analysis/frameworks/spring-profile.js';
 import { JVM_SYMBOL_VERSION } from '../analysis/languages/jvm-symbols.js';
+import { csharpAnalyzer } from '../analysis/languages/csharp.js';
 
 const execute = promisify(execFile);
-export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, structureAnalyzer, pythonAnalyzer, goAnalyzer, rubyAnalyzer, jvmAnalyzer, embeddedAnalyzer, typescriptAnalyzer, typescriptServicesRelease, laravelAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
+export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, structureAnalyzer, pythonAnalyzer, goAnalyzer, rubyAnalyzer, jvmAnalyzer, csharpAnalyzer, embeddedAnalyzer, typescriptAnalyzer, typescriptServicesRelease, laravelAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
 export interface IndexOptions {
   stateDirectory?: string; config?: AtlasConfig; onProgress?: (name: string) => void;
   /** Index a materialized commit tree: Git is not consulted and the run records this commit, clean. */

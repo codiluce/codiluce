@@ -8,3 +8,4 @@
 (method_declaration name: (identifier) @name) @declaration.method
 (constructor_declaration name: (identifier) @name) @declaration.constructor
 (property_declaration name: (identifier) @name) @declaration.property
+(field_declaration (variable_declaration (variable_declarator name: (identifier) @name) @declaration.property))

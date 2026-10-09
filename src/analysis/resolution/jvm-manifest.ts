@@ -5,9 +5,14 @@ export interface XmlNode {
     text: string;
     children: XmlNode[];
     start: number;
+    end?: number;
     attributes?: Record<string, string>;
 }
 export function readPomXml(text: string): XmlNode | undefined {
+    return readXmlData(text, 'project', 'http://maven.apache.org/POM/4.0.0');
+}
+/** A data-only reader shared by Maven and MSBuild; namespace/root are explicit. */
+export function readXmlData(text: string, root: string, namespace: string): XmlNode | undefined {
     if (text.length > 1 << 20 || /<!DOCTYPE|<!ENTITY/i.test(text))
         return;
     const document: XmlNode = { name: '', text: '', children: [], start: 0 }, stack = [document];
@@ -53,6 +58,7 @@ export function readPomXml(text: string): XmlNode | undefined {
         if (close) {
             if (attrs || self || stack.length === 1 || stack.at(-1)!.name !== name)
                 return;
+            stack.at(-1)!.end = offset + match[0].length;
             stack.pop();
         }
         else {
@@ -62,16 +68,16 @@ export function readPomXml(text: string): XmlNode | undefined {
                     return;
                 attributes[attribute[1]!] = decode(attribute[3]!);
             }
-            if (attributes.xmlns && attributes.xmlns !== 'http://maven.apache.org/POM/4.0.0')
+            if (attributes.xmlns && attributes.xmlns !== namespace)
                 return;
-            const node: XmlNode = { name: name!, text: '', children: [], start: offset, attributes };
+            const node: XmlNode = { name: name!, text: '', children: [], start: offset, ...(self ? {end: offset + match[0].length} : {}), attributes };
             stack.at(-1)!.children.push(node);
             if (!self)
                 stack.push(node);
         }
         offset += match[0].length;
     }
-    if (stack.length !== 1 || document.children.length !== 1 || document.text.trim() || document.children[0]!.name !== 'project')
+    if (stack.length !== 1 || document.children.length !== 1 || document.text.trim() || document.children[0]!.name !== root)
         return;
     return document.children[0];
 }
