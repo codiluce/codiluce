@@ -1,3 +1,4 @@
+import { normalizeFetchMethod } from '../routes/http-method.js';
 import ts from 'typescript';
 import path from 'node:path';
 import type { ScannedFile } from '../../core/analyzer.js';
@@ -18,7 +19,7 @@ import { nuxtFetchPath } from '../../analyzers/ts-http.js';
 
 type Bound = { node: ts.Expression | ts.MethodDeclaration; frame: TypeScriptPackFile };
 export const vuePack: TypeScriptFrameworkPack = {
-  id: 'vue', version: '1.0.1', includeEmbedded: true,
+  id: 'vue', version: '1.0.2', includeEmbedded: true,
   applies: scope => !!scope.inputs?.some(file => file.language === 'vue') || scope.files.some(frame => frame.runtime.project.dependencies['vue-router'] !== undefined),
   declare(scope): void {
     const reader = new VueStatic(scope);
@@ -229,7 +230,7 @@ class VueComponent {
     const url = call.arguments[0], options = call.arguments[1];
     if ((globalFetch || nuxt) && options) {
       if (!ts.isObjectLiteralExpression(options) || options.properties.some(property => !ts.isPropertyAssignment(property) || !propertyName(property.name))) method = undefined;
-      else for (const property of options.properties) if (ts.isPropertyAssignment(property)) { if (propertyName(property.name) === 'method') method = ts.isStringLiteralLike(property.initializer) ? property.initializer.text.toUpperCase() : undefined; else if (nuxt && !['body', 'headers', 'credentials', 'query', 'params', 'retry', 'timeout'].includes(propertyName(property.name)!)) method = undefined; }
+      else for (const property of options.properties) if (ts.isPropertyAssignment(property)) { if (propertyName(property.name) === 'method') method = ts.isStringLiteralLike(property.initializer) ? normalizeFetchMethod(nuxt ? property.initializer.text.toUpperCase() : property.initializer.text) : undefined; else if (nuxt && !['body', 'headers', 'credentials', 'query', 'params', 'retry', 'timeout'].includes(propertyName(property.name)!)) method = undefined; }
     }
     const start = site.start + call.getStart(parsed), end = site.start + call.end;
     if (!method || !url || !ts.isStringLiteralLike(url) || call.arguments.some(ts.isSpreadElement)) { this.gap(start, 'Template HTTP call requires a literal URL and method', 'vue-template-http-gap'); return true; }

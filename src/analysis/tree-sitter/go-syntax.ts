@@ -10,7 +10,7 @@ export function extractGoSemantic(root: Node, declarations: DeclarationFact[], s
   let visited = 0, truncated = false;
   const site = (node: Node) => ({ start: node.startIndex, range: source.range(node.startIndex, node.endIndex) });
   const field = (node: Node, name: string) => node.childForFieldName(name) ?? undefined;
-  const items = (node: Node | undefined) => node?.namedChildren ?? [];
+  const items = (node: Node | undefined) => node?.namedChildren.filter(child => child.type !== 'comment') ?? [];
   const limit = () => { if (++visited > 200_000) truncated = true; return !truncated; };
   const unknown = (node: Node): GoExpression => ({ ...site(node), kind: 'unknown', text: node.text.slice(0, 200) });
   function expression(node: Node | undefined, depth = 0): GoExpression {
@@ -40,9 +40,11 @@ export function extractGoSemantic(root: Node, declarations: DeclarationFact[], s
       default: return unknown(node);
     }
   }
-  function scope(node: Node, parent: string | undefined, kind: GoSemanticFacts['scopes'][number]['kind'], owner?: string): string {
-    const key = `${kind}:${node.startIndex}:${node.endIndex}`;
-    facts.scopes.push({ key, parent, kind, owner, start: node.startIndex, end: Math.min(node.endIndex, source.text.length), ...(['control', 'case'].includes(kind) ? { conditional: `${node.type} at line ${source.range(node.startIndex, node.startIndex).startLine}` } : {}) }); return key;
+  function scope(node: Node, parent: string | undefined, kind: GoSemanticFacts['scopes'][number]['kind'], owner?: string, conditional: boolean | string = true): string {
+    // An else-if has both its outer branch scope and its own control scope.
+    // Keep their identities distinct so the parent chain cannot point to self.
+    const key = `${kind}:${node.startIndex}:${node.endIndex}${typeof conditional === 'string' ? ':branch' : ''}`;
+    facts.scopes.push({ key, parent, kind, owner, start: node.startIndex, end: Math.min(node.endIndex, source.text.length), ...(conditional && ['control', 'case'].includes(kind) ? { conditional: typeof conditional === 'string' ? conditional : `${node.type} at line ${source.range(node.startIndex, node.startIndex).startLine}` } : {}) }); return key;
   }
   function parameters(node: Node | undefined): GoParameterFact[] {
     if (!node) return [];
@@ -121,7 +123,12 @@ export function extractGoSemantic(root: Node, declarations: DeclarationFact[], s
       case 'function_declaration': case 'method_declaration': case 'type_spec': case 'type_alias': case 'func_literal': definition(node, current); return;
       case 'block': { const inner = scope(node, current, 'block'); items(node).forEach(child => walk(child, inner)); return; }
       case 'if_statement': case 'for_statement': case 'expression_switch_statement': case 'type_switch_statement': case 'select_statement': {
-        const inner = scope(node, current, 'control');
+        const inner = scope(node, current, 'control', undefined, !['if_statement', 'expression_switch_statement', 'type_switch_statement'].includes(node.type));
+        if (node.type === 'if_statement') {
+          const consequence = field(node, 'consequence'), alternative = field(node, 'alternative'), reason = `if_statement at line ${source.range(node.startIndex, node.startIndex).startLine}`;
+          for (const child of items(node)) walk(child, child.id === consequence?.id || child.id === alternative?.id ? scope(child, inner, 'control', undefined, reason) : inner);
+          return;
+        }
         if (node.type === 'type_switch_statement') {
           const value = field(node, 'value'); if (value) read(value, inner);
           for (const child of node.namedChildren) {

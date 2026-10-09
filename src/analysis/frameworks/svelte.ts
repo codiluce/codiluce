@@ -1,3 +1,4 @@
+import { normalizeFetchMethod } from '../routes/http-method.js';
 import ts from 'typescript';
 import type { AST } from 'svelte/compiler';
 import type { ScannedFile } from '../../core/analyzer.js';
@@ -30,7 +31,7 @@ const names = (value: unknown): string[] => {
 const nameOf = (node: Js | undefined): string | undefined => !node ? undefined : node.type === 'Identifier' ? String(node.name) : node.type === 'MemberExpression' ? nameOf(js(node.object)) && (node.computed ? js(node.property)?.type === 'Literal' && typeof js(node.property)?.value === 'string' ? `${nameOf(js(node.object))}.${js(node.property)!.value}` : undefined : `${nameOf(js(node.object))}.${js(node.property)?.name}`) : node.type === 'ChainExpression' ? nameOf(js(node.expression)) : undefined;
 
 export const sveltePack: TypeScriptFrameworkPack = {
-  id: 'svelte-sveltekit', version: '1.0.1:parser-5.57.2', includeEmbedded: true,
+  id: 'svelte-sveltekit', version: '1.0.2:parser-5.57.2', includeEmbedded: true,
   applies: scope => !!scope.inputs?.some(file => file.language === 'svelte') || scope.files.some(frame => frame.runtime.project.dependencies['@sveltejs/kit'] !== undefined),
   async declare(scope) {
     const reader = new TypeScriptStatic(scope, 'svelte', ['svelte', '@sveltejs/kit', '@sveltejs/kit/vite']);
@@ -259,7 +260,7 @@ class SvelteComponent {
       for (const item of options.properties as unknown[]) {
         const property = js(item), key = js(property?.key), value = js(property?.value);
         if (!property || property.type !== 'Property' || property.computed) { method = undefined; break; }
-        if (key?.name === 'method' || key?.value === 'method') method = typeof value?.value === 'string' ? value.value.toUpperCase() : undefined;
+        if (key?.name === 'method' || key?.value === 'method') method = normalizeFetchMethod(value?.value);
       }
     }
     if (!method || url?.type !== 'Literal' || typeof url.value !== 'string') { this.gap(node.start, 'Dynamic template HTTP URL/method requires a value summary', 'svelte-http-gap'); return true; }

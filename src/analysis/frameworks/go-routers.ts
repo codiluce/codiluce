@@ -8,7 +8,7 @@ import { composeRoutePath, type RoutingContract } from '../routes/contracts.js';
 import { compileChiPath, compileGinPath, compileGoMux, compileEchoPath, compileFiberPath, compileGorillaPath, goPatternsOverlap, goRouteSubset } from '../routes/go-patterns.js';
 import { goMuxProfile } from './go-profile.js';
 
-export const GO_ROUTER_VERSION = '2.0.0';
+export const GO_ROUTER_VERSION = '2.1.0';
 type Framework = 'net-http' | 'chi' | 'gin' | 'echo' | 'fiber' | 'gorilla';
 interface RoutingOptions { caseSensitive?: boolean; strict?: boolean; unescape?: boolean; encoded?: boolean; skipClean?: boolean; disableHead?: boolean; methods?: string[]; noGroup404?: boolean }
 interface Site { file: string; start: number; range: SourceRange }
@@ -37,12 +37,14 @@ export class GoRegistrations {
   private readonly ordinals = new Map<string, number>();
   private readonly defaults = new Map<string, Receiver>();
   private readonly stopped = new Set<string>();
+  private readonly servingCalls = new Set<string>();
   private readonly runtimeConditions = new Map<string, string[]>();
   private steps = 0;
   constructor(private readonly context: AnalysisContext, private readonly symbols: GoSymbols) {}
   private fact(site: Site, reason: string): Evidence { return { ...evidence('framework', 'go-routers', site.file, site.range.startLine, reason), analyzerVersion: GO_ROUTER_VERSION, endLine: site.range.endLine }; }
   private issue(site: Site, reason: string, code = 'registration-gap'): void { this.context.graph.diagnose({ analyzer: 'go-routers', severity: 'warning', code: `go-${code}`, file: site.file, line: site.range.startLine, entityId: this.context.files.get(site.file)?.id, reason }); }
   private ordinal(key: string): number { const value = this.ordinals.get(key) ?? 0; this.ordinals.set(key, value + 1); return value; }
+  private callKey(env: Environment, site: Site): string { return JSON.stringify([env.runtime, env.instance, site.file, site.start]); }
   private local(env: Environment, file: string, scope: string): Environment { return { ...env, file, scope }; }
   private scopeOwner(facts: GoSemanticFacts, scope: string): string | undefined { let current = facts.scopes.find(item => item.key === scope); while (current) { if (current.owner) return current.owner; current = facts.scopes.find(item => item.key === current?.parent); } return undefined; }
   private conditions(env: Environment, scope: string): string[] {
@@ -137,7 +139,7 @@ export class GoRegistrations {
       const binding = this.symbols.sourceBinding(env.file, expression, env.scope, env.origin);
       if (binding) {
         const parameter = env.parameters.get(`${binding.file}:${binding.fact.scope}:${binding.fact.name}`);
-        if (parameter !== undefined) { if (binding.mutable) { if (is(parameter, 'receiver')) parameter.root.conditions.push('Helper parameter reassigns/exposes its router identity'); else return undefined; } return parameter; }
+        if (parameter !== undefined) { if (binding.mutable) { if (is(parameter, 'receiver')) parameter.root.conditions.push('Helper parameter reassigns/exposes its router identity'); else if (is(parameter, 'route')) parameter.entry.conditions.push('Helper parameter reassigns/exposes its route builder identity'); else return undefined; } return parameter; }
         const key = this.bindingKey(env, binding.file, binding.fact);
         if (!this.values.has(key) && binding.fact.value && !this.active.has(key)) {
           this.active.add(key); const local = this.local(env, binding.file, binding.fact.scope), value = this.evaluate(binding.fact.value, local, depth + 1); this.values.set(key, value); this.active.delete(key);
@@ -178,7 +180,9 @@ export class GoRegistrations {
     if (bound(callee) && (callee.kind === 'builtin' && callee.name === 'panic' || callee.kind === 'external' && (callee.specifier === 'os' && callee.members.join('.') === 'Exit' || callee.specifier === 'log' && ['Fatal', 'Fatalf', 'Fatalln'].includes(callee.members.join('.'))))) {
       const conditions = this.conditions(env, env.scope);
       if (!conditions.length) this.stopped.add(env.runtime);
-      this.runtimeConditions.set(env.runtime, [...this.runtimeConditions.get(env.runtime) ?? [], 'Reachable program termination can prevent router serving']);
+      // Termination evaluates its arguments first. A known native serving call
+      // in an argument has already exposed its router before it returns.
+      if (!expression.args.some(arg => arg.kind === 'call' && this.servingCalls.has(this.callKey(env, { file: env.file, ...arg })))) this.runtimeConditions.set(env.runtime, [...this.runtimeConditions.get(env.runtime) ?? [], 'Reachable program termination can prevent router serving']);
       return undefined;
     }
     if (bound(callee) && callee.kind === 'external') {
@@ -336,7 +340,7 @@ export class GoRegistrations {
     receiver.proof.push(this.fact(site, 'Indexed literal routing configuration'));
   }
   private fresh(receiver: Receiver, env: Environment, site: Site): Entry {
-    const entry: Entry = { site, path: receiver.base || '/', methods: '*', host: receiver.host, middleware: [...receiver.middleware], conditions: unique([...receiver.conditions, ...this.conditions(env, env.scope)]), proof: [this.fact(site, `Qualified ${receiver.framework} registration builder`)], order: receiver.root.entries.length, profile: receiver.modern, options: { ...receiver.options }, prefix: true };
+    const entry: Entry = { site, path: receiver.base || '/', methods: '*', host: receiver.host, middleware: [...receiver.middleware], conditions: unique([...receiver.conditions, ...this.conditions(env, env.scope), ...receiver.root.exposed ? ['Registration after a serving call requires startup-order proof'] : []]), proof: [this.fact(site, `Qualified ${receiver.framework} registration builder`)], order: receiver.root.entries.length, profile: receiver.modern, options: { ...receiver.options }, prefix: true };
     entry.disabled = true; receiver.root.entries.push(entry); this.touch(site, receiver.framework); return entry;
   }
   private groupPath(base: string, child: string): string { return child ? `${base.replace(/\/+$/, '')}${child.startsWith('/') ? '' : '/'}${child}` : base || '/'; }
@@ -444,6 +448,7 @@ export class GoRegistrations {
   }
   private routeOperation(route: RouteValue, method: string, args: Value[], raw: GoExpression[], env: Environment, site: Site): Value {
     const { receiver, entry } = route;
+    if (receiver.root.exposed) entry.conditions.push('Route builder mutation after a serving call requires startup-order proof');
     if (route.chain) {
       if (method === 'Name') return route;
       if (!['Add', 'All', 'Get', 'Head', 'Post', 'Put', 'Delete', 'Patch', 'Options', 'Connect', 'Trace', 'Query'].includes(method)) { receiver.root.conditions.push(`Unreviewed Fiber chain operation ${method}`); return route; }
@@ -467,7 +472,7 @@ export class GoRegistrations {
   }
   private ginJoin(base: string, child: string): string { const pathValue = path.posix.join(base || '/', child).replace(/\/$/, '') || '/'; return child.endsWith('/') && pathValue !== '/' ? `${pathValue}/` : pathValue; }
   private register(receiver: Receiver, method: string, args: Value[], raw: GoExpression[], env: Environment, site: Site): void {
-    const root = receiver.root, conditions = [...receiver.conditions, ...this.conditions(env, env.scope)], framework = receiver.framework;
+    const root = receiver.root, conditions = [...receiver.conditions, ...this.conditions(env, env.scope), ...root.exposed ? ['Registration after a serving call requires startup-order proof'] : []], framework = receiver.framework;
     let value = args[0], methods: string[] | '*' = '*', callbacks = args.slice(1), source = raw.slice(1), host: string | undefined;
     if (['Method', 'MethodFunc'].includes(method) || framework === 'gin' && method === 'Handle') { methods = typeof args[0] === 'string' ? [args[0]] : '*'; value = args[1]; callbacks = args.slice(2); source = raw.slice(2); if (typeof args[0] !== 'string') conditions.push('Dynamic HTTP method'); }
     else if (framework === 'gin' && method === 'Match') { methods = Array.isArray(args[0]) && args[0].every(value => typeof value === 'string') ? args[0] as string[] : '*'; value = args[1]; callbacks = args.slice(2); source = raw.slice(2); if (!Array.isArray(methods)) conditions.push('Dynamic method list'); }
@@ -489,13 +494,14 @@ export class GoRegistrations {
   private mount(receiver: Receiver, prefix: string, child: Receiver, strip: string | undefined, mode: 'chi' | 'preserve' | 'fiber' | 'gorilla', env: Environment, site: Site, methods: string[] | '*' = '*', host?: string, middleware = receiver.middleware, conditions: string[] = []): void {
     const root = receiver.root;
     if (mode === 'chi' && (child.root === root || root.entries.some(entry => entry.child && entry.path.replace(/\/$/, '') === prefix.replace(/\/$/, '')))) root.conditions.push('Duplicate/self Chi mount panics during registration');
-    root.entries.push({ site, path: prefix, methods, host, child, strip, mode, middleware: [...middleware], conditions: unique([...conditions, ...receiver.conditions, ...this.conditions(env, env.scope)]), proof: [this.fact(site, `${receiver.framework} ${mode} mount ${prefix}${strip ? `; StripPrefix ${strip}` : ''}`)], order: root.entries.length, profile: receiver.modern }); root.frozen = true; this.touch(site, receiver.framework);
+    root.entries.push({ site, path: prefix, methods, host, child, strip, mode, middleware: [...middleware], conditions: unique([...conditions, ...receiver.conditions, ...this.conditions(env, env.scope), ...root.exposed ? ['Registration after a serving call requires startup-order proof'] : []]), proof: [this.fact(site, `${receiver.framework} ${mode} mount ${prefix}${strip ? `; StripPrefix ${strip}` : ''}`)], order: root.entries.length, profile: receiver.modern }); root.frozen = true; this.touch(site, receiver.framework);
   }
   private expose(value: Value, env: Environment, site: Site): void {
     const handler = value === null ? { kind: 'handler' as const, router: this.defaultMux(env, site), conditions: [], proof: [] } : this.handler(value, undefined, env, false);
     if (handler.router && env.application) { handler.router.root.exposed = true; handler.router.root.applications.add(env.application); handler.router.root.conditions.push(...handler.conditions, ...this.conditions(env, env.scope)); }
     else if (handler.callback && env.application) { const root = this.receiver('net-http', env, site); root.exposed = true; root.applications.add(env.application); root.entries.push({ site, path: '/', methods: '*', callback: handler.callback, middleware: [], conditions: handler.conditions, proof: handler.proof, order: 0, profile: root.modern }); }
     else this.issue(site, 'Serving handler/application boundary is unresolved');
+    if (env.application && (handler.router || handler.callback)) this.servingCalls.add(this.callKey(env, site));
   }
   private contract(root: Receiver, entry: Entry): RoutingContract {
     let pattern = this.pattern(root, entry, entry.path);

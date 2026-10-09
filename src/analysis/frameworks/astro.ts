@@ -1,3 +1,4 @@
+import { normalizeFetchMethod } from '../routes/http-method.js';
 import ts from 'typescript';
 import path from 'node:path';
 import { matchesGlob } from '../../core/config.js';
@@ -22,7 +23,7 @@ const nameOf = (node: Js | undefined): string | undefined => !node ? undefined :
 function names(value: unknown): string[] { const node = js(value); if (!node) return []; if (node.type === 'Identifier') return [String(node.name)]; if (node.type === 'RestElement') return names(node.argument); if (node.type === 'AssignmentPattern') return names(node.left); if (node.type === 'ObjectPattern') return (node.properties as unknown[]).flatMap(item => names(js(item)?.value ?? js(item)?.argument)); if (node.type === 'ArrayPattern') return (node.elements as unknown[]).flatMap(names); return []; }
 
 export const astroPack: TypeScriptFrameworkPack = {
-  id: 'astro', version: '1.0.1:parser-0.5.1', includeEmbedded: true,
+  id: 'astro', version: '1.0.2:parser-0.5.1', includeEmbedded: true,
   applies: scope => !!scope.inputs?.some(file => file.language === 'astro') || scope.files.some(frame => frame.runtime.project.dependencies.astro !== undefined),
   async declare(scope) {
     const reader = new TypeScriptStatic(scope, 'astro', ['astro/config', 'astro:middleware']);
@@ -189,7 +190,7 @@ class AstroComponent {
     const args = node.arguments as unknown[], url = js(args[0]), options = js(args[1]); let method: string | undefined = 'GET';
     if (options) {
       if (options.type !== 'ObjectExpression') method = undefined;
-      else for (const item of options.properties as unknown[]) { const property = js(item), key = js(property?.key), value = js(property?.value); if (!property || property.type !== 'Property' || property.computed) { method = undefined; break; } if (key?.name === 'method' || key?.value === 'method') method = typeof value?.value === 'string' ? value.value.toUpperCase() : undefined; }
+      else for (const item of options.properties as unknown[]) { const property = js(item), key = js(property?.key), value = js(property?.value); if (!property || property.type !== 'Property' || property.computed) { method = undefined; break; } if (key?.name === 'method' || key?.value === 'method') method = normalizeFetchMethod(value?.value); }
     }
     if (!method || url?.type !== 'Literal' || typeof url.value !== 'string') { this.gap(node.start, 'Dynamic template fetch URL/method requires a value summary', 'astro-http-gap'); return true; }
     const fact = this.fact(node.start, node.end, 'Astro server template fetch call'), effect = this.sites.effect(this.component.id, { category: 'network', operation: method, detail: url.value, line: fact.line!, via: 'fetch' });
