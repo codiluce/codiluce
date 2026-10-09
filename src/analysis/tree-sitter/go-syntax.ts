@@ -5,7 +5,7 @@ import { goString } from './go-imports.js';
 
 /** Bounded, serializable original-source facts. No compiler or target code. */
 export function extractGoSemantic(root: Node, declarations: DeclarationFact[], source: SourceText): { facts: GoSemanticFacts; truncated: boolean } {
-  const facts: GoSemanticFacts = { scopes: [], definitions: [], bindings: [], writes: [], references: [], calls: [], gaps: [] };
+  const facts: GoSemanticFacts = { scopes: [], definitions: [], bindings: [], writes: [], references: [], calls: [], returns: [], gaps: [] };
   const byStart = new Map(declarations.map(item => [item.start, item])), seenClosures = new Set<number>();
   let visited = 0, truncated = false;
   const site = (node: Node) => ({ start: node.startIndex, range: source.range(node.startIndex, node.endIndex) });
@@ -34,14 +34,15 @@ export function extractGoSemantic(root: Node, declarations: DeclarationFact[], s
       case 'unary_expression': return { ...s, kind: 'unary', operator: node.children.find(child => !child.isNamed)?.text ?? '', object: recurse(field(node, 'operand')) };
       case 'index_expression': return { ...s, kind: 'index', object: recurse(field(node, 'operand')), index: recurse(field(node, 'index')) };
       case 'generic_type': return { ...s, kind: 'index', object: recurse(field(node, 'type')) };
-      case 'composite_literal': return { ...s, kind: 'composite', type: recurse(field(node, 'type')) };
+      case 'binary_expression': return { ...s, kind: 'binary', operator: node.children.find(child => !child.isNamed)?.text ?? '', left: recurse(field(node, 'left')), right: recurse(field(node, 'right')) };
+      case 'composite_literal': return { ...s, kind: 'composite', type: recurse(field(node, 'type')), items: items(field(node, 'body')).map(item => item.type === 'keyed_element' ? { key: item.namedChildren[0]?.text, value: recurse(item.namedChildren.at(-1)?.namedChildren[0] ?? item.namedChildren.at(-1)) } : { value: recurse(item.type === 'literal_element' ? item.namedChildren[0] : item) }) };
       case 'func_literal': return { ...s, kind: 'function', key: `closure:${node.startIndex}:${Math.min(node.endIndex, source.text.length)}` };
       default: return unknown(node);
     }
   }
   function scope(node: Node, parent: string | undefined, kind: GoSemanticFacts['scopes'][number]['kind'], owner?: string): string {
     const key = `${kind}:${node.startIndex}:${node.endIndex}`;
-    facts.scopes.push({ key, parent, kind, owner, start: node.startIndex, end: Math.min(node.endIndex, source.text.length) }); return key;
+    facts.scopes.push({ key, parent, kind, owner, start: node.startIndex, end: Math.min(node.endIndex, source.text.length), ...(['control', 'case'].includes(kind) ? { conditional: `${node.type} at line ${source.range(node.startIndex, node.startIndex).startLine}` } : {}) }); return key;
   }
   function parameters(node: Node | undefined): GoParameterFact[] {
     if (!node) return [];
@@ -83,6 +84,12 @@ export function extractGoSemantic(root: Node, declarations: DeclarationFact[], s
   }
   function read(node: Node, current: string, typeOnly = false, parentReference = false): void {
     if (!limit()) return;
+    if (node.type === 'binary_expression' && node.children.some(child => ['&&', '||'].includes(child.type))) {
+      const left = field(node, 'left'), right = field(node, 'right');
+      if (left) read(left, current, typeOnly);
+      if (right) read(right, scope(right, current, 'control'), typeOnly);
+      return;
+    }
     if (node.type === 'func_literal') { definition(node, current); return; }
     if (['call_expression', 'type_conversion_expression'].includes(node.type) && !typeOnly) {
       const value = expression(node); if (value.kind === 'call') facts.calls.push({ ...site(node), expression: value, scope: current, timing: node.parent?.type === 'defer_statement' ? 'deferred' : node.parent?.type === 'go_statement' ? 'goroutine' : 'immediate' });
@@ -138,9 +145,11 @@ export function extractGoSemantic(root: Node, declarations: DeclarationFact[], s
       }
       case 'assignment_statement': case 'inc_statement': case 'dec_statement': {
         const targets = field(node, 'left')?.namedChildren ?? node.namedChildren.slice(0, 1), assignment = node.type === 'assignment_statement' && node.children.some(child => child.type === '=');
-        for (const target of targets) { facts.writes.push({ ...site(target), target: expression(target), scope: current, kind: assignment ? 'assignment' : 'augmentation' }); read(target, current); }
+        const values = items(field(node, 'right'));
+        for (const [index, target] of targets.entries()) { facts.writes.push({ ...site(target), target: expression(target), scope: current, kind: assignment ? 'assignment' : 'augmentation', ...(assignment && values.length === targets.length ? { value: expression(values[index]) } : {}) }); read(target, current); }
         const right = field(node, 'right'); if (right) read(right, current); return;
       }
+      case 'return_statement': { const values = items(node.namedChildren[0]); facts.returns.push({ ...site(node), scope: current, values: values.map(value => expression(value)) }); values.forEach(value => read(value, current)); return; }
       case 'labeled_statement': { const statement = node.namedChildren.at(-1); if (statement) walk(statement, current); return; }
       case 'break_statement': case 'continue_statement': case 'goto_statement': return;
       default:

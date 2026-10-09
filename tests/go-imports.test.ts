@@ -94,7 +94,7 @@ test('Go internal packages enforce importer path boundaries across selected modu
 
 test('Canonical standard-library imports resist local module names and record external names/versions separately', async () => {
   const root = await repository({ 'go.mod': 'module net\nrequire github.com/gin-gonic/gin v1.10.0\n', 'main.go': 'package app\nimport (\n "net/http"\n "math/rand/v2"\n "github.com/gin-gonic/gin"\n)', 'http/local.go': 'package impostor\n' });
-  const graph = await index(root), values = imports(graph, 'main.go'); assert.equal(values[0]!.outcome.standardLibrary, true); assert.equal(values[0]!.local, 'http'); assert.equal(values[1]!.local, 'rand'); assert.equal(values[2]!.outcome.declaredVersion, 'v1.10.0'); assert.equal(values[2]!.local, undefined); assert.equal(graph.relations.some(item => item.type === 'imports' && item.to === file(graph, 'http/local.go').id), false);
+  const graph = await index(root), values = imports(graph, 'main.go'); assert.equal(values[0]!.outcome.standardLibrary, true); assert.equal(values[0]!.local, 'http'); assert.equal(values[1]!.local, 'rand'); assert.equal(values[2]!.outcome.declaredVersion, 'v1.10.0'); assert.equal(values[2]!.local, 'gin'); assert.equal(graph.relations.some(item => item.type === 'imports' && item.to === file(graph, 'http/local.go').id), false);
 });
 
 test('Unknown filename/build inputs retain conditional package files; a recorded target selects a single package', async () => {

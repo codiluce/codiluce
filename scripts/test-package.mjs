@@ -64,6 +64,9 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
       ['GET /package-svelte-api', 'svelte-ui/src/routes/package-svelte-api/+server.ts', 1],
       ['POST /package-svelte?/save', 'svelte-ui/src/routes/(app)/package-svelte/+page.server.ts', 1],
       ['GET /package-astro-api', 'astro-ui/src/pages/package-astro-api.ts', 2],
+      ['GET|HEAD /package-go-http/{id}', 'go-http/handlers/handler.go', 3],
+      ['GET /package-go-chi/child', 'go-chi/main.go', 3],
+      ['GET /package-go-gin/:id', 'go-gin/main.go', 3],
     ]) {
       const found = await (await fetch(`${url}api/entities?search=${encodeURIComponent(name)}&type=api_endpoint`)).json();
       const endpoint = found.items.find(item => item.name === name); assert.ok(endpoint);
@@ -195,7 +198,7 @@ try {
   await writeFile(path.join(nuxtUi, 'server/api/package-nuxt.post.ts'), 'export default defineEventHandler(\n(event)=>({ok:true}));');
   const goConsumer = path.join(repo, 'go-workspace/deep/consumer'), goShared = path.join(repo, 'go-workspace/deep/shared');
   await mkdir(goConsumer, { recursive: true }); await mkdir(goShared, { recursive: true });
-  await writeFile(path.join(repo, 'go.work'), 'go 1.25\nuse (\n ./go-workspace/deep/consumer\n ./go-workspace/deep/shared\n)\n');
+  await writeFile(path.join(repo, 'go.work'), 'go 1.25\nuse (\n ./go-workspace/deep/consumer\n ./go-workspace/deep/shared\n ./go-http\n ./go-chi\n ./go-gin\n)\n');
   await writeFile(path.join(goConsumer, 'go.mod'), 'module example.com/consumer\ngo 1.25\n');
   await writeFile(path.join(goConsumer, 'consumer.go'), 'package consumer\nimport "example.com/shared/v2"\nimport h "example.com/shared/v2/handlers"\nfunc PackagedGoConsumer(){routing.PackagedGoShared();h.PackagedGoHandler();v:=h.PackagedGoNew();f:=v.PackagedGoServe;f()}');
   await writeFile(path.join(goShared, 'go.mod'), 'module example.com/shared/v2\ngo 1.25\n');
@@ -204,6 +207,17 @@ try {
   await mkdir(path.join(goShared, 'handlers'), { recursive: true });
   await writeFile(path.join(goShared, 'handlers', 'handler.go'), 'package handlers\ntype PackagedGoService struct{}\nfunc PackagedGoHandler(){}\nfunc PackagedGoNew()*PackagedGoService{return &PackagedGoService{}}');
   await writeFile(path.join(goShared, 'handlers', 'methods.go'), 'package handlers\nfunc(s *PackagedGoService)PackagedGoServe(){PackagedGoHandler()}');
+  for (const [directory, requirement, source] of [
+    ['go-http', '', 'package main\nimport("net/http";"example.com/package-http/handlers")\nfunc main(){m:=http.NewServeMux();m.HandleFunc("GET /package-go-http/{id}",handlers.PackagedGoHTTP);http.ListenAndServe(":8080",m)}\n'],
+    ['go-chi', 'require github.com/go-chi/chi/v5 v5.2.1\n', 'package main\nimport("net/http";"github.com/go-chi/chi/v5")\nfunc PackagedGoChi(w http.ResponseWriter,r *http.Request){}\nfunc Install(r chi.Router){r.Get("/child",PackagedGoChi)}\nfunc main(){r:=chi.NewRouter();r.Route("/package-go-chi",Install);http.ListenAndServe(":8080",r)}\n'],
+    ['go-gin', 'require github.com/gin-gonic/gin v1.11.0\n', 'package main\nimport "github.com/gin-gonic/gin"\nfunc PackagedGoGin(c *gin.Context){}\nfunc Router()*gin.Engine{r:=gin.Default();r.Group("/package-go-gin").GET("/:id",PackagedGoGin);return r}\nfunc main(){Router().Run()}\n'],
+  ]) {
+    await mkdir(path.join(repo, directory), { recursive: true });
+    await writeFile(path.join(repo, directory, 'go.mod'), `module example.com/package-${directory.slice(3)}\ngo 1.25\n${requirement}`);
+    await writeFile(path.join(repo, directory, 'main.go'), source);
+  }
+  await mkdir(path.join(repo, 'go-http/handlers'), { recursive: true });
+  await writeFile(path.join(repo, 'go-http/handlers/handler.go'), 'package handlers\nimport "net/http"\nfunc PackagedGoHTTP(w http.ResponseWriter,r *http.Request){}\n');
   console.log('Starting the installed executable from a repository with spaces…');
   await checkSession(bin, repo);
   assert.ok((await readdir(path.join(repo, '.codiluce'))).includes('codiluce.db'));
@@ -405,7 +419,7 @@ try {
   console.log('Checking npm exec against the tarball without a local installation…');
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
-  console.log('Package installation, seven grammars, workspace binding, Go module/workspace/package imports, build alternatives, lexical calls and concrete receiver callbacks, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
+  console.log('Package installation, seven grammars, workspace binding, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

@@ -2,8 +2,9 @@ import type { AnalysisContext, ScannedFile } from '../../core/analyzer.js';
 import { declarationHashes, evidence, type CallSites, type Evidence } from '../../core/graph.js';
 import { fileAnalysis, type GoBindingFact, type GoDefinitionFact, type GoExpression, type GoImportFact, type GoSemanticFacts } from '../facts.js';
 import { type GoPackage, type GoResolution, GoResolver } from '../resolution/go.js';
+import { goApi } from './go-api.js';
 
-export const GO_SYMBOL_VERSION = '1';
+export const GO_SYMBOL_VERSION = '2';
 const BUILTINS = new Set('append cap clear close complex copy delete imag len make max min new panic print println real recover'.split(' '));
 const BASIC_TYPES = new Set('any bool byte comparable complex64 complex128 error float32 float64 int int8 int16 int32 int64 rune string uint uint8 uint16 uint32 uint64 uintptr'.split(' '));
 const exported = (name: string) => /^\p{Lu}/u.test(name);
@@ -66,7 +67,8 @@ export class GoSymbols {
       for (const fact of this.context.syntax!.get(unit.file.path)!.facts.go!.imports) {
         const outcome = this.resolver.resolve(unit.file.path, fact.specifier, origin);
         const target = outcome.status === 'resolved' ? this.package(outcome.package, origin) : undefined;
-        const name = fact.kind === 'named' ? fact.local : fact.kind === 'default' ? target?.source.name ?? (outcome.status === 'external' && outcome.standardLibrary ? fact.specifier.split('/').filter(part => !/^v\d+$/.test(part)).at(-1) : undefined) : undefined;
+        const profile = goApi(outcome, fact.specifier);
+        const name = fact.kind === 'named' ? fact.local : fact.kind === 'default' ? target?.source.name ?? (outcome.status === 'external' && outcome.standardLibrary ? fact.specifier.split('/').filter(part => !/^v\d+$/.test(part)).at(-1) : profile?.reviewed ? profile.name : undefined) : undefined;
         unit.imports.push({ fact, outcome, target, name }); if (target && !pkg.dependencies.includes(target)) pkg.dependencies.push(target);
       }
     }
@@ -299,9 +301,34 @@ export class GoSymbols {
   /** Shared by router packs: scope and original expressions come from cached
    * parser facts; qualified imports and callbacks carry their proof hops. */
   resolveExpression(file: string, expression: GoExpression, scope: string, origin = file): GoBoundValue {
-    const pkg = this.roots.get(origin); const unit = pkg?.units.get(file);
+    const unit = this.unit(file, origin);
     return unit ? this.value(unit, scope, expression) : unknown('No prepared Go compilation unit');
   }
+  private unit(file: string, origin: string): Unit | undefined {
+    const root = this.roots.get(origin); if (!root) return undefined;
+    const seen = new Set<Package>(), matches = new Set<Unit>(), pending = [root];
+    while (pending.length && seen.size < 2048) { const pkg = pending.pop()!; if (seen.has(pkg)) continue; seen.add(pkg); if (pkg.units.has(file)) matches.add(pkg.units.get(file)!); pending.push(...pkg.dependencies); }
+    return matches.size === 1 ? [...matches][0] : undefined;
+  }
+  unitFacts(file: string, origin = file): GoSemanticFacts | undefined { const unit = this.unit(file, origin); return unit && this.qualified(unit.pkg) ? unit.facts : undefined; }
+  sourceBinding(file: string, expression: GoExpression, scope: string, origin = file): { fact: GoBindingFact; file: string; mutable: boolean } | undefined {
+    const unit = this.unit(file, origin); if (!unit || !this.qualified(unit.pkg)) return undefined;
+    let entries: (Binding | Definition)[] = [];
+    if (expression.kind === 'name') {
+      const local = this.lexical(unit, scope, expression.name, expression.start);
+      if (local) entries = local;
+      else {
+        if (unit.imports.some(item => item.name === expression.name || item.fact.kind === 'dot' && (!item.target || !this.qualified(item.target)))) return undefined;
+        entries = [...(unit.pkg.globals.get(expression.name) ?? []), ...(exported(expression.name) ? unit.imports.filter(item => item.fact.kind === 'dot').flatMap(item => item.target?.globals.get(expression.name) ?? []) : [])];
+      }
+    } else if (expression.kind === 'member' && exported(expression.name)) {
+      const object = this.value(unit, scope, expression.object); if (object.kind !== 'namespace' || !object.imported.target || !this.qualified(object.imported.target)) return undefined;
+      entries = object.imported.target.globals.get(expression.name) ?? [];
+    }
+    const entry = entries.length === 1 ? entries[0] : undefined;
+    return entry && 'mutable' in entry ? { fact: entry.fact, file: entry.unit.file.path, mutable: entry.mutable } : undefined;
+  }
+  declarationId(file: string, key: string): string | undefined { return this.context.syntax?.get(file)?.declarations.get(key) ?? this.closures.get(`${file}:${key}`); }
   analyze(files: ScannedFile[]): void {
     for (const file of files) {
       const entity = this.context.graph.entities.get(file.id)!, analysis = fileAnalysis(entity.metadata.analysis); if (!analysis) continue;

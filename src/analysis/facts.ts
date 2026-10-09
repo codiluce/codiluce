@@ -57,11 +57,12 @@ export type GoExpression = GoSite & (
   | { kind: 'call'; callee: GoExpression; args: GoExpression[] }
   | { kind: 'unary'; operator: string; object: GoExpression }
   | { kind: 'index'; object: GoExpression; index?: GoExpression }
-  | { kind: 'composite'; type: GoExpression }
+  | { kind: 'composite'; type: GoExpression; items?: { key?: string; value: GoExpression }[] }
+  | { kind: 'binary'; operator: string; left: GoExpression; right: GoExpression }
   | { kind: 'function'; key: string }
   | { kind: 'unknown'; text: string }
 );
-export interface GoScopeFact { key: string; parent?: string; owner?: string; kind: 'file' | 'function' | 'type' | 'block' | 'control' | 'case'; start: number; end: number }
+export interface GoScopeFact { key: string; parent?: string; owner?: string; kind: 'file' | 'function' | 'type' | 'block' | 'control' | 'case'; start: number; end: number; conditional?: string }
 export interface GoParameterFact { name?: string; type: GoExpression; variadic?: boolean }
 export interface GoDefinitionFact extends GoSite {
   key: string; name: string; kind: 'function' | 'method' | 'type' | 'closure'; scope: string; bodyScope?: string; typeScope?: string;
@@ -70,10 +71,11 @@ export interface GoDefinitionFact extends GoSite {
   alias?: boolean; underlying?: GoExpression; interface?: boolean; fields?: { name?: string; type: GoExpression; embedded: boolean }[];
 }
 export interface GoBindingFact extends GoSite { name: string; scope: string; end: number; kind: 'var' | 'const' | 'short' | 'parameter' | 'type-parameter' | 'range'; type?: GoExpression; value?: GoExpression; tuple?: boolean }
-export interface GoWriteFact extends GoSite { target: GoExpression; scope: string; kind: 'assignment' | 'augmentation' | 'address' }
+export interface GoWriteFact extends GoSite { target: GoExpression; scope: string; kind: 'assignment' | 'augmentation' | 'address'; value?: GoExpression }
 export interface GoReferenceFact extends GoSite { expression: GoExpression; scope: string }
 export interface GoCallFact extends GoReferenceFact { expression: GoExpression & { kind: 'call' }; timing: 'immediate' | 'deferred' | 'goroutine' }
-export interface GoSemanticFacts { scopes: GoScopeFact[]; definitions: GoDefinitionFact[]; bindings: GoBindingFact[]; writes: GoWriteFact[]; references: GoReferenceFact[]; calls: GoCallFact[]; gaps: string[] }
+export interface GoReturnFact extends GoSite { scope: string; values: GoExpression[] }
+export interface GoSemanticFacts { scopes: GoScopeFact[]; definitions: GoDefinitionFact[]; bindings: GoBindingFact[]; writes: GoWriteFact[]; references: GoReferenceFact[]; calls: GoCallFact[]; returns: GoReturnFact[]; gaps: string[] }
 export interface GoSyntaxFacts { package?: { name: string; range: SourceRange; start: number }; imports: GoImportFact[]; comments: { text: string; start: number; end: number }[]; complete: boolean; semantic?: GoSemanticFacts }
 export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; python?: PythonSyntaxFacts; go?: GoSyntaxFacts }
 export interface ImportBinding { imported: string; local: string; typeOnly?: boolean }

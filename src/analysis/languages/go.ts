@@ -6,8 +6,10 @@ import { GoResolver, GO_RESOLVER_VERSION, type GoResolution } from '../resolutio
 import { STRUCTURE_VERSION } from '../tree-sitter/analyzer.js';
 import { GO_BUILD_VERSION } from './go-build.js';
 import { GoSymbols, GO_SYMBOL_VERSION } from './go-symbols.js';
+import { GO_API_VERSION, goApi } from './go-api.js';
+import { GoRegistrations, GO_ROUTER_VERSION } from '../frameworks/go-routers.js';
 
-export const GO_IMPORT_VERSION = `${ANALYZER_VERSION}:go-imports:2`;
+export const GO_IMPORT_VERSION = `${ANALYZER_VERSION}:go-imports:3`;
 export const goAnalyzer: Analyzer = {
   name: 'go-imports', version: GO_IMPORT_VERSION,
   async analyze(context): Promise<void> {
@@ -18,9 +20,9 @@ export const goAnalyzer: Analyzer = {
     // Services and original containment must exist on both cold and replayed
     // graphs; graph-result caching does not serialize in-memory binders.
     symbols.prepare(files);
-    const run = async () => { for (const file of files) analyzeFile(context, resolver, file); symbols.analyze(files); };
+    const run = async () => { for (const file of files) analyzeFile(context, resolver, file); new GoRegistrations(context, symbols).run(); symbols.analyze(files); };
     if (context.cache) await context.cache.unit(context, this.name, 'repository', {
-      version: GO_IMPORT_VERSION, symbols: GO_SYMBOL_VERSION, syntax: STRUCTURE_VERSION, resolver: GO_RESOLVER_VERSION, build: GO_BUILD_VERSION, config: context.config, projects: resolver.describe(),
+      version: GO_IMPORT_VERSION, symbols: GO_SYMBOL_VERSION, api: GO_API_VERSION, routers: GO_ROUTER_VERSION, syntax: STRUCTURE_VERSION, resolver: GO_RESOLVER_VERSION, build: GO_BUILD_VERSION, config: context.config, projects: resolver.describe(),
       files: [...context.files.values()].filter(file => file.language === 'go' || /(?:^|\/)(?:go\.mod|go\.work)$/.test(file.path)).sort((a, b) => a.path.localeCompare(b.path, 'en')).map(file => fileKey(context, file.path)),
       vendorRoots: [...context.directoryInventory ?? []].filter(dir => /(?:^|\/)vendor$/.test(dir)).sort(), manifests: [...context.goManifestInventory ?? []].sort(), syntaxAvailability: files.map(file => [file.path, context.syntax?.get(file.path)?.facts.go?.complete]),
     }, run); else await run();
@@ -46,7 +48,8 @@ function analyzeFile(context: AnalysisContext, resolver: GoResolver, file: Scann
     const conditions = [...selection.conditions, ...(selection.status === 'invalid' ? ['Invalid compilation unit cannot prove a runtime namespace'] : []), ...('conditions' in outcome ? outcome.conditions : [])];
     // Unknown external package names are left for an evidence-backed framework
     // profile. Directory basenames do not invent their default namespace.
-    const name = outcome.status === 'resolved' ? outcome.package.name : outcome.status === 'external' && outcome.standardLibrary ? fact.specifier.split('/').filter(part => !/^v\d+$/.test(part)).at(-1) : undefined;
+    const api = goApi(outcome, fact.specifier);
+    const name = outcome.status === 'resolved' ? outcome.package.name : outcome.status === 'external' && outcome.standardLibrary ? fact.specifier.split('/').filter(part => !/^v\d+$/.test(part)).at(-1) : api?.reviewed ? api.name : undefined;
     const local = fact.kind === 'default' ? name : fact.local, metadata = { adapter: 'go', version: 1, specifier: fact.specifier, kind: fact.kind, ...(local ? { local } : {}), range: fact.range, conditions: [...new Set(conditions)], sideEffect: fact.kind === 'blank', dotImport: fact.kind === 'dot' };
     entries.push({ ...metadata, outcome: { ...serialize(outcome), ...('proof' in outcome ? { proof } : {}) } });
     if (outcome.status === 'resolved') for (const target of outcome.package.files) context.graph.relate(file.id, target.id, 'imports', proof, metadata, JSON.stringify([fact.specifier, fact.kind, local ?? '']));

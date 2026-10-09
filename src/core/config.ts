@@ -10,7 +10,7 @@ import { parseGoManifest } from '../analysis/resolution/go-manifest.js';
 const execute = promisify(execFile);
 
 /** Explicit target inputs; absent fields remain unknown, never host defaults. */
-export interface GoBuildConfig { goos?: string; goarch?: string; tags?: string[]; cgoEnabled?: boolean; compiler?: 'gc' | 'gccgo'; toolchainVersion?: string; workspace?: string | false; includeTests?: boolean }
+export interface GoBuildConfig { goos?: string; goarch?: string; tags?: string[]; cgoEnabled?: boolean; compiler?: 'gc' | 'gccgo'; toolchainVersion?: string; workspace?: string | false; includeTests?: boolean; httpMuxGo121?: boolean }
 
 export interface ApplicationConfig {
   name: string; path: string;
@@ -222,10 +222,10 @@ export async function resolveConfig(root: string, raw: RawConfig): Promise<Atlas
   for (const app of config.applications) {
     if (app.go !== undefined) {
       const go = app.go, tag = (value: unknown) => typeof value === 'string' && /^[A-Za-z0-9_.]+$/.test(value);
-      if (!go || typeof go !== 'object' || Array.isArray(go) || Object.keys(go).some(key => !['goos', 'goarch', 'tags', 'cgoEnabled', 'compiler', 'toolchainVersion', 'workspace', 'includeTests'].includes(key))
+      if (!go || typeof go !== 'object' || Array.isArray(go) || Object.keys(go).some(key => !['goos', 'goarch', 'tags', 'cgoEnabled', 'compiler', 'toolchainVersion', 'workspace', 'includeTests', 'httpMuxGo121'].includes(key))
         || go.goos !== undefined && !tag(go.goos) || go.goarch !== undefined && !tag(go.goarch)
         || go.tags !== undefined && (!Array.isArray(go.tags) || go.tags.length > 128 || !go.tags.every(tag) || new Set(go.tags).size !== go.tags.length)
-        || go.cgoEnabled !== undefined && typeof go.cgoEnabled !== 'boolean' || go.includeTests !== undefined && typeof go.includeTests !== 'boolean'
+        || go.cgoEnabled !== undefined && typeof go.cgoEnabled !== 'boolean' || go.includeTests !== undefined && typeof go.includeTests !== 'boolean' || go.httpMuxGo121 !== undefined && typeof go.httpMuxGo121 !== 'boolean'
         || go.compiler !== undefined && !['gc', 'gccgo'].includes(go.compiler)
         || go.toolchainVersion !== undefined && !/^1\.\d+(?:\.\d+)?$/.test(go.toolchainVersion)
         || go.workspace !== undefined && go.workspace !== false && (typeof go.workspace !== 'string' || path.isAbsolute(go.workspace) || /[\\\0]/.test(go.workspace) || /^[A-Za-z]:/.test(go.workspace))) throw new Error('Invalid Go build configuration');
