@@ -23,7 +23,10 @@ async function handle(job: { id: number; language: string; content: string }): P
   try {
     const { parser, query } = await load(job.language);
     parser.reset();
-    const tree = parser.parse(job.content);
+    // Go inserts a semicolon at EOF. This grammar needs a terminal newline
+    // for some declarations; positions still map to the original input.
+    const input = job.language === 'go' && !job.content.endsWith('\n') ? `${job.content}\n` : job.content;
+    const tree = parser.parse(input);
     if (!tree) throw new Error('Parser returned no tree');
     try { process.send?.({ id: job.id, facts: extractStructure(tree.rootNode, query, job.language, job.content) }); }
     finally { tree.delete(); }

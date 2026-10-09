@@ -8,11 +8,11 @@ import { StructureParser } from './client.js';
 import { fileKey } from '../../pipeline/cache.js';
 import { IndexedSources } from '../indexed-sources.js';
 
-export const STRUCTURE_VERSION = `${ANALYZER_VERSION}:${GRAMMAR_CATALOG_VERSION}:15`;
+export const STRUCTURE_VERSION = `${ANALYZER_VERSION}:${GRAMMAR_CATALOG_VERSION}:17`;
 export const analysisRegistry = new AnalysisRegistry();
 analysisRegistry.registerLanguage({ id: 'typescript', version: ANALYZER_VERSION, languages: ['typescript', 'javascript'], features: { structure: 'supported', imports: 'partial', references: 'partial', effects: 'partial', guards: 'supported' } });
 analysisRegistry.registerLanguage({ id: 'php', version: ANALYZER_VERSION, languages: ['php'], features: { structure: 'partial', imports: 'partial', references: 'partial', effects: 'partial', guards: 'supported' } });
-for (const language of STRUCTURAL_LANGUAGES) analysisRegistry.registerLanguage({ id: `syntax-${language}`, version: STRUCTURE_VERSION, languages: [language], features: { structure: 'supported', ...(language === 'python' ? { imports: 'partial' } : {}) } });
+for (const language of STRUCTURAL_LANGUAGES) analysisRegistry.registerLanguage({ id: `syntax-${language}`, version: STRUCTURE_VERSION, languages: [language], features: { structure: 'supported', ...(['python', 'go'].includes(language) ? { imports: 'partial' } : {}) } });
 
 export const structureAnalyzer: Analyzer = {
   name: 'tree-sitter-structure', version: STRUCTURE_VERSION,
@@ -45,7 +45,7 @@ export const structureAnalyzer: Analyzer = {
           const compute = () => parser.parse(grammar.language, content);
           const facts = context.cache ? await context.cache.value('syntax-facts', file.path, { version: STRUCTURE_VERSION, file: fileKey(context, file.path), parser: analysis.parser }, compute) : await compute();
           const declarations = declare(context, file, content, facts);
-          if (facts.python) { context.syntax ??= new Map(); context.syntax.set(file.path, { facts, declarations }); }
+          if (facts.python || facts.go) { context.syntax ??= new Map(); context.syntax.set(file.path, { facts, declarations }); }
           analysis.features.structure = { status: facts.issues.length ? 'partial' : 'supported', ...(facts.issues.length ? { reason: `${facts.issues.length} syntax or extraction finding(s); valid declarations retained` } : {}) };
           for (const issue of facts.issues) context.graph.diagnose({ analyzer: 'tree-sitter-structure', severity: 'warning', code: issue.code, file: file.path, entityId: file.id, ...(issue.range ? { line: issue.range.startLine } : {}), reason: issue.reason });
         } catch (error) {

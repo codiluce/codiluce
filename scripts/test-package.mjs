@@ -193,12 +193,28 @@ try {
   await writeFile(path.join(nuxtUi, 'app/pages/package-nuxt/[id].vue'), '<template><PackagedNuxtCard/></template>');
   await writeFile(path.join(nuxtUi, 'app/components/PackagedNuxtCard.vue'), '<script setup>\nfunction PackagedNuxtSave(){return $fetch("/api/package-nuxt",{method:"POST"});}\n</script>\n<template><button @click="PackagedNuxtSave"/></template>');
   await writeFile(path.join(nuxtUi, 'server/api/package-nuxt.post.ts'), 'export default defineEventHandler(\n(event)=>({ok:true}));');
+  const goConsumer = path.join(repo, 'go-workspace/deep/consumer'), goShared = path.join(repo, 'go-workspace/deep/shared');
+  await mkdir(goConsumer, { recursive: true }); await mkdir(goShared, { recursive: true });
+  await writeFile(path.join(repo, 'go.work'), 'go 1.25\nuse (\n ./go-workspace/deep/consumer\n ./go-workspace/deep/shared\n)\n');
+  await writeFile(path.join(goConsumer, 'go.mod'), 'module example.com/consumer\ngo 1.25\n');
+  await writeFile(path.join(goConsumer, 'consumer.go'), 'package consumer\nimport "example.com/shared/v2"\nfunc PackagedGoConsumer(){routing.PackagedGoShared()}');
+  await writeFile(path.join(goShared, 'go.mod'), 'module example.com/shared/v2\ngo 1.25\n');
+  await writeFile(path.join(goShared, 'shared.go'), 'package routing\nfunc PackagedGoShared(){}');
+  await writeFile(path.join(goShared, 'platform_linux.go'), 'package routing\ntype PackagedGoLinux struct{}');
   console.log('Starting the installed executable from a repository with spaces…');
   await checkSession(bin, repo);
   assert.ok((await readdir(path.join(repo, '.codiluce'))).includes('codiluce.db'));
   const summary = JSON.parse((await run(process.execPath, [bin, 'inspect', 'summary'], repo)).stdout);
   assert.ok(summary.counts.entities > 0);
   assert.deepEqual(JSON.parse((await run(process.execPath, ['--experimental-sqlite', bin, 'inspect', 'summary'], repo)).stdout), summary);
+  const goSymbols = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'PackagedGo'], repo)).stdout).items;
+  const goConsumerSymbol = goSymbols.find(entity => entity.name === 'PackagedGoConsumer'), goSharedSymbol = goSymbols.find(entity => entity.name === 'PackagedGoShared'); assert.ok(goConsumerSymbol && goSharedSymbol);
+  const goFile = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', goConsumerSymbol.parentId], repo)).stdout);
+  const goImport = goFile.metadata.importOutcomes.find(item => item.specifier === 'example.com/shared/v2'); assert.ok(goImport);
+  assert.equal(goImport.local, 'routing'); assert.equal(goImport.range.startLine, 2); assert.equal(goImport.outcome.status, 'resolved'); assert.equal(goImport.outcome.targets.length, 2);
+  assert.ok(goImport.conditions.some(reason => reason.includes('Unknown build')), 'installed resolver retains the unconfigured platform alternative');
+  const goEdges = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', goFile.id, '--type', 'imports'], repo)).stdout).items;
+  assert.ok(goEdges.some(edge => edge.to === goSharedSymbol.parentId)); assert.equal(goFile.metadata.analysis.features.imports.status, 'partial'); assert.equal(goFile.metadata.analysis.features.references.status, 'unsupported');
   const workspaceSymbols = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'Workspace'], repo)).stdout).items;
   const consumerSymbol = workspaceSymbols.find(entity => entity.name === 'WorkspaceConsumer' && entity.type === 'function'), sharedSymbol = workspaceSymbols.find(entity => entity.name === 'WorkspaceShared' && entity.type === 'function');
   assert.ok(consumerSymbol && sharedSymbol, 'installed project services extract deep workspace declarations');
@@ -378,7 +394,7 @@ try {
   console.log('Checking npm exec against the tarball without a local installation…');
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
-  console.log('Package installation, seven grammars, workspace binding, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
+  console.log('Package installation, seven grammars, workspace binding, Go module/workspace/package imports and build alternatives, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

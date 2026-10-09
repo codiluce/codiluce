@@ -5,8 +5,12 @@ import path from 'node:path';
 import { parse } from 'yaml';
 import { ECOSYSTEMS, readManifests, type Ecosystem } from './manifests.js';
 import { nodeWorkspacePatterns } from './workspaces.js';
+import { parseGoManifest } from '../analysis/resolution/go-manifest.js';
 
 const execute = promisify(execFile);
+
+/** Explicit target inputs; absent fields remain unknown, never host defaults. */
+export interface GoBuildConfig { goos?: string; goarch?: string; tags?: string[]; cgoEnabled?: boolean; compiler?: 'gc' | 'gccgo'; toolchainVersion?: string; workspace?: string | false; includeTests?: boolean }
 
 export interface ApplicationConfig {
   name: string; path: string;
@@ -27,6 +31,7 @@ export interface ApplicationConfig {
   sourceRoots?: Record<string, string[]>;
   /** Explicit framework entry modules/factories (e.g. flask: ["shop:create_app"]). */
   entrypoints?: Record<string, string[]>;
+  go?: GoBuildConfig;
 }
 /** An application as configuration may give it: frameworks and ecosystems are completed from its manifests. */
 export type ApplicationInput = Omit<ApplicationConfig, 'frameworks' | 'ecosystems'> & {
@@ -122,6 +127,17 @@ export async function detectApplications(root: string, rootName = path.basename(
   const ownedDirectories = new Set<string>();
   const allowed = (relative: string) => !relative.split('/').some(segment => segment.startsWith('.') && segment !== '.' || TEST_DIRECTORIES.test(segment)) && ![...ignored].some(directory => relative === directory || relative.startsWith(`${directory}/`)) && !ignores.some(glob => matchesGlob(relative, glob));
   async function declaredMembers(relative: string, names: string[]): Promise<void> {
+    if (names.includes('go.work')) {
+      const workspace = parseGoManifest(await readFile(path.join(repoPath(root, relative), 'go.work'), 'utf8'), 'workspace');
+      if (workspace.valid) for (const member of workspace.uses) {
+        if (path.isAbsolute(member) || /^[A-Za-z]:/.test(member)) continue;
+        const directory = path.posix.normalize(path.posix.join(relative, member));
+        if (directory === '..' || directory.startsWith('../') || !allowed(directory)) continue;
+        const absolute = repoPath(root, directory);
+        if (await realpath(absolute).catch(() => undefined) !== absolute || !(await stat(absolute).catch(() => undefined))?.isDirectory()) continue;
+        await inspect(directory, 2);
+      }
+    }
     for (const manifest of ['package.json', 'pnpm-workspace.yaml']) {
       if (!names.includes(manifest)) continue;
       const patterns = nodeWorkspacePatterns(manifest, await readFile(path.join(repoPath(root, relative), manifest), 'utf8'));
@@ -204,6 +220,17 @@ export async function resolveConfig(root: string, raw: RawConfig): Promise<Atlas
   const names = new Set<string>();
   const paths = new Set<string>();
   for (const app of config.applications) {
+    if (app.go !== undefined) {
+      const go = app.go, tag = (value: unknown) => typeof value === 'string' && /^[A-Za-z0-9_.]+$/.test(value);
+      if (!go || typeof go !== 'object' || Array.isArray(go) || Object.keys(go).some(key => !['goos', 'goarch', 'tags', 'cgoEnabled', 'compiler', 'toolchainVersion', 'workspace', 'includeTests'].includes(key))
+        || go.goos !== undefined && !tag(go.goos) || go.goarch !== undefined && !tag(go.goarch)
+        || go.tags !== undefined && (!Array.isArray(go.tags) || go.tags.length > 128 || !go.tags.every(tag) || new Set(go.tags).size !== go.tags.length)
+        || go.cgoEnabled !== undefined && typeof go.cgoEnabled !== 'boolean' || go.includeTests !== undefined && typeof go.includeTests !== 'boolean'
+        || go.compiler !== undefined && !['gc', 'gccgo'].includes(go.compiler)
+        || go.toolchainVersion !== undefined && !/^1\.\d+(?:\.\d+)?$/.test(go.toolchainVersion)
+        || go.workspace !== undefined && go.workspace !== false && (typeof go.workspace !== 'string' || path.isAbsolute(go.workspace) || /[\\\0]/.test(go.workspace) || /^[A-Za-z]:/.test(go.workspace))) throw new Error('Invalid Go build configuration');
+      if (typeof go.workspace === 'string') repoPath(root, path.posix.join(app.path, go.workspace));
+    }
     if (names.has(app.name) || paths.has(app.path)) throw new Error('Application names and paths must be unique');
     names.add(app.name); paths.add(app.path);
     if (app.apiOrigins !== undefined && (!Array.isArray(app.apiOrigins) || !app.apiOrigins.every(origin => typeof origin === 'string' && /^https?:\/\//.test(origin) && new URL(origin).origin === origin))) throw new Error('apiOrigins must contain HTTP origins without paths');

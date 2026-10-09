@@ -14,6 +14,8 @@ export const filesystemAnalyzer: Analyzer = {
   name: 'filesystem', version: ANALYZER_VERSION,
   async analyze(context: AnalysisContext): Promise<void> {
     const { root, config, graph } = context;
+    const directoryInventory = context.directoryInventory = new Set(['.']);
+    const goManifestInventory = context.goManifestInventory = new Set<string>();
     graph.addEntity({ id: context.repositoryId, type: 'repository', name: config.repository.name, metadata: {}, evidence: [evidence('filesystem', 'filesystem', undefined, undefined, 'Repository scan root')] });
     // A materialized commit holds tracked files only: there is nothing ignored to prune.
     const ignored = context.revision ? undefined : await gitIgnored(root);
@@ -26,6 +28,8 @@ export const filesystemAnalyzer: Analyzer = {
       const absolute = path.join(root, relative);
       for (const entry of (await readdir(absolute, { withFileTypes: true })).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) {
         const rel = relative ? `${relative}/${entry.name}` : entry.name;
+        if (entry.isDirectory() || entry.isSymbolicLink()) directoryInventory.add(rel);
+        if (['go.mod', 'go.work'].includes(entry.name) && (entry.isFile() || entry.isSymbolicLink())) goManifestInventory.add(rel);
         if (shouldIgnore(rel)) continue;
         if (entry.isSymbolicLink()) { graph.diagnose({ analyzer: 'filesystem', severity: 'info', code: 'symlink-skipped', file: rel, reason: 'Symlinks are not followed' }); continue; }
         const facts = [evidence('filesystem', 'filesystem', rel)];

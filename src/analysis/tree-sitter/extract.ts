@@ -2,11 +2,19 @@ import type { Node, Query } from 'web-tree-sitter';
 import type { DeclarationFact, ParseIssue, StructureFacts } from '../facts.js';
 import { SourceText } from '../source-map.js';
 import { extractPythonImports } from './python-imports.js';
+import { extractGoImports } from './go-imports.js';
 
 const MAX_DECLARATIONS = 20_000, MAX_ISSUES = 100, MAX_NODES = 200_000;
 const compact = (text: string) => text.replace(/\s+/g, ' ').trim();
 const FIELD_BODIES = new Set(['block', 'body_statement', 'class_body', 'declaration_list', 'field_declaration_list', 'enum_body', 'function_body', 'arrow_expression_clause', 'constructor_body', 'accessor_list']);
 const CALLABLES = new Set(['function', 'method', 'constructor']);
+class GoOriginalSource extends SourceText {
+  override range(start: number, end: number) {
+    // Only the parser's optional one-character EOF suffix is permitted.
+    if (start > this.text.length + 1 || end > this.text.length + 1) return super.range(start, end);
+    return super.range(Math.min(start, this.text.length), Math.min(end, this.text.length));
+  }
+}
 const METHOD_OWNERS = new Set(['class', 'struct', 'interface', 'trait', 'record', 'object', 'enum']);
 function child(node: Node, ...types: string[]): Node | undefined { return node.namedChildren.find(item => types.includes(item.type)); }
 function body(node: Node): Node | undefined { return node.childForFieldName('body') ?? node.namedChildren.find(item => FIELD_BODIES.has(item.type)); }
@@ -64,7 +72,7 @@ function annotations(node: Node): string[] {
 interface Captured { node: Node; name: Node; kind: string }
 
 export function extractStructure(root: Node, query: Query, language: string, content: string): StructureFacts {
-  const source = new SourceText(content), issues: ParseIssue[] = [];
+  const source = language === 'go' ? new GoOriginalSource(content) : new SourceText(content), issues: ParseIssue[] = [];
   const damaged: { start: number; end: number }[] = [];
   let truncated = false, visited = 0;
   const queue = [root];
@@ -114,7 +122,7 @@ export function extractStructure(root: Node, query: Query, language: string, con
       key: String(node.id), ...(parent ? { parent: parent.key } : {}), name: name.text, qualifiedName, kind,
       entityType: CALLABLES.has(kind) ? (kind === 'function' ? 'function' : 'method') : kind === 'property' ? 'method' : 'class',
       signature: `${mods.includes('static') && CALLABLES.has(kind) ? 'static ' : ''}${signature(node, name, kind)}`, range: source.range(owner.startIndex, owner.endIndex),
-      start: owner.startIndex, end: owner.endIndex, nameEnd: name.endIndex,
+      start: owner.startIndex, end: Math.min(owner.endIndex, content.length), nameEnd: name.endIndex,
       ...(visibility ? { visibility } : {}), ...(mods.length ? { modifiers: mods } : {}), ...(notes.length ? { annotations: notes } : {}),
       ...(language === 'go' ? { exported: /^[A-Z]/.test(name.text) } : language === 'rust' ? { exported: !!visibility?.startsWith('pub') } : {}),
     };
@@ -149,7 +157,8 @@ export function extractStructure(root: Node, query: Query, language: string, con
   for (const declaration of declarations) { const key = keys.get(declaration.key)!; if (declaration.parent) declaration.parent = keys.get(declaration.parent); declaration.key = key; }
   issues.sort((a, b) => (a.range?.startLine ?? 0) - (b.range?.startLine ?? 0) || (a.range?.startColumn ?? 0) - (b.range?.startColumn ?? 0) || a.reason.localeCompare(b.reason));
   const python = language === 'python' ? extractPythonImports(root, declarations, source) : undefined;
-  truncated ||= python?.truncated ?? false;
+  const go = language === 'go' ? extractGoImports(root, source) : undefined;
+  truncated ||= (python?.truncated ?? false) || (go?.truncated ?? false);
   if (truncated) issues.push({ code: 'syntax-budget-exceeded', reason: 'Structural extraction reached its node, declaration, diagnostic or query limit' });
-  return { declarations, issues, truncated, ...(python ? { python: python.facts } : {}) };
+  return { declarations, issues, truncated, ...(python ? { python: python.facts } : {}), ...(go ? { go: go.facts } : {}) };
 }
