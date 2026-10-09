@@ -6,7 +6,7 @@ import { ANALYZER_VERSION, declarationHashes, evidence, type Entity, type Entity
 import { SiteCollector } from './references.js';
 import { resolveReferences, type TsApplicationState } from './ts-references.js';
 import { UrlEvaluator } from './ts-url.js';
-import { detectHttpSite, detectInertiaElement, evaluateSite, expandWrappers, reportWrapper, wrapperRootsForProgram, shadowedBinding, HTTP_METHODS, wrapperOf, type HttpSite, type WrapperRoot, type WrapperStats } from './ts-http.js';
+import { detectHttpSite, detectInertiaElement, evaluateSite, expandWrappers, reportWrapper, wrapperRootsForProgram, shadowedBinding, HTTP_METHODS, HTTP_ANALYSIS_VERSION, wrapperOf, type HttpSite, type WrapperRoot, type WrapperStats } from './ts-http.js';
 import { runtimeReference } from '../analysis/languages/typescript-runtime.js';
 import { fileKey, pathSetKey } from '../pipeline/cache.js';
 import { IndexedSources } from '../analysis/indexed-sources.js';
@@ -67,7 +67,7 @@ export const typescriptAnalyzer: Analyzer = {
       const run = () => analyzeComponent(context, component, services);
       const resolutionInputs = [...new Set([...resolutionFiles.map(file => file.path), ...services.resolver.configInputs])].sort().map(file => fileKey(context, file));
       const unit = component.length === 1 ? component[0]!.project.name : `group:${component.map(runtime => runtime.project.root).sort().join(',')}`;
-      if (context.cache && inputsAvailable) await context.cache.unit(context, 'typescript-nextjs', unit, { projects: component.map(runtime => runtime.project), options: component.map(runtime => services.resolver.options.get(runtime.project.id)), files: files.map(file => fileKey(context, file.path)), resolutionInputs, paths: pathSetKey(context), config: context.config, applications: [...context.applicationIds], typescript: ts.version, embedded: EMBEDDED_VERSION, packs: typescriptFrameworkPacks.map(pack => [pack.id, pack.version]) }, run);
+      if (context.cache && inputsAvailable) await context.cache.unit(context, 'typescript-nextjs', unit, { projects: component.map(runtime => runtime.project), options: component.map(runtime => services.resolver.options.get(runtime.project.id)), files: files.map(file => fileKey(context, file.path)), resolutionInputs, paths: pathSetKey(context), config: context.config, applications: [...context.applicationIds], typescript: ts.version, http: HTTP_ANALYSIS_VERSION, embedded: EMBEDDED_VERSION, packs: typescriptFrameworkPacks.map(pack => [pack.id, pack.version]) }, run);
       else await run();
     }
     for (const [file, reason] of sources.failures) context.graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'indexed-source-unavailable', file, entityId: context.files.get(file)?.id, reason });

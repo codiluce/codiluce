@@ -6,7 +6,7 @@ import { routingContract, matchRoutePattern } from '../analysis/routes/contracts
 import { configuredProxy, proxyPath, relativeApiBoundary, requestApplication } from '../analysis/routes/boundaries.js';
 import { preferGoRoutes } from '../analysis/routes/go-patterns.js';
 export const apiMatcher: Analyzer = {
-  name: 'api-matcher', version: `${ANALYZER_VERSION}:7`,
+  name: 'api-matcher', version: `${ANALYZER_VERSION}:8`,
   async analyze(context: AnalysisContext): Promise<void> {
     const endpoints = [...context.graph.entities.values()].filter(entity => entity.type === 'api_endpoint');
     const appsById = new Map(context.config.applications.map(app => [context.applicationIds.get(app.name), app]));
@@ -14,7 +14,12 @@ export const apiMatcher: Analyzer = {
     const contracts = new Map(endpoints.map(endpoint => [endpoint.id, routingContract(endpoint.metadata.routing)]));
     const patterns = new Map(endpoints.map(endpoint => [endpoint.id, compileIndexedPath(String(endpoint.metadata.routePath))]));
     const requests = new Map<string, string[]>();
-    const hosts = (endpoint: Entity): string[] => { const contract = contracts.get(endpoint.id); return [...new Set([contract?.host, ...contract?.guards?.map(guard => guard.host) ?? []].filter((host): host is string => !!host))]; };
+    const layers = (endpoint: Entity) => { const contract = contracts.get(endpoint.id); return contract ? [contract, ...contract.guards ?? []] : []; };
+    const observedConstraints = (endpoint: Entity, origin?: string, query?: URLSearchParams): boolean => layers(endpoint).every(contract => {
+      if (origin) { const url = new URL(origin), host = contract.hostAuthority ? url.host : url.hostname; if (contract.host && contract.host !== host || contract.excludedHosts?.includes(host) || contract.schemes && !contract.schemes.includes(url.protocol.slice(0, -1))) return false; }
+      return !query || (contract.queries ?? []).every(item => query.has(item.name) && (item.value === undefined || query.get(item.name) === item.value));
+    });
+    const needsOrigin = (endpoint: Entity) => layers(endpoint).some(contract => contract.host || contract.excludedHosts?.length || contract.schemes?.length);
     const matchPath = (endpoint: Entity, path: string, strict = true): boolean => {
       const contract = contracts.get(endpoint.id);
       if (contract) return matchRoutePattern(contract.pattern, path, strict) && (contract.guards ?? []).every(guard => (!guard.rawPrefix || path.startsWith(guard.rawPrefix)) && matchRoutePattern(guard.pattern, path, strict));
@@ -50,7 +55,7 @@ export const apiMatcher: Analyzer = {
           const app = appFor(endpoint);
           if (!app || !methodMatches(endpoint, observation.method!) || endpoint.metadata.registration === 'convention' && endpoint.metadata.framework === 'laravel') return false;
           if (origin && !app.apiOrigins?.includes(origin)) return false;
-          if (origin && hosts(endpoint).some(host => host !== new URL(origin).hostname)) return false;
+          if (origin && !observedConstraints(endpoint, origin)) return false;
           if (!origin && observation.transport === 'sveltekit-fetch') return app.name === callerApp?.name && endpoint.metadata.framework === 'sveltekit';
           if (!origin && observation.transport === 'nuxt-fetch') return app.name === callerApp?.name && endpoint.metadata.framework === 'nuxt';
           if (!origin && ['sveltekit', 'astro', 'nuxt'].includes(String(endpoint.metadata.framework)) && app.name !== callerApp?.name && !callerApp?.apiProxies?.some(proxy => proxy.target === app.name)) return false;
@@ -63,12 +68,12 @@ export const apiMatcher: Analyzer = {
       const selectors = [...new URLSearchParams(search).keys()].filter(key => key.startsWith('/'));
       let candidates = eligible.filter(endpoint => {
         const action = contracts.get(endpoint.id)?.action;
-        return (!action || (action.name === 'default' ? selectors.length === 0 : selectors.length === 1 && selectors[0] === `/${action.name}`)) && (!proxy || appFor(endpoint)?.name === proxy.target) && matchPath(endpoint, proxy ? proxyPath(proxy, pathname) : pathname);
+        return observedConstraints(endpoint, origin, new URLSearchParams(search)) && (!action || (action.name === 'default' ? selectors.length === 0 : selectors.length === 1 && selectors[0] === `/${action.name}`)) && (!proxy || appFor(endpoint)?.name === proxy.target) && matchPath(endpoint, proxy ? proxyPath(proxy, pathname) : pathname);
       });
-      if (origin || !candidates.some(endpoint => hosts(endpoint).length)) candidates = preferGoRoutes(candidates, endpoint => contracts.get(endpoint.id), observation.method);
+      if (origin || !candidates.some(needsOrigin)) candidates = preferGoRoutes(candidates, endpoint => contracts.get(endpoint.id), observation.method);
       // Keep constrained candidates in ambiguity detection: ignoring one could
       // falsely select another route with the same HTTP method/path.
-      if (candidates.length !== 1 || candidates[0]!.metadata.constraintsUnresolved || !origin && hosts(candidates[0]!).length) {
+      if (candidates.length !== 1 || candidates[0]!.metadata.constraintsUnresolved || !origin && needsOrigin(candidates[0]!)) {
         context.graph.diagnose({ analyzer: 'api-matcher', severity: 'warning', code: candidates.length > 1 ? 'ambiguous-http-match' : candidates.length === 1 ? 'constrained-http-match' : 'unmatched-http-call', entityId: observation.callerId, file: observation.evidence.file, line: observation.evidence.line, reason: `${observation.method} ${pathname}: ${candidates.length} eligible endpoints${origin ? ' with explicit origin association' : ''}${candidates[0]?.metadata.constraintsUnresolved ? '; route constraints unresolved' : ''}` });
         continue;
       }
@@ -115,8 +120,8 @@ export const apiMatcher: Analyzer = {
       const pattern = proxy ? proxyPath(proxy, resolved.pattern) : resolved.pattern;
       const scoped = proxy ? eligible.filter(endpoint => appFor(endpoint)?.name === proxy.target) : eligible;
       // A dynamic path summary does not prove a form action query selector.
-      const hostKnown = (endpoint: Entity) => { const required = hosts(endpoint); if (!required.length) return true; const origins = resolved.app ? appFor(endpoint)?.apiOrigins : undefined; return !!origins?.length && origins.every(origin => required.every(host => new URL(origin).hostname === host)); };
-      const candidates = scoped.filter(endpoint => !hosts(endpoint).length || !resolved.app || !appFor(endpoint)?.apiOrigins?.length || appFor(endpoint)!.apiOrigins!.some(origin => hosts(endpoint).every(host => new URL(origin).hostname === host)));
+      const hostKnown = (endpoint: Entity) => { if (layers(endpoint).some(contract => contract.queries?.length)) return false; if (!needsOrigin(endpoint)) return true; const origins = resolved.app ? appFor(endpoint)?.apiOrigins : undefined; return !!origins?.length && origins.every(origin => observedConstraints(endpoint, origin)); };
+      const candidates = scoped.filter(endpoint => !needsOrigin(endpoint) || !resolved.app || !appFor(endpoint)?.apiOrigins?.length || appFor(endpoint)!.apiOrigins!.some(origin => observedConstraints(endpoint, origin)));
       let strict = candidates.filter(endpoint => !contracts.get(endpoint.id)?.action && matchPath(endpoint, pattern));
       let loose = candidates.filter(endpoint => !contracts.get(endpoint.id)?.action && matchPath(endpoint, pattern, false));
       if (!pattern.includes('{*}') && loose.every(hostKnown)) { strict = preferGoRoutes(strict, endpoint => contracts.get(endpoint.id), observation.method); loose = preferGoRoutes(loose, endpoint => contracts.get(endpoint.id), observation.method); }

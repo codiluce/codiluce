@@ -65,6 +65,42 @@ export function compileGinPath(original: string): RoutePattern {
   }
   pattern.alternatives = [segments]; return pattern;
 }
+export function compileEchoPath(original: string, major: 4 | 5): RoutePattern {
+  const path = original.startsWith('/') ? original : `/${original}`;
+  const pattern = compileGinPath(path.replace(/\/\*$/, '/*catchall'));
+  pattern.dialect = `echo-${major}`; pattern.original = path;
+  if (path === '/*') pattern.alternatives = [[{ kind: 'rest', name: 'wildcard', minimum: 0 }]];
+  return pattern;
+}
+export function compileFiberPath(original: string, major: 2 | 3, options: { caseSensitive?: boolean; strict?: boolean; unescape?: boolean; integerBits?: 32 | 64 } = {}): RoutePattern {
+  const path = original ? original.startsWith('/') ? original : `/${original}` : '/';
+  const pattern: RoutePattern = { version: 1, dialect: `fiber-${major}`, original: path, status: 'exact', alternatives: [], caseSensitive: options.caseSensitive ?? false, strict: options.strict ?? false, encoded: !options.unescape, integerBits: options.integerBits ?? 64 };
+  const partial = (reason: string): RoutePattern => ({ ...pattern, status: 'partial', reason, prefix: opaquePrefix(path) });
+  if (path.length > 4096 || /[\\#]/.test(path)) return partial('Unreviewed Fiber escapes or path length');
+  let alternatives: RouteSegment[][] = [[]]; const raw = path.slice(1).split('/'); if (!raw.at(-1)) raw.pop();
+  for (const [index, part] of raw.entries()) {
+    if (['*', '+'].includes(part)) { if (index !== raw.length - 1) return partial('Nonterminal Fiber greedy parameters require a separate matcher'); alternatives.forEach(items => items.push({ kind: 'rest', name: part, minimum: part === '+' ? 1 : 0 })); continue; }
+    const optional = /^:([A-Za-z0-9_]+)(?:<(int|float|uuid|bool)>)?\?$/.exec(part);
+    if (optional) { if (alternatives.length >= 32) return partial('Optional Fiber parameters exceed the expansion budget'); const parameter: RouteSegment = { kind: 'segment', parts: [{ kind: 'parameter', name: optional[1]!, ...(optional[2] === 'int' ? { converter: 'go-int' as const } : {}) }] }; if (optional[2] && optional[2] !== 'int') return partial('Unreviewed Fiber constraint'); alternatives = alternatives.flatMap(items => [items, [...items, parameter]]); continue; }
+    const parts: RoutePart[] = []; let cursor = 0;
+    for (const match of part.matchAll(/:([A-Za-z0-9_]+)(?:<([^<>]+)>)?/g)) {
+      if (match.index! > cursor) parts.push({ kind: 'literal', value: part.slice(cursor, match.index) });
+      if (match[2] && match[2] !== 'int') return partial('Fiber constraint requires a reviewed bounded matcher');
+      parts.push({ kind: 'parameter', name: match[1]!, ...(match[2] ? { converter: 'go-int' as const } : {}) }); cursor = match.index! + match[0].length;
+    }
+    if (cursor < part.length) parts.push({ kind: 'literal', value: part.slice(cursor) });
+    if (parts.some(item => item.kind === 'literal' && /[:*+?<>]/.test(item.value))) return partial('Unreviewed Fiber path syntax');
+    if (parts.some((item, i) => item.kind === 'parameter' && parts[i + 1]?.kind === 'parameter') || parts.length > 1 && parts.some(item => item.kind === 'parameter' && item.converter)) return partial('Adjacent or embedded constrained Fiber parameters require a delimiter matcher');
+    alternatives.forEach(items => items.push({ kind: 'segment', parts }));
+  }
+  pattern.alternatives = alternatives; return pattern;
+}
+export function compileGorillaPath(original: string, options: { prefix?: boolean; strict?: boolean; encoded?: boolean; skipClean?: boolean } = {}): RoutePattern {
+  const pattern = compileChiPath(original); pattern.dialect = 'gorilla-1'; pattern.strict = true; pattern.encoded = options.encoded ?? false; pattern.skipClean = options.skipClean ?? false; pattern.pathPrefix = options.prefix;
+  // PathPrefix is a byte prefix, including a partial final segment.
+  if (options.prefix && /[{}]/.test(original)) return { ...pattern, status: 'partial', reason: 'Templated Gorilla PathPrefix requires a prefix matcher', prefix: opaquePrefix(original) };
+  return pattern;
+}
 function goEscapePath(path: string): string {
   return encodeURIComponent(path).replace(/[!'()*]/g, char => `%${char.charCodeAt(0).toString(16).toUpperCase()}`).replace(/%2F|%3A|%40|%26|%3D|%2B|%24|%2C|%3B/g, text => decodeURIComponent(text));
 }
@@ -72,24 +108,28 @@ export function matchGoPath(pattern: RoutePattern, path: string, strictHoles = t
   if (pattern.status === 'partial') return !pattern.prefix || path.includes('{*}') || path.startsWith(pattern.prefix);
   if (!path.startsWith('/')) return false;
   const modern = pattern.dialect === 'go-servemux-122', mux = modern || pattern.dialect === 'go-servemux-121';
+  const fiber = pattern.dialect.startsWith('fiber-'), echo = pattern.dialect.startsWith('echo-'), gorilla = pattern.dialect === 'gorilla-1';
   if (mux && (path.includes('//') || path.split('/').some(part => part === '.' || part === '..'))) return false; // Redirects have no application handler.
+  if (gorilla && !pattern.skipClean && (path.includes('//') || path.split('/').some(part => part === '.' || part === '..'))) return false;
   let parts: string[];
   try {
     if (modern) parts = path.slice(1).split('/').map(decodeURIComponent);
-    else { const decoded = decodeURIComponent(path); if (pattern.dialect !== 'chi-5' || goEscapePath(decoded) === path) path = decoded; parts = path.slice(1).split('/'); }
+    else { const decoded = decodeURIComponent(path); if (!(fiber || gorilla) || !pattern.encoded) { if (!(pattern.dialect === 'chi-5' || echo) || goEscapePath(decoded) === path) path = decoded; } if (!pattern.caseSensitive) path = path.toLowerCase(); parts = path.slice(1).split('/'); }
   } catch { return false; }
+  if (pattern.pathPrefix) return path.startsWith(pattern.caseSensitive ? pattern.original : pattern.original.toLowerCase());
   const slash = path.endsWith('/'); if (!parts.at(-1)) parts.pop();
   return pattern.alternatives.some(segments => {
     const rest = segments.at(-1)?.kind === 'rest';
-    if (!rest && slash !== pattern.original.endsWith('/') && path !== '/') return false;
-    if (rest && parts.length === segments.length - 1 && !slash && path !== '/') return false;
+    if (pattern.strict && !rest && slash !== pattern.original.endsWith('/') && path !== '/') return false;
+    if (!fiber && rest && parts.length === segments.length - 1 && !slash && path !== '/') return false;
     let cursor = 0;
     for (const segment of segments) {
       if (segment.kind === 'rest') return parts.length - cursor >= segment.minimum;
       const value = parts[cursor++]; if (value === undefined) return false;
       if (value === '{*}') { if (strictHoles && !(segment.parts.length === 1 && segment.parts[0]?.kind === 'parameter')) return false; continue; }
-      const regex = segment.parts.map(part => part.kind === 'literal' ? escape(part.value) : part.converter === 'int' ? '[0-9]+' : part.converter === 'slug' ? '[-A-Za-z0-9_]+' : modern ? '.+' : '[^/]+').join('');
-      if (!new RegExp(`^${regex}$`).test(value)) return false;
+      const regex = segment.parts.map(part => part.kind === 'literal' ? escape(part.value) : part.converter === 'int' ? '[0-9]+' : part.converter === 'go-int' ? '[+-]?[0-9]+' : part.converter === 'slug' ? '[-A-Za-z0-9_]+' : modern ? '.+' : '[^/]+').join('');
+      if (!new RegExp(`^${regex}$`, pattern.caseSensitive ? '' : 'i').test(value)) return false;
+      if (segment.parts.length === 1 && segment.parts[0]?.kind === 'parameter' && segment.parts[0].converter === 'go-int') { const bits = BigInt(pattern.integerBits ?? 64), integer = BigInt(value); if (integer < -(1n << (bits - 1n)) || integer >= 1n << (bits - 1n)) return false; }
     }
     return cursor === parts.length;
   });
@@ -131,11 +171,12 @@ export function preferGoRoutes<T>(items: T[], contract: (item: T) => RoutingCont
       if (a.dispatch.order === b.dispatch.order && level < Math.min(left.length, right.length) - 1) continue;
       if (method && !!a.fallbackMethods?.includes(method) !== !!b.fallbackMethods?.includes(method)) return !a.fallbackMethods?.includes(method);
       if (a.dispatch.dialect === 'go-servemux') return !!a.host && !b.host || goRouteSubset(a, b) && !goRouteSubset(b, a);
+      if (['fiber', 'gorilla'].includes(a.dispatch.dialect)) return a.dispatch.order < b.dispatch.order;
       const x = a.pattern.alternatives[0], y = b.pattern.alternatives[0]; if (!x || !y || a.pattern.status !== 'exact' || b.pattern.status !== 'exact') return false;
       for (let i = 0; i < Math.min(x.length, y.length); i++) {
         const rank = (segment: RouteSegment) => segment.kind === 'rest' ? 0 : segment.parts.every(part => part.kind === 'literal') ? 3 : segment.parts.some(part => part.kind === 'parameter' && part.converter) ? 2 : 1;
         if (rank(x[i]!) !== rank(y[i]!)) return rank(x[i]!) > rank(y[i]!);
-      } return false;
+      } return !!b.notFoundFallback && !a.notFoundFallback && goRouteSubset({ ...a, methods: '*' }, { ...b, methods: '*' }) && goRouteSubset({ ...b, methods: '*' }, { ...a, methods: '*' });
     } return false;
   }));
 }

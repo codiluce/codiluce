@@ -1,13 +1,14 @@
 /** Serializable routing facts shared by framework packs, history and matching.
  * Opaque syntax is retained as a competing candidate, never a confirmed match. */
-export type RoutePart = { kind: 'literal'; value: string } | { kind: 'parameter'; name: string; converter?: 'int' | 'float' | 'uuid' | 'slug' };
+export type RoutePart = { kind: 'literal'; value: string } | { kind: 'parameter'; name: string; converter?: 'int' | 'go-int' | 'float' | 'uuid' | 'slug' };
 export type RouteSegment = { kind: 'segment'; parts: RoutePart[] } | { kind: 'rest'; name: string; minimum: 0 | 1 };
 import { matchGoPath } from './go-patterns.js';
 export interface RoutePattern {
-  version: 1; dialect: 'express-common' | 'express-4' | 'express-5' | 'starlette' | 'werkzeug' | 'django-path' | 'django-re-path' | 'sveltekit' | 'astro' | 'nuxt-page' | 'nitro-2' | 'go-servemux-121' | 'go-servemux-122' | 'chi-5' | 'gin-1'; original: string;
+  version: 1; dialect: 'express-common' | 'express-4' | 'express-5' | 'starlette' | 'werkzeug' | 'django-path' | 'django-re-path' | 'sveltekit' | 'astro' | 'nuxt-page' | 'nitro-2' | 'go-servemux-121' | 'go-servemux-122' | 'chi-5' | 'gin-1' | 'echo-4' | 'echo-5' | 'fiber-2' | 'fiber-3' | 'gorilla-1'; original: string;
   status: 'exact' | 'partial'; reason?: string; alternatives: RouteSegment[][];
   prefix?: string;
   caseSensitive: boolean; strict: boolean;
+  encoded?: boolean; skipClean?: boolean; pathPrefix?: boolean; integerBits?: 32 | 64;
 }
 export interface RoutingContract {
   version: 1; pattern: RoutePattern; methods: string[] | '*'; executionContext: 'server';
@@ -16,10 +17,15 @@ export interface RoutingContract {
   mounts: { id: string; file: string; line: number; prefix: string }[];
   middleware: string[]; conditions: string[];
   host?: string;
-  dispatch?: { dialect: 'go-servemux' | 'chi' | 'gin'; root: string; order: number };
+  hostAuthority?: boolean;
+  dispatch?: { dialect: 'go-servemux' | 'chi' | 'gin' | 'echo' | 'fiber' | 'gorilla'; root: string; order: number };
+  excludedHosts?: string[];
+  queries?: { name: string; value?: string }[];
+  schemes?: string[];
   /** Parent dispatch decisions expressed in the externally visible path. */
   guards?: RoutingContract[];
   fallbackMethods?: string[];
+  notFoundFallback?: boolean;
   /** StripPrefix also checks RawPath; alternate escaped prefix spellings fail. */
   rawPrefix?: string;
   /** Form actions share a page URL; the query selector chooses an operation. */
@@ -164,7 +170,7 @@ export function djangoRegexRoute(original: string, include = false): string | un
   return route;
 }
 export function matchRoutePattern(pattern: RoutePattern, pathname: string, strictHoles = true): boolean {
-  if (['go-servemux-121', 'go-servemux-122', 'chi-5', 'gin-1'].includes(pattern.dialect)) return matchGoPath(pattern, pathname, strictHoles);
+  if (['go-servemux-121', 'go-servemux-122', 'chi-5', 'gin-1', 'echo-4', 'echo-5', 'fiber-2', 'fiber-3', 'gorilla-1'].includes(pattern.dialect)) return matchGoPath(pattern, pathname, strictHoles);
   if (['nitro-2', 'nuxt-page'].includes(pattern.dialect) && pathname.includes('//')) return false;
   if (pattern.dialect === 'astro') {
     // Repeated encoding has version-specific fallback semantics. The common

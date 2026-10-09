@@ -31,6 +31,7 @@ import type { SiteCollector } from './references.js';
 import { emptyScope, MISSING_ARGUMENT, type ResolvedUrl, type Scope, type Unresolved, type UrlEvaluator } from './ts-url.js';
 
 export const HTTP_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD']);
+export const HTTP_ANALYSIS_VERSION = '2';
 const AXIOS_VERBS = new Set(['get', 'post', 'put', 'patch', 'delete', 'options', 'head']);
 const INERTIA_MODULES = new Set(['@inertiajs/react', '@inertiajs/vue3', '@inertiajs/svelte', '@inertiajs/core', '@inertiajs/inertia', '@inertiajs/inertia-react']);
 const INERTIA_VERBS = new Set(['get', 'post', 'put', 'patch', 'delete']);
@@ -286,8 +287,10 @@ function readOptions(urls: UrlEvaluator, options: ts.Expression | undefined, sco
       const value = ts.isPropertyAssignment(property) ? property.initializer : ts.isShorthandPropertyAssignment(property) ? property.name : undefined;
       const read = value ? urls.stringValue(value, object.scope) : { reason: 'Dynamic/unsupported HTTP method', parameters: [] };
       if ('reason' in read) return { reason: 'Dynamic/unsupported HTTP method', parameters: read.parameters };
-      method = read.value.toUpperCase();
-      if (!HTTP_METHODS.has(method)) return { reason: 'Dynamic/unsupported HTTP method', parameters: [] };
+      const upper = read.value.toUpperCase();
+      if (!/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(read.value) || ['CONNECT', 'TRACE', 'TRACK'].includes(upper)) return { reason: 'Dynamic/unsupported HTTP method', parameters: [] };
+      // Fetch normalizes its standard methods; extension tokens keep case.
+      method = HTTP_METHODS.has(upper) && upper !== 'PATCH' ? upper : read.value;
     }
   }
   return { ...(method ? { method } : {}) };
