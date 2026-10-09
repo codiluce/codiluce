@@ -26,6 +26,7 @@ import { embeddedAnalyzer } from '../analysis/embedded/index.js';
 import { goAnalyzer } from '../analysis/languages/go.js';
 import { rubyAnalyzer } from '../analysis/languages/ruby.js';
 import { GO_ROUTER_VERSION } from '../analysis/frameworks/go-routers.js';
+import { RAILS_VERSION } from '../analysis/frameworks/rails.js';
 
 const execute = promisify(execFile);
 export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, structureAnalyzer, pythonAnalyzer, goAnalyzer, rubyAnalyzer, embeddedAnalyzer, typescriptAnalyzer, typescriptServicesRelease, laravelAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
@@ -56,6 +57,6 @@ export async function indexRepository(repository: string, options: IndexOptions 
     graph.diagnose({ analyzer: 'indexer', severity: 'info', code: 'git-metadata-unavailable', reason: 'No readable Git HEAD/status; this is still a valid working-tree scan' });
   }
   for (const analyzer of analyzers) { options.onProgress?.(analyzer.name); await analyzer.analyze(context); }
-  const run: AnalysisRun = { id: randomUUID(), repositoryId, repositoryName: config.repository.name, ...(commitSha ? { commitSha } : {}), ...(dirty !==undefined ? { dirty } : {}), analyzedAt: new Date().toISOString(), configDigest: createHash('sha256').update(JSON.stringify(config)).digest('hex'), schemaVersion: SCHEMA_VERSION, analyzerVersions: Object.fromEntries([...analyzers.map(analyzer => [analyzer.name, analyzer.version]), ...typescriptFrameworkPacks.map(pack => [pack.id, pack.version]), ['fastapi', FASTAPI_VERSION], ['flask', FLASK_VERSION], ['django', DJANGO_VERSION], ['go-routers', GO_ROUTER_VERSION]]) };
+  const run: AnalysisRun = { id: randomUUID(), repositoryId, repositoryName: config.repository.name, ...(commitSha ? { commitSha } : {}), ...(dirty !==undefined ? { dirty } : {}), analyzedAt: new Date().toISOString(), configDigest: createHash('sha256').update(JSON.stringify(config)).digest('hex'), schemaVersion: SCHEMA_VERSION, analyzerVersions: Object.fromEntries([...analyzers.map(analyzer => [analyzer.name, analyzer.version]), ...typescriptFrameworkPacks.map(pack => [pack.id, pack.version]), ['fastapi', FASTAPI_VERSION], ['flask', FLASK_VERSION], ['django', DJANGO_VERSION], ['go-routers', GO_ROUTER_VERSION], ['rails', RAILS_VERSION]]) };
   return graph.finish(run);
 }

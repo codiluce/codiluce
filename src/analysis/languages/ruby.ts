@@ -7,8 +7,9 @@ import { STRUCTURE_VERSION } from '../tree-sitter/analyzer.js';
 import { RubySymbols, RUBY_SYMBOL_VERSION } from './ruby-symbols.js';
 import { RubyAutoloadCatalog, RUBY_AUTOLOAD_VERSION } from '../resolution/ruby-autoload.js';
 import { RUBY_PROFILE_VERSION } from './ruby-profile.js';
+import { RailsRegistrations, RAILS_VERSION } from '../frameworks/rails.js';
 
-export const RUBY_IMPORT_VERSION = `${ANALYZER_VERSION}:ruby-imports:3`;
+export const RUBY_IMPORT_VERSION = `${ANALYZER_VERSION}:ruby-imports:4`;
 export const rubyAnalyzer: Analyzer = {
   name: 'ruby-imports', version: RUBY_IMPORT_VERSION,
   async analyze(context): Promise<void> {
@@ -42,10 +43,11 @@ export const rubyAnalyzer: Analyzer = {
         entity.metadata.importOutcomes = outcomes; entity.metadata.externalImports = [...new Set(external)].sort();
         analysis.features.imports = { status: 'partial', reason: 'Literal Ruby loads and lazy activation, recorded load-path/cwd inputs and version-qualified autoload contracts; executable gem activation, dynamic runtime loading and loader hooks require further profiles' };
       }
+      new RailsRegistrations(context, symbols, autoload).run();
       symbols.analyze(files);
       autoload.annotate();
     };
-    if (context.cache) await context.cache.unit(context, this.name, 'repository', { version: RUBY_IMPORT_VERSION, symbols: RUBY_SYMBOL_VERSION, autoload: RUBY_AUTOLOAD_VERSION, profiles: RUBY_PROFILE_VERSION, autoloadInputs: autoload.describe(), syntax: STRUCTURE_VERSION, resolver: RUBY_RESOLVER_VERSION, config: context.config, projects: resolver.describe(), files: [...context.files.values()].filter(file => file.language === 'ruby' || file.path.endsWith('/Gemfile.lock') || file.path === 'Gemfile.lock').map(file => fileKey(context, file.path)), paths: [...context.files.values()].map(file => [file.path, file.language, file.analyzable]), observedFiles: [...context.fileInventory ?? []].sort(), availability: files.map(file => [file.path, resolver.facts(file.path)?.complete]), directories: [...context.directoryInventory ?? []].sort() }, run);
+    if (context.cache) await context.cache.unit(context, this.name, 'repository', { version: RUBY_IMPORT_VERSION, symbols: RUBY_SYMBOL_VERSION, rails: RAILS_VERSION, autoload: RUBY_AUTOLOAD_VERSION, profiles: RUBY_PROFILE_VERSION, autoloadInputs: autoload.describe(), syntax: STRUCTURE_VERSION, resolver: RUBY_RESOLVER_VERSION, config: context.config, projects: resolver.describe(), files: [...context.files.values()].filter(file => file.language === 'ruby' || file.path.endsWith('/Gemfile.lock') || file.path === 'Gemfile.lock').map(file => fileKey(context, file.path)), paths: [...context.files.values()].map(file => [file.path, file.language, file.analyzable]), observedFiles: [...context.fileInventory ?? []].sort(), availability: files.map(file => [file.path, resolver.facts(file.path)?.complete]), directories: [...context.directoryInventory ?? []].sort() }, run);
     else await run();
   },
 };

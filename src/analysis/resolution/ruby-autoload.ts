@@ -247,7 +247,7 @@ export class RubyAutoloadCatalog {
       const entity = this.context.graph.entities.get(file.id)!;
       const candidates = [...this.indexes.get(model.project.id)?.values() ?? []].filter(item => item.path === file.path || item.shadowed.includes(file.path));
       entity.metadata.rubyAutoload = { adapter: model.rails ? 'rails-zeitwerk' : 'zeitwerk', version: RUBY_AUTOLOAD_VERSION, profile: model.profile, loaderProfile: model.loaderProfile, candidates: candidates.map(item => ({ name: item.name, loader: item.loader, selected: item.path === file.path, shadowed: item.shadowed, reason: item.reason })), gaps: model.gaps, conditions: model.conditions };
-      const analysis = fileAnalysis(entity.metadata.analysis); if (analysis && model.profile.reviewed && !model.gaps.length && candidates.some(candidate => !candidate.reason)) analysis.features.framework = { status: 'partial', reason: 'Version-qualified autoload root/inflector contract; Rails routes/actions/callbacks and executable boot/reload remain unsupported' };
+      const analysis = fileAnalysis(entity.metadata.analysis); if (analysis && model.profile.reviewed && !model.gaps.length && candidates.some(candidate => !candidate.reason) && !Array.isArray(entity.metadata.frameworkPacks)) analysis.features.framework = { status: 'partial', reason: 'Version-qualified autoload root/inflector contract; executable boot/reload and wider framework depth remain unsupported' };
     }
   }
 }

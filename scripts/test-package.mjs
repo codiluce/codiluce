@@ -7,7 +7,7 @@ import { once } from 'node:events';
 import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 
 const execute = promisify(execFile);
@@ -72,6 +72,7 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
       ['GET|HEAD /package-go-fiber2/items', 'go-fiber2/main.go', 3],
       ['GET /package-go-fiber3/items', 'go-fiber3/main.go', 3],
       ['GET /package-go-gorilla/items/{id}', 'go-gorilla/main.go', 3],
+      ['GET /package-rails/:id', 'ruby-autoload/app/controllers/admin/users_controller.rb', 2],
     ]) {
       const found = await (await fetch(`${url}api/entities?search=${encodeURIComponent(name)}&type=api_endpoint`)).json();
       const endpoint = found.items.find(item => item.name === name); assert.ok(endpoint);
@@ -165,6 +166,11 @@ try {
   await writeFile(path.join(rubyAutoload, 'config/initializers/inflections.rb'), 'Rails.autoloaders.main.inflector.inflect("html_parser" => "HTMLParser")\n');
   await writeFile(path.join(rubyAutoload, 'main.rb'), '# 😀 original autoload trigger\nAdmin::HTMLParser.run\n');
   await writeFile(path.join(rubyAutoload, 'app/services/admin/html_parser.rb'), 'class Admin::HTMLParser\n def self.run; end\nend\n');
+  await mkdir(path.join(rubyAutoload, 'app/controllers/admin'), { recursive: true });
+  await writeFile(path.join(rubyAutoload, 'app/controllers/application_controller.rb'), 'class ApplicationController < ActionController::Base\n before_action :packaged_authenticate\n private\n def packaged_authenticate; end\nend\n');
+  await writeFile(path.join(rubyAutoload, 'app/controllers/admin/users_controller.rb'), 'class Admin::UsersController < ApplicationController\n def show; end\nend\n');
+  await writeFile(path.join(rubyAutoload, 'config/routes.rb'), 'Rails.application.routes.draw do\n resources :packaged_rails, path: "package-rails", controller: "admin/users", only: :show\nend\n');
+  await writeFile(path.join(rubyAutoload, 'client.ts'), 'export function PackagedRailsRequest(){return fetch("https://packaged-rails.test/package-rails/12.json")}\n');
   const flaskServer = path.join(repo, 'flask-server');
   await mkdir(flaskServer);
   await writeFile(path.join(flaskServer, 'requirements.txt'), 'Flask==3.1.2\n');
@@ -242,6 +248,12 @@ try {
   }
   await mkdir(path.join(repo, 'go-http/handlers'), { recursive: true });
   await writeFile(path.join(repo, 'go-http/handlers/handler.go'), 'package handlers\nimport "net/http"\nfunc PackagedGoHTTP(w http.ResponseWriter,r *http.Request){}\n');
+  // Explicit fixture deployment inputs; the origin is not inferred from source.
+  const { detectApplications } = await import(pathToFileURL(path.join(installed, 'dist/src/core/config.js')).href);
+  const applications = await detectApplications(repo);
+  const railsApplication = applications.find(app => app.path === 'ruby-autoload'); assert.ok(railsApplication); railsApplication.apiOrigins = ['https://packaged-rails.test'];
+  await mkdir(path.join(repo, '.codiluce'), { recursive: true });
+  await writeFile(path.join(repo, '.codiluce/config.yml'), JSON.stringify({ applications }));
   console.log('Starting the installed executable from a repository with spaces…');
   await checkSession(bin, repo);
   assert.ok((await readdir(path.join(repo, '.codiluce'))).includes('codiluce.db'));
@@ -328,12 +340,23 @@ try {
   const autoloadServiceDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', autoloadService.id], repo)).stdout);
   assert.equal(autoloadServiceDetail.metadata.analysis.features.framework.status, 'partial');
   assert.equal(autoloadServiceDetail.metadata.rubyAutoload.loaderProfile.version, '2.7.5');
-  assert.match(autoloadServiceDetail.metadata.analysis.features.framework.reason, /routes\/actions\/callbacks.*unsupported/);
+  assert.match(autoloadServiceDetail.metadata.analysis.features.framework.reason, /boot\/reload.*unsupported/);
   const autoloadImports = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', autoloadMain.id, '--type', 'imports'], repo)).stdout).items;
   assert.equal(autoloadImports.length, 1); assert.equal(autoloadImports[0].metadata.kind, 'autoload-trigger');
   const autoloadProof = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relation', '--id', autoloadImports[0].id], repo)).stdout);
   assert.ok(autoloadProof.evidence.some(item => item.file === 'ruby-autoload/main.rb' && item.line === 2));
   assert.ok(autoloadProof.evidence.some(item => item.file === 'ruby-autoload/config/initializers/inflections.rb' && item.line === 1));
+  const railsEntities = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', '/package-rails'], repo)).stdout).items;
+  const railsEndpoint = railsEntities.find(entity => entity.type === 'api_endpoint' && entity.name === 'GET /package-rails/:id'); assert.ok(railsEndpoint);
+  const railsDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', railsEndpoint.id], repo)).stdout);
+  assert.equal(railsDetail.metadata.constraintsUnresolved, undefined); assert.equal(railsDetail.metadata.routing.dispatch.dialect, 'rails');
+  const railsHandles = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', railsEndpoint.id, '--type', 'handles'], repo)).stdout).items; assert.equal(railsHandles.length, 1);
+  const railsAction = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', railsHandles[0].to], repo)).stdout); assert.equal(railsAction.path, 'ruby-autoload/app/controllers/admin/users_controller.rb'); assert.equal(railsAction.sourceRange.startLine, 2);
+  const railsCallbacks = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', railsAction.id, '--type', 'references'], repo)).stdout).items.filter(item => item.metadata?.role === 'action_callback'); assert.equal(railsCallbacks.length, 1);
+  const railsCallback = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', railsCallbacks[0].to], repo)).stdout); assert.equal(railsCallback.path, 'ruby-autoload/app/controllers/application_controller.rb'); assert.equal(railsCallback.sourceRange.startLine, 4);
+  const railsProof = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relation', '--id', railsHandles[0].id], repo)).stdout); assert.ok(railsProof.evidence.some(item => item.file === 'ruby-autoload/config/routes.rb' && item.line === 2));
+  const railsRequests = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', railsEndpoint.id, '--type', 'requests'], repo)).stdout).items; assert.equal(railsRequests.length, 1);
+  const railsLicense = await readFile(path.join(path.dirname(path.dirname(bin)), 'dist/src/analysis/frameworks/rails-inflections.js'), 'utf8'); assert.match(railsLicense, /Copyright \(c\) David Heinemeier Hansson/); assert.match(railsLicense, /Permission is hereby granted/);
   const pythonEndpoints = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', '/package-python'], repo)).stdout).items;
   const pythonEndpoint = pythonEndpoints.find(entity => entity.type === 'api_endpoint' && entity.name === 'GET /package-python/{id:int}');
   assert.ok(pythonEndpoint, 'installed FastAPI pack resolves its imported handler');
@@ -486,7 +509,7 @@ try {
   console.log('Checking npm exec against the tarball without a local installation…');
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
-  console.log('Package installation, seven grammars, workspace binding, Ruby literal loads/scopes/original paths, namespace reopenings/direct methods/initializers and lazy Rails/Zeitwerk original autoload/inflection evidence and dynamic/conditional gaps, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin/Echo 4–5/Fiber 2–3/Gorilla router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
+  console.log('Package installation, seven grammars, workspace binding, Ruby literal loads/scopes/original paths, namespace reopenings/direct methods/initializers and lazy Rails/Zeitwerk original autoload/inflection evidence, Rails resources/original controller actions/private callback references/HTTP request flows/source proofs and inflection license, dynamic/conditional gaps, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin/Echo 4–5/Fiber 2–3/Gorilla router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

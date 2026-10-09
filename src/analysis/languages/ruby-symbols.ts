@@ -4,11 +4,11 @@ import { fileAnalysis, type RubyCallFact, type RubyDefinitionFact, type RubyExpr
 import type { RubyLoad, RubyResolver } from '../resolution/ruby.js';
 import type { RubyAutoloadCatalog, RubyAutoloadCandidate } from '../resolution/ruby-autoload.js';
 
-export const RUBY_SYMBOL_VERSION = '2';
+export const RUBY_SYMBOL_VERSION = '3';
 interface Definition { fact: RubyDefinitionFact; file: string; id: string; proof: Evidence[] }
 interface Constant { order: number; name: string; definition?: Definition; value?: RubyValue; reason?: string; implicit?: boolean; proof: Evidence[] }
 interface Method { order: number; definition: Definition; name: string; owner: string; singleton: boolean; visibility: string; reason?: string }
-interface Unit { file: ScannedFile; facts: RubySyntaxFacts; scopes: Map<string, RubyScopeFact>; nesting: Map<string, string[] | string>; marks: Map<string, number>; activation: Evidence[] }
+interface Unit { file: ScannedFile; facts: RubySyntaxFacts; scopes: Map<string, RubyScopeFact>; nesting: Map<string, string[] | string>; marks: Map<string, number>; activation: Evidence[]; invoked?: Set<string> }
 interface Barrier { order: number; reason: string; owner?: string; constants?: boolean; methods?: boolean }
 interface Pending { order: number; file?: ScannedFile; reason?: string; proof: Evidence[]; source: string; site: RubySite }
 interface Activation { file: string; site: RubySite; name: string; target?: string; kind: 'file' | 'implicit'; status: string; reason?: string; proof: Evidence[] }
@@ -21,6 +21,7 @@ export type RubyValue =
   | { kind: 'literal'; value: string | number | boolean | null; proof: Evidence[] }
   | { kind: 'local'; proof: Evidence[] }
   | { kind: 'unknown'; reason: string; proof: Evidence[] };
+export interface RubyFrameworkMethod { id: string; file: string; fact: RubyDefinitionFact; visibility: string; proof: Evidence[]; reason?: string }
 const unknown = (reason: string, proof: Evidence[] = []): RubyValue => ({ kind: 'unknown', reason, proof });
 const siteKey = (site: RubySite) => `${site.start}:${site.end}`;
 const methodKey = (owner: string, singleton: boolean, name: string) => JSON.stringify([owner, singleton, name]);
@@ -49,7 +50,7 @@ export class RubySymbols {
     }
     return [];
   }
-  private deferred(unit: Unit, scope: string): boolean { return this.ancestors(unit, scope).some(item => item.deferred); }
+  private deferred(unit: Unit, scope: string): boolean { return this.ancestors(unit, scope).some(item => item.deferred && !unit.invoked?.has(item.key)); }
   private conditional(unit: Unit, scope: string): boolean { return this.ancestors(unit, scope).some(item => item.conditional); }
   private barrier(snapshot: Snapshot, order: number, name: string, feature: 'constants' | 'methods'): string | undefined {
     return snapshot.invalid ?? snapshot.barriers.find(item => item.order <= order && item[feature] && (item.owner === undefined || item.owner === name || name.startsWith(item.owner + '::')))?.reason;
@@ -172,7 +173,7 @@ export class RubySymbols {
     } else if (singleton && !owner) { unit.nesting.set(fact.bodyScope, 'Top-level singleton receiver requires a runtime self summary'); return; }
     const key = methodKey(owner, singleton, fact.name), entries = snapshot.methods.get(key) ?? [];
     entries.push({ order, definition, name: fact.name, owner, singleton, visibility: visibility.get(fact.scope) ?? 'public', ...(this.conditional(unit, fact.scope) ? { reason: `Conditional method definition ${fact.name}` } : {}) }); snapshot.methods.set(key, entries);
-    if (HOOKS.has(fact.name)) snapshot.barriers.push({ order, methods: true, constants: true, reason: `Ruby ${fact.name} hook requires a bounded activation summary` });
+    if (HOOKS.has(fact.name) && (singleton || ['Class', 'Module', 'Object', 'BasicObject'].includes(owner))) snapshot.barriers.push({ order, methods: true, constants: true, reason: `Ruby ${fact.name} hook requires a bounded activation summary` });
   }
   private processCall(snapshot: Snapshot, unit: Unit, call: RubyCallFact, order: number, visibility: Map<string, string>): void {
     if (call.bare && this.localScope(unit, call.scope, call.expression.method, call.start)) return;
@@ -332,6 +333,25 @@ export class RubySymbols {
     return this.value(snapshot, unit, scope, expression, this.limit(snapshot, unit, scope, expression));
   }
   fileLoads(file: string): RubyLoad[] { const snapshot = this.snapshots.get(file); return this.resolver.fileLoads(file).map(load => snapshot?.refinements.get(`${file}:${siteKey(load.site)}`) ?? load); }
+  /** A reviewed framework invokes its indexed DSL source. This restores the
+   * original unit in that origin; it never runs Ruby or the target framework. */
+  frameworkConstant(origin: string, file: string, scope: string, name: string, site: RubySite, proof: Evidence[] = []): RubyValue {
+    const snapshot = this.snapshots.get(origin), source = this.context.files.get(file); if (!snapshot || !source) return unknown('Framework origin/source is not indexed');
+    if (!snapshot.units.has(file)) this.build(snapshot, source, 0, proof);
+    const unit = snapshot.units.get(file); if (!unit) return unknown('Complete original framework syntax is required');
+    unit.invoked ??= new Set(); for (const ancestor of this.ancestors(unit, scope)) if (ancestor.kind === 'block') unit.invoked.add(ancestor.key);
+    return this.resolveConstant(snapshot, unit, scope, name, snapshot.order, 0, site);
+  }
+  frameworkMethods(origin: string, name: string, singleton = false): { methods: RubyFrameworkMethod[]; conditions: string[]; reason?: string } {
+    const snapshot = this.snapshots.get(origin); if (!snapshot) return { methods: [], conditions: [], reason: 'Framework origin is not prepared' };
+    const reason = this.barrier(snapshot, snapshot.order, name, 'methods'); if (reason) return { methods: [], conditions: snapshot.conditions, reason };
+    const methods: RubyFrameworkMethod[] = [];
+    for (const entries of snapshot.methods.values()) {
+      const selected = entries.filter(item => item.owner === name && item.singleton === singleton && item.order <= snapshot.order).at(-1); if (!selected) continue;
+      methods.push({ id: selected.definition.id, file: selected.definition.file, fact: selected.definition.fact, visibility: selected.visibility, proof: [...selected.definition.proof, ...this.proof(selected.definition.file, selected.definition.fact, 'Original framework-selected instance method')], ...(selected.reason ? { reason: selected.reason } : {}) });
+    }
+    return { methods, conditions: snapshot.conditions };
+  }
   private call(snapshot: Snapshot, unit: Unit, fact: RubyCallFact): RubyValue {
     const order = this.limit(snapshot, unit, fact.scope, fact);
     if (fact.bare && this.localScope(unit, fact.scope, fact.expression.method, fact.start)) return { kind: 'local', proof: [] };

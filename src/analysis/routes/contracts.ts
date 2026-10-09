@@ -1,14 +1,16 @@
 /** Serializable routing facts shared by framework packs, history and matching.
  * Opaque syntax is retained as a competing candidate, never a confirmed match. */
-export type RoutePart = { kind: 'literal'; value: string } | { kind: 'parameter'; name: string; converter?: 'int' | 'go-int' | 'float' | 'uuid' | 'slug' };
+export type RoutePart = { kind: 'literal'; value: string } | { kind: 'parameter'; name: string; converter?: 'int' | 'go-int' | 'float' | 'uuid' | 'slug' | 'rails-segment' };
 export type RouteSegment = { kind: 'segment'; parts: RoutePart[] } | { kind: 'rest'; name: string; minimum: 0 | 1 };
 import { matchGoPath } from './go-patterns.js';
+import { matchRailsLiteral, normalizeRailsPath } from './rails-patterns.js';
 export interface RoutePattern {
-  version: 1; dialect: 'express-common' | 'express-4' | 'express-5' | 'starlette' | 'werkzeug' | 'django-path' | 'django-re-path' | 'sveltekit' | 'astro' | 'nuxt-page' | 'nitro-2' | 'go-servemux-121' | 'go-servemux-122' | 'chi-5' | 'gin-1' | 'echo-4' | 'echo-5' | 'fiber-2' | 'fiber-3' | 'gorilla-1'; original: string;
+  version: 1; dialect: 'express-common' | 'express-4' | 'express-5' | 'starlette' | 'werkzeug' | 'django-path' | 'django-re-path' | 'sveltekit' | 'astro' | 'nuxt-page' | 'nitro-2' | 'go-servemux-121' | 'go-servemux-122' | 'chi-5' | 'gin-1' | 'echo-4' | 'echo-5' | 'fiber-2' | 'fiber-3' | 'gorilla-1' | 'rails'; original: string;
   status: 'exact' | 'partial'; reason?: string; alternatives: RouteSegment[][];
   prefix?: string;
   caseSensitive: boolean; strict: boolean;
   encoded?: boolean; skipClean?: boolean; pathPrefix?: boolean; integerBits?: 32 | 64;
+  rails?: { sources: string[] };
 }
 export interface RoutingContract {
   version: 1; pattern: RoutePattern; methods: string[] | '*'; executionContext: 'server';
@@ -18,7 +20,7 @@ export interface RoutingContract {
   middleware: string[]; conditions: string[];
   host?: string;
   hostAuthority?: boolean;
-  dispatch?: { dialect: 'go-servemux' | 'chi' | 'gin' | 'echo' | 'fiber' | 'gorilla'; root: string; order: number };
+  dispatch?: { dialect: 'go-servemux' | 'chi' | 'gin' | 'echo' | 'fiber' | 'gorilla' | 'rails'; root: string; order: number };
   excludedHosts?: string[];
   queries?: { name: string; value?: string }[];
   schemes?: string[];
@@ -170,6 +172,8 @@ export function djangoRegexRoute(original: string, include = false): string | un
   return route;
 }
 export function matchRoutePattern(pattern: RoutePattern, pathname: string, strictHoles = true): boolean {
+  if (pattern.dialect === 'rails' && pattern.status === 'exact' && !pathname.includes('{*}')) return matchRailsLiteral(pattern, pathname);
+  if (pattern.dialect === 'rails') pathname = normalizeRailsPath(pathname);
   if (['go-servemux-121', 'go-servemux-122', 'chi-5', 'gin-1', 'echo-4', 'echo-5', 'fiber-2', 'fiber-3', 'gorilla-1'].includes(pattern.dialect)) return matchGoPath(pattern, pathname, strictHoles);
   if (['nitro-2', 'nuxt-page'].includes(pattern.dialect) && pathname.includes('//')) return false;
   if (pattern.dialect === 'astro') {
@@ -184,7 +188,7 @@ export function matchRoutePattern(pattern: RoutePattern, pathname: string, stric
   }
   if (pattern.status === 'partial') return !pattern.prefix || pathname.includes('{*}') || pathname.startsWith(pattern.prefix);
   const django = pattern.dialect.startsWith('django-');
-  const parameter = (part: RoutePart) => part.kind === 'literal' ? escaped(part.value) : part.converter === 'int' ? '[0-9]+' : part.converter === 'float' ? pattern.dialect === 'werkzeug' ? '[0-9]+\\.[0-9]+' : '[0-9]+(?:\\.[0-9]+)?' : part.converter === 'slug' ? '[-a-zA-Z0-9_]+' : part.converter === 'uuid' ? django ? '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' : '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}' : '[^/]+';
+  const parameter = (part: RoutePart) => part.kind === 'literal' ? escaped(part.value) : part.converter === 'rails-segment' ? '[^/.?]+' : part.converter === 'int' ? '[0-9]+' : part.converter === 'float' ? pattern.dialect === 'werkzeug' ? '[0-9]+\\.[0-9]+' : '[0-9]+(?:\\.[0-9]+)?' : part.converter === 'slug' ? '[-a-zA-Z0-9_]+' : part.converter === 'uuid' ? django ? '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' : '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}' : '[^/]+';
   if ((['starlette', 'werkzeug'].includes(pattern.dialect) || django) && !pathname.includes('{*}')) {
     return pattern.alternatives.some(segments => {
       const body = segments.map(segment => segment.kind === 'rest' ? segment.minimum ? django ? '.+' : '[^/].*' : '.*' : segment.parts.map(parameter).join('')).join('/');
