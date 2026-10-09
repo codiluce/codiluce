@@ -9,3 +9,5 @@
 (static_item name: (identifier) @name) @declaration.static
 (macro_definition name: (identifier) @name) @declaration.macro
 (enum_variant name: (identifier) @name) @declaration.variant
+(field_declaration name: (field_identifier) @name) @declaration.field
+(union_item name: (type_identifier) @name) @declaration.union

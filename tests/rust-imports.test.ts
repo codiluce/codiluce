@@ -87,7 +87,7 @@ test('Outlined and inline modules retain original declarations, module sources, 
     const module = imports(g).find(o => o.kind === 'module')!;
     assert.deepEqual(module.outcome.targets, [unit(g, 'src/internal.rs').id]);
     assert.ok(g.relations.some(e => e.type === 'imports' && e.from === unit(g, 'src/lib.rs').id && e.to === unit(g, 'src/internal.rs').id));
-    assert.equal((unit(g, 'src/lib.rs').metadata.analysis as any).features.references.status, 'unsupported');
+    assert.equal((unit(g, 'src/lib.rs').metadata.analysis as any).features.references.status, 'partial');
     assert.equal(g.relations.filter(e => e.type === 'calls' && g.entities.find(x => x.id === e.from)?.language === 'rust').length, 0);
 });
 test('Rust module filename precedence refuses collisions and pruned/symlinked alternatives', async () => {

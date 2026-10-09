@@ -10,7 +10,7 @@ Codiluce supports repositories containing Next.js and Laravel applications. A ty
 - `backend/`: Laravel / PHP, Composer PSR-4 `App\\` → `app/`. Routes under `routes/`; controllers in `app/Http/Controllers`, Eloquent models in `app/Models`, services in `app/Services`, migrations in `database/migrations`.
 - Laravel applications may also contain Inertia/React/Vite assets under `resources/`. Those files remain part of the Laravel application.
 - `backend/bootstrap/app.php` can register API routes with a custom prefix, including **`apiPrefix: ''`**. The analyzer reads the configured prefix rather than assuming `/api`.
-- Other ecosystems (Python, Ruby, Go, Rust, JVM, .NET, Swift/Xcode, C/C++ with CMake, Shopify themes) are detected from their manifests (`src/core/manifests.ts`): the application, its ecosystems and the frameworks its dependencies name. Their files are named by language, measured and highlighted, and TypeScript/JavaScript is analyzed in any application. Next.js/Laravel retain their existing framework analysis; Express/Nest add static registration packs. Python, Go, Ruby, Rust, Java, C# and Kotlin get Tree-sitter declaration extraction, including outside detected applications. Python adds static package/import resolution, lexical references/calls and initial FastAPI, Flask and Django registration packs; Go adds indexed module/workspace/package imports, recorded build contexts, bounded lexical/package references and calls, and initial net/http/Chi/Gin/Echo/Fiber/Gorilla Mux registration packs. Ruby adds original scoped syntax facts and literal source-load dependencies with recorded ordered load roots/cwd and runtime boundary diagnostics; Ruby adds scoped constants/direct methods and Rails/Zeitwerk autoload contracts; Rails adds initial source routing, resource expansion, original actions and callback references; Java/Kotlin add selected Maven/Gradle/configured roots, original imports, bounded scoped references/direct calls and initial Spring MVC and WebFlux registration/handler/path contracts; C# adds indexed MSBuild source compilations, scoped references/direct calls and logical partial types; ASP.NET adds initial serving-reachable minimal API registration/handler/path contracts; ASP.NET MVC adds original controller/action and conventional routing contracts; Rust adds original Cargo/workspace/module/scoped import inputs, while Rust references/calls and routers remain separate work.
+- Other ecosystems (Python, Ruby, Go, Rust, JVM, .NET, Swift/Xcode, C/C++ with CMake, Shopify themes) are detected from their manifests (`src/core/manifests.ts`): the application, its ecosystems and the frameworks its dependencies name. Their files are named by language, measured and highlighted, and TypeScript/JavaScript is analyzed in any application. Next.js/Laravel retain their existing framework analysis; Express/Nest add static registration packs. Python, Go, Ruby, Rust, Java, C# and Kotlin get Tree-sitter declaration extraction, including outside detected applications. Python adds static package/import resolution, lexical references/calls and initial FastAPI, Flask and Django registration packs; Go adds indexed module/workspace/package imports, recorded build contexts, bounded lexical/package references and calls, and initial net/http/Chi/Gin/Echo/Fiber/Gorilla Mux registration packs. Ruby adds original scoped syntax facts and literal source-load dependencies with recorded ordered load roots/cwd and runtime boundary diagnostics; Ruby adds scoped constants/direct methods and Rails/Zeitwerk autoload contracts; Rails adds initial source routing, resource expansion, original actions and callback references; Java/Kotlin add selected Maven/Gradle/configured roots, original imports, bounded scoped references/direct calls and initial Spring MVC and WebFlux registration/handler/path contracts; C# adds indexed MSBuild source compilations, scoped references/direct calls and logical partial types; ASP.NET adds initial serving-reachable minimal API registration/handler/path contracts; ASP.NET MVC adds original controller/action and conventional routing contracts; Rust adds original Cargo/workspace/module/scoped import inputs, compilation-scoped references/direct calls, original closures and bounded callback binding; Rust routers remain separate work.
 - Analysis does not read credentials, connect to the application database, or invoke target application scripts. The index describes the working tree, with HEAD and dirty state recorded separately.
 - The test fixture proves a login chain from page to table: page `/account` → `AccountPanel` → `handleSave` → `AccountService.signIn()` (base URL built in code) → `POST /auth/login` → `AuthController::login` → `AuthService::authenticate` → reads table `users` (Eloquent model `User`, `$table = 'users'`, declared by a migration).
 
@@ -397,5 +397,48 @@ checked original ranges, actual Rust cache hits and exact cold/warm/revision gra
 retains inputs and gaps: mini-redis has no certified source winners under its resolver/macro boundary; env_logger's
 recorded no-default/default profiles have 404/440 compilation-scoped original source import edges. These counts do
 not qualify runtime behavior, routers, production recall, performance or native operating systems. P9a is the initial
-completed import foundation; P9b scoped references/direct callbacks, P9c Axum/Actix, P9d Rocket/Warp and P9e mixed-stack/
-source/version/performance qualification remain open, with P10 release gates.
+completed import foundation. P9b now adds the initial bounded binding foundation below; P9c Axum/Actix, P9d Rocket/Warp
+and P9e mixed-stack/source/version/performance qualification remain open, with P10 release gates.
+
+
+## 25. Rust original references and direct callbacks (P9b)
+
+`src/analysis/tree-sitter/rust-semantic.ts` extracts serializable original parameters, local activation points,
+control/lambda scopes, types, impls, value/type references, calls, writes and return operands. Fields/unions join the
+original declaration query. Function bodies retain their cfg attributes; impl/trait members stay outside import
+namespaces. Closures and async blocks are original entities with stable parent/ordinal IDs, source ranges/hashes and
+body ownership. No desugaring, macro expansion, compiler inference or target execution runs.
+
+`src/analysis/languages/rust-symbols.ts` reconstructs `RustSymbols` on both cold and warm passes. Lookup uses each
+original Cargo compilation and lexical expression paths, separately from edition-2015 import roots. Alias bindings
+retain their canonical declaration scope/crate even through source re-exports. Parameters/locals activate in their
+native body/control scope; closure captures remain distinct from named-item capture barriers. Unknown patterns,
+mutable assignments/borrows, missing/inactive/unknown cfg and incomplete grammar facts refuse source winners.
+
+The initial callable subset follows immutable original functions, closures, constants, literal tuple operands,
+function-pointer casts/shared borrows and single unconditional source callback-return summaries under caller
+parameters. Concrete original type annotations/aliases/factory returns, Self and fields support bounded inherent
+member lookup with privacy/arity/cfg checks. Exact receiver forms and simple reviewed adjustment are separate from
+arbitrary dereferencing or trait/generic dispatch. Visible binary traits, standard prelude names, source trait defaults,
+blanket/consumer-crate implementations, competing members and opaque/boxed self receivers retain gaps. Source callee
+identity is a static relationship, not compiler validity, borrow/lifetime safety, runtime execution or callback trait
+qualification. Async calls retain future-construction/awaited metadata; body ownership remains deferred source syntax.
+
+File metadata exposes `rustCallOutcomes` and `rustReferenceOutcomes`, with compilation/crate/invocation/scope/owner,
+original operand range/start, status, unique target or reason, conditions and source/manifest/import proof. Certified
+`calls`/`references` edges retain the same proof and compilation discriminator. Call-site coverage counts an original
+site once across contexts only when active outcomes agree; conditional/external/unresolved outcomes remain visible.
+References report partial support, failed syntax/budgets, or disabled orphan inputs. Caps constrain extraction,
+recursive lookup, semantic operations and compilation-scoped outcomes. Member/binding/scope indexes avoid repository
+name scans on each operand. Rust/Cargo/config/source hashes, syntax availability, recorded inputs and denied inventory
+invalidate cache units. Warm replay reconstructs services alongside the original anonymous entity graph patch; history
+records `rust-symbols` with the other analyzer versions.
+
+41 conformance cases complement the 34 import cases. The installed production package checks original shared handler
+functions, leaves, qualified inherent callbacks, closure ownership and CRLF/emoji proof through CLI and HTTP/source
+APIs. The source qualification scripts validate every original call/reference target/range/proof, reject winners for
+unqualified outcomes, require actual symbol cache hits and compare full cold/warm/revision graphs on four immutable
+mini-redis/env_logger profiles. Current profiles retain 440/476 env_logger import edges, 294/303 original call edges
+and 2,859/3,129 original reference edges; mini-redis retains zero certified calls/references under resolver/macro gaps.
+These counts do not establish recall, compiler/runtime correctness, router, performance or native-platform coverage.
+Next is P9c initial Axum/Actix registration/composition/handler contracts; P9d/P9e and P10 release gates remain open.

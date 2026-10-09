@@ -4,7 +4,7 @@ import { evidence, type Evidence } from '../../core/graph.js';
 import type { RustImportFact, RustItemFact, RustScopeFact, RustSyntaxFacts } from '../facts.js';
 import { rustAnd, rustAttributes, rustName, type RustAttributes, type RustTruth } from '../languages/rust-cfg.js';
 import { RustProjects, rustPath, type RustCompilation } from './rust-projects.js';
-export const RUST_RESOLVER_VERSION = '1';
+export const RUST_RESOLVER_VERSION = '2';
 export interface RustScope {
     id: string;
     fact: RustScopeFact;
@@ -27,6 +27,8 @@ export interface RustSymbol {
     name: string;
     namespaces: RustItemFact['namespaces'];
     scope: RustScope;
+    originalScope?: RustScope;
+    originalVisibility?: string;
     visibility: string;
     active: RustTruth;
     gaps: string[];
@@ -163,7 +165,7 @@ export class RustResolver {
             }
         }
         // Original lexical blocks remain separate from the surrounding module.
-        for (const child of syntax.scopes.filter(child => child.parent === fact.key && child.kind === 'block'))
+        for (const child of syntax.scopes.filter(child => child.parent === fact.key && !['file','module','enum'].includes(child.kind)))
             this.load(comp, file, child, scope, logicalPath, directory, selected, scope.gaps, seen, scope.pathBase);
         return scope;
     }
@@ -237,7 +239,7 @@ export class RustResolver {
         for(const [index,part]of parts.entries()){if(index===0&&['crate','self'].includes(part))continue;if(part==='super'){if(!target.length)return;target.pop();}else if(part==='crate'||part==='self')return;else target.push(part);}
         for(let ancestor:RustScope|undefined=scope;ancestor;ancestor=ancestor.moduleParent)if(JSON.stringify(ancestor.logicalPath)===JSON.stringify(target))return ancestor;
     }
-    private visible(symbol: RustSymbol, from: RustScope): boolean {
+    visible(symbol: RustSymbol, from: RustScope): boolean {
         if (symbol.active === false)
             return false;
         if (symbol.visibility === 'pub')
@@ -318,7 +320,7 @@ export class RustResolver {
             return [];
         return result.symbols.map(symbol => {
             const gaps = unique([...result.conditions, ...this.exportGaps(site, symbol)]);
-            return { ...symbol, name: fact.glob ? symbol.name : fact.alias ?? fact.segments.at(-1)!, scope: site.scope, visibility: fact.visibility, active: rustAnd([symbol.active, site.active]), gaps, proof: result.proof };
+            return { ...symbol, name: fact.glob ? symbol.name : fact.alias ?? fact.segments.at(-1)!, originalScope: symbol.originalScope ?? symbol.scope, originalVisibility: symbol.originalVisibility ?? symbol.visibility, scope: site.scope, visibility: fact.visibility, active: rustAnd([symbol.active, site.active]), gaps, proof: result.proof };
         });
     }
     private lookup(scope: RustScope, name: string, from: RustScope, trail: Set<string>): RustResolution {
@@ -385,7 +387,7 @@ export class RustResolver {
     private noPrelude(scope: RustScope): boolean { for (let s: RustScope | undefined = scope; s; s = s.parent)
         if (s.attributes.noPrelude)
             return true; return false; }
-    path(scope: RustScope, segments: string[], absolute = false, trail = new Set<string>()): RustResolution {
+    path(scope: RustScope, segments: string[], absolute = false, trail = new Set<string>(),mode:'import'|'expression'='import'): RustResolution {
         if (!segments.length)
             return failure('unresolved', 'Empty Rust path');
         if (segments.includes('Self') || segments.includes('$crate'))
@@ -415,7 +417,7 @@ export class RustResolver {
         }
         else {
             const root = this.roots.get(scope.compilation.id) ?? this.scopes.find(s => s.compilation.id === scope.compilation.id && !s.parent);
-            let current: RustScope | undefined = absolute || scope.compilation.target.package.edition === '2015' ? root : scope;
+            let current: RustScope | undefined = absolute || mode==='import'&&scope.compilation.target.package.edition === '2015' ? root : scope;
             result = failure('unresolved', `Rust path head ${first} is unavailable`);
             while (current) {
                 result = this.lookup(current, first, scope, trail);

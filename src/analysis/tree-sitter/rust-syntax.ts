@@ -2,13 +2,18 @@ import type { Node } from 'web-tree-sitter';
 import type { DeclarationFact, RustImportFact, RustItemFact, RustScopeFact, RustSyntaxFacts } from '../facts.js';
 import type { SourceText } from '../source-map.js';
 import { rustName, rustIdentifier } from '../languages/rust-cfg.js';
+import { extractRustSemantic } from './rust-semantic.js';
 export function extractRust(root: Node, declarations: DeclarationFact[], source: SourceText): RustSyntaxFacts {
     const facts: RustSyntaxFacts = { scopes: [], items: [], imports: [], complete: !root.hasError, gaps: [] };
     let visits = 0;
     const byStart = new Map(declarations.map(item => [item.start, item]));
     const site = (node: Node) => ({ start: node.startIndex, end: node.endIndex, range: source.range(node.startIndex, node.endIndex) });
-    const attributes = (node: Node) => { const values: string[] = []; for (let s = node.previousNamedSibling; s?.type === 'attribute_item'; s = s.previousNamedSibling)
-        values.unshift(s.text); return values; };
+    const attributes = (node: Node) => {
+        const values: string[] = [];
+        for (let s = node.previousNamedSibling; s?.type === 'attribute_item'; s = s.previousNamedSibling)
+            values.unshift(s.text);
+        return values;
+    };
     const visibility = (node: Node) => node.namedChildren.find(n => n.type === 'visibility_modifier')?.text.replace(/\s+/g, '') ?? 'private';
     function scope(node: Node, kind: RustScopeFact['kind'], parent?: RustScopeFact, module?: string): RustScopeFact {
         const key = kind === 'file' ? 'root' : `${node.startIndex}:${node.endIndex}:${kind}`;
@@ -92,7 +97,7 @@ export function extractRust(root: Node, declarations: DeclarationFact[], source:
         }
         const declaration = byStart.get(node.startIndex);
         let item: RustItemFact | undefined;
-        if (declaration?.end === node.endIndex && ['module', 'struct', 'enum', 'trait', 'type', 'function', 'constant', 'static', 'macro', 'variant'].includes(declaration.kind)) {
+        if (declaration?.end === node.endIndex && !['impl', 'trait'].includes(current.kind) && ['module', 'struct', 'union', 'enum', 'trait', 'type', 'function', 'constant', 'static', 'macro', 'variant'].includes(declaration.kind)) {
             const namespaces: RustItemFact['namespaces'] = declaration.kind === 'macro' ? ['macro'] : ['function', 'constant', 'static'].includes(declaration.kind) ? ['value'] : declaration.kind === 'variant' ? ['type', 'value'] : declaration.kind === 'struct' && !node.namedChildren.some(n => n.type === 'field_declaration_list') ? ['type', 'value'] : ['type'];
             item = { ...site(node), key: declaration.key, scope: current.key, name: rustName(declaration.name), kind: declaration.kind, namespaces, visibility: enumVisibility ?? visibility(node), attributes: attributes(node), gaps: [] };
             facts.items.push(item);
@@ -126,12 +131,36 @@ export function extractRust(root: Node, declarations: DeclarationFact[], source:
                 visit(n, child);
             return;
         }
-        if (['impl_item', 'trait_item'].includes(node.type))
-            return; // Associated items cannot be imported by use.
+        if (['impl_item', 'trait_item'].includes(node.type)) {
+            const child = scope(node, node.type === 'impl_item' ? 'impl' : 'trait', current);
+            child.attributes.push(...attributes(node));
+            const body = node.childForFieldName('body');
+            if (body)
+                for (const n of body.namedChildren)
+                    visit(n, child);
+            return; // Associated definitions remain outside the import namespace.
+        }
+        if (['closure_expression', 'async_block'].includes(node.type)) {
+            const child = scope(node, 'lambda', current);
+            child.owner = `${node.startIndex}:${node.endIndex}:${node.type === 'async_block' ? 'async' : 'closure'}`;
+            const body = node.childForFieldName('body') ?? node.namedChildren.find(n => n.type === 'block');
+            if (body)
+                visit(body, child);
+            return;
+        }
+        if (['if_expression', 'while_expression', 'for_expression', 'match_arm'].includes(node.type)) {
+            const child = scope(node, 'control', current);
+            child.attributes.push(...attributes(node));
+            for (const n of node.namedChildren)
+                visit(n, n.type === 'else_clause' ? current : child);
+            return;
+        }
         if (node.type === 'function_item') {
             const body = node.childForFieldName('body');
             if (body) {
                 const child = scope(body, 'block', current, current.module);
+                child.owner = declaration?.key;
+                child.attributes.push(...attributes(node));
                 if (item)
                     item.body = child.key;
                 for (const n of body.namedChildren)
@@ -148,5 +177,6 @@ export function extractRust(root: Node, declarations: DeclarationFact[], source:
         visit(node, top);
     if (!facts.complete)
         facts.gaps.push('Incomplete/truncated original Rust syntax');
+    facts.semantic = extractRustSemantic(root, declarations, source, facts);
     return facts;
 }

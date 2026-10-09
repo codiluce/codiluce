@@ -120,7 +120,11 @@ manifest relative to the application, `rust.target` selects its kind/name, and `
 tests/benches. Unselected conditions stay uncertain. Registry/Git crates retain external identities; binary exports,
 build scripts, source overrides, proc macros, generated items, resolver 1 feature unification and unreviewed effective
 configuration retain gaps. P9a import support has conformance, installed CLI/API and [pinned source checks](docs/rust-source-qualification.html).
-Rust references/direct calls and Axum/Actix/Rocket/Warp routing remain P9b–P9e work. No Cargo/rustc or target code runs.
+Rust now adds compilation-scoped references and direct source function/inherent-method calls, immutable callback aliases,
+original closure/async-block ownership and bounded source callback-return summaries. Original paths, caller/target IDs and
+proof remain visible through the CLI/API and warm/history replay. Trait/generic dispatch, arbitrary receiver coercion,
+mutable callbacks and compiler/borrow inference retain gaps. Axum/Actix/Rocket/Warp routing remains P9c–P9e work.
+No Cargo/rustc or target code runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original
 component source locations. Module and instance scopes stay distinct; Astro server and client scripts retain separate contexts.

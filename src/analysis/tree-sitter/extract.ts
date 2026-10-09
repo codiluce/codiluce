@@ -175,6 +175,7 @@ export function extractStructure(root: Node, query: Query, language: string, con
   if (jvm && truncated) jvm.complete = false;
   if (csharp && truncated) csharp.complete = false;
   if (rust && truncated) rust.complete = false;
+  if (rust?.semantic && truncated) rust.semantic.complete = false;
   if (truncated) issues.push({ code: 'syntax-budget-exceeded', reason: 'Structural extraction reached its node, declaration, diagnostic or query limit' });
   return { declarations, issues, truncated, ...(python ? { python: python.facts } : {}), ...(go ? { go: go.facts } : {}), ...(ruby ? { ruby: ruby.facts } : {}), ...(jvm ? {jvm} : {}), ...(csharp ? {csharp} : {}), ...(rust?{rust}:{}) };
 }

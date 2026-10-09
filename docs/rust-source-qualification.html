@@ -1,5 +1,5 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rust unchanged source qualification</title><style>body{font:16px/1.6 system-ui,sans-serif;background:#101822;color:#e5ecf4;margin:0;padding:32px}main{max-width:1200px;margin:auto}h1{line-height:1.2}p{max-width:1000px;color:#bdcbdc}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;border-bottom:1px solid #344353;padding:12px;vertical-align:top}small{display:block;color:#9dafc4;font-weight:400}a,code{color:#79ced3}code{overflow-wrap:anywhere}.status{border:1px solid #5a7882;padding:16px;border-radius:8px}pre{white-space:pre-wrap;overflow-wrap:anywhere}@media(max-width:600px){body{padding:18px}}</style><main><h1>Rust unchanged source qualification</h1><p>2026-10-09T15:44:48.595Z · v22.12.0 · linux/x64.</p><p class="status"><strong>Four recorded source profiles: PASS</strong> — unchanged tracked blobs, original declaration/import ranges and compilation identities, actual Rust cache hits and exact cold/warm/revision graph equality.</p><div class="scroll"><table><thead><tr><th>Pinned original source</th><th>Rust files</th><th>Declarations</th><th>Compilations</th><th>Import outcomes</th><th>Source import edges</th><th>Replay</th></tr></thead><tbody><tr><th><a href="https://github.com/tokio-rs/mini-redis/tree/3d93b42bc363220f85af4fc9e1bebd35b588a4a3">mini-redis · no optional features</a><small>3d93b42b · 31 tracked inputs</small></th><td>28</td><td>230</td><td>17</td><td>unsupported: 842, external: 784, excluded: 6</td><td>0</td><td>Equal</td></tr><tr><th><a href="https://github.com/tokio-rs/mini-redis/tree/3d93b42bc363220f85af4fc9e1bebd35b588a4a3">mini-redis · recorded otel feature</a><small>3d93b42b · 31 tracked inputs</small></th><td>28</td><td>230</td><td>17</td><td>unsupported: 842, external: 790</td><td>0</td><td>Equal</td></tr><tr><th><a href="https://github.com/rust-cli/env_logger/tree/f80dca81223bb7cd50fc81f484e20eaef22be0aa">env_logger · no default features</a><small>f80dca81 · 31 tracked inputs</small></th><td>26</td><td>347</td><td>26</td><td>external: 436, excluded: 54, resolved: 404, unsupported: 2</td><td>404</td><td>Equal</td></tr><tr><th><a href="https://github.com/rust-cli/env_logger/tree/f80dca81223bb7cd50fc81f484e20eaef22be0aa">env_logger · recorded defaults</a><small>f80dca81 · 31 tracked inputs</small></th><td>26</td><td>347</td><td>26</td><td>external: 472, resolved: 440, excluded: 18, unsupported: 2</td><td>440</td><td>Equal</td></tr></tbody></table></div><p>These profiles establish the P9a source-input contract. mini-redis keeps resolver 1 build/dev/platform feature-unification gaps and original macro attributes. env_logger preserves workspace inheritance, local env_filter dependencies, selected source features and generated/scoped item boundaries. Source winners require an original accessible declaration with no remaining import conditions. Binary crates keep external identities without synthesized exports. Counts are compilation-scoped: a source file can occur in independent library, binary and example invocations.</p><p>Features/defaults and the x86_64-unknown-linux-gnu triple/cfg values are recorded qualification assumptions, never derived from the host or rustc. Unreviewed Cargo configuration, unavailable compiler inputs, generated modules, proc macros and hygiene retain gaps. Literal Cargo aliases and registry Rust-version selection preserve original source bindings while binary dependency selection stays unavailable. No Cargo/rustc, build script, registry/Git dependency, target configuration or macro executes. Upstream inputs are neither edited nor replaced. This report does not qualify routers, lexical references/calls, runtime behavior, native operating systems, performance or broad production recall; those remain P9b–P9e/P10 work.</p><p>The scripts check HEAD and tracked-file differences, copy regular source/manifest/lock/ignore/config blobs directly from the pinned trees, retain SHA-256 path/mode/byte digests, validate original ranges and edge evidence, and compare complete graph fingerprints. Reproduce with exact checkouts: <code>node scripts/qualify-rust-sources.mjs --mini-redis /path/to/mini-redis --env-logger /path/to/env_logger</code>. <a href="language-framework-compatibility.html#implementation">Roadmap</a>.</p><details><summary>Raw source evidence and recorded inputs</summary><pre>{
-  &quot;measuredAt&quot;: &quot;2026-10-09T15:44:48.595Z&quot;,
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rust unchanged source qualification</title><style>body{font:16px/1.6 system-ui,sans-serif;background:#101822;color:#e5ecf4;margin:0;padding:32px}main{max-width:1200px;margin:auto}h1{line-height:1.2}p{max-width:1000px;color:#bdcbdc}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;border-bottom:1px solid #344353;padding:12px;vertical-align:top}small{display:block;color:#9dafc4;font-weight:400}a,code{color:#79ced3}code{overflow-wrap:anywhere}.status{border:1px solid #5a7882;padding:16px;border-radius:8px}pre{white-space:pre-wrap;overflow-wrap:anywhere}@media(max-width:600px){body{padding:18px}}</style><main><h1>Rust unchanged source qualification</h1><p>2026-10-09T16:37:31.823Z · v22.12.0 · linux/x64.</p><p class="status"><strong>Four recorded source profiles: PASS</strong> — unchanged tracked blobs, original declaration/import/call/reference ranges and compilation identities, actual Rust import and symbol cache hits and exact cold/warm/revision graph equality.</p><div class="scroll"><table><thead><tr><th>Pinned original source</th><th>Rust files</th><th>Declarations</th><th>Compilations</th><th>Import outcomes</th><th>Source import edges</th><th>Call outcomes</th><th>Call / reference edges</th><th>Replay</th></tr></thead><tbody><tr><th><a href="https://github.com/tokio-rs/mini-redis/tree/3d93b42bc363220f85af4fc9e1bebd35b588a4a3">mini-redis · no optional features</a><small>3d93b42b · 31 tracked inputs</small></th><td>28</td><td>310</td><td>17</td><td>unsupported: 887, external: 820, excluded: 6</td><td>0</td><td>unsupported: 5755, excluded: 46</td><td>0 / 0</td><td>Equal</td></tr><tr><th><a href="https://github.com/tokio-rs/mini-redis/tree/3d93b42bc363220f85af4fc9e1bebd35b588a4a3">mini-redis · recorded otel feature</a><small>3d93b42b · 31 tracked inputs</small></th><td>28</td><td>310</td><td>17</td><td>unsupported: 887, external: 826</td><td>0</td><td>unsupported: 5799, excluded: 2</td><td>0 / 0</td><td>Equal</td></tr><tr><th><a href="https://github.com/rust-cli/env_logger/tree/f80dca81223bb7cd50fc81f484e20eaef22be0aa">env_logger · no default features</a><small>f80dca81 · 31 tracked inputs</small></th><td>26</td><td>437</td><td>26</td><td>external: 435, excluded: 66, resolved: 440</td><td>440</td><td>unresolved: 1754, external: 110, resolved: 294, excluded: 478, unsupported: 942</td><td>294 / 2859</td><td>Equal</td></tr><tr><th><a href="https://github.com/rust-cli/env_logger/tree/f80dca81223bb7cd50fc81f484e20eaef22be0aa">env_logger · recorded defaults</a><small>f80dca81 · 31 tracked inputs</small></th><td>26</td><td>437</td><td>26</td><td>external: 481, resolved: 476, excluded: 18, unsupported: 2</td><td>476</td><td>unresolved: 1925, external: 281, resolved: 303, unsupported: 1068, excluded: 109</td><td>303 / 3129</td><td>Equal</td></tr></tbody></table></div><p>These profiles establish the P9a source-input and P9b bounded original call/reference contracts. Anonymous closure/async declarations retain original ownership. Every certified source call/reference has a unique original target, empty remaining conditions and checked proof; unsupported dispatch keeps explicit outcomes. mini-redis keeps resolver 1 build/dev/platform feature-unification gaps and original macro attributes. env_logger preserves workspace inheritance, local env_filter dependencies, selected source features and generated/scoped item boundaries. Source winners require an original accessible declaration with no remaining import conditions. Binary crates keep external identities without synthesized exports. Counts are compilation-scoped: a source file can occur in independent library, binary and example invocations.</p><p>Features/defaults and the x86_64-unknown-linux-gnu triple/cfg values are recorded qualification assumptions, never derived from the host or rustc. Unreviewed Cargo configuration, unavailable compiler inputs, generated modules, proc macros and hygiene retain gaps. Literal Cargo aliases and registry Rust-version selection preserve original source bindings while binary dependency selection stays unavailable. No Cargo/rustc, build script, registry/Git dependency, target configuration or macro executes. Upstream inputs are neither edited nor replaced. These are bounded source integration counts. Trait/generic dispatch, borrowing and arbitrary receiver coercion, generated items, routers, runtime behavior, native operating systems, performance and broad production recall remain P9c–P9e/P10 work.</p><p>The scripts check HEAD and tracked-file differences, copy regular source/manifest/lock/ignore/config blobs directly from the pinned trees, retain SHA-256 path/mode/byte digests, validate original ranges and edge evidence, and compare complete graph fingerprints. Reproduce with exact checkouts: <code>node scripts/qualify-rust-sources.mjs --mini-redis /path/to/mini-redis --env-logger /path/to/env_logger</code>. <a href="language-framework-compatibility.html#implementation">Roadmap</a>.</p><details><summary>Raw source evidence and recorded inputs</summary><pre>{
+  &quot;measuredAt&quot;: &quot;2026-10-09T16:37:31.823Z&quot;,
   &quot;node&quot;: &quot;v22.12.0&quot;,
   &quot;platform&quot;: &quot;linux/x64&quot;,
   &quot;results&quot;: [
@@ -50,17 +50,270 @@
           ]
         },
         &quot;files&quot;: 28,
-        &quot;declarations&quot;: 230,
+        &quot;declarations&quot;: 310,
         &quot;structure&quot;: {
           &quot;supported&quot;: 28
         },
         &quot;imports&quot;: {
-          &quot;unsupported&quot;: 842,
-          &quot;external&quot;: 784,
+          &quot;unsupported&quot;: 887,
+          &quot;external&quot;: 820,
           &quot;excluded&quot;: 6
         },
         &quot;importEdges&quot;: 0,
         &quot;compilationCount&quot;: 17,
+        &quot;calls&quot;: {
+          &quot;unsupported&quot;: 5755,
+          &quot;excluded&quot;: 46
+        },
+        &quot;references&quot;: {
+          &quot;unsupported&quot;: 17269,
+          &quot;excluded&quot;: 58
+        },
+        &quot;callEdges&quot;: 0,
+        &quot;referenceEdges&quot;: 0,
+        &quot;anonymousDeclarations&quot;: 22,
+        &quot;symbolSamples&quot;: [
+          {
+            &quot;file&quot;: &quot;examples/pub.rs&quot;,
+            &quot;line&quot;: 25,
+            &quot;name&quot;: &quot;Client::connect&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile; Unreviewed Rust attribute tokio::main may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;examples/pub.rs&quot;,
+            &quot;line&quot;: 28,
+            &quot;name&quot;: &quot;client.publish&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile; Unreviewed Rust attribute tokio::main may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;examples/pub.rs&quot;,
+            &quot;line&quot;: 28,
+            &quot;name&quot;: &quot;literal.into&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile; Unreviewed Rust attribute tokio::main may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;examples/pub.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;Ok&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile; Unreviewed Rust attribute tokio::main may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 34,
+            &quot;name&quot;: &quot;await.map&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 34,
+            &quot;name&quot;: &quot;await.map&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 34,
+            &quot;name&quot;: &quot;await.map&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 34,
+            &quot;name&quot;: &quot;await.map&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 34,
+            &quot;name&quot;: &quot;await.map&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 34,
+            &quot;name&quot;: &quot;await.map&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 34,
+            &quot;name&quot;: &quot;await.map&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 34,
+            &quot;name&quot;: &quot;await.map&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          }
+        ],
         &quot;projects&quot;: [
           {
             &quot;id&quot;: &quot;project:eab555d5ade01318113cc3c8&quot;,
@@ -4859,10 +5112,12 @@
           }
         ],
         &quot;diagnostics&quot;: {
-          &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;: 75,
+          &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;: 78,
           &quot;Unreviewed Rust attribute derive may generate/change items&quot;: 2,
+          &quot;Unreviewed Rust attribute instrument may generate/change items&quot;: 6,
+          &quot;Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;: 16,
+          &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;: 2,
           &quot;Unreviewed Rust attribute command may generate/change items&quot;: 2,
-          &quot;Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;: 8,
           &quot;Original Cargo dependency is inactive&quot;: 3,
           &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile; Unreviewed Rust attribute tokio::main may generate/change items&quot;: 3,
           &quot;Unreviewed Rust attribute tokio::main may generate/change items&quot;: 6,
@@ -5495,12 +5750,13 @@
         ],
         &quot;cacheHits&quot;: {
           &quot;syntax-facts&quot;: 28,
-          &quot;rust-imports&quot;: 1
+          &quot;rust-imports&quot;: 1,
+          &quot;rust-symbols&quot;: 1
         },
         &quot;cacheEqual&quot;: true,
         &quot;revisionEqual&quot;: true,
-        &quot;graphFingerprint&quot;: &quot;055944a7a8175da9a5ab1a114ed91b901e23587a4f08404f34ccc3f4c7893fb8&quot;,
-        &quot;boundary&quot;: &quot;Original Cargo/module/scoped use/re-export and target/source integration only. Recorded features/cfg are assumptions; no compiler, build, macro expansion, dependency execution, runtime, router, reference/call or production accuracy qualification.&quot;
+        &quot;graphFingerprint&quot;: &quot;c296ea248666b93a77703582869ef879274b686718a2358f4b5525ffa22a3d09&quot;,
+        &quot;boundary&quot;: &quot;Original Cargo/module/scoped import, direct source function/closure/reference and target/source integration only. Recorded features/cfg are assumptions; no compiler, build, macro expansion, dependency execution, runtime, router, trait/generic dispatch, performance or production recall qualification.&quot;
       }
     },
     {
@@ -5552,16 +5808,269 @@
           ]
         },
         &quot;files&quot;: 28,
-        &quot;declarations&quot;: 230,
+        &quot;declarations&quot;: 310,
         &quot;structure&quot;: {
           &quot;supported&quot;: 28
         },
         &quot;imports&quot;: {
-          &quot;unsupported&quot;: 842,
-          &quot;external&quot;: 790
+          &quot;unsupported&quot;: 887,
+          &quot;external&quot;: 826
         },
         &quot;importEdges&quot;: 0,
         &quot;compilationCount&quot;: 17,
+        &quot;calls&quot;: {
+          &quot;unsupported&quot;: 5799,
+          &quot;excluded&quot;: 2
+        },
+        &quot;references&quot;: {
+          &quot;unsupported&quot;: 17323,
+          &quot;excluded&quot;: 4
+        },
+        &quot;callEdges&quot;: 0,
+        &quot;referenceEdges&quot;: 0,
+        &quot;anonymousDeclarations&quot;: 22,
+        &quot;symbolSamples&quot;: [
+          {
+            &quot;file&quot;: &quot;examples/pub.rs&quot;,
+            &quot;line&quot;: 25,
+            &quot;name&quot;: &quot;Client::connect&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile; Unreviewed Rust attribute tokio::main may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;examples/pub.rs&quot;,
+            &quot;line&quot;: 28,
+            &quot;name&quot;: &quot;client.publish&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile; Unreviewed Rust attribute tokio::main may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;examples/pub.rs&quot;,
+            &quot;line&quot;: 28,
+            &quot;name&quot;: &quot;literal.into&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile; Unreviewed Rust attribute tokio::main may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;examples/pub.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;Ok&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile; Unreviewed Rust attribute tokio::main may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 30,
+            &quot;name&quot;: &quot;rx.recv&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 33,
+            &quot;name&quot;: &quot;client.get&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 34,
+            &quot;name&quot;: &quot;await.map&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 34,
+            &quot;name&quot;: &quot;await.map&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 34,
+            &quot;name&quot;: &quot;await.map&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 34,
+            &quot;name&quot;: &quot;await.map&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 34,
+            &quot;name&quot;: &quot;await.map&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 34,
+            &quot;name&quot;: &quot;await.map&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 34,
+            &quot;name&quot;: &quot;await.map&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/clients/buffered_client.rs&quot;,
+            &quot;line&quot;: 34,
+            &quot;name&quot;: &quot;await.map&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          }
+        ],
         &quot;projects&quot;: [
           {
             &quot;id&quot;: &quot;project:eab555d5ade01318113cc3c8&quot;,
@@ -10394,10 +10903,12 @@
           }
         ],
         &quot;diagnostics&quot;: {
-          &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;: 75,
+          &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile&quot;: 78,
           &quot;Unreviewed Rust attribute derive may generate/change items&quot;: 2,
+          &quot;Unreviewed Rust attribute instrument may generate/change items&quot;: 6,
+          &quot;Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;: 16,
+          &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;: 2,
           &quot;Unreviewed Rust attribute command may generate/change items&quot;: 2,
-          &quot;Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;: 8,
           &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile; Unreviewed Rust attribute tokio::main may generate/change items&quot;: 3,
           &quot;Unreviewed Rust attribute tokio::main may generate/change items&quot;: 6,
           &quot;Resolver 1 build/dev/platform feature unification requires a reviewed invocation profile; Unreviewed Rust attribute tokio::main may generate/change items; Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute command may generate/change items&quot;: 1,
@@ -11029,12 +11540,13 @@
         ],
         &quot;cacheHits&quot;: {
           &quot;syntax-facts&quot;: 28,
-          &quot;rust-imports&quot;: 1
+          &quot;rust-imports&quot;: 1,
+          &quot;rust-symbols&quot;: 1
         },
         &quot;cacheEqual&quot;: true,
         &quot;revisionEqual&quot;: true,
-        &quot;graphFingerprint&quot;: &quot;bc3a87ae29d5299b234da90fa4221eb07bf093d4d9169ca84b0f6efe8426eada&quot;,
-        &quot;boundary&quot;: &quot;Original Cargo/module/scoped use/re-export and target/source integration only. Recorded features/cfg are assumptions; no compiler, build, macro expansion, dependency execution, runtime, router, reference/call or production accuracy qualification.&quot;
+        &quot;graphFingerprint&quot;: &quot;50c37704a0716313912f9028c6237da9115257df623a0f84e271d2e370f7fb00&quot;,
+        &quot;boundary&quot;: &quot;Original Cargo/module/scoped import, direct source function/closure/reference and target/source integration only. Recorded features/cfg are assumptions; no compiler, build, macro expansion, dependency execution, runtime, router, trait/generic dispatch, performance or production recall qualification.&quot;
       }
     },
     {
@@ -11084,18 +11596,276 @@
           ]
         },
         &quot;files&quot;: 26,
-        &quot;declarations&quot;: 347,
+        &quot;declarations&quot;: 437,
         &quot;structure&quot;: {
           &quot;supported&quot;: 26
         },
         &quot;imports&quot;: {
-          &quot;external&quot;: 436,
-          &quot;excluded&quot;: 54,
-          &quot;resolved&quot;: 404,
-          &quot;unsupported&quot;: 2
+          &quot;external&quot;: 435,
+          &quot;excluded&quot;: 66,
+          &quot;resolved&quot;: 440
         },
-        &quot;importEdges&quot;: 404,
+        &quot;importEdges&quot;: 440,
         &quot;compilationCount&quot;: 26,
+        &quot;calls&quot;: {
+          &quot;unresolved&quot;: 1754,
+          &quot;external&quot;: 110,
+          &quot;resolved&quot;: 294,
+          &quot;excluded&quot;: 478,
+          &quot;unsupported&quot;: 942
+        },
+        &quot;references&quot;: {
+          &quot;unresolved&quot;: 5694,
+          &quot;external&quot;: 1597,
+          &quot;resolved&quot;: 2859,
+          &quot;unsupported&quot;: 2328,
+          &quot;excluded&quot;: 1918
+        },
+        &quot;callEdges&quot;: 294,
+        &quot;referenceEdges&quot;: 2859,
+        &quot;anonymousDeclarations&quot;: 34,
+        &quot;symbolSamples&quot;: [
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/fmt/mod.rs&quot;,
+            &quot;line&quot;: 140,
+            &quot;name&quot;: &quot;Rc::new&quot;,
+            &quot;status&quot;: &quot;external&quot;,
+            &quot;reason&quot;: &quot;No unique original Rust callable/reference&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/fmt/mod.rs&quot;,
+            &quot;line&quot;: 140,
+            &quot;name&quot;: &quot;Rc::new&quot;,
+            &quot;status&quot;: &quot;external&quot;,
+            &quot;reason&quot;: &quot;No unique original Rust callable/reference&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/fmt/mod.rs&quot;,
+            &quot;line&quot;: 140,
+            &quot;name&quot;: &quot;Rc::new&quot;,
+            &quot;status&quot;: &quot;external&quot;,
+            &quot;reason&quot;: &quot;No unique original Rust callable/reference&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          }
+        ],
         &quot;projects&quot;: [
           {
             &quot;id&quot;: &quot;project:eab555d5ade01318113cc3c8&quot;,
@@ -14663,9 +15433,9 @@
           }
         ],
         &quot;diagnostics&quot;: {
-          &quot;Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;: 9,
+          &quot;Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;: 14,
           &quot;Original Rust module is inactive under recorded cfg&quot;: 2,
-          &quot;Original Rust import is inactive under recorded cfg&quot;: 4,
+          &quot;Original Rust import is inactive under recorded cfg&quot;: 7,
           &quot;Unreviewed Rust attribute default may generate/change items&quot;: 2
         },
         &quot;samples&quot;: [
@@ -15152,12 +15922,13 @@
         ],
         &quot;cacheHits&quot;: {
           &quot;syntax-facts&quot;: 26,
-          &quot;rust-imports&quot;: 1
+          &quot;rust-imports&quot;: 1,
+          &quot;rust-symbols&quot;: 1
         },
         &quot;cacheEqual&quot;: true,
         &quot;revisionEqual&quot;: true,
-        &quot;graphFingerprint&quot;: &quot;6594b0390c2ba4915bf6f55a6d1411e5d68dcf78be46f5e9384f0b3b2b87328f&quot;,
-        &quot;boundary&quot;: &quot;Original Cargo/module/scoped use/re-export and target/source integration only. Recorded features/cfg are assumptions; no compiler, build, macro expansion, dependency execution, runtime, router, reference/call or production accuracy qualification.&quot;
+        &quot;graphFingerprint&quot;: &quot;38c1bc4ecbdb690110bfaf7152dcd8461aaed57c039cdb74ba5706a0e7858b2a&quot;,
+        &quot;boundary&quot;: &quot;Original Cargo/module/scoped import, direct source function/closure/reference and target/source integration only. Recorded features/cfg are assumptions; no compiler, build, macro expansion, dependency execution, runtime, router, trait/generic dispatch, performance or production recall qualification.&quot;
       }
     },
     {
@@ -15207,18 +15978,277 @@
           ]
         },
         &quot;files&quot;: 26,
-        &quot;declarations&quot;: 347,
+        &quot;declarations&quot;: 437,
         &quot;structure&quot;: {
           &quot;supported&quot;: 26
         },
         &quot;imports&quot;: {
-          &quot;external&quot;: 472,
-          &quot;resolved&quot;: 440,
+          &quot;external&quot;: 481,
+          &quot;resolved&quot;: 476,
           &quot;excluded&quot;: 18,
           &quot;unsupported&quot;: 2
         },
-        &quot;importEdges&quot;: 440,
+        &quot;importEdges&quot;: 476,
         &quot;compilationCount&quot;: 26,
+        &quot;calls&quot;: {
+          &quot;unresolved&quot;: 1925,
+          &quot;external&quot;: 281,
+          &quot;resolved&quot;: 303,
+          &quot;unsupported&quot;: 1068,
+          &quot;excluded&quot;: 109
+        },
+        &quot;references&quot;: {
+          &quot;unresolved&quot;: 6369,
+          &quot;external&quot;: 2011,
+          &quot;resolved&quot;: 3129,
+          &quot;unsupported&quot;: 2791,
+          &quot;excluded&quot;: 591
+        },
+        &quot;callEdges&quot;: 303,
+        &quot;referenceEdges&quot;: 3129,
+        &quot;anonymousDeclarations&quot;: 34,
+        &quot;symbolSamples&quot;: [
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter.rev&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 15,
+            &quot;name&quot;: &quot;directives.iter&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;crates/env_filter/src/directive.rs&quot;,
+            &quot;line&quot;: 17,
+            &quot;name&quot;: &quot;target.starts_with&quot;,
+            &quot;status&quot;: &quot;unresolved&quot;,
+            &quot;reason&quot;: &quot;Rust method receiver/type inference is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/fmt/humantime.rs&quot;,
+            &quot;line&quot;: 26,
+            &quot;name&quot;: &quot;SystemTime::now&quot;,
+            &quot;status&quot;: &quot;external&quot;,
+            &quot;reason&quot;: &quot;No unique original Rust callable/reference&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/fmt/humantime.rs&quot;,
+            &quot;line&quot;: 26,
+            &quot;name&quot;: &quot;SystemTime::now&quot;,
+            &quot;status&quot;: &quot;external&quot;,
+            &quot;reason&quot;: &quot;No unique original Rust callable/reference&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/fmt/humantime.rs&quot;,
+            &quot;line&quot;: 26,
+            &quot;name&quot;: &quot;SystemTime::now&quot;,
+            &quot;status&quot;: &quot;external&quot;,
+            &quot;reason&quot;: &quot;No unique original Rust callable/reference&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          }
+        ],
         &quot;projects&quot;: [
           {
             &quot;id&quot;: &quot;project:eab555d5ade01318113cc3c8&quot;,
@@ -18897,7 +19927,7 @@
           }
         ],
         &quot;diagnostics&quot;: {
-          &quot;Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;: 9,
+          &quot;Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;: 16,
           &quot;Original Rust module is inactive under recorded cfg&quot;: 1,
           &quot;Original Rust import is inactive under recorded cfg&quot;: 1,
           &quot;Unreviewed Rust attribute default may generate/change items&quot;: 2
@@ -19386,12 +20416,13 @@
         ],
         &quot;cacheHits&quot;: {
           &quot;syntax-facts&quot;: 26,
-          &quot;rust-imports&quot;: 1
+          &quot;rust-imports&quot;: 1,
+          &quot;rust-symbols&quot;: 1
         },
         &quot;cacheEqual&quot;: true,
         &quot;revisionEqual&quot;: true,
-        &quot;graphFingerprint&quot;: &quot;3bf75f4d3baf73348d36b2a33498ee34d9efbb1ae74cd4cf8dd57178f021d93d&quot;,
-        &quot;boundary&quot;: &quot;Original Cargo/module/scoped use/re-export and target/source integration only. Recorded features/cfg are assumptions; no compiler, build, macro expansion, dependency execution, runtime, router, reference/call or production accuracy qualification.&quot;
+        &quot;graphFingerprint&quot;: &quot;1ff4773db0964948da60512f40fd64dd8ea08f53ae6e60853e0d94125b07894f&quot;,
+        &quot;boundary&quot;: &quot;Original Cargo/module/scoped import, direct source function/closure/reference and target/source integration only. Recorded features/cfg are assumptions; no compiler, build, macro expansion, dependency execution, runtime, router, trait/generic dispatch, performance or production recall qualification.&quot;
       }
     }
   ]
