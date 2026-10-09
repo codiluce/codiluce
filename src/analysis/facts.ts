@@ -142,13 +142,15 @@ export type CsharpExpression = CsharpSite & (
   | {kind:'unary';operator:string;value:CsharpExpression}
   | {kind:'cast';type:string;value:CsharpExpression}
   | {kind:'typeof';type:string}
+  | {kind:'array';values:CsharpExpression[];type?:string}
   | {kind:'unknown';text:string}
 );
 export interface CsharpArgument {name?:string;modifier?:string;value:CsharpExpression}
 export interface CsharpParameter {name:string;type?:string;modifiers:string[];default?:CsharpExpression}
 export interface CsharpAttribute extends CsharpSite {type:string;args:CsharpArgument[];target?:string}
 export interface CsharpScope extends CsharpSite {key:string;parent?:string;owner?:string;namespace:string;kind:'file'|'namespace'|'type'|'function'|'lambda'|'block'|'control'|'initializer'|'opaque';gaps:string[];deferred?:boolean}
-export interface CsharpDefinitionFact extends CsharpSite {key:string;name:string;kind:string;scope:string;parent?:string;bodyScope?:string;typeScope?:string;parameters:CsharpParameter[];returnType?:string;modifiers:string[];typeParameters:string[];attributes:CsharpAttribute[];value?:CsharpExpression;gaps:string[];hasBody:boolean}
+export interface CsharpStatement extends CsharpSite {scope:string;kind:'expression'|'variable'|'return'|'block'|'control'|'opaque';value?:CsharpExpression;bindings?:number[];body?:CsharpStatement[];branches?:CsharpStatement[][];control?:string;awaited?:boolean;text?:string}
+export interface CsharpDefinitionFact extends CsharpSite {key:string;name:string;kind:string;scope:string;parent?:string;bodyScope?:string;typeScope?:string;parameters:CsharpParameter[];returnType?:string;modifiers:string[];typeParameters:string[];attributes:CsharpAttribute[];value?:CsharpExpression;gaps:string[];hasBody:boolean;statements?:CsharpStatement[]}
 export interface CsharpBindingFact extends CsharpSite {name:string;scope:string;kind:'parameter'|'local'|'loop'|'catch'|'pattern';type?:string;value?:CsharpExpression;modifiers:string[]}
 export interface CsharpSemanticFacts {scopes:CsharpScope[];definitions:CsharpDefinitionFact[];bindings:CsharpBindingFact[];writes:(CsharpSite&{scope:string;target:CsharpExpression;operator:string;value?:CsharpExpression})[];references:(CsharpSite&{scope:string;expression:CsharpExpression;kind:'type'|'attribute'|'value'})[];calls:(CsharpSite&{scope:string;expression:CsharpExpression})[];returns:(CsharpSite&{scope:string;value:CsharpExpression})[];complete:boolean;gaps:string[]}
 export interface CsharpSyntaxFacts { imports: CsharpImportFact[]; declarations: CsharpDeclarationFact[]; namespaces: {name: string; start: number; range: SourceRange}[]; complete: boolean; gaps: string[]; semantic?:CsharpSemanticFacts }

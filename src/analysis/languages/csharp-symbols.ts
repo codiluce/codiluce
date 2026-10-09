@@ -3,7 +3,7 @@ import { declarationHashes, evidence, type CallSites, type Evidence } from '../.
 import { fileAnalysis, type CsharpBindingFact, type CsharpDefinitionFact, type CsharpExpression, type CsharpImportFact, type CsharpScope, type CsharpSemanticFacts } from '../facts.js';
 import { CsharpResolver, type CsharpEnvironment, type CsharpSymbol } from '../resolution/csharp.js';
 import type { CsharpType } from './csharp-types.js';
-export const CSHARP_SYMBOL_VERSION = '1';
+export const CSHARP_SYMBOL_VERSION = '2';
 const typeKinds = new Set(['class', 'interface', 'struct', 'enum', 'record', 'type']), callableKinds = new Set(['method', 'constructor', 'function', 'lambda', 'top-level']);
 const primitives: Record<string, string> = { bool: 'System.Boolean', byte: 'System.Byte', sbyte: 'System.SByte', char: 'System.Char', decimal: 'System.Decimal', double: 'System.Double', float: 'System.Single', int: 'System.Int32', uint: 'System.UInt32', long: 'System.Int64', ulong: 'System.UInt64', short: 'System.Int16', ushort: 'System.UInt16', string: 'System.String', object: 'System.Object', void: 'System.Void' };
 interface Unit {
@@ -71,6 +71,11 @@ export class CsharpSymbols {
     private readonly byId = new Map<string, CsharpDefinition>();
     private readonly selectedParameters = new Map<string, (string | undefined)[]>();
     private readonly conflictingContracts = new Set<string>();
+    private readonly frameworkTypes = new Map<string, {
+        names: Set<string>;
+        implicit: boolean;
+        proof: Evidence[];
+    }>();
     private operations = 0;
     private depth = 0;
     constructor(readonly context: AnalysisContext, readonly resolver: CsharpResolver) {
@@ -394,7 +399,14 @@ export class CsharpSymbols {
             return { kind: 'primitive', name: primitives[name]!, proof: this.proof(unit, site, 'Reserved C# type alias ' + name) };
         if (name === 'dynamic' || !/^(?:global::)?[\p{L}_][\p{L}\p{N}_]*(?:(?:\.|::)[\p{L}_][\p{L}\p{N}_]*)*$/u.test(name))
             return unknown('Dynamic/nullable/generic/array/pointer type requires a reviewed type profile');
-        const value = this.named(unit, scope, name, site.start, true);
+        let value = this.named(unit, scope, name, site.start, true);
+        const profile = this.frameworkTypes.get(this.resolver.projects.selection(unit.file.path).project?.id ?? '');
+        if (profile && value.kind === 'unknown' && value.reason.startsWith('No original lexical/namespace/import binding for ')) {
+            const clean = name.replace(/^global::/, ''), head = clean.split('.')[0]!;
+            const candidates = profile.names.has(clean) ? [clean] : profile.implicit && !clean.includes('.') ? [...profile.names].filter(type => type.endsWith('.' + clean)) : [];
+            if (candidates.length === 1 && value.reason === 'No original lexical/namespace/import binding for ' + head)
+                value = { kind: 'external', names: candidates, proof: [...value.proof, ...profile.proof] };
+        }
         if (value.kind === 'external' && value.names.length === 1 && Object.values(primitives).includes(value.names[0]!))
             return { kind: 'primitive', name: value.names[0]!, proof: value.proof };
         return value;
@@ -597,6 +609,9 @@ export class CsharpSymbols {
         parameters?: string[];
         returnType?: string;
         allowUntyped?: boolean;
+        allowOptional?: boolean;
+        allowExtension?: boolean;
+        definitionIds?: string[];
     }): CsharpHandler {
         let value = this.lookup(file, scope, expression);
         const unit = this.units.get(file);
@@ -605,6 +620,8 @@ export class CsharpSymbols {
         if (value.kind !== 'callable')
             return { status: 'unresolved', reason: value.kind === 'unknown' ? value.reason : 'Expression is not an original source callable', proof: value.proof };
         const candidates = value.definitions.filter(definition => {
+            if (expected?.definitionIds && !expected.definitionIds.includes(definition.id))
+                return false;
             if (expected?.parameters) {
                 if (definition.fact.parameters.length !== expected.parameters.length)
                     return false;
@@ -625,7 +642,7 @@ export class CsharpSymbols {
                 if (!actual || actual !== selected)
                     return false;
             }
-            return !definition.fact.parameters.some(parameter => parameter.modifiers.length || parameter.default);
+            return !definition.fact.parameters.some((parameter, index) => parameter.modifiers.some(modifier => !(expected?.allowExtension && index === 0 && modifier === 'this')) || parameter.default && !expected?.allowOptional);
         });
         if (candidates.length !== 1)
             return { status: 'unresolved', reason: 'Callback has no unique original selected signature', proof: value.proof };
@@ -652,6 +669,11 @@ export class CsharpSymbols {
         }
         return { status: 'resolved', definition, proof: [...value.proof, ...definition.symbol?.proof ?? this.proof(definition.unit, definition.fact, 'Original callback body')], conditions: ['Original selected callable; no generated delegate/closure declaration is fabricated'] };
     }
+    /** Reviewed framework type identities remain external and compilation-scoped;
+     * original declarations, aliases and shadows always take precedence. */
+    registerFrameworkTypes(project: string, names: string[], implicit: boolean, proof: Evidence[]): void {
+        this.frameworkTypes.set(project, { names: new Set(names), implicit, proof });
+    }
     constant(file: string, scope: string, expression: CsharpExpression): {
         status: 'resolved';
         value: string | number | boolean | null;
@@ -675,6 +697,17 @@ export class CsharpSymbols {
                 const left = evaluate(file, scope, value.left), right = evaluate(file, scope, value.right);
                 if (left.status === 'resolved' && right.status === 'resolved' && typeof left.value === 'string' && typeof right.value === 'string')
                     return { status: 'resolved', value: left.value + right.value, proof: [...left.proof, ...right.proof] };
+            }
+            if (value.kind === 'name') {
+                for (const space of this.chain(current, scope)) {
+                    const entries = current.names.get(space.key)?.get(value.name);
+                    if (!entries?.length)
+                        continue;
+                    const binding = entries.length === 1 && !('id' in entries[0]!) ? entries[0] as CsharpBindingFact : undefined;
+                    if (binding?.modifiers.includes('const') && binding.value && value.start > binding.end)
+                        return evaluate(file, binding.scope, binding.value);
+                    break;
+                }
             }
             const bound = this.lookup(file, scope, value);
             if (bound.kind === 'field' && bound.definition.fact.modifiers.includes('const') && bound.definition.fact.value)
@@ -730,6 +763,17 @@ export class CsharpSymbols {
             for (const gap of new Set([...unit.facts.gaps, ...unit.facts.scopes.flatMap(scope => scope.gaps), ...unit.facts.definitions.flatMap(definition => definition.gaps)]))
                 this.context.graph.diagnose({ analyzer: 'csharp-symbols', severity: 'warning', code: 'csharp-binding-gap', file: file.path, entityId: file.id, reason: gap });
         }
+    }
+    owns(definition: CsharpDefinition, scope: string): boolean { return this.owner(definition.unit, scope) === definition.id; }
+    canonicalType(file: string, scope: string, type: string, site: {
+        start: number;
+        range: CsharpExpression['range'];
+    }): CsharpValue {
+        const unit = this.units.get(file), environment = this.resolver.environment(file);
+        if (!unit || environment.status !== 'resolved')
+            return unknown(environment.status === 'resolved' ? 'Original semantic syntax unavailable' : environment.reason);
+        const gap = this.scopeGap(unit, scope);
+        return gap ? unknown(gap) : this.typeValue(unit, scope, type, site);
     }
     private attributeType(unit: Unit, scope: string, expression: CsharpExpression): CsharpValue {
         if (expression.kind !== 'name')

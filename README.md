@@ -98,7 +98,13 @@ lambdas, local functions and top-level bodies now retain source proof and call c
 conflicting partial declarations, conditional preprocessing, denied sources and executable build behavior remain explicit. `applications[].dotnet` records the selected
 project and compilation inputs; `sourceRoots.csharp` can define a compilation when no project is available.
 Inherited/generic/dynamic dispatch, conversions, generated constructors, accessors and compiler delegate/task behavior
-retain explicit gaps. ASP.NET routing is the next planned subphase. No target .NET/MSBuild toolchain runs.
+retain explicit gaps. ASP.NET Core 8–10 now adds serving-reachable minimal hosting, nested route groups, invoked original
+source helpers/factories, method groups and natural delegates. Original Web SDK/TFM/framework-reference inputs select a
+reviewed family; SDK implicit namespaces require original `ImplicitUsings` selection. `entrypoints.aspnet` can select an
+original startup method, and `dotnet.aspnet` records a runtime `version` or external deployment `pathBase`.
+Route contracts retain optional/default/catch-all/complex segments, reviewed constraints, order, hosts and explicit methods.
+GET does not imply HEAD. Authorization, filters, middleware, custom binding/metadata, changed/escaped hosting values and
+conditional startup retain gaps. MVC/controller routing remains the next subphase. No target .NET/MSBuild toolchain runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original
 component source locations. Module and instance scopes stay distinct; Astro server and client scripts retain separate contexts.

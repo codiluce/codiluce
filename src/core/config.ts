@@ -36,7 +36,8 @@ export interface SpringMvcConfig {
 }
 export interface JvmConfig { sourceSet?: 'main' | 'test'; profiles?: string[]; dependencies?: string[]; spring?: SpringMvcConfig }
 /** Recorded MSBuild compilation inputs. Values never come from the host SDK/environment. */
-export interface DotnetConfig { project?: string; targetFramework?: string; configuration?: string; platform?: string; properties?: Record<string,string> }
+export interface AspNetConfig {version?:string;pathBase?:string}
+export interface DotnetConfig {aspnet?:AspNetConfig; project?: string; targetFramework?: string; configuration?: string; platform?: string; properties?: Record<string,string> }
 
 export interface ApplicationConfig {
   name: string; path: string;
@@ -251,11 +252,17 @@ export async function resolveConfig(root: string, raw: RawConfig): Promise<Atlas
   for (const app of config.applications) {
     if (app.dotnet !== undefined) {
       const value = app.dotnet, scalar = (item: unknown) => typeof item === 'string' && /^[A-Za-z0-9_. +;-]{1,512}$/.test(item);
-      if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key=>!['project','targetFramework','configuration','platform','properties'].includes(key))
+      if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key=>!['project','targetFramework','configuration','platform','properties','aspnet'].includes(key))
         || value.project !== undefined && (typeof value.project !== 'string' || !value.project.endsWith('.csproj') || value.project.length > 2048 || /[\\\0$*?{}\[\]]/.test(value.project) || path.isAbsolute(value.project) || /^[A-Za-z]:/.test(value.project))
         || value.targetFramework !== undefined && (typeof value.targetFramework !== 'string' || !/^net(?:standard|coreapp)?\d+(?:\.\d+)?(?:-[a-z0-9.]+)?$/.test(value.targetFramework))
         || [value.configuration,value.platform].some(item=>item!==undefined&&!scalar(item))
         || value.properties !== undefined && (!value.properties || typeof value.properties !== 'object' || Array.isArray(value.properties) || Object.keys(value.properties).length > 128 || Object.entries(value.properties).some(([key,item])=>!/^\w{1,128}$/.test(key)||/^MSBuild|^TargetFrameworks?$|^Configuration$|^Platform$/i.test(key)||!scalar(item)))) throw new Error('Invalid .NET compilation configuration');
+      if (value.aspnet!==undefined) {
+        const aspnet=value.aspnet;
+        if(!aspnet||typeof aspnet!=='object'||Array.isArray(aspnet)||Object.keys(aspnet).some(key=>!['version','pathBase'].includes(key))
+          ||aspnet.version!==undefined&&(typeof aspnet.version!=='string'||!/^\d+\.\d+\.\d+$/.test(aspnet.version))
+          ||aspnet.pathBase!==undefined&&(typeof aspnet.pathBase!=='string'||aspnet.pathBase.length>2048||aspnet.pathBase!==''&&(!aspnet.pathBase.startsWith('/')||aspnet.pathBase.endsWith('/'))||/[\\\0?#{}*]/.test(aspnet.pathBase)||aspnet.pathBase.includes('//')||aspnet.pathBase.split('/').some(part=>part==='.'||part==='..')))throw new Error('Invalid ASP.NET routing configuration');
+      }
       if (value.project) repoPath(root,path.posix.join(app.path,value.project));
     }
     if (app.jvm !== undefined) {

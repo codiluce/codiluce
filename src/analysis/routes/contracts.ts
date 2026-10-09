@@ -2,17 +2,19 @@
  * Opaque syntax is retained as a competing candidate, never a confirmed match. */
 export type RoutePart = { kind: 'literal'; value: string } | { kind: 'parameter'; name: string; converter?: 'int' | 'go-int' | 'float' | 'uuid' | 'slug' | 'rails-segment' };
 export type RouteSegment = { kind: 'segment'; parts: RoutePart[] } | { kind: 'rest'; name: string; minimum: 0 | 1 };
+import {matchAspNetPath,type AspNetPathData,type AspNetEndpointData} from './aspnet-patterns.js';
 import { matchGoPath } from './go-patterns.js';
 import { matchRailsLiteral, normalizeRailsPath } from './rails-patterns.js';
 import { matchSpringPath, type SpringPathData, type SpringNameCondition } from './spring-patterns.js';
 export interface RoutePattern {
-  version: 1; dialect: 'express-common' | 'express-4' | 'express-5' | 'starlette' | 'werkzeug' | 'django-path' | 'django-re-path' | 'sveltekit' | 'astro' | 'nuxt-page' | 'nitro-2' | 'go-servemux-121' | 'go-servemux-122' | 'chi-5' | 'gin-1' | 'echo-4' | 'echo-5' | 'fiber-2' | 'fiber-3' | 'gorilla-1' | 'rails' | 'spring-path-6.2' | 'spring-path-7.0'; original: string;
+  version: 1; dialect: 'express-common' | 'express-4' | 'express-5' | 'starlette' | 'werkzeug' | 'django-path' | 'django-re-path' | 'sveltekit' | 'astro' | 'nuxt-page' | 'nitro-2' | 'go-servemux-121' | 'go-servemux-122' | 'chi-5' | 'gin-1' | 'echo-4' | 'echo-5' | 'fiber-2' | 'fiber-3' | 'gorilla-1' | 'rails' | 'spring-path-6.2' | 'spring-path-7.0' | 'aspnet-8' | 'aspnet-9' | 'aspnet-10'; original: string;
   status: 'exact' | 'partial'; reason?: string; alternatives: RouteSegment[][];
   prefix?: string;
   caseSensitive: boolean; strict: boolean;
   encoded?: boolean; skipClean?: boolean; pathPrefix?: boolean; integerBits?: 32 | 64;
   rails?: { sources: string[] };
   spring?: SpringPathData;
+  aspnet?: AspNetPathData;
 }
 export interface RoutingContract {
   version: 1; pattern: RoutePattern; methods: string[] | '*'; executionContext: 'server';
@@ -22,7 +24,8 @@ export interface RoutingContract {
   middleware: string[]; conditions: string[];
   host?: string;
   hostAuthority?: boolean;
-  dispatch?: { dialect: 'go-servemux' | 'chi' | 'gin' | 'echo' | 'fiber' | 'gorilla' | 'rails' | 'spring' | 'spring-webflux'; root: string; order: number };
+  dispatch?: { dialect: 'go-servemux' | 'chi' | 'gin' | 'echo' | 'fiber' | 'gorilla' | 'rails' | 'spring' | 'spring-webflux' | 'aspnet'; root: string; order: number };
+  aspnet?: AspNetEndpointData;
   spring?: { params: SpringNameCondition[]; headers: SpringNameCondition[]; consumes: string[]; produces: string[]; declaredMethods?: string[] };
   excludedHosts?: string[];
   queries?: { name: string; value?: string }[];
@@ -175,6 +178,7 @@ export function djangoRegexRoute(original: string, include = false): string | un
   return route;
 }
 export function matchRoutePattern(pattern: RoutePattern, pathname: string, strictHoles = true): boolean {
+  if (pattern.dialect.startsWith('aspnet-')) return matchAspNetPath(pattern,pathname,strictHoles);
   if (pattern.dialect.startsWith('spring-path-')) return matchSpringPath(pattern, pathname, strictHoles);
   if (pattern.dialect === 'rails' && pattern.status === 'exact' && !pathname.includes('{*}')) return matchRailsLiteral(pattern, pathname);
   if (pattern.dialect === 'rails') pathname = normalizeRailsPath(pathname);

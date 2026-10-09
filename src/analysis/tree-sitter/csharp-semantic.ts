@@ -1,5 +1,5 @@
 import type { Node } from 'web-tree-sitter';
-import type { CsharpArgument, CsharpAttribute, CsharpBindingFact, CsharpDefinitionFact, CsharpExpression, CsharpParameter, CsharpScope, CsharpSemanticFacts, DeclarationFact } from '../facts.js';
+import type { CsharpArgument, CsharpAttribute, CsharpBindingFact, CsharpDefinitionFact, CsharpExpression, CsharpParameter, CsharpScope, CsharpSemanticFacts, CsharpStatement, DeclarationFact } from '../facts.js';
 import type { SourceText } from '../source-map.js';
 const types = new Set(['class', 'interface', 'struct', 'enum', 'record', 'type']);
 const name = (value: string) => value.replace(/\s+/g, '').replace(/@([\p{L}_][\p{L}\p{N}_]*)/gu, '$1');
@@ -10,6 +10,7 @@ export function extractCsharpSemantic(root: Node, declarations: DeclarationFact[
     const unknown = (node: Node): CsharpExpression => ({ ...site(node), kind: 'unknown', text: node.text.slice(0, 300) });
     const children = (node: Node) => node.namedChildren.filter(child => child.type !== 'comment');
     const bySite = new Map(declarations.map(fact => [`${fact.start}:${fact.end}`, fact])), lambdaKeys = new Map<number, string>();
+    const nodeScopes = new Map<number, CsharpScope>(), definitionNodes = new Map<CsharpDefinitionFact, Node>();
     let nodes = 0, expressions = 0, scopeOrdinal = 0, lambdaOrdinal = 0;
     const lambdaKey = (node: Node) => {
         let key = lambdaKeys.get(node.id);
@@ -81,6 +82,12 @@ export function extractCsharpSemantic(root: Node, declarations: DeclarationFact[
                 return unknown(node);
             }
         }
+        if (['array_creation_expression', 'implicit_array_creation_expression', 'collection_expression'].includes(node.type)) {
+            const initializer = parts.find(child => child.type === 'initializer_expression') ?? (node.type === 'collection_expression' ? node : undefined);
+            if (!initializer || children(initializer).length > 128 || children(initializer).some(child => child.type === 'spread_element'))
+                return unknown(node);
+            return { ...base, kind: 'array', values: children(initializer).map(child => expression(child.type === 'collection_element' ? children(child)[0] ?? child : child, depth + 1)), ...(node.childForFieldName('type') ? { type: name(node.childForFieldName('type')!.text) } : {}) };
+        }
         if (node.type === 'member_access_expression') {
             const object = node.childForFieldName('expression'), member = node.childForFieldName('name');
             return object && member ? { ...base, kind: 'member', object: expression(object, depth + 1), name: name(member.text) } : unknown(node);
@@ -116,11 +123,11 @@ export function extractCsharpSemantic(root: Node, declarations: DeclarationFact[
     const parameters = (node: Node | undefined): CsharpParameter[] => {
         if (!node)
             return [];
-        if (node.type === 'implicit_parameter')
+        if (node.type === 'implicit_parameter' || node.type === 'identifier')
             return [{ name: name(node.text), modifiers: [] }];
         return children(node).filter(child => ['parameter', 'implicit_parameter', 'identifier'].includes(child.type)).map(parameter => { const identifier = parameter.childForFieldName('name') ?? (parameter.type === 'identifier' || parameter.type === 'implicit_parameter' ? parameter : undefined), type = parameter.childForFieldName('type'), value = children(parameter).find(child => child.id !== identifier?.id && child.id !== type?.id && !['modifier', 'attribute_list'].includes(child.type)); return { name: name(identifier?.text ?? ''), ...type ? { type: name(type.text) } : {}, modifiers: parameter.children.filter(child => ['ref', 'out', 'in', 'params', 'this', 'scoped'].includes(child.type) || child.type === 'modifier').map(child => child.text), ...parameter.children.some(child => child.type === '=') && value ? { default: expression(value) } : {} }; });
     };
-    const scope = (node: Node, kind: CsharpScope['kind'], parent?: CsharpScope, owner?: string, namespace = parent?.namespace ?? ''): CsharpScope => { const value: CsharpScope = { ...site(node), key: 'csharp-scope:' + scopeOrdinal++, kind, namespace, ...parent ? { parent: parent.key } : {}, ...owner ? { owner } : {}, gaps: [], ...kind === 'lambda' ? { deferred: true } : {} }; facts.scopes.push(value); return value; };
+    const scope = (node: Node, kind: CsharpScope['kind'], parent?: CsharpScope, owner?: string, namespace = parent?.namespace ?? ''): CsharpScope => { const value: CsharpScope = { ...site(node), key: 'csharp-scope:' + scopeOrdinal++, kind, namespace, ...parent ? { parent: parent.key } : {}, ...owner ? { owner } : {}, gaps: [], ...kind === 'lambda' ? { deferred: true } : {} }; facts.scopes.push(value); nodeScopes.set(node.id, value); return value; };
     const fileScope = scope(root, 'file'), fileNamespace = root.namedChildren.find(child => child.type === 'file_scoped_namespace_declaration'), namespaceScope = fileNamespace ? scope(root, 'namespace', fileScope, undefined, name(fileNamespace.childForFieldName('name')?.text ?? '')) : undefined;
     if (namespaceScope)
         namespaceScope.start = fileNamespace!.endIndex;
@@ -147,6 +154,7 @@ export function extractCsharpSemantic(root: Node, declarations: DeclarationFact[
     } => {
         const key = fact?.key ?? lambdaKey(node), body = node.childForFieldName('body'), params = parameters(node.childForFieldName('parameters') ?? undefined), mods = fact?.modifiers ?? node.children.filter(child => child.type === 'modifier' || ['static', 'async'].includes(child.type)).map(child => child.text), parent = fact?.parent && declarations.find(item => item.key === fact.parent && item.kind !== 'namespace')?.key;
         const value: CsharpDefinitionFact = { ...site(node), key, name: fact?.name ?? '<lambda>', kind, scope: current.key, ...parent ? { parent } : {}, parameters: params, modifiers: mods, typeParameters: children(node).find(child => child.type === 'type_parameter_list')?.namedChildren.map(child => name(child.childForFieldName('name')?.text ?? child.text)) ?? [], attributes: attributes(node), gaps: [], hasBody: !!body };
+        definitionNodes.set(value, node);
         const returnNode = node.childForFieldName('returns') ?? (!types.has(kind) && kind !== 'constructor' ? node.childForFieldName('type') : null);
         if (returnNode)
             value.returnType = name(returnNode.text);
@@ -313,7 +321,7 @@ export function extractCsharpSemantic(root: Node, declarations: DeclarationFact[
                 if (tuple)
                     opaqueNames(tuple, current, 'local');
                 if (identifier)
-                    facts.bindings.push({ ...site(variable), name: name(identifier.text), scope: current.key, kind: 'local', ...type && type.type !== 'implicit_type' ? { type: name(type.text) } : {}, ...value ? { value: expression(value) } : {}, modifiers: [] });
+                    facts.bindings.push({ ...site(variable), name: name(identifier.text), scope: current.key, kind: 'local', ...type && type.type !== 'implicit_type' ? { type: name(type.text) } : {}, ...value ? { value: expression(value) } : {}, modifiers: node.parent?.children.filter(child => child.type === 'modifier' || child.type === 'const').map(child => child.text) ?? [] });
                 if (value)
                     walk(value, current);
             }
@@ -352,6 +360,42 @@ export function extractCsharpSemantic(root: Node, declarations: DeclarationFact[
     };
     for (const node of root.namedChildren)
         walk(node, namespaceScope && node.startIndex >= namespaceScope.start ? namespaceScope : fileScope);
+    const statements = (node: Node, current: CsharpScope): CsharpStatement[] => {
+        const base = { ...site(node), scope: current.key };
+        if (['comment', 'local_function_statement', 'empty_statement'].includes(node.type))
+            return [];
+        if (node.type === 'global_statement')
+            return children(node).flatMap(child => statements(child, current));
+        if (node.type === 'block') {
+            const block = nodeScopes.get(node.id) ?? current;
+            return [{ ...base, scope: block.key, kind: 'block', body: children(node).flatMap(child => statements(child, block)) }];
+        }
+        if (node.type === 'local_declaration_statement')
+            return [{ ...base, kind: 'variable', bindings: facts.bindings.filter(binding => binding.kind === 'local' && binding.scope === current.key && binding.start >= node.startIndex && binding.end <= node.endIndex).map(binding => binding.start) }];
+        if (node.type === 'expression_statement' || node.type === 'return_statement') {
+            const value = children(node)[0];
+            return [{ ...base, kind: node.type === 'return_statement' ? 'return' : 'expression', ...(value ? { value: expression(value), awaited: value.type === 'await_expression' } : {}) }];
+        }
+        const control = nodeScopes.get(node.id);
+        if (control?.kind === 'control') {
+            const branches = children(node).filter(child => child.type === 'block' || child.type.endsWith('_statement') || child.type === 'switch_section' || child.type === 'catch_clause').map(child => statements(child, control));
+            const condition = node.childForFieldName('condition');
+            return [{ ...base, scope: control.key, kind: 'control', control: node.type, branches, ...condition ? { value: expression(condition) } : {} }];
+        }
+        return [{ ...base, kind: 'opaque', text: node.text.slice(0, 300) }];
+    };
+    for (const [definition, node] of definitionNodes) {
+        if (!definition.bodyScope || types.has(definition.kind))
+            continue;
+        const current = facts.scopes.find(scope => scope.key === definition.bodyScope)!, body = node.childForFieldName('body');
+        if (body?.type === 'block')
+            definition.statements = children(body).flatMap(child => statements(child, current));
+        else if (body)
+            definition.statements = [{ ...site(body), scope: current.key, kind: 'return' as const, value: expression(body), awaited: body.type === 'await_expression' }];
+    }
+    const top = facts.definitions.find(definition => definition.kind === 'top-level');
+    if (top && topScope)
+        top.statements = globals.flatMap(node => statements(node, topScope));
     facts.gaps = [...new Set(facts.gaps)].sort();
     return facts;
 }

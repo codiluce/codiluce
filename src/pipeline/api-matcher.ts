@@ -6,10 +6,11 @@ import { routingContract, matchRoutePattern } from '../analysis/routes/contracts
 import { configuredProxy, proxyPath, relativeApiBoundary, requestApplication } from '../analysis/routes/boundaries.js';
 import { preferGoRoutes } from '../analysis/routes/go-patterns.js';
 import { preferRailsRoutes } from '../analysis/routes/rails-patterns.js';
+import {preferAspNetRoutes,matchAspNetHosts,reviewedAspNetRequest} from '../analysis/routes/aspnet-patterns.js';
 import { preferWebFluxRoutes } from '../analysis/routes/webflux-order.js';
 import { preferSpringRoutes, matchSpringParams } from '../analysis/routes/spring-patterns.js';
 export const apiMatcher: Analyzer = {
-  name: 'api-matcher', version: `${ANALYZER_VERSION}:11`,
+  name: 'api-matcher', version: `${ANALYZER_VERSION}:12`,
   async analyze(context: AnalysisContext): Promise<void> {
     const endpoints = [...context.graph.entities.values()].filter(entity => entity.type === 'api_endpoint');
     const appsById = new Map(context.config.applications.map(app => [context.applicationIds.get(app.name), app]));
@@ -19,10 +20,10 @@ export const apiMatcher: Analyzer = {
     const requests = new Map<string, string[]>();
     const layers = (endpoint: Entity) => { const contract = contracts.get(endpoint.id); return contract ? [contract, ...contract.guards ?? []] : []; };
     const observedConstraints = (endpoint: Entity, origin?: string, query?: URLSearchParams): boolean => layers(endpoint).every(contract => {
-      if (origin) { const url = new URL(origin), host = contract.hostAuthority ? url.host : url.hostname; if (contract.host && contract.host !== host || contract.excludedHosts?.includes(host) || contract.schemes && !contract.schemes.includes(url.protocol.slice(0, -1))) return false; }
+      if (origin) { const url = new URL(origin), host = contract.hostAuthority ? url.host : url.hostname; if (!matchAspNetHosts(contract.aspnet?.hosts,url) || contract.host && contract.host !== host || contract.excludedHosts?.includes(host) || contract.schemes && !contract.schemes.includes(url.protocol.slice(0, -1))) return false; }
       return !query || (contract.queries ?? []).every(item => query.has(item.name) && (item.value === undefined || query.get(item.name) === item.value)) && matchSpringParams(contract,query);
     });
-    const needsOrigin = (endpoint: Entity) => layers(endpoint).some(contract => contract.host || contract.excludedHosts?.length || contract.schemes?.length);
+    const needsOrigin = (endpoint: Entity) => layers(endpoint).some(contract => contract.host || contract.aspnet?.hosts?.length || contract.excludedHosts?.length || contract.schemes?.length);
     const matchPath = (endpoint: Entity, path: string, strict = true): boolean => {
       const contract = contracts.get(endpoint.id);
       if (contract) return matchRoutePattern(contract.pattern, path, strict) && (contract.guards ?? []).every(guard => (!guard.rawPrefix || path.startsWith(guard.rawPrefix)) && matchRoutePattern(guard.pattern, path, strict));
@@ -31,6 +32,7 @@ export const apiMatcher: Analyzer = {
     };
     const methodMatches = (endpoint: Entity, method: string): boolean => {
       const contract = contracts.get(endpoint.id), methods = contract?.methods;
+      if (contract?.aspnet) method=method.toUpperCase();
       if (contract?.excludedMethods?.includes(method)) return false;
       if (contract?.guards?.some(guard => guard.excludedMethods?.includes(method) || guard.methods !== '*' && !guard.methods.includes(method))) return false;
       return endpoint.metadata.method === method || methods === '*' || Array.isArray(methods) && methods.includes(method);
@@ -75,9 +77,10 @@ export const apiMatcher: Analyzer = {
       });
       if (origin || !candidates.some(needsOrigin)) candidates = preferSpringRoutes(preferRailsRoutes(preferGoRoutes(candidates, endpoint => contracts.get(endpoint.id), observation.method), endpoint => contracts.get(endpoint.id), observation.method),endpoint=>contracts.get(endpoint.id),observation.method);
       if (origin || !candidates.some(needsOrigin)) candidates = preferWebFluxRoutes(candidates,endpoint=>contracts.get(endpoint.id));
+      if ((origin || !candidates.some(needsOrigin)) && reviewedAspNetRequest(proxy ? proxyPath(proxy,pathname):pathname)) candidates=preferAspNetRoutes(candidates,endpoint=>contracts.get(endpoint.id));
       // Keep constrained candidates in ambiguity detection: ignoring one could
       // falsely select another route with the same HTTP method/path.
-      if (candidates.length !== 1 || candidates[0]!.metadata.constraintsUnresolved || !origin && needsOrigin(candidates[0]!)) {
+      if (candidates.length !== 1 || candidates[0]!.metadata.constraintsUnresolved || !!contracts.get(candidates[0]!.id)?.aspnet&&!reviewedAspNetRequest(proxy?proxyPath(proxy,pathname):pathname) || !origin && needsOrigin(candidates[0]!)) {
         context.graph.diagnose({ analyzer: 'api-matcher', severity: 'warning', code: candidates.length > 1 ? 'ambiguous-http-match' : candidates.length === 1 ? 'constrained-http-match' : 'unmatched-http-call', entityId: observation.callerId, file: observation.evidence.file, line: observation.evidence.line, reason: `${observation.method} ${pathname}: ${candidates.length} eligible endpoints${origin ? ' with explicit origin association' : ''}${candidates[0]?.metadata.constraintsUnresolved ? '; route constraints unresolved' : ''}` });
         continue;
       }
@@ -130,8 +133,9 @@ export const apiMatcher: Analyzer = {
       let loose = candidates.filter(endpoint => !contracts.get(endpoint.id)?.action && matchPath(endpoint, pattern, false));
       if (!pattern.includes('{*}') && loose.every(hostKnown)) { strict = preferSpringRoutes(preferRailsRoutes(preferGoRoutes(strict, endpoint => contracts.get(endpoint.id), observation.method), endpoint => contracts.get(endpoint.id), observation.method),endpoint=>contracts.get(endpoint.id),observation.method); loose = preferSpringRoutes(preferRailsRoutes(preferGoRoutes(loose, endpoint => contracts.get(endpoint.id), observation.method), endpoint => contracts.get(endpoint.id), observation.method),endpoint=>contracts.get(endpoint.id),observation.method); }
       if (!resolved.holes && !pattern.includes('{*}') && loose.every(hostKnown)) { strict = preferWebFluxRoutes(strict,endpoint=>contracts.get(endpoint.id)); loose = preferWebFluxRoutes(loose,endpoint=>contracts.get(endpoint.id)); }
+      if (!resolved.holes && !pattern.includes('{*}') && loose.every(hostKnown) && reviewedAspNetRequest(pattern)) { strict=preferAspNetRoutes(strict,endpoint=>contracts.get(endpoint.id));loose=preferAspNetRoutes(loose,endpoint=>contracts.get(endpoint.id)); }
       const label = `${observation.method} ${resolved.pattern}${resolved.app ? ` on ${resolved.app}` : ''}`;
-      if (strict.length !== 1 || loose.length !== 1 || strict[0]!.metadata.constraintsUnresolved || strict[0] && !hostKnown(strict[0])) {
+      if (strict.length !== 1 || loose.length !== 1 || strict[0]!.metadata.constraintsUnresolved || !!contracts.get(strict[0]!.id)?.aspnet&&!reviewedAspNetRequest(pattern) || strict[0] && !hostKnown(strict[0])) {
         const reason = loose.length > strict.length ? `${label}: a dynamic segment could also equal a literal route segment (${loose.filter(item => !strict.includes(item)).map(item => item.name).join(', ')})` : `${label}: ${strict.length} eligible endpoints${strict[0]?.metadata.constraintsUnresolved ? '; route constraints unresolved' : ''}`;
         diagnose(loose.length > 1 ? 'ambiguous-http-match' : strict.length === 1 ? 'constrained-http-match' : 'unmatched-http-call', reason);
         return;

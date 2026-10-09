@@ -33,6 +33,7 @@ import { SPRING_VERSION } from '../analysis/frameworks/spring-profile.js';
 import { JVM_SYMBOL_VERSION } from '../analysis/languages/jvm-symbols.js';
 import { CSHARP_SYMBOL_VERSION } from '../analysis/languages/csharp-symbols.js';
 import { CSHARP_TYPE_VERSION } from '../analysis/languages/csharp-types.js';
+import {ASPNET_VERSION} from '../analysis/frameworks/aspnet-profile.js';
 import { csharpAnalyzer } from '../analysis/languages/csharp.js';
 
 const execute = promisify(execFile);
@@ -64,6 +65,6 @@ export async function indexRepository(repository: string, options: IndexOptions 
     graph.diagnose({ analyzer: 'indexer', severity: 'info', code: 'git-metadata-unavailable', reason: 'No readable Git HEAD/status; this is still a valid working-tree scan' });
   }
   for (const analyzer of analyzers) { options.onProgress?.(analyzer.name); await analyzer.analyze(context); }
-  const run: AnalysisRun = { id: randomUUID(), repositoryId, repositoryName: config.repository.name, ...(commitSha ? { commitSha } : {}), ...(dirty !==undefined ? { dirty } : {}), analyzedAt: new Date().toISOString(), configDigest: createHash('sha256').update(JSON.stringify(config)).digest('hex'), schemaVersion: SCHEMA_VERSION, analyzerVersions: Object.fromEntries([...analyzers.map(analyzer => [analyzer.name, analyzer.version]), ...typescriptFrameworkPacks.map(pack => [pack.id, pack.version]), ['fastapi', FASTAPI_VERSION], ['flask', FLASK_VERSION], ['django', DJANGO_VERSION], ['go-routers', GO_ROUTER_VERSION], ['rails', RAILS_VERSION], ['jvm-symbols',JVM_SYMBOL_VERSION],['csharp-symbols',CSHARP_SYMBOL_VERSION],['csharp-types',CSHARP_TYPE_VERSION], ['spring-mvc',SPRING_VERSION], ['spring-webflux',WEBFLUX_VERSION]]) };
+  const run: AnalysisRun = { id: randomUUID(), repositoryId, repositoryName: config.repository.name, ...(commitSha ? { commitSha } : {}), ...(dirty !==undefined ? { dirty } : {}), analyzedAt: new Date().toISOString(), configDigest: createHash('sha256').update(JSON.stringify(config)).digest('hex'), schemaVersion: SCHEMA_VERSION, analyzerVersions: Object.fromEntries([...analyzers.map(analyzer => [analyzer.name, analyzer.version]), ...typescriptFrameworkPacks.map(pack => [pack.id, pack.version]), ['fastapi', FASTAPI_VERSION], ['flask', FLASK_VERSION], ['django', DJANGO_VERSION], ['go-routers', GO_ROUTER_VERSION], ['rails', RAILS_VERSION], ['jvm-symbols',JVM_SYMBOL_VERSION],['csharp-symbols',CSHARP_SYMBOL_VERSION],['csharp-types',CSHARP_TYPE_VERSION],['aspnet-minimal',ASPNET_VERSION], ['spring-mvc',SPRING_VERSION], ['spring-webflux',WEBFLUX_VERSION]]) };
   return graph.finish(run);
 }
