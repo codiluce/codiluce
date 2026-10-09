@@ -4,6 +4,7 @@ import { SourceText } from '../source-map.js';
 import { extractPythonImports } from './python-imports.js';
 import { extractGoImports } from './go-imports.js';
 import { extractGoSemantic } from './go-syntax.js';
+import { extractRubySemantic } from './ruby-syntax.js';
 
 const MAX_DECLARATIONS = 20_000, MAX_ISSUES = 100, MAX_NODES = 200_000;
 const compact = (text: string) => text.replace(/\s+/g, ' ').trim();
@@ -160,8 +161,9 @@ export function extractStructure(root: Node, query: Query, language: string, con
   const python = language === 'python' ? extractPythonImports(root, declarations, source) : undefined;
   const go = language === 'go' ? extractGoImports(root, source) : undefined;
   const goSemantic = language === 'go' ? extractGoSemantic(root, declarations, source) : undefined;
+  const ruby = language === 'ruby' ? extractRubySemantic(root, declarations, source) : undefined;
   if (go && goSemantic) go.facts.semantic = goSemantic.facts;
-  truncated ||= (python?.truncated ?? false) || (go?.truncated ?? false) || (goSemantic?.truncated ?? false);
+  truncated ||= (python?.truncated ?? false) || (go?.truncated ?? false) || (goSemantic?.truncated ?? false) || (ruby?.truncated ?? false);
   if (truncated) issues.push({ code: 'syntax-budget-exceeded', reason: 'Structural extraction reached its node, declaration, diagnostic or query limit' });
-  return { declarations, issues, truncated, ...(python ? { python: python.facts } : {}), ...(go ? { go: go.facts } : {}) };
+  return { declarations, issues, truncated, ...(python ? { python: python.facts } : {}), ...(go ? { go: go.facts } : {}), ...(ruby ? { ruby: ruby.facts } : {}) };
 }

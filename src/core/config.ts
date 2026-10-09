@@ -11,6 +11,8 @@ const execute = promisify(execFile);
 
 /** Explicit target inputs; absent fields remain unknown, never host defaults. */
 export interface GoBuildConfig { goos?: string; goarch?: string; tags?: string[]; cgoEnabled?: boolean; compiler?: 'gc' | 'gccgo'; toolchainVersion?: string; workspace?: string | false; includeTests?: boolean; httpMuxGo121?: boolean }
+/** Ruby target cwd, relative to the application. sourceRoots.ruby records its ordered load paths. */
+export interface RubyRuntimeConfig { cwd?: string }
 
 export interface ApplicationConfig {
   name: string; path: string;
@@ -32,6 +34,7 @@ export interface ApplicationConfig {
   /** Explicit framework entry modules/factories (e.g. flask: ["shop:create_app"]). */
   entrypoints?: Record<string, string[]>;
   go?: GoBuildConfig;
+  ruby?: RubyRuntimeConfig;
 }
 /** An application as configuration may give it: frameworks and ecosystems are completed from its manifests. */
 export type ApplicationInput = Omit<ApplicationConfig, 'frameworks' | 'ecosystems'> & {
@@ -220,6 +223,11 @@ export async function resolveConfig(root: string, raw: RawConfig): Promise<Atlas
   const names = new Set<string>();
   const paths = new Set<string>();
   for (const app of config.applications) {
+    if (app.ruby !== undefined) {
+      const ruby = app.ruby;
+      if (!ruby || typeof ruby !== 'object' || Array.isArray(ruby) || Object.keys(ruby).some(key => key !== 'cwd') || ruby.cwd !== undefined && (typeof ruby.cwd !== 'string' || path.isAbsolute(ruby.cwd) || /[\\\0]/.test(ruby.cwd) || /^[A-Za-z]:/.test(ruby.cwd))) throw new Error('Invalid Ruby runtime configuration');
+      if (typeof ruby.cwd === 'string') repoPath(root, path.posix.join(app.path, ruby.cwd));
+    }
     if (app.go !== undefined) {
       const go = app.go, tag = (value: unknown) => typeof value === 'string' && /^[A-Za-z0-9_.]+$/.test(value);
       if (!go || typeof go !== 'object' || Array.isArray(go) || Object.keys(go).some(key => !['goos', 'goarch', 'tags', 'cgoEnabled', 'compiler', 'toolchainVersion', 'workspace', 'includeTests', 'httpMuxGo121'].includes(key))

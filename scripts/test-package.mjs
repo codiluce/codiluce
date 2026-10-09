@@ -151,6 +151,11 @@ try {
   await writeFile(path.join(pythonPackage, '__init__.py'), '');
   await writeFile(path.join(pythonPackage, 'main.py'), 'from fastapi import FastAPI\nfrom .handler import PackagedPythonHandler as handler\napp = FastAPI()\napp.add_api_route("/package-python/{id:int}", handler, methods=["GET"])\n');
   await writeFile(path.join(pythonPackage, 'handler.py'), 'def PackagedPythonLeaf():\n    return "ok"\ndef PackagedPythonHandler():\n    return PackagedPythonLeaf()\n');
+  const rubySource = path.join(repo, 'ruby-source');
+  await mkdir(path.join(rubySource, 'lib'), { recursive: true });
+  await writeFile(path.join(rubySource, 'Gemfile'), 'gem "rails", "~> 8.1"\n');
+  await writeFile(path.join(rubySource, 'main.rb'), '# 😀 original Ruby load\nrequire_relative "lib/widget"\nrequire File.expand_path("lib/widget", __dir__)\nif enabled\n require_relative "lib/widget"\nend\nrequire feature\n');
+  await writeFile(path.join(rubySource, 'lib/widget.rb'), 'module PackagedRuby\n class Widget\n  def show; end\n end\nend\n');
   const flaskServer = path.join(repo, 'flask-server');
   await mkdir(flaskServer);
   await writeFile(path.join(flaskServer, 'requirements.txt'), 'Flask==3.1.2\n');
@@ -277,6 +282,21 @@ try {
   const pythonDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', pythonMain.id], repo)).stdout);
   assert.equal(pythonDetail.metadata.analysis.features.imports.status, 'partial');
   assert.equal(pythonDetail.metadata.analysis.features.references.status, 'partial');
+  const rubyFiles = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'ruby-source'], repo)).stdout).items;
+  const rubyMain = rubyFiles.find(item => item.type === 'file' && item.path === 'ruby-source/main.rb'), rubyWidget = rubyFiles.find(item => item.type === 'file' && item.path === 'ruby-source/lib/widget.rb');
+  assert.ok(rubyMain && rubyWidget, 'installed Ruby source inputs are indexed');
+  const rubyDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', rubyMain.id], repo)).stdout);
+  assert.equal(rubyDetail.metadata.analysis.features.imports.status, 'partial');
+  assert.equal(rubyDetail.metadata.analysis.features.references.status, 'unsupported');
+  assert.equal(rubyDetail.metadata.analysis.features.framework.status, 'unsupported', 'Rails recognition alone must not claim routing support');
+  assert.deepEqual(rubyDetail.metadata.importOutcomes.map(item => item.outcome.status), ['resolved', 'resolved', 'resolved', 'unsupported']);
+  assert.equal(rubyDetail.metadata.importOutcomes[0].range.startLine, 2);
+  assert.ok(rubyDetail.metadata.importOutcomes[2].conditions.some(item => item.includes('Conditional')));
+  const rubyImports = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', rubyMain.id, '--type', 'imports'], repo)).stdout).items;
+  assert.equal(rubyImports.length, 3); assert.ok(rubyImports.every(item => item.to === rubyWidget.id));
+  const rubyImport = rubyImports.find(item => item.metadata?.kind === 'require_relative' && !item.metadata.conditions?.length) ?? rubyImports[0];
+  const rubyImportDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relation', '--id', rubyImport.id], repo)).stdout);
+  assert.ok(rubyImportDetail.evidence.some(fact => fact.file === 'ruby-source/main.rb' && fact.line === 2));
   const pythonEndpoints = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', '/package-python'], repo)).stdout).items;
   const pythonEndpoint = pythonEndpoints.find(entity => entity.type === 'api_endpoint' && entity.name === 'GET /package-python/{id:int}');
   assert.ok(pythonEndpoint, 'installed FastAPI pack resolves its imported handler');
@@ -429,7 +449,7 @@ try {
   console.log('Checking npm exec against the tarball without a local installation…');
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
-  console.log('Package installation, seven grammars, workspace binding, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin/Echo 4–5/Fiber 2–3/Gorilla router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
+  console.log('Package installation, seven grammars, workspace binding, Ruby literal loads/scopes/original paths and dynamic/conditional gaps, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin/Echo 4–5/Fiber 2–3/Gorilla router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

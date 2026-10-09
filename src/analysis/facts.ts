@@ -77,7 +77,25 @@ export interface GoCallFact extends GoReferenceFact { expression: GoExpression &
 export interface GoReturnFact extends GoSite { scope: string; values: GoExpression[] }
 export interface GoSemanticFacts { scopes: GoScopeFact[]; definitions: GoDefinitionFact[]; bindings: GoBindingFact[]; writes: GoWriteFact[]; references: GoReferenceFact[]; calls: GoCallFact[]; returns: GoReturnFact[]; gaps: string[] }
 export interface GoSyntaxFacts { package?: { name: string; range: SourceRange; start: number }; imports: GoImportFact[]; comments: { text: string; start: number; end: number }[]; complete: boolean; semantic?: GoSemanticFacts }
-export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; python?: PythonSyntaxFacts; go?: GoSyntaxFacts }
+export interface RubySite { start: number; end: number; range: SourceRange }
+export type RubyExpression = RubySite & (
+  | { kind: 'literal'; value: string | number | boolean | null }
+  | { kind: 'symbol'; name: string }
+  | { kind: 'constant'; name: string }
+  | { kind: 'identifier'; name: string }
+  | { kind: 'call'; receiver?: RubyExpression; method: string; args: RubyExpression[] }
+  | { kind: 'array'; items: RubyExpression[] }
+  | { kind: 'hash'; items: { key: RubyExpression; value: RubyExpression }[] }
+  | { kind: 'unknown'; text: string }
+);
+export interface RubyScopeFact extends RubySite { key: string; parent?: string; owner?: string; kind: 'file' | 'class' | 'module' | 'method' | 'singleton' | 'block' | 'control'; name?: string; conditional?: string; deferred?: boolean }
+export interface RubyDefinitionFact extends RubySite { key: string; name: string; kind: 'class' | 'module' | 'method' | 'singleton_method'; scope: string; bodyScope: string; superclass?: RubyExpression; receiver?: RubyExpression }
+export interface RubyCallFact extends RubySite { expression: RubyExpression & { kind: 'call' }; scope: string; blockScope?: string }
+export interface RubyAssignmentFact extends RubySite { target: RubyExpression; value: RubyExpression; scope: string; augmentation?: boolean }
+export interface RubyReferenceFact extends RubySite { expression: RubyExpression & { kind: 'constant' }; scope: string }
+export interface RubyGapFact extends RubySite { scope: string; kind: 'path' | 'loader' | 'constants' | 'scope'; reason: string }
+export interface RubySyntaxFacts { scopes: RubyScopeFact[]; definitions: RubyDefinitionFact[]; calls: RubyCallFact[]; assignments: RubyAssignmentFact[]; references: RubyReferenceFact[]; gaps: RubyGapFact[]; complete: boolean }
+export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts }
 export interface ImportBinding { imported: string; local: string; typeOnly?: boolean }
 export type ImportOutcome =
   | { status: 'resolved'; targets: string[]; proof: Evidence[] }
