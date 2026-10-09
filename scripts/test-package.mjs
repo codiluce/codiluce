@@ -138,6 +138,7 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
       ['GET|HEAD /package-axum/{id}', 'axum-server/src/handlers.rs', 3],
       ['GET /package-actix/{id:[0-9]+}', 'actix-server/src/handlers.rs', 3],
       ['GET|HEAD /package-rocket/<id>', 'rocket-server/src/handlers.rs', 3],
+      ['GET|HEAD /package-rocket-form/<id>', 'rocket-form-server/src/main.rs', 8],
       ['GET /package-warp/<p0>', 'warp-server/src/handlers.rs', 3],
       ['GET /package-warp/returned', 'warp-server/src/main.rs', 1],
       ['GET /package-warp3/<p0>', 'warp3-server/src/handlers.rs', 3],
@@ -151,6 +152,14 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
       const originalSource = await (await fetch(`${url}api/source?entity=${handler.node.id}`)).json(); assert.equal(originalSource.file.path,handlerPath);assert.equal(originalSource.focus.startLine,line);
       assert.ok(flow.edges.some(edge => edge.kind === 'handles' && edge.hops.some(hop => hop.type === 'handles' && hop.to === handler.node.id)));
     }
+    const formRoutes=await(await fetch(`${url}api/entities?search=${encodeURIComponent('/package-rocket-')}&type=api_endpoint`)).json();
+    const formRoute=formRoutes.items.find(item=>item.name==='GET|HEAD /package-rocket-form/<id>'),queryRoute=formRoutes.items.find(item=>item.name==='GET|HEAD /package-rocket-query?<lang>&<opt..>');assert.ok(formRoute&&queryRoute);
+    const formDetail=await(await fetch(`${url}api/entities/${formRoute.id}`)).json();assert.ok(!formDetail.metadata.constraintsUnresolved);
+    for(const [name,line]of [['FromFormField',3],['FromForm',5]])assert.ok(formDetail.evidence.some(fact=>fact.file==='rocket-form-server/src/main.rs'&&fact.line===line&&fact.explanation?.includes(' '+name+' derive')));
+    const queryDetail=await(await fetch(`${url}api/entities/${queryRoute.id}`)).json();assert.ok(queryDetail.metadata.constraintsUnresolved);assert.ok(queryDetail.metadata.routing.conditions.some(gap=>gap.includes('Rocket query/body conversion')));
+    const queryFlow=await(await fetch(`${url}api/projection/request-flows/${queryRoute.id}`)).json();assert.equal(queryFlow.stages.client,false,'installed API retains opaque query conversion');assert.equal(queryFlow.callers,0);
+    const queryHandler=queryFlow.nodes.find(item=>item.kind==='handler');assert.ok(queryHandler);assert.equal(queryHandler.node.path,'rocket-form-server/src/main.rs');assert.equal(queryHandler.node.sourceRange.startLine,9);
+    const querySource=await(await fetch(`${url}api/source?entity=${queryHandler.node.id}`)).json();assert.equal(querySource.file.path,'rocket-form-server/src/main.rs');assert.equal(querySource.focus.startLine,9);
     assert.equal((await fetch(`${url}licenses/fontsource-variable-nunito.txt`)).status, 200);
     child.kill(signal);
     assert.deepEqual(await exited, [0, null], output);
@@ -169,7 +178,7 @@ try {
   const tarball = path.join(temporary, tarballs[0]);
   const report = JSON.parse((await npm(['pack', '--dry-run', '--ignore-scripts', '--json'])).stdout)[0];
   const files = report.files.map(file => file.path);
-  for (const required of ['bin/codiluce.js', 'dist/src/cli.js', 'dist/src/history/worker.js', 'web/out/index.html', 'LICENSE', 'web/out/licenses/react.txt','dist/src/analysis/languages/rust-symbols.js','dist/src/analysis/tree-sitter/rust-semantic.js']) {
+  for (const required of ['bin/codiluce.js', 'dist/src/cli.js', 'dist/src/history/worker.js', 'web/out/index.html', 'LICENSE', 'web/out/licenses/react.txt','dist/src/analysis/languages/rust-symbols.js','dist/src/analysis/tree-sitter/rust-semantic.js','dist/src/analysis/frameworks/rust-derive-namespace.js']) {
     assert.ok(files.includes(required), `tarball is missing ${required}`);
   }
   const grammarManifest = JSON.parse(await readFile(path.join(root, 'grammars/manifest.json'), 'utf8'));
@@ -243,6 +252,10 @@ try {
   }
   await writeFile(path.join(repo,'frontend/rust-router-api.ts'),'export async function PackagedAxumRequest(){await fetch("https://packaged-axum.test/package-axum/42");}export async function PackagedActixRequest(){await fetch("https://packaged-actix.test/package-actix/42");}export async function PackagedRocketRequest(){await fetch("https://packaged-rocket.test/package-rocket/42");}export async function PackagedWarpRequest(){await fetch("https://packaged-warp.test/package-warp/42");}export async function PackagedWarp3Request(){await fetch("https://packaged-warp3.test/package-warp3/42");}export async function PackagedWarpAsyncRequest(){await fetch("https://packaged-warp.test/package-warp/returned");}');
   await writeFile(path.join(repo,'frontend/rust-uncertain-api.ts'),'export async function UncertainAxumRequest(){await fetch("https://packaged-axum-uncertain.test/package-axum-uncertain/42")}');
+  const rocketForm=path.join(repo,'rocket-form-server');await mkdir(path.join(rocketForm,'src'),{recursive:true});
+  await writeFile(path.join(rocketForm,'Cargo.toml'),'[package]\nname="rocket-form-server"\nversion="1.0.0"\nedition="2021"\n[dependencies]\nrocket="0.5.1"\n');
+  await writeFile(path.join(rocketForm,'src/main.rs'),'// 😀 original form source\r\n#[macro_use]extern crate rocket;\r\n#[derive(FromFormField)]\r\nenum Lang{#[field(value="en")]English}\r\n#[derive(FromForm)]\r\nstruct Options{emoji:bool}\r\nfn packaged_form_leaf(){}\r\n#[get("/package-rocket-form/<id>")]fn PackagedRocketFormHandler(id:u8)->&\'static str{packaged_form_leaf();"ok"}\r\n#[get("/package-rocket-query/?<lang>&<opt..>")]fn PackagedRocketFormQuery(lang:Option<Lang>,opt:Options)->&\'static str{"ok"}\r\n#[launch]fn rocket()->_ {rocket::build().mount("/",routes![PackagedRocketFormHandler,PackagedRocketFormQuery])}\r\n');
+  await writeFile(path.join(repo,'frontend/rust-form-api.ts'),'export async function PackagedRocketFormRequest(){await fetch("https://packaged-rocket-form.test/package-rocket-form/42")}export async function PackagedRocketFormOverflow(){await fetch("https://packaged-rocket-form.test/package-rocket-form/256")}export async function PackagedRocketFormQueryRequest(){await fetch("https://packaged-rocket-form.test/package-rocket-query/?lang=en")}');
   const dotnetSource = path.join(repo, 'dotnet-source');
   for (const module of ['app', 'lib']) await mkdir(path.join(dotnetSource, module), {recursive: true});
   await writeFile(path.join(dotnetSource, 'lib/Library.csproj'), '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup></Project>');
@@ -400,7 +413,7 @@ class PackagedWebFluxKotlin {
   const webFluxApplication = applications.find(app => app.path === 'jvm-source/flux'); assert.ok(webFluxApplication); webFluxApplication.apiOrigins = ['https://packaged-webflux.test']; webFluxApplication.jvm = {spring:{stack:'webflux',componentScan:['packaged']}};
   const aspnetApplication=applications.find(app=>app.path==='aspnet-server');assert.ok(aspnetApplication);aspnetApplication.apiOrigins=['https://packaged-aspnet.test'];
   for(const app of applications.filter(app=>app.path.startsWith('rust-source')))app.rust={features:[],defaultFeatures:false};
-  for(const [directory,origin]of [['axum-server','https://packaged-axum.test'],['axum-uncertain-server','https://packaged-axum-uncertain.test'],['actix-server','https://packaged-actix.test'],['rocket-server','https://packaged-rocket.test'],['warp-server','https://packaged-warp.test'],['warp3-server','https://packaged-warp3.test']]){const app=applications.find(app=>app.path===directory);assert.ok(app);app.rust={features:[],defaultFeatures:false};app.apiOrigins=[origin];}
+  for(const [directory,origin]of [['axum-server','https://packaged-axum.test'],['axum-uncertain-server','https://packaged-axum-uncertain.test'],['actix-server','https://packaged-actix.test'],['rocket-server','https://packaged-rocket.test'],['rocket-form-server','https://packaged-rocket-form.test'],['warp-server','https://packaged-warp.test'],['warp3-server','https://packaged-warp3.test']]){const app=applications.find(app=>app.path===directory);assert.ok(app);app.rust={features:[],defaultFeatures:false};app.apiOrigins=[origin];}
   await mkdir(path.join(repo, '.codiluce'), { recursive: true });
   await writeFile(path.join(repo, '.codiluce/config.yml'), JSON.stringify({ applications }));
   console.log('Starting the installed executable from a repository with spaces…');
@@ -484,6 +497,21 @@ class PackagedWebFluxKotlin {
     const calls=JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',callback.id,'--type','calls'],repo)).stdout).items.filter(edge=>edge.from===callback.id&&edge.metadata.adapter==='rust-routers');assert.equal(calls.length,1);const leaf=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',calls[0].to],repo)).stdout);assert.equal(leaf.path,callback.path);assert.equal(leaf.sourceRange.startLine,2);
     const requests=JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',endpoint.id,'--type','requests'],repo)).stdout).items;assert.equal(requests.length,1);const proof=JSON.parse((await run(process.execPath,[bin,'inspect','relation','--id',handles[0].id],repo)).stdout);assert.ok(proof.evidence.some(fact=>fact.file===callback.path&&fact.line===3));
   }
+  const formEndpoint=JSON.parse((await run(process.execPath,[bin,'inspect','entities','--search','GET|HEAD /package-rocket-form/<id>'],repo)).stdout).items.find(item=>item.name==='GET|HEAD /package-rocket-form/<id>');assert.ok(formEndpoint);
+  const formDetail=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',formEndpoint.id],repo)).stdout);assert.ok(!formDetail.metadata.constraintsUnresolved);
+  for(const [name,line]of [['FromFormField',3],['FromForm',5]])assert.ok(formDetail.evidence.some(fact=>fact.file==='rocket-form-server/src/main.rs'&&fact.line===line&&fact.explanation?.includes(' '+name+' derive')));
+  const formHandles=JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',formEndpoint.id,'--type','handles'],repo)).stdout).items;assert.equal(formHandles.length,1);
+  const formHandler=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',formHandles[0].to],repo)).stdout);assert.equal(formHandler.path,'rocket-form-server/src/main.rs');assert.equal(formHandler.sourceRange.startLine,8);
+  const formCalls=JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',formHandler.id,'--type','calls'],repo)).stdout).items.filter(edge=>edge.from===formHandler.id&&edge.metadata.adapter==='rust-routers');assert.equal(formCalls.length,1);
+  const formLeaf=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',formCalls[0].to],repo)).stdout);assert.equal(formLeaf.name,'packaged_form_leaf');assert.equal(formLeaf.sourceRange.startLine,7);
+  assert.equal(JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',formEndpoint.id,'--type','requests'],repo)).stdout).items.length,1,'overflowing u8 cannot add a request winner');
+  const queryEndpoint=JSON.parse((await run(process.execPath,[bin,'inspect','entities','--search','GET|HEAD /package-rocket-query?<lang>&<opt..>'],repo)).stdout).items.find(item=>item.name==='GET|HEAD /package-rocket-query?<lang>&<opt..>');assert.ok(queryEndpoint);
+  const queryDetail=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',queryEndpoint.id],repo)).stdout);assert.ok(queryDetail.metadata.constraintsUnresolved);
+  const queryHandles=JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',queryEndpoint.id,'--type','handles'],repo)).stdout).items;assert.equal(queryHandles.length,1,'conditional query retains original source handler');
+  const queryHandler=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',queryHandles[0].to],repo)).stdout);assert.equal(queryHandler.name,'PackagedRocketFormQuery');assert.equal(queryHandler.path,'rocket-form-server/src/main.rs');assert.equal(queryHandler.sourceRange.startLine,9);
+  assert.equal(JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',queryEndpoint.id,'--type','requests'],repo)).stdout).items.length,0);
+  const formUnits=JSON.parse((await run(process.execPath,[bin,'inspect','entities','--search','rocket-form-server/src/main.rs'],repo)).stdout).items,formUnit=formUnits.find(item=>item.type==='file');assert.ok(formUnit);
+  const formUnitDetail=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',formUnit.id],repo)).stdout);assert.ok(formUnitDetail.metadata.rustCallOutcomes.length&&formUnitDetail.metadata.rustCallOutcomes.every(item=>item.status==='unsupported'),'framework derivation never certifies generated general-body calls');
   const uncertainAxum=JSON.parse((await run(process.execPath,[bin,'inspect','entities','--search','GET|HEAD /package-axum-uncertain/{id}'],repo)).stdout).items.find(item=>item.name==='GET|HEAD /package-axum-uncertain/{id}');assert.ok(uncertainAxum);
   const uncertainAxumDetail=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',uncertainAxum.id],repo)).stdout);assert.ok(uncertainAxumDetail.metadata.constraintsUnresolved);assert.ok(uncertainAxumDetail.metadata.constraints.some(condition=>condition.includes('unreviewed registration effects')));
   assert.equal(JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',uncertainAxum.id,'--type','requests'],repo)).stdout).items.length,0,'installed lexical macro shadow cannot certify frontend entry');

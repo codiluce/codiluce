@@ -204,7 +204,7 @@ export class RustSymbols {
             return unknown('Unselected original Rust type parameter');
         if (type.segments.length === 1 && ['bool', 'char', 'str', 'i8', 'i16', 'i32', 'i64', 'i128', 'isize', 'u8', 'u16', 'u32', 'u64', 'u128', 'usize', 'f32', 'f64'].includes(type.segments[0]!))
             return { kind: 'external', name: 'rust-primitive::' + type.segments[0], dependency: 'rust-language', proof: this.proof(scope.file.path, type, 'Native Rust primitive type'), conditions: [] };
-        return this.fromResolution(this.resolver.path(scope, type.segments, type.absolute ?? false, new Set(), 'expression'), scope, true, trail);
+        return this.fromResolution(this.resolver.path(scope, type.segments, type.absolute ?? false, new Set(), 'type'), scope, true, trail);
     }
     private enclosingDefinition(scope: RustScope): RustDefinition | undefined {
         for (const s of this.chain(scope)) {
@@ -368,7 +368,7 @@ export class RustSymbols {
                 }
                 if (!expression.absolute && parts.length > 1 && this.binding(scope, head, expression.start))
                     return unknown('Rust local operands cannot supply associated path namespaces');
-                const direct = this.fromResolution(this.resolver.path(scope, parts, expression.absolute, new Set(), 'expression'), scope, false, trail);
+                const direct = this.fromResolution(this.resolver.path(scope, parts, expression.absolute, new Set(), 'value'), scope, false, trail);
                 if (direct.kind !== 'unknown')
                     return direct;
                 for (let count = parts.length - 1; count > 0; count--) {

@@ -711,3 +711,53 @@ builds, and installed CLI/API/history/npm-exec checks (3.20 MB / 286 files). Des
 Earlier exact-graph proof comparisons
 remain evidence for their preceding releases; this slice intentionally adds general source import/binding facts while
 checking unchanged native routes and original handlers independently.
+
+## 32. Rust consumer source namespaces and form-derive qualification (P9e2b2a)
+
+Qualified Rust path prefixes now look up the type namespace; direct source values and reviewed framework macros
+select the value and macro namespaces. Cargo/extern crate names are type bindings, so the documented Rocket
+`#[launch] fn rocket()` no longer masks `rocket::build()`. Explicit macro imports can coexist with same-named
+source functions. Unavailable imported namespaces retain gaps rather than borrowing registry identities.
+Resolver/import versions are 4 and the Rust router version is 7; existing cache keys include these contracts.
+
+`frameworks/rust-derive-namespace.ts` reviews only canonical Rocket 0.5 `FromForm` structs and `FromFormField`
+enums with complete original syntax, bounded macro-free input and a matching canonical delegation identity.
+`FromForm` additionally requires its relative `rocket::async_trait` delegate to resolve to the same canonical crate;
+a local module cannot borrow the separate absolute Cargo identity. `FromFormField` uses absolute generated paths.
+Native Rocket/Devise codegen wraps its context and implementation in an anonymous const, so it can preserve only
+the containing-module namespace. Original derived items retain their generation gap. General Rust binding,
+generated traits and query/body conversion do not borrow this framework-only proof. Explicit macro aliases,
+known-true `cfg_attr` and selective `macro_use` keep original attribute coordinates. Unknown/composed generation,
+opaque input token trees, source/fork identities, unsupported versions/features and renamed-only delegation remain
+gaps. No macros or target code execute.
+The original Rocket 0.5.0 and 0.5.1 generators and Devise 0.4.0–0.4.2 wrappers were read without execution.
+The delegated async-trait 0.1.43/0.1.83/0.1.89 entry and trait/impl transforms preserve the containing item; the
+consumer's unchanged lock records 0.1.83. This supports namespace review, independently of generated async/trait
+semantics; see the original [0.1.83 delegate source](https://docs.rs/async-trait/0.1.83/src/async_trait/lib.rs.html).
+
+`scripts/qualify-rust-consumers.mjs` and its independent manual fixture compare archived `771d9d0` against the
+current implementation using the same audit adapter. The unchanged pinned Render Rocket 0.5 consumer improves
+from zero to three qualified routes and all four original handler bindings; custom `Option<Lang>`/`Options` query
+conversion remains conditional. An unchanged Warp 0.3 benchmark retains its original String-capture closure and
+all-method route: its informal GET comment supplies no method filter. The benchmark's Rocket 0.4.7/nightly source
+retains its unsupported boundary rather than borrowing the 0.5 profile.
+
+The [consumer accuracy report](rust-consumer-source-accuracy.html) accounts for all six source routes: four supported
+pairs match, one query is conditional and one legacy route is outside the profile. All 16 selected declarations
+(eight functions and one closure included) retain baseline IDs/ranges; no generated main/context/trait declarations
+are fabricated. All 18 general source-call outcomes remain unsupported. Each profile has exact cold/warm/revision
+graphs and actual import/symbol/router cache hits. These bins have no active local module import edges, so this
+audit makes no import-recall claim. Four-route precision/recall is a small reviewed sample, not production accuracy.
+
+Five additional conformance cases cover separate namespaces, canonical form-derive identities, CRLF/emoji proof,
+query/u8 boundaries, cfg and source/dependency/cache invalidation. The production-only installed CLI/API checks
+cover the canonical launch function name, native form namespace proof, an original handler and leaf, retained query
+binding and rejection of overflowing u8 requests, alongside the existing renamed Rocket profile. Broader Axum 0.7,
+Warp 0.4 and real-consumer import/version qualification remain P9e2b2b; full P9 and P10 remain open.
+
+Release validation passes all 1,063 tests with four workers, CLI/web typechecks, production builds and the
+production-only installed CLI/API/history/npm-exec checks (3.20 MB / 287 files). The corrected package expectation
+uses Rocket's native mounted query name without an empty trailing segment. The twelve preceding Axum source
+profiles retain 55 functions, 31 supported original route/handler pairs and three general module edges, with exact
+within-implementation replay and opaque generated-main bodies. Desktop/mobile report layout and roadmap filtering
+are checked before the phase commit.

@@ -6,7 +6,7 @@ import { sourceRustResolver } from '../resolution/rust-runtime-namespace.js';
 import { RUST_PROJECT_VERSION } from '../resolution/rust-projects.js';
 import { STRUCTURE_VERSION } from '../tree-sitter/analyzer.js';
 import { fileKey } from '../../pipeline/cache.js';
-export const RUST_IMPORT_VERSION = '3';
+export const RUST_IMPORT_VERSION = '4';
 export const rustAnalyzer: Analyzer = { name: 'rust-imports', version: RUST_IMPORT_VERSION, async analyze(context: AnalysisContext) {
         const files = [...context.files.values()].filter(file => file.language === 'rust' && file.analyzable).sort((a, b) => a.path.localeCompare(b.path, 'en'));
         if (!files.length)

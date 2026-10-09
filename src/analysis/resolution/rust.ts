@@ -4,7 +4,7 @@ import { evidence, type Evidence } from '../../core/graph.js';
 import type { RustImportFact, RustItemFact, RustScopeFact, RustSyntaxFacts } from '../facts.js';
 import { rustAnd, rustAttributes, rustName, type RustAttributes, type RustTruth } from '../languages/rust-cfg.js';
 import { RustProjects, rustPath, type RustCompilation } from './rust-projects.js';
-export const RUST_RESOLVER_VERSION = '3';
+export const RUST_RESOLVER_VERSION = '4';
 export interface RustScope {
     id: string;
     fact: RustScopeFact;
@@ -323,7 +323,7 @@ export class RustResolver {
         if (fact.alias === '_')
             return [];
         if (result.status === 'external')
-            return [{ id: this.context.graph.id('rust-external-binding', this.importKey(site)), name: fact.alias ?? fact.segments.at(-1)!, namespaces: ['type', 'value', 'macro'], scope: site.scope, visibility: fact.visibility, active: site.active, gaps: result.conditions, proof: result.proof, external: { dependency: result.dependency, name: result.crate, path: result.path } }];
+            return [{ id: this.context.graph.id('rust-external-binding', this.importKey(site)), name: fact.alias ?? fact.segments.at(-1)!, namespaces: fact.kind === 'extern' || !result.path.length ? ['type'] : ['type', 'value', 'macro'], scope: site.scope, visibility: fact.visibility, active: site.active, gaps: result.conditions, proof: result.proof, external: { dependency: result.dependency, name: result.crate, path: result.path } }];
         if (result.status !== 'resolved')
             return [];
         return result.symbols.map(symbol => {
@@ -331,16 +331,20 @@ export class RustResolver {
             return { ...symbol, name: fact.glob ? symbol.name : fact.alias ?? fact.segments.at(-1)!, originalScope: symbol.originalScope ?? symbol.scope, originalVisibility: symbol.originalVisibility ?? symbol.visibility, scope: site.scope, visibility: fact.visibility, active: rustAnd([symbol.active, site.active]), gaps, proof: result.proof };
         });
     }
-    private lookup(scope: RustScope, name: string, from: RustScope, trail: Set<string>): RustResolution {
-        const own = scope.items.filter(s => s.name === name && s.active !== false && this.visible(s, from));
+    private lookup(scope: RustScope, name: string, from: RustScope, trail: Set<string>, namespace?: 'type' | 'value' | 'macro'): RustResolution {
+        const available = (symbol: RustSymbol) => (!namespace || symbol.namespaces.includes(namespace)) && this.visible(symbol, from);
+        const own = scope.items.filter(s => s.name === name && s.active !== false && available(s));
         const explicit = scope.imports.filter(site => !site.fact.glob && site.fact.alias !== '_' && (site.fact.alias ?? site.fact.segments.at(-1)) === name && site.active !== false && !trail.has(this.importKey(site)));
-        const groups = explicit.map(site => this.binding(site, this.resolve(site, trail)).filter(s => this.visible(s, from))), bindings = groups.flat();
-        if (own.length || explicit.length) {
+        const results = explicit.map(site => this.resolve(site, trail));
+        const groups = explicit.map((site, index) => this.binding(site, results[index]!).filter(available)), bindings = groups.flat();
+        const opaque = results.find(result => result.status !== 'resolved' && result.status !== 'external' || namespace && result.status === 'resolved' && result.conditions.length && !result.symbols.some(symbol => symbol.namespaces.includes(namespace)));
+        if (own.length || bindings.length || opaque || !namespace && explicit.length) {
             if (groups.some((group, index) => groups.slice(index + 1).some(other => group.some(a => other.some(b => a.namespaces.some(ns => b.namespaces.includes(ns)))))))
                 return { status: 'ambiguous', candidates: bindings.map(s => s.id), reason: 'Competing explicit Rust import bindings in the same namespace' };
             if (bindings.length || own.length)
                 return this.combine([...own, ...bindings].map(s => this.value(s)));
-            const result = explicit.length ? this.resolve(explicit[0]!, trail) : undefined;
+            if (opaque?.status === 'resolved') return failure('unsupported', 'Original Rust import namespace is constrained: ' + opaque.conditions.join('; '));
+            const result = opaque ?? results[0];
             return result && result.status !== 'resolved' && result.status !== 'external' ? result : failure('unresolved', 'Rust name is inaccessible');
         }
         const values: RustResolution[] = [];
@@ -349,7 +353,7 @@ export class RustResolver {
             if (result.status === 'external')
                 values.push(failure('unsupported', 'External Rust glob may supply this name; original exports are unavailable'));
             else if (result.status === 'resolved')
-                for (const symbol of this.binding(site, result).filter(s => s.name === name && this.visible(s, from)))
+                for (const symbol of this.binding(site, result).filter(s => s.name === name && available(s)))
                     values.push(this.value(symbol));
             else if (result.status === 'unsupported')
                 values.push(result);
@@ -395,7 +399,7 @@ export class RustResolver {
     private noPrelude(scope: RustScope): boolean { for (let s: RustScope | undefined = scope; s; s = s.parent)
         if (s.attributes.noPrelude)
             return true; return false; }
-    path(scope: RustScope, segments: string[], absolute = false, trail = new Set<string>(),mode:'import'|'expression'='import'): RustResolution {
+    path(scope: RustScope, segments: string[], absolute = false, trail = new Set<string>(),mode:'import'|'expression'|'type'|'value'|'macro'='import'): RustResolution {
         if (!segments.length)
             return failure('unresolved', 'Empty Rust path');
         if (segments.includes('Self') || segments.includes('$crate'))
@@ -428,14 +432,14 @@ export class RustResolver {
             let current: RustScope | undefined = absolute || mode==='import'&&scope.compilation.target.package.edition === '2015' ? root : scope;
             result = failure('unresolved', `Rust path head ${first} is unavailable`);
             while (current) {
-                result = this.lookup(current, first, scope, trail);
+                result = this.lookup(current, first, scope, trail, segments.length > 1 ? 'type' : ['type','value','macro'].includes(mode) ? mode as 'type'|'value'|'macro' : undefined);
                 if (result.status !== 'unresolved')
                     break;
                 if (['file', 'module'].includes(current.fact.kind))
                     break;
                 current = current.parent;
             }
-            if (result.status === 'unresolved' && !this.noPrelude(scope) && (scope.compilation.target.package.edition !== '2015' || first === 'std' || first === 'core'))
+            if (result.status === 'unresolved' && (segments.length > 1 || !['value','macro'].includes(mode)) && !this.noPrelude(scope) && (scope.compilation.target.package.edition !== '2015' || first === 'std' || first === 'core'))
                 result = this.external(scope, first, false, trail);
             index++;
         }
@@ -450,7 +454,7 @@ export class RustResolver {
             const owners = result.symbols.filter(symbol => symbol.module);
             if (!owners.length)
                 return failure('unsupported', 'Rust associated items cannot be imported; only modules/enum variants are qualified');
-            const values = owners.map(owner => this.lookup(owner.module!, name, scope, trail)), next = this.combine(values);
+            const values = owners.map(owner => this.lookup(owner.module!, name, scope, trail, index < segments.length - 1 ? 'type' : ['type','value','macro'].includes(mode) ? mode as 'type'|'value'|'macro' : undefined)), next = this.combine(values);
             result = next.status === 'resolved' || next.status === 'external' ? { ...next, proof: [...result.proof, ...next.proof], conditions: unique([...result.conditions, ...next.conditions]) } : next;
         }
         return result;

@@ -311,6 +311,16 @@ test('Native runtime main attributes preserve sibling source imports while their
         assert.equal(g.relations.filter(edge => edge.type === 'calls' && edge.from === boot.id && edge.metadata?.adapter === 'rust').length, 0);
     }
 });
+test('Qualified Rust prefixes use type namespaces without borrowing same-named source values', async () => {
+    const g = await index(await repo({ 'Cargo.toml': manifest('app','[dependencies]\nexternal="1"'), 'src/lib.rs':'extern crate external;fn external(){}fn namespace(){}mod namespace{pub fn layer(){}pub mod layer{pub struct Original;pub fn leaf(){}}}use namespace::layer::Original;use external::Binary;pub fn run(){external();namespace::layer::leaf();}' }));
+    assert.equal(use(g).find(item=>item.specifier==='namespace::layer::Original')!.outcome.status,'resolved');
+    assert.equal(use(g).find(item=>item.specifier==='external::Binary')!.outcome.status,'external');
+    const run = g.entities.find(item=>item.name==='run'&&item.language==='rust')!;
+    const calls = g.relations.filter(edge=>edge.type==='calls'&&edge.from===run.id&&edge.metadata?.adapter==='rust');
+    assert.deepEqual(calls.map(edge=>g.entities.find(item=>item.id===edge.to)!.name).sort(),['external','leaf']);
+    const opaque = await index(await repo({ 'Cargo.toml':manifest('app','[dependencies]\nexternal="1"'), 'src/lib.rs':'mod provider{#[custom::change]pub fn external(){}}use provider::external;use external::Binary;' }));
+    assert.equal(use(opaque).find(item=>item.specifier==='external::Binary')!.outcome.status,'unsupported','an unavailable imported namespace cannot lend its name to a registry crate');
+});
 test('Runtime namespace proof follows canonical renamed, imported and absolute macro identities at original sites', async () => {
     for (const [prefix, attribute] of [['', '#[runtime::main]'], ['use runtime as rt;', '#[rt::main]'], ['use runtime::main as enter;', '#[enter]'], ['mod runtime{pub fn main(){}}', '#[::runtime::main]']] as const) {
         const source = `${prefix}\nmod model;use crate::model::Original;\n${attribute}\nasync fn boot(){}`;

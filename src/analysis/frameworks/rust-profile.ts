@@ -7,7 +7,7 @@ import { rustAttributes, rustCfg, rustSplit, rustString } from '../languages/rus
 import type { RustRouteDialect } from '../routes/rust-patterns.js';
 import type { RustScopeFact } from '../facts.js';
 import { warpPathSyntax } from './warp-syntax.js';
-export const RUST_ROUTER_VERSION = '6';
+export const RUST_ROUTER_VERSION = '7';
 export interface RustWebProfile {
     framework: 'axum' | 'actix-web' | 'tokio' | 'rocket' | 'warp';
     dialect?: RustRouteDialect;
@@ -53,7 +53,7 @@ export interface RustWebAttribute {
     proof: Evidence[];
 }
 const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'CONNECT', 'TRACE'];
-const rocketMacroNames = new Set(['get', 'put', 'post', 'delete', 'head', 'patch', 'options', 'route', 'routes', 'launch', 'main']);
+const rocketMacroNames = new Set(['get', 'put', 'post', 'delete', 'head', 'patch', 'options', 'route', 'routes', 'launch', 'main', 'FromForm', 'FromFormField']);
 const warpMacroNames = new Set(['path']);
 function macroUseNames(text: string, exported = rocketMacroNames): string[] | undefined {
     if (text === 'macro_use')
@@ -64,7 +64,7 @@ function macroUseNames(text: string, exported = rocketMacroNames): string[] | un
 /** Exact original macro_use extern sites provide reviewed Rocket/Warp macros.
  * Local/source bindings and competing imports are never replaced. */
 export function rustWebMacroResolution(base: RustResolver, scope: RustScope, path: string[], at = Infinity, absolute = false): RustResolution {
-    const original = base.path(scope, path, absolute, new Set(), 'expression');
+    const original = base.path(scope, path, absolute, new Set(), 'macro');
     if (original.status !== 'unresolved' || path.length !== 1 || absolute)
         return original;
     const candidates: RustResolution[] = [];
@@ -73,7 +73,7 @@ export function rustWebMacroResolution(base: RustResolver, scope: RustScope, pat
             if (site.fact.kind !== 'extern' || site.active !== true || site.scope.file.path === scope.file.path && site.fact.end > at)
                 continue;
             const attrs = site.fact.attributes.map(attr => attr.replace(/^#!?\[/, '').replace(/\]$/, '').trim());
-            const result = base.path(site.scope, [site.fact.alias ?? site.fact.segments[0]!], false, new Set(), 'expression'), profile = rustWebProfile(scope, result);
+            const result = base.resolve(site), profile = rustWebProfile(scope, result);
             const names = profile?.framework === 'rocket' && profile.dialect === 'rocket-0.5' ? rocketMacroNames : profile?.framework === 'warp' && profile.dialect?.startsWith('warp-') ? warpMacroNames : undefined;
             if (result.status === 'external' && names && attrs.some(attr => macroUseNames(attr,names)?.includes(path[0]!)) && profile!.conditions.every(gap => gap.startsWith('Unreviewed Rust attribute')))
                 candidates.push({ ...result, path, proof: [...result.proof, { ...evidence('framework', 'rust-routers', site.scope.file.path, site.fact.range.startLine, `Original ${profile!.framework} macro_use extern declaration supplies this known macro name`), analyzerVersion: RUST_ROUTER_VERSION }] });
@@ -170,7 +170,7 @@ export function rustWebAttributeReader(base: RustResolver) {
             if (/^macro_use(?:\s*\([\s\S]*\))?$/.test(text)) {
                 const site = scope.imports.find(site => site.fact.kind === 'extern' && site.fact.attributes.includes(attribute));
                 if (site) {
-                    const result = base.path(scope, [site.fact.alias ?? site.fact.segments[0]!], false, new Set(), 'expression'), profile = rustWebProfile(scope, result);
+                    const result = base.resolve(site), profile = rustWebProfile(scope, result);
                     const names = profile?.framework === 'rocket' && profile.dialect === 'rocket-0.5' ? rocketMacroNames : profile?.framework === 'warp' && profile.dialect?.startsWith('warp-') ? warpMacroNames : undefined;
                     if (names && macroUseNames(text,names) && profile!.conditions.every(gap => gap.startsWith('Unreviewed Rust attribute')))
                         return [];

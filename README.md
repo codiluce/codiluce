@@ -189,7 +189,12 @@ Rust module imports now resolve, while the same declarations, routes and origina
 Canonical Tokio 1, Actix Web 4 and Rocket 0.5 main attributes preserve sibling source namespaces under bounded
 version/feature/syntax contracts; annotated signatures and generated bodies remain opaque to general binding.
 Unknown generation, source/fork identities, composed wrappers and unavailable macro imports retain gaps.
-Broader unchanged Rust consumer/import/version accuracy remains P9e2b2 and native OS release checks remain P10.
+P9e2b2a adds [unchanged Rust consumer accuracy](docs/rust-consumer-source-accuracy.html): the Rocket 0.5 sample now
+retains all four original handlers, with three qualified routes and a conditional custom form query. A Warp 0.3
+all-method control and a legacy Rocket boundary retain their original contracts. Qualified Rust prefixes, direct
+values and framework macros use separate namespaces. Bounded canonical Rocket form derives preserve sibling source
+namespaces; original generated traits and query conversion remain opaque. Broader Axum 0.7/Warp 0.4 and consumer
+import/version accuracy remain P9e2b2b, and native OS release checks remain P10.
 No Cargo/rustc or target code runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original

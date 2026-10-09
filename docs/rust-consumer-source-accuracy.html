@@ -1,0 +1,3401 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rust consumer source accuracy · P9e2b2a</title><style>body{font:16px/1.6 system-ui,sans-serif;background:#101822;color:#e5ecf4;margin:0;padding:32px}main{max-width:1200px;margin:auto}h1{line-height:1.2}p{max-width:1050px;color:#bdcbdc}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;border-bottom:1px solid #344353;padding:12px;vertical-align:top}small{display:block;color:#9dafc4;font-weight:400}a,code{color:#79ced3}code{overflow-wrap:anywhere}.status{border:1px solid #5a7882;padding:16px;border-radius:8px}pre{white-space:pre-wrap;overflow-wrap:anywhere}@media(max-width:600px){body{padding:18px}}</style><main><h1>Rust consumer source accuracy</h1><p>2026-10-09T23:14:52.680Z · v22.12.0 · linux/x64 · P9e2b2a.</p><p class="status"><strong>Bounded consumer source PASS.</strong> The original Rocket 0.5 consumer improves from zero to three qualified routes and four original handler bindings. Warp 0.3 retains its all-method control. 4/4 supported route/handler pairs match; the complete source inventory contains 6 routes, including one conditional form query and one legacy Rocket route outside the reviewed profile. P9e2b2/P9/P10 remain open.</p><p>Both repositories retain every original tracked Rust, Cargo, lock and relevant ignore/configuration input: 5 inputs / 2 Rust files for Rocket, 19 inputs / 5 Rust files for the benchmark. No source or manifest is changed. Each profile selects its original package/bin, empty application features and disabled application defaults; dependency declarations/features remain original. The same audit adapter runs against archived 771d9d0f and the current implementation.</p><div class="scroll"><table><thead><tr><th>Unchanged original profile</th><th>Reviewed declarations</th><th>All source routes</th><th>Qualified before → current/supported</th><th>Retained boundary</th><th>Actual import/symbol/router cache hits</th></tr></thead><tbody><tr><th><a href="https://github.com/render-examples/rocket-rust-hello-world/blob/e230b997c771c64480afe3067cc7bb111d5616f3/src/main.rs">Rocket 0.5 original consumer</a><small>Cargo.toml · original bin hello</small></th><td>12</td><td>4</td><td>0 → 3/3</td><td>1 conditional, 0 legacy</td><td>1/1/1</td></tr><tr><th><a href="https://github.com/rousan/rust-web-frameworks-benchmark/blob/7aaad31609f18ab73668e33378dc1d07e1d7368d/warp/src/main.rs">Warp 0.3 original control</a><small>warp/Cargo.toml · original bin warp</small></th><td>2</td><td>1</td><td>1 → 1/1</td><td>0 conditional, 0 legacy</td><td>1/1/1</td></tr><tr><th><a href="https://github.com/rousan/rust-web-frameworks-benchmark/blob/7aaad31609f18ab73668e33378dc1d07e1d7368d/rocket/src/main.rs">Legacy Rocket 0.4 boundary</a><small>rocket/Cargo.toml · original bin rocket</small></th><td>2</td><td>1</td><td>0 → 0/0</td><td>0 conditional, 1 legacy</td><td>1/1/1</td></tr></tbody></table></div><h2>Independent inventory and source proof</h2><p>Manual source review accounts for all 16 selected declarations, 8 original functions and one original closure; IDs and coordinates remain identical across implementations. No generated main, context or trait implementation is invented. All five supported/conditional handler bindings point to original declarations. Every Rocket endpoint carries FromFormField evidence at original line 5 and FromForm evidence at original line 14. Supported route precision and recall are 100% on this four-route sample, which does not establish production or population accuracy. These bins have zero active local module edges; no import-recall denominator is claimed.</p><p>All three profiles have exact cold/warm/revision graphs within each implementation and actual import, symbol and router cache hits. All 18 general source-call outcomes remain unsupported; generated entry bodies and original derived-type traits do not acquire general winners.</p><h2>Native contracts and boundaries</h2><p>Qualified path prefixes now select Rust's type namespace; direct functions use the value namespace and known framework macros use the macro namespace. An original function named rocket or get no longer masks the crate or attribute macro. Opaque imports still cannot lend an external namespace. The <a href="https://doc.rust-lang.org/reference/names/namespaces.html">Rust namespace reference</a> defines these separate source spaces.</p><p>Canonical Rocket 0.5 FromForm/FromFormField derives use <a href="https://github.com/rwf2/Rocket/blob/f53611f74f2c777b9d7ebb40f8ec3f8dadd0a6f6/core/codegen/src/derive/from_form.rs">native form codegen</a> and <a href="https://github.com/rwf2/Rocket/blob/f53611f74f2c777b9d7ebb40f8ec3f8dadd0a6f6/core/codegen/src/derive/from_form_field.rs">field codegen</a> with <a href="https://docs.rs/devise_core/0.4.2/src/devise_core/generator.rs.html">Devise's anonymous const wrapper</a>. Original <a href="https://github.com/rwf2/Rocket/blob/c20efb9a26968abb8c289f3e4af690c2e282c81e/core/codegen/src/derive/from_form.rs">Rocket 0.5.0 form codegen</a> and its original manifest also use Devise 0.4; the anonymous wrapper is unchanged in reviewed Devise 0.4.0–0.4.2 source. Bounded macro-free original struct/enum input can preserve only the containing-module namespace. Original derived types, generated guards and conversion behavior remain opaque. Unknown/composed derives or attributes, opaque inputs, renamed-only delegation, unavailable/fork identities and unsupported version/feature profiles retain gaps.</p><ul><li><strong>Rocket 0.5 original consumer:</strong> Custom Option&lt;Lang&gt;/Options form-query conversion remains a native guard condition; the original hello binding is retained.</li><li><strong>Warp 0.3 original control:</strong> The GET comment is not a method filter: the original path!/map chain accepts all methods and a String capture.</li><li><strong>Legacy Rocket 0.4 boundary:</strong> One original GET / index route uses Rocket 0.4.7, ignite and nightly compiler features; no Rocket 0.5 contract is borrowed.</li></ul><h2>Reproduction and remaining qualification</h2><p>Run <code>node scripts/qualify-rust-consumers.mjs --rocket-consumer /path/to/rocket-rust-hello-world --web-benchmark /path/to/rust-web-frameworks-benchmark</code> at the pinned commits in the raw evidence. Only Codiluce's own Node/WASM source analysis runs; no Cargo/rustc, macro expansion, build script, target configuration, dependency or source code executes. Broader Axum 0.7, Warp 0.4 and real-consumer import/version accuracy remain P9e2b2b; native-platform and wider release qualification remain open. Implementation digest: <code>ac4bc8c9187099692118a8b24dbf55be58fd2c3dcab1b959c5deca8c8d3ceeb1</code>. <a href="language-framework-compatibility.html#implementation">Roadmap</a>.</p><details><summary>Manual ground truth, immutable pins, source coordinates, baseline summaries and raw current evidence</summary><pre>{
+  &quot;phase&quot;: &quot;P9e2b2a&quot;,
+  &quot;measuredAt&quot;: &quot;2026-10-09T23:14:52.680Z&quot;,
+  &quot;node&quot;: &quot;v22.12.0&quot;,
+  &quot;platform&quot;: &quot;linux/x64&quot;,
+  &quot;pins&quot;: {
+    &quot;rocket&quot;: {
+      &quot;repository&quot;: &quot;render-examples/rocket-rust-hello-world&quot;,
+      &quot;commit&quot;: &quot;e230b997c771c64480afe3067cc7bb111d5616f3&quot;
+    },
+    &quot;benchmark&quot;: {
+      &quot;repository&quot;: &quot;rousan/rust-web-frameworks-benchmark&quot;,
+      &quot;commit&quot;: &quot;7aaad31609f18ab73668e33378dc1d07e1d7368d&quot;
+    }
+  },
+  &quot;baselineCommit&quot;: &quot;771d9d0fe4dd59141789781440ec2d46b5a3337c&quot;,
+  &quot;implementationHead&quot;: &quot;771d9d0fe4dd59141789781440ec2d46b5a3337c&quot;,
+  &quot;implementationDigest&quot;: &quot;ac4bc8c9187099692118a8b24dbf55be58fd2c3dcab1b959c5deca8c8d3ceeb1&quot;,
+  &quot;counts&quot;: {
+    &quot;declarations&quot;: 16,
+    &quot;functions&quot;: 8,
+    &quot;closures&quot;: 1,
+    &quot;sourceRoutes&quot;: 6,
+    &quot;supportedRoutes&quot;: 4,
+    &quot;confirmedRoutes&quot;: 4,
+    &quot;conditionalRoutes&quot;: 1,
+    &quot;outsideProfileRoutes&quot;: 1,
+    &quot;originalHandlerPairs&quot;: 5,
+    &quot;falsePositiveRoutes&quot;: 0,
+    &quot;missedSupportedRoutes&quot;: 0,
+    &quot;generalCalls&quot;: 18,
+    &quot;generalCallWinners&quot;: 0
+  },
+  &quot;results&quot;: [
+    {
+      &quot;sample&quot;: {
+        &quot;name&quot;: &quot;Rocket 0.5 original consumer&quot;,
+        &quot;pin&quot;: &quot;rocket&quot;,
+        &quot;manifest&quot;: &quot;Cargo.toml&quot;,
+        &quot;file&quot;: &quot;src/main.rs&quot;,
+        &quot;target&quot;: &quot;hello&quot;,
+        &quot;edition&quot;: &quot;2021&quot;,
+        &quot;framework&quot;: &quot;rocket&quot;,
+        &quot;requirement&quot;: &quot;0.5&quot;,
+        &quot;dialect&quot;: &quot;rocket-0.5&quot;,
+        &quot;beforeQualified&quot;: 0,
+        &quot;declarations&quot;: [
+          [
+            &quot;tests&quot;,
+            &quot;module&quot;,
+            3
+          ],
+          [
+            &quot;Lang&quot;,
+            &quot;enum&quot;,
+            6
+          ],
+          [
+            &quot;English&quot;,
+            &quot;variant&quot;,
+            8
+          ],
+          [
+            &quot;Russian&quot;,
+            &quot;variant&quot;,
+            11
+          ],
+          [
+            &quot;Options&quot;,
+            &quot;struct&quot;,
+            15
+          ],
+          [
+            &quot;emoji&quot;,
+            &quot;field&quot;,
+            16
+          ],
+          [
+            &quot;name&quot;,
+            &quot;field&quot;,
+            17
+          ],
+          [
+            &quot;world&quot;,
+            &quot;function&quot;,
+            23
+          ],
+          [
+            &quot;mir&quot;,
+            &quot;function&quot;,
+            30
+          ],
+          [
+            &quot;wave&quot;,
+            &quot;function&quot;,
+            37
+          ],
+          [
+            &quot;hello&quot;,
+            &quot;function&quot;,
+            54
+          ],
+          [
+            &quot;rocket&quot;,
+            &quot;function&quot;,
+            76
+          ]
+        ],
+        &quot;derives&quot;: [
+          {
+            &quot;name&quot;: &quot;FromFormField&quot;,
+            &quot;line&quot;: 5
+          },
+          {
+            &quot;name&quot;: &quot;FromForm&quot;,
+            &quot;line&quot;: 14
+          }
+        ],
+        &quot;routes&quot;: [
+          {
+            &quot;path&quot;: &quot;/hello/world&quot;,
+            &quot;methods&quot;: [
+              &quot;GET&quot;,
+              &quot;HEAD&quot;
+            ],
+            &quot;handler&quot;: &quot;world&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;line&quot;: 23
+          },
+          {
+            &quot;path&quot;: &quot;/hello/мир&quot;,
+            &quot;methods&quot;: [
+              &quot;GET&quot;,
+              &quot;HEAD&quot;
+            ],
+            &quot;handler&quot;: &quot;mir&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;line&quot;: 30
+          },
+          {
+            &quot;path&quot;: &quot;/wave/&lt;name&gt;/&lt;age&gt;&quot;,
+            &quot;methods&quot;: [
+              &quot;GET&quot;,
+              &quot;HEAD&quot;
+            ],
+            &quot;handler&quot;: &quot;wave&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;line&quot;: 37
+          },
+          {
+            &quot;path&quot;: &quot;/?&lt;lang&gt;&amp;&lt;opt..&gt;&quot;,
+            &quot;methods&quot;: [
+              &quot;GET&quot;,
+              &quot;HEAD&quot;
+            ],
+            &quot;handler&quot;: &quot;hello&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;line&quot;: 54,
+            &quot;conditional&quot;: true
+          }
+        ],
+        &quot;boundary&quot;: &quot;Custom Option&lt;Lang&gt;/Options form-query conversion remains a native guard condition; the original hello binding is retained.&quot;
+      },
+      &quot;pin&quot;: {
+        &quot;repository&quot;: &quot;render-examples/rocket-rust-hello-world&quot;,
+        &quot;commit&quot;: &quot;e230b997c771c64480afe3067cc7bb111d5616f3&quot;
+      },
+      &quot;url&quot;: &quot;https://github.com/render-examples/rocket-rust-hello-world/blob/e230b997c771c64480afe3067cc7bb111d5616f3/src/main.rs&quot;,
+      &quot;before&quot;: {
+        &quot;qualifiedEndpoints&quot;: 0,
+        &quot;originalHandlers&quot;: 0,
+        &quot;selectedDeclarations&quot;: 12,
+        &quot;graphFingerprint&quot;: &quot;58443d7221d5c7cb59054cd5b3f778707ddbdb0cfd2017bef43d81b4e7d35b53&quot;
+      },
+      &quot;review&quot;: {
+        &quot;declarations&quot;: 12,
+        &quot;functions&quot;: 5,
+        &quot;closures&quot;: 0,
+        &quot;sourceRoutes&quot;: 4,
+        &quot;supportedRoutes&quot;: 3,
+        &quot;confirmedRoutes&quot;: 3,
+        &quot;conditionalRoutes&quot;: 1,
+        &quot;outsideProfileRoutes&quot;: 0,
+        &quot;originalHandlerPairs&quot;: 4,
+        &quot;falsePositiveRoutes&quot;: 0,
+        &quot;missedSupportedRoutes&quot;: 0,
+        &quot;generalCalls&quot;: 12,
+        &quot;generalCallWinners&quot;: 0
+      },
+      &quot;evidence&quot;: {
+        &quot;commit&quot;: &quot;e230b997c771c64480afe3067cc7bb111d5616f3&quot;,
+        &quot;copiedFiles&quot;: 5,
+        &quot;trackedBlobDigest&quot;: &quot;f3d06e85414973c0d1198f826ee6768e1236358d728aaf3073d1b7b09bd8c6a3&quot;,
+        &quot;qualificationInputs&quot;: {
+          &quot;applications&quot;: [
+            {
+              &quot;name&quot;: &quot;sample&quot;,
+              &quot;path&quot;: &quot;.&quot;,
+              &quot;rust&quot;: {
+                &quot;package&quot;: &quot;Cargo.toml&quot;,
+                &quot;target&quot;: {
+                  &quot;kind&quot;: &quot;bin&quot;,
+                  &quot;name&quot;: &quot;hello&quot;
+                },
+                &quot;features&quot;: [],
+                &quot;defaultFeatures&quot;: false
+              }
+            }
+          ]
+        },
+        &quot;files&quot;: 2,
+        &quot;declarations&quot;: 17,
+        &quot;structure&quot;: {
+          &quot;supported&quot;: 2
+        },
+        &quot;imports&quot;: {
+          &quot;external&quot;: 1,
+          &quot;excluded&quot;: 1
+        },
+        &quot;importEdges&quot;: 0,
+        &quot;compilationCount&quot;: 1,
+        &quot;calls&quot;: {
+          &quot;unsupported&quot;: 12
+        },
+        &quot;references&quot;: {
+          &quot;excluded&quot;: 1,
+          &quot;unsupported&quot;: 42
+        },
+        &quot;callEdges&quot;: 0,
+        &quot;referenceEdges&quot;: 0,
+        &quot;anonymousDeclarations&quot;: 1,
+        &quot;symbolSamples&quot;: [
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;line&quot;: 55,
+            &quot;name&quot;: &quot;String::new&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;line&quot;: 57,
+            &quot;name&quot;: &quot;greeting.push_str&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;line&quot;: 61,
+            &quot;name&quot;: &quot;greeting.push_str&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;line&quot;: 62,
+            &quot;name&quot;: &quot;greeting.push_str&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;line&quot;: 63,
+            &quot;name&quot;: &quot;greeting.push_str&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;line&quot;: 67,
+            &quot;name&quot;: &quot;greeting.push_str&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;line&quot;: 68,
+            &quot;name&quot;: &quot;greeting.push_str&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;line&quot;: 71,
+            &quot;name&quot;: &quot;greeting.push&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;line&quot;: 77,
+            &quot;name&quot;: &quot;rocket::build.mount.mount.mount&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;line&quot;: 77,
+            &quot;name&quot;: &quot;rocket::build.mount.mount&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;line&quot;: 77,
+            &quot;name&quot;: &quot;rocket::build.mount&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;line&quot;: 77,
+            &quot;name&quot;: &quot;rocket::build&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          }
+        ],
+        &quot;projects&quot;: [
+          {
+            &quot;id&quot;: &quot;project:eab555d5ade01318113cc3c8&quot;,
+            &quot;root&quot;: &quot;.&quot;,
+            &quot;manifest&quot;: &quot;Cargo.toml&quot;,
+            &quot;name&quot;: &quot;hello&quot;,
+            &quot;version&quot;: &quot;0.0.0&quot;,
+            &quot;edition&quot;: &quot;2021&quot;,
+            &quot;resolver&quot;: &quot;2&quot;,
+            &quot;configuration&quot;: [],
+            &quot;features&quot;: {},
+            &quot;dependencies&quot;: [
+              {
+                &quot;key&quot;: &quot;rocket&quot;,
+                &quot;name&quot;: &quot;rocket&quot;,
+                &quot;renamed&quot;: false,
+                &quot;package&quot;: &quot;rocket&quot;,
+                &quot;version&quot;: &quot;0.5&quot;,
+                &quot;source&quot;: &quot;registry&quot;,
+                &quot;sourceId&quot;: &quot;crates-io&quot;,
+                &quot;optional&quot;: false,
+                &quot;defaultFeatures&quot;: true,
+                &quot;features&quot;: [],
+                &quot;scope&quot;: &quot;normal&quot;,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency rocket (rocket)&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;targets&quot;: [
+              {
+                &quot;id&quot;: &quot;crate:5687ca2d3541cd86d701650e&quot;,
+                &quot;kind&quot;: &quot;bin&quot;,
+                &quot;name&quot;: &quot;hello&quot;,
+                &quot;crateName&quot;: &quot;hello&quot;,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;requiredFeatures&quot;: [],
+                &quot;procMacro&quot;: false,
+                &quot;harness&quot;: true,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original Cargo bin target hello at src/main.rs&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;gaps&quot;: [],
+            &quot;proof&quot;: [
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo package/workspace/edition/target inputs; no target tools run&quot;
+              }
+            ]
+          }
+        ],
+        &quot;compilations&quot;: [
+          {
+            &quot;id&quot;: &quot;rust-compilation:a3077020c48ee26e739474ea&quot;,
+            &quot;invocation&quot;: &quot;rust-invocation:0db6dbb8b97cef6a788bbc9f&quot;,
+            &quot;target&quot;: &quot;crate:5687ca2d3541cd86d701650e&quot;,
+            &quot;package&quot;: &quot;project:eab555d5ade01318113cc3c8&quot;,
+            &quot;kind&quot;: &quot;bin&quot;,
+            &quot;crateName&quot;: &quot;hello&quot;,
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;features&quot;: [],
+            &quot;cfg&quot;: null,
+            &quot;targetTriple&quot;: null,
+            &quot;test&quot;: false,
+            &quot;selected&quot;: true,
+            &quot;gaps&quot;: [],
+            &quot;dependencies&quot;: [
+              {
+                &quot;name&quot;: &quot;rocket&quot;,
+                &quot;active&quot;: true,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency rocket (rocket)&quot;
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        &quot;manifestOutcomes&quot;: [
+          {
+            &quot;file&quot;: &quot;Cargo.toml&quot;,
+            &quot;status&quot;: &quot;package&quot;,
+            &quot;gaps&quot;: []
+          }
+        ],
+        &quot;diagnostics&quot;: {
+          &quot;Original Rust module is inactive under recorded cfg&quot;: 1,
+          &quot;Unreviewed Rust attribute get may generate/change items&quot;: 1,
+          &quot;Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;: 1,
+          &quot;Unreviewed Rust attribute field may generate/change items&quot;: 1,
+          &quot;Unreviewed Rust attribute launch may generate/change items&quot;: 1,
+          &quot;Unreviewed Rust attribute derive may generate/change items&quot;: 1
+        },
+        &quot;samples&quot;: [
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;line&quot;: 1,
+            &quot;specifier&quot;: &quot;rocket&quot;,
+            &quot;kind&quot;: &quot;extern&quot;,
+            &quot;status&quot;: &quot;external&quot;,
+            &quot;conditions&quot;: [
+              &quot;Unreviewed Rust attribute derive may generate/change items&quot;,
+              &quot;Unreviewed Rust attribute get may generate/change items&quot;,
+              &quot;Unreviewed Rust attribute launch may generate/change items&quot;,
+              &quot;Unreviewed Rust attribute macro_use may generate/change items&quot;
+            ]
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;line&quot;: 3,
+            &quot;specifier&quot;: &quot;tests&quot;,
+            &quot;kind&quot;: &quot;module&quot;,
+            &quot;status&quot;: &quot;excluded&quot;,
+            &quot;reason&quot;: &quot;Original Rust module is inactive under recorded cfg&quot;
+          }
+        ],
+        &quot;cacheHits&quot;: {
+          &quot;syntax-facts&quot;: 2,
+          &quot;rust-imports&quot;: 1,
+          &quot;rust-symbols&quot;: 1,
+          &quot;rust-routers&quot;: 1
+        },
+        &quot;cacheEqual&quot;: true,
+        &quot;revisionEqual&quot;: true,
+        &quot;graphFingerprint&quot;: &quot;c29946ab7d152314804c2ca37aa5e61f2eb1f133abf48b0f8e0062027379ed64&quot;,
+        &quot;boundary&quot;: &quot;Original Cargo/module/scoped import, direct source function/closure/reference and bounded native router source integration only. Recorded features/cfg are assumptions; no compiler, build, macro expansion, dependency execution, runtime, broad router recall, trait/generic dispatch, performance or production recall qualification.&quot;,
+        &quot;unreadSymlinks&quot;: 0,
+        &quot;routerEndpoints&quot;: 4,
+        &quot;qualifiedRouterEndpoints&quot;: 3,
+        &quot;declaredRouterEndpoints&quot;: 4,
+        &quot;originalHandlerEdges&quot;: 4,
+        &quot;frameworkCallEdges&quot;: 0,
+        &quot;routerSamples&quot;: [
+          {
+            &quot;path&quot;: &quot;src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 23,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 25,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;name&quot;: &quot;GET|HEAD /hello/world&quot;,
+            &quot;framework&quot;: &quot;rocket&quot;,
+            &quot;compilation&quot;: &quot;rust-compilation:a3077020c48ee26e739474ea&quot;,
+            &quot;registration&quot;: &quot;explicit&quot;,
+            &quot;routePath&quot;: &quot;/hello/world&quot;,
+            &quot;methods&quot;: [
+              &quot;GET&quot;,
+              &quot;HEAD&quot;
+            ],
+            &quot;dialect&quot;: &quot;rocket-0.5&quot;,
+            &quot;conditions&quot;: [],
+            &quot;handler&quot;: [
+              {
+                &quot;id&quot;: &quot;symbol:2a4fc5256ebb6bb0af8e187d&quot;,
+                &quot;path&quot;: &quot;src/main.rs&quot;,
+                &quot;range&quot;: {
+                  &quot;startLine&quot;: 23,
+                  &quot;startColumn&quot;: 1,
+                  &quot;endLine&quot;: 25,
+                  &quot;endColumn&quot;: 2
+                },
+                &quot;name&quot;: &quot;world&quot;,
+                &quot;kind&quot;: &quot;function&quot;
+              }
+            ],
+            &quot;proof&quot;: [
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo package/workspace/edition/target inputs; no target tools run&quot;
+              },
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo bin target hello at src/main.rs&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 76,
+                &quot;explanation&quot;: &quot;Original selected Rust bin main entry&quot;,
+                &quot;endLine&quot;: 81
+              },
+              {
+                &quot;source&quot;: &quot;syntax&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;4&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Rust extern rocket&quot;
+              },
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original normal Cargo dependency rocket (rocket)&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original rocket macro_use extern declaration supplies this known macro name&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original registry rocket requirement 0.5; reviewed native rocket-0.5 contract, without executing dependency code&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 76,
+                &quot;explanation&quot;: &quot;Original Rocket launch attribute invokes this source factory and awaits native launch without expanding the macro&quot;,
+                &quot;endLine&quot;: 81
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 76,
+                &quot;explanation&quot;: &quot;Original native Rust serving future is awaited on the selected source entry path&quot;,
+                &quot;endLine&quot;: 81
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 5,
+                &quot;explanation&quot;: &quot;Original Rocket 0.5 FromFormField derive on Lang: anonymous const contains generated context/impls; containing-module namespace only, generated traits/guards remain unreviewed&quot;,
+                &quot;endLine&quot;: 5
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 14,
+                &quot;explanation&quot;: &quot;Original Rocket 0.5 FromForm derive on Options: anonymous const contains generated context/impls; containing-module namespace only, generated traits/guards remain unreviewed&quot;,
+                &quot;endLine&quot;: 14
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 78,
+                &quot;explanation&quot;: &quot;Original Rocket routes! literal source path list; reviewed registration syntax without macro expansion&quot;,
+                &quot;endLine&quot;: 78
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 79,
+                &quot;explanation&quot;: &quot;Original Rocket routes! literal source path list; reviewed registration syntax without macro expansion&quot;,
+                &quot;endLine&quot;: 79
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 80,
+                &quot;explanation&quot;: &quot;Original Rocket routes! literal source path list; reviewed registration syntax without macro expansion&quot;,
+                &quot;endLine&quot;: 80
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 77,
+                &quot;explanation&quot;: &quot;Qualified original rocket router constructor&quot;,
+                &quot;endLine&quot;: 77
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 77,
+                &quot;explanation&quot;: &quot;Original consuming builder step&quot;,
+                &quot;endLine&quot;: 78
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 77,
+                &quot;explanation&quot;: &quot;Original consuming builder step&quot;,
+                &quot;endLine&quot;: 79
+              },
+              {
+                &quot;source&quot;: &quot;syntax&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;4&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 23,
+                &quot;explanation&quot;: &quot;Original Rust function world&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 77,
+                &quot;explanation&quot;: &quot;Original Rocket mount and routes! member&quot;,
+                &quot;endLine&quot;: 79
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 23,
+                &quot;explanation&quot;: &quot;Original rocket GET|HEAD /hello/world under selected Cargo source context&quot;,
+                &quot;endLine&quot;: 25
+              }
+            ]
+          },
+          {
+            &quot;path&quot;: &quot;src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 30,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 32,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;name&quot;: &quot;GET|HEAD /hello/мир&quot;,
+            &quot;framework&quot;: &quot;rocket&quot;,
+            &quot;compilation&quot;: &quot;rust-compilation:a3077020c48ee26e739474ea&quot;,
+            &quot;registration&quot;: &quot;explicit&quot;,
+            &quot;routePath&quot;: &quot;/hello/мир&quot;,
+            &quot;methods&quot;: [
+              &quot;GET&quot;,
+              &quot;HEAD&quot;
+            ],
+            &quot;dialect&quot;: &quot;rocket-0.5&quot;,
+            &quot;conditions&quot;: [],
+            &quot;handler&quot;: [
+              {
+                &quot;id&quot;: &quot;symbol:71165d143473ca9378a8fa67&quot;,
+                &quot;path&quot;: &quot;src/main.rs&quot;,
+                &quot;range&quot;: {
+                  &quot;startLine&quot;: 30,
+                  &quot;startColumn&quot;: 1,
+                  &quot;endLine&quot;: 32,
+                  &quot;endColumn&quot;: 2
+                },
+                &quot;name&quot;: &quot;mir&quot;,
+                &quot;kind&quot;: &quot;function&quot;
+              }
+            ],
+            &quot;proof&quot;: [
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo package/workspace/edition/target inputs; no target tools run&quot;
+              },
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo bin target hello at src/main.rs&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 76,
+                &quot;explanation&quot;: &quot;Original selected Rust bin main entry&quot;,
+                &quot;endLine&quot;: 81
+              },
+              {
+                &quot;source&quot;: &quot;syntax&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;4&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Rust extern rocket&quot;
+              },
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original normal Cargo dependency rocket (rocket)&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original rocket macro_use extern declaration supplies this known macro name&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original registry rocket requirement 0.5; reviewed native rocket-0.5 contract, without executing dependency code&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 76,
+                &quot;explanation&quot;: &quot;Original Rocket launch attribute invokes this source factory and awaits native launch without expanding the macro&quot;,
+                &quot;endLine&quot;: 81
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 76,
+                &quot;explanation&quot;: &quot;Original native Rust serving future is awaited on the selected source entry path&quot;,
+                &quot;endLine&quot;: 81
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 5,
+                &quot;explanation&quot;: &quot;Original Rocket 0.5 FromFormField derive on Lang: anonymous const contains generated context/impls; containing-module namespace only, generated traits/guards remain unreviewed&quot;,
+                &quot;endLine&quot;: 5
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 14,
+                &quot;explanation&quot;: &quot;Original Rocket 0.5 FromForm derive on Options: anonymous const contains generated context/impls; containing-module namespace only, generated traits/guards remain unreviewed&quot;,
+                &quot;endLine&quot;: 14
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 78,
+                &quot;explanation&quot;: &quot;Original Rocket routes! literal source path list; reviewed registration syntax without macro expansion&quot;,
+                &quot;endLine&quot;: 78
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 79,
+                &quot;explanation&quot;: &quot;Original Rocket routes! literal source path list; reviewed registration syntax without macro expansion&quot;,
+                &quot;endLine&quot;: 79
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 80,
+                &quot;explanation&quot;: &quot;Original Rocket routes! literal source path list; reviewed registration syntax without macro expansion&quot;,
+                &quot;endLine&quot;: 80
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 77,
+                &quot;explanation&quot;: &quot;Qualified original rocket router constructor&quot;,
+                &quot;endLine&quot;: 77
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 77,
+                &quot;explanation&quot;: &quot;Original consuming builder step&quot;,
+                &quot;endLine&quot;: 78
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 77,
+                &quot;explanation&quot;: &quot;Original consuming builder step&quot;,
+                &quot;endLine&quot;: 79
+              },
+              {
+                &quot;source&quot;: &quot;syntax&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;4&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 30,
+                &quot;explanation&quot;: &quot;Original Rust function mir&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 77,
+                &quot;explanation&quot;: &quot;Original Rocket mount and routes! member&quot;,
+                &quot;endLine&quot;: 79
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 30,
+                &quot;explanation&quot;: &quot;Original rocket GET|HEAD /hello/мир under selected Cargo source context&quot;,
+                &quot;endLine&quot;: 32
+              }
+            ]
+          },
+          {
+            &quot;path&quot;: &quot;src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 54,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 73,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;name&quot;: &quot;GET|HEAD /?&lt;lang&gt;&amp;&lt;opt..&gt;&quot;,
+            &quot;framework&quot;: &quot;rocket&quot;,
+            &quot;compilation&quot;: &quot;rust-compilation:a3077020c48ee26e739474ea&quot;,
+            &quot;registration&quot;: &quot;explicit&quot;,
+            &quot;routePath&quot;: &quot;/?&lt;lang&gt;&amp;&lt;opt..&gt;&quot;,
+            &quot;methods&quot;: [
+              &quot;GET&quot;,
+              &quot;HEAD&quot;
+            ],
+            &quot;dialect&quot;: &quot;rocket-0.5&quot;,
+            &quot;conditions&quot;: [
+              &quot;Rocket request/query/body guard requires native source/type proof&quot;,
+              &quot;Rocket query/body conversion remains a native guard condition&quot;
+            ],
+            &quot;handler&quot;: [
+              {
+                &quot;id&quot;: &quot;symbol:37b660b391a9c9f3529b7e88&quot;,
+                &quot;path&quot;: &quot;src/main.rs&quot;,
+                &quot;range&quot;: {
+                  &quot;startLine&quot;: 54,
+                  &quot;startColumn&quot;: 1,
+                  &quot;endLine&quot;: 73,
+                  &quot;endColumn&quot;: 2
+                },
+                &quot;name&quot;: &quot;hello&quot;,
+                &quot;kind&quot;: &quot;function&quot;
+              }
+            ],
+            &quot;proof&quot;: [
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo package/workspace/edition/target inputs; no target tools run&quot;
+              },
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo bin target hello at src/main.rs&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 76,
+                &quot;explanation&quot;: &quot;Original selected Rust bin main entry&quot;,
+                &quot;endLine&quot;: 81
+              },
+              {
+                &quot;source&quot;: &quot;syntax&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;4&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Rust extern rocket&quot;
+              },
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original normal Cargo dependency rocket (rocket)&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original rocket macro_use extern declaration supplies this known macro name&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original registry rocket requirement 0.5; reviewed native rocket-0.5 contract, without executing dependency code&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 76,
+                &quot;explanation&quot;: &quot;Original Rocket launch attribute invokes this source factory and awaits native launch without expanding the macro&quot;,
+                &quot;endLine&quot;: 81
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 76,
+                &quot;explanation&quot;: &quot;Original native Rust serving future is awaited on the selected source entry path&quot;,
+                &quot;endLine&quot;: 81
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 5,
+                &quot;explanation&quot;: &quot;Original Rocket 0.5 FromFormField derive on Lang: anonymous const contains generated context/impls; containing-module namespace only, generated traits/guards remain unreviewed&quot;,
+                &quot;endLine&quot;: 5
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 14,
+                &quot;explanation&quot;: &quot;Original Rocket 0.5 FromForm derive on Options: anonymous const contains generated context/impls; containing-module namespace only, generated traits/guards remain unreviewed&quot;,
+                &quot;endLine&quot;: 14
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 78,
+                &quot;explanation&quot;: &quot;Original Rocket routes! literal source path list; reviewed registration syntax without macro expansion&quot;,
+                &quot;endLine&quot;: 78
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 79,
+                &quot;explanation&quot;: &quot;Original Rocket routes! literal source path list; reviewed registration syntax without macro expansion&quot;,
+                &quot;endLine&quot;: 79
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 80,
+                &quot;explanation&quot;: &quot;Original Rocket routes! literal source path list; reviewed registration syntax without macro expansion&quot;,
+                &quot;endLine&quot;: 80
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 77,
+                &quot;explanation&quot;: &quot;Qualified original rocket router constructor&quot;,
+                &quot;endLine&quot;: 77
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 77,
+                &quot;explanation&quot;: &quot;Original consuming builder step&quot;,
+                &quot;endLine&quot;: 78
+              },
+              {
+                &quot;source&quot;: &quot;syntax&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;4&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 54,
+                &quot;explanation&quot;: &quot;Original Rust function hello&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 77,
+                &quot;explanation&quot;: &quot;Original Rocket mount and routes! member&quot;,
+                &quot;endLine&quot;: 78
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 54,
+                &quot;explanation&quot;: &quot;Original rocket GET|HEAD /?&lt;lang&gt;&amp;&lt;opt..&gt; under selected Cargo source context&quot;,
+                &quot;endLine&quot;: 73
+              }
+            ]
+          },
+          {
+            &quot;path&quot;: &quot;src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 37,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 39,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;name&quot;: &quot;GET|HEAD /wave/&lt;name&gt;/&lt;age&gt;&quot;,
+            &quot;framework&quot;: &quot;rocket&quot;,
+            &quot;compilation&quot;: &quot;rust-compilation:a3077020c48ee26e739474ea&quot;,
+            &quot;registration&quot;: &quot;explicit&quot;,
+            &quot;routePath&quot;: &quot;/wave/&lt;name&gt;/&lt;age&gt;&quot;,
+            &quot;methods&quot;: [
+              &quot;GET&quot;,
+              &quot;HEAD&quot;
+            ],
+            &quot;dialect&quot;: &quot;rocket-0.5&quot;,
+            &quot;conditions&quot;: [],
+            &quot;handler&quot;: [
+              {
+                &quot;id&quot;: &quot;symbol:1f5608978994b9020ed1655c&quot;,
+                &quot;path&quot;: &quot;src/main.rs&quot;,
+                &quot;range&quot;: {
+                  &quot;startLine&quot;: 37,
+                  &quot;startColumn&quot;: 1,
+                  &quot;endLine&quot;: 39,
+                  &quot;endColumn&quot;: 2
+                },
+                &quot;name&quot;: &quot;wave&quot;,
+                &quot;kind&quot;: &quot;function&quot;
+              }
+            ],
+            &quot;proof&quot;: [
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo package/workspace/edition/target inputs; no target tools run&quot;
+              },
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo bin target hello at src/main.rs&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 76,
+                &quot;explanation&quot;: &quot;Original selected Rust bin main entry&quot;,
+                &quot;endLine&quot;: 81
+              },
+              {
+                &quot;source&quot;: &quot;syntax&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;4&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Rust extern rocket&quot;
+              },
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original normal Cargo dependency rocket (rocket)&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original rocket macro_use extern declaration supplies this known macro name&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original registry rocket requirement 0.5; reviewed native rocket-0.5 contract, without executing dependency code&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 76,
+                &quot;explanation&quot;: &quot;Original Rocket launch attribute invokes this source factory and awaits native launch without expanding the macro&quot;,
+                &quot;endLine&quot;: 81
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 76,
+                &quot;explanation&quot;: &quot;Original native Rust serving future is awaited on the selected source entry path&quot;,
+                &quot;endLine&quot;: 81
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 5,
+                &quot;explanation&quot;: &quot;Original Rocket 0.5 FromFormField derive on Lang: anonymous const contains generated context/impls; containing-module namespace only, generated traits/guards remain unreviewed&quot;,
+                &quot;endLine&quot;: 5
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 14,
+                &quot;explanation&quot;: &quot;Original Rocket 0.5 FromForm derive on Options: anonymous const contains generated context/impls; containing-module namespace only, generated traits/guards remain unreviewed&quot;,
+                &quot;endLine&quot;: 14
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 78,
+                &quot;explanation&quot;: &quot;Original Rocket routes! literal source path list; reviewed registration syntax without macro expansion&quot;,
+                &quot;endLine&quot;: 78
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 79,
+                &quot;explanation&quot;: &quot;Original Rocket routes! literal source path list; reviewed registration syntax without macro expansion&quot;,
+                &quot;endLine&quot;: 79
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 80,
+                &quot;explanation&quot;: &quot;Original Rocket routes! literal source path list; reviewed registration syntax without macro expansion&quot;,
+                &quot;endLine&quot;: 80
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 77,
+                &quot;explanation&quot;: &quot;Qualified original rocket router constructor&quot;,
+                &quot;endLine&quot;: 77
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 77,
+                &quot;explanation&quot;: &quot;Original consuming builder step&quot;,
+                &quot;endLine&quot;: 78
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 77,
+                &quot;explanation&quot;: &quot;Original consuming builder step&quot;,
+                &quot;endLine&quot;: 79
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 77,
+                &quot;explanation&quot;: &quot;Original consuming builder step&quot;,
+                &quot;endLine&quot;: 80
+              },
+              {
+                &quot;source&quot;: &quot;syntax&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;4&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 37,
+                &quot;explanation&quot;: &quot;Original Rust function wave&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 77,
+                &quot;explanation&quot;: &quot;Original Rocket mount and routes! member&quot;,
+                &quot;endLine&quot;: 80
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;src/main.rs&quot;,
+                &quot;line&quot;: 37,
+                &quot;explanation&quot;: &quot;Original rocket GET|HEAD /wave/&lt;name&gt;/&lt;age&gt; under selected Cargo source context&quot;,
+                &quot;endLine&quot;: 39
+              }
+            ]
+          }
+        ],
+        &quot;selectedFiles&quot;: [
+          &quot;src/main.rs&quot;
+        ],
+        &quot;selectedDeclarations&quot;: [
+          {
+            &quot;id&quot;: &quot;symbol:1f5608978994b9020ed1655c&quot;,
+            &quot;path&quot;: &quot;src/main.rs&quot;,
+            &quot;name&quot;: &quot;wave&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 37,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 39,
+              &quot;endColumn&quot;: 2
+            }
+          },
+          {
+            &quot;id&quot;: &quot;symbol:2a4fc5256ebb6bb0af8e187d&quot;,
+            &quot;path&quot;: &quot;src/main.rs&quot;,
+            &quot;name&quot;: &quot;world&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 23,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 25,
+              &quot;endColumn&quot;: 2
+            }
+          },
+          {
+            &quot;id&quot;: &quot;symbol:37b660b391a9c9f3529b7e88&quot;,
+            &quot;path&quot;: &quot;src/main.rs&quot;,
+            &quot;name&quot;: &quot;hello&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 54,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 73,
+              &quot;endColumn&quot;: 2
+            }
+          },
+          {
+            &quot;id&quot;: &quot;symbol:3b955660c148781e406ea19f&quot;,
+            &quot;path&quot;: &quot;src/main.rs&quot;,
+            &quot;name&quot;: &quot;tests&quot;,
+            &quot;kind&quot;: &quot;module&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 3,
+              &quot;startColumn&quot;: 14,
+              &quot;endLine&quot;: 3,
+              &quot;endColumn&quot;: 24
+            }
+          },
+          {
+            &quot;id&quot;: &quot;symbol:6d945c3ff27779381844b7ce&quot;,
+            &quot;path&quot;: &quot;src/main.rs&quot;,
+            &quot;name&quot;: &quot;Lang&quot;,
+            &quot;kind&quot;: &quot;enum&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 6,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 12,
+              &quot;endColumn&quot;: 2
+            }
+          },
+          {
+            &quot;id&quot;: &quot;symbol:71165d143473ca9378a8fa67&quot;,
+            &quot;path&quot;: &quot;src/main.rs&quot;,
+            &quot;name&quot;: &quot;mir&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 30,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 32,
+              &quot;endColumn&quot;: 2
+            }
+          },
+          {
+            &quot;id&quot;: &quot;symbol:7591e1697a62e8918d3a9a37&quot;,
+            &quot;path&quot;: &quot;src/main.rs&quot;,
+            &quot;name&quot;: &quot;emoji&quot;,
+            &quot;kind&quot;: &quot;field&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 16,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 16,
+              &quot;endColumn&quot;: 16
+            }
+          },
+          {
+            &quot;id&quot;: &quot;symbol:af2ab25eab0d3df92ac92158&quot;,
+            &quot;path&quot;: &quot;src/main.rs&quot;,
+            &quot;name&quot;: &quot;rocket&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 76,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 81,
+              &quot;endColumn&quot;: 2
+            }
+          },
+          {
+            &quot;id&quot;: &quot;symbol:b9574c96dd7303193f668efd&quot;,
+            &quot;path&quot;: &quot;src/main.rs&quot;,
+            &quot;name&quot;: &quot;English&quot;,
+            &quot;kind&quot;: &quot;variant&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 8,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 8,
+              &quot;endColumn&quot;: 12
+            }
+          },
+          {
+            &quot;id&quot;: &quot;symbol:bf48cad045ad33ec7811f78c&quot;,
+            &quot;path&quot;: &quot;src/main.rs&quot;,
+            &quot;name&quot;: &quot;name&quot;,
+            &quot;kind&quot;: &quot;field&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 17,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 17,
+              &quot;endColumn&quot;: 26
+            }
+          },
+          {
+            &quot;id&quot;: &quot;symbol:e5128f4269c0f04b7650e366&quot;,
+            &quot;path&quot;: &quot;src/main.rs&quot;,
+            &quot;name&quot;: &quot;Russian&quot;,
+            &quot;kind&quot;: &quot;variant&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 11,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 11,
+              &quot;endColumn&quot;: 12
+            }
+          },
+          {
+            &quot;id&quot;: &quot;symbol:e5bfac839eaa8c54a3fe6b9d&quot;,
+            &quot;path&quot;: &quot;src/main.rs&quot;,
+            &quot;name&quot;: &quot;Options&quot;,
+            &quot;kind&quot;: &quot;struct&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 15,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 18,
+              &quot;endColumn&quot;: 2
+            }
+          }
+        ],
+        &quot;localImportSamples&quot;: [],
+        &quot;sourceCallSamples&quot;: [
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 55,
+              &quot;startColumn&quot;: 24,
+              &quot;endLine&quot;: 55,
+              &quot;endColumn&quot;: 37
+            },
+            &quot;owner&quot;: &quot;hello&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 57,
+              &quot;startColumn&quot;: 9,
+              &quot;endLine&quot;: 57,
+              &quot;endColumn&quot;: 33
+            },
+            &quot;owner&quot;: &quot;hello&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 61,
+              &quot;startColumn&quot;: 32,
+              &quot;endLine&quot;: 61,
+              &quot;endColumn&quot;: 59
+            },
+            &quot;owner&quot;: &quot;hello&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 62,
+              &quot;startColumn&quot;: 32,
+              &quot;endLine&quot;: 62,
+              &quot;endColumn&quot;: 58
+            },
+            &quot;owner&quot;: &quot;hello&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 63,
+              &quot;startColumn&quot;: 17,
+              &quot;endLine&quot;: 63,
+              &quot;endColumn&quot;: 40
+            },
+            &quot;owner&quot;: &quot;hello&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 67,
+              &quot;startColumn&quot;: 9,
+              &quot;endLine&quot;: 67,
+              &quot;endColumn&quot;: 32
+            },
+            &quot;owner&quot;: &quot;hello&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 68,
+              &quot;startColumn&quot;: 9,
+              &quot;endLine&quot;: 68,
+              &quot;endColumn&quot;: 32
+            },
+            &quot;owner&quot;: &quot;hello&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 71,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 71,
+              &quot;endColumn&quot;: 23
+            },
+            &quot;owner&quot;: &quot;hello&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 77,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 80,
+              &quot;endColumn&quot;: 39
+            },
+            &quot;owner&quot;: &quot;rocket&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 77,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 79,
+              &quot;endColumn&quot;: 46
+            },
+            &quot;owner&quot;: &quot;rocket&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 77,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 78,
+              &quot;endColumn&quot;: 36
+            },
+            &quot;owner&quot;: &quot;rocket&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 77,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 77,
+              &quot;endColumn&quot;: 20
+            },
+            &quot;owner&quot;: &quot;rocket&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute derive may generate/change items; Unreviewed Rust attribute get may generate/change items; Unreviewed Rust attribute launch may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          }
+        ]
+      }
+    },
+    {
+      &quot;sample&quot;: {
+        &quot;name&quot;: &quot;Warp 0.3 original control&quot;,
+        &quot;pin&quot;: &quot;benchmark&quot;,
+        &quot;manifest&quot;: &quot;warp/Cargo.toml&quot;,
+        &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+        &quot;target&quot;: &quot;warp&quot;,
+        &quot;edition&quot;: &quot;2018&quot;,
+        &quot;framework&quot;: &quot;warp&quot;,
+        &quot;requirement&quot;: &quot;0.3.1&quot;,
+        &quot;dialect&quot;: &quot;warp-0.3&quot;,
+        &quot;beforeQualified&quot;: 1,
+        &quot;declarations&quot;: [
+          [
+            &quot;main&quot;,
+            &quot;function&quot;,
+            4
+          ],
+          [
+            &quot;&lt;closure&gt;&quot;,
+            &quot;closure&quot;,
+            6
+          ]
+        ],
+        &quot;routes&quot;: [
+          {
+            &quot;path&quot;: &quot;/hello/&lt;p0&gt;&quot;,
+            &quot;methods&quot;: &quot;*&quot;,
+            &quot;handler&quot;: &quot;&lt;closure&gt;&quot;,
+            &quot;kind&quot;: &quot;closure&quot;,
+            &quot;line&quot;: 6
+          }
+        ],
+        &quot;boundary&quot;: &quot;The GET comment is not a method filter: the original path!/map chain accepts all methods and a String capture.&quot;
+      },
+      &quot;pin&quot;: {
+        &quot;repository&quot;: &quot;rousan/rust-web-frameworks-benchmark&quot;,
+        &quot;commit&quot;: &quot;7aaad31609f18ab73668e33378dc1d07e1d7368d&quot;
+      },
+      &quot;url&quot;: &quot;https://github.com/rousan/rust-web-frameworks-benchmark/blob/7aaad31609f18ab73668e33378dc1d07e1d7368d/warp/src/main.rs&quot;,
+      &quot;before&quot;: {
+        &quot;qualifiedEndpoints&quot;: 1,
+        &quot;originalHandlers&quot;: 1,
+        &quot;selectedDeclarations&quot;: 2,
+        &quot;graphFingerprint&quot;: &quot;e7e5c2b2a55a9cc7e073105312cdd9b7ed5fc0acfd36c3a680648a5f1ca0eada&quot;
+      },
+      &quot;review&quot;: {
+        &quot;declarations&quot;: 2,
+        &quot;functions&quot;: 1,
+        &quot;closures&quot;: 1,
+        &quot;sourceRoutes&quot;: 1,
+        &quot;supportedRoutes&quot;: 1,
+        &quot;confirmedRoutes&quot;: 1,
+        &quot;conditionalRoutes&quot;: 0,
+        &quot;outsideProfileRoutes&quot;: 0,
+        &quot;originalHandlerPairs&quot;: 1,
+        &quot;falsePositiveRoutes&quot;: 0,
+        &quot;missedSupportedRoutes&quot;: 0,
+        &quot;generalCalls&quot;: 3,
+        &quot;generalCallWinners&quot;: 0
+      },
+      &quot;evidence&quot;: {
+        &quot;commit&quot;: &quot;7aaad31609f18ab73668e33378dc1d07e1d7368d&quot;,
+        &quot;copiedFiles&quot;: 19,
+        &quot;trackedBlobDigest&quot;: &quot;dc0dc96e2a0a4ae455d24ead3218b693ee41e401d0d2b4942a9b573902558799&quot;,
+        &quot;qualificationInputs&quot;: {
+          &quot;applications&quot;: [
+            {
+              &quot;name&quot;: &quot;sample&quot;,
+              &quot;path&quot;: &quot;.&quot;,
+              &quot;rust&quot;: {
+                &quot;package&quot;: &quot;warp/Cargo.toml&quot;,
+                &quot;target&quot;: {
+                  &quot;kind&quot;: &quot;bin&quot;,
+                  &quot;name&quot;: &quot;warp&quot;
+                },
+                &quot;features&quot;: [],
+                &quot;defaultFeatures&quot;: false
+              }
+            }
+          ]
+        },
+        &quot;files&quot;: 5,
+        &quot;declarations&quot;: 14,
+        &quot;structure&quot;: {
+          &quot;supported&quot;: 5
+        },
+        &quot;imports&quot;: {
+          &quot;external&quot;: 1
+        },
+        &quot;importEdges&quot;: 0,
+        &quot;compilationCount&quot;: 1,
+        &quot;calls&quot;: {
+          &quot;unsupported&quot;: 3
+        },
+        &quot;references&quot;: {
+          &quot;unsupported&quot;: 4
+        },
+        &quot;callEdges&quot;: 0,
+        &quot;referenceEdges&quot;: 0,
+        &quot;anonymousDeclarations&quot;: 5,
+        &quot;symbolSamples&quot;: [
+          {
+            &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+            &quot;line&quot;: 6,
+            &quot;name&quot;: &quot;macro.map&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute tokio::main may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+            &quot;line&quot;: 8,
+            &quot;name&quot;: &quot;warp::serve.run&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute tokio::main may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+            &quot;line&quot;: 8,
+            &quot;name&quot;: &quot;warp::serve&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute tokio::main may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          }
+        ],
+        &quot;projects&quot;: [
+          {
+            &quot;id&quot;: &quot;project:03dea0b07b290b822e378283&quot;,
+            &quot;root&quot;: &quot;actix&quot;,
+            &quot;manifest&quot;: &quot;actix/Cargo.toml&quot;,
+            &quot;name&quot;: &quot;actix&quot;,
+            &quot;version&quot;: &quot;0.1.0&quot;,
+            &quot;edition&quot;: &quot;2018&quot;,
+            &quot;resolver&quot;: &quot;1&quot;,
+            &quot;configuration&quot;: [],
+            &quot;features&quot;: {},
+            &quot;dependencies&quot;: [
+              {
+                &quot;key&quot;: &quot;actix-web&quot;,
+                &quot;name&quot;: &quot;actix_web&quot;,
+                &quot;renamed&quot;: false,
+                &quot;package&quot;: &quot;actix-web&quot;,
+                &quot;version&quot;: &quot;3.3.2&quot;,
+                &quot;source&quot;: &quot;registry&quot;,
+                &quot;sourceId&quot;: &quot;crates-io&quot;,
+                &quot;optional&quot;: false,
+                &quot;defaultFeatures&quot;: true,
+                &quot;features&quot;: [],
+                &quot;scope&quot;: &quot;normal&quot;,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;actix/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency actix-web (actix-web)&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;targets&quot;: [
+              {
+                &quot;id&quot;: &quot;crate:8b2969dfef9ad640cd5ae407&quot;,
+                &quot;kind&quot;: &quot;bin&quot;,
+                &quot;name&quot;: &quot;actix&quot;,
+                &quot;crateName&quot;: &quot;actix&quot;,
+                &quot;file&quot;: &quot;actix/src/main.rs&quot;,
+                &quot;requiredFeatures&quot;: [],
+                &quot;procMacro&quot;: false,
+                &quot;harness&quot;: true,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;actix/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original Cargo bin target actix at actix/src/main.rs&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;gaps&quot;: [],
+            &quot;proof&quot;: [
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;actix/Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo package/workspace/edition/target inputs; no target tools run&quot;
+              }
+            ]
+          },
+          {
+            &quot;id&quot;: &quot;project:c6c27452a0d36c1ef7a20f1d&quot;,
+            &quot;root&quot;: &quot;gotham&quot;,
+            &quot;manifest&quot;: &quot;gotham/Cargo.toml&quot;,
+            &quot;name&quot;: &quot;gotham&quot;,
+            &quot;version&quot;: &quot;0.1.0&quot;,
+            &quot;edition&quot;: &quot;2018&quot;,
+            &quot;resolver&quot;: &quot;1&quot;,
+            &quot;configuration&quot;: [],
+            &quot;features&quot;: {},
+            &quot;dependencies&quot;: [
+              {
+                &quot;key&quot;: &quot;gotham&quot;,
+                &quot;name&quot;: &quot;gotham&quot;,
+                &quot;renamed&quot;: false,
+                &quot;package&quot;: &quot;gotham&quot;,
+                &quot;version&quot;: &quot;0.6.0&quot;,
+                &quot;source&quot;: &quot;registry&quot;,
+                &quot;sourceId&quot;: &quot;crates-io&quot;,
+                &quot;optional&quot;: false,
+                &quot;defaultFeatures&quot;: true,
+                &quot;features&quot;: [],
+                &quot;scope&quot;: &quot;normal&quot;,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;gotham/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency gotham (gotham)&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;targets&quot;: [
+              {
+                &quot;id&quot;: &quot;crate:2ec0c04dc0703a8bdd4aae46&quot;,
+                &quot;kind&quot;: &quot;bin&quot;,
+                &quot;name&quot;: &quot;gotham&quot;,
+                &quot;crateName&quot;: &quot;gotham&quot;,
+                &quot;file&quot;: &quot;gotham/src/main.rs&quot;,
+                &quot;requiredFeatures&quot;: [],
+                &quot;procMacro&quot;: false,
+                &quot;harness&quot;: true,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;gotham/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original Cargo bin target gotham at gotham/src/main.rs&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;gaps&quot;: [],
+            &quot;proof&quot;: [
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;gotham/Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo package/workspace/edition/target inputs; no target tools run&quot;
+              }
+            ]
+          },
+          {
+            &quot;id&quot;: &quot;project:ddf37a1485145b01a3d7fe80&quot;,
+            &quot;root&quot;: &quot;hyper&quot;,
+            &quot;manifest&quot;: &quot;hyper/Cargo.toml&quot;,
+            &quot;name&quot;: &quot;hyper&quot;,
+            &quot;version&quot;: &quot;0.1.0&quot;,
+            &quot;edition&quot;: &quot;2018&quot;,
+            &quot;resolver&quot;: &quot;1&quot;,
+            &quot;configuration&quot;: [],
+            &quot;features&quot;: {},
+            &quot;dependencies&quot;: [
+              {
+                &quot;key&quot;: &quot;hyper&quot;,
+                &quot;name&quot;: &quot;hyper&quot;,
+                &quot;renamed&quot;: false,
+                &quot;package&quot;: &quot;hyper&quot;,
+                &quot;version&quot;: &quot;0.14&quot;,
+                &quot;source&quot;: &quot;registry&quot;,
+                &quot;sourceId&quot;: &quot;crates-io&quot;,
+                &quot;optional&quot;: false,
+                &quot;defaultFeatures&quot;: true,
+                &quot;features&quot;: [
+                  &quot;full&quot;
+                ],
+                &quot;scope&quot;: &quot;normal&quot;,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;hyper/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency hyper (hyper)&quot;
+                  }
+                ]
+              },
+              {
+                &quot;key&quot;: &quot;tokio&quot;,
+                &quot;name&quot;: &quot;tokio&quot;,
+                &quot;renamed&quot;: false,
+                &quot;package&quot;: &quot;tokio&quot;,
+                &quot;version&quot;: &quot;1&quot;,
+                &quot;source&quot;: &quot;registry&quot;,
+                &quot;sourceId&quot;: &quot;crates-io&quot;,
+                &quot;optional&quot;: false,
+                &quot;defaultFeatures&quot;: true,
+                &quot;features&quot;: [
+                  &quot;full&quot;
+                ],
+                &quot;scope&quot;: &quot;normal&quot;,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;hyper/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency tokio (tokio)&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;targets&quot;: [
+              {
+                &quot;id&quot;: &quot;crate:91efc9d5aeb4515de73f9936&quot;,
+                &quot;kind&quot;: &quot;bin&quot;,
+                &quot;name&quot;: &quot;hyper&quot;,
+                &quot;crateName&quot;: &quot;hyper&quot;,
+                &quot;file&quot;: &quot;hyper/src/main.rs&quot;,
+                &quot;requiredFeatures&quot;: [],
+                &quot;procMacro&quot;: false,
+                &quot;harness&quot;: true,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;hyper/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original Cargo bin target hyper at hyper/src/main.rs&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;gaps&quot;: [],
+            &quot;proof&quot;: [
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;hyper/Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo package/workspace/edition/target inputs; no target tools run&quot;
+              }
+            ]
+          },
+          {
+            &quot;id&quot;: &quot;project:b714ccf00b17c7375b20bcbc&quot;,
+            &quot;root&quot;: &quot;rocket&quot;,
+            &quot;manifest&quot;: &quot;rocket/Cargo.toml&quot;,
+            &quot;name&quot;: &quot;rocket&quot;,
+            &quot;version&quot;: &quot;0.1.0&quot;,
+            &quot;edition&quot;: &quot;2018&quot;,
+            &quot;resolver&quot;: &quot;1&quot;,
+            &quot;configuration&quot;: [],
+            &quot;features&quot;: {},
+            &quot;dependencies&quot;: [
+              {
+                &quot;key&quot;: &quot;rocket&quot;,
+                &quot;name&quot;: &quot;rocket&quot;,
+                &quot;renamed&quot;: false,
+                &quot;package&quot;: &quot;rocket&quot;,
+                &quot;version&quot;: &quot;0.4.7&quot;,
+                &quot;source&quot;: &quot;registry&quot;,
+                &quot;sourceId&quot;: &quot;crates-io&quot;,
+                &quot;optional&quot;: false,
+                &quot;defaultFeatures&quot;: true,
+                &quot;features&quot;: [],
+                &quot;scope&quot;: &quot;normal&quot;,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;rocket/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency rocket (rocket)&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;targets&quot;: [
+              {
+                &quot;id&quot;: &quot;crate:fbacb34b6a7597641c705b67&quot;,
+                &quot;kind&quot;: &quot;bin&quot;,
+                &quot;name&quot;: &quot;rocket&quot;,
+                &quot;crateName&quot;: &quot;rocket&quot;,
+                &quot;file&quot;: &quot;rocket/src/main.rs&quot;,
+                &quot;requiredFeatures&quot;: [],
+                &quot;procMacro&quot;: false,
+                &quot;harness&quot;: true,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;rocket/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original Cargo bin target rocket at rocket/src/main.rs&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;gaps&quot;: [],
+            &quot;proof&quot;: [
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;rocket/Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo package/workspace/edition/target inputs; no target tools run&quot;
+              }
+            ]
+          },
+          {
+            &quot;id&quot;: &quot;project:eb8eb67f039616778df2ed4c&quot;,
+            &quot;root&quot;: &quot;warp&quot;,
+            &quot;manifest&quot;: &quot;warp/Cargo.toml&quot;,
+            &quot;name&quot;: &quot;warp&quot;,
+            &quot;version&quot;: &quot;0.1.0&quot;,
+            &quot;edition&quot;: &quot;2018&quot;,
+            &quot;resolver&quot;: &quot;1&quot;,
+            &quot;configuration&quot;: [],
+            &quot;features&quot;: {},
+            &quot;dependencies&quot;: [
+              {
+                &quot;key&quot;: &quot;tokio&quot;,
+                &quot;name&quot;: &quot;tokio&quot;,
+                &quot;renamed&quot;: false,
+                &quot;package&quot;: &quot;tokio&quot;,
+                &quot;version&quot;: &quot;1&quot;,
+                &quot;source&quot;: &quot;registry&quot;,
+                &quot;sourceId&quot;: &quot;crates-io&quot;,
+                &quot;optional&quot;: false,
+                &quot;defaultFeatures&quot;: true,
+                &quot;features&quot;: [
+                  &quot;full&quot;
+                ],
+                &quot;scope&quot;: &quot;normal&quot;,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency tokio (tokio)&quot;
+                  }
+                ]
+              },
+              {
+                &quot;key&quot;: &quot;warp&quot;,
+                &quot;name&quot;: &quot;warp&quot;,
+                &quot;renamed&quot;: false,
+                &quot;package&quot;: &quot;warp&quot;,
+                &quot;version&quot;: &quot;0.3.1&quot;,
+                &quot;source&quot;: &quot;registry&quot;,
+                &quot;sourceId&quot;: &quot;crates-io&quot;,
+                &quot;optional&quot;: false,
+                &quot;defaultFeatures&quot;: true,
+                &quot;features&quot;: [],
+                &quot;scope&quot;: &quot;normal&quot;,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency warp (warp)&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;targets&quot;: [
+              {
+                &quot;id&quot;: &quot;crate:77254b62671ddd0075486d57&quot;,
+                &quot;kind&quot;: &quot;bin&quot;,
+                &quot;name&quot;: &quot;warp&quot;,
+                &quot;crateName&quot;: &quot;warp&quot;,
+                &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+                &quot;requiredFeatures&quot;: [],
+                &quot;procMacro&quot;: false,
+                &quot;harness&quot;: true,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original Cargo bin target warp at warp/src/main.rs&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;gaps&quot;: [],
+            &quot;proof&quot;: [
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo package/workspace/edition/target inputs; no target tools run&quot;
+              }
+            ]
+          }
+        ],
+        &quot;compilations&quot;: [
+          {
+            &quot;id&quot;: &quot;rust-compilation:1d45d7b28929fd826136754c&quot;,
+            &quot;invocation&quot;: &quot;rust-invocation:6d00dec46ca6a32a49affa22&quot;,
+            &quot;target&quot;: &quot;crate:77254b62671ddd0075486d57&quot;,
+            &quot;package&quot;: &quot;project:eb8eb67f039616778df2ed4c&quot;,
+            &quot;kind&quot;: &quot;bin&quot;,
+            &quot;crateName&quot;: &quot;warp&quot;,
+            &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+            &quot;features&quot;: [],
+            &quot;cfg&quot;: null,
+            &quot;targetTriple&quot;: null,
+            &quot;test&quot;: false,
+            &quot;selected&quot;: true,
+            &quot;gaps&quot;: [],
+            &quot;dependencies&quot;: [
+              {
+                &quot;name&quot;: &quot;tokio&quot;,
+                &quot;active&quot;: true,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency tokio (tokio)&quot;
+                  }
+                ]
+              },
+              {
+                &quot;name&quot;: &quot;warp&quot;,
+                &quot;active&quot;: true,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency warp (warp)&quot;
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        &quot;manifestOutcomes&quot;: [
+          {
+            &quot;file&quot;: &quot;actix/Cargo.toml&quot;,
+            &quot;status&quot;: &quot;package&quot;,
+            &quot;gaps&quot;: []
+          },
+          {
+            &quot;file&quot;: &quot;gotham/Cargo.toml&quot;,
+            &quot;status&quot;: &quot;package&quot;,
+            &quot;gaps&quot;: []
+          },
+          {
+            &quot;file&quot;: &quot;hyper/Cargo.toml&quot;,
+            &quot;status&quot;: &quot;package&quot;,
+            &quot;gaps&quot;: []
+          },
+          {
+            &quot;file&quot;: &quot;rocket/Cargo.toml&quot;,
+            &quot;status&quot;: &quot;package&quot;,
+            &quot;gaps&quot;: []
+          },
+          {
+            &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+            &quot;status&quot;: &quot;package&quot;,
+            &quot;gaps&quot;: []
+          }
+        ],
+        &quot;diagnostics&quot;: {
+          &quot;Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;: 1,
+          &quot;Unreviewed Rust attribute tokio::main may generate/change items&quot;: 1
+        },
+        &quot;samples&quot;: [
+          {
+            &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+            &quot;line&quot;: 1,
+            &quot;specifier&quot;: &quot;warp::Filter&quot;,
+            &quot;kind&quot;: &quot;use&quot;,
+            &quot;status&quot;: &quot;external&quot;,
+            &quot;conditions&quot;: [
+              &quot;Unreviewed Rust attribute tokio::main may generate/change items&quot;
+            ]
+          }
+        ],
+        &quot;cacheHits&quot;: {
+          &quot;syntax-facts&quot;: 5,
+          &quot;rust-imports&quot;: 1,
+          &quot;rust-symbols&quot;: 1,
+          &quot;rust-routers&quot;: 1
+        },
+        &quot;cacheEqual&quot;: true,
+        &quot;revisionEqual&quot;: true,
+        &quot;graphFingerprint&quot;: &quot;6ddca115faa9ada39b5f96c36067d794232469d8a6a041aa89994f23969a4d77&quot;,
+        &quot;boundary&quot;: &quot;Original Cargo/module/scoped import, direct source function/closure/reference and bounded native router source integration only. Recorded features/cfg are assumptions; no compiler, build, macro expansion, dependency execution, runtime, broad router recall, trait/generic dispatch, performance or production recall qualification.&quot;,
+        &quot;unreadSymlinks&quot;: 0,
+        &quot;routerEndpoints&quot;: 1,
+        &quot;qualifiedRouterEndpoints&quot;: 1,
+        &quot;declaredRouterEndpoints&quot;: 1,
+        &quot;originalHandlerEdges&quot;: 1,
+        &quot;frameworkCallEdges&quot;: 0,
+        &quot;routerSamples&quot;: [
+          {
+            &quot;path&quot;: &quot;warp/src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 6,
+              &quot;startColumn&quot;: 17,
+              &quot;endLine&quot;: 6,
+              &quot;endColumn&quot;: 86
+            },
+            &quot;name&quot;: &quot;ALL /hello/&lt;p0&gt;&quot;,
+            &quot;framework&quot;: &quot;warp&quot;,
+            &quot;compilation&quot;: &quot;rust-compilation:1d45d7b28929fd826136754c&quot;,
+            &quot;registration&quot;: &quot;explicit&quot;,
+            &quot;routePath&quot;: &quot;/hello/&lt;p0&gt;&quot;,
+            &quot;methods&quot;: &quot;*&quot;,
+            &quot;dialect&quot;: &quot;warp-0.3&quot;,
+            &quot;conditions&quot;: [],
+            &quot;handler&quot;: [
+              {
+                &quot;id&quot;: &quot;symbol:0b5a44131ba055083d64b47c&quot;,
+                &quot;path&quot;: &quot;warp/src/main.rs&quot;,
+                &quot;range&quot;: {
+                  &quot;startLine&quot;: 6,
+                  &quot;startColumn&quot;: 51,
+                  &quot;endLine&quot;: 6,
+                  &quot;endColumn&quot;: 85
+                },
+                &quot;name&quot;: &quot;&lt;closure&gt;&quot;,
+                &quot;kind&quot;: &quot;closure&quot;
+              }
+            ],
+            &quot;proof&quot;: [
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo package/workspace/edition/target inputs; no target tools run&quot;
+              },
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo bin target warp at warp/src/main.rs&quot;
+              },
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original normal Cargo dependency tokio (tokio)&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original registry tokio requirement 1; reviewed native tokio-1 contract, without executing dependency code&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+                &quot;line&quot;: 4,
+                &quot;explanation&quot;: &quot;Original selected Rust bin main entry&quot;,
+                &quot;endLine&quot;: 9
+              },
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original normal Cargo dependency warp (warp)&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original registry warp requirement 0.3.1; reviewed native warp-0.3 contract, without executing dependency code&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+                &quot;line&quot;: 6,
+                &quot;explanation&quot;: &quot;Original Warp path! literal/type token trees; reviewed native filter syntax without macro expansion&quot;,
+                &quot;endLine&quot;: 6
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+                &quot;line&quot;: 6,
+                &quot;explanation&quot;: &quot;Qualified original warp filter constructor&quot;,
+                &quot;endLine&quot;: 6
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+                &quot;line&quot;: 6,
+                &quot;explanation&quot;: &quot;Original consuming builder step&quot;,
+                &quot;endLine&quot;: 6
+              },
+              {
+                &quot;source&quot;: &quot;syntax&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;4&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Rust use warp::Filter&quot;
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original canonical Warp Filter trait import enables native source combinators&quot;,
+                &quot;endLine&quot;: 1
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+                &quot;line&quot;: 8,
+                &quot;explanation&quot;: &quot;Original consuming builder step&quot;,
+                &quot;endLine&quot;: 8
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+                &quot;line&quot;: 8,
+                &quot;explanation&quot;: &quot;Original Warp serve Filter constructor; no exposure until a native serving future is awaited&quot;,
+                &quot;endLine&quot;: 8
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+                &quot;line&quot;: 8,
+                &quot;explanation&quot;: &quot;Original warp-0.3 server run native contract&quot;,
+                &quot;endLine&quot;: 8
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+                &quot;line&quot;: 8,
+                &quot;explanation&quot;: &quot;Original native Rust serving future is awaited on the selected source entry path&quot;,
+                &quot;endLine&quot;: 8
+              },
+              {
+                &quot;source&quot;: &quot;syntax&quot;,
+                &quot;analyzer&quot;: &quot;rust-symbols&quot;,
+                &quot;analyzerVersion&quot;: &quot;1&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+                &quot;line&quot;: 6,
+                &quot;explanation&quot;: &quot;Original Rust closure operand&quot;,
+                &quot;endLine&quot;: 6
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+                &quot;line&quot;: 6,
+                &quot;explanation&quot;: &quot;Original Warp map callback operand and ordered extraction contract&quot;,
+                &quot;endLine&quot;: 6
+              },
+              {
+                &quot;source&quot;: &quot;framework&quot;,
+                &quot;analyzer&quot;: &quot;rust-routers&quot;,
+                &quot;analyzerVersion&quot;: &quot;7&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+                &quot;line&quot;: 6,
+                &quot;explanation&quot;: &quot;Original warp ALL /hello/&lt;p0&gt; under selected Cargo source context&quot;,
+                &quot;endLine&quot;: 6
+              }
+            ]
+          }
+        ],
+        &quot;selectedFiles&quot;: [
+          &quot;warp/src/main.rs&quot;
+        ],
+        &quot;selectedDeclarations&quot;: [
+          {
+            &quot;id&quot;: &quot;symbol:0b5a44131ba055083d64b47c&quot;,
+            &quot;path&quot;: &quot;warp/src/main.rs&quot;,
+            &quot;name&quot;: &quot;&lt;closure&gt;&quot;,
+            &quot;kind&quot;: &quot;closure&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 6,
+              &quot;startColumn&quot;: 51,
+              &quot;endLine&quot;: 6,
+              &quot;endColumn&quot;: 85
+            }
+          },
+          {
+            &quot;id&quot;: &quot;symbol:c1d0fbdbab95eb46cae59de9&quot;,
+            &quot;path&quot;: &quot;warp/src/main.rs&quot;,
+            &quot;name&quot;: &quot;main&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 4,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 9,
+              &quot;endColumn&quot;: 2
+            }
+          }
+        ],
+        &quot;localImportSamples&quot;: [],
+        &quot;sourceCallSamples&quot;: [
+          {
+            &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 6,
+              &quot;startColumn&quot;: 17,
+              &quot;endLine&quot;: 6,
+              &quot;endColumn&quot;: 86
+            },
+            &quot;owner&quot;: &quot;main&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute tokio::main may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 8,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 8,
+              &quot;endColumn&quot;: 51
+            },
+            &quot;owner&quot;: &quot;main&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute tokio::main may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 8,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 8,
+              &quot;endColumn&quot;: 23
+            },
+            &quot;owner&quot;: &quot;main&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute tokio::main may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          }
+        ]
+      }
+    },
+    {
+      &quot;sample&quot;: {
+        &quot;name&quot;: &quot;Legacy Rocket 0.4 boundary&quot;,
+        &quot;pin&quot;: &quot;benchmark&quot;,
+        &quot;manifest&quot;: &quot;rocket/Cargo.toml&quot;,
+        &quot;file&quot;: &quot;rocket/src/main.rs&quot;,
+        &quot;target&quot;: &quot;rocket&quot;,
+        &quot;edition&quot;: &quot;2018&quot;,
+        &quot;framework&quot;: &quot;rocket&quot;,
+        &quot;requirement&quot;: &quot;0.4.7&quot;,
+        &quot;beforeQualified&quot;: 0,
+        &quot;declarations&quot;: [
+          [
+            &quot;index&quot;,
+            &quot;function&quot;,
+            7
+          ],
+          [
+            &quot;main&quot;,
+            &quot;function&quot;,
+            11
+          ]
+        ],
+        &quot;routes&quot;: [],
+        &quot;outsideRoutes&quot;: 1,
+        &quot;boundary&quot;: &quot;One original GET / index route uses Rocket 0.4.7, ignite and nightly compiler features; no Rocket 0.5 contract is borrowed.&quot;
+      },
+      &quot;pin&quot;: {
+        &quot;repository&quot;: &quot;rousan/rust-web-frameworks-benchmark&quot;,
+        &quot;commit&quot;: &quot;7aaad31609f18ab73668e33378dc1d07e1d7368d&quot;
+      },
+      &quot;url&quot;: &quot;https://github.com/rousan/rust-web-frameworks-benchmark/blob/7aaad31609f18ab73668e33378dc1d07e1d7368d/rocket/src/main.rs&quot;,
+      &quot;before&quot;: {
+        &quot;qualifiedEndpoints&quot;: 0,
+        &quot;originalHandlers&quot;: 0,
+        &quot;selectedDeclarations&quot;: 2,
+        &quot;graphFingerprint&quot;: &quot;0d51d3bec062ba8deb8cf5d2865b10dd723b5a209098a307c132ad5604ac1b07&quot;
+      },
+      &quot;review&quot;: {
+        &quot;declarations&quot;: 2,
+        &quot;functions&quot;: 2,
+        &quot;closures&quot;: 0,
+        &quot;sourceRoutes&quot;: 1,
+        &quot;supportedRoutes&quot;: 0,
+        &quot;confirmedRoutes&quot;: 0,
+        &quot;conditionalRoutes&quot;: 0,
+        &quot;outsideProfileRoutes&quot;: 1,
+        &quot;originalHandlerPairs&quot;: 0,
+        &quot;falsePositiveRoutes&quot;: 0,
+        &quot;missedSupportedRoutes&quot;: 0,
+        &quot;generalCalls&quot;: 3,
+        &quot;generalCallWinners&quot;: 0
+      },
+      &quot;evidence&quot;: {
+        &quot;commit&quot;: &quot;7aaad31609f18ab73668e33378dc1d07e1d7368d&quot;,
+        &quot;copiedFiles&quot;: 19,
+        &quot;trackedBlobDigest&quot;: &quot;dc0dc96e2a0a4ae455d24ead3218b693ee41e401d0d2b4942a9b573902558799&quot;,
+        &quot;qualificationInputs&quot;: {
+          &quot;applications&quot;: [
+            {
+              &quot;name&quot;: &quot;sample&quot;,
+              &quot;path&quot;: &quot;.&quot;,
+              &quot;rust&quot;: {
+                &quot;package&quot;: &quot;rocket/Cargo.toml&quot;,
+                &quot;target&quot;: {
+                  &quot;kind&quot;: &quot;bin&quot;,
+                  &quot;name&quot;: &quot;rocket&quot;
+                },
+                &quot;features&quot;: [],
+                &quot;defaultFeatures&quot;: false
+              }
+            }
+          ]
+        },
+        &quot;files&quot;: 5,
+        &quot;declarations&quot;: 14,
+        &quot;structure&quot;: {
+          &quot;supported&quot;: 5
+        },
+        &quot;imports&quot;: {
+          &quot;external&quot;: 1
+        },
+        &quot;importEdges&quot;: 0,
+        &quot;compilationCount&quot;: 1,
+        &quot;calls&quot;: {
+          &quot;unsupported&quot;: 3
+        },
+        &quot;references&quot;: {
+          &quot;unsupported&quot;: 4
+        },
+        &quot;callEdges&quot;: 0,
+        &quot;referenceEdges&quot;: 0,
+        &quot;anonymousDeclarations&quot;: 5,
+        &quot;symbolSamples&quot;: [
+          {
+            &quot;file&quot;: &quot;rocket/src/main.rs&quot;,
+            &quot;line&quot;: 12,
+            &quot;name&quot;: &quot;rocket::ignite.mount.launch&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute feature may generate/change items; Unreviewed Rust attribute get may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;rocket/src/main.rs&quot;,
+            &quot;line&quot;: 12,
+            &quot;name&quot;: &quot;rocket::ignite.mount&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute feature may generate/change items; Unreviewed Rust attribute get may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;rocket/src/main.rs&quot;,
+            &quot;line&quot;: 12,
+            &quot;name&quot;: &quot;rocket::ignite&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute feature may generate/change items; Unreviewed Rust attribute get may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          }
+        ],
+        &quot;projects&quot;: [
+          {
+            &quot;id&quot;: &quot;project:03dea0b07b290b822e378283&quot;,
+            &quot;root&quot;: &quot;actix&quot;,
+            &quot;manifest&quot;: &quot;actix/Cargo.toml&quot;,
+            &quot;name&quot;: &quot;actix&quot;,
+            &quot;version&quot;: &quot;0.1.0&quot;,
+            &quot;edition&quot;: &quot;2018&quot;,
+            &quot;resolver&quot;: &quot;1&quot;,
+            &quot;configuration&quot;: [],
+            &quot;features&quot;: {},
+            &quot;dependencies&quot;: [
+              {
+                &quot;key&quot;: &quot;actix-web&quot;,
+                &quot;name&quot;: &quot;actix_web&quot;,
+                &quot;renamed&quot;: false,
+                &quot;package&quot;: &quot;actix-web&quot;,
+                &quot;version&quot;: &quot;3.3.2&quot;,
+                &quot;source&quot;: &quot;registry&quot;,
+                &quot;sourceId&quot;: &quot;crates-io&quot;,
+                &quot;optional&quot;: false,
+                &quot;defaultFeatures&quot;: true,
+                &quot;features&quot;: [],
+                &quot;scope&quot;: &quot;normal&quot;,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;actix/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency actix-web (actix-web)&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;targets&quot;: [
+              {
+                &quot;id&quot;: &quot;crate:8b2969dfef9ad640cd5ae407&quot;,
+                &quot;kind&quot;: &quot;bin&quot;,
+                &quot;name&quot;: &quot;actix&quot;,
+                &quot;crateName&quot;: &quot;actix&quot;,
+                &quot;file&quot;: &quot;actix/src/main.rs&quot;,
+                &quot;requiredFeatures&quot;: [],
+                &quot;procMacro&quot;: false,
+                &quot;harness&quot;: true,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;actix/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original Cargo bin target actix at actix/src/main.rs&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;gaps&quot;: [],
+            &quot;proof&quot;: [
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;actix/Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo package/workspace/edition/target inputs; no target tools run&quot;
+              }
+            ]
+          },
+          {
+            &quot;id&quot;: &quot;project:c6c27452a0d36c1ef7a20f1d&quot;,
+            &quot;root&quot;: &quot;gotham&quot;,
+            &quot;manifest&quot;: &quot;gotham/Cargo.toml&quot;,
+            &quot;name&quot;: &quot;gotham&quot;,
+            &quot;version&quot;: &quot;0.1.0&quot;,
+            &quot;edition&quot;: &quot;2018&quot;,
+            &quot;resolver&quot;: &quot;1&quot;,
+            &quot;configuration&quot;: [],
+            &quot;features&quot;: {},
+            &quot;dependencies&quot;: [
+              {
+                &quot;key&quot;: &quot;gotham&quot;,
+                &quot;name&quot;: &quot;gotham&quot;,
+                &quot;renamed&quot;: false,
+                &quot;package&quot;: &quot;gotham&quot;,
+                &quot;version&quot;: &quot;0.6.0&quot;,
+                &quot;source&quot;: &quot;registry&quot;,
+                &quot;sourceId&quot;: &quot;crates-io&quot;,
+                &quot;optional&quot;: false,
+                &quot;defaultFeatures&quot;: true,
+                &quot;features&quot;: [],
+                &quot;scope&quot;: &quot;normal&quot;,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;gotham/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency gotham (gotham)&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;targets&quot;: [
+              {
+                &quot;id&quot;: &quot;crate:2ec0c04dc0703a8bdd4aae46&quot;,
+                &quot;kind&quot;: &quot;bin&quot;,
+                &quot;name&quot;: &quot;gotham&quot;,
+                &quot;crateName&quot;: &quot;gotham&quot;,
+                &quot;file&quot;: &quot;gotham/src/main.rs&quot;,
+                &quot;requiredFeatures&quot;: [],
+                &quot;procMacro&quot;: false,
+                &quot;harness&quot;: true,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;gotham/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original Cargo bin target gotham at gotham/src/main.rs&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;gaps&quot;: [],
+            &quot;proof&quot;: [
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;gotham/Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo package/workspace/edition/target inputs; no target tools run&quot;
+              }
+            ]
+          },
+          {
+            &quot;id&quot;: &quot;project:ddf37a1485145b01a3d7fe80&quot;,
+            &quot;root&quot;: &quot;hyper&quot;,
+            &quot;manifest&quot;: &quot;hyper/Cargo.toml&quot;,
+            &quot;name&quot;: &quot;hyper&quot;,
+            &quot;version&quot;: &quot;0.1.0&quot;,
+            &quot;edition&quot;: &quot;2018&quot;,
+            &quot;resolver&quot;: &quot;1&quot;,
+            &quot;configuration&quot;: [],
+            &quot;features&quot;: {},
+            &quot;dependencies&quot;: [
+              {
+                &quot;key&quot;: &quot;hyper&quot;,
+                &quot;name&quot;: &quot;hyper&quot;,
+                &quot;renamed&quot;: false,
+                &quot;package&quot;: &quot;hyper&quot;,
+                &quot;version&quot;: &quot;0.14&quot;,
+                &quot;source&quot;: &quot;registry&quot;,
+                &quot;sourceId&quot;: &quot;crates-io&quot;,
+                &quot;optional&quot;: false,
+                &quot;defaultFeatures&quot;: true,
+                &quot;features&quot;: [
+                  &quot;full&quot;
+                ],
+                &quot;scope&quot;: &quot;normal&quot;,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;hyper/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency hyper (hyper)&quot;
+                  }
+                ]
+              },
+              {
+                &quot;key&quot;: &quot;tokio&quot;,
+                &quot;name&quot;: &quot;tokio&quot;,
+                &quot;renamed&quot;: false,
+                &quot;package&quot;: &quot;tokio&quot;,
+                &quot;version&quot;: &quot;1&quot;,
+                &quot;source&quot;: &quot;registry&quot;,
+                &quot;sourceId&quot;: &quot;crates-io&quot;,
+                &quot;optional&quot;: false,
+                &quot;defaultFeatures&quot;: true,
+                &quot;features&quot;: [
+                  &quot;full&quot;
+                ],
+                &quot;scope&quot;: &quot;normal&quot;,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;hyper/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency tokio (tokio)&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;targets&quot;: [
+              {
+                &quot;id&quot;: &quot;crate:91efc9d5aeb4515de73f9936&quot;,
+                &quot;kind&quot;: &quot;bin&quot;,
+                &quot;name&quot;: &quot;hyper&quot;,
+                &quot;crateName&quot;: &quot;hyper&quot;,
+                &quot;file&quot;: &quot;hyper/src/main.rs&quot;,
+                &quot;requiredFeatures&quot;: [],
+                &quot;procMacro&quot;: false,
+                &quot;harness&quot;: true,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;hyper/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original Cargo bin target hyper at hyper/src/main.rs&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;gaps&quot;: [],
+            &quot;proof&quot;: [
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;hyper/Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo package/workspace/edition/target inputs; no target tools run&quot;
+              }
+            ]
+          },
+          {
+            &quot;id&quot;: &quot;project:b714ccf00b17c7375b20bcbc&quot;,
+            &quot;root&quot;: &quot;rocket&quot;,
+            &quot;manifest&quot;: &quot;rocket/Cargo.toml&quot;,
+            &quot;name&quot;: &quot;rocket&quot;,
+            &quot;version&quot;: &quot;0.1.0&quot;,
+            &quot;edition&quot;: &quot;2018&quot;,
+            &quot;resolver&quot;: &quot;1&quot;,
+            &quot;configuration&quot;: [],
+            &quot;features&quot;: {},
+            &quot;dependencies&quot;: [
+              {
+                &quot;key&quot;: &quot;rocket&quot;,
+                &quot;name&quot;: &quot;rocket&quot;,
+                &quot;renamed&quot;: false,
+                &quot;package&quot;: &quot;rocket&quot;,
+                &quot;version&quot;: &quot;0.4.7&quot;,
+                &quot;source&quot;: &quot;registry&quot;,
+                &quot;sourceId&quot;: &quot;crates-io&quot;,
+                &quot;optional&quot;: false,
+                &quot;defaultFeatures&quot;: true,
+                &quot;features&quot;: [],
+                &quot;scope&quot;: &quot;normal&quot;,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;rocket/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency rocket (rocket)&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;targets&quot;: [
+              {
+                &quot;id&quot;: &quot;crate:fbacb34b6a7597641c705b67&quot;,
+                &quot;kind&quot;: &quot;bin&quot;,
+                &quot;name&quot;: &quot;rocket&quot;,
+                &quot;crateName&quot;: &quot;rocket&quot;,
+                &quot;file&quot;: &quot;rocket/src/main.rs&quot;,
+                &quot;requiredFeatures&quot;: [],
+                &quot;procMacro&quot;: false,
+                &quot;harness&quot;: true,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;rocket/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original Cargo bin target rocket at rocket/src/main.rs&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;gaps&quot;: [],
+            &quot;proof&quot;: [
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;rocket/Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo package/workspace/edition/target inputs; no target tools run&quot;
+              }
+            ]
+          },
+          {
+            &quot;id&quot;: &quot;project:eb8eb67f039616778df2ed4c&quot;,
+            &quot;root&quot;: &quot;warp&quot;,
+            &quot;manifest&quot;: &quot;warp/Cargo.toml&quot;,
+            &quot;name&quot;: &quot;warp&quot;,
+            &quot;version&quot;: &quot;0.1.0&quot;,
+            &quot;edition&quot;: &quot;2018&quot;,
+            &quot;resolver&quot;: &quot;1&quot;,
+            &quot;configuration&quot;: [],
+            &quot;features&quot;: {},
+            &quot;dependencies&quot;: [
+              {
+                &quot;key&quot;: &quot;tokio&quot;,
+                &quot;name&quot;: &quot;tokio&quot;,
+                &quot;renamed&quot;: false,
+                &quot;package&quot;: &quot;tokio&quot;,
+                &quot;version&quot;: &quot;1&quot;,
+                &quot;source&quot;: &quot;registry&quot;,
+                &quot;sourceId&quot;: &quot;crates-io&quot;,
+                &quot;optional&quot;: false,
+                &quot;defaultFeatures&quot;: true,
+                &quot;features&quot;: [
+                  &quot;full&quot;
+                ],
+                &quot;scope&quot;: &quot;normal&quot;,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency tokio (tokio)&quot;
+                  }
+                ]
+              },
+              {
+                &quot;key&quot;: &quot;warp&quot;,
+                &quot;name&quot;: &quot;warp&quot;,
+                &quot;renamed&quot;: false,
+                &quot;package&quot;: &quot;warp&quot;,
+                &quot;version&quot;: &quot;0.3.1&quot;,
+                &quot;source&quot;: &quot;registry&quot;,
+                &quot;sourceId&quot;: &quot;crates-io&quot;,
+                &quot;optional&quot;: false,
+                &quot;defaultFeatures&quot;: true,
+                &quot;features&quot;: [],
+                &quot;scope&quot;: &quot;normal&quot;,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency warp (warp)&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;targets&quot;: [
+              {
+                &quot;id&quot;: &quot;crate:77254b62671ddd0075486d57&quot;,
+                &quot;kind&quot;: &quot;bin&quot;,
+                &quot;name&quot;: &quot;warp&quot;,
+                &quot;crateName&quot;: &quot;warp&quot;,
+                &quot;file&quot;: &quot;warp/src/main.rs&quot;,
+                &quot;requiredFeatures&quot;: [],
+                &quot;procMacro&quot;: false,
+                &quot;harness&quot;: true,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original Cargo bin target warp at warp/src/main.rs&quot;
+                  }
+                ]
+              }
+            ],
+            &quot;gaps&quot;: [],
+            &quot;proof&quot;: [
+              {
+                &quot;source&quot;: &quot;filesystem&quot;,
+                &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                &quot;confidence&quot;: 1,
+                &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+                &quot;line&quot;: 1,
+                &quot;explanation&quot;: &quot;Original Cargo package/workspace/edition/target inputs; no target tools run&quot;
+              }
+            ]
+          }
+        ],
+        &quot;compilations&quot;: [
+          {
+            &quot;id&quot;: &quot;rust-compilation:1a7c41ea9f85b87ecaa748f6&quot;,
+            &quot;invocation&quot;: &quot;rust-invocation:e16cce7e3dc8ace047aad727&quot;,
+            &quot;target&quot;: &quot;crate:fbacb34b6a7597641c705b67&quot;,
+            &quot;package&quot;: &quot;project:b714ccf00b17c7375b20bcbc&quot;,
+            &quot;kind&quot;: &quot;bin&quot;,
+            &quot;crateName&quot;: &quot;rocket&quot;,
+            &quot;file&quot;: &quot;rocket/src/main.rs&quot;,
+            &quot;features&quot;: [],
+            &quot;cfg&quot;: null,
+            &quot;targetTriple&quot;: null,
+            &quot;test&quot;: false,
+            &quot;selected&quot;: true,
+            &quot;gaps&quot;: [],
+            &quot;dependencies&quot;: [
+              {
+                &quot;name&quot;: &quot;rocket&quot;,
+                &quot;active&quot;: true,
+                &quot;gaps&quot;: [],
+                &quot;proof&quot;: [
+                  {
+                    &quot;source&quot;: &quot;filesystem&quot;,
+                    &quot;analyzer&quot;: &quot;rust-imports&quot;,
+                    &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+                    &quot;confidence&quot;: 1,
+                    &quot;file&quot;: &quot;rocket/Cargo.toml&quot;,
+                    &quot;line&quot;: 1,
+                    &quot;explanation&quot;: &quot;Original normal Cargo dependency rocket (rocket)&quot;
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        &quot;manifestOutcomes&quot;: [
+          {
+            &quot;file&quot;: &quot;actix/Cargo.toml&quot;,
+            &quot;status&quot;: &quot;package&quot;,
+            &quot;gaps&quot;: []
+          },
+          {
+            &quot;file&quot;: &quot;gotham/Cargo.toml&quot;,
+            &quot;status&quot;: &quot;package&quot;,
+            &quot;gaps&quot;: []
+          },
+          {
+            &quot;file&quot;: &quot;hyper/Cargo.toml&quot;,
+            &quot;status&quot;: &quot;package&quot;,
+            &quot;gaps&quot;: []
+          },
+          {
+            &quot;file&quot;: &quot;rocket/Cargo.toml&quot;,
+            &quot;status&quot;: &quot;package&quot;,
+            &quot;gaps&quot;: []
+          },
+          {
+            &quot;file&quot;: &quot;warp/Cargo.toml&quot;,
+            &quot;status&quot;: &quot;package&quot;,
+            &quot;gaps&quot;: []
+          }
+        ],
+        &quot;diagnostics&quot;: {
+          &quot;Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;: 1,
+          &quot;Unreviewed Rust attribute get may generate/change items&quot;: 1,
+          &quot;Unreviewed Rust attribute feature may generate/change items&quot;: 1
+        },
+        &quot;samples&quot;: [
+          {
+            &quot;file&quot;: &quot;rocket/src/main.rs&quot;,
+            &quot;line&quot;: 4,
+            &quot;specifier&quot;: &quot;rocket&quot;,
+            &quot;kind&quot;: &quot;extern&quot;,
+            &quot;status&quot;: &quot;external&quot;,
+            &quot;conditions&quot;: [
+              &quot;Unreviewed Rust attribute feature may generate/change items&quot;,
+              &quot;Unreviewed Rust attribute get may generate/change items&quot;,
+              &quot;Unreviewed Rust attribute macro_use may generate/change items&quot;
+            ]
+          }
+        ],
+        &quot;cacheHits&quot;: {
+          &quot;syntax-facts&quot;: 5,
+          &quot;rust-imports&quot;: 1,
+          &quot;rust-symbols&quot;: 1,
+          &quot;rust-routers&quot;: 1
+        },
+        &quot;cacheEqual&quot;: true,
+        &quot;revisionEqual&quot;: true,
+        &quot;graphFingerprint&quot;: &quot;69f5bfa54c47f2302bbfc61910fa61d8dd2bb8c7814c4319a2c92090b49b8e21&quot;,
+        &quot;boundary&quot;: &quot;Original Cargo/module/scoped import, direct source function/closure/reference and bounded native router source integration only. Recorded features/cfg are assumptions; no compiler, build, macro expansion, dependency execution, runtime, broad router recall, trait/generic dispatch, performance or production recall qualification.&quot;,
+        &quot;unreadSymlinks&quot;: 0,
+        &quot;routerEndpoints&quot;: 0,
+        &quot;qualifiedRouterEndpoints&quot;: 0,
+        &quot;declaredRouterEndpoints&quot;: 0,
+        &quot;originalHandlerEdges&quot;: 0,
+        &quot;frameworkCallEdges&quot;: 0,
+        &quot;routerSamples&quot;: [],
+        &quot;selectedFiles&quot;: [
+          &quot;rocket/src/main.rs&quot;
+        ],
+        &quot;selectedDeclarations&quot;: [
+          {
+            &quot;id&quot;: &quot;symbol:0d4401e4d38be7be9ee5005b&quot;,
+            &quot;path&quot;: &quot;rocket/src/main.rs&quot;,
+            &quot;name&quot;: &quot;index&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 7,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 9,
+              &quot;endColumn&quot;: 2
+            }
+          },
+          {
+            &quot;id&quot;: &quot;symbol:bd1b43fca5b9c63011e7837f&quot;,
+            &quot;path&quot;: &quot;rocket/src/main.rs&quot;,
+            &quot;name&quot;: &quot;main&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 11,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 13,
+              &quot;endColumn&quot;: 2
+            }
+          }
+        ],
+        &quot;localImportSamples&quot;: [],
+        &quot;sourceCallSamples&quot;: [
+          {
+            &quot;file&quot;: &quot;rocket/src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 12,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 12,
+              &quot;endColumn&quot;: 57
+            },
+            &quot;owner&quot;: &quot;main&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute feature may generate/change items; Unreviewed Rust attribute get may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;rocket/src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 12,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 12,
+              &quot;endColumn&quot;: 48
+            },
+            &quot;owner&quot;: &quot;main&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute feature may generate/change items; Unreviewed Rust attribute get may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          },
+          {
+            &quot;file&quot;: &quot;rocket/src/main.rs&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 12,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 12,
+              &quot;endColumn&quot;: 21
+            },
+            &quot;owner&quot;: &quot;main&quot;,
+            &quot;status&quot;: &quot;unsupported&quot;,
+            &quot;reason&quot;: &quot;Unreviewed Rust attribute feature may generate/change items; Unreviewed Rust attribute get may generate/change items; Rust macro invocation can supply generated/scoped items; expansion is unavailable&quot;,
+            &quot;execution&quot;: &quot;direct&quot;
+          }
+        ]
+      }
+    }
+  ]
+}</pre></details></main></html>

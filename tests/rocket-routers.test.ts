@@ -32,6 +32,49 @@ const requestedHandler = (graph: SoftwareGraph, caller: string) => { const sourc
 const shape = (graph: SoftwareGraph) => canonicalJson({ entities: graph.entities, relations: graph.relations, diagnostics: graph.diagnostics.filter(d => !['git-metrics', 'indexer'].includes(d.analyzer) && d.code !== 'git-ignore-unavailable') });
 const launch = (handlers: string, list = 'handler', prefix = '/api') => `${handlers}#[rocket::launch]fn application()->_ {rocket::build().mount("${prefix}",rocket::routes![${list}])}`;
 const original = 'fn leaf(){}#[rocket::get("/hello")]fn handler()->&\'static str{leaf();"hello"}';
+test('Rocket native form derives preserve sibling routes and original proof without qualifying generated traits or query conversion', async () => {
+    const source = '// 😀 original\r\n#[macro_use]extern crate rocket;\r\n#[derive(FromFormField)]\r\nenum Lang{#[field(value="en")]English,#[field(value="ru")]Russian}\r\n#[derive(FromForm)]\r\nstruct Options<\'r>{emoji:bool,name:Option<&\'r str>}\r\nfn leaf(){}impl Lang{fn original_method(){}}\r\n#[get("/world")]fn world()->&\'static str{Lang::original_method();leaf();"ok"}\r\n#[get("/мир")]fn mir()->&\'static str{"ok"}\r\n#[get("/<name>/<age>",rank=2)]fn wave(name:&str,age:u8)->String{format!("{name} {age}")}\r\n#[get("/?<lang>&<opt..>")]fn hello(lang:Option<Lang>,opt:Options<\'_>)->String{String::new()}\r\n#[launch]fn rocket()->_ {rocket::build().mount("/hello",routes![world,mir]).mount("/wave",routes![wave]).mount("/",routes![hello])}';
+    const g = await index(await repo(source,'rocket="0.5.1"',{'client.ts':'export async function world(){await fetch("https://api.test/hello/world")}export async function mir(){await fetch("https://api.test/hello/%D0%BC%D0%B8%D1%80")}export async function wave(){await fetch("https://api.test/wave/person/100")}export async function overflow(){await fetch("https://api.test/wave/person/256")}export async function query(){await fetch("https://api.test/?lang=en")}' }));
+    const routes = endpoints(g).filter(endpoint=>endpoint.metadata.registration==='explicit');assert.equal(routes.length,4);
+    const confirmed = routes.filter(endpoint=>!endpoint.metadata.constraintsUnresolved);assert.equal(confirmed.length,3);
+    assert.deepEqual(confirmed.map(endpoint=>handler(g,endpoint)!.name).sort(),['mir','wave','world']);
+    assert.equal(requests(g).length,3);assert.equal(requestedHandler(g,'overflow'),undefined);assert.equal(requestedHandler(g,'query'),undefined);
+    const query = routes.find(endpoint=>handler(g,endpoint)!.name==='hello')!;assert.ok(query.metadata.constraintsUnresolved);
+    for(const endpoint of confirmed){assert.ok(endpoint.evidence.some(fact=>fact.file==='src/main.rs'&&fact.line===3&&fact.explanation?.includes('FromFormField')));assert.ok(endpoint.evidence.some(fact=>fact.file==='src/main.rs'&&fact.line===5&&fact.explanation?.includes('FromForm derive')));}
+    const world=handler(g,confirmed.find(endpoint=>handler(g,endpoint)!.name==='world')!)!;
+    const calls=g.relations.filter(edge=>edge.type==='calls'&&edge.from===world.id&&edge.metadata?.adapter==='rust-routers');assert.deepEqual(calls.map(edge=>g.entities.find(item=>item.id===edge.to)!.name),['leaf'],'derived original types retain their own generation gap');
+    const unit=g.entities.find(item=>item.type==='file'&&item.path==='src/main.rs')!;
+    assert.ok((unit.metadata.rustCallOutcomes as any[]).every(item=>item.status==='unsupported'),'general binding does not borrow framework derive or launch contracts');
+});
+test('Rocket form derive identities follow explicit imports, selective macro imports and separate macro/value namespaces', async () => {
+    for(const prefix of ['use rocket::FromForm as Form;','#[macro_use(FromForm)]extern crate rocket;use rocket::FromForm as Form;','use rocket::FromForm as Form;fn Form(){}']){
+        const g=await index(await repo(prefix+'#[derive(Form)]struct Options{value:bool}#[rocket::get("/hello")]fn handler()->&\'static str{"ok"}#[rocket::launch]fn rocket()->_ {rocket::build().mount("/",rocket::routes![handler])}'));
+        assert.equal(endpoints(g).filter(endpoint=>endpoint.metadata.registration==='explicit'&&!endpoint.metadata.constraintsUnresolved).length,1,prefix);
+    }
+    const g=await index(await repo('#[macro_use]extern crate rocket;fn get(){}#[get("/hello")]fn handler()->&\'static str{"ok"}#[launch]fn rocket()->_ {rocket::build().mount("/",routes![handler])}'));
+    assert.equal(endpoints(g).filter(endpoint=>endpoint.metadata.registration==='explicit'&&!endpoint.metadata.constraintsUnresolved).length,1,'a function cannot shadow an attribute macro');
+    const absolute=await index(await repo('mod rocket{pub mod async_trait{}}#[derive(::rocket::FromFormField)]enum Lang{English}#[::rocket::get("/hello")]fn handler()->&\'static str{"ok"}#[::rocket::launch]fn application()->_ {::rocket::build().mount("/",::rocket::routes![handler])}'));
+    assert.equal(endpoints(absolute).filter(endpoint=>endpoint.metadata.registration==='explicit'&&!endpoint.metadata.constraintsUnresolved).length,1,'FromFormField uses absolute native paths, independently of the relative FromForm async_trait delegate');
+});
+test('Opaque, composed, source and unavailable Rocket form derives cannot certify sibling routes', async () => {
+    const route='#[rocket::get("/hello")]fn handler()->&\'static str{"ok"}#[rocket::launch]fn application()->_ {rocket::build().mount("/",rocket::routes![handler])}';
+    for(const item of ['#[derive(custom::FromForm)]struct Options{value:bool}','#[derive(rocket::FromForm,custom::Extra)]struct Options{value:bool}','#[derive(rocket::FromForm)]#[custom::change]struct Options{value:bool}','#[derive(rocket::FromForm)]struct Options{value:custom!()}','#[derive(rocket::FromForm)]struct Options{#[field(default=custom!())]value:bool}','mod fake{pub struct FromForm;}#[derive(fake::FromForm)]struct Options{value:bool}','#[derive(rocket::FromFormField)]struct Options{value:bool}','mod rocket{pub mod async_trait{}}#[derive(::rocket::FromForm)]struct Options{value:bool}']){
+        const g=await index(await repo(item+(item.startsWith('mod rocket{')?route.replaceAll('rocket::','::rocket::'):route)));assert.equal(endpoints(g).filter(endpoint=>!endpoint.metadata.constraintsUnresolved).length,0,item);
+    }
+    for(const [dependency,name] of [['web={package="rocket",version="0.5.1"}','web'],['rocket={version="0.5.1",registry="fork"}','rocket'],['rocket="0.4"','rocket'],['rocket={version=">=0.5,<0.7"}','rocket']]){
+        const g=await index(await repo(`#[derive(${name}::FromForm)]struct Options{value:bool}`+route.replaceAll('rocket::',name+'::'),dependency));assert.equal(endpoints(g).filter(endpoint=>!endpoint.metadata.constraintsUnresolved).length,0,dependency);
+    }
+});
+test('Conditional Rocket form derives and source edits preserve original IDs and invalidate namespace proof', async () => {
+    const source='// 😀\r\n#[cfg_attr(unix,derive(rocket::FromForm))]\r\nstruct Options{value:bool}\r\n#[rocket::get("/hello")]fn handler()->&\'static str{"ok"}\r\n#[rocket::launch]fn rocket()->_ {rocket::build().mount("/",rocket::routes![handler])}';
+    const root=await repo(source),cacheRoot=await repo(''),rust={...selected,cfg:{flags:['unix'],values:{}}};
+    assert.equal(endpoints(await index(root)).filter(endpoint=>!endpoint.metadata.constraintsUnresolved).length,0);
+    const cold=await index(root,new AnalysisCache(cacheRoot),rust),cache=new AnalysisCache(cacheRoot),warm=await index(root,cache,rust),revision=await index(root,undefined,rust,'original');assert.equal(shape(cold),shape(warm));assert.equal(shape(cold),shape(revision));assert.ok(cache.events.some(event=>event.analyzer==='rust-routers'&&event.hit));
+    const route=endpoints(cold).find(endpoint=>endpoint.metadata.registration==='explicit')!;assert.ok(route&&!route.metadata.constraintsUnresolved);assert.ok(route.evidence.some(fact=>fact.line===2&&fact.explanation?.includes('FromForm derive')));
+    await put(root,'src/main.rs','// shifted\r\n\r\n'+source);const shifted=await index(root,new AnalysisCache(cacheRoot),rust),updated=endpoints(shifted).find(endpoint=>endpoint.id===route.id)!;assert.ok(updated);assert.ok(updated.evidence.some(fact=>fact.line===4&&fact.explanation?.includes('FromForm derive')));
+    await put(root,'src/main.rs',source.replace('derive(rocket::FromForm)','derive(custom::FromForm)'));assert.equal(endpoints(await index(root,new AnalysisCache(cacheRoot),rust)).filter(endpoint=>!endpoint.metadata.constraintsUnresolved).length,0);
+    await put(root,'src/main.rs',source);await put(root,'Cargo.toml','[package]\nname="api"\nversion="1.0.0"\nedition="2021"\n[dependencies]\nrocket="0.4"');assert.equal(endpoints(await index(root,new AnalysisCache(cacheRoot),rust)).filter(endpoint=>!endpoint.metadata.constraintsUnresolved).length,0,'dependency versions invalidate native derive proof');
+});
 test('Rocket native paths normalize empty segments and decode each request segment after splitting', () => {
     const pattern = compileRocketPath('/hello/<name>', { name: 'str' });
     assert.equal(pattern.status, 'exact');
