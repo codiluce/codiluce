@@ -4,7 +4,7 @@ import { evidence, type Evidence } from '../../core/graph.js';
 import type { RustImportFact, RustItemFact, RustScopeFact, RustSyntaxFacts } from '../facts.js';
 import { rustAnd, rustAttributes, rustName, type RustAttributes, type RustTruth } from '../languages/rust-cfg.js';
 import { RustProjects, rustPath, type RustCompilation } from './rust-projects.js';
-export const RUST_RESOLVER_VERSION = '2';
+export const RUST_RESOLVER_VERSION = '3';
 export interface RustScope {
     id: string;
     fact: RustScopeFact;
@@ -21,7 +21,9 @@ export interface RustScope {
     attributes: RustAttributes;
     items: RustSymbol[];
     imports: RustImportSite[];
+    namespaceProof: Evidence[];
 }
+export interface RustNamespaceAttributes { attributes: RustAttributes; proof: Evidence[] }
 export interface RustSymbol {
     id: string;
     name: string;
@@ -87,7 +89,7 @@ export class RustResolver {
     readonly membership = new Map<string, RustScope[]>();
     private readonly loading = new Set<string>();
     private readonly resolved = new Map<string, RustResolution>();
-    constructor(readonly context: AnalysisContext, private readonly attributeReader?: (attributes: string[], compilation: RustCompilation, file: string, scope: string) => RustAttributes, private readonly scopeGapReader?: (fact: RustScopeFact, compilation: RustCompilation, file: string) => string[]) {
+    constructor(readonly context: AnalysisContext, private readonly attributeReader?: (attributes: string[], compilation: RustCompilation, file: string, scope: string) => RustAttributes, private readonly scopeGapReader?: (fact: RustScopeFact, compilation: RustCompilation, file: string) => string[], private readonly namespaceAttributeReader?: (item: RustItemFact, scope: RustScope) => RustNamespaceAttributes | undefined) {
         this.projects = new RustProjects(context);
         for (const compilation of this.projects.compilations)
             this.root(compilation);
@@ -112,16 +114,19 @@ export class RustResolver {
     }
     private load(comp: RustCompilation, file: ScannedFile, fact: RustScopeFact, parent: RustScope | undefined, logicalPath: string[], directory: string, active: RustTruth, gaps: string[], seen: Set<string>, pathBase?: string): RustScope {
         const syntax = this.syntax(file.path)!, attrs = this.attributes(fact.attributes, comp, file.path, fact.owner ? fact.parent ?? fact.key : fact.key), selected = rustAnd([active, attrs.active]);
-        const scope: RustScope = { id: this.context.graph.id('rust-scope', comp.id, file.path, fact.key, logicalPath.join('::')), fact, file, compilation: comp, ...(parent ? { parent } : {}), module: undefined!, logicalPath, directory, pathBase: pathBase ?? (fact.kind === 'file' ? path.posix.dirname(file.path) : directory), active: selected, gaps: unique([...gaps, ...this.scopeGapReader?.(fact,comp,file.path)??fact.gaps, ...attrs.gaps, ...!syntax.complete ? syntax.gaps : []]), attributes: attrs, items: [], imports: [] };
+        const scope: RustScope = { id: this.context.graph.id('rust-scope', comp.id, file.path, fact.key, logicalPath.join('::')), fact, file, compilation: comp, ...(parent ? { parent } : {}), module: undefined!, logicalPath, directory, pathBase: pathBase ?? (fact.kind === 'file' ? path.posix.dirname(file.path) : directory), active: selected, gaps: unique([...gaps, ...this.scopeGapReader?.(fact,comp,file.path)??fact.gaps, ...attrs.gaps, ...!syntax.complete ? syntax.gaps : []]), attributes: attrs, items: [], imports: [], namespaceProof: [...parent?.namespaceProof ?? []] };
         scope.module = ['file', 'module'].includes(fact.kind) ? scope : parent!.module;
         if (['file', 'module'].includes(fact.kind) && parent)
             scope.moduleParent = parent.module;
         for (const item of syntax.items.filter(i => i.scope === fact.key)) {
-            const attributes = this.attributes(item.attributes, comp, file.path, fact.key);
-            if (rustAnd([selected, attributes.active]) !== false)
-                scope.gaps.push(...attributes.gaps.filter(gap => gap.startsWith('Unreviewed Rust attribute')));
+            const reviewed = this.namespaceAttributeReader?.(item, scope), attributes = reviewed?.attributes ?? this.attributes(item.attributes, comp, file.path, fact.key);
+            if (rustAnd([selected, attributes.active]) !== false) {
+                scope.gaps.push(...attributes.namespaceGaps);
+                if (reviewed) scope.namespaceProof.push(...reviewed.proof);
+            }
         }
         scope.gaps = unique(scope.gaps);
+        scope.namespaceProof = unique(scope.namespaceProof);
         this.scopes.push(scope);
         this.membership.set(file.path, [...this.membership.get(file.path) ?? [], scope]);
         if (seen.size >= 512 || this.scopes.length >= 30000) {
@@ -140,7 +145,7 @@ export class RustResolver {
                 scope.gaps.push('Original Rust declaration identity is unavailable');
                 continue;
             }
-            const symbol: RustSymbol = { id, name: item.name, namespaces: item.namespaces, scope, visibility: item.visibility, active: itemActive, gaps: unique([...scope.gaps, ...attributes.gaps, ...item.gaps]), proof: this.proof(file.path, item.range.startLine, `Original Rust ${item.kind} ${item.name}`), fact: item };
+            const symbol: RustSymbol = { id, name: item.name, namespaces: item.namespaces, scope, visibility: item.visibility, active: itemActive, gaps: unique([...scope.gaps, ...attributes.gaps, ...item.gaps]), proof: [...scope.namespaceProof, ...this.proof(file.path, item.range.startLine, `Original Rust ${item.kind} ${item.name}`)], fact: item };
             if (item.kind === 'macro' && !attributes.macroExport)
                 symbol.gaps.push('Textual macro_rules scope/import/export behavior is not qualified');
             scope.items.push(symbol);
@@ -213,7 +218,7 @@ export class RustResolver {
             const child = this.load(scope.compilation, file, root, scope, [...scope.logicalPath, item.name], directory, symbol.active, symbol.gaps, inherited);
             child.moduleParent = scope.module;
             symbol.module = child;
-            const proof = [...symbol.proof, ...this.proof(selected, 1, 'Original outlined Rust module source')];
+            const proof = [...symbol.proof, ...child.namespaceProof, ...this.proof(selected, 1, 'Original outlined Rust module source')];
             return { status: 'resolved', symbols: [symbol], proof, conditions: unique([...symbol.gaps, ...child.gaps, ...symbol.active === 'unknown' ? ['Unselected Rust module cfg'] : []]) };
         }
         finally {
@@ -304,7 +309,7 @@ export class RustResolver {
                 selected = this.glob(selected.symbols, site.scope, next);
         }
         if (selected.status === 'resolved' || selected.status === 'external')
-            selected = { ...selected, proof: [...this.proof(site.scope.file.path, site.fact.range.startLine, `Original Rust ${site.fact.kind} ${site.fact.specifier}`), ...selected.proof], conditions: unique([...selected.conditions, ...site.gaps, ...site.active === 'unknown' ? ['Unselected Rust import cfg'] : [], ...selected.status === 'resolved' ? selected.symbols.flatMap(symbol => this.exportGaps(site, symbol)) : []]) };
+            selected = { ...selected, proof: [...site.scope.namespaceProof, ...this.proof(site.scope.file.path, site.fact.range.startLine, `Original Rust ${site.fact.kind} ${site.fact.specifier}`), ...selected.proof], conditions: unique([...selected.conditions, ...site.gaps, ...site.active === 'unknown' ? ['Unselected Rust import cfg'] : [], ...selected.status === 'resolved' ? selected.symbols.flatMap(symbol => this.exportGaps(site, symbol)) : []]) };
         if (trail.size === 0)
             this.resolved.set(key, selected);
         return selected;
@@ -355,7 +360,7 @@ export class RustResolver {
         const root = this.roots.get(scope.compilation.id) ?? this.scopes.find(s => s.compilation.id === scope.compilation.id && !s.parent);
         if (!root)
             return failure('unsupported', 'Original Rust crate root is unavailable');
-        return this.value({ id: root.file.id, name: 'crate', namespaces: ['type'], scope: root, visibility: 'pub', active: root.active, gaps: root.gaps, proof: scope.compilation.proof, module: root });
+        return this.value({ id: root.file.id, name: 'crate', namespaces: ['type'], scope: root, visibility: 'pub', active: root.active, gaps: root.gaps, proof: [...scope.compilation.proof, ...root.namespaceProof], module: root });
     }
     private external(scope: RustScope, name: string, explicit = false, trail = new Set<string>()): RustResolution {
         const root = this.roots.get(scope.compilation.id) ?? this.scopes.find(s => s.compilation.id === scope.compilation.id && !s.parent), noPrelude = this.noPrelude(scope);
@@ -405,7 +410,7 @@ export class RustResolver {
         }
         else if (first === 'self') {
             const module = scope.module;
-            result = this.value({ id: module.file.id, name: 'self', namespaces: ['type'], scope: module, visibility: 'pub', active: module.active, gaps: module.gaps, proof: [], module });
+            result = this.value({ id: module.file.id, name: 'self', namespaces: ['type'], scope: module, visibility: 'pub', active: module.active, gaps: module.gaps, proof: module.namespaceProof, module });
             index++;
         }
         else if (first === 'super') {
@@ -416,7 +421,7 @@ export class RustResolver {
             }
             if (!module)
                 return failure('unresolved', 'Rust super path escapes its crate root');
-            result = this.value({ id: module.file.id, name: 'super', namespaces: ['type'], scope: module, visibility: 'pub', active: module.active, gaps: module.gaps, proof: [], module });
+            result = this.value({ id: module.file.id, name: 'super', namespaces: ['type'], scope: module, visibility: 'pub', active: module.active, gaps: module.gaps, proof: module.namespaceProof, module });
         }
         else {
             const root = this.roots.get(scope.compilation.id) ?? this.scopes.find(s => s.compilation.id === scope.compilation.id && !s.parent);

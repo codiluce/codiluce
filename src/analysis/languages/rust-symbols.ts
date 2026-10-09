@@ -2,6 +2,7 @@ import type { AnalysisContext, ScannedFile, Analyzer } from '../../core/analyzer
 import { declarationHashes, evidence, type Evidence, type CallSites } from '../../core/graph.js';
 import { fileAnalysis, type RustDefinitionFact, type RustSemanticFacts, type RustExpression, type RustTypeFact, type RustBindingFact, type RustSite, type RustImplFact } from '../facts.js';
 import { RustResolver, type RustScope, type RustSymbol, type RustResolution, RUST_RESOLVER_VERSION } from '../resolution/rust.js';
+import { sourceRustResolver } from '../resolution/rust-runtime-namespace.js';
 import { rustAttributes, rustAnd } from './rust-cfg.js';
 import { STRUCTURE_VERSION } from '../tree-sitter/analyzer.js';
 import { fileKey } from '../../pipeline/cache.js';
@@ -129,7 +130,7 @@ export class RustSymbols {
     private definitionScope(def: RustDefinition, from: RustScope): RustScope | undefined { return this.scope(def.unit.file.path, def.fact.scope, from.compilation.id); }
     private sourceSymbol(def: RustDefinition, scope: RustScope): RustSymbol {
         const attrs = this.attributes(scope, def.fact.attributes);
-        return { id: def.id, name: def.fact.name, namespaces: typeKinds.has(def.fact.kind) ? ['type'] : ['value'], scope, visibility: def.fact.visibility, active: attrs.active, gaps: unique([...attrs.gaps, ...def.fact.gaps, ...!def.unit.facts.complete ? ['Incomplete original Rust semantic syntax'] : []]), proof: this.proof(def.unit.file.path, def.fact, `Original Rust ${def.fact.kind} ${def.fact.name}`) };
+        return { id: def.id, name: def.fact.name, namespaces: typeKinds.has(def.fact.kind) ? ['type'] : ['value'], scope, visibility: def.fact.visibility, active: attrs.active, gaps: unique([...attrs.gaps, ...def.fact.gaps, ...!def.unit.facts.complete ? ['Incomplete original Rust semantic syntax'] : []]), proof: [...scope.namespaceProof, ...this.proof(def.unit.file.path, def.fact, `Original Rust ${def.fact.kind} ${def.fact.name}`)] };
     }
     private fromResolution(result: RustResolution, scope: RustScope, typeOnly = false, trail = new Set<string>()): RustValue {
         if (result.status === 'external')
@@ -526,7 +527,7 @@ export class RustSymbols {
                             kind: 'call';
                         }) : (site as RustSemanticFacts['references'][number]).kind === 'type' && expression.kind === 'path' ? this.typeValue(scope, { ...expression, kind: 'path', text: expression.segments.join('::'), generics: !!expression.generics?.length }) : this.value(scope, expression);
                         const targets = value.kind === 'callable' ? value.definitions.map(d => d.definition.id) : value.kind === 'type' || value.kind === 'instance' ? [value.symbol.id] : value.kind === 'source' ? [value.definition.id] : value.kind === 'future' && value.definition ? [value.definition.id] : [], conditions = unique([...attrs.gaps, ...value.conditions]), status = attrs.active === false ? 'excluded' : attrs.active !== true || conditions.length ? 'unsupported' : value.kind === 'external' ? 'external' : targets.length === 1 && (kind === 'reference' || value.kind === 'callable') ? 'resolved' : 'unresolved';
-                        const owner = this.owner(scope), proof = [...this.proof(unit.file.path, site, `Original Rust ${kind} operand`), ...scope.compilation.proof, ...value.proof], metadata = { adapter: 'rust', version: RUST_SYMBOL_VERSION, compilation: scope.compilation.id, crate: scope.compilation.target.id, invocation: scope.compilation.invocation, scope: scope.id, owner, start: site.start, range: site.range, status, ...status === 'resolved' ? { target: targets[0] } : {}, ...value.kind === 'external' ? { external: value.name } : {}, ...status !== 'resolved' ? { reason: conditions.length ? conditions.join('; ') : value.kind === 'unknown' ? value.reason : 'No unique original Rust callable/reference' } : {}, conditions, proof };
+                        const owner = this.owner(scope), proof = [...scope.namespaceProof, ...this.proof(unit.file.path, site, `Original Rust ${kind} operand`), ...scope.compilation.proof, ...value.proof], metadata = { adapter: 'rust', version: RUST_SYMBOL_VERSION, compilation: scope.compilation.id, crate: scope.compilation.target.id, invocation: scope.compilation.invocation, scope: scope.id, owner, start: site.start, range: site.range, status, ...status === 'resolved' ? { target: targets[0] } : {}, ...value.kind === 'external' ? { external: value.name } : {}, ...status !== 'resolved' ? { reason: conditions.length ? conditions.join('; ') : value.kind === 'unknown' ? value.reason : 'No unique original Rust callable/reference' } : {}, conditions, proof };
                         if (kind === 'call') {
                             const call = site as RustSemanticFacts['calls'][number], target = value.kind === 'callable' ? value.definitions[0]?.definition : undefined;
                             Object.assign(metadata, { name: expression.kind === 'call' ? this.describe(expression.callee) : '', execution: target?.fact.async ? call.awaited ? 'awaited' : 'future-construction' : 'direct', awaited: call.awaited });
@@ -582,7 +583,7 @@ export const rustSymbolsAnalyzer: Analyzer = { name: 'rust-symbols', version: RU
                 if (analysis)
                     analysis.features.references = { status: 'failed', reason: 'Original Rust semantic syntax is unavailable' };
             }
-        const resolver = context.rust ??= new RustResolver(context), symbols = context.rustSymbols = new RustSymbols(context, resolver), run = async () => symbols.analyze();
+        const resolver = context.rust ??= sourceRustResolver(context), symbols = context.rustSymbols = new RustSymbols(context, resolver), run = async () => symbols.analyze();
         const key = { version: RUST_SYMBOL_VERSION, resolver: RUST_RESOLVER_VERSION, syntax: STRUCTURE_VERSION, config: context.config, projects: resolver.projects.describe(), compilations: resolver.projects.describeCompilations(), files: [...context.files.values()].filter(f => f.language === 'rust' || f.language === 'toml').map(f => [fileKey(context, f.path), !!context.syntax?.get(f.path)?.facts.rust?.semantic?.complete]), inventory: [...context.fileInventory ?? []].sort(), directories: [...context.directoryInventory ?? []].sort() };
         if (context.cache)
             await context.cache.unit(context, 'rust-symbols', 'repository', key, run);

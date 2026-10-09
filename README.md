@@ -184,8 +184,12 @@ records unchanged frontend controls and the cost of adding native Rust routing a
 functions and 31 route/handler pairs, with two additional macro/custom-extractor boundary profiles. Standard startup
 diagnostics preserve native listener identity and original lexical scope; trailing comments preserve router factory
 returns. Unreviewed listener versions, nested macro effects and custom handler extractors retain request uncertainty.
-The three reviewed general Rust module imports still retain their native attribute gap, so broader source/import/version
-accuracy remains P9e2b and native OS release checks remain P10.
+P9e2b1 adds [runtime namespace qualification](docs/rust-runtime-namespace-accuracy.html): all three reviewed general
+Rust module imports now resolve, while the same declarations, routes and original handler identities remain exact.
+Canonical Tokio 1, Actix Web 4 and Rocket 0.5 main attributes preserve sibling source namespaces under bounded
+version/feature/syntax contracts; annotated signatures and generated bodies remain opaque to general binding.
+Unknown generation, source/fork identities, composed wrappers and unavailable macro imports retain gaps.
+Broader unchanged Rust consumer/import/version accuracy remains P9e2b2 and native OS release checks remain P10.
 No Cargo/rustc or target code runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original

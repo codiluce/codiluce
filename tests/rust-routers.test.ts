@@ -129,7 +129,7 @@ test('Custom diagnostic macros, prelude changes and user formatting operands kee
     }
 });
 test('A nested macro shadow retains its actual lexical identity and constrains outside serving', async () => {
-    for (const block of ['{use custom_logger::info as println;println!("starting");}', '{use custom_logger::info as println;println!{"starting"}}', '{custom!{"effects unavailable"}}']) {
+    for (const block of ['{use custom_logger::info as println;println!("starting");}', '{use custom_logger::info as println;println!{"starting"}}', '{custom!{"effects unavailable"}}', '{use missing::println;println!("unavailable import");}', '{use missing::*;println!("unavailable glob");}']) {
         const source = serve('Router::new().route("/x",get(handler))').replace('axum::serve(listener,app)', block + 'axum::serve(listener,app)');
         const g = await index(await repo(source, axum + '\ncustom_logger="1.0"', {'client.ts':'export async function load(){await fetch("https://api.test/x")}'}));
         assert.ok(route(g, '/x').metadata.constraintsUnresolved);

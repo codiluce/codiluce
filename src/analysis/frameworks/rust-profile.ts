@@ -7,7 +7,7 @@ import { rustAttributes, rustCfg, rustSplit, rustString } from '../languages/rus
 import type { RustRouteDialect } from '../routes/rust-patterns.js';
 import type { RustScopeFact } from '../facts.js';
 import { warpPathSyntax } from './warp-syntax.js';
-export const RUST_ROUTER_VERSION = '5';
+export const RUST_ROUTER_VERSION = '6';
 export interface RustWebProfile {
     framework: 'axum' | 'actix-web' | 'tokio' | 'rocket' | 'warp';
     dialect?: RustRouteDialect;
@@ -208,6 +208,11 @@ export class RustWebMacros {
             for (let current: RustScope | undefined = scope; current; current = current.parent) {
                 if (current.attributes.noPrelude || current.attributes.noStd || current.attributes.noCore || current.imports.some(site => site.active !== false && site.fact.attributes.some(attribute => /^#!?\[\s*macro_use\b/.test(attribute))))
                     return;
+                if (current.items.some(item => item.name === macro.path[0] && item.active !== false) || current.imports.some(site => site.active !== false && !site.fact.glob && (site.fact.alias ?? site.fact.segments.at(-1)) === macro.path[0])) return;
+                for (const site of current.imports.filter(site => site.active !== false && site.fact.glob)) {
+                    const imported = this.base.resolve(site);
+                    if (imported.status !== 'resolved' || imported.conditions.length) return;
+                }
             }
             const standard = this.base.path(scope, ['std'], false, new Set(), 'expression');
             if (standard.status !== 'external' || standard.dependency !== 'rust-standard-library' || standard.crate !== 'std' || standard.conditions.length)

@@ -190,12 +190,14 @@ export interface RustAttributes {
     noPrelude: boolean;
     macroExport: boolean;
     gaps: string[];
+    namespaceGaps: string[];
 }
-export function rustAttributes(attributes: string[], env: RustCfgEnvironment): RustAttributes {
-    const result: RustAttributes = { active: true, noStd: false, noCore: false, noPrelude: false, macroExport: false, gaps: [] };
+export function rustAttributes(attributes: string[], env: RustCfgEnvironment, nesting = 0): RustAttributes {
+    const result: RustAttributes = { active: true, noStd: false, noCore: false, noPrelude: false, macroExport: false, gaps: [], namespaceGaps: [] };
     const apply = (attribute: string, depth = 0): void => {
         if (depth > 32) {
             result.gaps.push('Rust attribute nesting budget');
+            result.namespaceGaps.push('Rust attribute nesting budget');
             return;
         }
         const text = attribute.replace(/^#!?\[/, '').replace(/\]$/, '').trim();
@@ -211,14 +213,19 @@ export function rustAttributes(attributes: string[], env: RustCfgEnvironment): R
             const values = rustSplit(call[2]!);
             if (!values || values.length < 2) {
                 result.gaps.push('Malformed Rust cfg_attr');
+                result.namespaceGaps.push('Malformed Rust cfg_attr');
                 return;
             }
             const value = rustCfg(values[0]!, env);
             if (value === true)
                 for (const nested of values.slice(1))
                     apply(nested, depth + 1);
-            else if (value === 'unknown')
+            else if (value === 'unknown') {
                 result.gaps.push(`Unselected Rust cfg_attr(${values[0]})`);
+                const possible = rustAttributes(values.slice(1), env, depth + 1);
+                if (possible.namespaceGaps.length || possible.path !== undefined || possible.noStd || possible.noCore || possible.noPrelude || possible.macroExport)
+                    result.namespaceGaps.push(`Unselected Rust cfg_attr(${values[0]}) can change namespace/items`);
+            }
             return;
         }
         const selectedPath = /^path\s*=\s*([\s\S]*)$/.exec(text);
@@ -237,6 +244,7 @@ export function rustAttributes(attributes: string[], env: RustCfgEnvironment): R
         if (text === 'no_core') {
             result.noCore = true;
             result.gaps.push('Unreviewed Rust no_core/compiler feature profile');
+            result.namespaceGaps.push('Unreviewed Rust no_core/compiler feature profile');
             return;
         }
         if (text === 'no_implicit_prelude') {
@@ -259,9 +267,11 @@ export function rustAttributes(attributes: string[], env: RustCfgEnvironment): R
         const name = /^([\w:]+)/.exec(text)?.[1];
         if (name && ['allow', 'warn', 'deny', 'forbid', 'expect', 'doc', 'deprecated', 'inline', 'cold', 'must_use', 'repr', 'non_exhaustive', 'track_caller', 'no_mangle', 'export_name', 'link', 'link_name'].includes(name))
             return;
-        result.gaps.push(`Unreviewed Rust attribute ${name ?? text.slice(0, 80)} may generate/change items`);
+        const gap = `Unreviewed Rust attribute ${name ?? text.slice(0, 80)} may generate/change items`;
+        result.gaps.push(gap);
+        result.namespaceGaps.push(gap);
     };
     for (const attribute of attributes)
-        apply(attribute);
+        apply(attribute, nesting);
     return result;
 }

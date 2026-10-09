@@ -664,3 +664,50 @@ qualification, including Axum 0.7 and Rocket/Warp consumers, remains open; nativ
 P9e2a release validation passes all 1,050 tests with four test workers, CLI/web type checks and builds, installed
 CLI/API/history/npm-exec checks and desktop/mobile report checks. The initial concurrent build/test run hit the
 existing Java parser-budget test timeout; that test passed alone and in the bounded full-suite retry.
+
+
+## 31. Runtime namespace qualification and original general module imports (P9e2b1)
+
+`resolution/rust-runtime-namespace.ts` discovers canonical runtime attribute identities with the conservative source
+resolver, then replays only pre-reviewed containing-module facts. Tokio 1, Actix Web 4 and Rocket 0.5 `main` contracts
+require original registry identities, closed version/feature selections, bounded literal options and original async
+function shapes. Tokio defaults require its multi-thread runtime; current-thread options cannot select worker counts.
+Actix's emitted absolute delegation requires the canonical `actix_web` dependency; a renamed-only crate cannot lend
+that path an identity. Rocket `launch` remains opaque because it can add a sibling `main`.
+
+The containing module may use sibling original imports and declarations while the annotated function keeps its original
+attribute gap. General binding does not borrow a generated synchronous signature or certify rewritten body calls.
+Original attribute proof follows source aliases and conditional attributes selected by recorded cfg inputs, with exact
+original lines and compilation identities. Nested module proof stays in the relevant namespace. Unknown conditional
+metadata/lint attributes retain item-level conditions without claiming possible sibling generation; conditional proc
+macros, prelude changes and module paths retain namespace uncertainty. Attribute recursion remains bounded.
+
+Namespace input review includes every active original source scope, item/import attribute, reachable module and macro
+in the selected compilation. An unknown macro in another block can export crate-level names and prevents this review.
+Original standard println/eprintln/format token trees qualify only containing-module effects with a literal format
+string and bounded operands free of items, attributes and nested macros. Formatting, dispatch and runtime effects stay
+unreviewed. Explicit unavailable imports/globs and source shadows cannot borrow standard prelude macro identity; the
+framework diagnostic resolver now obeys the same shadow boundary. Opaque lifted inner attributes, composed wrappers,
+source/fork lookalikes, unavailable modules and unsupported versions/features/options retain gaps.
+
+`scripts/qualify-rust-namespaces.mjs --axum-book /path/to/axum.code-maven.com` archives P9e2a `b79d9f4`, independently
+checks the unchanged manual portfolio and records [runtime namespace accuracy](rust-runtime-namespace-accuracy.html).
+All three reviewed general module-import edges now resolve, versus zero at that baseline. The same ten supported
+profiles retain 55 selected functions and 31 original route/handler pairs, with original handler IDs and source
+coordinates unchanged. All 50 main-body call outcomes remain unsupported. Two original serde/custom-extractor
+boundary profiles remain constrained. Every baseline/current profile has exact cold/warm/revision replay and actual
+Rust cache hits. The preceding P9e2a report remains historical evidence for its 0/3 result.
+
+Resolver/import versions and the framework shadow profile invalidate affected caches; symbol and router keys include
+the resolver contract. Eight new conformance cases check native identities, source aliases, original proof ranges,
+optional/multiple dependency selections, cfg/generation/shadow boundaries and cold/warm/revision/source/dependency
+invalidation. Installed-package CLI/API checks retain original module proof and zero general generated-body call
+winners. No Cargo/rustc, target dependency, configuration, build script, source or macro executes.
+
+P9e2b1 is the bounded runtime namespace/general import slice, not the full Rust accuracy gate. P9e2b2 unchanged
+consumer/import/version qualification, including Axum 0.7 and Rocket/Warp, remains next; native OS and P10 release
+gates remain open. Release validation passes all 1,058 tests with four workers, CLI/web type checks and production
+builds, and installed CLI/API/history/npm-exec checks (3.20 MB / 286 files). Desktop/mobile HTML checks pass.
+Earlier exact-graph proof comparisons
+remain evidence for their preceding releases; this slice intentionally adds general source import/binding facts while
+checking unchanged native routes and original handlers independently.

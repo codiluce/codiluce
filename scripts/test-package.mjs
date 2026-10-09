@@ -72,6 +72,20 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
     const rustHandlerOutcome=rustUnit.metadata.rustCallOutcomes.find(c=>c.name==='direct'),rustHandler=await(await fetch(`${url}api/entities/${rustHandlerOutcome.target}`)).json();assert.equal(rustHandler.name,'packaged_rust_handler');assert.equal(rustHandler.path,'rust-source/shared/src/model.rs');assert.equal(rustHandler.sourceRange.startLine,4);
     const rustHandlerSource=await(await fetch(`${url}api/source?entity=${rustHandler.id}`)).json();assert.equal(rustHandlerSource.focus.startLine,4);
     const rustClosure=await(await fetch(`${url}api/entities/${rustUnit.metadata.rustCallOutcomes.find(c=>c.name==='cb').target}`)).json();assert.equal(rustClosure.metadata.declarationKind,'closure');assert.equal(rustClosure.sourceRange.startLine,5);
+    for (const [directory, status] of [['axum-server', 'resolved'], ['axum-uncertain-server', 'unsupported']]) {
+      const files = await (await fetch(`${url}api/entities?search=${directory}/src/main.rs&type=file`)).json();
+      const original = files.items.find(item => item.path === `${directory}/src/main.rs`); assert.ok(original);
+      const unit = await (await fetch(`${url}api/entities/${original.id}`)).json();
+      assert.equal(unit.metadata.importOutcomes.find(item => item.kind === 'module' && item.specifier === 'handlers').outcome.status, status);
+      assert.ok(unit.metadata.rustCallOutcomes.length && unit.metadata.rustCallOutcomes.every(item => item.status === 'unsupported'), 'installed API preserves opaque generated main bodies');
+      const edges = await (await fetch(`${url}api/entities/${original.id}/relations?direction=outgoing&type=imports`)).json();
+      const modules = edges.items.filter(edge => edge.metadata.kind === 'module');
+      assert.equal(modules.length, status === 'resolved' ? 1 : 0);
+      if (modules.length) {
+        const proof = await (await fetch(`${url}api/relations/${modules[0].id}`)).json();
+        assert.ok(proof.evidence.some(fact => fact.file === original.path && fact.line === 1 && fact.explanation?.includes('containing-module namespace only')));
+      }
+    }
     const csharpSearch = await (await fetch(`${url}api/projection/search?q=PackagedCsharpUse`)).json();
     const csharpSymbol = csharpSearch.items.find(item => item.name === 'PackagedCsharpUse' && item.type === 'class'); assert.ok(csharpSymbol);
     const csharpSource = await (await fetch(`${url}api/source?entity=${csharpSymbol.id}`)).json();
@@ -449,6 +463,19 @@ class PackagedWebFluxKotlin {
   const rustLeaf=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',rustHandlerCalls[0].to],repo)).stdout);assert.equal(rustLeaf.name,'packaged_rust_leaf');assert.equal(rustLeaf.sourceRange.startLine,3);
   const rustClosure=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',rustDetail.metadata.rustCallOutcomes.find(c=>c.name==='cb').target],repo)).stdout);assert.equal(rustClosure.metadata.declarationKind,'closure');assert.equal(rustClosure.sourceRange.startLine,5);assert.ok(rustClosure.parentId);
   const rustBodyCalls=JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',rustClosure.id,'--type','calls'],repo)).stdout).items.filter(edge=>edge.from===rustClosure.id);assert.equal(rustBodyCalls[0].to,rustHandler.id);const rustClosureProof=JSON.parse((await run(process.execPath,[bin,'inspect','relation','--id',rustBodyCalls[0].id],repo)).stdout);assert.ok(rustClosureProof.evidence.some(p=>p.file==='rust-source/shared/src/model.rs'&&p.line===4));
+  for (const [directory, status] of [['axum-server', 'resolved'], ['axum-uncertain-server', 'unsupported']]) {
+    const files = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', `${directory}/src/main.rs`], repo)).stdout).items;
+    const original = files.find(item => item.type === 'file' && item.path === `${directory}/src/main.rs`); assert.ok(original);
+    const unit = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', original.id], repo)).stdout);
+    assert.equal(unit.metadata.importOutcomes.find(item => item.kind === 'module' && item.specifier === 'handlers').outcome.status, status);
+    assert.ok(unit.metadata.rustCallOutcomes.length && unit.metadata.rustCallOutcomes.every(item => item.status === 'unsupported'), 'installed CLI preserves opaque generated main bodies');
+    const modules = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', original.id, '--type', 'imports'], repo)).stdout).items.filter(edge => edge.metadata.kind === 'module');
+    assert.equal(modules.length, status === 'resolved' ? 1 : 0);
+    if (modules.length) {
+      const proof = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relation', '--id', modules[0].id], repo)).stdout);
+      assert.ok(proof.evidence.some(fact => fact.file === original.path && fact.line === 1 && fact.explanation?.includes('containing-module namespace only')));
+    }
+  }
   for(const [name,directory,framework]of [['GET|HEAD /package-axum/{id}','axum-server','axum'],['GET /package-actix/{id:[0-9]+}','actix-server','actix-web'],['GET|HEAD /package-rocket/<id>','rocket-server','rocket'],['GET /package-warp/<p0>','warp-server','warp'],['GET /package-warp3/<p0>','warp3-server','warp']]){
     const items=JSON.parse((await run(process.execPath,[bin,'inspect','entities','--search',name],repo)).stdout).items,endpoint=items.find(item=>item.name===name&&item.type==='api_endpoint');assert.ok(endpoint);
     const detail=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',endpoint.id],repo)).stdout);assert.equal(detail.metadata.framework,framework);assert.ok(!detail.metadata.constraintsUnresolved);assert.ok(detail.metadata.routing.mounts.length);assert.ok(detail.evidence.some(fact=>fact.file===`${directory}/Cargo.toml`));

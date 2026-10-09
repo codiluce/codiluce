@@ -53,6 +53,11 @@ test('Rust literal and cfg readers retain native three-valued predicates without
     assert.equal(rustCfg('all(test,unknown)', { test: false }), false);
     assert.equal(rustAttributes(['#[cfg(feature="api")]', '#[cfg_attr(unix,path="linux.rs")]'], env).path, 'linux.rs');
     assert.equal(rustAttributes(['#[cfg_attr(unix,path="linux.rs")]'], { test: false }).gaps.length, 1);
+    assert.equal(rustAttributes(['#[cfg_attr(unix,doc="metadata only")]'], { test:false }).namespaceGaps.length,0);
+    assert.equal(rustAttributes(['#[cfg_attr(unix,custom::generate)]'], { test:false }).namespaceGaps.length,1);
+    assert.equal(rustAttributes(['#[cfg_attr(unix,no_implicit_prelude)]'], { test:false }).namespaceGaps.length,1);
+    const nested = '#[' + 'cfg_attr(unix,'.repeat(36) + 'doc="metadata"' + ')'.repeat(36) + ']';
+    assert.ok(rustAttributes([nested], {test:false}).namespaceGaps.length, 'unknown conditional attributes respect the nesting budget');
     assert.equal(cargoRequirement('0.2.3'), '>=0.2.3 <0.3.0-0');
     assert.ok(cargoRequirement('>=1.0, <2.0'));
     assert.equal(cargoRequirement('1 || 2'), undefined);
@@ -289,6 +294,140 @@ test('Invalid inherited dependency overrides and unreviewed item attributes cann
     assert.equal(use(g, 'app/src/lib.rs')[0]!.outcome.status, 'unsupported');
     const generated = await repo({ 'Cargo.toml': manifest(), 'src/lib.rs': '#[custom::generate]fn generated(){}mod a{pub struct Public;}use crate::a::Public;' }), gap = await index(generated);
     assert.equal(use(gap)[0]!.outcome.status, 'unsupported');
+});
+test('Native runtime main attributes preserve sibling source imports while their signatures and bodies remain opaque', async () => {
+    for (const [dependency, attribute] of [['tokio={version="1.50.0",features=["full"]}', '#[tokio::main]'], ['actix-web="4.11.0"', '#[actix_web::main]'], ['rocket="0.5.1"', '#[rocket::main]']] as const) {
+        const root = await repo({ 'Cargo.toml': manifest('app', '[dependencies]\n' + dependency), 'src/lib.rs': `// 😀 original\r\nmod model;\r\nuse crate::model::Original;\r\nmod inspect{use crate::boot;}\r\npub fn plain(){model::leaf();}\r\n${attribute}\r\nasync fn boot(){use crate::model::Original;model::leaf();}`, 'src/model.rs': 'pub struct Original;pub fn leaf(){}' }), g = await index(root);
+        const outcomes = imports(g), module = outcomes.find(item => item.kind === 'module' && item.specifier === 'model')!, sibling = outcomes.find(item => item.specifier === 'crate::model::Original' && item.range.startLine === 3)!;
+        assert.equal(module.outcome.status, 'resolved', attribute + JSON.stringify(outcomes));
+        assert.equal(sibling.outcome.status, 'resolved');
+        assert.equal(outcomes.find(item => item.specifier === 'crate::boot')!.outcome.status, 'unsupported', 'the original async signature cannot borrow the generated synchronous signature');
+        assert.equal(outcomes.find(item => item.specifier === 'crate::model::Original' && item.range.startLine === 7)!.outcome.status, 'unsupported', 'generated body scopes retain their original attribute gap');
+        const modelEdges = g.relations.filter(edge => edge.type === 'imports' && edge.to === unit(g, 'src/model.rs').id);
+        assert.equal(modelEdges.length, 2);
+        assert.ok(modelEdges.every(edge => edge.evidence.some(fact => fact.file === 'src/lib.rs' && fact.line === 6 && fact.explanation?.includes('containing-module namespace only'))));
+        const plain = g.entities.find(item => item.name === 'plain' && item.language === 'rust')!, boot = g.entities.find(item => item.name === 'boot' && item.language === 'rust')!;
+        assert.equal(g.relations.filter(edge => edge.type === 'calls' && edge.from === plain.id && edge.metadata?.adapter === 'rust').length, 1);
+        assert.equal(g.relations.filter(edge => edge.type === 'calls' && edge.from === boot.id && edge.metadata?.adapter === 'rust').length, 0);
+    }
+});
+test('Runtime namespace proof follows canonical renamed, imported and absolute macro identities at original sites', async () => {
+    for (const [prefix, attribute] of [['', '#[runtime::main]'], ['use runtime as rt;', '#[rt::main]'], ['use runtime::main as enter;', '#[enter]'], ['mod runtime{pub fn main(){}}', '#[::runtime::main]']] as const) {
+        const source = `${prefix}\nmod model;use crate::model::Original;\n${attribute}\nasync fn boot(){}`;
+        const g = await index(await repo({ 'Cargo.toml': manifest('app', '[dependencies]\nruntime={package="tokio",version="1.50.0",features=["full"]}'), 'src/lib.rs': source, 'src/model.rs': 'pub struct Original;' }));
+        const winner = use(g).find(item => item.specifier === 'crate::model::Original')!;
+        assert.equal(winner.outcome.status, 'resolved', prefix + attribute);
+        const edge = g.relations.find(edge => edge.type === 'imports' && edge.to === unit(g, 'src/model.rs').id && edge.metadata?.specifier === 'crate::model::Original')!;
+        assert.ok(edge.evidence.some(fact => fact.file === 'src/lib.rs' && fact.line === 3 && fact.explanation?.includes('tokio main attribute on boot')));
+    }
+    const g = await index(await repo({ 'Cargo.toml': manifest('app', '[dependencies]\ntokio={version="1.50.0",features=["full"]}'), 'src/lib.rs': 'mod unrelated;use crate::unrelated::Plain;mod nested{mod model{pub struct Original;}use self::model::Original;#[tokio::main]async fn boot(){}}', 'src/unrelated.rs': 'pub struct Plain;' }));
+    assert.ok(imports(g).every(item => item.outcome.status === 'resolved'));
+    const unrelated = g.relations.filter(edge => edge.type === 'imports' && edge.to === unit(g, 'src/unrelated.rs').id);
+    assert.ok(unrelated.every(edge => !edge.evidence.some(fact => fact.explanation?.includes('containing-module namespace only'))), 'a nested wrapper does not lend proof to unrelated namespaces');
+});
+test('Runtime namespace contracts retain version, feature, source and literal option boundaries', async () => {
+    const defaults = 'tokio={version="1.50.0",features=["full"]}';
+    for (const [dependency, attribute] of [
+        ['tokio="0.2"', '#[tokio::main]'], ['tokio={version="2",features=["full"]}', '#[tokio::main]'], ['tokio={version=">=1,<3",features=["full"]}', '#[tokio::main]'],
+        ['tokio="1.50.0"', '#[tokio::main]'], ['tokio={version="1.50.0",features=["macros","rt"]}', '#[tokio::main]'], ['tokio={version="1.50.0",registry="fork",features=["full"]}', '#[tokio::main]'],
+        [defaults, '#[tokio::main(flavor="current_thread",worker_threads=2)]'], [defaults, '#[tokio::main(flavor="current_thread",flavor="multi_thread")]'],
+        [defaults, '#[tokio::main(worker_threads=0)]'], [defaults, '#[tokio::main(worker_threads=99999999999999999999)]'], [defaults, '#[tokio::main(start_paused=true)]'],
+        ['actix-web={version="4.11.0",default-features=false}', '#[actix_web::main]'], ['server={package="actix-web",version="4.11.0"}', '#[server::main]'],
+        ['rocket="0.4"', '#[rocket::main]'], ['rocket="0.5.1"', '#[rocket::launch]'],
+    ] as [string,string][]) {
+        const g = await index(await repo({ 'Cargo.toml': manifest('app', '[dependencies]\n' + dependency), 'src/lib.rs': `mod model;use crate::model::Original;${attribute}async fn boot(){}`, 'src/model.rs': 'pub struct Original;' }));
+        assert.ok(imports(g).every(item => item.outcome.status !== 'resolved'), dependency + attribute);
+        assert.equal(g.relations.filter(edge => edge.type === 'imports' && edge.metadata?.adapter === 'rust').length, 0);
+    }
+    for (const attribute of ['#[tokio::main(flavor="current_thread")]', '#[tokio::main(flavor="current_thread",)]']) {
+        const g = await index(await repo({ 'Cargo.toml': manifest('app', '[dependencies]\ntokio={version="1.50.0",features=["macros","rt"]}'), 'src/lib.rs': `mod model;use crate::model::Original;${attribute}async fn boot(){}`, 'src/model.rs': 'pub struct Original;' }));
+        assert.ok(imports(g).every(item => item.outcome.status === 'resolved'));
+    }
+});
+test('Source/import/extern macro shadows and lifted or composed attributes cannot qualify sibling imports', async () => {
+    const dependencies = '[dependencies]\ntokio={version="1.50.0",features=["full"]}\ncustom="1"\nrocket="0.5.1"';
+    for (const source of [
+        'mod tokio{pub fn main(){}}#[tokio::main]async fn boot(){}',
+        'use custom::main as enter;#[enter]async fn boot(){}',
+        'extern crate custom as tokio;#[tokio::main]async fn boot(){}',
+        '#[tokio::main]async fn boot(){#![custom::generate]}',
+        '#[tokio::main]async fn boot(){#![cfg_attr(unix,custom::generate)]}',
+        '#[tokio::main]#[rocket::main]async fn boot(){}',
+        '#[tokio::main]#[custom::generate]async fn boot(){}',
+        '#[tokio::main]fn boot(){}',
+        '#[rocket::main]async fn boot(value:u32){}',
+        '#[tokio::main]async fn main(value:u32){}',
+        '#[tokio::main]async fn boot(){}unknown!();',
+        '#[tokio::main]async fn boot(){unknown!();}',
+        '#[tokio::main]async fn boot(){}fn elsewhere(){unknown!();}',
+        '#[tokio::main]async fn boot(){println!("{}",{macro_rules! made{()=>{}};42});}',
+        '#[tokio::main]async fn boot(){println!("{}",custom!());}',
+    ]) {
+        const g = await index(await repo({ 'Cargo.toml': manifest('app', dependencies), 'src/lib.rs': `mod model;use crate::model::Original;${source}`, 'src/model.rs': 'pub struct Original;' }));
+        assert.ok(!imports(g).some(item => item.outcome.status === 'resolved'), source);
+        assert.equal(g.relations.filter(edge => edge.type === 'imports' && edge.metadata?.adapter === 'rust').length, 0);
+    }
+    const neutral = await index(await repo({ 'Cargo.toml': manifest('app', dependencies), 'src/lib.rs': 'mod model;use crate::model::Original;#[tokio::main]async fn boot(){#![allow(unused)]}', 'src/model.rs': 'pub struct Original;' }));
+    assert.ok(imports(neutral).every(item => item.outcome.status === 'resolved'), 'reviewed literal inner lint attributes cannot add namespace items');
+});
+test('Standard formatting namespace proof never implies runtime registration or generated-body call proof', async () => {
+    const root = await repo({ 'Cargo.toml':manifest('app','[dependencies]\ntokio={version="1.50.0",features=["full"]}'), 'src/lib.rs':'mod model;use crate::model::Original;#[tokio::main]async fn boot(){println!("custom runtime formatting {}",listener.local_addr().unwrap());}fn text(value:u32){let formatted=format!("{value} + {}",value+2);}', 'src/model.rs':'pub struct Original;' });
+    const g = await index(root);
+    assert.ok(imports(g).every(item=>item.outcome.status==='resolved'));
+    assert.ok(g.relations.filter(edge=>edge.type==='imports').every(edge=>edge.evidence.some(fact=>fact.explanation?.includes('formatting and runtime effects remain unreviewed'))));
+    const boot = g.entities.find(item=>item.name==='boot'&&item.language==='rust')!;
+    assert.equal(g.relations.filter(edge=>edge.type==='calls'&&edge.from===boot.id).length,0);
+    await put(root,'src/lib.rs','mod model;use crate::model::Original;#[tokio::main]async fn boot(){}fn elsewhere(){use custom::println;println!("unknown");}');
+    assert.ok(imports(await index(root)).every(item=>item.outcome.status!=='resolved'), 'a custom macro in another source block can export crate names');
+});
+test('Unselected cfg_attr generation constrains sibling imports and selected native conditions keep original proof', async () => {
+    const root = await repo({ 'Cargo.toml': manifest('app', '[features]\nruntime=[]\n[dependencies]\ntokio={version="1.50.0",features=["full"]}'), 'src/lib.rs': 'mod model;use crate::model::Original;#[cfg_attr(unix,custom::generate)]fn opaque(){}', 'src/model.rs': 'pub struct Original;' });
+    const unknown = await index(root);
+    assert.ok(imports(unknown).every(item => item.outcome.status === 'unsupported'));
+    assert.ok(imports(unknown).every(item => item.outcome.reason?.includes('cfg_attr')));
+    const disabled = await index(root, [{ name:'app',path:'.',rust:{...selected,cfg:{flags:[],values:{}}} }]);
+    assert.ok(imports(disabled).every(item => item.outcome.status === 'resolved'));
+    await put(root,'src/lib.rs','mod model;use crate::model::Original;#[cfg_attr(unix,doc="metadata only")]fn described(){}');
+    assert.ok(imports(await index(root)).every(item=>item.outcome.status==='resolved'), 'conditional metadata cannot supply sibling items');
+    await put(root, 'src/lib.rs', '// 😀 original\r\nmod model;use crate::model::Original;\r\n#[cfg_attr(all(unix,feature="runtime"),tokio::main)]\r\nasync fn boot(){use crate::model::Original;}');
+    const active = await index(root, [{ name:'app',path:'.',rust:{...selected,features:['runtime'],cfg:{flags:['unix'],values:{}}} }]);
+    assert.equal(imports(active).find(item => item.kind === 'module')!.outcome.status, 'resolved');
+    assert.equal(use(active).find(item => item.range.startLine === 2)!.outcome.status, 'resolved');
+    assert.equal(use(active).find(item => item.range.startLine === 4)!.outcome.status, 'unsupported');
+    assert.ok(active.relations.filter(edge => edge.type === 'imports').every(edge => edge.evidence.some(fact => fact.line === 3 && fact.explanation?.includes('containing-module namespace only'))));
+    const inactive = await index(root, [{ name:'app',path:'.',rust:{...selected,cfg:{flags:['unix'],values:{}}} }]);
+    assert.ok(imports(inactive).every(item => item.outcome.status === 'resolved'), 'an inactive runtime attribute leaves the original async body available');
+});
+test('Runtime namespace import proof replays across cache/revision and invalidates with source/dependency selections', async () => {
+    const cargo = manifest('app','[dependencies]\ntokio={version="1.50.0",features=["full"]}'), source = '// 😀\r\nmod model;use crate::model::Original;\r\n#[tokio::main]\r\nasync fn boot(){}';
+    const root = await repo({ 'Cargo.toml':cargo, 'src/lib.rs':source, 'src/model.rs':'pub struct Original;' }), state = await repo({});
+    const cold = await index(root,undefined,new AnalysisCache(state)), cache = new AnalysisCache(state), warm = await index(root,undefined,cache), revision = await index(root,undefined,undefined,'original-source');
+    assert.equal(shape(cold),shape(warm));assert.equal(shape(cold),shape(revision));
+    for (const analyzer of ['rust-imports','rust-symbols','rust-routers']) assert.ok(cache.events.some(event=>event.analyzer===analyzer&&event.hit));
+    const original = cold.entities.find(item=>item.language==='rust'&&item.name==='Original')!;
+    await put(root,'src/lib.rs','// shifted\r\n\r\n'+source);
+    const shifted = await index(root,undefined,new AnalysisCache(state));
+    assert.equal(shifted.entities.find(item=>item.language==='rust'&&item.name==='Original')!.id,original.id);
+    assert.ok(shifted.relations.filter(edge=>edge.type==='imports').every(edge=>edge.evidence.some(fact=>fact.file==='src/lib.rs'&&fact.line===5&&fact.explanation?.includes('containing-module namespace only'))));
+    await put(root,'Cargo.toml',cargo.replace('1.50.0','2'));
+    assert.ok(imports(await index(root,undefined,new AnalysisCache(state))).every(item=>item.outcome.status==='unsupported'));
+    await put(root,'Cargo.toml',cargo);
+    await put(root,'src/lib.rs',source.replace('#[tokio::main]','#[custom::generate]'));
+    assert.ok(imports(await index(root,undefined,new AnalysisCache(state))).every(item=>item.outcome.status==='unsupported'));
+});
+test('Runtime namespace selections do not borrow another dependency alias, optional feature or local package identity', async () => {
+    const files = { 'Cargo.toml':manifest('app','[features]\nruntime=["dep:rt"]\n[dependencies]\nrt={package="tokio",version="1.50.0",features=["full"],optional=true}'), 'src/lib.rs':'mod model;use crate::model::Original;#[rt::main]async fn boot(){}', 'src/model.rs':'pub struct Original;' }, root = await repo(files);
+    assert.ok(imports(await index(root)).every(item=>item.outcome.status==='unsupported'));
+    const enabled = await index(root,[{name:'app',path:'.',rust:{...selected,features:['runtime']}}]);
+    assert.ok(imports(enabled).every(item=>item.outcome.status==='resolved'));
+    await put(root,'Cargo.toml',manifest('app','[dependencies]\nolder={package="tokio",version="1.50.0",features=["full"]}\nfuture={package="tokio",version="2",features=["full"]}'));
+    await put(root,'src/lib.rs',files['src/lib.rs'].replace('rt::main','older::main'));
+    assert.ok(imports(await index(root)).every(item=>item.outcome.status==='resolved'));
+    await put(root,'src/lib.rs',files['src/lib.rs'].replace('rt::main','future::main'));
+    assert.ok(imports(await index(root)).every(item=>item.outcome.status==='unsupported'));
+    await put(root,'Cargo.toml',manifest('app','[dependencies]\nrt={package="tokio",path="local",version="1.50.0"}'));
+    await put(root,'local/Cargo.toml','[package]\nname="tokio"\nversion="1.50.0"\nedition="2021"');await put(root,'local/src/lib.rs','pub fn main(){}');await put(root,'src/lib.rs',files['src/lib.rs']);
+    assert.ok(imports(await index(root)).every(item=>item.outcome.status==='unsupported'));
 });
 test('Cargo optional version defaults and implicit workspace path members retain original metadata', async () => {
     const root = await repo({ 'Cargo.toml': '[workspace]\nmembers=["app"]\nresolver="2"\n[workspace.package]\nedition="2021"\n[workspace.dependencies]\ndep={path="dep"}', 'app/Cargo.toml': '[package]\nname="app"\nedition.workspace=true\n[dependencies]\ndep.workspace=true', 'app/src/lib.rs': 'use dep::Public;', 'dep/Cargo.toml': '[package]\nname="dep"\nedition.workspace=true', 'dep/src/lib.rs': 'pub struct Public;' }), g = await index(root, [{ name: 'app', path: 'app', rust: selected }]);
