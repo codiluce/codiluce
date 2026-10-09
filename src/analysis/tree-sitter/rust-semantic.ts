@@ -207,7 +207,7 @@ export function extractRustSemantic(root: Node, declarations: DeclarationFact[],
             typeReferences(node.childForFieldName('return_type'), bodyScope, attrs);
             if (body) {
                 walk(body, bodyScope);
-                const tail = body.type === 'block' ? body.namedChildren.at(-1) : body;
+                const tail = body.type === 'block' ? body.namedChildren.filter(child => !child.type.includes('comment')).at(-1) : body;
                 if (tail && tail.type !== 'return_expression' && tail.type !== 'let_declaration' && tail.type !== 'empty_statement' && !tail.type.endsWith('_item') && !(tail.type === 'expression_statement' && tail.text.trimEnd().endsWith(';'))) {
                     const n = tail.type === 'expression_statement' ? tail.namedChildren[0]! : tail;
                     facts.returns.push({ ...site(n), scope: scopeAt(body, bodyScope).key, owner: key, value: expression(n), conditional: conditional(bodyScope) });

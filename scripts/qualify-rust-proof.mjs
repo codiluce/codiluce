@@ -31,6 +31,10 @@ export async function qualifyRustProof(project, baselineRef = '888bdb7') {
       if (!value || typeof value !== 'object') return value;
       return Object.fromEntries(Object.entries(value).map(([key, item]) => {
         if (key === 'analyzerVersion' && value.analyzer === 'rust-routers' || key === 'version' && value.adapter === 'rust-routers') return [key, 'router-cache-version'];
+        // A structural cache bump affects recorded version labels, not graph
+        // semantics. Keep every original fact, coordinate and condition in the
+        // comparison so a parser change on this fixed workload still fails.
+        if (key === 'analyzerVersion' && value.analyzer === 'tree-sitter-structure' || key === 'adapterVersion' && value.adapter?.startsWith('syntax-')) return [key, 'structure-cache-version'];
         if (key === 'evidence') return [key, [...new Map(item.map(normalize).map(fact => [canonicalJson(fact), fact])).values()].sort((a, b) => canonicalJson(a).localeCompare(canonicalJson(b)))];
         return [key, normalize(item)];
       }));
@@ -38,12 +42,12 @@ export async function qualifyRustProof(project, baselineRef = '888bdb7') {
     const shape = graph => normalize({ entities: graph.entities, relations: graph.relations, diagnostics: graph.diagnostics.filter(d => !['indexer', 'git-metrics'].includes(d.analyzer) && d.code !== 'git-ignore-unavailable') });
     const hash = value => createHash('sha256').update(canonicalJson(value)).digest('hex');
     const before = shape(graphs.before), after = shape(graphs.after);
-    assert.equal(hash(before), hash(after), 'IDs, native contracts, calls, conditions, coordinates and all distinct evidence preserved; only duplicate proof and Rust router analyzer/cache version normalized');
+    assert.equal(hash(before), hash(after), 'IDs, native contracts, calls, conditions, coordinates and all distinct evidence preserved; only duplicate proof and router/structure analyzer/cache versions normalized');
     const sizes = Object.fromEntries(Object.entries(graphs).map(([label, graph]) => [label, { bytes: Buffer.byteLength(JSON.stringify(graph)), entities: graph.entities.length, relations: graph.relations.length, requests: graph.relations.filter(e => e.type === 'requests').length, maxEndpointEvidence: Math.max(...graph.entities.filter(e => e.type === 'api_endpoint').map(e => e.evidence.length)) }]));
     assert.ok(sizes.before.maxEndpointEvidence > 256, 'the pre-fix native release must reproduce repeated proof');
     assert.ok(sizes.after.maxEndpointEvidence < 256, 'fixed original endpoint evidence fits its budget');
     assert.equal(sizes.after.requests, workload.expectedRequests);
-    return { baseline: revision, resourcesPerProfile: 12, fixtureDigest: createHash('sha256').update(await readFile(path.join(project, 'scripts/fixtures/rust-workload.ts'))).digest('hex'), semanticAndDistinctProofEqual: true, normalizedGraphDigest: hash(after), normalization: 'Exact duplicate evidence and only rust-routers analyzer/cache version; all other entities, relations, metadata and diagnostics retained', sizes };
+    return { baseline: revision, resourcesPerProfile: 12, fixtureDigest: createHash('sha256').update(await readFile(path.join(project, 'scripts/fixtures/rust-workload.ts'))).digest('hex'), semanticAndDistinctProofEqual: true, normalizedGraphDigest: hash(after), normalization: 'Exact duplicate evidence and only rust-routers/tree-sitter-structure analyzer/cache versions; all original facts, entities, relations, metadata and diagnostics retained', sizes };
   } finally { await rm(temporary, { recursive: true, force: true }); }
 }
 

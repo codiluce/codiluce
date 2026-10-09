@@ -113,6 +113,7 @@ interface Future {
 interface Listener {
     kind: 'listener';
     proof: Evidence[];
+    conditions: string[];
 }
 interface Guard {
     kind: 'guard';
@@ -277,7 +278,11 @@ export class RustRegistrations {
             return;
         }
         const scopeKeys = new Set(this.symbols.resolver.membership.get(env.scope.file.path)?.filter(scope => scope.compilation.id === env.scope.compilation.id && this.symbols.owner(scope) === env.owner).map(scope => scope.fact.key));
-        const events = [...facts.bindings.filter(binding => binding.kind !== 'parameter' && scopeKeys.has(binding.scope) && (binding.value || binding.projection)).map(item => ({ kind: 'binding' as const, start: item.start, item })), ...facts.statements.filter(item => scopeKeys.has(item.scope)).map(item => ({ kind: 'statement' as const, start: item.start, item })), ...facts.calls.filter(item => scopeKeys.has(item.scope)).map(item => ({ kind: 'call' as const, start: item.start, item })), ...facts.writes.filter(item => scopeKeys.has(item.scope) && item.kind === 'assignment').map(item => ({ kind: 'write' as const, start: item.start, item })), ...facts.returns.filter(item => item.owner === this.symbols.definition(env.scope.file.path, env.scope.fact.owner ?? '')?.fact.key).map(item => ({ kind: 'return' as const, start: item.start, item }))].sort((a, b) => a.start - b.start || a.kind.localeCompare(b.kind));
+        // Brace-delimited macro statements need not have an expression wrapper.
+        // Use their actual lexical scope for identities and uncertainty; an
+        // unreviewed nested macro can affect builders declared outside its block.
+        const macros = this.symbols.resolver.syntax(env.scope.file.path)?.macros?.filter(item => scopeKeys.has(item.scope)).map(item => ({ kind: 'macro' as const, start: item.start, item })) ?? [];
+        const events = [...macros, ...facts.bindings.filter(binding => binding.kind !== 'parameter' && scopeKeys.has(binding.scope) && (binding.value || binding.projection)).map(item => ({ kind: 'binding' as const, start: item.start, item })), ...facts.statements.filter(item => scopeKeys.has(item.scope)).map(item => ({ kind: 'statement' as const, start: item.start, item })), ...facts.calls.filter(item => scopeKeys.has(item.scope)).map(item => ({ kind: 'call' as const, start: item.start, item })), ...facts.writes.filter(item => scopeKeys.has(item.scope) && item.kind === 'assignment').map(item => ({ kind: 'write' as const, start: item.start, item })), ...facts.returns.filter(item => item.owner === this.symbols.definition(env.scope.file.path, env.scope.fact.owner ?? '')?.fact.key).map(item => ({ kind: 'return' as const, start: item.start, item }))].sort((a, b) => a.start - b.start || a.kind.localeCompare(b.kind));
         for (const event of events) {
             if (++this.steps > 50000) {
                 this.gap(env, siteOf(env, event.item), 'Rust registration summary budget exceeded');
@@ -290,7 +295,13 @@ export class RustRegistrations {
             if (attributes?.active === false)
                 continue;
             const local = { ...env, scope, conditions: unique([...this.conditions(env, scope), ...attributes?.gaps ?? [], ...attributes?.active === 'unknown' ? ['Unselected Rust registration attributes'] : []]) };
-            if (event.kind === 'binding') {
+            if (event.kind === 'macro') {
+                if (scope.gaps.includes('Rust macro invocation can supply generated/scoped items; expansion is unavailable'))
+                    this.gap(local, siteOf(local, event.item), 'Original reachable Rust macro invocation has unreviewed registration effects');
+                else if (this.macros.diagnostic(scope, event.item))
+                    this.evaluate({ ...event.item, kind: 'macro' }, local);
+            }
+            else if (event.kind === 'binding') {
                 let value = this.evaluate(event.item.value ?? event.item.projection!.value, local);
                 for (const index of event.item.projection?.indices ?? []) value = Array.isArray(value) ? value[index] : undefined;
                 env.locals.set(this.bindingKey(scope.file.path, event.item), value);
@@ -358,6 +369,19 @@ export class RustRegistrations {
         if (expression.kind === 'literal')
             return expression.value;
         if (expression.kind === 'macro') {
+            const diagnostic = this.macros.diagnostic(env.scope, expression);
+            if (diagnostic) {
+                if (diagnostic.receiver) {
+                    const binding = this.binding(env.scope, diagnostic.receiver, expression.start), listener = binding && env.locals.get(this.bindingKey(env.scope.file.path, binding));
+                    if (!binding || binding.mutable || !is(listener, 'listener') || listener.conditions.length)
+                        this.gap(env, site, 'Standard diagnostic operand lacks an immutable original native Tokio listener binding');
+                    else
+                        env.proof.push(...diagnostic.proof, ...listener.proof, this.fact(site, 'Original standard diagnostic reads native Tokio listener local_addr; standard SocketAddr formatting cannot alter router registration'));
+                }
+                else
+                    env.proof.push(...diagnostic.proof, this.fact(site, 'Original standard literal diagnostic with no formatting operands'));
+                return;
+            }
             const profile = rustWebProfile(env.scope, rustWebMacroResolution(this.symbols.resolver, env.scope, expression.path, expression.start, expression.absolute));
             if (profile?.framework === 'rocket' && profile.dialect === 'rocket-0.5' && profile.path.join('::') === 'routes' && expression.operands !== undefined && !profile.conditions.length)
                 return expression.operands.map(operand => this.callback(env, operand));
@@ -445,7 +469,7 @@ export class RustRegistrations {
         if (profile.framework === 'tokio' && name === 'net::TcpListener::bind' && args.length === 1) {
             const dep = [...env.scope.compilation.dependencies.values()].find(entry => entry.dependency.package === 'tokio')?.dependency;
             if (dep && [...dep.features, ...env.scope.compilation.dependencyFeatures.get(dep.name) ?? []].some(feature => ['net', 'full'].includes(feature)))
-                return { kind: 'future', result: { kind: 'listener', proof: [...profile.proof, this.fact(site, 'Original Tokio listener bind future, success path')] } };
+                return { kind: 'future', result: { kind: 'listener', conditions: local.conditions, proof: [...profile.proof, this.fact(site, 'Original Tokio listener bind future, success path')] } };
             return;
         }
         if (profile.framework === 'axum') {
@@ -461,7 +485,7 @@ export class RustRegistrations {
             if (/^routing::MethodFilter::(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|CONNECT|TRACE)$/.test(name))
                 return { kind: 'guard', methods: [profile.path.at(-1)!], conditions: profile.conditions, proof: profile.proof };
             if (name === 'serve' && args.length === 2 && is(args[1], 'router')) {
-                return { kind: 'future', server: { kind: 'server', router: args[1], environment: local, bound: is(args[0], 'listener'), running: true, proof: [...profile.proof, ...is(args[0], 'listener') ? args[0].proof : [], this.fact(site, 'Original Axum serve future construction; awaited exposure is recorded separately')], conditions: unique([...profile.conditions, ...args[1].conditions, ...!is(args[0], 'listener') ? ['Original Axum listener identity is unreviewed'] : []]) } };
+                return { kind: 'future', server: { kind: 'server', router: args[1], environment: local, bound: is(args[0], 'listener'), running: true, proof: [...profile.proof, ...is(args[0], 'listener') ? args[0].proof : [], this.fact(site, 'Original Axum serve future construction; awaited exposure is recorded separately')], conditions: unique([...profile.conditions, ...args[1].conditions, ...is(args[0], 'listener') ? args[0].conditions : ['Original Axum listener identity is unreviewed']]) } };
             }
             if (name === 'middleware::from_fn' && args.length === 1 && is(args[0], 'callback'))
                 return { kind: 'middleware', targets: [args[0].definition.id], conditions: ['Source middleware may change routing/short-circuit; request selection is unproven'], proof: [...profile.proof, ...args[0].proof] };
@@ -659,7 +683,7 @@ export class RustRegistrations {
         const server: Server = {...value,consumed:false,proof:[...value.proof,this.fact(site,`Original ${value.warpDialect} server ${name} native contract`)],conditions:[...value.conditions]};
         if (value.warpDialect === 'warp-0.4' && name === 'incoming' && args.length === 1) {
             server.bound = is(args[0],'listener');
-            if (is(args[0],'listener')) server.proof.push(...args[0].proof);
+            if (is(args[0],'listener')) {server.proof.push(...args[0].proof);server.conditions.push(...args[0].conditions);}
             else server.conditions.push('Warp incoming Acceptor/listener implementation is unreviewed');
             return server;
         }
@@ -1055,6 +1079,29 @@ export class RustRegistrations {
         const base = compileRustPath(path || '/', dialect, true), prefix = path === '/' ? '' : path;
         return { ...base, rust: { sources: base.rust?.sources.map(source => source.slice(0, -1) + (prefix.endsWith('/') || !prefix ? '[\\s\\S]*$' : '(?:/[\\s\\S]*)?$')) ?? [], prefixDefault: true }, alternatives: base.alternatives.map(segments => [...segments, { kind: 'rest' as const, name: '__fallback', minimum: 0 as const }]) };
     }
+    private axumExtractorConditions(callback: Callback | undefined): string[] {
+        if (!callback) return [];
+        const nativePathType = (text: string): boolean => {
+            const selected = text.trim();
+            if (selected.startsWith('(') && selected.endsWith(')')) {
+                const fields = rustSplit(selected.slice(1, -1));
+                return !!fields?.length && fields.length <= 16 && fields.every(field => !!this.warpGuard(callback.scope, field.trim()));
+            }
+            return !!this.warpGuard(callback.scope, selected);
+        };
+        const conditions: string[] = [];
+        for (const parameter of callback.definition.fact.parameters) {
+            const type = parameter.type, result = type?.kind === 'path' ? this.symbols.resolver.path(callback.scope, type.segments ?? [], !!type.absolute, new Set(), 'expression') : undefined;
+            const profile = result && rustWebProfile(callback.scope, result);
+            if (profile?.framework === 'axum' && !profile.conditions.length) {
+                if (profile.path.join('::') === 'http::Method' && !type!.generics) continue;
+                const argument = /<([\s\S]*)>\s*$/.exec(type!.text)?.[1];
+                if (profile.path.join('::') === 'extract::Path' && argument && nativePathType(argument)) continue;
+            }
+            conditions.push('Axum handler extractor requires reviewed native source/type/guard proof');
+        }
+        return unique(conditions);
+    }
     private emitAxum(router: Router, env: Environment, root: string, conditions: string[], proof: Evidence[]): void {
         const paths = new Map<string, Entry[]>();
         for (const entry of router.entries.filter(entry => !entry.pathFallback))
@@ -1067,7 +1114,7 @@ export class RustRegistrations {
                 conditions.push('Axum paths collide after capture-name normalization');
             else
                 shape.set(key, path);
-            const routes = entries.flatMap(entry => entry.routes.map(route => ({ ...cloneRoute(route), conditions: unique([...route.conditions, ...entry.conditions]), proof: [...entry.proof, ...route.proof], middleware: unique([...entry.middleware, ...route.middleware]) }))), explicit = routes.filter(route => !route.fallback && route.methods !== '*'), claimed = new Set<string>();
+            const routes = entries.flatMap(entry => entry.routes.map(route => ({ ...cloneRoute(route), conditions: unique([...route.conditions, ...entry.conditions, ...this.axumExtractorConditions(route.callback)]), proof: [...entry.proof, ...route.proof], middleware: unique([...entry.middleware, ...route.middleware]) }))), explicit = routes.filter(route => !route.fallback && route.methods !== '*'), claimed = new Set<string>();
             for (const route of explicit)
                 for (const method of route.methods) {
                     if (claimed.has(method))
@@ -1093,9 +1140,10 @@ export class RustRegistrations {
         for (const [order, entry] of router.entries.entries())
             if (entry.pathFallback) {
                 const base = compileRustPath(entry.path, router.dialect, router.legacy), pattern = { ...base, rust: { sources: base.rust?.sources.map(source => source.slice(0, -1) + (entry.path.endsWith('/') ? '[\\s\\S]*$' : '(?:/[\\s\\S]+)?$')) ?? [], prefixDefault: true }, alternatives: base.alternatives.map(segments => [...segments, { kind: 'rest' as const, name: '__fallback', minimum: 0 as const }]) };
-                this.emit(router, env, root, pattern, entry.routes[0]!, entry, conditions, proof, { resource: root + '-nested-fallback-' + order, resourceOrder: order, routeOrder: 0, fallback: 'path' });
+                const route = entry.routes[0]!;
+                this.emit(router, env, root, pattern, { ...route, conditions: unique([...route.conditions, ...this.axumExtractorConditions(route.callback)]) }, entry, conditions, proof, { resource: root + '-nested-fallback-' + order, resourceOrder: order, routeOrder: 0, fallback: 'path' });
             }
-        const fallback = router.fallback ?? { site: router.site, methods: '*' as const, conditions: [], proof: [], middleware: [] };
+        const originalFallback = router.fallback ?? { site: router.site, methods: '*' as const, conditions: [], proof: [], middleware: [] }, fallback = { ...originalFallback, conditions: unique([...originalFallback.conditions, ...this.axumExtractorConditions(originalFallback.callback)]) };
         this.emit(router, env, root, this.wildcard('/', router.dialect), fallback, { site: fallback.site, path: '/', routes: [], methods: '*', conditions: [], proof: [], mounts: [], middleware: [] }, conditions, proof, { resource: root + '-fallback', resourceOrder: Number.MAX_SAFE_INTEGER, routeOrder: 0, fallback: 'path' }, undefined, router.fallback ? undefined : 404);
     }
     private emitActix(router: Router, env: Environment, root: string, conditions: string[], proof: Evidence[], prefix: string, lineage: NonNullable<RustEndpointData['lineage']>, mounts: RoutingContract['mounts'], middleware: string[], resourceMethods: Methods, seen: Set<Router>, inheritedDefault?: Route): void {

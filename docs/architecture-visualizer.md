@@ -618,3 +618,49 @@ Only Codiluce's Node/TS/WASM code executes. Generated source fixtures and record
 bounded source integration, not compiler/runtime correctness or native OS execution. Stratified unchanged-source
 accuracy and broader version qualification remain P9e2. Native OS, grammar/history performance and broad release
 gates remain P10; the complete P0–P10 objective is still active.
+
+## 30. Unchanged Axum source accuracy and registration boundaries (P9e2a)
+
+`scripts/fixtures/axum-source-portfolio.mjs` records manual ground truth from immutable original Axum consumer
+examples, independently of indexer output. Ten original Axum 0.8.8/Tokio 1.50.0/Rust 2024 package/bin profiles cover
+55 selected function declarations and 31 path/method/fallback registrations with their original handlers. The same
+complete tracked input tree supplies each selection, including a real local Cargo library. Directory names do not
+replace original Cargo bin names. Two additional unchanged profiles exercise serde macro and custom extractor boundaries.
+
+`scripts/qualify-axum-sources.mjs --axum-book /path/to/axum.code-maven.com` compares against the pinned pre-phase
+Codiluce release and fails on extra/missing manual source functions, registrations or handler pairs. Every source
+operand/declaration snippet and coordinate is checked. Every baseline/current profile performs cold/warm/revision
+reads with actual Rust import, symbol and router cache hits. The report records upstream/implementation digests,
+original Cargo inputs, manual inventories and raw outcomes in [Axum source accuracy](axum-source-accuracy.html).
+
+The framework resolver recognizes exact standard println/eprintln identities with a literal and no formatting
+operands, or a single `{}` and an immutable original binding already proven to be a qualified native Tokio listener's
+`local_addr().unwrap()`. Prelude changes, local/source/import macro shadows, arbitrary operands and opaque/mutable
+receivers retain gaps. Original token-tree sites are evaluated in their actual lexical scope, including brace-delimited
+statements. An unreviewed reachable nested macro constrains serving outside its block. General Rust resolution does
+not borrow these framework-only contracts or synthesize standard macro exports. Native listener conditions survive
+both diagnostic evaluation and Axum/Warp serving, including use under a different reviewed async runtime.
+
+Rust semantic extraction ignores trailing comment trivia when identifying a function/closure's actual tail return.
+The returned expression and its coordinates remain original; a semicolon still prevents an implicit return. The
+structural cache version changes so previously cached comment-tail summaries cannot replay. The fixed mixed-stack
+proof auditor now explicitly normalizes only duplicate evidence and router/structure cache-version labels; every
+original semantic fact, entity, relation, diagnostic, source coordinate and distinct proof remains compared.
+
+Axum source bindings remain visible when handler entry is conditional. Canonical native Path scalar/flat-tuple and
+Method identities have bounded source contracts; source lookalikes, custom parameter types, opaque Path conversion
+types and other extractors retain native source/type/guard conditions. Root and nested fallbacks carry those same
+conditions. The original Version FromRequestParts example keeps its known root and both actual registration bindings,
+but cannot certify frontend entry into its custom API handler. Request conversion success, compiler/Handler validity
+and runtime serving are not executed checks.
+
+All 31 supported reviewed registrations/handler pairs match, with zero extra or missed supported routes. General Rust
+local-import recall is a separate remaining gap: none of the three reviewed active module edges becomes confirmed
+because the general resolver retains the original tokio::main generation condition. The framework resolver can follow
+their original handlers under its reviewed native attribute contract. This small portfolio from one repository/family
+does not establish population accuracy or the full declaration/import/route gate. P9e2b broader source/import/version
+qualification, including Axum 0.7 and Rocket/Warp consumers, remains open; native OS and broad release gates remain P10.
+
+P9e2a release validation passes all 1,050 tests with four test workers, CLI/web type checks and builds, installed
+CLI/API/history/npm-exec checks and desktop/mobile report checks. The initial concurrent build/test run hit the
+existing Java parser-budget test timeout; that test passed alone and in the bounded full-suite retry.

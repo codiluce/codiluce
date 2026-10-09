@@ -67,6 +67,121 @@ test('Native original Axum served registrations bind source handlers and retain 
     assert.ok(endpoint.evidence.some(fact => fact.explanation?.includes('serving future')));
     assert.deepEqual((endpoint.metadata.routing as any).methods, ['GET', 'HEAD']);
 });
+test('Standard startup diagnostics retain original listener proof, factory and handler ranges', async () => {
+    for (const diagnostic of ['println!("listening on http://{}",listener.local_addr().unwrap());', 'std::println!["listening {}",listener.local_addr().unwrap(),];', '::std::eprintln!{"listening {}",listener.local_addr().unwrap()}', 'println!("starting");']) {
+        const source = serve('factory()').replace('async fn handler(){}', 'async fn handler(){}fn factory()->Router{Router::new().route("/x",get(handler))}').replace('axum::serve(listener,app)', diagnostic + 'axum::serve(listener,app)');
+        const g = await index(await repo(source));
+        const endpoint = route(g, '/x');
+        assert.ok(endpoint && !endpoint.metadata.constraintsUnresolved, diagnostic);
+        assert.equal(handler(g, endpoint)?.name, 'handler');
+        assert.equal(endpoint.sourceRange?.startLine, 1);
+        assert.ok(endpoint.evidence.some(fact => fact.explanation?.includes(diagnostic.includes('local_addr') ? 'reads native Tokio listener local_addr' : 'literal diagnostic')));
+        assert.ok(g.entities.find(entity => entity.path === 'src/main.rs' && entity.type === 'file')!.metadata.rustCallOutcomes);
+    }
+});
+test('Diagnostic syntax cannot certify a custom, shadowed, mutable or unknown listener operand', async () => {
+    for (const [prefix, operand] of [
+        ['struct Fake;impl Fake{fn local_addr(&self)->Self{Fake}fn unwrap(self)->Self{self}}let other=Fake;', 'other'],
+        ['let other=unknown();', 'other'],
+        ['let other="not a listener";', 'other'],
+        ['let mut other=listener;', 'other'],
+        ['let listener="shadow";', 'listener'],
+    ] as [string, string][]) {
+        for (const delimiters of ['()', '{}']) {
+            const diagnostic = `println!${delimiters[0]}"{}",${operand}.local_addr().unwrap()${delimiters[1]};`;
+            const g = await index(await repo(serve('Router::new().route("/x",get(handler))').replace('axum::serve(listener,app)', prefix + diagnostic + 'axum::serve(listener,app)'), axum, {'client.ts':'export async function load(){await fetch("https://api.test/x")}'}));
+            const endpoint = route(g, '/x');
+            assert.ok(endpoint?.metadata.constraintsUnresolved, prefix + diagnostic);
+            assert.equal(requests(g).length, 0,'an uncertain diagnostic cannot certify request dispatch');
+            assert.ok(g.diagnostics.some(diagnostic => diagnostic.reason.includes('immutable original native Tokio listener')));
+        }
+    }
+});
+test('Native listener qualification survives a different reviewed runtime without losing version conditions', async () => {
+    const source = serve('Router::new().route("/x",get(handler))').replace('#[tokio::main]', '#[actix_web::main]');
+    const good = await index(await repo(source.replace('axum::serve(listener,app)', 'println!("{}",listener.local_addr().unwrap());axum::serve(listener,app)'), axum + '\n' + actix));
+    assert.ok(!route(good, '/x').metadata.constraintsUnresolved);
+    for (const diagnostic of ['', 'println!("{}",listener.local_addr().unwrap());']) {
+        const g = await index(await repo(source.replace('axum::serve(listener,app)', diagnostic + 'axum::serve(listener,app)'), axum.replace('1.53.2','2.0') + '\n' + actix, {'client.ts':'export async function load(){await fetch("https://api.test/x")}'}));
+        assert.ok(route(g, '/x').metadata.constraintsUnresolved);
+        assert.equal(requests(g).length, 0);
+        assert.ok((route(g, '/x').metadata.constraints as string[]).some(condition => condition.includes('version family')));
+    }
+});
+test('Custom diagnostic macros, prelude changes and user formatting operands keep expansion gaps', async () => {
+    const source = serve('Router::new().route("/x",get(handler))');
+    for (const [prefix, diagnostic] of [
+        ['macro_rules! println{($($t:tt)*)=>{}}', 'println!("starting");'],
+        ['use custom_logger::info as println;', 'println!("starting");'],
+        ['#![no_implicit_prelude]', 'println!("starting");'],
+        ['#![no_std]', 'println!("starting");'],
+        ['use log::*;', 'println!("starting");'],
+        ['', 'println!("{}", app);'],
+        ['', 'println!("{}", mutate(app));'],
+        ['', 'println!("{:?}",listener.local_addr().unwrap());'],
+        ['', 'println!("{} {}",listener.local_addr().unwrap(),app);'],
+        ['', 'println!("{listener}");'],
+        ['', 'println!("{}",listener.local_addr().expect("bound"));'],
+    ] as [string, string][]) {
+        const g = await index(await repo(prefix + source.replace('axum::serve(listener,app)', diagnostic + 'axum::serve(listener,app)'), axum + '\nlog="0.4"\ncustom_logger="1.0"'));
+        assert.ok(declared(g).every(endpoint => endpoint.metadata.constraintsUnresolved && !handler(g, endpoint)), prefix + diagnostic);
+        assert.ok(g.diagnostics.some(diagnostic => diagnostic.reason.includes('macro invocation')), prefix + diagnostic);
+    }
+});
+test('A nested macro shadow retains its actual lexical identity and constrains outside serving', async () => {
+    for (const block of ['{use custom_logger::info as println;println!("starting");}', '{use custom_logger::info as println;println!{"starting"}}', '{custom!{"effects unavailable"}}']) {
+        const source = serve('Router::new().route("/x",get(handler))').replace('axum::serve(listener,app)', block + 'axum::serve(listener,app)');
+        const g = await index(await repo(source, axum + '\ncustom_logger="1.0"', {'client.ts':'export async function load(){await fetch("https://api.test/x")}'}));
+        assert.ok(route(g, '/x').metadata.constraintsUnresolved);
+        assert.equal(requests(g).length, 0);
+        assert.ok(g.diagnostics.some(diagnostic => diagnostic.reason.includes('unreviewed registration effects')));
+    }
+});
+test('Native startup diagnostics replay exactly across CRLF, cache and revision reads', async () => {
+    const source = serve('factory()').replace('async fn handler(){}', 'async fn handler(){}\nfn factory()->Router{Router::new().route("/x",get(handler))}\n').replace('axum::serve(listener,app)', '\nprintln!("listening {}",listener.local_addr().unwrap());\naxum::serve(listener,app)').replaceAll('\n','\r\n');
+    const root = await repo(source), state = await mkdtemp(path.join(tmpdir(),'codiluce-diagnostic-cache-'));
+    roots.push(state);
+    const cold = await index(root, new AnalysisCache(state)), warmCache = new AnalysisCache(state), warm = await index(root, warmCache), revision = await index(root, undefined, selected, 'source-pin');
+    assert.equal(shape(cold), shape(warm));
+    assert.equal(shape(cold), shape(revision));
+    assert.ok(warmCache.events.some(event => event.analyzer === 'rust-routers' && event.hit));
+    assert.ok(!route(cold, '/x').metadata.constraintsUnresolved);
+    assert.equal(route(cold, '/x').sourceRange?.startLine, 2);
+    assert.ok(route(cold, '/x').evidence.some(fact => fact.line === 4 && fact.explanation?.includes('reads native Tokio listener')));
+    const general = cold.entities.find(entity => entity.type === 'file' && entity.path === 'src/main.rs')!;
+    assert.ok((general.metadata.rustCallOutcomes as any[]).some(outcome => outcome.status === 'unsupported' && outcome.reason.includes('macro invocation')),'general Rust analysis remains conservative');
+});
+test('Trailing source comments preserve the original router tail expression and its callback', async () => {
+    for (const tail of ['// .route("/commented",get(other))\n', '/* .route("/commented",get(other)) */', '// first\r\n/* 😀 last */']) {
+        const source = serve('factory()').replace('async fn handler(){}', `async fn handler(){}fn factory()->Router{Router::new().route("/x",get(handler))\n${tail}\n}`);
+        const g = await index(await repo(source));
+        assert.equal(declared(g).length, 1);
+        assert.ok(!route(g, '/x').metadata.constraintsUnresolved);
+        assert.equal(handler(g, route(g, '/x'))?.name, 'handler');
+        assert.equal(route(g, '/x').sourceRange?.startLine, 1);
+    }
+    const noReturn = serve('factory()').replace('async fn handler(){}', 'async fn handler(){}fn factory(){Router::new().route("/x",get(handler));\n// no returned router\n}');
+    assert.equal(declared(await index(await repo(noReturn))).length, 0, 'a semicolon still prevents a returned router');
+});
+test('Custom Axum extractors retain original registrations without certifying handler-entry requests', async () => {
+    for (const [definition, type] of [['#[derive(Debug)]enum Version{V1}', 'Version'], ['struct Path<T>(T);', 'Path<String>'], ['struct Custom;', 'axum::extract::Path<Custom>'], ['', 'axum::extract::Json<String>'], ['', 'axum::extract::Path<((u32,u32),(u32,u32))>']] as [string,string][]) {
+        const source = serve('Router::new().route("/x/{id}",get(handler)).route("/known",get(known))').replace('async fn handler(){}', `${definition}async fn handler(value:${type}){}async fn known(){}`);
+        const g = await index(await repo(source, axum, {'client.ts':'export async function custom(){await fetch("https://api.test/x/42")}export async function known(){await fetch("https://api.test/known")}'}));
+        const endpoint = route(g, '/x/{id}');
+        assert.ok(endpoint.metadata.constraintsUnresolved);
+        assert.ok((endpoint.metadata.constraints as string[]).some(condition => condition.includes('extractor')));
+        assert.equal(handler(g, endpoint)?.name, 'handler','original binding remains known while entry is conditional');
+        assert.equal(requests(g).length, 1);
+        assert.equal(handler(g, requests(g)[0]!)?.name, 'known');
+    }
+    const rejecting = 'struct Custom;impl<S:Send+Sync> axum::extract::FromRequestParts<S> for Custom{type Rejection=axum::http::StatusCode;async fn from_request_parts(_: &mut axum::http::request::Parts,_:&S)->Result<Self,Self::Rejection>{Err(axum::http::StatusCode::UNAUTHORIZED)}}';
+    for (const builder of ['Router::new().fallback(handler)', 'Router::new().nest("/api",Router::new().fallback(handler))']) {
+        const source = serve(builder).replace('async fn handler(){}', rejecting + 'async fn handler(_:Custom){}');
+        const g = await index(await repo(source, axum, {'client.ts':'export async function load(){await fetch("https://api.test/api/missing")}'}));
+        assert.ok(declared(g).some(endpoint => handler(g, endpoint)?.name === 'handler' && endpoint.metadata.constraintsUnresolved));
+        assert.equal(requests(g).filter(endpoint => handler(g, endpoint)).length, 0,'root and nested fallback entry retain the original custom extractor condition');
+    }
+});
 test('Actix App.route factory binds an original async handler with resource-level method guards', async () => {
     const g = await index(await repo(app('App::new().route("/users/{id}",web::get().to(handler))'), actix));
     const endpoint = route(g, '/users/{id}');

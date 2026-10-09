@@ -7,7 +7,7 @@ import { rustAttributes, rustCfg, rustSplit, rustString } from '../languages/rus
 import type { RustRouteDialect } from '../routes/rust-patterns.js';
 import type { RustScopeFact } from '../facts.js';
 import { warpPathSyntax } from './warp-syntax.js';
-export const RUST_ROUTER_VERSION = '4';
+export const RUST_ROUTER_VERSION = '5';
 export interface RustWebProfile {
     framework: 'axum' | 'actix-web' | 'tokio' | 'rocket' | 'warp';
     dialect?: RustRouteDialect;
@@ -194,6 +194,38 @@ export class RustWebMacros {
     private readonly proofs = new Map<string, Evidence[]>();
     constructor(private readonly base: RustResolver) { }
     private key(compilation: RustCompilation, file: string, scope: string) { return JSON.stringify([compilation.id, file, scope]); }
+    /** Only standard diagnostic syntax with no user formatting dispatch. The
+     * one operand form is provisional: registration evaluation must prove the
+     * original binding is a native Tokio listener before it can qualify. */
+    diagnostic(scope: RustScope, macro: { path: string[]; absolute: boolean; tokens: string }): { receiver?: string; proof: Evidence[] } | undefined {
+        const result = this.base.path(scope, macro.path, macro.absolute, new Set(), 'expression');
+        let proof: Evidence[];
+        if (result.status === 'external' && result.dependency === 'rust-standard-library' && result.crate === 'std' && ['println', 'eprintln'].includes(result.path.join('::')) && !result.conditions.length)
+            proof = result.proof;
+        else if (result.status === 'unresolved' && !macro.absolute && macro.path.length === 1 && ['println', 'eprintln'].includes(macro.path[0]!)) {
+            // Prelude macros have no fabricated general resolver symbol. Every
+            // competing source/import/extern binding and disabled prelude wins.
+            for (let current: RustScope | undefined = scope; current; current = current.parent) {
+                if (current.attributes.noPrelude || current.attributes.noStd || current.attributes.noCore || current.imports.some(site => site.active !== false && site.fact.attributes.some(attribute => /^#!?\[\s*macro_use\b/.test(attribute))))
+                    return;
+            }
+            const standard = this.base.path(scope, ['std'], false, new Set(), 'expression');
+            if (standard.status !== 'external' || standard.dependency !== 'rust-standard-library' || standard.crate !== 'std' || standard.conditions.length)
+                return;
+            proof = standard.proof;
+        }
+        else
+            return;
+        const args = rustSplit(macro.tokens.slice(1, -1)), literal = args?.[0] && rustString(args[0]);
+        if (literal === undefined || !args)
+            return;
+        if (args.length === 1 && !/[{}]/.test(literal))
+            return { proof };
+        const receiver = args.length === 2 && /^([A-Za-z_][A-Za-z_0-9]*)\s*\.\s*local_addr\s*\(\s*\)\s*\.\s*unwrap\s*\(\s*\)$/.exec(args[1]!);
+        if (receiver && /^[^{}]*\{\}[^{}]*$/.test(literal))
+            return { receiver: receiver[1], proof };
+        return;
+    }
     read = (fact: RustScopeFact, compilation: RustCompilation, file: string): string[] => {
         const gap = 'Rust macro invocation can supply generated/scoped items; expansion is unavailable';
         if (!fact.gaps.includes(gap))
@@ -212,6 +244,11 @@ export class RustWebMacros {
                 continue;
             if (attrs.active !== true || attrs.gaps.length)
                 return fact.gaps;
+            const diagnostic = this.diagnostic(scope, macro);
+            if (diagnostic) {
+                proof.push(...diagnostic.proof, { ...evidence('framework', 'rust-routers', file, macro.range.startLine, diagnostic.receiver ? 'Original standard diagnostic syntax; native listener operand identity requires registration evaluation' : 'Original standard literal diagnostic with no formatting operands; reviewed item-neutral syntax without expansion'), endLine: macro.range.endLine, analyzerVersion: RUST_ROUTER_VERSION });
+                continue;
+            }
             const identity = rustWebMacroResolution(this.base, scope, macro.path, macro.start, macro.absolute), profile = rustWebProfile(scope, identity);
             if (profile?.framework === 'rocket' && profile.dialect === 'rocket-0.5' && profile.path.join('::') === 'routes' && macro.operands !== undefined && profile.conditions.every(condition => condition === gap || condition.startsWith('Unreviewed Rust attribute'))) {
                 proof.push(...profile.proof, { ...evidence('framework', 'rust-routers', file, macro.range.startLine, 'Original Rocket routes! literal source path list; reviewed registration syntax without macro expansion'), endLine: macro.range.endLine, analyzerVersion: RUST_ROUTER_VERSION });

@@ -179,8 +179,13 @@ gaps. P9e1 adds mixed-stack conformance for all six Rust version profiles with T
 shared original Cargo source, concurrent recorded Unix/Windows contexts, native default responses, source proof,
 cache/history replay and invalidation. Repeated identical registration proof is deduplicated; a 192-route and
 768-request source portfolio fits a 16 MiB graph serialization budget. The [local performance comparison](docs/rust-compatibility-performance.html)
-records unchanged frontend controls and the cost of adding native Rust routing against P9b. Broader unchanged-source accuracy/version
-qualification remains P9e2, and native OS release checks remain P10.
+records unchanged frontend controls and the cost of adding native Rust routing against P9b. P9e2a adds
+[unchanged Axum source accuracy](docs/axum-source-accuracy.html): ten original 0.8 profiles match 55 reviewed
+functions and 31 route/handler pairs, with two additional macro/custom-extractor boundary profiles. Standard startup
+diagnostics preserve native listener identity and original lexical scope; trailing comments preserve router factory
+returns. Unreviewed listener versions, nested macro effects and custom handler extractors retain request uncertainty.
+The three reviewed general Rust module imports still retain their native attribute gap, so broader source/import/version
+accuracy remains P9e2b and native OS release checks remain P10.
 No Cargo/rustc or target code runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original
