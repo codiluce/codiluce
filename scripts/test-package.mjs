@@ -58,7 +58,7 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
       assert.equal(source.focus.startLine, entity.sourceRange.startLine);
       const file = await (await fetch(`${url}api/projection/locate/${source.file.id}`)).json();
       assert.equal(file.node.analysis.features.structure.status, 'supported');
-      assert.equal(file.node.analysis.features.references.status, language === 'python' ? 'partial' : 'unsupported');
+      assert.equal(file.node.analysis.features.references.status, ['python', 'go'].includes(language) ? 'partial' : 'unsupported');
     }
     for (const [name, handlerPath, line] of [
       ['GET /package-svelte-api', 'svelte-ui/src/routes/package-svelte-api/+server.ts', 1],
@@ -197,10 +197,13 @@ try {
   await mkdir(goConsumer, { recursive: true }); await mkdir(goShared, { recursive: true });
   await writeFile(path.join(repo, 'go.work'), 'go 1.25\nuse (\n ./go-workspace/deep/consumer\n ./go-workspace/deep/shared\n)\n');
   await writeFile(path.join(goConsumer, 'go.mod'), 'module example.com/consumer\ngo 1.25\n');
-  await writeFile(path.join(goConsumer, 'consumer.go'), 'package consumer\nimport "example.com/shared/v2"\nfunc PackagedGoConsumer(){routing.PackagedGoShared()}');
+  await writeFile(path.join(goConsumer, 'consumer.go'), 'package consumer\nimport "example.com/shared/v2"\nimport h "example.com/shared/v2/handlers"\nfunc PackagedGoConsumer(){routing.PackagedGoShared();h.PackagedGoHandler();v:=h.PackagedGoNew();f:=v.PackagedGoServe;f()}');
   await writeFile(path.join(goShared, 'go.mod'), 'module example.com/shared/v2\ngo 1.25\n');
   await writeFile(path.join(goShared, 'shared.go'), 'package routing\nfunc PackagedGoShared(){}');
   await writeFile(path.join(goShared, 'platform_linux.go'), 'package routing\ntype PackagedGoLinux struct{}');
+  await mkdir(path.join(goShared, 'handlers'), { recursive: true });
+  await writeFile(path.join(goShared, 'handlers', 'handler.go'), 'package handlers\ntype PackagedGoService struct{}\nfunc PackagedGoHandler(){}\nfunc PackagedGoNew()*PackagedGoService{return &PackagedGoService{}}');
+  await writeFile(path.join(goShared, 'handlers', 'methods.go'), 'package handlers\nfunc(s *PackagedGoService)PackagedGoServe(){PackagedGoHandler()}');
   console.log('Starting the installed executable from a repository with spaces…');
   await checkSession(bin, repo);
   assert.ok((await readdir(path.join(repo, '.codiluce'))).includes('codiluce.db'));
@@ -214,7 +217,15 @@ try {
   assert.equal(goImport.local, 'routing'); assert.equal(goImport.range.startLine, 2); assert.equal(goImport.outcome.status, 'resolved'); assert.equal(goImport.outcome.targets.length, 2);
   assert.ok(goImport.conditions.some(reason => reason.includes('Unknown build')), 'installed resolver retains the unconfigured platform alternative');
   const goEdges = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', goFile.id, '--type', 'imports'], repo)).stdout).items;
-  assert.ok(goEdges.some(edge => edge.to === goSharedSymbol.parentId)); assert.equal(goFile.metadata.analysis.features.imports.status, 'partial'); assert.equal(goFile.metadata.analysis.features.references.status, 'unsupported');
+  assert.ok(goEdges.some(edge => edge.to === goSharedSymbol.parentId)); assert.equal(goFile.metadata.analysis.features.imports.status, 'partial'); assert.equal(goFile.metadata.analysis.features.references.status, 'partial');
+  const goHandler = goSymbols.find(entity => entity.name === 'PackagedGoHandler'), goService = goSymbols.find(entity => entity.name === 'PackagedGoService'), goServe = goSymbols.find(entity => entity.name === 'PackagedGoServe'); assert.ok(goHandler && goService && goServe);
+  assert.equal(goServe.parentId, goService.id, 'installed Go receiver methods attach across original package files');
+  const goCalls = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', goConsumerSymbol.id, '--type', 'calls'], repo)).stdout).items;
+  const goHandlerCall = goCalls.find(edge => edge.to === goHandler.id); assert.ok(goHandlerCall, 'installed Go member calls bind the original exported handler');
+  const goCallDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relation', '--id', goHandlerCall.id], repo)).stdout);
+  assert.ok(goCallDetail.evidence.some(fact => fact.file.endsWith('consumer.go') && fact.line === 4), 'installed Go member calls retain original source evidence');
+  assert.ok(goCalls.some(edge => edge.to === goServe.id), 'installed Go factory result and method callback bind the original method');
+  assert.ok(!goCalls.some(edge => edge.to === goSharedSymbol.id), 'unconfigured provider build alternatives cannot prove a runtime callback');
   const workspaceSymbols = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'Workspace'], repo)).stdout).items;
   const consumerSymbol = workspaceSymbols.find(entity => entity.name === 'WorkspaceConsumer' && entity.type === 'function'), sharedSymbol = workspaceSymbols.find(entity => entity.name === 'WorkspaceShared' && entity.type === 'function');
   assert.ok(consumerSymbol && sharedSymbol, 'installed project services extract deep workspace declarations');
@@ -394,7 +405,7 @@ try {
   console.log('Checking npm exec against the tarball without a local installation…');
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
-  console.log('Package installation, seven grammars, workspace binding, Go module/workspace/package imports and build alternatives, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
+  console.log('Package installation, seven grammars, workspace binding, Go module/workspace/package imports, build alternatives, lexical calls and concrete receiver callbacks, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

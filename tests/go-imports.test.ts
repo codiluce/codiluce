@@ -37,7 +37,7 @@ test('Go raw/interpreted import strings preserve Unicode byte escapes and reject
 
 test('Go packages span files and use declared package names rather than version/directory basenames', async () => {
   const root = await repository({ 'main.go': 'package app\nimport (\n "example.com/app/pkg/v2"\n r "example.com/app/pkg/v2"\n . "example.com/app/pkg/v2"\n _ "example.com/app/pkg/v2"\n)\n', 'pkg/v2/a.go': 'package routes_test\nfunc First(){}', 'pkg/v2/b.go': 'package routes_test\ntype Handler struct{}\nfunc (h Handler) Serve(){}' });
-  const graph = await index(root), entries = imports(graph, 'main.go'); assert.equal(entries.length, 4); assert.deepEqual(entries.map(item => item.local), ['routes_test', 'r', '.', '_']); assert.ok(entries.every(item => item.outcome.status === 'resolved' && item.outcome.targets.length === 2)); assert.equal(graph.relations.filter(item => item.type === 'imports' && item.from === file(graph, 'main.go').id).length, 8); assert.equal(fileAnalysis(file(graph, 'main.go').metadata.analysis)?.features.references.status, 'unsupported');
+  const graph = await index(root), entries = imports(graph, 'main.go'); assert.equal(entries.length, 4); assert.deepEqual(entries.map(item => item.local), ['routes_test', 'r', '.', '_']); assert.ok(entries.every(item => item.outcome.status === 'resolved' && item.outcome.targets.length === 2)); assert.equal(graph.relations.filter(item => item.type === 'imports' && item.from === file(graph, 'main.go').id).length, 8); assert.equal(fileAnalysis(file(graph, 'main.go').metadata.analysis)?.features.references.status, 'partial');
 });
 
 test('Unrelated nested modules stay external until a workspace use or declared local replacement selects them', async () => {

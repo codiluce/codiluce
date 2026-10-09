@@ -7,7 +7,7 @@ import { IndexedSources } from '../indexed-sources.js';
 import { selectGoFile, type GoSelection } from '../languages/go-build.js';
 import { goModulePath, parseGoManifest, type GoManifest, type GoReplace } from './go-manifest.js';
 
-export const GO_RESOLVER_VERSION = '1';
+export const GO_RESOLVER_VERSION = '2';
 export interface GoModule { id: string; root: string; file: string; manifest: GoManifest }
 interface Workspace { root: string; file: string; manifest: GoManifest }
 export interface GoPackage { key: string; directory: string; name: string; module: GoModule; files: ScannedFile[]; conditions: string[] }
@@ -111,21 +111,21 @@ export class GoResolver {
     if (names.length > 1) return { status: 'ambiguous', candidates: candidates.map(file => file.id), reason: 'Competing package names in the selected directory/build context' };
     if (!names.length) return { status: 'unsupported', reason: 'Package clause is unavailable' };
     if (names[0] === 'main' && !allowMain) return { status: 'unsupported', reason: 'A Go command package cannot be imported as a library' };
-    const target: GoPackage = { key: `${module.id}:${directory}:${names[0]}`, directory, name: names[0]!, module, files: candidates, conditions: [...new Set(conditions)] };
+    const target: GoPackage = { key: `${module.id}:${directory}:${names[0]}:${JSON.stringify(config)}`, directory, name: names[0]!, module, files: candidates, conditions: [...new Set(conditions)] };
     return { status: 'resolved', package: target, conditions: target.conditions, proof: [evidence('filesystem', 'go-imports', module.file, undefined, `Indexed module directory/package ${directory} declares ${target.name}`)] };
   }
-  packageFor(file: string): GoResolution {
+  packageFor(file: string, origin = file): GoResolution {
     const module = this.owner(file); if (!module?.manifest.valid) return { status: 'unsupported', reason: 'No qualified owning module' };
-    const selection = this.selection(file); if (selection.status === 'inactive') return { status: 'excluded', reason: 'Compilation unit is inactive under recorded build/test inputs' };
-    return this.package(module, path.posix.dirname(file), this.config(file), true, this.context.syntax?.get(file)?.facts.go?.package?.name);
+    const selection = this.selection(file, this.config(origin)); if (selection.status === 'inactive') return { status: 'excluded', reason: 'Compilation unit is inactive under recorded build/test inputs' };
+    return this.package(module, path.posix.dirname(file), this.config(origin), true, this.context.syntax?.get(file)?.facts.go?.package?.name);
   }
-  resolve(file: string, specifier: string): GoResolution {
+  resolve(file: string, specifier: string, origin = file): GoResolution {
     if (specifier === 'C') return { status: 'unsupported', reason: 'cgo pseudo-package and generated C bindings are not executed/indexed' };
     if (!goModulePath(specifier)) return { status: 'unsupported', reason: 'Relative, malformed or unreviewed import path; GOPATH imports require a separate profile' };
     if (specifier.split('/').includes('vendor')) return { status: 'unsupported', reason: 'Vendor directories cannot be named as canonical import paths' };
     const privateIndex = specifier.split('/').lastIndexOf('internal'), owner = this.owner(file), ownPath = owner?.manifest.module && path.posix.join(owner.manifest.module, path.posix.relative(owner.root, path.posix.dirname(file)));
     if (privateIndex >= 0) { const parent = specifier.split('/').slice(0, privateIndex).join('/'); if (!parent || !ownPath || !matches(parent, ownPath)) return { status: 'unsupported', reason: 'Import crosses a Go internal-package boundary' }; }
-    const env = this.environment(file), config = this.config(file);
+    const env = this.environment(origin), config = this.config(origin);
     if (STANDARD.has(specifier)) return { status: 'external', module: specifier, standardLibrary: true, proof: [evidence('syntax', 'go-imports', file, undefined, 'Reviewed canonical standard-library import; module names cannot impersonate it')], conditions: [...env.conditions, ...(env.error ? [env.error.reason] : [])] };
     if (env.error) return env.error;
     const conditions = [...env.conditions], candidates: GoResolution[] = [], requirements = new Map<string, string>();

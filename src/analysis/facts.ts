@@ -49,7 +49,32 @@ export interface PythonReferenceFact { name: string; scope?: string; start: numb
 export interface PythonScopeFact { key: string; parent?: string; kind: 'comprehension' | 'lambda'; start: number; end: number }
 export interface PythonSyntaxFacts { imports: PythonImportFact[]; writes: PythonBindingWrite[]; calls: PythonCallFact[]; assignments: PythonAssignmentFact[]; returns: PythonReturnFact[]; definitions: PythonDefinitionFact[]; references: PythonReferenceFact[]; scopes: PythonScopeFact[]; opaqueScopes: string[]; opaqueModule: boolean }
 export interface GoImportFact { specifier: string; local?: string; kind: 'named' | 'default' | 'dot' | 'blank'; range: SourceRange; start: number; end: number }
-export interface GoSyntaxFacts { package?: { name: string; range: SourceRange; start: number }; imports: GoImportFact[]; comments: { text: string; start: number; end: number }[]; complete: boolean }
+export interface GoSite { start: number; range: SourceRange }
+export type GoExpression = GoSite & (
+  | { kind: 'name'; name: string }
+  | { kind: 'literal'; value: string | number | boolean | null }
+  | { kind: 'member'; object: GoExpression; name: string }
+  | { kind: 'call'; callee: GoExpression; args: GoExpression[] }
+  | { kind: 'unary'; operator: string; object: GoExpression }
+  | { kind: 'index'; object: GoExpression; index?: GoExpression }
+  | { kind: 'composite'; type: GoExpression }
+  | { kind: 'function'; key: string }
+  | { kind: 'unknown'; text: string }
+);
+export interface GoScopeFact { key: string; parent?: string; owner?: string; kind: 'file' | 'function' | 'type' | 'block' | 'control' | 'case'; start: number; end: number }
+export interface GoParameterFact { name?: string; type: GoExpression; variadic?: boolean }
+export interface GoDefinitionFact extends GoSite {
+  key: string; name: string; kind: 'function' | 'method' | 'type' | 'closure'; scope: string; bodyScope?: string; typeScope?: string;
+  end: number; signature: string; receiver?: GoParameterFact; parameters: GoParameterFact[]; results: GoParameterFact[];
+  generic?: boolean;
+  alias?: boolean; underlying?: GoExpression; interface?: boolean; fields?: { name?: string; type: GoExpression; embedded: boolean }[];
+}
+export interface GoBindingFact extends GoSite { name: string; scope: string; end: number; kind: 'var' | 'const' | 'short' | 'parameter' | 'type-parameter' | 'range'; type?: GoExpression; value?: GoExpression; tuple?: boolean }
+export interface GoWriteFact extends GoSite { target: GoExpression; scope: string; kind: 'assignment' | 'augmentation' | 'address' }
+export interface GoReferenceFact extends GoSite { expression: GoExpression; scope: string }
+export interface GoCallFact extends GoReferenceFact { expression: GoExpression & { kind: 'call' }; timing: 'immediate' | 'deferred' | 'goroutine' }
+export interface GoSemanticFacts { scopes: GoScopeFact[]; definitions: GoDefinitionFact[]; bindings: GoBindingFact[]; writes: GoWriteFact[]; references: GoReferenceFact[]; calls: GoCallFact[]; gaps: string[] }
+export interface GoSyntaxFacts { package?: { name: string; range: SourceRange; start: number }; imports: GoImportFact[]; comments: { text: string; start: number; end: number }[]; complete: boolean; semantic?: GoSemanticFacts }
 export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; python?: PythonSyntaxFacts; go?: GoSyntaxFacts }
 export interface ImportBinding { imported: string; local: string; typeOnly?: boolean }
 export type ImportOutcome =

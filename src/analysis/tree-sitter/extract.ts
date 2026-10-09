@@ -3,6 +3,7 @@ import type { DeclarationFact, ParseIssue, StructureFacts } from '../facts.js';
 import { SourceText } from '../source-map.js';
 import { extractPythonImports } from './python-imports.js';
 import { extractGoImports } from './go-imports.js';
+import { extractGoSemantic } from './go-syntax.js';
 
 const MAX_DECLARATIONS = 20_000, MAX_ISSUES = 100, MAX_NODES = 200_000;
 const compact = (text: string) => text.replace(/\s+/g, ' ').trim();
@@ -124,7 +125,7 @@ export function extractStructure(root: Node, query: Query, language: string, con
       signature: `${mods.includes('static') && CALLABLES.has(kind) ? 'static ' : ''}${signature(node, name, kind)}`, range: source.range(owner.startIndex, owner.endIndex),
       start: owner.startIndex, end: Math.min(owner.endIndex, content.length), nameEnd: name.endIndex,
       ...(visibility ? { visibility } : {}), ...(mods.length ? { modifiers: mods } : {}), ...(notes.length ? { annotations: notes } : {}),
-      ...(language === 'go' ? { exported: /^[A-Z]/.test(name.text) } : language === 'rust' ? { exported: !!visibility?.startsWith('pub') } : {}),
+      ...(language === 'go' ? { exported: /^\p{Lu}/u.test(name.text) } : language === 'rust' ? { exported: !!visibility?.startsWith('pub') } : {}),
     };
     declarations.push(fact); byNode.set(node.id, fact);
     if (target) receiverMethods.push({ fact, target, scope: parent?.qualifiedName ?? top });
@@ -158,7 +159,9 @@ export function extractStructure(root: Node, query: Query, language: string, con
   issues.sort((a, b) => (a.range?.startLine ?? 0) - (b.range?.startLine ?? 0) || (a.range?.startColumn ?? 0) - (b.range?.startColumn ?? 0) || a.reason.localeCompare(b.reason));
   const python = language === 'python' ? extractPythonImports(root, declarations, source) : undefined;
   const go = language === 'go' ? extractGoImports(root, source) : undefined;
-  truncated ||= (python?.truncated ?? false) || (go?.truncated ?? false);
+  const goSemantic = language === 'go' ? extractGoSemantic(root, declarations, source) : undefined;
+  if (go && goSemantic) go.facts.semantic = goSemantic.facts;
+  truncated ||= (python?.truncated ?? false) || (go?.truncated ?? false) || (goSemantic?.truncated ?? false);
   if (truncated) issues.push({ code: 'syntax-budget-exceeded', reason: 'Structural extraction reached its node, declaration, diagnostic or query limit' });
   return { declarations, issues, truncated, ...(python ? { python: python.facts } : {}), ...(go ? { go: go.facts } : {}) };
 }
