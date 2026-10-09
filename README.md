@@ -133,7 +133,11 @@ Cargo/mount/serving proof and request flows survive installed CLI/API and cache/
 require an application boundary before competing with frontend requests. Unreviewed versions, macros, custom regexes,
 guards, middleware, conditional setup and generic/native trait inference retain gaps. Literal log 0.4 messages and the
 default Actix Logger have narrow reviewed contracts. See the [unchanged Actix source profiles](docs/rust-router-source-qualification.html).
-Rocket/Warp remains P9d; broader source/version/target/performance qualification remains P9e/P10.
+P9d1 adds initial Rocket 0.5 attributes, literal `routes!` source lists, macro imports, mount prefixes and selected
+launch/main entrypoints. Original factories and handlers retain native default/manual ranks, HEAD fallback, decoded
+segments, literal queries and fixed-width integer/bool/string parameter guards. Unknown request/body/query guards,
+fairings, catchers and conversion/compiler contracts retain conditions. Warp remains P9d2; broader
+source/version/target/performance qualification remains P9e/P10.
 No Cargo/rustc or target code runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original

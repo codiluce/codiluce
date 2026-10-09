@@ -1,5 +1,5 @@
 import type { Node } from 'web-tree-sitter';
-import type { DeclarationFact, RustImportFact, RustItemFact, RustScopeFact, RustSyntaxFacts } from '../facts.js';
+import type { DeclarationFact, RustExpression, RustImportFact, RustItemFact, RustScopeFact, RustSyntaxFacts } from '../facts.js';
 import type { SourceText } from '../source-map.js';
 import { rustName, rustIdentifier } from '../languages/rust-cfg.js';
 import { extractRustSemantic } from './rust-semantic.js';
@@ -80,7 +80,25 @@ export function extractRust(root: Node, declarations: DeclarationFact[], source:
             return;
         if (node.type === 'macro_invocation') {
             const head=node.text.slice(0,node.text.indexOf('!')).replace(/\s+/g,''),tree=node.namedChildren.find(child=>child.type==='token_tree');
-            facts.macros!.push({...site(node),scope:current.key,path:head.split('::').filter(Boolean).map(rustName),tokens:tree?.text.slice(0,8193)??'',attributes:attributes(node)});
+            let operands: (RustExpression & {kind:'path'})[] | undefined;
+            if (tree && tree.text.length <= 8192) {
+                let body=tree.text.slice(1,-1);
+                for(const comment of tree.namedChildren.filter(child=>child.type.includes('comment')).sort((a,b)=>b.startIndex-a.startIndex)){
+                    const start=comment.startIndex-tree.startIndex-1,end=comment.endIndex-tree.startIndex-1;
+                    body=body.slice(0,start)+body.slice(start,end).replace(/[^\r\n]/g,' ')+body.slice(end);
+                }
+                const fields=body.split(',');
+                operands=[]; let offset=tree.startIndex+1;
+                for (const [index,field] of fields.entries()) {
+                    const text=field.trim(), compact=text.replace(/\s+/g,'');
+                    if (!text && index === fields.length-1) break;
+                    if (index >= 512 || !/^(?:::\s*)?(?:r#)?[_\p{ID_Start}][_\p{ID_Continue}]*(?:\s*::\s*(?:r#)?[_\p{ID_Start}][_\p{ID_Continue}]*)*$/u.test(text)) {operands=undefined;break;}
+                    const start=offset+field.indexOf(text),end=start+text.length;
+                    operands.push({start,end,range:source.range(start,end),kind:'path',segments:compact.split('::').filter(Boolean).map(rustName),absolute:compact.startsWith('::')});
+                    offset+=field.length+1;
+                }
+            }
+            facts.macros!.push({...site(node),scope:current.key,path:head.split('::').filter(Boolean).map(rustName),absolute:head.startsWith('::'),tokens:tree?.text.slice(0,8193)??'',operands,attributes:attributes(node)});
             current.gaps.push('Rust macro invocation can supply generated/scoped items; expansion is unavailable');
             return;
         }

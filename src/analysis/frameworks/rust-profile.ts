@@ -6,9 +6,9 @@ import { cargoRequirement, type RustCompilation } from '../resolution/rust-proje
 import { rustAttributes, rustCfg, rustSplit, rustString } from '../languages/rust-cfg.js';
 import type { RustRouteDialect } from '../routes/rust-patterns.js';
 import type { RustScopeFact } from '../facts.js';
-export const RUST_ROUTER_VERSION = '1';
+export const RUST_ROUTER_VERSION = '2';
 export interface RustWebProfile {
-    framework: 'axum' | 'actix-web' | 'tokio';
+    framework: 'axum' | 'actix-web' | 'tokio' | 'rocket';
     dialect?: RustRouteDialect;
     path: string[];
     proof: Evidence[];
@@ -19,7 +19,7 @@ export interface RustWebProfile {
  * lookalike local package, fork or requirement crossing native syntax families
  * cannot activate these contracts. No restored binaries are inspected. */
 export function rustWebProfile(scope: RustScope, result: RustResolution): RustWebProfile | undefined {
-    if (result.status !== 'external' || !['axum', 'actix-web', 'tokio'].includes(result.dependency))
+    if (result.status !== 'external' || !['axum', 'actix-web', 'tokio', 'rocket'].includes(result.dependency))
         return;
     const candidates = [...scope.compilation.dependencies.values()].filter(entry => entry.dependency.package === result.dependency && entry.dependency.name.replaceAll('-', '_') === result.crate);
     if (candidates.length !== 1)
@@ -32,26 +32,57 @@ export function rustWebProfile(scope: RustScope, result: RustResolution): RustWe
         conditions.push('Rust web dependency activation/runtime selection is unproven');
     const requirement = dep.version && cargoRequirement(dep.version);
     const within = (range: string) => !!requirement && subset(requirement, range);
-    const dialect = framework === 'axum' ? within('>=0.7.0 <0.8.0') ? 'axum-0.7' : within('>=0.8.0 <0.9.0') ? 'axum-0.8' : undefined : framework === 'actix-web' && within('>=4.0.0 <5.0.0') ? 'actix-web-4' : undefined;
+    const dialect = framework === 'axum' ? within('>=0.7.0 <0.8.0') ? 'axum-0.7' : within('>=0.8.0 <0.9.0') ? 'axum-0.8' : undefined : framework === 'actix-web' && within('>=4.0.0 <5.0.0') ? 'actix-web-4' : framework === 'rocket' && within('>=0.5.0 <0.6.0') ? 'rocket-0.5' : undefined;
     if (framework === 'tokio' ? !within('>=1.0.0 <2.0.0') : !dialect)
         conditions.push('Rust web requirement crosses or lacks a reviewed native version family');
     const features = new Set([...dep.features, ...scope.compilation.dependencyFeatures.get(dep.name) ?? []]);
-    const macros = framework === 'actix-web' ? dep.defaultFeatures || features.has('macros') : framework === 'tokio' ? (features.has('macros') || features.has('full')) && (features.has('rt') || features.has('rt-multi-thread') || features.has('full')) : false;
+    const macros = framework === 'rocket' || (framework === 'actix-web' ? dep.defaultFeatures || features.has('macros') : framework === 'tokio' ? (features.has('macros') || features.has('full')) && (features.has('rt') || features.has('rt-multi-thread') || features.has('full')) : false);
     return { framework, dialect, path: result.path, macros, conditions: [...new Set(conditions)], proof: [...result.proof, ...dep.proof, { ...evidence('framework', 'rust-routers', scope.compilation.target.package.manifest, 1, `Original registry ${dep.package} requirement ${dep.version ?? '(absent)'}; reviewed native ${dialect ?? framework + '-1'} contract, without executing dependency code`), analyzerVersion: RUST_ROUTER_VERSION }] };
 }
 export interface RustWebAttribute {
-    kind: 'runtime' | 'route';
-    framework: 'actix-web' | 'tokio';
+    kind: 'runtime' | 'route' | 'launch';
+    framework: 'actix-web' | 'tokio' | 'rocket';
     path?: string;
     methods?: string[];
+    rank?: number;
+    format?: string;
+    data?: string;
     proof: Evidence[];
 }
 const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'CONNECT', 'TRACE'];
-export function rustWebAttribute(base: RustResolver, scope: RustScope, attribute: string): RustWebAttribute | undefined {
+const rocketMacroNames = new Set(['get', 'put', 'post', 'delete', 'head', 'patch', 'options', 'route', 'routes', 'launch', 'main']);
+function macroUseNames(text: string): string[] | undefined {
+    if (text === 'macro_use')
+        return [...rocketMacroNames];
+    const match = /^macro_use\s*\(([\s\S]*)\)$/.exec(text), names = match && rustSplit(match[1]!);
+    return names?.length && names.every(name => rocketMacroNames.has(name)) && new Set(names).size === names.length ? names : undefined;
+}
+/** Exact original macro_use extern sites provide Rocket's known macro names.
+ * Local/source bindings and competing imports are never replaced. */
+export function rustWebMacroResolution(base: RustResolver, scope: RustScope, path: string[], at = Infinity, absolute = false): RustResolution {
+    const original = base.path(scope, path, absolute, new Set(), 'expression');
+    if (original.status !== 'unresolved' || path.length !== 1 || absolute)
+        return original;
+    const candidates: RustResolution[] = [];
+    for (let current: RustScope | undefined = scope; current; current = current.parent) {
+        for (const site of current.imports) {
+            if (site.fact.kind !== 'extern' || site.active !== true || site.scope.file.path === scope.file.path && site.fact.end > at)
+                continue;
+            const attrs = site.fact.attributes.map(attr => attr.replace(/^#!?\[/, '').replace(/\]$/, '').trim());
+            if (!attrs.some(attr => macroUseNames(attr)?.includes(path[0]!)))
+                continue;
+            const result = base.path(site.scope, [site.fact.alias ?? site.fact.segments[0]!], false, new Set(), 'expression'), profile = rustWebProfile(scope, result);
+            if (result.status === 'external' && profile?.framework === 'rocket' && profile.dialect === 'rocket-0.5' && profile.conditions.every(gap => gap.startsWith('Unreviewed Rust attribute')))
+                candidates.push({ ...result, path, proof: [...result.proof, { ...evidence('framework', 'rust-routers', site.scope.file.path, site.fact.range.startLine, 'Original Rocket macro_use extern declaration supplies this known macro name'), analyzerVersion: RUST_ROUTER_VERSION }] });
+        }
+    }
+    return candidates.length === 1 ? candidates[0]! : candidates.length ? { status: 'ambiguous', candidates: candidates.map((_, i) => String(i)), reason: 'Competing original Rocket macro_use imports' } : original;
+}
+export function rustWebAttribute(base: RustResolver, scope: RustScope, attribute: string, at = Infinity): RustWebAttribute | undefined {
     const text = attribute.replace(/^#!?\[/, '').replace(/\]$/, '').trim(), match = /^([\w:]+)(?:\s*\(([\s\S]*)\))?$/.exec(text);
     if (!match)
         return;
-    const profile = rustWebProfile(scope, base.path(scope, match[1]!.split('::'), false, new Set(), 'expression'));
+    const profile = rustWebProfile(scope, rustWebMacroResolution(base, scope, match[1]!.split('::').filter(Boolean), at, match[1]!.startsWith('::')));
     // The base resolver deliberately retains unknown attributes. Only those gaps
     // are ignored while identifying this exact native macro; all other gaps stay.
     if (!profile || profile.conditions.some(gap => !gap.startsWith('Unreviewed Rust attribute')) || !profile.macros)
@@ -59,6 +90,42 @@ export function rustWebAttribute(base: RustResolver, scope: RustScope, attribute
     const name = profile.path.join('::'), args = rustSplit(match[2] ?? '');
     if (!args)
         return;
+    if (profile.framework === 'rocket') {
+        if (['main', 'launch'].includes(name) && !args.length)
+            return { kind: name === 'launch' ? 'launch' : 'runtime', framework: 'rocket', proof: profile.proof };
+        const generic = name === 'route', method = generic ? args[0] : name === name.toLowerCase() ? name.toUpperCase() : undefined;
+        if (!method || !methods.includes(method) || !generic && ['CONNECT', 'TRACE'].includes(method))
+            return;
+        const first = generic ? /^uri\s*=\s*([\s\S]*)$/.exec(args[1] ?? '')?.[1] : args[0], path = first && rustString(first);
+        if (path === undefined)
+            return;
+        const options: Pick<RustWebAttribute, 'rank' | 'format' | 'data'> = {}, seen = new Set<string>();
+        for (const field of args.slice(generic ? 2 : 1)) {
+            const selected = /^(rank|format|data)\s*=\s*([\s\S]*)$/.exec(field);
+            if (!selected || seen.has(selected[1]!))
+                return;
+            seen.add(selected[1]!);
+            if (selected[1] === 'rank') {
+                const number = Number(selected[2]);
+                if (!/^-?\d+$/.test(selected[2]!) || !Number.isSafeInteger(number) || number < -(2 ** 31) || number >= 2 ** 31)
+                    return;
+                options.rank = number;
+            }
+            else {
+                const value = rustString(selected[2]!);
+                if (value === undefined || !value.length)
+                    return;
+                if (selected[1] === 'format')
+                    options.format = value;
+                else {
+                    if (!/^<[_\p{ID_Start}][_\p{ID_Continue}]*>$/u.test(value))
+                        return;
+                    options.data = value.slice(1, -1);
+                }
+            }
+        }
+        return { kind: 'route', framework: 'rocket', path, methods: [method], proof: profile.proof, ...options };
+    }
     if (name === 'main' && ['tokio', 'actix-web'].includes(profile.framework)) {
         if (profile.framework === 'actix-web' && args.length || profile.framework === 'tokio' && args.some(arg => !/^(?:flavor\s*=\s*"(?:multi_thread|current_thread)"|worker_threads\s*=\s*[1-9]\d*)$/.test(arg)))
             return;
@@ -97,12 +164,21 @@ export function rustWebAttributeReader(base: RustResolver) {
             if (!scope || depth > 32)
                 return [attribute];
             const text = attribute.replace(/^#!?\[/, '').replace(/\]$/, '').trim(), selected = /^cfg_attr\s*\(([\s\S]*)\)$/.exec(text);
+            if (macroUseNames(text)) {
+                const site = scope.imports.find(site => site.fact.kind === 'extern' && site.fact.attributes.includes(attribute));
+                if (site) {
+                    const result = base.path(scope, [site.fact.alias ?? site.fact.segments[0]!], false, new Set(), 'expression'), profile = rustWebProfile(scope, result);
+                    if (profile?.framework === 'rocket' && profile.dialect === 'rocket-0.5' && profile.conditions.every(gap => gap.startsWith('Unreviewed Rust attribute')))
+                        return [];
+                }
+            }
             if (selected) {
                 const args = rustSplit(selected[1]!);
                 if (args && args.length >= 2 && rustCfg(args[0]!, compilation.environment) === true)
                     return args.slice(1).flatMap(arg => filter(arg, depth + 1));
             }
-            return rustWebAttribute(base, scope, attribute) ? [] : [attribute];
+            const at = base.syntax(file)?.items.find(item => item.attributes.includes(attribute))?.start;
+            return rustWebAttribute(base, scope, attribute, at) ? [] : [attribute];
         };
         return rustAttributes(attributes.flatMap(attribute => filter(attribute)), compilation.environment);
     };
@@ -118,6 +194,8 @@ export class RustWebMacros {
         const gap = 'Rust macro invocation can supply generated/scoped items; expansion is unavailable';
         if (!fact.gaps.includes(gap))
             return fact.gaps;
+        if (['file', 'module', 'impl', 'trait', 'enum'].includes(fact.kind))
+            return fact.gaps;
         const scope = this.base.scopes.find(scope => scope.compilation.id === compilation.id && scope.file.path === file && scope.fact.key === fact.key), macros = this.base.syntax(file)?.macros?.filter(macro => macro.scope === fact.key);
         if (!scope || !macros?.length)
             return fact.gaps;
@@ -130,6 +208,11 @@ export class RustWebMacros {
                 continue;
             if (attrs.active !== true || attrs.gaps.length)
                 return fact.gaps;
+            const identity = rustWebMacroResolution(this.base, scope, macro.path, macro.start, macro.absolute), profile = rustWebProfile(scope, identity);
+            if (profile?.framework === 'rocket' && profile.dialect === 'rocket-0.5' && profile.path.join('::') === 'routes' && macro.operands !== undefined && profile.conditions.every(condition => condition === gap || condition.startsWith('Unreviewed Rust attribute'))) {
+                proof.push(...profile.proof, { ...evidence('framework', 'rust-routers', file, macro.range.startLine, 'Original Rocket routes! literal source path list; reviewed registration syntax without macro expansion'), endLine: macro.range.endLine, analyzerVersion: RUST_ROUTER_VERSION });
+                continue;
+            }
             const literal = rustString(macro.tokens.slice(1, -1).trim().replace(/,$/, ''));
             if (literal === undefined || /[{}]/.test(literal))
                 return fact.gaps;

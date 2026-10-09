@@ -10,7 +10,7 @@ Codiluce supports repositories containing Next.js and Laravel applications. A ty
 - `backend/`: Laravel / PHP, Composer PSR-4 `App\\` → `app/`. Routes under `routes/`; controllers in `app/Http/Controllers`, Eloquent models in `app/Models`, services in `app/Services`, migrations in `database/migrations`.
 - Laravel applications may also contain Inertia/React/Vite assets under `resources/`. Those files remain part of the Laravel application.
 - `backend/bootstrap/app.php` can register API routes with a custom prefix, including **`apiPrefix: ''`**. The analyzer reads the configured prefix rather than assuming `/api`.
-- Other ecosystems (Python, Ruby, Go, Rust, JVM, .NET, Swift/Xcode, C/C++ with CMake, Shopify themes) are detected from their manifests (`src/core/manifests.ts`): the application, its ecosystems and the frameworks its dependencies name. Their files are named by language, measured and highlighted, and TypeScript/JavaScript is analyzed in any application. Next.js/Laravel retain their existing framework analysis; Express/Nest add static registration packs. Python, Go, Ruby, Rust, Java, C# and Kotlin get Tree-sitter declaration extraction, including outside detected applications. Python adds static package/import resolution, lexical references/calls and initial FastAPI, Flask and Django registration packs; Go adds indexed module/workspace/package imports, recorded build contexts, bounded lexical/package references and calls, and initial net/http/Chi/Gin/Echo/Fiber/Gorilla Mux registration packs. Ruby adds original scoped syntax facts and literal source-load dependencies with recorded ordered load roots/cwd and runtime boundary diagnostics; Ruby adds scoped constants/direct methods and Rails/Zeitwerk autoload contracts; Rails adds initial source routing, resource expansion, original actions and callback references; Java/Kotlin add selected Maven/Gradle/configured roots, original imports, bounded scoped references/direct calls and initial Spring MVC and WebFlux registration/handler/path contracts; C# adds indexed MSBuild source compilations, scoped references/direct calls and logical partial types; ASP.NET adds initial serving-reachable minimal API registration/handler/path contracts; ASP.NET MVC adds original controller/action and conventional routing contracts; Rust adds original Cargo/workspace/module/scoped import inputs, compilation-scoped references/direct calls, original closures and bounded callback binding; Rust routers remain separate work.
+- Other ecosystems (Python, Ruby, Go, Rust, JVM, .NET, Swift/Xcode, C/C++ with CMake, Shopify themes) are detected from their manifests (`src/core/manifests.ts`): the application, its ecosystems and the frameworks its dependencies name. Their files are named by language, measured and highlighted, and TypeScript/JavaScript is analyzed in any application. Next.js/Laravel retain their existing framework analysis; Express/Nest add static registration packs. Python, Go, Ruby, Rust, Java, C# and Kotlin get Tree-sitter declaration extraction, including outside detected applications. Python adds static package/import resolution, lexical references/calls and initial FastAPI, Flask and Django registration packs; Go adds indexed module/workspace/package imports, recorded build contexts, bounded lexical/package references and calls, and initial net/http/Chi/Gin/Echo/Fiber/Gorilla Mux registration packs. Ruby adds original scoped syntax facts and literal source-load dependencies with recorded ordered load roots/cwd and runtime boundary diagnostics; Ruby adds scoped constants/direct methods and Rails/Zeitwerk autoload contracts; Rails adds initial source routing, resource expansion, original actions and callback references; Java/Kotlin add selected Maven/Gradle/configured roots, original imports, bounded scoped references/direct calls and initial Spring MVC and WebFlux registration/handler/path contracts; C# adds indexed MSBuild source compilations, scoped references/direct calls and logical partial types; ASP.NET adds initial serving-reachable minimal API registration/handler/path contracts; ASP.NET MVC adds original controller/action and conventional routing contracts; Rust adds original Cargo/workspace/module/scoped import inputs, compilation-scoped references/direct calls, original closures and bounded callback binding; initial Axum/Actix/Rocket source packs are implemented, with Warp and broader qualification remaining.
 - Analysis does not read credentials, connect to the application database, or invoke target application scripts. The index describes the working tree, with HEAD and dirty state recorded separately.
 - The test fixture proves a login chain from page to table: page `/account` → `AccountPanel` → `handleSave` → `AccountService.signIn()` (base URL built in code) → `POST /auth/login` → `AuthController::login` → `AuthService::authenticate` → reads table `users` (Eloquent model `User`, `$table = 'users'`, declared by a migration).
 
@@ -494,4 +494,43 @@ e7883efe44988509a7a24a9d6c1e48bcc3670c7c. Both retain 154 original Rust files/1,
 original handler/range/proof checks, actual router cache hits and exact cold/warm/revision fingerprints. Its two/eight
 declared registrations retain two/eight original handler links and native defaults. Tracked Rust symlinks stay unread.
 The HTML evidence is `docs/rust-router-source-qualification.html`. These checks qualify initial bounded integration;
-Rocket/Warp remains P9d and broad source/version/target/performance/native-platform accuracy remains P9e/P10.
+Rocket is now implemented as the initial P9d1 subset below; Warp remains P9d2 and broad
+source/version/target/performance/native-platform accuracy remains P9e/P10.
+
+## 27. Rocket attributes, route lists and launch contracts (P9d1)
+
+The Rust profile service now selects canonical Rocket 0.5 registry identities. Exact original `get`/`post`/other
+HTTP attributes and generic `route` attributes retain literal URIs, ranks, format and body conditions. Native `launch`
+and `main` attributes qualify selected original bin entries; competing/generated main items and incompatible entry
+signatures stay constrained. Original qualified, aliased, absolute and selective `macro_use` imports preserve macro
+identity without expanding a proc macro. Source shadows, alternate registry/path/Git identities, requirements spanning
+unreviewed families and opaque attribute options cannot borrow this profile.
+
+Syntax facts record original macro paths, absolute lookup, tokens and bounded literal path operands with original
+UTF-16/CRLF ranges. `routes!` supports source paths, aliases, re-exports, comments and trailing commas; nested expressions
+and larger lists retain gaps. The general Rust service still records unavailable macro expansion. Only this pack's
+reviewed expression-level route-list and literal logging contracts can remove a native registration scope gap.
+Expression-only macros cannot neutralize file/module/impl/trait item scopes.
+
+The existing bounded source evaluator follows original Rocket factories, multiple consuming mounts, async launch
+factories, explicit ignition success paths and stored serving futures. A `launch` source factory must return a reviewed
+Rocket builder; an ordinary `main` must await its launch future. known `manage` calls preserve a routing-neutral builder step;
+fairings, configuration providers, manual route implementations and catchers remain unreviewed. Original route functions
+and direct handler leaves keep their identities, Cargo/source/mount/serving proof and installed inspector projections.
+
+`rocket-patterns.ts` records native path/query colors and computes the default rank from the unmounted route. Mounts
+use strict origin syntax and clear literal queries; route attributes use Rocket's separate Unicode route syntax. Native
+request segments split before percent decoding, ignore empty segments and preserve decoded slashes inside a segment.
+Ignored trailing captures accept zero or more segments. Literal query fields match any corresponding duplicate field.
+Reviewed immutable `&str`/owned standard String, bool and fixed-width signed/unsigned integer guards retain exact parsing
+bounds through 128 bits. Arbitrary FromParam/FromSegments/FromForm/FromRequest/FromData conversions, native machine-word
+width, reference adjustment, format headers and body data remain conditions. Known same-rank path/method collisions
+constrain ignition independently of query predicates and parameter conversion. Ranked dispatch and native HEAD fallback
+preserve unknown earlier competitors; a dynamic request does not prove query predicates.
+
+Cold/warm/revision checks cover registrations, original handlers/leaves, requests, actual router cache hits and source,
+manifest, feature and deny changes. Original IDs survive preceding whitespace; source operands and handlers preserve
+CRLF/emoji coordinates. The installed production package checks a renamed Rocket dependency, original module handler,
+mounted numeric capture, source leaf and explicit-origin frontend request through CLI and HTTP/source/request-flow APIs.
+These are bounded source contracts, without target Rust execution or compiler/Responder inference. P9d2 Warp and
+P9e/P10 broader source/version/target/performance/platform qualification remain open.

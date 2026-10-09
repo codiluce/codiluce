@@ -1,6 +1,6 @@
 import type { Entity } from '../../core/graph.js';
 import type { RoutePattern, RoutePart, RouteSegment, RoutingContract } from './contracts.js';
-export type RustRouteDialect = 'axum-0.7' | 'axum-0.8' | 'actix-web-4';
+export type RustRouteDialect = 'axum-0.7' | 'axum-0.8' | 'actix-web-4' | 'rocket-0.5';
 export interface RustPathData {
     sources: string[];
     prefixDefault?: boolean;
@@ -16,6 +16,9 @@ export interface RustEndpointData {
         order: number;
     }[];
     headFallback?: boolean;
+    rank?: number;
+    format?: string;
+    data?: string;
 }
 const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const parameterName = /^[A-Za-z_]\w*$/;

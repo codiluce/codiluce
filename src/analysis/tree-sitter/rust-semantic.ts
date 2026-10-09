@@ -46,6 +46,10 @@ export function extractRustSemantic(root: Node, declarations: DeclarationFact[],
         if (depth > 64)
             return unknown();
         const next = (n: Node | null | undefined) => expression(n, depth + 1);
+        if (node.type === 'macro_invocation') {
+            const macro = syntax.macros?.find(macro => macro.start === node.startIndex && macro.end === node.endIndex);
+            if (macro) return { ...at, kind: 'macro', path: macro.path, absolute:macro.absolute, tokens: macro.tokens, operands: macro.operands };
+        }
         if (['identifier', 'scoped_identifier', 'type_identifier', 'scoped_type_identifier', 'self', 'crate', 'super', 'primitive_type'].includes(node.type)) {
             const path = textPath(node);
             return path ? { ...at, kind: 'path', ...path } : { ...at, kind: 'path', segments: [], absolute: false, qualified: true };

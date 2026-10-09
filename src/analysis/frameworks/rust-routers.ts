@@ -6,10 +6,11 @@ import { rustAnd, rustCfg, rustSplit } from '../languages/rust-cfg.js';
 import { RustResolver, type RustScope } from '../resolution/rust.js';
 import { compileRustPath, type RustRouteDialect, type RustEndpointData } from '../routes/rust-patterns.js';
 import type { RoutingContract, RoutePattern } from '../routes/contracts.js';
+import { compileRocketPath, rocketPathsCollide, reviewedRocketMount } from '../routes/rocket-patterns.js';
 import { STRUCTURE_VERSION } from '../tree-sitter/analyzer.js';
 import { fileKey } from '../../pipeline/cache.js';
-import { rustWebProfile, rustWebAttribute, rustWebAttributeReader, RustWebMacros, RUST_ROUTER_VERSION, type RustWebProfile, type RustWebAttribute } from './rust-profile.js';
-type Framework = 'axum' | 'actix-web';
+import { rustWebProfile, rustWebAttribute, rustWebAttributeReader, rustWebMacroResolution, RustWebMacros, RUST_ROUTER_VERSION, type RustWebProfile, type RustWebAttribute } from './rust-profile.js';
+type Framework = 'axum' | 'actix-web' | 'rocket';
 type Methods = string[] | '*';
 interface Site extends RustSite {
     file: string;
@@ -85,6 +86,7 @@ interface Router {
     proof: Evidence[];
     middleware: string[];
     legacy: boolean;
+    rocketIgnited?: boolean;
     consumed?: boolean;
 }
 interface Server {
@@ -199,7 +201,7 @@ export class RustRegistrations {
             }
             return [attribute];
         };
-        return definition.fact.attributes.flatMap(attribute => expand(attribute)).map(attribute => rustWebAttribute(this.base, baseScope, attribute)).filter((attribute): attribute is RustWebAttribute => !!attribute);
+        return definition.fact.attributes.flatMap(attribute => expand(attribute)).map(attribute => rustWebAttribute(this.base, baseScope, attribute, definition.fact.start)).filter((attribute): attribute is RustWebAttribute => !!attribute);
     }
     private callback(env: Environment, expression: RustExpression): Callback | undefined {
         const result = this.symbols.handler(env.scope, expression);
@@ -223,21 +225,33 @@ export class RustRegistrations {
         const file = this.context.graph.entities.get(this.context.files.get(site.file)!.id)!, analysis = fileAnalysis(file.metadata.analysis);
         file.metadata.frameworkPacks = unique([...Array.isArray(file.metadata.frameworkPacks) ? file.metadata.frameworkPacks as string[] : [], framework]);
         if (analysis)
-            analysis.features.framework = { status: 'partial', reason: 'Original Cargo profiles, reachable Axum/Actix constructors, serving futures, source helpers/closures and native route contracts; dynamic setup and opaque middleware remain gaps' };
+            analysis.features.framework = { status: 'partial', reason: 'Original Cargo profiles, reachable Axum/Actix/Rocket constructors, serving contracts, source helpers/closures and native route contracts; dynamic setup and opaque middleware remain gaps' };
     }
     run(): void {
         for (const root of this.symbols.resolver.roots.values()) {
             if (root.compilation.target.kind !== 'bin' || root.compilation.selected === false)
                 continue;
-            const main = this.symbols.definitions(root.file.path).find(def => def.fact.kind === 'function' && def.fact.name === 'main' && def.fact.scope === root.fact.key);
-            if (!main?.fact.body)
-                continue;
-            const body = this.scope(root.file.path, main.fact.body, root);
-            if (!body)
-                continue;
-            const runtime = this.context.graph.id('rust-runtime', root.compilation.invocation, root.compilation.target.id, main.id), attributes = this.reviewedAttributes(main, root), runtimeAttribute = attributes.find(attribute => attribute.kind === 'runtime');
-            const env: Environment = { scope: body, origin: root, runtime, frame: runtime, owner: main.id, locals: new Map(), stack: [main.id], conditions: unique([...body.gaps, ...body.active !== true ? ['Unselected Rust main cfg'] : [], ...main.fact.async && !runtimeAttribute ? ['Async Rust main lacks a reviewed runtime attribute'] : [], ...runtimeAttribute && !main.fact.async ? ['Native runtime attribute requires an original async main'] : [], ...main.fact.generics || main.fact.parameters.length ? ['Generic/parameterized Rust main is outside the native entry contract'] : [], ...attributes.filter(attribute => attribute.kind === 'runtime').length > 1 ? ['Competing Rust runtime attributes'] : []]), proof: [...root.compilation.proof, ...runtimeAttribute?.proof ?? [], this.fact(siteOf({ scope: root } as Environment, main.fact), 'Original selected Rust bin main entry')] };
-            this.execute(env);
+            const definitions = this.symbols.definitions(root.file.path).filter(def => def.fact.kind === 'function' && def.fact.scope === root.fact.key), mainFunction = definitions.find(def => def.fact.name === 'main'), launches = definitions.filter(def => this.reviewedAttributes(def, root).some(attribute => attribute.kind === 'launch'));
+            for (const main of [...launches, ...mainFunction ? [mainFunction] : []]) {
+                if (!main.fact.body)
+                    continue;
+                const body = this.scope(root.file.path, main.fact.body, root);
+                if (!body)
+                    continue;
+                const runtime = this.context.graph.id('rust-runtime', root.compilation.invocation, root.compilation.target.id, main.id), attributes = this.reviewedAttributes(main, root), runtimeAttribute = attributes.find(attribute => attribute.kind === 'runtime'), launch = attributes.find(attribute => attribute.kind === 'launch');
+                const env: Environment = { scope: body, origin: root, runtime, frame: runtime, owner: main.id, locals: new Map(), stack: [main.id], conditions: unique([...body.gaps, ...body.active !== true ? ['Unselected Rust main cfg'] : [], ...main.fact.async && !runtimeAttribute ? ['Async Rust main lacks a reviewed runtime attribute'] : [], ...runtimeAttribute && !main.fact.async ? ['Native runtime attribute requires an original async main'] : [], ...main.fact.generics || main.fact.parameters.length ? ['Generic/parameterized Rust main is outside the native entry contract'] : [], ...attributes.filter(attribute => attribute.kind === 'runtime').length > 1 ? ['Competing Rust runtime attributes'] : []]), proof: [...root.compilation.proof, ...runtimeAttribute?.proof ?? [], this.fact(siteOf({ scope: root } as Environment, main.fact), 'Original selected Rust bin main entry')] };
+                if (launch) {
+                    env.conditions = unique([...env.conditions.filter(condition => condition !== 'Async Rust main lacks a reviewed runtime attribute'), ...launches.length !== 1 || !!mainFunction || attributes.filter(attribute => attribute.kind === 'runtime' || attribute.kind === 'launch').length > 1 ? ['Competing Rocket launch/main entrypoints would generate conflicting main items'] : []]);
+                    env.proof.push(...launch.proof, this.fact(siteOf(env, main.fact), 'Original Rocket launch attribute invokes this source factory and awaits native launch without expanding the macro'));
+                }
+                const result = this.execute(env);
+                if (launch) {
+                    if (is(result, 'router') && result.framework === 'rocket')
+                        this.expose({ kind: 'server', router: result, environment: env, bound: true, running: true, conditions: env.conditions, proof: env.proof }, env, siteOf(env, main.fact));
+                    else
+                        this.gap(env, siteOf(env, main.fact), 'Original Rocket launch factory has no reviewed returned Rocket builder');
+                }
+            }
         }
         for (const serving of this.pending)
             this.emitServer(serving.server, serving.env, serving.site);
@@ -329,6 +343,12 @@ export class RustRegistrations {
         const site = siteOf(env, expression);
         if (expression.kind === 'literal')
             return expression.value;
+        if (expression.kind === 'macro') {
+            const profile = rustWebProfile(env.scope, rustWebMacroResolution(this.symbols.resolver, env.scope, expression.path, expression.start, expression.absolute));
+            if (profile?.framework === 'rocket' && profile.dialect === 'rocket-0.5' && profile.path.join('::') === 'routes' && expression.operands !== undefined && !profile.conditions.length)
+                return expression.operands.map(operand => this.callback(env, operand));
+            return;
+        }
         if (['paren', 'try', 'deref', 'reference', 'cast'].includes(expression.kind))
             return this.evaluate((expression as RustExpression & {
                 value: RustExpression;
@@ -370,7 +390,7 @@ export class RustRegistrations {
             const args = expression.args.map(arg => this.evaluate(arg, env));
             if (expression.callee.kind === 'field') {
                 const receiver = this.evaluate(expression.callee.value, env), name = expression.callee.name;
-                if (['unwrap', 'expect'].includes(name) && (is(receiver, 'server') || is(receiver, 'listener') || is(receiver, 'future')))
+                if (['unwrap', 'expect'].includes(name) && (is(receiver, 'server') || is(receiver, 'listener') || is(receiver, 'future') || is(receiver, 'router') && receiver.framework === 'rocket' && receiver.rocketIgnited))
                     return receiver;
                 return this.method(receiver, name, args, env, site, expression);
             }
@@ -388,6 +408,8 @@ export class RustRegistrations {
         kind: 'call';
     }): Value {
         const name = profile.path.join('::'), local = { ...env, conditions: unique([...env.conditions, ...profile.conditions]), proof: [...env.proof, ...profile.proof] };
+        if (profile.framework === 'rocket' && name === 'build' && args.length === 0 && profile.dialect)
+            return this.makeRouter(local, site, profile, 'router');
         if (profile.framework !== 'tokio' && !profile.dialect) {
             this.gap(env, site, profile.conditions.join('; ') || 'Unreviewed Rust web version family');
             return;
@@ -536,6 +558,33 @@ export class RustRegistrations {
         if (name === 'clone' && args.length === 0 && value.framework === 'axum')
             return this.copy(value, env, site, true);
         const result = this.copy(value, env, site);
+        if (value.framework === 'rocket') {
+            if (name === 'mount' && args.length === 2) {
+                const original = typeof args[0] === 'string' ? args[0] : '/', prefix = original.split('?')[0]!, base = compileRocketPath(prefix), validBase = typeof args[0] === 'string' && reviewedRocketMount(original) && base.status === 'exact' && base.rocket!.segments.every(segment => 'literal' in segment), list = Array.isArray(args[1]) ? args[1] : undefined;
+                if (!list) {
+                    result.conditions.push('Original Rocket mount has no reviewed routes! source list');
+                    return result;
+                }
+                const mount = { id: this.context.graph.id('mount', result.id, prefix, String(result.entries.length)), file: site.file, line: site.range.startLine, prefix };
+                for (const item of list) {
+                    if (!is(item, 'callback') || item.attribute?.framework !== 'rocket' || item.attribute.kind !== 'route') {
+                        result.conditions.push('Original Rocket routes! member is not a reviewed original route function');
+                        continue;
+                    }
+                    const attribute = item.attribute, path = '/' + (prefix + '/' + attribute.path!.split('?')[0]).split('/').filter(Boolean).join('/') + (attribute.path!.includes('?') ? '?' + attribute.path!.split('?')[1] : ''), registration: Route = { site: siteOf({ ...env, scope: item.scope }, item.definition.fact), methods: attribute.methods!, callback: item, conditions: unique([...item.conditions, ...attribute.format ? ['Rocket format guard requires native Accept/Content-Type proof'] : [], ...attribute.data ? ['Rocket body/data guard requires native FromData proof'] : [], ...!validBase ? ['Unreviewed Rocket mount origin/prefix'] : []]), proof: [...item.proof, ...attribute.proof, this.fact(site, 'Original Rocket mount and routes! member')], middleware: [] };
+                    result.entries.push({ site, path, routes: [registration], methods: '*', conditions: [], proof: result.proof, mounts: [mount], middleware: [] });
+                }
+                return result;
+            }
+            if (name === 'manage' && args.length === 1)
+                return result;
+            if (name === 'ignite' && args.length === 0)
+                return { kind: 'future', result: { ...result, rocketIgnited: true } };
+            if (name === 'launch' && args.length === 0)
+                return { kind: 'future', server: { kind: 'server', router: result, environment: env, bound: true, running: true, conditions: result.conditions, proof: [...result.proof, this.fact(site, 'Original Rocket launch future, native configured bind contract')] } };
+            result.conditions.push(`Unreviewed Rocket builder ${name} may affect launch/dispatch`);
+            return result;
+        }
         if (['into_make_service', 'into_make_service_with_connect_info'].includes(name) && value.framework === 'axum' && args.length === 0)
             return result;
         if (name === 'without_v07_checks' && value.dialect === 'axum-0.8' && args.length === 0) {
@@ -711,10 +760,61 @@ export class RustRegistrations {
         this.exposed.add(router.id);
         const root = this.context.graph.id('rust-dispatch', env.runtime, router.id, site.file, String(this.ordinal(env.runtime + router.id))), conditions = unique([...server.conditions, ...router.conditions, ...this.conditions(env, env.scope), ...this.runtimeGaps.get(env.runtime) ?? [], ...!server.bound ? ['Original native server has no reviewed bind/listener'] : []]);
         const proof = [...server.environment.proof, ...server.proof, this.fact(site, 'Original native Rust serving future is awaited on the selected source entry path')];
-        if (router.framework === 'axum')
+        if (router.framework === 'rocket')
+            this.emitRocket(router, env, root, conditions, proof);
+        else if (router.framework === 'axum')
             this.emitAxum(router, env, root, conditions, proof);
         else
             this.emitActix(router, env, root, conditions, proof, '', [], [], [], '*', new Set());
+    }
+    private emitRocket(router: Router, env: Environment, root: string, conditions: string[], proof: Evidence[]): void {
+        const records = router.entries.flatMap(entry => entry.routes.map(route => {
+            const callback = route.callback!, attribute = callback.attribute!, guards: Record<string, string> = {}, original = compileRocketPath(attribute.path!), names = original.rocket?.segments.filter(segment => 'name' in segment).map(segment => (segment as {
+                name: string;
+            }).name) ?? [], query = original.rocket?.queryParameters.map(parameter => parameter.name) ?? [], parameters = callback.definition.fact.parameters;
+            const gaps: string[] = [];
+            for (const parameter of parameters) {
+                if (!parameter.name || !names.includes(parameter.name) || query.includes(parameter.name)) {
+                    gaps.push('Rocket request/query/body guard requires native source/type proof');
+                    continue;
+                }
+                const type = parameter.type, inner = type?.kind === 'reference' ? type.inner : type, text = inner?.text.replace(/\s+/g, '');
+                const resolution = inner?.kind === 'path' ? this.symbols.resolver.path(callback.scope, inner.segments ?? [], !!inner.absolute, new Set(), 'expression') : undefined;
+                const builtin = resolution?.status === 'unresolved', ancestry: RustScope[] = [];
+                for (let current: RustScope | undefined = callback.scope; current; current = current.parent)
+                    ancestry.push(current);
+                if (builtin && text && (text === 'str' && type?.kind === 'reference' && !type.mutable || type?.kind === 'path' && /^(?:[iu](?:8|16|32|64|128)|bool)$/.test(text)))
+                    guards[parameter.name] = text;
+                else if (type?.kind === 'path' && text === 'String' && builtin && !ancestry.some(scope => scope.attributes.noPrelude || scope.attributes.noStd || scope.attributes.noCore) || type?.kind === 'path' && resolution?.status === 'external' && resolution.dependency === 'rust-standard-library' && resolution.path.join('::') === 'string::String')
+                    guards[parameter.name] = 'str';
+                else
+                    gaps.push('Rocket parameter FromParam/FromSegments implementation is unreviewed');
+                if (original.rocket?.segments.some(segment => 'name' in segment && segment.name === parameter.name && segment.rest))
+                    gaps.push('Rocket trailing parameter FromSegments implementation is unreviewed');
+            }
+            for (const name of names.filter(name => name !== '_'))
+                if (!parameters.some(parameter => parameter.name === name))
+                    gaps.push('Original Rocket route capture has no named source parameter');
+            if (query.some(name => name !== '_') || attribute.data)
+                gaps.push('Rocket query/body conversion remains a native guard condition');
+            if (callback.definition.fact.generics)
+                gaps.push('Generic Rocket route signature is unreviewed');
+            const pattern = compileRocketPath(entry.path, guards), rank = attribute.rank ?? original.rocket?.defaultRank ?? 0;
+            return { entry, route: { ...route, conditions: unique([...route.conditions, ...gaps]) }, pattern, rank, attribute };
+        }));
+        if (records.length > 512)
+            conditions.push('Rocket collision/registration analysis exceeds 512 routes');
+        else
+            for (let i = 0; i < records.length; i++)
+                for (let j = i + 1; j < records.length; j++) {
+                    const a = records[i]!, b = records[j]!;
+                    if (a.rank === b.rank && a.attribute.methods!.some(method => b.attribute.methods!.includes(method)) && rocketPathsCollide(a.pattern, b.pattern))
+                        conditions.push('Rocket same-rank overlapping routes would fail ignition');
+                }
+        for (const [order, { entry, route, pattern, rank, attribute }] of records.entries()) {
+            const methods = route.methods === '*' ? '*' : route.methods.includes('GET') ? unique([...route.methods, 'HEAD']) : route.methods;
+            this.emit(router, env, root, pattern, { ...route, methods }, entry, unique(conditions), proof, { resource: this.context.graph.id('rocket-resource', root, String(order)), resourceOrder: order, routeOrder: order, rank, ...attribute.format ? { format: attribute.format } : {}, ...attribute.data ? { data: attribute.data } : {}, ...attribute.methods!.includes('GET') ? { headFallback: true } : {} });
+        }
     }
     private wildcard(path: string, dialect: RustRouteDialect): RoutePattern {
         const base = compileRustPath(path || '/', dialect, true), prefix = path === '/' ? '' : path;

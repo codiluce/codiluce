@@ -161,6 +161,7 @@ export interface RustItemFact {key:string;scope:string;name:string;kind:string;n
 export interface RustSite {start:number;end:number;range:SourceRange}
 export interface RustTypeFact extends RustSite {kind:'path'|'reference'|'function'|'unknown';text:string;segments?:string[];absolute?:boolean;generics?:boolean;inner?:RustTypeFact;mutable?:boolean}
 export type RustExpression=RustSite & (
+  | {kind:'macro';path:string[];absolute:boolean;tokens:string;operands?: (RustExpression & {kind:'path'})[]}
   | {kind:'path';segments:string[];absolute:boolean;generics?:string[];qualified?:boolean}
   | {kind:'field';value:RustExpression;name:string}
   | {kind:'call';callee:RustExpression;args:RustExpression[]}
@@ -179,7 +180,7 @@ export interface RustDefinitionFact extends RustSite {key:string;name:string;kin
 export interface RustImplFact extends RustSite {key:string;scope:string;parent:string;type:RustTypeFact;trait?:RustTypeFact;generics:boolean;typeParameters?:string[];attributes:string[];gaps:string[]}
 export interface RustBindingFact extends RustSite {name:string;scope:string;activation:number;kind:'parameter'|'local'|'pattern';type?:RustTypeFact;value?:RustExpression;mutable:boolean;attributes:string[];gaps:string[]}
 export interface RustSemanticFacts {definitions:RustDefinitionFact[];impls:RustImplFact[];bindings:RustBindingFact[];references:(RustSite&{scope:string;expression:RustExpression;kind:'type'|'value';attributes:string[]})[];calls:(RustSite&{scope:string;expression:RustExpression&{kind:'call'};attributes:string[];awaited:boolean})[];statements:(RustSite&{scope:string;expression:RustExpression;attributes:string[]})[];writes:(RustSite&{scope:string;target:RustExpression;value?:RustExpression;kind:'assignment'|'mutable-borrow'})[];returns:(RustSite&{scope:string;owner:string;value:RustExpression;conditional:boolean})[];complete:boolean;gaps:string[]}
-export interface RustSyntaxFacts {scopes:RustScopeFact[];items:RustItemFact[];imports:RustImportFact[];macros?: (RustSite&{scope:string;path:string[];tokens:string;attributes:string[]})[];complete:boolean;gaps:string[];semantic?:RustSemanticFacts}
+export interface RustSyntaxFacts {scopes:RustScopeFact[];items:RustItemFact[];imports:RustImportFact[];macros?: (RustSite&{scope:string;path:string[];absolute:boolean;tokens:string;operands?: (RustExpression & {kind:'path'})[];attributes:string[]})[];complete:boolean;gaps:string[];semantic?:RustSemanticFacts}
 export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts; csharp?: CsharpSyntaxFacts; rust?:RustSyntaxFacts }
 export interface ImportBinding { imported: string; local: string; typeOnly?: boolean }
 export type ImportOutcome =
