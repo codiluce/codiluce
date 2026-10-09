@@ -4,8 +4,9 @@ import { fileKey } from '../../pipeline/cache.js';
 import { fileAnalysis } from '../facts.js';
 import { RubyResolver, RUBY_RESOLVER_VERSION } from '../resolution/ruby.js';
 import { STRUCTURE_VERSION } from '../tree-sitter/analyzer.js';
+import { RubySymbols, RUBY_SYMBOL_VERSION } from './ruby-symbols.js';
 
-export const RUBY_IMPORT_VERSION = `${ANALYZER_VERSION}:ruby-imports:1`;
+export const RUBY_IMPORT_VERSION = `${ANALYZER_VERSION}:ruby-imports:2`;
 export const rubyAnalyzer: Analyzer = {
   name: 'ruby-imports', version: RUBY_IMPORT_VERSION,
   async analyze(context): Promise<void> {
@@ -13,6 +14,7 @@ export const rubyAnalyzer: Analyzer = {
     if (!files.length) return;
     const resolver = context.ruby = new RubyResolver(context), repository = context.graph.entities.get(context.repositoryId)!;
     resolver.prepare(files);
+    const symbols = context.rubySymbols = new RubySymbols(context, resolver); symbols.prepare(files);
     repository.metadata.projects = [...Array.isArray(repository.metadata.projects) ? repository.metadata.projects : [], ...resolver.describe()];
     const run = async () => {
       for (const file of files) {
@@ -36,8 +38,9 @@ export const rubyAnalyzer: Analyzer = {
         entity.metadata.importOutcomes = outcomes; entity.metadata.externalImports = [...new Set(external)].sort();
         analysis.features.imports = { status: 'partial', reason: 'Literal Ruby loads, recorded load-path/cwd inputs, original scopes and bounded File paths; gem activation, dynamic runtime loading and Zeitwerk require later profiles' };
       }
+      symbols.analyze(files);
     };
-    if (context.cache) await context.cache.unit(context, this.name, 'repository', { version: RUBY_IMPORT_VERSION, syntax: STRUCTURE_VERSION, resolver: RUBY_RESOLVER_VERSION, config: context.config, projects: resolver.describe(), files: [...context.files.values()].filter(file => file.language === 'ruby').map(file => fileKey(context, file.path)), paths: [...context.files.values()].map(file => [file.path, file.language, file.analyzable]), observedFiles: [...context.fileInventory ?? []].sort(), availability: files.map(file => [file.path, resolver.facts(file.path)?.complete]), directories: [...context.directoryInventory ?? []].sort() }, run);
+    if (context.cache) await context.cache.unit(context, this.name, 'repository', { version: RUBY_IMPORT_VERSION, symbols: RUBY_SYMBOL_VERSION, syntax: STRUCTURE_VERSION, resolver: RUBY_RESOLVER_VERSION, config: context.config, projects: resolver.describe(), files: [...context.files.values()].filter(file => file.language === 'ruby').map(file => fileKey(context, file.path)), paths: [...context.files.values()].map(file => [file.path, file.language, file.analyzable]), observedFiles: [...context.fileInventory ?? []].sort(), availability: files.map(file => [file.path, resolver.facts(file.path)?.complete]), directories: [...context.directoryInventory ?? []].sort() }, run);
     else await run();
   },
 };

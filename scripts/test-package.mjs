@@ -58,7 +58,7 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
       assert.equal(source.focus.startLine, entity.sourceRange.startLine);
       const file = await (await fetch(`${url}api/projection/locate/${source.file.id}`)).json();
       assert.equal(file.node.analysis.features.structure.status, 'supported');
-      assert.equal(file.node.analysis.features.references.status, ['python', 'go'].includes(language) ? 'partial' : 'unsupported');
+      assert.equal(file.node.analysis.features.references.status, ['python', 'go', 'ruby'].includes(language) ? 'partial' : 'unsupported');
     }
     for (const [name, handlerPath, line] of [
       ['GET /package-svelte-api', 'svelte-ui/src/routes/package-svelte-api/+server.ts', 1],
@@ -154,8 +154,8 @@ try {
   const rubySource = path.join(repo, 'ruby-source');
   await mkdir(path.join(rubySource, 'lib'), { recursive: true });
   await writeFile(path.join(rubySource, 'Gemfile'), 'gem "rails", "~> 8.1"\n');
-  await writeFile(path.join(rubySource, 'main.rb'), '# 😀 original Ruby load\nrequire_relative "lib/widget"\nrequire File.expand_path("lib/widget", __dir__)\nif enabled\n require_relative "lib/widget"\nend\nrequire feature\n');
-  await writeFile(path.join(rubySource, 'lib/widget.rb'), 'module PackagedRuby\n class Widget\n  def show; end\n end\nend\n');
+  await writeFile(path.join(rubySource, 'main.rb'), '# 😀 original Ruby load\nrequire_relative "lib/widget"\nrequire File.expand_path("lib/widget", __dir__)\nPackagedRuby::Widget.build\nPackagedRuby::Widget.new.show\nif enabled\n require_relative "lib/widget"\nend\nrequire feature\n');
+  await writeFile(path.join(rubySource, 'lib/widget.rb'), 'module PackagedRuby\n class Widget\n  def initialize; end\n  def show; end\n  def self.build; end\n end\nend\nclass PackagedRuby::Widget\n def self.build; end\nend\n');
   const flaskServer = path.join(repo, 'flask-server');
   await mkdir(flaskServer);
   await writeFile(path.join(flaskServer, 'requirements.txt'), 'Flask==3.1.2\n');
@@ -287,7 +287,7 @@ try {
   assert.ok(rubyMain && rubyWidget, 'installed Ruby source inputs are indexed');
   const rubyDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', rubyMain.id], repo)).stdout);
   assert.equal(rubyDetail.metadata.analysis.features.imports.status, 'partial');
-  assert.equal(rubyDetail.metadata.analysis.features.references.status, 'unsupported');
+  assert.equal(rubyDetail.metadata.analysis.features.references.status, 'partial');
   assert.equal(rubyDetail.metadata.analysis.features.framework.status, 'unsupported', 'Rails recognition alone must not claim routing support');
   assert.deepEqual(rubyDetail.metadata.importOutcomes.map(item => item.outcome.status), ['resolved', 'resolved', 'resolved', 'unsupported']);
   assert.equal(rubyDetail.metadata.importOutcomes[0].range.startLine, 2);
@@ -297,6 +297,17 @@ try {
   const rubyImport = rubyImports.find(item => item.metadata?.kind === 'require_relative' && !item.metadata.conditions?.length) ?? rubyImports[0];
   const rubyImportDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relation', '--id', rubyImport.id], repo)).stdout);
   assert.ok(rubyImportDetail.evidence.some(fact => fact.file === 'ruby-source/main.rb' && fact.line === 2));
+  const rubyCalls = rubyDetail.metadata.rubyCallOutcomes.filter(item => item.kind === 'resolved');
+  assert.equal(rubyCalls.length, 3, 'installed Ruby binder follows explicit loads to original singleton, initializer and instance methods');
+  const rubyBuild = rubyCalls.find(item => item.method === 'build'); assert.equal(rubyBuild.range.startLine, 4);
+  const rubyBuildDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', rubyBuild.target], repo)).stdout);
+  assert.equal(rubyBuildDetail.path, 'ruby-source/lib/widget.rb'); assert.equal(rubyBuildDetail.sourceRange.startLine, 9, 'latest original reopening wins');
+  const rubyCallEdges = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', rubyMain.id, '--type', 'calls'], repo)).stdout).items;
+  assert.equal(rubyCallEdges.length, 3);
+  const rubyBuildEdge = rubyCallEdges.find(item => item.to === rubyBuild.target);
+  const rubyBuildProof = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relation', '--id', rubyBuildEdge.id], repo)).stdout);
+  assert.ok(rubyBuildProof.evidence.some(item => item.file === 'ruby-source/main.rb' && item.line === 4));
+  assert.ok(rubyBuildProof.evidence.some(item => item.file === 'ruby-source/lib/widget.rb' && item.line === 9));
   const pythonEndpoints = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', '/package-python'], repo)).stdout).items;
   const pythonEndpoint = pythonEndpoints.find(entity => entity.type === 'api_endpoint' && entity.name === 'GET /package-python/{id:int}');
   assert.ok(pythonEndpoint, 'installed FastAPI pack resolves its imported handler');
@@ -449,7 +460,7 @@ try {
   console.log('Checking npm exec against the tarball without a local installation…');
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
-  console.log('Package installation, seven grammars, workspace binding, Ruby literal loads/scopes/original paths and dynamic/conditional gaps, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin/Echo 4–5/Fiber 2–3/Gorilla router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
+  console.log('Package installation, seven grammars, workspace binding, Ruby literal loads/scopes/original paths, namespace reopenings/direct methods/initializers and dynamic/conditional gaps, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin/Echo 4–5/Fiber 2–3/Gorilla router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

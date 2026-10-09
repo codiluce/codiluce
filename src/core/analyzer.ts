@@ -11,6 +11,7 @@ import type { EmbeddedRegion } from '../analysis/embedded/source.js';
 import type { GoResolver } from '../analysis/resolution/go.js';
 import type { GoSymbols } from '../analysis/languages/go-symbols.js';
 import type { RubyResolver } from '../analysis/resolution/ruby.js';
+import type { RubySymbols } from '../analysis/languages/ruby-symbols.js';
 export interface ScannedFile { path: string; absolutePath: string; id: string; language?: string; analyzable: boolean; application?: ApplicationConfig; embedded?: EmbeddedRegion }
 export interface HttpObservation {
   callerId: string; fileId: string; method?: string; url?: string; expression: string; evidence: Evidence;
@@ -38,6 +39,7 @@ export interface AnalysisContext {
   go?: GoResolver;
   goSymbols?: GoSymbols;
   ruby?: RubyResolver;
+  rubySymbols?: RubySymbols;
   /** Directory entries observed by the scanner, including pruned roots; their
    * contents are never read through the indexed source boundary. */
   directoryInventory?: Set<string>;

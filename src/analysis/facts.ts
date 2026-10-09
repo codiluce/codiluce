@@ -90,11 +90,12 @@ export type RubyExpression = RubySite & (
 );
 export interface RubyScopeFact extends RubySite { key: string; parent?: string; owner?: string; kind: 'file' | 'class' | 'module' | 'method' | 'singleton' | 'block' | 'control'; name?: string; conditional?: string; deferred?: boolean }
 export interface RubyDefinitionFact extends RubySite { key: string; name: string; kind: 'class' | 'module' | 'method' | 'singleton_method'; scope: string; bodyScope: string; superclass?: RubyExpression; receiver?: RubyExpression }
-export interface RubyCallFact extends RubySite { expression: RubyExpression & { kind: 'call' }; scope: string; blockScope?: string }
+export interface RubyCallFact extends RubySite { expression: RubyExpression & { kind: 'call' }; scope: string; blockScope?: string; bare?: boolean; safeNavigation?: boolean }
+export interface RubyLocalFact extends RubySite { name: string; scope: string; kind: 'parameter' | 'block_local' | 'write' }
 export interface RubyAssignmentFact extends RubySite { target: RubyExpression; value: RubyExpression; scope: string; augmentation?: boolean }
 export interface RubyReferenceFact extends RubySite { expression: RubyExpression & { kind: 'constant' }; scope: string }
 export interface RubyGapFact extends RubySite { scope: string; kind: 'path' | 'loader' | 'constants' | 'scope'; reason: string }
-export interface RubySyntaxFacts { scopes: RubyScopeFact[]; definitions: RubyDefinitionFact[]; calls: RubyCallFact[]; assignments: RubyAssignmentFact[]; references: RubyReferenceFact[]; gaps: RubyGapFact[]; complete: boolean }
+export interface RubySyntaxFacts { scopes: RubyScopeFact[]; definitions: RubyDefinitionFact[]; calls: RubyCallFact[]; locals: RubyLocalFact[]; assignments: RubyAssignmentFact[]; references: RubyReferenceFact[]; gaps: RubyGapFact[]; complete: boolean }
 export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts }
 export interface ImportBinding { imported: string; local: string; typeOnly?: boolean }
 export type ImportOutcome =

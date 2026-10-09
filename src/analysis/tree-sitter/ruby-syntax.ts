@@ -36,7 +36,7 @@ function stringValue(text: string): string | undefined {
 }
 
 export function extractRubySemantic(root: Node, declarations: DeclarationFact[], source: SourceText): { facts: RubySyntaxFacts; truncated: boolean } {
-  const facts: RubySyntaxFacts = { scopes: [], definitions: [], calls: [], assignments: [], references: [], gaps: [], complete: false };
+  const facts: RubySyntaxFacts = { scopes: [], definitions: [], calls: [], locals: [], assignments: [], references: [], gaps: [], complete: false };
   let visits = 0, truncated = false;
   const bySite = new Map(declarations.map(item => [`${item.start}:${item.end}`, item]));
   const site = (node: Node) => ({ start: node.startIndex, end: node.endIndex, range: source.range(node.startIndex, node.endIndex) });
@@ -57,6 +57,7 @@ export function extractRubySemantic(root: Node, declarations: DeclarationFact[],
       case 'hash': return { ...site(node), kind: 'hash', items: children(node).map(child => { const key = field(child, 'key'), value = field(child, 'value'); return key && value ? { key: expression(key, depth + 1), value: expression(value, depth + 1) } : { key: unknown(child), value: unknown(child) }; }) };
       case 'hash_key_symbol': return { ...site(node), kind: 'symbol', name: node.text.replace(/:$/, '') };
       case 'call': { const method = field(node, 'method'), receiver = field(node, 'receiver'); return method ? { ...site(node), kind: 'call', method: method.text, ...(receiver ? { receiver: expression(receiver, depth + 1) } : {}), args: children(field(node, 'arguments')).map(child => expression(child, depth + 1)) } : unknown(node); }
+      case 'element_reference': { const object = field(node, 'object'); return object ? { ...site(node), kind: 'call', receiver: expression(object, depth + 1), method: '[]', args: children(node).filter(child => child.id !== object.id).map(child => expression(child, depth + 1)) } : unknown(node); }
       default: return unknown(node);
     }
   }
@@ -65,6 +66,14 @@ export function extractRubySemantic(root: Node, declarations: DeclarationFact[],
     facts.scopes.push({ ...site(node), key, parent, kind, ...details }); return key;
   }
   const gap = (node: Node, current: string, kind: RubySyntaxFacts['gaps'][number]['kind'], reason: string) => facts.gaps.push({ ...site(node), scope: current, kind, reason });
+  function parameters(node: Node | undefined, current: string): void {
+    for (const parameter of children(node)) {
+      const name = parameter.type === 'identifier' ? parameter : field(parameter, 'name');
+      const names = parameter.type === 'destructured_parameter' ? parameter.descendantsOfType('identifier') : name?.type === 'identifier' ? [name] : [];
+      for (const name of names) facts.locals.push({ ...site(name), scope: current, name: name.text, kind: parameter.type === 'identifier' && node && field(node, 'locals')?.id === parameter.id ? 'block_local' : 'parameter' });
+      const value = field(parameter, 'value'); if (value) walk(value, current);
+    }
+  }
   let depth = 0;
   function walk(node: Node, current: string): void {
     if (++depth > 512) { depth--; truncated = true; return; }
@@ -80,17 +89,24 @@ export function extractRubySemantic(root: Node, declarations: DeclarationFact[],
       facts.definitions.push({ ...site(node), key: declaration?.key ?? `${node.startIndex}:${node.endIndex}:${node.type}`, kind: node.type as 'class' | 'module' | 'method' | 'singleton_method', name: name.text.replace(/\s+/g, ''), scope: current, bodyScope: inner, ...(superclass ? { superclass: expression(superclass) } : {}), ...(receiver ? { receiver: expression(receiver) } : {}) });
       if (superclass) walk(superclass, current);
       if (name.type === 'scope_resolution' && field(name, 'scope')) walk(field(name, 'scope')!, current);
+      parameters(field(node, 'parameters'), inner);
       if (body) walk(body, inner); return;
     }
     if (node.type === 'singleton_class') { const inner = scope(node, current, 'singleton'); gap(node, inner, 'scope', 'Singleton-class lexical and loader context requires a receiver summary'); children(node).forEach(child => walk(child, inner)); return; }
-    if (['block', 'do_block', 'lambda'].includes(node.type)) { const inner = scope(node, current, 'block', { deferred: true }); children(node).forEach(child => walk(child, inner)); return; }
-    if (['if', 'unless', 'elsif', 'if_modifier', 'unless_modifier', 'case', 'when', 'while', 'until', 'for', 'while_modifier', 'until_modifier', 'rescue', 'ensure', 'conditional', 'binary'].includes(node.type)) {
+    if (['block', 'do_block', 'lambda'].includes(node.type)) { const inner = scope(node, current, 'block', { deferred: true }); const params = field(node, 'parameters'); parameters(params, inner); children(node).filter(child => child.id !== params?.id).forEach(child => walk(child, inner)); return; }
+    if (['if', 'unless', 'elsif', 'if_modifier', 'unless_modifier', 'case', 'case_match', 'in_clause', 'match_pattern', 'test_pattern', 'when', 'while', 'until', 'for', 'while_modifier', 'until_modifier', 'rescue', 'ensure', 'conditional', 'binary'].includes(node.type)) {
       if (node.type === 'binary' && children(node).some(child => child.type === 'global_variable' && ['$LOAD_PATH', '$:', '$LOADED_FEATURES', '$"'].includes(child.text))) gap(node, current, 'path', 'Ruby load path or loaded-feature binary operations require a state summary');
-      const inner = scope(node, current, 'control', { conditional: `${node.type} at line ${site(node).range.startLine}` }); children(node).forEach(child => walk(child, inner)); return;
+      const inner = scope(node, current, 'control', { conditional: `${node.type} at line ${site(node).range.startLine}` });
+      const operator = field(node, 'operator')?.text, left = field(node, 'left'), right = field(node, 'right');
+      if (node.type === 'binary' && operator && !['and', 'or', '&&', '||'].includes(operator) && left && right) facts.calls.push({ ...site(node), scope: inner, expression: { ...site(node), kind: 'call', receiver: expression(left), method: operator, args: [expression(right)] } });
+      if (node.type === 'binary' && field(node, 'operator')?.text === '=~') for (const regex of node.namedChildren.filter(child => child.type === 'regex')) for (const capture of regex.text.matchAll(/\(\?<([\p{L}_][\p{L}\p{N}_]*)>/gu)) facts.locals.push({ ...site(regex), scope: inner, name: capture[1]!, kind: 'write' });
+      const pattern = field(node, 'pattern') ?? field(node, 'variable');
+      if (pattern) for (const target of [...pattern.type === 'identifier' ? [pattern] : pattern.descendantsOfType('identifier'), ...pattern.descendantsOfType('hash_key_symbol')]) facts.locals.push({ ...site(target), scope: inner, name: target.text.replace(/:$/, ''), kind: 'write' });
+      children(node).filter(child => child.id !== pattern?.id).forEach(child => walk(child, inner)); return;
     }
     if (['assignment', 'operator_assignment', 'multiple_assignment'].includes(node.type)) {
       const left = field(node, 'left'), right = field(node, 'right');
-      if (left && right) { facts.assignments.push({ ...site(node), scope: current, target: expression(left), value: expression(right), ...(node.type !== 'assignment' ? { augmentation: true } : {}) }); if (left.text.includes('$LOAD_PATH') || left.text.includes('$:') || left.text.includes('$LOADED_FEATURES') || left.text.includes('$"')) gap(node, current, 'path', 'Ruby load path or loaded-feature state is reassigned'); walk(right, current); }
+      if (left && right) { const target = expression(left); facts.assignments.push({ ...site(node), scope: current, target, value: expression(right), ...(node.type !== 'assignment' ? { augmentation: true } : {}) }); if (target.kind === 'call') facts.calls.push({ ...site(node), scope: current, expression: { ...target, ...site(node), method: target.method + '=', args: [...target.args, expression(right)] } }); for (const target of left.type === 'identifier' ? [left] : left.type === 'left_assignment_list' ? left.descendantsOfType('identifier') : []) facts.locals.push({ ...site(target), scope: current, name: target.text, kind: 'write' }); if (left.text.includes('$LOAD_PATH') || left.text.includes('$:') || left.text.includes('$LOADED_FEATURES') || left.text.includes('$"')) gap(node, current, 'path', 'Ruby load path or loaded-feature state is reassigned'); walk(right, current); }
       else children(node).forEach(child => walk(child, current)); return;
     }
     if (['alias', 'undef'].includes(node.type)) { gap(node, current, 'loader', node.type === 'alias' ? 'Ruby method aliases can replace loader identity' : 'Ruby undef can remove loader method identity'); return; }
@@ -98,7 +114,7 @@ export function extractRubySemantic(root: Node, declarations: DeclarationFact[],
       const value = expression(node);
       if (value.kind === 'call') {
         const block = field(node, 'block');
-        facts.calls.push({ ...site(node), scope: current, expression: value, ...(block ? { blockScope: `block:${block.startIndex}:${block.endIndex}` } : {}) });
+        facts.calls.push({ ...site(node), scope: current, expression: value, ...(block ? { blockScope: `block:${block.startIndex}:${block.endIndex}` } : {}), ...(node.children.some(child => child.type === '&.') ? { safeNavigation: true } : {}) });
         const receiver = field(node, 'receiver');
         if (receiver?.text.includes('$LOAD_PATH') || receiver?.text.includes('$:') || receiver?.text.includes('$LOADED_FEATURES') || receiver?.text.includes('$"')) gap(node, current, 'path', 'Ruby load path or loaded-feature operations require a state summary');
         if (value.receiver?.kind === 'constant' && ['Dir', '::Dir', 'FileUtils', '::FileUtils'].includes(value.receiver.name) && ['chdir', 'cd'].includes(value.method)) gap(node, current, 'path', 'Ruby working-directory changes require a recorded runtime state summary');
@@ -106,7 +122,9 @@ export function extractRubySemantic(root: Node, declarations: DeclarationFact[],
       }
       children(node).filter(child => child.id !== field(node, 'method')?.id).forEach(child => walk(child, current)); return;
     }
+    if (['super', 'yield', 'element_reference'].includes(node.type)) { const value = expression(node); facts.calls.push({ ...site(node), scope: current, expression: value.kind === 'call' ? value : { ...site(node), kind: 'call', method: node.type, args: children(field(node, 'arguments')).map(child => expression(child)) } }); children(node).forEach(child => walk(child, current)); return; }
     if (['constant', 'scope_resolution'].includes(node.type)) { const value = expression(node); if (value.kind === 'constant') facts.references.push({ ...site(node), expression: value, scope: current }); return; }
+    if (node.type === 'identifier' && !['__FILE__', '__LINE__', '__ENCODING__'].includes(node.text)) { facts.calls.push({ ...site(node), scope: current, bare: true, expression: { ...site(node), kind: 'call', method: node.text, args: [] } }); return; }
     children(node).forEach(child => walk(child, current));
   }
   walk(root, scope(root, undefined, 'file'));
