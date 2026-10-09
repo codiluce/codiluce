@@ -28,6 +28,7 @@ export function proxyPath(proxy: NonNullable<ApplicationConfig['apiProxies']>[nu
 export function relativeApiBoundary(context: AnalysisContext, observation: HttpObservation, caller: ApplicationConfig | undefined, target: ApplicationConfig, pathname: string): { proof: Evidence[]; resolution: string } | { reason: string } {
   const execution = requestExecutionContext(context, observation);
   if (observation.transport === 'sveltekit-fetch' && caller?.name === target.name) return { resolution: 'sveltekit-fetch', proof: [evidence('framework', 'api-matcher', observation.evidence.file, observation.evidence.line, `Proven SvelteKit RequestEvent.fetch resolves a relative request within ${caller.name}`)] };
+  if (observation.transport === 'nuxt-fetch' && caller?.name === target.name) return { resolution: 'nuxt-fetch', proof: [evidence('framework', 'api-matcher', observation.evidence.file, observation.evidence.line, `Proven Nuxt fetch uses the same application in browser and Nitro server contexts: ${caller.name}`)] };
   if (execution !== 'browser') return { reason: `Relative URL has ${execution} execution context; a browser origin is required to prove the application boundary` };
   const proxy = configuredProxy(caller, pathname);
   if (proxy?.target === target.name) return { resolution: 'configured-proxy', proof: [evidence('framework', 'api-matcher', observation.evidence.file, observation.evidence.line, `Configured browser proxy on ${caller!.name}: ${proxy.pathPrefix} → ${target.name}${proxy.targetPrefix ?? proxy.pathPrefix}`)] };

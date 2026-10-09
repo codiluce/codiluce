@@ -5,7 +5,7 @@ import { compileIndexedPath, matchIndexedPath, requestPathSegments } from '../an
 import { routingContract, matchRoutePattern } from '../analysis/routes/contracts.js';
 import { configuredProxy, proxyPath, relativeApiBoundary, requestApplication } from '../analysis/routes/boundaries.js';
 export const apiMatcher: Analyzer = {
-  name: 'api-matcher', version: `${ANALYZER_VERSION}:5`,
+  name: 'api-matcher', version: `${ANALYZER_VERSION}:6`,
   async analyze(context: AnalysisContext): Promise<void> {
     const endpoints = [...context.graph.entities.values()].filter(entity => entity.type === 'api_endpoint');
     const appsById = new Map(context.config.applications.map(app => [context.applicationIds.get(app.name), app]));
@@ -48,7 +48,8 @@ export const apiMatcher: Analyzer = {
           if (!app || !methodMatches(endpoint, observation.method!) || endpoint.metadata.registration === 'convention' && endpoint.metadata.framework === 'laravel') return false;
           if (origin && !app.apiOrigins?.includes(origin)) return false;
           if (!origin && observation.transport === 'sveltekit-fetch') return app.name === callerApp?.name && endpoint.metadata.framework === 'sveltekit';
-          if (!origin && ['sveltekit', 'astro'].includes(String(endpoint.metadata.framework)) && app.name !== callerApp?.name && !callerApp?.apiProxies?.some(proxy => proxy.target === app.name)) return false;
+          if (!origin && observation.transport === 'nuxt-fetch') return app.name === callerApp?.name && endpoint.metadata.framework === 'nuxt';
+          if (!origin && ['sveltekit', 'astro', 'nuxt'].includes(String(endpoint.metadata.framework)) && app.name !== callerApp?.name && !callerApp?.apiProxies?.some(proxy => proxy.target === app.name)) return false;
           // Relative requests can target a local Next endpoint or a unique backend.
           return !!origin || !hasFramework(app, 'nextjs') || app.name === callerApp?.name;
         });
@@ -98,7 +99,9 @@ export const apiMatcher: Analyzer = {
           if (!app || !methodMatches(endpoint, observation.method!) || endpoint.metadata.registration === 'convention' && endpoint.metadata.framework === 'laravel') return false;
           if (resolved.app) return app.name === resolved.app;
           if (observation.transport === 'sveltekit-fetch') return app.name === callerApp?.name && endpoint.metadata.framework === 'sveltekit';
+          if (observation.transport === 'nuxt-fetch') return app.name === callerApp?.name && endpoint.metadata.framework === 'nuxt';
           if (endpoint.metadata.framework === 'sveltekit' && app.name !== callerApp?.name && !callerApp?.apiProxies?.some(proxy => proxy.target === app.name)) return false;
+          if (endpoint.metadata.framework === 'nuxt' && app.name !== callerApp?.name && !callerApp?.apiProxies?.some(proxy => proxy.target === app.name)) return false;
           return !!contracts.get(endpoint.id) || app.name === callerApp?.name || (hasFramework(app, 'laravel') && !hasFramework(callerApp, 'laravel'));
         });
         resolvedEligible.set(key, eligible);

@@ -13,6 +13,8 @@ import { sourceRange, type TypeScriptFrameworkPack, type TypeScriptPackScope, ty
 import { VueStatic, profile, propertyName } from './vue-static.js';
 import { vueTemplateSites, type VueTemplateSite } from './vue-template.js';
 import { vueRouters } from './vue-router.js';
+import { nuxtComponent, nuxtImportedComponent, nuxtGlobal } from './nuxt-conventions.js';
+import { nuxtFetchPath } from '../../analyzers/ts-http.js';
 
 type Bound = { node: ts.Expression | ts.MethodDeclaration; frame: TypeScriptPackFile };
 export const vuePack: TypeScriptFrameworkPack = {
@@ -32,6 +34,7 @@ class VueComponent {
   private readonly frames: TypeScriptPackFile[];
   private readonly bindings = new Map<string, Bound>();
   private readonly components = new Map<string, Bound>();
+  private readonly blockedComponents = new Set<string>();
   private readonly occurrences = new Map<string, number>();
   private readonly sites = new SiteCollector();
   private text = ''; private source!: SourceText; private component!: Entity;
@@ -44,7 +47,7 @@ class VueComponent {
     if (typeof component !== 'string' || !facts) return;
     this.component = context.graph.entities.get(component)!;
     this.text = context.sources?.readFile(this.file.absolutePath) ?? ''; this.source = new SourceText(this.text);
-    const dependency = context.projects?.nodeOwner(this.file.path).dependencies.vue;
+    const project = context.projects?.nodeOwner(this.file.path), dependency = project?.dependencies.vue ?? (project && this.scope.services.nuxt.get(project.id)?.valid ? '^3.0.0' : undefined);
     const analysis = fileAnalysis(fileEntity.metadata.analysis);
     if (dependency && !profile(dependency, 3)) {
       if (analysis) analysis.features.framework = { status: 'unsupported', reason: 'Vue dependency is outside the qualified Vue 3 profile' };
@@ -53,6 +56,12 @@ class VueComponent {
     if (facts.issues.some(issue => issue.fatal || issue.code === 'unsupported-template') || analysis?.features.structure.status === 'failed') {
       if (analysis) analysis.features.framework = { status: facts.issues.some(issue => issue.fatal) || analysis.features.structure.status === 'failed' ? 'failed' : 'unsupported', reason: 'Malformed or unsupported component/template input prevents Vue qualification' }; return;
     }
+    const nuxtConfig = project && this.scope.services.nuxt.get(project.id);
+    if (nuxtConfig?.valid && (/\.(?:server|island)(?:\.global)?\.vue$/.test(this.file.path) || this.file.path.startsWith(`${nuxtConfig.src === '.' ? '' : `${nuxtConfig.src}/`}components/islands/`))) {
+      this.component.metadata.executionContext = 'server';
+      if (analysis) analysis.features.framework = { status: 'unsupported', reason: 'Nuxt server components/islands require a separate render/hydration boundary; browser callbacks are not inferred' };
+      this.gap(0, 'Nuxt server component/island mode requires a separate render boundary', 'nuxt-component-mode-gap'); return;
+    }
     if (!dependency) this.gap(0, 'No declared Vue version; only the bounded Vue 3 SFC syntax subset is analyzed', 'vue-version-profile');
     if (facts.regions.some(region => !region.supported)) { if (analysis) analysis.features.framework = { status: 'unsupported', reason: 'Unavailable script bindings prevent Vue qualification' }; this.gap(0, 'Unavailable script bindings prevent template qualification'); return; }
     fileEntity.metadata.frameworkPacks = [...new Set([...(fileEntity.metadata.frameworkPacks as string[] | undefined ?? []), 'vue'])];
@@ -60,6 +69,11 @@ class VueComponent {
     if (analysis) analysis.features.framework = { status: 'partial', reason: 'Vue 3 static local components, Options/setup bindings and bounded template callbacks; dynamic/global/compiler-plugin behavior is outside this profile' };
     if (analysis) analysis.features.references = { status: 'partial', reason: 'Vue script and bounded local template component/callback bindings' };
     for (const frame of [...this.frames].sort((a, b) => Number(a.file.embedded?.role === 'setup') - Number(b.file.embedded?.role === 'setup'))) {
+      for (const statement of frame.source.statements) if (ts.isImportDeclaration(statement) && statement.importClause && sourceMapped(context, frame.source.fileName, statement.getStart(frame.source), statement.end)) {
+        const clause = statement.importClause; if (clause.name) this.blockedComponents.add(clause.name.text);
+        if (clause.namedBindings && ts.isNamespaceImport(clause.namedBindings)) this.blockedComponents.add(clause.namedBindings.name.text);
+        else if (clause.namedBindings) for (const item of clause.namedBindings.elements) this.blockedComponents.add(item.name.text);
+      }
       if (frame.file.embedded?.role === 'setup') {
         if (frame.source.statements.some(statement => sourceMapped(context, frame.source.fileName, statement.getStart(frame.source), statement.end) && setupRuntimeExport(statement))) {
           if (analysis) analysis.features.framework = { status: 'failed', reason: 'Runtime exports inside script setup are invalid Vue SFC syntax' };
@@ -146,10 +160,17 @@ class VueComponent {
     const graph = this.scope.context.graph;
     if (site.kind === 'component') {
       if (nativeTags.has(site.name!) || ['slot', 'component'].includes(site.name!)) return;
-      const bound = this.binding(site.name!, true, site.locals), target = bound && !ts.isMethodDeclaration(bound.node) && this.reader.component(bound.node, bound.frame.state.checker);
-      const selfName = path.posix.basename(this.file.path, '.vue'), self = !bound && [selfName, selfName.replace(/([a-z\d])([A-Z])/g, '$1-$2').toLowerCase()].includes(site.name!) ? this.component : undefined;
-      if (target || self) this.sites.add({ from: this.component.id, to: (target || self)!.id, type: 'renders', form: 'render', evidence: this.fact(site.start, site.end, `Vue template renders <${site.name}> through a bound component`) });
-      else if (/^[A-Z]|-/.test(site.name!) && !['RouterView', 'RouterLink', 'router-view', 'router-link', 'Transition', 'TransitionGroup', 'KeepAlive', 'Teleport', 'Suspense'].includes(site.name!)) this.gap(site.start, `Component <${site.name}> has no qualified local runtime binding`);
+      const bound = this.binding(site.name!, true, site.locals), target = bound && !ts.isMethodDeclaration(bound.node) && (this.reader.component(bound.node, bound.frame.state.checker) ?? nuxtImportedComponent(this.scope, bound.frame, bound.node));
+      const shadow = site.locals.includes(site.name!.split('.')[0]!) || this.blockedComponents.has(site.name!) || this.blockedComponents.has(site.name!.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase()).replace(/^./, letter => letter.toUpperCase()));
+      const selfName = path.posix.basename(this.file.path, '.vue'), self = !bound && !shadow && [selfName, selfName.replace(/([a-z\d])([A-Z])/g, '$1-$2').toLowerCase()].includes(site.name!) ? this.component : undefined;
+      const convention = !bound && !shadow && !self ? nuxtComponent(this.scope, this.file.path, site.name!) : undefined;
+      const rendered = target || self || convention;
+      const nuxt = this.scope.services.nuxt.get(this.scope.context.projects!.nodeOwner(this.file.path).id), importedConvention = bound && !ts.isMethodDeclaration(bound.node) && nuxtImportedComponent(this.scope, bound.frame, bound.node);
+      if (rendered) {
+        const fact = this.fact(site.start, site.end, convention || importedConvention ? `Nuxt indexed component convention for <${site.name}>; original component ${String(rendered.path)}` : `Vue template renders <${site.name}> through a bound component`);
+        if (convention || importedConvention) { fact.analyzer = 'nuxt'; const entity = graph.entities.get(this.file.id)!; entity.metadata.frameworkPacks = [...new Set([...(entity.metadata.frameworkPacks as string[] | undefined ?? []), 'nuxt'])]; }
+        this.sites.add({ from: this.component.id, to: rendered.id, type: 'renders', form: 'render', evidence: fact });
+      } else if (/^[A-Z]|-/.test(site.name!) && !vueBuiltins.has(site.name!) && !(nuxt?.valid && !bound && !shadow && nuxtBuiltins.has(site.name!))) this.gap(site.start, `Component <${site.name}> has no qualified local runtime binding`);
       return;
     }
     const value = this.text.slice(site.start, site.end);
@@ -196,24 +217,25 @@ class VueComponent {
   }
   private http(call: ts.CallExpression, site: VueTemplateSite, owner: Entity, parsed: ts.SourceFile, bound: Bound | undefined): boolean {
     const callee = call.expression, name = callee.getText(parsed);
+    const config = this.scope.services.nuxt.get(this.scope.context.projects!.nodeOwner(this.file.path).id), globalFrames = this.frames.length ? this.frames : this.scope.files.filter(frame => frame.runtime.project.id === config?.project.id), nuxt = !!config?.valid && !config.conditions.length && !bound && !site.locals.includes('$fetch') && !this.bindings.has('$fetch') && !this.blockedComponents.has('$fetch') && ts.isIdentifier(callee) && callee.text === '$fetch' && globalFrames.every(frame => nuxtGlobal(this.scope, frame, callee, '$fetch', false));
     const resolved = bound && !ts.isMethodDeclaration(bound.node) ? this.reader.resolve(bound.node, bound.frame.state.checker) : undefined;
     const fetchSymbol = resolved && bound ? bound.frame.state.checker.getSymbolAtLocation(resolved) : undefined;
     const globalFetch = !!fetchSymbol?.declarations?.length && fetchSymbol.declarations.every(declaration => bound!.frame.state.program.isSourceFileDefaultLibrary(declaration.getSourceFile())) && (ts.isIdentifier(resolved!) && resolved!.text === 'fetch' || ts.isPropertyAccessExpression(resolved!) && resolved!.name.text === 'fetch');
-    let method: string | undefined = globalFetch ? 'GET' : undefined;
+    let method: string | undefined = globalFetch || nuxt ? 'GET' : undefined;
     const axios = bound && !ts.isMethodDeclaration(bound.node) ? frameworkBinding(bound.node, bound.frame.state.checker, this.scope.services) : undefined;
     const axiosMethod = axios?.member === 'default' && ts.isPropertyAccessExpression(callee) ? callee.name.text : axios?.member;
     if (axios?.module === 'axios' && axiosMethod && ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'].includes(axiosMethod)) method = axiosMethod.toUpperCase();
     if (!method) return false;
     const url = call.arguments[0], options = call.arguments[1];
-    if (globalFetch && options) {
+    if ((globalFetch || nuxt) && options) {
       if (!ts.isObjectLiteralExpression(options) || options.properties.some(property => !ts.isPropertyAssignment(property) || !propertyName(property.name))) method = undefined;
-      else for (const property of options.properties) if (ts.isPropertyAssignment(property) && propertyName(property.name) === 'method') method = ts.isStringLiteralLike(property.initializer) ? property.initializer.text.toUpperCase() : undefined;
+      else for (const property of options.properties) if (ts.isPropertyAssignment(property)) { if (propertyName(property.name) === 'method') method = ts.isStringLiteralLike(property.initializer) ? property.initializer.text.toUpperCase() : undefined; else if (nuxt && !['body', 'headers', 'credentials', 'query', 'params', 'retry', 'timeout'].includes(propertyName(property.name)!)) method = undefined; }
     }
     const start = site.start + call.getStart(parsed), end = site.start + call.end;
     if (!method || !url || !ts.isStringLiteralLike(url) || call.arguments.some(ts.isSpreadElement)) { this.gap(start, 'Template HTTP call requires a literal URL and method', 'vue-template-http-gap'); return true; }
     const fact = this.fact(start, end, `${name} HTTP call in Vue template ${site.kind}`), effect: EffectFact = { category: 'network', operation: method, detail: url.text, line: fact.line!, via: name };
     (owner.metadata.effects as EffectFact[] | undefined ?? (owner.metadata.effects = []) as EffectFact[]).push(effect);
-    this.scope.context.http.push({ callerId: owner.id, fileId: this.file.id, method, url: url.text, expression: url.getText(parsed), evidence: fact, effect });
+    this.scope.context.http.push({ callerId: owner.id, fileId: this.file.id, method, url: nuxt ? nuxtFetchPath(url.text, config!.base) : url.text, ...(nuxt ? { transport: 'nuxt-fetch' as const } : {}), expression: url.getText(parsed), evidence: fact, effect });
     const file = this.scope.context.graph.entities.get(this.file.id)!;
     (file.metadata.httpRequests as unknown[] | undefined ?? (file.metadata.httpRequests = []) as unknown[]).push({ callerId: owner.id, method, url: url.text, expression: url.getText(parsed), line: fact.line, resolution: 'literal' });
     return true;
@@ -225,6 +247,8 @@ function setupRuntimeExport(statement: ts.Statement): boolean {
   if (ts.isTypeAliasDeclaration(statement) || ts.isInterfaceDeclaration(statement)) return false;
   return ts.canHaveModifiers(statement) && !!ts.getModifiers(statement)?.some(modifier => modifier.kind === ts.SyntaxKind.ExportKeyword);
 }
+const vueBuiltins = new Set(['RouterView', 'RouterLink', 'router-view', 'router-link', 'Transition', 'TransitionGroup', 'KeepAlive', 'Teleport', 'Suspense']);
+const nuxtBuiltins = new Set(['NuxtPage', 'NuxtLayout', 'NuxtLink', 'NuxtLoadingIndicator', 'NuxtErrorBoundary', 'ClientOnly', 'DevOnly', 'nuxt-page', 'nuxt-layout', 'nuxt-link', 'nuxt-loading-indicator', 'nuxt-error-boundary', 'client-only', 'dev-only']);
 // Vue's default HTML/SVG/MathML parser profile. Uppercase imported names keep
 // their component meaning; a binding named `input` cannot replace <input>.
 const nativeTags = new Set(('html,body,base,head,link,meta,style,title,address,article,aside,footer,header,h1,h2,h3,h4,h5,h6,hgroup,nav,section,div,dd,dl,dt,figcaption,figure,picture,hr,img,li,main,ol,p,pre,ul,a,b,abbr,bdi,bdo,br,cite,code,data,dfn,em,i,kbd,mark,q,rp,rt,ruby,s,samp,small,span,strong,sub,sup,time,u,var,wbr,area,audio,map,track,video,embed,object,param,source,canvas,script,noscript,del,ins,caption,col,colgroup,table,thead,tbody,td,th,tr,button,datalist,fieldset,form,input,label,legend,meter,optgroup,option,output,progress,select,textarea,details,dialog,menu,summary,template,blockquote,iframe,tfoot,svg,animate,animateMotion,animateTransform,circle,clipPath,color-profile,defs,desc,ellipse,feBlend,feColorMatrix,feComponentTransfer,feComposite,feConvolveMatrix,feDiffuseLighting,feDisplacementMap,feDistantLight,feDropShadow,feFlood,feFuncA,feFuncB,feFuncG,feFuncR,feGaussianBlur,feImage,feMerge,feMergeNode,feMorphology,feOffset,fePointLight,feSpecularLighting,feSpotLight,feTile,feTurbulence,filter,foreignObject,g,hatch,hatchpath,image,line,linearGradient,marker,mask,mesh,meshgradient,meshpatch,meshrow,metadata,mpath,path,pattern,polygon,polyline,radialGradient,rect,set,solidcolor,stop,switch,symbol,text,textPath,tspan,unknown,use,view,math,maction,maligngroup,malignmark,menclose,merror,mfenced,mfrac,mglyph,mi,mlabeledtr,mlongdiv,mmultiscripts,mn,mo,mover,mpadded,mphantom,mroot,mrow,ms,mscarries,mscarry,msgroup,msline,mspace,msqrt,msrow,mstack,mstyle,msub,msubsup,msup,mtable,mtd,mtext,mtr,munder,munderover,semantics,annotation,annotation-xml').split(','));

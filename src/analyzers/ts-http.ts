@@ -38,7 +38,9 @@ const INERTIA_VERBS = new Set(['get', 'post', 'put', 'patch', 'delete']);
 const MAX_WRAPPER_DEPTH = 4, MAX_CALL_SITES = 300, MAX_PROOF = 12;
 
 export interface HttpSite {
-  transport?: 'sveltekit-fetch';
+  transport?: 'sveltekit-fetch' | 'nuxt-fetch';
+  /** Literal Nuxt app base, following ofetch/ufo withBase semantics. */
+  nuxtBase?: string;
   /** The call (or, for Inertia's `<Link>` and `<Form>`, the JSX element) making the request. */
   node: ts.Node;
   client: 'fetch' | 'axios' | 'axios-instance' | 'inertia';
@@ -245,9 +247,16 @@ export function evaluateSite(urls: UrlEvaluator, site: HttpSite, scope: Scope = 
   if (!site.url) return { reason: 'The request has no URL argument', parameters: [], method };
   // A plain literal of the site itself is matched as written (api-matcher); anything else is evaluated.
   const plain = literalText(site.url);
-  if (plain !== undefined && scope.bindings.size === 0 && site.client !== 'axios-instance') return { method, url: plain };
+  if (plain !== undefined && scope.bindings.size === 0 && site.client !== 'axios-instance') return { method, url: site.nuxtBase ? nuxtFetchPath(plain, site.nuxtBase) : plain };
   const resolved = site.client === 'axios-instance' ? urls.resolveJoined(site.base, site.url, scope) : urls.resolve(site.url, scope);
+  if ('url' in resolved && site.nuxtBase && resolved.url.relative) { resolved.url = { ...resolved.url, pattern: nuxtFetchPath(resolved.url.pattern, site.nuxtBase), display: nuxtFetchPath(resolved.url.display, site.nuxtBase) }; }
   return 'url' in resolved ? { method, resolved: resolved.url } : { ...resolved, method };
+}
+export function nuxtFetchPath(url: string, base: string): string {
+  if (!base || /^[\w+.-]{2,}:/.test(url) || url.startsWith('//')) return url;
+  if (!url || url === '/') return base;
+  if (url.startsWith(base) && (!url[base.length] || ['/', '?'].includes(url[base.length]!))) return url;
+  return `${base}/${url.replace(/^\/+/, '')}`;
 }
 /**
  * The method an options object sets (fetch init: `method`; axios config:

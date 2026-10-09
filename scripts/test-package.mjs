@@ -172,6 +172,14 @@ try {
   await writeFile(path.join(astroUi, 'src/components/Counter.svelte'), '<script>function PackagedAstroIslandSave(){return fetch("/package-astro-api");}</script><button onclick={PackagedAstroIslandSave}/>');
   await writeFile(path.join(astroUi, 'src/pages/package-astro-api.ts'), 'export const prerender = false;\nexport function GET(){return new Response("ok");}');
   await writeFile(path.join(astroUi, 'src/pages/package-astro-static.json.ts'), 'export function GET(){return new Response("static output");}');
+  const nuxtUi = path.join(repo, 'nuxt-ui');
+  await mkdir(path.join(nuxtUi, 'app/pages/package-nuxt'), { recursive: true }); await mkdir(path.join(nuxtUi, 'app/components'), { recursive: true }); await mkdir(path.join(nuxtUi, 'server/api'), { recursive: true });
+  await writeFile(path.join(nuxtUi, 'package.json'), JSON.stringify({ dependencies: { nuxt: '^4.6.0' } }));
+  await writeFile(path.join(nuxtUi, 'nuxt.config.ts'), 'export default defineNuxtConfig({});');
+  await writeFile(path.join(nuxtUi, 'app/pages/package-nuxt.vue'), '<template><NuxtPage/></template>');
+  await writeFile(path.join(nuxtUi, 'app/pages/package-nuxt/[id].vue'), '<template><PackagedNuxtCard/></template>');
+  await writeFile(path.join(nuxtUi, 'app/components/PackagedNuxtCard.vue'), '<script setup>\nfunction PackagedNuxtSave(){return $fetch("/api/package-nuxt",{method:"POST"});}\n</script>\n<template><button @click="PackagedNuxtSave"/></template>');
+  await writeFile(path.join(nuxtUi, 'server/api/package-nuxt.post.ts'), 'export default defineEventHandler(\n(event)=>({ok:true}));');
   console.log('Starting the installed executable from a repository with spaces…');
   await checkSession(bin, repo);
   assert.ok((await readdir(path.join(repo, '.codiluce'))).includes('codiluce.db'));
@@ -298,6 +306,16 @@ try {
   const astroIslandDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', astroIsland.to], repo)).stdout); assert.equal(astroIslandDetail.sourceRange.startLine, 4); assert.equal(astroIslandDetail.metadata.executionContext, 'browser'); assert.equal(astroIslandDetail.metadata.renderer, 'svelte');
   const astroRequests = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', astroIsland.to, '--type', 'requests'], repo)).stdout).items, astroRequest = astroRequests.find(edge => edge.to === astroEndpoint.id); assert.ok(astroRequest, 'installed hydrated island supplies the Astro application origin');
   const astroRequestDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relation', '--id', astroRequest.id], repo)).stdout); assert.ok(astroRequestDetail.evidence.some(fact => fact.file === 'astro-ui/src/components/Counter.svelte'), 'installed Astro invocation preserves original Svelte call evidence');
+  const nuxtEntities = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'package-nuxt'], repo)).stdout).items;
+  const nuxtPage = nuxtEntities.find(entity => entity.type === 'route' && entity.name === '/package-nuxt/[id]'), nuxtEndpoint = nuxtEntities.find(entity => entity.type === 'api_endpoint' && entity.name === 'POST /api/package-nuxt'); assert.ok(nuxtPage && nuxtEndpoint, 'installed Nuxt pack registers indexed nested pages and method-suffixed server routes');
+  const nuxtTargets = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', nuxtPage.id, '--type', 'routes_to'], repo)).stdout).items; assert.equal(nuxtTargets.length, 2);
+  const nuxtView = vueEntities.find(entity => entity.path === 'nuxt-ui/app/pages/package-nuxt/[id].vue'), nuxtCard = vueEntities.find(entity => entity.path === 'nuxt-ui/app/components/PackagedNuxtCard.vue'); assert.ok(nuxtView && nuxtCard);
+  const nuxtRender = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', nuxtView.id, '--type', 'renders'], repo)).stdout).items.find(edge => edge.to === nuxtCard.id); assert.ok(nuxtRender, 'installed Nuxt auto-import convention reaches the original Vue component');
+  const nuxtEvents = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', nuxtCard.id, '--type', 'references'], repo)).stdout).items, nuxtEvent = nuxtEvents.find(edge => edge.metadata?.events?.includes('click')); assert.ok(nuxtEvent);
+  const nuxtRequest = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', nuxtEvent.to, '--type', 'requests'], repo)).stdout).items.find(edge => edge.to === nuxtEndpoint.id); assert.ok(nuxtRequest, 'installed Nuxt fetch transport reaches its own application endpoint');
+  const nuxtRequestDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relation', '--id', nuxtRequest.id], repo)).stdout); assert.ok(nuxtRequestDetail.evidence.some(fact => fact.file === 'nuxt-ui/app/components/PackagedNuxtCard.vue' && fact.line === 2));
+  const nuxtHandler = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', nuxtEndpoint.id, '--type', 'handles'], repo)).stdout).items[0]; assert.ok(nuxtHandler);
+  const nuxtHandlerDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', nuxtHandler.to], repo)).stdout); assert.equal(nuxtHandlerDetail.path, 'nuxt-ui/server/api/package-nuxt.post.ts'); assert.equal(nuxtHandlerDetail.sourceRange.startLine, 2); assert.equal(nuxtHandlerDetail.metadata.executionContext, 'server');
   await assert.rejects(run(process.execPath, [bin, 'start', '--build-ui', '--no-open'], repo), error => error.code === 1 && /only available in a Codiluce source checkout/.test(error.stderr));
   await assert.rejects(run(process.execPath, [bin, 'unknown-command'], repo), error => error.code === 1);
   const broken = path.join(repo, 'frontend/src/broken.ts');
@@ -346,7 +364,7 @@ try {
   console.log('Checking npm exec against the tarball without a local installation…');
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
-  console.log('Package installation, seven grammars, workspace binding, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
+  console.log('Package installation, seven grammars, workspace binding, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }
