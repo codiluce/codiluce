@@ -112,8 +112,8 @@ test('Ruby conditional reopenings and namespace mutations cannot prove direct ca
  const graph = await index(root); assert.equal(targets(graph).length, 0); assert.ok(calls(graph).filter(item => item.method === 'run').every(item => item.kind === 'unresolved'));
 });
 
-test('Ruby external, lazy, conditional and wrapped startup boundaries retain earlier proven calls only', async () => {
- for (const setup of [`require 'external'`, `autoload :Other, 'widget'`, `require_relative 'lib/widget' if enabled`, `load 'widget.rb', true`, `def setup; require 'external'; end`]) {
+test('Ruby external, conditional and wrapped startup boundaries retain earlier proven calls only', async () => {
+ for (const setup of [`require 'external'`, `require_relative 'lib/widget' if enabled`, `load 'widget.rb', true`, `def setup; require 'external'; end`]) {
   const root = await repository({ 'main.rb': `class Widget; def self.run; end; end\nWidget.run\n${setup}\nWidget.run`, 'lib/widget.rb': 'class Other; end' }); const graph = await index(root); assert.equal(targets(graph).length, 1, setup); assert.equal(calls(graph).filter(item => item.method === 'run').at(-1)?.kind, 'unresolved', setup);
  }
 });

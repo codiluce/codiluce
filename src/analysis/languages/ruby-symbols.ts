@@ -1,15 +1,18 @@
 import type { AnalysisContext, ScannedFile } from '../../core/analyzer.js';
 import { evidence, type CallSites, type Evidence } from '../../core/graph.js';
 import { fileAnalysis, type RubyCallFact, type RubyDefinitionFact, type RubyExpression, type RubyScopeFact, type RubySite, type RubySyntaxFacts } from '../facts.js';
-import type { RubyResolver } from '../resolution/ruby.js';
+import type { RubyLoad, RubyResolver } from '../resolution/ruby.js';
+import type { RubyAutoloadCatalog, RubyAutoloadCandidate } from '../resolution/ruby-autoload.js';
 
-export const RUBY_SYMBOL_VERSION = '1';
+export const RUBY_SYMBOL_VERSION = '2';
 interface Definition { fact: RubyDefinitionFact; file: string; id: string; proof: Evidence[] }
-interface Constant { order: number; name: string; definition?: Definition; value?: RubyValue; reason?: string; proof: Evidence[] }
+interface Constant { order: number; name: string; definition?: Definition; value?: RubyValue; reason?: string; implicit?: boolean; proof: Evidence[] }
 interface Method { order: number; definition: Definition; name: string; owner: string; singleton: boolean; visibility: string; reason?: string }
 interface Unit { file: ScannedFile; facts: RubySyntaxFacts; scopes: Map<string, RubyScopeFact>; nesting: Map<string, string[] | string>; marks: Map<string, number>; activation: Evidence[] }
 interface Barrier { order: number; reason: string; owner?: string; constants?: boolean; methods?: boolean }
-interface Snapshot { origin: string; order: number; units: Map<string, Unit>; constants: Map<string, Constant[]>; methods: Map<string, Method[]>; barriers: Barrier[]; loaded: Set<string>; loading: Set<string>; visits: number; invalid?: string }
+interface Pending { order: number; file?: ScannedFile; reason?: string; proof: Evidence[]; source: string; site: RubySite }
+interface Activation { file: string; site: RubySite; name: string; target?: string; kind: 'file' | 'implicit'; status: string; reason?: string; proof: Evidence[] }
+interface Snapshot { origin: string; order: number; units: Map<string, Unit>; constants: Map<string, Constant[]>; methods: Map<string, Method[]>; barriers: Barrier[]; loaded: Set<string>; loading: Set<string>; visits: number; pending: Map<string, Pending>; activating: Set<string>; activations: Activation[]; conditions: string[]; refinements: Map<string, RubyLoad>; invalid?: string }
 export type RubyValue =
   | { kind: 'namespace'; name: string; definitions: Definition[]; proof: Evidence[] }
   | { kind: 'instance'; name: string; proof: Evidence[] }
@@ -30,7 +33,7 @@ const HOOKS = new Set(['inherited', 'included', 'prepended', 'extended', 'append
  * retain an invocation-time condition; unrelated indexed files are not globals. */
 export class RubySymbols {
   private readonly snapshots = new Map<string, Snapshot>();
-  constructor(readonly context: AnalysisContext, readonly resolver: RubyResolver) {}
+  constructor(readonly context: AnalysisContext, readonly resolver: RubyResolver, readonly autoload?: RubyAutoloadCatalog) {}
   private proof(file: string, site: RubySite, reason: string): Evidence[] {
     return [{ ...evidence('syntax', 'ruby-symbols', file, site.range.startLine, reason), analyzerVersion: RUBY_SYMBOL_VERSION, endLine: site.range.endLine }];
   }
@@ -52,30 +55,60 @@ export class RubySymbols {
     return snapshot.invalid ?? snapshot.barriers.find(item => item.order <= order && item[feature] && (item.owner === undefined || item.owner === name || name.startsWith(item.owner + '::')))?.reason;
   }
   private entries(snapshot: Snapshot, name: string, order: number): Constant[] { return (snapshot.constants.get(name) ?? []).filter(item => item.order <= order); }
-  private constant(snapshot: Snapshot, name: string, order: number, depth = 0): RubyValue {
+  private activate(snapshot: Snapshot, name: string, order: number, unit: Unit, scope: string, site: RubySite): boolean {
+    const registered = snapshot.pending.get(name), pending = registered && registered.order <= order ? registered : undefined;
+    const candidate: RubyAutoloadCandidate | undefined = pending ? { name, kind: 'file', file: pending.file, path: pending.file?.path ?? pending.source, directories: [], shadowed: [], loader: 'main', proof: pending.proof, conditions: [], reason: pending.reason } : this.autoload?.lookup(snapshot.origin, name, unit.file.path, this.deferred(unit, scope));
+    if (!candidate) return false;
+    const proof = [...this.proof(unit.file.path, site, `Original constant access activates ${name}`), ...candidate.proof], activation: Activation = { file: unit.file.path, site, name, kind: candidate.kind, target: candidate.file?.id, status: 'unresolved', proof };
+    snapshot.activations.push(activation); snapshot.conditions = [...new Set([...snapshot.conditions, ...candidate.conditions, ...this.deferred(unit, scope) ? ['Lazy constant activation in a deferred body requires invocation timing proof'] : []])];
+    let reason = candidate.reason;
+    if (!reason && this.conditional(unit, scope)) reason = 'Conditional autoload activation requires a branch and initialization-order summary';
+    if (!reason && snapshot.activating.has(name)) reason = `Cyclic autoload activation for ${name}`;
+    if (reason) { activation.reason = reason; this.addConstant(snapshot, { order: ++snapshot.order, name, reason, proof }); unit.marks.set(siteKey(site), snapshot.order); return true; }
+    if (candidate.kind === 'implicit') {
+      activation.status = 'resolved'; this.addConstant(snapshot, { order: ++snapshot.order, name, implicit: true, value: { kind: 'namespace', name, definitions: [], proof }, proof }); unit.marks.set(siteKey(site), snapshot.order); return true;
+    }
+    if (!candidate.file) { activation.reason = 'Autoload has no indexed original source'; this.addConstant(snapshot, { order: ++snapshot.order, name, reason: activation.reason, proof }); return true; }
+    snapshot.activating.add(name);
+    this.build(snapshot, candidate.file, 0, proof);
+    snapshot.activating.delete(name);
+    const entries = this.entries(snapshot, name, snapshot.order);
+    const boundary = this.barrier(snapshot, snapshot.order, name, 'constants');
+    if (boundary || !entries.length || entries.some(entry => entry.reason)) {
+      activation.reason = boundary ?? entries.find(entry => entry.reason)?.reason ?? `Autoload source ${candidate.path} does not define expected constant ${name}`;
+      snapshot.barriers.push({ order: ++snapshot.order, constants: true, methods: true, reason: activation.reason });
+      this.addConstant(snapshot, { order: snapshot.order, name, reason: activation.reason, proof });
+    } else activation.status = 'resolved';
+    unit.marks.set(siteKey(site), snapshot.order); return true;
+  }
+  private constant(snapshot: Snapshot, name: string, order: number, depth = 0, query?: { unit: Unit; scope: string; site: RubySite }): RubyValue {
     if (depth > 64) return unknown('Ruby constant alias lookup budget exceeded');
     const barrier = this.barrier(snapshot, order, name, 'constants'); if (barrier) return unknown(barrier);
-    const entries = this.entries(snapshot, name, order); if (!entries.length) return unknown(`No initialized indexed constant ${name}`);
+    let entries = this.entries(snapshot, name, order);
+    if (!entries.length && query && this.activate(snapshot, name, order, query.unit, query.scope, query.site)) { order = snapshot.order; const boundary = this.barrier(snapshot, order, name, 'constants'); if (boundary) return unknown(boundary); entries = this.entries(snapshot, name, order); }
+    if (!entries.length) return unknown(`No initialized indexed constant ${name}`);
     if (entries.length > 128) return unknown(`Ruby namespace/reopening candidate budget exceeded for ${name}`);
     if (entries.some(item => item.reason)) return unknown(entries.find(item => item.reason)!.reason!, entries.flatMap(item => item.proof));
-    const writes = entries.filter(item => !item.definition);
+    const writes = entries.filter(item => !item.definition && !item.implicit);
     if (writes.length) {
       if (writes.length !== 1 || entries.length !== 1) return unknown(`Constant ${name} is reassigned or reopened through an alias`, entries.flatMap(item => item.proof));
       let value = writes[0]!.value ?? unknown(`Constant ${name} has no bounded value`);
-      if (value.kind === 'namespace' && value.name !== name) value = this.constant(snapshot, value.name, order, depth + 1);
+      if (value.kind === 'namespace' && value.name !== name) value = this.constant(snapshot, value.name, order, depth + 1, query);
       return { ...value, proof: [...writes[0]!.proof, ...value.proof] };
     }
-    const definitions = entries.map(item => item.definition!);
+    const definitions = entries.flatMap(item => item.definition ? [item.definition] : []);
+    if (entries.some(item => item.implicit) && definitions.some(item => item.fact.kind === 'class')) return unknown(`Implicit namespace ${name} cannot be reopened as a class`);
+    if (!definitions.length) return { kind: 'namespace', name, definitions: [], proof: entries.flatMap(item => item.proof) };
     if (new Set(definitions.map(item => item.fact.kind)).size !== 1) return unknown(`Class/module kind mismatch for reopened ${name}`);
     const explicit = definitions.filter(item => item.fact.superclass);
     if (explicit.some(item => item.fact.superclass?.kind !== 'constant') || new Set(explicit.map(item => item.fact.superclass?.kind === 'constant' ? item.fact.superclass.name : '')).size > 1 || !definitions[0]!.fact.superclass && explicit.length) return unknown(`Reopened ${name} has an unproved or incompatible superclass`);
     return { kind: 'namespace', name, definitions, proof: entries.flatMap(item => item.proof) };
   }
-  private head(snapshot: Snapshot, unit: Unit, scope: string, name: string, order: number): RubyValue {
+  private head(snapshot: Snapshot, unit: Unit, scope: string, name: string, order: number, site: RubySite): RubyValue {
     const nesting = this.nesting(unit, scope); if (typeof nesting === 'string') return unknown(nesting);
     for (const owner of nesting) {
       const candidate = `${owner}::${name}`;
-      if (this.entries(snapshot, candidate, order).length) return this.constant(snapshot, candidate, order);
+      if (this.entries(snapshot, candidate, order).length || snapshot.pending.get(candidate)?.order! <= order || this.autoload?.lookup(snapshot.origin, candidate, unit.file.path, this.deferred(unit, scope))) return this.constant(snapshot, candidate, order, 0, { unit, scope, site });
     }
     // Ancestors precede Object fallback. Do not guess past an unreviewed
     // superclass or mixin when a lexical constant was not found.
@@ -84,18 +117,19 @@ export class RubySymbols {
       const barrier = this.barrier(snapshot, order, owner, 'constants'); if (barrier) return unknown(barrier);
       if (this.entries(snapshot, owner, order).some(item => item.definition?.fact.superclass)) return unknown(`Inherited constant lookup for ${owner} requires an ancestor summary`);
     }
-    return this.constant(snapshot, name, order);
+    return this.constant(snapshot, name, order, 0, { unit, scope, site });
   }
-  private resolveConstant(snapshot: Snapshot, unit: Unit, scope: string, spelling: string, order: number, depth = 0): RubyValue {
+  private resolveConstant(snapshot: Snapshot, unit: Unit, scope: string, spelling: string, order: number, depth = 0, site?: RubySite): RubyValue {
     if (depth > 64) return unknown('Ruby constant lookup budget exceeded');
     const absolute = spelling.startsWith('::'), parts = spelling.replace(/^::/, '').split('::');
     if (!parts.length || parts.some(part => !/^\p{Lu}[\p{ID_Continue}]*$/u.test(part))) return unknown('Dynamic Ruby constant path is unsupported');
-    let value = absolute ? this.constant(snapshot, parts[0]!, order) : this.head(snapshot, unit, scope, parts[0]!, order);
+    const original = site ?? unit.scopes.get(scope)!;
+    let value = absolute ? this.constant(snapshot, parts[0]!, order, 0, { unit, scope, site: original }) : this.head(snapshot, unit, scope, parts[0]!, order, original);
     for (const part of parts.slice(1)) {
       if (value.kind !== 'namespace') return value.kind === 'unknown' ? value : unknown('Qualified constant receiver is not an indexed namespace');
       const name = `${value.name}::${part}`, direct = this.entries(snapshot, name, order);
       if (!direct.length && value.definitions.some(item => item.fact.superclass)) return unknown(`Qualified inherited constant ${name} requires an ancestor summary`);
-      value = this.constant(snapshot, name, order);
+      value = this.constant(snapshot, name, Math.max(order, unit.marks.get(siteKey(original)) ?? order), 0, { unit, scope, site: original });
     }
     return value;
   }
@@ -113,13 +147,16 @@ export class RubySymbols {
   }
   private addConstant(snapshot: Snapshot, entry: Constant): void { const entries = snapshot.constants.get(entry.name) ?? []; entries.push(entry); snapshot.constants.set(entry.name, entries); }
   private namespace(snapshot: Snapshot, unit: Unit, fact: RubyDefinitionFact, order: number): void {
+    if (fact.superclass) { this.value(snapshot, unit, fact.scope, fact.superclass, order); order = Math.max(order, snapshot.order); }
     const nesting = this.nesting(unit, fact.scope); let name = this.targetName(snapshot, unit, fact.scope, fact.name, order);
     if (!name || typeof nesting === 'string') { unit.nesting.set(fact.bodyScope, 'Namespace owner is not initialized by indexed source'); return; }
+    if (!this.entries(snapshot, name, order).length && !snapshot.activating.has(name) && this.autoload?.lookup(snapshot.origin, name)?.file?.path !== unit.file.path) this.activate(snapshot, name, order, unit, fact.scope, fact);
+    order = Math.max(order, snapshot.order);
     const existing = this.entries(snapshot, name, order).length ? this.constant(snapshot, name, order) : undefined;
     if (existing?.kind === 'namespace') name = existing.name;
     const definition = this.definition(unit, fact);
     const reason = this.conditional(unit, fact.scope) ? `Conditional namespace definition ${name}` : existing && existing.kind !== 'namespace' ? 'Class/module reopening receiver is not a bounded namespace' : !definition ? 'Original declaration identity is unavailable' : undefined;
-    this.addConstant(snapshot, { name, order, definition, reason, proof: [...unit.activation, ...this.proof(unit.file.path, fact, `Original ${fact.kind} definition/reopening ${name}`)] });
+    if (!this.entries(snapshot, name, order).some(entry => entry.definition?.id === definition?.id)) this.addConstant(snapshot, { name, order, definition, reason, proof: [...unit.activation, ...this.proof(unit.file.path, fact, `Original ${fact.kind} definition/reopening ${name}`)] });
     unit.nesting.set(fact.bodyScope, reason ?? [name, ...nesting]);
   }
   private registerMethod(snapshot: Snapshot, unit: Unit, fact: RubyDefinitionFact, order: number, visibility: Map<string, string>): void {
@@ -189,11 +226,26 @@ export class RubySymbols {
       } else if (event.kind === 'gap') snapshot.barriers.push({ order, methods: true, constants: event.fact.kind === 'scope', reason: event.fact.reason });
       else if (event.kind === 'call') {
         this.processCall(snapshot, unit, event.fact, order, visibility);
-        const load = loads.get(siteKey(fact)); if (!load) continue;
+        let load = loads.get(siteKey(fact)); if (!load) continue;
         if (load.kind !== 'require_relative' && inputs(file.path) !== inputs(snapshot.origin)) { snapshot.barriers.push({ order, constants: true, methods: true, reason: 'Shared source has different recorded Ruby load-path/cwd inputs; consumer initialization is not established' }); continue; }
-        if (load.kind === 'autoload') { snapshot.barriers.push({ order, constants: true, methods: true, reason: 'Ruby autoload activation requires a lazy namespace summary' }); continue; }
+        if (load.kind === 'autoload') {
+          const nesting = this.nesting(unit, fact.scope); let owner = typeof nesting !== 'string' ? nesting[0] : undefined;
+          const receiver = load.site.expression.receiver;
+          if (this.entries(snapshot, 'Module', order).length) { load = { ...load, outcome: { status: 'unsupported', reason: 'Indexed Module namespace requires a builtin autoload method summary' } }; snapshot.refinements.set(`${file.path}:${siteKey(fact)}`, load); }
+          if (receiver && !(receiver.kind === 'constant' && ['Kernel', '::Kernel'].includes(receiver.name))) {
+            const value = this.value(snapshot, unit, fact.scope, receiver, order);
+            if (value.kind === 'namespace' && value.definitions.every(def => !def.fact.superclass) && !this.barrier(snapshot, order, value.name, 'methods') && !(snapshot.methods.get(methodKey(value.name, true, 'autoload')) ?? []).length && !['Module', 'Kernel'].some(core => this.entries(snapshot, core, order).length)) {
+              load = this.resolver.qualifiedAutoload(file.path, load.site); owner = value.name; snapshot.refinements.set(`${file.path}:${siteKey(fact)}`, load);
+            }
+          }
+          const name = typeof nesting !== 'string' && load.constant ? [owner, load.constant].filter(Boolean).join('::') : undefined;
+          if (name && !load.conditions.length && load.outcome.status === 'resolved') snapshot.pending.set(name, { order, file: load.outcome.target, proof: [...unit.activation, ...this.proof(file.path, fact, `Original lazy autoload registration ${name}`), ...load.outcome.proof], source: file.path, site: fact });
+          else snapshot.barriers.push({ order, constants: true, methods: true, reason: 'Ruby autoload registration is conditional, dynamic, external or unresolved' }); continue;
+        }
         if (load.kind !== 'load' && !load.wrapped && !load.conditions.length && load.outcome.status === 'resolved' && !load.outcome.conditions.length && !this.conditional(unit, fact.scope)) this.build(snapshot, load.outcome.target, depth + 1, [...unit.activation, ...this.proof(file.path, fact, `Unconditional indexed ${load.kind} activates original source`), ...load.outcome.proof]);
         else snapshot.barriers.push({ order, constants: true, methods: true, reason: `Ruby ${load.kind} initialization is external, conditional, repeated, wrapped or unresolved` });
+      } else if (event.kind === 'reference') {
+        this.resolveConstant(snapshot, unit, fact.scope, event.fact.expression.name, order, 0, fact); unit.marks.set(siteKey(fact), snapshot.order);
       }
     }
     snapshot.loading.delete(file.path); snapshot.loaded.add(file.path);
@@ -201,8 +253,20 @@ export class RubySymbols {
   prepare(files: ScannedFile[]): void {
     for (const file of files) {
       if (this.snapshots.size >= 1024) break;
-      const snapshot: Snapshot = { origin: file.path, order: 0, units: new Map(), constants: new Map(), methods: new Map(), barriers: [], loaded: new Set(), loading: new Set(), visits: 0 };
-      this.snapshots.set(file.path, snapshot); this.build(snapshot, file);
+      const snapshot: Snapshot = { origin: file.path, order: 0, units: new Map(), constants: new Map(), methods: new Map(), barriers: [], loaded: new Set(), loading: new Set(), visits: 0, pending: new Map(), activating: new Set(), activations: [], conditions: [], refinements: new Map() };
+      this.snapshots.set(file.path, snapshot);
+      const model = this.autoload?.model(file.path);
+      if (model && !model.gaps.length) for (const seed of model.seeds) {
+        if (seed.file === file.path) continue; const id = this.context.syntax?.get(seed.file)?.declarations.get(seed.fact.key); if (!id) continue;
+        snapshot.conditions = [...new Set([...snapshot.conditions, ...model.conditions])];
+        this.addConstant(snapshot, { order: ++snapshot.order, name: seed.name, definition: { fact: seed.fact, file: seed.file, id, proof: seed.proof }, proof: [...model.profile.proof, ...model.loaderProfile?.proof ?? [], ...seed.proof] });
+      }
+      this.build(snapshot, file);
+      const prepared = new Set<string>();
+      for (let pass = 0; pass < 256; pass++) {
+        const units = [...snapshot.units.values()].filter(unit => !prepared.has(unit.file.path)); if (!units.length) break;
+        for (const unit of units) { prepared.add(unit.file.path); for (const reference of unit.facts.references) if (this.deferred(unit, reference.scope)) this.resolveConstant(snapshot, unit, reference.scope, reference.expression.name, snapshot.order, 0, reference); }
+      }
     }
   }
   private limit(snapshot: Snapshot, unit: Unit, scope: string, site: RubySite): number { return this.deferred(unit, scope) ? snapshot.order : unit.marks.get(siteKey(site)) ?? snapshot.order; }
@@ -240,7 +304,7 @@ export class RubySymbols {
       if (method.visibility !== 'public' && !implicit) return unknown('Explicit Ruby receiver cannot prove private/protected method access');
       return { kind: 'function', id: method.definition.id, proof: [...receiver.proof, ...method.definition.proof, ...this.proof(method.definition.file, method.definition.fact, `Latest initialized ${namespace ? 'singleton' : 'instance'} method ${owner || '<main>'}.${name}`)] };
     }
-    if (name === 'new' && namespace && receiver.definitions.every(item => item.fact.kind === 'class' && !item.fact.superclass) && !['Class', 'Object', 'BasicObject', 'Kernel'].some(builtin => this.entries(snapshot, builtin, order).length)) {
+    if (name === 'new' && namespace && receiver.definitions.length && receiver.definitions.every(item => item.fact.kind === 'class' && !item.fact.superclass) && !['Class', 'Object', 'BasicObject', 'Kernel'].some(builtin => this.entries(snapshot, builtin, order).length)) {
       const initializer = (snapshot.methods.get(methodKey(owner, false, 'initialize')) ?? []).filter(item => item.order <= order);
       if (initializer.some(item => item.reason)) return unknown('Conditional Ruby initializer requires an activation summary');
       return { kind: 'constructor', name: owner, target: initializer.at(-1)?.definition.id, proof: [...receiver.proof, ...initializer.at(-1) ? this.proof(initializer.at(-1)!.definition.file, initializer.at(-1)!.definition.fact, 'Direct original Ruby initializer') : []] };
@@ -253,7 +317,7 @@ export class RubySymbols {
   }
   private value(snapshot: Snapshot, unit: Unit, scope: string, expression: RubyExpression, order: number, depth = 0): RubyValue {
     if (depth > 64) return unknown('Ruby expression/alias lookup budget exceeded');
-    if (expression.kind === 'constant') return this.resolveConstant(snapshot, unit, scope, expression.name, order, depth);
+    if (expression.kind === 'constant') return this.resolveConstant(snapshot, unit, scope, expression.name, order, depth, expression);
     if (expression.kind === 'literal') return { kind: 'literal', value: expression.value, proof: this.proof(unit.file.path, expression, 'Original literal Ruby value') };
     if (expression.kind === 'identifier') return expression.name === 'self' ? this.self(snapshot, unit, scope, order) : this.local(snapshot, unit, scope, expression, order, depth);
     if (expression.kind === 'call') {
@@ -267,6 +331,7 @@ export class RubySymbols {
     const snapshot = this.snapshots.get(origin), unit = snapshot?.units.get(file); if (!snapshot || !unit) return unknown('No complete prepared Ruby source snapshot');
     return this.value(snapshot, unit, scope, expression, this.limit(snapshot, unit, scope, expression));
   }
+  fileLoads(file: string): RubyLoad[] { const snapshot = this.snapshots.get(file); return this.resolver.fileLoads(file).map(load => snapshot?.refinements.get(`${file}:${siteKey(load.site)}`) ?? load); }
   private call(snapshot: Snapshot, unit: Unit, fact: RubyCallFact): RubyValue {
     const order = this.limit(snapshot, unit, fact.scope, fact);
     if (fact.bare && this.localScope(unit, fact.scope, fact.expression.method, fact.start)) return { kind: 'local', proof: [] };
@@ -280,7 +345,7 @@ export class RubySymbols {
       const snapshot = this.snapshots.get(file.path), unit = snapshot?.units.get(file.path);
       if (!snapshot || !unit) { analysis.features.references = { status: 'partial', reason: !snapshot && this.snapshots.size >= 1024 ? 'Ruby source snapshot context budget exceeded' : 'Complete Ruby syntax/source snapshot is unavailable' }; continue; }
       const counts = new Map<string, CallSites>(), references: unknown[] = [], calls: unknown[] = [];
-      const condition = (scope: string) => this.deferred(unit, scope) ? ['Completed indexed source snapshot; invocation timing and later runtime mutations are not established'] : [];
+      const condition = (scope: string) => [...snapshot.conditions, ...this.deferred(unit, scope) ? ['Completed indexed source snapshot; invocation timing and later runtime mutations are not established'] : []];
       for (const reference of unit.facts.references) {
         const value = this.resolve(file.path, reference.scope, reference.expression), owner = this.owner(unit, reference.scope), proof = [...this.proof(file.path, reference, 'Original scoped Ruby constant reference'), ...value.proof];
         const targets = value.kind === 'namespace' ? value.definitions.map(item => item.id) : [];
@@ -301,8 +366,10 @@ export class RubySymbols {
         const declaration = this.context.graph.entities.get(entry.definition.id)!; declaration.metadata.rubyNamespace = { name, snapshot: file.path, reopenedDeclarations: entries.filter(item => item.definition).map(item => item.definition!.id) };
       }
       entity.metadata.rubyReferenceOutcomes = references; entity.metadata.rubyCallOutcomes = calls;
-      entity.metadata.rubySnapshot = { origin: file.path, sources: [...snapshot.loaded].sort(), gaps: [...new Set(snapshot.barriers.map(item => item.reason).concat(snapshot.invalid ?? []))] };
-      analysis.features.references = { status: 'partial', reason: 'Scoped constants, source-ordered class/module reopenings, immutable local namespace/instance aliases and direct original singleton/instance methods under explicit source snapshots; autoload, ancestors/mixins, dynamic self, reflection and higher-order returns remain gaps' };
+      entity.metadata.rubyAutoloadOutcomes = snapshot.activations.map(item => ({ ...item, conditions: snapshot.conditions, origin: file.path }));
+      for (const activation of snapshot.activations) if (activation.target && activation.status === 'resolved') this.context.graph.relate(this.context.files.get(activation.file)!.id, activation.target, 'imports', activation.proof, { adapter: 'ruby-autoload', version: RUBY_SYMBOL_VERSION, kind: 'autoload-trigger', name: activation.name, origin: file.path, range: activation.site.range, conditions: snapshot.conditions }, JSON.stringify(['autoload-trigger', activation.name, file.path]));
+      entity.metadata.rubySnapshot = { origin: file.path, sources: [...snapshot.loaded].sort(), conditions: snapshot.conditions, gaps: [...new Set(snapshot.barriers.map(item => item.reason).concat(snapshot.invalid ?? []))] };
+      analysis.features.references = { status: 'partial', reason: 'Scoped constants, source-ordered reopenings, immutable concrete receivers and bounded original methods, with literal/profile-qualified lazy autoload activation; ancestors/mixins, dynamic self, reflection, executable loader hooks/reload and higher-order returns remain gaps' };
     }
   }
 }

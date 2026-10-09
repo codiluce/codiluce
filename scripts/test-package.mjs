@@ -156,6 +156,15 @@ try {
   await writeFile(path.join(rubySource, 'Gemfile'), 'gem "rails", "~> 8.1"\n');
   await writeFile(path.join(rubySource, 'main.rb'), '# 😀 original Ruby load\nrequire_relative "lib/widget"\nrequire File.expand_path("lib/widget", __dir__)\nPackagedRuby::Widget.build\nPackagedRuby::Widget.new.show\nif enabled\n require_relative "lib/widget"\nend\nrequire feature\n');
   await writeFile(path.join(rubySource, 'lib/widget.rb'), 'module PackagedRuby\n class Widget\n  def initialize; end\n  def show; end\n  def self.build; end\n end\nend\nclass PackagedRuby::Widget\n def self.build; end\nend\n');
+  const rubyAutoload = path.join(repo, 'ruby-autoload');
+  await mkdir(path.join(rubyAutoload, 'app/services/admin'), { recursive: true });
+  await mkdir(path.join(rubyAutoload, 'config/initializers'), { recursive: true });
+  await writeFile(path.join(rubyAutoload, 'Gemfile'), 'gem "rails", "~> 8.1.0"\n');
+  await writeFile(path.join(rubyAutoload, 'Gemfile.lock'), 'GEM\n  specs:\n    rails (8.1.0)\n    zeitwerk (2.7.5)\n');
+  await writeFile(path.join(rubyAutoload, 'config/application.rb'), 'module PackagedRails; class Application < Rails::Application; end; end\n');
+  await writeFile(path.join(rubyAutoload, 'config/initializers/inflections.rb'), 'Rails.autoloaders.main.inflector.inflect("html_parser" => "HTMLParser")\n');
+  await writeFile(path.join(rubyAutoload, 'main.rb'), '# 😀 original autoload trigger\nAdmin::HTMLParser.run\n');
+  await writeFile(path.join(rubyAutoload, 'app/services/admin/html_parser.rb'), 'class Admin::HTMLParser\n def self.run; end\nend\n');
   const flaskServer = path.join(repo, 'flask-server');
   await mkdir(flaskServer);
   await writeFile(path.join(flaskServer, 'requirements.txt'), 'Flask==3.1.2\n');
@@ -308,6 +317,23 @@ try {
   const rubyBuildProof = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relation', '--id', rubyBuildEdge.id], repo)).stdout);
   assert.ok(rubyBuildProof.evidence.some(item => item.file === 'ruby-source/main.rb' && item.line === 4));
   assert.ok(rubyBuildProof.evidence.some(item => item.file === 'ruby-source/lib/widget.rb' && item.line === 9));
+  const autoloadFiles = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'ruby-autoload'], repo)).stdout).items;
+  const autoloadMain = autoloadFiles.find(item => item.type === 'file' && item.path === 'ruby-autoload/main.rb'); assert.ok(autoloadMain);
+  const autoloadDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', autoloadMain.id], repo)).stdout);
+  const autoloadCall = autoloadDetail.metadata.rubyCallOutcomes.find(item => item.kind === 'resolved'); assert.ok(autoloadCall); assert.equal(autoloadCall.range.startLine, 2);
+  assert.ok(autoloadCall.conditions.some(item => item.includes('loader contract')));
+  const autoloadTarget = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', autoloadCall.target], repo)).stdout);
+  assert.equal(autoloadTarget.path, 'ruby-autoload/app/services/admin/html_parser.rb'); assert.equal(autoloadTarget.sourceRange.startLine, 2);
+  const autoloadService = autoloadFiles.find(item => item.type === 'file' && item.path === autoloadTarget.path);
+  const autoloadServiceDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', autoloadService.id], repo)).stdout);
+  assert.equal(autoloadServiceDetail.metadata.analysis.features.framework.status, 'partial');
+  assert.equal(autoloadServiceDetail.metadata.rubyAutoload.loaderProfile.version, '2.7.5');
+  assert.match(autoloadServiceDetail.metadata.analysis.features.framework.reason, /routes\/actions\/callbacks.*unsupported/);
+  const autoloadImports = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relations', '--id', autoloadMain.id, '--type', 'imports'], repo)).stdout).items;
+  assert.equal(autoloadImports.length, 1); assert.equal(autoloadImports[0].metadata.kind, 'autoload-trigger');
+  const autoloadProof = JSON.parse((await run(process.execPath, [bin, 'inspect', 'relation', '--id', autoloadImports[0].id], repo)).stdout);
+  assert.ok(autoloadProof.evidence.some(item => item.file === 'ruby-autoload/main.rb' && item.line === 2));
+  assert.ok(autoloadProof.evidence.some(item => item.file === 'ruby-autoload/config/initializers/inflections.rb' && item.line === 1));
   const pythonEndpoints = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', '/package-python'], repo)).stdout).items;
   const pythonEndpoint = pythonEndpoints.find(entity => entity.type === 'api_endpoint' && entity.name === 'GET /package-python/{id:int}');
   assert.ok(pythonEndpoint, 'installed FastAPI pack resolves its imported handler');
@@ -460,7 +486,7 @@ try {
   console.log('Checking npm exec against the tarball without a local installation…');
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
-  console.log('Package installation, seven grammars, workspace binding, Ruby literal loads/scopes/original paths, namespace reopenings/direct methods/initializers and dynamic/conditional gaps, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin/Echo 4–5/Fiber 2–3/Gorilla router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
+  console.log('Package installation, seven grammars, workspace binding, Ruby literal loads/scopes/original paths, namespace reopenings/direct methods/initializers and lazy Rails/Zeitwerk original autoload/inflection evidence and dynamic/conditional gaps, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin/Echo 4–5/Fiber 2–3/Gorilla router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

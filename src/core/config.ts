@@ -12,7 +12,16 @@ const execute = promisify(execFile);
 /** Explicit target inputs; absent fields remain unknown, never host defaults. */
 export interface GoBuildConfig { goos?: string; goarch?: string; tags?: string[]; cgoEnabled?: boolean; compiler?: 'gc' | 'gccgo'; toolchainVersion?: string; workspace?: string | false; includeTests?: boolean; httpMuxGo121?: boolean }
 /** Ruby target cwd, relative to the application. sourceRoots.ruby records its ordered load paths. */
-export interface RubyRuntimeConfig { cwd?: string }
+export interface RubyAutoloadConfig {
+  /** Ordered Zeitwerk roots, relative to the application, with Object as the default namespace. */
+  roots?: { path: string; namespace?: string; loader?: 'main' | 'once' }[];
+  version?: string;
+  inflector?: 'rails' | 'zeitwerk';
+  inflections?: Record<string, string>;
+  ignore?: string[];
+  collapse?: string[];
+}
+export interface RubyRuntimeConfig { cwd?: string; environment?: string; autoload?: RubyAutoloadConfig }
 
 export interface ApplicationConfig {
   name: string; path: string;
@@ -225,8 +234,21 @@ export async function resolveConfig(root: string, raw: RawConfig): Promise<Atlas
   for (const app of config.applications) {
     if (app.ruby !== undefined) {
       const ruby = app.ruby;
-      if (!ruby || typeof ruby !== 'object' || Array.isArray(ruby) || Object.keys(ruby).some(key => key !== 'cwd') || ruby.cwd !== undefined && (typeof ruby.cwd !== 'string' || path.isAbsolute(ruby.cwd) || /[\\\0]/.test(ruby.cwd) || /^[A-Za-z]:/.test(ruby.cwd))) throw new Error('Invalid Ruby runtime configuration');
+      const relative = (value: unknown) => typeof value === 'string' && value.length > 0 && !path.isAbsolute(value) && !/[\\\0*?\[\]{}]/.test(value) && !/^[A-Za-z]:/.test(value);
+      const cname = (value: unknown) => typeof value === 'string' && /^\p{Lu}[\p{ID_Continue}]*$/u.test(value);
+      if (!ruby || typeof ruby !== 'object' || Array.isArray(ruby) || Object.keys(ruby).some(key => !['cwd', 'environment', 'autoload'].includes(key)) || ruby.cwd !== undefined && !relative(ruby.cwd) || ruby.environment !== undefined && (typeof ruby.environment !== 'string' || !/^[A-Za-z0-9_-]{1,80}$/.test(ruby.environment))) throw new Error('Invalid Ruby runtime configuration');
       if (typeof ruby.cwd === 'string') repoPath(root, path.posix.join(app.path, ruby.cwd));
+      const autoload = ruby.autoload;
+      if (autoload !== undefined) {
+        if (!autoload || typeof autoload !== 'object' || Array.isArray(autoload) || Object.keys(autoload).some(key => !['roots', 'version', 'inflector', 'inflections', 'ignore', 'collapse'].includes(key))
+          || autoload.version !== undefined && (typeof autoload.version !== 'string' || !/^\d+\.\d+\.\d+$/.test(autoload.version))
+          || autoload.inflector !== undefined && !['rails', 'zeitwerk'].includes(autoload.inflector)
+          || autoload.roots !== undefined && (!Array.isArray(autoload.roots) || autoload.roots.length > 64 || autoload.roots.some(item => !item || typeof item !== 'object' || Array.isArray(item) || Object.keys(item).some(key => !['path', 'namespace', 'loader'].includes(key)) || !relative(item.path) || item.namespace !== undefined && (typeof item.namespace !== 'string' || !item.namespace.split('::').every(cname)) || item.loader !== undefined && !['main', 'once'].includes(item.loader)))
+          || autoload.inflections !== undefined && (!autoload.inflections || typeof autoload.inflections !== 'object' || Array.isArray(autoload.inflections) || Object.keys(autoload.inflections).length > 256 || Object.entries(autoload.inflections).some(([key, value]) => !/^[\p{L}\p{N}_]+$/u.test(key) || !cname(value)))
+          || [autoload.ignore, autoload.collapse].some(items => items !== undefined && (!Array.isArray(items) || items.length > 256 || !items.every(relative)))) throw new Error('Invalid Ruby autoload configuration');
+        for (const item of autoload.roots ?? []) repoPath(root, path.posix.join(app.path, item.path));
+        for (const value of [...autoload.ignore ?? [], ...autoload.collapse ?? []]) repoPath(root, path.posix.join(app.path, value));
+      }
     }
     if (app.go !== undefined) {
       const go = app.go, tag = (value: unknown) => typeof value === 'string' && /^[A-Za-z0-9_.]+$/.test(value);

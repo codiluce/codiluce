@@ -5,8 +5,10 @@ import { fileAnalysis } from '../facts.js';
 import { RubyResolver, RUBY_RESOLVER_VERSION } from '../resolution/ruby.js';
 import { STRUCTURE_VERSION } from '../tree-sitter/analyzer.js';
 import { RubySymbols, RUBY_SYMBOL_VERSION } from './ruby-symbols.js';
+import { RubyAutoloadCatalog, RUBY_AUTOLOAD_VERSION } from '../resolution/ruby-autoload.js';
+import { RUBY_PROFILE_VERSION } from './ruby-profile.js';
 
-export const RUBY_IMPORT_VERSION = `${ANALYZER_VERSION}:ruby-imports:2`;
+export const RUBY_IMPORT_VERSION = `${ANALYZER_VERSION}:ruby-imports:3`;
 export const rubyAnalyzer: Analyzer = {
   name: 'ruby-imports', version: RUBY_IMPORT_VERSION,
   async analyze(context): Promise<void> {
@@ -14,8 +16,10 @@ export const rubyAnalyzer: Analyzer = {
     if (!files.length) return;
     const resolver = context.ruby = new RubyResolver(context), repository = context.graph.entities.get(context.repositoryId)!;
     resolver.prepare(files);
-    const symbols = context.rubySymbols = new RubySymbols(context, resolver); symbols.prepare(files);
+    const autoload = context.rubyAutoload = new RubyAutoloadCatalog(context, resolver);
+    const symbols = context.rubySymbols = new RubySymbols(context, resolver, autoload); symbols.prepare(files);
     repository.metadata.projects = [...Array.isArray(repository.metadata.projects) ? repository.metadata.projects : [], ...resolver.describe()];
+    repository.metadata.rubyAutoloadProfiles = autoload.describe();
     const run = async () => {
       for (const file of files) {
         const entity = context.graph.entities.get(file.id)!, analysis = fileAnalysis(entity.metadata.analysis); if (!analysis) continue;
@@ -23,7 +27,7 @@ export const rubyAnalyzer: Analyzer = {
         if (!facts) { analysis.features.imports = { status: 'failed', reason: 'Ruby syntax facts are unavailable' }; continue; }
         entity.metadata.importResolver = { adapter: 'ruby', version: RUBY_IMPORT_VERSION, project: resolver.owner(file.path)?.id };
         const outcomes: unknown[] = [], external: string[] = [];
-        for (const load of resolver.fileLoads(file.path)) {
+        for (const load of symbols.fileLoads(file.path)) {
           const { outcome, site } = load;
           const proof = [{ ...evidence('syntax', 'ruby-imports', file.path, site.range.startLine, `Ruby ${load.kind} source dependency`), analyzerVersion: RUBY_IMPORT_VERSION, endLine: site.range.endLine }, ...('proof' in outcome ? outcome.proof : [])];
           const scopes = resolver.ancestors(file.path, site.scope), owner = scopes.find(scope => scope.owner)?.owner;
@@ -36,11 +40,12 @@ export const rubyAnalyzer: Analyzer = {
         }
         for (const gap of facts.gaps) context.graph.diagnose({ analyzer: 'ruby-imports', severity: 'warning', code: `ruby-${gap.kind}-gap`, file: file.path, entityId: file.id, line: gap.range.startLine, reason: gap.reason });
         entity.metadata.importOutcomes = outcomes; entity.metadata.externalImports = [...new Set(external)].sort();
-        analysis.features.imports = { status: 'partial', reason: 'Literal Ruby loads, recorded load-path/cwd inputs, original scopes and bounded File paths; gem activation, dynamic runtime loading and Zeitwerk require later profiles' };
+        analysis.features.imports = { status: 'partial', reason: 'Literal Ruby loads and lazy activation, recorded load-path/cwd inputs and version-qualified autoload contracts; executable gem activation, dynamic runtime loading and loader hooks require further profiles' };
       }
       symbols.analyze(files);
+      autoload.annotate();
     };
-    if (context.cache) await context.cache.unit(context, this.name, 'repository', { version: RUBY_IMPORT_VERSION, symbols: RUBY_SYMBOL_VERSION, syntax: STRUCTURE_VERSION, resolver: RUBY_RESOLVER_VERSION, config: context.config, projects: resolver.describe(), files: [...context.files.values()].filter(file => file.language === 'ruby').map(file => fileKey(context, file.path)), paths: [...context.files.values()].map(file => [file.path, file.language, file.analyzable]), observedFiles: [...context.fileInventory ?? []].sort(), availability: files.map(file => [file.path, resolver.facts(file.path)?.complete]), directories: [...context.directoryInventory ?? []].sort() }, run);
+    if (context.cache) await context.cache.unit(context, this.name, 'repository', { version: RUBY_IMPORT_VERSION, symbols: RUBY_SYMBOL_VERSION, autoload: RUBY_AUTOLOAD_VERSION, profiles: RUBY_PROFILE_VERSION, autoloadInputs: autoload.describe(), syntax: STRUCTURE_VERSION, resolver: RUBY_RESOLVER_VERSION, config: context.config, projects: resolver.describe(), files: [...context.files.values()].filter(file => file.language === 'ruby' || file.path.endsWith('/Gemfile.lock') || file.path === 'Gemfile.lock').map(file => fileKey(context, file.path)), paths: [...context.files.values()].map(file => [file.path, file.language, file.analyzable]), observedFiles: [...context.fileInventory ?? []].sort(), availability: files.map(file => [file.path, resolver.facts(file.path)?.complete]), directories: [...context.directoryInventory ?? []].sort() }, run);
     else await run();
   },
 };

@@ -28,7 +28,7 @@ const EXTENSIONS: Record<string, string> = {
 };
 /** Files known by their whole name. */
 const NAMES: Record<string, string> = {
-  Gemfile: 'ruby', Rakefile: 'ruby', Podfile: 'ruby', Fastfile: 'ruby', Appfile: 'ruby', Brewfile: 'ruby', Guardfile: 'ruby', Vagrantfile: 'ruby',
+  Gemfile: 'ruby', 'Gemfile.lock': 'ruby-lock', Rakefile: 'ruby', Podfile: 'ruby', Fastfile: 'ruby', Appfile: 'ruby', Brewfile: 'ruby', Guardfile: 'ruby', Vagrantfile: 'ruby',
   Makefile: 'makefile', GNUmakefile: 'makefile', makefile: 'makefile', 'CMakeLists.txt': 'cmake', Jenkinsfile: 'groovy', Pipfile: 'toml', 'go.mod': 'go-module', 'go.work': 'go-workspace',
   'setup.cfg': 'ini',
 };

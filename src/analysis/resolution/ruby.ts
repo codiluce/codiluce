@@ -5,7 +5,7 @@ import { ANALYZER_VERSION, evidence, type Evidence } from '../../core/graph.js';
 import type { RubyCallFact, RubyExpression, RubySyntaxFacts } from '../facts.js';
 import { IndexedSources } from '../indexed-sources.js';
 
-export const RUBY_RESOLVER_VERSION = `${ANALYZER_VERSION}:ruby-resolver:1`;
+export const RUBY_RESOLVER_VERSION = `${ANALYZER_VERSION}:ruby-resolver:2`;
 export interface RubyProject { id: string; root: string; application?: ApplicationConfig; manifests: string[]; loadPaths: { path: string; proof: Evidence }[]; cwd?: string }
 export type RubyLoadKind = 'require' | 'require_relative' | 'load' | 'autoload';
 export type RubyLoadOutcome =
@@ -51,7 +51,7 @@ export class RubyResolver {
     }
   }
   owner(file: string): RubyProject | undefined { return this.ownership.get(file); }
-  describe(): Record<string, unknown>[] { return this.projects.map(project => ({ id: project.id, ecosystem: 'ruby', root: project.root, application: project.application?.name, manifests: project.manifests, sourceRoots: project.loadPaths.map(item => item.path), ...(project.cwd !== undefined ? { cwd: project.cwd } : {}), resolver: RUBY_RESOLVER_VERSION, gaps: ['Gem activation, executable gemspec/Gemfile, implicit installed load paths and Zeitwerk conventions require later profiles'] })); }
+  describe(): Record<string, unknown>[] { return this.projects.map(project => ({ id: project.id, ecosystem: 'ruby', root: project.root, application: project.application?.name, manifests: project.manifests, sourceRoots: project.loadPaths.map(item => item.path), ...(project.cwd !== undefined ? { cwd: project.cwd } : {}), resolver: RUBY_RESOLVER_VERSION, gaps: ['Executable gem activation/gemspec/Gemfile, implicit installed load paths and custom loader setup/hooks remain unsupported'] })); }
   private proof(file: string | undefined, line: number | undefined, explanation: string, source: Evidence['source'] = 'syntax'): Evidence { return { ...evidence(source, 'ruby-resolver', file, line, explanation), analyzerVersion: RUBY_RESOLVER_VERSION }; }
   facts(file: string): RubySyntaxFacts | undefined { return this.context.syntax?.get(file)?.facts.ruby; }
   ancestors(file: string, scope: string): RubySyntaxFacts['scopes'] { let index = this.scopes.get(file); if (!index) { index = new Map(this.facts(file)?.scopes.map(item => [item.key, item])); this.scopes.set(file, index); } const result: RubySyntaxFacts['scopes'] = [], seen = new Set<string>(); let current = index.get(scope); while (current && !seen.has(current.key)) { seen.add(current.key); result.push(current); current = current.parent ? index.get(current.parent) : undefined; } return result; }
@@ -157,6 +157,14 @@ export class RubyResolver {
       result.push({ kind, site, specifier: value?.path, ...(constant ? { constant } : {}), wrapped, outcome, conditions });
     }
     this.loads.set(file, result); return result;
+  }
+  /** The symbol service must first prove the explicit Module receiver and its
+   * builtin method table. This only selects the bounded original path. */
+  qualifiedAutoload(file: string, site: RubyCallFact): RubyLoad {
+    const args = site.expression.args, name = args[0]?.kind === 'symbol' ? args[0].name : args[0]?.kind === 'literal' && typeof args[0].value === 'string' ? args[0].value : undefined;
+    const constant = name && /^\p{Lu}[\p{ID_Continue}]*$/u.test(name) ? name : undefined, value = args[1] && this.value(file, args[1]), facts = this.facts(file), conditions = this.conditions(file, site.scope);
+    const reason = !facts?.complete ? 'Complete original Ruby syntax is required' : !constant || args.length !== 2 || site.blockScope ? 'autoload requires two bounded literal constant/path arguments' : !value ? 'Dynamic autoload path expression' : facts.gaps.some(gap => ['loader', 'constants', 'scope', 'path'].includes(gap.kind)) ? 'Ruby namespace/method/path mutation constrains qualified autoload' : undefined;
+    return { kind: 'autoload', site, constant, specifier: value?.path, wrapped: false, conditions, outcome: reason ? { status: 'unsupported', reason } : this.resolve(file, 'autoload', value!.path, value!.absolute, value!.proof) };
   }
   /** Refine known earlier source loads before emitting edges. Imported source
    * can change Kernel/File or path state; cycles retain initialization gaps. */
