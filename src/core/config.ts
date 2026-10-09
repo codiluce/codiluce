@@ -241,7 +241,7 @@ export async function resolveConfig(root: string, raw: RawConfig): Promise<Atlas
       const autoload = ruby.autoload;
       if (autoload !== undefined) {
         if (!autoload || typeof autoload !== 'object' || Array.isArray(autoload) || Object.keys(autoload).some(key => !['roots', 'version', 'inflector', 'inflections', 'ignore', 'collapse'].includes(key))
-          || autoload.version !== undefined && (typeof autoload.version !== 'string' || !/^\d+\.\d+\.\d+$/.test(autoload.version))
+          || autoload.version !== undefined && (typeof autoload.version !== 'string' || !/^\d+\.\d+\.\d+(?:\.\d+){0,13}$/.test(autoload.version))
           || autoload.inflector !== undefined && !['rails', 'zeitwerk'].includes(autoload.inflector)
           || autoload.roots !== undefined && (!Array.isArray(autoload.roots) || autoload.roots.length > 64 || autoload.roots.some(item => !item || typeof item !== 'object' || Array.isArray(item) || Object.keys(item).some(key => !['path', 'namespace', 'loader'].includes(key)) || !relative(item.path) || item.namespace !== undefined && (typeof item.namespace !== 'string' || !item.namespace.split('::').every(cname)) || item.loader !== undefined && !['main', 'once'].includes(item.loader)))
           || autoload.inflections !== undefined && (!autoload.inflections || typeof autoload.inflections !== 'object' || Array.isArray(autoload.inflections) || Object.keys(autoload.inflections).length > 256 || Object.entries(autoload.inflections).some(([key, value]) => !/^[\p{L}\p{N}_]+$/u.test(key) || !cname(value)))

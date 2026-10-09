@@ -1,5 +1,5 @@
 import path from 'node:path';
-import semver from 'semver';
+import { rubyProfileSubset } from '../languages/ruby-version.js';
 import type { AnalysisContext, ScannedFile } from '../../core/analyzer.js';
 import { evidence, type Evidence } from '../../core/graph.js';
 import { fileAnalysis, type RubyCallFact, type RubyDefinitionFact, type RubyExpression } from '../facts.js';
@@ -34,9 +34,8 @@ export class RubyAutoloadCatalog {
   }
   private proof(file: string | undefined, line: number | undefined, reason: string, source: Evidence['source'] = 'syntax'): Evidence[] { return [{ ...evidence(source, 'ruby-autoload', file, line, reason), analyzerVersion: RUBY_AUTOLOAD_VERSION }]; }
   private rails71(model: RubyAutoloadModel): boolean | undefined {
-    if (model.profile.version) return semver.satisfies(model.profile.version, '>=7.1.0 <7.2.0');
-    if (model.profile.range && semver.subset(model.profile.range, '>=7.1.0 <7.2.0')) return true;
-    if (model.profile.range && semver.subset(model.profile.range, '>=7.2.0 <8.2.0')) return false;
+    if (rubyProfileSubset(model.profile, '7.1', '7.2')) return true;
+    if (rubyProfileSubset(model.profile, '7.2', '8.2')) return false;
     return;
   }
   private root(model: RubyAutoloadModel, directory: string, namespace: string, loader: Root['loader'], proof: Evidence[], source: Root['source'] = 'recorded'): void {

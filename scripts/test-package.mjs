@@ -161,7 +161,7 @@ try {
   await mkdir(path.join(rubyAutoload, 'app/services/admin'), { recursive: true });
   await mkdir(path.join(rubyAutoload, 'config/initializers'), { recursive: true });
   await writeFile(path.join(rubyAutoload, 'Gemfile'), 'gem "rails", "~> 8.1.0"\n');
-  await writeFile(path.join(rubyAutoload, 'Gemfile.lock'), 'GEM\n  specs:\n    rails (8.1.0)\n    zeitwerk (2.7.5)\n');
+  await writeFile(path.join(rubyAutoload, 'Gemfile.lock'), 'GEM\n  specs:\n    rails (8.1.3.1)\n    zeitwerk (2.7.5)\n');
   await writeFile(path.join(rubyAutoload, 'config/application.rb'), 'module PackagedRails; class Application < Rails::Application; end; end\n');
   await writeFile(path.join(rubyAutoload, 'config/initializers/inflections.rb'), 'Rails.autoloaders.main.inflector.inflect("html_parser" => "HTMLParser")\n');
   await writeFile(path.join(rubyAutoload, 'main.rb'), '# 😀 original autoload trigger\nAdmin::HTMLParser.run\n');
@@ -169,7 +169,7 @@ try {
   await mkdir(path.join(rubyAutoload, 'app/controllers/admin'), { recursive: true });
   await writeFile(path.join(rubyAutoload, 'app/controllers/application_controller.rb'), 'class ApplicationController < ActionController::Base\n before_action :packaged_authenticate\n private\n def packaged_authenticate; end\nend\n');
   await writeFile(path.join(rubyAutoload, 'app/controllers/admin/users_controller.rb'), 'class Admin::UsersController < ApplicationController\n def show; end\nend\n');
-  await writeFile(path.join(rubyAutoload, 'config/routes.rb'), 'Rails.application.routes.draw do\n resources :packaged_rails, path: "package-rails", controller: "admin/users", only: :show\nend\n');
+  await writeFile(path.join(rubyAutoload, 'config/routes.rb'), 'Rails.application.routes.draw do\n resources :packaged_rails, path: "package-rails", controller: "admin/users", only: %i[show]\nend\n');
   await writeFile(path.join(rubyAutoload, 'client.ts'), 'export function PackagedRailsRequest(){return fetch("https://packaged-rails.test/package-rails/12.json")}\n');
   const flaskServer = path.join(repo, 'flask-server');
   await mkdir(flaskServer);

@@ -4,10 +4,11 @@ import type { AnalysisContext } from '../../core/analyzer.js';
 import { evidence, type Evidence } from '../../core/graph.js';
 import { IndexedSources } from '../indexed-sources.js';
 import type { RubyProject, RubyResolver } from '../resolution/ruby.js';
+import { rubyNumericVersion, rubyProfileSubset, validRubyRequirements, emptyRubyRequirements, satisfiesRubyRequirements, compareRubyVersions } from './ruby-version.js';
 
-export const RUBY_PROFILE_VERSION = '1';
-export interface RubyGemProfile { gem: string; reviewed: boolean; version?: string; range?: string; proof: Evidence[]; gaps: string[] }
-const REVIEWED: Record<string, string> = { rails: '>=7.1.0 <7.3.0 || >=8.0.0 <8.2.0', zeitwerk: '>=2.6.0 <2.8.0' };
+export const RUBY_PROFILE_VERSION = '2';
+export interface RubyGemProfile { gem: string; reviewed: boolean; version?: string; range?: string; requirements: string[]; proof: Evidence[]; gaps: string[] }
+const REVIEWED: Record<string, [string, string][]> = { rails: [['7.1', '7.3'], ['8.0', '8.2']], zeitwerk: [['2.6', '2.8']] };
 /** RubyGems requirements are ANDed; pessimistic ~> differs from npm's tilde. */
 export function rubyGemRange(requirements: string[]): string | undefined {
   if (!requirements.length) return;
@@ -50,8 +51,8 @@ export function rubyGemProfile(context: AnalysisContext, resolver: RubyResolver,
     }
   }
   const range = rubyGemRange(requirements);
-  if (requirements.length && !range) gaps.push(`Unsupported RubyGems ${gem} version requirements`);
-  if (range && !semver.minVersion(range)) gaps.push(`Unsatisfiable RubyGems ${gem} version requirements`);
+  if (!validRubyRequirements(requirements)) gaps.push(`Unsupported RubyGems ${gem} version requirements`);
+  if (emptyRubyRequirements(requirements)) gaps.push(`Unsatisfiable RubyGems ${gem} version requirements`);
   const lock = path.posix.join(project.root, 'Gemfile.lock'), text = sources.readFile(lock), locked: string[] = [];
   if (text !== undefined) {
     let section = '';
@@ -60,18 +61,18 @@ export function rubyGemProfile(context: AnalysisContext, resolver: RubyResolver,
       const match = /^    ([A-Za-z0-9_.-]+) \(([^)]+)\)\s*$/.exec(line);
       if (match?.[1] !== gem) continue;
       if (section !== 'GEM') gaps.push(`Locked ${gem} comes from unreviewed ${section || 'unknown'} source`);
-      if (!semver.valid(match[2]!)) gaps.push(`Unreviewed locked ${gem} version ${match[2]}`); else locked.push(match[2]!);
+      if (!rubyNumericVersion(match[2]!)) gaps.push(`Unreviewed locked ${gem} version ${match[2]}`); else locked.push(match[2]!);
       proof.push(fact(lock, index + 1, `Recorded locked ${gem} version ${match[2]}`));
     }
   } else if (context.fileInventory?.has(lock)) gaps.push(`Observed ${gem} lockfile is not indexed/readable`);
-  const versions = [...new Set(locked)]; if (versions.length > 1) gaps.push(`Competing locked ${gem} versions`);
+  const versions = locked.filter((version, index) => !locked.slice(0, index).some(prior => compareRubyVersions(rubyNumericVersion(version)!, rubyNumericVersion(prior)!) === 0)); if (versions.length > 1) gaps.push(`Competing locked ${gem} versions`);
   let version = versions[0];
-  if (configured) { if (version && version !== configured) gaps.push(`Recorded ${gem} version conflicts with its lockfile`); version = configured; proof.push(fact(undefined, undefined, `Recorded ${gem} runtime version ${configured}`, 'framework')); }
-  if (version && range && !semver.satisfies(version, range)) gaps.push(`Selected ${gem} version conflicts with dependency requirements`);
+  if (configured) { if (version && (!rubyNumericVersion(configured) || compareRubyVersions(rubyNumericVersion(version)!, rubyNumericVersion(configured)!) !== 0)) gaps.push(`Recorded ${gem} version conflicts with its lockfile`); version = configured; proof.push(fact(undefined, undefined, `Recorded ${gem} runtime version ${configured}`, 'framework')); }
+  if (version && !satisfiesRubyRequirements(version, requirements)) gaps.push(`Selected ${gem} version conflicts with dependency requirements`);
   if (!configured && !declarations && !(transitive && version)) gaps.push(`No literal ${gem} dependency declaration`);
-  if (!version && !range) gaps.push(`No bounded ${gem} version input`);
+  if (!version && !requirements.length) gaps.push(`No bounded ${gem} version input`);
   const reviewed = REVIEWED[gem];
-  const inProfile = reviewed && (version ? semver.satisfies(version, reviewed) : range && semver.subset(range, reviewed));
+  const inProfile = reviewed?.some(([lower, upper]) => rubyProfileSubset({ version, requirements }, lower, upper));
   if (!inProfile) gaps.push(`Version is outside reviewed ${gem} autoload profiles`);
-  return { gem, reviewed: gaps.length === 0, ...(version ? { version } : {}), ...(range ? { range } : {}), proof, gaps: [...new Set(gaps)] };
+  return { gem, reviewed: gaps.length === 0, ...(version ? { version } : {}), ...(range ? { range } : {}), requirements, proof, gaps: [...new Set(gaps)] };
 }

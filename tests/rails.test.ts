@@ -79,11 +79,12 @@ test('Rails route/controller/config edits invalidate caches and cold/warm/revisi
 });
 
 test('Rails reviewed versions distinguish underscore-prefixed actions', async () => {
- for (const version of ['7.1.0', '7.2.0', '8.0.0', '8.1.0']) {
+ for (const version of ['7.1.0', '7.2.0', '8.0.0', '8.1.0', '8.1.0.0', '8.1.1', '8.1.2', '8.1.3.1']) {
   const root = await repository('get "hidden", to: "photos#_hidden"', { Gemfile: `gem "rails", "${version}"`, 'app/controllers/photos_controller.rb': controller('PhotosController', ['_hidden']) });
   const graph = await index(root), route = endpoints(graph)[0]!;
-  assert.equal(Boolean(handler(graph, route)), version !== '8.1.0', version);
-  assert.equal(Boolean(route.metadata.constraintsUnresolved), version === '8.1.0', version);
+  const hidden = ['8.1.0', '8.1.0.0'].includes(version);
+  assert.equal(Boolean(handler(graph, route)), !hidden, version);
+  assert.equal(Boolean(route.metadata.constraintsUnresolved), hidden, version);
  }
 });
 

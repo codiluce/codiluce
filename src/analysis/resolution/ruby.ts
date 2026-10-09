@@ -5,7 +5,7 @@ import { ANALYZER_VERSION, evidence, type Evidence } from '../../core/graph.js';
 import type { RubyCallFact, RubyExpression, RubySyntaxFacts } from '../facts.js';
 import { IndexedSources } from '../indexed-sources.js';
 
-export const RUBY_RESOLVER_VERSION = `${ANALYZER_VERSION}:ruby-resolver:2`;
+export const RUBY_RESOLVER_VERSION = `${ANALYZER_VERSION}:ruby-resolver:3`;
 export interface RubyProject { id: string; root: string; application?: ApplicationConfig; manifests: string[]; loadPaths: { path: string; proof: Evidence }[]; cwd?: string }
 export type RubyLoadKind = 'require' | 'require_relative' | 'load' | 'autoload';
 export type RubyLoadOutcome =
@@ -46,7 +46,7 @@ export class RubyResolver {
       this.projects.push(project);
     }
     for (const file of files) {
-      const project = this.projects.filter(project => inside(file.path, project.root)).sort((a, b) => b.root.length - a.root.length)[0];
+      const project = this.projects.filter(project => inside(file.path, project.root)).sort((a, b) => (b.root === '.' ? 0 : b.root.length) - (a.root === '.' ? 0 : a.root.length))[0];
       if (project) this.ownership.set(file.path, project);
     }
   }

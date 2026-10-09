@@ -9,7 +9,7 @@ import { RailsControllers } from './rails-controllers.js';
 import { compileRailsPath, normalizeRailsPath, type RailsConstraint } from '../routes/rails-patterns.js';
 import type { RoutingContract } from '../routes/contracts.js';
 
-export const RAILS_VERSION = '1';
+export const RAILS_VERSION = '2';
 interface Site extends RubySite { file: string }
 interface Resource { name: string; controller: string; collection: string; member: string; nested: string; new: string; singleton: boolean; param: string; nestedParam: string }
 interface Frame { file: string; scope: string; path: string; module: string; controller?: string; actionDefault?: string; resource?: Resource; level: 'root' | 'resource' | 'member' | 'collection' | 'new'; shallow: boolean; shallowPath: string; format?: boolean | string; constraints: Record<string, RailsConstraint>; host?: string; conditions: string[]; proof: Evidence[]; bindings: Map<string, RubyExpression>; stack: string[]; pathNames: Record<string, string>; only?: string[]; except?: string[]; depth?: number }
@@ -209,7 +209,9 @@ export class RailsRegistrations {
       const only = options.has('only') ? strings(options.get('only')) : frame.only, except = options.has('except') ? strings(options.get('except')) : frame.except;
       if (options.has('only') && !only || options.has('except') && !except || [...only ?? [], ...except ?? []].some(value => !actions.includes(value))) { this.unknown(root, local, call, 'Invalid/dynamic resource action restriction'); continue; }
       const allowed = (only ?? actions.filter(action => !(singleton && action === 'index') && !(root.apiOnly && ['new', 'edit'].includes(action)))).filter(action => !except?.includes(action));
-      for (const action of ['index', 'create', 'new', 'edit', 'show', 'update', 'destroy']) {
+      // Mapper#resource emits new/member mappings before collection/create;
+      // Mapper#resources emits collection mappings first. Keep native order.
+      for (const action of singleton ? ['new', 'edit', 'show', 'update', 'destroy', 'create'] : ['index', 'create', 'new', 'edit', 'show', 'update', 'destroy']) {
         if (!allowed.includes(action) || singleton && action === 'index') continue;
         const routePath = ['index', 'create'].includes(action) ? collection : action === 'new' ? resource.new : action === 'edit' ? join(member, local.pathNames.edit!) : member;
         const verbs = action === 'create' ? ['POST'] : action === 'update' ? ['PATCH', 'PUT'] : action === 'destroy' ? ['DELETE'] : ['GET'];

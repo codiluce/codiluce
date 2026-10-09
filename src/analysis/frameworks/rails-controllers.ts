@@ -1,4 +1,4 @@
-import semver from 'semver';
+import { rubyProfileExact, rubyProfileSubset } from '../languages/ruby-version.js';
 import type { AnalysisContext } from '../../core/analyzer.js';
 import { evidence, type Evidence } from '../../core/graph.js';
 import type { RubyCallFact, RubyDefinitionFact, RubyExpression, RubySite } from '../facts.js';
@@ -54,12 +54,11 @@ export class RailsControllers {
     if (chain.some(level => level.methods.some(method => ['action_methods', 'process_action', 'method_missing', 'method_for_action', '_handle_action', 'process', 'dispatch', '_run_process_action_callbacks'].includes(method.fact.name)))) return fail('Custom Rails action dispatch requires a method summary');
     const selected = new Map<string, RubyFrameworkMethod>();
     for (const level of chain) for (const method of level.methods) if (!selected.has(method.fact.name)) selected.set(method.fact.name, method);
-    // 8.1 excludes underscore-prefixed public methods; older reviewed versions
-    // expose them. A crossing requirement is not one selected behavior.
+    // 8.1.0 excluded underscore-prefixed public methods; 8.1.1 reverted that
+    // rule. A crossing/unreviewed selection cannot pick either behavior.
     if (action.startsWith('_')) {
-      const profile = model.profile, hidden = profile.version ? semver.satisfies(profile.version, '>=8.1.0') : profile.range && semver.subset(profile.range, '>=8.1.0');
-      const visible = profile.version ? semver.satisfies(profile.version, '<8.1.0') : profile.range && semver.subset(profile.range, '<8.1.0');
-      if (hidden || !visible) return fail(hidden ? 'Rails 8.1 excludes underscore-prefixed actions' : 'Underscore action behavior requires a selected Rails version');
+      const hidden = rubyProfileExact(model.profile, '8.1.0'), visible = rubyProfileSubset(model.profile, undefined, '8.1') || rubyProfileSubset(model.profile, '8.1.1', '8.2');
+      if (hidden || !visible) return fail(hidden ? 'Rails 8.1.0 excludes underscore-prefixed actions' : 'Underscore action behavior requires a selected Rails version');
     }
     const method = selected.get(action), abstract = chain.findIndex(level => level.abstract), owner = chain.findIndex(level => level.methods.some(item => item.id === method?.id));
     if (!method || method.visibility !== 'public' || method.reason || abstract >= 0 && owner >= abstract && owner !== 0) return fail(method?.reason ?? 'No original public Rails action method; abstract/internal methods, implicit templates and generated actions remain unsupported');
