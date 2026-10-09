@@ -96,7 +96,10 @@ export interface RubyAssignmentFact extends RubySite { target: RubyExpression; v
 export interface RubyReferenceFact extends RubySite { expression: RubyExpression & { kind: 'constant' }; scope: string }
 export interface RubyGapFact extends RubySite { scope: string; kind: 'path' | 'loader' | 'constants' | 'scope'; reason: string }
 export interface RubySyntaxFacts { scopes: RubyScopeFact[]; definitions: RubyDefinitionFact[]; calls: RubyCallFact[]; locals: RubyLocalFact[]; assignments: RubyAssignmentFact[]; references: RubyReferenceFact[]; gaps: RubyGapFact[]; complete: boolean }
-export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts }
+export interface JvmImportFact { specifier: string; kind: 'single' | 'star' | 'static' | 'static-star'; alias?: string; start: number; end: number; range: SourceRange }
+export interface JvmDeclarationFact { key: string; name: string; qualifiedName: string; parent?: string; importable: boolean; static: boolean; visibility: string; reason?: string }
+export interface JvmSyntaxFacts { package: string; imports: JvmImportFact[]; declarations: JvmDeclarationFact[]; complete: boolean; module?: string; gaps: string[] }
+export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts }
 export interface ImportBinding { imported: string; local: string; typeOnly?: boolean }
 export type ImportOutcome =
   | { status: 'resolved'; targets: string[]; proof: Evidence[] }

@@ -5,6 +5,7 @@ import { extractPythonImports } from './python-imports.js';
 import { extractGoImports } from './go-imports.js';
 import { extractGoSemantic } from './go-syntax.js';
 import { extractRubySemantic } from './ruby-syntax.js';
+import { extractJvm } from './jvm-syntax.js';
 
 const MAX_DECLARATIONS = 20_000, MAX_ISSUES = 100, MAX_NODES = 200_000;
 const compact = (text: string) => text.replace(/\s+/g, ' ').trim();
@@ -41,7 +42,7 @@ function declarationKind(language: string, node: Node, kind: string): string {
 function parameters(node: Node): Node | undefined { return node.childForFieldName('parameters') ?? child(node, 'function_value_parameters', 'formal_parameters', 'parameter_list', 'method_parameters'); }
 function signature(node: Node, name: Node, kind: string): string {
   if (node.type === 'type_spec' && ['struct', 'interface'].includes(kind)) return kind;
-  if (kind === 'property') return compact(node.childForFieldName('type')?.text ?? '');
+  if (kind === 'property') return compact(node.childForFieldName('type')?.text ?? (node.type === 'variable_declarator' ? node.parent?.childForFieldName('type')?.text : undefined) ?? '');
   if (CALLABLES.has(kind)) {
     const params = parameters(node)?.text ?? '()';
     const parameterNode = parameters(node);
@@ -54,8 +55,9 @@ function signature(node: Node, name: Node, kind: string): string {
   return compact(node.text.slice(name.endIndex - node.startIndex, end - node.startIndex)).slice(0, 1200);
 }
 function modifiers(node: Node): string[] {
+  if (node.type === 'variable_declarator' && ['field_declaration','constant_declaration'].includes(node.parent?.type ?? '')) return modifiers(node.parent!);
   const values = node.namedChildren.filter(item => ['modifiers', 'modifier', 'visibility_modifier'].includes(item.type));
-  return [...values.flatMap(item => (item.type === 'modifiers' ? item.namedChildren : [item])).filter(item => !/annotation|attribute/.test(item.type)).map(item => compact(item.text)),
+  return [...values.flatMap(item => (item.type === 'modifiers' ? item.children : [item])).filter(item => !/annotation|attribute/.test(item.type)).map(item => compact(item.text)),
     ...(node.type === 'singleton_method' ? ['static'] : []),
     ...(node.children.some(item => item.type === 'async') ? ['async'] : [])];
 }
@@ -162,8 +164,10 @@ export function extractStructure(root: Node, query: Query, language: string, con
   const go = language === 'go' ? extractGoImports(root, source) : undefined;
   const goSemantic = language === 'go' ? extractGoSemantic(root, declarations, source) : undefined;
   const ruby = language === 'ruby' ? extractRubySemantic(root, declarations, source) : undefined;
+  const jvm = ['java','kotlin'].includes(language) ? extractJvm(root, language, declarations, source) : undefined;
   if (go && goSemantic) go.facts.semantic = goSemantic.facts;
   truncated ||= (python?.truncated ?? false) || (go?.truncated ?? false) || (goSemantic?.truncated ?? false) || (ruby?.truncated ?? false);
+  if (jvm && truncated) jvm.complete = false;
   if (truncated) issues.push({ code: 'syntax-budget-exceeded', reason: 'Structural extraction reached its node, declaration, diagnostic or query limit' });
-  return { declarations, issues, truncated, ...(python ? { python: python.facts } : {}), ...(go ? { go: go.facts } : {}), ...(ruby ? { ruby: ruby.facts } : {}) };
+  return { declarations, issues, truncated, ...(python ? { python: python.facts } : {}), ...(go ? { go: go.facts } : {}), ...(ruby ? { ruby: ruby.facts } : {}), ...(jvm ? {jvm} : {}) };
 }

@@ -76,6 +76,11 @@ registration retain visible gaps. The inspector shows which analysis features ar
 are detected and mapped with their files, lines and Git metrics. Missing
 yours? [Tell us](https://github.com/codiluce/codiluce/issues).
 
+Java and Kotlin now resolve original local import declarations within selected Maven reactors, literal Gradle projects
+and recorded source/classpath inputs. Explicit, wildcard, static and alias imports retain source evidence and visibility
+constraints. Unknown build configuration, excluded sources, binary classpaths and competing declarations stay visible.
+JVM calls, Spring routing and C#/ASP.NET import/routing analysis remain planned.
+
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original
 component source locations. Module and instance scopes stay distinct; Astro server and client scripts retain separate contexts.
 Vue 3 also links local template components and bounded event callbacks. Vue Router 4/5 manual route records resolve

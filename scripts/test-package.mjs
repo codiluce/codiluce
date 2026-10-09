@@ -60,6 +60,11 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
       assert.equal(file.node.analysis.features.structure.status, 'supported');
       assert.equal(file.node.analysis.features.references.status, ['python', 'go', 'ruby'].includes(language) ? 'partial' : 'unsupported');
     }
+    for (const name of ['PackagedJavaUse','PackagedKotlinUse']) {
+      const search=await(await fetch(`${url}api/projection/search?q=${name}`)).json(), symbol=search.items.find(item=>item.name===name&&item.type==='class');assert.ok(symbol);
+      const source=await(await fetch(`${url}api/source?entity=${symbol.id}`)).json(), file=await(await fetch(`${url}api/entities/${source.file.id}`)).json();
+      assert.deepEqual(file.metadata.importOutcomes.map(item=>item.outcome.status),['resolved','resolved']);assert.equal(file.metadata.analysis.features.references.status,'unsupported');
+    }
     for (const [name, handlerPath, line] of [
       ['GET /package-svelte-api', 'svelte-ui/src/routes/package-svelte-api/+server.ts', 1],
       ['POST /package-svelte?/save', 'svelte-ui/src/routes/(app)/package-svelte/+page.server.ts', 1],
@@ -152,6 +157,20 @@ try {
   await writeFile(path.join(pythonPackage, '__init__.py'), '');
   await writeFile(path.join(pythonPackage, 'main.py'), 'from fastapi import FastAPI\nfrom .handler import PackagedPythonHandler as handler\napp = FastAPI()\napp.add_api_route("/package-python/{id:int}", handler, methods=["GET"])\n');
   await writeFile(path.join(pythonPackage, 'handler.py'), 'def PackagedPythonLeaf():\n    return "ok"\ndef PackagedPythonHandler():\n    return PackagedPythonLeaf()\n');
+  const jvmSource = path.join(repo, 'jvm-source');
+  const jvmPom = (name, body='') => `<project><modelVersion>4.0.0</modelVersion><groupId>packaged</groupId><artifactId>${name}</artifactId><version>1.0</version>${body}</project>`;
+  const kotlinPlugin = '<build><plugins><plugin><groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-maven-plugin</artifactId><version>2.2.0</version></plugin></plugins></build>';
+  await mkdir(jvmSource, {recursive:true});
+  await writeFile(path.join(jvmSource,'pom.xml'),jvmPom('root','<packaging>pom</packaging><modules><module>app</module><module>lib</module></modules>'));
+  for (const module of ['app','lib']) {
+    await mkdir(path.join(jvmSource,module,'src/main/java/packaged'),{recursive:true});
+    await mkdir(path.join(jvmSource,module,'src/main/kotlin/packaged'),{recursive:true});
+    await writeFile(path.join(jvmSource,module,'pom.xml'),jvmPom(module,kotlinPlugin+(module==='app'?'<dependencies><dependency><groupId>packaged</groupId><artifactId>lib</artifactId><version>1.0</version></dependency></dependencies>':'')));
+  }
+  await writeFile(path.join(jvmSource,'lib/src/main/java/packaged/PackagedWidget.java'),'package packaged; public class PackagedWidget { public static int VALUE=1; public static void run(){} }');
+  await writeFile(path.join(jvmSource,'lib/src/main/kotlin/packaged/Helpers.kt'),'package packaged\nfun packagedHelp() {}\n');
+  await writeFile(path.join(jvmSource,'app/src/main/java/packaged/PackagedJavaUse.java'),'// 😀 original\r\npackage packaged;\r\nimport packaged.PackagedWidget;\r\nimport static packaged.PackagedWidget.VALUE;\r\npublic class PackagedJavaUse {}');
+  await writeFile(path.join(jvmSource,'app/src/main/kotlin/packaged/PackagedKotlinUse.kt'),'package packaged\nimport packaged.PackagedWidget as Widget\nimport packaged.packagedHelp\nclass PackagedKotlinUse\n');
   const rubySource = path.join(repo, 'ruby-source');
   await mkdir(path.join(rubySource, 'lib'), { recursive: true });
   await writeFile(path.join(rubySource, 'Gemfile'), 'gem "rails", "~> 8.1"\n');
@@ -303,6 +322,20 @@ try {
   const pythonDetail = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entity', '--id', pythonMain.id], repo)).stdout);
   assert.equal(pythonDetail.metadata.analysis.features.imports.status, 'partial');
   assert.equal(pythonDetail.metadata.analysis.features.references.status, 'partial');
+  const jvmFiles = JSON.parse((await run(process.execPath,[bin,'inspect','entities','--search','jvm-source'],repo)).stdout).items;
+  for (const [sourcePath, targetSuffixes] of [
+    ['app/src/main/java/packaged/PackagedJavaUse.java',['lib/src/main/java/packaged/PackagedWidget.java']],
+    ['app/src/main/kotlin/packaged/PackagedKotlinUse.kt',['lib/src/main/java/packaged/PackagedWidget.java','lib/src/main/kotlin/packaged/Helpers.kt']],
+  ]) {
+    const file = jvmFiles.find(item=>item.type==='file'&&item.path==='jvm-source/'+sourcePath);assert.ok(file);
+    const detail = JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',file.id],repo)).stdout);
+    assert.equal(detail.metadata.analysis.features.imports.status,'partial');assert.equal(detail.metadata.analysis.features.references.status,'unsupported');
+    assert.deepEqual(detail.metadata.importOutcomes.map(item=>item.outcome.status),['resolved','resolved']);
+    const edges = JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',file.id,'--type','imports'],repo)).stdout).items;
+    for (const targetSuffix of targetSuffixes) assert.ok(edges.some(edge=>edge.to===jvmFiles.find(item=>item.type==='file'&&item.path==='jvm-source/'+targetSuffix)?.id));
+    for(const outcome of detail.metadata.importOutcomes)for(const declaration of outcome.outcome.declarations){const original=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',declaration],repo)).stdout);assert.ok(original.path.startsWith('jvm-source/lib/'));assert.ok(original.sourceRange.startLine>0);}
+    for(const edge of edges){const proof=JSON.parse((await run(process.execPath,[bin,'inspect','relation','--id',edge.id],repo)).stdout);assert.ok(proof.evidence.some(fact=>fact.file==='jvm-source/'+sourcePath&&fact.line>0));}
+  }
   const rubyFiles = JSON.parse((await run(process.execPath, [bin, 'inspect', 'entities', '--search', 'ruby-source'], repo)).stdout).items;
   const rubyMain = rubyFiles.find(item => item.type === 'file' && item.path === 'ruby-source/main.rb'), rubyWidget = rubyFiles.find(item => item.type === 'file' && item.path === 'ruby-source/lib/widget.rb');
   assert.ok(rubyMain && rubyWidget, 'installed Ruby source inputs are indexed');
@@ -509,7 +542,7 @@ try {
   console.log('Checking npm exec against the tarball without a local installation…');
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
-  console.log('Package installation, seven grammars, workspace binding, Ruby literal loads/scopes/original paths, namespace reopenings/direct methods/initializers and lazy Rails/Zeitwerk original autoload/inflection evidence, Rails resources/original controller actions/private callback references/HTTP request flows/source proofs and inflection license, dynamic/conditional gaps, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin/Echo 4–5/Fiber 2–3/Gorilla router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
+  console.log('Package installation, seven grammars, workspace binding, original Java/Kotlin Maven imports/static members/aliases/declaration proofs, Ruby literal loads/scopes/original paths, namespace reopenings/direct methods/initializers and lazy Rails/Zeitwerk original autoload/inflection evidence, Rails resources/original controller actions/private callback references/HTTP request flows/source proofs and inflection license, dynamic/conditional gaps, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin/Echo 4–5/Fiber 2–3/Gorilla router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

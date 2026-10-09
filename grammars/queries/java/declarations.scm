@@ -6,3 +6,6 @@
 (method_declaration name: (identifier) @name) @declaration.method
 (constructor_declaration name: (identifier) @name) @declaration.constructor
 (compact_constructor_declaration name: (identifier) @name) @declaration.constructor
+(field_declaration declarator: (variable_declarator name: (identifier) @name) @declaration.property)
+(constant_declaration declarator: (variable_declarator name: (identifier) @name) @declaration.property)
+(enum_constant name: (identifier) @name) @declaration.property

@@ -27,9 +27,10 @@ import { goAnalyzer } from '../analysis/languages/go.js';
 import { rubyAnalyzer } from '../analysis/languages/ruby.js';
 import { GO_ROUTER_VERSION } from '../analysis/frameworks/go-routers.js';
 import { RAILS_VERSION } from '../analysis/frameworks/rails.js';
+import { jvmAnalyzer } from '../analysis/languages/jvm.js';
 
 const execute = promisify(execFile);
-export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, structureAnalyzer, pythonAnalyzer, goAnalyzer, rubyAnalyzer, embeddedAnalyzer, typescriptAnalyzer, typescriptServicesRelease, laravelAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
+export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, structureAnalyzer, pythonAnalyzer, goAnalyzer, rubyAnalyzer, jvmAnalyzer, embeddedAnalyzer, typescriptAnalyzer, typescriptServicesRelease, laravelAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
 export interface IndexOptions {
   stateDirectory?: string; config?: AtlasConfig; onProgress?: (name: string) => void;
   /** Index a materialized commit tree: Git is not consulted and the run records this commit, clean. */

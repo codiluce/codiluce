@@ -22,6 +22,8 @@ export interface RubyAutoloadConfig {
   collapse?: string[];
 }
 export interface RubyRuntimeConfig { cwd?: string; environment?: string; autoload?: RubyAutoloadConfig }
+/** Recorded JVM compilation inputs; target Maven/Gradle/compiler never runs. */
+export interface JvmConfig { sourceSet?: 'main' | 'test'; profiles?: string[]; dependencies?: string[] }
 
 export interface ApplicationConfig {
   name: string; path: string;
@@ -44,6 +46,7 @@ export interface ApplicationConfig {
   entrypoints?: Record<string, string[]>;
   go?: GoBuildConfig;
   ruby?: RubyRuntimeConfig;
+  jvm?: JvmConfig;
 }
 /** An application as configuration may give it: frameworks and ecosystems are completed from its manifests. */
 export type ApplicationInput = Omit<ApplicationConfig, 'frameworks' | 'ecosystems'> & {
@@ -232,6 +235,13 @@ export async function resolveConfig(root: string, raw: RawConfig): Promise<Atlas
   const names = new Set<string>();
   const paths = new Set<string>();
   for (const app of config.applications) {
+    if (app.jvm !== undefined) {
+      const value = app.jvm;
+      if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key => !['sourceSet','profiles','dependencies'].includes(key)) || value.sourceSet !== undefined && !['main','test'].includes(value.sourceSet)
+        || value.profiles !== undefined && (!Array.isArray(value.profiles) || value.profiles.length > 128 || new Set(value.profiles).size !== value.profiles.length || value.profiles.some(item => typeof item !== 'string' || !/^[\w.-]{1,128}$/.test(item)))
+        || value.dependencies !== undefined && (!Array.isArray(value.dependencies) || value.dependencies.length > 128 || new Set(value.dependencies).size !== value.dependencies.length || value.dependencies.some(item => typeof item !== 'string' || !item || item.length > 2048 || /[\\\0$*?{}\[\]]/.test(item) || path.isAbsolute(item) || /^[A-Za-z]:/.test(item)))) throw new Error('Invalid JVM compilation configuration');
+      for (const dependency of value.dependencies ?? []) repoPath(root,path.posix.join(app.path,dependency));
+    }
     if (app.ruby !== undefined) {
       const ruby = app.ruby;
       const relative = (value: unknown) => typeof value === 'string' && value.length > 0 && !path.isAbsolute(value) && !/[\\\0*?\[\]{}]/.test(value) && !/^[A-Za-z]:/.test(value);
