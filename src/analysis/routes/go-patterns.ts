@@ -162,7 +162,7 @@ export function preferGoRoutes<T>(items: T[], contract: (item: T) => RoutingCont
   if (items.length < 2) return items;
   return items.filter(item => !items.some(other => {
     if (other === item) return false; const first = contract(other), second = contract(item);
-    if (!first || !second || ['rails','aspnet','axum','actix-web','rocket'].includes(first.dispatch?.dialect ?? '') || ['rails','aspnet','axum','actix-web','rocket'].includes(second.dispatch?.dialect ?? '') || first.conditions.length || second.conditions.length) return false;
+    if (!first || !second || ['rails','aspnet','axum','actix-web','rocket','warp'].includes(first.dispatch?.dialect ?? '') || ['rails','aspnet','axum','actix-web','rocket','warp'].includes(second.dispatch?.dialect ?? '') || first.conditions.length || second.conditions.length) return false;
     const left = [...first.guards ?? [], first], right = [...second.guards ?? [], second];
     if (method && left[0]?.dispatch?.root === right[0]?.dispatch?.root && !!first.fallbackMethods?.includes(method) !== !!second.fallbackMethods?.includes(method)) return !first.fallbackMethods?.includes(method);
     for (let level = 0; level < Math.min(left.length, right.length); level++) {

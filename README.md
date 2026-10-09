@@ -28,9 +28,17 @@
 
 ## Why Codiluce?
 
-Agents write and change code faster than anyone can review it line by line. Codiluce keeps you in the picture: it
-reads your repository and draws it as a map you can zoom, search and replay, where every link between pages, requests,
-functions and tables comes with the evidence behind it.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/comprehension-gap-on-dark.svg">
+  <img src="docs/readme/comprehension-gap-on-light.svg" alt="An illustration: from autocomplete to coding agents to agents in parallel, agent output grows exponentially while human comprehension barely rises. With Codiluce, comprehension follows the output and the gap narrows." width="880">
+</picture>
+
+**The comprehension gap is widening.** More people and more agents are writing code, and every change is bigger than
+the last. Reading the diff no longer tells a team what the system does, which flows a change touches, or what it can
+break.
+
+Codiluce keeps understanding in step with the code. It reads your repository and draws it as a map you can zoom,
+search and replay, where every link between pages, requests, functions and tables comes with the evidence behind it.
 
 ## Quick start
 
@@ -64,7 +72,34 @@ Want it always at hand? Run `npm install --global codiluce`, then `codiluce star
 Codiluce runs on your machine. It reads your code but never runs it, never installs its dependencies and never writes
 to your checkout. Nothing leaves your computer unless you ask for AI descriptions or GitHub pull request data.
 
-## How deep does it go?
+## Languages and frameworks
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/readme/stacks-on-dark.svg">
+  <img src="docs/readme/stacks-on-light.svg" alt="Frameworks: React, Next.js, Express, ASP.NET Core, Vue, FastAPI, Spring, Flask, Django, Laravel, Svelte, NestJS, Ruby on Rails and Gin. Languages: TypeScript, JavaScript, Python, Java, C#, PHP, Go, Rust, Kotlin and Ruby." width="880">
+</picture>
+
+How far Codiluce follows the code depends on the stack:
+
+- **Flows to the data:** React and Next.js with Laravel and Inertia, from the click through the request to the
+  handler and the tables it reads and writes.
+- **Routes and handlers:** Express, NestJS, Vue Router, Nuxt, SvelteKit and Astro; Django, FastAPI and Flask; Spring
+  MVC and WebFlux; ASP.NET Core; Ruby on Rails; Gin, Echo, Fiber, Chi, Gorilla Mux and net/http; Axum, Actix Web and
+  Rocket. Every route links to the exact handler that serves it.
+- **Structure:** TypeScript, JavaScript, PHP, Python, Go, Ruby, Java, Kotlin, C# and Rust get declarations, imports,
+  references and direct calls.
+- **Map:** Angular, Remix, Fastify, Symfony, Quarkus, Blazor and every other language and framework are detected and
+  mapped with their files, lines and Git metrics.
+
+The npm release (0.1.1) analyzes TypeScript, JavaScript, React, Next.js, Laravel and Inertia. Everything else is on
+`main`: [run it from source](CONTRIBUTING.md#develop-locally) today, and it ships in the next release. See what each
+framework covers, and what stays a visible gap, in [Languages & frameworks](https://codiluce.com/docs/stacks/).
+
+<sub>Logos are trademarks of their owners, shown only to say which code Codiluce reads. Artwork from
+[Simple Icons](https://simpleicons.org) (CC0) and [Devicon](https://devicon.dev) (MIT).</sub>
+
+<details>
+<summary>Analysis notes by language, for contributors</summary>
 
 TypeScript and JavaScript are analyzed down to calls and requests across applications and local workspace packages, and supported frameworks down to
 routes, commands and tables. Express and Nest have static routing packs for mounted routers and registered controllers,
@@ -152,9 +187,12 @@ and unsupported syntax retain gaps. Astro 5/6/7 now links original components/la
 static build operations and qualified Vue/Svelte/React islands. Prerendered files stay separate from live APIs;
 dynamic configuration, middleware policies and generated URLs retain gaps. Bounded Nuxt conventions are next.
 
+</details>
+
 ## Learn more
 
-- [Getting started](https://codiluce.com/docs/) and [using the map](https://codiluce.com/docs/map/)
+- [Getting started](https://codiluce.com/docs/), [languages & frameworks](https://codiluce.com/docs/stacks/) and
+  [using the map](https://codiluce.com/docs/map/)
 - [History](https://codiluce.com/docs/history/), [CLI & API](https://codiluce.com/docs/cli/) and
   [configuration](https://codiluce.com/docs/configuration/)
 - [How it works](https://codiluce.com/docs/how-it-works/), the [technical reference](docs/reference.md) and the

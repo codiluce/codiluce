@@ -106,21 +106,24 @@ export function extractRustSemantic(root: Node, declarations: DeclarationFact[],
         }
         return false;
     };
-    function pattern(node: Node | null | undefined, scope: RustScopeFact, activation: number, kind: 'parameter' | 'local' | 'pattern', value?: RustExpression, annotation?: RustTypeFact, mutable = false, attrs: string[] = [], gaps: string[] = [], depth = 0): void {
+    function pattern(node: Node | null | undefined, scope: RustScopeFact, activation: number, kind: 'parameter' | 'local' | 'pattern', value?: RustExpression, annotation?: RustTypeFact, mutable = false, attrs: string[] = [], gaps: string[] = [], depth = 0, projection?:{value:RustExpression;indices:number[]}): void {
         if (!node || depth > 64)
             return;
         if (['identifier', 'self', 'shorthand_field_identifier'].includes(node.type)) {
-            facts.bindings.push({ ...site(node), name: rustName(node.text), scope: scope.key, activation, kind, ...value ? { value } : {}, ...annotation ? { type: annotation } : {}, mutable, attributes: attrs, gaps });
+            facts.bindings.push({ ...site(node), name: rustName(node.text), scope: scope.key, activation, kind, ...value ? { value } : {}, ...projection ? {projection} : {}, ...annotation ? { type: annotation } : {}, mutable, attributes: attrs, gaps });
             return;
         }
         if (node.type === 'mut_pattern' || node.type === 'ref_pattern' || node.type === 'reference_pattern') {
             const child = node.namedChildren.find(n => n.type !== 'mutable_specifier');
-            pattern(child, scope, activation, kind, value, annotation, mutable || node.text.startsWith('mut '), attrs, gaps, depth + 1);
+            pattern(child, scope, activation, kind, value, annotation, mutable || node.text.startsWith('mut '), attrs, gaps, depth + 1, projection);
             return;
         }
         if (node.type === 'tuple_pattern') {
-            for (const [index, n] of node.namedChildren.entries())
-                pattern(n, scope, activation, kind, value?.kind === 'tuple' ? value.values[index] : undefined, undefined, mutable, attrs, gaps, depth + 1);
+            const positional = node.children.filter(child => (child.isNamed || child.type === '_') && !child.type.includes('comment')), rest = node.children.some(child => child.text === '..');
+            for (const [index, n] of positional.entries()) {
+                const original = !rest && (projection ?? (value && value.kind !== 'tuple' ? {value,indices:[]} : undefined));
+                pattern(n, scope, activation, kind, !rest && value?.kind === 'tuple' ? value.values[index] : undefined, undefined, mutable, attrs, rest ? [...gaps,'Tuple-rest Rust binding requires native tuple extent proof'] : gaps, depth + 1, original ? {...original,indices:[...original.indices,index]} : undefined);
+            }
             return;
         }
         if (node.type === 'field_pattern') {
@@ -156,7 +159,7 @@ export function extractRustSemantic(root: Node, declarations: DeclarationFact[],
     };
     function parameters(node: Node | null | undefined, scope: RustScopeFact, attrs: string[]): RustParameter[] {
         const result: RustParameter[] = [];
-        for (const n of node?.namedChildren ?? []) {
+        for (const n of node?.children.filter(child => child.isNamed || child.type === '_') ?? []) {
             if (n.type.includes('comment') || n.type === 'attribute_item')
                 continue;
             if (n.type === 'self_parameter') {

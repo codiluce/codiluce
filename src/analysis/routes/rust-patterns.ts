@@ -1,6 +1,6 @@
 import type { Entity } from '../../core/graph.js';
 import type { RoutePattern, RoutePart, RouteSegment, RoutingContract } from './contracts.js';
-export type RustRouteDialect = 'axum-0.7' | 'axum-0.8' | 'actix-web-4' | 'rocket-0.5';
+export type RustRouteDialect = 'axum-0.7' | 'axum-0.8' | 'actix-web-4' | 'rocket-0.5' | 'warp-0.3' | 'warp-0.4';
 export interface RustPathData {
     sources: string[];
     prefixDefault?: boolean;

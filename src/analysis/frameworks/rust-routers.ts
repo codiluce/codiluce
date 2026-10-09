@@ -7,10 +7,12 @@ import { RustResolver, type RustScope } from '../resolution/rust.js';
 import { compileRustPath, type RustRouteDialect, type RustEndpointData } from '../routes/rust-patterns.js';
 import type { RoutingContract, RoutePattern } from '../routes/contracts.js';
 import { compileRocketPath, rocketPathsCollide, reviewedRocketMount } from '../routes/rocket-patterns.js';
+import { compileWarpPath, warpBranches, type WarpNode, type WarpDialect, type WarpDispatchData, type WarpBranch } from '../routes/warp-patterns.js';
+import { warpPathSyntax } from './warp-syntax.js';
 import { STRUCTURE_VERSION } from '../tree-sitter/analyzer.js';
 import { fileKey } from '../../pipeline/cache.js';
 import { rustWebProfile, rustWebAttribute, rustWebAttributeReader, rustWebMacroResolution, RustWebMacros, RUST_ROUTER_VERSION, type RustWebProfile, type RustWebAttribute } from './rust-profile.js';
-type Framework = 'axum' | 'actix-web' | 'rocket';
+type Framework = 'axum' | 'actix-web' | 'rocket' | 'warp';
 type Methods = string[] | '*';
 interface Site extends RustSite {
     file: string;
@@ -34,6 +36,7 @@ interface Callback {
     proof: Evidence[];
     conditions: string[];
     attribute?: RustWebAttribute;
+    awaitedReturn?: boolean;
 }
 interface Native {
     kind: 'native';
@@ -74,7 +77,7 @@ interface Router {
     kind: 'router';
     framework: Framework;
     dialect: RustRouteDialect;
-    mode: 'router' | 'app' | 'scope' | 'resource' | 'config';
+    mode: 'router' | 'app' | 'scope' | 'resource' | 'config' | 'filter';
     id: string;
     site: Site;
     entries: Entry[];
@@ -87,6 +90,7 @@ interface Router {
     middleware: string[];
     legacy: boolean;
     rocketIgnited?: boolean;
+    warp?: { node: WarpNode; handlers: Map<string, Route>; extracts?: string[]; union?: [string[] | undefined, string[] | undefined]; copy: boolean };
     consumed?: boolean;
 }
 interface Server {
@@ -97,6 +101,8 @@ interface Server {
     running: boolean;
     proof: Evidence[];
     conditions: string[];
+    warpDialect?: WarpDialect;
+    consumed?: boolean;
 }
 interface Future {
     kind: 'future';
@@ -225,7 +231,7 @@ export class RustRegistrations {
         const file = this.context.graph.entities.get(this.context.files.get(site.file)!.id)!, analysis = fileAnalysis(file.metadata.analysis);
         file.metadata.frameworkPacks = unique([...Array.isArray(file.metadata.frameworkPacks) ? file.metadata.frameworkPacks as string[] : [], framework]);
         if (analysis)
-            analysis.features.framework = { status: 'partial', reason: 'Original Cargo profiles, reachable Axum/Actix/Rocket constructors, serving contracts, source helpers/closures and native route contracts; dynamic setup and opaque middleware remain gaps' };
+            analysis.features.framework = { status: 'partial', reason: 'Original Cargo profiles, reachable Axum/Actix/Rocket/Warp constructors, serving contracts, source helpers/closures and native route/filter contracts; dynamic setup and opaque middleware remain gaps' };
     }
     run(): void {
         for (const root of this.symbols.resolver.roots.values()) {
@@ -268,7 +274,7 @@ export class RustRegistrations {
             return;
         }
         const scopeKeys = new Set(this.symbols.resolver.membership.get(env.scope.file.path)?.filter(scope => scope.compilation.id === env.scope.compilation.id && this.symbols.owner(scope) === env.owner).map(scope => scope.fact.key));
-        const events = [...facts.bindings.filter(binding => binding.kind !== 'parameter' && scopeKeys.has(binding.scope) && binding.value).map(item => ({ kind: 'binding' as const, start: item.start, item })), ...facts.statements.filter(item => scopeKeys.has(item.scope)).map(item => ({ kind: 'statement' as const, start: item.start, item })), ...facts.calls.filter(item => scopeKeys.has(item.scope)).map(item => ({ kind: 'call' as const, start: item.start, item })), ...facts.writes.filter(item => scopeKeys.has(item.scope) && item.kind === 'assignment').map(item => ({ kind: 'write' as const, start: item.start, item })), ...facts.returns.filter(item => item.owner === this.symbols.definition(env.scope.file.path, env.scope.fact.owner ?? '')?.fact.key).map(item => ({ kind: 'return' as const, start: item.start, item }))].sort((a, b) => a.start - b.start || a.kind.localeCompare(b.kind));
+        const events = [...facts.bindings.filter(binding => binding.kind !== 'parameter' && scopeKeys.has(binding.scope) && (binding.value || binding.projection)).map(item => ({ kind: 'binding' as const, start: item.start, item })), ...facts.statements.filter(item => scopeKeys.has(item.scope)).map(item => ({ kind: 'statement' as const, start: item.start, item })), ...facts.calls.filter(item => scopeKeys.has(item.scope)).map(item => ({ kind: 'call' as const, start: item.start, item })), ...facts.writes.filter(item => scopeKeys.has(item.scope) && item.kind === 'assignment').map(item => ({ kind: 'write' as const, start: item.start, item })), ...facts.returns.filter(item => item.owner === this.symbols.definition(env.scope.file.path, env.scope.fact.owner ?? '')?.fact.key).map(item => ({ kind: 'return' as const, start: item.start, item }))].sort((a, b) => a.start - b.start || a.kind.localeCompare(b.kind));
         for (const event of events) {
             if (++this.steps > 50000) {
                 this.gap(env, siteOf(env, event.item), 'Rust registration summary budget exceeded');
@@ -281,8 +287,11 @@ export class RustRegistrations {
             if (attributes?.active === false)
                 continue;
             const local = { ...env, scope, conditions: unique([...this.conditions(env, scope), ...attributes?.gaps ?? [], ...attributes?.active === 'unknown' ? ['Unselected Rust registration attributes'] : []]) };
-            if (event.kind === 'binding')
-                env.locals.set(this.bindingKey(scope.file.path, event.item), this.evaluate(event.item.value!, local));
+            if (event.kind === 'binding') {
+                let value = this.evaluate(event.item.value ?? event.item.projection!.value, local);
+                for (const index of event.item.projection?.indices ?? []) value = Array.isArray(value) ? value[index] : undefined;
+                env.locals.set(this.bindingKey(scope.file.path, event.item), value);
+            }
             else if (event.kind === 'write') {
                 const target = event.item.target, binding = target.kind === 'path' && target.segments.length === 1 ? this.binding(scope, target.segments[0]!, event.item.start) : undefined;
                 if (binding && event.item.value && binding.mutable && !local.conditions.length)
@@ -292,6 +301,8 @@ export class RustRegistrations {
             }
             else if (event.kind === 'return') {
                 const value = this.evaluate(event.item.value, local);
+                if (value === undefined && event.item.value.kind === 'unknown' && this.builders.some(builder => builder.env.runtime === env.runtime))
+                    this.gap(local,siteOf(local,event.item),'Original Rust return/control expression has no reviewed registration summary');
                 if (!event.item.conditional)
                     return value;
                 this.gap(local, siteOf(local, event.item), 'Conditional Rust helper return is unreviewed');
@@ -347,6 +358,14 @@ export class RustRegistrations {
             const profile = rustWebProfile(env.scope, rustWebMacroResolution(this.symbols.resolver, env.scope, expression.path, expression.start, expression.absolute));
             if (profile?.framework === 'rocket' && profile.dialect === 'rocket-0.5' && profile.path.join('::') === 'routes' && expression.operands !== undefined && !profile.conditions.length)
                 return expression.operands.map(operand => this.callback(env, operand));
+            if (profile?.framework === 'warp' && profile.dialect?.startsWith('warp-') && profile.path.join('::') === 'path') {
+                const syntax = warpPathSyntax(expression.tokens);
+                if (!syntax) return;
+                const nodes: WarpNode[] = syntax.segments.map(segment => segment.kind === 'literal' ? { kind: 'literal', value: segment.value } : { kind: 'param', type: segment.text, guard: this.warpGuard(env.scope, segment.text) });
+                if (syntax.end) nodes.push({ kind: 'end' });
+                const node = nodes.reduce<WarpNode>((left, right) => ({ kind: 'and', left, right }), { kind: 'any' });
+                return this.makeWarp(env, site, profile, node, syntax.segments.filter(segment => segment.kind === 'type').map(segment => (segment as {text:string}).text));
+            }
             return;
         }
         if (['paren', 'try', 'deref', 'reference', 'cast'].includes(expression.kind))
@@ -376,8 +395,9 @@ export class RustRegistrations {
             }
             const resolution = this.symbols.resolver.path(env.scope, expression.segments, expression.absolute, new Set(), 'expression'), profile = rustWebProfile(env.scope, resolution);
             if (profile) {
-                if (expression.generics?.length)
+                if (expression.generics?.length && !(profile.framework === 'warp' && /^(?:filters::)?path::param$/.test(profile.path.join('::'))))
                     profile.conditions.push('Explicit generic Rust web operands require native type/trait instantiation proof');
+                profile.generics = expression.generics;
                 if (profile.framework === 'axum' && /^routing::MethodFilter::(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|CONNECT|TRACE)$/.test(profile.path.join('::')))
                     return { kind: 'guard', methods: [profile.path.at(-1)!], conditions: profile.conditions, proof: profile.proof };
                 return { kind: 'native', profile };
@@ -386,6 +406,10 @@ export class RustRegistrations {
         }
         if (expression.kind === 'closure' || expression.kind === 'async')
             return this.callback(env, expression);
+        if (expression.kind === 'field') {
+            const value = this.evaluate(expression.value, env);
+            return Array.isArray(value) && /^\d+$/.test(expression.name) ? value[Number(expression.name)] : undefined;
+        }
         if (expression.kind === 'call') {
             const args = expression.args.map(arg => this.evaluate(arg, env));
             if (expression.callee.kind === 'field') {
@@ -408,6 +432,7 @@ export class RustRegistrations {
         kind: 'call';
     }): Value {
         const name = profile.path.join('::'), local = { ...env, conditions: unique([...env.conditions, ...profile.conditions]), proof: [...env.proof, ...profile.proof] };
+        if (profile.framework === 'warp' && profile.dialect?.startsWith('warp-')) return this.nativeWarp(profile, args, local, site, expression);
         if (profile.framework === 'rocket' && name === 'build' && args.length === 0 && profile.dialect)
             return this.makeRouter(local, site, profile, 'router');
         if (profile.framework !== 'tokio' && !profile.dialect) {
@@ -468,12 +493,213 @@ export class RustRegistrations {
             this.gap(env, site, `Unreviewed native ${profile.framework} ${name} builder escape`);
         return;
     }
+    private warpGuard(scope: RustScope, text: string): string | undefined {
+        const compact = text.replace(/\s+/g, '');
+        if (!/^(?:::\s*)?(?:r#)?[_\p{ID_Start}][_\p{ID_Continue}]*(?:::(?:r#)?[_\p{ID_Start}][_\p{ID_Continue}]*)*$/u.test(compact)) return;
+        const result = this.symbols.resolver.path(scope, compact.split('::').filter(Boolean), compact.startsWith('::'), new Set(), 'expression');
+        if (result.status === 'external' && result.dependency === 'rust-standard-library' && !result.conditions.length) {
+            if (result.path.join('::') === 'string::String') return 'String';
+            if (result.path.length === 2 && result.path[0] === 'primitive' && /^(?:bool|[iu](?:8|16|32|64|128))$/.test(result.path[1]!)) return result.path[1];
+        }
+        if (result.status !== 'unresolved' || compact.includes('::')) return;
+        if (/^(?:bool|[iu](?:8|16|32|64|128))$/.test(compact)) return compact;
+        if (compact === 'String') {
+            for (let current: RustScope | undefined = scope; current; current = current.parent)
+                if (current.attributes.noStd || current.attributes.noCore || current.attributes.noPrelude) return;
+            return 'String';
+        }
+        return;
+    }
+    private makeWarp(env: Environment, site: Site, profile: RustWebProfile, node: WarpNode, extracts: string[] | undefined = [], copy = true): Router {
+        const router = this.makeRouter(env, site, profile, 'filter');
+        router.warp = { node, handlers: new Map(), extracts, copy };
+        return router;
+    }
+    private nativeWarp(profile: RustWebProfile, args: Value[], env: Environment, site: Site, expression: RustExpression & {kind:'call'}): Value {
+        const name = profile.path.join('::').replace(/^filters::/, '');
+        if (name.startsWith('Filter::') && is(args[0], 'router') && args[0].framework === 'warp') {
+            if (args[0].dialect !== profile.dialect) env = {...env,conditions:unique([...env.conditions,'Fully-qualified Warp Filter combinator crosses native version families'])};
+            return this.warpMethod(args[0], name.slice('Filter::'.length), args.slice(1), env, site, true);
+        }
+        if (name === 'serve' && args.length === 1 && is(args[0], 'router') && args[0].framework === 'warp') {
+            const filter = this.copy(args[0], env, site);
+            return { kind: 'server', router: filter, warpDialect: profile.dialect as WarpDialect, environment: env, bound: false, running: false, proof: [...filter.proof, ...profile.proof, this.fact(site, 'Original Warp serve Filter constructor; no exposure until a native serving future is awaited')], conditions: unique([...filter.conditions, ...profile.conditions, ...filter.warp?.extracts === undefined || filter.warp.extracts.length !== 1 ? ['Warp serve requires a single reviewed reply extraction from the original source Filter'] : [], ...filter.dialect !== profile.dialect ? ['Warp serve and Filter originate from different native version families'] : [], ...!profile.server ? ['Warp 0.4 serve requires the selected server Cargo feature'] : []]) };
+        }
+        if (['any', 'any::any'].includes(name) && !args.length) return this.makeWarp(env, site, profile, {kind:'any'});
+        if (['path', 'path::path'].includes(name) && args.length === 1) {
+            if (typeof args[0] === 'string' && args[0] && !args[0].includes('/')) return this.makeWarp(env, site, profile, {kind:'literal',value:args[0]});
+            return this.makeWarp(env, site, profile, {kind:'opaque',reason:'Warp exact path is dynamic, empty or contains a slash; native constructor proof is absent'}, undefined);
+        }
+        if (name === 'path::end' && !args.length) return this.makeWarp(env, site, profile, {kind:'end'});
+        if (name === 'path::param' && !args.length) {
+            if (profile.generics && profile.generics.length !== 1)
+                return this.makeWarp(env,site,profile,{kind:'opaque',reason:'Warp path::param has an incompatible original type argument count',pathNeutral:false},undefined);
+            const type = profile.generics?.length === 1 ? profile.generics[0] : undefined;
+            return this.makeWarp(env, site, profile, {kind:'param',type,...type ? {guard:this.warpGuard(env.scope,type)} : {}}, [type ?? '?']);
+        }
+        if (name === 'path::tail' && !args.length) return this.makeWarp(env, site, profile, {kind:'tail'}, ['warp::path::Tail']);
+        if (['path::peek', 'path::full', 'method', 'method::method'].includes(name) && !args.length) return this.makeWarp(env, site, profile, {kind:'extract'}, [name]);
+        const verb = /^(?:method::)?(get|post|put|patch|delete|head|options)$/.exec(name);
+        if (verb && !args.length) return this.makeWarp(env, site, profile, {kind:'method',methods:[verb[1]!.toUpperCase()]});
+        if (/^(?:body|header|query|cookie|host|addr|fs)(?:::|$)/.test(name))
+            return this.makeWarp(env, site, profile, {kind:'opaque',reason:`Warp ${name} extraction/predicate/reply contract is unreviewed`,pathNeutral:!name.startsWith('fs::')}, undefined, false);
+        if (args.some(arg => is(arg,'router') || is(arg,'server'))) this.gap(env,site,`Original Warp value escapes into unreviewed native ${name}`);
+        return;
+    }
+    private warpTrait(env: Environment, dialect: RustRouteDialect): Evidence[] | undefined {
+        for (let current: RustScope | undefined = env.scope; current; current = current.parent) {
+            for (const imported of current.imports) {
+                if (imported.fact.kind !== 'use' || imported.fact.glob || imported.active !== true || imported.gaps.length) continue;
+                const name = imported.fact.alias ?? imported.fact.segments.at(-1)!;
+                const resolution = name === '_' ? this.symbols.resolver.path(current, imported.fact.segments, imported.fact.absolute, new Set(), 'expression') : this.symbols.resolver.path(current, [name], false, new Set(), 'expression'), profile = rustWebProfile(current, resolution);
+                if (profile?.framework === 'warp' && profile.dialect === dialect && profile.path.join('::') === 'Filter' && !profile.conditions.length) return [...profile.proof,this.fact(siteOf({...env,scope:current},imported.fact),'Original canonical Warp Filter trait import enables native source combinators')];
+            }
+        }
+        return;
+    }
+    private warpMethod(value: Router, name: string, args: Value[], env: Environment, site: Site, qualified = false): Value {
+        if (!value.warp) return;
+        const result = this.copy(value, env, site, name === 'clone'), data = result.warp!;
+        if (name === 'clone' && !args.length) return result;
+        const trait = qualified ? [this.fact(site,'Original fully-qualified canonical Warp Filter combinator')] : this.warpTrait(env,value.dialect);
+        if (!trait) result.conditions.push('Original Warp Filter trait import/method contract is unreviewed');
+        else result.proof.push(...trait);
+        if (['and','or'].includes(name) && args.length === 1) {
+            const other = is(args[0],'router') && args[0].framework === 'warp' ? args[0] : undefined;
+            let right: WarpNode = other?.warp?.node ?? {kind:'opaque',reason:'Original Warp composition operand has no reviewed source Filter summary'};
+            if (name === 'and' && data.handlers.size === 0 && data.extracts?.length === 0 && other?.warp?.handlers.size) {
+                const prefixes = warpBranches(data.node);
+                if (prefixes?.length === 1 && !prefixes[0]!.conditions.length) {
+                    const pattern = compileWarpPath(prefixes[0]!.node,result.dialect as WarpDialect);
+                    if (pattern.status === 'exact' && pattern.original.endsWith('/..')) {
+                        const prefix = pattern.original.slice(0,-3), id = this.context.graph.id('mount',result.id,other.id,prefix,String(this.ordinal(result.id+'warp-mount')));
+                        right = {kind:'mount',input:right,id,prefix,file:site.file,line:site.range.startLine};
+                        result.proof.push(this.fact(site,'Original literal Warp prefix Filter.and source handler/filter mount'));
+                    }
+                }
+            }
+            data.node = {kind:name as 'and'|'or',left:data.node,right};
+            if (other?.warp) {
+                if (other.consumed && !other.warp.copy) this.gap(env,site,'Original Warp composition operand is reused after move');
+                if (!other.warp.copy) other.consumed = true;
+                data.handlers = new Map([...data.handlers,...other.warp.handlers]);
+                result.conditions.push(...other.conditions,...other.dialect !== result.dialect ? ['Warp composition crosses reviewed native version families'] : []);
+                result.proof.push(...other.proof,this.fact(site,'Original ordered Warp source filter composition'));
+            }
+            if (name === 'and') {
+                data.extracts = data.extracts && other?.warp?.extracts ? [...data.extracts,...other.warp.extracts] : undefined;
+                data.union = undefined;
+            } else { data.union = [data.extracts,other?.warp?.extracts]; data.extracts = ['Either']; }
+            data.copy = data.copy && !!other?.warp?.copy;
+        } else if (['map','then','and_then'].includes(name) && args.length === 1) {
+            const callback = is(args[0],'callback') && !args[0].attribute ? {...args[0],awaitedReturn:name !== 'map' && !args[0].definition.fact.async} : undefined;
+            const parameters = callback?.definition.fact.parameters ?? [];
+            let parameter = 0;
+            const infer = (node: WarpNode, depth=0): WarpNode => {
+                if (depth > 64) return node;
+                if (node.kind === 'and') return {...node,left:infer(node.left,depth+1),right:infer(node.right,depth+1)};
+                if (node.kind === 'mount') return {...node,input:infer(node.input,depth+1)};
+                if (node.kind === 'param') {
+                    const type = parameters[parameter++]?.type;
+                    return node.type || !callback || type?.kind !== 'path' ? node : {...node,type:type.text,guard:this.warpGuard(callback.scope,type.text)};
+                }
+                if (['tail','extract','handler','or'].includes(node.kind)) parameter++;
+                return node;
+            };
+            const input = infer(data.node), identity = JSON.stringify([env.frame, env.owner, callback?.definition.id ?? 'unresolved']), id = this.context.graph.id('warp-handler',identity,String(this.ordinal(identity)));
+            const asyncReturn = callback && (callback.definition.fact.async || callback.definition.unit.facts.returns.some(item => item.owner === callback.definition.fact.key && item.value.kind === 'async'));
+            const typeConditions: string[] = [];
+            for (const [index,parameter] of parameters.entries()) {
+                const extracted = data.extracts?.[index], annotation = parameter.type;
+                if (!callback || !annotation || !extracted || extracted === '?') continue;
+                const from = this.warpGuard(env.scope,extracted), to = annotation.kind === 'path' ? this.warpGuard(callback.scope,annotation.text) : undefined;
+                if (from && from !== to || extracted === 'Either' && !!to) typeConditions.push('Warp callback parameter type is incompatible with the original native extraction');
+            }
+            const conditions = unique([...callback?.conditions ?? [], ...typeConditions, ...!callback ? ['Original Warp source mapper/handler is unresolved'] : [], ...callback?.definition.fact.kind === 'async' ? ['Warp mapper requires an original function/closure operand rather than an already constructed async block'] : [], ...callback?.definition.fact.generics ? ['Generic Warp callback instantiation is unreviewed'] : [], ...data.extracts === undefined || data.extracts.length !== parameters.length ? ['Warp callback extraction arity is unproven or incompatible'] : [], ...name === 'map' && asyncReturn ? ['Warp map requires a synchronous callback; a source Future is not a reviewed Reply'] : [], ...name !== 'map' && !asyncReturn ? ['Warp asynchronous callback return Future contract is unreviewed'] : []]);
+            data.node = {kind:'handler',input,id,fallible:name === 'and_then'};
+            data.handlers.set(id,{site,methods:'*',callback,conditions,proof:[...callback?.proof ?? [],this.fact(site,`Original Warp ${name} callback operand and ordered extraction contract`)],middleware:[]});
+            data.extracts = [`reply:${callback?.definition.fact.returnType?.text ?? callback?.definition.id ?? '?'}`];
+            data.union = undefined;
+            data.copy = data.copy && callback?.definition.fact.kind === 'function';
+        } else if (name === 'boxed' && !args.length) data.copy = false;
+        else if (name === 'unify' && !args.length) {
+            const [left,right] = data.union ?? [];
+            if (left && right && JSON.stringify(left) === JSON.stringify(right)) data.extracts = left;
+            else { data.extracts = undefined; result.conditions.push('Warp unify requires reviewed equal extraction types in both original branches'); }
+            data.union = undefined;
+        } else {
+            data.node = {kind:'opaque',input:data.node,reason:`Original Warp Filter ${name} wrapper/recovery/extraction transformation is unreviewed`};
+            data.extracts = undefined; data.union = undefined; data.copy = false;
+            for (const arg of args) if (is(arg,'callback')) result.middleware.push(arg.definition.id);
+        }
+        let count = 0;
+        const pending = [{node:data.node,depth:0}];
+        while (pending.length) {
+            const {node,depth} = pending.pop()!;
+            if (++count > 512 || depth > 64) {
+                data.node = {kind:'opaque',reason:'Warp filter algebra exceeds 512 nodes or 64 source composition levels'};
+                data.extracts = undefined; result.conditions.push(data.node.reason); break;
+            }
+            if (node.kind === 'and' || node.kind === 'or') pending.push({node:node.left,depth:depth+1},{node:node.right,depth:depth+1});
+            else if (node.kind === 'handler' || node.kind === 'mount' || node.kind === 'opaque' && node.input) pending.push({node:node.input!,depth:depth+1});
+        }
+        return result;
+    }
+    private warpAddress(value: Value): boolean {
+        return Array.isArray(value) && value.length === 2 && Array.isArray(value[0]) && value[0].length === 4 && value[0].every(part => typeof part === 'number' && Number.isInteger(part) && part >= 0 && part <= 255) && typeof value[1] === 'number' && Number.isInteger(value[1]) && value[1] >= 0 && value[1] <= 65535;
+    }
+    private warpServer(value: Server, name: string, args: Value[], env: Environment, site: Site): Value {
+        if (value.consumed) this.gap(env,site,'Original consuming Warp server is reused after move');
+        value.consumed = true;
+        const server: Server = {...value,consumed:false,proof:[...value.proof,this.fact(site,`Original ${value.warpDialect} server ${name} native contract`)],conditions:[...value.conditions]};
+        if (value.warpDialect === 'warp-0.4' && name === 'incoming' && args.length === 1) {
+            server.bound = is(args[0],'listener');
+            if (is(args[0],'listener')) server.proof.push(...args[0].proof);
+            else server.conditions.push('Warp incoming Acceptor/listener implementation is unreviewed');
+            return server;
+        }
+        if (value.warpDialect === 'warp-0.4' && name === 'graceful' && args.length === 1) return server;
+        if (name === 'run' && (value.bound ? value.warpDialect === 'warp-0.4' && !args.length : args.length === 1)) {
+            if (!value.bound) {
+                server.bound = this.warpAddress(args[0]);
+                if (!server.bound) server.conditions.push('Original Warp bind SocketAddr source operand is unreviewed');
+            }
+            server.running = true;
+            return {kind:'future',server};
+        }
+        if (name === 'bind' && !value.bound && args.length === 1) {
+            server.bound = this.warpAddress(args[0]);
+            if (!server.bound) server.conditions.push('Original Warp bind SocketAddr source operand is unreviewed');
+            if (value.warpDialect === 'warp-0.4') return {kind:'future',result:server};
+            server.running = true; return {kind:'future',server};
+        }
+        if (value.warpDialect === 'warp-0.3' && (name === 'bind_ephemeral' && args.length === 1 || name === 'bind_with_graceful_shutdown' && args.length === 2)) {
+            server.bound = this.warpAddress(args[0]); server.running = true;
+            if (!server.bound) server.conditions.push('Original Warp bind SocketAddr source operand is unreviewed');
+            return [undefined,{kind:'future',server}];
+        }
+        this.gap(env,site,`Unreviewed ${value.warpDialect} server ${name} or incompatible serving signature`);
+        return;
+    }
+    private emitWarp(router: Router, env: Environment, root: string, conditions: string[], proof: Evidence[]): void {
+        if (!router.warp) return;
+        const data = router.warp, branches = warpBranches(data.node);
+        const records: WarpBranch[] = branches?.filter(branch => !!branch.handler) ?? [...data.handlers.keys()].map(handler => ({node:{kind:'opaque' as const,reason:'Warp source endpoint branch budget exceeded'},handler,methods:'*' as const,conditions:['Warp source endpoint branch budget exceeded']}));
+        for (const [order,branch] of records.entries()) {
+            const original = data.handlers.get(branch.handler!);
+            if (!original) continue;
+            const route: Route = {...original,methods:branch.methods,conditions:unique([...original.conditions,...branch.conditions]),middleware:unique([...original.middleware,...router.middleware])}, pattern = compileWarpPath(branch.node,router.dialect as WarpDialect), entry: Entry = {site:route.site,path:pattern.original,routes:[],methods:'*',conditions:[],proof:router.proof,mounts:branch.mounts??[],middleware:router.middleware};
+            this.emit(router,env,root,pattern,route,entry,conditions,proof,{resource:this.context.graph.id('warp-resource',root,String(order)),resourceOrder:order,routeOrder:order},undefined,undefined,{program:data.node,handler:branch.handler!});
+        }
+        if (!records.length) this.gap(env,router.site,'Original Warp serving filter has no reviewed original response callback');
+    }
     private copy(router: Router, env: Environment, site: Site, clone = false): Router {
-        if (router.consumed && !clone)
+        const consuming = !clone && !(router.framework === 'warp' && router.warp?.copy);
+        if (router.consumed && consuming)
             this.gap(env, site, 'Original Rust consuming builder is reused after move');
-        if (!clone)
+        if (consuming)
             router.consumed = true;
-        const next: Router = { ...router, consumed: false, entries: router.entries.map(entry => ({ ...entry, routes: entry.routes.map(cloneRoute), conditions: [...entry.conditions], middleware: [...entry.middleware] })), routes: router.routes.map(cloneRoute), conditions: unique([...router.conditions, ...this.conditions(env, env.scope), ...router.consumed && clone ? ['Cloned Rust builder was already consumed'] : []]), proof: [...router.proof, this.fact(site, clone ? 'Original explicit builder clone' : 'Original consuming builder step')], middleware: [...router.middleware] };
+        const next: Router = { ...router, consumed: false, ...router.warp ? {warp:{...router.warp,handlers:new Map(router.warp.handlers)}} : {}, entries: router.entries.map(entry => ({ ...entry, routes: entry.routes.map(cloneRoute), conditions: [...entry.conditions], middleware: [...entry.middleware] })), routes: router.routes.map(cloneRoute), conditions: unique([...router.conditions, ...this.conditions(env, env.scope), ...router.consumed && clone ? ['Cloned Rust builder was already consumed'] : []]), proof: [...router.proof, this.fact(site, clone ? 'Original explicit builder clone' : 'Original consuming builder step')], middleware: [...router.middleware] };
         return next;
     }
     private method(value: Value, name: string, args: Value[], env: Environment, site: Site, expression: RustExpression & {
@@ -485,6 +711,7 @@ export class RustRegistrations {
             return;
         }
         if (is(value, 'server')) {
+            if (value.warpDialect) return this.warpServer(value, name, args, env, site);
             if (['bind', 'listen'].includes(name) && args.length === 1) {
                 value.bound = true;
                 value.proof.push(this.fact(site, `Original Actix ${name} success path`));
@@ -553,6 +780,7 @@ export class RustRegistrations {
         }
         if (!is(value, 'router'))
             return;
+        if (value.framework === 'warp') return this.warpMethod(value, name, args, env, site);
         if (value.mode === 'config')
             return this.configureMethod(value, name, args, env, site);
         if (name === 'clone' && args.length === 0 && value.framework === 'axum')
@@ -760,7 +988,9 @@ export class RustRegistrations {
         this.exposed.add(router.id);
         const root = this.context.graph.id('rust-dispatch', env.runtime, router.id, site.file, String(this.ordinal(env.runtime + router.id))), conditions = unique([...server.conditions, ...router.conditions, ...this.conditions(env, env.scope), ...this.runtimeGaps.get(env.runtime) ?? [], ...!server.bound ? ['Original native server has no reviewed bind/listener'] : []]);
         const proof = [...server.environment.proof, ...server.proof, this.fact(site, 'Original native Rust serving future is awaited on the selected source entry path')];
-        if (router.framework === 'rocket')
+        if (router.framework === 'warp')
+            this.emitWarp(router, env, root, conditions, proof);
+        else if (router.framework === 'rocket')
             this.emitRocket(router, env, root, conditions, proof);
         else if (router.framework === 'axum')
             this.emitAxum(router, env, root, conditions, proof);
@@ -897,14 +1127,14 @@ export class RustRegistrations {
         const fallback = router.fallback ?? { site: router.site, methods: guard, conditions: [], proof: [], middleware: [] };
         this.emit(router, env, root, pattern, { ...fallback, methods: guard }, entry, conditions, proof, { resource, resourceOrder: lineage.at(-1)!.order, routeOrder: router.routes.length, lineage, resourceMethods: guard, fallback: 'resource' }, covered === '*' ? METHODS : covered, router.fallback ? undefined : 405);
     }
-    private emit(router: Router, env: Environment, root: string, pattern: RoutePattern, route: Route, entry: Entry, conditions: string[], proof: Evidence[], rust: RustEndpointData, excludedMethods?: string[], status?: number): void {
+    private emit(router: Router, env: Environment, root: string, pattern: RoutePattern, route: Route, entry: Entry, conditions: string[], proof: Evidence[], rust: RustEndpointData, excludedMethods?: string[], status?: number, warp?: WarpDispatchData): void {
         if (Array.isArray(route.methods) && !route.methods.length)
             return;
         const application = env.origin.file.application?.name, parentId = application && this.context.applicationIds.get(application);
         if (!parentId)
             return;
         const constraints = unique([...conditions, ...entry.conditions, ...route.conditions, ...this.runtimeGaps.get(env.runtime) ?? [], ...pattern.status === 'partial' ? [pattern.reason ?? 'Unreviewed Rust native route syntax'] : []]), method = route.methods === '*' ? 'ALL' : route.methods.join('|'), id = this.context.graph.id('endpoint', 'rust', root, rust.resource, String(rust.routeOrder), method, pattern.original), facts = [...proof, ...entry.proof, ...route.proof, this.fact(route.site, `Original ${router.framework} ${method} ${pattern.original} under selected Cargo source context`)];
-        const contract: RoutingContract = { version: 1, pattern, methods: route.methods, ...excludedMethods?.length ? { excludedMethods: unique(excludedMethods) } : {}, executionContext: 'server', registration: { file: route.site.file, line: route.site.range.startLine, receiver: router.id }, mounts: entry.mounts, middleware: unique([...entry.middleware, ...route.middleware]), conditions: constraints, dispatch: { dialect: router.framework, root, order: rust.routeOrder }, rust };
+        const contract: RoutingContract = { version: 1, pattern, methods: route.methods, ...excludedMethods?.length ? { excludedMethods: unique(excludedMethods) } : {}, executionContext: 'server', registration: { file: route.site.file, line: route.site.range.startLine, receiver: router.id }, mounts: entry.mounts, middleware: unique([...entry.middleware, ...route.middleware]), conditions: constraints, dispatch: { dialect: router.framework, root, order: rust.routeOrder }, rust, ...warp ? {warp} : {} };
         this.context.graph.contain({ id, type: 'api_endpoint', name: `${method} ${pattern.original}`, path: route.site.file, language: 'rust', parentId, sourceRange: route.site.range, metadata: { framework: router.framework, registration: status ? 'implicit' : 'explicit', method, routePath: pattern.original, routing: contract, executionContext: 'server', compilation: env.origin.compilation.id, crate: env.origin.compilation.target.id, invocation: env.origin.compilation.invocation, qualification: 'bounded-native-source-contract', ...status ? { status, role: status === 405 ? 'method-not-allowed' : 'not-found' } : {}, ...constraints.length ? { constraintsUnresolved: true, constraints } : {} }, evidence: facts });
         this.context.graph.relate(this.context.files.get(route.site.file)!.id, id, 'routes_to', facts, { framework: router.framework, role: 'registration', compilation: env.scope.compilation.id });
         if (route.callback) {
@@ -915,12 +1145,24 @@ export class RustRegistrations {
             this.context.graph.relate(id, target, 'references', facts, { framework: router.framework, role: 'middleware' });
     }
     private sourceHandlerCalls(callback: Callback, proof: Evidence[]): void {
-        const definition = callback.definition, key = JSON.stringify([callback.scope.compilation.id, definition.id]);
+        const definition = callback.definition, key = JSON.stringify([callback.scope.compilation.id, definition.id,!!callback.awaitedReturn]);
         if (this.handlerCalls.has(key))
             return;
         this.handlerCalls.add(key);
         if (!definition.unit.facts.complete)
             return;
+        if (callback.awaitedReturn) {
+            for (const returned of definition.unit.facts.returns.filter(returned => returned.owner === definition.fact.key && !returned.conditional && returned.value.kind === 'async')) {
+                const value = this.symbols.value(callback.scope,returned.value);
+                if (value.kind !== 'future' || value.definition?.fact.kind !== 'async' || value.conditions.length) continue;
+                const scope = this.scope(value.definition.unit.file.path,value.definition.fact.scope,callback.scope);
+                if (!scope || scope.active !== true || scope.gaps.length) continue;
+                const child: Callback = {kind:'callback',definition:value.definition,scope,environment:callback.environment,proof:value.proof,conditions:value.conditions};
+                const facts = [...proof,...child.proof,this.fact(siteOf({...callback.environment,scope:callback.scope},returned.value),'Original Warp then/and_then awaits this returned source async block')];
+                this.context.graph.relate(definition.id,child.definition.id,'calls',facts,{adapter:'rust-routers',version:RUST_ROUTER_VERSION,dispatch:'direct',compilation:callback.scope.compilation.id,crate:callback.scope.compilation.target.id,invocation:callback.scope.compilation.invocation,start:returned.value.start,range:returned.value.range,owner:definition.id,target:child.definition.id,execution:'awaited-future-body'},JSON.stringify([callback.scope.compilation.id,definition.id,returned.value.start,'framework-returned-future']));
+                this.sourceHandlerCalls(child,facts);
+            }
+        }
         for (const call of definition.unit.facts.calls) {
             const scope = this.scope(definition.unit.file.path, call.scope, callback.scope);
             if (!scope || this.symbols.owner(scope) !== definition.id)

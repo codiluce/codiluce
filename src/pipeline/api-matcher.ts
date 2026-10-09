@@ -11,8 +11,9 @@ import { preferWebFluxRoutes } from '../analysis/routes/webflux-order.js';
 import { preferSpringRoutes, matchSpringParams } from '../analysis/routes/spring-patterns.js';
 import {preferRocketRoutes,matchRocketQuery} from '../analysis/routes/rocket-patterns.js';
 import { preferRustRoutes } from '../analysis/routes/rust-patterns.js';
+import { preferWarpRoutes } from '../analysis/routes/warp-patterns.js';
 export const apiMatcher: Analyzer = {
-  name: 'api-matcher', version: `${ANALYZER_VERSION}:15`,
+  name: 'api-matcher', version: `${ANALYZER_VERSION}:16`,
   async analyze(context: AnalysisContext): Promise<void> {
     const endpoints = [...context.graph.entities.values()].filter(entity => entity.type === 'api_endpoint');
     const appsById = new Map(context.config.applications.map(app => [context.applicationIds.get(app.name), app]));
@@ -82,6 +83,7 @@ export const apiMatcher: Analyzer = {
       if (origin || !candidates.some(needsOrigin)) candidates = preferWebFluxRoutes(candidates,endpoint=>contracts.get(endpoint.id));
       if ((origin || !candidates.some(needsOrigin)) && reviewedAspNetRequest(proxy ? proxyPath(proxy,pathname):pathname)) candidates=preferAspNetRoutes(candidates,endpoint=>contracts.get(endpoint.id));
       if (origin || !candidates.some(needsOrigin)) candidates=preferRocketRoutes(preferRustRoutes(candidates,endpoints,endpoint=>contracts.get(endpoint.id),endpoint=>observedConstraints(endpoint,origin,new URLSearchParams(search))&&matchPath(endpoint,proxy?proxyPath(proxy,pathname):pathname),observation.method),endpoint=>contracts.get(endpoint.id),observation.method);
+      if (origin || !candidates.some(needsOrigin)) candidates=preferWarpRoutes(candidates,endpoint=>contracts.get(endpoint.id),proxy?proxyPath(proxy,pathname):pathname,observation.method);
       // Keep constrained candidates in ambiguity detection: ignoring one could
       // falsely select another route with the same HTTP method/path.
       if (candidates.length !== 1 || candidates[0]!.metadata.constraintsUnresolved || !!contracts.get(candidates[0]!.id)?.aspnet&&!reviewedAspNetRequest(proxy?proxyPath(proxy,pathname):pathname) || !origin && needsOrigin(candidates[0]!)) {
@@ -140,6 +142,7 @@ export const apiMatcher: Analyzer = {
       if (!resolved.holes && !pattern.includes('{*}') && loose.every(hostKnown)) { strict = preferWebFluxRoutes(strict,endpoint=>contracts.get(endpoint.id)); loose = preferWebFluxRoutes(loose,endpoint=>contracts.get(endpoint.id)); }
       if (!resolved.holes && !pattern.includes('{*}') && loose.every(hostKnown) && reviewedAspNetRequest(pattern)) { strict=preferAspNetRoutes(strict,endpoint=>contracts.get(endpoint.id));loose=preferAspNetRoutes(loose,endpoint=>contracts.get(endpoint.id)); }
       if (!resolved.holes && !pattern.includes('{*}') && loose.every(hostKnown)) { strict=preferRocketRoutes(preferRustRoutes(strict,endpoints,endpoint=>contracts.get(endpoint.id),endpoint=>matchPath(endpoint,pattern),observation.method!),endpoint=>contracts.get(endpoint.id),observation.method!);loose=preferRocketRoutes(preferRustRoutes(loose,endpoints,endpoint=>contracts.get(endpoint.id),endpoint=>matchPath(endpoint,pattern,false),observation.method!),endpoint=>contracts.get(endpoint.id),observation.method!); }
+      if (!resolved.holes && !pattern.includes('{*}') && loose.every(hostKnown)) { strict=preferWarpRoutes(strict,endpoint=>contracts.get(endpoint.id),pattern,observation.method!);loose=preferWarpRoutes(loose,endpoint=>contracts.get(endpoint.id),pattern,observation.method!,false); }
       const label = `${observation.method} ${resolved.pattern}${resolved.app ? ` on ${resolved.app}` : ''}`;
       if (strict.length !== 1 || loose.length !== 1 || strict[0]!.metadata.constraintsUnresolved || !!contracts.get(strict[0]!.id)?.aspnet&&!reviewedAspNetRequest(pattern) || strict[0] && !hostKnown(strict[0])) {
         const reason = loose.length > strict.length ? `${label}: a dynamic segment could also equal a literal route segment (${loose.filter(item => !strict.includes(item)).map(item => item.name).join(', ')})` : `${label}: ${strict.length} eligible endpoints${strict[0]?.metadata.constraintsUnresolved ? '; route constraints unresolved' : ''}`;
