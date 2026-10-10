@@ -192,6 +192,34 @@
         "sdkSha256": "87d1d1a2879d139cdc624b968efad3d4a97b8078cdff95e63ac88ecafd1a0171",
         "container": "ubuntu@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55"
       }
+    },
+    {
+      "language": "fsharp",
+      "file": "tree-sitter-fsharp.wasm",
+      "sha256": "ff1a927387fec25e184d120d9e18ec7cd5271b30f6380f02d494d3548a99f7b7",
+      "abi": 15,
+      "artifactPackage": "upstream-release",
+      "artifactVersion": "0.3.12",
+      "artifactPath": "tree-sitter-fsharp.wasm",
+      "artifactUrl": "https://github.com/ionide/tree-sitter-fsharp/releases/download/0.3.12/tree-sitter-fsharp.wasm",
+      "source": "https://github.com/ionide/tree-sitter-fsharp",
+      "sourceRevision": "aefd0c8741bdf3aeb827a228aa4a996a6536697e",
+      "license": "MIT",
+      "licenseFile": "licenses/fsharp.txt"
+    },
+    {
+      "language": "fsharp-signature",
+      "file": "tree-sitter-fsharp_signature.wasm",
+      "sha256": "23de7d67ae268119f524ad361806773ae8df5c0d54af02b738e60897f9c4cdb5",
+      "abi": 15,
+      "artifactPackage": "upstream-release",
+      "artifactVersion": "0.3.12",
+      "artifactPath": "tree-sitter-fsharp_signature.wasm",
+      "artifactUrl": "https://github.com/ionide/tree-sitter-fsharp/releases/download/0.3.12/tree-sitter-fsharp_signature.wasm",
+      "source": "https://github.com/ionide/tree-sitter-fsharp",
+      "sourceRevision": "aefd0c8741bdf3aeb827a228aa4a996a6536697e",
+      "license": "MIT",
+      "licenseFile": "licenses/fsharp.txt"
     }
   ]
 }

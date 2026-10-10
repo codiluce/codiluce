@@ -9,7 +9,7 @@ the authoritative parsers for their languages.
 version, SHA-256, language ABI and license. Six artifacts come from the pinned
 VS Code grammar bundle; Kotlin, C, C++ and Objective-C come from their upstream grammar packages. The
 bundle's build revision and each upstream license are retained here. Swift 0.7.3 and Scala 0.26.2 come from pinned upstream release WASM assets,
-with immutable source revisions and artifact URLs/checksums; these are not npm artifacts. The
+with immutable source revisions and artifact URLs/checksums; these are not npm artifacts. F# uses the distinct upstream 0.3.12 implementation/signature releases (ABI 15), with the original MIT notice. The public language stays `fsharp`; `.fsi` selects `fsharp-signature`, while `.fs`/`.fsx` select `fsharp`. Both artifact/query hashes participate in cache identity. The
 runtime is pinned in `package.json` and the manifest. Groovy uses generated C from the
 community `@dekobon/tree-sitter-groovy` 0.3.0 package, built once with pinned
 Tree-sitter CLI 0.26.9, wasi-sdk 29.0 and a Linux container digest. Its MIT license
@@ -18,8 +18,8 @@ container and rebuild script; its WASM is a source build, not an upstream WASM r
 
 `npm run grammars:sync` restores the ten npm WASM artifacts from installed
 development dependencies after verifying versions/checksums, and verifies the
-committed Swift/Scala release assets and source-built Groovy asset. It runs offline and compiles nothing. To restore
-the Swift/Scala release assets explicitly, run
+committed Swift/Scala/F# source and signature release assets and source-built Groovy asset. It runs offline and compiles nothing. To restore
+the Swift/Scala/F# source and signature release assets explicitly, run
 `npm run grammars:sync -- --download-releases`; this downloads the pinned URL
 and verifies its checksum before writing it. Normal CLI builds verify and copy this directory
 to `dist/grammars/`. An installed package loads it relative to its own module,
@@ -198,3 +198,21 @@ only its files. Twenty-nine cases and the
 [original Groovy source audit](../docs/groovy-source-accuracy.html) cover the initial
 subset and negative profiles, including ten deliberately omitted FileTreeBuilder
 members. Wider grammar/source accuracy and native OS qualification remain open.
+
+F# source/signature profiles retain original namespaces/modules, clear bindings,
+records/fields/unions/cases/named payloads, enums/exceptions/delegates, explicit
+class/struct/member/property/new-constructor headers, operators/active patterns,
+source attributes/directives and original extension/interface context. No compiler/FSI,
+project build, signature/implementation merge, assembly load, type provider,
+quotation execution or compiler-created CLR entity is inferred.
+
+Qualification remains bounded: class signatures, equality constraints and newer
+nullable types have known grammar gaps. Bare single-case union/type aliases and
+capitalized binding/pattern heads retain explicit ambiguity gaps. External declarations
+and named functions inside anonymous lambdas/computations remain unqualified. An
+upstream WASM trap on a 1,000-statement function fails its own file; the process is
+discarded before later jobs. Thirty-three conformance cases and the
+[original F# source/signature audit](../docs/fsharp-source-accuracy.html) preserve
+147/158 reviewed declarations, with eleven documented omissions and zero extras.
+Broader source accuracy, project/import binding and native-platform/mixed-memory
+qualification remain open.

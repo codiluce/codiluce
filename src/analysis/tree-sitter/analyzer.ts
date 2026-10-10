@@ -9,7 +9,7 @@ import { fileKey } from '../../pipeline/cache.js';
 import { IndexedSources } from '../indexed-sources.js';
 import {objectiveCppSource} from './objc-cpp.js';
 
-export const STRUCTURE_VERSION = `${ANALYZER_VERSION}:${GRAMMAR_CATALOG_VERSION}:48`;
+export const STRUCTURE_VERSION = `${ANALYZER_VERSION}:${GRAMMAR_CATALOG_VERSION}:49`;
 export const analysisRegistry = new AnalysisRegistry();
 analysisRegistry.registerLanguage({ id: 'typescript', version: ANALYZER_VERSION, languages: ['typescript', 'javascript'], features: { structure: 'supported', imports: 'partial', references: 'partial', effects: 'partial', guards: 'supported' } });
 analysisRegistry.registerLanguage({ id: 'php', version: ANALYZER_VERSION, languages: ['php'], features: { structure: 'partial', imports: 'partial', references: 'partial', effects: 'partial', guards: 'supported' } });
@@ -23,7 +23,7 @@ export const structureAnalyzer: Analyzer = {
     const integrity = new Map<string, string | undefined>();
     try {
       for (const file of [...context.files.values()].sort((a, b) => a.path.localeCompare(b.path, 'en'))) {
-        const grammar = grammarCatalog.get(file.language ?? '');
+        const grammar = grammarCatalog.get(file.language==='fsharp'&&file.path.toLowerCase().endsWith('.fsi')?'fsharp-signature':file.language ?? '');
         if (!(STRUCTURAL_LANGUAGES as readonly string[]).includes(file.language ?? '') || !file.analyzable) continue;
         const fileEntity = context.graph.entities.get(file.id)!;
         const analysis: FileAnalysis = {
@@ -58,6 +58,7 @@ export const structureAnalyzer: Analyzer = {
           if(facts.swift)fileEntity.metadata.swiftSyntax=facts.swift;
           if(facts.scala)fileEntity.metadata.scalaSyntax=facts.scala;
           if(facts.groovy)fileEntity.metadata.groovySyntax=facts.groovy;
+          if(facts.fsharp)fileEntity.metadata.fsharpSyntax=facts.fsharp;
           if(facts.objc)fileEntity.metadata.objcSyntax={...facts.objc,sourceProfile:objectiveCpp?'objective-cpp-partial':'objective-c'};
           if (facts.python || facts.go || facts.ruby || facts.jvm || facts.csharp || facts.rust) { context.syntax ??= new Map(); context.syntax.set(file.path, { facts, declarations }); }
           analysis.features.structure = { status: facts.issues.length ? 'partial' : 'supported', ...(facts.issues.length ? { reason: `${facts.issues.length} syntax or extraction finding(s); valid declarations retained` } : {}) };

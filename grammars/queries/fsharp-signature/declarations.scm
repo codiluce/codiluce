@@ -1,0 +1,1 @@
+[(namespace) (named_module) (module_defn) (module_abbrev) (type_definition) (function_or_value_defn) (member_defn) (record_field) (union_type_case) (union_type_field) (enum_type_case) (exception_definition) (value_definition)] @declaration

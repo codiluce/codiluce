@@ -123,6 +123,7 @@ test('capability outcomes distinguish parsed, failed, type-input, skipped and un
     'large.py': 'x'.repeat(129),
     'example.swift': 'func run() {}',
     'example.fs': 'let run () = 1',
+    'example.vb': 'Module Example\nEnd Module',
     'example.php': '<?php function run() {}',
   });
   const graph = await indexRepository(root, { config: { ...await config(root), maxFileBytes: 128 } });
@@ -139,6 +140,7 @@ test('capability outcomes distinguish parsed, failed, type-input, skipped and un
   assert.equal(analysis('large.py').features.structure.status, 'disabled');
   assert.equal(analysis('example.swift').features.structure.status, 'supported');
   assert.equal(analysis('example.swift').features.imports.status, 'unsupported');
-  assert.equal(analysis('example.fs').features.structure.status, 'unsupported');
+  assert.equal(analysis('example.fs').features.structure.status, 'supported');
+  assert.equal(analysis('example.vb').features.structure.status, 'unsupported');
   assert.equal(analysis('example.php').features.structure.status, 'disabled');
 });

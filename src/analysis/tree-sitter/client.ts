@@ -30,7 +30,12 @@ export class StructureParser {
       const message = (result: { id: number; facts?: StructureFacts; error?: string }) => {
         if (result.id !== id) return;
         cleanup();
-        if (result.error || !result.facts) reject(new Error(result.error ?? 'Invalid parser result'));
+        if (result.error || !result.facts) {
+          // A WASM trap can leave the runtime/loaded parsers unusable. Never
+          // reuse that process for the next file, even after a caught error.
+          if (this.child === child) this.close();
+          reject(new Error(result.error ?? 'Invalid parser result'));
+        }
         else resolve(result.facts);
       };
       const timer = setTimeout(() => failure(new Error(`Parser exceeded ${this.timeoutMs} ms for ${language}`)), this.timeoutMs);

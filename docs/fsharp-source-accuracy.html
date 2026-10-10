@@ -1,0 +1,4244 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>F# original source/signature qualification</title><style>body{font:16px/1.6 system-ui,sans-serif;background:#101822;color:#e5ecf4;margin:0;padding:clamp(16px,4vw,48px)}main{max-width:1120px;margin:auto}p{overflow-wrap:anywhere}h1{font-size:clamp(28px,5vw,42px);line-height:1.2}a,code{color:#8bddd8}code{overflow-wrap:anywhere}table{border-collapse:collapse;width:100%;min-width:650px}th,td{padding:12px;text-align:left;border-bottom:1px solid #344353}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}.scroll{overflow:auto}.status{padding:18px;border:1px solid #688c8d;border-radius:8px}summary{cursor:pointer;padding:12px 0}</style></head><body><main><h1>F# original source/signature qualification</h1><p>P10b4a · 2026-10-10T21:36:01.539Z · v22.12.0 · linux/x64. Immutable dotnet/fsharp v14.0.100 bytes, recorded SHA-256, independent original name/kind/name-line inventories, exact UTF-16 ranges and actual syntax-cache replay.</p><p class="status"><strong>147/158 reviewed original declarations · 11 documented omissions · 0 extras</strong><br>The separate upstream 0.3.12 implementation and signature WASM profiles preserve original FSharp.Core namespaces/modules/functions. Overall reviewed coverage is 93.0%. This bounded four-file portfolio does not establish broad F# accuracy or compiler compatibility.</p><div class="scroll"><table><thead><tr><th>Original immutable file</th><th>Retained/reviewed</th><th>Missed</th><th>Structure</th></tr></thead><tbody><tr><td><a href="https://github.com/dotnet/fsharp/blob/2cb9ee0a5d63b52ad7bfbd9364b90b991a26fd72/src/FSharp.Core/result.fs">src/FSharp.Core/result.fs</a></td><td>20/20</td><td>0</td><td>supported</td></tr><tr><td><a href="https://github.com/dotnet/fsharp/blob/2cb9ee0a5d63b52ad7bfbd9364b90b991a26fd72/src/FSharp.Core/result.fsi">src/FSharp.Core/result.fsi</a></td><td>19/20</td><td>1</td><td>partial</td></tr><tr><td><a href="https://github.com/dotnet/fsharp/blob/2cb9ee0a5d63b52ad7bfbd9364b90b991a26fd72/src/FSharp.Core/option.fs">src/FSharp.Core/option.fs</a></td><td>55/59</td><td>4</td><td>partial</td></tr><tr><td><a href="https://github.com/dotnet/fsharp/blob/2cb9ee0a5d63b52ad7bfbd9364b90b991a26fd72/src/FSharp.Core/option.fsi">src/FSharp.Core/option.fsi</a></td><td>53/59</td><td>6</td><td>partial</td></tr></tbody></table></div><p>The source Result module retains all 20 original declarations. Signature equality constraints omit contains in Result and both Option/ValueOption modules. Newer nullable-ofObj/toObj syntax omits four source and four signature functions. Every omission remains in the denominator and raw proof below; source after these errors retains exact lexical ownership. Cold/warm/revision modes agree, with four actual syntax-fact cache hits. Source and signature facts remain separate declarations; project compile order, agreement, assemblies, imports, references, effects and framework binding remain unverified.</p><p>The conformance profile additionally preserves original records/fields, native unions/cases/named payloads, enums, exceptions, classes/structs/methods/properties, explicit accessor headers, source new constructors, operators, active patterns, clear value patterns, source attributes, conditional alternatives and type-extension/interface implementation context. No implicit filename module, generated CLR module/type/union helper, accessor method, compiler-facing CompiledName symbol, type provider or quotation is expanded. Load/reference/search-path directives retain explicit source-only gaps.</p><p>External declarations and named bindings inside anonymous lambdas/computations retain explicit qualification/owner gaps. Known grammar limits remain visible: common valid class signatures fail; a single bare alias/union case is ambiguous and emits only the original type; capitalized binding heads may be constructor patterns and are omitted. A stress function with 1,000 statements traps the upstream WASM. Such a file fails explicitly and the parser process is discarded before later files. These limits prevent a broad beta/full-language claim. The <a href="https://github.com/ionide/tree-sitter-fsharp/tree/aefd0c8741bdf3aeb827a228aa4a996a6536697e">pinned grammar source</a>, <a href="https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/signature-files">signature contract</a> and <a href="https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/discriminated-unions">original union syntax</a> explain the source/compiler boundaries.</p><h2>Grammar startup on this Linux host</h2><p>Medians of three fresh direct parser processes per profile, reading original Result.fs/Result.fsi. Source/signature assets are 11,430,318/2,695,892 bytes and ABI 15. Linux /proc VmHWM measures the process image since exec; kernel RSS accounting can be approximate. Startup, worker IPC and whole-index child/tree memory are excluded. This records parser cost, without a production/native-platform budget guarantee.</p><ul><li>implementation: runtime initialization 9.5 ms, grammar load 19.5 ms, first parse/extraction 57.1 ms, process-image peak 174.7 MiB.</li><li>signature: runtime initialization 9.3 ms, grammar load 7.5 ms, first parse/extraction 54.8 ms, process-image peak 145.5 MiB.</li></ul><p><a href="fsharp-compatibility-performance.html">Five-run existing TS/Laravel regression</a> measures existing workloads separately. Native macOS/Windows qualification, broader original F# accuracy and full mixed-history/memory budgets remain P10 gates. Next: VB.NET grammar qualification and Razor/ERB/Liquid original regions.</p><p>Implementation digest (source, grammar assets/catalog/queries, dependency pins and audit/memory driver): <code>669fc84d960d35ebefc7faf25155bd55939686fda4d405ce75be5c16a71e3b15</code>.</p><p>Reproduce: <code>node --experimental-sqlite --import tsx scripts/qualify-fsharp-source.mjs --output docs/fsharp-source-accuracy.html</code>. Optional <code>--source DIRECTORY</code> verifies identical source hashes under the displayed paths. <a href="language-framework-compatibility.html#implementation">Implementation roadmap</a></p><details><summary>Independent inventory, omissions, ranges, source hashes and raw startup measurements</summary><pre>{
+  &quot;phase&quot;: &quot;P10b4a&quot;,
+  &quot;measuredAt&quot;: &quot;2026-10-10T21:36:01.539Z&quot;,
+  &quot;baseline&quot;: &quot;3e49248&quot;,
+  &quot;implementationDigest&quot;: &quot;669fc84d960d35ebefc7faf25155bd55939686fda4d405ce75be5c16a71e3b15&quot;,
+  &quot;node&quot;: &quot;v22.12.0&quot;,
+  &quot;platform&quot;: &quot;linux/x64&quot;,
+  &quot;memoryMethod&quot;: &quot;linux-proc-vmhwm&quot;,
+  &quot;reviewedSourceDeclarations&quot;: 158,
+  &quot;matchedDeclarations&quot;: 147,
+  &quot;missedDeclarations&quot;: 11,
+  &quot;extraDeclarations&quot;: 0,
+  &quot;coldWarmEqual&quot;: true,
+  &quot;revisionModeEqual&quot;: true,
+  &quot;syntaxFactCacheHits&quot;: 4,
+  &quot;startup&quot;: [
+    {
+      &quot;profile&quot;: &quot;implementation&quot;,
+      &quot;repetitions&quot;: 3,
+      &quot;median&quot;: {
+        &quot;runtimeMs&quot;: 9.549061999999992,
+        &quot;grammarLoadMs&quot;: 19.528142000000003,
+        &quot;firstExtractionMs&quot;: 57.13646299999999,
+        &quot;peakRssKiB&quot;: 178852
+      },
+      &quot;runs&quot;: [
+        {
+          &quot;runtimeMs&quot;: 9.549061999999992,
+          &quot;grammarLoadMs&quot;: 19.528142000000003,
+          &quot;firstExtractionMs&quot;: 57.13646299999999,
+          &quot;peakRssKiB&quot;: 178268
+        },
+        {
+          &quot;runtimeMs&quot;: 9.244494000000003,
+          &quot;grammarLoadMs&quot;: 18.103242999999992,
+          &quot;firstExtractionMs&quot;: 65.181757,
+          &quot;peakRssKiB&quot;: 185512
+        },
+        {
+          &quot;runtimeMs&quot;: 9.824895999999995,
+          &quot;grammarLoadMs&quot;: 20.601642,
+          &quot;firstExtractionMs&quot;: 56.47783099999998,
+          &quot;peakRssKiB&quot;: 178852
+        }
+      ]
+    },
+    {
+      &quot;profile&quot;: &quot;signature&quot;,
+      &quot;repetitions&quot;: 3,
+      &quot;median&quot;: {
+        &quot;runtimeMs&quot;: 9.26521200000002,
+        &quot;grammarLoadMs&quot;: 7.472996000000023,
+        &quot;firstExtractionMs&quot;: 54.82887699999998,
+        &quot;peakRssKiB&quot;: 148964
+      },
+      &quot;runs&quot;: [
+        {
+          &quot;runtimeMs&quot;: 9.26521200000002,
+          &quot;grammarLoadMs&quot;: 7.472996000000023,
+          &quot;firstExtractionMs&quot;: 60.572986000000014,
+          &quot;peakRssKiB&quot;: 147828
+        },
+        {
+          &quot;runtimeMs&quot;: 12.575334999999995,
+          &quot;grammarLoadMs&quot;: 8.638069999999999,
+          &quot;firstExtractionMs&quot;: 54.82887699999998,
+          &quot;peakRssKiB&quot;: 150860
+        },
+        {
+          &quot;runtimeMs&quot;: 9.238673000000006,
+          &quot;grammarLoadMs&quot;: 7.295488000000006,
+          &quot;firstExtractionMs&quot;: 54.14925599999998,
+          &quot;peakRssKiB&quot;: 148964
+        }
+      ]
+    }
+  ],
+  &quot;results&quot;: [
+    {
+      &quot;repo&quot;: &quot;dotnet/fsharp&quot;,
+      &quot;version&quot;: &quot;v14.0.100&quot;,
+      &quot;commit&quot;: &quot;2cb9ee0a5d63b52ad7bfbd9364b90b991a26fd72&quot;,
+      &quot;file&quot;: &quot;src/FSharp.Core/result.fs&quot;,
+      &quot;sha256&quot;: &quot;0cf84dbc6ef243e25554e81aea037b753acd020cb5ce38873fb8a4d1f4962073&quot;,
+      &quot;expected&quot;: [
+        [
+          3,
+          &quot;Microsoft.FSharp.Core&quot;,
+          &quot;namespace&quot;
+        ],
+        [
+          6,
+          &quot;Result&quot;,
+          &quot;module&quot;
+        ],
+        [
+          9,
+          &quot;map&quot;,
+          &quot;function&quot;
+        ],
+        [
+          15,
+          &quot;mapError&quot;,
+          &quot;function&quot;
+        ],
+        [
+          21,
+          &quot;bind&quot;,
+          &quot;function&quot;
+        ],
+        [
+          27,
+          &quot;isOk&quot;,
+          &quot;function&quot;
+        ],
+        [
+          33,
+          &quot;isError&quot;,
+          &quot;function&quot;
+        ],
+        [
+          39,
+          &quot;defaultValue&quot;,
+          &quot;function&quot;
+        ],
+        [
+          45,
+          &quot;defaultWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          51,
+          &quot;count&quot;,
+          &quot;function&quot;
+        ],
+        [
+          57,
+          &quot;fold&quot;,
+          &quot;function&quot;
+        ],
+        [
+          63,
+          &quot;foldBack&quot;,
+          &quot;function&quot;
+        ],
+        [
+          69,
+          &quot;exists&quot;,
+          &quot;function&quot;
+        ],
+        [
+          75,
+          &quot;forall&quot;,
+          &quot;function&quot;
+        ],
+        [
+          81,
+          &quot;contains&quot;,
+          &quot;function&quot;
+        ],
+        [
+          87,
+          &quot;iter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          93,
+          &quot;toArray&quot;,
+          &quot;function&quot;
+        ],
+        [
+          99,
+          &quot;toList&quot;,
+          &quot;function&quot;
+        ],
+        [
+          105,
+          &quot;toOption&quot;,
+          &quot;function&quot;
+        ],
+        [
+          111,
+          &quot;toValueOption&quot;,
+          &quot;function&quot;
+        ]
+      ],
+      &quot;omitted&quot;: [],
+      &quot;status&quot;: &quot;supported&quot;,
+      &quot;url&quot;: &quot;https://github.com/dotnet/fsharp/blob/2cb9ee0a5d63b52ad7bfbd9364b90b991a26fd72/src/FSharp.Core/result.fs&quot;,
+      &quot;matched&quot;: [
+        [
+          3,
+          &quot;Microsoft.FSharp.Core&quot;,
+          &quot;namespace&quot;
+        ],
+        [
+          6,
+          &quot;Result&quot;,
+          &quot;module&quot;
+        ],
+        [
+          9,
+          &quot;map&quot;,
+          &quot;function&quot;
+        ],
+        [
+          15,
+          &quot;mapError&quot;,
+          &quot;function&quot;
+        ],
+        [
+          21,
+          &quot;bind&quot;,
+          &quot;function&quot;
+        ],
+        [
+          27,
+          &quot;isOk&quot;,
+          &quot;function&quot;
+        ],
+        [
+          33,
+          &quot;isError&quot;,
+          &quot;function&quot;
+        ],
+        [
+          39,
+          &quot;defaultValue&quot;,
+          &quot;function&quot;
+        ],
+        [
+          45,
+          &quot;defaultWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          51,
+          &quot;count&quot;,
+          &quot;function&quot;
+        ],
+        [
+          57,
+          &quot;fold&quot;,
+          &quot;function&quot;
+        ],
+        [
+          63,
+          &quot;foldBack&quot;,
+          &quot;function&quot;
+        ],
+        [
+          69,
+          &quot;exists&quot;,
+          &quot;function&quot;
+        ],
+        [
+          75,
+          &quot;forall&quot;,
+          &quot;function&quot;
+        ],
+        [
+          81,
+          &quot;contains&quot;,
+          &quot;function&quot;
+        ],
+        [
+          87,
+          &quot;iter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          93,
+          &quot;toArray&quot;,
+          &quot;function&quot;
+        ],
+        [
+          99,
+          &quot;toList&quot;,
+          &quot;function&quot;
+        ],
+        [
+          105,
+          &quot;toOption&quot;,
+          &quot;function&quot;
+        ],
+        [
+          111,
+          &quot;toValueOption&quot;,
+          &quot;function&quot;
+        ]
+      ],
+      &quot;missed&quot;: [],
+      &quot;findings&quot;: 0,
+      &quot;proof&quot;: [
+        {
+          &quot;key&quot;: &quot;fsharp:125:3254:namespace:135&quot;,
+          &quot;name&quot;: &quot;Microsoft.FSharp.Core&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core&quot;,
+          &quot;kind&quot;: &quot;namespace&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 3,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 114,
+            &quot;endColumn&quot;: 30
+          },
+          &quot;start&quot;: 125,
+          &quot;end&quot;: 3254,
+          &quot;nameEnd&quot;: 156,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;parent&quot;: &quot;fsharp:125:3254:namespace:135&quot;,
+          &quot;name&quot;: &quot;Result&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result&quot;,
+          &quot;kind&quot;: &quot;module&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 5,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 114,
+            &quot;endColumn&quot;: 30
+          },
+          &quot;start&quot;: 158,
+          &quot;end&quot;: 3254,
+          &quot;nameEnd&quot;: 246,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:286:421:function:293&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;map&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.map&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 9,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 12,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;start&quot;: 286,
+          &quot;end&quot;: 421,
+          &quot;nameEnd&quot;: 296,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:464:604:function:471&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;mapError&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.mapError&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 15,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 18,
+            &quot;endColumn&quot;: 23
+          },
+          &quot;start&quot;: 464,
+          &quot;end&quot;: 604,
+          &quot;nameEnd&quot;: 479,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:643:773:function:650&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;bind&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.bind&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 21,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 24,
+            &quot;endColumn&quot;: 27
+          },
+          &quot;start&quot;: 643,
+          &quot;end&quot;: 773,
+          &quot;nameEnd&quot;: 654,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:812:908:function:819&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;isOk&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.isOk&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 30,
+            &quot;endColumn&quot;: 27
+          },
+          &quot;start&quot;: 812,
+          &quot;end&quot;: 908,
+          &quot;nameEnd&quot;: 823,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:950:1049:function:957&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;isError&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.isError&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 33,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 36,
+            &quot;endColumn&quot;: 26
+          },
+          &quot;start&quot;: 950,
+          &quot;end&quot;: 1049,
+          &quot;nameEnd&quot;: 964,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:1096:1203:function:1103&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;defaultValue&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.defaultValue&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 39,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 42,
+            &quot;endColumn&quot;: 20
+          },
+          &quot;start&quot;: 1096,
+          &quot;end&quot;: 1203,
+          &quot;nameEnd&quot;: 1115,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:1249:1392:function:1256&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;defaultWith&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.defaultWith&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 45,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 48,
+            &quot;endColumn&quot;: 20
+          },
+          &quot;start&quot;: 1249,
+          &quot;end&quot;: 1392,
+          &quot;nameEnd&quot;: 1267,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:1432:1522:function:1439&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;count&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.count&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 51,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 54,
+            &quot;endColumn&quot;: 20
+          },
+          &quot;start&quot;: 1432,
+          &quot;end&quot;: 1522,
+          &quot;nameEnd&quot;: 1444,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:1561:1753:function:1568&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;fold&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.fold&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 57,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 60,
+            &quot;endColumn&quot;: 33
+          },
+          &quot;start&quot;: 1561,
+          &quot;end&quot;: 1753,
+          &quot;nameEnd&quot;: 1572,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:1796:1992:function:1803&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;foldBack&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.foldBack&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 63,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 66,
+            &quot;endColumn&quot;: 33
+          },
+          &quot;start&quot;: 1796,
+          &quot;end&quot;: 1992,
+          &quot;nameEnd&quot;: 1811,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:2033:2169:function:2040&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;exists&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.exists&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 69,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 72,
+            &quot;endColumn&quot;: 30
+          },
+          &quot;start&quot;: 2033,
+          &quot;end&quot;: 2169,
+          &quot;nameEnd&quot;: 2046,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:2210:2345:function:2217&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;forall&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.forall&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 75,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 78,
+            &quot;endColumn&quot;: 30
+          },
+          &quot;start&quot;: 2210,
+          &quot;end&quot;: 2345,
+          &quot;nameEnd&quot;: 2223,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:2388:2499:function:2395&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;contains&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.contains&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 81,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 84,
+            &quot;endColumn&quot;: 28
+          },
+          &quot;start&quot;: 2388,
+          &quot;end&quot;: 2499,
+          &quot;nameEnd&quot;: 2403,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:2541:2666:function:2548&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;iter&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.iter&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 87,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 90,
+            &quot;endColumn&quot;: 27
+          },
+          &quot;start&quot;: 2541,
+          &quot;end&quot;: 2666,
+          &quot;nameEnd&quot;: 2552,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:2708:2809:function:2715&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;toArray&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.toArray&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 93,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 96,
+            &quot;endColumn&quot;: 26
+          },
+          &quot;start&quot;: 2708,
+          &quot;end&quot;: 2809,
+          &quot;nameEnd&quot;: 2722,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:2850:2946:function:2857&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;toList&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.toList&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 99,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 102,
+            &quot;endColumn&quot;: 24
+          },
+          &quot;start&quot;: 2850,
+          &quot;end&quot;: 2946,
+          &quot;nameEnd&quot;: 2863,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:2989:3090:function:2996&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;toOption&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.toOption&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 105,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 108,
+            &quot;endColumn&quot;: 25
+          },
+          &quot;start&quot;: 2989,
+          &quot;end&quot;: 3090,
+          &quot;nameEnd&quot;: 3004,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:3138:3254:function:3145&quot;,
+          &quot;parent&quot;: &quot;fsharp:158:3254:module:240&quot;,
+          &quot;name&quot;: &quot;toValueOption&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.toValueOption&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 111,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 114,
+            &quot;endColumn&quot;: 30
+          },
+          &quot;start&quot;: 3138,
+          &quot;end&quot;: 3254,
+          &quot;nameEnd&quot;: 3158,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        }
+      ]
+    },
+    {
+      &quot;repo&quot;: &quot;dotnet/fsharp&quot;,
+      &quot;version&quot;: &quot;v14.0.100&quot;,
+      &quot;commit&quot;: &quot;2cb9ee0a5d63b52ad7bfbd9364b90b991a26fd72&quot;,
+      &quot;file&quot;: &quot;src/FSharp.Core/result.fsi&quot;,
+      &quot;sha256&quot;: &quot;5fb059daf929ddf31c2663544d225640d72b353fd3bd483f363686f474925c39&quot;,
+      &quot;expected&quot;: [
+        [
+          3,
+          &quot;Microsoft.FSharp.Core&quot;,
+          &quot;namespace&quot;
+        ],
+        [
+          11,
+          &quot;Result&quot;,
+          &quot;module&quot;
+        ],
+        [
+          28,
+          &quot;map&quot;,
+          &quot;function&quot;
+        ],
+        [
+          45,
+          &quot;mapError&quot;,
+          &quot;function&quot;
+        ],
+        [
+          70,
+          &quot;bind&quot;,
+          &quot;function&quot;
+        ],
+        [
+          84,
+          &quot;isOk&quot;,
+          &quot;function&quot;
+        ],
+        [
+          99,
+          &quot;isError&quot;,
+          &quot;function&quot;
+        ],
+        [
+          115,
+          &quot;defaultValue&quot;,
+          &quot;function&quot;
+        ],
+        [
+          132,
+          &quot;defaultWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          147,
+          &quot;count&quot;,
+          &quot;function&quot;
+        ],
+        [
+          166,
+          &quot;fold&quot;,
+          &quot;function&quot;
+        ],
+        [
+          186,
+          &quot;foldBack&quot;,
+          &quot;function&quot;
+        ],
+        [
+          205,
+          &quot;exists&quot;,
+          &quot;function&quot;
+        ],
+        [
+          223,
+          &quot;forall&quot;,
+          &quot;function&quot;
+        ],
+        [
+          240,
+          &quot;contains&quot;,
+          &quot;function&quot;
+        ],
+        [
+          254,
+          &quot;iter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          269,
+          &quot;toArray&quot;,
+          &quot;function&quot;
+        ],
+        [
+          284,
+          &quot;toList&quot;,
+          &quot;function&quot;
+        ],
+        [
+          299,
+          &quot;toOption&quot;,
+          &quot;function&quot;
+        ],
+        [
+          314,
+          &quot;toValueOption&quot;,
+          &quot;function&quot;
+        ]
+      ],
+      &quot;omitted&quot;: [
+        240
+      ],
+      &quot;status&quot;: &quot;partial&quot;,
+      &quot;url&quot;: &quot;https://github.com/dotnet/fsharp/blob/2cb9ee0a5d63b52ad7bfbd9364b90b991a26fd72/src/FSharp.Core/result.fsi&quot;,
+      &quot;matched&quot;: [
+        [
+          3,
+          &quot;Microsoft.FSharp.Core&quot;,
+          &quot;namespace&quot;
+        ],
+        [
+          11,
+          &quot;Result&quot;,
+          &quot;module&quot;
+        ],
+        [
+          28,
+          &quot;map&quot;,
+          &quot;function&quot;
+        ],
+        [
+          45,
+          &quot;mapError&quot;,
+          &quot;function&quot;
+        ],
+        [
+          70,
+          &quot;bind&quot;,
+          &quot;function&quot;
+        ],
+        [
+          84,
+          &quot;isOk&quot;,
+          &quot;function&quot;
+        ],
+        [
+          99,
+          &quot;isError&quot;,
+          &quot;function&quot;
+        ],
+        [
+          115,
+          &quot;defaultValue&quot;,
+          &quot;function&quot;
+        ],
+        [
+          132,
+          &quot;defaultWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          147,
+          &quot;count&quot;,
+          &quot;function&quot;
+        ],
+        [
+          166,
+          &quot;fold&quot;,
+          &quot;function&quot;
+        ],
+        [
+          186,
+          &quot;foldBack&quot;,
+          &quot;function&quot;
+        ],
+        [
+          205,
+          &quot;exists&quot;,
+          &quot;function&quot;
+        ],
+        [
+          223,
+          &quot;forall&quot;,
+          &quot;function&quot;
+        ],
+        [
+          254,
+          &quot;iter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          269,
+          &quot;toArray&quot;,
+          &quot;function&quot;
+        ],
+        [
+          284,
+          &quot;toList&quot;,
+          &quot;function&quot;
+        ],
+        [
+          299,
+          &quot;toOption&quot;,
+          &quot;function&quot;
+        ],
+        [
+          314,
+          &quot;toValueOption&quot;,
+          &quot;function&quot;
+        ]
+      ],
+      &quot;missed&quot;: [
+        [
+          240,
+          &quot;contains&quot;,
+          &quot;function&quot;
+        ]
+      ],
+      &quot;findings&quot;: 2,
+      &quot;proof&quot;: [
+        {
+          &quot;key&quot;: &quot;fsharp:125:13541:namespace:135&quot;,
+          &quot;name&quot;: &quot;Microsoft.FSharp.Core&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core&quot;,
+          &quot;kind&quot;: &quot;namespace&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 3,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 314,
+            &quot;endColumn&quot;: 71
+          },
+          &quot;start&quot;: 125,
+          &quot;end&quot;: 13541,
+          &quot;nameEnd&quot;: 156,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;parent&quot;: &quot;fsharp:125:13541:namespace:135&quot;,
+          &quot;name&quot;: &quot;Result&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result&quot;,
+          &quot;kind&quot;: &quot;module&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 10,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 314,
+            &quot;endColumn&quot;: 71
+          },
+          &quot;start&quot;: 371,
+          &quot;end&quot;: 13541,
+          &quot;nameEnd&quot;: 459,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:1128:1245:function:1167&quot;,
+          &quot;parent&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;name&quot;: &quot;map&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.map&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 28,
+            &quot;endColumn&quot;: 94
+          },
+          &quot;start&quot;: 1128,
+          &quot;end&quot;: 1245,
+          &quot;nameEnd&quot;: 1170,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:1895:2022:function:1939&quot;,
+          &quot;parent&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;name&quot;: &quot;mapError&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.mapError&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 44,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 45,
+            &quot;endColumn&quot;: 99
+          },
+          &quot;start&quot;: 1895,
+          &quot;end&quot;: 2022,
+          &quot;nameEnd&quot;: 1947,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:2956:3091:function:2996&quot;,
+          &quot;parent&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;name&quot;: &quot;bind&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.bind&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 69,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 70,
+            &quot;endColumn&quot;: 111
+          },
+          &quot;start&quot;: 2956,
+          &quot;end&quot;: 3091,
+          &quot;nameEnd&quot;: 3000,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:3480:3560:function:3520&quot;,
+          &quot;parent&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;name&quot;: &quot;isOk&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.isOk&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 83,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 84,
+            &quot;endColumn&quot;: 56
+          },
+          &quot;start&quot;: 3480,
+          &quot;end&quot;: 3560,
+          &quot;nameEnd&quot;: 3524,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:3972:4058:function:4015&quot;,
+          &quot;parent&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;name&quot;: &quot;isError&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.isError&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 98,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 99,
+            &quot;endColumn&quot;: 59
+          },
+          &quot;start&quot;: 3972,
+          &quot;end&quot;: 4058,
+          &quot;nameEnd&quot;: 4022,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:4637:4744:function:4685&quot;,
+          &quot;parent&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;name&quot;: &quot;defaultValue&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.defaultValue&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 114,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 115,
+            &quot;endColumn&quot;: 75
+          },
+          &quot;start&quot;: 4637,
+          &quot;end&quot;: 4744,
+          &quot;nameEnd&quot;: 4697,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:5565:5685:function:5612&quot;,
+          &quot;parent&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;name&quot;: &quot;defaultWith&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.defaultWith&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 131,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 132,
+            &quot;endColumn&quot;: 89
+          },
+          &quot;start&quot;: 5565,
+          &quot;end&quot;: 5685,
+          &quot;nameEnd&quot;: 5623,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:6144:6225:function:6185&quot;,
+          &quot;parent&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;name&quot;: &quot;count&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.count&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 146,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 147,
+            &quot;endColumn&quot;: 56
+          },
+          &quot;start&quot;: 6144,
+          &quot;end&quot;: 6225,
+          &quot;nameEnd&quot;: 6190,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:7088:7252:function:7128&quot;,
+          &quot;parent&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;name&quot;: &quot;fold&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.fold&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 165,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 167,
+            &quot;endColumn&quot;: 98
+          },
+          &quot;start&quot;: 7088,
+          &quot;end&quot;: 7252,
+          &quot;nameEnd&quot;: 7132,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:8135:8307:function:8179&quot;,
+          &quot;parent&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;name&quot;: &quot;foldBack&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.foldBack&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 185,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 187,
+            &quot;endColumn&quot;: 98
+          },
+          &quot;start&quot;: 8135,
+          &quot;end&quot;: 8307,
+          &quot;nameEnd&quot;: 8187,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:9079:9190:function:9121&quot;,
+          &quot;parent&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;name&quot;: &quot;exists&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.exists&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 204,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 205,
+            &quot;endColumn&quot;: 85
+          },
+          &quot;start&quot;: 9079,
+          &quot;end&quot;: 9190,
+          &quot;nameEnd&quot;: 9127,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:9959:10070:function:10001&quot;,
+          &quot;parent&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;name&quot;: &quot;forall&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.forall&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 222,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 223,
+            &quot;endColumn&quot;: 85
+          },
+          &quot;start&quot;: 9959,
+          &quot;end&quot;: 10070,
+          &quot;nameEnd&quot;: 10007,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:11407:11514:function:11450&quot;,
+          &quot;parent&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;name&quot;: &quot;iter&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.iter&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 253,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 254,
+            &quot;endColumn&quot;: 80
+          },
+          &quot;start&quot;: 11407,
+          &quot;end&quot;: 11514,
+          &quot;nameEnd&quot;: 11454,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:11930:12020:function:11973&quot;,
+          &quot;parent&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;name&quot;: &quot;toArray&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.toArray&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 268,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 269,
+            &quot;endColumn&quot;: 63
+          },
+          &quot;start&quot;: 11930,
+          &quot;end&quot;: 12020,
+          &quot;nameEnd&quot;: 11980,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:12426:12513:function:12468&quot;,
+          &quot;parent&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;name&quot;: &quot;toList&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.toList&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 283,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 284,
+            &quot;endColumn&quot;: 61
+          },
+          &quot;start&quot;: 12426,
+          &quot;end&quot;: 12513,
+          &quot;nameEnd&quot;: 12474,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:12921:13014:function:12965&quot;,
+          &quot;parent&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;name&quot;: &quot;toOption&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.toOption&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 298,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 299,
+            &quot;endColumn&quot;: 65
+          },
+          &quot;start&quot;: 12921,
+          &quot;end&quot;: 13014,
+          &quot;nameEnd&quot;: 12973,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:13437:13541:function:13486&quot;,
+          &quot;parent&quot;: &quot;fsharp:371:13541:module:453&quot;,
+          &quot;name&quot;: &quot;toValueOption&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Result.toValueOption&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 313,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 314,
+            &quot;endColumn&quot;: 71
+          },
+          &quot;start&quot;: 13437,
+          &quot;end&quot;: 13541,
+          &quot;nameEnd&quot;: 13499,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        }
+      ]
+    },
+    {
+      &quot;repo&quot;: &quot;dotnet/fsharp&quot;,
+      &quot;version&quot;: &quot;v14.0.100&quot;,
+      &quot;commit&quot;: &quot;2cb9ee0a5d63b52ad7bfbd9364b90b991a26fd72&quot;,
+      &quot;file&quot;: &quot;src/FSharp.Core/option.fs&quot;,
+      &quot;sha256&quot;: &quot;7bc1e364b234903dd63adb2a0e6dbf3a5c3e65a67bbd5156d4cc62f8952c85a9&quot;,
+      &quot;expected&quot;: [
+        [
+          3,
+          &quot;Microsoft.FSharp.Core&quot;,
+          &quot;namespace&quot;
+        ],
+        [
+          8,
+          &quot;Option&quot;,
+          &quot;module&quot;
+        ],
+        [
+          11,
+          &quot;get&quot;,
+          &quot;function&quot;
+        ],
+        [
+          17,
+          &quot;isSome&quot;,
+          &quot;function&quot;
+        ],
+        [
+          23,
+          &quot;isNone&quot;,
+          &quot;function&quot;
+        ],
+        [
+          29,
+          &quot;defaultValue&quot;,
+          &quot;function&quot;
+        ],
+        [
+          35,
+          &quot;defaultWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          41,
+          &quot;orElse&quot;,
+          &quot;function&quot;
+        ],
+        [
+          47,
+          &quot;orElseWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          53,
+          &quot;count&quot;,
+          &quot;function&quot;
+        ],
+        [
+          59,
+          &quot;fold&quot;,
+          &quot;function&quot;
+        ],
+        [
+          65,
+          &quot;foldBack&quot;,
+          &quot;function&quot;
+        ],
+        [
+          71,
+          &quot;exists&quot;,
+          &quot;function&quot;
+        ],
+        [
+          77,
+          &quot;forall&quot;,
+          &quot;function&quot;
+        ],
+        [
+          83,
+          &quot;contains&quot;,
+          &quot;function&quot;
+        ],
+        [
+          89,
+          &quot;iter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          95,
+          &quot;map&quot;,
+          &quot;function&quot;
+        ],
+        [
+          101,
+          &quot;map2&quot;,
+          &quot;function&quot;
+        ],
+        [
+          107,
+          &quot;map3&quot;,
+          &quot;function&quot;
+        ],
+        [
+          113,
+          &quot;bind&quot;,
+          &quot;function&quot;
+        ],
+        [
+          119,
+          &quot;flatten&quot;,
+          &quot;function&quot;
+        ],
+        [
+          125,
+          &quot;filter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          131,
+          &quot;toArray&quot;,
+          &quot;function&quot;
+        ],
+        [
+          137,
+          &quot;toList&quot;,
+          &quot;function&quot;
+        ],
+        [
+          143,
+          &quot;toNullable&quot;,
+          &quot;function&quot;
+        ],
+        [
+          149,
+          &quot;ofNullable&quot;,
+          &quot;function&quot;
+        ],
+        [
+          156,
+          &quot;ofObj&quot;,
+          &quot;function&quot;
+        ],
+        [
+          162,
+          &quot;toObj&quot;,
+          &quot;function&quot;
+        ],
+        [
+          168,
+          &quot;ofValueOption&quot;,
+          &quot;function&quot;
+        ],
+        [
+          174,
+          &quot;toValueOption&quot;,
+          &quot;function&quot;
+        ],
+        [
+          179,
+          &quot;ValueOption&quot;,
+          &quot;module&quot;
+        ],
+        [
+          182,
+          &quot;get&quot;,
+          &quot;function&quot;
+        ],
+        [
+          188,
+          &quot;isSome&quot;,
+          &quot;function&quot;
+        ],
+        [
+          194,
+          &quot;isNone&quot;,
+          &quot;function&quot;
+        ],
+        [
+          200,
+          &quot;defaultValue&quot;,
+          &quot;function&quot;
+        ],
+        [
+          207,
+          &quot;defaultWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          213,
+          &quot;orElse&quot;,
+          &quot;function&quot;
+        ],
+        [
+          219,
+          &quot;orElseWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          225,
+          &quot;count&quot;,
+          &quot;function&quot;
+        ],
+        [
+          231,
+          &quot;fold&quot;,
+          &quot;function&quot;
+        ],
+        [
+          237,
+          &quot;foldBack&quot;,
+          &quot;function&quot;
+        ],
+        [
+          243,
+          &quot;exists&quot;,
+          &quot;function&quot;
+        ],
+        [
+          249,
+          &quot;forall&quot;,
+          &quot;function&quot;
+        ],
+        [
+          255,
+          &quot;contains&quot;,
+          &quot;function&quot;
+        ],
+        [
+          261,
+          &quot;iter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          267,
+          &quot;map&quot;,
+          &quot;function&quot;
+        ],
+        [
+          273,
+          &quot;map2&quot;,
+          &quot;function&quot;
+        ],
+        [
+          279,
+          &quot;map3&quot;,
+          &quot;function&quot;
+        ],
+        [
+          285,
+          &quot;bind&quot;,
+          &quot;function&quot;
+        ],
+        [
+          291,
+          &quot;flatten&quot;,
+          &quot;function&quot;
+        ],
+        [
+          297,
+          &quot;filter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          307,
+          &quot;toArray&quot;,
+          &quot;function&quot;
+        ],
+        [
+          313,
+          &quot;toList&quot;,
+          &quot;function&quot;
+        ],
+        [
+          319,
+          &quot;toNullable&quot;,
+          &quot;function&quot;
+        ],
+        [
+          325,
+          &quot;ofNullable&quot;,
+          &quot;function&quot;
+        ],
+        [
+          332,
+          &quot;ofObj&quot;,
+          &quot;function&quot;
+        ],
+        [
+          338,
+          &quot;toObj&quot;,
+          &quot;function&quot;
+        ],
+        [
+          344,
+          &quot;ofOption&quot;,
+          &quot;function&quot;
+        ],
+        [
+          350,
+          &quot;toOption&quot;,
+          &quot;function&quot;
+        ]
+      ],
+      &quot;omitted&quot;: [
+        156,
+        162,
+        332,
+        338
+      ],
+      &quot;status&quot;: &quot;partial&quot;,
+      &quot;url&quot;: &quot;https://github.com/dotnet/fsharp/blob/2cb9ee0a5d63b52ad7bfbd9364b90b991a26fd72/src/FSharp.Core/option.fs&quot;,
+      &quot;matched&quot;: [
+        [
+          3,
+          &quot;Microsoft.FSharp.Core&quot;,
+          &quot;namespace&quot;
+        ],
+        [
+          8,
+          &quot;Option&quot;,
+          &quot;module&quot;
+        ],
+        [
+          11,
+          &quot;get&quot;,
+          &quot;function&quot;
+        ],
+        [
+          17,
+          &quot;isSome&quot;,
+          &quot;function&quot;
+        ],
+        [
+          23,
+          &quot;isNone&quot;,
+          &quot;function&quot;
+        ],
+        [
+          29,
+          &quot;defaultValue&quot;,
+          &quot;function&quot;
+        ],
+        [
+          35,
+          &quot;defaultWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          41,
+          &quot;orElse&quot;,
+          &quot;function&quot;
+        ],
+        [
+          47,
+          &quot;orElseWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          53,
+          &quot;count&quot;,
+          &quot;function&quot;
+        ],
+        [
+          59,
+          &quot;fold&quot;,
+          &quot;function&quot;
+        ],
+        [
+          65,
+          &quot;foldBack&quot;,
+          &quot;function&quot;
+        ],
+        [
+          71,
+          &quot;exists&quot;,
+          &quot;function&quot;
+        ],
+        [
+          77,
+          &quot;forall&quot;,
+          &quot;function&quot;
+        ],
+        [
+          83,
+          &quot;contains&quot;,
+          &quot;function&quot;
+        ],
+        [
+          89,
+          &quot;iter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          95,
+          &quot;map&quot;,
+          &quot;function&quot;
+        ],
+        [
+          101,
+          &quot;map2&quot;,
+          &quot;function&quot;
+        ],
+        [
+          107,
+          &quot;map3&quot;,
+          &quot;function&quot;
+        ],
+        [
+          113,
+          &quot;bind&quot;,
+          &quot;function&quot;
+        ],
+        [
+          119,
+          &quot;flatten&quot;,
+          &quot;function&quot;
+        ],
+        [
+          125,
+          &quot;filter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          131,
+          &quot;toArray&quot;,
+          &quot;function&quot;
+        ],
+        [
+          137,
+          &quot;toList&quot;,
+          &quot;function&quot;
+        ],
+        [
+          143,
+          &quot;toNullable&quot;,
+          &quot;function&quot;
+        ],
+        [
+          149,
+          &quot;ofNullable&quot;,
+          &quot;function&quot;
+        ],
+        [
+          168,
+          &quot;ofValueOption&quot;,
+          &quot;function&quot;
+        ],
+        [
+          174,
+          &quot;toValueOption&quot;,
+          &quot;function&quot;
+        ],
+        [
+          179,
+          &quot;ValueOption&quot;,
+          &quot;module&quot;
+        ],
+        [
+          182,
+          &quot;get&quot;,
+          &quot;function&quot;
+        ],
+        [
+          188,
+          &quot;isSome&quot;,
+          &quot;function&quot;
+        ],
+        [
+          194,
+          &quot;isNone&quot;,
+          &quot;function&quot;
+        ],
+        [
+          200,
+          &quot;defaultValue&quot;,
+          &quot;function&quot;
+        ],
+        [
+          207,
+          &quot;defaultWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          213,
+          &quot;orElse&quot;,
+          &quot;function&quot;
+        ],
+        [
+          219,
+          &quot;orElseWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          225,
+          &quot;count&quot;,
+          &quot;function&quot;
+        ],
+        [
+          231,
+          &quot;fold&quot;,
+          &quot;function&quot;
+        ],
+        [
+          237,
+          &quot;foldBack&quot;,
+          &quot;function&quot;
+        ],
+        [
+          243,
+          &quot;exists&quot;,
+          &quot;function&quot;
+        ],
+        [
+          249,
+          &quot;forall&quot;,
+          &quot;function&quot;
+        ],
+        [
+          255,
+          &quot;contains&quot;,
+          &quot;function&quot;
+        ],
+        [
+          261,
+          &quot;iter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          267,
+          &quot;map&quot;,
+          &quot;function&quot;
+        ],
+        [
+          273,
+          &quot;map2&quot;,
+          &quot;function&quot;
+        ],
+        [
+          279,
+          &quot;map3&quot;,
+          &quot;function&quot;
+        ],
+        [
+          285,
+          &quot;bind&quot;,
+          &quot;function&quot;
+        ],
+        [
+          291,
+          &quot;flatten&quot;,
+          &quot;function&quot;
+        ],
+        [
+          297,
+          &quot;filter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          307,
+          &quot;toArray&quot;,
+          &quot;function&quot;
+        ],
+        [
+          313,
+          &quot;toList&quot;,
+          &quot;function&quot;
+        ],
+        [
+          319,
+          &quot;toNullable&quot;,
+          &quot;function&quot;
+        ],
+        [
+          325,
+          &quot;ofNullable&quot;,
+          &quot;function&quot;
+        ],
+        [
+          344,
+          &quot;ofOption&quot;,
+          &quot;function&quot;
+        ],
+        [
+          350,
+          &quot;toOption&quot;,
+          &quot;function&quot;
+        ]
+      ],
+      &quot;missed&quot;: [
+        [
+          156,
+          &quot;ofObj&quot;,
+          &quot;function&quot;
+        ],
+        [
+          162,
+          &quot;toObj&quot;,
+          &quot;function&quot;
+        ],
+        [
+          332,
+          &quot;ofObj&quot;,
+          &quot;function&quot;
+        ],
+        [
+          338,
+          &quot;toObj&quot;,
+          &quot;function&quot;
+        ]
+      ],
+      &quot;findings&quot;: 14,
+      &quot;proof&quot;: [
+        {
+          &quot;key&quot;: &quot;fsharp:125:10507:namespace:135&quot;,
+          &quot;name&quot;: &quot;Microsoft.FSharp.Core&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core&quot;,
+          &quot;kind&quot;: &quot;namespace&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 3,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 353,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;start&quot;: 125,
+          &quot;end&quot;: 10507,
+          &quot;nameEnd&quot;: 156,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;parent&quot;: &quot;fsharp:125:10507:namespace:135&quot;,
+          &quot;name&quot;: &quot;Option&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option&quot;,
+          &quot;kind&quot;: &quot;module&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 7,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 177,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;start&quot;: 196,
+          &quot;end&quot;: 5118,
+          &quot;nameEnd&quot;: 284,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:329:465:function:329&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;get&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.get&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 11,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 14,
+            &quot;endColumn&quot;: 22
+          },
+          &quot;start&quot;: 329,
+          &quot;end&quot;: 465,
+          &quot;nameEnd&quot;: 332,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:506:603:function:513&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;isSome&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.isSome&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 17,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 20,
+            &quot;endColumn&quot;: 25
+          },
+          &quot;start&quot;: 506,
+          &quot;end&quot;: 603,
+          &quot;nameEnd&quot;: 519,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:644:741:function:651&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;isNone&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.isNone&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 23,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 26,
+            &quot;endColumn&quot;: 26
+          },
+          &quot;start&quot;: 644,
+          &quot;end&quot;: 741,
+          &quot;nameEnd&quot;: 657,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:788:894:function:795&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;defaultValue&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.defaultValue&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 29,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 32,
+            &quot;endColumn&quot;: 22
+          },
+          &quot;start&quot;: 788,
+          &quot;end&quot;: 894,
+          &quot;nameEnd&quot;: 807,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:940:1075:function:947&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;defaultWith&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.defaultWith&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 35,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 38,
+            &quot;endColumn&quot;: 22
+          },
+          &quot;start&quot;: 940,
+          &quot;end&quot;: 1075,
+          &quot;nameEnd&quot;: 958,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:1116:1223:function:1123&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;orElse&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.orElse&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 41,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 44,
+            &quot;endColumn&quot;: 27
+          },
+          &quot;start&quot;: 1116,
+          &quot;end&quot;: 1223,
+          &quot;nameEnd&quot;: 1129,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:1268:1413:function:1275&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;orElseWith&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.orElseWith&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 47,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 50,
+            &quot;endColumn&quot;: 27
+          },
+          &quot;start&quot;: 1268,
+          &quot;end&quot;: 1413,
+          &quot;nameEnd&quot;: 1285,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:1453:1542:function:1460&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;count&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.count&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 53,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 56,
+            &quot;endColumn&quot;: 22
+          },
+          &quot;start&quot;: 1453,
+          &quot;end&quot;: 1542,
+          &quot;nameEnd&quot;: 1465,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:1581:1755:function:1588&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;fold&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.fold&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 59,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 62,
+            &quot;endColumn&quot;: 35
+          },
+          &quot;start&quot;: 1581,
+          &quot;end&quot;: 1755,
+          &quot;nameEnd&quot;: 1592,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:1798:1977:function:1805&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;foldBack&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.foldBack&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 65,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 68,
+            &quot;endColumn&quot;: 35
+          },
+          &quot;start&quot;: 1798,
+          &quot;end&quot;: 1977,
+          &quot;nameEnd&quot;: 1813,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:2018:2153:function:2025&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;exists&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.exists&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 71,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 74,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;start&quot;: 2018,
+          &quot;end&quot;: 2153,
+          &quot;nameEnd&quot;: 2031,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:2194:2328:function:2201&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;forall&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.forall&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 77,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 80,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;start&quot;: 2194,
+          &quot;end&quot;: 2328,
+          &quot;nameEnd&quot;: 2207,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:2371:2481:function:2378&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;contains&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.contains&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 83,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 86,
+            &quot;endColumn&quot;: 30
+          },
+          &quot;start&quot;: 2371,
+          &quot;end&quot;: 2481,
+          &quot;nameEnd&quot;: 2386,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:2523:2647:function:2530&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;iter&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.iter&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 89,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 92,
+            &quot;endColumn&quot;: 29
+          },
+          &quot;start&quot;: 2523,
+          &quot;end&quot;: 2647,
+          &quot;nameEnd&quot;: 2534,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:2685:2818:function:2692&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;map&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.map&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 95,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 98,
+            &quot;endColumn&quot;: 36
+          },
+          &quot;start&quot;: 2685,
+          &quot;end&quot;: 2818,
+          &quot;nameEnd&quot;: 2695,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:2857:3017:function:2864&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;map2&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.map2&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 101,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 104,
+            &quot;endColumn&quot;: 20
+          },
+          &quot;start&quot;: 2857,
+          &quot;end&quot;: 3017,
+          &quot;nameEnd&quot;: 2868,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:3056:3243:function:3063&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;map3&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.map3&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 107,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 110,
+            &quot;endColumn&quot;: 20
+          },
+          &quot;start&quot;: 3056,
+          &quot;end&quot;: 3243,
+          &quot;nameEnd&quot;: 3067,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:3282:3408:function:3289&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;bind&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.bind&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 113,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 116,
+            &quot;endColumn&quot;: 29
+          },
+          &quot;start&quot;: 3282,
+          &quot;end&quot;: 3408,
+          &quot;nameEnd&quot;: 3293,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:3450:3544:function:3457&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;flatten&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.flatten&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 119,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 122,
+            &quot;endColumn&quot;: 22
+          },
+          &quot;start&quot;: 3450,
+          &quot;end&quot;: 3544,
+          &quot;nameEnd&quot;: 3464,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:3585:3744:function:3592&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;filter&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.filter&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 125,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 128,
+            &quot;endColumn&quot;: 57
+          },
+          &quot;start&quot;: 3585,
+          &quot;end&quot;: 3744,
+          &quot;nameEnd&quot;: 3598,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:3786:3886:function:3793&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;toArray&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.toArray&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 131,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 134,
+            &quot;endColumn&quot;: 28
+          },
+          &quot;start&quot;: 3786,
+          &quot;end&quot;: 3886,
+          &quot;nameEnd&quot;: 3800,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:3927:4022:function:3934&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;toList&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.toList&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 137,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 140,
+            &quot;endColumn&quot;: 26
+          },
+          &quot;start&quot;: 3927,
+          &quot;end&quot;: 4022,
+          &quot;nameEnd&quot;: 3940,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:4067:4194:function:4074&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;toNullable&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.toNullable&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 143,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 146,
+            &quot;endColumn&quot;: 39
+          },
+          &quot;start&quot;: 4067,
+          &quot;end&quot;: 4194,
+          &quot;nameEnd&quot;: 4084,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:4239:4392:function:4246&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;ofNullable&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.ofNullable&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 149,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 153,
+            &quot;endColumn&quot;: 17
+          },
+          &quot;start&quot;: 4239,
+          &quot;end&quot;: 4392,
+          &quot;nameEnd&quot;: 4256,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:4811:4942:function:4818&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;ofValueOption&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.ofValueOption&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 168,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 171,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;start&quot;: 4811,
+          &quot;end&quot;: 4942,
+          &quot;nameEnd&quot;: 4831,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:4990:5118:function:4997&quot;,
+          &quot;parent&quot;: &quot;fsharp:196:5118:module:278&quot;,
+          &quot;name&quot;: &quot;toValueOption&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.toValueOption&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 174,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 177,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;start&quot;: 4990,
+          &quot;end&quot;: 5118,
+          &quot;nameEnd&quot;: 5010,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;parent&quot;: &quot;fsharp:125:10507:namespace:135&quot;,
+          &quot;name&quot;: &quot;ValueOption&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption&quot;,
+          &quot;kind&quot;: &quot;module&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 179,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 353,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;start&quot;: 5120,
+          &quot;end&quot;: 10507,
+          &quot;nameEnd&quot;: 5138,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:5183:5331:function:5183&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;get&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.get&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 182,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 185,
+            &quot;endColumn&quot;: 27
+          },
+          &quot;start&quot;: 5183,
+          &quot;end&quot;: 5331,
+          &quot;nameEnd&quot;: 5186,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:5372:5481:function:5379&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;isSome&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.isSome&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 188,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 191,
+            &quot;endColumn&quot;: 30
+          },
+          &quot;start&quot;: 5372,
+          &quot;end&quot;: 5481,
+          &quot;nameEnd&quot;: 5385,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:5522:5631:function:5529&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;isNone&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.isNone&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 194,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 197,
+            &quot;endColumn&quot;: 31
+          },
+          &quot;start&quot;: 5522,
+          &quot;end&quot;: 5631,
+          &quot;nameEnd&quot;: 5535,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:5678:5938:function:5685&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;defaultValue&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.defaultValue&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 200,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 205,
+            &quot;endColumn&quot;: 141
+          },
+          &quot;start&quot;: 5678,
+          &quot;end&quot;: 5938,
+          &quot;nameEnd&quot;: 5697,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:5983:6109:function:5990&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;defaultWith&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.defaultWith&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 207,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 210,
+            &quot;endColumn&quot;: 27
+          },
+          &quot;start&quot;: 5983,
+          &quot;end&quot;: 6109,
+          &quot;nameEnd&quot;: 6001,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:6150:6270:function:6157&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;orElse&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.orElse&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 213,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 216,
+            &quot;endColumn&quot;: 33
+          },
+          &quot;start&quot;: 6150,
+          &quot;end&quot;: 6270,
+          &quot;nameEnd&quot;: 6163,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:6315:6473:function:6322&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;orElseWith&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.orElseWith&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 219,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 222,
+            &quot;endColumn&quot;: 33
+          },
+          &quot;start&quot;: 6315,
+          &quot;end&quot;: 6473,
+          &quot;nameEnd&quot;: 6332,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:6513:6614:function:6520&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;count&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.count&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 225,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 228,
+            &quot;endColumn&quot;: 27
+          },
+          &quot;start&quot;: 6513,
+          &quot;end&quot;: 6614,
+          &quot;nameEnd&quot;: 6525,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:6653:6841:function:6660&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;fold&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.fold&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 231,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 234,
+            &quot;endColumn&quot;: 40
+          },
+          &quot;start&quot;: 6653,
+          &quot;end&quot;: 6841,
+          &quot;nameEnd&quot;: 6664,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:6884:7076:function:6891&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;foldBack&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.foldBack&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 237,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 240,
+            &quot;endColumn&quot;: 40
+          },
+          &quot;start&quot;: 6884,
+          &quot;end&quot;: 7076,
+          &quot;nameEnd&quot;: 6899,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:7117:7264:function:7124&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;exists&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.exists&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 243,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 246,
+            &quot;endColumn&quot;: 37
+          },
+          &quot;start&quot;: 7117,
+          &quot;end&quot;: 7264,
+          &quot;nameEnd&quot;: 7130,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:7305:7451:function:7312&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;forall&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.forall&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 249,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 252,
+            &quot;endColumn&quot;: 37
+          },
+          &quot;start&quot;: 7305,
+          &quot;end&quot;: 7451,
+          &quot;nameEnd&quot;: 7318,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:7494:7616:function:7501&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;contains&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.contains&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 255,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 258,
+            &quot;endColumn&quot;: 35
+          },
+          &quot;start&quot;: 7494,
+          &quot;end&quot;: 7616,
+          &quot;nameEnd&quot;: 7509,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:7658:7794:function:7665&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;iter&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.iter&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 261,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 264,
+            &quot;endColumn&quot;: 34
+          },
+          &quot;start&quot;: 7658,
+          &quot;end&quot;: 7794,
+          &quot;nameEnd&quot;: 7669,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:7832:7987:function:7839&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;map&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.map&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 267,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 270,
+            &quot;endColumn&quot;: 46
+          },
+          &quot;start&quot;: 7832,
+          &quot;end&quot;: 7987,
+          &quot;nameEnd&quot;: 7842,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:8026:8210:function:8033&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;map2&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.map2&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 273,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 276,
+            &quot;endColumn&quot;: 25
+          },
+          &quot;start&quot;: 8026,
+          &quot;end&quot;: 8210,
+          &quot;nameEnd&quot;: 8037,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:8249:8467:function:8256&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;map3&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.map3&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 279,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 282,
+            &quot;endColumn&quot;: 25
+          },
+          &quot;start&quot;: 8249,
+          &quot;end&quot;: 8467,
+          &quot;nameEnd&quot;: 8260,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:8506:8649:function:8513&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;bind&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.bind&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 285,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 288,
+            &quot;endColumn&quot;: 34
+          },
+          &quot;start&quot;: 8506,
+          &quot;end&quot;: 8649,
+          &quot;nameEnd&quot;: 8517,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:8691:8802:function:8698&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;flatten&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.flatten&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 291,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 294,
+            &quot;endColumn&quot;: 27
+          },
+          &quot;start&quot;: 8691,
+          &quot;end&quot;: 8802,
+          &quot;nameEnd&quot;: 8705,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:8843:9085:function:8850&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;filter&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.filter&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 297,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 304,
+            &quot;endColumn&quot;: 26
+          },
+          &quot;start&quot;: 8843,
+          &quot;end&quot;: 9085,
+          &quot;nameEnd&quot;: 8856,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:9127:9239:function:9134&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;toArray&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.toArray&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 307,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 310,
+            &quot;endColumn&quot;: 33
+          },
+          &quot;start&quot;: 9127,
+          &quot;end&quot;: 9239,
+          &quot;nameEnd&quot;: 9141,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:9280:9387:function:9287&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;toList&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.toList&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 313,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 316,
+            &quot;endColumn&quot;: 31
+          },
+          &quot;start&quot;: 9280,
+          &quot;end&quot;: 9387,
+          &quot;nameEnd&quot;: 9293,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:9432:9571:function:9439&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;toNullable&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.toNullable&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 319,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 322,
+            &quot;endColumn&quot;: 44
+          },
+          &quot;start&quot;: 9432,
+          &quot;end&quot;: 9571,
+          &quot;nameEnd&quot;: 9449,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:9616:9779:function:9623&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;ofNullable&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.ofNullable&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 325,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 329,
+            &quot;endColumn&quot;: 22
+          },
+          &quot;start&quot;: 9616,
+          &quot;end&quot;: 9779,
+          &quot;nameEnd&quot;: 9633,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:10215:10338:function:10222&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;ofOption&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.ofOption&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 344,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 347,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;start&quot;: 10215,
+          &quot;end&quot;: 10338,
+          &quot;nameEnd&quot;: 10230,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:10381:10507:function:10388&quot;,
+          &quot;parent&quot;: &quot;fsharp:5120:10507:module:5127&quot;,
+          &quot;name&quot;: &quot;toOption&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.toOption&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 350,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 353,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;start&quot;: 10381,
+          &quot;end&quot;: 10507,
+          &quot;nameEnd&quot;: 10396,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        }
+      ]
+    },
+    {
+      &quot;repo&quot;: &quot;dotnet/fsharp&quot;,
+      &quot;version&quot;: &quot;v14.0.100&quot;,
+      &quot;commit&quot;: &quot;2cb9ee0a5d63b52ad7bfbd9364b90b991a26fd72&quot;,
+      &quot;file&quot;: &quot;src/FSharp.Core/option.fsi&quot;,
+      &quot;sha256&quot;: &quot;9bdeb623eb24a1643d0d721b94abe8190554035339f4a6f5c445ee4fc71d17de&quot;,
+      &quot;expected&quot;: [
+        [
+          3,
+          &quot;Microsoft.FSharp.Core&quot;,
+          &quot;namespace&quot;
+        ],
+        [
+          13,
+          &quot;Option&quot;,
+          &quot;module&quot;
+        ],
+        [
+          26,
+          &quot;isSome&quot;,
+          &quot;function&quot;
+        ],
+        [
+          41,
+          &quot;isNone&quot;,
+          &quot;function&quot;
+        ],
+        [
+          59,
+          &quot;defaultValue&quot;,
+          &quot;function&quot;
+        ],
+        [
+          76,
+          &quot;defaultWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          94,
+          &quot;orElse&quot;,
+          &quot;function&quot;
+        ],
+        [
+          113,
+          &quot;orElseWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          130,
+          &quot;get&quot;,
+          &quot;function&quot;
+        ],
+        [
+          145,
+          &quot;count&quot;,
+          &quot;function&quot;
+        ],
+        [
+          164,
+          &quot;fold&quot;,
+          &quot;function&quot;
+        ],
+        [
+          183,
+          &quot;foldBack&quot;,
+          &quot;function&quot;
+        ],
+        [
+          201,
+          &quot;exists&quot;,
+          &quot;function&quot;
+        ],
+        [
+          219,
+          &quot;forall&quot;,
+          &quot;function&quot;
+        ],
+        [
+          236,
+          &quot;contains&quot;,
+          &quot;function&quot;
+        ],
+        [
+          250,
+          &quot;iter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          266,
+          &quot;map&quot;,
+          &quot;function&quot;
+        ],
+        [
+          285,
+          &quot;map2&quot;,
+          &quot;function&quot;
+        ],
+        [
+          306,
+          &quot;map3&quot;,
+          &quot;function&quot;
+        ],
+        [
+          333,
+          &quot;bind&quot;,
+          &quot;function&quot;
+        ],
+        [
+          351,
+          &quot;flatten&quot;,
+          &quot;function&quot;
+        ],
+        [
+          368,
+          &quot;filter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          383,
+          &quot;toArray&quot;,
+          &quot;function&quot;
+        ],
+        [
+          398,
+          &quot;toList&quot;,
+          &quot;function&quot;
+        ],
+        [
+          413,
+          &quot;toNullable&quot;,
+          &quot;function&quot;
+        ],
+        [
+          428,
+          &quot;ofNullable&quot;,
+          &quot;function&quot;
+        ],
+        [
+          444,
+          &quot;ofObj&quot;,
+          &quot;function&quot;
+        ],
+        [
+          459,
+          &quot;toObj&quot;,
+          &quot;function&quot;
+        ],
+        [
+          474,
+          &quot;ofValueOption&quot;,
+          &quot;function&quot;
+        ],
+        [
+          489,
+          &quot;toValueOption&quot;,
+          &quot;function&quot;
+        ],
+        [
+          494,
+          &quot;ValueOption&quot;,
+          &quot;module&quot;
+        ],
+        [
+          508,
+          &quot;isSome&quot;,
+          &quot;function&quot;
+        ],
+        [
+          523,
+          &quot;isNone&quot;,
+          &quot;function&quot;
+        ],
+        [
+          540,
+          &quot;defaultValue&quot;,
+          &quot;function&quot;
+        ],
+        [
+          557,
+          &quot;defaultWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          575,
+          &quot;orElse&quot;,
+          &quot;function&quot;
+        ],
+        [
+          594,
+          &quot;orElseWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          610,
+          &quot;get&quot;,
+          &quot;function&quot;
+        ],
+        [
+          625,
+          &quot;count&quot;,
+          &quot;function&quot;
+        ],
+        [
+          644,
+          &quot;fold&quot;,
+          &quot;function&quot;
+        ],
+        [
+          663,
+          &quot;foldBack&quot;,
+          &quot;function&quot;
+        ],
+        [
+          681,
+          &quot;exists&quot;,
+          &quot;function&quot;
+        ],
+        [
+          699,
+          &quot;forall&quot;,
+          &quot;function&quot;
+        ],
+        [
+          716,
+          &quot;contains&quot;,
+          &quot;function&quot;
+        ],
+        [
+          730,
+          &quot;iter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          746,
+          &quot;map&quot;,
+          &quot;function&quot;
+        ],
+        [
+          765,
+          &quot;map2&quot;,
+          &quot;function&quot;
+        ],
+        [
+          786,
+          &quot;map3&quot;,
+          &quot;function&quot;
+        ],
+        [
+          813,
+          &quot;bind&quot;,
+          &quot;function&quot;
+        ],
+        [
+          830,
+          &quot;flatten&quot;,
+          &quot;function&quot;
+        ],
+        [
+          847,
+          &quot;filter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          862,
+          &quot;toArray&quot;,
+          &quot;function&quot;
+        ],
+        [
+          877,
+          &quot;toList&quot;,
+          &quot;function&quot;
+        ],
+        [
+          892,
+          &quot;toNullable&quot;,
+          &quot;function&quot;
+        ],
+        [
+          907,
+          &quot;ofNullable&quot;,
+          &quot;function&quot;
+        ],
+        [
+          923,
+          &quot;ofObj&quot;,
+          &quot;function&quot;
+        ],
+        [
+          938,
+          &quot;toObj&quot;,
+          &quot;function&quot;
+        ],
+        [
+          953,
+          &quot;ofOption&quot;,
+          &quot;function&quot;
+        ],
+        [
+          968,
+          &quot;toOption&quot;,
+          &quot;function&quot;
+        ]
+      ],
+      &quot;omitted&quot;: [
+        236,
+        444,
+        459,
+        716,
+        923,
+        938
+      ],
+      &quot;status&quot;: &quot;partial&quot;,
+      &quot;url&quot;: &quot;https://github.com/dotnet/fsharp/blob/2cb9ee0a5d63b52ad7bfbd9364b90b991a26fd72/src/FSharp.Core/option.fsi&quot;,
+      &quot;matched&quot;: [
+        [
+          3,
+          &quot;Microsoft.FSharp.Core&quot;,
+          &quot;namespace&quot;
+        ],
+        [
+          13,
+          &quot;Option&quot;,
+          &quot;module&quot;
+        ],
+        [
+          26,
+          &quot;isSome&quot;,
+          &quot;function&quot;
+        ],
+        [
+          41,
+          &quot;isNone&quot;,
+          &quot;function&quot;
+        ],
+        [
+          59,
+          &quot;defaultValue&quot;,
+          &quot;function&quot;
+        ],
+        [
+          76,
+          &quot;defaultWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          94,
+          &quot;orElse&quot;,
+          &quot;function&quot;
+        ],
+        [
+          113,
+          &quot;orElseWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          130,
+          &quot;get&quot;,
+          &quot;function&quot;
+        ],
+        [
+          145,
+          &quot;count&quot;,
+          &quot;function&quot;
+        ],
+        [
+          164,
+          &quot;fold&quot;,
+          &quot;function&quot;
+        ],
+        [
+          183,
+          &quot;foldBack&quot;,
+          &quot;function&quot;
+        ],
+        [
+          201,
+          &quot;exists&quot;,
+          &quot;function&quot;
+        ],
+        [
+          219,
+          &quot;forall&quot;,
+          &quot;function&quot;
+        ],
+        [
+          250,
+          &quot;iter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          266,
+          &quot;map&quot;,
+          &quot;function&quot;
+        ],
+        [
+          285,
+          &quot;map2&quot;,
+          &quot;function&quot;
+        ],
+        [
+          306,
+          &quot;map3&quot;,
+          &quot;function&quot;
+        ],
+        [
+          333,
+          &quot;bind&quot;,
+          &quot;function&quot;
+        ],
+        [
+          351,
+          &quot;flatten&quot;,
+          &quot;function&quot;
+        ],
+        [
+          368,
+          &quot;filter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          383,
+          &quot;toArray&quot;,
+          &quot;function&quot;
+        ],
+        [
+          398,
+          &quot;toList&quot;,
+          &quot;function&quot;
+        ],
+        [
+          413,
+          &quot;toNullable&quot;,
+          &quot;function&quot;
+        ],
+        [
+          428,
+          &quot;ofNullable&quot;,
+          &quot;function&quot;
+        ],
+        [
+          474,
+          &quot;ofValueOption&quot;,
+          &quot;function&quot;
+        ],
+        [
+          489,
+          &quot;toValueOption&quot;,
+          &quot;function&quot;
+        ],
+        [
+          494,
+          &quot;ValueOption&quot;,
+          &quot;module&quot;
+        ],
+        [
+          508,
+          &quot;isSome&quot;,
+          &quot;function&quot;
+        ],
+        [
+          523,
+          &quot;isNone&quot;,
+          &quot;function&quot;
+        ],
+        [
+          540,
+          &quot;defaultValue&quot;,
+          &quot;function&quot;
+        ],
+        [
+          557,
+          &quot;defaultWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          575,
+          &quot;orElse&quot;,
+          &quot;function&quot;
+        ],
+        [
+          594,
+          &quot;orElseWith&quot;,
+          &quot;function&quot;
+        ],
+        [
+          610,
+          &quot;get&quot;,
+          &quot;function&quot;
+        ],
+        [
+          625,
+          &quot;count&quot;,
+          &quot;function&quot;
+        ],
+        [
+          644,
+          &quot;fold&quot;,
+          &quot;function&quot;
+        ],
+        [
+          663,
+          &quot;foldBack&quot;,
+          &quot;function&quot;
+        ],
+        [
+          681,
+          &quot;exists&quot;,
+          &quot;function&quot;
+        ],
+        [
+          699,
+          &quot;forall&quot;,
+          &quot;function&quot;
+        ],
+        [
+          730,
+          &quot;iter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          746,
+          &quot;map&quot;,
+          &quot;function&quot;
+        ],
+        [
+          765,
+          &quot;map2&quot;,
+          &quot;function&quot;
+        ],
+        [
+          786,
+          &quot;map3&quot;,
+          &quot;function&quot;
+        ],
+        [
+          813,
+          &quot;bind&quot;,
+          &quot;function&quot;
+        ],
+        [
+          830,
+          &quot;flatten&quot;,
+          &quot;function&quot;
+        ],
+        [
+          847,
+          &quot;filter&quot;,
+          &quot;function&quot;
+        ],
+        [
+          862,
+          &quot;toArray&quot;,
+          &quot;function&quot;
+        ],
+        [
+          877,
+          &quot;toList&quot;,
+          &quot;function&quot;
+        ],
+        [
+          892,
+          &quot;toNullable&quot;,
+          &quot;function&quot;
+        ],
+        [
+          907,
+          &quot;ofNullable&quot;,
+          &quot;function&quot;
+        ],
+        [
+          953,
+          &quot;ofOption&quot;,
+          &quot;function&quot;
+        ],
+        [
+          968,
+          &quot;toOption&quot;,
+          &quot;function&quot;
+        ]
+      ],
+      &quot;missed&quot;: [
+        [
+          236,
+          &quot;contains&quot;,
+          &quot;function&quot;
+        ],
+        [
+          444,
+          &quot;ofObj&quot;,
+          &quot;function&quot;
+        ],
+        [
+          459,
+          &quot;toObj&quot;,
+          &quot;function&quot;
+        ],
+        [
+          716,
+          &quot;contains&quot;,
+          &quot;function&quot;
+        ],
+        [
+          923,
+          &quot;ofObj&quot;,
+          &quot;function&quot;
+        ],
+        [
+          938,
+          &quot;toObj&quot;,
+          &quot;function&quot;
+        ]
+      ],
+      &quot;findings&quot;: 18,
+      &quot;proof&quot;: [
+        {
+          &quot;key&quot;: &quot;fsharp:125:44620:namespace:135&quot;,
+          &quot;name&quot;: &quot;Microsoft.FSharp.Core&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core&quot;,
+          &quot;kind&quot;: &quot;namespace&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 3,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 968,
+            &quot;endColumn&quot;: 58
+          },
+          &quot;start&quot;: 125,
+          &quot;end&quot;: 44620,
+          &quot;nameEnd&quot;: 156,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;parent&quot;: &quot;fsharp:125:44620:namespace:135&quot;,
+          &quot;name&quot;: &quot;Option&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option&quot;,
+          &quot;kind&quot;: &quot;module&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 12,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 444,
+            &quot;endColumn&quot;: 70
+          },
+          &quot;start&quot;: 338,
+          &quot;end&quot;: 19921,
+          &quot;nameEnd&quot;: 426,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:832:907:function:874&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;isSome&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.isSome&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 25,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 26,
+            &quot;endColumn&quot;: 49
+          },
+          &quot;start&quot;: 832,
+          &quot;end&quot;: 907,
+          &quot;nameEnd&quot;: 880,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:1312:1387:function:1354&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;isNone&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.isNone&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 40,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 41,
+            &quot;endColumn&quot;: 49
+          },
+          &quot;start&quot;: 1312,
+          &quot;end&quot;: 1387,
+          &quot;nameEnd&quot;: 1360,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:2115:2213:function:2163&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;defaultValue&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.defaultValue&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 58,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 59,
+            &quot;endColumn&quot;: 66
+          },
+          &quot;start&quot;: 2115,
+          &quot;end&quot;: 2213,
+          &quot;nameEnd&quot;: 2175,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:3032:3141:function:3079&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;defaultWith&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.defaultWith&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 75,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 76,
+            &quot;endColumn&quot;: 78
+          },
+          &quot;start&quot;: 3032,
+          &quot;end&quot;: 3141,
+          &quot;nameEnd&quot;: 3090,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:3912:4013:function:3954&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;orElse&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.orElse&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 93,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 94,
+            &quot;endColumn&quot;: 75
+          },
+          &quot;start&quot;: 3912,
+          &quot;end&quot;: 4013,
+          &quot;nameEnd&quot;: 3960,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:5030:5154:function:5076&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;orElseWith&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.orElseWith&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 112,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 113,
+            &quot;endColumn&quot;: 94
+          },
+          &quot;start&quot;: 5030,
+          &quot;end&quot;: 5154,
+          &quot;nameEnd&quot;: 5086,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:5672:5737:function:5709&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;get&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.get&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 129,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 130,
+            &quot;endColumn&quot;: 37
+          },
+          &quot;start&quot;: 5672,
+          &quot;end&quot;: 5737,
+          &quot;nameEnd&quot;: 5712,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:6192:6264:function:6233&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;count&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.count&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 144,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 145,
+            &quot;endColumn&quot;: 47
+          },
+          &quot;start&quot;: 6192,
+          &quot;end&quot;: 6264,
+          &quot;nameEnd&quot;: 6238,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:7126:7265:function:7166&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;fold&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.fold&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 163,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 164,
+            &quot;endColumn&quot;: 115
+          },
+          &quot;start&quot;: 7126,
+          &quot;end&quot;: 7265,
+          &quot;nameEnd&quot;: 7170,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:8143:8290:function:8187&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;foldBack&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.foldBack&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 182,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 183,
+            &quot;endColumn&quot;: 119
+          },
+          &quot;start&quot;: 8143,
+          &quot;end&quot;: 8290,
+          &quot;nameEnd&quot;: 8195,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:9061:9163:function:9103&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;exists&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.exists&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 200,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 201,
+            &quot;endColumn&quot;: 76
+          },
+          &quot;start&quot;: 9061,
+          &quot;end&quot;: 9163,
+          &quot;nameEnd&quot;: 9109,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:9931:10033:function:9973&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;forall&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.forall&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 218,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 219,
+            &quot;endColumn&quot;: 76
+          },
+          &quot;start&quot;: 9931,
+          &quot;end&quot;: 10033,
+          &quot;nameEnd&quot;: 9979,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:11351:11449:function:11394&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;iter&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.iter&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 249,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 250,
+            &quot;endColumn&quot;: 71
+          },
+          &quot;start&quot;: 11351,
+          &quot;end&quot;: 11449,
+          &quot;nameEnd&quot;: 11398,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:12081:12178:function:12120&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;map&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.map&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 265,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 266,
+            &quot;endColumn&quot;: 74
+          },
+          &quot;start&quot;: 12081,
+          &quot;end&quot;: 12178,
+          &quot;nameEnd&quot;: 12123,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:13091:13223:function:13131&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;map2&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.map2&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 284,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 285,
+            &quot;endColumn&quot;: 108
+          },
+          &quot;start&quot;: 13091,
+          &quot;end&quot;: 13223,
+          &quot;nameEnd&quot;: 13135,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:14370:14576:function:14410&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;map3&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.map3&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 305,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 311,
+            &quot;endColumn&quot;: 22
+          },
+          &quot;start&quot;: 14370,
+          &quot;end&quot;: 14576,
+          &quot;nameEnd&quot;: 14414,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:15447:15552:function:15487&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;bind&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.bind&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 332,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 333,
+            &quot;endColumn&quot;: 81
+          },
+          &quot;start&quot;: 15447,
+          &quot;end&quot;: 15552,
+          &quot;nameEnd&quot;: 15491,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:16222:16311:function:16265&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;flatten&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.flatten&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 350,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 351,
+            &quot;endColumn&quot;: 62
+          },
+          &quot;start&quot;: 16222,
+          &quot;end&quot;: 16311,
+          &quot;nameEnd&quot;: 16272,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:17077:17184:function:17119&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;filter&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.filter&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 367,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 368,
+            &quot;endColumn&quot;: 81
+          },
+          &quot;start&quot;: 17077,
+          &quot;end&quot;: 17184,
+          &quot;nameEnd&quot;: 17125,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:17610:17691:function:17653&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;toArray&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.toArray&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 382,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 383,
+            &quot;endColumn&quot;: 54
+          },
+          &quot;start&quot;: 17610,
+          &quot;end&quot;: 17691,
+          &quot;nameEnd&quot;: 17660,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:18107:18185:function:18149&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;toList&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.toList&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 397,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 398,
+            &quot;endColumn&quot;: 52
+          },
+          &quot;start&quot;: 18107,
+          &quot;end&quot;: 18185,
+          &quot;nameEnd&quot;: 18155,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:18656:18747:function:18702&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;toNullable&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.toNullable&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 412,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 413,
+            &quot;endColumn&quot;: 61
+          },
+          &quot;start&quot;: 18656,
+          &quot;end&quot;: 18747,
+          &quot;nameEnd&quot;: 18712,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:19203:19293:function:19249&quot;,
+          &quot;parent&quot;: &quot;fsharp:338:19921:module:420&quot;,
+          &quot;name&quot;: &quot;ofNullable&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.Option.ofNullable&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 427,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 428,
+            &quot;endColumn&quot;: 60
+          },
+          &quot;start&quot;: 19203,
+          &quot;end&quot;: 19293,
+          &quot;nameEnd&quot;: 19259,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:20978:21074:function:21027&quot;,
+          &quot;parent&quot;: &quot;fsharp:125:44620:namespace:135&quot;,
+          &quot;name&quot;: &quot;ofValueOption&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ofValueOption&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 473,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 474,
+            &quot;endColumn&quot;: 63
+          },
+          &quot;start&quot;: 20978,
+          &quot;end&quot;: 21074,
+          &quot;nameEnd&quot;: 21040,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:21527:21622:function:21576&quot;,
+          &quot;parent&quot;: &quot;fsharp:125:44620:namespace:135&quot;,
+          &quot;name&quot;: &quot;toValueOption&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.toValueOption&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 488,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 489,
+            &quot;endColumn&quot;: 62
+          },
+          &quot;start&quot;: 21527,
+          &quot;end&quot;: 21622,
+          &quot;nameEnd&quot;: 21589,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;parent&quot;: &quot;fsharp:125:44620:namespace:135&quot;,
+          &quot;name&quot;: &quot;ValueOption&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption&quot;,
+          &quot;kind&quot;: &quot;module&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 494,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 923,
+            &quot;endColumn&quot;: 73
+          },
+          &quot;start&quot;: 21736,
+          &quot;end&quot;: 42920,
+          &quot;nameEnd&quot;: 21754,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:22217:22294:function:22259&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;isSome&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.isSome&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 507,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 508,
+            &quot;endColumn&quot;: 51
+          },
+          &quot;start&quot;: 22217,
+          &quot;end&quot;: 22294,
+          &quot;nameEnd&quot;: 22265,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:22743:22820:function:22785&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;isNone&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.isNone&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 522,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 523,
+            &quot;endColumn&quot;: 51
+          },
+          &quot;start&quot;: 22743,
+          &quot;end&quot;: 22820,
+          &quot;nameEnd&quot;: 22791,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:23580:23680:function:23628&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;defaultValue&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.defaultValue&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 539,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 540,
+            &quot;endColumn&quot;: 68
+          },
+          &quot;start&quot;: 23580,
+          &quot;end&quot;: 23680,
+          &quot;nameEnd&quot;: 23640,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:24541:24652:function:24588&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;defaultWith&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.defaultWith&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 556,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 557,
+            &quot;endColumn&quot;: 80
+          },
+          &quot;start&quot;: 24541,
+          &quot;end&quot;: 24652,
+          &quot;nameEnd&quot;: 24599,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:25511:25616:function:25553&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;orElse&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.orElse&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 574,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 575,
+            &quot;endColumn&quot;: 79
+          },
+          &quot;start&quot;: 25511,
+          &quot;end&quot;: 25616,
+          &quot;nameEnd&quot;: 25559,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:26745:26873:function:26791&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;orElseWith&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.orElseWith&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 593,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 594,
+            &quot;endColumn&quot;: 98
+          },
+          &quot;start&quot;: 26745,
+          &quot;end&quot;: 26873,
+          &quot;nameEnd&quot;: 26801,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:27420:27487:function:27457&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;get&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.get&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 609,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 610,
+            &quot;endColumn&quot;: 39
+          },
+          &quot;start&quot;: 27420,
+          &quot;end&quot;: 27487,
+          &quot;nameEnd&quot;: 27460,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:27984:28058:function:28025&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;count&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.count&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 624,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 625,
+            &quot;endColumn&quot;: 49
+          },
+          &quot;start&quot;: 27984,
+          &quot;end&quot;: 28058,
+          &quot;nameEnd&quot;: 28030,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:28978:29119:function:29018&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;fold&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.fold&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 643,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 644,
+            &quot;endColumn&quot;: 117
+          },
+          &quot;start&quot;: 28978,
+          &quot;end&quot;: 29119,
+          &quot;nameEnd&quot;: 29022,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:30055:30204:function:30099&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;foldBack&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.foldBack&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 662,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 663,
+            &quot;endColumn&quot;: 121
+          },
+          &quot;start&quot;: 30055,
+          &quot;end&quot;: 30204,
+          &quot;nameEnd&quot;: 30107,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:31027:31131:function:31069&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;exists&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.exists&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 680,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 681,
+            &quot;endColumn&quot;: 78
+          },
+          &quot;start&quot;: 31027,
+          &quot;end&quot;: 31131,
+          &quot;nameEnd&quot;: 31075,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:31952:32056:function:31994&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;forall&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.forall&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 698,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 699,
+            &quot;endColumn&quot;: 78
+          },
+          &quot;start&quot;: 31952,
+          &quot;end&quot;: 32056,
+          &quot;nameEnd&quot;: 32000,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:33462:33562:function:33505&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;iter&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.iter&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 729,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 730,
+            &quot;endColumn&quot;: 73
+          },
+          &quot;start&quot;: 33462,
+          &quot;end&quot;: 33562,
+          &quot;nameEnd&quot;: 33509,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:34267:34367:function:34306&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;map&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.map&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 745,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 746,
+            &quot;endColumn&quot;: 77
+          },
+          &quot;start&quot;: 34267,
+          &quot;end&quot;: 34367,
+          &quot;nameEnd&quot;: 34309,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:35414:35551:function:35454&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;map2&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.map2&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 764,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 765,
+            &quot;endColumn&quot;: 113
+          },
+          &quot;start&quot;: 35414,
+          &quot;end&quot;: 35551,
+          &quot;nameEnd&quot;: 35458,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:36896:37109:function:36936&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;map3&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.map3&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 785,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 791,
+            &quot;endColumn&quot;: 23
+          },
+          &quot;start&quot;: 36896,
+          &quot;end&quot;: 37109,
+          &quot;nameEnd&quot;: 36940,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:38067:38176:function:38107&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;bind&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.bind&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 812,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 813,
+            &quot;endColumn&quot;: 85
+          },
+          &quot;start&quot;: 38067,
+          &quot;end&quot;: 38176,
+          &quot;nameEnd&quot;: 38111,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:38935:39028:function:38978&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;flatten&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.flatten&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 829,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 830,
+            &quot;endColumn&quot;: 66
+          },
+          &quot;start&quot;: 38935,
+          &quot;end&quot;: 39028,
+          &quot;nameEnd&quot;: 38985,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:39882:39992:function:39924&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;filter&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.filter&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 846,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 847,
+            &quot;endColumn&quot;: 84
+          },
+          &quot;start&quot;: 39882,
+          &quot;end&quot;: 39992,
+          &quot;nameEnd&quot;: 39930,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:40456:40539:function:40499&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;toArray&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.toArray&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 861,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 862,
+            &quot;endColumn&quot;: 56
+          },
+          &quot;start&quot;: 40456,
+          &quot;end&quot;: 40539,
+          &quot;nameEnd&quot;: 40506,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:40993:41073:function:41035&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;toList&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.toList&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 876,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 877,
+            &quot;endColumn&quot;: 54
+          },
+          &quot;start&quot;: 40993,
+          &quot;end&quot;: 41073,
+          &quot;nameEnd&quot;: 41041,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:41582:41675:function:41628&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;toNullable&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.toNullable&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 891,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 892,
+            &quot;endColumn&quot;: 63
+          },
+          &quot;start&quot;: 41582,
+          &quot;end&quot;: 41675,
+          &quot;nameEnd&quot;: 41638,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:42162:42253:function:42208&quot;,
+          &quot;parent&quot;: &quot;fsharp:21736:42920:module:21743&quot;,
+          &quot;name&quot;: &quot;ofNullable&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ValueOption.ofNullable&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 906,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 907,
+            &quot;endColumn&quot;: 61
+          },
+          &quot;start&quot;: 42162,
+          &quot;end&quot;: 42253,
+          &quot;nameEnd&quot;: 42218,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:43999:44084:function:44043&quot;,
+          &quot;parent&quot;: &quot;fsharp:125:44620:namespace:135&quot;,
+          &quot;name&quot;: &quot;ofOption&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.ofOption&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 952,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 953,
+            &quot;endColumn&quot;: 57
+          },
+          &quot;start&quot;: 43999,
+          &quot;end&quot;: 44084,
+          &quot;nameEnd&quot;: 44051,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        },
+        {
+          &quot;key&quot;: &quot;fsharp:44534:44620:function:44578&quot;,
+          &quot;parent&quot;: &quot;fsharp:125:44620:namespace:135&quot;,
+          &quot;name&quot;: &quot;toOption&quot;,
+          &quot;qualifiedName&quot;: &quot;Microsoft.FSharp.Core.toOption&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 967,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 968,
+            &quot;endColumn&quot;: 58
+          },
+          &quot;start&quot;: 44534,
+          &quot;end&quot;: 44620,
+          &quot;nameEnd&quot;: 44586,
+          &quot;declarationForm&quot;: &quot;declaration&quot;
+        }
+      ]
+    }
+  ]
+}</pre></details></main></body></html>

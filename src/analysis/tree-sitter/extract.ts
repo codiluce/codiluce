@@ -13,6 +13,7 @@ import {extractObjcStructure} from './objc-structure.js';
 import {extractSwiftStructure} from './swift-structure.js';
 import {extractScalaStructure} from './scala-structure.js';
 import {extractGroovyStructure} from './groovy-structure.js';
+import {extractFsharpStructure} from './fsharp-structure.js';
 
 const MAX_DECLARATIONS = 20_000, MAX_ISSUES = 100, MAX_NODES = 200_000;
 const compact = (text: string) => text.replace(/\s+/g, ' ').trim();
@@ -89,6 +90,7 @@ export function extractStructure(root: Node, query: Query, language: string, con
   if(language==='swift')return extractSwiftStructure(root,query,content);
   if(language==='scala')return extractScalaStructure(root,query,content);
   if(language==='groovy')return extractGroovyStructure(root,query,content);
+  if(language==='fsharp'||language==='fsharp-signature')return extractFsharpStructure(root,query,content,language==='fsharp-signature');
   const source = ['go','csharp'].includes(language) ? new ParserOriginalSource(content) : new SourceText(content), issues: ParseIssue[] = [];
   const damaged: { start: number; end: number }[] = [];
   let truncated = false, visited = 0;
