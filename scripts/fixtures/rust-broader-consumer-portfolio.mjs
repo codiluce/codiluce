@@ -69,3 +69,11 @@ export const rustBroaderConsumers = [
         boundary:'All five original path/method registrations are conditional with no handler winner. Serde derives, custom state filters, query/body/form extraction, CORS and rejection recovery retain gaps; Store initialization and included JSON are never executed.',
     },
 ];
+
+// Same independent original denominator. This phase changes only whether the
+// five original Q&A callback declarations bind under a reviewed namespace.
+export const rustDeriveConsumers = rustBroaderConsumers.map(sample => sample.key !== 'warp-qa' ? sample : {
+    ...sample,
+    routes: sample.routes.map(item => ({...item,status:'conditional'})),
+    boundary:'All five original callbacks now bind conditionally through recorded canonical Serde derive namespace proof. Custom state filters, query/body/form extraction, CORS, rejection recovery, generated traits and runtime behavior remain unreviewed; no newly qualified routing/request pairs follow.',
+});

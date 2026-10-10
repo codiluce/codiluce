@@ -200,6 +200,12 @@ two Warp 0.4 applications. It inventories all 29 user routes and 14 source modul
 and conditional/unbound handlers. Empty canonical Rust print macros now preserve reviewed namespaces and diagnostic
 syntax. The broader accuracy gate remains open; custom derives, state filters, middleware and serving delegation
 remain follow-on work.
+P9e2b2b2a adds [recorded derive namespace qualification](docs/rust-derive-source-accuracy.html). Canonical builtin
+derives and four reviewed Serde provider versions preserve sibling source namespaces through original Cargo.lock
+dependency selections. The unchanged Warp Q&A consumer now binds all five original callbacks conditionally, bringing
+the full inventory to four qualified pairs, 14 conditional bindings and 11 misses. Generated traits, JSON/form
+conversion, state filters, middleware and serving delegation retain gaps. Missing or unreviewed provider selections
+and builtin-looking macro shadows cannot lend a namespace proof.
 No Cargo/rustc or target code runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original

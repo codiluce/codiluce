@@ -130,7 +130,7 @@ export class RustSymbols {
     private definitionScope(def: RustDefinition, from: RustScope): RustScope | undefined { return this.scope(def.unit.file.path, def.fact.scope, from.compilation.id); }
     private sourceSymbol(def: RustDefinition, scope: RustScope): RustSymbol {
         const attrs = this.attributes(scope, def.fact.attributes);
-        return { id: def.id, name: def.fact.name, namespaces: typeKinds.has(def.fact.kind) ? ['type'] : ['value'], scope, visibility: def.fact.visibility, active: attrs.active, gaps: unique([...attrs.gaps, ...def.fact.gaps, ...!def.unit.facts.complete ? ['Incomplete original Rust semantic syntax'] : []]), proof: [...scope.namespaceProof, ...this.proof(def.unit.file.path, def.fact, `Original Rust ${def.fact.kind} ${def.fact.name}`)] };
+        return { id: def.id, name: def.fact.name, namespaces: typeKinds.has(def.fact.kind) ? ['type'] : ['value'], scope, visibility: def.fact.visibility, active: attrs.active, gaps: unique([...attrs.gaps, ...def.fact.gaps, ...this.resolver.originalItemGaps(scope,def.fact.key), ...!def.unit.facts.complete ? ['Incomplete original Rust semantic syntax'] : []]), proof: [...scope.namespaceProof, ...this.proof(def.unit.file.path, def.fact, `Original Rust ${def.fact.kind} ${def.fact.name}`)] };
     }
     private fromResolution(result: RustResolution, scope: RustScope, typeOnly = false, trail = new Set<string>()): RustValue {
         if (result.status === 'external')

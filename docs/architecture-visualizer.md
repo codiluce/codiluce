@@ -799,6 +799,56 @@ handler/listener proof. P9e2b2b1 completes this wider inventory and diagnostic s
 address source-backed derive namespaces, Warp custom state/filter and serving delegation contracts and Axum
 helper/middleware gaps, then rerun the full original denominator. Broader P9e2b2b, P9, P10 and the full goal remain open.
 
+## 34. Recorded derive namespace contracts (P9e2b2b2a)
+
+`resolution/rust-derive-namespace.ts` shares canonical builtin and Serde derive namespace contracts between general
+imports and the Rust framework packs. Type, value and macro lookup remain separate. Bare builtin names require an
+available standard prelude with no competing source/import/macro-use identity. Explicit standard macro paths and
+aliases use their resolved identities. Unavailable or source macros named `Debug`/`Clone`, opaque globs, disabled
+preludes, unknown cfg, composed custom attributes, macro-bearing input and traversal bounds retain namespace gaps.
+
+`resolution/rust-lock.ts` reads only indexed original Cargo.lock version 3/4 inputs, within bounded package/selector
+budgets. The owning source package's recorded dependency edge must select a unique canonical crates.io package that
+satisfies its original Cargo requirement. A transitive provider must be reached through that selected dependency's
+own edge. Other workspace packages, duplicate/ambiguous entries, stale roots, missing/denied locks, private registries,
+Git/path forks and unreviewed provider versions cannot lend an identity. Workspace members use the workspace root
+lock. This reader does not perform dependency resolution, authenticate downloaded archives or execute build scripts.
+
+Serde re-exports require the recorded derive feature; direct serde_derive imports and renamed dependencies require
+a canonical runtime delegate, including a literal `#[serde(crate="...")]` override. The reviewed provider set is
+1.0.169, 1.0.203, 1.0.219 and 1.0.228, paired with a recorded canonical Serde runtime of the same version.
+Each reviewed native Serialize/Deserialize entry point routes successful output through an anonymous constant
+wrapper. Serde 1.0.152/1.0.156 can instead emit a named helper constant under a compiler-dependent selection, so a
+broad `serde="1"` declaration without provider proof remains insufficient. Native generators are read without
+running them. Original source ranges and lock package-header lines carry the proof.
+
+Namespace projection preserves sibling original declarations only. Original Serde-derived types and generated
+traits/conversions stay opaque, even when `Deserialize` is imported as `Clone`. Resolver and semantic source-symbol
+construction carry separate original-item gaps so the legacy builtin spelling rule cannot certify that alias.
+Composed Rocket/standard/Serde namespace reviews share identities without expanding macros or fabricating items.
+Resolver/import versions are 6 and Rust router version is 9. Existing Rust/TOML cache inputs include Cargo.lock;
+provider edits, denial, feature/cfg/dependency selections and source changes invalidate the relevant contracts.
+
+`qualify-rust-broader-consumers.mjs --derive` compares archived `e9eb724` with current source against the same four
+immutable original applications and the same independent 29-route/14-module denominator. The
+[derive accuracy report](rust-derive-source-accuracy.html) records all original import outcomes, selected declaration
+IDs/ranges, dependency selections and namespace/framework proof. The Warp Q&A consumer improves from zero to five
+original conditional callback bindings with its original serde_derive 1.0.228 lock entry at line 486. The portfolio
+now has four qualified pairs, 14 conditional bindings, zero unbound registrations and 11 misses; one of 14 general
+module declarations resolves. Eight automatic candidates and three static services remain outside the user-route
+denominator. No additional qualified requests follow: custom state, query/body/form conversion, CORS and rejection
+recovery remain uncertain. All original declaration IDs/ranges and exact cold/warm/revision graphs remain stable,
+with actual import/symbol/router cache hits.
+
+Seven new conformance tests cover reviewed/old/ambiguous/unrelated/stale/forked/denied provider selections, owning
+dependency selectors, workspace root locks, feature/cfg selection, explicit delegates, builtin aliases/shadows,
+nested items and limits. The 1,072-test suite passes with controlled concurrency; the existing Java declaration-budget
+case also passes in isolation after a highly concurrent run missed its expected budget diagnostic. Final focused
+derive/Rocket/Warp checks pass. Production-only installed CLI/API checks retain original derive and provider proof,
+qualified handler/leaf/request flows and opaque generated-main calls. Desktop/mobile HTML layout is checked.
+P9e2b2b2a completes the initial recorded derive namespace slice. Warp state/filter/serving delegation and Axum
+helper/middleware qualification remain next; broader P9e2b2b, P9, P10 and the full goal remain active.
+
 The 1,065-test suite passes with four workers; the final whitespace/doc-comment and resolved-alias boundaries
 also pass the focused diagnostic rerun. CLI/web typechecks and the production-only packed build, installation,
 CLI/API, history-worker and npm-exec checks pass (3.20 MB / 287 files). The installed CLI/API retain original

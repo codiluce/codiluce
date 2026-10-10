@@ -4,7 +4,7 @@ import { evidence, type Evidence } from '../../core/graph.js';
 import type { RustImportFact, RustItemFact, RustScopeFact, RustSyntaxFacts } from '../facts.js';
 import { rustAnd, rustAttributes, rustName, type RustAttributes, type RustTruth } from '../languages/rust-cfg.js';
 import { RustProjects, rustPath, type RustCompilation } from './rust-projects.js';
-export const RUST_RESOLVER_VERSION = '5';
+export const RUST_RESOLVER_VERSION = '6';
 export interface RustScope {
     id: string;
     fact: RustScopeFact;
@@ -23,7 +23,7 @@ export interface RustScope {
     imports: RustImportSite[];
     namespaceProof: Evidence[];
 }
-export interface RustNamespaceAttributes { attributes: RustAttributes; proof: Evidence[] }
+export interface RustNamespaceAttributes { attributes: RustAttributes; proof: Evidence[]; originalGaps?: string[] }
 export interface RustSymbol {
     id: string;
     name: string;
@@ -89,12 +89,14 @@ export class RustResolver {
     readonly membership = new Map<string, RustScope[]>();
     private readonly loading = new Set<string>();
     private readonly resolved = new Map<string, RustResolution>();
+    private readonly itemGaps = new Map<string, string[]>();
     constructor(readonly context: AnalysisContext, private readonly attributeReader?: (attributes: string[], compilation: RustCompilation, file: string, scope: string) => RustAttributes, private readonly scopeGapReader?: (fact: RustScopeFact, compilation: RustCompilation, file: string) => string[], private readonly namespaceAttributeReader?: (item: RustItemFact, scope: RustScope) => RustNamespaceAttributes | undefined) {
         this.projects = new RustProjects(context);
         for (const compilation of this.projects.compilations)
             this.root(compilation);
     }
     syntax(file: string): RustSyntaxFacts | undefined { return this.context.syntax?.get(file)?.facts.rust; }
+    originalItemGaps(scope: RustScope, key: string): string[] { return this.itemGaps.get(JSON.stringify([scope.compilation.id, scope.file.path, key])) ?? []; }
     attributes(attributes: string[], compilation: RustCompilation, file: string, scope: string): RustAttributes {
         return this.attributeReader?.(attributes, compilation, file, scope) ?? rustAttributes(attributes, compilation.environment);
     }
@@ -120,6 +122,7 @@ export class RustResolver {
             scope.moduleParent = parent.module;
         for (const item of syntax.items.filter(i => i.scope === fact.key)) {
             const reviewed = this.namespaceAttributeReader?.(item, scope), attributes = reviewed?.attributes ?? this.attributes(item.attributes, comp, file.path, fact.key);
+            if (reviewed?.originalGaps?.length) this.itemGaps.set(JSON.stringify([comp.id, file.path, item.key]), reviewed.originalGaps);
             if (rustAnd([selected, attributes.active]) !== false) {
                 scope.gaps.push(...attributes.namespaceGaps);
                 if (reviewed) scope.namespaceProof.push(...reviewed.proof);
@@ -145,7 +148,7 @@ export class RustResolver {
                 scope.gaps.push('Original Rust declaration identity is unavailable');
                 continue;
             }
-            const symbol: RustSymbol = { id, name: item.name, namespaces: item.namespaces, scope, visibility: item.visibility, active: itemActive, gaps: unique([...scope.gaps, ...attributes.gaps, ...item.gaps]), proof: [...scope.namespaceProof, ...this.proof(file.path, item.range.startLine, `Original Rust ${item.kind} ${item.name}`)], fact: item };
+            const symbol: RustSymbol = { id, name: item.name, namespaces: item.namespaces, scope, visibility: item.visibility, active: itemActive, gaps: unique([...scope.gaps, ...attributes.gaps, ...item.gaps, ...this.originalItemGaps(scope,item.key)]), proof: [...scope.namespaceProof, ...this.proof(file.path, item.range.startLine, `Original Rust ${item.kind} ${item.name}`)], fact: item };
             if (item.kind === 'macro' && !attributes.macroExport)
                 symbol.gaps.push('Textual macro_rules scope/import/export behavior is not qualified');
             scope.items.push(symbol);

@@ -4,6 +4,7 @@ import { evidence, type Evidence } from '../../core/graph.js';
 import type { RustItemFact, RustSyntaxFacts } from '../facts.js';
 import { rustAttributes, rustCfg, rustEmptyTokenTree, rustSplit, rustString } from '../languages/rust-cfg.js';
 import { cargoRequirement } from './rust-projects.js';
+import { RustDeriveNamespaces } from './rust-derive-namespace.js';
 import { RustResolver, RUST_RESOLVER_VERSION, type RustScope, type RustNamespaceAttributes } from './rust.js';
 
 const key = (scope: RustScope, item: RustItemFact) => JSON.stringify([scope.compilation.id, scope.file.path, scope.fact.key, item.key]);
@@ -138,19 +139,22 @@ function namespaceInputs(base: RustResolver, compilation: string, reviews: Map<s
 /** Discover identities conservatively first, then replay only pre-reviewed
  * namespace facts. No binary, macro, compiler or target code executes. */
 export function sourceRustResolver(context: AnalysisContext): RustResolver {
-    const base = new RustResolver(context), reviews = new Map<string, RustNamespaceAttributes>();
+    const base = new RustResolver(context), derives = new RustDeriveNamespaces(base), reviews = new Map<string, RustNamespaceAttributes>(), deriveReviews = new Map<string, RustNamespaceAttributes>();
     for (const scope of base.scopes)
         for (const item of base.syntax(scope.file.path)?.items.filter(item => item.scope === scope.fact.key && item.attributes.length) ?? []) {
             const selected = review(base, scope, item);
             if (selected) reviews.set(key(scope, item), selected);
+            const derive = derives.read(item,scope);
+            if (derive) deriveReviews.set(key(scope,item),derive);
         }
+    const allReviews = new Map([...reviews,...deriveReviews]);
     const inputs = new Map<string, Evidence[] | undefined>();
     for (const [id, selected] of reviews) {
         const compilation = JSON.parse(id)[0] as string;
-        if (!inputs.has(compilation)) inputs.set(compilation, namespaceInputs(base, compilation, reviews));
+        if (!inputs.has(compilation)) inputs.set(compilation, namespaceInputs(base, compilation, allReviews));
         const proof = inputs.get(compilation);
         if (proof) selected.proof.push(...proof);
         else reviews.delete(id);
     }
-    return reviews.size ? new RustResolver(context, undefined, undefined, (item, scope) => reviews.get(key(scope, item))) : base;
+    return reviews.size || deriveReviews.size ? new RustResolver(context, undefined, undefined, (item, scope) => deriveReviews.get(key(scope,item)) ?? reviews.get(key(scope, item))) : base;
 }
