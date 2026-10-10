@@ -153,6 +153,20 @@
       "sourceRevision": "b8b22bffbb3441780e6471665bacfb263741c86a",
       "license": "MIT",
       "licenseFile": "licenses/swift.txt"
+    },
+    {
+      "language": "scala",
+      "file": "tree-sitter-scala.wasm",
+      "sha256": "37d7fe5a91ca98941dc05493b0c05a0df0f36df5035890fa00b02497c68aaac3",
+      "abi": 15,
+      "artifactPackage": "upstream-release",
+      "artifactVersion": "0.26.2",
+      "artifactPath": "tree-sitter-scala.wasm",
+      "artifactUrl": "https://github.com/tree-sitter/tree-sitter-scala/releases/download/v0.26.2/tree-sitter-scala.wasm",
+      "source": "https://github.com/tree-sitter/tree-sitter-scala",
+      "sourceRevision": "b931fcc338390925eb893d70ad070033f5856ccf",
+      "license": "MIT",
+      "licenseFile": "licenses/scala.txt"
     }
   ]
 }

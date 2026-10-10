@@ -1,0 +1,1 @@
+[(package_clause) (package_object) (class_definition) (trait_definition) (object_definition) (enum_definition) (simple_enum_case) (full_enum_case) (function_definition) (function_declaration) (given_definition) (type_definition) (class_parameter) (val_definition) (val_declaration) (var_definition) (var_declaration)] @declaration

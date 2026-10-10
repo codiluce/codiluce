@@ -11,6 +11,7 @@ import { extractRust } from './rust-syntax.js';
 import {extractCfamilyStructure} from './cfamily-structure.js';
 import {extractObjcStructure} from './objc-structure.js';
 import {extractSwiftStructure} from './swift-structure.js';
+import {extractScalaStructure} from './scala-structure.js';
 
 const MAX_DECLARATIONS = 20_000, MAX_ISSUES = 100, MAX_NODES = 200_000;
 const compact = (text: string) => text.replace(/\s+/g, ' ').trim();
@@ -85,6 +86,7 @@ export function extractStructure(root: Node, query: Query, language: string, con
   if(language==='c'||language==='cpp')return extractCfamilyStructure(root,query,language,content);
   if(language==='objective-c')return extractObjcStructure(root,query,content);
   if(language==='swift')return extractSwiftStructure(root,query,content);
+  if(language==='scala')return extractScalaStructure(root,query,content);
   const source = ['go','csharp'].includes(language) ? new ParserOriginalSource(content) : new SourceText(content), issues: ParseIssue[] = [];
   const damaged: { start: number; end: number }[] = [];
   let truncated = false, visited = 0;

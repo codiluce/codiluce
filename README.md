@@ -97,6 +97,9 @@ How far Codiluce follows the code depends on the stack:
 - **Swift structure:** original types, protocols, extensions, functions, argument labels, properties, enum cases,
   initializers, subscripts and operators with exact source ranges. Imports and macros retain source syntax;
   cross-file binding and generated declarations remain visible gaps.
+- **Scala structure:** original Scala 2/3 packages, classes, traits, objects, methods, properties, enums, givens,
+  aliases and extension receiver headers with exact source ranges. Imports, implicit/type binding and compiler
+  synthesis remain visible gaps.
 - **Map:** Angular, Remix, Fastify, Symfony, Quarkus, Blazor and every other language and framework are detected and
   mapped with their files, lines and Git metrics.
 
@@ -128,6 +131,13 @@ compiler, SDK, SwiftPM manifest or target code executes. Imports/references/fram
 macro/property-wrapper expansion and conditional grammar recovery stay explicit. Twenty conformance cases,
 installed-package/history checks and an [immutable two-file source audit](docs/swift-source-accuracy.html) qualify
 this initial subset. Broader Swift source accuracy and native OS checks remain P10 release gates.
+
+Scala now has an initial source-only structural adapter for Scala 2/3 syntax, including Scala 3.6 conditional
+given headers, package context, explicit companion declarations and extension receiver signatures. No Scala
+compiler, JVM, sbt/Scala CLI, build scripts or target dependencies execute. Anonymous owners, derives and staged
+expansion retain explicit gaps. Twenty-eight conformance cases, installed-package/history checks and an
+[immutable Scala 2/3 source audit](docs/scala-source-accuracy.html) qualify the initial subset; broader source
+accuracy and native OS checks remain P10 release gates.
 
 Java and Kotlin now resolve original local import declarations within selected Maven reactors, literal Gradle projects
 and recorded source/classpath inputs. Explicit, wildcard, static and alias imports retain source evidence and visibility

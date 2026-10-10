@@ -21,6 +21,7 @@ export interface DeclarationFact {
   declarationForm?: 'declaration' | 'definition'; sourceConditions?: string[];
   selector?:string; dispatch?:'instance'|'class';
   swiftName?:string;
+  scalaExtension?:{signature:string;range:SourceRange};
 }
 export interface ParseIssue { code: string; reason: string; range?: SourceRange }
 export interface PythonGuardFact { expression: string; branch: boolean; scope?: string }
@@ -187,7 +188,8 @@ export interface RustSyntaxFacts {scopes:RustScopeFact[];items:RustItemFact[];im
 export interface CfamilySyntaxFacts { preprocessor: {kind:string;text:string;range:SourceRange}[]; complete:boolean }
 export interface ObjcSyntaxFacts { propertyImplementations:{kind:'synthesize'|'dynamic';text:string;names:string[];range:SourceRange}[]; moduleImports:{text:string;path:string[];range:SourceRange}[]; isolatedRegions?:{range:SourceRange;reason:string}[]; enumProfiles?:{macro:string;name:string;underlyingType:string;range:SourceRange}[]; cppProfile?:{grammar:'cpp';declarations:number;methodHeaders:number;recoveredRegions?:{range:SourceRange;reason:string}[]}; complete:boolean }
 export interface SwiftSyntaxFacts {imports:{text:string;path:string;kind?:string;range:SourceRange}[];directives:{text:string;range:SourceRange}[];macroInvocations:{text:string;name:string;range:SourceRange}[];complete:boolean}
-export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; cfamily?:CfamilySyntaxFacts; objc?:ObjcSyntaxFacts; swift?:SwiftSyntaxFacts; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts; csharp?: CsharpSyntaxFacts; rust?:RustSyntaxFacts }
+export interface ScalaSyntaxFacts {packages:{text:string;name:string;explicitBody:boolean;range:SourceRange}[];imports:{text:string;path:string;range:SourceRange}[];exports:{text:string;path:string;range:SourceRange}[];extensions:{text:string;signature:string;headerRange:SourceRange;range:SourceRange}[];givens:{text:string;name?:string;signature:string;range:SourceRange}[];staged:{text:string;kind:string;range:SourceRange}[];directives:{text:string;range:SourceRange}[];complete:boolean}
+export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; cfamily?:CfamilySyntaxFacts; objc?:ObjcSyntaxFacts; swift?:SwiftSyntaxFacts; scala?:ScalaSyntaxFacts; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts; csharp?: CsharpSyntaxFacts; rust?:RustSyntaxFacts }
 export interface ImportBinding { imported: string; local: string; typeOnly?: boolean }
 export type ImportOutcome =
   | { status: 'resolved'; targets: string[]; proof: Evidence[] }

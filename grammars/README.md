@@ -8,15 +8,14 @@ the authoritative parsers for their languages.
 `manifest.json` records each grammar's upstream revision, artifact package and
 version, SHA-256, language ABI and license. Six artifacts come from the pinned
 VS Code grammar bundle; Kotlin, C, C++ and Objective-C come from their upstream grammar packages. The
-bundle's build revision and each upstream license are retained here. Swift comes
-from its pinned upstream 0.7.3 release WASM asset, with an immutable source
-revision and artifact URL/checksum; it is not an npm artifact. The
+bundle's build revision and each upstream license are retained here. Swift 0.7.3 and Scala 0.26.2 come from pinned upstream release WASM assets,
+with immutable source revisions and artifact URLs/checksums; these are not npm artifacts. The
 runtime is pinned in `package.json` and the manifest.
 
 `npm run grammars:sync` restores the ten npm WASM artifacts from installed
 development dependencies after verifying versions/checksums, and verifies the
-committed Swift release asset. It runs offline and compiles nothing. To restore
-the Swift release asset explicitly, run
+committed Swift and Scala release assets. It runs offline and compiles nothing. To restore
+the Swift/Scala release assets explicitly, run
 `npm run grammars:sync -- --download-releases`; this downloads the pinned URL
 and verifies its checksum before writing it. Normal CLI builds verify and copy this directory
 to `dist/grammars/`. An installed package loads it relative to its own module,
@@ -28,7 +27,7 @@ grammar release requires declaration, range, overload, malformed-source and
 installed-package conformance checks before updating the checksum.
 
 The current adapters extract named types, modules/namespaces, functions and
-methods for Python, Go, Ruby, Rust, Java, C#, Kotlin, C, C++, Objective-C and Swift. Decorators/annotations,
+methods for Python, Go, Ruby, Rust, Java, C#, Kotlin, C, C++, Objective-C, Swift and Scala. Decorators/annotations,
 modifiers, signatures and lexical containment are preserved where the grammar
 exposes them. Local Go receivers and Rust impl methods attach only to a unique
 type in the same file; cross-file ownership and language binding belong to the
@@ -118,6 +117,30 @@ executes. Imports, cross-file extension/type binding, references, frameworks, ef
 and guards remain unsupported. Asset/query/source-version changes invalidate caches;
 missing Swift assets fail Swift files independently. See the
 [original Swift source audit](../docs/swift-source-accuracy.html).
+
+Scala uses the official upstream v0.26.2 release WASM (ABI 15, MIT). Consecutive
+unbraced packages and explicit braced/indented package bodies retain native
+lexical namespace context, without extending original package-clause ranges.
+Classes, traits, objects and package objects remain separate original declarations;
+case-class companions, primary constructors, inferred constructor properties and
+accessors are not synthesized. Explicit val/var constructor properties, native
+functions/methods, secondary constructors, curried/implicit/using headers, symbolic
+and escaped names, aliases/opaque/match types, enum cases, pattern bindings and
+named givens retain original syntax. Local values/parameters stay excluded.
+
+Extension methods retain original receiver/context headers in signatures and
+`scalaExtension`, while their ranges start at the actual method declaration.
+No receiver-type/extension dispatch binding is inferred. `scalaSyntax` records
+package headers (`explicitBody` distinguishes enclosing package bodies), imports,
+exports, givens, extensions, Scala CLI directives and staged source syntax.
+Anonymous given/instance members keep their original names with explicit owner
+gaps, without generated class/given names. Derives and macro/quote/splice syntax
+remain unexpanded; quoted/generated declarations do not produce entities. Imports,
+type/implicit/reference/framework/effect/guard binding remain unsupported. No JVM,
+Scala compiler, sbt/Scala CLI, target configuration/build script, dependency or
+application executes. Missing Scala assets affect its own files; asset/query/source
+versions invalidate cache and history identities. See the
+[original Scala source audit](../docs/scala-source-accuracy.html).
 
 Non-callable declarations use the existing graph `class` type with a
 `declarationKind`/`role`; properties exposed by C# use `method` with role

@@ -1,0 +1,1220 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Scala original source qualification</title><style>body{font:16px/1.6 system-ui,sans-serif;background:#101822;color:#e5ecf4;margin:0;padding:clamp(16px,4vw,48px)}main{max-width:1120px;margin:auto}h1{font-size:clamp(28px,5vw,42px);line-height:1.2}a,code{color:#8bddd8}code{overflow-wrap:anywhere}table{border-collapse:collapse;width:100%;min-width:650px}th,td{padding:12px;text-align:left;border-bottom:1px solid #344353}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}.scroll{overflow:auto}.status{padding:18px;border:1px solid #688c8d;border-radius:8px}summary{cursor:pointer;padding:12px 0}</style></head><body><main>
+ <h1>Scala original source qualification</h1><p>P10b2 · 2026-10-10T20:15:48.019Z · v22.12.0 · linux/x64. Immutable Scala 2.13.16 and Scala 3.6.4 library bytes, independent name-line/kind inventories and SHA-256 checks.</p>
+ <p class="status"><strong>35 matched / 35 reviewed original declarations · 0 missed · 0 extra</strong><br>All inventoried names, kinds, name lines, lexical parents and UTF-16 source ranges match. This three-file sample does not establish broad Scala accuracy, compiler validity, framework support or native OS compatibility.</p>
+ <div class="scroll"><table><thead><tr><th>Immutable original source</th><th>Matched</th><th>Findings</th><th>Capability</th></tr></thead><tbody><tr><td><a href="https://github.com/scala/scala/blob/3f6bdaeafde17d790023cc3f299b81eaaf876ca3/src/library/scala/math/Ordered.scala">scala/scala 2.13.16 · src/library/scala/math/Ordered.scala</a></td><td>12</td><td>1</td><td>Partial anonymous-owner profile</td></tr><tr><td><a href="https://github.com/scala/scala3/blob/6b2b8819191891f2057a1e11bda45035a4ca03ad/library/src/scala/CanEqual.scala">scala/scala3 3.6.4 · library/src/scala/CanEqual.scala</a></td><td>14</td><td>0</td><td>Supported original subset</td></tr><tr><td><a href="https://github.com/scala/scala3/blob/6b2b8819191891f2057a1e11bda45035a4ca03ad/library/src/scala/util/NotGiven.scala">scala/scala3 3.6.4 · library/src/scala/util/NotGiven.scala</a></td><td>9</td><td>0</td><td>Supported original subset</td></tr></tbody></table></div>
+ <p>Consecutive and braced/indented packages preserve original namespace context; package-clause ranges never grow over following siblings. Traits/classes/objects and package objects retain separate original declarations. Original methods, symbolic names, overloads, curried/implicit/using headers, type/context bounds, secondary constructors, explicit val/var constructor properties, properties/pattern bindings, aliases/opaque types, enum cases, named givens and extension methods retain source spelling. Extension receiver/context headers participate in method identities while the method range stays original.</p>
+ <p>Ordered.scala retains six original trait methods, its companion helper and the original anonymous-instance <code>compare</code> method. That instance has no source name: its method keeps the enclosing original helper and an explicit anonymous-owner gap, without inventing a class. CanEqual.scala retains nine named original givens; NotGiven.scala retains the original class, trait, object, property, method and three givens. Companion/case-class accessors, factories, implicit solutions and compiler-provided equality instances are never synthesized.</p>
+ <p><code>scalaSyntax</code> records package headers, imports/exports/selectors, extension headers, named/anonymous givens, Scala CLI directives and staged syntax. Import resolution, cross-file class/object merging, type/implicit/extension binding, references, frameworks, effects and guards remain unsupported. Anonymous given/instance owners, derives and macro/quote/splice expansion produce explicit gaps. Quoted/generated declarations add no entities. No compiler, JVM, sbt/Scala CLI, build scripts, target dependencies or application executes. See <a href="https://www.scala-lang.org/files/archive/spec/2.13/09-top-level-definitions.html">Scala 2 package rules</a>, <a href="https://docs.scala-lang.org/scala3/reference/contextual/givens.html">Scala 3 givens</a> and <a href="https://docs.scala-lang.org/scala3/reference/contextual/extension-methods.html">extension methods</a>.</p>
+ <p>The pinned <a href="https://github.com/tree-sitter/tree-sitter-scala/releases/tag/v0.26.2">upstream v0.26.2 WASM release</a> uses ABI 15 and an MIT license. Twenty-eight conformance cases cover Scala 2/3 and 3.6 conditional-given headers, lexical packages, anonymous owners, source-only synthesis/staging limits, malformed headers, comments/XML/string lookalikes, CRLF/emoji/EOF, large bodies, bounded metadata and cache invalidation.</p>
+ <p>Cold/warm and revision analysis preserve original graph identities/evidence, with three actual syntax-cache hits. Installed-package CLI/API/source and compiled history checks cover original Scala declarations, givens and extension header evidence. Removing Scala WASM/query assets fails only Scala analysis while Swift remains usable. Broader Scala 2/3 source portfolios, mixed monorepo/history throughput, full index process-tree memory and native Windows/macOS remain P10 release gates.</p>
+ <h2>Grammar startup on this Linux host</h2><p>Three fresh direct parser processes reading original CanEqual.scala: medians 9.7 ms runtime initialization, 10.9 ms grammar load, 17.8 ms first extraction and 137.7 MiB process peak RSS. Process startup, worker IPC and whole-index process-tree memory are excluded. <a href="scala-compatibility-performance.html">Existing TS/Laravel regression comparison</a> measures regressions separately.</p>
+ <p>Implementation digest: <code>eb67fcd87567e5e00214f29b18b5352ad14fbdd645cb247c2c48ad376fe73f27</code>. Reproduce: <code>node --experimental-sqlite --import tsx scripts/qualify-scala-source.mjs --output docs/scala-source-accuracy.html</code>. Optional <code>--source</code> reads the three displayed original paths and checks immutable hashes. <a href="language-framework-compatibility.html#implementation">Full roadmap</a></p>
+ <details><summary>Independent inventories, immutable hashes and original source facts</summary><pre>{
+  &quot;phase&quot;: &quot;P10b2&quot;,
+  &quot;measuredAt&quot;: &quot;2026-10-10T20:15:48.019Z&quot;,
+  &quot;baseline&quot;: &quot;7fc5467&quot;,
+  &quot;implementationDigest&quot;: &quot;eb67fcd87567e5e00214f29b18b5352ad14fbdd645cb247c2c48ad376fe73f27&quot;,
+  &quot;node&quot;: &quot;v22.12.0&quot;,
+  &quot;platform&quot;: &quot;linux/x64&quot;,
+  &quot;reviewedSourceDeclarations&quot;: 35,
+  &quot;matchedDeclarations&quot;: 35,
+  &quot;extraDeclarations&quot;: 0,
+  &quot;missedDeclarations&quot;: 0,
+  &quot;coldWarmEqual&quot;: true,
+  &quot;revisionModeEqual&quot;: true,
+  &quot;syntaxFactCacheHits&quot;: 3,
+  &quot;grammar&quot;: {
+    &quot;repetitions&quot;: 3,
+    &quot;median&quot;: {
+      &quot;runtimeMs&quot;: 9.682367999999997,
+      &quot;grammarLoadMs&quot;: 10.879215000000016,
+      &quot;firstExtractionMs&quot;: 17.782398,
+      &quot;peakRssKiB&quot;: 140972
+    },
+    &quot;runs&quot;: [
+      {
+        &quot;runtimeMs&quot;: 11.800869000000006,
+        &quot;grammarLoadMs&quot;: 9.87392299999999,
+        &quot;firstExtractionMs&quot;: 24.674338000000006,
+        &quot;peakRssKiB&quot;: 148404
+      },
+      {
+        &quot;runtimeMs&quot;: 9.682367999999997,
+        &quot;grammarLoadMs&quot;: 11.352215000000001,
+        &quot;firstExtractionMs&quot;: 17.09464,
+        &quot;peakRssKiB&quot;: 140972
+      },
+      {
+        &quot;runtimeMs&quot;: 9.456800000000015,
+        &quot;grammarLoadMs&quot;: 10.879215000000016,
+        &quot;firstExtractionMs&quot;: 17.782398,
+        &quot;peakRssKiB&quot;: 140856
+      }
+    ]
+  },
+  &quot;results&quot;: [
+    {
+      &quot;repo&quot;: &quot;scala/scala&quot;,
+      &quot;version&quot;: &quot;2.13.16&quot;,
+      &quot;commit&quot;: &quot;3f6bdaeafde17d790023cc3f299b81eaaf876ca3&quot;,
+      &quot;file&quot;: &quot;src/library/scala/math/Ordered.scala&quot;,
+      &quot;sha256&quot;: &quot;57317111d8b0db3ff48fd874bfcfcef184bfa3ca880d7b5602f95c3587336e37&quot;,
+      &quot;findings&quot;: [
+        &quot;scala-anonymous-owner-gap&quot;
+      ],
+      &quot;expected&quot;: [
+        [
+          13,
+          &quot;scala&quot;,
+          &quot;namespace&quot;
+        ],
+        [
+          14,
+          &quot;math&quot;,
+          &quot;namespace&quot;
+        ],
+        [
+          59,
+          &quot;Ordered&quot;,
+          &quot;trait&quot;
+        ],
+        [
+          74,
+          &quot;compare&quot;,
+          &quot;method&quot;
+        ],
+        [
+          78,
+          &quot;&lt;&quot;,
+          &quot;method&quot;
+        ],
+        [
+          82,
+          &quot;&gt;&quot;,
+          &quot;method&quot;
+        ],
+        [
+          86,
+          &quot;&lt;=&quot;,
+          &quot;method&quot;
+        ],
+        [
+          90,
+          &quot;&gt;=&quot;,
+          &quot;method&quot;
+        ],
+        [
+          94,
+          &quot;compareTo&quot;,
+          &quot;method&quot;
+        ],
+        [
+          97,
+          &quot;Ordered&quot;,
+          &quot;object&quot;
+        ],
+        [
+          99,
+          &quot;orderingToOrdered&quot;,
+          &quot;method&quot;
+        ],
+        [
+          100,
+          &quot;compare&quot;,
+          &quot;method&quot;
+        ]
+      ],
+      &quot;url&quot;: &quot;https://github.com/scala/scala/blob/3f6bdaeafde17d790023cc3f299b81eaaf876ca3/src/library/scala/math/Ordered.scala&quot;,
+      &quot;facts&quot;: {
+        &quot;declarations&quot;: [
+          {
+            &quot;key&quot;: &quot;scala:299:312:namespace:307&quot;,
+            &quot;name&quot;: &quot;scala&quot;,
+            &quot;qualifiedName&quot;: &quot;scala&quot;,
+            &quot;kind&quot;: &quot;namespace&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;package scala&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 13,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 13,
+              &quot;endColumn&quot;: 14
+            },
+            &quot;start&quot;: 299,
+            &quot;end&quot;: 312,
+            &quot;nameEnd&quot;: 312,
+            &quot;declarationForm&quot;: &quot;definition&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:313:325:namespace:321&quot;,
+            &quot;name&quot;: &quot;math&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.math&quot;,
+            &quot;kind&quot;: &quot;namespace&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;package math&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 14,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 14,
+              &quot;endColumn&quot;: 13
+            },
+            &quot;start&quot;: 313,
+            &quot;end&quot;: 325,
+            &quot;nameEnd&quot;: 325,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:299:312:namespace:307&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:2442:3421:trait:2448&quot;,
+            &quot;name&quot;: &quot;Ordered&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.math.Ordered&quot;,
+            &quot;kind&quot;: &quot;trait&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;trait Ordered[A] extends Any with java.lang.Comparable[A]&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 59,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 95,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 2442,
+            &quot;end&quot;: 3421,
+            &quot;nameEnd&quot;: 2455,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:313:325:namespace:321&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:2805:2830:method:2809&quot;,
+            &quot;name&quot;: &quot;compare&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.math.Ordered.compare&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;def compare(that: A): Int&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 74,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 74,
+              &quot;endColumn&quot;: 28
+            },
+            &quot;start&quot;: 2805,
+            &quot;end&quot;: 2830,
+            &quot;nameEnd&quot;: 2816,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;scala:2442:3421:trait:2448&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:2890:2942:method:2894&quot;,
+            &quot;name&quot;: &quot;&lt;&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.math.Ordered.&lt;&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;def &lt; (that: A): Boolean =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 78,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 78,
+              &quot;endColumn&quot;: 55
+            },
+            &quot;start&quot;: 2890,
+            &quot;end&quot;: 2942,
+            &quot;nameEnd&quot;: 2895,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:2442:3421:trait:2448&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:3006:3058:method:3010&quot;,
+            &quot;name&quot;: &quot;&gt;&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.math.Ordered.&gt;&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;def &gt; (that: A): Boolean =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 82,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 82,
+              &quot;endColumn&quot;: 55
+            },
+            &quot;start&quot;: 3006,
+            &quot;end&quot;: 3058,
+            &quot;nameEnd&quot;: 3011,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:2442:3421:trait:2448&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:3131:3183:method:3135&quot;,
+            &quot;name&quot;: &quot;&lt;=&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.math.Ordered.&lt;=&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;def &lt;= (that: A): Boolean =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 86,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 86,
+              &quot;endColumn&quot;: 55
+            },
+            &quot;start&quot;: 3131,
+            &quot;end&quot;: 3183,
+            &quot;nameEnd&quot;: 3137,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:2442:3421:trait:2448&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:3259:3311:method:3263&quot;,
+            &quot;name&quot;: &quot;&gt;=&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.math.Ordered.&gt;=&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;def &gt;= (that: A): Boolean =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 90,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 90,
+              &quot;endColumn&quot;: 55
+            },
+            &quot;start&quot;: 3259,
+            &quot;end&quot;: 3311,
+            &quot;nameEnd&quot;: 3265,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:2442:3421:trait:2448&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:3376:3419:method:3380&quot;,
+            &quot;name&quot;: &quot;compareTo&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.math.Ordered.compareTo&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;def compareTo(that: A): Int =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 94,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 94,
+              &quot;endColumn&quot;: 46
+            },
+            &quot;start&quot;: 3376,
+            &quot;end&quot;: 3419,
+            &quot;nameEnd&quot;: 3389,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:2442:3421:trait:2448&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:3423:3645:object:3430&quot;,
+            &quot;name&quot;: &quot;Ordered&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.math.Ordered&quot;,
+            &quot;kind&quot;: &quot;object&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;object Ordered&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 97,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 101,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 3423,
+            &quot;end&quot;: 3645,
+            &quot;nameEnd&quot;: 3437,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:313:325:namespace:321&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:3491:3644:method:3504&quot;,
+            &quot;name&quot;: &quot;orderingToOrdered&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.math.Ordered.orderingToOrdered&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;implicit def orderingToOrdered[T](x: T)(implicit ord: Ordering[T]): Ordered[T] =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 99,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 101,
+              &quot;endColumn&quot;: 1
+            },
+            &quot;start&quot;: 3491,
+            &quot;end&quot;: 3644,
+            &quot;nameEnd&quot;: 3521,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:3423:3645:object:3430&quot;,
+            &quot;modifiers&quot;: [
+              &quot;implicit&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;scala:3593:3641:method:3597&quot;,
+            &quot;name&quot;: &quot;compare&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.math.Ordered.orderingToOrdered.compare&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;def compare(that: T): Int =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 100,
+              &quot;startColumn&quot;: 22,
+              &quot;endLine&quot;: 100,
+              &quot;endColumn&quot;: 70
+            },
+            &quot;start&quot;: 3593,
+            &quot;end&quot;: 3641,
+            &quot;nameEnd&quot;: 3604,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:3491:3644:method:3504&quot;,
+            &quot;sourceConditions&quot;: [
+              &quot;Original member of an anonymous Scala instance; no generated class name or type binding is inferred&quot;
+            ]
+          }
+        ],
+        &quot;issues&quot;: [
+          {
+            &quot;code&quot;: &quot;scala-anonymous-owner-gap&quot;,
+            &quot;reason&quot;: &quot;Original anonymous instance members retained; lexical source has no named owner&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 100,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 100,
+              &quot;endColumn&quot;: 72
+            }
+          }
+        ],
+        &quot;truncated&quot;: false,
+        &quot;scala&quot;: {
+          &quot;packages&quot;: [
+            {
+              &quot;text&quot;: &quot;package scala&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 13,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 13,
+                &quot;endColumn&quot;: 14
+              },
+              &quot;name&quot;: &quot;scala&quot;,
+              &quot;explicitBody&quot;: false
+            },
+            {
+              &quot;text&quot;: &quot;package math&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 14,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 14,
+                &quot;endColumn&quot;: 13
+              },
+              &quot;name&quot;: &quot;math&quot;,
+              &quot;explicitBody&quot;: false
+            }
+          ],
+          &quot;imports&quot;: [
+            {
+              &quot;text&quot;: &quot;import scala.language.implicitConversions&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 16,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 16,
+                &quot;endColumn&quot;: 42
+              },
+              &quot;path&quot;: &quot;scala.language.implicitConversions&quot;
+            }
+          ],
+          &quot;exports&quot;: [],
+          &quot;extensions&quot;: [],
+          &quot;givens&quot;: [],
+          &quot;staged&quot;: [],
+          &quot;directives&quot;: [],
+          &quot;complete&quot;: false
+        }
+      }
+    },
+    {
+      &quot;repo&quot;: &quot;scala/scala3&quot;,
+      &quot;version&quot;: &quot;3.6.4&quot;,
+      &quot;commit&quot;: &quot;6b2b8819191891f2057a1e11bda45035a4ca03ad&quot;,
+      &quot;file&quot;: &quot;library/src/scala/CanEqual.scala&quot;,
+      &quot;sha256&quot;: &quot;eaaeb709fcadcd4bac50b38998203bbfe765505a87af17cbe0e56794231ff1f3&quot;,
+      &quot;findings&quot;: [],
+      &quot;expected&quot;: [
+        [
+          1,
+          &quot;scala&quot;,
+          &quot;namespace&quot;
+        ],
+        [
+          8,
+          &quot;CanEqual&quot;,
+          &quot;trait&quot;
+        ],
+        [
+          14,
+          &quot;CanEqual&quot;,
+          &quot;object&quot;
+        ],
+        [
+          16,
+          &quot;derived&quot;,
+          &quot;object&quot;
+        ],
+        [
+          23,
+          &quot;canEqualAny&quot;,
+          &quot;method&quot;
+        ],
+        [
+          26,
+          &quot;canEqualNumber&quot;,
+          &quot;given&quot;
+        ],
+        [
+          27,
+          &quot;canEqualString&quot;,
+          &quot;given&quot;
+        ],
+        [
+          32,
+          &quot;canEqualSeqs&quot;,
+          &quot;given&quot;
+        ],
+        [
+          33,
+          &quot;canEqualSeq&quot;,
+          &quot;given&quot;
+        ],
+        [
+          35,
+          &quot;canEqualSet&quot;,
+          &quot;given&quot;
+        ],
+        [
+          37,
+          &quot;canEqualMap&quot;,
+          &quot;given&quot;
+        ],
+        [
+          41,
+          &quot;canEqualOptions&quot;,
+          &quot;given&quot;
+        ],
+        [
+          42,
+          &quot;canEqualOption&quot;,
+          &quot;given&quot;
+        ],
+        [
+          44,
+          &quot;canEqualEither&quot;,
+          &quot;given&quot;
+        ]
+      ],
+      &quot;url&quot;: &quot;https://github.com/scala/scala3/blob/6b2b8819191891f2057a1e11bda45035a4ca03ad/library/src/scala/CanEqual.scala&quot;,
+      &quot;facts&quot;: {
+        &quot;declarations&quot;: [
+          {
+            &quot;key&quot;: &quot;scala:0:13:namespace:8&quot;,
+            &quot;name&quot;: &quot;scala&quot;,
+            &quot;qualifiedName&quot;: &quot;scala&quot;,
+            &quot;kind&quot;: &quot;namespace&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;package scala&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 1,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 1,
+              &quot;endColumn&quot;: 14
+            },
+            &quot;start&quot;: 0,
+            &quot;end&quot;: 13,
+            &quot;nameEnd&quot;: 13,
+            &quot;declarationForm&quot;: &quot;definition&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:187:300:trait:284&quot;,
+            &quot;name&quot;: &quot;CanEqual&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.CanEqual&quot;,
+            &quot;kind&quot;: &quot;trait&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;@implicitNotFound(\&quot;Values of types ${L} and ${R} cannot be compared with == or !=\&quot;) sealed trait CanEqual[-L, -R]&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 7,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 8,
+              &quot;endColumn&quot;: 30
+            },
+            &quot;start&quot;: 187,
+            &quot;end&quot;: 300,
+            &quot;nameEnd&quot;: 292,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:0:13:namespace:8&quot;,
+            &quot;modifiers&quot;: [
+              &quot;sealed&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@implicitNotFound(\&quot;Values of types ${L} and ${R} cannot be compared with == or !=\&quot;)&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;scala:559:2177:object:566&quot;,
+            &quot;name&quot;: &quot;CanEqual&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.CanEqual&quot;,
+            &quot;kind&quot;: &quot;object&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;object CanEqual&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 14,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 47,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 559,
+            &quot;end&quot;: 2177,
+            &quot;nameEnd&quot;: 574,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:0:13:namespace:8&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:621:662:object:628&quot;,
+            &quot;name&quot;: &quot;derived&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.CanEqual.derived&quot;,
+            &quot;kind&quot;: &quot;object&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;object derived extends CanEqual[Any, Any]&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 16,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 16,
+              &quot;endColumn&quot;: 44
+            },
+            &quot;start&quot;: 621,
+            &quot;end&quot;: 662,
+            &quot;nameEnd&quot;: 635,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:559:2177:object:566&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:937:984:method:941&quot;,
+            &quot;name&quot;: &quot;canEqualAny&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.CanEqual.canEqualAny&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;def canEqualAny[L, R]: CanEqual[L, R] =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 23,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 23,
+              &quot;endColumn&quot;: 50
+            },
+            &quot;start&quot;: 937,
+            &quot;end&quot;: 984,
+            &quot;nameEnd&quot;: 952,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:559:2177:object:566&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:1039:1095:given:1045&quot;,
+            &quot;name&quot;: &quot;canEqualNumber&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.CanEqual.canEqualNumber&quot;,
+            &quot;kind&quot;: &quot;given&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;given canEqualNumber: CanEqual[Number, Number] =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 26,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 26,
+              &quot;endColumn&quot;: 59
+            },
+            &quot;start&quot;: 1039,
+            &quot;end&quot;: 1095,
+            &quot;nameEnd&quot;: 1059,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:559:2177:object:566&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:1098:1154:given:1104&quot;,
+            &quot;name&quot;: &quot;canEqualString&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.CanEqual.canEqualString&quot;,
+            &quot;kind&quot;: &quot;given&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;given canEqualString: CanEqual[String, String] =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 27,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 27,
+              &quot;endColumn&quot;: 59
+            },
+            &quot;start&quot;: 1098,
+            &quot;end&quot;: 1154,
+            &quot;nameEnd&quot;: 1118,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:559:2177:object:566&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:1350:1436:given:1356&quot;,
+            &quot;name&quot;: &quot;canEqualSeqs&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.CanEqual.canEqualSeqs&quot;,
+            &quot;kind&quot;: &quot;given&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;given canEqualSeqs[T, U](using eq: CanEqual[T, U]): CanEqual[Seq[T], Seq[U]] =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 32,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 32,
+              &quot;endColumn&quot;: 89
+            },
+            &quot;start&quot;: 1350,
+            &quot;end&quot;: 1436,
+            &quot;nameEnd&quot;: 1368,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:559:2177:object:566&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:1439:1521:given:1445&quot;,
+            &quot;name&quot;: &quot;canEqualSeq&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.CanEqual.canEqualSeq&quot;,
+            &quot;kind&quot;: &quot;given&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;given canEqualSeq[T](using eq: CanEqual[T, T]): CanEqual[Seq[T], Seq[T]] =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 33,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 33,
+              &quot;endColumn&quot;: 85
+            },
+            &quot;start&quot;: 1439,
+            &quot;end&quot;: 1521,
+            &quot;nameEnd&quot;: 1456,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:559:2177:object:566&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:1563:1648:given:1569&quot;,
+            &quot;name&quot;: &quot;canEqualSet&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.CanEqual.canEqualSet&quot;,
+            &quot;kind&quot;: &quot;given&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;given canEqualSet[T, U](using eq: CanEqual[T, U]): CanEqual[Set[T], Set[U]] =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 35,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 35,
+              &quot;endColumn&quot;: 88
+            },
+            &quot;start&quot;: 1563,
+            &quot;end&quot;: 1648,
+            &quot;nameEnd&quot;: 1580,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:559:2177:object:566&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:1652:1791:given:1658&quot;,
+            &quot;name&quot;: &quot;canEqualMap&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.CanEqual.canEqualMap&quot;,
+            &quot;kind&quot;: &quot;given&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;given canEqualMap[K1, V1, K2, V2]( using eqK: CanEqual[K1, K2], eqV: CanEqual[V1, V2] ): CanEqual[Map[K1, V1], Map[K2, V2]] =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 37,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 39,
+              &quot;endColumn&quot;: 50
+            },
+            &quot;start&quot;: 1652,
+            &quot;end&quot;: 1791,
+            &quot;nameEnd&quot;: 1669,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:559:2177:object:566&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:1795:1890:given:1801&quot;,
+            &quot;name&quot;: &quot;canEqualOptions&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.CanEqual.canEqualOptions&quot;,
+            &quot;kind&quot;: &quot;given&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;given canEqualOptions[T, U](using eq: CanEqual[T, U]): CanEqual[Option[T], Option[U]] =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 41,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 41,
+              &quot;endColumn&quot;: 98
+            },
+            &quot;start&quot;: 1795,
+            &quot;end&quot;: 1890,
+            &quot;nameEnd&quot;: 1816,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:559:2177:object:566&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:1893:1984:given:1899&quot;,
+            &quot;name&quot;: &quot;canEqualOption&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.CanEqual.canEqualOption&quot;,
+            &quot;kind&quot;: &quot;given&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;given canEqualOption[T](using eq: CanEqual[T, T]): CanEqual[Option[T], Option[T]] =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 42,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 42,
+              &quot;endColumn&quot;: 94
+            },
+            &quot;start&quot;: 1893,
+            &quot;end&quot;: 1984,
+            &quot;nameEnd&quot;: 1913,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:559:2177:object:566&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:2027:2175:given:2033&quot;,
+            &quot;name&quot;: &quot;canEqualEither&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.CanEqual.canEqualEither&quot;,
+            &quot;kind&quot;: &quot;given&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;given canEqualEither[L1, R1, L2, R2]( using eqL: CanEqual[L1, L2], eqR: CanEqual[R1, R2] ): CanEqual[Either[L1, R1], Either[L2, R2]] =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 44,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 46,
+              &quot;endColumn&quot;: 56
+            },
+            &quot;start&quot;: 2027,
+            &quot;end&quot;: 2175,
+            &quot;nameEnd&quot;: 2047,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:559:2177:object:566&quot;
+          }
+        ],
+        &quot;issues&quot;: [],
+        &quot;truncated&quot;: false,
+        &quot;scala&quot;: {
+          &quot;packages&quot;: [
+            {
+              &quot;text&quot;: &quot;package scala&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 1,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 1,
+                &quot;endColumn&quot;: 14
+              },
+              &quot;name&quot;: &quot;scala&quot;,
+              &quot;explicitBody&quot;: false
+            }
+          ],
+          &quot;imports&quot;: [
+            {
+              &quot;text&quot;: &quot;import annotation.implicitNotFound&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 3,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 3,
+                &quot;endColumn&quot;: 35
+              },
+              &quot;path&quot;: &quot;annotation.implicitNotFound&quot;
+            },
+            {
+              &quot;text&quot;: &quot;import scala.collection.{Seq, Set, Map}&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 4,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 4,
+                &quot;endColumn&quot;: 40
+              },
+              &quot;path&quot;: &quot;scala.collection&quot;
+            }
+          ],
+          &quot;exports&quot;: [],
+          &quot;extensions&quot;: [],
+          &quot;givens&quot;: [
+            {
+              &quot;text&quot;: &quot;given canEqualNumber: CanEqual[Number, Number] = derived&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 26,
+                &quot;startColumn&quot;: 3,
+                &quot;endLine&quot;: 26,
+                &quot;endColumn&quot;: 59
+              },
+              &quot;name&quot;: &quot;canEqualNumber&quot;,
+              &quot;signature&quot;: &quot;given canEqualNumber: CanEqual[Number, Number] =&quot;
+            },
+            {
+              &quot;text&quot;: &quot;given canEqualString: CanEqual[String, String] = derived&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 27,
+                &quot;startColumn&quot;: 3,
+                &quot;endLine&quot;: 27,
+                &quot;endColumn&quot;: 59
+              },
+              &quot;name&quot;: &quot;canEqualString&quot;,
+              &quot;signature&quot;: &quot;given canEqualString: CanEqual[String, String] =&quot;
+            },
+            {
+              &quot;text&quot;: &quot;given canEqualSeqs[T, U](using eq: CanEqual[T, U]): CanEqual[Seq[T], Seq[U]] = derived&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 32,
+                &quot;startColumn&quot;: 3,
+                &quot;endLine&quot;: 32,
+                &quot;endColumn&quot;: 89
+              },
+              &quot;name&quot;: &quot;canEqualSeqs&quot;,
+              &quot;signature&quot;: &quot;given canEqualSeqs[T, U](using eq: CanEqual[T, U]): CanEqual[Seq[T], Seq[U]] =&quot;
+            },
+            {
+              &quot;text&quot;: &quot;given canEqualSeq[T](using eq: CanEqual[T, T]): CanEqual[Seq[T], Seq[T]] = derived&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 33,
+                &quot;startColumn&quot;: 3,
+                &quot;endLine&quot;: 33,
+                &quot;endColumn&quot;: 85
+              },
+              &quot;name&quot;: &quot;canEqualSeq&quot;,
+              &quot;signature&quot;: &quot;given canEqualSeq[T](using eq: CanEqual[T, T]): CanEqual[Seq[T], Seq[T]] =&quot;
+            },
+            {
+              &quot;text&quot;: &quot;given canEqualSet[T, U](using eq: CanEqual[T, U]): CanEqual[Set[T], Set[U]] = derived&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 35,
+                &quot;startColumn&quot;: 3,
+                &quot;endLine&quot;: 35,
+                &quot;endColumn&quot;: 88
+              },
+              &quot;name&quot;: &quot;canEqualSet&quot;,
+              &quot;signature&quot;: &quot;given canEqualSet[T, U](using eq: CanEqual[T, U]): CanEqual[Set[T], Set[U]] =&quot;
+            },
+            {
+              &quot;text&quot;: &quot;given canEqualMap[K1, V1, K2, V2](\n    using eqK: CanEqual[K1, K2], eqV: CanEqual[V1, V2]\n  ): CanEqual[Map[K1, V1], Map[K2, V2]] = derived&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 37,
+                &quot;startColumn&quot;: 3,
+                &quot;endLine&quot;: 39,
+                &quot;endColumn&quot;: 50
+              },
+              &quot;name&quot;: &quot;canEqualMap&quot;,
+              &quot;signature&quot;: &quot;given canEqualMap[K1, V1, K2, V2]( using eqK: CanEqual[K1, K2], eqV: CanEqual[V1, V2] ): CanEqual[Map[K1, V1], Map[K2, V2]] =&quot;
+            },
+            {
+              &quot;text&quot;: &quot;given canEqualOptions[T, U](using eq: CanEqual[T, U]): CanEqual[Option[T], Option[U]] = derived&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 41,
+                &quot;startColumn&quot;: 3,
+                &quot;endLine&quot;: 41,
+                &quot;endColumn&quot;: 98
+              },
+              &quot;name&quot;: &quot;canEqualOptions&quot;,
+              &quot;signature&quot;: &quot;given canEqualOptions[T, U](using eq: CanEqual[T, U]): CanEqual[Option[T], Option[U]] =&quot;
+            },
+            {
+              &quot;text&quot;: &quot;given canEqualOption[T](using eq: CanEqual[T, T]): CanEqual[Option[T], Option[T]] = derived&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 42,
+                &quot;startColumn&quot;: 3,
+                &quot;endLine&quot;: 42,
+                &quot;endColumn&quot;: 94
+              },
+              &quot;name&quot;: &quot;canEqualOption&quot;,
+              &quot;signature&quot;: &quot;given canEqualOption[T](using eq: CanEqual[T, T]): CanEqual[Option[T], Option[T]] =&quot;
+            },
+            {
+              &quot;text&quot;: &quot;given canEqualEither[L1, R1, L2, R2](\n    using eqL: CanEqual[L1, L2], eqR: CanEqual[R1, R2]\n  ): CanEqual[Either[L1, R1], Either[L2, R2]] = derived&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 44,
+                &quot;startColumn&quot;: 3,
+                &quot;endLine&quot;: 46,
+                &quot;endColumn&quot;: 56
+              },
+              &quot;name&quot;: &quot;canEqualEither&quot;,
+              &quot;signature&quot;: &quot;given canEqualEither[L1, R1, L2, R2]( using eqL: CanEqual[L1, L2], eqR: CanEqual[R1, R2] ): CanEqual[Either[L1, R1], Either[L2, R2]] =&quot;
+            }
+          ],
+          &quot;staged&quot;: [],
+          &quot;directives&quot;: [],
+          &quot;complete&quot;: true
+        }
+      }
+    },
+    {
+      &quot;repo&quot;: &quot;scala/scala3&quot;,
+      &quot;version&quot;: &quot;3.6.4&quot;,
+      &quot;commit&quot;: &quot;6b2b8819191891f2057a1e11bda45035a4ca03ad&quot;,
+      &quot;file&quot;: &quot;library/src/scala/util/NotGiven.scala&quot;,
+      &quot;sha256&quot;: &quot;ac2cc6b5af052e1b32a87504dfaf849b76aca68368a471547d8029d0bf9c5447&quot;,
+      &quot;findings&quot;: [],
+      &quot;expected&quot;: [
+        [
+          1,
+          &quot;scala.util&quot;,
+          &quot;namespace&quot;
+        ],
+        [
+          25,
+          &quot;NotGiven&quot;,
+          &quot;class&quot;
+        ],
+        [
+          27,
+          &quot;LowPriorityNotGiven&quot;,
+          &quot;trait&quot;
+        ],
+        [
+          30,
+          &quot;default&quot;,
+          &quot;given&quot;
+        ],
+        [
+          32,
+          &quot;NotGiven&quot;,
+          &quot;object&quot;
+        ],
+        [
+          34,
+          &quot;cachedValue&quot;,
+          &quot;property&quot;
+        ],
+        [
+          40,
+          &quot;value&quot;,
+          &quot;method&quot;
+        ],
+        [
+          43,
+          &quot;amb1&quot;,
+          &quot;given&quot;
+        ],
+        [
+          46,
+          &quot;amb2&quot;,
+          &quot;given&quot;
+        ]
+      ],
+      &quot;url&quot;: &quot;https://github.com/scala/scala3/blob/6b2b8819191891f2057a1e11bda45035a4ca03ad/library/src/scala/util/NotGiven.scala&quot;,
+      &quot;facts&quot;: {
+        &quot;declarations&quot;: [
+          {
+            &quot;key&quot;: &quot;scala:0:18:namespace:8&quot;,
+            &quot;name&quot;: &quot;scala.util&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.util&quot;,
+            &quot;kind&quot;: &quot;namespace&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;package scala.util&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 1,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 1,
+              &quot;endColumn&quot;: 19
+            },
+            &quot;start&quot;: 0,
+            &quot;end&quot;: 18,
+            &quot;nameEnd&quot;: 18,
+            &quot;declarationForm&quot;: &quot;definition&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:1200:1235:class:1212&quot;,
+            &quot;name&quot;: &quot;NotGiven&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.util.NotGiven&quot;,
+            &quot;kind&quot;: &quot;class&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;final class NotGiven[+T] private ()&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 25,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 25,
+              &quot;endColumn&quot;: 36
+            },
+            &quot;start&quot;: 1200,
+            &quot;end&quot;: 1235,
+            &quot;nameEnd&quot;: 1220,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:0:18:namespace:8&quot;,
+            &quot;modifiers&quot;: [
+              &quot;final&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;scala:1237:1379:trait:1243&quot;,
+            &quot;name&quot;: &quot;LowPriorityNotGiven&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.util.LowPriorityNotGiven&quot;,
+            &quot;kind&quot;: &quot;trait&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;trait LowPriorityNotGiven&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 27,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 31,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 1237,
+            &quot;end&quot;: 1379,
+            &quot;nameEnd&quot;: 1262,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:0:18:namespace:8&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:1331:1377:given:1337&quot;,
+            &quot;name&quot;: &quot;default&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.util.LowPriorityNotGiven.default&quot;,
+            &quot;kind&quot;: &quot;given&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;given default[T]: NotGiven[T] =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 30,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 30,
+              &quot;endColumn&quot;: 49
+            },
+            &quot;start&quot;: 1331,
+            &quot;end&quot;: 1377,
+            &quot;nameEnd&quot;: 1344,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:1237:1379:trait:1243&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:1380:1998:object:1387&quot;,
+            &quot;name&quot;: &quot;NotGiven&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.util.NotGiven&quot;,
+            &quot;kind&quot;: &quot;object&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;object NotGiven extends LowPriorityNotGiven&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 32,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 47,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 1380,
+            &quot;end&quot;: 1998,
+            &quot;nameEnd&quot;: 1395,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:0:18:namespace:8&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:1429:1478:property:1441&quot;,
+            &quot;name&quot;: &quot;cachedValue&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.util.NotGiven.cachedValue&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;private val cachedValue&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 34,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 34,
+              &quot;endColumn&quot;: 52
+            },
+            &quot;start&quot;: 1429,
+            &quot;end&quot;: 1478,
+            &quot;nameEnd&quot;: 1452,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:1380:1998:object:1387&quot;,
+            &quot;modifiers&quot;: [
+              &quot;private&quot;
+            ],
+            &quot;visibility&quot;: &quot;private&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:1708:1750:method:1712&quot;,
+            &quot;name&quot;: &quot;value&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.util.NotGiven.value&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;def value: NotGiven[Nothing] =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 40,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 40,
+              &quot;endColumn&quot;: 45
+            },
+            &quot;start&quot;: 1708,
+            &quot;end&quot;: 1750,
+            &quot;nameEnd&quot;: 1717,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:1380:1998:object:1387&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:1828:1873:given:1834&quot;,
+            &quot;name&quot;: &quot;amb1&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.util.NotGiven.amb1&quot;,
+            &quot;kind&quot;: &quot;given&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;given amb1[T](using ev: T): NotGiven[T] =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 43,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 43,
+              &quot;endColumn&quot;: 48
+            },
+            &quot;start&quot;: 1828,
+            &quot;end&quot;: 1873,
+            &quot;nameEnd&quot;: 1838,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:1380:1998:object:1387&quot;
+          },
+          {
+            &quot;key&quot;: &quot;scala:1951:1996:given:1957&quot;,
+            &quot;name&quot;: &quot;amb2&quot;,
+            &quot;qualifiedName&quot;: &quot;scala.util.NotGiven.amb2&quot;,
+            &quot;kind&quot;: &quot;given&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;given amb2[T](using ev: T): NotGiven[T] =&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 46,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 46,
+              &quot;endColumn&quot;: 48
+            },
+            &quot;start&quot;: 1951,
+            &quot;end&quot;: 1996,
+            &quot;nameEnd&quot;: 1961,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;scala:1380:1998:object:1387&quot;
+          }
+        ],
+        &quot;issues&quot;: [],
+        &quot;truncated&quot;: false,
+        &quot;scala&quot;: {
+          &quot;packages&quot;: [
+            {
+              &quot;text&quot;: &quot;package scala.util&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 1,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 1,
+                &quot;endColumn&quot;: 19
+              },
+              &quot;name&quot;: &quot;scala.util&quot;,
+              &quot;explicitBody&quot;: false
+            }
+          ],
+          &quot;imports&quot;: [],
+          &quot;exports&quot;: [],
+          &quot;extensions&quot;: [],
+          &quot;givens&quot;: [
+            {
+              &quot;text&quot;: &quot;given default[T]: NotGiven[T] = NotGiven.value&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 30,
+                &quot;startColumn&quot;: 3,
+                &quot;endLine&quot;: 30,
+                &quot;endColumn&quot;: 49
+              },
+              &quot;name&quot;: &quot;default&quot;,
+              &quot;signature&quot;: &quot;given default[T]: NotGiven[T] =&quot;
+            },
+            {
+              &quot;text&quot;: &quot;given amb1[T](using ev: T): NotGiven[T] = ???&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 43,
+                &quot;startColumn&quot;: 3,
+                &quot;endLine&quot;: 43,
+                &quot;endColumn&quot;: 48
+              },
+              &quot;name&quot;: &quot;amb1&quot;,
+              &quot;signature&quot;: &quot;given amb1[T](using ev: T): NotGiven[T] =&quot;
+            },
+            {
+              &quot;text&quot;: &quot;given amb2[T](using ev: T): NotGiven[T] = ???&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 46,
+                &quot;startColumn&quot;: 3,
+                &quot;endLine&quot;: 46,
+                &quot;endColumn&quot;: 48
+              },
+              &quot;name&quot;: &quot;amb2&quot;,
+              &quot;signature&quot;: &quot;given amb2[T](using ev: T): NotGiven[T] =&quot;
+            }
+          ],
+          &quot;staged&quot;: [],
+          &quot;directives&quot;: [],
+          &quot;complete&quot;: true
+        }
+      }
+    }
+  ]
+}</pre></details></main></body></html>
