@@ -8,7 +8,7 @@
 // the map are kept; a view epoch drops responses that belong to an old view.
 import type { Entity, Relation } from '@engine/core/graph';
 import type { AggregateEdgesPage, AggregateGroup, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FlowList, FlowSummary, ImpactItem, ImpactResult, LocateResult, NodeSummary, ProjectionMeta, Rect, RelationItem, RequestFlow, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineEntry, TimelineResponse, ViewKey } from '@engine/projection/dto';
-import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, FamiliesResult, FeaturesResult, FileListResult, FlowStatus, ImpactGroupBy, PersonAuthorship } from '@engine/projection/dto';
+import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, EntityPulls, FamiliesResult, FeaturesResult, FileListResult, FlowStatus, ImpactGroupBy, PersonAuthorship, PullDetail, PullsResult } from '@engine/projection/dto';
 import type { CatalogTab } from './catalog';
 import { fromRequestFlow, fromSteps, type MapFlow } from './map-flow';
 import { isAbort, type AtlasApi } from './api';
@@ -39,6 +39,8 @@ export interface SelectionState {
   annotation?: { status: Status; data?: EntityAnnotation; error?: string };
   /** Who changed it (the Git history), in the people window; `stamp` is the view and window of `data`. */
   authorship?: { status: Status; stamp?: string; data?: EntityAuthorship; error?: string };
+  /** The open pull requests changing it, and the latest merged in the people window. */
+  pulls?: { status: Status; stamp?: string; data?: EntityPulls; error?: string };
 }
 export interface RelationsState { status: Status; forId?: string; items: RelationItem[]; typeCounts: { type: string; direction: string; count: number }[]; total: number; hasMore: boolean; type?: string; direction: 'both' | 'outgoing' | 'incoming'; error?: string }
 export interface AggregateState { status: Status; forId?: string; data?: AggregateResult; error?: string; drill?: { group: AggregateGroup; status: Status; page?: AggregateEdgesPage; items: AggregateEdgesPage['items']; error?: string } }
@@ -80,6 +82,8 @@ export interface TimelineState {
 }
 /** The origin of a blast radius that is the uncommitted changes of the live index, not an entity. */
 export const WORKING_CHANGES = 'working';
+/** The prefix of a blast radius origin that is a pull request (`pull-request:<id>`), not an entity. */
+export const PULL_ORIGIN = 'pull-request:';
 /**
  * Blast radius of an entity (`forId`), or of the uncommitted changes
  * (`WORKING_CHANGES`). It stays on its origin while the selection moves; the
@@ -101,8 +105,8 @@ export type CenterView = 'map' | 'flow' | 'impact' | 'files';
  * otherwise in layers) or as an outline of steps.
  */
 export interface FlowViewState { id: string; title: string; subtitle?: string; lanes: boolean; layout: 'diagram' | 'outline' }
-/** What a list of files is of: a feature, a data family, a coverage category or a person (the highlight on the map). */
-export interface FileSubject { kind: 'feature' | 'family' | 'coverage' | 'person'; key: string }
+/** What a list of files is of: a feature, a data family, a coverage category, a person or a pull request (the highlight on the map). */
+export interface FileSubject { kind: 'feature' | 'family' | 'coverage' | 'person' | 'pull'; key: string }
 export interface FilesState extends FileSubject { status: Status; stamp: string; data?: FileListResult; error?: string }
 /** What the viewed comparison's changes reach (history). */
 export interface CommitImpactState { status: Status; viewStamp?: string; data?: ImpactResult; error?: string; show: boolean }
@@ -162,6 +166,26 @@ export interface PeopleState {
   reveal?: number;
 }
 /**
+ * Pull requests in the people window: merged into the branch up to the commit
+ * shown, open now (pull requests and branches), closed. The Pull requests
+ * panel lists one `tab` of them (`query` filters); `focus` lights the files
+ * one changes and dims the rest, with what it changes in `pull`. `stamp` is
+ * the view and window of `data`.
+ */
+export interface PullsState {
+  status: Status; stamp?: string; data?: PullsResult; error?: string;
+  tab: 'open' | 'merged' | 'closed';
+  query: string;
+  /** The provider is being asked again. */
+  refreshing?: boolean;
+  focus?: string;
+  pull?: { id: string; status: Status; stamp?: string; data?: PullDetail; error?: string };
+  /** Rows (and their `id:folders` / `id:commits` / `id:outside` lists) expanded in the panel. */
+  open: Record<string, boolean>;
+  /** Incremented to ask the shell to show the Pull requests panel. */
+  reveal?: number;
+}
+/**
  * A flow shown on the map: everything it touches stays lit, the rest dims;
  * it plays branch by branch (`playback.index` is the branch), the pulse
  * flowing along the branch's edges wave by wave.
@@ -207,6 +231,7 @@ export interface AtlasState {
   families: FamiliesState;
   features: FeaturesState;
   people: PeopleState;
+  pulls: PullsState;
   center: CenterView;
   flowView?: FlowViewState;
   files?: FilesState;
@@ -298,7 +323,7 @@ export class AtlasStore {
       history: { entries: [], index: -1 }, showDiagnostics: prefs.showDiagnostics ?? true, themeId: prefs.themeId ?? DEFAULT_THEME, moreThemes: prefs.moreThemes ?? false,
       staleIndex: false, sceneRevision: 0,
       impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '', open: {} }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, families: { show: false, status: 'idle' }, features: { status: 'idle', open: {} },
-      people: { window: prefs.peopleWindow ?? 'all', show: false, status: 'idle', open: {} }, center: 'map',
+      people: { window: prefs.peopleWindow ?? 'all', show: false, status: 'idle', open: {} }, pulls: { status: 'idle', tab: 'open', query: '', open: {} }, center: 'map',
       timeline: { open: false, status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true, split: prefs.split ?? true, regionLevel: prefs.regionLevel ?? 'auto', regions: { status: 'idle' } },
     };
   }
@@ -357,9 +382,11 @@ export class AtlasStore {
     this.set({ selection: undefined, relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' }, evidence: undefined, source: undefined });
     await this.init();
     if (selected && !this.state.selection) await this.select(selected, { fly: false, recordHistory: false }).catch(() => undefined);
-    // A new run is a new view: who changed it is read again.
+    // A new run is a new view: who changed it, and the pull requests on it, are read again.
     if (this.state.people.status !== 'idle') void this.loadPeople();
     if (this.state.people.focus) void this.loadPerson(this.state.people.focus);
+    if (this.state.pulls.status !== 'idle') void this.loadPulls();
+    if (this.state.pulls.focus) void this.loadPull(this.state.pulls.focus);
   }
   /** Fetch the next page of children for each container (bounded, de-duplicated). */
   async loadChildren(ids: string[]): Promise<void> {
@@ -416,6 +443,7 @@ export class AtlasStore {
         this.loadSelectionCoverage(id, signal),
         this.loadSelectionAnnotation(id, signal),
         this.loadSelectionAuthorship(id, signal),
+        this.loadSelectionPulls(id, signal),
       ]);
     } catch (error) {
       if (isAbort(error)) return;
@@ -871,6 +899,8 @@ export class AtlasStore {
       if (this.state.features.status !== 'idle') void this.loadFeatures();
       if (this.state.people.status !== 'idle') void this.loadPeople();
       if (this.state.people.focus) void this.loadPerson(this.state.people.focus);
+      if (this.state.pulls.status !== 'idle') void this.loadPulls();
+      if (this.state.pulls.focus) void this.loadPull(this.state.pulls.focus);
       if (this.state.requests.open) void this.loadRequestFlow(this.state.requests.open.id);
       if (this.state.steps) void this.loadSteps(this.state.steps.anchor);
       if (this.state.impact.open && this.state.impact.forId) void this.loadImpact(this.state.impact.forId);
@@ -934,7 +964,7 @@ export class AtlasStore {
     this.set(state => ({ impact: { ...state.impact, status: 'loading', forId: id, viewStamp, ...(state.impact.forId !== id ? { data: undefined, items: [] } : {}) } }));
     try {
       const options = { depth: current.depth, ...current.filter, ...(current.group ? { group: current.group } : {}), offset: append ? current.items.length : 0, limit: 100 };
-      const data = await this.api.impact(id === WORKING_CHANGES ? { working: true } : id, options, signal);
+      const data = await this.api.impact(id === WORKING_CHANGES ? { working: true } : id.startsWith(PULL_ORIGIN) ? { pull: id.slice(PULL_ORIGIN.length), window: this.peopleWindow() } : id, options, signal);
       if (signal.aborted) return;
       for (const item of data.items.items) this.scene.upsert(item);
       this.set(state => state.impact.forId === id && state.impact.open ? { impact: { ...state.impact, status: 'ready', data, viewStamp, items: append ? [...state.impact.items, ...data.items.items] : data.items.items, error: undefined } } : {});
@@ -1176,7 +1206,7 @@ export class AtlasStore {
   }
   /** Light one family on the map (again: none); the colors are shown if they were not. A lit feature lets go. */
   focusFamily(key: string | undefined): void {
-    this.set(state => ({ families: { ...state.families, focus: key === undefined || state.families.focus === key ? undefined : key }, ...(key ? { features: { ...state.features, focus: undefined }, people: { ...state.people, focus: undefined, person: undefined } } : {}) }));
+    this.set(state => ({ families: { ...state.families, focus: key === undefined || state.families.focus === key ? undefined : key }, ...(key ? { features: { ...state.features, focus: undefined }, people: { ...state.people, focus: undefined, person: undefined }, pulls: { ...state.pulls, focus: undefined, pull: undefined } } : {}) }));
     if (key && !this.state.families.show) void this.toggleFamilies(true);
     this.followHighlight('family', this.state.families.focus);
   }
@@ -1205,7 +1235,7 @@ export class AtlasStore {
    */
   async focusFeature(key: string | undefined, options: { fit?: boolean } = {}): Promise<void> {
     const focus = key === undefined || this.state.features.focus === key ? undefined : key;
-    this.set(state => ({ features: { ...state.features, focus, ...(focus ? { open: { ...state.features.open, [focus]: true } } : {}) }, ...(focus ? { families: { ...state.families, focus: undefined }, people: { ...state.people, focus: undefined, person: undefined } } : {}) }));
+    this.set(state => ({ features: { ...state.features, focus, ...(focus ? { open: { ...state.features.open, [focus]: true } } : {}) }, ...(focus ? { families: { ...state.families, focus: undefined }, people: { ...state.people, focus: undefined, person: undefined }, pulls: { ...state.pulls, focus: undefined, pull: undefined } } : {}) }));
     if (!focus) return;
     this.followHighlight('feature', focus);
     await this.ensureFeatures();
@@ -1277,7 +1307,7 @@ export class AtlasStore {
    */
   async focusPerson(key: string | undefined, options: { fit?: boolean } = {}): Promise<void> {
     const focus = key === undefined || this.state.people.focus === key ? undefined : key;
-    this.set(state => ({ people: { ...state.people, focus, ...(focus ? { open: { ...state.people.open, [focus]: true } } : { person: undefined }) }, ...(focus ? { families: { ...state.families, focus: undefined }, features: { ...state.features, focus: undefined } } : {}) }));
+    this.set(state => ({ people: { ...state.people, focus, ...(focus ? { open: { ...state.people.open, [focus]: true } } : { person: undefined }) }, ...(focus ? { families: { ...state.families, focus: undefined }, features: { ...state.features, focus: undefined }, pulls: { ...state.pulls, focus: undefined, pull: undefined } } : {}) }));
     if (!focus) { this.aborts.get('person')?.abort(); return; }
     this.followHighlight('person', focus);
     await this.loadPerson(focus);
@@ -1303,7 +1333,10 @@ export class AtlasStore {
       people.status !== 'idle' ? this.loadPeople() : undefined,
       people.focus ? this.loadPerson(people.focus) : undefined,
       selection?.authorship ? this.loadSelectionAuthorship(selection.id, this.aborts.get('selection')?.signal ?? new AbortController().signal) : undefined,
-      this.state.files?.kind === 'person' ? this.loadFiles() : undefined,
+      this.state.pulls.status !== 'idle' ? this.loadPulls() : undefined,
+      this.state.pulls.focus ? this.loadPull(this.state.pulls.focus) : undefined,
+      selection?.pulls ? this.loadSelectionPulls(selection.id, this.aborts.get('selection')?.signal ?? new AbortController().signal) : undefined,
+      this.state.files?.kind === 'person' || this.state.files?.kind === 'pull' ? this.loadFiles() : undefined,
     ]);
   }
   /** Expand or collapse a row of the People panel (`open` undefined: toggle). */
@@ -1316,6 +1349,83 @@ export class AtlasStore {
     if (!this.state.timeline.compare) await this.setCompare(true);
     await this.setTarget(snapshot);
   }
+  // Pull requests -------------------------------------------------------------------
+  /** The pull requests of the current view and window, loaded when they are not yet. */
+  async ensurePulls(): Promise<void> {
+    const pulls = this.state.pulls;
+    if (pulls.status === 'loading' || (pulls.status === 'ready' && pulls.stamp === this.peopleStamp())) return;
+    await this.loadPulls();
+  }
+  /** Load the pull requests (`refresh`: ask the provider again). Merged ones are filtered by the panel's query on the server. */
+  async loadPulls(options: { refresh?: boolean } = {}): Promise<void> {
+    const signal = this.abortable('pulls');
+    const stamp = this.peopleStamp(), query = this.state.pulls.query;
+    this.set(state => ({ pulls: { ...state.pulls, status: 'loading', error: undefined, ...(options.refresh ? { refreshing: true } : {}) } }));
+    try {
+      const data = await this.api.pulls(this.peopleWindow(), { ...(query ? { query } : {}), ...(options.refresh ? { refresh: true } : {}) }, signal);
+      if (signal.aborted) return;
+      this.set(state => ({ pulls: { ...state.pulls, status: 'ready', data, stamp, refreshing: false } }));
+    } catch (error) { if (!isAbort(error)) this.set(state => ({ pulls: { ...state.pulls, status: 'error', refreshing: false, error: error instanceof Error ? error.message : String(error) } })); }
+  }
+  /** Filter the pull requests by number, words of the title, branch or author. */
+  setPullsQuery(query: string): void {
+    if (query === this.state.pulls.query) return;
+    this.set(state => ({ pulls: { ...state.pulls, query } }));
+    void this.loadPulls();
+  }
+  setPullsTab(tab: PullsState['tab']): void { this.set(state => ({ pulls: { ...state.pulls, tab } })); }
+  /** Expand or collapse a row of the Pull requests panel (`open` undefined: toggle). */
+  setPullsOpen(branch: string, open?: boolean): void {
+    this.set(state => ({ pulls: { ...state.pulls, open: { ...state.pulls.open, [branch]: open ?? !state.pulls.open[branch] } } }));
+  }
+  private async loadPull(id: string): Promise<void> {
+    const signal = this.abortable('pull');
+    const stamp = this.peopleStamp();
+    this.set(state => ({ pulls: { ...state.pulls, pull: { ...(state.pulls.pull?.id === id ? state.pulls.pull : { id }), status: 'loading', error: undefined } } }));
+    try {
+      const data = await this.api.pull(id, this.peopleWindow(), signal);
+      if (signal.aborted) return;
+      this.set(state => state.pulls.focus === id ? { pulls: { ...state.pulls, pull: { id, status: 'ready', stamp, data } } } : {});
+    } catch (error) { if (!isAbort(error)) this.set(state => state.pulls.focus === id ? { pulls: { ...state.pulls, pull: { id, status: 'error', stamp, error: error instanceof Error ? error.message : String(error) } } } : {}); }
+  }
+  private async loadSelectionPulls(id: string, signal: AbortSignal): Promise<void> {
+    const stamp = this.peopleStamp();
+    this.set(state => state.selection?.id === id ? { selection: { ...state.selection, pulls: { ...state.selection.pulls, status: 'loading', error: undefined } } } : {});
+    try {
+      const data = await this.api.entityPulls(id, this.peopleWindow(), signal);
+      this.set(state => state.selection?.id === id ? { selection: { ...state.selection, pulls: { status: 'ready', stamp, data } } } : {});
+    } catch (error) { if (!isAbort(error)) this.set(state => state.selection?.id === id ? { selection: { ...state.selection, pulls: { status: 'error', error: error instanceof Error ? error.message : String(error) } } } : {}); }
+  }
+  /**
+   * Light the files a pull request changes and dim the rest (again: none);
+   * with `fit`, the camera frames the folders holding them. A lit person,
+   * feature or family lets go: one focus at a time.
+   */
+  async focusPull(id: string | undefined, options: { fit?: boolean } = {}): Promise<void> {
+    const focus = id === undefined || this.state.pulls.focus === id ? undefined : id;
+    this.set(state => ({ pulls: { ...state.pulls, focus, ...(focus ? { open: { ...state.pulls.open, [focus]: true } } : { pull: undefined }) }, ...(focus ? { families: { ...state.families, focus: undefined }, features: { ...state.features, focus: undefined }, people: { ...state.people, focus: undefined, person: undefined } } : {}) }));
+    if (!focus) { this.aborts.get('pull')?.abort(); return; }
+    this.followHighlight('pull', focus);
+    await this.loadPull(focus);
+    const folders = this.state.pulls.pull?.id === focus ? this.state.pulls.pull.data?.folders : undefined;
+    if (!options.fit || !folders?.length) return;
+    try {
+      const { items } = await this.api.nodes(folders.slice(0, 60).map(folder => folder.id));
+      if (this.state.pulls.focus === focus && items.length) this.navigator?.fitNodes(items);
+    } catch { /* framing is optional */ }
+  }
+  /** Open the Pull requests panel (on one, lit on the map, on the list that holds it). */
+  async revealPulls(id?: string): Promise<void> {
+    this.set(state => ({ pulls: { ...state.pulls, reveal: (state.pulls.reveal ?? 0) + 1 } }));
+    if (!id) return;
+    await this.ensurePulls();
+    const data = this.state.pulls.data;
+    const tab = data?.open.some(item => item.id === id) ? 'open' : data?.closed.some(item => item.id === id) ? 'closed' : 'merged';
+    this.set(state => ({ pulls: { ...state.pulls, tab } }));
+    if (this.state.pulls.focus !== id) await this.focusPull(id, { fit: true });
+  }
+  /** What depends on the code a pull request changes, in the middle. */
+  showPullImpact(id: string): Promise<void> { return this.showImpact(`${PULL_ORIGIN}${id}`); }
   // Lists of what is lit -------------------------------------------------------------
   /**
    * List the files a highlight lights, in the middle: a feature, a data family,
@@ -1328,12 +1438,13 @@ export class AtlasStore {
     if (kind === 'feature' && this.state.features.focus !== key) void this.focusFeature(key);
     if (kind === 'family' && this.state.families.focus !== key) this.focusFamily(key);
     if (kind === 'person' && this.state.people.focus !== key) void this.focusPerson(key);
+    if (kind === 'pull' && this.state.pulls.focus !== key) void this.focusPull(key);
     if (kind === 'coverage' && !this.state.coverage.show) void this.toggleCoverage(true);
     await this.loadFiles();
   }
   closeFiles(): void { this.aborts.get('files')?.abort(); this.set({ ...this.leaveCenter('files'), files: undefined }); }
   /** The view (and, for a person, the window) a list of files belongs to. */
-  private filesStamp(subject: FileSubject): string { return `${subject.kind}:${subject.key}|${subject.kind === 'person' ? this.peopleStamp() : this.viewStamp()}`; }
+  private filesStamp(subject: FileSubject): string { return `${subject.kind}:${subject.key}|${subject.kind === 'person' || subject.kind === 'pull' ? this.peopleStamp() : this.viewStamp()}`; }
   async loadFiles(): Promise<void> {
     const files = this.state.files;
     if (!files) return;
@@ -1341,7 +1452,7 @@ export class AtlasStore {
     const signal = this.abortable('files');
     this.set(state => state.files ? { files: { ...state.files, status: 'loading', stamp, error: undefined } } : {});
     try {
-      const data = await this.api.files(files.kind === 'person' ? { person: files.key, window: this.peopleWindow() } : { [files.kind]: files.key }, signal);
+      const data = await this.api.files(files.kind === 'person' || files.kind === 'pull' ? { [files.kind]: files.key, window: this.peopleWindow() } : { [files.kind]: files.key }, signal);
       if (signal.aborted) return;
       this.set(state => state.files?.stamp === stamp ? { files: { ...state.files, status: 'ready', data } } : {});
     } catch (error) { if (!isAbort(error)) this.set(state => state.files?.stamp === stamp ? { files: { ...state.files, status: 'error', error: error instanceof Error ? error.message : String(error) } } : {}); }

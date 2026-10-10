@@ -31,7 +31,7 @@ function impactParams(params: URLSearchParams): ImpactQuery {
   const groupKey = params.get('groupKey');
   return { depth: numberParam(params, 'depth'), types: params.get('types')?.split(',').filter(Boolean), type: text(params, 'type'), distance: numberParam(params, 'distance'), ...(group ? { group: group as ImpactQuery['group'] } : {}), ...(groupKey !== null ? { groupKey } : {}) };
 }
-export function isProjectionPath(pathname: string): boolean { return pathname.startsWith('/api/projection') || pathname === '/api/source' || pathname === '/api/source/diff' || pathname === '/api/history' || pathname.startsWith('/api/history/') || pathname === '/api/annotations' || pathname.startsWith('/api/annotations/') || pathname === '/api/authorship' || pathname.startsWith('/api/authorship/'); }
+export function isProjectionPath(pathname: string): boolean { return pathname.startsWith('/api/projection') || pathname === '/api/source' || pathname === '/api/source/diff' || pathname === '/api/history' || pathname.startsWith('/api/history/') || pathname === '/api/annotations' || pathname.startsWith('/api/annotations/') || pathname === '/api/authorship' || pathname.startsWith('/api/authorship/') || pathname === '/api/pulls' || pathname.startsWith('/api/pulls/'); }
 
 /** Returns true when the request was handled. */
 export async function handleProjectionRoute(context: ProjectionContext, url: URL, response: ServerResponse, acceptEncoding?: string): Promise<boolean> {
@@ -72,10 +72,18 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
     else if (pathname === '/api/projection/coverage/export') result = projection.coverageExport(view);
     else if (pathname === '/api/projection/families') result = projection.families(view);
     else if (pathname === '/api/projection/features') result = projection.features(view);
-    else if (pathname === '/api/projection/files') result = await projection.fileList(view, { feature: params.get('feature') ?? undefined, family: params.get('family') ?? undefined, coverage: params.get('coverage') ?? undefined, person: params.get('person') ?? undefined, window: text(params, 'window') });
+    else if (pathname === '/api/projection/files') result = await projection.fileList(view, { feature: params.get('feature') ?? undefined, family: params.get('family') ?? undefined, coverage: params.get('coverage') ?? undefined, person: params.get('person') ?? undefined, pull: params.get('pull') ?? undefined, window: text(params, 'window') });
     else if (pathname === '/api/authorship') result = await projection.authorship(view, { window: text(params, 'window') });
     else if ((match = new RegExp(`^/api/authorship/person/${ID}$`).exec(pathname))) result = await projection.personAuthorship(decodeURIComponent(match[1]!), view, { window: text(params, 'window') });
     else if ((match = new RegExp(`^/api/authorship/entity/${ID}$`).exec(pathname))) result = await projection.entityAuthorship(decodeURIComponent(match[1]!), view, { window: text(params, 'window') });
+    else if (pathname === '/api/pulls') result = await projection.pulls(view, { window: text(params, 'window'), query: text(params, 'q'), refresh: params.get('refresh') === '1' });
+    else if ((match = new RegExp(`^/api/pulls/item/${ID}$`).exec(pathname))) result = await projection.pull(decodeURIComponent(match[1]!), view, { window: text(params, 'window') });
+    else if ((match = new RegExp(`^/api/pulls/entity/${ID}$`).exec(pathname))) result = await projection.entityPulls(decodeURIComponent(match[1]!), view, { window: text(params, 'window') });
+    else if (pathname === '/api/projection/impact-pull') {
+      const pull = params.get('pull');
+      if (!pull) throw new Error('pull is required');
+      result = await projection.pullImpact(pull, view, { ...page, ...impactParams(params), window: text(params, 'window') });
+    }
     else if (pathname === '/api/annotations') result = projection.annotationsOverview();
     else if ((match = new RegExp(`^/api/annotations/entity/${ID}$`).exec(pathname))) result = projection.entityAnnotation(decodeURIComponent(match[1]!), view);
     else if ((match = new RegExp(`^/api/projection/coverage/${ID}$`).exec(pathname))) result = projection.coverageOf(decodeURIComponent(match[1]!), view);

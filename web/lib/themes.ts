@@ -468,6 +468,8 @@ export function featureHues(keys: string[]): Map<string, number> { return family
 /** People: hues spread by the golden angle over their order of first commit, so a person keeps one color in every window and view. */
 export function personHue(order: number): number { return Math.round((28 + order * 137.508) % 360); }
 export function personHues(people: { key: string; order: number }[]): Map<string, number> { return new Map(people.map(person => [person.key, personHue(person.order)])); }
+/** Pull requests: open work in green, merged in violet, closed unmerged in grey-red, as code hosts show them. */
+export function pullHue(state: 'open' | 'merged' | 'closed'): number { return state === 'open' ? 140 : state === 'merged' ? 268 : 2; }
 /** A family's hue when the order of the families is not at hand. */
 export function familyHashHue(key: string): number { return domainHue(`family:${key}`); }
 export function familyHsl(hue: number | 'none', dark: boolean): Hsl { return hue === 'none' ? hsl(220, 8, dark ? 34 : 78) : hsl(hue, dark ? 60 : 58, dark ? 58 : 50); }

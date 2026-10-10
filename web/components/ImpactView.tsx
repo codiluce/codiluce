@@ -1,14 +1,15 @@
 'use client';
-// Blast radius in the middle of the screen: what depends on an entity, or on
-// the uncommitted changes, hop by hop. It stays on its origin while you select
-// what it lists; the overview map colors it by hops. Listed by hops, or by
-// application, feature or folder. Results come from /api/projection/impact
-// and /api/projection/impact-working.
+// Blast radius in the middle of the screen: what depends on an entity, on
+// the uncommitted changes or on a pull request, hop by hop. It stays on its
+// origin while you select what it lists; the overview map colors it by hops.
+// Listed by hops, or by application, feature or folder. Results come from
+// /api/projection/impact, /api/projection/impact-working and
+// /api/projection/impact-pull.
 import { useState } from 'react';
 import type { ImpactGroupBy, ImpactItem, ImpactResult, NodeSummary } from '@engine/projection/dto';
 import { compactNumber, shortSha, typeLabel } from '../lib/format';
 import { impactColors, mixHex } from '../lib/renderer';
-import { WORKING_CHANGES } from '../lib/store';
+import { PULL_ORIGIN, WORKING_CHANGES } from '../lib/store';
 import { themeById } from '../lib/themes';
 import { CopyButton } from './FilesView';
 import { useAtlas, useStore } from './context';
@@ -23,6 +24,8 @@ function distanceColor(themeId: string, distance: number, depth: number): string
 /** What a blast radius starts from, in words. */
 export function impactOriginName(forId: string | undefined, data: ImpactResult | undefined, fallback?: string): string {
   if (forId === WORKING_CHANGES) return 'uncommitted changes';
+  if (data?.origin.kind === 'pull') return data.origin.number !== undefined ? `pull request #${data.origin.number}` : `branch ${data.origin.title}`;
+  if (forId?.startsWith(PULL_ORIGIN)) return forId.slice(PULL_ORIGIN.length).replace(/^pr-(\d+)$/, 'pull request #$1').replace(/^branch:/, 'branch ');
   return data?.origin.kind === 'entity' ? data.origin.node.name : fallback ?? '…';
 }
 
@@ -34,10 +37,10 @@ export function ImpactView() {
   const live = useAtlas(state => state.meta?.snapshot.kind === 'working_tree' && !state.meta.comparison);
   const comparing = useAtlas(state => !!state.meta?.comparison);
   const features = useAtlas(state => (state.annotations.data?.domains.length ?? 0) > 0);
-  const known = useAtlas(() => impact.forId && impact.forId !== WORKING_CHANGES ? store.scene.nodes.get(impact.forId)?.name : undefined);
+  const known = useAtlas(() => impact.forId && impact.forId !== WORKING_CHANGES && !impact.forId.startsWith(PULL_ORIGIN) ? store.scene.nodes.get(impact.forId)?.name : undefined);
   const data = impact.forId ? impact.data : undefined;
   const max = data ? Math.max(1, ...data.byDistance) : 1;
-  const working = impact.forId === WORKING_CHANGES;
+  const working = impact.forId === WORKING_CHANGES || !!impact.forId?.startsWith(PULL_ORIGIN);
   const name = impactOriginName(impact.forId, data, known);
   const groups = GROUPS.filter(([key]) => key !== 'feature' || features);
   const copy = () => impact.items.map(item => `${item.name} (${typeLabel(item.type, item.role)}, ${item.distance} hop${item.distance === 1 ? '' : 's'})${item.path ? ` ${item.path}` : ''}`).join('\n');
@@ -74,7 +77,7 @@ export function ImpactView() {
         {impact.status === 'error' && <p className="note error">{impact.error}</p>}
         {data && (
           <>
-            {data.total === 0 && !(data.origin.kind === 'working' && data.origin.reason) && <p className="note">Nothing indexed depends on this. That is a lower bound: see what the walk cannot see below.</p>}
+            {data.total === 0 && !((data.origin.kind === 'working' || data.origin.kind === 'pull') && data.origin.reason) && <p className="note">Nothing indexed depends on this. That is a lower bound: see what the walk cannot see below.</p>}
             {data.total > 0 && (
               <div className="impact-bars" role="list" aria-label="Affected entities by hop count">
                 {data.byDistance.map((count, distance) => distance === 0 ? null : (
@@ -152,6 +155,10 @@ function OriginNote({ data, node, working }: { data?: ImpactResult; node?: NodeS
     return origin.method === 'comparison'
       ? <p className="absent impact-origin">From the {data!.seeds} entities{changed ? ` (${changed})` : ''} in {origin.files} file{origin.files === 1 ? '' : 's'} that changed since the indexed commit {origin.head ? shortSha(origin.head) : ''}, as indexed.</p>
       : <p className="absent impact-origin">From everything in the {origin.files} file{origin.files === 1 ? '' : 's'} Git reports as changed or new{origin.missing ? ` (${origin.missing} more not in the index: deleted, or not analyzed)` : ''}. Index the HEAD commit in History to start from what changed inside them only.</p>;
+  }
+  if (origin?.kind === 'pull') {
+    if (origin.reason) return <p className="note">{origin.reason}</p>;
+    return <p className="absent impact-origin">From everything in the {origin.files} file{origin.files === 1 ? '' : 's'} on this map that {origin.number !== undefined ? `pull request #${origin.number}` : `branch ${origin.title}`} {origin.state === 'merged' ? 'changed' : 'changes'}{origin.missing ? ` (${origin.missing} more it ${origin.state === 'merged' ? 'changed are' : 'changes are'} not on the map: new, gone since, or not analyzed)` : ''}. {data ? `${compactNumber(data.total)} affected.` : ''}</p>;
   }
   if (working) return null;
   if (!node) return null;

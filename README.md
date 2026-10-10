@@ -62,6 +62,8 @@ Want it always at hand? Run `npm install --global codiluce`, then `codiluce star
 - **Replay your Git history.** Every commit becomes a snapshot. Compare any two, or watch the architecture change as a
   time-lapse.
 - **See the blast radius.** Pick anything and see what depends on it, hop by hop.
+- **Review pull requests on the map.** Open and merged pull requests, and branches not merged yet, light the files they
+  change, with their commits, people and blast radius.
 - **Check the evidence.** Every link opens the file and line that proves it. What cannot be proven shows up as a
   finding, never as a guess.
 - **Add descriptions, if you like.** A language model can describe files, flows and commits, with the cost estimated

@@ -869,6 +869,41 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .timeline-track .tick.person line { stroke: var(--person); stroke-width: 2.2; opacity: 1; }
 .timeline-person { display: flex; align-items: center; gap: 2px; margin-top: 2px; font-size: 11px; color: var(--muted); }
 
+/* Pull requests: open work, merged and closed, lit on the map one at a time. */
+.pulls-tabs { margin: 2px 0 6px; max-width: 100%; flex-wrap: wrap; }
+.pulls-tabs .count { margin-left: 3px; color: var(--subtle); font-variant-numeric: tabular-nums; }
+.pulls-provider { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0 0 8px; font-size: 11.5px; line-height: 1.45; }
+.pulls-provider .absent { margin: 0; }
+.pulls-provider .note { flex-basis: 100%; margin: 0; }
+p.pulls-provider { display: block; color: var(--subtle); }
+.pulls-tree, .pulls-tree .tree-item > .tree-children, .pulls-tree .tree-branch, .pulls-tree .tree-leaves { grid-template-columns: minmax(0, 1fr); }
+.pulls-tree .tree-children { min-width: 0; }
+.pull-outside .label .absent { margin-left: 6px; font-family: inherit; }
+.pull-outside .count { flex: none; white-space: nowrap; }
+.pull-label { flex-wrap: wrap; row-gap: 2px; }
+.pull-label .label { flex: 1 1 0; min-width: 0; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
+.pull-number { margin-right: 5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pull-meta { flex-basis: 100%; margin-left: 15px; color: var(--subtle); font-size: 11px; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pull-source.branch, .pull-source.merge { background: var(--chip); }
+.pull-source.merge-message, .pull-source.squash-message { font-style: italic; }
+.pull-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.pull-actions a.button { text-decoration: none; }
+.pull-people { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 11.5px; }
+.pull-person { display: inline-flex; align-items: center; white-space: nowrap; }
+.pull-person .person-kind { margin-left: 4px; }
+.pull-outside { cursor: default; }
+.pull-outside:hover { border-color: transparent; }
+.pulls-panel .feature-focus { flex-wrap: wrap; margin-bottom: 8px; }
+.pulls-panel .feature-focus .button { margin-left: 0; }
+.pull-focus-name { flex: 1 1 calc(100% - 20px); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pull-row { flex-wrap: wrap; row-gap: 1px; }
+.pull-row .label { flex: 1 1 0; min-width: 0; }
+.pull-row .person-kind { margin-left: 4px; }
+.pull-row .count { flex-basis: 100%; margin-left: 15px; padding-left: 0; font-size: 11px; overflow: hidden; text-overflow: ellipsis; }
+.pulls-section > .absent { margin: 2px 0 2px; }
+.pulls-section .people-rows { grid-template-columns: minmax(0, 1fr); }
+.timeline-track .tick.pull line { stroke: var(--pull); stroke-width: 3; opacity: 1; }
+
 /* The middle of the screen: the map, or a tool (a flow, a blast radius, a list of files) with the map as an overview in a corner. */
 .center-body { position: relative; flex: 1; min-height: 0; min-width: 0; }
 .map-holder { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }

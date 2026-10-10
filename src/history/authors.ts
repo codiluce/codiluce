@@ -47,13 +47,13 @@ export interface Person {
   order: number;
 }
 
-/** Read the history reachable from `head`, newest first, with the files each commit changed. */
-export function readAuthorLog(root: string, head: string, maxCommits = AUTHORS_MAX_COMMITS): Promise<AuthorLog> {
-  if (!/^[0-9a-f]{40}$/.test(head)) return Promise.reject(new Error('Invalid commit'));
+/** Read the history reachable from `head` (and not from `exclude`), newest first, with the files each commit changed. */
+export function readAuthorLog(root: string, head: string, maxCommits = AUTHORS_MAX_COMMITS, options: { exclude?: string } = {}): Promise<AuthorLog> {
+  if (!/^[0-9a-f]{40}$/.test(head) || (options.exclude !== undefined && !/^[0-9a-f]{40}$/.test(options.exclude))) return Promise.reject(new Error('Invalid commit'));
   return new Promise((resolve, reject) => {
     // --relative: paths relative to the scanned root, which may be a subdirectory of the Git work tree.
     const format = '%x1e%H%x1f%P%x1f%aN%x1f%aE%x1f%aI%x1f%cI%x1f%s%x1f%(trailers:key=Co-authored-by,valueonly,separator=%x1d)';
-    const child = spawn('git', ['-c', 'core.quotepath=off', 'log', '--topo-order', '-M', '--numstat', '-z', '--relative', `--max-count=${maxCommits + 1}`, `--format=${format}`, head, '--'], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, GIT_OPTIONAL_LOCKS: '0', GIT_TERMINAL_PROMPT: '0', LC_ALL: 'C' } });
+    const child = spawn('git', ['-c', 'core.quotepath=off', 'log', '--topo-order', '-M', '--numstat', '-z', '--relative', `--max-count=${maxCommits + 1}`, `--format=${format}`, head, ...(options.exclude ? [`^${options.exclude}`] : []), '--'], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, GIT_OPTIONAL_LOCKS: '0', GIT_TERMINAL_PROMPT: '0', LC_ALL: 'C' } });
     const identities: Identity[] = [], known = new Map<string, number>();
     const identity = (name: string, email: string) => {
       const key = `${name}\0${email}`;

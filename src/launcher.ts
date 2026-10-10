@@ -23,6 +23,8 @@ export interface LaunchOptions {
   open?: boolean;
   noCache?: boolean;
   historyIndexing?: boolean;
+  /** Ask the provider for pull requests (`--pr-metadata github`). */
+  pullRequests?: 'github';
   signal?: AbortSignal;
   log?: (message: string) => void;
 }
@@ -155,7 +157,7 @@ export async function launchLocal(options: LaunchOptions = {}): Promise<LocalSes
   log('[3/3] Starting the local server…');
   const store = new GraphStore(database, true);
   let server: Server;
-  try { server = createInspectionServer(store, { root, stateDirectory, uiDirectory, maxFileBytes: config.maxFileBytes, historyIndexing: options.historyIndexing }); }
+  try { server = createInspectionServer(store, { root, stateDirectory, uiDirectory, maxFileBytes: config.maxFileBytes, historyIndexing: options.historyIndexing, ...(options.pullRequests ? { pullRequests: options.pullRequests } : {}) }); }
   catch (error) { store.close(); throw error; }
   let closing = false;
   const closed = new Promise<void>(resolve => server.once('close', () => { store.close(); resolve(); }));

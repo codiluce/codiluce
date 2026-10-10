@@ -2,6 +2,8 @@
 // and history services over a scripted Git history (no browser).
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
+import { execFileSync } from 'node:child_process';
+import { appendFile } from 'node:fs/promises';
 import path from 'node:path';
 import { indexRepository } from '../../src/pipeline/index.js';
 import { GraphStore } from '../../src/storage/sqlite.js';
@@ -236,4 +238,49 @@ test('people: who changed the code, one coloring and one focus at a time, in a w
   assert.equal(atlas.getState().people.data?.window?.commits, 1);
   atlas.focusFamily('users');
   assert.equal(atlas.getState().people.focus, undefined, 'lighting a family lets the person go');
+});
+
+test('pull requests: open work listed and lit one focus at a time, its files, its blast radius, and the selection\'s', async () => {
+  // Open work: a branch off main changing the login form (the working tree is back on main after).
+  const env = { ...process.env, GIT_AUTHOR_NAME: 'Fixture', GIT_AUTHOR_EMAIL: 'fixture@example.test', GIT_COMMITTER_NAME: 'Fixture', GIT_COMMITTER_EMAIL: 'fixture@example.test', GIT_CONFIG_NOSYSTEM: '1', HOME: fixture.root };
+  const git = (...args: string[]) => execFileSync('git', args, { cwd: fixture.root, env, encoding: 'utf8' });
+  const LOGIN = 'frontend/src/components/auth/LoginForm.tsx';
+  git('checkout', '-q', '-b', 'wip');
+  await appendFile(path.join(fixture.root, LOGIN), '// wip\n');
+  git('commit', '-q', '-am', 'Work in progress');
+  git('checkout', '-q', 'main');
+  try {
+    const { atlas, api } = await ready();
+    const login = store.entities({ path: LOGIN, type: 'file' }).items[0]!;
+    await atlas.ensurePulls();
+    const pulls = atlas.getState().pulls;
+    assert.equal(pulls.status, 'ready');
+    assert.deepEqual(pulls.data?.open.map(pull => [pull.id, pull.source, pull.files, pull.inView]), [['branch:wip', 'branch', 1, 1]]);
+    assert.equal(pulls.data?.mergedTotal, 0, 'no merge or pull request on the line');
+    await atlas.ensurePeople();
+    await atlas.focusPerson(atlas.getState().people.data!.people[0]!.key);
+    await atlas.focusPull('branch:wip', { fit: true });
+    assert.equal(atlas.getState().people.focus, undefined, 'lighting a pull request lets the person go');
+    assert.equal(atlas.getState().pulls.pull?.status, 'ready');
+    assert.deepEqual(Object.keys(atlas.getState().pulls.pull!.data!.files), [login.id]);
+    assert.ok((atlas.navigator as RecordingNavigator).fits.length > 0, 'the camera frames its folders');
+    await atlas.openFiles({ kind: 'pull', key: 'branch:wip' });
+    assert.equal(atlas.getState().center, 'files');
+    assert.deepEqual(atlas.getState().files?.data?.files.map(file => file.path), [LOGIN]);
+    await atlas.showPullImpact('branch:wip');
+    assert.equal(atlas.getState().center, 'impact');
+    assert.equal(atlas.getState().impact.data?.origin.kind, 'pull');
+    assert.ok(api.calls.includes('impact:pull:branch:wip'));
+    await atlas.select(login.id, { fly: false });
+    assert.deepEqual(atlas.getState().selection?.pulls?.data?.open.map(pull => pull.id), ['branch:wip']);
+    await atlas.revealPulls('branch:wip');
+    assert.equal(atlas.getState().pulls.reveal, 1);
+    assert.equal(atlas.getState().pulls.tab, 'open');
+    assert.equal(atlas.getState().pulls.focus, 'branch:wip', 'revealing the lit one keeps it lit');
+    // Searching asks the server again; nothing matches.
+    atlas.setPullsQuery('nothing like this');
+    await until(() => atlas.getState().pulls.status === 'ready' && atlas.getState().pulls.data?.open.length === 0);
+    atlas.focusFamily('users');
+    assert.equal(atlas.getState().pulls.focus, undefined, 'lighting a family lets the pull request go');
+  } finally { git('branch', '-q', '-D', 'wip'); }
 });

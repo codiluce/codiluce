@@ -16,10 +16,12 @@ Code and architecture visualizer
 
 npx codiluce start [PATH] [--repo PATH] [--state-dir PATH] [--port N]
                             [--no-open] [--build-ui] [--ui PATH] [--no-cache] [--history-indexing]
+                            [--pr-metadata github]
 npx codiluce init [--repo PATH] [--state-dir PATH]
 npx codiluce index [--repo PATH] [--state-dir PATH] [--no-cache]
 npx codiluce inspect [summary|entities|entity|relations|relation|diagnostics] [options]
 npx codiluce serve [--repo PATH] [--state-dir PATH] [--port 4300] [--ui PATH|none] [--history-indexing] [--read-only]
+                   [--pr-metadata github]
 npx codiluce history index [--repo PATH] [--state-dir PATH] [--ref BRANCH] [--limit N]
                        [--since DATE] [--commits SHA,SHA] [--jobs N] [--all-parents] [--pr-metadata github]
 npx codiluce history status [--repo PATH] [--state-dir PATH]
@@ -55,6 +57,12 @@ indexed commits are skipped. --pr-metadata github reads merged pull requests
 from the GitHub API (GITHUB_TOKEN for private repositories). serve
 --history-indexing lets the map index a missing commit on request.
 
+The Pull requests panel reads merged pull requests and branches not merged
+yet from Git alone. serve and start --pr-metadata github also ask GitHub for
+open, merged and closed pull requests (GITHUB_TOKEN or GH_TOKEN for private
+repositories), and for the files of one whose commits are not local; without
+it, the server makes no network request.
+
 annotate describes files, folders, flows, domains, commits and history
 chapters with OpenAI models (OPENAI_API_KEY from the environment or a .env in
 this workspace or the state directory) into <state>/annotations.db, in
@@ -70,6 +78,8 @@ async function main(): Promise<void> {
   const { positionals, values } = parseArgs({ allowPositionals: true, options });
   const command = positionals[0];
   if (values.help || !command) { console.log(HELP); return; }
+  if (values['pr-metadata'] !== undefined && values['pr-metadata'] !== 'github') throw new Error('--pr-metadata supports: github');
+  const prMetadata = () => values['pr-metadata'] === 'github' ? 'github' as const : undefined;
   if (command === 'start') {
     if (positionals.length > 2) throw new Error('start accepts one repository directory');
     if (positionals[1] && values.repo) throw new Error('Choose a repository with PATH or --repo, not both');
@@ -82,6 +92,7 @@ async function main(): Promise<void> {
         port: values.port !== undefined ? Number(values.port) : undefined,
         uiDirectory: values.ui, buildUi: !!values['build-ui'], open: !values['no-open'],
         noCache: !!values['no-cache'], historyIndexing: !!values['history-indexing'] && !values['read-only'],
+        ...(prMetadata() ? { pullRequests: prMetadata() } : {}),
         signal: controller.signal,
       });
       await session.closed;
@@ -134,13 +145,12 @@ async function main(): Promise<void> {
     }
     if (action !== 'index') throw new Error(`Unknown history action ${action}`);
     const positive = (name: string) => { const value = values[name as keyof typeof values]; if (value === undefined) return undefined; const number = Number(value); if (!Number.isSafeInteger(number) || number < 1) throw new Error(`--${name} must be a positive integer`); return number; };
-    if (values['pr-metadata'] !== undefined && values['pr-metadata'] !== 'github') throw new Error('--pr-metadata supports: github');
     await mkdir(stateDirectory, { recursive: true });
     const started = Date.now();
     const result = await indexHistory({
       root, stateDirectory, ref: values.ref as string | undefined, firstParent: !values['all-parents'], limit: positive('limit'), since: values.since as string | undefined,
       commits: values.commits ? String(values.commits).split(',').map(item => item.trim()).filter(Boolean) : undefined, jobs: positive('jobs'),
-      pullRequests: values['pr-metadata'] === 'github' ? 'github' : undefined, onProgress: reportHistory,
+      pullRequests: prMetadata(), onProgress: reportHistory,
     });
     console.log(JSON.stringify({ database: path.join(stateDirectory, HISTORY_DATABASE), ...result, seconds: Math.round((Date.now() - started) / 100) / 10 }, null, 2));
     if (result.failed) process.exitCode = 2;
@@ -157,7 +167,7 @@ async function main(): Promise<void> {
     const ui = values.ui === 'none' ? undefined : values.ui ? path.resolve(String(values.ui)) : path.join(await toolDirectory(), 'web/out');
     const uiDirectory = ui && await exists(path.join(ui, 'index.html')) ? ui : undefined;
     if (values.ui && values.ui !== 'none' && !uiDirectory) { store.close(); throw new Error(`No built UI at ${ui}; run npm run build:web`); }
-    const server = createInspectionServer(store, { root, stateDirectory, uiDirectory, maxFileBytes, historyIndexing: !!values['history-indexing'] && !values['read-only'] });
+    const server = createInspectionServer(store, { root, stateDirectory, uiDirectory, maxFileBytes, historyIndexing: !!values['history-indexing'] && !values['read-only'], ...(prMetadata() ? { pullRequests: prMetadata() } : {}) });
     server.once('error', error => { store.close(); console.error(error.message); process.exitCode = 1; });
     server.listen(port, '127.0.0.1', () => {
       console.log(`Graph inspection API: http://127.0.0.1:${port}/api`);

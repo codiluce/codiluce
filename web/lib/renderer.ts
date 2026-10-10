@@ -64,6 +64,8 @@ export interface RenderState {
   people?: FamilyOverlay;
   /** One person in focus: the files they changed and the areas holding them stay lit. */
   person?: FamilyOverlay;
+  /** One pull request in focus: the files it changes and the areas holding them stay lit. */
+  pull?: FamilyOverlay;
   frames?: FrameOverlay[];
   time: number;
   reducedMotion: boolean;
@@ -107,7 +109,8 @@ export class MapRenderer {
     const familyLit = state.families?.focus ? this.familyLit(scene, state.families, familyOf!) : undefined;
     const peopleOf = state.people ? this.familyResolver(scene, state.people) : undefined;
     const focusLit = state.feature?.focus ? this.familyLit(scene, state.feature, this.familyResolver(scene, state.feature))
-      : state.person?.focus ? this.familyLit(scene, state.person, this.familyResolver(scene, state.person)) : familyLit;
+      : state.person?.focus ? this.familyLit(scene, state.person, this.familyResolver(scene, state.person))
+      : state.pull?.focus ? this.familyLit(scene, state.pull, this.familyResolver(scene, state.pull)) : familyLit;
     for (const item of items) {
       // A playing flow decides what stays lit; then the feature or family in focus (chosen on purpose, it wins over the selection); then what the selection reaches.
       const dimmed = flowSet ? !flowSet.has(item.node.id) : focusLit ? !focusLit(item.node) : !!emphasis && !emphasis.has(item.node.id);
@@ -124,6 +127,7 @@ export class MapRenderer {
       if (state.families && !item.open && !family && state.families.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.families.areas.get(item.node.id)!, state.families);
       else if (state.feature && !state.coverage && !item.open && state.feature.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.feature.areas.get(item.node.id)!, state.feature);
       else if (state.person && !state.coverage && !item.open && state.person.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.person.areas.get(item.node.id)!, state.person);
+      else if (state.pull && !state.coverage && !item.open && state.pull.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.pull.areas.get(item.node.id)!, state.pull);
       else if (state.people && !item.open && !person && state.people.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.people.areas.get(item.node.id)!, state.people);
       if (state.comparison) this.changeOverlay(ctx, viewport, camera, item, alpha, state);
       if (state.impact) this.impactOverlay(ctx, viewport, camera, item, alpha, state.impact);

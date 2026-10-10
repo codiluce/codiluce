@@ -37,7 +37,11 @@ import { assignDomains, PLATFORM, type DomainAssignment, type DomainRule } from 
 import type { AnnotationsOverview, EntityAnnotation, TimelineResponse, WorkingOrigin } from './dto.js';
 import { guardsAt, hintOf, phrase } from './conditions.js';
 import { SYMBOL_TYPES } from './hierarchy.js';
-import { AuthorLogs } from '../history/authors.js';
+import { AUTHORS_MAX_COMMITS, AuthorLogs, type AuthorLog } from '../history/authors.js';
+import { baseBranch, pool, PullSources, type OpenWork } from '../history/pull-sources.js';
+import type { PullFileChange } from '../history/pull-requests.js';
+import { computePulls, entityPulls, pullDetail, pullFiles, pullsResult, type PullsComputation } from './pulls.js';
+import type { EntityPulls, PullDetail, PullOrigin, PullsResult } from './dto.js';
 import { authorshipResult, computeAuthorship, entityAuthorship, isAuthorshipWindow, personAuthorship, type AuthorshipComputation } from './authorship.js';
 import type { AuthorshipResult, AuthorshipWindowKey, EntityAuthorship, PersonAuthorship } from './dto.js';
 export type { NodeSummary, Page, RelationItem, ViewKey } from './dto.js';
@@ -71,6 +75,8 @@ interface View {
   families?: FamilyAssignment;
   /** Authorship by window (lazily). */
   authorship?: Map<string, AuthorshipComputation>;
+  /** Pull requests by window (lazily), with what they were computed from. */
+  pulls?: Map<string, { stamp: string; computed: PullsComputation }>;
 }
 const HTTP_FINDINGS = new Set(['unresolved-http-call', 'unresolved-http-url', 'unmatched-http-call', 'ambiguous-http-match', 'constrained-http-match', 'unverified-relative-api-boundary']);
 const IMPACT_TYPE_ORDER: Record<string, number> = { route: 0, api_endpoint: 1, component: 2, controller: 3, model: 4, class: 4, function: 5, method: 6, database_table: 7, file: 8 };
@@ -88,6 +94,10 @@ export interface ProjectionOptions {
   history?: () => HistoryStore | undefined;
   /** Read-only language-model annotations (`annotate`), when they exist. */
   annotations?: () => AnnotationStore | undefined;
+  /** Ask the provider for pull requests (`--pr-metadata github`). */
+  pullRequests?: 'github';
+  /** Where pull requests are read (tests replace it). */
+  pullSources?: PullSources;
 }
 
 export class ProjectionService {
@@ -97,7 +107,11 @@ export class ProjectionService {
   private timeline?: { stamp: string; registry: TimelineRegistry; snapshots: Set<string>; layouts: Map<string, { registry: TimelineRegistry; layout: TimelineLayout }> };
   private evolutionRun?: { key: string; job: EvolutionJob; done: Promise<void>; result?: EvolutionResponse; error?: string };
   private readonly authorLogs: AuthorLogs;
-  constructor(private readonly store: GraphStore, private readonly options: ProjectionOptions = {}) { this.authorLogs = new AuthorLogs(options.root, options.stateDirectory); }
+  private readonly pullSources: PullSources;
+  constructor(private readonly store: GraphStore, private readonly options: ProjectionOptions = {}) {
+    this.authorLogs = new AuthorLogs(options.root, options.stateDirectory);
+    this.pullSources = options.pullSources ?? new PullSources(options.root, { ...(options.pullRequests ? { provider: options.pullRequests } : {}) });
+  }
 
   // Snapshots and views ---------------------------------------------------------------
   /** Undefined, `current` or the live run's ID: the working-tree index; otherwise a stored snapshot ID. */
@@ -312,6 +326,119 @@ export class ProjectionService {
     if ('reason' in computed) return { id, available: false, reason: computed.reason, scope: node.type === 'file' ? 'file' : 'area', files: 0, changedFiles: 0, commits: 0, lines: 0, people: [], recent: [] };
     return entityAuthorship(computed, current.index, node, this.snapshotLookup());
   }
+  // Pull requests (history/pull-sources.ts, projection/pulls.ts) -------------------------
+  private readonly mergeMessages = new Map<string, Promise<Map<string, { subject: string; body: string }>>>();
+  /** Merge commits of the first-parent line up to `anchor` with their whole message (a pull request's title is in the body). */
+  private lineMerges(anchor: string): Promise<Map<string, { subject: string; body: string }>> {
+    let pending = this.mergeMessages.get(anchor);
+    if (!pending) {
+      pending = git(this.options.root!, ['log', '--first-parent', '--merges', '-z', `--max-count=${AUTHORS_MAX_COMMITS}`, '--format=%H%x1f%s%x1f%b', anchor, '--'], { maxBuffer: 256 * 1024 * 1024 }).then(output => {
+        const messages = new Map<string, { subject: string; body: string }>();
+        for (const record of output.split('\0')) { const [sha, subject, body] = record.replace(/^\n/, '').split('\x1f'); if (sha) messages.set(sha, { subject: subject ?? '', body: (body ?? '').trim() }); }
+        return messages;
+      }, () => new Map());
+      this.mergeMessages.set(anchor, pending);
+      if (this.mergeMessages.size > 6) this.mergeMessages.delete(this.mergeMessages.keys().next().value!);
+    }
+    return pending;
+  }
+  /**
+   * The pull requests of a view: merged up to its commit in the window (from
+   * the author log), open now (branches, and the provider's when asked), and
+   * the provider's closed ones. The reason when there is no Git history.
+   */
+  private async pullsOf(current: View, window: string | undefined, options: { refresh?: boolean } = {}): Promise<{ computed: PullsComputation; context: Parameters<typeof pullsResult>[1] } | { reason: string }> {
+    const authorship = await this.authorshipOf(current, window);
+    if ('reason' in authorship) return authorship;
+    const root = this.options.root!;
+    const history = this.options.history?.();
+    const base = await baseBranch(root, history?.meta('default_ref'));
+    const oldest = authorship.history.log.commits.at(-1)?.committedAt;
+    const [provider, open, messages] = await Promise.all([
+      this.pullSources.provider({ ...(options.refresh ? { refresh: true } : {}), ...(oldest ? { since: oldest } : {}) }),
+      base ? this.pullSources.open(base) : Promise.resolve<OpenWork>({ branches: [], truncated: false }),
+      this.lineMerges(authorship.window.anchor),
+    ]);
+    // What provider pull requests not merged here change: from Git when their commits are here; the files of
+    // the latest open ones are asked for when a token is set (the others when selected).
+    const pullChanges = new Map<number, { changes: PullFileChange[]; log?: AuthorLog }>();
+    const pending = provider.pulls.filter(pull => pull.state !== 'merged');
+    let asked = 0;
+    await pool(pending.slice(0, 400), 4, async pull => {
+      const fetch = pull.state === 'open' && provider.token && asked++ < 30;
+      const known = await this.pullSources.pullChanges(pull, base?.sha, { fetch }).catch(() => undefined);
+      if (known) pullChanges.set(pull.number, known);
+    });
+    const key = authorship.window.key;
+    const stamp = [provider.fetchedAt ?? provider.status, base?.sha ?? '', open.branches.map(branch => branch.tip).join(','), [...pullChanges.keys()].sort((a, b) => a - b).join(',')].join('|');
+    const context = {
+      ...(base ? { base } : {}), branchesTruncated: open.truncated, ...(open.error ? { branchError: open.error } : {}),
+      provider: { name: 'github' as const, status: provider.status, token: provider.token, ...(provider.repository ? { repository: provider.repository } : {}), ...(provider.fetchedAt ? { fetchedAt: provider.fetchedAt } : {}), ...(provider.error ? { error: provider.error } : {}) },
+    };
+    const cached = current.pulls?.get(key);
+    if (cached?.stamp === stamp) return { computed: cached.computed, context };
+    const computed = computePulls({ authorship, messages, provider: provider.pulls, recorded: history?.pullRequests() ?? [], providerAsked: provider.status !== 'off', branches: open.branches, pullChanges, ...(base ? { base } : {}), snapshotOf: this.snapshotLookup() });
+    (current.pulls ??= new Map()).set(key, { stamp, computed });
+    return { computed, context };
+  }
+  /** Pull requests of a view: open now, merged in the window up to its commit (newest first; `query` filters), closed. `refresh` asks the provider again. */
+  async pulls(view?: ViewKey, options: { window?: string; query?: string; refresh?: boolean } = {}): Promise<PullsResult> {
+    const current = this.load(view);
+    const result = await this.pullsOf(current, options.window, { ...(options.refresh ? { refresh: true } : {}) });
+    if ('reason' in result) return { available: false, reason: result.reason, truncated: false, provider: { name: 'github', status: this.pullSources.providerEnabled ? 'ok' : 'off', token: false }, open: [], merged: [], mergedTotal: 0, closed: [], branchesTruncated: false };
+    return pullsResult(result.computed, result.context, { ...(options.query ? { query: options.query } : {}) });
+  }
+  /** One pull request on the map: the files of this view it changes, the areas and folders holding them, the rest, its commits and people. */
+  async pull(id: string, view?: ViewKey, options: { window?: string } = {}): Promise<PullDetail> {
+    const current = this.load(view);
+    let result = await this.pullsOf(current, options.window);
+    if ('reason' in result) throw new NotFoundError(result.reason);
+    let set = result.computed.byId.get(id);
+    if (!set) throw new NotFoundError(`Unknown pull request ${id}`);
+    if (!set.changes && set.summary.number !== undefined) {
+      // Its commits are not here: the provider is asked for its files once, then it is placed on the map.
+      const number = set.summary.number;
+      const pull = (await this.pullSources.provider()).pulls.find(item => item.number === number && item.state !== 'merged');
+      if (pull) {
+        try { await this.pullSources.pullChanges(pull, result.context.base?.sha, { fetch: true }); }
+        catch (error) { return { ...pullDetail(result.computed, set, current.index), unknownReason: `GitHub did not list its files: ${error instanceof Error ? error.message : String(error)}` }; }
+        result = await this.pullsOf(current, options.window);
+        if ('reason' in result) throw new NotFoundError(result.reason);
+        set = result.computed.byId.get(id) ?? set;
+      }
+    }
+    return pullDetail(result.computed, set, current.index);
+  }
+  /** The open pull requests changing an entity (a file; a symbol's or entry point's file; every file of an area), and the latest merged in the window. */
+  async entityPulls(id: string, view?: ViewKey, options: { window?: string } = {}): Promise<EntityPulls> {
+    const current = this.load(view);
+    const node = this.require(current, id);
+    const result = await this.pullsOf(current, options.window);
+    if ('reason' in result) return { id, available: false, reason: result.reason, scope: node.type === 'file' ? 'file' : 'area', files: 0, open: [], merged: [], mergedTotal: 0 };
+    return entityPulls(result.computed, current.index, node);
+  }
+  /** What depends on the code a pull request changes: a walk from every entity of its files on this map. */
+  async pullImpact(id: string, view: ViewKey | undefined, options: ImpactQuery & { window?: string }): Promise<ImpactResult> {
+    const current = this.load(view);
+    const depth = impactDepth(options.depth);
+    const types = impactTypes(options.types);
+    const result = await this.pullsOf(current, options.window);
+    if ('reason' in result) throw new NotFoundError(result.reason);
+    const set = result.computed.byId.get(id);
+    if (!set) throw new NotFoundError(`Unknown pull request ${id}`);
+    const ids = pullFiles(result.computed, set);
+    const origin: PullOrigin = { kind: 'pull', id, title: set.summary.title, ...(set.summary.number !== undefined ? { number: set.summary.number } : {}), state: set.summary.state, files: ids.length, missing: (set.changes?.length ?? 0) - ids.length };
+    if (!set.changes) origin.reason = 'Its files are not known yet: open it in the Pull requests panel first.';
+    else if (!ids.length) origin.reason = 'None of the files it changes is on this map.';
+    const index = current.index;
+    const key = `pull:${createHash('sha1').update(ids.join('\0')).digest('hex')}:${depth}:${[...types].sort().join(',')}`;
+    const computation = this.cachedImpact(current, key, () => {
+      const seeds = new Set<string>();
+      for (const file of ids) { const node = index.node(file); if (node) for (const seed of seedsOf(index, node).seeds) { if (seeds.size >= MAX_IMPACT_SEEDS) break; seeds.add(seed); } }
+      return { ...computeImpact(index, [...seeds].sort(), { depth, types }), seedsTruncated: seeds.size >= MAX_IMPACT_SEEDS };
+    });
+    return this.impactResult(current, computation, origin, depth, types, options);
+  }
   // Data families (projection/families.ts) ---------------------------
   /** Data families of a view's index. */
   private familyAssignment(current: View): FamilyAssignment {
@@ -372,7 +499,7 @@ export class ProjectionService {
    * files, a data family's files (`none`: code files using no table), the code
    * files of a coverage category, or the files a person changed in a window.
    */
-  async fileList(view: ViewKey | undefined, query: { feature?: string; family?: string; coverage?: string; person?: string; window?: string }): Promise<FileListResult> {
+  async fileList(view: ViewKey | undefined, query: { feature?: string; family?: string; coverage?: string; person?: string; pull?: string; window?: string }): Promise<FileListResult> {
     const current = this.load(view);
     const index = current.index;
     let ids: string[], title: string, codeOnly = false;
@@ -396,7 +523,10 @@ export class ProjectionService {
     } else if (query.person !== undefined) {
       const result = await this.personAuthorship(query.person, view, { window: query.window });
       ids = Object.keys(result.files); title = result.person.name;
-    } else throw new Error('feature, family, coverage or person is required');
+    } else if (query.pull !== undefined) {
+      const result = await this.pull(query.pull, view, { window: query.window });
+      ids = Object.keys(result.files); title = result.pull.number !== undefined ? `#${result.pull.number} ${result.pull.title}` : result.pull.title;
+    } else throw new Error('feature, family, coverage, person or pull is required');
     const files = ids.flatMap(id => {
       const node = index.node(id);
       if (!node || node.type !== 'file' || !node.path || node.change?.status === 'removed' || (codeOnly && !CODE_LANGUAGES.has(node.language ?? ''))) return [];

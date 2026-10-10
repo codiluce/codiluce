@@ -2,7 +2,7 @@
 import { Fragment, useEffect, useState } from 'react';
 import type { Entity, Evidence } from '@engine/core/graph';
 import { fileAnalysis } from '@engine/analysis/facts';
-import type { AggregateGroup, ChangeFacet, DiagnosticItem, NodeChange, NodeSummary, RelationItem } from '@engine/projection/dto';
+import type { AggregateGroup, ChangeFacet, DiagnosticItem, EntityPull, NodeChange, NodeSummary, RelationItem } from '@engine/projection/dto';
 import { compactNumber, percent, relationPhrase, relativeTime, shortSha, typeLabel } from '../lib/format';
 import { entryOf, isContainer, LANES_TYPES, NO_FAMILY, tourEntry, type AtlasStore } from '../lib/store';
 import { coverageCss, familyCss, familyHues, featureHues, personHue, themeById } from '../lib/themes';
@@ -12,6 +12,7 @@ import { TypeBadge } from './TypeBadge';
 import { AnalysisSupport } from './AnalysisSupport';
 import { CallSitesSection, CommitImpactChip, EffectsSection } from './Analysis';
 import { CommitList, KindTag, PersonDot, WindowPicker, windowText } from './PeoplePanel';
+import { PullDot, pullWhen, SourceTag } from './PullsPanel';
 
 export function Inspector({ onClose }: { onClose: () => void }) {
   const selection = useAtlas(state => state.selection);
@@ -111,6 +112,7 @@ function Selection() {
       <FlowsSection node={node} />
       {node.kind === 'entity' && (node.type === 'directory' || node.type === 'application' || node.type === 'repository') && <DataBreakdown key={node.id} node={node} />}
       <PeopleSection key={`people:${node.id}`} />
+      <PullsSection key={`pulls:${node.id}`} />
       <Facts node={node} entity={entity} />
       <AnalysisSupport analysis={node.analysis ?? fileAnalysis(selection.file?.metadata.analysis)} />
       {node.type === 'database_table' && entity && <TableSection entity={entity} />}
@@ -283,6 +285,37 @@ function PeopleSection() {
         <details className="people-recent" open>
           <summary>Latest changes</summary>
           <CommitList commits={data.recent.slice(0, 8)} names={names} />
+        </details>
+      )}
+    </section>
+  );
+}
+/** The open pull requests (and branches) changing the selection, and the latest merged in the people window. */
+function PullsSection() {
+  const store = useStore();
+  const pulls = useAtlas(state => state.selection?.pulls);
+  const focus = useAtlas(state => state.pulls.focus);
+  const data = pulls?.data;
+  // Without Git history every selection would say so; the Pull requests panel says why once.
+  if (!data?.available || (!data.open.length && !data.merged.length)) return null;
+  const row = (pull: EntityPull) => (
+    <li key={pull.id}>
+      <button className="person-row pull-row" aria-pressed={focus === pull.id} onClick={() => void store.revealPulls(pull.id)} title={`${pull.number !== undefined ? `#${pull.number} ` : ''}${pull.title}: ${pull.here.files} file${pull.here.files === 1 ? '' : 's'} here, +${pull.here.added} −${pull.here.deleted}. Select to light every file it changes.`}>
+        <PullDot state={pull.state} />
+        <span className="label">{pull.number !== undefined ? `#${pull.number} ` : pull.source === 'branch' ? 'Branch ' : ''}{pull.title}</span>
+        <SourceTag pull={pull} />
+        <span className="count">{[pull.author?.name, pullWhen(pull)].filter(Boolean).join(' · ')}</span>
+      </button>
+    </li>
+  );
+  return (
+    <section className="section people-section pulls-section">
+      <h4>Pull requests {data.open.length > 0 && <span className="chip"><span className="count">{data.open.length} open</span></span>}{pulls?.status === 'loading' && <span className="spinner tiny" aria-label="Loading" />}</h4>
+      {data.open.length > 0 && <><p className="absent">{data.scope === 'area' ? 'Open work changing its files' : 'Open work changing it'}:</p><ul className="people-rows">{data.open.map(row)}</ul></>}
+      {data.merged.length > 0 && (
+        <details className="people-recent" open={!data.open.length}>
+          <summary>Latest merged{data.mergedTotal > data.merged.length ? ` (${data.merged.length} of ${data.mergedTotal})` : ''} · {windowText(data.window)}</summary>
+          <ul className="people-rows">{data.merged.map(row)}</ul>
         </details>
       )}
     </section>
