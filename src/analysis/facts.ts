@@ -22,6 +22,7 @@ export interface DeclarationFact {
   selector?:string; dispatch?:'instance'|'class';
   swiftName?:string;
   scalaExtension?:{signature:string;range:SourceRange};
+  vbnetIdentity?:{qualifiedName:string;signature:string};
 }
 export interface ParseIssue { code: string; reason: string; range?: SourceRange }
 export interface PythonGuardFact { expression: string; branch: boolean; scope?: string }
@@ -191,7 +192,8 @@ export interface SwiftSyntaxFacts {imports:{text:string;path:string;kind?:string
 export interface ScalaSyntaxFacts {packages:{text:string;name:string;explicitBody:boolean;range:SourceRange}[];imports:{text:string;path:string;range:SourceRange}[];exports:{text:string;path:string;range:SourceRange}[];extensions:{text:string;signature:string;headerRange:SourceRange;range:SourceRange}[];givens:{text:string;name?:string;signature:string;range:SourceRange}[];staged:{text:string;kind:string;range:SourceRange}[];directives:{text:string;range:SourceRange}[];complete:boolean}
 export interface GroovySyntaxFacts {packages:{name:string;text:string;range:SourceRange}[];imports:{path:string;kind:'single'|'star'|'static'|'static-star';alias?:string;text:string;range:SourceRange}[];annotations:{name:string;text:string;range:SourceRange;generationUnverified:boolean}[];dsl:{kind:string;text:string;range:SourceRange}[];complete:boolean}
 export interface FsharpSyntaxFacts {sourceKind:'implementation'|'signature';attributes:{text:string;range:SourceRange}[];imports:{text:string;path:string;range:SourceRange}[];directives:{text:string;range:SourceRange}[];conditions:{text:string;range:SourceRange}[];quotations:{text:string;range:SourceRange}[];complete:boolean}
-export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; cfamily?:CfamilySyntaxFacts; objc?:ObjcSyntaxFacts; swift?:SwiftSyntaxFacts; scala?:ScalaSyntaxFacts; groovy?:GroovySyntaxFacts; fsharp?:FsharpSyntaxFacts; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts; csharp?: CsharpSyntaxFacts; rust?:RustSyntaxFacts }
+export interface VbnetSyntaxFacts {options:{text:string;range:SourceRange}[];imports:{text:string;paths:string[];range:SourceRange}[];attributes:{text:string;range:SourceRange}[];directives:{text:string;range:SourceRange}[];projectContextUnverified:true;complete:boolean}
+export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; cfamily?:CfamilySyntaxFacts; objc?:ObjcSyntaxFacts; swift?:SwiftSyntaxFacts; scala?:ScalaSyntaxFacts; groovy?:GroovySyntaxFacts; fsharp?:FsharpSyntaxFacts; vbnet?:VbnetSyntaxFacts; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts; csharp?: CsharpSyntaxFacts; rust?:RustSyntaxFacts }
 export interface ImportBinding { imported: string; local: string; typeOnly?: boolean }
 export type ImportOutcome =
   | { status: 'resolved'; targets: string[]; proof: Evidence[] }

@@ -26,9 +26,9 @@ async function handle(job: { id: number; language: string; content: string; obje
   try {
     const { parser, query } = await load(job.language);
     parser.reset();
-    // Go's EOF semicolon and C-family/C# preprocessor directives need a terminal
-    // newline in these grammars; positions still map to the original input.
-    const input = ['go','csharp','c','cpp','objective-c'].includes(job.language) && !job.content.endsWith('\n') ? `${job.content}\n` : job.content;
+    // Go's EOF semicolon, C-family/C# directives and VB statement terminators
+    // need a terminal newline; positions still map to the original input.
+    const input = ['go','csharp','c','cpp','objective-c','vbnet'].includes(job.language) && !job.content.endsWith('\n') ? `${job.content}\n` : job.content;
     const tree = parser.parse(input);
     if (!tree) throw new Error('Parser returned no tree');
     try {

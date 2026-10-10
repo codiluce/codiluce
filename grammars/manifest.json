@@ -220,6 +220,31 @@
       "sourceRevision": "aefd0c8741bdf3aeb827a228aa4a996a6536697e",
       "license": "MIT",
       "licenseFile": "licenses/fsharp.txt"
+    },
+    {
+      "language": "vbnet",
+      "file": "tree-sitter-vb_dotnet.wasm",
+      "sha256": "35e8f433a604a3503b07631aa53ab4594f064cb6089eac6807c5d000826857b4",
+      "abi": 14,
+      "artifactPackage": "source-build",
+      "artifactVersion": "0.1.9",
+      "artifactPath": "tree-sitter-vb_dotnet.wasm",
+      "source": "https://github.com/CodeAnt-AI/tree-sitter-vb-dotnet",
+      "sourceRevision": "cfca210ce8fdcb5245bd9cd5c47ce0a21a8488d5",
+      "license": "MIT",
+      "licenseFile": "licenses/vbnet.txt",
+      "artifactBuild": {
+        "script": "scripts/build-vbnet-grammar.mjs",
+        "sourceArchive": "https://registry.npmjs.org/tree-sitter-vb-dotnet/-/tree-sitter-vb-dotnet-0.1.9.tgz",
+        "sourceIntegrity": "sha512-Qau+yoj2BTsZNWFUlfQ23X6gNfDC/P3TXFiKdKAUK1bUrHwIngD2mfLYgtqNZQ4C7RP/M9pvcYx7g7fddviYhg==",
+        "cliVersion": "0.26.9",
+        "cliUrl": "https://github.com/tree-sitter/tree-sitter/releases/download/v0.26.9/tree-sitter-linux-x64.gz",
+        "cliSha256": "9ce82137caa65864e7ca8b869fd391cef88c9bd2a01c4371b9c4dd26c2585efb",
+        "sdkVersion": "29.0",
+        "sdkUrl": "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-29/wasi-sdk-29.0-x86_64-linux.tar.gz",
+        "sdkSha256": "87d1d1a2879d139cdc624b968efad3d4a97b8078cdff95e63ac88ecafd1a0171",
+        "container": "ubuntu@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55"
+      }
     }
   ]
 }

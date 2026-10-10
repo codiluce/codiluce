@@ -18,7 +18,7 @@ container and rebuild script; its WASM is a source build, not an upstream WASM r
 
 `npm run grammars:sync` restores the ten npm WASM artifacts from installed
 development dependencies after verifying versions/checksums, and verifies the
-committed Swift/Scala/F# source and signature release assets and source-built Groovy asset. It runs offline and compiles nothing. To restore
+committed Swift/Scala/F# source and signature release assets and source-built Groovy/VB.NET assets. It runs offline and compiles nothing. To restore
 the Swift/Scala/F# source and signature release assets explicitly, run
 `npm run grammars:sync -- --download-releases`; this downloads the pinned URL
 and verifies its checksum before writing it. Normal CLI builds verify and copy this directory
@@ -36,7 +36,7 @@ grammar release requires declaration, range, overload, malformed-source and
 installed-package conformance checks before updating the checksum.
 
 The current adapters extract named types, modules/namespaces, functions and
-methods for Python, Go, Ruby, Rust, Java, C#, Kotlin, C, C++, Objective-C, Swift, Scala and Groovy. Decorators/annotations,
+methods for Python, Go, Ruby, Rust, Java, C#, Kotlin, C, C++, Objective-C, Swift, Scala, Groovy, F# and VB.NET. Decorators/annotations,
 modifiers, signatures and lexical containment are preserved where the grammar
 exposes them. Local Go receivers and Rust impl methods attach only to a unique
 type in the same file; cross-file ownership and language binding belong to the
@@ -216,3 +216,34 @@ discarded before later jobs. Thirty-three conformance cases and the
 147/158 reviewed declarations, with eleven documented omissions and zero extras.
 Broader source accuracy, project/import binding and native-platform/mixed-memory
 qualification remain open.
+
+
+VB.NET uses `CodeAnt-AI/tree-sitter-vb-dotnet` 0.1.9 generated C at
+`cfca210ce8fdcb5245bd9cd5c47ce0a21a8488d5`, with the same pinned CLI/SDK/container
+as Groovy. `node scripts/build-vbnet-grammar.mjs [--artifacts DIRECTORY]` compiles
+only the published generated C inside an isolated network-free container and
+requires the exact committed 1,496,364-byte ABI-14 WASM checksum. Normal sync and
+installed indexing compile nothing and use no network. The archive/source tree
+has no separate LICENSE file: the exact original grammar.js author/MIT header
+and package/tree-sitter MIT declarations are retained with standard MIT terms
+in `licenses/vbnet.txt`; no copyright holder/year is invented.
+
+The bounded original VB profile retains namespaces/modules, classes/structures/
+interfaces/enums/members, delegates, module procedures/type methods, each field/
+constant binder, properties/accessor headers, regular events and explicit source
+`Sub New` constructors. Original Option, Imports, attributes and native conditional
+directives retain UTF-16 source evidence. ASCII identifier/keyword case and bracket
+spelling are canonicalized only for source IDs; original names, signatures, evidence
+and literal spelling remain intact. Unicode compiler case equivalence and identifier
+type-character agreement remain unverified. No implicit project root namespace,
+partial merge, Imports resolution, Handles/Implements binding, CLR/generated helper,
+preprocessor branch, runtime, target dependency or application is inferred/executed.
+
+Valid generic/nested-type/inheritance layouts, custom events, LINQ/XML and import
+aliases have known upstream grammar gaps. Recovered scope bodies retain only intact
+original headers and quarantine uncertain members; damaged headers are omitted.
+Root recovery also quarantines potentially spilled members. Header/node/query/
+metadata/diagnostic limits are explicit. The conformance cases and
+[immutable original VB source audit](../docs/vbnet-source-accuracy.html) qualify this
+limited profile; wider VB grammar/project/import/framework accuracy, mixed process-tree
+memory and native OS release gates remain open.

@@ -1,0 +1,1 @@
+[(namespace_block) (module_block) (class_block) (structure_block) (interface_block) (enum_block) (enum_member) (delegate_declaration) (method_declaration) (constructor_declaration) (property_declaration) (event_declaration) (variable_declarator) (const_declaration)] @declaration

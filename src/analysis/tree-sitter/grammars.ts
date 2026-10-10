@@ -10,7 +10,7 @@ export interface GrammarSpec {
   artifactBuild?:{script:string;sourceArchive:string;sourceIntegrity:string;cliVersion:string;cliUrl:string;cliSha256:string;sdkVersion:string;sdkUrl:string;sdkSha256:string;container:string};
 }
 interface GrammarManifest { format: number; runtime: { package: string; version: string }; grammars: GrammarSpec[] }
-export const STRUCTURAL_LANGUAGES = ['python', 'go', 'ruby', 'rust', 'java', 'csharp', 'kotlin', 'c', 'cpp', 'objective-c', 'swift', 'scala', 'groovy', 'fsharp'] as const;
+export const STRUCTURAL_LANGUAGES = ['python', 'go', 'ruby', 'rust', 'java', 'csharp', 'kotlin', 'c', 'cpp', 'objective-c', 'swift', 'scala', 'groovy', 'fsharp', 'vbnet'] as const;
 // In a source checkout: grammars/. In a compiled package: dist/grammars/.
 export const GRAMMAR_ROOT = new URL('../../../grammars/', import.meta.url);
 let manifestText = '', manifestError: string | undefined;
