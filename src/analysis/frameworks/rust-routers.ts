@@ -7,7 +7,8 @@ import { RustResolver, RUST_RESOLVER_VERSION, type RustScope } from '../resoluti
 import { rustWebNamespaceReader } from './rust-derive-namespace.js';
 import {warpCors,warpCorsMethod,type WarpCors} from './warp-cors.js';
 import {warpStateOutput,warpStateIdentity} from './warp-state.js';
-import { compileRustPath, type RustRouteDialect, type RustEndpointData } from '../routes/rust-patterns.js';
+import {RustSourceProjections} from './rust-source-projection.js';
+import { compileRustPath, type RustRouteDialect, type RustEndpointData, type RustMiddlewareStage } from '../routes/rust-patterns.js';
 import type { RoutingContract, RoutePattern } from '../routes/contracts.js';
 import { compileRocketPath, rocketPathsCollide, reviewedRocketMount } from '../routes/rocket-patterns.js';
 import { compileWarpPath, warpBranches, type WarpNode, type WarpDialect, type WarpDispatchData, type WarpBranch } from '../routes/warp-patterns.js';
@@ -22,6 +23,7 @@ interface Site extends RustSite {
 }
 interface Environment {
     scope: RustScope;
+    conditionalAxum?:boolean;
     origin: RustScope;
     runtime: string;
     frame: string;
@@ -40,7 +42,10 @@ interface Callback {
     conditions: string[];
     attribute?: RustWebAttribute;
     awaitedReturn?: boolean;
+    conditionalNamespace?:boolean;
 }
+interface SourceCandidate {kind:'source-candidate';callback:Callback}
+interface SourceSummary {kind:'source-summary';callback:Callback;args:Value[];environment:Environment;site:Site;awaited?:boolean;done?:boolean;result?:Value}
 interface Native {
     kind: 'native';
     profile: RustWebProfile;
@@ -58,6 +63,8 @@ interface Route {
     conditions: string[];
     proof: Evidence[];
     middleware: string[];
+    middlewareStages?: RustMiddlewareStage[];
+    middlewareApplications?:number;
     fallback?: boolean;
     headFallback?: boolean;
     warpOutput?: string;
@@ -97,6 +104,7 @@ interface Router {
     routes: Route[];
     methods: Methods;
     fallback?: Route;
+    automaticFallbackConditions?:string[];
     conditions: string[];
     proof: Evidence[];
     middleware: string[];
@@ -139,9 +147,10 @@ interface Middleware {
     targets: string[];
     conditions: string[];
     proof: Evidence[];
+    stage?: RustMiddlewareStage;
 }
-type Value = Native | WarpWrapper | WarpCors | Callback | Router | MethodRouter | Server | Future | Listener | Guard | Middleware | string | number | boolean | null | Value[] | undefined;
-const is = <K extends 'native' | 'warp-wrapper' | 'warp-cors' | 'callback' | 'router' | 'method' | 'server' | 'future' | 'listener' | 'guard' | 'middleware'>(value: Value, kind: K): value is Extract<Value, {
+type Value = Native | SourceCandidate | SourceSummary | WarpWrapper | WarpCors | Callback | Router | MethodRouter | Server | Future | Listener | Guard | Middleware | string | number | boolean | null | Value[] | undefined;
+const is = <K extends 'native' | 'source-candidate' | 'source-summary' | 'warp-wrapper' | 'warp-cors' | 'callback' | 'router' | 'method' | 'server' | 'future' | 'listener' | 'guard' | 'middleware'>(value: Value, kind: K): value is Extract<Value, {
     kind: K;
 }> => !!value && typeof value === 'object' && !Array.isArray(value) && value.kind === kind;
 const unique = <T>(values: T[]) => [...new Set(values)];
@@ -173,9 +182,11 @@ export class RustRegistrations {
     }[] = [];
     private readonly handlerCalls = new Set<string>();
     private readonly scopeIndex: Map<string, RustScope>;
+    private readonly sourceProjections:RustSourceProjections;
     private steps = 0;
     constructor(private readonly context: AnalysisContext, private readonly base: RustResolver, private readonly symbols: RustSymbols, private readonly macros: RustWebMacros) {
         this.scopeIndex = new Map(symbols.resolver.scopes.map(scope => [JSON.stringify([scope.compilation.id, scope.file.path, scope.fact.key]), scope]));
+        this.sourceProjections=new RustSourceProjections(symbols);
     }
     private fact(site: Site, reason: string): Evidence { return { ...evidence('framework', 'rust-routers', site.file, site.range.startLine, reason), endLine: site.range.endLine, analyzerVersion: RUST_ROUTER_VERSION }; }
     private gap(env: Environment, site: Site, reason: string): void {
@@ -232,6 +243,32 @@ export class RustRegistrations {
             return;
         const reviewed = this.reviewedAttributes(result.definition,result.scope),attributes=reviewed.filter(attribute=>attribute.kind==='route'),instrument=reviewed.filter(attribute=>attribute.kind==='instrument');
         return { kind: 'callback', definition: result.definition, scope: result.scope, environment: env, proof: [...result.proof,...instrument.flatMap(attribute=>attribute.proof)], conditions: unique([...result.conditions, ...attributes.length > 1 ? ['Competing Rust route attributes require an explicit multi-route contract'] : [],...instrument.length?['Generated tracing instrument span/subscriber behavior remains unreviewed; only the original source helper is projected']:[]]), attribute: attributes[0] };
+    }
+    private sourceCandidate(env:Environment,expression:RustExpression):SourceCandidate|undefined {
+        if(!this.sourceProjections.namespace(env.scope))return;
+        while(expression.kind==='paren')expression=expression.value;
+        if(expression.kind!=='path'||expression.qualified||expression.generics?.length||!expression.segments.length||!expression.absolute&&this.binding(env.scope,expression.segments[0]!,expression.start))return;
+        const axum=[...env.scope.compilation.dependencies.values()].some(entry=>{
+            if(entry.active!==true||entry.compilation||entry.dependency.package!=='axum')return false;
+            const profile=rustWebProfile(env.scope,this.symbols.resolver.path(env.scope,[entry.dependency.name.replaceAll('-','_')],true,new Set(),'type'));
+            return profile?.framework==='axum'&&!!profile.dialect;
+        });
+        if(!axum)return;
+        const resolved=this.symbols.resolver.path(env.scope,expression.segments,expression.absolute,new Set(),'value');
+        if(resolved.status!=='resolved'||resolved.symbols.length!==1)return;
+        const symbol=resolved.symbols[0]!,scope=symbol.originalScope??symbol.scope,definition=this.symbols.definitions(scope.file.path).find(definition=>definition.id===symbol.id);
+        if(!definition)return;
+        const projected=this.sourceProjections.callable({kind:'callable',definitions:[{definition,scope}],proof:resolved.proof,conditions:resolved.conditions});
+        return projected?{kind:'source-candidate',callback:{kind:'callback',...projected,environment:env,conditionalNamespace:true}}:undefined;
+    }
+    private axumSourceValue(value:Value):Value {
+        if(is(value,'source-candidate'))return value.callback;
+        if(!is(value,'source-summary'))return value;
+        if(value.done)return value.result;
+        value.done=true;
+        const result=this.invoke(value.callback,value.args.map(arg=>this.axumSourceValue(arg)),{...value.environment,conditionalAxum:true},value.site);
+        value.result=is(result,'future')&&value.awaited&&result.environment?this.execute(result.environment):result;
+        return value.result;
     }
     private route(env: Environment, site: Site, methods: Methods, value: Value): Route {
         const callback = is(value, 'callback') && !value.attribute ? value : undefined;
@@ -311,7 +348,7 @@ export class RustRegistrations {
             if (event.kind === 'macro') {
                 if (scope.gaps.includes('Rust macro invocation can supply generated/scoped items; expansion is unavailable'))
                     this.gap(local, siteOf(local, event.item), 'Original reachable Rust macro invocation has unreviewed registration effects');
-                else if (this.macros.diagnostic(scope, event.item))
+                else if (this.macros.diagnostic(scope, event.item)||this.macros.formatting(scope,event.item))
                     this.evaluate({ ...event.item, kind: 'macro' }, local);
             }
             else if (event.kind === 'binding') {
@@ -346,7 +383,7 @@ export class RustRegistrations {
             return;
         }
         const scope = this.scope(def.unit.file.path, def.fact.body, callback.scope);
-        if (!scope || scope.active !== true || scope.gaps.length) {
+        if (!scope || scope.active !== true || scope.gaps.length&&!(env.conditionalAxum&&callback.conditionalNamespace&&this.sourceProjections.namespace(scope))) {
             this.gap(env, site, 'Original Rust helper/factory scope is inactive or unreviewed');
             return;
         }
@@ -359,7 +396,7 @@ export class RustRegistrations {
             }
             locals.set(this.bindingKey(def.unit.file.path, binding), args[i]);
         }
-        const child: Environment = { ...env, scope, frame, locals, owner: def.id, stack: [...env.stack, def.id], conditions: unique([...env.conditions, ...callback.conditions]), proof: [...env.proof, ...callback.proof, this.fact(site, 'Original source helper/factory invocation')] };
+        const child: Environment = { ...env, scope, frame, locals, owner: def.id, stack: [...env.stack, def.id], conditions: unique([...env.conditions, ...callback.conditions]), proof: [...env.proof, ...callback.proof, this.fact(site, callback.conditionalNamespace?'Original conditional Axum source helper/factory summary; generated exports and compiler validity remain unreviewed':'Original source helper/factory invocation')] };
         return def.fact.async ? { kind: 'future', environment: child } : this.execute(child);
     }
     private evaluate(expression: RustExpression, env: Environment): Value {
@@ -395,10 +432,13 @@ export class RustRegistrations {
                     env.proof.push(...diagnostic.proof, this.fact(site, rustEmptyTokenTree(expression.tokens) ? 'Original empty standard print diagnostic with no formatting operands' : 'Original standard literal diagnostic with no formatting operands'));
                 return;
             }
+            const formatting=this.macros.formatting(env.scope,expression);
+            if(formatting){env.proof.push(...formatting);this.gap(env,site,'Original standard formatting runtime dispatch/side effects may affect registration reachability; no formatter executes');return;}
             const profile = rustWebProfile(env.scope, rustWebMacroResolution(this.symbols.resolver, env.scope, expression.path, expression.start, expression.absolute));
             if (profile?.framework === 'rocket' && profile.dialect === 'rocket-0.5' && profile.path.join('::') === 'routes' && expression.operands !== undefined && !profile.conditions.length)
                 return expression.operands.map(operand => this.callback(env, operand));
             if (profile?.framework === 'warp' && profile.dialect?.startsWith('warp-') && profile.path.join('::') === 'path') {
+                if(env.conditionalAxum)return;
                 const syntax = warpPathSyntax(expression.tokens);
                 if (!syntax) return;
                 const nodes: WarpNode[] = syntax.segments.map(segment => segment.kind === 'literal' ? { kind: 'literal', value: segment.value } : { kind: 'param', type: segment.text, guard: this.warpGuard(env.scope, segment.text) });
@@ -416,6 +456,7 @@ export class RustRegistrations {
             return expression.values.map(value => this.evaluate(value, env));
         if (expression.kind === 'await') {
             const value = this.evaluate(expression.value, env);
+            if(is(value,'source-summary'))return {...value,done:false,result:undefined,awaited:true};
             if (is(value, 'future')) {
                 if (value.server) {
                     this.expose(value.server, env, site);
@@ -430,7 +471,7 @@ export class RustRegistrations {
                 const binding = this.binding(env.scope, expression.segments[0]!, expression.start);
                 if (binding) {
                     const value = env.locals.get(this.bindingKey(env.scope.file.path, binding));
-                    return binding.mutable && is(value, 'callback') ? undefined : value;
+                    return binding.mutable && (is(value, 'callback')||is(value,'source-candidate')||is(value,'source-summary')) ? undefined : value;
                 }
             }
             const resolution = this.symbols.resolver.path(env.scope, expression.segments, expression.absolute, new Set(), 'expression'), profile = rustWebProfile(env.scope, resolution);
@@ -444,7 +485,7 @@ export class RustRegistrations {
                     return {kind:'guard',httpMethod:true,methods:[profile.path.at(-1)!],conditions:profile.conditions,proof:profile.proof};
                 return { kind: 'native', profile };
             }
-            return this.callback(env, expression);
+            return this.callback(env, expression)??this.sourceCandidate(env,expression);
         }
         if (expression.kind === 'closure' || expression.kind === 'async')
             return this.callback(env, expression);
@@ -465,6 +506,7 @@ export class RustRegistrations {
                 return this.native(callee.profile, args, env, site, expression);
             if (is(callee, 'callback'))
                 return this.invoke(callee, args, env, site);
+            if(is(callee,'source-candidate'))return {kind:'source-summary',callback:callee.callback,args,environment:env,site};
             if (args.some(arg => is(arg, 'router') || is(arg, 'method') || is(arg, 'server')))
                 this.gap(env, site, 'Original Rust builder escapes into an unreviewed call');
         }
@@ -473,6 +515,8 @@ export class RustRegistrations {
     private native(profile: RustWebProfile, args: Value[], env: Environment, site: Site, expression: RustExpression & {
         kind: 'call';
     }): Value {
+        if(env.conditionalAxum&&!['axum','tokio'].includes(profile.framework))return;
+        if(profile.framework==='axum')args=args.map(arg=>this.axumSourceValue(arg));
         const name = profile.path.join('::'), local = { ...env, conditions: unique([...env.conditions, ...profile.conditions]), proof: [...env.proof, ...profile.proof] };
         if (profile.framework === 'warp' && profile.dialect?.startsWith('warp-')) return this.nativeWarp(profile, args, local, site, expression);
         if (profile.framework === 'rocket' && name === 'build' && args.length === 0 && profile.dialect)
@@ -502,8 +546,21 @@ export class RustRegistrations {
             if (name === 'serve' && args.length === 2 && is(args[1], 'router')) {
                 return { kind: 'future', server: { kind: 'server', router: args[1], environment: local, bound: is(args[0], 'listener'), running: true, proof: [...profile.proof, ...is(args[0], 'listener') ? args[0].proof : [], this.fact(site, 'Original Axum serve future construction; awaited exposure is recorded separately')], conditions: unique([...profile.conditions, ...args[1].conditions, ...is(args[0], 'listener') ? args[0].conditions : ['Original Axum listener identity is unreviewed']]) } };
             }
-            if (name === 'middleware::from_fn' && args.length === 1 && is(args[0], 'callback'))
-                return { kind: 'middleware', targets: [args[0].definition.id], conditions: ['Source middleware may change routing/short-circuit; request selection is unproven'], proof: [...profile.proof, ...args[0].proof] };
+            const middleware=/^middleware::(from_fn|from_fn_with_state|map_response|map_response_with_state)$/.exec(name);
+            if(middleware){
+                const kind=middleware[1] as RustMiddlewareStage['kind'],stateful=kind.endsWith('_with_state'),response=kind.startsWith('map_response');
+                if(args.length!==(stateful?2:1))return;
+                const callback=is(args[stateful?1:0],'callback')?args[stateful?1:0] as Callback:undefined;
+                const conditions=unique([...profile.conditions,...callback?.conditions??[],
+                    response?'Axum map_response request-part extractors run before the inner service and may reject/change request parts; response callback runs only after inner success':'Source middleware may change routing/short-circuit; request selection is unproven',
+                    'Axum middleware extractor/Future/IntoResponse/Clone/Send/Sync bounds and runtime outcomes remain unreviewed',
+                    ...stateful?['Axum middleware supplied state value and trait bounds remain unreviewed']:[],
+                    ...!callback?['Original Axum middleware callback is unresolved']:[],
+                    ...callback&&!callback.definition.fact.async?['Axum middleware source callback Future contract remains unreviewed']:[]]);
+                const source=this.operationSite(env,kind,expression,site);
+                const stage:RustMiddlewareStage={kind,...callback?{callback:callback.definition.id,...callback.conditionalNamespace?{binding:'conditional-original-source' as const}:{},sourceParameterCount:callback.definition.fact.parameters.length}:{},source:{file:source.file,line:source.range.startLine,column:source.range.startColumn},state:stateful?'supplied-unreviewed':'unit',execution:response?'deferred-response-callback':'deferred-request-callback',requestExtraction:'before-inner-conditional',conditions};
+                return {kind:'middleware',targets:callback?[callback.definition.id]:[],conditions,stage,proof:uniqueProof(profile.proof,callback?.proof??[],[this.fact(source,response?'Original native Axum response mapping: request-part extraction precedes inner call; deferred response callback follows inner success':'Original native Axum request middleware: extractors precede deferred callback; Next may be skipped')])};
+            }
         }
         if (profile.framework === 'actix-web') {
             if (name === 'middleware::Logger::default' && args.length === 0)
@@ -668,7 +725,7 @@ export class RustRegistrations {
         }
         return prelude||explicit;
     }
-    private warpOperationSite(env:Environment,name:string,expression:RustExpression&{kind:'call'}|undefined,fallback:Site):Site {
+    private operationSite(env:Environment,name:string,expression:RustExpression&{kind:'call'}|undefined,fallback:Site):Site {
         const callee=expression?.callee,source=this.symbols.resolver.projects.sources.readFile(env.scope.file.path);
         if(!callee||source===undefined||callee.kind!=='field'&&callee.kind!=='path')return fallback;
         const end=callee.end,start=end-name.length;
@@ -761,14 +818,14 @@ export class RustRegistrations {
             data.clone = data.clone && clone;
         } else if(name==='with'&&args.length===1&&is(args[0],'warp-cors')){
             const cors=args[0],reason='Warp CORS header-dependent rejection/preflight bypass and input Reply/Clone/Send/Sync/error bounds remain unreviewed';
-            const operation=this.warpOperationSite(env,name,expression,site);
+            const operation=this.operationSite(env,name,expression,site);
             data.node={kind:'cors',input:data.node,policy:structuredClone(cors.policy),source:{file:operation.file,line:operation.range.startLine},reason};
             result.conditions.push(reason,...cors.conditions,...cors.profile.dialect!==value.dialect?['Warp CORS wrapper and Filter originate from different native version families']:[],...cors.consumed?['Original Warp CORS builder/wrapper is reused after move']:[]);
             result.proof.push(...cors.proof,this.fact(operation,'Original Warp CORS wrapper: preflight can bypass the inner Filter; ordinary successes retain original handler ownership; one nested Either extraction and combined Rejection error'));
             cors.consumed=true;data.extracts=['Either'];data.union=undefined;data.copy=false;
         } else if(name==='recover'&&args.length===1){
             const callback=is(args[0],'callback')&&!args[0].attribute?args[0]:undefined,reason='Warp recovery callback TryFuture/IsReject/Send bounds and success versus rejection remain unreviewed';
-            const operation=this.warpOperationSite(env,name,expression,site);
+            const operation=this.operationSite(env,name,expression,site);
             data.node={kind:'recover',input:data.node,callback:callback?.definition.id,source:{file:operation.file,line:operation.range.startLine},reason};
             result.conditions.push(reason,...callback?.conditions??[],...!callback||callback.definition.fact.parameters.length!==1?['Original Warp recovery requires one source rejection parameter']:[],...!callback||!callback.definition.fact.async&&!callback.definition.unit.facts.returns.some(item=>item.owner===callback.definition.fact.key&&item.value.kind==='async')?['Original Warp recovery callback Future contract is unreviewed']:[]);
             result.proof.push(...callback?.proof??[],this.fact(operation,'Original Warp recover resets the original path cursor on rejection and invokes only the deferred recovery callback; successful input retains its original handler; one Either extraction and callback Future error'));
@@ -867,6 +924,9 @@ export class RustRegistrations {
     private method(value: Value, name: string, args: Value[], env: Environment, site: Site, expression: RustExpression & {
         kind: 'call';
     }): Value {
+        if(is(value,'source-summary'))value=this.axumSourceValue(value);
+        if((is(value,'router')||is(value,'method'))&&value.framework==='axum')args=args.map(arg=>this.axumSourceValue(arg));
+        if(env.conditionalAxum&&(is(value,'router')||is(value,'method'))&&value.framework!=='axum')return;
         if(is(value,'warp-cors'))return warpCorsMethod(value,name,args,this.fact(site,`Original Warp CORS ${name} builder/wrapper source step`),this.warpCloneContext(env));
         if (is(value, 'future')) {
             if (name === 'with_graceful_shutdown' && args.length === 1)
@@ -933,7 +993,7 @@ export class RustRegistrations {
                 return result;
             }
             if (['layer', 'route_layer'].includes(name) && args.length === 1) {
-                this.applyLayer(result.routes, args[0], site, result.conditions);
+                this.applyLayer(result.routes, args[0], this.operationSite(env,name,expression,site), result.conditions,name as 'layer'|'route_layer');
                 return result;
             }
             if (name === 'with_state' && value.framework === 'axum' && args.length === 1)
@@ -991,6 +1051,10 @@ export class RustRegistrations {
         }
         if (name === 'nest' && value.framework === 'axum' && args.length === 2 && is(args[1], 'router') && args[1].framework === 'axum') {
             const prefix = typeof args[0] === 'string' ? args[0] : '/', child = args[1];
+            if(child.automaticFallbackConditions?.length){
+                result.automaticFallbackConditions=unique([...result.automaticFallbackConditions??[],...child.automaticFallbackConditions,'Nested Axum automatic fallback middleware selection remains unreviewed']);
+                result.proof.push(this.fact(site,'Original nested automatic fallback middleware uncertainty is retained; no fallback handler is synthesized'));
+            }
             const mount = { id: this.context.graph.id('mount', result.id, child.id, prefix, String(result.entries.length)), file: site.file, line: site.range.startLine, prefix };
             for (const entry of child.entries)
                 result.entries.push({ ...entry, path: join(prefix, entry.path, value.dialect), mounts: [mount, ...entry.mounts], conditions: unique([...entry.conditions, ...child.conditions, ...typeof args[0] !== 'string' || prefix === '/' || /\*/.test(prefix) ? ['Unreviewed Axum nest prefix'] : []]), middleware: [...entry.middleware] });
@@ -1001,6 +1065,10 @@ export class RustRegistrations {
         }
         if (name === 'merge' && value.framework === 'axum' && args.length === 1 && is(args[0], 'router') && args[0].framework === 'axum') {
             const other = args[0];
+            if(other.automaticFallbackConditions?.length){
+                result.automaticFallbackConditions=unique([...result.automaticFallbackConditions??[],...other.automaticFallbackConditions,'Merged Axum automatic fallback middleware selection remains unreviewed']);
+                result.proof.push(this.fact(site,'Original merged automatic fallback middleware uncertainty is retained; no fallback handler is synthesized'));
+            }
             result.entries.push(...other.entries.map(entry => ({ ...entry, routes: entry.routes.map(cloneRoute) })));
             result.conditions.push(...other.conditions);
             if (result.fallback && other.fallback)
@@ -1028,11 +1096,13 @@ export class RustRegistrations {
             if (name === 'route_layer' && !result.entries.length)
                 result.conditions.push('Empty Axum route_layer would panic');
             for (const entry of result.entries)
-                this.applyLayer(entry.routes, args[0], site, entry.conditions);
+                this.applyLayer(entry.routes, args[0], this.operationSite(env,name,expression,site), entry.conditions,name as 'layer'|'route_layer');
             if (result.routes.length)
-                this.applyLayer(result.routes, args[0], site, result.conditions);
+                this.applyLayer(result.routes, args[0], this.operationSite(env,name,expression,site), result.conditions,name as 'layer'|'route_layer');
             if (name === 'layer' && result.fallback)
-                this.applyLayer([result.fallback], args[0], site, result.conditions);
+                this.applyLayer([result.fallback], args[0], this.operationSite(env,name,expression,site), result.conditions,name as 'layer'|'route_layer');
+            if(name==='layer'&&value.framework==='axum'&&!result.fallback)
+                result.automaticFallbackConditions=unique([...result.automaticFallbackConditions??[],...is(args[0],'middleware')?args[0].conditions:['Opaque layer/middleware can affect native route selection'],'Original Axum automatic path fallback middleware stack remains unreviewed']);
             if (value.framework === 'actix-web') {
                 const targets = is(args[0], 'middleware') ? args[0].targets : is(args[0], 'callback') ? [args[0].definition.id] : [];
                 result.middleware.push(...targets);
@@ -1131,14 +1201,19 @@ export class RustRegistrations {
         }
         router.conditions.push('Original Actix HttpServiceFactory is unresolved or opaque');
     }
-    private applyLayer(routes: Route[], value: Value, site: Site, conditions: string[]): void {
+    private applyLayer(routes: Route[], value: Value, site: Site, conditions: string[],method:'layer'|'route_layer'): void {
         const targets = is(value, 'middleware') ? value.targets : is(value, 'callback') ? [value.definition.id] : [], gaps = is(value, 'middleware') ? value.conditions : ['Opaque layer/middleware can affect native route selection'];
         if (!routes.length)
             conditions.push(...gaps);
         for (const route of routes) {
+            const order=route.middlewareApplications??0;route.middlewareApplications=order+1;
             route.middleware.push(...targets);
             route.conditions.push(...gaps);
             route.proof.push(this.fact(site, 'Original layer order applies to routes present at this builder step'), ...is(value, 'middleware') ? value.proof : []);
+            if(is(value,'middleware')&&value.stage){
+                const previous=route.middlewareStages??[];
+                route.middlewareStages=[...previous,{...value.stage,application:{file:site.file,line:site.range.startLine,column:site.range.startColumn,method,order}}];
+            }
         }
     }
     private expose(server: Server, env: Environment, site: Site): void {
@@ -1269,7 +1344,7 @@ export class RustRegistrations {
                 this.emit(router, env, root, pattern, { ...route, methods }, entries[0]!, conditions, proof, { resource, resourceOrder, routeOrder: order, ...fallback ? { fallback: 'method' as const } : {}, ...!hasHead && route.methods !== '*' && route.methods.includes('GET') ? { headFallback: true } : {} }, fallback ? Array.from(claimed).concat(!hasHead && claimed.has('GET') ? ['HEAD'] : []) : undefined);
             }
             if (!routes.some(route => route.fallback || route.methods === '*'))
-                this.emit(router, env, root, pattern, { site: entries[0]!.site, methods: '*', conditions: [], proof: [], middleware: [] }, entries[0]!, conditions, proof, { resource, resourceOrder, routeOrder: routes.length, fallback: 'method' }, covered === '*' ? METHODS : covered, 405);
+                this.emit(router, env, root, pattern, { site: entries[0]!.site, methods: '*', conditions: routes.some(route=>route.middlewareApplications)?['Original Axum automatic method fallback middleware stack remains unreviewed']:[], proof: [], middleware: [] }, entries[0]!, conditions, proof, { resource, resourceOrder, routeOrder: routes.length, fallback: 'method' }, covered === '*' ? METHODS : covered, 405);
         }
         for (const [order, entry] of router.entries.entries())
             if (entry.pathFallback) {
@@ -1277,7 +1352,7 @@ export class RustRegistrations {
                 const route = entry.routes[0]!;
                 this.emit(router, env, root, pattern, { ...route, conditions: unique([...route.conditions, ...this.axumExtractorConditions(route.callback)]) }, entry, conditions, proof, { resource: root + '-nested-fallback-' + order, resourceOrder: order, routeOrder: 0, fallback: 'path' });
             }
-        const originalFallback = router.fallback ?? { site: router.site, methods: '*' as const, conditions: [], proof: [], middleware: [] }, fallback = { ...originalFallback, conditions: unique([...originalFallback.conditions, ...this.axumExtractorConditions(originalFallback.callback)]) };
+        const originalFallback = router.fallback ?? { site: router.site, methods: '*' as const, conditions: [], proof: [], middleware: [] }, fallback = { ...originalFallback, conditions: unique([...originalFallback.conditions, ...this.axumExtractorConditions(originalFallback.callback),...!router.fallback?router.automaticFallbackConditions??[]:[]]) };
         this.emit(router, env, root, this.wildcard('/', router.dialect), fallback, { site: fallback.site, path: '/', routes: [], methods: '*', conditions: [], proof: [], mounts: [], middleware: [] }, conditions, proof, { resource: root + '-fallback', resourceOrder: Number.MAX_SAFE_INTEGER, routeOrder: 0, fallback: 'path' }, undefined, router.fallback ? undefined : 404);
     }
     private emitActix(router: Router, env: Environment, root: string, conditions: string[], proof: Evidence[], prefix: string, lineage: NonNullable<RustEndpointData['lineage']>, mounts: RoutingContract['mounts'], middleware: string[], resourceMethods: Methods, seen: Set<Router>, inheritedDefault?: Route): void {
@@ -1321,15 +1396,17 @@ export class RustRegistrations {
         if (!parentId)
             return;
         const constraints = unique([...conditions, ...entry.conditions, ...route.conditions, ...this.runtimeGaps.get(env.runtime) ?? [], ...pattern.status === 'partial' ? [pattern.reason ?? 'Unreviewed Rust native route syntax'] : []]), method = route.methods === '*' ? 'ALL' : route.methods.join('|'), id = this.context.graph.id('endpoint', 'rust', root, rust.resource, String(rust.routeOrder), method, pattern.original), facts = uniqueProof(proof, entry.proof, route.proof, [this.fact(route.site, `Original ${router.framework} ${method} ${pattern.original} under selected Cargo source context`)]);
-        const contract: RoutingContract = { version: 1, pattern, methods: route.methods, ...excludedMethods?.length ? { excludedMethods: unique(excludedMethods) } : {}, executionContext: 'server', registration: { file: route.site.file, line: route.site.range.startLine, receiver: router.id }, mounts: entry.mounts, middleware: unique([...entry.middleware, ...route.middleware]), conditions: constraints, dispatch: { dialect: router.framework, root, order: rust.routeOrder }, rust, ...warp ? {warp} : {} };
+        const contract: RoutingContract = { version: 1, pattern, methods: route.methods, ...excludedMethods?.length ? { excludedMethods: unique(excludedMethods) } : {}, executionContext: 'server', registration: { file: route.site.file, line: route.site.range.startLine, receiver: router.id }, mounts: entry.mounts, middleware: unique([...entry.middleware, ...route.middleware]), conditions: constraints, dispatch: { dialect: router.framework, root, order: rust.routeOrder }, rust:{...rust,...route.middlewareStages?.length?{middleware:route.middlewareStages}:{}}, ...warp ? {warp} : {} };
         this.context.graph.contain({ id, type: 'api_endpoint', name: `${method} ${pattern.original}`, path: route.site.file, language: 'rust', parentId, sourceRange: route.site.range, metadata: { framework: router.framework, registration: status ? 'implicit' : 'explicit', method, routePath: pattern.original, routing: contract, executionContext: 'server', compilation: env.origin.compilation.id, crate: env.origin.compilation.target.id, invocation: env.origin.compilation.invocation, qualification: 'bounded-native-source-contract', ...status ? { status, role: status === 405 ? 'method-not-allowed' : 'not-found' } : {}, ...constraints.length ? { constraintsUnresolved: true, constraints } : {} }, evidence: facts });
         this.context.graph.relate(this.context.files.get(route.site.file)!.id, id, 'routes_to', facts, { framework: router.framework, role: 'registration', compilation: env.scope.compilation.id });
         if (route.callback) {
-            this.context.graph.relate(id, route.callback.definition.id, 'handles', uniqueProof(facts, route.callback.proof), { framework: router.framework, role: 'handler', compilation: env.scope.compilation.id });
+            this.context.graph.relate(id, route.callback.definition.id, 'handles', uniqueProof(facts, route.callback.proof), { framework: router.framework, role: 'handler', compilation: env.scope.compilation.id,...route.callback.conditionalNamespace?{binding:'conditional-original-source'}:{} });
             this.sourceHandlerCalls(route.callback, facts);
         }
-        for (const target of contract.middleware)
-            this.context.graph.relate(id, target, 'references', facts, { framework: router.framework, role: 'middleware' });
+        for (const target of contract.middleware){
+            const stages=route.middlewareStages?.filter(stage=>stage.callback===target);
+            this.context.graph.relate(id, target, 'references', facts, { framework: router.framework, role: 'middleware',...stages?.length?{compilation:env.origin.compilation.id,execution:'deferred-native-middleware',stages}:{} });
+        }
         if(warp&&pattern.warp){
             const pending=[pattern.warp.branch];let count=0;
             while(pending.length&&++count<=512){

@@ -108,7 +108,7 @@ test('Native listener qualification survives a different reviewed runtime withou
         assert.ok((route(g, '/x').metadata.constraints as string[]).some(condition => condition.includes('version family')));
     }
 });
-test('Custom diagnostic macros, prelude changes and user formatting operands keep expansion gaps', async () => {
+test('Custom macros/prelude changes keep expansion gaps; canonical user formatting keeps runtime gaps', async () => {
     const source = serve('Router::new().route("/x",get(handler))');
     for (const [prefix, diagnostic] of [
         ['macro_rules! println{($($t:tt)*)=>{}}', 'println!("starting");'],
@@ -124,8 +124,10 @@ test('Custom diagnostic macros, prelude changes and user formatting operands kee
         ['', 'println!("{}",listener.local_addr().expect("bound"));'],
     ] as [string, string][]) {
         const g = await index(await repo(prefix + source.replace('axum::serve(listener,app)', diagnostic + 'axum::serve(listener,app)'), axum + '\nlog="0.4"\ncustom_logger="1.0"'));
-        assert.ok(declared(g).every(endpoint => endpoint.metadata.constraintsUnresolved && !handler(g, endpoint)), prefix + diagnostic);
-        assert.ok(g.diagnostics.some(diagnostic => diagnostic.reason.includes('macro invocation')), prefix + diagnostic);
+        const namespaceOnly=!prefix&&!diagnostic.includes('.expect('); // Nested quoted operands remain outside the bounded formatting syntax.
+        assert.ok(declared(g).every(endpoint => endpoint.metadata.constraintsUnresolved && (namespaceOnly ? handler(g, endpoint)?.name==='handler' : !handler(g, endpoint))), prefix + diagnostic);
+        assert.ok(g.diagnostics.some(diagnostic => diagnostic.reason.includes(namespaceOnly?'formatting runtime dispatch':'macro invocation')), prefix + diagnostic);
+        assert.equal(requests(g).length,0);
     }
 });
 test('A nested macro shadow retains its actual lexical identity and constrains outside serving', async () => {

@@ -8,7 +8,8 @@ import type { RustRouteDialect } from '../routes/rust-patterns.js';
 import type { RustScopeFact } from '../facts.js';
 import { warpPathSyntax } from './warp-syntax.js';
 import { RustLockfiles } from '../resolution/rust-lock.js';
-export const RUST_ROUTER_VERSION = '12';
+import {rustStandardNamespaceMacro} from '../resolution/rust-runtime-namespace.js';
+export const RUST_ROUTER_VERSION = '13';
 export interface RustWebProfile {
     framework: 'axum' | 'actix-web' | 'tokio' | 'rocket' | 'warp';
     dialect?: RustRouteDialect;
@@ -249,6 +250,9 @@ export class RustWebMacros {
     private readonly proofs = new Map<string, Evidence[]>();
     private readonly exclusions = new Map<string, Evidence[]>();
     constructor(private readonly base: RustResolver) { }
+    formatting(scope:RustScope,macro:Parameters<typeof rustStandardNamespaceMacro>[2]):Evidence[]|undefined {
+        return rustStandardNamespaceMacro(this.base,scope,macro);
+    }
     private key(compilation: RustCompilation, file: string, scope: string) { return JSON.stringify([compilation.id, file, scope]); }
     recordExclusion=(scope:RustScope,proof:Evidence[]):void=>{
         const key=this.key(scope.compilation,scope.file.path,scope.fact.key);
@@ -333,6 +337,8 @@ export class RustWebMacros {
                 proof.push(...diagnostic.proof, { ...evidence('framework', 'rust-routers', file, macro.range.startLine, diagnostic.receiver ? 'Original standard diagnostic syntax; native listener operand identity requires registration evaluation' : rustEmptyTokenTree(macro.tokens) ? 'Original empty standard print diagnostic; reviewed item-neutral syntax without expansion' : 'Original standard literal diagnostic with no formatting operands; reviewed item-neutral syntax without expansion'), endLine: macro.range.endLine, analyzerVersion: RUST_ROUTER_VERSION });
                 continue;
             }
+            const formatting=this.formatting(scope,macro);
+            if(formatting){proof.push(...formatting,{...evidence('framework','rust-routers',file,macro.range.startLine,'Original standard formatting syntax is namespace-neutral; formatter dispatch, side effects and runtime registration reachability remain unreviewed'),analyzerVersion:RUST_ROUTER_VERSION,endLine:macro.range.endLine});continue;}
             const identity = rustWebMacroResolution(this.base, scope, macro.path, macro.start, macro.absolute), profile = rustWebProfile(scope, identity);
             if (profile?.framework === 'rocket' && profile.dialect === 'rocket-0.5' && profile.path.join('::') === 'routes' && macro.operands !== undefined && profile.conditions.every(condition => condition === gap || condition.startsWith('Unreviewed Rust attribute'))) {
                 proof.push(...profile.proof, { ...evidence('framework', 'rust-routers', file, macro.range.startLine, 'Original Rocket routes! literal source path list; reviewed registration syntax without macro expansion'), endLine: macro.range.endLine, analyzerVersion: RUST_ROUTER_VERSION });

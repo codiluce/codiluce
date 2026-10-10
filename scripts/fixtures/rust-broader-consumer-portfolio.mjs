@@ -97,3 +97,14 @@ export const rustWarpCorsConsumers = rustWarpWrapperConsumers.map(sample=>sample
     recovery:{file:'src/main.rs',line:266,callbackLine:82,handler:'return_error'},
     boundary:'All five original callbacks stay conditional. Each endpoint retains its original state extraction and the original Store type identity, plus the deferred return_error recovery reference. Native CORS policy/one nested Either output/preflight bypass and recovery cursor reset/one Either output are explicit. Clone/Send/Sync field bounds, query/body/form conversions, generated implementations, CORS header inputs, recovery outcomes and runtime behavior remain unreviewed; no new qualified pairs follow.',
 });
+
+export const rustAxumHelperConsumers = rustWarpCorsConsumers.map(sample=>sample.key!=='axum-course'?sample:{
+    ...sample,routes:sample.routes.map(route=>({...route,status:'conditional'})),
+    helpers:[{file:'src/main.rs',line:101,name:'routes_hello'},{file:'src/web/routes_login.rs',line:8,name:'routes'},{file:'src/web/routes_tickets.rs',line:8,name:'routes'}],
+    middleware:[
+        {kind:'from_fn',file:'src/main.rs',line:30,applicationLine:30,callbackFile:'src/web/mw_auth.rs',callbackLine:15,handler:'mw_require_auth',routes:3},
+        {kind:'map_response',file:'src/main.rs',line:36,applicationLine:36,callbackFile:'src/main.rs',callbackLine:55,handler:'main_response_mapper',routes:6},
+        {kind:'from_fn_with_state',file:'src/main.rs',line:37,applicationLine:37,callbackFile:'src/web/mw_auth.rs',callbackLine:27,handler:'mw_ctx_resolver',routes:6},
+    ],
+    boundary:'All six unchanged original routes/handlers bind conditionally through original helper merge/nest/state summaries. Fifteen deferred middleware references retain the three original callbacks and constructor/application order. Generated type-attribute exports, general Rust binding, compiler validity, custom state/extractors, authentication, response mapping, opaque CookieManagerLayer, static fallback and formatting runtime effects remain unreviewed. No new qualified pairs or general module resolutions follow.',
+});

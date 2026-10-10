@@ -992,3 +992,62 @@ pass. The production build and installed CLI/API original state/handler/recovery
 291 files), along with compiled history workers, missing-parser fallback, signal handling and npm-exec checks.
 The reproduced four-consumer audit matches the final implementation digest and all original checkouts remain
 clean. Desktop/mobile report layout and roadmap Rust filtering/expand/collapse are verified before committing.
+
+## 38. Conditional Axum helpers and native middleware (P9e2b2b2c3)
+
+Axum 0.7/0.8 native consumers can request one original source function under unrelated type attributes through
+`RustSourceProjections`. Generated exports and compiler validity remain unreviewed. Conditional candidates are
+separate from general symbols and native callbacks; only an Axum consumer can request their summary. A source
+function's own attributes must be reviewed, and its body must be present, nongeneric and complete. Unknown module
+attributes, namespace macros, cfg, source/import shadows, ambiguity, mutable aliases and unsafe/extern/const
+signatures cannot borrow the projection. General Rust resolver/import/symbol behavior is unchanged.
+
+Original helper calls are deferred source summaries until native Axum requests them. Existing source parameter,
+cycle and ownership limits apply. Merge/nest/method/state builders retain original handler definitions and paths.
+Async factories require an original await before their bodies supply a router; unused/unawaited/recursive factories
+supply no serving registrations. Conditional source handlers carry `binding: conditional-original-source`. They
+cannot certify client request edges or become general resolved imports/calls; other framework operands cannot use
+these candidates. No Rust function, macro or dependency executes.
+
+Canonical from_fn/from_fn_with_state/map_response/map_response_with_state retain native constructor identity,
+unit/supplied state mode, original callback source parameter count and constructor/application token coordinates.
+References have role `middleware` and execution `deferred-native-middleware`; they are neither direct calls nor
+route handlers. `routing.rust.middleware` retains per-endpoint builder application order, including ordinal gaps
+for opaque layer steps. Layers apply to routes present at that step; later layers are outermost. Explicit fallback
+and route-layer scopes remain distinct. Automatic fallback stack coverage stays conditional.
+
+Native map_response extracts request parts before calling the inner service. Extractor rejection/mutation can
+short-circuit that call. Its response callback runs after inner success. From-fn middleware has request extraction
+before its callback and may skip Next. Source Future/IntoResponse/extractor/Clone/Send/Sync/state trait compatibility
+and runtime outcomes stay unreviewed even for a response-only source signature. Metadata records original source
+shape without asserting trait satisfaction. Opaque external layers and static fallback services retain gaps.
+Native [0.7.9 map_response](https://github.com/tokio-rs/axum/blob/axum-v0.7.9/axum/src/middleware/map_response.rs),
+[0.8.9 map_response](https://github.com/tokio-rs/axum/blob/axum-v0.8.9/axum/src/middleware/map_response.rs) and
+[0.8.9 from_fn](https://github.com/tokio-rs/axum/blob/axum-v0.8.9/axum/src/middleware/from_fn.rs) define this contract.
+
+Bounded canonical standard formatting with item/attribute/macro-free operands preserves only the containing
+namespace. Formatter dispatch, side effects and registration reachability remain runtime gaps. Standard/source
+macro identity checks remain conservative, and no formatter executes. Rust router version is 13; general import
+and resolver versions remain 6.
+
+`qualify-rust-broader-consumers.mjs --axum-helpers` compares archived `cd8ed31` against all four immutable consumers.
+The [Axum helper/middleware audit](axum-helper-middleware-source-accuracy.html) retains all 29 original route and
+14 module denominators. Six course routes improve from misses to conditional original handler bindings; fifteen
+original deferred middleware/route associations retain the three original callback declarations and layer sites.
+Four qualified controls and general course import/call/reference outcomes remain unchanged. The portfolio now has
+four qualified pairs, 25 conditional bindings, zero unbound registrations and zero misses. Thirteen automatic
+candidates and three static services remain separate; only one general module resolves.
+
+Twelve added conformance cases cover original helper/re-export/method/state summaries, projection barriers,
+mutable aliases, awaited/unused/recursive factories, cross-framework isolation, native middleware families,
+conditional references, layer snapshots/opaque steps, automatic fallback conditions, CRLF/emoji operation tokens,
+formatting effects and cache/version invalidation. Installed CLI/API fixtures retain original conditional handler
+and middleware coordinates, deferred metadata, source inspection and no qualified client flow. The initial
+P9e2b2b2c3 scope is complete; broader original consumer/import/version and custom middleware/state/extractor
+qualification, native Windows/macOS checks, P9/P10 and the full goal remain open.
+
+Final verification: all 1,109 tests pass with four workers against the frozen implementation, along with CLI/web
+typechecks. The production build and installed CLI/API conditional helper/middleware/source checks pass (3.23 MB /
+292 files), plus compiled history workers, missing-parser fallback, signals and npm-exec. The four-consumer audit
+matches the final implementation digest and original checkouts remain clean. Desktop/mobile report layout,
+expanded raw proof, horizontal table scrolling and roadmap Rust filtering/expand/collapse are verified.

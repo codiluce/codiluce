@@ -5,6 +5,20 @@ export interface RustPathData {
     sources: string[];
     prefixDefault?: boolean;
 }
+/** Original builder application order, not a guarantee that callbacks execute.
+ * Later layers are outermost; response mapping follows successful inner calls. */
+export interface RustMiddlewareStage {
+    kind: 'from_fn' | 'from_fn_with_state' | 'map_response' | 'map_response_with_state';
+    callback?: string;
+    binding?: 'conditional-original-source';
+    source: {file:string;line:number;column?:number};
+    state: 'unit' | 'supplied-unreviewed';
+    execution: 'deferred-request-callback' | 'deferred-response-callback';
+    requestExtraction: 'before-inner-conditional';
+    sourceParameterCount?: number;
+    application?: {file:string;line:number;column?:number;method:'layer'|'route_layer';order:number};
+    conditions: string[];
+}
 export interface RustEndpointData {
     resource: string;
     resourceOrder: number;
@@ -19,6 +33,7 @@ export interface RustEndpointData {
     rank?: number;
     format?: string;
     data?: string;
+    middleware?: RustMiddlewareStage[];
 }
 const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const parameterName = /^[A-Za-z_]\w*$/;

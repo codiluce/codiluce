@@ -228,6 +228,14 @@ separate deferred callback reference. Neither bypass nor recovery borrows an ori
 All five unchanged Q&A handlers retain their original state, Store type and recovery references. The full portfolio
 remains four qualified pairs, 19 conditional bindings and six misses. Generated traits, field bounds, header inputs
 and recovery outcomes stay conditional. Axum helpers/middleware and broader P9/P10 qualification remain open.
+P9e2b2b2c3 adds [Axum helper and middleware qualification](docs/axum-helper-middleware-source-accuracy.html).
+Axum 0.7/0.8 consumers can retain original functions conditionally when unrelated type attributes leave generated
+exports unreviewed. Original helper merge/nest/state summaries now retain all six course handlers. Four native
+middleware constructors preserve deferred original callbacks, state mode, operation coordinates and layer order.
+Response mapping retains request-part extraction before the inner service and possible rejection. Canonical bounded
+formatting has namespace proof with runtime effects left conditional. The full portfolio now has four qualified
+pairs, 25 conditional bindings and zero source route misses; general Rust binding stays conservative. Custom
+middleware/state/extractor contracts, wider source/version coverage, broader P9/P10 and native-platform gates remain open.
 No Cargo/rustc or target code runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original

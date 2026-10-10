@@ -13,7 +13,7 @@ type Macro = NonNullable<RustSyntaxFacts['macros']>[number];
 
 /** Standard formatting syntax can have runtime effects while still supplying
  * no crate exports. Arguments containing macros/attributes/items stay opaque. */
-function standardNamespaceMacro(base: RustResolver, scope: RustScope, macro: Macro): Evidence[] | undefined {
+export function rustStandardNamespaceMacro(base: RustResolver, scope: RustScope, macro: Pick<Macro,'path'|'absolute'|'tokens'|'range'>): Evidence[] | undefined {
     if (macro.tokens.length > 8192) return;
     const names = ['println', 'eprintln', 'format'], result = base.path(scope, macro.path, macro.absolute, new Set(), 'expression');
     const allowed = (condition: string) => generationGap(condition) || condition === 'Rust macro invocation can supply generated/scoped items; expansion is unavailable';
@@ -128,7 +128,7 @@ function namespaceInputs(base: RustResolver, compilation: string, reviews: Map<s
             const selected = rustAttributes(macro.attributes, scope.compilation.environment);
             if (selected.active === false) continue;
             if (selected.active !== true || selected.gaps.length) return;
-            const native = standardNamespaceMacro(base, scope, macro);
+            const native = rustStandardNamespaceMacro(base, scope, macro);
             if (!native) return;
             proof.push(...native);
         }
