@@ -52,6 +52,8 @@ interface Route {
     middleware: string[];
     fallback?: boolean;
     headFallback?: boolean;
+    warpOutput?: string;
+    warpFuture?: boolean;
 }
 interface MethodRouter {
     kind: 'method';
@@ -91,7 +93,7 @@ interface Router {
     middleware: string[];
     legacy: boolean;
     rocketIgnited?: boolean;
-    warp?: { node: WarpNode; handlers: Map<string, Route>; extracts?: string[]; union?: [string[] | undefined, string[] | undefined]; copy: boolean };
+    warp?: { node: WarpNode; handlers: Map<string, Route>; extracts?: string[]; union?: [string[] | undefined, string[] | undefined]; copy: boolean; clone: boolean };
     consumed?: boolean;
 }
 interface Server {
@@ -423,7 +425,7 @@ export class RustRegistrations {
             }
             const resolution = this.symbols.resolver.path(env.scope, expression.segments, expression.absolute, new Set(), 'expression'), profile = rustWebProfile(env.scope, resolution);
             if (profile) {
-                if (expression.generics?.length && !(profile.framework === 'warp' && /^(?:filters::)?path::param$/.test(profile.path.join('::'))))
+                if (expression.generics?.length && !(profile.framework === 'warp' && /^(?:filters::)?(?:path::param|query(?:::query)?|body::(?:json|form))$/.test(profile.path.join('::'))))
                     profile.conditions.push('Explicit generic Rust web operands require native type/trait instantiation proof');
                 profile.generics = expression.generics;
                 if (profile.framework === 'axum' && /^routing::MethodFilter::(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|CONNECT|TRACE)$/.test(profile.path.join('::')))
@@ -540,7 +542,7 @@ export class RustRegistrations {
     }
     private makeWarp(env: Environment, site: Site, profile: RustWebProfile, node: WarpNode, extracts: string[] | undefined = [], copy = true): Router {
         const router = this.makeRouter(env, site, profile, 'filter');
-        router.warp = { node, handlers: new Map(), extracts, copy };
+        router.warp = { node, handlers: new Map(), extracts, copy, clone:copy };
         return router;
     }
     private nativeWarp(profile: RustWebProfile, args: Value[], env: Environment, site: Site, expression: RustExpression & {kind:'call'}): Value {
@@ -551,7 +553,8 @@ export class RustRegistrations {
         }
         if (name === 'serve' && args.length === 1 && is(args[0], 'router') && args[0].framework === 'warp') {
             const filter = this.copy(args[0], env, site);
-            return { kind: 'server', router: filter, warpDialect: profile.dialect as WarpDialect, environment: env, bound: false, running: false, proof: [...filter.proof, ...profile.proof, this.fact(site, 'Original Warp serve Filter constructor; no exposure until a native serving future is awaited')], conditions: unique([...filter.conditions, ...profile.conditions, ...filter.warp?.extracts === undefined || filter.warp.extracts.length !== 1 ? ['Warp serve requires a single reviewed reply extraction from the original source Filter'] : [], ...filter.dialect !== profile.dialect ? ['Warp serve and Filter originate from different native version families'] : [], ...!profile.server ? ['Warp 0.4 serve requires the selected server Cargo feature'] : []]) };
+            const mapped=[...filter.warp?.handlers.values()??[]];
+            return { kind: 'server', router: filter, warpDialect: profile.dialect as WarpDialect, environment: env, bound: false, running: false, proof: [...filter.proof, ...profile.proof, this.fact(site, 'Original Warp serve Filter constructor; no exposure until a native serving future is awaited')], conditions: unique([...filter.conditions, ...profile.conditions, ...filter.warp?.extracts === undefined || filter.warp.extracts.length !== 1 ? ['Warp serve requires a single reviewed reply extraction from the original source Filter'] : [], ...mapped.some(route=>route.warpFuture)?['Warp final map produces an unawaited source Future rather than a native Reply']:[],...mapped.some(route=>route.warpOutput&&/^(?:bool|[iu](?:8|16|32|64|128))$/.test(route.warpOutput))?['Warp final mapped primitive is not a native Reply']:[], ...filter.dialect !== profile.dialect ? ['Warp serve and Filter originate from different native version families'] : [], ...!profile.server ? ['Warp 0.4 serve requires the selected server Cargo feature'] : []]) };
         }
         if (['any', 'any::any'].includes(name) && !args.length) return this.makeWarp(env, site, profile, {kind:'any'});
         if (['path', 'path::path'].includes(name) && args.length === 1) {
@@ -569,6 +572,11 @@ export class RustRegistrations {
         if (['path::peek', 'path::full', 'method', 'method::method'].includes(name) && !args.length) return this.makeWarp(env, site, profile, {kind:'extract'}, [name]);
         const verb = /^(?:method::)?(get|post|put|patch|delete|head|options)$/.exec(name);
         if (verb && !args.length) return this.makeWarp(env, site, profile, {kind:'method',methods:[verb[1]!.toUpperCase()]});
+        if (['query','query::query','body::json','body::form'].includes(name) && !args.length && (!profile.generics || profile.generics.length===1)) {
+            const result=this.makeWarp(env,site,profile,{kind:'opaque',reason:`Warp ${name} deserialization/predicate and native Send/Deserialize bounds remain unreviewed`,pathNeutral:true,extractionCount:1},[profile.generics?.[0]??'?']);
+            result.proof.push(this.fact(site,`Original canonical Warp ${name} supplies exactly one ordered extraction; deserialization and request predicates remain unreviewed`));
+            return result;
+        }
         if (/^(?:body|header|query|cookie|host|addr|fs)(?:::|$)/.test(name))
             return this.makeWarp(env, site, profile, {kind:'opaque',reason:`Warp ${name} extraction/predicate/reply contract is unreviewed`,pathNeutral:!name.startsWith('fs::')}, undefined, false);
         if (args.some(arg => is(arg,'router') || is(arg,'server'))) this.gap(env,site,`Original Warp value escapes into unreviewed native ${name}`);
@@ -585,10 +593,75 @@ export class RustRegistrations {
         }
         return;
     }
+    /** Native mappers produce one extraction. When another mapper consumes it,
+     * the previous callback is an extraction stage, not an HTTP handler. */
+    private warpExtractions(node: WarpNode, handlers: Map<string,Route>, router: Router, site: Site, depth=0): WarpNode {
+        if(depth>64)return {kind:'opaque',reason:'Warp mapped extraction traversal exceeds the source composition bound'};
+        if(node.kind==='and'||node.kind==='or')return {...node,left:this.warpExtractions(node.left,handlers,router,site,depth+1),right:this.warpExtractions(node.right,handlers,router,site,depth+1)};
+        if(node.kind==='mount'||node.kind==='transform')return {...node,input:this.warpExtractions(node.input,handlers,router,site,depth+1)};
+        if(node.kind==='opaque'&&node.input)return {...node,input:this.warpExtractions(node.input,handlers,router,site,depth+1)};
+        if(node.kind!=='handler')return node;
+        const original=handlers.get(node.id);
+        if(!original)return {kind:'opaque',input:node,reason:'Original Warp mapped extraction callback identity is unavailable',pathNeutral:true};
+        router.proof.push(...original.proof,this.fact(original.site,'Original Warp mapper is consumed as a deferred single extraction before the final response callback; no target callback executes'));
+        router.conditions.push(...original.conditions);
+        return {kind:'transform',input:this.warpExtractions(node.input,handlers,router,site,depth+1),callback:original.callback?.definition.id,source:{file:original.site.file,line:original.site.range.startLine},fallible:node.fallible,...!original.warpOutput?{reason:'Warp mapped extraction output type/Future/trait relationship remains unreviewed'}:{}};
+    }
+    private warpCallbackClone(callback: Callback | undefined): boolean {
+        if(!callback)return false;
+        const definition=callback.definition, fact=definition.fact;
+        if(['function','method'].includes(fact.kind)&&!fact.parameters.some(parameter=>parameter.receiver))return true;
+        if(fact.kind!=='closure'||!fact.body||callback.conditions.length)return false;
+        const syntax=this.symbols.resolver.syntax(definition.unit.file.path),body=syntax?.scopes.find(scope=>scope.key===fact.body);
+        if(!body||!syntax?.complete||!definition.unit.facts.complete)return false;
+        const scopes=new Set(syntax.scopes.filter(scope=>scope.start>=body.start&&scope.end<=body.end).map(scope=>scope.key));
+        if(syntax.macros?.some(macro=>scopes.has(macro.scope)))return false;
+        const source=this.symbols.resolver.projects.sources.readFile(definition.unit.file.path)?.slice(fact.start,fact.end);
+        const references=definition.unit.facts.references.filter(reference=>scopes.has(reference.scope)&&reference.kind==='value').map(reference=>({scope:reference.scope,expression:reference.expression}));
+        for(const write of definition.unit.facts.writes.filter(write=>scopes.has(write.scope)))references.push({scope:write.scope,expression:write.target});
+        for(const reference of references){
+            let expression=reference.expression;
+            for(let depth=0;depth<32;depth++){
+                if(expression.kind==='field'||expression.kind==='reference'||expression.kind==='deref'||expression.kind==='paren')expression=expression.value;
+                else break;
+            }
+            if(expression.kind!=='path'||expression.segments.length!==1)continue;
+            const scope=this.scope(definition.unit.file.path,reference.scope,callback.scope),binding=scope&&this.binding(scope,expression.segments[0]!,expression.start);
+            if(!binding||scopes.has(binding.scope))continue;
+            if(binding.mutable||binding.gaps.length||!source||!/^move\s*\|/.test(source)||binding.type?.kind==='reference')return false;
+            const value=callback.environment.locals.get(this.bindingKey(definition.unit.file.path,binding));
+            if(!['string','number','boolean'].includes(typeof value)&&!(is(value,'callback')&&value.definition.fact.kind==='function'))return false;
+            if(binding.value?.kind!=='literal'&&!(is(value,'callback')&&value.definition.fact.kind==='function'&&binding.value?.kind==='path'))return false;
+        }
+        return true;
+    }
+    private warpCloneContext(env: Environment): boolean {
+        let prelude=true,explicit=false;
+        for(let scope:RustScope|undefined=env.scope;scope;scope=scope.parent){
+            if(scope.attributes.noPrelude||scope.attributes.noCore)prelude=false;
+            const collision=(symbol:typeof scope.items[number])=>{
+                if(symbol.active===false||symbol.fact?.kind!=='trait')return false;
+                const member=this.symbols.resolver.syntax(symbol.scope.file.path)?.scopes.find(candidate=>candidate.kind==='trait'&&candidate.start===symbol.fact!.start&&candidate.end===symbol.fact!.end);
+                return !!member&&!!this.symbols.facts(symbol.scope.file.path)?.definitions.some(definition=>definition.scope===member.key&&definition.name==='clone');
+            };
+            if(scope.items.some(collision))return false;
+            for(const site of scope.imports.filter(site=>site.active!==false)){
+                const result=this.symbols.resolver.resolve(site);
+                if(result.status==='resolved'&&result.symbols.some(collision))return false;
+                if(result.status==='external'&&result.dependency==='rust-standard-library'&&['std','core'].includes(result.crate)&&result.path.join('::')==='clone::Clone'&&!result.conditions.length)explicit=true;
+                else if((site.fact.alias??site.fact.segments.at(-1))==='Clone')return false;
+            }
+        }
+        return prelude||explicit;
+    }
     private warpMethod(value: Router, name: string, args: Value[], env: Environment, site: Site, qualified = false): Value {
         if (!value.warp) return;
         const result = this.copy(value, env, site, name === 'clone'), data = result.warp!;
-        if (name === 'clone' && !args.length) return result;
+        if (name === 'clone' && !args.length) {
+            if(!data.clone)result.conditions.push('Warp filter Clone bound depends on unreviewed original callback captures or filter operands');
+            if(!this.warpCloneContext(env))result.conditions.push('Warp filter clone method has no reviewed standard trait context or has a source trait competitor');
+            return result;
+        }
         const trait = qualified ? [this.fact(site,'Original fully-qualified canonical Warp Filter combinator')] : this.warpTrait(env,value.dialect);
         if (!trait) result.conditions.push('Original Warp Filter trait import/method contract is unreviewed');
         else result.proof.push(...trait);
@@ -613,12 +686,14 @@ export class RustRegistrations {
                 data.handlers = new Map([...data.handlers,...other.warp.handlers]);
                 result.conditions.push(...other.conditions,...other.dialect !== result.dialect ? ['Warp composition crosses reviewed native version families'] : []);
                 result.proof.push(...other.proof,this.fact(site,'Original ordered Warp source filter composition'));
+                if(name==='and'&&!other.warp.clone)result.conditions.push('Warp Filter.and requires a reviewed Clone bound for the right source filter');
             }
             if (name === 'and') {
                 data.extracts = data.extracts && other?.warp?.extracts ? [...data.extracts,...other.warp.extracts] : undefined;
                 data.union = undefined;
             } else { data.union = [data.extracts,other?.warp?.extracts]; data.extracts = ['Either']; }
             data.copy = data.copy && !!other?.warp?.copy;
+            data.clone = data.clone && !!other?.warp?.clone;
         } else if (['map','then','and_then'].includes(name) && args.length === 1) {
             const callback = is(args[0],'callback') && !args[0].attribute ? {...args[0],awaitedReturn:name !== 'map' && !args[0].definition.fact.async} : undefined;
             const parameters = callback?.definition.fact.parameters ?? [];
@@ -632,24 +707,31 @@ export class RustRegistrations {
                     return node.type || !callback || type?.kind !== 'path' ? node : {...node,type:type.text,guard:this.warpGuard(callback.scope,type.text)};
                 }
                 if (['tail','extract','handler','or'].includes(node.kind)) parameter++;
+                if(node.kind==='transform')parameter++;
+                if(node.kind==='opaque'&&node.extractionCount!==undefined)parameter+=node.extractionCount;
                 return node;
             };
-            const input = infer(data.node), identity = JSON.stringify([env.frame, env.owner, callback?.definition.id ?? 'unresolved']), id = this.context.graph.id('warp-handler',identity,String(this.ordinal(identity)));
+            const input = infer(this.warpExtractions(data.node,data.handlers,result,site)), identity = JSON.stringify([env.frame, env.owner, callback?.definition.id ?? 'unresolved']), id = this.context.graph.id('warp-handler',identity,String(this.ordinal(identity)));
             const asyncReturn = callback && (callback.definition.fact.async || callback.definition.unit.facts.returns.some(item => item.owner === callback.definition.fact.key && item.value.kind === 'async'));
             const typeConditions: string[] = [];
             for (const [index,parameter] of parameters.entries()) {
                 const extracted = data.extracts?.[index], annotation = parameter.type;
                 if (!callback || !annotation || !extracted || extracted === '?') continue;
-                const from = this.warpGuard(env.scope,extracted), to = annotation.kind === 'path' ? this.warpGuard(callback.scope,annotation.text) : undefined;
+                const from = this.warpGuard(env.scope,extracted.replace(/^reply:/,'')), to = annotation.kind === 'path' ? this.warpGuard(callback.scope,annotation.text) : undefined;
                 if (from && from !== to || extracted === 'Either' && !!to) typeConditions.push('Warp callback parameter type is incompatible with the original native extraction');
             }
-            const conditions = unique([...callback?.conditions ?? [], ...typeConditions, ...!callback ? ['Original Warp source mapper/handler is unresolved'] : [], ...callback?.definition.fact.kind === 'async' ? ['Warp mapper requires an original function/closure operand rather than an already constructed async block'] : [], ...callback?.definition.fact.generics ? ['Generic Warp callback instantiation is unreviewed'] : [], ...data.extracts === undefined || data.extracts.length !== parameters.length ? ['Warp callback extraction arity is unproven or incompatible'] : [], ...name === 'map' && asyncReturn ? ['Warp map requires a synchronous callback; a source Future is not a reviewed Reply'] : [], ...name !== 'map' && !asyncReturn ? ['Warp asynchronous callback return Future contract is unreviewed'] : []]);
+            const conditions = unique([...callback?.conditions ?? [], ...typeConditions, ...!callback ? ['Original Warp source mapper/handler is unresolved'] : [], ...callback?.definition.fact.kind === 'async' ? ['Warp mapper requires an original function/closure operand rather than an already constructed async block'] : [], ...callback?.definition.fact.generics ? ['Generic Warp callback instantiation is unreviewed'] : [], ...data.extracts === undefined || data.extracts.length !== parameters.length ? ['Warp callback extraction arity is unproven or incompatible'] : [], ...name !== 'map' && !asyncReturn ? ['Warp asynchronous callback return Future contract is unreviewed'] : []]);
             data.node = {kind:'handler',input,id,fallible:name === 'and_then'};
-            data.handlers.set(id,{site,methods:'*',callback,conditions,proof:[...callback?.proof ?? [],this.fact(site,`Original Warp ${name} callback operand and ordered extraction contract`)],middleware:[]});
-            data.extracts = [`reply:${callback?.definition.fact.returnType?.text ?? callback?.definition.id ?? '?'}`];
+            const output=!(name==='map'&&asyncReturn)&&callback?.definition.fact.returnType?.kind==='path'?this.warpGuard(callback.scope,callback.definition.fact.returnType.text):undefined;
+            data.handlers.clear();
+            data.handlers.set(id,{site,methods:'*',callback,conditions,proof:[...callback?.proof ?? [],this.fact(site,`Original Warp ${name} callback operand and ordered extraction contract`)],middleware:[],warpOutput:output,warpFuture:name==='map'&&!!asyncReturn});
+            data.extracts = [`reply:${output??'?'}`];
             data.union = undefined;
-            data.copy = data.copy && callback?.definition.fact.kind === 'function';
-        } else if (name === 'boxed' && !args.length) data.copy = false;
+            const clone=this.warpCallbackClone(callback);
+            if(!clone)result.conditions.push('Warp native mapper requires Clone/Send callback bounds; original captured values remain unreviewed');
+            data.copy = data.copy && clone;
+            data.clone = data.clone && clone;
+        } else if (name === 'boxed' && !args.length) {data.copy = false;data.clone = true;result.proof.push(this.fact(site,'Original Warp boxed filter preserves extraction and error shape and supplies native Arc-backed Clone; Send/Sync bounds remain source preconditions'));}
         else if (name === 'unify' && !args.length) {
             const [left,right] = data.union ?? [];
             if (left && right && JSON.stringify(left) === JSON.stringify(right)) data.extracts = left;
@@ -657,7 +739,7 @@ export class RustRegistrations {
             data.union = undefined;
         } else {
             data.node = {kind:'opaque',input:data.node,reason:`Original Warp Filter ${name} wrapper/recovery/extraction transformation is unreviewed`};
-            data.extracts = undefined; data.union = undefined; data.copy = false;
+            data.extracts = undefined; data.union = undefined; data.copy = false;data.clone=false;
             for (const arg of args) if (is(arg,'callback')) result.middleware.push(arg.definition.id);
         }
         let count = 0;
@@ -669,14 +751,16 @@ export class RustRegistrations {
                 data.extracts = undefined; result.conditions.push(data.node.reason); break;
             }
             if (node.kind === 'and' || node.kind === 'or') pending.push({node:node.left,depth:depth+1},{node:node.right,depth:depth+1});
-            else if (node.kind === 'handler' || node.kind === 'mount' || node.kind === 'opaque' && node.input) pending.push({node:node.input!,depth:depth+1});
+            else if (node.kind === 'handler' || node.kind === 'transform' || node.kind === 'mount' || node.kind === 'opaque' && node.input) pending.push({node:node.input!,depth:depth+1});
         }
         result.proof = uniqueProof(result.proof);
         result.conditions = unique(result.conditions);
         return result;
     }
     private warpAddress(value: Value): boolean {
-        return Array.isArray(value) && value.length === 2 && Array.isArray(value[0]) && value[0].length === 4 && value[0].every(part => typeof part === 'number' && Number.isInteger(part) && part >= 0 && part <= 255) && typeof value[1] === 'number' && Number.isInteger(value[1]) && value[1] >= 0 && value[1] <= 65535;
+        if(!Array.isArray(value)||value.length!==2||!Array.isArray(value[0])||![4,8].includes(value[0].length))return false;
+        const address=value[0],maximum=address.length===4?255:65535;
+        return address.every(part=>typeof part==='number'&&Number.isInteger(part)&&part>=0&&part<=maximum)&&typeof value[1]==='number'&&Number.isInteger(value[1])&&value[1]>=0&&value[1]<=65535;
     }
     private warpServer(value: Server, name: string, args: Value[], env: Environment, site: Site): Value {
         if (value.consumed) this.gap(env,site,'Original consuming Warp server is reused after move');
@@ -1197,6 +1281,15 @@ export class RustRegistrations {
         }
         for (const target of contract.middleware)
             this.context.graph.relate(id, target, 'references', facts, { framework: router.framework, role: 'middleware' });
+        if(warp&&pattern.warp){
+            const pending=[pattern.warp.branch];let count=0;
+            while(pending.length&&++count<=512){
+                const node=pending.pop()!;
+                if(node.kind==='transform'&&node.callback)this.context.graph.relate(id,node.callback,'references',facts,{framework:'warp',role:'extraction',execution:'deferred-filter-callback',compilation:env.scope.compilation.id,source:node.source,conditions:constraints},JSON.stringify([id,node.callback,node.source]));
+                if(node.kind==='and'||node.kind==='or')pending.push(node.left,node.right);
+                else if(node.kind==='handler'||node.kind==='transform'||node.kind==='mount'||node.kind==='opaque'&&node.input)pending.push(node.input!);
+            }
+        }
     }
     private sourceHandlerCalls(callback: Callback, proof: Evidence[]): void {
         const definition = callback.definition, key = JSON.stringify([callback.scope.compilation.id, definition.id,!!callback.awaitedReturn]);

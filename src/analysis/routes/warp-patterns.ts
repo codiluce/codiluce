@@ -9,8 +9,9 @@ export type WarpNode =
   | { kind: 'method'; methods: string[] }
   | { kind: 'and' | 'or'; left: WarpNode; right: WarpNode }
   | { kind: 'handler'; input: WarpNode; id: string; fallible: boolean }
+  | { kind: 'transform'; input: WarpNode; callback?: string; source?: {file:string;line:number}; fallible: boolean; reason?: string }
   | { kind: 'mount'; input: WarpNode; id: string; prefix: string; file: string; line: number }
-  | { kind: 'opaque'; input?: WarpNode; reason: string; pathNeutral?: boolean };
+  | { kind: 'opaque'; input?: WarpNode; reason: string; pathNeutral?: boolean; extractionCount?: number };
 
 export interface WarpPathData { branch: WarpNode }
 export interface WarpDispatchData { program: WarpNode; handler: string }
@@ -66,6 +67,10 @@ export function evaluateWarp(program: WarpNode, path: string, method: string, st
       const input = walk(node.input, state, depth + 1);
       return { ...input, success: input.success.map(next => ({ ...next, handler: node.id, uncertain: next.uncertain || node.fallible || !!next.handler })), rejects: input.rejects || node.fallible && input.success.length > 0 };
     }
+    if (node.kind === 'transform') {
+      const input = walk(node.input,state,depth+1);
+      return {...input,success:input.success.map(next=>({...next,uncertain:next.uncertain||node.fallible||!!node.reason})),rejects:input.rejects||node.fallible&&input.success.length>0};
+    }
     if (node.kind === 'mount') return walk(node.input,state,depth+1);
     if (node.kind === 'opaque') {
       const input = node.input ? walk(node.input, state, depth + 1) : pass();
@@ -110,6 +115,7 @@ export function warpBranches(program: WarpNode): WarpBranch[] | undefined {
     if (node.kind === 'handler') {
       return walk(node.input, depth + 1)?.map(branch => ({ ...branch, node: { ...node, input: branch.node }, handler: node.id, conditions: distinct([...branch.conditions, ...branch.handler ? ['Multiple Warp mapper stages require native extraction/reply transformation proof'] : [], ...node.fallible ? ['Warp and_then can reject after native path/method filters; source return success is unproven'] : []]) }));
     }
+    if (node.kind === 'transform') return walk(node.input,depth+1)?.map(branch=>({...branch,node:{...node,input:branch.node},conditions:distinct([...branch.conditions,...node.reason?[node.reason]:[],...node.fallible?['Warp fallible mapped extraction can reject before the response callback']:[]])}));
     if (node.kind === 'mount') return walk(node.input,depth+1)?.map(branch=>({...branch,node:{...node,input:branch.node},mounts:[{id:node.id,prefix:node.prefix,file:node.file,line:node.line},...branch.mounts??[]]}));
     if (node.kind === 'opaque') {
       return (node.input ? walk(node.input, depth + 1) : [{ node: { kind: 'any' as const }, methods: '*' as const, conditions: [] }])?.map(branch => ({ ...branch, node: { ...node, ...node.input ? { input: branch.node } : {} }, conditions: distinct([...branch.conditions, node.reason]) }));
@@ -125,7 +131,7 @@ export function compileWarpPath(branch: WarpNode, dialect: WarpDialect): RoutePa
   const read = (node: WarpNode, depth = 0): void => {
     if (depth > 64) { partial = true; return; }
     if (node.kind === 'and') { read(node.left, depth + 1); read(node.right, depth + 1); }
-    else if (node.kind === 'handler' || node.kind === 'mount') read(node.input, depth + 1);
+    else if (node.kind === 'handler' || node.kind === 'transform' || node.kind === 'mount') read(node.input, depth + 1);
     else if (node.kind === 'opaque') { partial = true; if (node.input) read(node.input, depth + 1); }
     else if (node.kind === 'literal') { if (ended) partial = true; segments.push({ kind: 'segment', parts: [{ kind: 'literal', value: node.value }] }); }
     else if (node.kind === 'param') { if (ended) partial = true; segments.push({ kind: 'segment', parts: [{ kind: 'parameter', name: `p${captures++}`, ...node.guard ? { constraint: node.guard } : {} }] }); }

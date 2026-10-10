@@ -799,6 +799,13 @@ handler/listener proof. P9e2b2b1 completes this wider inventory and diagnostic s
 address source-backed derive namespaces, Warp custom state/filter and serving delegation contracts and Axum
 helper/middleware gaps, then rerun the full original denominator. Broader P9e2b2b, P9, P10 and the full goal remain open.
 
+The 1,065-test suite passes with four workers; the final whitespace/doc-comment and resolved-alias boundaries
+also pass the focused diagnostic rerun. CLI/web typechecks and the production-only packed build, installation,
+CLI/API, history-worker and npm-exec checks pass (3.20 MB / 287 files). The installed CLI/API retain original
+empty-print namespace proof, original framework diagnostic coordinates, handler/leaf/request bindings and opaque
+generated entry bodies. All four pinned consumer profiles reproduce after restoring their immutable checkouts.
+Desktop/mobile report layout and roadmap pack filtering pass before the phase commit.
+
 ## 34. Recorded derive namespace contracts (P9e2b2b2a)
 
 `resolution/rust-derive-namespace.ts` shares canonical builtin and Serde derive namespace contracts between general
@@ -849,9 +856,44 @@ qualified handler/leaf/request flows and opaque generated-main calls. Desktop/mo
 P9e2b2b2a completes the initial recorded derive namespace slice. Warp state/filter/serving delegation and Axum
 helper/middleware qualification remain next; broader P9e2b2b, P9, P10 and the full goal remain active.
 
-The 1,065-test suite passes with four workers; the final whitespace/doc-comment and resolved-alias boundaries
-also pass the focused diagnostic rerun. CLI/web typechecks and the production-only packed build, installation,
-CLI/API, history-worker and npm-exec checks pass (3.20 MB / 287 files). The installed CLI/API retain original
-empty-print namespace proof, original framework diagnostic coordinates, handler/leaf/request bindings and opaque
-generated entry bodies. All four pinned consumer profiles reproduce after restoring their immutable checkouts.
-Desktop/mobile report layout and roadmap pack filtering pass before the phase commit.
+## 35. Warp mapped extraction and serving bounds (P9e2b2b2b)
+
+Native Warp map/then/and_then outputs each occupy one extraction slot. When a later mapper consumes them,
+`rust-routers.ts` turns earlier original callbacks into bounded `transform` stages, retaining their original
+declaration IDs, registration coordinates and conditions. Only the final response callback owns the HTTP handler.
+Endpoint extraction references record deferred execution and the selected compilation; they do not fabricate
+direct calls. Fallible stages preserve rejection, ordered alternatives and path-cursor behavior.
+
+Canonical query, JSON and form filters preserve one ordered slot for explicit or inferred type arguments.
+This proves callback argument order without certifying Deserialize, Send, body/query predicates or conversion.
+Original function items, capture-free closures and closed moved scalar-literal captures provide bounded native
+mapper Clone/Send evidence. Mutable, borrowed, macro-bearing and unknown captures retain conditions; original
+competing clone traits and unavailable standard-prelude contexts also remain uncertain. Native boxed filters
+provide Arc-backed Clone separately from Copy. Unknown state/Future/output/trait relationships retain gaps.
+A final mapped bool/integer from the reviewed guard set or an unawaited Future cannot qualify as a native Reply.
+Broader Reply/type inference remains unreviewed.
+
+Literal four-octet IPv4 and eight-segment IPv6 arrays require native integer/address/port bounds under the
+[standard SocketAddr tuple conversion](https://doc.rust-lang.org/std/net/enum.SocketAddr.html#impl-From%3C(I,+u16)%3E-for-SocketAddr). Awaited
+ordinary source helpers retain serving proof; unawaited helpers cannot expose routes. Unreviewed tracing
+attributes, wrappers, custom state, CORS and rejection recovery remain outside this completed slice.
+Rust router contract version is 10; import/resolver versions remain 6.
+
+`qualify-rust-broader-consumers.mjs --state` compares archived `4174da3` with current source against the same
+four pinned original applications. The [Warp extraction audit](warp-extraction-source-accuracy.html) verifies
+all five original Q&A extraction callbacks at src/main.rs line 217, correct mapper/deserializer arity, original
+IDs/ranges and exact cold/warm/revision replay with actual cache hits. The complete denominator remains four
+qualified pairs, 14 conditional handler bindings and 11 misses among 29 source routes, with one of 14 general
+module declarations resolved. No additional qualified request pairs follow from the extraction references.
+
+Seven conformance tests cover native versions, output/arity boundaries, deserializer slot order, capture and
+Clone uncertainty, fallible dispatch, IPv6/helper await contracts and cache/source invalidation. Installed CLI/API
+fixtures check original extraction callback coordinates and deferred metadata alongside handler/request flows.
+P9e2b2b2b completes this initial extraction/serving-bound slice; Warp wrapper/serving delegation and Axum
+helper/middleware qualification remain next. Broader P9/P10 and the full goal remain active.
+
+All 1,079 tests pass with four workers, including the seven new extraction/serving cases. CLI/web typechecks,
+production build and package installation pass (3.21 MB / 289 files). Installed CLI/API extraction references,
+original CRLF/emoji callback coordinates, handler/leaf/request flows, history workers, missing-grammar fallback
+and npm-exec checks pass. The immutable four-consumer audit reproduces against the final implementation digest;
+desktop/mobile report layout and roadmap filtering are verified before the phase commit.

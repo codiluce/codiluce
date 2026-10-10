@@ -206,6 +206,14 @@ dependency selections. The unchanged Warp Q&A consumer now binds all five origin
 the full inventory to four qualified pairs, 14 conditional bindings and 11 misses. Generated traits, JSON/form
 conversion, state filters, middleware and serving delegation retain gaps. Missing or unreviewed provider selections
 and builtin-looking macro shadows cannot lend a namespace proof.
+P9e2b2b2b adds [Warp extraction and serving qualification](docs/warp-extraction-source-accuracy.html). Earlier
+map/then/and_then callbacks become deferred extraction references when a later mapper consumes them; the final
+response callback retains handler ownership. Query/JSON/form filters preserve one ordered argument slot, with
+deserialization and predicates still unreviewed. Bounded callback captures and native boxed Clone behavior are
+checked, and awaited source helpers accept literal IPv4/IPv6 socket addresses. All five original Q&A state
+callbacks retain source coordinates, while custom state types, CORS/recovery and generated traits keep conditions.
+The full 29-route consumer denominator remains four qualified pairs, 14 conditional bindings and 11 misses.
+Wrapper/serving delegation and Axum helper/middleware qualification remain next.
 No Cargo/rustc or target code runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original

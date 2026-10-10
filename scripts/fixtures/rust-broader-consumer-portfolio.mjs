@@ -77,3 +77,9 @@ export const rustDeriveConsumers = rustBroaderConsumers.map(sample => sample.key
     routes: sample.routes.map(item => ({...item,status:'conditional'})),
     boundary:'All five original callbacks now bind conditionally through recorded canonical Serde derive namespace proof. Custom state filters, query/body/form extraction, CORS, rejection recovery, generated traits and runtime behavior remain unreviewed; no newly qualified routing/request pairs follow.',
 });
+
+export const rustWarpExtractionConsumers = rustDeriveConsumers.map(sample => sample.key !== 'warp-qa' ? sample : {
+    ...sample,
+    extractions:[{file:'src/main.rs',line:217,callbackLine:217}],
+    boundary:'All five original callbacks remain conditional. The original state mapper at line 217 is a deferred extraction reference for each endpoint, with one ordered output slot. Native query/JSON/form slots preserve callback arity; state output types, captured Clone/Send bounds, CORS, recovery and request predicates remain unreviewed. No new qualified pairs follow.',
+});
