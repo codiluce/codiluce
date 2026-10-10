@@ -1,0 +1,2 @@
+[(function_definition) (declaration) (field_declaration) (type_definition) (struct_specifier) (union_specifier) (enum_specifier) (enumerator) (preproc_def) (preproc_function_def)] @declaration
+[(class_declaration) (class_interface) (class_implementation) (protocol_declaration) (protocol_forward_declaration) (compatibility_alias_declaration) (method_declaration) (method_definition) (property_declaration) (instance_variables) (property_implementation) (module_import)] @objc_declaration

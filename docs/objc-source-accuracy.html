@@ -1,0 +1,1469 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Objective-C original source qualification</title><style>body{font:16px/1.6 system-ui,sans-serif;background:#101822;color:#e5ecf4;margin:0;padding:clamp(16px,4vw,48px)}main{max-width:1120px;margin:auto}h1{font-size:clamp(28px,5vw,42px);line-height:1.2}a,code{color:#8bddd8}code{overflow-wrap:anywhere}table{border-collapse:collapse;width:100%;min-width:700px}th,td{padding:12px;text-align:left;border-bottom:1px solid #344353}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}.scroll{overflow:auto}.status{padding:18px;border:1px solid #688c8d;border-radius:8px}summary{cursor:pointer;padding:12px 0}</style></head><body><main><h1>Objective-C original source qualification</h1><p>P10a2a · 2026-10-10T18:21:03.204Z · v22.12.0 · linux/x64. Immutable AFNetworking 4.0.1 source at <code>ffae2391ab0c29dc88eb0a58d2f5b2c2c27cadbf</code>, independent original line/name/kind inventory, original ranges and actual graph-cache replay.</p><p class="status"><strong>32 matched / 36 reviewed source declarations · 4 unexpanded macro declarations · 0 extra</strong><br>All 32 declarations in the supported original syntax subset match. Four named <code>NS_ENUM</code> type/value declarations remain unexpanded and missing from the graph; overall reviewed coverage is 88.9%. Broader beta precision/recall is not achieved by this sample. Header analysis stays partial; implementation syntax qualifies without recovery findings.</p><div class="scroll"><table><thead><tr><th>Immutable original source</th><th>Matched</th><th>Unexpanded / missing</th><th>Findings</th><th>Capability</th></tr></thead><tbody><tr><td><a href="https://github.com/AFNetworking/AFNetworking/blob/ffae2391ab0c29dc88eb0a58d2f5b2c2c27cadbf/AFNetworking/AFSecurityPolicy.h">AFNetworking/AFSecurityPolicy.h</a></td><td>10</td><td>4</td><td>17</td><td>Partial, original-region recovery</td></tr><tr><td><a href="https://github.com/AFNetworking/AFNetworking/blob/ffae2391ab0c29dc88eb0a58d2f5b2c2c27cadbf/AFNetworking/AFSecurityPolicy.m">AFNetworking/AFSecurityPolicy.m</a></td><td>22</td><td>0</td><td>0</td><td>Supported original subset</td></tr></tbody></table></div><p>The header's annotation boundary prevents the full-file grammar from retaining an interface. The adapter parses its exact self-contained original <code>@interface … @end</code> slice, with no rewritten bytes or synthetic prefix, then remaps all facts/evidence to the original file. Source-context uncertainty stays explicit on every recovered declaration. Comment/string/raw-string/preprocessor regions cannot introduce classes. Properties are retained as properties; recovery adds no C variables. Macro type profiles and mixed Objective-C++ syntax remain the next P10a2b work.</p><p>Interfaces, implementations, categories/extensions and forwards remain separate original declarations. Selector spelling and class/instance domains are retained; method declarations and definitions have separate forms/identities. Source ownership is lexical, with no interface/implementation logical merge, header/type or runtime message binding. Imports, references, framework, effects and guards remain unsupported. <a href="https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjectiveC/Chapters/ocSelectors.html">Apple selector model</a> explains the separate class/instance domains. Original property, <code>@synthesize</code> and <code>@dynamic</code> syntax never adds generated accessor/ivar entities; <a href="https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ObjectiveC/Chapters/ocProperties.html">Apple property semantics</a> require compiler/runtime behavior outside this adapter.</p><p>Cold/warm and revision-analysis modes retain identical graph identities, findings and original evidence, with two actual syntax-cache hits. Installed CLI/API checks exercise original selector positions and signed dispatch, declaration forms, synthesis syntax, explicit <code>.mm</code> partial status, missing-grammar isolation and stable selectors in two compiled history snapshots. This does not qualify full Git-history throughput, native Windows/macOS execution or mixed Objective-C/C++ imports.</p><h2>Grammar startup on this Linux host</h2><p>Official <code>tree-sitter-objc 3.0.2</code> MIT WASM, ABI 14, 5.07 MiB. Three fresh direct parser processes: medians 6.8 ms runtime initialization, 13.7 ms grammar load, 5.3 ms first parse, 88.6 MiB parser-process peak RSS. Process startup, parser-worker IPC and whole-index child memory are excluded. <a href="objc-compatibility-performance.html">Repeated existing TS/Laravel comparison</a> measures regressions separately.</p><p>Implementation digest: <code>fcfea83aa70bbadc2dc8cc8f5f723b96805e11c29e3e39a7b48ebbfe8a1873f4</code>. Reproduce: <code>node --experimental-sqlite --import tsx scripts/qualify-objc-source.mjs --output docs/objc-source-accuracy.html</code>. Optional <code>--source</code> reads the two displayed paths and verifies identical hashes. <a href="language-framework-compatibility.html#implementation">Full implementation roadmap</a></p><details><summary>Independent inventory, remaining macro declarations and original source facts</summary><pre>{
+  &quot;phase&quot;: &quot;P10a2a&quot;,
+  &quot;measuredAt&quot;: &quot;2026-10-10T18:21:03.204Z&quot;,
+  &quot;baseline&quot;: &quot;6bc79c3&quot;,
+  &quot;implementationDigest&quot;: &quot;fcfea83aa70bbadc2dc8cc8f5f723b96805e11c29e3e39a7b48ebbfe8a1873f4&quot;,
+  &quot;node&quot;: &quot;v22.12.0&quot;,
+  &quot;platform&quot;: &quot;linux/x64&quot;,
+  &quot;source&quot;: {
+    &quot;repo&quot;: &quot;AFNetworking/AFNetworking&quot;,
+    &quot;version&quot;: &quot;4.0.1&quot;,
+    &quot;commit&quot;: &quot;ffae2391ab0c29dc88eb0a58d2f5b2c2c27cadbf&quot;
+  },
+  &quot;reviewedSourceDeclarations&quot;: 36,
+  &quot;matchedDeclarations&quot;: 32,
+  &quot;unexpandedMacroDeclarations&quot;: 4,
+  &quot;extraDeclarations&quot;: 0,
+  &quot;missedSupportedDeclarations&quot;: 0,
+  &quot;overallReviewedCoverage&quot;: 0.8888888888888888,
+  &quot;coldWarmEqual&quot;: true,
+  &quot;revisionModeEqual&quot;: true,
+  &quot;syntaxFactCacheHits&quot;: 2,
+  &quot;grammar&quot;: {
+    &quot;wasmBytes&quot;: 5317155,
+    &quot;repetitions&quot;: 3,
+    &quot;median&quot;: {
+      &quot;runtimeMs&quot;: 6.772327999999998,
+      &quot;loadMs&quot;: 13.692749999999997,
+      &quot;firstParseMs&quot;: 5.317591999999998,
+      &quot;peakRssKiB&quot;: 90724
+    },
+    &quot;runs&quot;: [
+      {
+        &quot;runtimeMs&quot;: 6.772327999999998,
+        &quot;loadMs&quot;: 14.181219000000002,
+        &quot;firstParseMs&quot;: 5.626469999999998,
+        &quot;peakRssKiB&quot;: 90724
+      },
+      {
+        &quot;runtimeMs&quot;: 6.887989000000001,
+        &quot;loadMs&quot;: 10.672124999999998,
+        &quot;firstParseMs&quot;: 5.181995000000001,
+        &quot;peakRssKiB&quot;: 90724
+      },
+      {
+        &quot;runtimeMs&quot;: 6.560866999999998,
+        &quot;loadMs&quot;: 13.692749999999997,
+        &quot;firstParseMs&quot;: 5.317591999999998,
+        &quot;peakRssKiB&quot;: 90724
+      }
+    ]
+  },
+  &quot;results&quot;: [
+    {
+      &quot;file&quot;: &quot;AFNetworking/AFSecurityPolicy.h&quot;,
+      &quot;sha256&quot;: &quot;3623f0e76f0ca095c86a550c577b7772c6bdbb87659564fb41f85336730aed6e&quot;,
+      &quot;expected&quot;: [
+        [
+          39,
+          &quot;AFSecurityPolicy&quot;,
+          &quot;class-interface&quot;
+        ],
+        [
+          44,
+          &quot;SSLPinningMode&quot;,
+          &quot;property&quot;
+        ],
+        [
+          53,
+          &quot;pinnedCertificates&quot;,
+          &quot;property&quot;
+        ],
+        [
+          58,
+          &quot;allowInvalidCertificates&quot;,
+          &quot;property&quot;
+        ],
+        [
+          63,
+          &quot;validatesDomainName&quot;,
+          &quot;property&quot;
+        ],
+        [
+          74,
+          &quot;certificatesInBundle:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          85,
+          &quot;defaultPolicy&quot;,
+          &quot;method&quot;
+        ],
+        [
+          102,
+          &quot;policyWithPinningMode:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          115,
+          &quot;policyWithPinningMode:withPinnedCertificates:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          131,
+          &quot;evaluateServerTrust:forDomain:&quot;,
+          &quot;method&quot;
+        ]
+      ],
+      &quot;unexpanded&quot;: [
+        [
+          25,
+          &quot;AFSSLPinningMode&quot;,
+          &quot;NS_ENUM macro type&quot;
+        ],
+        [
+          26,
+          &quot;AFSSLPinningModeNone&quot;,
+          &quot;enum macro value&quot;
+        ],
+        [
+          27,
+          &quot;AFSSLPinningModePublicKey&quot;,
+          &quot;enum macro value&quot;
+        ],
+        [
+          28,
+          &quot;AFSSLPinningModeCertificate&quot;,
+          &quot;enum macro value&quot;
+        ]
+      ],
+      &quot;url&quot;: &quot;https://github.com/AFNetworking/AFNetworking/blob/ffae2391ab0c29dc88eb0a58d2f5b2c2c27cadbf/AFNetworking/AFSecurityPolicy.h&quot;,
+      &quot;facts&quot;: {
+        &quot;declarations&quot;: [
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;name&quot;: &quot;AFSecurityPolicy&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy&quot;,
+            &quot;kind&quot;: &quot;class-interface&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;@interface AFSecurityPolicy : NSObject &lt;NSSecureCoding, NSCopying&gt;&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 39,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 134,
+              &quot;endColumn&quot;: 5
+            },
+            &quot;start&quot;: 1844,
+            &quot;end&quot;: 5330,
+            &quot;nameEnd&quot;: 1871,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;annotations&quot;: [
+              &quot;&lt;NSSecureCoding, NSCopying&gt;&quot;,
+              &quot;Original superclass syntax: NSObject&quot;
+            ],
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:205:277:property:262&quot;,
+            &quot;name&quot;: &quot;SSLPinningMode&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::SSLPinningMode&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@property (readonly, nonatomic, assign) AFSSLPinningMode SSLPinningMode&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 44,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 44,
+              &quot;endColumn&quot;: 73
+            },
+            &quot;start&quot;: 2049,
+            &quot;end&quot;: 2121,
+            &quot;nameEnd&quot;: 2120,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;annotations&quot;: [
+              &quot;(readonly, nonatomic, assign)&quot;,
+              &quot;readonly&quot;,
+              &quot;nonatomic&quot;,
+              &quot;assign&quot;
+            ],
+            &quot;modifiers&quot;: [
+              &quot;objc-property&quot;
+            ],
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:545:622:property:603&quot;,
+            &quot;name&quot;: &quot;pinnedCertificates&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::pinnedCertificates&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@property (nonatomic, strong, nullable) NSSet &lt;NSData *&gt; *pinnedCertificates&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 53,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 53,
+              &quot;endColumn&quot;: 78
+            },
+            &quot;start&quot;: 2389,
+            &quot;end&quot;: 2466,
+            &quot;nameEnd&quot;: 2465,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;annotations&quot;: [
+              &quot;(nonatomic, strong, nullable)&quot;,
+              &quot;nonatomic&quot;,
+              &quot;strong&quot;,
+              &quot;nullable&quot;
+            ],
+            &quot;modifiers&quot;: [
+              &quot;objc-property&quot;
+            ],
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:728:788:property:763&quot;,
+            &quot;name&quot;: &quot;allowInvalidCertificates&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::allowInvalidCertificates&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@property (nonatomic, assign) BOOL allowInvalidCertificates&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 58,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 58,
+              &quot;endColumn&quot;: 61
+            },
+            &quot;start&quot;: 2572,
+            &quot;end&quot;: 2632,
+            &quot;nameEnd&quot;: 2631,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;annotations&quot;: [
+              &quot;(nonatomic, assign)&quot;,
+              &quot;nonatomic&quot;,
+              &quot;assign&quot;
+            ],
+            &quot;modifiers&quot;: [
+              &quot;objc-property&quot;
+            ],
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:892:947:property:927&quot;,
+            &quot;name&quot;: &quot;validatesDomainName&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::validatesDomainName&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@property (nonatomic, assign) BOOL validatesDomainName&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 63,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 63,
+              &quot;endColumn&quot;: 56
+            },
+            &quot;start&quot;: 2736,
+            &quot;end&quot;: 2791,
+            &quot;nameEnd&quot;: 2790,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;annotations&quot;: [
+              &quot;(nonatomic, assign)&quot;,
+              &quot;nonatomic&quot;,
+              &quot;assign&quot;
+            ],
+            &quot;modifiers&quot;: [
+              &quot;objc-property&quot;
+            ],
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:1453:1515:method:1475&quot;,
+            &quot;name&quot;: &quot;certificatesInBundle:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+certificatesInBundle:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (NSSet &lt;NSData *&gt; *)certificatesInBundle:(NSBundle *)bundle;&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 74,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 74,
+              &quot;endColumn&quot;: 63
+            },
+            &quot;start&quot;: 3297,
+            &quot;end&quot;: 3359,
+            &quot;nameEnd&quot;: 3339,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;certificatesInBundle:&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;,
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:1877:1907:method:1893&quot;,
+            &quot;name&quot;: &quot;defaultPolicy&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+defaultPolicy&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (instancetype)defaultPolicy;&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 85,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 85,
+              &quot;endColumn&quot;: 31
+            },
+            &quot;start&quot;: 3721,
+            &quot;end&quot;: 3751,
+            &quot;nameEnd&quot;: 3750,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;defaultPolicy&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;,
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:2407:2475:method:2423&quot;,
+            &quot;name&quot;: &quot;policyWithPinningMode:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+policyWithPinningMode:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (instancetype)policyWithPinningMode:(AFSSLPinningMode)pinningMode;&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 102,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 102,
+              &quot;endColumn&quot;: 69
+            },
+            &quot;start&quot;: 4251,
+            &quot;end&quot;: 4319,
+            &quot;nameEnd&quot;: 4288,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;policyWithPinningMode:&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;,
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:2748:2878:method:2764&quot;,
+            &quot;name&quot;: &quot;policyWithPinningMode:withPinnedCertificates:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+policyWithPinningMode:withPinnedCertificates:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (instancetype)policyWithPinningMode:(AFSSLPinningMode)pinningMode withPinnedCertificates:(NSSet &lt;NSData *&gt; *)pinnedCertificates;&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 115,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 115,
+              &quot;endColumn&quot;: 131
+            },
+            &quot;start&quot;: 4592,
+            &quot;end&quot;: 4722,
+            &quot;nameEnd&quot;: 4629,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;policyWithPinningMode:withPinnedCertificates:&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;,
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:3371:3480:method:3379&quot;,
+            &quot;name&quot;: &quot;evaluateServerTrust:forDomain:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::-evaluateServerTrust:forDomain:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;- (BOOL)evaluateServerTrust:(SecTrustRef)serverTrust forDomain:(nullable NSString *)domain;&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 131,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 132,
+              &quot;endColumn&quot;: 57
+            },
+            &quot;start&quot;: 5215,
+            &quot;end&quot;: 5324,
+            &quot;nameEnd&quot;: 5242,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;modifiers&quot;: [
+              &quot;instance-method&quot;
+            ],
+            &quot;selector&quot;: &quot;evaluateServerTrust:forDomain:&quot;,
+            &quot;dispatch&quot;: &quot;instance&quot;,
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          }
+        ],
+        &quot;issues&quot;: [
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 25,
+              &quot;startColumn&quot;: 17,
+              &quot;endLine&quot;: 25,
+              &quot;endColumn&quot;: 28
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 25,
+              &quot;startColumn&quot;: 47,
+              &quot;endLine&quot;: 25,
+              &quot;endColumn&quot;: 48
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 28,
+              &quot;startColumn&quot;: 32,
+              &quot;endLine&quot;: 29,
+              &quot;endColumn&quot;: 2
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 37,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 39,
+              &quot;endColumn&quot;: 67
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 39,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 39,
+              &quot;endColumn&quot;: 41
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 53,
+              &quot;startColumn&quot;: 39,
+              &quot;endLine&quot;: 53,
+              &quot;endColumn&quot;: 40
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 53,
+              &quot;startColumn&quot;: 55,
+              &quot;endLine&quot;: 53,
+              &quot;endColumn&quot;: 56
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 74,
+              &quot;startColumn&quot;: 43,
+              &quot;endLine&quot;: 74,
+              &quot;endColumn&quot;: 53
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 74,
+              &quot;startColumn&quot;: 55,
+              &quot;endLine&quot;: 74,
+              &quot;endColumn&quot;: 56
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 102,
+              &quot;startColumn&quot;: 38,
+              &quot;endLine&quot;: 102,
+              &quot;endColumn&quot;: 68
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 115,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 115,
+              &quot;endColumn&quot;: 57
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 115,
+              &quot;startColumn&quot;: 69,
+              &quot;endLine&quot;: 115,
+              &quot;endColumn&quot;: 112
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 131,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 131,
+              &quot;endColumn&quot;: 42
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 132,
+              &quot;startColumn&quot;: 28,
+              &quot;endLine&quot;: 132,
+              &quot;endColumn&quot;: 30
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 132,
+              &quot;startColumn&quot;: 49,
+              &quot;endLine&quot;: 132,
+              &quot;endColumn&quot;: 50
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 134,
+              &quot;startColumn&quot;: 2,
+              &quot;endLine&quot;: 134,
+              &quot;endColumn&quot;: 5
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-source-context-gap&quot;,
+            &quot;reason&quot;: &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 39,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 134,
+              &quot;endColumn&quot;: 5
+            }
+          }
+        ],
+        &quot;truncated&quot;: false,
+        &quot;cfamily&quot;: {
+          &quot;preprocessor&quot;: [
+            {
+              &quot;kind&quot;: &quot;preproc_include&quot;,
+              &quot;text&quot;: &quot;#import &lt;Foundation/Foundation.h&gt;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 22,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 23,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_include&quot;,
+              &quot;text&quot;: &quot;#import &lt;Security/Security.h&gt;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 23,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 24,
+                &quot;endColumn&quot;: 1
+              }
+            }
+          ],
+          &quot;complete&quot;: false
+        },
+        &quot;objc&quot;: {
+          &quot;propertyImplementations&quot;: [],
+          &quot;moduleImports&quot;: [],
+          &quot;isolatedRegions&quot;: [
+            {
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 39,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 134,
+                &quot;endColumn&quot;: 5
+              },
+              &quot;reason&quot;: &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            }
+          ],
+          &quot;complete&quot;: false
+        }
+      }
+    },
+    {
+      &quot;file&quot;: &quot;AFNetworking/AFSecurityPolicy.m&quot;,
+      &quot;sha256&quot;: &quot;1e942f9bcf388b59c7f6a6440f332ba8dd3eaad93ac24854ed29913993926466&quot;,
+      &quot;expected&quot;: [
+        [
+          27,
+          &quot;AFSecKeyGetData&quot;,
+          &quot;function&quot;
+        ],
+        [
+          43,
+          &quot;AFSecKeyIsEqualToKey&quot;,
+          &quot;function&quot;
+        ],
+        [
+          51,
+          &quot;AFPublicKeyForCertificate&quot;,
+          &quot;function&quot;
+        ],
+        [
+          86,
+          &quot;AFServerTrustIsValid&quot;,
+          &quot;function&quot;
+        ],
+        [
+          100,
+          &quot;AFCertificateTrustChainForServerTrust&quot;,
+          &quot;function&quot;
+        ],
+        [
+          112,
+          &quot;AFPublicKeyTrustChainForServerTrust&quot;,
+          &quot;function&quot;
+        ],
+        [
+          149,
+          &quot;AFSecurityPolicy()&quot;,
+          &quot;class-interface&quot;
+        ],
+        [
+          150,
+          &quot;SSLPinningMode&quot;,
+          &quot;property&quot;
+        ],
+        [
+          151,
+          &quot;pinnedPublicKeys&quot;,
+          &quot;property&quot;
+        ],
+        [
+          154,
+          &quot;AFSecurityPolicy&quot;,
+          &quot;class-implementation&quot;
+        ],
+        [
+          156,
+          &quot;certificatesInBundle:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          168,
+          &quot;defaultPolicy&quot;,
+          &quot;method&quot;
+        ],
+        [
+          175,
+          &quot;policyWithPinningMode:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          180,
+          &quot;policyWithPinningMode:withPinnedCertificates:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          189,
+          &quot;init&quot;,
+          &quot;method&quot;
+        ],
+        [
+          200,
+          &quot;setPinnedCertificates:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          220,
+          &quot;evaluateServerTrust:forDomain:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          297,
+          &quot;keyPathsForValuesAffectingPinnedPublicKeys&quot;,
+          &quot;method&quot;
+        ],
+        [
+          303,
+          &quot;supportsSecureCoding&quot;,
+          &quot;method&quot;
+        ],
+        [
+          307,
+          &quot;initWithCoder:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          322,
+          &quot;encodeWithCoder:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          331,
+          &quot;copyWithZone:&quot;,
+          &quot;method&quot;
+        ]
+      ],
+      &quot;unexpanded&quot;: [],
+      &quot;url&quot;: &quot;https://github.com/AFNetworking/AFNetworking/blob/ffae2391ab0c29dc88eb0a58d2f5b2c2c27cadbf/AFNetworking/AFSecurityPolicy.m&quot;,
+      &quot;facts&quot;: {
+        &quot;declarations&quot;: [
+          {
+            &quot;key&quot;: &quot;1293:1592:function:1309&quot;,
+            &quot;name&quot;: &quot;AFSecKeyGetData&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecKeyGetData&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;entityType&quot;: &quot;function&quot;,
+            &quot;signature&quot;: &quot;static NSData * AFSecKeyGetData(SecKeyRef key)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 27,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 40,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 1293,
+            &quot;end&quot;: 1592,
+            &quot;nameEnd&quot;: 1324,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;static&quot;
+            ],
+            &quot;sourceConditions&quot;: [
+              &quot;#if !TARGET_OS_IOS &amp;&amp; !TARGET_OS_WATCH &amp;&amp; !TARGET_OS_TV&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;1601:1859:function:1613&quot;,
+            &quot;name&quot;: &quot;AFSecKeyIsEqualToKey&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecKeyIsEqualToKey&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;entityType&quot;: &quot;function&quot;,
+            &quot;signature&quot;: &quot;static BOOL AFSecKeyIsEqualToKey(SecKeyRef key1, SecKeyRef key2)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 43,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 49,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 1601,
+            &quot;end&quot;: 1859,
+            &quot;nameEnd&quot;: 1633,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;static&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;1861:2897:function:1871&quot;,
+            &quot;name&quot;: &quot;AFPublicKeyForCertificate&quot;,
+            &quot;qualifiedName&quot;: &quot;AFPublicKeyForCertificate&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;entityType&quot;: &quot;function&quot;,
+            &quot;signature&quot;: &quot;static id AFPublicKeyForCertificate(NSData *certificate)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 51,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 84,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 1861,
+            &quot;end&quot;: 2897,
+            &quot;nameEnd&quot;: 1896,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;static&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;2899:3325:function:2911&quot;,
+            &quot;name&quot;: &quot;AFServerTrustIsValid&quot;,
+            &quot;qualifiedName&quot;: &quot;AFServerTrustIsValid&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;entityType&quot;: &quot;function&quot;,
+            &quot;signature&quot;: &quot;static BOOL AFServerTrustIsValid(SecTrustRef serverTrust)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 86,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 98,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 2899,
+            &quot;end&quot;: 3325,
+            &quot;nameEnd&quot;: 2931,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;static&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;3327:3873:function:3344&quot;,
+            &quot;name&quot;: &quot;AFCertificateTrustChainForServerTrust&quot;,
+            &quot;qualifiedName&quot;: &quot;AFCertificateTrustChainForServerTrust&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;entityType&quot;: &quot;function&quot;,
+            &quot;signature&quot;: &quot;static NSArray * AFCertificateTrustChainForServerTrust(SecTrustRef serverTrust)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 100,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 110,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 3327,
+            &quot;end&quot;: 3873,
+            &quot;nameEnd&quot;: 3381,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;static&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;3875:5162:function:3892&quot;,
+            &quot;name&quot;: &quot;AFPublicKeyTrustChainForServerTrust&quot;,
+            &quot;qualifiedName&quot;: &quot;AFPublicKeyTrustChainForServerTrust&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;entityType&quot;: &quot;function&quot;,
+            &quot;signature&quot;: &quot;static NSArray * AFPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 112,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 145,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 3875,
+            &quot;end&quot;: 5162,
+            &quot;nameEnd&quot;: 3927,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;static&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc:5180:5354:class-interface:5191&quot;,
+            &quot;name&quot;: &quot;AFSecurityPolicy()&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy()&quot;,
+            &quot;kind&quot;: &quot;class-interface&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;@interface AFSecurityPolicy()&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 149,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 152,
+              &quot;endColumn&quot;: 5
+            },
+            &quot;start&quot;: 5180,
+            &quot;end&quot;: 5354,
+            &quot;nameEnd&quot;: 5207,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-extension&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc:5210:5283:property:5268&quot;,
+            &quot;name&quot;: &quot;SSLPinningMode&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy()::SSLPinningMode&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@property (readwrite, nonatomic, assign) AFSSLPinningMode SSLPinningMode&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 150,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 150,
+              &quot;endColumn&quot;: 74
+            },
+            &quot;start&quot;: 5210,
+            &quot;end&quot;: 5283,
+            &quot;nameEnd&quot;: 5282,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc:5180:5354:class-interface:5191&quot;,
+            &quot;annotations&quot;: [
+              &quot;(readwrite, nonatomic, assign)&quot;,
+              &quot;readwrite&quot;,
+              &quot;nonatomic&quot;,
+              &quot;assign&quot;
+            ],
+            &quot;modifiers&quot;: [
+              &quot;objc-property&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc:5284:5349:property:5332&quot;,
+            &quot;name&quot;: &quot;pinnedPublicKeys&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy()::pinnedPublicKeys&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@property (readwrite, nonatomic, strong) NSSet *pinnedPublicKeys&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 151,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 151,
+              &quot;endColumn&quot;: 66
+            },
+            &quot;start&quot;: 5284,
+            &quot;end&quot;: 5349,
+            &quot;nameEnd&quot;: 5348,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc:5180:5354:class-interface:5191&quot;,
+            &quot;annotations&quot;: [
+              &quot;(readwrite, nonatomic, strong)&quot;,
+              &quot;readwrite&quot;,
+              &quot;nonatomic&quot;,
+              &quot;strong&quot;
+            ],
+            &quot;modifiers&quot;: [
+              &quot;objc-property&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;name&quot;: &quot;AFSecurityPolicy&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy&quot;,
+            &quot;kind&quot;: &quot;class-implementation&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;@implementation AFSecurityPolicy&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 154,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 341,
+              &quot;endColumn&quot;: 5
+            },
+            &quot;start&quot;: 5356,
+            &quot;end&quot;: 12769,
+            &quot;nameEnd&quot;: 5388,
+            &quot;declarationForm&quot;: &quot;definition&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:5390:5812:method:5401&quot;,
+            &quot;name&quot;: &quot;certificatesInBundle:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+certificatesInBundle:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (NSSet *)certificatesInBundle:(NSBundle *)bundle&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 156,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 166,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 5390,
+            &quot;end&quot;: 5812,
+            &quot;nameEnd&quot;: 5421,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;certificatesInBundle:&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:5814:5993:method:5830&quot;,
+            &quot;name&quot;: &quot;defaultPolicy&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+defaultPolicy&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (instancetype)defaultPolicy&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 168,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 173,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 5814,
+            &quot;end&quot;: 5993,
+            &quot;nameEnd&quot;: 5843,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;defaultPolicy&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:5995:6269:method:6011&quot;,
+            &quot;name&quot;: &quot;policyWithPinningMode:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+policyWithPinningMode:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (instancetype)policyWithPinningMode:(AFSSLPinningMode)pinningMode&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 175,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 178,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 5995,
+            &quot;end&quot;: 6269,
+            &quot;nameEnd&quot;: 6032,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;policyWithPinningMode:&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:6271:6594:method:6287&quot;,
+            &quot;name&quot;: &quot;policyWithPinningMode:withPinnedCertificates:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+policyWithPinningMode:withPinnedCertificates:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (instancetype)policyWithPinningMode:(AFSSLPinningMode)pinningMode withPinnedCertificates:(NSSet *)pinnedCertificates&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 180,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 187,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 6271,
+            &quot;end&quot;: 6594,
+            &quot;nameEnd&quot;: 6308,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;policyWithPinningMode:withPinnedCertificates:&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:6596:6743:method:6612&quot;,
+            &quot;name&quot;: &quot;init&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::-init&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;- (instancetype)init&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 189,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 198,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 6596,
+            &quot;end&quot;: 6743,
+            &quot;nameEnd&quot;: 6616,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;instance-method&quot;
+            ],
+            &quot;selector&quot;: &quot;init&quot;,
+            &quot;dispatch&quot;: &quot;instance&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:6745:7401:method:6753&quot;,
+            &quot;name&quot;: &quot;setPinnedCertificates:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::-setPinnedCertificates:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;- (void)setPinnedCertificates:(NSSet *)pinnedCertificates&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 200,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 216,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 6745,
+            &quot;end&quot;: 7401,
+            &quot;nameEnd&quot;: 6774,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;instance-method&quot;
+            ],
+            &quot;selector&quot;: &quot;setPinnedCertificates:&quot;,
+            &quot;dispatch&quot;: &quot;instance&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:7419:10879:method:7427&quot;,
+            &quot;name&quot;: &quot;evaluateServerTrust:forDomain:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::-evaluateServerTrust:forDomain:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;- (BOOL)evaluateServerTrust:(SecTrustRef)serverTrust forDomain:(NSString *)domain&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 220,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 293,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 7419,
+            &quot;end&quot;: 10879,
+            &quot;nameEnd&quot;: 7446,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;instance-method&quot;
+            ],
+            &quot;selector&quot;: &quot;evaluateServerTrust:forDomain:&quot;,
+            &quot;dispatch&quot;: &quot;instance&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:10917:11030:method:10928&quot;,
+            &quot;name&quot;: &quot;keyPathsForValuesAffectingPinnedPublicKeys&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+keyPathsForValuesAffectingPinnedPublicKeys&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (NSSet *)keyPathsForValuesAffectingPinnedPublicKeys&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 297,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 299,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 10917,
+            &quot;end&quot;: 11030,
+            &quot;nameEnd&quot;: 10970,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;keyPathsForValuesAffectingPinnedPublicKeys&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:11063:11111:method:11071&quot;,
+            &quot;name&quot;: &quot;supportsSecureCoding&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+supportsSecureCoding&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (BOOL)supportsSecureCoding&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 303,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 305,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 11063,
+            &quot;end&quot;: 11111,
+            &quot;nameEnd&quot;: 11091,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;supportsSecureCoding&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:11113:11772:method:11129&quot;,
+            &quot;name&quot;: &quot;initWithCoder:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::-initWithCoder:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;- (instancetype)initWithCoder:(NSCoder *)decoder&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 307,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 320,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 11113,
+            &quot;end&quot;: 11772,
+            &quot;nameEnd&quot;: 11142,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;instance-method&quot;
+            ],
+            &quot;selector&quot;: &quot;initWithCoder:&quot;,
+            &quot;dispatch&quot;: &quot;instance&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:11774:12293:method:11782&quot;,
+            &quot;name&quot;: &quot;encodeWithCoder:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::-encodeWithCoder:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;- (void)encodeWithCoder:(NSCoder *)coder&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 322,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 327,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 11774,
+            &quot;end&quot;: 12293,
+            &quot;nameEnd&quot;: 11797,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;instance-method&quot;
+            ],
+            &quot;selector&quot;: &quot;encodeWithCoder:&quot;,
+            &quot;dispatch&quot;: &quot;instance&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:12321:12763:method:12337&quot;,
+            &quot;name&quot;: &quot;copyWithZone:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::-copyWithZone:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;- (instancetype)copyWithZone:(NSZone *)zone&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 331,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 339,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 12321,
+            &quot;end&quot;: 12763,
+            &quot;nameEnd&quot;: 12349,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;instance-method&quot;
+            ],
+            &quot;selector&quot;: &quot;copyWithZone:&quot;,
+            &quot;dispatch&quot;: &quot;instance&quot;
+          }
+        ],
+        &quot;issues&quot;: [],
+        &quot;truncated&quot;: false,
+        &quot;cfamily&quot;: {
+          &quot;preprocessor&quot;: [
+            {
+              &quot;kind&quot;: &quot;preproc_include&quot;,
+              &quot;text&quot;: &quot;#import \&quot;AFSecurityPolicy.h\&quot;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 22,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 23,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_include&quot;,
+              &quot;text&quot;: &quot;#import &lt;AssertMacros.h&gt;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 24,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 25,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_if&quot;,
+              &quot;text&quot;: &quot;#if !TARGET_OS_IOS &amp;&amp; !TARGET_OS_WATCH &amp;&amp; !TARGET_OS_TV&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 26,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 41,
+                &quot;endColumn&quot;: 7
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_if&quot;,
+              &quot;text&quot;: &quot;#if TARGET_OS_IOS || TARGET_OS_WATCH || TARGET_OS_TV&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 44,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 48,
+                &quot;endColumn&quot;: 7
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_else&quot;,
+              &quot;text&quot;: &quot;#else&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 46,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 47,
+                &quot;endColumn&quot;: 66
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic push&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 63,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 64,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic ignored \&quot;-Wdeprecated-declarations\&quot;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 64,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 65,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic pop&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 66,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 67,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic push&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 89,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 90,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic ignored \&quot;-Wdeprecated-declarations\&quot;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 90,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 91,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic pop&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 92,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 93,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic push&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 125,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 126,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic ignored \&quot;-Wdeprecated-declarations\&quot;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 126,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 127,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic pop&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 128,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 129,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma mark -&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 147,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 148,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma mark -&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 218,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 219,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma mark - NSKeyValueObserving&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 295,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 296,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma mark - NSSecureCoding&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 301,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 302,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma mark - NSCopying&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 329,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 330,
+                &quot;endColumn&quot;: 1
+              }
+            }
+          ],
+          &quot;complete&quot;: true
+        },
+        &quot;objc&quot;: {
+          &quot;propertyImplementations&quot;: [],
+          &quot;moduleImports&quot;: [],
+          &quot;complete&quot;: true
+        }
+      }
+    }
+  ]
+}</pre></details></main></body></html>

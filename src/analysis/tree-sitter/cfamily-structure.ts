@@ -7,12 +7,13 @@ const compact=(text:string)=>text.replace(/\s+/g,' ').trim().slice(0,1200);
 const typeKinds=new Map([['class_specifier','class'],['struct_specifier','struct'],['union_specifier','union'],['enum_specifier','enum'],['namespace_definition','namespace']]);
 const callableKinds=new Set(['function','qualified-function','method','constructor','destructor']);
 const scopeKinds=new Set([...typeKinds.values(),...callableKinds]);
-const directiveKinds=new Set(['preproc_if','preproc_ifdef','preproc_elif','preproc_elifdef','preproc_else','preproc_include','preproc_def','preproc_function_def','preproc_call']);
+const directiveKinds=new Set(['preproc_if','preproc_ifdef','preproc_elif','preproc_elifdef','preproc_else','preproc_include','preproc_def','preproc_function_def','preproc_call','preproc_undef','preproc_linemarker']);
 const conditionKinds=new Set(['preproc_if','preproc_ifdef','preproc_elif','preproc_elifdef','preproc_else']);
-interface Declarator {name:Node;text:string;display:string;operators:Node[]}
+export interface Declarator {name:Node;text:string;display:string;operators:Node[]}
+export interface CfamilySeed {node:Node;declaration:DeclarationFact;scope?:boolean}
 /** Operators are ordered outwards from the original name. The first operator
  * distinguishes a function from a variable that points to a function. */
-function declarator(node:Node|undefined,depth=0):Declarator|undefined {
+export function declarator(node:Node|undefined,depth=0):Declarator|undefined {
  if(!node||depth>64||node.hasError||node.isMissing)return;
  if(node.type==='qualified_identifier'){
   const scope=node.childForFieldName('scope'),selected=declarator(node.childForFieldName('name')??undefined,depth+1);if(!selected)return;
@@ -26,7 +27,7 @@ function declarator(node:Node|undefined,depth=0):Declarator|undefined {
  }
  const inner=node.childForFieldName('declarator')??(['parenthesized_declarator','attributed_declarator','reference_declarator'].includes(node.type)?node.namedChildren.find(child=>!/attribute/.test(child.type)):undefined);
  const selected=declarator(inner,depth+1);if(!selected)return;
- return {...selected,operators:[...selected.operators,...['function_declarator','pointer_declarator','reference_declarator','array_declarator'].includes(node.type)?[node]:[]]};
+ return {...selected,operators:[...selected.operators,...['function_declarator','pointer_declarator','reference_declarator','array_declarator','block_pointer_declarator'].includes(node.type)?[node]:[]]};
 }
 function owner(node:Node):Node {return node.parent?.type==='template_declaration'?node.parent:node;}
 function body(node:Node):Node|undefined{return node.childForFieldName('body')??undefined;}
@@ -34,7 +35,7 @@ function header(node:Node):string {
  const nested=node.type==='template_declaration'?node.namedChildren.find(child=>typeKinds.has(child.type)||child.type==='function_definition'):undefined;
  return compact(node.text.slice(0,(body(node)?.startIndex??(nested?body(nested)?.startIndex:undefined)??node.endIndex)-node.startIndex));
 }
-function context(node:Node):string[]{
+export function context(node:Node):string[]{
  const values:string[]=[];let depth=0;
  for(let parent=node.parent;parent&&++depth<=128;parent=parent.parent)if(conditionKinds.has(parent.type))values.unshift(parent.text.split('\n')[0]!.trim().slice(0,8192));
  return values;
@@ -57,7 +58,7 @@ function access(node:Node,parent:DeclarationFact|undefined):string|undefined {
 }
 /** Original source structure only: no preprocessing, includes, macro expansion,
  * compiler, template instantiation, overload or translation-unit binding. */
-export function extractCfamilyStructure(root:Node,query:Query,language:'c'|'cpp',content:string):StructureFacts {
+export function extractCfamilyStructure(root:Node,query:Query,language:'c'|'cpp',content:string,seeds:readonly CfamilySeed[]=[]):StructureFacts {
  const source=new SourceText(content),issues:ParseIssue[]=[],preprocessor:NonNullable<StructureFacts['cfamily']>['preprocessor']=[],damaged:{start:number;end:number}[]=[];
  let truncated=false,visited=0;
  const range=(node:Node)=>source.range(Math.min(node.startIndex,content.length),Math.min(node.endIndex,content.length));
@@ -74,7 +75,7 @@ export function extractCfamilyStructure(root:Node,query:Query,language:'c'|'cpp'
  const nodes=new Map<number,Node>();for(const capture of query.captures(root,{matchLimit:4096}))if(capture.name==='declaration')nodes.set(capture.node.id,capture.node);
  if(query.didExceedMatchLimit())truncated=true;
  const candidates=[...nodes.values()].sort((a,b)=>owner(a).startIndex-owner(b).startIndex||b.endIndex-a.endIndex);
- const declarations:DeclarationFact[]=[],byNode=new Map<number,DeclarationFact>(),originalNodes=new Map<string,Node>();
+ const declarations:DeclarationFact[]=seeds.map(seed=>seed.declaration),byNode=new Map<number,DeclarationFact>(seeds.filter(seed=>seed.scope).map(seed=>[seed.node.id,seed.declaration])),originalNodes=new Map<string,Node>(seeds.map(seed=>[seed.declaration.key,seed.node]));
  const parentFor=(node:Node,friend=false):DeclarationFact|undefined=>{let depth=0;for(let current=node.parent;current&&++depth<=128;current=current.parent){const selected=byNode.get(current.id);if(selected&&(!friend||!['class','struct','union'].includes(selected.kind)))return selected;}return;};
  const add=(node:Node,name:Node|undefined,text:string,kind:string,signature:string,form:DeclarationFact['declarationForm'],friend=false,display?:string):DeclarationFact|undefined=>{
   if(declarations.length>=MAX_DECLARATIONS){truncated=true;return;}

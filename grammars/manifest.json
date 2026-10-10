@@ -126,6 +126,19 @@
       "sourceRevision": "f41e1a044c8a84ea9fa8577fdd2eab92ec96de02",
       "license": "MIT",
       "licenseFile": "licenses/cpp.txt"
+    },
+    {
+      "language": "objective-c",
+      "file": "tree-sitter-objc.wasm",
+      "sha256": "155bf61fc94941fa9d07c86cd46895f14dfb2549fb7f646faeb83765af05c970",
+      "abi": 14,
+      "artifactPackage": "tree-sitter-objc",
+      "artifactVersion": "3.0.2",
+      "artifactPath": "tree-sitter-objc.wasm",
+      "source": "https://github.com/tree-sitter-grammars/tree-sitter-objc",
+      "sourceRevision": "18802acf31d0b5c1c1d50bdbc9eb0e1636cab9ed",
+      "license": "MIT",
+      "licenseFile": "licenses/objc.txt"
     }
   ]
 }

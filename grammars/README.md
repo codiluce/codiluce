@@ -7,7 +7,7 @@ the authoritative parsers for their languages.
 
 `manifest.json` records each grammar's upstream revision, artifact package and
 version, SHA-256, language ABI and license. Six artifacts come from the pinned
-VS Code grammar bundle; Kotlin, C and C++ come from their upstream grammar packages. The
+VS Code grammar bundle; Kotlin, C, C++ and Objective-C come from their upstream grammar packages. The
 bundle's build revision and each upstream license are retained here. The
 runtime is pinned in `package.json` and the manifest.
 
@@ -23,7 +23,7 @@ grammar release requires declaration, range, overload, malformed-source and
 installed-package conformance checks before updating the checksum.
 
 The current adapters extract named types, modules/namespaces, functions and
-methods for Python, Go, Ruby, Rust, Java, C#, Kotlin, C and C++. Decorators/annotations,
+methods for Python, Go, Ruby, Rust, Java, C#, Kotlin, C, C++ and Objective-C. Decorators/annotations,
 modifiers, signatures and lexical containment are preserved where the grammar
 exposes them. Local Go receivers and Rust impl methods attach only to a unique
 type in the same file; cross-file ownership and language binding belong to the
@@ -48,6 +48,28 @@ unsupported. Out-of-line C++ definitions attach only to a unique exact original
 type in the same file and directive context. Others retain qualified names and
 an explicit translation-unit/type-binding condition; headers cannot supply
 inferred ownership. See [original-source qualification](../docs/cfamily-source-accuracy.html).
+
+Objective-C uses the official `tree-sitter-objc` 3.0.2 WASM (ABI 14, MIT).
+Interfaces, implementations, categories/extensions, protocols, forward
+declarations and compatibility aliases remain separate original declarations.
+Methods retain selector spelling, `dispatch` (class/instance), signed qualified
+names and declaration/definition forms. Properties, ivars, atomic/bitfield
+declarations, block-pointer data, C helpers/typedefs and original module/import,
+synthesis and dynamic syntax are retained. Synthesized ivars/accessors and
+message dispatch never produce entities or semantic edges. Ownership is lexical;
+logical interface/implementation merging and header/type binding remain open.
+
+When annotation/macro syntax hides a container from the full-file parse, the
+adapter can parse an exact self-contained original Objective-C region and
+remap its ranges to the original file. It does not rewrite, prefix or expand
+source; every recovered declaration records a source-context gap. Discovery
+excludes strings, raw C++ strings, comments and preprocessor lines. Recovered
+files remain partial. `objcSyntax` stores original module/property-implementation
+syntax and recovery ranges. The current grammar extends C; `.mm` files always
+record explicit partial Objective-C++ status. `NS_ENUM` macro type/value profiles,
+broader header contexts and mixed C++ qualification are P10a2b work. Imports,
+references, framework, effects and guards remain unsupported. See
+[unchanged-source accuracy and remaining macro declarations](../docs/objc-source-accuracy.html).
 
 Non-callable declarations use the existing graph `class` type with a
 `declarationKind`/`role`; properties exposed by C# use `method` with role

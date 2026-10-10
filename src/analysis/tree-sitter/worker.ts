@@ -3,6 +3,7 @@
 import { Parser, Language, Query } from 'web-tree-sitter';
 import { grammarCatalog, queryText, verifiedGrammar } from './grammars.js';
 import { extractStructure } from './extract.js';
+import {recoverObjcRegions} from './objc-regions.js';
 
 const loaded = new Map<string, { parser: Parser; query: Query }>();
 const initialized = Parser.init();
@@ -25,10 +26,10 @@ async function handle(job: { id: number; language: string; content: string }): P
     parser.reset();
     // Go's EOF semicolon and C-family/C# preprocessor directives need a terminal
     // newline in these grammars; positions still map to the original input.
-    const input = ['go','csharp','c','cpp'].includes(job.language) && !job.content.endsWith('\n') ? `${job.content}\n` : job.content;
+    const input = ['go','csharp','c','cpp','objective-c'].includes(job.language) && !job.content.endsWith('\n') ? `${job.content}\n` : job.content;
     const tree = parser.parse(input);
     if (!tree) throw new Error('Parser returned no tree');
-    try { process.send?.({ id: job.id, facts: extractStructure(tree.rootNode, query, job.language, job.content) }); }
+    try { const original=extractStructure(tree.rootNode, query, job.language, job.content);process.send?.({ id: job.id, facts: job.language==='objective-c'?recoverObjcRegions(original,job.content,parser,query):original }); }
     finally { tree.delete(); }
   } catch (error) { process.send?.({ id: job.id, error: error instanceof Error ? error.message : String(error) }); }
 }
