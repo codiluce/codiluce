@@ -5,6 +5,8 @@ import { RustSymbols, type RustDefinition } from '../languages/rust-symbols.js';
 import { rustAnd, rustCfg, rustEmptyTokenTree, rustSplit } from '../languages/rust-cfg.js';
 import { RustResolver, RUST_RESOLVER_VERSION, type RustScope } from '../resolution/rust.js';
 import { rustWebNamespaceReader } from './rust-derive-namespace.js';
+import {warpCors,warpCorsMethod,type WarpCors} from './warp-cors.js';
+import {warpStateOutput,warpStateIdentity} from './warp-state.js';
 import { compileRustPath, type RustRouteDialect, type RustEndpointData } from '../routes/rust-patterns.js';
 import type { RoutingContract, RoutePattern } from '../routes/contracts.js';
 import { compileRocketPath, rocketPathsCollide, reviewedRocketMount } from '../routes/rocket-patterns.js';
@@ -59,6 +61,7 @@ interface Route {
     fallback?: boolean;
     headFallback?: boolean;
     warpOutput?: string;
+    warpState?: import('../routes/warp-patterns.js').WarpSourceState;
     warpFuture?: boolean;
 }
 interface MethodRouter {
@@ -127,6 +130,7 @@ interface Listener {
 interface Guard {
     kind: 'guard';
     methods: Methods;
+    httpMethod?:boolean;
     conditions: string[];
     proof: Evidence[];
 }
@@ -136,8 +140,8 @@ interface Middleware {
     conditions: string[];
     proof: Evidence[];
 }
-type Value = Native | WarpWrapper | Callback | Router | MethodRouter | Server | Future | Listener | Guard | Middleware | string | number | boolean | null | Value[] | undefined;
-const is = <K extends 'native' | 'warp-wrapper' | 'callback' | 'router' | 'method' | 'server' | 'future' | 'listener' | 'guard' | 'middleware'>(value: Value, kind: K): value is Extract<Value, {
+type Value = Native | WarpWrapper | WarpCors | Callback | Router | MethodRouter | Server | Future | Listener | Guard | Middleware | string | number | boolean | null | Value[] | undefined;
+const is = <K extends 'native' | 'warp-wrapper' | 'warp-cors' | 'callback' | 'router' | 'method' | 'server' | 'future' | 'listener' | 'guard' | 'middleware'>(value: Value, kind: K): value is Extract<Value, {
     kind: K;
 }> => !!value && typeof value === 'object' && !Array.isArray(value) && value.kind === kind;
 const unique = <T>(values: T[]) => [...new Set(values)];
@@ -436,6 +440,8 @@ export class RustRegistrations {
                 profile.generics = expression.generics;
                 if (profile.framework === 'axum' && /^routing::MethodFilter::(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|CONNECT|TRACE)$/.test(profile.path.join('::')))
                     return { kind: 'guard', methods: [profile.path.at(-1)!], conditions: profile.conditions, proof: profile.proof };
+                if(profile.framework==='warp'&&profile.dialect?.startsWith('warp-')&&/^http::Method::(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|CONNECT|TRACE)$/.test(profile.path.join('::')))
+                    return {kind:'guard',httpMethod:true,methods:[profile.path.at(-1)!],conditions:profile.conditions,proof:profile.proof};
                 return { kind: 'native', profile };
             }
             return this.callback(env, expression);
@@ -553,10 +559,11 @@ export class RustRegistrations {
     }
     private nativeWarp(profile: RustWebProfile, args: Value[], env: Environment, site: Site, expression: RustExpression & {kind:'call'}): Value {
         const name = profile.path.join('::').replace(/^filters::/, '');
+        if(name==='cors'&&!args.length)return warpCors(profile,this.fact(site,'Original native Warp CORS builder defaults; no header conversion or request validation executes'));
         if((['log','log::log'].includes(name)&&args.length===1&&typeof args[0]==='string')||(name==='trace::request'&&!args.length))return {kind:'warp-wrapper',name:name==='trace::request'?'trace':'log',profile,proof:[...profile.proof,this.fact(site,`Original native Warp default ${name} wrapper constructor; no logger/subscriber executes`)]};
         if (name.startsWith('Filter::') && is(args[0], 'router') && args[0].framework === 'warp') {
             if (args[0].dialect !== profile.dialect) env = {...env,conditions:unique([...env.conditions,'Fully-qualified Warp Filter combinator crosses native version families'])};
-            return this.warpMethod(args[0], name.slice('Filter::'.length), args.slice(1), env, site, true);
+            return this.warpMethod(args[0], name.slice('Filter::'.length), args.slice(1), env, site, true,expression);
         }
         if (name === 'serve' && args.length === 1 && is(args[0], 'router') && args[0].framework === 'warp') {
             const filter = this.copy(args[0], env, site);
@@ -605,14 +612,14 @@ export class RustRegistrations {
     private warpExtractions(node: WarpNode, handlers: Map<string,Route>, router: Router, site: Site, depth=0): WarpNode {
         if(depth>64)return {kind:'opaque',reason:'Warp mapped extraction traversal exceeds the source composition bound'};
         if(node.kind==='and'||node.kind==='or')return {...node,left:this.warpExtractions(node.left,handlers,router,site,depth+1),right:this.warpExtractions(node.right,handlers,router,site,depth+1)};
-        if(node.kind==='mount'||node.kind==='transform')return {...node,input:this.warpExtractions(node.input,handlers,router,site,depth+1)};
+        if(node.kind==='mount'||node.kind==='transform'||node.kind==='cors'||node.kind==='recover')return {...node,input:this.warpExtractions(node.input,handlers,router,site,depth+1)};
         if(node.kind==='opaque'&&node.input)return {...node,input:this.warpExtractions(node.input,handlers,router,site,depth+1)};
         if(node.kind!=='handler')return node;
         const original=handlers.get(node.id);
         if(!original)return {kind:'opaque',input:node,reason:'Original Warp mapped extraction callback identity is unavailable',pathNeutral:true};
         router.proof.push(...original.proof,this.fact(original.site,'Original Warp mapper is consumed as a deferred single extraction before the final response callback; no target callback executes'));
         router.conditions.push(...original.conditions);
-        return {kind:'transform',input:this.warpExtractions(node.input,handlers,router,site,depth+1),callback:original.callback?.definition.id,source:{file:original.site.file,line:original.site.range.startLine},fallible:node.fallible,...!original.warpOutput?{reason:'Warp mapped extraction output type/Future/trait relationship remains unreviewed'}:{}};
+        return {kind:'transform',input:this.warpExtractions(node.input,handlers,router,site,depth+1),callback:original.callback?.definition.id,source:{file:original.site.file,line:original.site.range.startLine},state:original.warpState,fallible:node.fallible,...!original.warpOutput?{reason:'Warp mapped extraction output type/Future/trait relationship remains unreviewed'}:{}};
     }
     private warpCallbackClone(callback: Callback | undefined): boolean {
         if(!callback)return false;
@@ -661,7 +668,15 @@ export class RustRegistrations {
         }
         return prelude||explicit;
     }
-    private warpMethod(value: Router, name: string, args: Value[], env: Environment, site: Site, qualified = false): Value {
+    private warpOperationSite(env:Environment,name:string,expression:RustExpression&{kind:'call'}|undefined,fallback:Site):Site {
+        const callee=expression?.callee,source=this.symbols.resolver.projects.sources.readFile(env.scope.file.path);
+        if(!callee||source===undefined||callee.kind!=='field'&&callee.kind!=='path')return fallback;
+        const end=callee.end,start=end-name.length;
+        if(start<callee.start||source.slice(start,end)!==name)return fallback;
+        const prefix=source.slice(0,start),line=prefix.split('\n').length,column=start-(prefix.lastIndexOf('\n')+1)+1;
+        return {file:env.scope.file.path,start,end,range:{startLine:line,startColumn:column,endLine:line,endColumn:column+name.length}};
+    }
+    private warpMethod(value: Router, name: string, args: Value[], env: Environment, site: Site, qualified = false,expression?:RustExpression&{kind:'call'}): Value {
         if (!value.warp) return;
         const result = this.copy(value, env, site, name === 'clone'), data = result.warp!;
         if (name === 'clone' && !args.length) {
@@ -714,7 +729,7 @@ export class RustRegistrations {
                     return node.type || !callback || type?.kind !== 'path' ? node : {...node,type:type.text,guard:this.warpGuard(callback.scope,type.text)};
                 }
                 if (['tail','extract','handler','or'].includes(node.kind)) parameter++;
-                if(node.kind==='transform')parameter++;
+                if(node.kind==='transform'||node.kind==='cors'||node.kind==='recover')parameter++;
                 if(node.kind==='opaque'&&node.extractionCount!==undefined)parameter+=node.extractionCount;
                 return node;
             };
@@ -726,18 +741,38 @@ export class RustRegistrations {
                 if (!callback || !annotation || !extracted || extracted === '?') continue;
                 const from = this.warpGuard(env.scope,extracted.replace(/^reply:/,'')), to = annotation.kind === 'path' ? this.warpGuard(callback.scope,annotation.text) : undefined;
                 if (from && from !== to || extracted === 'Either' && !!to) typeConditions.push('Warp callback parameter type is incompatible with the original native extraction');
+                if(extracted.startsWith('source:')){
+                    const target=this.symbols.typeValue(callback.scope,annotation);
+                    if((target.kind==='type'||target.kind==='instance')&&(target.references.length>0||warpStateIdentity({id:target.symbol.id,compilation:target.symbol.scope.compilation.id,name:target.symbol.name,file:target.symbol.scope.file.path,line:target.symbol.fact?.range.startLine??1})!==extracted)||target.kind==='external')typeConditions.push('Warp callback parameter has a different original source state type than its ordered extraction');
+                }
             }
             const conditions = unique([...callback?.conditions ?? [], ...typeConditions, ...!callback ? ['Original Warp source mapper/handler is unresolved'] : [], ...callback?.definition.fact.kind === 'async' ? ['Warp mapper requires an original function/closure operand rather than an already constructed async block'] : [], ...callback?.definition.fact.generics ? ['Generic Warp callback instantiation is unreviewed'] : [], ...data.extracts === undefined || data.extracts.length !== parameters.length ? ['Warp callback extraction arity is unproven or incompatible'] : [], ...name !== 'map' && !asyncReturn ? ['Warp asynchronous callback return Future contract is unreviewed'] : []]);
             data.node = {kind:'handler',input,id,fallible:name === 'and_then'};
-            const output=!(name==='map'&&asyncReturn)&&callback?.definition.fact.returnType?.kind==='path'?this.warpGuard(callback.scope,callback.definition.fact.returnType.text):undefined;
+            const state=name==='map'&&callback&&!asyncReturn?warpStateOutput(this.symbols,this.base,callback.definition,callback.scope,scope=>this.warpCloneContext({...env,scope})):undefined;
+            const output=state?.extraction??(!(name==='map'&&asyncReturn)&&callback?.definition.fact.returnType?.kind==='path'?this.warpGuard(callback.scope,callback.definition.fact.returnType.text):undefined);
             data.handlers.clear();
-            data.handlers.set(id,{site,methods:'*',callback,conditions,proof:[...callback?.proof ?? [],this.fact(site,`Original Warp ${name} callback operand and ordered extraction contract`)],middleware:[],warpOutput:output,warpFuture:name==='map'&&!!asyncReturn});
-            data.extracts = [`reply:${output??'?'}`];
+            data.handlers.set(id,{site,methods:'*',callback,conditions:unique([...conditions,...state?.conditions??[]]),proof:[...callback?.proof ?? [],...state?.proof??[],this.fact(site,`Original Warp ${name} callback operand and ordered extraction contract`)],middleware:[],warpOutput:output,warpState:state?.state,warpFuture:name==='map'&&!!asyncReturn});
+            const returnIdentity=callback&&!callback.conditions.length&&!callback.definition.fact.generics?`result:${name}:${callback.scope.compilation.id}:${callback.definition.id}`:'?';
+            data.extracts = [state?.extraction??`reply:${output??returnIdentity}`];
             data.union = undefined;
             const clone=this.warpCallbackClone(callback);
             if(!clone)result.conditions.push('Warp native mapper requires Clone/Send callback bounds; original captured values remain unreviewed');
             data.copy = data.copy && clone;
             data.clone = data.clone && clone;
+        } else if(name==='with'&&args.length===1&&is(args[0],'warp-cors')){
+            const cors=args[0],reason='Warp CORS header-dependent rejection/preflight bypass and input Reply/Clone/Send/Sync/error bounds remain unreviewed';
+            const operation=this.warpOperationSite(env,name,expression,site);
+            data.node={kind:'cors',input:data.node,policy:structuredClone(cors.policy),source:{file:operation.file,line:operation.range.startLine},reason};
+            result.conditions.push(reason,...cors.conditions,...cors.profile.dialect!==value.dialect?['Warp CORS wrapper and Filter originate from different native version families']:[],...cors.consumed?['Original Warp CORS builder/wrapper is reused after move']:[]);
+            result.proof.push(...cors.proof,this.fact(operation,'Original Warp CORS wrapper: preflight can bypass the inner Filter; ordinary successes retain original handler ownership; one nested Either extraction and combined Rejection error'));
+            cors.consumed=true;data.extracts=['Either'];data.union=undefined;data.copy=false;
+        } else if(name==='recover'&&args.length===1){
+            const callback=is(args[0],'callback')&&!args[0].attribute?args[0]:undefined,reason='Warp recovery callback TryFuture/IsReject/Send bounds and success versus rejection remain unreviewed';
+            const operation=this.warpOperationSite(env,name,expression,site);
+            data.node={kind:'recover',input:data.node,callback:callback?.definition.id,source:{file:operation.file,line:operation.range.startLine},reason};
+            result.conditions.push(reason,...callback?.conditions??[],...!callback||callback.definition.fact.parameters.length!==1?['Original Warp recovery requires one source rejection parameter']:[],...!callback||!callback.definition.fact.async&&!callback.definition.unit.facts.returns.some(item=>item.owner===callback.definition.fact.key&&item.value.kind==='async')?['Original Warp recovery callback Future contract is unreviewed']:[]);
+            result.proof.push(...callback?.proof??[],this.fact(operation,'Original Warp recover resets the original path cursor on rejection and invokes only the deferred recovery callback; successful input retains its original handler; one Either extraction and callback Future error'));
+            data.union=[data.extracts,undefined];data.extracts=['Either'];data.copy=false;data.clone=data.clone&&this.warpCallbackClone(callback);
         } else if(name==='with'&&args.length===1&&is(args[0],'warp-wrapper')){
             const wrapper=args[0],reason='Warp native logging/tracing wrapper input Reply/Send/IsReject bounds and subscriber effects remain unreviewed';
             data.node={kind:'transform',input:data.node,source:{file:site.file,line:site.range.startLine},fallible:false,reason};
@@ -747,7 +782,7 @@ export class RustRegistrations {
         } else if (name === 'boxed' && !args.length) {data.copy = false;data.clone = true;result.proof.push(this.fact(site,'Original Warp boxed filter preserves extraction and error shape and supplies native Arc-backed Clone; Send/Sync bounds remain source preconditions'));}
         else if (name === 'unify' && !args.length) {
             const [left,right] = data.union ?? [];
-            if (left && right && JSON.stringify(left) === JSON.stringify(right)) data.extracts = left;
+            if (left && right && ![...left,...right].some(value=>value.includes('?')||value==='Either') && JSON.stringify(left) === JSON.stringify(right)) data.extracts = left;
             else { data.extracts = undefined; result.conditions.push('Warp unify requires reviewed equal extraction types in both original branches'); }
             data.union = undefined;
         } else {
@@ -764,7 +799,7 @@ export class RustRegistrations {
                 data.extracts = undefined; result.conditions.push(data.node.reason); break;
             }
             if (node.kind === 'and' || node.kind === 'or') pending.push({node:node.left,depth:depth+1},{node:node.right,depth:depth+1});
-            else if (node.kind === 'handler' || node.kind === 'transform' || node.kind === 'mount' || node.kind === 'opaque' && node.input) pending.push({node:node.input!,depth:depth+1});
+            else if (node.kind === 'handler' || node.kind === 'transform' || node.kind === 'cors' || node.kind === 'recover' || node.kind === 'mount' || node.kind === 'opaque' && node.input) pending.push({node:node.input!,depth:depth+1});
         }
         result.proof = uniqueProof(result.proof);
         result.conditions = unique(result.conditions);
@@ -832,6 +867,7 @@ export class RustRegistrations {
     private method(value: Value, name: string, args: Value[], env: Environment, site: Site, expression: RustExpression & {
         kind: 'call';
     }): Value {
+        if(is(value,'warp-cors'))return warpCorsMethod(value,name,args,this.fact(site,`Original Warp CORS ${name} builder/wrapper source step`),this.warpCloneContext(env));
         if (is(value, 'future')) {
             if (name === 'with_graceful_shutdown' && args.length === 1)
                 return value;
@@ -907,7 +943,7 @@ export class RustRegistrations {
         }
         if (!is(value, 'router'))
             return;
-        if (value.framework === 'warp') return this.warpMethod(value, name, args, env, site);
+        if (value.framework === 'warp') return this.warpMethod(value, name, args, env, site,false,expression);
         if (value.mode === 'config')
             return this.configureMethod(value, name, args, env, site);
         if (name === 'clone' && args.length === 0 && value.framework === 'axum')
@@ -1299,8 +1335,10 @@ export class RustRegistrations {
             while(pending.length&&++count<=512){
                 const node=pending.pop()!;
                 if(node.kind==='transform'&&node.callback)this.context.graph.relate(id,node.callback,'references',facts,{framework:'warp',role:'extraction',execution:'deferred-filter-callback',compilation:env.scope.compilation.id,source:node.source,conditions:constraints},JSON.stringify([id,node.callback,node.source]));
+                if(node.kind==='transform'&&node.state)this.context.graph.relate(id,node.state.id,'references',facts,{framework:'warp',role:'state-type',execution:'deferred-filter-callback',compilation:env.scope.compilation.id,source:node.source,state:node.state,conditions:constraints},JSON.stringify([id,node.state.id,node.source,'state-type']));
+                if(node.kind==='recover'&&node.callback)this.context.graph.relate(id,node.callback,'references',facts,{framework:'warp',role:'recovery',execution:'deferred-rejection-callback',compilation:env.scope.compilation.id,source:node.source,conditions:constraints},JSON.stringify([id,node.callback,node.source,'recovery']));
                 if(node.kind==='and'||node.kind==='or')pending.push(node.left,node.right);
-                else if(node.kind==='handler'||node.kind==='transform'||node.kind==='mount'||node.kind==='opaque'&&node.input)pending.push(node.input!);
+                else if(node.kind==='handler'||node.kind==='transform'||node.kind==='cors'||node.kind==='recover'||node.kind==='mount'||node.kind==='opaque'&&node.input)pending.push(node.input!);
             }
         }
     }

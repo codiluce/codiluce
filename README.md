@@ -221,6 +221,13 @@ handlers and rejection shape. Recorded Tokio test macros exclude test functions 
 literal include_str supplies namespace proof without reading included contents. All five original placey callbacks
 now bind conditionally. The full portfolio has four qualified pairs, 19 conditional bindings and six misses.
 Custom state, CORS/recovery and Axum helper/middleware work remain open, along with broader P9/P10 qualification.
+P9e2b2b2c2 adds [Warp custom state, CORS and recovery qualification](docs/warp-cors-recovery-source-accuracy.html).
+Original state types now retain their owning compilation and deferred source references. Native CORS builders
+preserve source settings and model preflight bypass; native recovery resets the rejection cursor and retains a
+separate deferred callback reference. Neither bypass nor recovery borrows an original route handler's path proof.
+All five unchanged Q&A handlers retain their original state, Store type and recovery references. The full portfolio
+remains four qualified pairs, 19 conditional bindings and six misses. Generated traits, field bounds, header inputs
+and recovery outcomes stay conditional. Axum helpers/middleware and broader P9/P10 qualification remain open.
 No Cargo/rustc or target code runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original

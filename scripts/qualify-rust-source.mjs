@@ -76,12 +76,14 @@ try {
     const routers=cold.entities.filter(entity=>entity.type==='api_endpoint'&&entity.language==='rust'),handles=cold.relations.filter(relation=>relation.type==='handles'&&routers.some(endpoint=>endpoint.id===relation.from)),frameworkCalls=cold.relations.filter(relation=>relation.type==='calls'&&relation.metadata?.adapter==='rust-routers');
     for(const endpoint of routers){range(endpoint.path,endpoint.sourceRange);assert.ok(compilationIds.has(endpoint.metadata.compilation));assert.ok(endpoint.metadata.routing.pattern.dialect.startsWith('axum')||['actix-web-4','rocket-0.5','warp-0.3','warp-0.4'].includes(endpoint.metadata.routing.pattern.dialect));if(!endpoint.metadata.constraintsUnresolved)assert.equal(endpoint.metadata.routing.conditions.length,0);for(const fact of endpoint.evidence){assert.ok(blobs.has(fact.file));assert.ok(fact.line>0&&fact.line<=blobs.get(fact.file).split('\n').length);}}
     const extractions=cold.relations.filter(relation=>relation.type==='references'&&relation.metadata?.framework==='warp'&&relation.metadata?.role==='extraction');
-    for(const relation of extractions){
+    const recoveries=cold.relations.filter(relation=>relation.type==='references'&&relation.metadata?.framework==='warp'&&relation.metadata?.role==='recovery'),stateTypes=cold.relations.filter(relation=>relation.type==='references'&&relation.metadata?.framework==='warp'&&relation.metadata?.role==='state-type');
+    for(const relation of [...extractions,...recoveries,...stateTypes]){
         const endpoint=routers.find(endpoint=>endpoint.id===relation.from),target=identities.get(relation.to);
         assert.ok(endpoint&&target?.language==='rust');range(target.path,target.sourceRange);
-        assert.equal(relation.metadata.execution,'deferred-filter-callback');assert.ok(compilationIds.has(relation.metadata.compilation));
+        assert.equal(relation.metadata.execution,relation.metadata.role==='recovery'?'deferred-rejection-callback':'deferred-filter-callback');assert.ok(compilationIds.has(relation.metadata.compilation));
         assert.deepEqual(relation.metadata.conditions,endpoint.metadata.routing.conditions);
         assert.ok(blobs.has(relation.metadata.source.file));assert.ok(relation.metadata.source.line>0&&relation.metadata.source.line<=blobs.get(relation.metadata.source.file).split('\n').length);
+        if(relation.metadata.role==='state-type'){const state=relation.metadata.state;assert.equal(state.id,relation.to);assert.ok(compilationIds.has(state.compilation));assert.equal(state.file,target.path);assert.equal(state.line,target.sourceRange.startLine);assert.equal(state.name,target.name);}
         assert.ok(!cold.relations.some(edge=>edge.type==='calls'&&edge.from===relation.from&&edge.to===relation.to),'deferred extraction reference is not an invented direct call');
     }
     for(const relation of [...handles,...frameworkCalls]){const original=identities.get(relation.to);assert.ok(original?.language==='rust');range(original.path,original.sourceRange);for(const fact of relation.evidence){assert.ok(blobs.has(fact.file));assert.ok(fact.line>0&&fact.line<=blobs.get(fact.file).split('\n').length);}}
@@ -91,6 +93,9 @@ try {
         result.registrationDiagnostics=cold.diagnostics.filter(item=>item.analyzer==='rust-routers');
         result.registrationSamples=units.flatMap(unit=>(unit.metadata.rustRegistrations??[]).map(item=>({file:unit.path,...item})));
         result.extractionSamples=extractions.map(relation=>({endpoint:relation.from,routePath:identities.get(relation.from).metadata.routePath,methods:identities.get(relation.from).metadata.routing.methods,callback:{id:relation.to,path:identities.get(relation.to).path,range:identities.get(relation.to).sourceRange,name:identities.get(relation.to).name},source:relation.metadata.source,conditions:relation.metadata.conditions,proof:relation.evidence}));
+        const deferred=relations=>relations.map(relation=>({endpoint:relation.from,routePath:identities.get(relation.from).metadata.routePath,methods:identities.get(relation.from).metadata.routing.methods,target:{id:relation.to,path:identities.get(relation.to).path,range:identities.get(relation.to).sourceRange,name:identities.get(relation.to).name},source:relation.metadata.source,state:relation.metadata.state,compilation:relation.metadata.compilation,execution:relation.metadata.execution,conditions:relation.metadata.conditions,proof:relation.evidence}));
+        result.recoverySamples=deferred(recoveries);result.stateTypeSamples=deferred(stateTypes);
+        result.warpPrograms=routers.filter(endpoint=>endpoint.metadata.routing.warp).map(endpoint=>({endpoint:endpoint.id,routePath:endpoint.metadata.routePath,methods:endpoint.metadata.routing.methods,patternStatus:endpoint.metadata.routing.pattern.status,...endpoint.metadata.routing.warp}));
         result.routerSamples.forEach((sample,index)=>{sample.proof=routers[index].evidence;for(const handler of sample.handler)handler.kind=identities.get(handler.id).metadata.declarationKind;});
         result.importDetails = imports.map(item => ({file:item.file,range:item.range,specifier:item.specifier,kind:item.kind,compilation:item.compilation,status:item.outcome.status,reason:item.outcome.reason,conditions:item.outcome.conditions}));
     }

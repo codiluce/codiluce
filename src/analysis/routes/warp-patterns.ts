@@ -2,6 +2,15 @@ import type { Entity } from '../../core/graph.js';
 import type { RoutePattern, RouteSegment, RoutingContract } from './contracts.js';
 
 export type WarpDialect = 'warp-0.3' | 'warp-0.4';
+export interface WarpCorsPolicy {
+  origins: string[] | 'any' | 'unknown';
+  methods: string[] | 'unknown';
+  allowedHeaders: string[] | 'unknown';
+  exposedHeaders: string[] | 'unknown';
+  credentials: boolean | 'unknown';
+  maxAge?: number | 'unknown';
+}
+export interface WarpSourceState { id: string; compilation: string; name: string; file: string; line: number }
 export type WarpNode =
   | { kind: 'any' | 'end' | 'tail' | 'extract' }
   | { kind: 'literal'; value: string }
@@ -9,7 +18,9 @@ export type WarpNode =
   | { kind: 'method'; methods: string[] }
   | { kind: 'and' | 'or'; left: WarpNode; right: WarpNode }
   | { kind: 'handler'; input: WarpNode; id: string; fallible: boolean }
-  | { kind: 'transform'; input: WarpNode; callback?: string; source?: {file:string;line:number}; fallible: boolean; reason?: string }
+  | { kind: 'transform'; input: WarpNode; callback?: string; source?: {file:string;line:number}; state?: WarpSourceState; fallible: boolean; reason?: string }
+  | { kind: 'cors'; input: WarpNode; policy: WarpCorsPolicy; source: {file:string;line:number}; reason: string }
+  | { kind: 'recover'; input: WarpNode; callback?: string; source: {file:string;line:number}; reason: string }
   | { kind: 'mount'; input: WarpNode; id: string; prefix: string; file: string; line: number }
   | { kind: 'opaque'; input?: WarpNode; reason: string; pathNeutral?: boolean; extractionCount?: number };
 
@@ -71,6 +82,19 @@ export function evaluateWarp(program: WarpNode, path: string, method: string, st
       const input = walk(node.input,state,depth+1);
       return {...input,success:input.success.map(next=>({...next,uncertain:next.uncertain||node.fallible||!!node.reason})),rejects:input.rejects||node.fallible&&input.success.length>0};
     }
+    if (node.kind === 'cors') {
+      const input = walk(node.input,state,depth+1);
+      const preflight = (method === '*' || method === 'OPTIONS') && (node.policy.methods === 'unknown' || node.policy.methods.length > 0);
+      // Headers are not part of the request-path matcher. An allowed preflight
+      // can answer before the inner Filter, with no original response callback.
+      return {...input,success:[...input.success.map(next=>({...next,uncertain:true})),...preflight?[{cursor:state.cursor,uncertain:true}]:[]],rejects:true};
+    }
+    if (node.kind === 'recover') {
+      const input = walk(node.input,state,depth+1);
+      // Native recovery resets the cursor on rejection. The deferred callback
+      // may answer or reject; its unknown success cannot borrow an inner handler.
+      return {...input,success:[...input.success.map(next=>({...next,uncertain:true})),...input.rejects?[{cursor:state.cursor,uncertain:true}]:[]],rejects:input.rejects};
+    }
     if (node.kind === 'mount') return walk(node.input,state,depth+1);
     if (node.kind === 'opaque') {
       const input = node.input ? walk(node.input, state, depth + 1) : pass();
@@ -116,6 +140,7 @@ export function warpBranches(program: WarpNode): WarpBranch[] | undefined {
       return walk(node.input, depth + 1)?.map(branch => ({ ...branch, node: { ...node, input: branch.node }, handler: node.id, conditions: distinct([...branch.conditions, ...branch.handler ? ['Multiple Warp mapper stages require native extraction/reply transformation proof'] : [], ...node.fallible ? ['Warp and_then can reject after native path/method filters; source return success is unproven'] : []]) }));
     }
     if (node.kind === 'transform') return walk(node.input,depth+1)?.map(branch=>({...branch,node:{...node,input:branch.node},conditions:distinct([...branch.conditions,...node.reason?[node.reason]:[],...node.fallible?['Warp fallible mapped extraction can reject before the response callback']:[]])}));
+    if (node.kind === 'cors' || node.kind === 'recover') return walk(node.input,depth+1)?.map(branch=>({...branch,node:{...node,input:branch.node},conditions:distinct([...branch.conditions,node.reason])}));
     if (node.kind === 'mount') return walk(node.input,depth+1)?.map(branch=>({...branch,node:{...node,input:branch.node},mounts:[{id:node.id,prefix:node.prefix,file:node.file,line:node.line},...branch.mounts??[]]}));
     if (node.kind === 'opaque') {
       return (node.input ? walk(node.input, depth + 1) : [{ node: { kind: 'any' as const }, methods: '*' as const, conditions: [] }])?.map(branch => ({ ...branch, node: { ...node, ...node.input ? { input: branch.node } : {} }, conditions: distinct([...branch.conditions, node.reason]) }));
@@ -128,10 +153,11 @@ export function warpBranches(program: WarpNode): WarpBranch[] | undefined {
 export function compileWarpPath(branch: WarpNode, dialect: WarpDialect): RoutePattern {
   const segments: RouteSegment[] = [];
   let ended = false, captures = 0, partial = false;
-  const read = (node: WarpNode, depth = 0): void => {
+  const read = (node: WarpNode, depth = 0, response?: string): void => {
     if (depth > 64) { partial = true; return; }
-    if (node.kind === 'and') { read(node.left, depth + 1); read(node.right, depth + 1); }
-    else if (node.kind === 'handler' || node.kind === 'transform' || node.kind === 'mount') read(node.input, depth + 1);
+    if (node.kind === 'and') { read(node.left, depth + 1,response); read(node.right, depth + 1,response); }
+    else if (node.kind === 'handler' || node.kind === 'transform' || node.kind === 'mount') read(node.input, depth + 1,node.kind==='handler'?node.id:response);
+    else if (node.kind === 'cors' || node.kind === 'recover') { if(response)partial=true; read(node.input,depth+1,response); }
     else if (node.kind === 'opaque') { partial = true; if (node.input) read(node.input, depth + 1); }
     else if (node.kind === 'literal') { if (ended) partial = true; segments.push({ kind: 'segment', parts: [{ kind: 'literal', value: node.value }] }); }
     else if (node.kind === 'param') { if (ended) partial = true; segments.push({ kind: 'segment', parts: [{ kind: 'parameter', name: `p${captures++}`, ...node.guard ? { constraint: node.guard } : {} }] }); }
@@ -146,7 +172,9 @@ export function compileWarpPath(branch: WarpNode, dialect: WarpDialect): RoutePa
 }
 export function matchWarpPath(pattern: RoutePattern, path: string, strict = true): boolean {
   const node = pattern.warp?.branch;
-  return !!node && evaluateWarp(node, path, '*', strict).success.length > 0;
+  if(!node)return false;
+  const handlers=new Set(warpBranches(node)?.flatMap(branch=>branch.handler?[branch.handler]:[])??[]);
+  return evaluateWarp(node,path,'*',strict).success.some(state=>!handlers.size||!!state.handler&&handlers.has(state.handler));
 }
 export function preferWarpRoutes(items: Entity[], contract: (entity: Entity) => RoutingContract | undefined, path: string, method: string, strict = true): Entity[] {
   const outcomes = new Map<string, Outcome>();

@@ -90,3 +90,10 @@ export const rustWarpWrapperConsumers = rustWarpExtractionConsumers.map(sample=>
     instrument:{file:'src/main.rs',line:83,handler:'outer',providerLine:2049,testProviderLine:2007},
     boundary:'All five original source callbacks now bind conditionally through the recorded parameter-free tracing instrument helper and native default Warp log/trace wrappers. Native Tokio test functions are excluded only in the recorded non-test bin context. Original included text is not read. Captured values, wrapper Reply/Send/Clone/IsReject bounds, generated instrumentation, custom placeholder types and static services remain unreviewed; no new qualified request pairs follow.',
 });
+
+export const rustWarpCorsConsumers = rustWarpWrapperConsumers.map(sample=>sample.key!=='warp-qa'?sample:{
+    ...sample,stateType:{file:'src/main.rs',line:42,name:'Store'},
+    cors:{file:'src/main.rs',constructorLine:219,wrapperLine:265,methods:['GET','POST','PUT','DELETE'],allowedHeaders:['content-type']},
+    recovery:{file:'src/main.rs',line:266,callbackLine:82,handler:'return_error'},
+    boundary:'All five original callbacks stay conditional. Each endpoint retains its original state extraction and the original Store type identity, plus the deferred return_error recovery reference. Native CORS policy/one nested Either output/preflight bypass and recovery cursor reset/one Either output are explicit. Clone/Send/Sync field bounds, query/body/form conversions, generated implementations, CORS header inputs, recovery outcomes and runtime behavior remain unreviewed; no new qualified pairs follow.',
+});

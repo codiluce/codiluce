@@ -943,3 +943,52 @@ installed CLI/API wrapper, provider and original-handler checks pass (3.22 MB / 
 history workers, missing-parser fallback, signal handling and npm-exec checks. The four-consumer audit reproduces
 against the final implementation digest with clean immutable checkouts. Desktop/mobile report layout and roadmap
 filtering/expand/collapse are verified before the phase commit.
+
+## 37. Warp custom state, CORS and recovery (P9e2b2b2c2)
+
+Original custom state output identities come from selected source annotations/constructors and the native
+Clone::clone return Self shape for a captured type with a canonical builtin Clone derive. The type retains its
+owning compilation, independently of the serving bin. Aliases share the original type identity; incompatible
+handler parameter types keep a mismatch condition. Inherent/trait clone competitors, macro shadows, generic or
+missing source types cannot borrow the derived clone proof. Construction, fields, generated implementation and
+Clone/Send/Sync bounds stay unreviewed. Deferred state-type references point to original class declarations;
+no constructor, clone body, generated implementation or state callback executes.
+
+Native CORS builders retain literal origins, HTTP methods, allowed/exposed headers, credentials and max-age
+settings. Canonical Warp HTTP Method constants are separate from Axum MethodFilter guards. Unknown conversion
+or iterator inputs retain the native wrapper and explicit gaps. Builder/wrapper moves, explicit standard clones
+and build transitions stay visible. Ordinary successful input retains its original response callback; allowed
+preflight can bypass the inner Filter with no original handler. The output has one nested Either slot and a
+combined Rejection error. Header-dependent validation and input Reply/Clone/Send/Sync/error bounds remain
+conditional. The URL path/method matcher has no header inputs and cannot certify native OPTIONS differences
+between Warp 0.4.2 and 0.4.3 when access-control-request-method is absent.
+
+Native recovery resets to the original cursor on input rejection and invokes a separately referenced original
+rejection callback. Successful input retains its response handler; possible recovery success cannot borrow that
+handler. Recovery outputs one Either slot and the callback Future error, with TryFuture/IsReject/Send and outcome
+gaps. Recovery references use role `recovery` and execution `deferred-rejection-callback`; they create neither
+direct calls nor catch-all endpoint handlers. A response mapper after CORS/recovery gets a partial source path
+because bypass/recovery may succeed independently of input predicates. Unify requires equal reviewed extraction
+identities; repeated monomorphic original callbacks can share a return identity, while unrelated opaque outputs
+cannot be equated. Source operation coordinates use the actual method tokens in multiline receiver chains.
+
+`qualify-rust-broader-consumers.mjs --cors` compares archived `ad36ba3` with all four immutable original consumers.
+The [custom state/CORS/recovery audit](warp-cors-recovery-source-accuracy.html) retains all 29 original routes and
+14 module declarations, original IDs/ranges, exact cold/warm/revision graphs and actual cache hits. Each unchanged
+Q&A endpoint now has its original line-217 state extraction, line-42 Store type and line-82 return_error callback
+reference; CORS/recovery operation proof comes from lines 265/266. Recorded CORS methods and headers match the
+original source. All five handlers remain conditional. Four qualified controls, 19 conditional bindings, six
+misses, one general module resolved, eight automatic candidates and three static services remain unchanged.
+
+Eleven conformance cases cover native Warp 0.3.7/0.4.2/0.4.3 policy/ownership, preflight bypass, recovery cursor
+reset, original deferred references, source state aliases/mismatches/shadows, imported library type identity,
+builder moves/clones, cache/revision invalidation, multiline coordinates and output unification. Installed CLI/API
+fixtures retain CRLF/emoji original state/handler/recovery declarations and conditional flows. Rust router contract
+version is 12; general import/resolver versions remain 6. This completes the initial P9e2b2b2c2 slice. Axum helpers/
+middleware under P9e2b2b2c3 and broader P9/P10 qualification remain open; the full goal remains active.
+
+Final verification: all 1,097 tests pass with four workers against the frozen implementation; CLI/web typechecks
+pass. The production build and installed CLI/API original state/handler/recovery proof checks pass (3.22 MB /
+291 files), along with compiled history workers, missing-parser fallback, signal handling and npm-exec checks.
+The reproduced four-consumer audit matches the final implementation digest and all original checkouts remain
+clean. Desktop/mobile report layout and roadmap Rust filtering/expand/collapse are verified before committing.
