@@ -8,12 +8,17 @@ the authoritative parsers for their languages.
 `manifest.json` records each grammar's upstream revision, artifact package and
 version, SHA-256, language ABI and license. Six artifacts come from the pinned
 VS Code grammar bundle; Kotlin, C, C++ and Objective-C come from their upstream grammar packages. The
-bundle's build revision and each upstream license are retained here. The
+bundle's build revision and each upstream license are retained here. Swift comes
+from its pinned upstream 0.7.3 release WASM asset, with an immutable source
+revision and artifact URL/checksum; it is not an npm artifact. The
 runtime is pinned in `package.json` and the manifest.
 
-`npm run grammars:sync` restores WASM files from the installed development
-dependencies, after verifying package versions and checksums. It does not
-download or compile anything. Normal CLI builds verify and copy this directory
+`npm run grammars:sync` restores the ten npm WASM artifacts from installed
+development dependencies after verifying versions/checksums, and verifies the
+committed Swift release asset. It runs offline and compiles nothing. To restore
+the Swift release asset explicitly, run
+`npm run grammars:sync -- --download-releases`; this downloads the pinned URL
+and verifies its checksum before writing it. Normal CLI builds verify and copy this directory
 to `dist/grammars/`. An installed package loads it relative to its own module,
 so the current working directory does not affect asset lookup.
 
@@ -23,7 +28,7 @@ grammar release requires declaration, range, overload, malformed-source and
 installed-package conformance checks before updating the checksum.
 
 The current adapters extract named types, modules/namespaces, functions and
-methods for Python, Go, Ruby, Rust, Java, C#, Kotlin, C, C++ and Objective-C. Decorators/annotations,
+methods for Python, Go, Ruby, Rust, Java, C#, Kotlin, C, C++, Objective-C and Swift. Decorators/annotations,
 modifiers, signatures and lexical containment are preserved where the grammar
 exposes them. Local Go receivers and Rust impl methods attach only to a unique
 type in the same file; cross-file ownership and language binding belong to the
@@ -93,6 +98,26 @@ containers/selectors with an explicit gap, while standalone C remains usable.
 Imports, references, framework, effects and guards remain unsupported. See
 [macro/mixed original-source qualification](../docs/objc-cpp-source-accuracy.html)
 and the [historical P10a2a source inventory](../docs/objc-source-accuracy.html).
+
+Swift uses the official upstream 0.7.3 release WASM (ABI 15, MIT). Original
+classes/structs/enums/actors/protocols/extensions retain separate lexical owners;
+there is no extension/type merging. Original functions/methods, parameter labels
+(`swiftName`), overloaded signatures, async/typed throws, generic constraints,
+initializers/deinitializers/subscripts, native operators/precedence groups,
+properties, enum cases, aliases and associated types retain original ranges.
+Local bindings and generated accessors/memberwise initializers/enum factories
+add no declarations. Headers remove actual AST comments without rewriting source.
+
+`swiftSyntax` stores original imports, conditional directives and macro invocations.
+Branches retain source conditions without evaluation. Unknown potentially generating
+attributes and macro invocations produce explicit expansion gaps. The pinned grammar
+can emit a zero-width recovery error for `#if` directly inside a type body: valid
+headers/branch context survive with a partial outcome. Invalid headers add no guessed
+facts. No Swift compiler, SDK, SwiftPM manifest, target dependencies or application
+executes. Imports, cross-file extension/type binding, references, frameworks, effects
+and guards remain unsupported. Asset/query/source-version changes invalidate caches;
+missing Swift assets fail Swift files independently. See the
+[original Swift source audit](../docs/swift-source-accuracy.html).
 
 Non-callable declarations use the existing graph `class` type with a
 `declarationKind`/`role`; properties exposed by C# use `method` with role

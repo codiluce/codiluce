@@ -94,6 +94,9 @@ How far Codiluce follows the code depends on the stack:
   selectors, standard enum/options source profiles, native C++ declarations and C++-typed selector headers.
   Original-source recovery preserves positions and context gaps. Mixed files and SDK macros remain partial; imports,
   shared types, message dispatch and compiler-generated accessors remain open.
+- **Swift structure:** original types, protocols, extensions, functions, argument labels, properties, enum cases,
+  initializers, subscripts and operators with exact source ranges. Imports and macros retain source syntax;
+  cross-file binding and generated declarations remain visible gaps.
 - **Map:** Angular, Remix, Fastify, Symfony, Quarkus, Blazor and every other language and framework are detected and
   mapped with their files, lines and Git metrics.
 
@@ -118,6 +121,13 @@ registered routes, routers/blueprints, URL includes/namespaces, invoked or confi
 registration retain visible gaps. The inspector shows which analysis features are available for each file. Other ecosystems
 are detected and mapped with their files, lines and Git metrics. Missing
 yours? [Tell us](https://github.com/codiluce/codiluce/issues).
+
+Swift now has an initial source-only structural adapter with pinned upstream WASM, lexical ownership,
+label-aware overload identities, original attributes/conditional context and bounded parser recovery. No Swift
+compiler, SDK, SwiftPM manifest or target code executes. Imports/references/frameworks remain unsupported;
+macro/property-wrapper expansion and conditional grammar recovery stay explicit. Twenty conformance cases,
+installed-package/history checks and an [immutable two-file source audit](docs/swift-source-accuracy.html) qualify
+this initial subset. Broader Swift source accuracy and native OS checks remain P10 release gates.
 
 Java and Kotlin now resolve original local import declarations within selected Maven reactors, literal Gradle projects
 and recorded source/classpath inputs. Explicit, wildcard, static and alias imports retain source evidence and visibility

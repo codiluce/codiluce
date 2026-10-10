@@ -6,9 +6,10 @@ export interface GrammarSpec {
   language: string; file: string; sha256: string; abi: number;
   source: string; sourceRevision: string; license: string; licenseFile: string;
   artifactPackage: string; artifactVersion: string; artifactPath: string;
+  artifactUrl?:string;
 }
 interface GrammarManifest { format: number; runtime: { package: string; version: string }; grammars: GrammarSpec[] }
-export const STRUCTURAL_LANGUAGES = ['python', 'go', 'ruby', 'rust', 'java', 'csharp', 'kotlin', 'c', 'cpp', 'objective-c'] as const;
+export const STRUCTURAL_LANGUAGES = ['python', 'go', 'ruby', 'rust', 'java', 'csharp', 'kotlin', 'c', 'cpp', 'objective-c', 'swift'] as const;
 // In a source checkout: grammars/. In a compiled package: dist/grammars/.
 export const GRAMMAR_ROOT = new URL('../../../grammars/', import.meta.url);
 let manifestText = '', manifestError: string | undefined;

@@ -1,0 +1,1 @@
+[(class_declaration) (protocol_declaration) (function_declaration) (protocol_function_declaration) (init_declaration) (deinit_declaration) (subscript_declaration) (property_declaration) (protocol_property_declaration) (enum_entry) (typealias_declaration) (associatedtype_declaration) (macro_declaration) (operator_declaration) (precedence_group_declaration)] @declaration

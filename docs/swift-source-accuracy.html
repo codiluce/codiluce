@@ -1,0 +1,1840 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Swift original source qualification</title><style>body{font:16px/1.6 system-ui,sans-serif;background:#101822;color:#e5ecf4;margin:0;padding:clamp(16px,4vw,48px)}main{max-width:1120px;margin:auto}h1{font-size:clamp(28px,5vw,42px);line-height:1.2}a,code{color:#8bddd8}code{overflow-wrap:anywhere}table{border-collapse:collapse;width:100%;min-width:650px}th,td{padding:12px;text-align:left;border-bottom:1px solid #344353}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}.scroll{overflow:auto}.status{padding:18px;border:1px solid #688c8d;border-radius:8px}summary{cursor:pointer;padding:12px 0}</style></head><body><main>
+ <h1>Swift original source qualification</h1><p>P10b1 · 2026-10-10T19:35:06.799Z · v22.12.0 · linux/x64. Immutable Alamofire 5.10.2 and Swift Algorithms 1.2.0 original bytes, independent name-line/kind inventories and SHA-256 checks.</p>
+ <p class="status"><strong>60 matched / 60 reviewed original declarations · 0 missed · 0 extra</strong><br>All inventoried names, kinds, name lines, lexical parents and UTF-16 source ranges match. This two-file sample does not establish broad Swift accuracy, compiler validity, framework support or native OS compatibility.</p>
+ <div class="scroll"><table><thead><tr><th>Immutable original source</th><th>Matched</th><th>Findings</th><th>Capability</th></tr></thead><tbody><tr><td><a href="https://github.com/Alamofire/Alamofire/blob/513364f870f6bfc468f9d2ff0a95caccc10044c5/Source/Core/HTTPMethod.swift">Alamofire/Alamofire 5.10.2 · Source/Core/HTTPMethod.swift</a></td><td>13</td><td>0</td><td>Supported original subset</td></tr><tr><td><a href="https://github.com/apple/swift-algorithms/blob/f6919dfc309e7f1b56224378b11e28bab5bccc42/Sources/Algorithms/AdjacentPairs.swift">apple/swift-algorithms 1.2.0 · Sources/Algorithms/AdjacentPairs.swift</a></td><td>47</td><td>0</td><td>Supported original subset</td></tr></tbody></table></div>
+ <p>Original classes, structs, enums, actors, protocols and extensions retain separate lexical owners. Named functions/methods, generic constraints, async/typed throws, argument labels, initializers, deinitializers, subscripts, operators, properties, enum cases, aliases and associated types preserve source spelling. The Algorithms sample includes constrained extensions, nested iterators/indices, overloaded methods, original comparison operators and subscripts. No synthesized accessors, memberwise constructors, enum factories, macro outputs or merged extension/type ownership appear.</p>
+ <p><code>swiftSyntax</code> records original imports, conditional directives and macro invocations. Import resolution, cross-file type/extension binding, references, frameworks, effects and guards remain unsupported. Known source attributes retain spelling; unknown potentially generating attributes and macro invocations produce explicit expansion gaps. Neither SwiftPM manifests nor Swift compiler/SDK/target dependencies execute. See the <a href="https://docs.swift.org/latest/documentation/the-swift-programming-language/declarations/">Swift declaration model</a> and <a href="https://docs.swift.org/latest/documentation/the-swift-programming-language/macros/">macro model</a>.</p>
+ <p>The pinned upstream <a href="https://github.com/alex-pinkus/tree-sitter-swift/releases/tag/0.7.3">0.7.3 grammar release</a> uses ABI 15 and an MIT license. Its original conditional-directive parsing can emit an empty recovery error for <code>#if</code> directly inside a type body. Such files retain their original declarations/branch context and report partial structure. Branches never evaluate. Invalid headers add no guessed declarations; body recovery retains valid headers. Twenty conformance cases cover these limits, labels/overloads, strings/comments, original CRLF/emoji/EOF ranges, budget caps and cache invalidation.</p>
+ <p>Cold/warm and revision analysis preserve original graph identities/evidence, with two actual syntax-cache hits. Installed-package CLI/API/source and compiled history checks cover original Swift declarations and labels. Removing Swift WASM/query assets fails only Swift analysis while C++ remains usable. Broader Swift 6 source portfolios, mixed monorepo/history throughput, full index process-tree memory and native Windows/macOS remain P10 release gates.</p>
+ <h2>Grammar startup on this Linux host</h2><p>Three fresh direct parser processes reading original AdjacentPairs.swift: medians 16.3 ms runtime initialization, 15.3 ms grammar load, 59.4 ms first extraction and 144.4 MiB process peak RSS. Process startup, worker IPC and whole-index process-tree memory are excluded. <a href="swift-compatibility-performance.html">Existing TS/Laravel regression comparison</a> measures regressions separately.</p>
+ <p>Implementation digest: <code>6bfc587c484b41196cc796c0de777d578c94e33dc48030834d30528357f06aba</code>. Reproduce: <code>node --experimental-sqlite --import tsx scripts/qualify-swift-source.mjs --output docs/swift-source-accuracy.html</code>. Optional <code>--source</code> reads the two displayed original paths and checks immutable hashes. <a href="language-framework-compatibility.html#implementation">Full roadmap</a></p>
+ <details><summary>Independent inventories, immutable hashes and original source facts</summary><pre>{
+  &quot;phase&quot;: &quot;P10b1&quot;,
+  &quot;measuredAt&quot;: &quot;2026-10-10T19:35:06.799Z&quot;,
+  &quot;baseline&quot;: &quot;edf383c&quot;,
+  &quot;implementationDigest&quot;: &quot;6bfc587c484b41196cc796c0de777d578c94e33dc48030834d30528357f06aba&quot;,
+  &quot;node&quot;: &quot;v22.12.0&quot;,
+  &quot;platform&quot;: &quot;linux/x64&quot;,
+  &quot;reviewedSourceDeclarations&quot;: 60,
+  &quot;matchedDeclarations&quot;: 60,
+  &quot;extraDeclarations&quot;: 0,
+  &quot;missedDeclarations&quot;: 0,
+  &quot;coldWarmEqual&quot;: true,
+  &quot;revisionModeEqual&quot;: true,
+  &quot;syntaxFactCacheHits&quot;: 2,
+  &quot;grammar&quot;: {
+    &quot;repetitions&quot;: 3,
+    &quot;median&quot;: {
+      &quot;runtimeMs&quot;: 16.258892000000003,
+      &quot;grammarLoadMs&quot;: 15.272645000000011,
+      &quot;firstExtractionMs&quot;: 59.38812999999999,
+      &quot;peakRssKiB&quot;: 147856
+    },
+    &quot;runs&quot;: [
+      {
+        &quot;runtimeMs&quot;: 16.711382000000015,
+        &quot;grammarLoadMs&quot;: 15.272645000000011,
+        &quot;firstExtractionMs&quot;: 59.38812999999999,
+        &quot;peakRssKiB&quot;: 141556
+      },
+      {
+        &quot;runtimeMs&quot;: 16.258892000000003,
+        &quot;grammarLoadMs&quot;: 15.889928999999995,
+        &quot;firstExtractionMs&quot;: 76.59318000000002,
+        &quot;peakRssKiB&quot;: 151100
+      },
+      {
+        &quot;runtimeMs&quot;: 15.215516000000008,
+        &quot;grammarLoadMs&quot;: 14.377692999999965,
+        &quot;firstExtractionMs&quot;: 48.21776,
+        &quot;peakRssKiB&quot;: 147856
+      }
+    ]
+  },
+  &quot;results&quot;: [
+    {
+      &quot;repo&quot;: &quot;Alamofire/Alamofire&quot;,
+      &quot;version&quot;: &quot;5.10.2&quot;,
+      &quot;commit&quot;: &quot;513364f870f6bfc468f9d2ff0a95caccc10044c5&quot;,
+      &quot;file&quot;: &quot;Source/Core/HTTPMethod.swift&quot;,
+      &quot;sha256&quot;: &quot;38a11f5cc3ef4beafe86a18debe0b9b3588ff054a3cd3681bd6371dfe5e6f64f&quot;,
+      &quot;expected&quot;: [
+        [
+          29,
+          &quot;HTTPMethod&quot;,
+          &quot;struct&quot;
+        ],
+        [
+          31,
+          &quot;connect&quot;,
+          &quot;property&quot;
+        ],
+        [
+          33,
+          &quot;delete&quot;,
+          &quot;property&quot;
+        ],
+        [
+          35,
+          &quot;get&quot;,
+          &quot;property&quot;
+        ],
+        [
+          37,
+          &quot;head&quot;,
+          &quot;property&quot;
+        ],
+        [
+          39,
+          &quot;options&quot;,
+          &quot;property&quot;
+        ],
+        [
+          41,
+          &quot;patch&quot;,
+          &quot;property&quot;
+        ],
+        [
+          43,
+          &quot;post&quot;,
+          &quot;property&quot;
+        ],
+        [
+          45,
+          &quot;put&quot;,
+          &quot;property&quot;
+        ],
+        [
+          47,
+          &quot;query&quot;,
+          &quot;property&quot;
+        ],
+        [
+          49,
+          &quot;trace&quot;,
+          &quot;property&quot;
+        ],
+        [
+          51,
+          &quot;rawValue&quot;,
+          &quot;property&quot;
+        ],
+        [
+          53,
+          &quot;init&quot;,
+          &quot;constructor&quot;
+        ]
+      ],
+      &quot;url&quot;: &quot;https://github.com/Alamofire/Alamofire/blob/513364f870f6bfc468f9d2ff0a95caccc10044c5/Source/Core/HTTPMethod.swift&quot;,
+      &quot;facts&quot;: {
+        &quot;declarations&quot;: [
+          {
+            &quot;key&quot;: &quot;swift:1415:2438:struct:1429&quot;,
+            &quot;name&quot;: &quot;HTTPMethod&quot;,
+            &quot;qualifiedName&quot;: &quot;HTTPMethod&quot;,
+            &quot;kind&quot;: &quot;struct&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;public struct HTTPMethod: RawRepresentable, Equatable, Hashable, Sendable&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 29,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 56,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 1415,
+            &quot;end&quot;: 2438,
+            &quot;nameEnd&quot;: 1439,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:1521:1580:property:1539&quot;,
+            &quot;name&quot;: &quot;connect&quot;,
+            &quot;qualifiedName&quot;: &quot;HTTPMethod.connect&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;let connect&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 31,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 31,
+              &quot;endColumn&quot;: 64
+            },
+            &quot;start&quot;: 1521,
+            &quot;end&quot;: 1580,
+            &quot;nameEnd&quot;: 1546,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:1415:2438:struct:1429&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;,
+              &quot;static&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:1610:1667:property:1628&quot;,
+            &quot;name&quot;: &quot;delete&quot;,
+            &quot;qualifiedName&quot;: &quot;HTTPMethod.delete&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;let delete&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 33,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 33,
+              &quot;endColumn&quot;: 62
+            },
+            &quot;start&quot;: 1610,
+            &quot;end&quot;: 1667,
+            &quot;nameEnd&quot;: 1634,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:1415:2438:struct:1429&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;,
+              &quot;static&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:1694:1745:property:1712&quot;,
+            &quot;name&quot;: &quot;get&quot;,
+            &quot;qualifiedName&quot;: &quot;HTTPMethod.get&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;let get&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 35,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 35,
+              &quot;endColumn&quot;: 56
+            },
+            &quot;start&quot;: 1694,
+            &quot;end&quot;: 1745,
+            &quot;nameEnd&quot;: 1715,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:1415:2438:struct:1429&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;,
+              &quot;static&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:1773:1826:property:1791&quot;,
+            &quot;name&quot;: &quot;head&quot;,
+            &quot;qualifiedName&quot;: &quot;HTTPMethod.head&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;let head&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 37,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 37,
+              &quot;endColumn&quot;: 58
+            },
+            &quot;start&quot;: 1773,
+            &quot;end&quot;: 1826,
+            &quot;nameEnd&quot;: 1795,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:1415:2438:struct:1429&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;,
+              &quot;static&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:1857:1916:property:1875&quot;,
+            &quot;name&quot;: &quot;options&quot;,
+            &quot;qualifiedName&quot;: &quot;HTTPMethod.options&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;let options&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 39,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 39,
+              &quot;endColumn&quot;: 64
+            },
+            &quot;start&quot;: 1857,
+            &quot;end&quot;: 1916,
+            &quot;nameEnd&quot;: 1882,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:1415:2438:struct:1429&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;,
+              &quot;static&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:1945:2000:property:1963&quot;,
+            &quot;name&quot;: &quot;patch&quot;,
+            &quot;qualifiedName&quot;: &quot;HTTPMethod.patch&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;let patch&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 41,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 41,
+              &quot;endColumn&quot;: 60
+            },
+            &quot;start&quot;: 1945,
+            &quot;end&quot;: 2000,
+            &quot;nameEnd&quot;: 1968,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:1415:2438:struct:1429&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;,
+              &quot;static&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:2028:2081:property:2046&quot;,
+            &quot;name&quot;: &quot;post&quot;,
+            &quot;qualifiedName&quot;: &quot;HTTPMethod.post&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;let post&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 43,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 43,
+              &quot;endColumn&quot;: 58
+            },
+            &quot;start&quot;: 2028,
+            &quot;end&quot;: 2081,
+            &quot;nameEnd&quot;: 2050,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:1415:2438:struct:1429&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;,
+              &quot;static&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:2108:2159:property:2126&quot;,
+            &quot;name&quot;: &quot;put&quot;,
+            &quot;qualifiedName&quot;: &quot;HTTPMethod.put&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;let put&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 45,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 45,
+              &quot;endColumn&quot;: 56
+            },
+            &quot;start&quot;: 2108,
+            &quot;end&quot;: 2159,
+            &quot;nameEnd&quot;: 2129,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:1415:2438:struct:1429&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;,
+              &quot;static&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:2188:2243:property:2206&quot;,
+            &quot;name&quot;: &quot;query&quot;,
+            &quot;qualifiedName&quot;: &quot;HTTPMethod.query&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;let query&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 47,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 47,
+              &quot;endColumn&quot;: 60
+            },
+            &quot;start&quot;: 2188,
+            &quot;end&quot;: 2243,
+            &quot;nameEnd&quot;: 2211,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:1415:2438:struct:1429&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;,
+              &quot;static&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:2272:2327:property:2290&quot;,
+            &quot;name&quot;: &quot;trace&quot;,
+            &quot;qualifiedName&quot;: &quot;HTTPMethod.trace&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;let trace&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 49,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 49,
+              &quot;endColumn&quot;: 60
+            },
+            &quot;start&quot;: 2272,
+            &quot;end&quot;: 2327,
+            &quot;nameEnd&quot;: 2295,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:1415:2438:struct:1429&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;,
+              &quot;static&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:2333:2360:property:2344&quot;,
+            &quot;name&quot;: &quot;rawValue&quot;,
+            &quot;qualifiedName&quot;: &quot;HTTPMethod.rawValue&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;let rawValue: String&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 51,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 51,
+              &quot;endColumn&quot;: 32
+            },
+            &quot;start&quot;: 2333,
+            &quot;end&quot;: 2360,
+            &quot;nameEnd&quot;: 2352,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;swift:1415:2438:struct:1429&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:2366:2436:constructor:2373&quot;,
+            &quot;name&quot;: &quot;init&quot;,
+            &quot;qualifiedName&quot;: &quot;HTTPMethod.init&quot;,
+            &quot;kind&quot;: &quot;constructor&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;public init(rawValue: String)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 53,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 55,
+              &quot;endColumn&quot;: 6
+            },
+            &quot;start&quot;: 2366,
+            &quot;end&quot;: 2436,
+            &quot;nameEnd&quot;: 2377,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:1415:2438:struct:1429&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;swiftName&quot;: &quot;init(_:)&quot;,
+            &quot;visibility&quot;: &quot;public&quot;
+          }
+        ],
+        &quot;issues&quot;: [],
+        &quot;truncated&quot;: false,
+        &quot;swift&quot;: {
+          &quot;imports&quot;: [],
+          &quot;directives&quot;: [],
+          &quot;macroInvocations&quot;: [],
+          &quot;complete&quot;: true
+        }
+      }
+    },
+    {
+      &quot;repo&quot;: &quot;apple/swift-algorithms&quot;,
+      &quot;version&quot;: &quot;1.2.0&quot;,
+      &quot;commit&quot;: &quot;f6919dfc309e7f1b56224378b11e28bab5bccc42&quot;,
+      &quot;file&quot;: &quot;Sources/Algorithms/AdjacentPairs.swift&quot;,
+      &quot;sha256&quot;: &quot;95d2387724ad0c1b656805c18e43a53b9d09b0768b174b31c129bcc070899c38&quot;,
+      &quot;expected&quot;: [
+        [
+          12,
+          &quot;Sequence&quot;,
+          &quot;extension&quot;
+        ],
+        [
+          34,
+          &quot;adjacentPairs&quot;,
+          &quot;method&quot;
+        ],
+        [
+          39,
+          &quot;Collection&quot;,
+          &quot;extension&quot;
+        ],
+        [
+          61,
+          &quot;adjacentPairs&quot;,
+          &quot;method&quot;
+        ],
+        [
+          70,
+          &quot;AdjacentPairsSequence&quot;,
+          &quot;struct&quot;
+        ],
+        [
+          72,
+          &quot;base&quot;,
+          &quot;property&quot;
+        ],
+        [
+          76,
+          &quot;init&quot;,
+          &quot;constructor&quot;
+        ],
+        [
+          81,
+          &quot;AdjacentPairsSequence&quot;,
+          &quot;extension&quot;
+        ],
+        [
+          84,
+          &quot;Iterator&quot;,
+          &quot;struct&quot;
+        ],
+        [
+          86,
+          &quot;base&quot;,
+          &quot;property&quot;
+        ],
+        [
+          89,
+          &quot;previousElement&quot;,
+          &quot;property&quot;
+        ],
+        [
+          92,
+          &quot;init&quot;,
+          &quot;constructor&quot;
+        ],
+        [
+          98,
+          &quot;AdjacentPairsSequence.Iterator&quot;,
+          &quot;extension&quot;
+        ],
+        [
+          99,
+          &quot;Element&quot;,
+          &quot;type&quot;
+        ],
+        [
+          102,
+          &quot;next&quot;,
+          &quot;method&quot;
+        ],
+        [
+          116,
+          &quot;AdjacentPairsSequence&quot;,
+          &quot;extension&quot;
+        ],
+        [
+          118,
+          &quot;makeIterator&quot;,
+          &quot;method&quot;
+        ],
+        [
+          123,
+          &quot;underestimatedCount&quot;,
+          &quot;property&quot;
+        ],
+        [
+          128,
+          &quot;AdjacentPairsSequence&quot;,
+          &quot;extension&quot;
+        ],
+        [
+          136,
+          &quot;AdjacentPairsCollection&quot;,
+          &quot;struct&quot;
+        ],
+        [
+          138,
+          &quot;base&quot;,
+          &quot;property&quot;
+        ],
+        [
+          141,
+          &quot;secondBaseIndex&quot;,
+          &quot;property&quot;
+        ],
+        [
+          144,
+          &quot;init&quot;,
+          &quot;constructor&quot;
+        ],
+        [
+          152,
+          &quot;AdjacentPairsCollection&quot;,
+          &quot;extension&quot;
+        ],
+        [
+          154,
+          &quot;Index&quot;,
+          &quot;struct&quot;
+        ],
+        [
+          156,
+          &quot;first&quot;,
+          &quot;property&quot;
+        ],
+        [
+          159,
+          &quot;second&quot;,
+          &quot;property&quot;
+        ],
+        [
+          162,
+          &quot;init&quot;,
+          &quot;constructor&quot;
+        ],
+        [
+          168,
+          &quot;==&quot;,
+          &quot;method&quot;
+        ],
+        [
+          173,
+          &quot;&lt;&quot;,
+          &quot;method&quot;
+        ],
+        [
+          179,
+          &quot;AdjacentPairsCollection&quot;,
+          &quot;extension&quot;
+        ],
+        [
+          181,
+          &quot;startIndex&quot;,
+          &quot;property&quot;
+        ],
+        [
+          188,
+          &quot;endIndex&quot;,
+          &quot;property&quot;
+        ],
+        [
+          193,
+          &quot;subscript&quot;,
+          &quot;subscript&quot;
+        ],
+        [
+          198,
+          &quot;index&quot;,
+          &quot;method&quot;
+        ],
+        [
+          207,
+          &quot;index&quot;,
+          &quot;method&quot;
+        ],
+        [
+          218,
+          &quot;index&quot;,
+          &quot;method&quot;
+        ],
+        [
+          234,
+          &quot;offsetForward&quot;,
+          &quot;method&quot;
+        ],
+        [
+          252,
+          &quot;offsetBackward&quot;,
+          &quot;method&quot;
+        ],
+        [
+          270,
+          &quot;distance&quot;,
+          &quot;method&quot;
+        ],
+        [
+          279,
+          &quot;count&quot;,
+          &quot;property&quot;
+        ],
+        [
+          284,
+          &quot;AdjacentPairsCollection&quot;,
+          &quot;extension&quot;
+        ],
+        [
+          288,
+          &quot;index&quot;,
+          &quot;method&quot;
+        ],
+        [
+          298,
+          &quot;AdjacentPairsCollection&quot;,
+          &quot;extension&quot;
+        ],
+        [
+          301,
+          &quot;AdjacentPairsCollection&quot;,
+          &quot;extension&quot;
+        ],
+        [
+          304,
+          &quot;AdjacentPairsCollection.Index&quot;,
+          &quot;extension&quot;
+        ],
+        [
+          306,
+          &quot;hash&quot;,
+          &quot;method&quot;
+        ]
+      ],
+      &quot;url&quot;: &quot;https://github.com/apple/swift-algorithms/blob/f6919dfc309e7f1b56224378b11e28bab5bccc42/Sources/Algorithms/AdjacentPairs.swift&quot;,
+      &quot;facts&quot;: {
+        &quot;declarations&quot;: [
+          {
+            &quot;key&quot;: &quot;swift:440:1307:extension:450&quot;,
+            &quot;name&quot;: &quot;Sequence&quot;,
+            &quot;qualifiedName&quot;: &quot;Sequence&quot;,
+            &quot;kind&quot;: &quot;extension&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;extension Sequence&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 12,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 37,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 440,
+            &quot;end&quot;: 1307,
+            &quot;nameEnd&quot;: 458,
+            &quot;declarationForm&quot;: &quot;definition&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:1190:1305:method:1215&quot;,
+            &quot;name&quot;: &quot;adjacentPairs&quot;,
+            &quot;qualifiedName&quot;: &quot;Sequence.adjacentPairs&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable public func adjacentPairs() -&gt; AdjacentPairsSequence&lt;Self&gt;&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 33,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 36,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 1190,
+            &quot;end&quot;: 1305,
+            &quot;nameEnd&quot;: 1228,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:440:1307:extension:450&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;adjacentPairs()&quot;,
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:1309:2158:extension:1319&quot;,
+            &quot;name&quot;: &quot;Collection&quot;,
+            &quot;qualifiedName&quot;: &quot;Collection&quot;,
+            &quot;kind&quot;: &quot;extension&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;extension Collection&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 39,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 64,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 1309,
+            &quot;end&quot;: 2158,
+            &quot;nameEnd&quot;: 1329,
+            &quot;declarationForm&quot;: &quot;definition&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:2037:2156:method:2062&quot;,
+            &quot;name&quot;: &quot;adjacentPairs&quot;,
+            &quot;qualifiedName&quot;: &quot;Collection.adjacentPairs&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable public func adjacentPairs() -&gt; AdjacentPairsCollection&lt;Self&gt;&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 60,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 63,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 2037,
+            &quot;end&quot;: 2156,
+            &quot;nameEnd&quot;: 2075,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:1309:2158:extension:1319&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;adjacentPairs()&quot;,
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:2346:2593:struct:2360&quot;,
+            &quot;name&quot;: &quot;AdjacentPairsSequence&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsSequence&quot;,
+            &quot;kind&quot;: &quot;struct&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;public struct AdjacentPairsSequence&lt;Base: Sequence&gt;&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 70,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 79,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 2346,
+            &quot;end&quot;: 2593,
+            &quot;nameEnd&quot;: 2381,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:2402:2445:property:2435&quot;,
+            &quot;name&quot;: &quot;base&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsSequence.base&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;let base: Base&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 71,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 72,
+              &quot;endColumn&quot;: 26
+            },
+            &quot;start&quot;: 2402,
+            &quot;end&quot;: 2445,
+            &quot;nameEnd&quot;: 2439,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;swift:2346:2593:struct:2360&quot;,
+            &quot;modifiers&quot;: [
+              &quot;internal&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@usableFromInline&quot;
+            ],
+            &quot;visibility&quot;: &quot;internal&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:2526:2591:constructor:2548&quot;,
+            &quot;name&quot;: &quot;init&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsSequence.init&quot;,
+            &quot;kind&quot;: &quot;constructor&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable internal init(base: Base)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 75,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 78,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 2526,
+            &quot;end&quot;: 2591,
+            &quot;nameEnd&quot;: 2552,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:2346:2593:struct:2360&quot;,
+            &quot;modifiers&quot;: [
+              &quot;internal&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;init(_:)&quot;,
+            &quot;visibility&quot;: &quot;internal&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:2595:2972:extension:2605&quot;,
+            &quot;name&quot;: &quot;AdjacentPairsSequence&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsSequence&quot;,
+            &quot;kind&quot;: &quot;extension&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;extension AdjacentPairsSequence&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 81,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 96,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 2595,
+            &quot;end&quot;: 2972,
+            &quot;nameEnd&quot;: 2626,
+            &quot;declarationForm&quot;: &quot;definition&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:2726:2970:struct:2740&quot;,
+            &quot;name&quot;: &quot;Iterator&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsSequence.Iterator&quot;,
+            &quot;kind&quot;: &quot;struct&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;public struct Iterator&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 84,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 95,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 2726,
+            &quot;end&quot;: 2970,
+            &quot;nameEnd&quot;: 2748,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:2595:2972:extension:2605&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:2755:2809:property:2790&quot;,
+            &quot;name&quot;: &quot;base&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsSequence.Iterator.base&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;var base: Base.Iterator&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 85,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 86,
+              &quot;endColumn&quot;: 37
+            },
+            &quot;start&quot;: 2755,
+            &quot;end&quot;: 2809,
+            &quot;nameEnd&quot;: 2794,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;swift:2726:2970:struct:2740&quot;,
+            &quot;modifiers&quot;: [
+              &quot;internal&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@usableFromInline&quot;
+            ],
+            &quot;visibility&quot;: &quot;internal&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:2815:2880:property:2850&quot;,
+            &quot;name&quot;: &quot;previousElement&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsSequence.Iterator.previousElement&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;var previousElement: Base.Element?&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 88,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 89,
+              &quot;endColumn&quot;: 48
+            },
+            &quot;start&quot;: 2815,
+            &quot;end&quot;: 2880,
+            &quot;nameEnd&quot;: 2865,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;swift:2726:2970:struct:2740&quot;,
+            &quot;modifiers&quot;: [
+              &quot;internal&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@usableFromInline&quot;
+            ],
+            &quot;visibility&quot;: &quot;internal&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:2886:2966:constructor:2910&quot;,
+            &quot;name&quot;: &quot;init&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsSequence.Iterator.init&quot;,
+            &quot;kind&quot;: &quot;constructor&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable internal init(base: Base.Iterator)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 91,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 94,
+              &quot;endColumn&quot;: 6
+            },
+            &quot;start&quot;: 2886,
+            &quot;end&quot;: 2966,
+            &quot;nameEnd&quot;: 2914,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:2726:2970:struct:2740&quot;,
+            &quot;modifiers&quot;: [
+              &quot;internal&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;init(_:)&quot;,
+            &quot;visibility&quot;: &quot;internal&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:2974:3382:extension:2984&quot;,
+            &quot;name&quot;: &quot;AdjacentPairsSequence.Iterator&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsSequence.Iterator&quot;,
+            &quot;kind&quot;: &quot;extension&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;extension AdjacentPairsSequence.Iterator: IteratorProtocol&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 98,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 114,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 2974,
+            &quot;end&quot;: 3382,
+            &quot;nameEnd&quot;: 3014,
+            &quot;declarationForm&quot;: &quot;definition&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:3037:3092:type:3054&quot;,
+            &quot;name&quot;: &quot;Element&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsSequence.Iterator.Element&quot;,
+            &quot;kind&quot;: &quot;type&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;public typealias Element = (Base.Element, Base.Element)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 99,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 99,
+              &quot;endColumn&quot;: 58
+            },
+            &quot;start&quot;: 3037,
+            &quot;end&quot;: 3092,
+            &quot;nameEnd&quot;: 3061,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;swift:2974:3382:extension:2984&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:3096:3380:method:3130&quot;,
+            &quot;name&quot;: &quot;next&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsSequence.Iterator.next&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable public mutating func next() -&gt; Element?&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 101,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 113,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 3096,
+            &quot;end&quot;: 3380,
+            &quot;nameEnd&quot;: 3134,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:2974:3382:extension:2984&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;,
+              &quot;mutating&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;next()&quot;,
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:3384:3634:extension:3394&quot;,
+            &quot;name&quot;: &quot;AdjacentPairsSequence&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsSequence&quot;,
+            &quot;kind&quot;: &quot;extension&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;extension AdjacentPairsSequence: Sequence&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 116,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 126,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 3384,
+            &quot;end&quot;: 3634,
+            &quot;nameEnd&quot;: 3415,
+            &quot;declarationForm&quot;: &quot;definition&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:3430:3527:method:3455&quot;,
+            &quot;name&quot;: &quot;makeIterator&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsSequence.makeIterator&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable public func makeIterator() -&gt; Iterator&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 117,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 120,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 3430,
+            &quot;end&quot;: 3527,
+            &quot;nameEnd&quot;: 3467,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:3384:3634:extension:3394&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;makeIterator()&quot;,
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:3531:3632:property:3555&quot;,
+            &quot;name&quot;: &quot;underestimatedCount&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsSequence.underestimatedCount&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;var underestimatedCount: Int&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 122,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 125,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 3531,
+            &quot;end&quot;: 3632,
+            &quot;nameEnd&quot;: 3574,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:3384:3634:extension:3394&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:3636:3727:extension:3646&quot;,
+            &quot;name&quot;: &quot;AdjacentPairsSequence&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsSequence&quot;,
+            &quot;kind&quot;: &quot;extension&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;extension AdjacentPairsSequence: LazySequenceProtocol where Base: LazySequenceProtocol&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 128,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 129,
+              &quot;endColumn&quot;: 38
+            },
+            &quot;start&quot;: 3636,
+            &quot;end&quot;: 3727,
+            &quot;nameEnd&quot;: 3667,
+            &quot;declarationForm&quot;: &quot;definition&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:3927:4270:struct:3941&quot;,
+            &quot;name&quot;: &quot;AdjacentPairsCollection&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection&quot;,
+            &quot;kind&quot;: &quot;struct&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;public struct AdjacentPairsCollection&lt;Base: Collection&gt;&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 136,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 150,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 3927,
+            &quot;end&quot;: 4270,
+            &quot;nameEnd&quot;: 3964,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:3987:4030:property:4020&quot;,
+            &quot;name&quot;: &quot;base&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.base&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;let base: Base&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 137,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 138,
+              &quot;endColumn&quot;: 26
+            },
+            &quot;start&quot;: 3987,
+            &quot;end&quot;: 4030,
+            &quot;nameEnd&quot;: 4024,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;swift:3927:4270:struct:3941&quot;,
+            &quot;modifiers&quot;: [
+              &quot;internal&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@usableFromInline&quot;
+            ],
+            &quot;visibility&quot;: &quot;internal&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:4034:4094:property:4067&quot;,
+            &quot;name&quot;: &quot;secondBaseIndex&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.secondBaseIndex&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;let secondBaseIndex: Base.Index&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 140,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 141,
+              &quot;endColumn&quot;: 43
+            },
+            &quot;start&quot;: 4034,
+            &quot;end&quot;: 4094,
+            &quot;nameEnd&quot;: 4082,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;swift:3927:4270:struct:3941&quot;,
+            &quot;modifiers&quot;: [
+              &quot;internal&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@usableFromInline&quot;
+            ],
+            &quot;visibility&quot;: &quot;internal&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:4098:4268:constructor:4120&quot;,
+            &quot;name&quot;: &quot;init&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.init&quot;,
+            &quot;kind&quot;: &quot;constructor&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable internal init(base: Base)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 143,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 149,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 4098,
+            &quot;end&quot;: 4268,
+            &quot;nameEnd&quot;: 4124,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:3927:4270:struct:3941&quot;,
+            &quot;modifiers&quot;: [
+              &quot;internal&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;init(_:)&quot;,
+            &quot;visibility&quot;: &quot;internal&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:4272:4887:extension:4282&quot;,
+            &quot;name&quot;: &quot;AdjacentPairsCollection&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection&quot;,
+            &quot;kind&quot;: &quot;extension&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;extension AdjacentPairsCollection&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 152,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 177,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 4272,
+            &quot;end&quot;: 4887,
+            &quot;nameEnd&quot;: 4305,
+            &quot;declarationForm&quot;: &quot;definition&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:4369:4885:struct:4383&quot;,
+            &quot;name&quot;: &quot;Index&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.Index&quot;,
+            &quot;kind&quot;: &quot;struct&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;public struct Index: Comparable&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 154,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 176,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 4369,
+            &quot;end&quot;: 4885,
+            &quot;nameEnd&quot;: 4388,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:4272:4887:extension:4282&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:4407:4459:property:4442&quot;,
+            &quot;name&quot;: &quot;first&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.Index.first&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;var first: Base.Index&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 155,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 156,
+              &quot;endColumn&quot;: 35
+            },
+            &quot;start&quot;: 4407,
+            &quot;end&quot;: 4459,
+            &quot;nameEnd&quot;: 4447,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;swift:4369:4885:struct:4383&quot;,
+            &quot;modifiers&quot;: [
+              &quot;internal&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@usableFromInline&quot;
+            ],
+            &quot;visibility&quot;: &quot;internal&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:4469:4522:property:4504&quot;,
+            &quot;name&quot;: &quot;second&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.Index.second&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;var second: Base.Index&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 158,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 159,
+              &quot;endColumn&quot;: 36
+            },
+            &quot;start&quot;: 4469,
+            &quot;end&quot;: 4522,
+            &quot;nameEnd&quot;: 4510,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;swift:4369:4885:struct:4383&quot;,
+            &quot;modifiers&quot;: [
+              &quot;internal&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@usableFromInline&quot;
+            ],
+            &quot;visibility&quot;: &quot;internal&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:4528:4655:constructor:4552&quot;,
+            &quot;name&quot;: &quot;init&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.Index.init&quot;,
+            &quot;kind&quot;: &quot;constructor&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable internal init(first: Base.Index, second: Base.Index)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 161,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 165,
+              &quot;endColumn&quot;: 6
+            },
+            &quot;start&quot;: 4528,
+            &quot;end&quot;: 4655,
+            &quot;nameEnd&quot;: 4556,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:4369:4885:struct:4383&quot;,
+            &quot;modifiers&quot;: [
+              &quot;internal&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;init(_:_:)&quot;,
+            &quot;visibility&quot;: &quot;internal&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:4661:4767:method:4695&quot;,
+            &quot;name&quot;: &quot;==&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.Index.==&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable public static func == (lhs: Index, rhs: Index) -&gt; Bool&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 167,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 170,
+              &quot;endColumn&quot;: 6
+            },
+            &quot;start&quot;: 4661,
+            &quot;end&quot;: 4767,
+            &quot;nameEnd&quot;: 4697,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:4369:4885:struct:4383&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;,
+              &quot;static&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;==(_:_:)&quot;,
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:4777:4881:method:4811&quot;,
+            &quot;name&quot;: &quot;&lt;&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.Index.&lt;&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable public static func &lt; (lhs: Index, rhs: Index) -&gt; Bool&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 172,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 175,
+              &quot;endColumn&quot;: 6
+            },
+            &quot;start&quot;: 4777,
+            &quot;end&quot;: 4881,
+            &quot;nameEnd&quot;: 4812,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:4369:4885:struct:4383&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;,
+              &quot;static&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;&lt;(_:_:)&quot;,
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:4889:8029:extension:4899&quot;,
+            &quot;name&quot;: &quot;AdjacentPairsCollection&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection&quot;,
+            &quot;kind&quot;: &quot;extension&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;extension AdjacentPairsCollection: Collection&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 179,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 282,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 4889,
+            &quot;end&quot;: 8029,
+            &quot;nameEnd&quot;: 4922,
+            &quot;declarationForm&quot;: &quot;definition&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:4939:5109:property:4963&quot;,
+            &quot;name&quot;: &quot;startIndex&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.startIndex&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;var startIndex: Index&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 180,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 185,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 4939,
+            &quot;end&quot;: 5109,
+            &quot;nameEnd&quot;: 4973,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:4889:8029:extension:4899&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:5115:5215:property:5139&quot;,
+            &quot;name&quot;: &quot;endIndex&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.endIndex&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;var endIndex: Index&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 187,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 190,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 5115,
+            &quot;end&quot;: 5215,
+            &quot;nameEnd&quot;: 5147,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:4889:8029:extension:4899&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:5219:5353:subscript:5239&quot;,
+            &quot;name&quot;: &quot;subscript&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.subscript&quot;,
+            &quot;kind&quot;: &quot;subscript&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable public subscript(position: Index) -&gt; (Base.Element, Base.Element)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 192,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 195,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 5219,
+            &quot;end&quot;: 5353,
+            &quot;nameEnd&quot;: 5248,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:4889:8029:extension:4899&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;subscript(_:)&quot;,
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:5357:5621:method:5382&quot;,
+            &quot;name&quot;: &quot;index&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.index&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable public func index(after i: Index) -&gt; Index&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 197,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 204,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 5357,
+            &quot;end&quot;: 5621,
+            &quot;nameEnd&quot;: 5387,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:4889:8029:extension:4899&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;index(after:)&quot;,
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:5625:5974:method:5650&quot;,
+            &quot;name&quot;: &quot;index&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.index&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable public func index(_ i: Index, offsetBy distance: Int) -&gt; Index&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 206,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 215,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 5625,
+            &quot;end&quot;: 5974,
+            &quot;nameEnd&quot;: 5655,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:4889:8029:extension:4899&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;index(_:offsetBy:)&quot;,
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:5978:6443:method:6003&quot;,
+            &quot;name&quot;: &quot;index&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.index&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable public func index( _ i: Index, offsetBy distance: Int, limitedBy limit: Index ) -&gt; Index?&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 217,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 231,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 5978,
+            &quot;end&quot;: 6443,
+            &quot;nameEnd&quot;: 6008,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:4889:8029:extension:4899&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;index(_:offsetBy:limitedBy:)&quot;,
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:6449:7010:method:6476&quot;,
+            &quot;name&quot;: &quot;offsetForward&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.offsetForward&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable internal func offsetForward( _ i: Index, by distance: Int, limitedBy limit: Index ) -&gt; Index?&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 233,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 249,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 6449,
+            &quot;end&quot;: 7010,
+            &quot;nameEnd&quot;: 6489,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:4889:8029:extension:4899&quot;,
+            &quot;modifiers&quot;: [
+              &quot;internal&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;offsetForward(_:by:limitedBy:)&quot;,
+            &quot;visibility&quot;: &quot;internal&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:7016:7562:method:7043&quot;,
+            &quot;name&quot;: &quot;offsetBackward&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.offsetBackward&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable internal func offsetBackward( _ i: Index, by distance: Int, limitedBy limit: Index ) -&gt; Index?&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 251,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 267,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 7016,
+            &quot;end&quot;: 7562,
+            &quot;nameEnd&quot;: 7057,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:4889:8029:extension:4899&quot;,
+            &quot;modifiers&quot;: [
+              &quot;internal&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;offsetBackward(_:by:limitedBy:)&quot;,
+            &quot;visibility&quot;: &quot;internal&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:7566:7950:method:7591&quot;,
+            &quot;name&quot;: &quot;distance&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.distance&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable public func distance(from start: Index, to end: Index) -&gt; Int&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 269,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 276,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 7566,
+            &quot;end&quot;: 7950,
+            &quot;nameEnd&quot;: 7599,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:4889:8029:extension:4899&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;distance(from:to:)&quot;,
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:7954:8027:property:7978&quot;,
+            &quot;name&quot;: &quot;count&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.count&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;var count: Int&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 278,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 281,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 7954,
+            &quot;end&quot;: 8027,
+            &quot;nameEnd&quot;: 7983,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:4889:8029:extension:4899&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:8031:8443:extension:8041&quot;,
+            &quot;name&quot;: &quot;AdjacentPairsCollection&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection&quot;,
+            &quot;kind&quot;: &quot;extension&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;extension AdjacentPairsCollection: BidirectionalCollection where Base: BidirectionalCollection&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 284,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 296,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 8031,
+            &quot;end&quot;: 8443,
+            &quot;nameEnd&quot;: 8064,
+            &quot;declarationForm&quot;: &quot;definition&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:8132:8441:method:8157&quot;,
+            &quot;name&quot;: &quot;index&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.index&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable public func index(before i: Index) -&gt; Index&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 287,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 295,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 8132,
+            &quot;end&quot;: 8441,
+            &quot;nameEnd&quot;: 8162,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:8031:8443:extension:8041&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;index(before:)&quot;,
+            &quot;visibility&quot;: &quot;public&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:8445:8542:extension:8455&quot;,
+            &quot;name&quot;: &quot;AdjacentPairsCollection&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection&quot;,
+            &quot;kind&quot;: &quot;extension&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;extension AdjacentPairsCollection: RandomAccessCollection where Base: RandomAccessCollection&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 298,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 299,
+              &quot;endColumn&quot;: 40
+            },
+            &quot;start&quot;: 8445,
+            &quot;end&quot;: 8542,
+            &quot;nameEnd&quot;: 8478,
+            &quot;declarationForm&quot;: &quot;definition&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:8544:8661:extension:8554&quot;,
+            &quot;name&quot;: &quot;AdjacentPairsCollection&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection&quot;,
+            &quot;kind&quot;: &quot;extension&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;extension AdjacentPairsCollection: LazySequenceProtocol, LazyCollectionProtocol where Base: LazySequenceProtocol&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 301,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 302,
+              &quot;endColumn&quot;: 38
+            },
+            &quot;start&quot;: 8544,
+            &quot;end&quot;: 8661,
+            &quot;nameEnd&quot;: 8577,
+            &quot;declarationForm&quot;: &quot;definition&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:8663:8834:extension:8673&quot;,
+            &quot;name&quot;: &quot;AdjacentPairsCollection.Index&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.Index&quot;,
+            &quot;kind&quot;: &quot;extension&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;extension AdjacentPairsCollection.Index: Hashable where Base.Index: Hashable&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 304,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 309,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 8663,
+            &quot;end&quot;: 8834,
+            &quot;nameEnd&quot;: 8702,
+            &quot;declarationForm&quot;: &quot;definition&quot;
+          },
+          {
+            &quot;key&quot;: &quot;swift:8744:8832:method:8769&quot;,
+            &quot;name&quot;: &quot;hash&quot;,
+            &quot;qualifiedName&quot;: &quot;AdjacentPairsCollection.Index.hash&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@inlinable public func hash(into hasher: inout Hasher)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 305,
+              &quot;startColumn&quot;: 3,
+              &quot;endLine&quot;: 308,
+              &quot;endColumn&quot;: 4
+            },
+            &quot;start&quot;: 8744,
+            &quot;end&quot;: 8832,
+            &quot;nameEnd&quot;: 8773,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;swift:8663:8834:extension:8673&quot;,
+            &quot;modifiers&quot;: [
+              &quot;public&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;@inlinable&quot;
+            ],
+            &quot;swiftName&quot;: &quot;hash(into:)&quot;,
+            &quot;visibility&quot;: &quot;public&quot;
+          }
+        ],
+        &quot;issues&quot;: [],
+        &quot;truncated&quot;: false,
+        &quot;swift&quot;: {
+          &quot;imports&quot;: [],
+          &quot;directives&quot;: [],
+          &quot;macroInvocations&quot;: [],
+          &quot;complete&quot;: true
+        }
+      }
+    }
+  ]
+}</pre></details></main></body></html>

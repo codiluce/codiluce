@@ -139,6 +139,20 @@
       "sourceRevision": "18802acf31d0b5c1c1d50bdbc9eb0e1636cab9ed",
       "license": "MIT",
       "licenseFile": "licenses/objc.txt"
+    },
+    {
+      "language": "swift",
+      "file": "tree-sitter-swift.wasm",
+      "sha256": "0258a7ef17303a8079ffe0748b3583d59656b5c3e8653fca7b6451b3e6689eb2",
+      "abi": 15,
+      "artifactPackage": "upstream-release",
+      "artifactVersion": "0.7.3",
+      "artifactPath": "tree-sitter-swift.wasm",
+      "artifactUrl": "https://github.com/alex-pinkus/tree-sitter-swift/releases/download/0.7.3/tree-sitter-swift.wasm",
+      "source": "https://github.com/alex-pinkus/tree-sitter-swift",
+      "sourceRevision": "b8b22bffbb3441780e6471665bacfb263741c86a",
+      "license": "MIT",
+      "licenseFile": "licenses/swift.txt"
     }
   ]
 }
