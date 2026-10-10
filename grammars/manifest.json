@@ -100,6 +100,32 @@
       "sourceRevision": "77dd60ea0a9003ce062c9728a513ffe1aaff8c82",
       "license": "MIT",
       "licenseFile": "licenses/kotlin.txt"
+    },
+    {
+      "language": "c",
+      "file": "tree-sitter-c.wasm",
+      "sha256": "c852c2a85ebf2beb636aa3b0ef7f7e70458684d74f6741b20dcb296885bed9f9",
+      "abi": 15,
+      "artifactPackage": "tree-sitter-c",
+      "artifactVersion": "0.24.1",
+      "artifactPath": "tree-sitter-c.wasm",
+      "source": "https://github.com/tree-sitter/tree-sitter-c",
+      "sourceRevision": "7fa1be1b694b6e763686793d97da01f36a0e5c12",
+      "license": "MIT",
+      "licenseFile": "licenses/c.txt"
+    },
+    {
+      "language": "cpp",
+      "file": "tree-sitter-cpp.wasm",
+      "sha256": "174eb0deb75b2ec7881bcacda9f995648d8e683956e5c2267e69ab6dc503fcbf",
+      "abi": 14,
+      "artifactPackage": "tree-sitter-cpp",
+      "artifactVersion": "0.23.4",
+      "artifactPath": "tree-sitter-cpp.wasm",
+      "source": "https://github.com/tree-sitter/tree-sitter-cpp",
+      "sourceRevision": "f41e1a044c8a84ea9fa8577fdd2eab92ec96de02",
+      "license": "MIT",
+      "licenseFile": "licenses/cpp.txt"
     }
   ]
 }

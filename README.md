@@ -88,6 +88,8 @@ How far Codiluce follows the code depends on the stack:
   Rocket and Warp. Every route links to the exact handler that serves it.
 - **Structure:** TypeScript, JavaScript, PHP, Python, Go, Ruby, Java, Kotlin, C# and Rust get declarations, imports,
   references and direct calls.
+- **C/C++ structure:** original declarations, prototypes, definitions, types, fields, namespaces and macros, with
+  source ranges and preprocessor context. Includes and type binding remain visible gaps.
 - **Map:** Angular, Remix, Fastify, Symfony, Quarkus, Blazor and every other language and framework are detected and
   mapped with their files, lines and Git metrics.
 
@@ -104,7 +106,9 @@ framework covers, and what stays a visible gap, in [Languages & frameworks](http
 TypeScript and JavaScript are analyzed down to calls and requests across applications and local workspace packages, and supported frameworks down to
 routes, commands and tables. Express and Nest have static routing packs for mounted routers and registered controllers,
 with handler links and visible gaps. Python, Go, Ruby, Rust, Java, C# and Kotlin also have declaration maps, with source ranges
-and nested types/functions. Python also resolves static imports across packages, namespace portions and configured or
+and nested types/functions. C/C++ add original declaration maps, prototype/definition distinctions, complex declarators,
+fields, typedefs, namespace/type ownership and original preprocessor syntax. C/C++ imports, references and translation-unit
+binding are not implemented. Python also resolves static imports across packages, namespace portions and configured or
 manifest source roots, binds local/imported calls and bounded re-exports, and has initial FastAPI, Flask and Django packs for
 registered routes, routers/blueprints, URL includes/namespaces, invoked or configured entrypoints, exact function/class view handlers and framework references. Conditional/type-only bindings and dynamic
 registration retain visible gaps. The inspector shows which analysis features are available for each file. Other ecosystems

@@ -8,6 +8,7 @@ import { extractRubySemantic } from './ruby-syntax.js';
 import { extractJvm } from './jvm-syntax.js';
 import { extractCsharp } from './csharp-syntax.js';
 import { extractRust } from './rust-syntax.js';
+import {extractCfamilyStructure} from './cfamily-structure.js';
 
 const MAX_DECLARATIONS = 20_000, MAX_ISSUES = 100, MAX_NODES = 200_000;
 const compact = (text: string) => text.replace(/\s+/g, ' ').trim();
@@ -79,6 +80,7 @@ function annotations(node: Node): string[] {
 interface Captured { node: Node; name: Node; kind: string }
 
 export function extractStructure(root: Node, query: Query, language: string, content: string): StructureFacts {
+  if(language==='c'||language==='cpp')return extractCfamilyStructure(root,query,language,content);
   const source = ['go','csharp'].includes(language) ? new ParserOriginalSource(content) : new SourceText(content), issues: ParseIssue[] = [];
   const damaged: { start: number; end: number }[] = [];
   let truncated = false, visited = 0;

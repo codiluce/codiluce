@@ -1,0 +1,1055 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>C/C++ original source qualification</title><style>body{font:16px/1.6 system-ui,sans-serif;background:#101822;color:#e5ecf4;margin:0;padding:clamp(16px,4vw,48px)}main{max-width:1120px;margin:auto}h1{font-size:clamp(28px,5vw,42px);line-height:1.2}p,li{max-width:950px}a,code{color:#8bddd8}code{overflow-wrap:anywhere}table{border-collapse:collapse;width:100%;min-width:650px}th,td{padding:12px;text-align:left;border-bottom:1px solid #344353}small{display:block;font-size:12px;color:#b4c8dc}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}.scroll{overflow:auto}.status{padding:18px;border:1px solid #688c8d;border-radius:8px}summary{cursor:pointer;padding:12px 0}</style></head><body><main><h1>C/C++ original source qualification</h1><p>P10a1 · 2026-10-10T17:32:13.828Z · v22.12.0 · linux/x64. Exact immutable bytes, recorded SHA-256, independent line/name/kind inventory, original source ranges and actual graph-cache replay.</p><p class="status"><strong>26 / 26 reviewed declarations · 0 missed · 0 extra</strong><br>Five original zlib 1.3.1 / GoogleTest 1.17.0 files retain types, fields, macros, prototypes, definitions, overloads, constructors and destructors. Cold/warm and revision-analysis modes yield identical graph identities and evidence. This is a bounded original-source sample; broader precision/recall and full Git-history throughput remain open.</p><div class="scroll"><table><thead><tr><th>Immutable source</th><th>Language</th><th>Reviewed declarations</th><th>Original directives</th></tr></thead><tbody><tr><td><a href="https://github.com/madler/zlib/blob/51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf/examples/zpipe.c">zlib/examples/zpipe.c</a><small>1.3.1 · 51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf</small></td><td>c</td><td>7</td><td>11</td></tr><tr><td><a href="https://github.com/google/googletest/blob/52eb8108c5bdec04579160ae17225d66034bd723/googletest/samples/sample1.h">googletest/samples/sample1.h</a><small>1.17.0 · 52eb8108c5bdec04579160ae17225d66034bd723</small></td><td>cpp</td><td>3</td><td>2</td></tr><tr><td><a href="https://github.com/google/googletest/blob/52eb8108c5bdec04579160ae17225d66034bd723/googletest/samples/sample1.cc">googletest/samples/sample1.cc</a><small>1.17.0 · 52eb8108c5bdec04579160ae17225d66034bd723</small></td><td>cpp</td><td>2</td><td>1</td></tr><tr><td><a href="https://github.com/google/googletest/blob/52eb8108c5bdec04579160ae17225d66034bd723/googletest/samples/sample2.h">googletest/samples/sample2.h</a><small>1.17.0 · 52eb8108c5bdec04579160ae17225d66034bd723</small></td><td>cpp</td><td>12</td><td>3</td></tr><tr><td><a href="https://github.com/google/googletest/blob/52eb8108c5bdec04579160ae17225d66034bd723/googletest/samples/sample2.cc">googletest/samples/sample2.cc</a><small>1.17.0 · 52eb8108c5bdec04579160ae17225d66034bd723</small></td><td>cpp</td><td>2</td><td>2</td></tr></tbody></table></div><p>GoogleTest's two <code>MyString::</code> source definitions remain <code>qualified-function</code> with explicit translation-unit/type-binding conditions. A header-defined class is not inferred as their owner. Include directives and both zlib macro branches are preserved as original syntax; no preprocessing, includes, macro expansion, compiler, template instantiation, application or dependency code executes. Imports, references, framework, effects and guards remain unsupported for these files.</p><p>Source-condition arrays retain enclosing original directives in source order. They describe source context; they are not evaluated predicates. Function-pointer data remains data, and prototypes and definitions have separate declaration forms and identities. Anonymous original scopes have explicit anonymous metadata.</p><h2>Grammar startup on this Linux host</h2><p>Medians of three fresh direct parser processes per language; runtime initialization, grammar loading and first parse are timed separately. Process startup, graph extraction and parser-worker IPC are excluded. Peak RSS includes the parser runtime and WASM memory, not a whole index process tree. This sample records cost; it does not set a native-platform or production throughput guarantee.</p><ul><li>C: 0.60 MiB WASM; 6.6 ms runtime initialization, 4.0 ms grammar load, 3.8 ms first parse; 64.6 MiB direct parser-process peak RSS.</li><li>C++: 3.28 MiB WASM; 6.8 ms runtime initialization, 8.9 ms grammar load, 5.2 ms first parse; 64.6 MiB direct parser-process peak RSS.</li></ul><p>The initial single source-index observation was 378 ms cold / 26 ms warm; it is not a regression benchmark. <a href="cfamily-compatibility-performance.html">Repeated TS/Laravel comparison</a> measures existing workloads separately. Package checks exercise installed CLI/API/source evidence, cache/history and a missing C grammar with surviving C++ structure. Native Windows/macOS qualification, translation-unit binding and other P10 languages remain later gates.</p><p>Implementation digest (source, grammar assets/catalog/queries, dependency pins and audit driver): <code>e520435ec196cc6ed4878283838c54e45c86053fabe3442f55eba0609930ccf2</code>.</p><p>Reproduce: <code>node --experimental-sqlite --import tsx scripts/qualify-cfamily-source.mjs --output docs/cfamily-source-accuracy.html</code>. Optional <code>--source</code> reads the five files under the displayed repository/file paths and verifies identical hashes. <a href="language-framework-compatibility.html#implementation">Implementation roadmap</a></p><details><summary>Original declarations, source ranges and immutable input hashes</summary><pre>{
+  &quot;measuredAt&quot;: &quot;2026-10-10T17:32:13.828Z&quot;,
+  &quot;baseline&quot;: &quot;5295873&quot;,
+  &quot;implementationDigest&quot;: &quot;e520435ec196cc6ed4878283838c54e45c86053fabe3442f55eba0609930ccf2&quot;,
+  &quot;node&quot;: &quot;v22.12.0&quot;,
+  &quot;platform&quot;: &quot;linux/x64&quot;,
+  &quot;files&quot;: 5,
+  &quot;reviewedDeclarations&quot;: 26,
+  &quot;matchedDeclarations&quot;: 26,
+  &quot;extraDeclarations&quot;: 0,
+  &quot;missedDeclarations&quot;: 0,
+  &quot;qualifiedDefinitionsWithoutTypeBinding&quot;: 2,
+  &quot;graphEntities&quot;: 37,
+  &quot;graphRelations&quot;: 36,
+  &quot;syntaxFactCacheHits&quot;: 5,
+  &quot;coldWarmEqual&quot;: true,
+  &quot;revisionModeEqual&quot;: true,
+  &quot;coldMs&quot;: 377.6722789999999,
+  &quot;warmMs&quot;: 26.206865000000107,
+  &quot;grammarLoads&quot;: [
+    {
+      &quot;language&quot;: &quot;c&quot;,
+      &quot;wasmBytes&quot;: 625918,
+      &quot;repetitions&quot;: 3,
+      &quot;median&quot;: {
+        &quot;runtimeMs&quot;: 6.592683999999998,
+        &quot;loadMs&quot;: 4.029552999999996,
+        &quot;firstParseMs&quot;: 3.7865109999999973,
+        &quot;peakRssKiB&quot;: 66116
+      },
+      &quot;runs&quot;: [
+        {
+          &quot;runtimeMs&quot;: 6.592683999999998,
+          &quot;loadMs&quot;: 4.029552999999996,
+          &quot;firstParseMs&quot;: 3.5080230000000014,
+          &quot;peakRssKiB&quot;: 66016
+        },
+        {
+          &quot;runtimeMs&quot;: 6.146006,
+          &quot;loadMs&quot;: 4.4462730000000015,
+          &quot;firstParseMs&quot;: 4.680227000000002,
+          &quot;peakRssKiB&quot;: 66116
+        },
+        {
+          &quot;runtimeMs&quot;: 9.147569999999998,
+          &quot;loadMs&quot;: 3.599558000000002,
+          &quot;firstParseMs&quot;: 3.7865109999999973,
+          &quot;peakRssKiB&quot;: 66132
+        }
+      ]
+    },
+    {
+      &quot;language&quot;: &quot;cpp&quot;,
+      &quot;wasmBytes&quot;: 3434931,
+      &quot;repetitions&quot;: 3,
+      &quot;median&quot;: {
+        &quot;runtimeMs&quot;: 6.768238,
+        &quot;loadMs&quot;: 8.863650999999997,
+        &quot;firstParseMs&quot;: 5.188189999999999,
+        &quot;peakRssKiB&quot;: 66132
+      },
+      &quot;runs&quot;: [
+        {
+          &quot;runtimeMs&quot;: 6.178407,
+          &quot;loadMs&quot;: 8.863650999999997,
+          &quot;firstParseMs&quot;: 4.686588999999998,
+          &quot;peakRssKiB&quot;: 66132
+        },
+        {
+          &quot;runtimeMs&quot;: 6.768238,
+          &quot;loadMs&quot;: 8.680693999999999,
+          &quot;firstParseMs&quot;: 6.0848510000000005,
+          &quot;peakRssKiB&quot;: 66132
+        },
+        {
+          &quot;runtimeMs&quot;: 8.927522000000003,
+          &quot;loadMs&quot;: 8.900721000000004,
+          &quot;firstParseMs&quot;: 5.188189999999999,
+          &quot;peakRssKiB&quot;: 66132
+        }
+      ]
+    }
+  ],
+  &quot;sources&quot;: [
+    {
+      &quot;name&quot;: &quot;zlib&quot;,
+      &quot;repo&quot;: &quot;madler/zlib&quot;,
+      &quot;commit&quot;: &quot;51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf&quot;,
+      &quot;version&quot;: &quot;1.3.1&quot;,
+      &quot;file&quot;: &quot;examples/zpipe.c&quot;,
+      &quot;language&quot;: &quot;c&quot;,
+      &quot;sha256&quot;: &quot;68140a82582ede938159630bca0fb13a93b4bf1cb2e85b08943c26242cf8f3a6&quot;,
+      &quot;inventory&quot;: [
+        [
+          23,
+          &quot;SET_BINARY_MODE&quot;,
+          &quot;macro&quot;
+        ],
+        [
+          25,
+          &quot;SET_BINARY_MODE&quot;,
+          &quot;macro&quot;
+        ],
+        [
+          28,
+          &quot;CHUNK&quot;,
+          &quot;macro&quot;
+        ],
+        [
+          36,
+          &quot;def&quot;,
+          &quot;function&quot;
+        ],
+        [
+          92,
+          &quot;inf&quot;,
+          &quot;function&quot;
+        ],
+        [
+          151,
+          &quot;zerr&quot;,
+          &quot;function&quot;
+        ],
+        [
+          176,
+          &quot;main&quot;,
+          &quot;function&quot;
+        ]
+      ],
+      &quot;url&quot;: &quot;https://github.com/madler/zlib/blob/51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf/examples/zpipe.c&quot;,
+      &quot;declarations&quot;: [
+        {
+          &quot;key&quot;: &quot;824:888:macro:834&quot;,
+          &quot;name&quot;: &quot;SET_BINARY_MODE&quot;,
+          &quot;qualifiedName&quot;: &quot;SET_BINARY_MODE&quot;,
+          &quot;kind&quot;: &quot;macro&quot;,
+          &quot;entityType&quot;: &quot;class&quot;,
+          &quot;signature&quot;: &quot;# define SET_BINARY_MODE(file) setmode(fileno(file), O_BINARY)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 23,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 24,
+            &quot;endColumn&quot;: 1
+          },
+          &quot;start&quot;: 824,
+          &quot;end&quot;: 888,
+          &quot;nameEnd&quot;: 849,
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;#if defined(MSDOS) || defined(OS2) || defined(WIN32) || defined(__CYGWIN__)&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;894:926:macro:904&quot;,
+          &quot;name&quot;: &quot;SET_BINARY_MODE&quot;,
+          &quot;qualifiedName&quot;: &quot;SET_BINARY_MODE&quot;,
+          &quot;kind&quot;: &quot;macro&quot;,
+          &quot;entityType&quot;: &quot;class&quot;,
+          &quot;signature&quot;: &quot;# define SET_BINARY_MODE(file)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 25,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 26,
+            &quot;endColumn&quot;: 1
+          },
+          &quot;start&quot;: 894,
+          &quot;end&quot;: 926,
+          &quot;nameEnd&quot;: 919,
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;#if defined(MSDOS) || defined(OS2) || defined(WIN32) || defined(__CYGWIN__)&quot;,
+            &quot;#else&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;934:954:macro:942&quot;,
+          &quot;name&quot;: &quot;CHUNK&quot;,
+          &quot;qualifiedName&quot;: &quot;CHUNK&quot;,
+          &quot;kind&quot;: &quot;macro&quot;,
+          &quot;entityType&quot;: &quot;class&quot;,
+          &quot;signature&quot;: &quot;#define CHUNK 16384&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 28,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 29,
+            &quot;endColumn&quot;: 1
+          },
+          &quot;start&quot;: 934,
+          &quot;end&quot;: 954,
+          &quot;nameEnd&quot;: 947,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;1343:2878:function:1347&quot;,
+          &quot;name&quot;: &quot;def&quot;,
+          &quot;qualifiedName&quot;: &quot;def&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;entityType&quot;: &quot;function&quot;,
+          &quot;signature&quot;: &quot;int def(FILE *source, FILE *dest, int level)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 36,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 84,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;start&quot;: 1343,
+          &quot;end&quot;: 2878,
+          &quot;nameEnd&quot;: 1350,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;3274:4928:function:3278&quot;,
+          &quot;name&quot;: &quot;inf&quot;,
+          &quot;qualifiedName&quot;: &quot;inf&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;entityType&quot;: &quot;function&quot;,
+          &quot;signature&quot;: &quot;int inf(FILE *source, FILE *dest)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 92,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 148,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;start&quot;: 3274,
+          &quot;end&quot;: 4928,
+          &quot;nameEnd&quot;: 3281,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;4963:5584:function:4968&quot;,
+          &quot;name&quot;: &quot;zerr&quot;,
+          &quot;qualifiedName&quot;: &quot;zerr&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;entityType&quot;: &quot;function&quot;,
+          &quot;signature&quot;: &quot;void zerr(int ret)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 151,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 173,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;start&quot;: 4963,
+          &quot;end&quot;: 5584,
+          &quot;nameEnd&quot;: 4972,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;5636:6322:function:5640&quot;,
+          &quot;name&quot;: &quot;main&quot;,
+          &quot;qualifiedName&quot;: &quot;main&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;entityType&quot;: &quot;function&quot;,
+          &quot;signature&quot;: &quot;int main(int argc, char **argv)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 176,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 205,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;start&quot;: 5636,
+          &quot;end&quot;: 6322,
+          &quot;nameEnd&quot;: 5644,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        }
+      ],
+      &quot;preprocessor&quot;: [
+        {
+          &quot;kind&quot;: &quot;preproc_include&quot;,
+          &quot;text&quot;: &quot;#include &lt;stdio.h&gt;&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 15,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 16,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;kind&quot;: &quot;preproc_include&quot;,
+          &quot;text&quot;: &quot;#include &lt;string.h&gt;&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 16,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 17,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;kind&quot;: &quot;preproc_include&quot;,
+          &quot;text&quot;: &quot;#include &lt;assert.h&gt;&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 17,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 18,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;kind&quot;: &quot;preproc_include&quot;,
+          &quot;text&quot;: &quot;#include \&quot;zlib.h\&quot;&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 18,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 19,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;kind&quot;: &quot;preproc_if&quot;,
+          &quot;text&quot;: &quot;#if defined(MSDOS) || defined(OS2) || defined(WIN32) || defined(__CYGWIN__)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 20,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 26,
+            &quot;endColumn&quot;: 7
+          }
+        },
+        {
+          &quot;kind&quot;: &quot;preproc_include&quot;,
+          &quot;text&quot;: &quot;#  include &lt;fcntl.h&gt;&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 21,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 22,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;kind&quot;: &quot;preproc_include&quot;,
+          &quot;text&quot;: &quot;#  include &lt;io.h&gt;&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 22,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 23,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;kind&quot;: &quot;preproc_function_def&quot;,
+          &quot;text&quot;: &quot;#  define SET_BINARY_MODE(file) setmode(fileno(file), O_BINARY)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 23,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 24,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;kind&quot;: &quot;preproc_else&quot;,
+          &quot;text&quot;: &quot;#else&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 24,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 26,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;kind&quot;: &quot;preproc_function_def&quot;,
+          &quot;text&quot;: &quot;#  define SET_BINARY_MODE(file)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 25,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 26,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;kind&quot;: &quot;preproc_def&quot;,
+          &quot;text&quot;: &quot;#define CHUNK 16384&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 28,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 29,
+            &quot;endColumn&quot;: 1
+          }
+        }
+      ]
+    },
+    {
+      &quot;name&quot;: &quot;googletest&quot;,
+      &quot;repo&quot;: &quot;google/googletest&quot;,
+      &quot;commit&quot;: &quot;52eb8108c5bdec04579160ae17225d66034bd723&quot;,
+      &quot;version&quot;: &quot;1.17.0&quot;,
+      &quot;file&quot;: &quot;samples/sample1.h&quot;,
+      &quot;upstream&quot;: &quot;googletest/samples/sample1.h&quot;,
+      &quot;language&quot;: &quot;cpp&quot;,
+      &quot;sha256&quot;: &quot;14967e01473758779a4908a29578a1fb0696dfe2075f5e10ecd3454c32402e2a&quot;,
+      &quot;inventory&quot;: [
+        [
+          33,
+          &quot;GOOGLETEST_SAMPLES_SAMPLE1_H_&quot;,
+          &quot;macro&quot;
+        ],
+        [
+          36,
+          &quot;Factorial&quot;,
+          &quot;function&quot;
+        ],
+        [
+          39,
+          &quot;IsPrime&quot;,
+          &quot;function&quot;
+        ]
+      ],
+      &quot;url&quot;: &quot;https://github.com/google/googletest/blob/52eb8108c5bdec04579160ae17225d66034bd723/googletest/samples/sample1.h&quot;,
+      &quot;declarations&quot;: [
+        {
+          &quot;key&quot;: &quot;1666:1704:macro:1674&quot;,
+          &quot;name&quot;: &quot;GOOGLETEST_SAMPLES_SAMPLE1_H_&quot;,
+          &quot;qualifiedName&quot;: &quot;GOOGLETEST_SAMPLES_SAMPLE1_H_&quot;,
+          &quot;kind&quot;: &quot;macro&quot;,
+          &quot;entityType&quot;: &quot;class&quot;,
+          &quot;signature&quot;: &quot;#define GOOGLETEST_SAMPLES_SAMPLE1_H_&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 33,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 34,
+            &quot;endColumn&quot;: 1
+          },
+          &quot;start&quot;: 1666,
+          &quot;end&quot;: 1704,
+          &quot;nameEnd&quot;: 1703,
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;#ifndef GOOGLETEST_SAMPLES_SAMPLE1_H_&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;1781:1802:function:1785&quot;,
+          &quot;name&quot;: &quot;Factorial&quot;,
+          &quot;qualifiedName&quot;: &quot;Factorial&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;entityType&quot;: &quot;function&quot;,
+          &quot;signature&quot;: &quot;int Factorial(int n)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 36,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 36,
+            &quot;endColumn&quot;: 22
+          },
+          &quot;start&quot;: 1781,
+          &quot;end&quot;: 1802,
+          &quot;nameEnd&quot;: 1794,
+          &quot;declarationForm&quot;: &quot;declaration&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;#ifndef GOOGLETEST_SAMPLES_SAMPLE1_H_&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;1856:1876:function:1861&quot;,
+          &quot;name&quot;: &quot;IsPrime&quot;,
+          &quot;qualifiedName&quot;: &quot;IsPrime&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;entityType&quot;: &quot;function&quot;,
+          &quot;signature&quot;: &quot;bool IsPrime(int n)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 39,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 39,
+            &quot;endColumn&quot;: 21
+          },
+          &quot;start&quot;: 1856,
+          &quot;end&quot;: 1876,
+          &quot;nameEnd&quot;: 1868,
+          &quot;declarationForm&quot;: &quot;declaration&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;#ifndef GOOGLETEST_SAMPLES_SAMPLE1_H_&quot;
+          ]
+        }
+      ],
+      &quot;preprocessor&quot;: [
+        {
+          &quot;kind&quot;: &quot;preproc_ifdef&quot;,
+          &quot;text&quot;: &quot;#ifndef GOOGLETEST_SAMPLES_SAMPLE1_H_&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 41,
+            &quot;endColumn&quot;: 7
+          }
+        },
+        {
+          &quot;kind&quot;: &quot;preproc_def&quot;,
+          &quot;text&quot;: &quot;#define GOOGLETEST_SAMPLES_SAMPLE1_H_&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 33,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 34,
+            &quot;endColumn&quot;: 1
+          }
+        }
+      ]
+    },
+    {
+      &quot;name&quot;: &quot;googletest&quot;,
+      &quot;repo&quot;: &quot;google/googletest&quot;,
+      &quot;commit&quot;: &quot;52eb8108c5bdec04579160ae17225d66034bd723&quot;,
+      &quot;version&quot;: &quot;1.17.0&quot;,
+      &quot;file&quot;: &quot;samples/sample1.cc&quot;,
+      &quot;upstream&quot;: &quot;googletest/samples/sample1.cc&quot;,
+      &quot;language&quot;: &quot;cpp&quot;,
+      &quot;sha256&quot;: &quot;663ac4c10de9fd37b0352533506d5c114b2fa6e1431d63cad840bd627577cc9b&quot;,
+      &quot;inventory&quot;: [
+        [
+          35,
+          &quot;Factorial&quot;,
+          &quot;function&quot;
+        ],
+        [
+          45,
+          &quot;IsPrime&quot;,
+          &quot;function&quot;
+        ]
+      ],
+      &quot;url&quot;: &quot;https://github.com/google/googletest/blob/52eb8108c5bdec04579160ae17225d66034bd723/googletest/samples/sample1.cc&quot;,
+      &quot;declarations&quot;: [
+        {
+          &quot;key&quot;: &quot;1726:1840:function:1730&quot;,
+          &quot;name&quot;: &quot;Factorial&quot;,
+          &quot;qualifiedName&quot;: &quot;Factorial&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;entityType&quot;: &quot;function&quot;,
+          &quot;signature&quot;: &quot;int Factorial(int n)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 35,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 42,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;start&quot;: 1726,
+          &quot;end&quot;: 1840,
+          &quot;nameEnd&quot;: 1739,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        },
+        {
+          &quot;key&quot;: &quot;1894:2470:function:1899&quot;,
+          &quot;name&quot;: &quot;IsPrime&quot;,
+          &quot;qualifiedName&quot;: &quot;IsPrime&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;entityType&quot;: &quot;function&quot;,
+          &quot;signature&quot;: &quot;bool IsPrime(int n)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 45,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 66,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;start&quot;: 1894,
+          &quot;end&quot;: 2470,
+          &quot;nameEnd&quot;: 1906,
+          &quot;declarationForm&quot;: &quot;definition&quot;
+        }
+      ],
+      &quot;preprocessor&quot;: [
+        {
+          &quot;kind&quot;: &quot;preproc_include&quot;,
+          &quot;text&quot;: &quot;#include \&quot;sample1.h\&quot;&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 33,
+            &quot;endColumn&quot;: 1
+          }
+        }
+      ]
+    },
+    {
+      &quot;name&quot;: &quot;googletest&quot;,
+      &quot;repo&quot;: &quot;google/googletest&quot;,
+      &quot;commit&quot;: &quot;52eb8108c5bdec04579160ae17225d66034bd723&quot;,
+      &quot;version&quot;: &quot;1.17.0&quot;,
+      &quot;file&quot;: &quot;samples/sample2.h&quot;,
+      &quot;upstream&quot;: &quot;googletest/samples/sample2.h&quot;,
+      &quot;language&quot;: &quot;cpp&quot;,
+      &quot;sha256&quot;: &quot;dc7708619ff5643fa3577a2551f2dead573c1c18069ce3b82d80a4c58aa3fb46&quot;,
+      &quot;inventory&quot;: [
+        [
+          33,
+          &quot;GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;,
+          &quot;macro&quot;
+        ],
+        [
+          38,
+          &quot;MyString&quot;,
+          &quot;class&quot;
+        ],
+        [
+          40,
+          &quot;c_string_&quot;,
+          &quot;property&quot;
+        ],
+        [
+          41,
+          &quot;operator=&quot;,
+          &quot;method&quot;
+        ],
+        [
+          45,
+          &quot;CloneCString&quot;,
+          &quot;method&quot;
+        ],
+        [
+          52,
+          &quot;MyString&quot;,
+          &quot;constructor&quot;
+        ],
+        [
+          55,
+          &quot;MyString&quot;,
+          &quot;constructor&quot;
+        ],
+        [
+          60,
+          &quot;MyString&quot;,
+          &quot;constructor&quot;
+        ],
+        [
+          68,
+          &quot;~MyString&quot;,
+          &quot;destructor&quot;
+        ],
+        [
+          71,
+          &quot;c_string&quot;,
+          &quot;method&quot;
+        ],
+        [
+          73,
+          &quot;Length&quot;,
+          &quot;method&quot;
+        ],
+        [
+          76,
+          &quot;Set&quot;,
+          &quot;method&quot;
+        ]
+      ],
+      &quot;url&quot;: &quot;https://github.com/google/googletest/blob/52eb8108c5bdec04579160ae17225d66034bd723/googletest/samples/sample2.h&quot;,
+      &quot;declarations&quot;: [
+        {
+          &quot;key&quot;: &quot;1666:1704:macro:1674&quot;,
+          &quot;name&quot;: &quot;GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;,
+          &quot;qualifiedName&quot;: &quot;GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;,
+          &quot;kind&quot;: &quot;macro&quot;,
+          &quot;entityType&quot;: &quot;class&quot;,
+          &quot;signature&quot;: &quot;#define GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 33,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 34,
+            &quot;endColumn&quot;: 1
+          },
+          &quot;start&quot;: 1666,
+          &quot;end&quot;: 1704,
+          &quot;nameEnd&quot;: 1703,
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;#ifndef GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;1752:2937:class:1758&quot;,
+          &quot;name&quot;: &quot;MyString&quot;,
+          &quot;qualifiedName&quot;: &quot;MyString&quot;,
+          &quot;kind&quot;: &quot;class&quot;,
+          &quot;entityType&quot;: &quot;class&quot;,
+          &quot;signature&quot;: &quot;class MyString&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 38,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 77,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;start&quot;: 1752,
+          &quot;end&quot;: 2937,
+          &quot;nameEnd&quot;: 1766,
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;#ifndef GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;1781:1803:property:1793&quot;,
+          &quot;name&quot;: &quot;c_string_&quot;,
+          &quot;qualifiedName&quot;: &quot;MyString::c_string_&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;const char * c_string_&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 40,
+            &quot;startColumn&quot;: 3,
+            &quot;endLine&quot;: 40,
+            &quot;endColumn&quot;: 25
+          },
+          &quot;start&quot;: 1781,
+          &quot;end&quot;: 1803,
+          &quot;nameEnd&quot;: 1802,
+          &quot;declarationForm&quot;: &quot;declaration&quot;,
+          &quot;parent&quot;: &quot;1752:2937:class:1758&quot;,
+          &quot;modifiers&quot;: [
+            &quot;const&quot;
+          ],
+          &quot;sourceConditions&quot;: [
+            &quot;#ifndef GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;
+          ],
+          &quot;visibility&quot;: &quot;private&quot;
+        },
+        {
+          &quot;key&quot;: &quot;1806:1853:method:1822&quot;,
+          &quot;name&quot;: &quot;operator=&quot;,
+          &quot;qualifiedName&quot;: &quot;MyString::operator=&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;const MyString &amp; operator=(const MyString&amp; rhs)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 41,
+            &quot;startColumn&quot;: 3,
+            &quot;endLine&quot;: 41,
+            &quot;endColumn&quot;: 50
+          },
+          &quot;start&quot;: 1806,
+          &quot;end&quot;: 1853,
+          &quot;nameEnd&quot;: 1831,
+          &quot;declarationForm&quot;: &quot;declaration&quot;,
+          &quot;parent&quot;: &quot;1752:2937:class:1758&quot;,
+          &quot;modifiers&quot;: [
+            &quot;const&quot;
+          ],
+          &quot;sourceConditions&quot;: [
+            &quot;#ifndef GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;
+          ],
+          &quot;visibility&quot;: &quot;private&quot;
+        },
+        {
+          &quot;key&quot;: &quot;1932:1988:method:1951&quot;,
+          &quot;name&quot;: &quot;CloneCString&quot;,
+          &quot;qualifiedName&quot;: &quot;MyString::CloneCString&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;static const char * CloneCString(const char* a_c_string)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 45,
+            &quot;startColumn&quot;: 3,
+            &quot;endLine&quot;: 45,
+            &quot;endColumn&quot;: 59
+          },
+          &quot;start&quot;: 1932,
+          &quot;end&quot;: 1988,
+          &quot;nameEnd&quot;: 1963,
+          &quot;declarationForm&quot;: &quot;declaration&quot;,
+          &quot;parent&quot;: &quot;1752:2937:class:1758&quot;,
+          &quot;modifiers&quot;: [
+            &quot;static&quot;,
+            &quot;const&quot;
+          ],
+          &quot;sourceConditions&quot;: [
+            &quot;#ifndef GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;
+          ],
+          &quot;visibility&quot;: &quot;public&quot;
+        },
+        {
+          &quot;key&quot;: &quot;2122:2156:constructor:2122&quot;,
+          &quot;name&quot;: &quot;MyString&quot;,
+          &quot;qualifiedName&quot;: &quot;MyString::MyString&quot;,
+          &quot;kind&quot;: &quot;constructor&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;MyString()&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 52,
+            &quot;startColumn&quot;: 3,
+            &quot;endLine&quot;: 52,
+            &quot;endColumn&quot;: 37
+          },
+          &quot;start&quot;: 2122,
+          &quot;end&quot;: 2156,
+          &quot;nameEnd&quot;: 2130,
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;parent&quot;: &quot;1752:2937:class:1758&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;#ifndef GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;
+          ],
+          &quot;visibility&quot;: &quot;public&quot;
+        },
+        {
+          &quot;key&quot;: &quot;2223:2312:constructor:2232&quot;,
+          &quot;name&quot;: &quot;MyString&quot;,
+          &quot;qualifiedName&quot;: &quot;MyString::MyString&quot;,
+          &quot;kind&quot;: &quot;constructor&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;explicit MyString(const char* a_c_string)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 55,
+            &quot;startColumn&quot;: 3,
+            &quot;endLine&quot;: 57,
+            &quot;endColumn&quot;: 4
+          },
+          &quot;start&quot;: 2223,
+          &quot;end&quot;: 2312,
+          &quot;nameEnd&quot;: 2240,
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;parent&quot;: &quot;1752:2937:class:1758&quot;,
+          &quot;modifiers&quot;: [
+            &quot;explicit&quot;
+          ],
+          &quot;sourceConditions&quot;: [
+            &quot;#ifndef GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;
+          ],
+          &quot;visibility&quot;: &quot;public&quot;
+        },
+        {
+          &quot;key&quot;: &quot;2332:2418:constructor:2332&quot;,
+          &quot;name&quot;: &quot;MyString&quot;,
+          &quot;qualifiedName&quot;: &quot;MyString::MyString&quot;,
+          &quot;kind&quot;: &quot;constructor&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;MyString(const MyString&amp; string)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 60,
+            &quot;startColumn&quot;: 3,
+            &quot;endLine&quot;: 62,
+            &quot;endColumn&quot;: 4
+          },
+          &quot;start&quot;: 2332,
+          &quot;end&quot;: 2418,
+          &quot;nameEnd&quot;: 2340,
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;parent&quot;: &quot;1752:2937:class:1758&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;#ifndef GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;
+          ],
+          &quot;visibility&quot;: &quot;public&quot;
+        },
+        {
+          &quot;key&quot;: &quot;2591:2626:destructor:2591&quot;,
+          &quot;name&quot;: &quot;~MyString&quot;,
+          &quot;qualifiedName&quot;: &quot;MyString::~MyString&quot;,
+          &quot;kind&quot;: &quot;destructor&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;~MyString()&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 68,
+            &quot;startColumn&quot;: 3,
+            &quot;endLine&quot;: 68,
+            &quot;endColumn&quot;: 38
+          },
+          &quot;start&quot;: 2591,
+          &quot;end&quot;: 2626,
+          &quot;nameEnd&quot;: 2600,
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;parent&quot;: &quot;1752:2937:class:1758&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;#ifndef GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;
+          ],
+          &quot;visibility&quot;: &quot;public&quot;
+        },
+        {
+          &quot;key&quot;: &quot;2699:2749:method:2711&quot;,
+          &quot;name&quot;: &quot;c_string&quot;,
+          &quot;qualifiedName&quot;: &quot;MyString::c_string&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;const char * c_string() const&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 71,
+            &quot;startColumn&quot;: 3,
+            &quot;endLine&quot;: 71,
+            &quot;endColumn&quot;: 53
+          },
+          &quot;start&quot;: 2699,
+          &quot;end&quot;: 2749,
+          &quot;nameEnd&quot;: 2719,
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;parent&quot;: &quot;1752:2937:class:1758&quot;,
+          &quot;modifiers&quot;: [
+            &quot;const&quot;
+          ],
+          &quot;sourceConditions&quot;: [
+            &quot;#ifndef GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;
+          ],
+          &quot;visibility&quot;: &quot;public&quot;
+        },
+        {
+          &quot;key&quot;: &quot;2753:2831:method:2760&quot;,
+          &quot;name&quot;: &quot;Length&quot;,
+          &quot;qualifiedName&quot;: &quot;MyString::Length&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;size_t Length() const&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 73,
+            &quot;startColumn&quot;: 3,
+            &quot;endLine&quot;: 73,
+            &quot;endColumn&quot;: 81
+          },
+          &quot;start&quot;: 2753,
+          &quot;end&quot;: 2831,
+          &quot;nameEnd&quot;: 2766,
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;parent&quot;: &quot;1752:2937:class:1758&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;#ifndef GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;
+          ],
+          &quot;visibility&quot;: &quot;public&quot;
+        },
+        {
+          &quot;key&quot;: &quot;2904:2935:method:2909&quot;,
+          &quot;name&quot;: &quot;Set&quot;,
+          &quot;qualifiedName&quot;: &quot;MyString::Set&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;void Set(const char* c_string)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 76,
+            &quot;startColumn&quot;: 3,
+            &quot;endLine&quot;: 76,
+            &quot;endColumn&quot;: 34
+          },
+          &quot;start&quot;: 2904,
+          &quot;end&quot;: 2935,
+          &quot;nameEnd&quot;: 2912,
+          &quot;declarationForm&quot;: &quot;declaration&quot;,
+          &quot;parent&quot;: &quot;1752:2937:class:1758&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;#ifndef GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;
+          ],
+          &quot;visibility&quot;: &quot;public&quot;
+        }
+      ],
+      &quot;preprocessor&quot;: [
+        {
+          &quot;kind&quot;: &quot;preproc_ifdef&quot;,
+          &quot;text&quot;: &quot;#ifndef GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 79,
+            &quot;endColumn&quot;: 7
+          }
+        },
+        {
+          &quot;kind&quot;: &quot;preproc_def&quot;,
+          &quot;text&quot;: &quot;#define GOOGLETEST_SAMPLES_SAMPLE2_H_&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 33,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 34,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;kind&quot;: &quot;preproc_include&quot;,
+          &quot;text&quot;: &quot;#include &lt;string.h&gt;&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 35,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 36,
+            &quot;endColumn&quot;: 1
+          }
+        }
+      ]
+    },
+    {
+      &quot;name&quot;: &quot;googletest&quot;,
+      &quot;repo&quot;: &quot;google/googletest&quot;,
+      &quot;commit&quot;: &quot;52eb8108c5bdec04579160ae17225d66034bd723&quot;,
+      &quot;version&quot;: &quot;1.17.0&quot;,
+      &quot;file&quot;: &quot;samples/sample2.cc&quot;,
+      &quot;upstream&quot;: &quot;googletest/samples/sample2.cc&quot;,
+      &quot;language&quot;: &quot;cpp&quot;,
+      &quot;sha256&quot;: &quot;2d895439f245dfc502e9429b1bc666a41b7f5e1ba241bd7b089561dd7f5dc7f2&quot;,
+      &quot;inventory&quot;: [
+        [
+          37,
+          &quot;CloneCString&quot;,
+          &quot;qualified-function&quot;
+        ],
+        [
+          49,
+          &quot;Set&quot;,
+          &quot;qualified-function&quot;
+        ]
+      ],
+      &quot;url&quot;: &quot;https://github.com/google/googletest/blob/52eb8108c5bdec04579160ae17225d66034bd723/googletest/samples/sample2.cc&quot;,
+      &quot;declarations&quot;: [
+        {
+          &quot;key&quot;: &quot;1735:1980:function:1757&quot;,
+          &quot;name&quot;: &quot;CloneCString&quot;,
+          &quot;qualifiedName&quot;: &quot;MyString::CloneCString&quot;,
+          &quot;kind&quot;: &quot;qualified-function&quot;,
+          &quot;entityType&quot;: &quot;function&quot;,
+          &quot;signature&quot;: &quot;const char * MyString::CloneCString(const char* a_c_string)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 37,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 45,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;start&quot;: 1735,
+          &quot;end&quot;: 1980,
+          &quot;nameEnd&quot;: 1769,
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;modifiers&quot;: [
+            &quot;const&quot;
+          ],
+          &quot;sourceConditions&quot;: [
+            &quot;Qualified C++ callable scope owner requires translation-unit/type binding&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;2052:2257:function:2067&quot;,
+          &quot;name&quot;: &quot;Set&quot;,
+          &quot;qualifiedName&quot;: &quot;MyString::Set&quot;,
+          &quot;kind&quot;: &quot;qualified-function&quot;,
+          &quot;entityType&quot;: &quot;function&quot;,
+          &quot;signature&quot;: &quot;void MyString::Set(const char* a_c_string)&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 49,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 54,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;start&quot;: 2052,
+          &quot;end&quot;: 2257,
+          &quot;nameEnd&quot;: 2070,
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;Qualified C++ callable scope owner requires translation-unit/type binding&quot;
+          ]
+        }
+      ],
+      &quot;preprocessor&quot;: [
+        {
+          &quot;kind&quot;: &quot;preproc_include&quot;,
+          &quot;text&quot;: &quot;#include \&quot;sample2.h\&quot;&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 33,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;kind&quot;: &quot;preproc_include&quot;,
+          &quot;text&quot;: &quot;#include &lt;string.h&gt;&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 34,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 35,
+            &quot;endColumn&quot;: 1
+          }
+        }
+      ]
+    }
+  ]
+}</pre></details></main></body></html>

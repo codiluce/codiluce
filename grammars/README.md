@@ -7,7 +7,7 @@ the authoritative parsers for their languages.
 
 `manifest.json` records each grammar's upstream revision, artifact package and
 version, SHA-256, language ABI and license. Six artifacts come from the pinned
-VS Code grammar bundle; Kotlin comes from its upstream grammar package. The
+VS Code grammar bundle; Kotlin, C and C++ come from their upstream grammar packages. The
 bundle's build revision and each upstream license are retained here. The
 runtime is pinned in `package.json` and the manifest.
 
@@ -23,19 +23,38 @@ grammar release requires declaration, range, overload, malformed-source and
 installed-package conformance checks before updating the checksum.
 
 The current adapters extract named types, modules/namespaces, functions and
-methods for Python, Go, Ruby, Rust, Java, C# and Kotlin. Decorators/annotations,
+methods for Python, Go, Ruby, Rust, Java, C#, Kotlin, C and C++. Decorators/annotations,
 modifiers, signatures and lexical containment are preserved where the grammar
 exposes them. Local Go receivers and Rust impl methods attach only to a unique
 type in the same file; cross-file ownership and language binding belong to the
 resolver phases. Ruby reopenings and C# partial declarations remain individual
 source declarations. Anonymous expressions, generated code, macro expansion,
-arbitrary properties/fields and inferred types are outside this subset.
+inferred types are outside this subset. Properties/fields are language-specific;
+C/C++ retain original fields, variables, typedefs, enum members, macros,
+namespaces, aliases, concepts, constructors/destructors and callable signatures.
+
+C 0.24.1 (ABI 15) and C++ 0.23.4 (ABI 14) ship their official MIT-licensed
+WASM artifacts. Declarator operator order distinguishes prototypes/definitions
+from function-pointer data, including function-returning pointers/references.
+`declarationForm` keeps original declarations and body-bearing/explicitly
+initialized definitions separate. Uninitialized data and field syntax remain
+declarations; the adapter does not classify compiler-level tentative definitions. Includes
+and preprocessor branch headers are retained as syntax in `cfamilySyntax`;
+`sourceConditions` record enclosing source directives, not evaluated predicates.
+Both branches remain visible. Anonymous scopes explicitly record anonymous
+metadata. No includes, macros, compiler, target dependencies or template
+instantiations execute. Imports/references/framework/effects/guards remain
+unsupported. Out-of-line C++ definitions attach only to a unique exact original
+type in the same file and directive context. Others retain qualified names and
+an explicit translation-unit/type-binding condition; headers cannot supply
+inferred ownership. See [original-source qualification](../docs/cfamily-source-accuracy.html).
 
 Non-callable declarations use the existing graph `class` type with a
 `declarationKind`/`role`; properties exposed by C# use `method` with role
 `property`. The inspector displays the actual kind. No new graph schema is
 required. Graph symbol identities contain language, application, file,
-qualified name, kind and normalized signature, without line numbers.
+qualified name, kind and normalized signature, without line numbers. C/C++
+identities also include declaration form; existing language identities are unchanged.
 
 The parser runs in a disposable child process, with a 10-second job deadline,
 a 256 MB V8 heap limit and extraction budgets. Grammars load lazily. Recovered

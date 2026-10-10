@@ -8,7 +8,7 @@ import { StructureParser } from './client.js';
 import { fileKey } from '../../pipeline/cache.js';
 import { IndexedSources } from '../indexed-sources.js';
 
-export const STRUCTURE_VERSION = `${ANALYZER_VERSION}:${GRAMMAR_CATALOG_VERSION}:41`;
+export const STRUCTURE_VERSION = `${ANALYZER_VERSION}:${GRAMMAR_CATALOG_VERSION}:42`;
 export const analysisRegistry = new AnalysisRegistry();
 analysisRegistry.registerLanguage({ id: 'typescript', version: ANALYZER_VERSION, languages: ['typescript', 'javascript'], features: { structure: 'supported', imports: 'partial', references: 'partial', effects: 'partial', guards: 'supported' } });
 analysisRegistry.registerLanguage({ id: 'php', version: ANALYZER_VERSION, languages: ['php'], features: { structure: 'partial', imports: 'partial', references: 'partial', effects: 'partial', guards: 'supported' } });
@@ -45,6 +45,7 @@ export const structureAnalyzer: Analyzer = {
           const compute = () => parser.parse(grammar.language, content);
           const facts = context.cache ? await context.cache.value('syntax-facts', file.path, { version: STRUCTURE_VERSION, file: fileKey(context, file.path), parser: analysis.parser }, compute) : await compute();
           const declarations = declare(context, file, content, facts);
+          if(facts.cfamily)fileEntity.metadata.cfamilySyntax=facts.cfamily;
           if (facts.python || facts.go || facts.ruby || facts.jvm || facts.csharp || facts.rust) { context.syntax ??= new Map(); context.syntax.set(file.path, { facts, declarations }); }
           analysis.features.structure = { status: facts.issues.length ? 'partial' : 'supported', ...(facts.issues.length ? { reason: `${facts.issues.length} syntax or extraction finding(s); valid declarations retained` } : {}) };
           for (const issue of facts.issues) context.graph.diagnose({ analyzer: 'tree-sitter-structure', severity: 'warning', code: issue.code, file: file.path, entityId: file.id, ...(issue.range ? { line: issue.range.startLine } : {}), reason: issue.reason });
@@ -62,7 +63,7 @@ function declare(context: AnalysisContext, file: ScannedFile, content: string, f
   const { graph } = context;
   const ids = new Map<string, string>(), occurrences = new Map<string, number>();
   for (const declaration of facts.declarations) {
-    const identity = [file.language!, file.application?.name ?? '', file.path, declaration.qualifiedName, declaration.kind, declaration.signature];
+    const identity = [file.language!, file.application?.name ?? '', file.path, declaration.qualifiedName, declaration.kind, declaration.signature,...declaration.declarationForm?[declaration.declarationForm]:[]];
     const base = JSON.stringify(identity), ordinal = occurrences.get(base) ?? 0;
     occurrences.set(base, ordinal + 1);
     ids.set(declaration.key, graph.id('symbol', ...identity, ...(ordinal ? [`declaration:${ordinal + 1}`] : [])));
@@ -82,6 +83,8 @@ function declarationMetadata(declaration: DeclarationFact, content: string): Rec
   return {
     qualifiedName: declaration.qualifiedName, declarationKind: declaration.kind, role: declaration.kind,
     signature: declaration.signature,
+    ...(declaration.declarationForm?{declarationForm:declaration.declarationForm}:{}),
+    ...(declaration.sourceConditions?.length?{sourceConditions:declaration.sourceConditions}:{}),
     ...(declaration.visibility ? { visibility: declaration.visibility } : {}),
     ...(declaration.exported !== undefined ? { exported: declaration.exported } : {}),
     ...(declaration.modifiers ? { modifiers: declaration.modifiers } : {}),
