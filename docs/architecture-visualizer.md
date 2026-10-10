@@ -897,3 +897,49 @@ production build and package installation pass (3.21 MB / 289 files). Installed 
 original CRLF/emoji callback coordinates, handler/leaf/request flows, history workers, missing-grammar fallback
 and npm-exec checks pass. The immutable four-consumer audit reproduces against the final implementation digest;
 desktop/mobile report layout and roadmap filtering are verified before the phase commit.
+
+## 36. Warp wrappers and original serving delegation (P9e2b2b2c1)
+
+The framework resolver projects bare native `tracing::instrument` on parameter-free original functions only
+through recorded tracing-attributes 0.1.31 and canonical tracing 0.1.44 dependency selections. Original Cargo.lock
+owning edges, registry identities, feature activation and the generated canonical tracing delegate are required.
+Fields, parameters, const/unsafe/extern/generic functions, composed attributes, missing/unreviewed providers and
+renamed-only runtimes remain outside this slice. Generated spans and subscriber effects stay conditional. The
+general Rust resolver keeps instrumented signatures/bodies and their call outcomes opaque.
+
+Framework attribute readers receive each original declaration start, preventing repeated attribute text from
+borrowing another function's contract. Native Tokio 1.53.1 / tokio-macros 2.7.0 empty test attributes on valid
+parameter-free functions without an explicit return annotation project the standard test selection only in the
+recorded non-test context. Excluded test functions retain their original source/provider proof and declarations;
+their bodies cannot create serving registrations. Unknown/test contexts and other providers retain generation gaps.
+
+Literal canonical include_str input supplies item-neutral namespace proof without reading included files or
+certifying their contents/availability. Source/import shadows, nested token trees, disabled preludes and opaque
+macro-use/glob inputs cannot lend that proof. Captured included text still has unreviewed value/Clone bounds.
+
+Default Warp log and trace::request constructors preserve the input's path/method rejection, original response
+callback ownership and Error type, while producing one native Logged/Traced Reply extraction. Original constructor
+and wrapper sites carry proof. Reply/Send/Clone/IsReject bounds and subscriber effects remain conditional; unknown
+and custom wrappers retain opaque transformations. Boxed-filter Clone and source move conditions stay separate.
+
+`qualify-rust-broader-consumers.mjs --wrappers` compares archived `cf34dba` with current source against all four
+unchanged original applications. The [wrapper/delegation audit](warp-wrapper-source-accuracy.html) retains all
+29 user registrations and 14 module declarations, exact original IDs/ranges and cold/warm/revision replay with
+actual cache hits. All five placey callbacks now bind conditionally through the original outer helper (line 83),
+native wrapper constructors (lines 89/90) and owning lock providers. Independent filter-construction, mapper
+expression and callback coordinates are checked separately. The portfolio has four qualified pairs, 19 conditional
+bindings and six misses. The five Q&A state references and all four qualified controls remain unchanged; no new
+qualified request pairs follow. General module resolution remains one of 14; three static services stay unreviewed.
+
+Seven conformance cases cover native versions, aliases/cfg, missing/old/stale/forked/denied providers, function/attribute
+boundaries, default/custom wrappers, literal included-text namespaces, recorded test exclusion, original coordinates
+and cache/source invalidation. Installed CLI/API fixtures retain conditional original handlers and source/provider
+proof without promoting client flows. Rust router contract version is 11; general import/resolver versions remain 6.
+P9e2b2b2c1 completes this initial wrapper/delegation slice. Remaining custom state/CORS/recovery and Axum helpers/
+middleware continue under P9e2b2b2c2/c3. Broader P9/P10 and the complete goal remain active.
+
+Final verification: all 1,086 tests pass with four workers; CLI/web typechecks pass. The production build and
+installed CLI/API wrapper, provider and original-handler checks pass (3.22 MB / 289 files), along with compiled
+history workers, missing-parser fallback, signal handling and npm-exec checks. The four-consumer audit reproduces
+against the final implementation digest with clean immutable checkouts. Desktop/mobile report layout and roadmap
+filtering/expand/collapse are verified before the phase commit.

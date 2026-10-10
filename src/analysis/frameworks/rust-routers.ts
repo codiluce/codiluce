@@ -43,6 +43,12 @@ interface Native {
     kind: 'native';
     profile: RustWebProfile;
 }
+interface WarpWrapper {
+    kind:'warp-wrapper';
+    name:'log'|'trace';
+    profile:RustWebProfile;
+    proof:Evidence[];
+}
 interface Route {
     site: Site;
     methods: Methods;
@@ -130,8 +136,8 @@ interface Middleware {
     conditions: string[];
     proof: Evidence[];
 }
-type Value = Native | Callback | Router | MethodRouter | Server | Future | Listener | Guard | Middleware | string | number | boolean | null | Value[] | undefined;
-const is = <K extends 'native' | 'callback' | 'router' | 'method' | 'server' | 'future' | 'listener' | 'guard' | 'middleware'>(value: Value, kind: K): value is Extract<Value, {
+type Value = Native | WarpWrapper | Callback | Router | MethodRouter | Server | Future | Listener | Guard | Middleware | string | number | boolean | null | Value[] | undefined;
+const is = <K extends 'native' | 'warp-wrapper' | 'callback' | 'router' | 'method' | 'server' | 'future' | 'listener' | 'guard' | 'middleware'>(value: Value, kind: K): value is Extract<Value, {
     kind: K;
 }> => !!value && typeof value === 'object' && !Array.isArray(value) && value.kind === kind;
 const unique = <T>(values: T[]) => [...new Set(values)];
@@ -220,8 +226,8 @@ export class RustRegistrations {
         const result = this.symbols.handler(env.scope, expression);
         if (result.status !== 'resolved')
             return;
-        const attributes = this.reviewedAttributes(result.definition, result.scope).filter(attribute => attribute.kind === 'route');
-        return { kind: 'callback', definition: result.definition, scope: result.scope, environment: env, proof: result.proof, conditions: unique([...result.conditions, ...attributes.length > 1 ? ['Competing Rust route attributes require an explicit multi-route contract'] : []]), attribute: attributes[0] };
+        const reviewed = this.reviewedAttributes(result.definition,result.scope),attributes=reviewed.filter(attribute=>attribute.kind==='route'),instrument=reviewed.filter(attribute=>attribute.kind==='instrument');
+        return { kind: 'callback', definition: result.definition, scope: result.scope, environment: env, proof: [...result.proof,...instrument.flatMap(attribute=>attribute.proof)], conditions: unique([...result.conditions, ...attributes.length > 1 ? ['Competing Rust route attributes require an explicit multi-route contract'] : [],...instrument.length?['Generated tracing instrument span/subscriber behavior remains unreviewed; only the original source helper is projected']:[]]), attribute: attributes[0] };
     }
     private route(env: Environment, site: Site, methods: Methods, value: Value): Route {
         const callback = is(value, 'callback') && !value.attribute ? value : undefined;
@@ -547,6 +553,7 @@ export class RustRegistrations {
     }
     private nativeWarp(profile: RustWebProfile, args: Value[], env: Environment, site: Site, expression: RustExpression & {kind:'call'}): Value {
         const name = profile.path.join('::').replace(/^filters::/, '');
+        if((['log','log::log'].includes(name)&&args.length===1&&typeof args[0]==='string')||(name==='trace::request'&&!args.length))return {kind:'warp-wrapper',name:name==='trace::request'?'trace':'log',profile,proof:[...profile.proof,this.fact(site,`Original native Warp default ${name} wrapper constructor; no logger/subscriber executes`)]};
         if (name.startsWith('Filter::') && is(args[0], 'router') && args[0].framework === 'warp') {
             if (args[0].dialect !== profile.dialect) env = {...env,conditions:unique([...env.conditions,'Fully-qualified Warp Filter combinator crosses native version families'])};
             return this.warpMethod(args[0], name.slice('Filter::'.length), args.slice(1), env, site, true);
@@ -731,6 +738,12 @@ export class RustRegistrations {
             if(!clone)result.conditions.push('Warp native mapper requires Clone/Send callback bounds; original captured values remain unreviewed');
             data.copy = data.copy && clone;
             data.clone = data.clone && clone;
+        } else if(name==='with'&&args.length===1&&is(args[0],'warp-wrapper')){
+            const wrapper=args[0],reason='Warp native logging/tracing wrapper input Reply/Send/IsReject bounds and subscriber effects remain unreviewed';
+            data.node={kind:'transform',input:data.node,source:{file:site.file,line:site.range.startLine},fallible:false,reason};
+            result.conditions.push(reason,...wrapper.profile.conditions,...wrapper.profile.dialect!==value.dialect?['Warp wrapper and Filter originate from different native version families']:[],...!data.clone?['Warp native logging/tracing wrapper requires a reviewed Clone bound for the input Filter']:[]);
+            result.proof.push(...wrapper.proof,this.fact(site,`Original Warp ${wrapper.name} wrapper preserves native path/method rejection and original callback ownership; output is one wrapped Reply and input Error is retained`));
+            data.extracts=[`reply:warp::${wrapper.name}::${wrapper.name==='log'?'Logged':'Traced'}`];data.union=undefined;data.copy=false;
         } else if (name === 'boxed' && !args.length) {data.copy = false;data.clone = true;result.proof.push(this.fact(site,'Original Warp boxed filter preserves extraction and error shape and supplies native Arc-backed Clone; Send/Sync bounds remain source preconditions'));}
         else if (name === 'unify' && !args.length) {
             const [left,right] = data.union ?? [];
@@ -1327,7 +1340,7 @@ export class RustRegistrations {
 export const rustRoutersAnalyzer: Analyzer = { name: 'rust-routers', version: RUST_ROUTER_VERSION, async analyze(context) {
         if (!context.rust || !context.rustSymbols)
             return;
-        const base = context.rust, macros = new RustWebMacros(base), resolver = new RustResolver(context, rustWebAttributeReader(base), macros.read, rustWebNamespaceReader(base)), symbols = new RustSymbols(context, resolver);
+        const base = context.rust, macros = new RustWebMacros(base), resolver = new RustResolver(context, rustWebAttributeReader(base,macros.recordExclusion), macros.read, rustWebNamespaceReader(base)), symbols = new RustSymbols(context, resolver);
         const run = async () => { new RustRegistrations(context, base, symbols, macros).run(); };
         const key = { version: RUST_ROUTER_VERSION, resolver: RUST_RESOLVER_VERSION, structure: STRUCTURE_VERSION, config: context.config, compilations: resolver.projects.describeCompilations(), projects: resolver.projects.describe(), files: [...context.files.values()].filter(file => file.language === 'rust' || file.language === 'toml').map(file => [fileKey(context, file.path), context.syntax?.get(file.path)?.facts.rust?.semantic?.complete ?? false]), inventory: [...context.fileInventory ?? []].sort(), directories: [...context.directoryInventory ?? []].sort() };
         if (context.cache)

@@ -83,3 +83,10 @@ export const rustWarpExtractionConsumers = rustDeriveConsumers.map(sample => sam
     extractions:[{file:'src/main.rs',line:217,callbackLine:217}],
     boundary:'All five original callbacks remain conditional. The original state mapper at line 217 is a deferred extraction reference for each endpoint, with one ordered output slot. Native query/JSON/form slots preserve callback arity; state output types, captured Clone/Send bounds, CORS, recovery and request predicates remain unreviewed. No new qualified pairs follow.',
 });
+
+export const rustWarpWrapperConsumers = rustWarpExtractionConsumers.map(sample=>sample.key!=='warp-placey'?sample:{
+    ...sample,routes:sample.routes.map((item,index)=>({...item,status:'conditional',registrationStartLine:[8,33,39,47,56][index],mappingLine:[10,33,39,47,56][index]})),
+    wrapperSites:[{file:'src/main.rs',line:89,kind:'log'},{file:'src/main.rs',line:90,kind:'trace'}],
+    instrument:{file:'src/main.rs',line:83,handler:'outer',providerLine:2049,testProviderLine:2007},
+    boundary:'All five original source callbacks now bind conditionally through the recorded parameter-free tracing instrument helper and native default Warp log/trace wrappers. Native Tokio test functions are excluded only in the recorded non-test bin context. Original included text is not read. Captured values, wrapper Reply/Send/Clone/IsReject bounds, generated instrumentation, custom placeholder types and static services remain unreviewed; no new qualified request pairs follow.',
+});

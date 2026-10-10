@@ -90,15 +90,15 @@ export class RustResolver {
     private readonly loading = new Set<string>();
     private readonly resolved = new Map<string, RustResolution>();
     private readonly itemGaps = new Map<string, string[]>();
-    constructor(readonly context: AnalysisContext, private readonly attributeReader?: (attributes: string[], compilation: RustCompilation, file: string, scope: string) => RustAttributes, private readonly scopeGapReader?: (fact: RustScopeFact, compilation: RustCompilation, file: string) => string[], private readonly namespaceAttributeReader?: (item: RustItemFact, scope: RustScope) => RustNamespaceAttributes | undefined) {
+    constructor(readonly context: AnalysisContext, private readonly attributeReader?: (attributes: string[], compilation: RustCompilation, file: string, scope: string, at?:number) => RustAttributes, private readonly scopeGapReader?: (fact: RustScopeFact, compilation: RustCompilation, file: string) => string[], private readonly namespaceAttributeReader?: (item: RustItemFact, scope: RustScope) => RustNamespaceAttributes | undefined) {
         this.projects = new RustProjects(context);
         for (const compilation of this.projects.compilations)
             this.root(compilation);
     }
     syntax(file: string): RustSyntaxFacts | undefined { return this.context.syntax?.get(file)?.facts.rust; }
     originalItemGaps(scope: RustScope, key: string): string[] { return this.itemGaps.get(JSON.stringify([scope.compilation.id, scope.file.path, key])) ?? []; }
-    attributes(attributes: string[], compilation: RustCompilation, file: string, scope: string): RustAttributes {
-        return this.attributeReader?.(attributes, compilation, file, scope) ?? rustAttributes(attributes, compilation.environment);
+    attributes(attributes: string[], compilation: RustCompilation, file: string, scope: string, at?:number): RustAttributes {
+        return this.attributeReader?.(attributes, compilation, file, scope, at) ?? rustAttributes(attributes, compilation.environment);
     }
     private proof(file: string, line: number, text: string): Evidence[] { return [{ ...evidence('syntax', 'rust-imports', file, line, text), analyzerVersion: RUST_RESOLVER_VERSION }]; }
     private root(compilation: RustCompilation): RustScope | undefined {
@@ -115,13 +115,13 @@ export class RustResolver {
         return result;
     }
     private load(comp: RustCompilation, file: ScannedFile, fact: RustScopeFact, parent: RustScope | undefined, logicalPath: string[], directory: string, active: RustTruth, gaps: string[], seen: Set<string>, pathBase?: string): RustScope {
-        const syntax = this.syntax(file.path)!, attrs = this.attributes(fact.attributes, comp, file.path, fact.owner ? fact.parent ?? fact.key : fact.key), selected = rustAnd([active, attrs.active]);
+        const syntax = this.syntax(file.path)!, attrs = this.attributes(fact.attributes, comp, file.path, fact.owner ? fact.parent ?? fact.key : fact.key,syntax.items.find(item=>item.key===fact.owner)?.start), selected = rustAnd([active, attrs.active]);
         const scope: RustScope = { id: this.context.graph.id('rust-scope', comp.id, file.path, fact.key, logicalPath.join('::')), fact, file, compilation: comp, ...(parent ? { parent } : {}), module: undefined!, logicalPath, directory, pathBase: pathBase ?? (fact.kind === 'file' ? path.posix.dirname(file.path) : directory), active: selected, gaps: unique([...gaps, ...this.scopeGapReader?.(fact,comp,file.path)??fact.gaps, ...attrs.gaps, ...!syntax.complete ? syntax.gaps : []]), attributes: attrs, items: [], imports: [], namespaceProof: [...parent?.namespaceProof ?? []] };
         scope.module = ['file', 'module'].includes(fact.kind) ? scope : parent!.module;
         if (['file', 'module'].includes(fact.kind) && parent)
             scope.moduleParent = parent.module;
         for (const item of syntax.items.filter(i => i.scope === fact.key)) {
-            const reviewed = this.namespaceAttributeReader?.(item, scope), attributes = reviewed?.attributes ?? this.attributes(item.attributes, comp, file.path, fact.key);
+            const reviewed = this.namespaceAttributeReader?.(item, scope), attributes = reviewed?.attributes ?? this.attributes(item.attributes, comp, file.path, fact.key,item.start);
             if (reviewed?.originalGaps?.length) this.itemGaps.set(JSON.stringify([comp.id, file.path, item.key]), reviewed.originalGaps);
             if (rustAnd([selected, attributes.active]) !== false) {
                 scope.gaps.push(...attributes.namespaceGaps);
@@ -143,7 +143,7 @@ export class RustResolver {
                 this.imports.push(site);
             }
         for (const item of syntax.items.filter(item => item.scope === fact.key)) {
-            const attributes = this.attributes(item.attributes, comp, file.path, fact.key), itemActive = rustAnd([selected, attributes.active]), id = this.context.syntax?.get(file.path)?.declarations.get(item.key);
+            const attributes = this.attributes(item.attributes, comp, file.path, fact.key,item.start), itemActive = rustAnd([selected, attributes.active]), id = this.context.syntax?.get(file.path)?.declarations.get(item.key);
             if (!id) {
                 scope.gaps.push('Original Rust declaration identity is unavailable');
                 continue;

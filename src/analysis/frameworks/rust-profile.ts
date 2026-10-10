@@ -7,7 +7,8 @@ import { rustAttributes, rustCfg, rustEmptyTokenTree, rustSplit, rustString } fr
 import type { RustRouteDialect } from '../routes/rust-patterns.js';
 import type { RustScopeFact } from '../facts.js';
 import { warpPathSyntax } from './warp-syntax.js';
-export const RUST_ROUTER_VERSION = '10';
+import { RustLockfiles } from '../resolution/rust-lock.js';
+export const RUST_ROUTER_VERSION = '11';
 export interface RustWebProfile {
     framework: 'axum' | 'actix-web' | 'tokio' | 'rocket' | 'warp';
     dialect?: RustRouteDialect;
@@ -43,8 +44,8 @@ export function rustWebProfile(scope: RustScope, result: RustResolution): RustWe
     return { framework, dialect, path: result.path, macros, ...framework === 'warp' ? { server: dialect === 'warp-0.3' || features.has('server') } : {}, conditions: [...new Set(conditions)], proof: [...result.proof, ...dep.proof, { ...evidence('framework', 'rust-routers', scope.compilation.target.package.manifest, 1, `Original registry ${dep.package} requirement ${dep.version ?? '(absent)'}; reviewed native ${dialect ?? framework + '-1'} contract, without executing dependency code`), analyzerVersion: RUST_ROUTER_VERSION }] };
 }
 export interface RustWebAttribute {
-    kind: 'runtime' | 'route' | 'launch';
-    framework: 'actix-web' | 'tokio' | 'rocket';
+    kind: 'runtime' | 'route' | 'launch' | 'instrument' | 'test';
+    framework: 'actix-web' | 'tokio' | 'rocket' | 'tracing';
     path?: string;
     methods?: string[];
     rank?: number;
@@ -85,6 +86,8 @@ export function rustWebAttribute(base: RustResolver, scope: RustScope, attribute
     const text = attribute.replace(/^#!?\[/, '').replace(/\]$/, '').trim(), match = /^([\w:]+)(?:\s*\(([\s\S]*)\))?$/.exec(text);
     if (!match)
         return;
+    const instrument = rustWebInstrument(base,scope,attribute,at);
+    if(instrument)return instrument;
     const profile = rustWebProfile(scope, rustWebMacroResolution(base, scope, match[1]!.split('::').filter(Boolean), at, match[1]!.startsWith('::')));
     // The base resolver deliberately retains unknown attributes. Only those gaps
     // are ignored while identifying this exact native macro; all other gaps stay.
@@ -93,6 +96,19 @@ export function rustWebAttribute(base: RustResolver, scope: RustScope, attribute
     const name = profile.path.join('::'), args = rustSplit(match[2] ?? '');
     if (!args)
         return;
+    if(profile.framework==='tokio'&&name==='test'&&!args.length&&scope.compilation.environment.test===false){
+        const syntax=base.syntax(scope.file.path),item=syntax?.items.find(item=>item.start===at),definition=item&&syntax?.semantic?.definitions.find(definition=>definition.key===item.key);
+        const dep=scope.compilation.dependencies.get((rustWebMacroResolution(base,scope,match[1]!.split('::').filter(Boolean),at,match[1]!.startsWith('::')) as Extract<RustResolution,{status:'external'}>).crate),locks=new RustLockfiles(base);
+        if(!dep||dep.active!==true||dep.compilation||dep.gaps.length||dep.dependency.name.replaceAll('-','_')!=='tokio'||dep.dependency.scope==='build'||!syntax?.complete||!syntax.semantic?.complete||!item||item.kind!=='function'||!definition?.async||!definition.body||definition.parameters.length||definition.generics||definition.gaps.length||definition.returnType||item.attributes.length!==1)return;
+        const standard=base.path(scope,['core'],true,new Set(),'type');
+        if(standard.status!=='external'||standard.dependency!=='rust-standard-library'||standard.crate!=='core'||standard.path.length||standard.conditions.some(gap=>!gap.startsWith('Unreviewed Rust attribute')))return;
+        const provider=locks.select(scope.compilation.target.package,dep.dependency,'tokio-macros'),runtime=locks.select(scope.compilation.target.package,dep.dependency);
+        if(provider?.package.version!=='2.7.0'||runtime?.package.version!=='1.53.1')return;
+        const source=base.projects.sources.readFile(scope.file.path),original=item.attributes[0]!,start=source?.lastIndexOf(original,item.start);
+        if(source===undefined||start===undefined||start<scope.fact.start||start<0)return;
+        const line=source.slice(0,start).split('\n').length;
+        return {kind:'test',framework:'tokio',proof:[...profile.proof,...standard.proof,...provider.proof,...runtime.proof,{...evidence('framework','rust-routers',scope.file.path,line,`Original tokio-macros 2.7.0 test on ${item.name}: native standard test function excluded under recorded test=false; no test body executes`),analyzerVersion:RUST_ROUTER_VERSION,endLine:line+original.split('\n').length-1}]};
+    }
     if (profile.framework === 'rocket') {
         if (['main', 'launch'].includes(name) && !args.length)
             return { kind: name === 'launch' ? 'launch' : 'runtime', framework: 'rocket', proof: profile.proof };
@@ -156,12 +172,48 @@ export function rustWebAttribute(base: RustResolver, scope: RustScope, attribute
     }
     return;
 }
+/** Framework projection of a recorded native instrument wrapper. The general
+ * Rust analyzer still treats its generated signature/body as opaque. */
+function rustWebInstrument(base:RustResolver,scope:RustScope,attribute:string,at:number):RustWebAttribute|undefined {
+    const text=attribute.replace(/^#!?\[/,'').replace(/\]$/,'').trim(),match=/^([\w:]+)(?:\s*\(\s*\))?$/.exec(text);
+    if(!match)return;
+    const identity=rustWebMacroResolution(base,scope,match[1]!.split('::').filter(Boolean),at,match[1]!.startsWith('::'));
+    const allowed=(conditions:string[])=>conditions.every(gap=>gap.startsWith('Unreviewed Rust attribute'));
+    if(identity.status!=='external'||!['tracing','tracing-attributes'].includes(identity.dependency)||identity.path.join('::')!=='instrument'||!allowed(identity.conditions))return;
+    const syntax=base.syntax(scope.file.path),item=syntax?.items.find(item=>item.start===at),definition=item&&syntax?.semantic?.definitions.find(definition=>definition.key===item.key),source=base.projects.sources.readFile(scope.file.path);
+    if(!syntax?.complete||!syntax.semantic?.complete||!item||item.kind!=='function'||!definition?.body||definition.generics||definition.parameters.length||definition.gaps.length||source===undefined)return;
+    const body=syntax.scopes.find(candidate=>candidate.key===definition.body);
+    if(!body||/\b(?:const|unsafe|extern)\b/.test(source.slice(item.start,body.start)))return;
+    const effective=(value:string,depth=0):string[]=>{
+        if(depth>32)return [value];
+        const selected=/^cfg_attr\s*\(([\s\S]*)\)$/.exec(value.replace(/^#!?\[/,'').replace(/\]$/,'').trim()),args=selected&&rustSplit(selected[1]!);
+        return args&&args.length>=2&&rustCfg(args[0]!,scope.compilation.environment)===true?args.slice(1).flatMap(value=>effective(value,depth+1)):[value];
+    };
+    const original=item.attributes.flatMap(value=>effective(value)),selected=original.filter(value=>value.replace(/^#!?\[/,'').replace(/\]$/,'').trim()===text);
+    if(selected.length!==1)return;
+    const remaining=rustAttributes(original.filter(value=>!selected.includes(value)),scope.compilation.environment);
+    if(remaining.active!==true||remaining.namespaceGaps.length)return;
+    const entry=scope.compilation.dependencies.get(identity.crate),dep=entry?.dependency;
+    if(!entry||!dep||entry.active!==true||entry.compilation||entry.gaps.length||dep.scope==='build')return;
+    const features=[...dep.features,...scope.compilation.dependencyFeatures.get(dep.name)??[]];
+    if(dep.package==='tracing'&&!dep.defaultFeatures&&!features.includes('attributes')&&!features.includes('tracing-attributes'))return;
+    const locks=new RustLockfiles(base),provider=locks.select(scope.compilation.target.package,dep,dep.package==='tracing'?'tracing-attributes':undefined);
+    if(!provider||provider.package.version!=='0.1.31')return;
+    const runtime=base.path(scope,['tracing'],true,new Set(),'type'),runtimeEntry=runtime.status==='external'&&scope.compilation.dependencies.get(runtime.crate);
+    if(runtime.status!=='external'||runtime.dependency!=='tracing'||runtime.crate!=='tracing'||runtime.path.length||!allowed(runtime.conditions)||!runtimeEntry||runtimeEntry.active!==true||runtimeEntry.compilation||runtimeEntry.gaps.length||runtimeEntry.dependency.scope==='build')return;
+    const native=locks.select(scope.compilation.target.package,runtimeEntry.dependency);
+    if(!native||native.package.version!=='0.1.44')return;
+    const originalAttribute=item.attributes.find(value=>effective(value).some(value=>selected.includes(value))),start=originalAttribute?source.lastIndexOf(originalAttribute,item.start):undefined;
+    if(start===undefined||start<scope.fact.start||start<0)return;
+    const line=source.slice(0,start).split('\n').length;
+    return {kind:'instrument',framework:'tracing',proof:[...identity.proof,...runtime.proof,...provider.proof,...native.proof,{...evidence('framework','rust-routers',scope.file.path,line,`Original tracing-attributes 0.1.31 instrument on ${item.name}: native parameter-free source helper projection; generated tracing behavior remains unreviewed`),analyzerVersion:RUST_ROUTER_VERSION,endLine:line+originalAttribute!.split('\n').length-1}]};
+}
 /** Framework-only resolver: exact recognized attribute sites preserve original
  * functions/bodies as reviewed framework syntax, without proc-macro expansion.
  * The general Rust resolver and its conservative call outcomes stay separate. */
-export function rustWebAttributeReader(base: RustResolver) {
+export function rustWebAttributeReader(base: RustResolver,recordProof?:(scope:RustScope,proof:Evidence[])=>void) {
     const scopes = new Map(base.scopes.map(scope => [JSON.stringify([scope.compilation.id, scope.file.path, scope.fact.key]), scope]));
-    return (attributes: string[], compilation: RustCompilation, file: string, key: string) => {
+    return (attributes: string[], compilation: RustCompilation, file: string, key: string, originalAt?:number) => {
         const scope = scopes.get(JSON.stringify([compilation.id, file, key]));
         const filter = (attribute: string, depth = 0): string[] => {
             if (!scope || depth > 32)
@@ -181,8 +233,11 @@ export function rustWebAttributeReader(base: RustResolver) {
                 if (args && args.length >= 2 && rustCfg(args[0]!, compilation.environment) === true)
                     return args.slice(1).flatMap(arg => filter(arg, depth + 1));
             }
-            const at = base.syntax(file)?.items.find(item => item.attributes.includes(attribute))?.start;
-            return rustWebAttribute(base, scope, attribute, at) ? [] : [attribute];
+            const candidates=base.syntax(file)?.items.filter(item=>item.attributes.includes(attribute))??[];
+            const at=originalAt??(candidates.length===1?candidates[0]!.start:undefined);
+            const reviewed=rustWebAttribute(base,scope,attribute,at);
+            if(reviewed?.kind==='test')recordProof?.(scope,reviewed.proof);
+            return reviewed?.kind==='test'?['#[cfg(test)]']:reviewed?[]:[attribute];
         };
         return rustAttributes(attributes.flatMap(attribute => filter(attribute)), compilation.environment);
     };
@@ -192,8 +247,28 @@ export function rustWebAttributeReader(base: RustResolver) {
  * their original expansion gap. This never expands or executes a macro. */
 export class RustWebMacros {
     private readonly proofs = new Map<string, Evidence[]>();
+    private readonly exclusions = new Map<string, Evidence[]>();
     constructor(private readonly base: RustResolver) { }
     private key(compilation: RustCompilation, file: string, scope: string) { return JSON.stringify([compilation.id, file, scope]); }
+    recordExclusion=(scope:RustScope,proof:Evidence[]):void=>{
+        const key=this.key(scope.compilation,scope.file.path,scope.fact.key);
+        this.exclusions.set(key,[...new Map([...(this.exclusions.get(key)??[]),...proof].map(fact=>[JSON.stringify(fact),fact])).values()]);
+    };
+    /** Literal include_str input is item-neutral. Contents, availability,
+     * returned bytes and compiler validity are deliberately not inspected. */
+    includedText(scope:RustScope,macro:{path:string[];absolute:boolean;tokens:string}):Evidence[]|undefined {
+        const args=rustSplit(macro.tokens.slice(1,-1));if(args?.length!==1||rustString(args[0]!)===undefined)return;
+        const allowed=(conditions:string[])=>conditions.every(gap=>gap==='Rust macro invocation can supply generated/scoped items; expansion is unavailable'||gap.startsWith('Unreviewed Rust attribute'));
+        const result=this.base.path(scope,macro.path,macro.absolute,new Set(),'expression');
+        if(result.status==='external'&&result.dependency==='rust-standard-library'&&result.crate==='std'&&result.path.join('::')==='include_str'&&allowed(result.conditions))return result.proof;
+        if(result.status!=='unresolved'||macro.absolute||macro.path.length!==1||macro.path[0]!=='include_str')return;
+        for(let current:RustScope|undefined=scope;current;current=current.parent){
+            if(current.attributes.noPrelude||current.attributes.noStd||current.attributes.noCore||current.items.some(item=>item.active!==false&&item.name==='include_str')||current.imports.some(site=>site.active!==false&&(!site.fact.glob&&(site.fact.alias??site.fact.segments.at(-1))==='include_str'||site.fact.attributes.some(value=>/^#!?\[\s*macro_use\b/.test(value)))))return;
+            for(const site of current.imports.filter(site=>site.active!==false&&site.fact.glob)){const imported=this.base.resolve(site);if(imported.status!=='resolved'||!allowed(imported.conditions))return;}
+        }
+        const standard=this.base.path(scope,['std'],false,new Set(),'expression');
+        if(standard.status==='external'&&standard.dependency==='rust-standard-library'&&standard.crate==='std'&&allowed(standard.conditions))return standard.proof;
+    }
     /** Only standard diagnostic syntax with no user formatting dispatch. The
      * one operand form is provisional: registration evaluation must prove the
      * original binding is a native Tokio listener before it can qualify. */
@@ -251,6 +326,8 @@ export class RustWebMacros {
                 continue;
             if (attrs.active !== true || attrs.gaps.length)
                 return fact.gaps;
+            const included=this.includedText(scope,macro);
+            if(included){proof.push(...included,{...evidence('framework','rust-routers',file,macro.range.startLine,'Original standard include_str with one literal filename: item-neutral namespace only; no included file is read or expanded'),analyzerVersion:RUST_ROUTER_VERSION,endLine:macro.range.endLine});continue;}
             const diagnostic = this.diagnostic(scope, macro);
             if (diagnostic) {
                 proof.push(...diagnostic.proof, { ...evidence('framework', 'rust-routers', file, macro.range.startLine, diagnostic.receiver ? 'Original standard diagnostic syntax; native listener operand identity requires registration evaluation' : rustEmptyTokenTree(macro.tokens) ? 'Original empty standard print diagnostic; reviewed item-neutral syntax without expansion' : 'Original standard literal diagnostic with no formatting operands; reviewed item-neutral syntax without expansion'), endLine: macro.range.endLine, analyzerVersion: RUST_ROUTER_VERSION });
@@ -285,7 +362,7 @@ export class RustWebMacros {
     proof(scope: RustScope): Evidence[] {
         const result: Evidence[] = [];
         for (let current: RustScope | undefined = scope; current; current = current.parent)
-            result.push(...this.proofs.get(this.key(current.compilation, current.file.path, current.fact.key)) ?? []);
+            result.push(...this.proofs.get(this.key(current.compilation, current.file.path, current.fact.key)) ?? [],...this.exclusions.get(this.key(current.compilation,current.file.path,current.fact.key))??[]);
         return result;
     }
 }

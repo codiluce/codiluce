@@ -214,6 +214,13 @@ checked, and awaited source helpers accept literal IPv4/IPv6 socket addresses. A
 callbacks retain source coordinates, while custom state types, CORS/recovery and generated traits keep conditions.
 The full 29-route consumer denominator remains four qualified pairs, 14 conditional bindings and 11 misses.
 Wrapper/serving delegation and Axum helper/middleware qualification remain next.
+P9e2b2b2c1 adds [Warp wrapper and serving delegation qualification](docs/warp-wrapper-source-accuracy.html).
+Recorded tracing-attributes 0.1.31 / tracing 0.1.44 allow parameter-free original serving helpers to be projected
+with generated span/subscriber behavior left conditional. Native default Warp log/trace wrappers preserve original
+handlers and rejection shape. Recorded Tokio test macros exclude test functions from the ordinary bin context;
+literal include_str supplies namespace proof without reading included contents. All five original placey callbacks
+now bind conditionally. The full portfolio has four qualified pairs, 19 conditional bindings and six misses.
+Custom state, CORS/recovery and Axum helper/middleware work remain open, along with broader P9/P10 qualification.
 No Cargo/rustc or target code runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original
