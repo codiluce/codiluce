@@ -1,0 +1,281 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Codiluce compatibility performance</title><style>body{font:16px/1.55 system-ui,sans-serif;background:#101822;color:#e5ecf4;margin:0;padding:clamp(16px,4vw,40px)}main{max-width:1200px;margin:auto}h1{font-size:36px;line-height:1.15}p{max-width:1000px;color:#bdcbdc}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;border-bottom:1px solid #344353;padding:12px}thead{color:#79ced3}small{display:block;color:#9dafc4;font-weight:400}.scroll{overflow:auto}.status{border:1px solid #5a7882;padding:16px;border-radius:8px}code{color:#a6d7df;overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere}a{color:#7ad0d6}</style><main><h1>Compatibility performance baseline</h1><p>2026-10-10T19:02:08.609Z · v22.12.0 · linux/x64 · AMD Ryzen 7 5800H with Radeon Graphics. Medians of 3 fresh processes per implementation/sample, alternating baseline/current order. Both use identical installed compiler/parser dependencies.</p><p class="status"><strong>Suggested TS/Laravel cold-index guardrail: PASS</strong> — at most 10% slower median indexing and 10% higher peak memory against the archived baseline on these fixed samples. These measurements qualify this host and sample set.</p><div class="scroll"><table><thead><tr><th>Sample</th><th>Baseline cold ms</th><th>Current cold ms</th><th>Time change</th><th>Baseline warm ms</th><th>Current warm ms</th><th>Baseline cold peak MiB</th><th>Current cold peak MiB</th><th>Memory change</th></tr></thead><tbody><tr><th>Small · integration fixture<small>49 files · 219 entities · 371 relations</small></th><td>600</td><td>587</td><td>-2.1%</td><td>48</td><td>45</td><td>329.0</td><td>329.2</td><td>0.1%</td></tr><tr><th>Medium · generated mixed stack<small>505 files · 2014 entities · 3761 relations</small></th><td>1034</td><td>1038</td><td>0.3%</td><td>168</td><td>158</td><td>344.6</td><td>345.6</td><td>0.3%</td></tr><tr><th>Large · generated mixed stack<small>3005 files · 12014 entities · 22511 relations</small></th><td>3206</td><td>3089</td><td>-3.6%</td><td>1101</td><td>990</td><td>413.5</td><td>415.0</td><td>0.4%</td></tr></tbody></table></div><p>The small sample is the existing Next/Laravel integration fixture. Medium and large samples contain 250/1500 TS modules plus as many PHP controllers, indexed local calls, HTTP requests and registered API routes. Cold indexing starts with no parser/graph cache. Warm replay follows a cache-population pass in the same process. Peak memory is the parent process's high-water RSS at the end of cold indexing; it does not include concurrent parser child memory.</p><p>Baseline commit: <code>e6eb6a2b319bd9b3ee507a1d1038c0bbe26748a7</code>. Current implementation: working tree. This comparison measures existing TS/Laravel workloads. Mixed Tree-sitter/workspace samples, grammar-load latency, full-history throughput and supported-OS qualification remain additional measurements. Synthetic module depth and framework features are bounded; production repositories can behave differently.</p><p>Reproduce: <code>node scripts/benchmark-compatibility.mjs --baseline-ref e6eb6a2b319bd9b3ee507a1d1038c0bbe26748a7 --repetitions 3 --output docs/objc-cpp-compatibility-performance.html</code>. The command archives the baseline into a temporary directory and cleans its samples afterward. <a href="language-framework-compatibility.html#implementation">Implementation audit</a></p><details><summary>Raw measurements</summary><pre>{
+  &quot;measuredAt&quot;: &quot;2026-10-10T19:02:08.609Z&quot;,
+  &quot;baseline&quot;: &quot;e6eb6a2b319bd9b3ee507a1d1038c0bbe26748a7&quot;,
+  &quot;current&quot;: &quot;working tree&quot;,
+  &quot;node&quot;: &quot;v22.12.0&quot;,
+  &quot;platform&quot;: &quot;linux/x64&quot;,
+  &quot;cpu&quot;: &quot;AMD Ryzen 7 5800H with Radeon Graphics&quot;,
+  &quot;repetitions&quot;: 3,
+  &quot;results&quot;: [
+    {
+      &quot;name&quot;: &quot;Small · integration fixture&quot;,
+      &quot;generatedModulesPerLanguage&quot;: 0,
+      &quot;baseline&quot;: {
+        &quot;coldMs&quot;: 600.10095,
+        &quot;coldPeakRssKiB&quot;: 336892,
+        &quot;warmMs&quot;: 48.34539900000004,
+        &quot;warmPeakRssKiB&quot;: 345152,
+        &quot;files&quot;: 49,
+        &quot;entities&quot;: 219,
+        &quot;relations&quot;: 371,
+        &quot;diagnostics&quot;: 35
+      },
+      &quot;current&quot;: {
+        &quot;coldMs&quot;: 587.337737,
+        &quot;coldPeakRssKiB&quot;: 337148,
+        &quot;warmMs&quot;: 44.6783240000002,
+        &quot;warmPeakRssKiB&quot;: 346020,
+        &quot;files&quot;: 49,
+        &quot;entities&quot;: 219,
+        &quot;relations&quot;: 371,
+        &quot;diagnostics&quot;: 35
+      },
+      &quot;runs&quot;: {
+        &quot;baseline&quot;: [
+          {
+            &quot;coldMs&quot;: 582.6323890000001,
+            &quot;coldPeakRssKiB&quot;: 361560,
+            &quot;warmMs&quot;: 47.310289999999895,
+            &quot;warmPeakRssKiB&quot;: 369288,
+            &quot;files&quot;: 49,
+            &quot;entities&quot;: 219,
+            &quot;relations&quot;: 371,
+            &quot;diagnostics&quot;: 35
+          },
+          {
+            &quot;coldMs&quot;: 600.10095,
+            &quot;coldPeakRssKiB&quot;: 330840,
+            &quot;warmMs&quot;: 50.99269299999992,
+            &quot;warmPeakRssKiB&quot;: 338356,
+            &quot;files&quot;: 49,
+            &quot;entities&quot;: 219,
+            &quot;relations&quot;: 371,
+            &quot;diagnostics&quot;: 35
+          },
+          {
+            &quot;coldMs&quot;: 655.3872999999999,
+            &quot;coldPeakRssKiB&quot;: 336892,
+            &quot;warmMs&quot;: 48.34539900000004,
+            &quot;warmPeakRssKiB&quot;: 345152,
+            &quot;files&quot;: 49,
+            &quot;entities&quot;: 219,
+            &quot;relations&quot;: 371,
+            &quot;diagnostics&quot;: 35
+          }
+        ],
+        &quot;current&quot;: [
+          {
+            &quot;coldMs&quot;: 587.337737,
+            &quot;coldPeakRssKiB&quot;: 337148,
+            &quot;warmMs&quot;: 46.18488000000002,
+            &quot;warmPeakRssKiB&quot;: 346020,
+            &quot;files&quot;: 49,
+            &quot;entities&quot;: 219,
+            &quot;relations&quot;: 371,
+            &quot;diagnostics&quot;: 35
+          },
+          {
+            &quot;coldMs&quot;: 609.1745080000001,
+            &quot;coldPeakRssKiB&quot;: 341236,
+            &quot;warmMs&quot;: 44.6783240000002,
+            &quot;warmPeakRssKiB&quot;: 348680,
+            &quot;files&quot;: 49,
+            &quot;entities&quot;: 219,
+            &quot;relations&quot;: 371,
+            &quot;diagnostics&quot;: 35
+          },
+          {
+            &quot;coldMs&quot;: 575.593628,
+            &quot;coldPeakRssKiB&quot;: 335860,
+            &quot;warmMs&quot;: 43.19697700000006,
+            &quot;warmPeakRssKiB&quot;: 343000,
+            &quot;files&quot;: 49,
+            &quot;entities&quot;: 219,
+            &quot;relations&quot;: 371,
+            &quot;diagnostics&quot;: 35
+          }
+        ]
+      }
+    },
+    {
+      &quot;name&quot;: &quot;Medium · generated mixed stack&quot;,
+      &quot;generatedModulesPerLanguage&quot;: 250,
+      &quot;baseline&quot;: {
+        &quot;coldMs&quot;: 1034.2427129999999,
+        &quot;coldPeakRssKiB&quot;: 352888,
+        &quot;warmMs&quot;: 167.72927600000003,
+        &quot;warmPeakRssKiB&quot;: 378496,
+        &quot;files&quot;: 505,
+        &quot;entities&quot;: 2014,
+        &quot;relations&quot;: 3761,
+        &quot;diagnostics&quot;: 4
+      },
+      &quot;current&quot;: {
+        &quot;coldMs&quot;: 1037.7619300000001,
+        &quot;coldPeakRssKiB&quot;: 353884,
+        &quot;warmMs&quot;: 157.58719599999995,
+        &quot;warmPeakRssKiB&quot;: 378876,
+        &quot;files&quot;: 505,
+        &quot;entities&quot;: 2014,
+        &quot;relations&quot;: 3761,
+        &quot;diagnostics&quot;: 4
+      },
+      &quot;runs&quot;: {
+        &quot;baseline&quot;: [
+          {
+            &quot;coldMs&quot;: 1067.9889210000001,
+            &quot;coldPeakRssKiB&quot;: 353072,
+            &quot;warmMs&quot;: 167.72927600000003,
+            &quot;warmPeakRssKiB&quot;: 378524,
+            &quot;files&quot;: 505,
+            &quot;entities&quot;: 2014,
+            &quot;relations&quot;: 3761,
+            &quot;diagnostics&quot;: 4
+          },
+          {
+            &quot;coldMs&quot;: 961.6184990000002,
+            &quot;coldPeakRssKiB&quot;: 348244,
+            &quot;warmMs&quot;: 204.619056,
+            &quot;warmPeakRssKiB&quot;: 374016,
+            &quot;files&quot;: 505,
+            &quot;entities&quot;: 2014,
+            &quot;relations&quot;: 3761,
+            &quot;diagnostics&quot;: 4
+          },
+          {
+            &quot;coldMs&quot;: 1034.2427129999999,
+            &quot;coldPeakRssKiB&quot;: 352888,
+            &quot;warmMs&quot;: 143.0483949999998,
+            &quot;warmPeakRssKiB&quot;: 378496,
+            &quot;files&quot;: 505,
+            &quot;entities&quot;: 2014,
+            &quot;relations&quot;: 3761,
+            &quot;diagnostics&quot;: 4
+          }
+        ],
+        &quot;current&quot;: [
+          {
+            &quot;coldMs&quot;: 1037.7619300000001,
+            &quot;coldPeakRssKiB&quot;: 353884,
+            &quot;warmMs&quot;: 163.9176269999998,
+            &quot;warmPeakRssKiB&quot;: 378876,
+            &quot;files&quot;: 505,
+            &quot;entities&quot;: 2014,
+            &quot;relations&quot;: 3761,
+            &quot;diagnostics&quot;: 4
+          },
+          {
+            &quot;coldMs&quot;: 979.8862839999999,
+            &quot;coldPeakRssKiB&quot;: 354192,
+            &quot;warmMs&quot;: 149.66866500000015,
+            &quot;warmPeakRssKiB&quot;: 379540,
+            &quot;files&quot;: 505,
+            &quot;entities&quot;: 2014,
+            &quot;relations&quot;: 3761,
+            &quot;diagnostics&quot;: 4
+          },
+          {
+            &quot;coldMs&quot;: 1088.73457,
+            &quot;coldPeakRssKiB&quot;: 351080,
+            &quot;warmMs&quot;: 157.58719599999995,
+            &quot;warmPeakRssKiB&quot;: 376920,
+            &quot;files&quot;: 505,
+            &quot;entities&quot;: 2014,
+            &quot;relations&quot;: 3761,
+            &quot;diagnostics&quot;: 4
+          }
+        ]
+      }
+    },
+    {
+      &quot;name&quot;: &quot;Large · generated mixed stack&quot;,
+      &quot;generatedModulesPerLanguage&quot;: 1500,
+      &quot;baseline&quot;: {
+        &quot;coldMs&quot;: 3205.6753599999997,
+        &quot;coldPeakRssKiB&quot;: 423404,
+        &quot;warmMs&quot;: 1100.9719450000002,
+        &quot;warmPeakRssKiB&quot;: 626204,
+        &quot;files&quot;: 3005,
+        &quot;entities&quot;: 12014,
+        &quot;relations&quot;: 22511,
+        &quot;diagnostics&quot;: 4
+      },
+      &quot;current&quot;: {
+        &quot;coldMs&quot;: 3088.950685,
+        &quot;coldPeakRssKiB&quot;: 424992,
+        &quot;warmMs&quot;: 989.5629580000004,
+        &quot;warmPeakRssKiB&quot;: 632076,
+        &quot;files&quot;: 3005,
+        &quot;entities&quot;: 12014,
+        &quot;relations&quot;: 22511,
+        &quot;diagnostics&quot;: 4
+      },
+      &quot;runs&quot;: {
+        &quot;baseline&quot;: [
+          {
+            &quot;coldMs&quot;: 3406.542124,
+            &quot;coldPeakRssKiB&quot;: 421144,
+            &quot;warmMs&quot;: 1053.0220140000001,
+            &quot;warmPeakRssKiB&quot;: 623240,
+            &quot;files&quot;: 3005,
+            &quot;entities&quot;: 12014,
+            &quot;relations&quot;: 22511,
+            &quot;diagnostics&quot;: 4
+          },
+          {
+            &quot;coldMs&quot;: 2981.596619,
+            &quot;coldPeakRssKiB&quot;: 438544,
+            &quot;warmMs&quot;: 1131.1610250000003,
+            &quot;warmPeakRssKiB&quot;: 642852,
+            &quot;files&quot;: 3005,
+            &quot;entities&quot;: 12014,
+            &quot;relations&quot;: 22511,
+            &quot;diagnostics&quot;: 4
+          },
+          {
+            &quot;coldMs&quot;: 3205.6753599999997,
+            &quot;coldPeakRssKiB&quot;: 423404,
+            &quot;warmMs&quot;: 1100.9719450000002,
+            &quot;warmPeakRssKiB&quot;: 626204,
+            &quot;files&quot;: 3005,
+            &quot;entities&quot;: 12014,
+            &quot;relations&quot;: 22511,
+            &quot;diagnostics&quot;: 4
+          }
+        ],
+        &quot;current&quot;: [
+          {
+            &quot;coldMs&quot;: 3335.1327290000004,
+            &quot;coldPeakRssKiB&quot;: 432232,
+            &quot;warmMs&quot;: 989.5629580000004,
+            &quot;warmPeakRssKiB&quot;: 637004,
+            &quot;files&quot;: 3005,
+            &quot;entities&quot;: 12014,
+            &quot;relations&quot;: 22511,
+            &quot;diagnostics&quot;: 4
+          },
+          {
+            &quot;coldMs&quot;: 3088.950685,
+            &quot;coldPeakRssKiB&quot;: 416948,
+            &quot;warmMs&quot;: 1021.2194719999998,
+            &quot;warmPeakRssKiB&quot;: 619844,
+            &quot;files&quot;: 3005,
+            &quot;entities&quot;: 12014,
+            &quot;relations&quot;: 22511,
+            &quot;diagnostics&quot;: 4
+          },
+          {
+            &quot;coldMs&quot;: 3005.4128259999998,
+            &quot;coldPeakRssKiB&quot;: 424992,
+            &quot;warmMs&quot;: 982.097957,
+            &quot;warmPeakRssKiB&quot;: 632076,
+            &quot;files&quot;: 3005,
+            &quot;entities&quot;: 12014,
+            &quot;relations&quot;: 22511,
+            &quot;diagnostics&quot;: 4
+          }
+        ]
+      }
+    }
+  ]
+}</pre></details></main></html>

@@ -7,8 +7,9 @@ import { GRAMMAR_CATALOG_VERSION, STRUCTURAL_LANGUAGES, grammarCatalog, grammarM
 import { StructureParser } from './client.js';
 import { fileKey } from '../../pipeline/cache.js';
 import { IndexedSources } from '../indexed-sources.js';
+import {objectiveCppSource} from './objc-cpp.js';
 
-export const STRUCTURE_VERSION = `${ANALYZER_VERSION}:${GRAMMAR_CATALOG_VERSION}:43`;
+export const STRUCTURE_VERSION = `${ANALYZER_VERSION}:${GRAMMAR_CATALOG_VERSION}:44`;
 export const analysisRegistry = new AnalysisRegistry();
 analysisRegistry.registerLanguage({ id: 'typescript', version: ANALYZER_VERSION, languages: ['typescript', 'javascript'], features: { structure: 'supported', imports: 'partial', references: 'partial', effects: 'partial', guards: 'supported' } });
 analysisRegistry.registerLanguage({ id: 'php', version: ANALYZER_VERSION, languages: ['php'], features: { structure: 'partial', imports: 'partial', references: 'partial', effects: 'partial', guards: 'supported' } });
@@ -42,16 +43,24 @@ export const structureAnalyzer: Analyzer = {
           }
           if (integrity.get(grammar.language)) throw new Error(integrity.get(grammar.language));
           const content = sources.readText(file.path);
-          const compute = () => parser.parse(grammar.language, content);
+          const objectiveCpp=grammar.language==='objective-c'&&(file.path.toLowerCase().endsWith('.mm')||objectiveCppSource(content));
+          if(objectiveCpp){
+            const cpp=grammarCatalog.get('cpp');if(!cpp)throw new Error('Auxiliary C++ grammar missing from catalog');
+            let queryHash=hashText('cpp:query-unavailable');
+            try{queryHash=hashText(queryText('cpp'));if(!integrity.has('cpp')){verifiedGrammar(cpp);integrity.set('cpp',undefined);}}
+            catch(error){integrity.set('cpp',error instanceof Error?error.message:String(error));}
+            analysis.parser.auxiliary=[{language:'cpp',grammar:cpp.sourceRevision,grammarHash:cpp.sha256,queryHash,abi:cpp.abi,...integrity.get('cpp')?{unavailable:integrity.get('cpp')}:{}}];
+          }
+          const compute = () => parser.parse(grammar.language, content, {objectiveCpp});
           const facts = context.cache ? await context.cache.value('syntax-facts', file.path, { version: STRUCTURE_VERSION, file: fileKey(context, file.path), parser: analysis.parser }, compute) : await compute();
           const declarations = declare(context, file, content, facts);
           if(facts.cfamily)fileEntity.metadata.cfamilySyntax=facts.cfamily;
-          if(facts.objc)fileEntity.metadata.objcSyntax={...facts.objc,sourceProfile:file.path.toLowerCase().endsWith('.mm')?'objective-cpp-partial':'objective-c'};
+          if(facts.objc)fileEntity.metadata.objcSyntax={...facts.objc,sourceProfile:objectiveCpp?'objective-cpp-partial':'objective-c'};
           if (facts.python || facts.go || facts.ruby || facts.jvm || facts.csharp || facts.rust) { context.syntax ??= new Map(); context.syntax.set(file.path, { facts, declarations }); }
           analysis.features.structure = { status: facts.issues.length ? 'partial' : 'supported', ...(facts.issues.length ? { reason: `${facts.issues.length} syntax or extraction finding(s); valid declarations retained` } : {}) };
-          if(facts.objc&&file.path.toLowerCase().endsWith('.mm')){
-            const reason='Original Objective-C/C declarations retained; mixed Objective-C++ syntax requires the separate C++ grammar qualification phase';
-            analysis.features.structure={status:'partial',reason};context.graph.diagnose({analyzer:'tree-sitter-structure',severity:'warning',code:'objc-cpp-structure-gap',file:file.path,entityId:file.id,reason});
+          if(facts.objc&&objectiveCpp){
+            const reason='Original Objective-C/C++ source profiles retain declarations; shared types, macros and cross-language binding remain unverified';
+            analysis.features.structure={status:'partial',reason};if(!facts.issues.some(issue=>issue.code==='objc-cpp-structure-gap'))context.graph.diagnose({analyzer:'tree-sitter-structure',severity:'warning',code:'objc-cpp-structure-gap',file:file.path,entityId:file.id,reason});
           }
           for (const issue of facts.issues) context.graph.diagnose({ analyzer: 'tree-sitter-structure', severity: 'warning', code: issue.code, file: file.path, entityId: file.id, ...(issue.range ? { line: issue.range.startLine } : {}), reason: issue.reason });
         } catch (error) {

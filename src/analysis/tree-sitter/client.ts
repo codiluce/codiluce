@@ -17,7 +17,7 @@ export class StructureParser {
   private child?: ChildProcess;
   private sequence = 0;
   constructor(private readonly timeoutMs = 10_000) {}
-  async parse(language: string, content: string): Promise<StructureFacts> {
+  async parse(language: string, content: string, options: {objectiveCpp?:boolean} = {}): Promise<StructureFacts> {
     if (!this.child) this.child = fork(WORKER, [], {
       execArgv: workerArguments(),
       serialization: 'advanced', stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
@@ -35,7 +35,7 @@ export class StructureParser {
       };
       const timer = setTimeout(() => failure(new Error(`Parser exceeded ${this.timeoutMs} ms for ${language}`)), this.timeoutMs);
       child.on('message', message); child.once('error', failure); child.once('exit', exited);
-      child.send({ id, language, content }, error => { if (error) failure(error); });
+      child.send({ id, language, content, ...options }, error => { if (error) failure(error); });
     });
   }
   close(): void { const child = this.child; this.child = undefined; if (child) { if (child.connected) child.disconnect(); child.kill(); } }

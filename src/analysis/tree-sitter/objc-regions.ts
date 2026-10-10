@@ -3,31 +3,13 @@ import type {StructureFacts} from '../facts.js';
 import type {SourceRange} from '../../core/graph.js';
 import {SourceText} from '../source-map.js';
 import {extractObjcStructure} from './objc-structure.js';
+import {cfamilySource} from './cfamily-source.js';
 
-interface Token {text:string;start:number;end:number}
-const MAX_TOKENS=200_000,MAX_REGIONS=4096;
-/** Discover original @interface/@implementation/@protocol regions. Comments,
- * literals, raw C++ strings and physical preprocessor lines cannot introduce
- * a declaration. No source is rewritten, prefixed or expanded. */
+const MAX_REGIONS=4096;
+/** Discover exact original Objective-C containers, excluding literals/comments
+ * and preprocessor bodies through the shared bounded source tokenizer. */
 export function objcRegions(content:string):{regions:{start:number;end:number}[];truncated:boolean} {
- const tokens:Token[]=[],identifier=/[\p{ID_Start}_$][\p{ID_Continue}$]*/uy;
- let index=0,truncated=false;
- while(index<content.length){
-  if(tokens.length>=MAX_TOKENS){truncated=true;break;}
-  const char=content[index]!;
-  if(/\s/.test(char)){index++;continue;}
-  if(content.startsWith('//',index)){const end=content.indexOf('\n',index+2);index=end<0?content.length:end+1;continue;}
-  if(content.startsWith('/*',index)){const end=content.indexOf('*/',index+2);index=end<0?content.length:end+2;continue;}
-  if(char==='#'&&(!tokens.length||tokens.at(-1)!.end<=content.lastIndexOf('\n',index-1)+1)){
-   let end=index;do{const next=content.indexOf('\n',end);if(next<0){end=content.length;break;}end=next+1;}while(/\\\r?\n$/.test(content.slice(index,end)));index=end;continue;
-  }
-  const raw=/^(?:u8|u|U|L)?R"([^\s()\\]{0,16})\(/.exec(content.slice(index));
-  if(raw){const end=content.indexOf(`)${raw[1]}"`,index+raw[0].length);index=end<0?content.length:end+raw[1]!.length+2;continue;}
-  if(char==='"'||char==="'"){const quote=char;index++;while(index<content.length){if(content[index]==='\\')index+=2;else if(content[index++]===quote)break;}continue;}
-  identifier.lastIndex=index;const match=identifier.exec(content);
-  if(match){tokens.push({text:match[0],start:index,end:identifier.lastIndex});index=identifier.lastIndex;}
-  else {tokens.push({text:char,start:index,end:index+1});index++;}
- }
+ const source=cfamilySource(content),tokens=source.tokens;let truncated=source.truncated;
  const regions:{start:number;end:number}[]=[],stack:number[]=[];
  for(let item=0;item<tokens.length-1;item++){
   if(tokens[item]!.text!=='@'||tokens[item]!.end!==tokens[item+1]!.start)continue;

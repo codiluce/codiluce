@@ -65,11 +65,34 @@ remap its ranges to the original file. It does not rewrite, prefix or expand
 source; every recovered declaration records a source-context gap. Discovery
 excludes strings, raw C++ strings, comments and preprocessor lines. Recovered
 files remain partial. `objcSyntax` stores original module/property-implementation
-syntax and recovery ranges. The current grammar extends C; `.mm` files always
-record explicit partial Objective-C++ status. `NS_ENUM` macro type/value profiles,
-broader header contexts and mixed C++ qualification are P10a2b work. Imports,
-references, framework, effects and guards remain unsupported. See
-[unchanged-source accuracy and remaining macro declarations](../docs/objc-source-accuracy.html).
+syntax and recovery ranges. The current grammar extends C.
+
+P10a2b adds original `NS_ENUM`, `NS_CLOSED_ENUM`, `NS_OPTIONS`, `CF_ENUM`,
+`CF_CLOSED_ENUM` and `CF_OPTIONS` source profiles. Explicit type/member names,
+raw initializers and directive alternatives are retained without evaluating values
+or expanding macros. Source definitions/undefinitions invalidate standard profiles;
+oversized/unreviewed directive context prevents profiling. SDK types and ABI remain
+unverified, and unsupported macro argument/member forms produce explicit gaps.
+
+Mixed `.mm` files and recognized C++-bearing Objective-C headers read the same
+original bytes through separate Objective-C and C++ grammars. Native namespaces,
+classes/templates/aliases and callable headers coexist with original Objective-C
+containers/selectors. Original C++ AST subtrees can retain declarations obscured
+by surrounding macro/parser recovery, with explicit context conditions. A bounded
+selector-header profile retains raw C++ return/parameter syntax. Native namespace
+containment is lexical; C++ facts cannot originate inside Objective-C containers.
+There is no source rewrite, synthetic prefix, SDK/compiler execution, macro
+expansion, shared type/import binding or runtime message dispatch. Mixed files
+remain explicitly partial. C++ ivar fields, nested native types inside Objective-C
+method bodies, arbitrary macro wrappers and broader annotation/template syntax
+still require qualification.
+
+Primary and auxiliary grammar/query hashes participate in cache identities;
+assets are checked on warm reads. Missing C++ assets retain original Objective-C
+containers/selectors with an explicit gap, while standalone C remains usable.
+Imports, references, framework, effects and guards remain unsupported. See
+[macro/mixed original-source qualification](../docs/objc-cpp-source-accuracy.html)
+and the [historical P10a2a source inventory](../docs/objc-source-accuracy.html).
 
 Non-callable declarations use the existing graph `class` type with a
 `declarationKind`/`role`; properties exposed by C# use `method` with role

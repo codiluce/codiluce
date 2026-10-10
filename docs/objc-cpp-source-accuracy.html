@@ -1,0 +1,2609 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Objective-C macro and mixed C++ source qualification</title><style>body{font:16px/1.6 system-ui,sans-serif;background:#101822;color:#e5ecf4;margin:0;padding:clamp(16px,4vw,48px)}main{max-width:1120px;margin:auto}h1{font-size:clamp(28px,5vw,42px);line-height:1.2}a,code{color:#8bddd8}code{overflow-wrap:anywhere}table{border-collapse:collapse;width:100%;min-width:700px}th,td{padding:12px;text-align:left;border-bottom:1px solid #344353}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}.scroll{overflow:auto}.status{padding:18px;border:1px solid #688c8d;border-radius:8px}summary{cursor:pointer;padding:12px 0}</style></head><body><main>
+ <h1>Objective-C macro and mixed C++ source qualification</h1><p>P10a2b · 2026-10-10T18:59:58.917Z · v22.12.0 · linux/x64. Immutable AFNetworking 4.0.1 and SFML 2.6.1 bytes, independent line/name/kind inventories, SHA-256 checks and original positions.</p>
+ <p class="status"><strong>43 matched / 43 reviewed source declarations · 0 missed · 0 extra</strong><br>The original sample contains 36 AFNetworking declarations plus seven SFML mixed declarations. All inventoried names/kinds/lines and ranges match. This bounded sample does not establish broad beta precision/recall, SDK/compiler validity or complete mixed-language compatibility.</p>
+ <div class="scroll"><table><thead><tr><th>Immutable original source</th><th>Matched</th><th>Findings</th><th>Capability</th></tr></thead><tbody><tr><td><a href="https://github.com/AFNetworking/AFNetworking/blob/ffae2391ab0c29dc88eb0a58d2f5b2c2c27cadbf/AFNetworking/AFSecurityPolicy.h">AFNetworking/AFNetworking · AFNetworking/AFSecurityPolicy.h</a></td><td>14</td><td>18</td><td>Partial macro/context profiles</td></tr><tr><td><a href="https://github.com/AFNetworking/AFNetworking/blob/ffae2391ab0c29dc88eb0a58d2f5b2c2c27cadbf/AFNetworking/AFSecurityPolicy.m">AFNetworking/AFNetworking · AFNetworking/AFSecurityPolicy.m</a></td><td>22</td><td>0</td><td>Supported original subset</td></tr><tr><td><a href="https://github.com/SFML/SFML/blob/69ea0cd863aed1d4092b970b676924a716ff718b/examples/cocoa/NSString+stdstring.mm">SFML/SFML · examples/cocoa/NSString+stdstring.mm</a></td><td>5</td><td>44</td><td>Partial separate grammar profiles</td></tr><tr><td><a href="https://github.com/SFML/SFML/blob/69ea0cd863aed1d4092b970b676924a716ff718b/src/SFML/Window/OSX/cpp_objc_conversion.mm">SFML/SFML · src/SFML/Window/OSX/cpp_objc_conversion.mm</a></td><td>2</td><td>21</td><td>Partial separate grammar profiles</td></tr></tbody></table></div>
+ <p>Six standard original enum/options spellings (<code>NS_ENUM</code>, <code>NS_CLOSED_ENUM</code>, <code>NS_OPTIONS</code>, <code>CF_ENUM</code>, <code>CF_CLOSED_ENUM</code>, <code>CF_OPTIONS</code>) retain explicit type/member names and original initializer text. AFNetworking's previously missing type and three values now appear. Local source definitions/undefinitions invalidate the standard profile. Comments, literals and preprocessor bodies cannot fabricate declarations. Numeric values, SDK types, ABI, macro expansion, conditional branch selection and generated declarations stay unverified. The <a href="https://developer.apple.com/documentation/swift/grouping-related-objective-c-constants">Apple enum/options model</a> documents the original spelling; <a href="https://github.com/swiftlang/swift-corelibs-foundation/blob/main/Sources/CoreFoundation/include/CFAvailability.h">CoreFoundation macro definitions</a> provide the corresponding CF spellings.</p>
+ <p>Mixed files and recognized mixed headers parse the same unchanged source through separate Objective-C and C++ grammars. Native C++ namespaces/classes/templates/aliases/direct function headers coexist with Objective-C interfaces/implementations and original selectors. A bounded selector-header profile preserves raw C++ parameter/return types when the C-based Objective-C grammar cannot represent them. SFML's original category retains its implementation and four signed selectors; the conversion file retains both original C++ helper functions. Native namespace ownership is lexical. C++ facts cannot originate inside Objective-C containers; local variables and literals add no phantom entities.</p>
+ <p>Headers and mixed files remain partial. Unsupported surrounding annotations, parser recovery, template/attribute-heavy macro members, C++ fields inside Objective-C ivar lists, nested native types inside Objective-C method bodies, arbitrary macro wrappers and shared translation-unit/type/import binding require broader qualification. Properties add no generated accessors or ivars. Imports, references, framework, effects and guards remain unsupported; no compiler, SDK, target dependencies or source application executes.</p>
+ <p>Cold/warm and revision-analysis graphs preserve original identities, evidence and findings; four actual syntax-cache hits are recorded. Auxiliary C++ provenance is part of cache identities and is revalidated on warm reads. Installed-package checks cover original mixed selectors, enum members/native declarations, source evidence and two compiled history snapshots; removal of the auxiliary C++ asset retains Objective-C headers/selectors with an explicit gap while standalone C remains usable. Native macOS/Windows and full Git-history throughput remain release gates.</p>
+ <h2>Two-grammar startup on this Linux host</h2><p>Three fresh direct extraction processes, reading the original SFML category: medians 10.2 ms runtime initialization, 18.7 ms two-grammar load, 36.3 ms first mixed extraction, 160.2 MiB process peak RSS. Process startup, worker IPC and whole-index process-tree memory are excluded. <a href="objc-cpp-compatibility-performance.html">Repeated existing TS/Laravel comparison</a> measures regressions separately.</p>
+ <p>Implementation digest: <code>0de53756a5919784326ba8602530498eeb7f897cf57732f1490b361e571b2b6f</code>. Reproduce: <code>node --experimental-sqlite --import tsx scripts/qualify-objc-cpp-source.mjs --output docs/objc-cpp-source-accuracy.html</code>. Optional <code>--source</code> reads the four displayed original paths and verifies their immutable hashes. <a href="language-framework-compatibility.html#implementation">Full implementation roadmap</a></p>
+ <details><summary>Independent inventories, immutable hashes and original source facts</summary><pre>{
+  &quot;phase&quot;: &quot;P10a2b&quot;,
+  &quot;measuredAt&quot;: &quot;2026-10-10T18:59:58.917Z&quot;,
+  &quot;baseline&quot;: &quot;e6eb6a2&quot;,
+  &quot;implementationDigest&quot;: &quot;0de53756a5919784326ba8602530498eeb7f897cf57732f1490b361e571b2b6f&quot;,
+  &quot;node&quot;: &quot;v22.12.0&quot;,
+  &quot;platform&quot;: &quot;linux/x64&quot;,
+  &quot;sources&quot;: [
+    {
+      &quot;repo&quot;: &quot;AFNetworking/AFNetworking&quot;,
+      &quot;version&quot;: &quot;4.0.1&quot;,
+      &quot;commit&quot;: &quot;ffae2391ab0c29dc88eb0a58d2f5b2c2c27cadbf&quot;
+    },
+    {
+      &quot;repo&quot;: &quot;SFML/SFML&quot;,
+      &quot;version&quot;: &quot;2.6.1&quot;,
+      &quot;commit&quot;: &quot;69ea0cd863aed1d4092b970b676924a716ff718b&quot;
+    }
+  ],
+  &quot;reviewedSourceDeclarations&quot;: 43,
+  &quot;matchedDeclarations&quot;: 43,
+  &quot;extraDeclarations&quot;: 0,
+  &quot;missedDeclarations&quot;: 0,
+  &quot;overallReviewedCoverage&quot;: 1,
+  &quot;coldWarmEqual&quot;: true,
+  &quot;revisionModeEqual&quot;: true,
+  &quot;syntaxFactCacheHits&quot;: 4,
+  &quot;grammar&quot;: {
+    &quot;repetitions&quot;: 3,
+    &quot;median&quot;: {
+      &quot;runtimeMs&quot;: 10.202995999999985,
+      &quot;twoGrammarLoadMs&quot;: 18.746424999999988,
+      &quot;firstMixedExtractionMs&quot;: 36.26225900000003,
+      &quot;peakRssKiB&quot;: 164004
+    },
+    &quot;runs&quot;: [
+      {
+        &quot;runtimeMs&quot;: 11.577199000000007,
+        &quot;twoGrammarLoadMs&quot;: 18.200365000000005,
+        &quot;firstMixedExtractionMs&quot;: 54.29360300000002,
+        &quot;peakRssKiB&quot;: 166164
+      },
+      {
+        &quot;runtimeMs&quot;: 10.202995999999985,
+        &quot;twoGrammarLoadMs&quot;: 20.855908,
+        &quot;firstMixedExtractionMs&quot;: 32.68518500000002,
+        &quot;peakRssKiB&quot;: 162744
+      },
+      {
+        &quot;runtimeMs&quot;: 9.677806000000004,
+        &quot;twoGrammarLoadMs&quot;: 18.746424999999988,
+        &quot;firstMixedExtractionMs&quot;: 36.26225900000003,
+        &quot;peakRssKiB&quot;: 164004
+      }
+    ]
+  },
+  &quot;results&quot;: [
+    {
+      &quot;file&quot;: &quot;AFNetworking/AFSecurityPolicy.h&quot;,
+      &quot;sha256&quot;: &quot;3623f0e76f0ca095c86a550c577b7772c6bdbb87659564fb41f85336730aed6e&quot;,
+      &quot;expected&quot;: [
+        [
+          25,
+          &quot;AFSSLPinningMode&quot;,
+          &quot;type&quot;
+        ],
+        [
+          26,
+          &quot;AFSSLPinningModeNone&quot;,
+          &quot;enum-member&quot;
+        ],
+        [
+          27,
+          &quot;AFSSLPinningModePublicKey&quot;,
+          &quot;enum-member&quot;
+        ],
+        [
+          28,
+          &quot;AFSSLPinningModeCertificate&quot;,
+          &quot;enum-member&quot;
+        ],
+        [
+          39,
+          &quot;AFSecurityPolicy&quot;,
+          &quot;class-interface&quot;
+        ],
+        [
+          44,
+          &quot;SSLPinningMode&quot;,
+          &quot;property&quot;
+        ],
+        [
+          53,
+          &quot;pinnedCertificates&quot;,
+          &quot;property&quot;
+        ],
+        [
+          58,
+          &quot;allowInvalidCertificates&quot;,
+          &quot;property&quot;
+        ],
+        [
+          63,
+          &quot;validatesDomainName&quot;,
+          &quot;property&quot;
+        ],
+        [
+          74,
+          &quot;certificatesInBundle:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          85,
+          &quot;defaultPolicy&quot;,
+          &quot;method&quot;
+        ],
+        [
+          102,
+          &quot;policyWithPinningMode:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          115,
+          &quot;policyWithPinningMode:withPinnedCertificates:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          131,
+          &quot;evaluateServerTrust:forDomain:&quot;,
+          &quot;method&quot;
+        ]
+      ],
+      &quot;unexpanded&quot;: [],
+      &quot;repo&quot;: &quot;AFNetworking/AFNetworking&quot;,
+      &quot;version&quot;: &quot;4.0.1&quot;,
+      &quot;commit&quot;: &quot;ffae2391ab0c29dc88eb0a58d2f5b2c2c27cadbf&quot;,
+      &quot;url&quot;: &quot;https://github.com/AFNetworking/AFNetworking/blob/ffae2391ab0c29dc88eb0a58d2f5b2c2c27cadbf/AFNetworking/AFSecurityPolicy.h&quot;,
+      &quot;facts&quot;: {
+        &quot;declarations&quot;: [
+          {
+            &quot;key&quot;: &quot;objc-enum:1246:1386:1274&quot;,
+            &quot;name&quot;: &quot;AFSSLPinningMode&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSSLPinningMode&quot;,
+            &quot;kind&quot;: &quot;type&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;typedef NS_ENUM(NSUInteger, AFSSLPinningMode)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 25,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 29,
+              &quot;endColumn&quot;: 3
+            },
+            &quot;start&quot;: 1246,
+            &quot;end&quot;: 1386,
+            &quot;nameEnd&quot;: 1290,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;annotations&quot;: [
+              &quot;Original macro: NS_ENUM&quot;,
+              &quot;Original underlying type syntax: NSUInteger&quot;
+            ],
+            &quot;sourceConditions&quot;: [
+              &quot;Original NS_ENUM enum/options source profile; macro expansion, SDK type/ABI and numeric values remain unverified&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-enum:1246:1386:1274:member:1298&quot;,
+            &quot;parent&quot;: &quot;objc-enum:1246:1386:1274&quot;,
+            &quot;name&quot;: &quot;AFSSLPinningModeNone&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSSLPinningMode::AFSSLPinningModeNone&quot;,
+            &quot;kind&quot;: &quot;enum-member&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;AFSSLPinningModeNone&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 26,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 26,
+              &quot;endColumn&quot;: 25
+            },
+            &quot;start&quot;: 1298,
+            &quot;end&quot;: 1318,
+            &quot;nameEnd&quot;: 1318,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;sourceConditions&quot;: [
+              &quot;Original NS_ENUM enum/options source profile; macro expansion, SDK type/ABI and numeric values remain unverified&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-enum:1246:1386:1274:member:1324&quot;,
+            &quot;parent&quot;: &quot;objc-enum:1246:1386:1274&quot;,
+            &quot;name&quot;: &quot;AFSSLPinningModePublicKey&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSSLPinningMode::AFSSLPinningModePublicKey&quot;,
+            &quot;kind&quot;: &quot;enum-member&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;AFSSLPinningModePublicKey&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 27,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 27,
+              &quot;endColumn&quot;: 30
+            },
+            &quot;start&quot;: 1324,
+            &quot;end&quot;: 1349,
+            &quot;nameEnd&quot;: 1349,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;sourceConditions&quot;: [
+              &quot;Original NS_ENUM enum/options source profile; macro expansion, SDK type/ABI and numeric values remain unverified&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-enum:1246:1386:1274:member:1355&quot;,
+            &quot;parent&quot;: &quot;objc-enum:1246:1386:1274&quot;,
+            &quot;name&quot;: &quot;AFSSLPinningModeCertificate&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSSLPinningMode::AFSSLPinningModeCertificate&quot;,
+            &quot;kind&quot;: &quot;enum-member&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;AFSSLPinningModeCertificate&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 28,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 28,
+              &quot;endColumn&quot;: 32
+            },
+            &quot;start&quot;: 1355,
+            &quot;end&quot;: 1382,
+            &quot;nameEnd&quot;: 1382,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;sourceConditions&quot;: [
+              &quot;Original NS_ENUM enum/options source profile; macro expansion, SDK type/ABI and numeric values remain unverified&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;name&quot;: &quot;AFSecurityPolicy&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy&quot;,
+            &quot;kind&quot;: &quot;class-interface&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;@interface AFSecurityPolicy : NSObject &lt;NSSecureCoding, NSCopying&gt;&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 39,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 134,
+              &quot;endColumn&quot;: 5
+            },
+            &quot;start&quot;: 1844,
+            &quot;end&quot;: 5330,
+            &quot;nameEnd&quot;: 1871,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;annotations&quot;: [
+              &quot;&lt;NSSecureCoding, NSCopying&gt;&quot;,
+              &quot;Original superclass syntax: NSObject&quot;
+            ],
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:205:277:property:262&quot;,
+            &quot;name&quot;: &quot;SSLPinningMode&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::SSLPinningMode&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@property (readonly, nonatomic, assign) AFSSLPinningMode SSLPinningMode&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 44,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 44,
+              &quot;endColumn&quot;: 73
+            },
+            &quot;start&quot;: 2049,
+            &quot;end&quot;: 2121,
+            &quot;nameEnd&quot;: 2120,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;annotations&quot;: [
+              &quot;(readonly, nonatomic, assign)&quot;,
+              &quot;readonly&quot;,
+              &quot;nonatomic&quot;,
+              &quot;assign&quot;
+            ],
+            &quot;modifiers&quot;: [
+              &quot;objc-property&quot;
+            ],
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:545:622:property:603&quot;,
+            &quot;name&quot;: &quot;pinnedCertificates&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::pinnedCertificates&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@property (nonatomic, strong, nullable) NSSet &lt;NSData *&gt; *pinnedCertificates&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 53,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 53,
+              &quot;endColumn&quot;: 78
+            },
+            &quot;start&quot;: 2389,
+            &quot;end&quot;: 2466,
+            &quot;nameEnd&quot;: 2465,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;annotations&quot;: [
+              &quot;(nonatomic, strong, nullable)&quot;,
+              &quot;nonatomic&quot;,
+              &quot;strong&quot;,
+              &quot;nullable&quot;
+            ],
+            &quot;modifiers&quot;: [
+              &quot;objc-property&quot;
+            ],
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:728:788:property:763&quot;,
+            &quot;name&quot;: &quot;allowInvalidCertificates&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::allowInvalidCertificates&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@property (nonatomic, assign) BOOL allowInvalidCertificates&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 58,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 58,
+              &quot;endColumn&quot;: 61
+            },
+            &quot;start&quot;: 2572,
+            &quot;end&quot;: 2632,
+            &quot;nameEnd&quot;: 2631,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;annotations&quot;: [
+              &quot;(nonatomic, assign)&quot;,
+              &quot;nonatomic&quot;,
+              &quot;assign&quot;
+            ],
+            &quot;modifiers&quot;: [
+              &quot;objc-property&quot;
+            ],
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:892:947:property:927&quot;,
+            &quot;name&quot;: &quot;validatesDomainName&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::validatesDomainName&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@property (nonatomic, assign) BOOL validatesDomainName&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 63,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 63,
+              &quot;endColumn&quot;: 56
+            },
+            &quot;start&quot;: 2736,
+            &quot;end&quot;: 2791,
+            &quot;nameEnd&quot;: 2790,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;annotations&quot;: [
+              &quot;(nonatomic, assign)&quot;,
+              &quot;nonatomic&quot;,
+              &quot;assign&quot;
+            ],
+            &quot;modifiers&quot;: [
+              &quot;objc-property&quot;
+            ],
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:1453:1515:method:1475&quot;,
+            &quot;name&quot;: &quot;certificatesInBundle:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+certificatesInBundle:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (NSSet &lt;NSData *&gt; *)certificatesInBundle:(NSBundle *)bundle;&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 74,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 74,
+              &quot;endColumn&quot;: 63
+            },
+            &quot;start&quot;: 3297,
+            &quot;end&quot;: 3359,
+            &quot;nameEnd&quot;: 3339,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;certificatesInBundle:&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;,
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:1877:1907:method:1893&quot;,
+            &quot;name&quot;: &quot;defaultPolicy&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+defaultPolicy&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (instancetype)defaultPolicy;&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 85,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 85,
+              &quot;endColumn&quot;: 31
+            },
+            &quot;start&quot;: 3721,
+            &quot;end&quot;: 3751,
+            &quot;nameEnd&quot;: 3750,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;defaultPolicy&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;,
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:2407:2475:method:2423&quot;,
+            &quot;name&quot;: &quot;policyWithPinningMode:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+policyWithPinningMode:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (instancetype)policyWithPinningMode:(AFSSLPinningMode)pinningMode;&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 102,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 102,
+              &quot;endColumn&quot;: 69
+            },
+            &quot;start&quot;: 4251,
+            &quot;end&quot;: 4319,
+            &quot;nameEnd&quot;: 4288,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;policyWithPinningMode:&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;,
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:2748:2878:method:2764&quot;,
+            &quot;name&quot;: &quot;policyWithPinningMode:withPinnedCertificates:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+policyWithPinningMode:withPinnedCertificates:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (instancetype)policyWithPinningMode:(AFSSLPinningMode)pinningMode withPinnedCertificates:(NSSet &lt;NSData *&gt; *)pinnedCertificates;&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 115,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 115,
+              &quot;endColumn&quot;: 131
+            },
+            &quot;start&quot;: 4592,
+            &quot;end&quot;: 4722,
+            &quot;nameEnd&quot;: 4629,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;policyWithPinningMode:withPinnedCertificates:&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;,
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-region:1844:objc:3371:3480:method:3379&quot;,
+            &quot;name&quot;: &quot;evaluateServerTrust:forDomain:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::-evaluateServerTrust:forDomain:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;- (BOOL)evaluateServerTrust:(SecTrustRef)serverTrust forDomain:(nullable NSString *)domain;&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 131,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 132,
+              &quot;endColumn&quot;: 57
+            },
+            &quot;start&quot;: 5215,
+            &quot;end&quot;: 5324,
+            &quot;nameEnd&quot;: 5242,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc-region:1844:objc:0:3486:class-interface:11&quot;,
+            &quot;modifiers&quot;: [
+              &quot;instance-method&quot;
+            ],
+            &quot;selector&quot;: &quot;evaluateServerTrust:forDomain:&quot;,
+            &quot;dispatch&quot;: &quot;instance&quot;,
+            &quot;sourceConditions&quot;: [
+              &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            ]
+          }
+        ],
+        &quot;issues&quot;: [
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 25,
+              &quot;startColumn&quot;: 17,
+              &quot;endLine&quot;: 25,
+              &quot;endColumn&quot;: 28
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 25,
+              &quot;startColumn&quot;: 47,
+              &quot;endLine&quot;: 25,
+              &quot;endColumn&quot;: 48
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 28,
+              &quot;startColumn&quot;: 32,
+              &quot;endLine&quot;: 29,
+              &quot;endColumn&quot;: 2
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 37,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 39,
+              &quot;endColumn&quot;: 67
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 39,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 39,
+              &quot;endColumn&quot;: 41
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 53,
+              &quot;startColumn&quot;: 39,
+              &quot;endLine&quot;: 53,
+              &quot;endColumn&quot;: 40
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 53,
+              &quot;startColumn&quot;: 55,
+              &quot;endLine&quot;: 53,
+              &quot;endColumn&quot;: 56
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 74,
+              &quot;startColumn&quot;: 43,
+              &quot;endLine&quot;: 74,
+              &quot;endColumn&quot;: 53
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 74,
+              &quot;startColumn&quot;: 55,
+              &quot;endLine&quot;: 74,
+              &quot;endColumn&quot;: 56
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 102,
+              &quot;startColumn&quot;: 38,
+              &quot;endLine&quot;: 102,
+              &quot;endColumn&quot;: 68
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 115,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 115,
+              &quot;endColumn&quot;: 57
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 115,
+              &quot;startColumn&quot;: 69,
+              &quot;endLine&quot;: 115,
+              &quot;endColumn&quot;: 112
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 131,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 131,
+              &quot;endColumn&quot;: 42
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 132,
+              &quot;startColumn&quot;: 28,
+              &quot;endLine&quot;: 132,
+              &quot;endColumn&quot;: 30
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 132,
+              &quot;startColumn&quot;: 49,
+              &quot;endLine&quot;: 132,
+              &quot;endColumn&quot;: 50
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 134,
+              &quot;startColumn&quot;: 2,
+              &quot;endLine&quot;: 134,
+              &quot;endColumn&quot;: 5
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-source-context-gap&quot;,
+            &quot;reason&quot;: &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 39,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 134,
+              &quot;endColumn&quot;: 5
+            }
+          },
+          {
+            &quot;code&quot;: &quot;objc-macro-profile-gap&quot;,
+            &quot;reason&quot;: &quot;Original NS_ENUM enum/options source profile; macro expansion, SDK type/ABI and numeric values remain unverified&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 25,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 29,
+              &quot;endColumn&quot;: 3
+            }
+          }
+        ],
+        &quot;truncated&quot;: false,
+        &quot;cfamily&quot;: {
+          &quot;preprocessor&quot;: [
+            {
+              &quot;kind&quot;: &quot;preproc_include&quot;,
+              &quot;text&quot;: &quot;#import &lt;Foundation/Foundation.h&gt;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 22,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 23,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_include&quot;,
+              &quot;text&quot;: &quot;#import &lt;Security/Security.h&gt;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 23,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 24,
+                &quot;endColumn&quot;: 1
+              }
+            }
+          ],
+          &quot;complete&quot;: false
+        },
+        &quot;objc&quot;: {
+          &quot;propertyImplementations&quot;: [],
+          &quot;moduleImports&quot;: [],
+          &quot;isolatedRegions&quot;: [
+            {
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 39,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 134,
+                &quot;endColumn&quot;: 5
+              },
+              &quot;reason&quot;: &quot;Original self-contained Objective-C region recovered; surrounding annotation/macro syntax remains unexpanded and requires source-context qualification&quot;
+            }
+          ],
+          &quot;complete&quot;: false,
+          &quot;enumProfiles&quot;: [
+            {
+              &quot;macro&quot;: &quot;NS_ENUM&quot;,
+              &quot;name&quot;: &quot;AFSSLPinningMode&quot;,
+              &quot;underlyingType&quot;: &quot;NSUInteger&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 25,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 29,
+                &quot;endColumn&quot;: 3
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      &quot;file&quot;: &quot;AFNetworking/AFSecurityPolicy.m&quot;,
+      &quot;sha256&quot;: &quot;1e942f9bcf388b59c7f6a6440f332ba8dd3eaad93ac24854ed29913993926466&quot;,
+      &quot;expected&quot;: [
+        [
+          27,
+          &quot;AFSecKeyGetData&quot;,
+          &quot;function&quot;
+        ],
+        [
+          43,
+          &quot;AFSecKeyIsEqualToKey&quot;,
+          &quot;function&quot;
+        ],
+        [
+          51,
+          &quot;AFPublicKeyForCertificate&quot;,
+          &quot;function&quot;
+        ],
+        [
+          86,
+          &quot;AFServerTrustIsValid&quot;,
+          &quot;function&quot;
+        ],
+        [
+          100,
+          &quot;AFCertificateTrustChainForServerTrust&quot;,
+          &quot;function&quot;
+        ],
+        [
+          112,
+          &quot;AFPublicKeyTrustChainForServerTrust&quot;,
+          &quot;function&quot;
+        ],
+        [
+          149,
+          &quot;AFSecurityPolicy()&quot;,
+          &quot;class-interface&quot;
+        ],
+        [
+          150,
+          &quot;SSLPinningMode&quot;,
+          &quot;property&quot;
+        ],
+        [
+          151,
+          &quot;pinnedPublicKeys&quot;,
+          &quot;property&quot;
+        ],
+        [
+          154,
+          &quot;AFSecurityPolicy&quot;,
+          &quot;class-implementation&quot;
+        ],
+        [
+          156,
+          &quot;certificatesInBundle:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          168,
+          &quot;defaultPolicy&quot;,
+          &quot;method&quot;
+        ],
+        [
+          175,
+          &quot;policyWithPinningMode:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          180,
+          &quot;policyWithPinningMode:withPinnedCertificates:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          189,
+          &quot;init&quot;,
+          &quot;method&quot;
+        ],
+        [
+          200,
+          &quot;setPinnedCertificates:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          220,
+          &quot;evaluateServerTrust:forDomain:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          297,
+          &quot;keyPathsForValuesAffectingPinnedPublicKeys&quot;,
+          &quot;method&quot;
+        ],
+        [
+          303,
+          &quot;supportsSecureCoding&quot;,
+          &quot;method&quot;
+        ],
+        [
+          307,
+          &quot;initWithCoder:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          322,
+          &quot;encodeWithCoder:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          331,
+          &quot;copyWithZone:&quot;,
+          &quot;method&quot;
+        ]
+      ],
+      &quot;unexpanded&quot;: [],
+      &quot;repo&quot;: &quot;AFNetworking/AFNetworking&quot;,
+      &quot;version&quot;: &quot;4.0.1&quot;,
+      &quot;commit&quot;: &quot;ffae2391ab0c29dc88eb0a58d2f5b2c2c27cadbf&quot;,
+      &quot;url&quot;: &quot;https://github.com/AFNetworking/AFNetworking/blob/ffae2391ab0c29dc88eb0a58d2f5b2c2c27cadbf/AFNetworking/AFSecurityPolicy.m&quot;,
+      &quot;facts&quot;: {
+        &quot;declarations&quot;: [
+          {
+            &quot;key&quot;: &quot;1293:1592:function:1309&quot;,
+            &quot;name&quot;: &quot;AFSecKeyGetData&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecKeyGetData&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;entityType&quot;: &quot;function&quot;,
+            &quot;signature&quot;: &quot;static NSData * AFSecKeyGetData(SecKeyRef key)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 27,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 40,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 1293,
+            &quot;end&quot;: 1592,
+            &quot;nameEnd&quot;: 1324,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;static&quot;
+            ],
+            &quot;sourceConditions&quot;: [
+              &quot;#if !TARGET_OS_IOS &amp;&amp; !TARGET_OS_WATCH &amp;&amp; !TARGET_OS_TV&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;1601:1859:function:1613&quot;,
+            &quot;name&quot;: &quot;AFSecKeyIsEqualToKey&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecKeyIsEqualToKey&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;entityType&quot;: &quot;function&quot;,
+            &quot;signature&quot;: &quot;static BOOL AFSecKeyIsEqualToKey(SecKeyRef key1, SecKeyRef key2)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 43,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 49,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 1601,
+            &quot;end&quot;: 1859,
+            &quot;nameEnd&quot;: 1633,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;static&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;1861:2897:function:1871&quot;,
+            &quot;name&quot;: &quot;AFPublicKeyForCertificate&quot;,
+            &quot;qualifiedName&quot;: &quot;AFPublicKeyForCertificate&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;entityType&quot;: &quot;function&quot;,
+            &quot;signature&quot;: &quot;static id AFPublicKeyForCertificate(NSData *certificate)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 51,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 84,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 1861,
+            &quot;end&quot;: 2897,
+            &quot;nameEnd&quot;: 1896,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;static&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;2899:3325:function:2911&quot;,
+            &quot;name&quot;: &quot;AFServerTrustIsValid&quot;,
+            &quot;qualifiedName&quot;: &quot;AFServerTrustIsValid&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;entityType&quot;: &quot;function&quot;,
+            &quot;signature&quot;: &quot;static BOOL AFServerTrustIsValid(SecTrustRef serverTrust)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 86,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 98,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 2899,
+            &quot;end&quot;: 3325,
+            &quot;nameEnd&quot;: 2931,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;static&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;3327:3873:function:3344&quot;,
+            &quot;name&quot;: &quot;AFCertificateTrustChainForServerTrust&quot;,
+            &quot;qualifiedName&quot;: &quot;AFCertificateTrustChainForServerTrust&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;entityType&quot;: &quot;function&quot;,
+            &quot;signature&quot;: &quot;static NSArray * AFCertificateTrustChainForServerTrust(SecTrustRef serverTrust)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 100,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 110,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 3327,
+            &quot;end&quot;: 3873,
+            &quot;nameEnd&quot;: 3381,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;static&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;3875:5162:function:3892&quot;,
+            &quot;name&quot;: &quot;AFPublicKeyTrustChainForServerTrust&quot;,
+            &quot;qualifiedName&quot;: &quot;AFPublicKeyTrustChainForServerTrust&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;entityType&quot;: &quot;function&quot;,
+            &quot;signature&quot;: &quot;static NSArray * AFPublicKeyTrustChainForServerTrust(SecTrustRef serverTrust)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 112,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 145,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 3875,
+            &quot;end&quot;: 5162,
+            &quot;nameEnd&quot;: 3927,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;static&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc:5180:5354:class-interface:5191&quot;,
+            &quot;name&quot;: &quot;AFSecurityPolicy()&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy()&quot;,
+            &quot;kind&quot;: &quot;class-interface&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;@interface AFSecurityPolicy()&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 149,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 152,
+              &quot;endColumn&quot;: 5
+            },
+            &quot;start&quot;: 5180,
+            &quot;end&quot;: 5354,
+            &quot;nameEnd&quot;: 5207,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-extension&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc:5210:5283:property:5268&quot;,
+            &quot;name&quot;: &quot;SSLPinningMode&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy()::SSLPinningMode&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@property (readwrite, nonatomic, assign) AFSSLPinningMode SSLPinningMode&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 150,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 150,
+              &quot;endColumn&quot;: 74
+            },
+            &quot;start&quot;: 5210,
+            &quot;end&quot;: 5283,
+            &quot;nameEnd&quot;: 5282,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc:5180:5354:class-interface:5191&quot;,
+            &quot;annotations&quot;: [
+              &quot;(readwrite, nonatomic, assign)&quot;,
+              &quot;readwrite&quot;,
+              &quot;nonatomic&quot;,
+              &quot;assign&quot;
+            ],
+            &quot;modifiers&quot;: [
+              &quot;objc-property&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc:5284:5349:property:5332&quot;,
+            &quot;name&quot;: &quot;pinnedPublicKeys&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy()::pinnedPublicKeys&quot;,
+            &quot;kind&quot;: &quot;property&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;@property (readwrite, nonatomic, strong) NSSet *pinnedPublicKeys&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 151,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 151,
+              &quot;endColumn&quot;: 66
+            },
+            &quot;start&quot;: 5284,
+            &quot;end&quot;: 5349,
+            &quot;nameEnd&quot;: 5348,
+            &quot;declarationForm&quot;: &quot;declaration&quot;,
+            &quot;parent&quot;: &quot;objc:5180:5354:class-interface:5191&quot;,
+            &quot;annotations&quot;: [
+              &quot;(readwrite, nonatomic, strong)&quot;,
+              &quot;readwrite&quot;,
+              &quot;nonatomic&quot;,
+              &quot;strong&quot;
+            ],
+            &quot;modifiers&quot;: [
+              &quot;objc-property&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;name&quot;: &quot;AFSecurityPolicy&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy&quot;,
+            &quot;kind&quot;: &quot;class-implementation&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;@implementation AFSecurityPolicy&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 154,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 341,
+              &quot;endColumn&quot;: 5
+            },
+            &quot;start&quot;: 5356,
+            &quot;end&quot;: 12769,
+            &quot;nameEnd&quot;: 5388,
+            &quot;declarationForm&quot;: &quot;definition&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:5390:5812:method:5401&quot;,
+            &quot;name&quot;: &quot;certificatesInBundle:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+certificatesInBundle:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (NSSet *)certificatesInBundle:(NSBundle *)bundle&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 156,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 166,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 5390,
+            &quot;end&quot;: 5812,
+            &quot;nameEnd&quot;: 5421,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;certificatesInBundle:&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:5814:5993:method:5830&quot;,
+            &quot;name&quot;: &quot;defaultPolicy&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+defaultPolicy&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (instancetype)defaultPolicy&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 168,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 173,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 5814,
+            &quot;end&quot;: 5993,
+            &quot;nameEnd&quot;: 5843,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;defaultPolicy&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:5995:6269:method:6011&quot;,
+            &quot;name&quot;: &quot;policyWithPinningMode:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+policyWithPinningMode:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (instancetype)policyWithPinningMode:(AFSSLPinningMode)pinningMode&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 175,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 178,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 5995,
+            &quot;end&quot;: 6269,
+            &quot;nameEnd&quot;: 6032,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;policyWithPinningMode:&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:6271:6594:method:6287&quot;,
+            &quot;name&quot;: &quot;policyWithPinningMode:withPinnedCertificates:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+policyWithPinningMode:withPinnedCertificates:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (instancetype)policyWithPinningMode:(AFSSLPinningMode)pinningMode withPinnedCertificates:(NSSet *)pinnedCertificates&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 180,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 187,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 6271,
+            &quot;end&quot;: 6594,
+            &quot;nameEnd&quot;: 6308,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;policyWithPinningMode:withPinnedCertificates:&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:6596:6743:method:6612&quot;,
+            &quot;name&quot;: &quot;init&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::-init&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;- (instancetype)init&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 189,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 198,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 6596,
+            &quot;end&quot;: 6743,
+            &quot;nameEnd&quot;: 6616,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;instance-method&quot;
+            ],
+            &quot;selector&quot;: &quot;init&quot;,
+            &quot;dispatch&quot;: &quot;instance&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:6745:7401:method:6753&quot;,
+            &quot;name&quot;: &quot;setPinnedCertificates:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::-setPinnedCertificates:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;- (void)setPinnedCertificates:(NSSet *)pinnedCertificates&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 200,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 216,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 6745,
+            &quot;end&quot;: 7401,
+            &quot;nameEnd&quot;: 6774,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;instance-method&quot;
+            ],
+            &quot;selector&quot;: &quot;setPinnedCertificates:&quot;,
+            &quot;dispatch&quot;: &quot;instance&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:7419:10879:method:7427&quot;,
+            &quot;name&quot;: &quot;evaluateServerTrust:forDomain:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::-evaluateServerTrust:forDomain:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;- (BOOL)evaluateServerTrust:(SecTrustRef)serverTrust forDomain:(NSString *)domain&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 220,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 293,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 7419,
+            &quot;end&quot;: 10879,
+            &quot;nameEnd&quot;: 7446,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;instance-method&quot;
+            ],
+            &quot;selector&quot;: &quot;evaluateServerTrust:forDomain:&quot;,
+            &quot;dispatch&quot;: &quot;instance&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:10917:11030:method:10928&quot;,
+            &quot;name&quot;: &quot;keyPathsForValuesAffectingPinnedPublicKeys&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+keyPathsForValuesAffectingPinnedPublicKeys&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (NSSet *)keyPathsForValuesAffectingPinnedPublicKeys&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 297,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 299,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 10917,
+            &quot;end&quot;: 11030,
+            &quot;nameEnd&quot;: 10970,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;keyPathsForValuesAffectingPinnedPublicKeys&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:11063:11111:method:11071&quot;,
+            &quot;name&quot;: &quot;supportsSecureCoding&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::+supportsSecureCoding&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+ (BOOL)supportsSecureCoding&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 303,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 305,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 11063,
+            &quot;end&quot;: 11111,
+            &quot;nameEnd&quot;: 11091,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;
+            ],
+            &quot;selector&quot;: &quot;supportsSecureCoding&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:11113:11772:method:11129&quot;,
+            &quot;name&quot;: &quot;initWithCoder:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::-initWithCoder:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;- (instancetype)initWithCoder:(NSCoder *)decoder&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 307,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 320,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 11113,
+            &quot;end&quot;: 11772,
+            &quot;nameEnd&quot;: 11142,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;instance-method&quot;
+            ],
+            &quot;selector&quot;: &quot;initWithCoder:&quot;,
+            &quot;dispatch&quot;: &quot;instance&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:11774:12293:method:11782&quot;,
+            &quot;name&quot;: &quot;encodeWithCoder:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::-encodeWithCoder:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;- (void)encodeWithCoder:(NSCoder *)coder&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 322,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 327,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 11774,
+            &quot;end&quot;: 12293,
+            &quot;nameEnd&quot;: 11797,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;instance-method&quot;
+            ],
+            &quot;selector&quot;: &quot;encodeWithCoder:&quot;,
+            &quot;dispatch&quot;: &quot;instance&quot;
+          },
+          {
+            &quot;key&quot;: &quot;objc:12321:12763:method:12337&quot;,
+            &quot;name&quot;: &quot;copyWithZone:&quot;,
+            &quot;qualifiedName&quot;: &quot;AFSecurityPolicy::-copyWithZone:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;- (instancetype)copyWithZone:(NSZone *)zone&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 331,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 339,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 12321,
+            &quot;end&quot;: 12763,
+            &quot;nameEnd&quot;: 12349,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;parent&quot;: &quot;objc:5356:12769:class-implementation:5372&quot;,
+            &quot;modifiers&quot;: [
+              &quot;instance-method&quot;
+            ],
+            &quot;selector&quot;: &quot;copyWithZone:&quot;,
+            &quot;dispatch&quot;: &quot;instance&quot;
+          }
+        ],
+        &quot;issues&quot;: [],
+        &quot;truncated&quot;: false,
+        &quot;cfamily&quot;: {
+          &quot;preprocessor&quot;: [
+            {
+              &quot;kind&quot;: &quot;preproc_include&quot;,
+              &quot;text&quot;: &quot;#import \&quot;AFSecurityPolicy.h\&quot;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 22,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 23,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_include&quot;,
+              &quot;text&quot;: &quot;#import &lt;AssertMacros.h&gt;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 24,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 25,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_if&quot;,
+              &quot;text&quot;: &quot;#if !TARGET_OS_IOS &amp;&amp; !TARGET_OS_WATCH &amp;&amp; !TARGET_OS_TV&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 26,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 41,
+                &quot;endColumn&quot;: 7
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_if&quot;,
+              &quot;text&quot;: &quot;#if TARGET_OS_IOS || TARGET_OS_WATCH || TARGET_OS_TV&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 44,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 48,
+                &quot;endColumn&quot;: 7
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_else&quot;,
+              &quot;text&quot;: &quot;#else&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 46,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 47,
+                &quot;endColumn&quot;: 66
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic push&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 63,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 64,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic ignored \&quot;-Wdeprecated-declarations\&quot;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 64,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 65,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic pop&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 66,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 67,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic push&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 89,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 90,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic ignored \&quot;-Wdeprecated-declarations\&quot;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 90,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 91,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic pop&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 92,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 93,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic push&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 125,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 126,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic ignored \&quot;-Wdeprecated-declarations\&quot;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 126,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 127,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma clang diagnostic pop&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 128,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 129,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma mark -&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 147,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 148,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma mark -&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 218,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 219,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma mark - NSKeyValueObserving&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 295,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 296,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma mark - NSSecureCoding&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 301,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 302,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#pragma mark - NSCopying&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 329,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 330,
+                &quot;endColumn&quot;: 1
+              }
+            }
+          ],
+          &quot;complete&quot;: true
+        },
+        &quot;objc&quot;: {
+          &quot;propertyImplementations&quot;: [],
+          &quot;moduleImports&quot;: [],
+          &quot;complete&quot;: true
+        }
+      }
+    },
+    {
+      &quot;repo&quot;: &quot;SFML/SFML&quot;,
+      &quot;version&quot;: &quot;2.6.1&quot;,
+      &quot;commit&quot;: &quot;69ea0cd863aed1d4092b970b676924a716ff718b&quot;,
+      &quot;file&quot;: &quot;examples/cocoa/NSString+stdstring.mm&quot;,
+      &quot;sha256&quot;: &quot;0e5a1bf15a2d32907d97bcb7a72c0cf174f47baf63e5db75b2b3a12992b1d95f&quot;,
+      &quot;expected&quot;: [
+        [
+          29,
+          &quot;NSString(NSString_stdstring)&quot;,
+          &quot;class-implementation&quot;
+        ],
+        [
+          31,
+          &quot;stringWithstdstring:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          43,
+          &quot;stringWithstdwstring:&quot;,
+          &quot;method&quot;
+        ],
+        [
+          53,
+          &quot;tostdstring&quot;,
+          &quot;method&quot;
+        ],
+        [
+          65,
+          &quot;tostdwstring&quot;,
+          &quot;method&quot;
+        ]
+      ],
+      &quot;unexpanded&quot;: [],
+      &quot;url&quot;: &quot;https://github.com/SFML/SFML/blob/69ea0cd863aed1d4092b970b676924a716ff718b/examples/cocoa/NSString+stdstring.mm&quot;,
+      &quot;facts&quot;: {
+        &quot;declarations&quot;: [
+          {
+            &quot;key&quot;: &quot;objc:1241:2677:class-implementation:1257&quot;,
+            &quot;name&quot;: &quot;NSString(NSString_stdstring)&quot;,
+            &quot;qualifiedName&quot;: &quot;NSString(NSString_stdstring)&quot;,
+            &quot;kind&quot;: &quot;class-implementation&quot;,
+            &quot;entityType&quot;: &quot;class&quot;,
+            &quot;signature&quot;: &quot;@implementation NSString (NSString_stdstring)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 29,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 73,
+              &quot;endColumn&quot;: 5
+            },
+            &quot;start&quot;: 1241,
+            &quot;end&quot;: 2677,
+            &quot;nameEnd&quot;: 1265,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;category&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-cpp-method:1288:1632:1293&quot;,
+            &quot;parent&quot;: &quot;objc:1241:2677:class-implementation:1257&quot;,
+            &quot;name&quot;: &quot;stringWithstdstring:&quot;,
+            &quot;qualifiedName&quot;: &quot;NSString(NSString_stdstring)::+stringWithstdstring:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+(id)stringWithstdstring:(const std::string&amp;)string&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 31,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 41,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 1288,
+            &quot;end&quot;: 1632,
+            &quot;nameEnd&quot;: 1312,
+            &quot;selector&quot;: &quot;stringWithstdstring:&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;,
+              &quot;objc-cpp-method-header&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;Original Objective-C++ return/parameter type syntax is retained without type binding&quot;
+            ],
+            &quot;sourceConditions&quot;: [
+              &quot;Original Objective-C++ selector header profile; C++ type and method-body binding remain unverified&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-cpp-method:1634:2020:1639&quot;,
+            &quot;parent&quot;: &quot;objc:1241:2677:class-implementation:1257&quot;,
+            &quot;name&quot;: &quot;stringWithstdwstring:&quot;,
+            &quot;qualifiedName&quot;: &quot;NSString(NSString_stdstring)::+stringWithstdwstring:&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;+(id)stringWithstdwstring:(const std::wstring&amp;)string&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 43,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 51,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 1634,
+            &quot;end&quot;: 2020,
+            &quot;nameEnd&quot;: 1659,
+            &quot;selector&quot;: &quot;stringWithstdwstring:&quot;,
+            &quot;dispatch&quot;: &quot;class&quot;,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;class-method&quot;,
+              &quot;objc-cpp-method-header&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;Original Objective-C++ return/parameter type syntax is retained without type binding&quot;
+            ],
+            &quot;sourceConditions&quot;: [
+              &quot;Original Objective-C++ selector header profile; C++ type and method-body binding remain unverified&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-cpp-method:2022:2329:2036&quot;,
+            &quot;parent&quot;: &quot;objc:1241:2677:class-implementation:1257&quot;,
+            &quot;name&quot;: &quot;tostdstring&quot;,
+            &quot;qualifiedName&quot;: &quot;NSString(NSString_stdstring)::-tostdstring&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;-(std::string)tostdstring&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 53,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 63,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 2022,
+            &quot;end&quot;: 2329,
+            &quot;nameEnd&quot;: 2047,
+            &quot;selector&quot;: &quot;tostdstring&quot;,
+            &quot;dispatch&quot;: &quot;instance&quot;,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;instance-method&quot;,
+              &quot;objc-cpp-method-header&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;Original Objective-C++ return/parameter type syntax is retained without type binding&quot;
+            ],
+            &quot;sourceConditions&quot;: [
+              &quot;Original Objective-C++ selector header profile; C++ type and method-body binding remain unverified&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-cpp-method:2331:2671:2346&quot;,
+            &quot;parent&quot;: &quot;objc:1241:2677:class-implementation:1257&quot;,
+            &quot;name&quot;: &quot;tostdwstring&quot;,
+            &quot;qualifiedName&quot;: &quot;NSString(NSString_stdstring)::-tostdwstring&quot;,
+            &quot;kind&quot;: &quot;method&quot;,
+            &quot;entityType&quot;: &quot;method&quot;,
+            &quot;signature&quot;: &quot;-(std::wstring)tostdwstring&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 65,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 71,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 2331,
+            &quot;end&quot;: 2671,
+            &quot;nameEnd&quot;: 2358,
+            &quot;selector&quot;: &quot;tostdwstring&quot;,
+            &quot;dispatch&quot;: &quot;instance&quot;,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;modifiers&quot;: [
+              &quot;instance-method&quot;,
+              &quot;objc-cpp-method-header&quot;
+            ],
+            &quot;annotations&quot;: [
+              &quot;Original Objective-C++ return/parameter type syntax is retained without type binding&quot;
+            ],
+            &quot;sourceConditions&quot;: [
+              &quot;Original Objective-C++ selector header profile; C++ type and method-body binding remain unverified&quot;
+            ]
+          }
+        ],
+        &quot;issues&quot;: [
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 31,
+              &quot;startColumn&quot;: 36,
+              &quot;endLine&quot;: 31,
+              &quot;endColumn&quot;: 38
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 31,
+              &quot;startColumn&quot;: 44,
+              &quot;endLine&quot;: 31,
+              &quot;endColumn&quot;: 45
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 33,
+              &quot;startColumn&quot;: 9,
+              &quot;endLine&quot;: 33,
+              &quot;endColumn&quot;: 10
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 36,
+              &quot;startColumn&quot;: 8,
+              &quot;endLine&quot;: 36,
+              &quot;endColumn&quot;: 9
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 36,
+              &quot;startColumn&quot;: 14,
+              &quot;endLine&quot;: 36,
+              &quot;endColumn&quot;: 15
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 36,
+              &quot;startColumn&quot;: 54,
+              &quot;endLine&quot;: 36,
+              &quot;endColumn&quot;: 59
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 43,
+              &quot;startColumn&quot;: 37,
+              &quot;endLine&quot;: 43,
+              &quot;endColumn&quot;: 39
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 43,
+              &quot;startColumn&quot;: 46,
+              &quot;endLine&quot;: 43,
+              &quot;endColumn&quot;: 47
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-extraction-gap&quot;,
+            &quot;reason&quot;: &quot;Original declarator requires an additional structural profile; no name is guessed&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 45,
+              &quot;startColumn&quot;: 15,
+              &quot;endLine&quot;: 45,
+              &quot;endColumn&quot;: 63
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 45,
+              &quot;startColumn&quot;: 42,
+              &quot;endLine&quot;: 45,
+              &quot;endColumn&quot;: 47
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 53,
+              &quot;startColumn&quot;: 6,
+              &quot;endLine&quot;: 53,
+              &quot;endColumn&quot;: 8
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 60,
+              &quot;startColumn&quot;: 16,
+              &quot;endLine&quot;: 60,
+              &quot;endColumn&quot;: 21
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 65,
+              &quot;startColumn&quot;: 6,
+              &quot;endLine&quot;: 65,
+              &quot;endColumn&quot;: 8
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 70,
+              &quot;startColumn&quot;: 12,
+              &quot;endLine&quot;: 70,
+              &quot;endColumn&quot;: 17
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 70,
+              &quot;startColumn&quot;: 52,
+              &quot;endLine&quot;: 70,
+              &quot;endColumn&quot;: 67
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 70,
+              &quot;startColumn&quot;: 103,
+              &quot;endLine&quot;: 70,
+              &quot;endColumn&quot;: 104
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 29,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 29,
+              &quot;endColumn&quot;: 2
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 29,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 29,
+              &quot;endColumn&quot;: 2
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 31,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 31,
+              &quot;endColumn&quot;: 27
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-extraction-gap&quot;,
+            &quot;reason&quot;: &quot;Original declarator requires an additional structural profile; no name is guessed&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 31,
+              &quot;startColumn&quot;: 44,
+              &quot;endLine&quot;: 31,
+              &quot;endColumn&quot;: 52
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 31,
+              &quot;startColumn&quot;: 45,
+              &quot;endLine&quot;: 31,
+              &quot;endColumn&quot;: 46
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 38,
+              &quot;startColumn&quot;: 19,
+              &quot;endLine&quot;: 38,
+              &quot;endColumn&quot;: 53
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 39,
+              &quot;startColumn&quot;: 69,
+              &quot;endLine&quot;: 39,
+              &quot;endColumn&quot;: 70
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 43,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 43,
+              &quot;endColumn&quot;: 28
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-extraction-gap&quot;,
+            &quot;reason&quot;: &quot;Original declarator requires an additional structural profile; no name is guessed&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 43,
+              &quot;startColumn&quot;: 46,
+              &quot;endLine&quot;: 43,
+              &quot;endColumn&quot;: 54
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 43,
+              &quot;startColumn&quot;: 47,
+              &quot;endLine&quot;: 43,
+              &quot;endColumn&quot;: 48
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-extraction-gap&quot;,
+            &quot;reason&quot;: &quot;Original declarator requires an additional structural profile; no name is guessed&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 48,
+              &quot;startColumn&quot;: 13,
+              &quot;endLine&quot;: 49,
+              &quot;endColumn&quot;: 100
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 48,
+              &quot;startColumn&quot;: 21,
+              &quot;endLine&quot;: 49,
+              &quot;endColumn&quot;: 88
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 48,
+              &quot;startColumn&quot;: 22,
+              &quot;endLine&quot;: 48,
+              &quot;endColumn&quot;: 32
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 49,
+              &quot;startColumn&quot;: 100,
+              &quot;endLine&quot;: 49,
+              &quot;endColumn&quot;: 101
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 57,
+              &quot;startColumn&quot;: 11,
+              &quot;endLine&quot;: 57,
+              &quot;endColumn&quot;: 15
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 57,
+              &quot;startColumn&quot;: 24,
+              &quot;endLine&quot;: 60,
+              &quot;endColumn&quot;: 15
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 57,
+              &quot;startColumn&quot;: 25,
+              &quot;endLine&quot;: 57,
+              &quot;endColumn&quot;: 51
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 57,
+              &quot;startColumn&quot;: 77,
+              &quot;endLine&quot;: 59,
+              &quot;endColumn&quot;: 7
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 59,
+              &quot;startColumn&quot;: 14,
+              &quot;endLine&quot;: 59,
+              &quot;endColumn&quot;: 21
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 63,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 73,
+              &quot;endColumn&quot;: 5
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 69,
+              &quot;startColumn&quot;: 22,
+              &quot;endLine&quot;: 70,
+              &quot;endColumn&quot;: 11
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 69,
+              &quot;startColumn&quot;: 23,
+              &quot;endLine&quot;: 69,
+              &quot;endColumn&quot;: 46
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 70,
+              &quot;startColumn&quot;: 53,
+              &quot;endLine&quot;: 70,
+              &quot;endColumn&quot;: 67
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 70,
+              &quot;startColumn&quot;: 61,
+              &quot;endLine&quot;: 70,
+              &quot;endColumn&quot;: 66
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 70,
+              &quot;startColumn&quot;: 68,
+              &quot;endLine&quot;: 70,
+              &quot;endColumn&quot;: 85
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 70,
+              &quot;startColumn&quot;: 104,
+              &quot;endLine&quot;: 70,
+              &quot;endColumn&quot;: 105
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 73,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 73,
+              &quot;endColumn&quot;: 2
+            }
+          },
+          {
+            &quot;code&quot;: &quot;objc-cpp-structure-gap&quot;,
+            &quot;reason&quot;: &quot;Original Objective-C and C++ grammar profiles retain separate source declarations; shared types, macros and cross-language binding remain unverified&quot;
+          }
+        ],
+        &quot;truncated&quot;: false,
+        &quot;cfamily&quot;: {
+          &quot;preprocessor&quot;: [
+            {
+              &quot;kind&quot;: &quot;preproc_include&quot;,
+              &quot;text&quot;: &quot;#import \&quot;NSString+stdstring.h\&quot;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 26,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 27,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_include&quot;,
+              &quot;text&quot;: &quot;#include &lt;SFML/System/Utf.hpp&gt;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 27,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 28,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#import \&quot;NSString+stdstring.h\&quot;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 26,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 27,
+                &quot;endColumn&quot;: 1
+              }
+            }
+          ],
+          &quot;complete&quot;: false
+        },
+        &quot;objc&quot;: {
+          &quot;propertyImplementations&quot;: [],
+          &quot;moduleImports&quot;: [],
+          &quot;complete&quot;: false,
+          &quot;cppProfile&quot;: {
+            &quot;grammar&quot;: &quot;cpp&quot;,
+            &quot;declarations&quot;: 0,
+            &quot;methodHeaders&quot;: 4
+          }
+        }
+      }
+    },
+    {
+      &quot;repo&quot;: &quot;SFML/SFML&quot;,
+      &quot;version&quot;: &quot;2.6.1&quot;,
+      &quot;commit&quot;: &quot;69ea0cd863aed1d4092b970b676924a716ff718b&quot;,
+      &quot;file&quot;: &quot;src/SFML/Window/OSX/cpp_objc_conversion.mm&quot;,
+      &quot;sha256&quot;: &quot;74b8ba335d4ee10aabfbfd38ea5e0f3fc67cf7685b13908384b9bb3f0b5f55e6&quot;,
+      &quot;expected&quot;: [
+        [
+          35,
+          &quot;stringToNSString&quot;,
+          &quot;function&quot;
+        ],
+        [
+          45,
+          &quot;sfStringToNSString&quot;,
+          &quot;function&quot;
+        ]
+      ],
+      &quot;unexpanded&quot;: [],
+      &quot;url&quot;: &quot;https://github.com/SFML/SFML/blob/69ea0cd863aed1d4092b970b676924a716ff718b/src/SFML/Window/OSX/cpp_objc_conversion.mm&quot;,
+      &quot;facts&quot;: {
+        &quot;declarations&quot;: [
+          {
+            &quot;key&quot;: &quot;objc-cpp:1487:1789:function:1497&quot;,
+            &quot;name&quot;: &quot;stringToNSString&quot;,
+            &quot;qualifiedName&quot;: &quot;stringToNSString&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;entityType&quot;: &quot;function&quot;,
+            &quot;signature&quot;: &quot;NSString * stringToNSString(const std::string&amp; string)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 35,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 42,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 1487,
+            &quot;end&quot;: 1789,
+            &quot;nameEnd&quot;: 1513,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;sourceConditions&quot;: [
+              &quot;Original separate C++ grammar profile; Objective-C/C++ type and translation-unit binding remain unverified&quot;
+            ]
+          },
+          {
+            &quot;key&quot;: &quot;objc-cpp:1852:2384:function:1862&quot;,
+            &quot;name&quot;: &quot;sfStringToNSString&quot;,
+            &quot;qualifiedName&quot;: &quot;sfStringToNSString&quot;,
+            &quot;kind&quot;: &quot;function&quot;,
+            &quot;entityType&quot;: &quot;function&quot;,
+            &quot;signature&quot;: &quot;NSString * sfStringToNSString(const sf::String&amp; string)&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 45,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 58,
+              &quot;endColumn&quot;: 2
+            },
+            &quot;start&quot;: 1852,
+            &quot;end&quot;: 2384,
+            &quot;nameEnd&quot;: 1880,
+            &quot;declarationForm&quot;: &quot;definition&quot;,
+            &quot;sourceConditions&quot;: [
+              &quot;Original separate C++ grammar profile; Objective-C/C++ type and translation-unit binding remain unverified&quot;
+            ]
+          }
+        ],
+        &quot;issues&quot;: [
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 35,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 35,
+              &quot;endColumn&quot;: 54
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 35,
+              &quot;startColumn&quot;: 34,
+              &quot;endLine&quot;: 35,
+              &quot;endColumn&quot;: 39
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 37,
+              &quot;startColumn&quot;: 9,
+              &quot;endLine&quot;: 37,
+              &quot;endColumn&quot;: 10
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 38,
+              &quot;startColumn&quot;: 8,
+              &quot;endLine&quot;: 38,
+              &quot;endColumn&quot;: 9
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 38,
+              &quot;startColumn&quot;: 14,
+              &quot;endLine&quot;: 38,
+              &quot;endColumn&quot;: 15
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 38,
+              &quot;startColumn&quot;: 54,
+              &quot;endLine&quot;: 38,
+              &quot;endColumn&quot;: 59
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 45,
+              &quot;startColumn&quot;: 1,
+              &quot;endLine&quot;: 45,
+              &quot;endColumn&quot;: 55
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 45,
+              &quot;startColumn&quot;: 36,
+              &quot;endLine&quot;: 45,
+              &quot;endColumn&quot;: 40
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-extraction-gap&quot;,
+            &quot;reason&quot;: &quot;Original declarator requires an additional structural profile; no name is guessed&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 47,
+              &quot;startColumn&quot;: 16,
+              &quot;endLine&quot;: 47,
+              &quot;endColumn&quot;: 87
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 47,
+              &quot;startColumn&quot;: 8,
+              &quot;endLine&quot;: 47,
+              &quot;endColumn&quot;: 9
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 47,
+              &quot;startColumn&quot;: 37,
+              &quot;endLine&quot;: 47,
+              &quot;endColumn&quot;: 41
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 47,
+              &quot;startColumn&quot;: 75,
+              &quot;endLine&quot;: 47,
+              &quot;endColumn&quot;: 79
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-extraction-gap&quot;,
+            &quot;reason&quot;: &quot;Original declarator requires an additional structural profile; no name is guessed&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 48,
+              &quot;startColumn&quot;: 15,
+              &quot;endLine&quot;: 48,
+              &quot;endColumn&quot;: 71
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 48,
+              &quot;startColumn&quot;: 47,
+              &quot;endLine&quot;: 48,
+              &quot;endColumn&quot;: 52
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 39,
+              &quot;startColumn&quot;: 19,
+              &quot;endLine&quot;: 39,
+              &quot;endColumn&quot;: 53
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 39,
+              &quot;startColumn&quot;: 91,
+              &quot;endLine&quot;: 39,
+              &quot;endColumn&quot;: 92
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 56,
+              &quot;startColumn&quot;: 19,
+              &quot;endLine&quot;: 56,
+              &quot;endColumn&quot;: 90
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 56,
+              &quot;startColumn&quot;: 22,
+              &quot;endLine&quot;: 56,
+              &quot;endColumn&quot;: 31
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 57,
+              &quot;startColumn&quot;: 12,
+              &quot;endLine&quot;: 57,
+              &quot;endColumn&quot;: 29
+            }
+          },
+          {
+            &quot;code&quot;: &quot;syntax-parse-error&quot;,
+            &quot;reason&quot;: &quot;Parser recovered from invalid syntax&quot;,
+            &quot;range&quot;: {
+              &quot;startLine&quot;: 57,
+              &quot;startColumn&quot;: 13,
+              &quot;endLine&quot;: 57,
+              &quot;endColumn&quot;: 16
+            }
+          },
+          {
+            &quot;code&quot;: &quot;objc-cpp-structure-gap&quot;,
+            &quot;reason&quot;: &quot;Original Objective-C and C++ grammar profiles retain separate source declarations; shared types, macros and cross-language binding remain unverified&quot;
+          }
+        ],
+        &quot;truncated&quot;: false,
+        &quot;cfamily&quot;: {
+          &quot;preprocessor&quot;: [
+            {
+              &quot;kind&quot;: &quot;preproc_include&quot;,
+              &quot;text&quot;: &quot;#include &lt;SFML/System/Utf.hpp&gt;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 29,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 30,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_include&quot;,
+              &quot;text&quot;: &quot;#import &lt;SFML/Window/OSX/cpp_objc_conversion.h&gt;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 31,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 32,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_include&quot;,
+              &quot;text&quot;: &quot;#import &lt;Foundation/Foundation.h&gt;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 32,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 33,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#import &lt;SFML/Window/OSX/cpp_objc_conversion.h&gt;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 31,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 32,
+                &quot;endColumn&quot;: 1
+              }
+            },
+            {
+              &quot;kind&quot;: &quot;preproc_call&quot;,
+              &quot;text&quot;: &quot;#import &lt;Foundation/Foundation.h&gt;&quot;,
+              &quot;range&quot;: {
+                &quot;startLine&quot;: 32,
+                &quot;startColumn&quot;: 1,
+                &quot;endLine&quot;: 33,
+                &quot;endColumn&quot;: 1
+              }
+            }
+          ],
+          &quot;complete&quot;: false
+        },
+        &quot;objc&quot;: {
+          &quot;propertyImplementations&quot;: [],
+          &quot;moduleImports&quot;: [],
+          &quot;complete&quot;: false,
+          &quot;cppProfile&quot;: {
+            &quot;grammar&quot;: &quot;cpp&quot;,
+            &quot;declarations&quot;: 2,
+            &quot;methodHeaders&quot;: 0
+          }
+        }
+      }
+    }
+  ]
+}</pre></details></main></body></html>

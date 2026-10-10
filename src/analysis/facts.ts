@@ -9,7 +9,7 @@ export interface FileAnalysis {
   version: 1;
   adapter: string;
   adapterVersion: string;
-  parser?: { name: string; version: string; grammar?: string; grammarHash?: string; queryHash?: string; abi?: number };
+  parser?: { name: string; version: string; grammar?: string; grammarHash?: string; queryHash?: string; abi?: number; auxiliary?:{language:string;grammar:string;grammarHash:string;queryHash:string;abi:number;unavailable?:string}[] };
   features: Record<AnalysisFeature, FeatureOutcome>;
 }
 /** A syntax-derived declaration. Offsets are UTF-16 indices into the original source. */
@@ -184,7 +184,7 @@ export interface RustBindingFact extends RustSite {name:string;scope:string;acti
 export interface RustSemanticFacts {definitions:RustDefinitionFact[];impls:RustImplFact[];bindings:RustBindingFact[];references:(RustSite&{scope:string;expression:RustExpression;kind:'type'|'value';attributes:string[]})[];calls:(RustSite&{scope:string;expression:RustExpression&{kind:'call'};attributes:string[];awaited:boolean})[];statements:(RustSite&{scope:string;expression:RustExpression;attributes:string[]})[];writes:(RustSite&{scope:string;target:RustExpression;value?:RustExpression;kind:'assignment'|'mutable-borrow'})[];returns:(RustSite&{scope:string;owner:string;value:RustExpression;conditional:boolean})[];complete:boolean;gaps:string[]}
 export interface RustSyntaxFacts {scopes:RustScopeFact[];items:RustItemFact[];imports:RustImportFact[];macros?: (RustSite&{scope:string;path:string[];absolute:boolean;tokens:string;operands?: (RustExpression & {kind:'path'})[];attributes:string[]})[];complete:boolean;gaps:string[];semantic?:RustSemanticFacts}
 export interface CfamilySyntaxFacts { preprocessor: {kind:string;text:string;range:SourceRange}[]; complete:boolean }
-export interface ObjcSyntaxFacts { propertyImplementations:{kind:'synthesize'|'dynamic';text:string;names:string[];range:SourceRange}[]; moduleImports:{text:string;path:string[];range:SourceRange}[]; isolatedRegions?:{range:SourceRange;reason:string}[]; complete:boolean }
+export interface ObjcSyntaxFacts { propertyImplementations:{kind:'synthesize'|'dynamic';text:string;names:string[];range:SourceRange}[]; moduleImports:{text:string;path:string[];range:SourceRange}[]; isolatedRegions?:{range:SourceRange;reason:string}[]; enumProfiles?:{macro:string;name:string;underlyingType:string;range:SourceRange}[]; cppProfile?:{grammar:'cpp';declarations:number;methodHeaders:number;recoveredRegions?:{range:SourceRange;reason:string}[]}; complete:boolean }
 export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; cfamily?:CfamilySyntaxFacts; objc?:ObjcSyntaxFacts; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts; csharp?: CsharpSyntaxFacts; rust?:RustSyntaxFacts }
 export interface ImportBinding { imported: string; local: string; typeOnly?: boolean }
 export type ImportOutcome =

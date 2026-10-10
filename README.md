@@ -91,8 +91,9 @@ How far Codiluce follows the code depends on the stack:
 - **C/C++ structure:** original declarations, prototypes, definitions, types, fields, namespaces and macros, with
   source ranges and preprocessor context. Includes and type binding remain visible gaps.
 - **Objective-C structure:** original interfaces, implementations, categories, protocols, properties, ivars and signed
-  selectors. Annotation-boundary recovery preserves original source with explicit gaps; enum macros and Objective-C++
-  remain partial. Imports, message dispatch and compiler-generated accessors remain open.
+  selectors, standard enum/options source profiles, native C++ declarations and C++-typed selector headers.
+  Original-source recovery preserves positions and context gaps. Mixed files and SDK macros remain partial; imports,
+  shared types, message dispatch and compiler-generated accessors remain open.
 - **Map:** Angular, Remix, Fastify, Symfony, Quarkus, Blazor and every other language and framework are detected and
   mapped with their files, lines and Git metrics.
 
