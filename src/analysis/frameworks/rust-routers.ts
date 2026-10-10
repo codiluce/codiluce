@@ -2,7 +2,7 @@ import type { AnalysisContext, Analyzer } from '../../core/analyzer.js';
 import { evidence, type Evidence, type SourceRange } from '../../core/graph.js';
 import { fileAnalysis, type RustBindingFact, type RustExpression, type RustSite } from '../facts.js';
 import { RustSymbols, type RustDefinition } from '../languages/rust-symbols.js';
-import { rustAnd, rustCfg, rustSplit } from '../languages/rust-cfg.js';
+import { rustAnd, rustCfg, rustEmptyTokenTree, rustSplit } from '../languages/rust-cfg.js';
 import { RustResolver, RUST_RESOLVER_VERSION, type RustScope } from '../resolution/rust.js';
 import { rustWebNamespaceReader } from './rust-derive-namespace.js';
 import { compileRustPath, type RustRouteDialect, type RustEndpointData } from '../routes/rust-patterns.js';
@@ -380,7 +380,7 @@ export class RustRegistrations {
                         env.proof.push(...diagnostic.proof, ...listener.proof, this.fact(site, 'Original standard diagnostic reads native Tokio listener local_addr; standard SocketAddr formatting cannot alter router registration'));
                 }
                 else
-                    env.proof.push(...diagnostic.proof, this.fact(site, 'Original standard literal diagnostic with no formatting operands'));
+                    env.proof.push(...diagnostic.proof, this.fact(site, rustEmptyTokenTree(expression.tokens) ? 'Original empty standard print diagnostic with no formatting operands' : 'Original standard literal diagnostic with no formatting operands'));
                 return;
             }
             const profile = rustWebProfile(env.scope, rustWebMacroResolution(this.symbols.resolver, env.scope, expression.path, expression.start, expression.absolute));

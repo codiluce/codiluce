@@ -761,3 +761,47 @@ uses Rocket's native mounted query name without an empty trailing segment. The t
 profiles retain 55 functions, 31 supported original route/handler pairs and three general module edges, with exact
 within-implementation replay and opaque generated-main bodies. Desktop/mobile report layout and roadmap filtering
 are checked before the phase commit.
+
+## 33. Broader original Rust consumer inventory and empty diagnostics (P9e2b2b1)
+
+Canonical empty `println!()`/`eprintln!()` are now recognized by the containing-module namespace review and the
+framework diagnostic contract. Parenthesis, bracket and brace token trees may contain only whitespace and non-doc comments;
+nested comments are scanned within the existing 8,192-character bound. Doc comments become attribute tokens and
+retain a gap, while ordinary `/**/`, `/***/` and four-slash comments remain whitespace. Empty `format!()`, custom/unavailable macro
+bindings, unknown generation and disabled standard preludes retain gaps. Generated entry signatures/bodies remain
+opaque to general call binding. Resolver/import versions are 5 and the Rust router version is 8, invalidating the
+corresponding cached contracts. No target code or macro executes.
+Whitespace uses Rust's `Pattern_White_Space` set; nonbreaking spaces and a token-tree BOM cannot borrow
+JavaScript's broader whitespace classification.
+Empty forms qualify by resolved macro identity: a print macro renamed to `format` remains a print, while
+`std::format` renamed to `println` retains its invalid empty-format gap. Framework registration proof now records
+the empty diagnostic at its original site rather than describing it as a literal-message form.
+
+`scripts/qualify-rust-broader-consumers.mjs` uses an independent original-source route/module inventory and the same
+adapter against archived `6a44ca3` and the current implementation. Two Axum 0.7 and two Warp 0.4 consumers keep their
+original editions, package/bin selection, dependency requirements and server features. Complete tracked source inputs
+and all original selected declaration IDs/ranges remain identical across implementations. Within each implementation,
+cold/warm/revision graphs and actual import/symbol/router cache hits agree.
+
+The [broader consumer report](rust-broader-consumer-accuracy.html) accounts for all 29 user registrations: four
+Axum CRUD route/handler pairs qualify, nine retain original conditional handler bindings, five Warp Q&A registrations
+remain conditional without handler winners, and eleven course/placey registrations are missed. Eight automatic
+fallback candidates are excluded from the user-route denominator. Three original static-service registrations are
+inventoried separately. The original 14 module declarations yield one resolved source edge; this does not measure
+all use/re-export imports. General import proof stays separate from framework handler proof. The four qualified
+controls are unchanged from the baseline, so the audit exposes remaining accuracy work without claiming a recall
+improvement. Application execution, compiler validity, runtime behavior and population accuracy are unqualified.
+
+Two new conformance cases cover empty/comment-only native diagnostics, nested comments, source CRLF/emoji
+coordinates, original namespace proof, opaque entry bodies, unavailable shadows and invalid empty formatting.
+The production-only package fixture includes the empty native print form alongside the existing original Axum
+handler/listener proof. P9e2b2b1 completes this wider inventory and diagnostic slice. The next implementation must
+address source-backed derive namespaces, Warp custom state/filter and serving delegation contracts and Axum
+helper/middleware gaps, then rerun the full original denominator. Broader P9e2b2b, P9, P10 and the full goal remain open.
+
+The 1,065-test suite passes with four workers; the final whitespace/doc-comment and resolved-alias boundaries
+also pass the focused diagnostic rerun. CLI/web typechecks and the production-only packed build, installation,
+CLI/API, history-worker and npm-exec checks pass (3.20 MB / 287 files). The installed CLI/API retain original
+empty-print namespace proof, original framework diagnostic coordinates, handler/leaf/request bindings and opaque
+generated entry bodies. All four pinned consumer profiles reproduce after restoring their immutable checkouts.
+Desktop/mobile report layout and roadmap pack filtering pass before the phase commit.

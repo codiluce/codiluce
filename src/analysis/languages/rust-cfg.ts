@@ -148,6 +148,32 @@ export function rustCfg(expression: string, env: RustCfgEnvironment): RustTruth 
         return 'unknown';
     }
 }
+/** Only whitespace/non-doc comments in an original delimited macro token tree. */
+export function rustEmptyTokenTree(tokens: string): boolean {
+    if (tokens.length > 8192 || !['()', '[]', '{}'].includes(tokens[0]! + tokens.at(-1))) return false;
+    const text = tokens.slice(1, -1); let index = 0;
+    while (index < text.length) {
+        if (/\p{Pattern_White_Space}/u.test(text[index]!)) { index++; continue; }
+        if (text.startsWith('//', index)) {
+            // Doc comments become attribute tokens, not whitespace.
+            if (text.startsWith('//!', index) || text.startsWith('///', index) && !text.startsWith('////', index)) return false;
+            const end = text.indexOf('\n', index + 2); index = end < 0 ? text.length : end + 1; continue;
+        }
+        if (text.startsWith('/*', index)) {
+            if (text.startsWith('/*!', index) || text.startsWith('/**', index) && !['*', '/'].includes(text[index + 3] ?? '')) return false;
+            let depth = 1; index += 2;
+            while (index < text.length && depth) {
+                if (text.startsWith('/*', index)) { depth++; index += 2; }
+                else if (text.startsWith('*/', index)) { depth--; index += 2; }
+                else index++;
+            }
+            if (depth) return false;
+            continue;
+        }
+        return false;
+    }
+    return true;
+}
 export function rustSplit(text: string): string[] | undefined {
     const parts: string[] = [];
     let start = 0, depth = 0;

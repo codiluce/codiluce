@@ -454,6 +454,15 @@ test('Literal canonical log messages and Actix default Logger preserve native ro
     assert.ok(route(g, '/x').evidence.some(fact => fact.explanation?.includes('literal log 0.4')));
     assert.ok(route(g, '/x').evidence.some(fact => fact.explanation?.includes('routing-neutral')));
 });
+test('Empty canonical standard diagnostics preserve original Axum serving and unavailable macro shadows remain gaps', async () => {
+    const source=serve('Router::new().route("/x",get(handler))');
+    for(const print of ['println!();eprintln!();','std::println!{};::std::eprintln![/* empty */];','println!(/* outer /* nested */ end */);eprintln!(// newline\n);']){
+        const g=await index(await repo(source.replace('let app=',print+'let app='),axum.replace('0.8.9','0.7.9'),{'client.ts':'export async function read(){await fetch("https://api.test/x")}'}));
+        assert.equal(declared(g).length,1);assert.ok(!route(g,'/x').metadata.constraintsUnresolved);assert.equal(handler(g,route(g,'/x'))!.name,'handler');assert.equal(requests(g).length,1);
+        assert.ok(route(g,'/x').evidence.some(fact=>fact.file==='src/main.rs'&&fact.explanation?.includes('empty standard print diagnostic')));
+    }
+    const shadow=await index(await repo(source.replace('let app=','use unavailable::println;println!();let app=')));assert.ok(route(shadow,'/x').metadata.constraintsUnresolved);assert.equal(handler(shadow,route(shadow,'/x')),undefined);
+});
 test('Log format operands, custom clauses, lookalikes and NormalizePath middleware retain native gaps', async () => {
     for (const message of ['log::info!("{}",opaque());', 'log::info!(target:"custom","message");', 'lookalike::info!("message");']) {
         const source = app('App::new().route("/x",web::get().to(handler))').replace('HttpServer::new', message + 'HttpServer::new'), g = await index(await repo(source, actix + '\nlog="0.4.34"'));

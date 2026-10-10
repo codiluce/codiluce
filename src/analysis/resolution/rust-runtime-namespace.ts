@@ -2,7 +2,7 @@ import { subset } from 'semver';
 import type { AnalysisContext } from '../../core/analyzer.js';
 import { evidence, type Evidence } from '../../core/graph.js';
 import type { RustItemFact, RustSyntaxFacts } from '../facts.js';
-import { rustAttributes, rustCfg, rustSplit, rustString } from '../languages/rust-cfg.js';
+import { rustAttributes, rustCfg, rustEmptyTokenTree, rustSplit, rustString } from '../languages/rust-cfg.js';
 import { cargoRequirement } from './rust-projects.js';
 import { RustResolver, RUST_RESOLVER_VERSION, type RustScope, type RustNamespaceAttributes } from './rust.js';
 
@@ -16,8 +16,8 @@ function standardNamespaceMacro(base: RustResolver, scope: RustScope, macro: Mac
     if (macro.tokens.length > 8192) return;
     const names = ['println', 'eprintln', 'format'], result = base.path(scope, macro.path, macro.absolute, new Set(), 'expression');
     const allowed = (condition: string) => generationGap(condition) || condition === 'Rust macro invocation can supply generated/scoped items; expansion is unavailable';
-    let proof: Evidence[];
-    if (result.status === 'external' && result.dependency === 'rust-standard-library' && result.crate === 'std' && names.includes(result.path.join('::')) && result.conditions.every(allowed)) proof = result.proof;
+    let proof: Evidence[], name: string;
+    if (result.status === 'external' && result.dependency === 'rust-standard-library' && result.crate === 'std' && names.includes(result.path.join('::')) && result.conditions.every(allowed)) { proof = result.proof; name = result.path[0]!; }
     else if (result.status === 'unresolved' && !macro.absolute && macro.path.length === 1 && names.includes(macro.path[0]!)) {
         for (let current: RustScope | undefined = scope; current; current = current.parent) {
             if (current.attributes.noPrelude || current.attributes.noStd || current.attributes.noCore || current.imports.some(site => site.active !== false && site.fact.attributes.some(attribute => /^#!?\[\s*macro_use\b/.test(attribute)))) return;
@@ -29,9 +29,11 @@ function standardNamespaceMacro(base: RustResolver, scope: RustScope, macro: Mac
         }
         const standard = base.path(scope, ['std'], false, new Set(), 'expression');
         if (standard.status !== 'external' || standard.dependency !== 'rust-standard-library' || standard.crate !== 'std' || standard.conditions.some(condition => !allowed(condition))) return;
-        proof = standard.proof;
+        proof = standard.proof; name = macro.path[0]!;
     } else return;
     const args = rustSplit(macro.tokens.slice(1, -1));
+    if (rustEmptyTokenTree(macro.tokens) && name !== 'format')
+        return [...proof, { ...evidence('syntax', 'rust-imports', scope.file.path, macro.range.startLine, 'Original empty standard print macro: namespace only; newline output and runtime I/O remain unreviewed'), analyzerVersion: RUST_RESOLVER_VERSION, endLine: macro.range.endLine }];
     if (!args?.length || args.length > 128 || rustString(args[0]!) === undefined) return;
     for (const argument of args.slice(1)) {
         if (rustString(argument) !== undefined) continue;

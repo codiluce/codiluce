@@ -3,11 +3,11 @@ import type { Evidence } from '../../core/graph.js';
 import { evidence } from '../../core/graph.js';
 import type { RustScope, RustResolver, RustResolution } from '../resolution/rust.js';
 import { cargoRequirement, type RustCompilation } from '../resolution/rust-projects.js';
-import { rustAttributes, rustCfg, rustSplit, rustString } from '../languages/rust-cfg.js';
+import { rustAttributes, rustCfg, rustEmptyTokenTree, rustSplit, rustString } from '../languages/rust-cfg.js';
 import type { RustRouteDialect } from '../routes/rust-patterns.js';
 import type { RustScopeFact } from '../facts.js';
 import { warpPathSyntax } from './warp-syntax.js';
-export const RUST_ROUTER_VERSION = '7';
+export const RUST_ROUTER_VERSION = '8';
 export interface RustWebProfile {
     framework: 'axum' | 'actix-web' | 'tokio' | 'rocket' | 'warp';
     dialect?: RustRouteDialect;
@@ -221,7 +221,9 @@ export class RustWebMacros {
         }
         else
             return;
-        const args = rustSplit(macro.tokens.slice(1, -1)), literal = args?.[0] && rustString(args[0]);
+        const args = rustSplit(macro.tokens.slice(1, -1));
+        if (rustEmptyTokenTree(macro.tokens)) return { proof };
+        const literal = args?.[0] && rustString(args[0]);
         if (literal === undefined || !args)
             return;
         if (args.length === 1 && !/[{}]/.test(literal))
@@ -251,7 +253,7 @@ export class RustWebMacros {
                 return fact.gaps;
             const diagnostic = this.diagnostic(scope, macro);
             if (diagnostic) {
-                proof.push(...diagnostic.proof, { ...evidence('framework', 'rust-routers', file, macro.range.startLine, diagnostic.receiver ? 'Original standard diagnostic syntax; native listener operand identity requires registration evaluation' : 'Original standard literal diagnostic with no formatting operands; reviewed item-neutral syntax without expansion'), endLine: macro.range.endLine, analyzerVersion: RUST_ROUTER_VERSION });
+                proof.push(...diagnostic.proof, { ...evidence('framework', 'rust-routers', file, macro.range.startLine, diagnostic.receiver ? 'Original standard diagnostic syntax; native listener operand identity requires registration evaluation' : rustEmptyTokenTree(macro.tokens) ? 'Original empty standard print diagnostic; reviewed item-neutral syntax without expansion' : 'Original standard literal diagnostic with no formatting operands; reviewed item-neutral syntax without expansion'), endLine: macro.range.endLine, analyzerVersion: RUST_ROUTER_VERSION });
                 continue;
             }
             const identity = rustWebMacroResolution(this.base, scope, macro.path, macro.start, macro.absolute), profile = rustWebProfile(scope, identity);

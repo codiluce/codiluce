@@ -4,7 +4,7 @@ import { evidence, type Evidence } from '../../core/graph.js';
 import type { RustImportFact, RustItemFact, RustScopeFact, RustSyntaxFacts } from '../facts.js';
 import { rustAnd, rustAttributes, rustName, type RustAttributes, type RustTruth } from '../languages/rust-cfg.js';
 import { RustProjects, rustPath, type RustCompilation } from './rust-projects.js';
-export const RUST_RESOLVER_VERSION = '4';
+export const RUST_RESOLVER_VERSION = '5';
 export interface RustScope {
     id: string;
     fact: RustScopeFact;

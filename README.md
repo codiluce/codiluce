@@ -195,6 +195,11 @@ all-method control and a legacy Rocket boundary retain their original contracts.
 values and framework macros use separate namespaces. Bounded canonical Rocket form derives preserve sibling source
 namespaces; original generated traits and query conversion remain opaque. Broader Axum 0.7/Warp 0.4 and consumer
 import/version accuracy remain P9e2b2b, and native OS release checks remain P10.
+P9e2b2b1 adds a [broader original-consumer audit](docs/rust-broader-consumer-accuracy.html) for two Axum 0.7 and
+two Warp 0.4 applications. It inventories all 29 user routes and 14 source module declarations, retaining misses
+and conditional/unbound handlers. Empty canonical Rust print macros now preserve reviewed namespaces and diagnostic
+syntax. The broader accuracy gate remains open; custom derives, state filters, middleware and serving delegation
+remain follow-on work.
 No Cargo/rustc or target code runs.
 
 Vue, Svelte and Astro now expose embedded JavaScript/TypeScript declarations, imports, calls and requests at their original

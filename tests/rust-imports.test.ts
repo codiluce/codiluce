@@ -10,7 +10,7 @@ import { canonicalJson } from '../src/history/fingerprint.js';
 import type { SoftwareGraph } from '../src/core/graph.js';
 import { StructureParser } from '../src/analysis/tree-sitter/client.js';
 import { cargoRequirement, rustPath } from '../src/analysis/resolution/rust-projects.js';
-import { rustAttributes, rustCfg, rustString } from '../src/analysis/languages/rust-cfg.js';
+import { rustAttributes, rustCfg, rustEmptyTokenTree, rustString } from '../src/analysis/languages/rust-cfg.js';
 const roots: string[] = [];
 after(async () => { await Promise.all(roots.map(root => rm(root, { recursive: true, force: true }))); });
 async function put(root: string, file: string, text: string) { await mkdir(path.dirname(path.join(root, file)), { recursive: true }); await writeFile(path.join(root, file), text); }
@@ -389,6 +389,19 @@ test('Standard formatting namespace proof never implies runtime registration or 
     assert.equal(g.relations.filter(edge=>edge.type==='calls'&&edge.from===boot.id).length,0);
     await put(root,'src/lib.rs','mod model;use crate::model::Original;#[tokio::main]async fn boot(){}fn elsewhere(){use custom::println;println!("unknown");}');
     assert.ok(imports(await index(root)).every(item=>item.outcome.status!=='resolved'), 'a custom macro in another source block can export crate names');
+});
+test('Empty standard print macros preserve only runtime sibling namespaces and opaque formats retain gaps', async () => {
+    for(const tokens of ['(/**/)','[/***/]','{//// ordinary\n}','(/* outer /** nested */ end */)','(\u0085\u200e\u200f\u2028\u2029)'])assert.ok(rustEmptyTokenTree(tokens),tokens);
+    for(const tokens of ['(/** docs */)','(/*! docs */)','(/// docs\n)','(//! docs\n)','(/* unfinished)','(,)', '("message")','(\u00a0)','(\ufeff)','('+' '.repeat(8192)+')'])assert.ok(!rustEmptyTokenTree(tokens),tokens.slice(0,40));
+    const cargo=manifest('app','[dependencies]\ntokio={version="1.50.0",features=["full"]}');
+    for(const body of ['println!();std::eprintln!{}','::std::println![/* empty */];eprintln!(/* comment */);','println!(/* outer /* nested */ end */);eprintln!(// newline\n);','use std::println as format;format!();']){
+        const g=await index(await repo({'Cargo.toml':cargo,'src/lib.rs':'// 😀\r\nmod model;use crate::model::Original;\r\n#[tokio::main]\r\nasync fn boot(){'+body+'}\r\n','src/model.rs':'pub struct Original;'}));
+        const original=imports(g).filter(item=>item.specifier!=='std::println');assert.equal(original.length,2);assert.ok(original.every(item=>item.outcome.status==='resolved'));assert.ok(g.relations.filter(edge=>edge.type==='imports').every(edge=>edge.evidence.some(fact=>fact.file==='src/lib.rs'&&fact.line===4&&fact.explanation?.includes('empty standard print macro'))));
+        const boot=g.entities.find(item=>item.name==='boot'&&item.language==='rust')!;assert.equal(g.relations.filter(edge=>edge.type==='calls'&&edge.from===boot.id).length,0);
+    }
+    for(const body of ['format!();','println!(/** docs */);','use std::format as println;println!();','use unavailable::println;println!();','custom!();println!();']){
+        const g=await index(await repo({'Cargo.toml':cargo,'src/lib.rs':'mod model;#[tokio::main]async fn boot(){'+body+'}','src/model.rs':'pub struct Original;'}));assert.ok(imports(g).filter(item=>item.kind==='module').every(item=>item.outcome.status!=='resolved'),body);
+    }
 });
 test('Unselected cfg_attr generation constrains sibling imports and selected native conditions keep original proof', async () => {
     const root = await repo({ 'Cargo.toml': manifest('app', '[features]\nruntime=[]\n[dependencies]\ntokio={version="1.50.0",features=["full"]}'), 'src/lib.rs': 'mod model;use crate::model::Original;#[cfg_attr(unix,custom::generate)]fn opaque(){}', 'src/model.rs': 'pub struct Original;' });
