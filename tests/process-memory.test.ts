@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {test} from 'node:test';
+import {readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {parseProcessPeakRssKiB,processPeakRssKiB} from '../scripts/process-memory.mjs';
+
+test('Peak RSS requires an explicit positive Linux VmHWM in kB and never guesses from other counters',()=>{
+ assert.equal(parseProcessPeakRssKiB('VmPeak: 700000 kB\nVmHWM:\t 123456 kB\nVmRSS: 123000 kB\n'),123456);
+ for(const status of ['VmRSS: 123 kB','VmHWM: 0 kB','VmHWM: -1 kB','VmHWM: 1 MB','VmHWM: 123unknown kB','VmHWM: 9007199254740993 kB'])assert.throws(()=>parseProcessPeakRssKiB(status),/missing or invalid/);
+});
+test('Linux process peak reflects its own resident allocations', {skip:process.platform!=='linux'},()=>{
+ const before=processPeakRssKiB(),buffer=Buffer.alloc(32*1024*1024,1),after=processPeakRssKiB();assert.equal(buffer[buffer.length-1],1);assert.ok(after>=before);assert.ok(after*1024>=process.memoryUsage().rss-8*1024*1024);assert.ok(after>=parseProcessPeakRssKiB(readFileSync('/proc/self/status','utf8'))-8192);
+});
+test('A fresh child excludes a large retained parent peak even if getrusage inherits it', {skip:process.platform!=='linux'},()=>{
+ const buffer=Buffer.alloc(128*1024*1024,1),parentRssKiB=process.memoryUsage().rss/1024;
+ const code=`import {processPeakRssKiB} from ${JSON.stringify(new URL('../scripts/process-memory.mjs',import.meta.url).href)};import {readFileSync} from 'node:fs';console.log(JSON.stringify({peakKiB:processPeakRssKiB(),legacyKiB:process.resourceUsage().maxRSS,status:readFileSync('/proc/self/status','utf8')}));`;
+ const child=JSON.parse(execFileSync(process.execPath,['--input-type=module','-e',code],{encoding:'utf8',timeout:30000}));assert.equal(buffer[buffer.length-1],1);assert.ok(child.peakKiB<parentRssKiB-64*1024,'The child cannot inherit its parent allocation as its own resident peak');assert.ok(child.peakKiB>=parseProcessPeakRssKiB(child.status)-8192);assert.ok(child.legacyKiB>=child.peakKiB-8192);
+});
