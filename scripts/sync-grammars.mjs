@@ -1,4 +1,4 @@
-// Restore pinned npm artifacts and verify committed upstream release assets.
+// Restore pinned npm artifacts and verify committed release/source-built assets.
 // --download-releases explicitly restores upstream assets by URL/checksum.
 // Normal CLI builds use the committed assets without network or compilation.
 import { createHash } from 'node:crypto';
@@ -11,6 +11,12 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const require = createRequire(import.meta.url);
 const manifest = JSON.parse(readFileSync(path.join(root, 'grammars/manifest.json'), 'utf8'));
 for (const grammar of manifest.grammars) {
+  if(grammar.artifactBuild){
+    const target=path.join(root,'grammars',grammar.file);
+    let bytes;try{bytes=readFileSync(target);}catch{throw Error(`Pinned ${grammar.language} built asset missing; restore from version control or run node ${grammar.artifactBuild.script}`);}
+    if(createHash('sha256').update(bytes).digest('hex')!==grammar.sha256)throw Error(`Built grammar checksum mismatch: ${grammar.language}`);
+    continue;
+  }
   if(grammar.artifactUrl){
     const target=path.join(root,'grammars',grammar.file);
     if(process.argv.includes('--download-releases')){

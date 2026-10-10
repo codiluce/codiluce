@@ -9,7 +9,7 @@ import { fileKey } from '../../pipeline/cache.js';
 import { IndexedSources } from '../indexed-sources.js';
 import {objectiveCppSource} from './objc-cpp.js';
 
-export const STRUCTURE_VERSION = `${ANALYZER_VERSION}:${GRAMMAR_CATALOG_VERSION}:47`;
+export const STRUCTURE_VERSION = `${ANALYZER_VERSION}:${GRAMMAR_CATALOG_VERSION}:48`;
 export const analysisRegistry = new AnalysisRegistry();
 analysisRegistry.registerLanguage({ id: 'typescript', version: ANALYZER_VERSION, languages: ['typescript', 'javascript'], features: { structure: 'supported', imports: 'partial', references: 'partial', effects: 'partial', guards: 'supported' } });
 analysisRegistry.registerLanguage({ id: 'php', version: ANALYZER_VERSION, languages: ['php'], features: { structure: 'partial', imports: 'partial', references: 'partial', effects: 'partial', guards: 'supported' } });
@@ -57,6 +57,7 @@ export const structureAnalyzer: Analyzer = {
           if(facts.cfamily)fileEntity.metadata.cfamilySyntax=facts.cfamily;
           if(facts.swift)fileEntity.metadata.swiftSyntax=facts.swift;
           if(facts.scala)fileEntity.metadata.scalaSyntax=facts.scala;
+          if(facts.groovy)fileEntity.metadata.groovySyntax=facts.groovy;
           if(facts.objc)fileEntity.metadata.objcSyntax={...facts.objc,sourceProfile:objectiveCpp?'objective-cpp-partial':'objective-c'};
           if (facts.python || facts.go || facts.ruby || facts.jvm || facts.csharp || facts.rust) { context.syntax ??= new Map(); context.syntax.set(file.path, { facts, declarations }); }
           analysis.features.structure = { status: facts.issues.length ? 'partial' : 'supported', ...(facts.issues.length ? { reason: `${facts.issues.length} syntax or extraction finding(s); valid declarations retained` } : {}) };

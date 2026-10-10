@@ -10,16 +10,25 @@ version, SHA-256, language ABI and license. Six artifacts come from the pinned
 VS Code grammar bundle; Kotlin, C, C++ and Objective-C come from their upstream grammar packages. The
 bundle's build revision and each upstream license are retained here. Swift 0.7.3 and Scala 0.26.2 come from pinned upstream release WASM assets,
 with immutable source revisions and artifact URLs/checksums; these are not npm artifacts. The
-runtime is pinned in `package.json` and the manifest.
+runtime is pinned in `package.json` and the manifest. Groovy uses generated C from the
+community `@dekobon/tree-sitter-groovy` 0.3.0 package, built once with pinned
+Tree-sitter CLI 0.26.9, wasi-sdk 29.0 and a Linux container digest. Its MIT license
+option is retained. `artifactBuild` records source SHA-512, toolchain SHA-256,
+container and rebuild script; its WASM is a source build, not an upstream WASM release.
 
 `npm run grammars:sync` restores the ten npm WASM artifacts from installed
 development dependencies after verifying versions/checksums, and verifies the
-committed Swift and Scala release assets. It runs offline and compiles nothing. To restore
+committed Swift/Scala release assets and source-built Groovy asset. It runs offline and compiles nothing. To restore
 the Swift/Scala release assets explicitly, run
 `npm run grammars:sync -- --download-releases`; this downloads the pinned URL
 and verifies its checksum before writing it. Normal CLI builds verify and copy this directory
 to `dist/grammars/`. An installed package loads it relative to its own module,
-so the current working directory does not affect asset lookup.
+so the current working directory does not affect asset lookup. An explicit maintainer
+rebuild runs `node scripts/build-groovy-grammar.mjs`: verified published generated
+C, CLI and SDK archives compile inside the pinned Linux/amd64 Docker container,
+without network or upstream npm/grammar-generation scripts. The result must match
+the committed checksum before replacement. Optional `--artifacts DIRECTORY` reads
+offline `source.tgz`, `cli.gz`, `sdk.tgz` mirrors with the same checksum checks.
 
 Codiluce owns `queries/<language>/declarations.scm`. Query and manifest changes
 invalidate structural fact caches and historical analysis identities. A new
@@ -27,7 +36,7 @@ grammar release requires declaration, range, overload, malformed-source and
 installed-package conformance checks before updating the checksum.
 
 The current adapters extract named types, modules/namespaces, functions and
-methods for Python, Go, Ruby, Rust, Java, C#, Kotlin, C, C++, Objective-C, Swift and Scala. Decorators/annotations,
+methods for Python, Go, Ruby, Rust, Java, C#, Kotlin, C, C++, Objective-C, Swift, Scala and Groovy. Decorators/annotations,
 modifiers, signatures and lexical containment are preserved where the grammar
 exposes them. Local Go receivers and Rust impl methods attach only to a unique
 type in the same file; cross-file ownership and language binding belong to the
@@ -155,3 +164,37 @@ syntax produces partial outcomes and retains valid declarations; missing or
 corrupt assets fail only the affected files. Every code file records actual
 feature outcomes in `metadata.analysis`. A declaration-only adapter does not
 place its files in the call/flow coverage denominator.
+
+Groovy uses the community dekobon v0.3.0 grammar (ABI 15; dual Apache-2.0/MIT,
+MIT option retained), not a Java facade or an Apache-maintained grammar. Original
+packages establish lexical ownership without extending source ranges. Native
+classes/traits/interfaces/annotation types/enums/records/components, constructors,
+methods/script functions, quoted names, generic/default/vararg/throws headers,
+properties/explicit-access fields and script bindings retain source spelling.
+Untyped class-body callables are constructors only when their original name
+matches the enclosing type. Properties, records, traits and scripts never
+synthesize accessors, helpers, script classes or run/main methods. Closures and
+DSL invocations never become inferred named callbacks or registrations.
+
+`groovySyntax` records bounded packages/import aliases/static stars, annotations
+and DSL headers. Import/type/receiver/delegate/metaprogramming binding, references,
+frameworks, effects and guards remain unsupported. Recognized AST-generation and
+Grape annotations retain explicit gaps; custom annotation resolution is unverified.
+The grammar does not qualify annotated parameters, nested types, Unicode names,
+some command-style named arguments or typed script declarations without initializers.
+Groovy 5 contextual keywords and newer compiler semantics remain unqualified.
+Malformed native headers, reserved parameter names and interpolated quoted callable names omit callables. Damaged
+class-body recovery retains original type headers with header-only ranges and
+omits member/script declarations across that file to prevent ownership spills;
+this intentionally sacrifices recall. Errors inside otherwise valid method bodies
+retain their original method headers. Limits cover nodes/declarations/metadata,
+diagnostics/context depth/query matches, with explicit partial outcomes.
+
+Groovy sources, Gradle, Jenkinsfile and upstream gvy/gy extensions are code. No
+JVM/Groovy compiler, AST transform, Grape download, Gradle/Jenkins, target build
+script, dependency or application executes. Asset/query/source changes invalidate
+fact/history identities; warm reads verify assets. Missing Groovy assets affect
+only its files. Twenty-nine cases and the
+[original Groovy source audit](../docs/groovy-source-accuracy.html) cover the initial
+subset and negative profiles, including ten deliberately omitted FileTreeBuilder
+members. Wider grammar/source accuracy and native OS qualification remain open.

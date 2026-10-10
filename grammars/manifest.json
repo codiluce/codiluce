@@ -167,6 +167,31 @@
       "sourceRevision": "b931fcc338390925eb893d70ad070033f5856ccf",
       "license": "MIT",
       "licenseFile": "licenses/scala.txt"
+    },
+    {
+      "language": "groovy",
+      "file": "tree-sitter-groovy.wasm",
+      "sha256": "1f701a1065a0bcb599f63065ccd9df501c2cae65a201dd297cce7f58b88b69b4",
+      "abi": 15,
+      "artifactPackage": "source-build",
+      "artifactVersion": "0.3.0",
+      "artifactPath": "tree-sitter-groovy.wasm",
+      "source": "https://github.com/dekobon/tree-sitter-groovy",
+      "sourceRevision": "654e4c2d736571dbc512043a1dc26017c7aedc85",
+      "license": "MIT",
+      "licenseFile": "licenses/groovy.txt",
+      "artifactBuild": {
+        "script": "scripts/build-groovy-grammar.mjs",
+        "sourceArchive": "https://registry.npmjs.org/@dekobon/tree-sitter-groovy/-/tree-sitter-groovy-0.3.0.tgz",
+        "sourceIntegrity": "sha512-TpuQiLHwnV0JVcj25pq35WxqsJJDx7/j+5Pgq1/0lPGDLKh8TWuFw3xsmMyY6ujNICmPE8TnVEQStAoxovnheA==",
+        "cliVersion": "0.26.9",
+        "cliUrl": "https://github.com/tree-sitter/tree-sitter/releases/download/v0.26.9/tree-sitter-linux-x64.gz",
+        "cliSha256": "9ce82137caa65864e7ca8b869fd391cef88c9bd2a01c4371b9c4dd26c2585efb",
+        "sdkVersion": "29.0",
+        "sdkUrl": "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-29/wasi-sdk-29.0-x86_64-linux.tar.gz",
+        "sdkSha256": "87d1d1a2879d139cdc624b968efad3d4a97b8078cdff95e63ac88ecafd1a0171",
+        "container": "ubuntu@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55"
+      }
     }
   ]
 }

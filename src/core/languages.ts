@@ -24,7 +24,7 @@ const EXTENSIONS: Record<string, string> = {
   '.css': 'css', '.scss': 'scss', '.json': 'json', '.yml': 'yaml', '.yaml': 'yaml', '.toml': 'toml', '.md': 'markdown', '.html': 'html',
   '.sql': 'sql', '.sh': 'shell', '.xml': 'xml', '.svg': 'xml',
   '.csproj': 'xml', '.fsproj': 'xml', '.vbproj': 'xml', '.props': 'xml', '.targets': 'xml', '.xaml': 'xml', '.plist': 'xml', '.storyboard': 'xml', '.xib': 'xml',
-  '.gradle': 'groovy', '.groovy': 'groovy', '.cmake': 'cmake', '.proto': 'protobuf', '.graphql': 'graphql', '.gql': 'graphql', '.prisma': 'prisma', '.properties': 'properties',
+  '.gradle': 'groovy', '.groovy': 'groovy', '.gvy': 'groovy', '.gy': 'groovy', '.cmake': 'cmake', '.proto': 'protobuf', '.graphql': 'graphql', '.gql': 'graphql', '.prisma': 'prisma', '.properties': 'properties',
 };
 /** Files known by their whole name. */
 const NAMES: Record<string, string> = {
@@ -35,7 +35,7 @@ const NAMES: Record<string, string> = {
 /** Languages whose files are code (the others: styles, data, configuration, documents). */
 export const CODE_LANGUAGES = new Set([
   'typescript', 'javascript', 'php', 'vue', 'svelte', 'astro', 'liquid', 'erb', 'razor', 'python', 'go', 'rust', 'java', 'kotlin', 'scala',
-  'csharp', 'fsharp', 'vbnet', 'ruby', 'c', 'cpp', 'objective-c', 'swift',
+  'csharp', 'fsharp', 'vbnet', 'ruby', 'c', 'cpp', 'objective-c', 'swift', 'groovy',
 ]);
 /** Legacy flow-language fallback for snapshots without per-file analysis outcomes (PHP requires Laravel). */
 export const FLOW_LANGUAGES = new Set(['typescript', 'javascript', 'php']);

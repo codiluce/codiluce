@@ -100,6 +100,9 @@ How far Codiluce follows the code depends on the stack:
 - **Scala structure:** original Scala 2/3 packages, classes, traits, objects, methods, properties, enums, givens,
   aliases and extension receiver headers with exact source ranges. Imports, implicit/type binding and compiler
   synthesis remain visible gaps.
+- **Groovy structure:** original types, traits, records/components, methods, constructors, properties/fields and
+  script bindings. Imports and annotations retain source syntax; unsupported grammar, generation and DSL binding
+  remain visible gaps. Gradle and Jenkins sources are read without execution.
 - **Map:** Angular, Remix, Fastify, Symfony, Quarkus, Blazor and every other language and framework are detected and
   mapped with their files, lines and Git metrics.
 
@@ -138,6 +141,13 @@ compiler, JVM, sbt/Scala CLI, build scripts or target dependencies execute. Anon
 expansion retain explicit gaps. Twenty-eight conformance cases, installed-package/history checks and an
 [immutable Scala 2/3 source audit](docs/scala-source-accuracy.html) qualify the initial subset; broader source
 accuracy and native OS checks remain P10 release gates.
+
+Groovy now has an initial source-only structural adapter with a reproducibly built, pinned community grammar.
+Twenty-nine conformance cases and an [immutable five-file source audit](docs/groovy-source-accuracy.html) cover
+library/build logic, Gradle and Jenkins sources. The audit retains 13 of 23 reviewed declarations; ten members of
+a builder with annotated parameters are omitted with an explicit ownership gap. Nested types, Unicode names and
+some command-style named arguments remain unqualified. No JVM, Groovy compiler, AST transform, Grape download,
+Gradle/Jenkins or target code executes. Imports, references and framework semantics remain unsupported.
 
 Java and Kotlin now resolve original local import declarations within selected Maven reactors, literal Gradle projects
 and recorded source/classpath inputs. Explicit, wildcard, static and alias imports retain source evidence and visibility
