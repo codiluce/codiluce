@@ -19,7 +19,7 @@
 // directory, at most `perUnit` per unit and `maxBytes` in total; the oldest
 // go first. Deleting the directory is always safe.
 import { createHash } from 'node:crypto';
-import { mkdirSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { closeSync, fstatSync, mkdirSync, openSync, readdirSync, readSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { gunzipSync, gzipSync } from 'node:zlib';
 import type { AnalysisContext, HttpObservation } from '../core/analyzer.js';
@@ -35,11 +35,18 @@ interface Record_ {
   entities: Entity[]; patches: Patch[]; relations: Relation[]; merged: { id: string; evidence: Evidence[] }[];
   diagnostics: Diagnostic[]; http: StoredObservation[];
 }
-export interface CacheLimits { perUnit: number; maxBytes: number }
+export interface CacheLimits { perUnit: number; maxBytes: number; /** Maximum decoded JSON bytes per entry; default 64 MiB. */ maxEntryBytes?: number }
 
 export class AnalysisCache {
   readonly events: CacheEvent[] = [];
-  constructor(readonly directory: string, readonly limits: CacheLimits = { perUnit: 2, maxBytes: 256 * 1024 * 1024 }, private readonly onEvent?: (event: CacheEvent) => void) {}
+  private readonly maxEntryBytes: number;
+  constructor(readonly directory: string, readonly limits: CacheLimits = { perUnit: 2, maxBytes: 256 * 1024 * 1024 }, private readonly onEvent?: (event: CacheEvent) => void) {
+    this.maxEntryBytes = limits.maxEntryBytes ?? 64 * 1024 * 1024;
+    for (const [name, value] of Object.entries({ perUnit: limits.perUnit, maxBytes: limits.maxBytes, maxEntryBytes: this.maxEntryBytes })) {
+      if (!Number.isSafeInteger(value) || value < 0) throw new Error(`Cache ${name} must be a nonnegative safe integer`);
+    }
+    this.limits = Object.freeze({ ...limits, maxEntryBytes: this.maxEntryBytes });
+  }
   private file(analyzer: string, unit: string, key: string): string { return path.join(this.directory, `${analyzer}.${unitName(unit)}.${key}.json.gz`); }
   private event(event: CacheEvent): void { this.events.push(event); this.onEvent?.(event); }
   static key(parts: unknown): string { return createHash('sha256').update(canonicalJson({ format: CACHE_FORMAT, schema: SCHEMA_VERSION, analyzer: ANALYZER_VERSION, parts })).digest('hex').slice(0, 32); }
@@ -49,7 +56,7 @@ export class AnalysisCache {
     const started = Date.now();
     const key = AnalysisCache.key(parts);
     const stored = this.read<Record_>(analyzer, unit, key);
-    if (stored && stored.format === CACHE_FORMAT && replay(context, stored)) { this.event({ analyzer, unit, hit: true, ms: Date.now() - started }); return; }
+    if (stored && stored.format === CACHE_FORMAT && stored.analyzer === analyzer && stored.unit === unit && stored.key === key && validRecord(stored) && replay(context, stored)) { this.event({ analyzer, unit, hit: true, ms: Date.now() - started }); return; }
     const record = await capture(context, work);
     this.write(analyzer, unit, key, { format: CACHE_FORMAT, analyzer, unit, key, ...record });
     this.event({ analyzer, unit, hit: false, ms: Date.now() - started });
@@ -59,40 +66,78 @@ export class AnalysisCache {
     const started = Date.now();
     const key = AnalysisCache.key(parts);
     const stored = this.read<{ format: number; value: T }>(analyzer, unit, key);
-    if (stored && stored.format === CACHE_FORMAT) { this.event({ analyzer, unit, hit: true, ms: Date.now() - started }); return stored.value; }
+    if (stored && stored.format === CACHE_FORMAT && Object.hasOwn(stored, 'value')) { this.event({ analyzer, unit, hit: true, ms: Date.now() - started }); return stored.value; }
     const value = await compute();
     this.write(analyzer, unit, key, { format: CACHE_FORMAT, value });
     this.event({ analyzer, unit, hit: false, ms: Date.now() - started });
     return value;
   }
   private read<T>(analyzer: string, unit: string, key: string): T | undefined {
-    try { return JSON.parse(gunzipSync(readFileSync(this.file(analyzer, unit, key))).toString('utf8')) as T; } catch { return undefined; }
+    if (!this.limits.perUnit || !this.limits.maxBytes || !this.maxEntryBytes) return undefined;
+    let descriptor: number | undefined;
+    try {
+      descriptor = openSync(this.file(analyzer, unit, key), 'r');
+      const info = fstatSync(descriptor);
+      if (!info.isFile() || !info.size || info.size > this.limits.maxBytes) return undefined;
+      // Bound the read even if an entry grows after stat. A changing/truncated
+      // cache entry is a miss; it must never change the source analysis result.
+      const bytes = Buffer.allocUnsafe(info.size);
+      let offset = 0;
+      while (offset < bytes.length) { const read = readSync(descriptor, bytes, offset, bytes.length - offset, null); if (!read) return undefined; offset += read; }
+      if (readSync(descriptor, Buffer.allocUnsafe(1), 0, 1, null)) return undefined;
+      return JSON.parse(gunzipSync(bytes, { maxOutputLength: this.maxEntryBytes }).toString('utf8')) as T;
+    } catch { return undefined; }
+    finally { if (descriptor !== undefined) closeSync(descriptor); }
   }
   private write(analyzer: string, unit: string, key: string, value: unknown): void {
+    if (!this.limits.perUnit || !this.limits.maxBytes || !this.maxEntryBytes) return;
+    let temporary: string | undefined;
     try {
+      const json = JSON.stringify(value);
+      if (Buffer.byteLength(json) > this.maxEntryBytes) return;
+      const compressed = gzipSync(json);
+      if (compressed.length > this.limits.maxBytes) return;
       mkdirSync(this.directory, { recursive: true });
-      const file = this.file(analyzer, unit, key), temporary = `${file}.${process.pid}.tmp`;
-      writeFileSync(temporary, gzipSync(JSON.stringify(value)));
+      const file = this.file(analyzer, unit, key); temporary = `${file}.${process.pid}.tmp`;
+      writeFileSync(temporary, compressed);
       renameSync(temporary, file);
       this.prune(analyzer, unit, file);
     } catch { /* the cache is an optimization: a read-only or full disk only costs time */ }
+    finally { if (temporary) try { unlinkSync(temporary); } catch { /* renamed or unavailable */ } }
   }
   /** Keep the newest `perUnit` entries of this unit, then the newest entries overall within `maxBytes`. */
   prune(analyzer?: string, unit?: string, keep?: string): void {
     let entries: { file: string; name: string; size: number; time: number }[];
     try { entries = readdirSync(this.directory).filter(name => name.endsWith('.json.gz')).map(name => { const file = path.join(this.directory, name); const info = statSync(file); return { file, name, size: info.size, time: info.mtimeMs }; }); } catch { return; }
-    entries.sort((a, b) => b.time - a.time || (a.file === keep ? -1 : b.file === keep ? 1 : 0));
+    entries.sort((a, b) => b.time - a.time || (a.file === keep ? -1 : b.file === keep ? 1 : a.name.localeCompare(b.name)));
     const remove = new Set<string>();
-    if (analyzer && unit) {
-      const prefix = `${analyzer}.${unitName(unit)}.`;
-      entries.filter(entry => entry.name.startsWith(prefix)).slice(this.limits.perUnit).forEach(entry => { if (entry.file !== keep) remove.add(entry.file); });
-    }
+    const counts = new Map<string, number>();
     let total = 0;
-    for (const entry of entries) { if (remove.has(entry.file)) continue; total += entry.size; if (total > this.limits.maxBytes && entry.file !== keep) remove.add(entry.file); }
+    for (const entry of entries) {
+      const group = entry.name.replace(/\.[a-f0-9]{32}\.json\.gz$/, '');
+      const count = counts.get(group) ?? 0;
+      if (count >= this.limits.perUnit || total + entry.size > this.limits.maxBytes) { remove.add(entry.file); continue; }
+      counts.set(group, count + 1); total += entry.size;
+    }
     for (const file of remove) { try { unlinkSync(file); } catch { /* already gone */ } }
   }
 }
 function unitName(unit: string): string { return `${unit.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 40)}-${createHash('sha256').update(unit).digest('hex').slice(0, 8)}`; }
+
+/** Validate the complete patch before replay mutates anything. Old, truncated
+ * or malformed JSON entries are cache misses rather than indexing failures. */
+function validRecord(record: Record_): boolean {
+  const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
+  const strings = (value: unknown) => Array.isArray(value) && value.every(item => typeof item === 'string');
+  const optionalObject = (value: unknown) => value === undefined || object(value);
+  const proofs = (value: unknown) => Array.isArray(value) && value.every(object);
+  return Array.isArray(record.entities) && record.entities.every(item => object(item) && typeof item.id === 'string' && typeof item.type === 'string' && object(item.metadata) && proofs(item.evidence))
+    && Array.isArray(record.relations) && record.relations.every(item => object(item) && ['id', 'from', 'to', 'type'].every(key => typeof item[key] === 'string') && proofs(item.evidence) && optionalObject(item.metadata))
+    && Array.isArray(record.patches) && record.patches.every(item => object(item) && typeof item.id === 'string' && (item.type === undefined || typeof item.type === 'string') && optionalObject(item.metadata) && optionalObject(item.metrics) && (item.removed === undefined || strings(item.removed)) && (item.removedMetrics === undefined || strings(item.removedMetrics)))
+    && Array.isArray(record.merged) && record.merged.every(item => object(item) && typeof item.id === 'string' && proofs(item.evidence))
+    && Array.isArray(record.diagnostics) && record.diagnostics.every(item => object(item) && typeof item.id === 'string')
+    && Array.isArray(record.http) && record.http.every(item => object(item) && typeof item.callerId === 'string' && (item.effect === undefined || Number.isSafeInteger(item.effect) && Number(item.effect) >= 0));
+}
 
 /** Run `work` and record what it changed in the graph and the analysis context. */
 async function capture(context: AnalysisContext, work: () => Promise<void>): Promise<Omit<Record_, 'format' | 'analyzer' | 'unit' | 'key'>> {

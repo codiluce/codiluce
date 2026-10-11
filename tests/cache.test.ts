@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { after, test } from 'node:test';
-import { cp, mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { gzipSync, gunzipSync } from 'node:zlib';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -8,6 +9,50 @@ import { stringify } from 'yaml';
 import { indexRepository } from '../src/pipeline/index.js';
 import { AnalysisCache, type CacheEvent } from '../src/pipeline/cache.js';
 import type { SoftwareGraph } from '../src/core/graph.js';
+
+test('cache budgets reject invalid limits and zero budgets disable reads and writes', async () => {
+  const dir = await directory('codiluce-cache-bounds-');
+  for (const limits of [{perUnit:-1,maxBytes:1024},{perUnit:1.5,maxBytes:1024},{perUnit:1,maxBytes:Infinity},{perUnit:1,maxBytes:1024,maxEntryBytes:NaN}]) assert.throws(() => new AnalysisCache(dir,limits), /nonnegative safe integer/);
+  const seeded = new AnalysisCache(dir); await seeded.value('sample','unit',{},async()=> 'old');
+  for (const limits of [{perUnit:0,maxBytes:1024},{perUnit:1,maxBytes:0},{perUnit:1,maxBytes:1024,maxEntryBytes:0}]) {
+    const cache = new AnalysisCache(dir,limits);
+    assert.equal(await cache.value('sample','unit',{},async()=> 'fresh'),'fresh');assert.equal(cache.events[0]!.hit,false);
+  }
+  assert.equal(await seeded.value('sample','unit',{},async()=> 'unexpected'),'old');
+});
+test('compressed and decoded entry budgets skip persistence while returning the computed result', async () => {
+  for (const limits of [{perUnit:1,maxBytes:1,maxEntryBytes:1024},{perUnit:1,maxBytes:1024,maxEntryBytes:128}]) {
+    const dir = await directory('codiluce-cache-bounds-'), cache = new AnalysisCache(dir,limits), value = '😀'.repeat(128);
+    assert.equal(await cache.value('sample','unit',{},async()=>value),value);assert.deepEqual(await readdir(dir),[]);
+    await cache.value('sample','unit',{},async()=>value);assert.ok(cache.events.every(event=>!event.hit));
+  }
+});
+test('an oversized decoded cache payload becomes a miss despite its small gzip size', async () => {
+  const dir = await directory('codiluce-cache-bounds-'), cache = new AnalysisCache(dir,{perUnit:2,maxBytes:4096,maxEntryBytes:256});
+  await cache.value('sample','unit',{},async()=> 'small');
+  const file = path.join(dir,(await readdir(dir))[0]!);
+  await writeFile(file,gzipSync(JSON.stringify({format:1,value:'x'.repeat(1024*1024)})));
+  assert.ok((await stat(file)).size<4096);
+  assert.equal(await cache.value('sample','unit',{},async()=> 'recomputed'),'recomputed');assert.equal(cache.events.at(-1)!.hit,false);
+  assert.equal(await cache.value('sample','unit',{},async()=> 'unexpected'),'recomputed');assert.equal(cache.events.at(-1)!.hit,true);
+});
+test('pruning enforces changed limits across all units and never exempts an oversized kept entry', async () => {
+  const dir = await directory('codiluce-cache-bounds-'), cache = new AnalysisCache(dir,{perUnit:3,maxBytes:4096});
+  for(const unit of ['one','two'])for(let i=0;i<3;i++)await cache.value('sample',unit,{i},async()=>i);
+  assert.equal((await readdir(dir)).length,6);
+  const smaller = new AnalysisCache(dir,{perUnit:1,maxBytes:4096});smaller.prune();assert.equal((await readdir(dir)).length,2);
+  const keep = path.join(dir,(await readdir(dir))[0]!);await writeFile(keep,Buffer.alloc(5000));smaller.prune('sample','one',keep);
+  assert.ok(!(await readdir(dir)).includes(path.basename(keep)));
+  const files=await readdir(dir);assert.ok((await Promise.all(files.map(file=>stat(path.join(dir,file))))).reduce((sum,item)=>sum+item.size,0)<=4096);
+});
+test('malformed application patches are rejected before any graph replay and recovered from source', async () => {
+  const root=await createFixture(), dir=await directory('codiluce-cache-shape-');await indexRepository(root,{cache:dir});
+  const name=(await readdir(dir)).find(name=>name.startsWith('typescript-nextjs.frontend'))!, file=path.join(dir,name);
+  const record=JSON.parse(gunzipSync(await readFile(file)).toString('utf8'));record.merged=[{id:'broken',evidence:null}];
+  await writeFile(file,gzipSync(JSON.stringify(record)));
+  const recovered=await indexWith(root,dir);assert.ok(recovered.misses.includes('typescript-nextjs:frontend'));
+  same(recovered.graph,await indexRepository(root),'malformed patch recovery');
+});
 
 const fixture = fileURLToPath(new URL('./fixtures/repository', import.meta.url));
 const temporary: string[] = [];

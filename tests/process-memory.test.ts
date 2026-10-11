@@ -1,8 +1,25 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {readFileSync} from 'node:fs';
+import {readFileSync,mkdirSync,mkdtempSync,rmSync,writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {parseProcessPeakRssKiB,processPeakRssKiB} from '../scripts/process-memory.mjs';
+import {parseProcessPeakRssKiB,processPeakRssKiB,sampleProcessTreeRssKiB} from '../scripts/process-memory.mjs';
+
+test('process tree sampling includes children of every thread and counts repeated descendants once',()=>{
+ const root=mkdtempSync(path.join(tmpdir(),'codiluce-proc-test-'));
+ const process=(pid:number,rss:number,threads:Record<number,string>)=>{mkdirSync(path.join(root,String(pid),'task'),{recursive:true});writeFileSync(path.join(root,String(pid),'status'),`VmRSS: ${rss} kB\n`);for(const [tid,children]of Object.entries(threads)){mkdirSync(path.join(root,String(pid),'task',tid));writeFileSync(path.join(root,String(pid),'task',tid,'children'),children);}};
+ try{
+  process(10,100,{10:'20',11:'30 20'});process(20,200,{20:'40'});process(30,300,{30:'40'});process(40,400,{40:'10'});
+  const sample=sampleProcessTreeRssKiB(10,root);assert.equal(sample.rssKiB,1000);assert.equal(sample.childRssKiB,900);assert.equal(sample.processes,4);assert.equal(sample.incomplete,false);assert.deepEqual(sample.pids.sort((a,b)=>a-b),[10,20,30,40]);
+  writeFileSync(path.join(root,'30/task/30/children'),'50');assert.equal(sampleProcessTreeRssKiB(10,root).incomplete,true);
+  const missing=sampleProcessTreeRssKiB(99,root);assert.equal(missing.available,false);assert.equal(missing.rssKiB,0);
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
+test('live Linux sampler includes the current process with a finite resident sample',{skip:process.platform!=='linux'},()=>{
+ const sample=sampleProcessTreeRssKiB(process.pid);assert.ok(sample.available);assert.ok(sample.pids.includes(process.pid));assert.ok(sample.rssKiB>0);assert.ok(sample.childRssKiB>=0);
+ for(const pid of [0,-1,1.5,NaN])assert.throws(()=>sampleProcessTreeRssKiB(pid),/positive safe integer/);
+});
 
 test('Peak RSS requires an explicit positive Linux VmHWM in kB and never guesses from other counters',()=>{
  assert.equal(parseProcessPeakRssKiB('VmPeak: 700000 kB\nVmHWM:\t 123456 kB\nVmRSS: 123000 kB\n'),123456);
