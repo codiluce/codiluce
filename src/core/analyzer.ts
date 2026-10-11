@@ -38,6 +38,8 @@ export interface AnalysisContext {
   /** Persistent cache of analyzer work (working-tree indexing with a state directory). */
   cache?: AnalysisCache;
   sources?: IndexedSources;
+  /** Optional dependency recorder for an atomic analyzer cache unit. */
+  sourceReads?: Set<string>;
   projects?: ProjectCatalog;
   typescript?: TypeScriptServices;
   /** Serializable syntax facts and exact declaration sites for language services. */

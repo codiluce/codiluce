@@ -10,7 +10,7 @@ export class IndexedSources {
   private readonly texts = new Map<string, string>();
   private readonly directories = new Set<string>(['.']);
   readonly failures = new Map<string, string>();
-  constructor(private readonly context: Pick<AnalysisContext, 'root' | 'files' | 'config' | 'graph'>) {
+  constructor(private readonly context: Pick<AnalysisContext, 'root' | 'files' | 'config' | 'graph' | 'sourceReads'>) {
     for (const relative of context.files.keys()) {
       let directory = path.posix.dirname(relative);
       while (!this.directories.has(directory)) { this.directories.add(directory); directory = path.posix.dirname(directory); }
@@ -37,6 +37,7 @@ export class IndexedSources {
   readText(fileName: string, options: { revalidate?:boolean } = {}): string {
     const relative = this.relative(fileName), file = relative === undefined ? undefined : this.context.files.get(relative);
     if (!file?.analyzable) throw new Error(`Source is not an indexed readable file: ${relative ?? 'outside repository'}`);
+    this.context.sourceReads?.add(file.path);
     const cached = this.texts.get(file.path);
     if (cached !== undefined && !options.revalidate) return cached;
     const expected = path.join(this.context.root, ...file.path.split('/'));

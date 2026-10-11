@@ -78,7 +78,8 @@ async function indexWith(root: string, cache: string): Promise<{ graph: Software
   const applications=events.filter(event=>event.analyzer!=='php-syntax-facts');
   return { graph, hits: applications.filter(event => event.hit).map(event => `${event.analyzer}:${event.unit}`).sort(), misses: applications.filter(event => !event.hit).map(event => `${event.analyzer}:${event.unit}`).sort(),syntax:events.filter(event=>event.analyzer==='php-syntax-facts') };
 }
-const UNITS = ['php-laravel:laravel', 'typescript-nextjs:backend', 'typescript-nextjs:frontend'];
+const UNITS = ['php-analysis:repository', 'php-laravel:laravel', 'typescript-nextjs:backend', 'typescript-nextjs:frontend'];
+const WARM_UNITS = UNITS.filter(unit=>unit!=='php-laravel:laravel');
 
 test('indexing again replays every unchanged application and builds exactly the same graph', async () => {
   const root = await createFixture(), cache = await directory('atlas-cache-dir-');
@@ -86,25 +87,25 @@ test('indexing again replays every unchanged application and builds exactly the 
   assert.deepEqual(first.misses, UNITS);
   assert.equal(first.syntax.length,24);assert.ok(first.syntax.every(event=>!event.hit));
   const second = await indexWith(root, cache);
-  assert.deepEqual([second.hits, second.misses], [UNITS, []]);
-  assert.equal(second.syntax.length,24);assert.ok(second.syntax.every(event=>event.hit));
+  assert.deepEqual([second.hits, second.misses], [WARM_UNITS, []]);
+  assert.equal(second.syntax.length,0,'qualified graph replay skips native-tree hydration');
   same(second.graph, first.graph, 'replayed');
   same(second.graph, await indexRepository(root), 'versus no cache');
   // Effects updated by the API matcher (the endpoint a request reaches) are rebuilt on replay, not stored.
   const signIn = second.graph.entities.find(entity => entity.name === 'signIn')!;
   assert.ok((signIn.metadata.effects as { endpoint?: string }[]).some(effect => effect.endpoint));
 });
-test('a change re-analyzes only the application it belongs to; new files invalidate every application', async () => {
+test('edits invalidate the PHP transaction while inner application units retain dependency scope', async () => {
   const root = await createFixture(), cache = await directory('atlas-cache-dir-');
   await indexWith(root, cache);
   await writeFile(path.join(root, 'backend/app/Services/AuditLog.php'), "<?php\nnamespace App\\Services;\nclass AuditLog {\n    public function record(int $id): void {}\n    public function clear(): void {}\n}\n");
   const backend = await indexWith(root, cache);
-  assert.deepEqual([backend.hits, backend.misses], [['typescript-nextjs:backend', 'typescript-nextjs:frontend'], ['php-laravel:laravel']]);
+  assert.deepEqual([backend.hits, backend.misses], [['typescript-nextjs:backend', 'typescript-nextjs:frontend'], ['php-analysis:repository','php-laravel:laravel']]);
   assert.deepEqual(backend.syntax.filter(event=>!event.hit).map(event=>event.unit),['backend/app/Services/AuditLog.php']);
   same(backend.graph, await indexRepository(root), 'after a PHP edit');
   await writeFile(path.join(root, 'frontend/src/components/LoginForm.tsx'), "export async function login(email: string) {\n  return fetch('https://api.fixture.test/auth/login', { method: 'POST', body: email.trim() });\n}\nexport function LoginForm() {\n  return <form onSubmit={() => login('demo@example.com')}><button>Login</button></form>;\n}\n");
   const frontend = await indexWith(root, cache);
-  assert.deepEqual([frontend.hits, frontend.misses], [['php-laravel:laravel', 'typescript-nextjs:backend'], ['typescript-nextjs:frontend']]);
+  assert.deepEqual([frontend.hits, frontend.misses], [['php-laravel:laravel', 'typescript-nextjs:backend'], ['php-analysis:repository','typescript-nextjs:frontend']]);
   same(frontend.graph, await indexRepository(root), 'after a TypeScript edit');
   await writeFile(path.join(root, 'notes.md'), '# notes\n');
   const added = await indexWith(root, cache);

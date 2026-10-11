@@ -34,8 +34,16 @@ interface Record_ {
   format: number; analyzer: string; unit: string; key: string;
   entities: Entity[]; patches: Patch[]; relations: Relation[]; merged: { id: string; evidence: Evidence[] }[];
   diagnostics: Diagnostic[]; http: StoredObservation[];
+  inputs?: string[];
 }
 export interface CacheLimits { perUnit: number; maxBytes: number; /** Maximum decoded JSON bytes per entry; default 64 MiB. */ maxEntryBytes?: number }
+export interface CacheReplayPolicy {
+  /** Revalidate recorded source dependencies immediately before mutation. */
+  beforeReplay?: (inputs: string[] | undefined) => boolean;
+  /** Do not retain transient source/worker failures under a healthy input key. */
+  shouldStore?: () => boolean;
+  inputs?: () => string[];
+}
 
 export class AnalysisCache {
   readonly events: CacheEvent[] = [];
@@ -52,14 +60,21 @@ export class AnalysisCache {
   static key(parts: unknown): string { return createHash('sha256').update(canonicalJson({ format: CACHE_FORMAT, schema: SCHEMA_VERSION, analyzer: ANALYZER_VERSION, parts })).digest('hex').slice(0, 32); }
 
   /** Run `work` for one unit of an analyzer, or replay what it did the last time its inputs were the same. */
-  async unit(context: AnalysisContext, analyzer: string, unit: string, parts: unknown, work: () => Promise<void>): Promise<void> {
+  async unit(context: AnalysisContext, analyzer: string, unit: string, parts: unknown, work: () => Promise<void>, policy: CacheReplayPolicy = {}): Promise<void> {
     const started = Date.now();
     const key = AnalysisCache.key(parts);
     const stored = this.read<Record_>(analyzer, unit, key);
-    if (stored && stored.format === CACHE_FORMAT && stored.analyzer === analyzer && stored.unit === unit && stored.key === key && validRecord(stored) && replay(context, stored)) { this.event({ analyzer, unit, hit: true, ms: Date.now() - started }); return; }
+    if (stored && stored.format === CACHE_FORMAT && stored.analyzer === analyzer && stored.unit === unit && stored.key === key && validRecord(stored) && replay(context, stored, () => policy.beforeReplay?.(stored.inputs) ?? true)) { this.event({ analyzer, unit, hit: true, ms: Date.now() - started }); return; }
     const record = await capture(context, work);
-    this.write(analyzer, unit, key, { format: CACHE_FORMAT, analyzer, unit, key, ...record });
+    if (policy.shouldStore?.() ?? true) this.write(analyzer, unit, key, { format: CACHE_FORMAT, analyzer, unit, key, ...record, ...policy.inputs ? {inputs:policy.inputs()} : {} });
     this.event({ analyzer, unit, hit: false, ms: Date.now() - started });
+  }
+  /** A cheap preparation hint, never authorization to replay. The full entry,
+   * graph compatibility and source dependencies are checked by unit(). */
+  hasUnit(analyzer: string, unit: string, parts: unknown): boolean {
+    if (!this.limits.perUnit || !this.limits.maxBytes || !this.maxEntryBytes) return false;
+    try { const info = statSync(this.file(analyzer, unit, AnalysisCache.key(parts))); return info.isFile() && info.size > 0 && info.size <= this.limits.maxBytes; }
+    catch { return false; }
   }
   /** A plain JSON value computed from inputs (e.g. Git metrics for one HEAD). */
   async value<T>(analyzer: string, unit: string, parts: unknown, compute: () => Promise<T>): Promise<T> {
@@ -136,7 +151,8 @@ function validRecord(record: Record_): boolean {
     && Array.isArray(record.patches) && record.patches.every(item => object(item) && typeof item.id === 'string' && (item.type === undefined || typeof item.type === 'string') && optionalObject(item.metadata) && optionalObject(item.metrics) && (item.removed === undefined || strings(item.removed)) && (item.removedMetrics === undefined || strings(item.removedMetrics)))
     && Array.isArray(record.merged) && record.merged.every(item => object(item) && typeof item.id === 'string' && proofs(item.evidence))
     && Array.isArray(record.diagnostics) && record.diagnostics.every(item => object(item) && typeof item.id === 'string')
-    && Array.isArray(record.http) && record.http.every(item => object(item) && typeof item.callerId === 'string' && (item.effect === undefined || Number.isSafeInteger(item.effect) && Number(item.effect) >= 0));
+    && Array.isArray(record.http) && record.http.every(item => object(item) && typeof item.callerId === 'string' && (item.effect === undefined || Number.isSafeInteger(item.effect) && Number(item.effect) >= 0))
+    && (record.inputs === undefined || strings(record.inputs));
 }
 
 /** Run `work` and record what it changed in the graph and the analysis context. */
@@ -186,13 +202,14 @@ async function capture(context: AnalysisContext, work: () => Promise<void>): Pro
   });
 }
 /** Apply a record; returns false (changing nothing) when it does not fit the graph as it is. */
-function replay(context: AnalysisContext, record: Record_): boolean {
+function replay(context: AnalysisContext, record: Record_, beforeMutation: () => boolean = () => true): boolean {
   const { graph } = context;
   if (record.entities.some(entity => graph.entities.has(entity.id)) || record.relations.some(relation => graph.relations.has(relation.id))) return false;
   if (record.patches.some(patch => !graph.entities.has(patch.id)) || record.merged.some(item => !graph.relations.has(item.id))) return false;
   const added = new Set(record.entities.map(entity => entity.id));
   const exists = (id: string) => graph.entities.has(id) || added.has(id);
   if (record.entities.some(entity => entity.parentId && !exists(entity.parentId)) || record.relations.some(relation => !exists(relation.from) || !exists(relation.to))) return false;
+  if (!beforeMutation()) return false;
   for (const entity of record.entities) graph.entities.set(entity.id, entity);
   for (const patch of record.patches) {
     const entity = graph.entities.get(patch.id)!;
