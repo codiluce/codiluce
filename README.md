@@ -110,6 +110,9 @@ How far Codiluce follows the code depends on the stack:
   template lookup remain visible gaps.
 - **Razor templates:** original component/view identity, C# member and render-local declarations, source directives
   and literal JavaScript/script/style regions. Compiler output, partial code-behind, imports and navigation stay open.
+- **Liquid templates:** original tags, controls, raw/comment/body regions and qualified literal JavaScript source,
+  plus explicit quoted Shopify template dependencies within one indexed theme. Dynamic/app-block/section-group lookup,
+  arbitrary engines, rendered output and runtime binding remain visible gaps.
 - **Map:** Angular, Remix, Fastify, Symfony, Quarkus, Blazor and every other language and framework are detected and
   mapped with their files, lines and Git metrics.
 
@@ -164,10 +167,18 @@ region boundaries; named Ruby/JavaScript declarations are additionally covered b
 checks. Import/reference/framework binding remains open.
 
 Razor now preserves native original component/view regions and C# members, render-local functions and qualified literal
-JavaScript. It uses a reproducible pinned generated-C grammar build with original MIT notices and nineteen verified
+JavaScript. It uses a reproducible pinned generated-C grammar build with original MIT notices and twenty verified
 local WASM assets. The [immutable Microsoft source audit](docs/razor-source-accuracy.html) qualifies 13 declarations
 and 28 of 29 reviewed source regions; valid route-less `@page`, HTML doctype and some literal text cause visible grammar
-gaps. Runtime/component compilation, code-behind, imports, Razor Pages/Blazor routing and Liquid remain open.
+gaps. Runtime/component compilation, code-behind, imports, Razor Pages/Blazor routing remain open.
+
+Liquid now has a pinned native original-region adapter and one canonical template identity. It retains original UTF-16
+ranges, variable binder metadata and complete independent Shopify JavaScript bodies, without generating render helpers
+or virtual files. The [immutable Dawn source audit](docs/liquid-source-accuracy.html) qualifies 12 original JavaScript
+declarations, 42 reviewed template dependency sites and 1,626 original delimiter regions across ten files. Explicit quoted
+render/include/section/layout dependencies resolve only to eligible original files within the indexed/configured
+`shopify-theme` application. Recovery, app blocks, section groups, generic/Jekyll engine lookup, non-HTML asset processors,
+interpolated/control-dependent scripts, rendered output, reference/framework/effect binding and broader accuracy remain open.
 
 Java and Kotlin now resolve original local import declarations within selected Maven reactors, literal Gradle projects
 and recorded source/classpath inputs. Explicit, wildcard, static and alias imports retain source evidence and visibility

@@ -297,6 +297,32 @@
         "container": "ubuntu@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55",
         "sourceDirectory": "tree-sitter-razor-d4664e409caaea12f73c9525484e3cf88b1cf718"
       }
+    },
+    {
+      "language": "liquid",
+      "file": "tree-sitter-liquid.wasm",
+      "sha256": "b5c08a0d17c21457141647595ffee1c028dd31179557e6472bd6e20b08ae37a8",
+      "abi": 14,
+      "artifactPackage": "codiluce-pinned-generated-c",
+      "artifactVersion": "0.1.0",
+      "artifactPath": "tree-sitter-liquid.wasm",
+      "source": "https://github.com/hankthetank27/tree-sitter-liquid",
+      "sourceRevision": "e45dbac8c5fa95b1f0e00e7e0c04bc8855823391",
+      "license": "MIT",
+      "licenseFile": "licenses/liquid.txt",
+      "artifactBuild": {
+        "script": "scripts/build-liquid-grammar.mjs",
+        "sourceArchive": "https://codeload.github.com/hankthetank27/tree-sitter-liquid/tar.gz/e45dbac8c5fa95b1f0e00e7e0c04bc8855823391",
+        "sourceIntegrity": "sha512-DKLzxCXUk87dDmzoAl849PVk9TI0wNNmy4WmV3U75b+vSbV1VidYjy3+B7B7QSigM7AxMIBXWv/xmLwMj0I9kg==",
+        "cliVersion": "0.26.9",
+        "cliUrl": "https://github.com/tree-sitter/tree-sitter/releases/download/v0.26.9/tree-sitter-linux-x64.gz",
+        "cliSha256": "9ce82137caa65864e7ca8b869fd391cef88c9bd2a01c4371b9c4dd26c2585efb",
+        "sdkVersion": "29.0",
+        "sdkUrl": "https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-29/wasi-sdk-29.0-x86_64-linux.tar.gz",
+        "sdkSha256": "87d1d1a2879d139cdc624b968efad3d4a97b8078cdff95e63ac88ecafd1a0171",
+        "container": "ubuntu@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55",
+        "sourceDirectory": "tree-sitter-liquid-e45dbac8c5fa95b1f0e00e7e0c04bc8855823391"
+      }
     }
   ]
 }

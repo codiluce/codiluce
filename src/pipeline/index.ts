@@ -24,6 +24,7 @@ import { FLASK_VERSION } from '../analysis/frameworks/flask.js';
 import { DJANGO_VERSION } from '../analysis/frameworks/django.js';
 import { embeddedAnalyzer } from '../analysis/embedded/index.js';
 import { goAnalyzer } from '../analysis/languages/go.js';
+import {liquidAnalyzer} from '../analysis/languages/liquid.js';
 import { rubyAnalyzer } from '../analysis/languages/ruby.js';
 import { GO_ROUTER_VERSION } from '../analysis/frameworks/go-routers.js';
 import { RAILS_VERSION } from '../analysis/frameworks/rails.js';
@@ -40,7 +41,7 @@ import {rustSymbolsAnalyzer} from '../analysis/languages/rust-symbols.js';
 import {rustRoutersAnalyzer} from '../analysis/frameworks/rust-routers.js';
 
 const execute = promisify(execFile);
-export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, structureAnalyzer, pythonAnalyzer, goAnalyzer, rubyAnalyzer, jvmAnalyzer, csharpAnalyzer, rustAnalyzer, rustSymbolsAnalyzer, rustRoutersAnalyzer, embeddedAnalyzer, typescriptAnalyzer, typescriptServicesRelease, laravelAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
+export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, structureAnalyzer, liquidAnalyzer, pythonAnalyzer, goAnalyzer, rubyAnalyzer, jvmAnalyzer, csharpAnalyzer, rustAnalyzer, rustSymbolsAnalyzer, rustRoutersAnalyzer, embeddedAnalyzer, typescriptAnalyzer, typescriptServicesRelease, laravelAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
 export interface IndexOptions {
   stateDirectory?: string; config?: AtlasConfig; onProgress?: (name: string) => void;
   /** Index a materialized commit tree: Git is not consulted and the run records this commit, clean. */

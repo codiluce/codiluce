@@ -125,6 +125,7 @@ test('capability outcomes distinguish parsed, failed, type-input, skipped and un
     'example.fs': 'let run () = 1',
     'example.vb': 'Module Example\nEnd Module',
     'example.cshtml': '<p>Razor</p>',
+    'example.liquid': '<p>{{ title }}</p>',
     'example.php': '<?php function run() {}',
   });
   const graph = await indexRepository(root, { config: { ...await config(root), maxFileBytes: 128 } });
@@ -146,5 +147,7 @@ test('capability outcomes distinguish parsed, failed, type-input, skipped and un
   assert.equal(analysis('example.vb').features.imports.status, 'unsupported');
   assert.equal(analysis('example.cshtml').features.structure.status, 'supported');
   assert.equal(analysis('example.cshtml').features.imports.status, 'unsupported');
+  assert.equal(analysis('example.liquid').features.structure.status, 'supported');
+  assert.equal(analysis('example.liquid').features.imports.status, 'unsupported');
   assert.equal(analysis('example.php').features.structure.status, 'disabled');
 });

@@ -1,0 +1,12 @@
+<!doctype html>
+{% assign heading = 'Original' %}
+<h1>{{ heading | escape }}</h1>
+<script>
+class LiquidClient {
+  constructor() { this.value = 1; }
+  read() { return this.value; }
+}
+function liquidClientHelper() { return 1; }
+const liquidBoundHelper = () => 2;
+</script>
+<style>.example { color: red; }</style>

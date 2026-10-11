@@ -17,7 +17,7 @@ export class StructureParser {
   private child?: ChildProcess;
   private sequence = 0;
   constructor(private readonly timeoutMs = 10_000) {}
-  async parse(language: string, content: string, options: {objectiveCpp?:boolean;erbHost?:'html'|'javascript'|'css'|'unknown';razorKind?:'component'|'view'} = {}): Promise<StructureFacts> {
+  async parse(language: string, content: string, options: {objectiveCpp?:boolean;erbHost?:'html'|'javascript'|'css'|'unknown';razorKind?:'component'|'view';liquidHost?:'html'|'javascript'|'css'|'unknown';liquidEngine?:'shopify'|'unknown';liquidBodyTags?:boolean} = {}): Promise<StructureFacts> {
     if (!this.child) this.child = fork(WORKER, [], {
       execArgv: workerArguments(),
       serialization: 'advanced', stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
