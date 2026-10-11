@@ -56,7 +56,14 @@ export function computeImpact(index: ProjectionIndex, seeds: string[], options: 
         const relation = index.relations[relationIndex]!;
         if (relation.to !== id || relation.from === id || !allowed.includes(relation.type) || (options.types && !options.types.has(relation.type))) continue;
         if (relation.change === 'removed' && !options.includeRemoved) continue;
-        if (distance.has(relation.from)) continue;
+        if (distance.has(relation.from)) {
+          // A nominal source reference may coexist with a qualified call.
+          // For parallel edges at the same distance, retain the call as the
+          // displayed hop regardless of stable relation-ID ordering.
+          const previous=index.relations[via.get(relation.from)??-1];
+          if(distance.get(relation.from)===level&&previous?.to===id&&previous.type==='references'&&relation.type==='calls')via.set(relation.from,relationIndex);
+          continue;
+        }
         if (distance.size >= MAX_IMPACT_NODES) { truncated = true; break; }
         distance.set(relation.from, level); via.set(relation.from, relationIndex); next.push(relation.from);
       }

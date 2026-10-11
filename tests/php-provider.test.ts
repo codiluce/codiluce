@@ -15,6 +15,9 @@ import { GraphBuilder, stableId } from '../src/core/graph.js';
 import { canonicalJson } from '../src/history/fingerprint.js';
 import { AnalysisCache } from '../src/pipeline/cache.js';
 import { indexRepository } from '../src/pipeline/index.js';
+import { phpStructureAnalyzer, phpLaravelStructureAnalyzer } from '../src/analysis/languages/php.js';
+import { phpSymbolsAnalyzer } from '../src/analysis/languages/php-symbols.js';
+import { IndexedSources } from '../src/analysis/indexed-sources.js';
 
 const roots:string[] = [], providers:PhpSources[] = [];
 after(async()=>{for(const source of providers)source.release();await Promise.all(roots.map(root=>rm(root,{recursive:true,force:true})));});
@@ -30,6 +33,27 @@ async function scanned(root:string,cache?:AnalysisCache) {
   await filesystemAnalyzer.analyze(context);return context;
 }
 function provider(context:AnalysisContext){const sources=context.phpSources??=new PhpSources(context);providers.push(sources);return sources;}
+
+test('Scoped PHP binding revalidates original sources before publishing uses',async()=>{
+  const root=await repository({'generic/entry.php':'<?php function helper(){}helper();'}),context=await scanned(root);provider(context);await phpStructureAnalyzer.analyze(context);
+  await writeFile(path.join(root,'generic/entry.php'),'<?php function changed(){}changed();');await phpSymbolsAnalyzer.analyze(context);
+  const file=context.graph.entities.get(context.files.get('generic/entry.php')!.id)!;assert.equal((file.metadata.analysis as {features:{references:{status:string}}}).features.references.status,'failed');assert.equal(file.metadata.phpCallOutcomes,undefined);assert.ok(![...context.graph.relations.values()].some(edge=>edge.type==='calls'));assert.equal(context.syntax?.has('generic/entry.php'),false);
+});
+test('A fresh PHP binding resolver cannot reuse an earlier analyzer manifest read',async()=>{
+  const root=await repository({'generic/composer.json':JSON.stringify({autoload:{'psr-4':{'Vendor\\':'src'}}}),'generic/src/A.php':'<?php namespace Vendor;class A{static function read(){}}','generic/entry.php':'<?php Vendor\\A::read();'}),context=await scanned(root);provider(context);await phpStructureAnalyzer.analyze(context);
+  context.sources=new IndexedSources(context);context.sources.readText('generic/composer.json');await writeFile(path.join(root,'generic/composer.json'),'{}');await phpSymbolsAnalyzer.analyze(context);
+  const file=context.graph.entities.get(context.files.get('generic/entry.php')!.id)!;assert.ok(!(file.metadata.phpCallOutcomes as {status:string}[]).some(site=>site.status==='resolved'));assert.ok(![...context.graph.relations.values()].some(edge=>edge.type==='calls'));
+});
+test('Partial bounded Laravel trees cannot advertise successful semantic features',async()=>{
+  const root=await repository({'backend/Budget.php':'<?php class Budget {'+Array.from({length:4200},(_,i)=>`function f${i}(){}`).join('')+'}'}),context=await scanned(root);provider(context);await laravelAnalyzer.analyze(context);await phpLaravelStructureAnalyzer.analyze(context);await phpSymbolsAnalyzer.analyze(context);
+  const file=context.graph.entities.get(context.files.get('backend/Budget.php')!.id)!;const features=(file.metadata.analysis as {features:Record<string,{status:string}>}).features;
+  assert.equal(features.structure!.status,'partial');for(const feature of ['references','framework','effects','guards'])assert.equal(features[feature]!.status,'failed');assert.equal(file.metadata.phpCallOutcomes,undefined);
+});
+test('Partial bounded generic PHP trees keep original structure but report binding failure',async()=>{
+  const root=await repository({'generic/Budget.php':'<?php class Budget {'+Array.from({length:4200},(_,i)=>`function f${i}(){}`).join('')+'}'}),context=await scanned(root);provider(context);await phpStructureAnalyzer.analyze(context);await phpSymbolsAnalyzer.analyze(context);
+  const file=context.graph.entities.get(context.files.get('generic/Budget.php')!.id)!;const features=(file.metadata.analysis as {features:Record<string,{status:string}>}).features;
+  assert.equal(features.structure!.status,'partial');assert.equal(features.references!.status,'failed');assert.equal(features.framework!.status,'unsupported');assert.equal(file.metadata.phpCallOutcomes,undefined);
+});
 
 test('Native PHP units share exact original UTF-16 trees and facts without comments or tokens',async()=>{
   const content='😀\r\n<?php namespace App; /** original */ class Service {public function run(?Other $value): void {$callback=fn()=>"😀";}}';

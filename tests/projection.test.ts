@@ -14,6 +14,7 @@ import { layoutHierarchy, pack, type LayoutNode, type Rect } from '../src/projec
 import { readIndexedSource, SourceError, SOURCE_MAX_LINES } from '../src/projection/source.js';
 import type { SoftwareGraph } from '../src/core/graph.js';
 import { guardsAt, hintOf, phrase } from '../src/projection/conditions.js';
+import { computeImpact } from '../src/projection/impact.js';
 
 const fixture = fileURLToPath(new URL('./fixtures/repository', import.meta.url));
 const temporary: string[] = [];
@@ -282,6 +283,14 @@ test('static UI serving stays inside the build directory', async () => {
 });
 
 // --- Blast radius, steps and paths ---------------------------------------------
+test('Impact prefers a parallel call over a nominal reference in either source order',()=>{
+  const rows:EntityRow[]=[{id:'repo',type:'repository',name:'repo'},{id:'origin',type:'function',name:'origin',parentId:'repo'},{id:'caller',type:'function',name:'caller',parentId:'repo'}];
+  for(const order of [['references','calls'],['calls','references']]){
+    const index=new ProjectionIndex('parallel',rows,order.map((type,i)=>({id:`edge${i}`,from:'caller',to:'origin',type})),[]);
+    const result=computeImpact(index,['origin'],{depth:1});assert.equal(result.distance.get('caller'),1);assert.equal(index.relations[result.via.get('caller')!]!.type,'calls');
+    const onlyReference=computeImpact(index,['origin'],{depth:1,types:new Set(['references'])});assert.equal(index.relations[onlyReference.via.get('caller')!]!.type,'references');
+  }
+});
 test('impact walks dependents across the stack, hop by hop, with the chain that reaches each', () => {
   const projection = new ProjectionService(store);
   const impact = projection.impact(symbolId('App\\Services\\AuthService::authenticate'), { depth: 8, limit: 100 });

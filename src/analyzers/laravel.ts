@@ -12,7 +12,7 @@ import { SiteCollector } from './references.js';
 import { PhpSources } from '../analysis/php/sources.js';
 import { PHP_PARSER_VERSION, PHP_SOURCE_PROFILE, PHP_SOURCE_PROVIDER_VERSION, PHP_STRUCTURE_VERSION } from '../analysis/php/version.js';
 
-export const LARAVEL_VERSION = `${ANALYZER_VERSION}:laravel-indexed-php:1`;
+export const LARAVEL_VERSION = `${ANALYZER_VERSION}:laravel-indexed-php:2`;
 
 interface ChainItem { name: string; args: Ast[]; ast: Ast }
 interface RouteContext { prefix: string; namePrefix: string; controller?: string; middleware: string[]; constraints: boolean; facts: Evidence[]; registration: 'static' | 'convention'; api: boolean }

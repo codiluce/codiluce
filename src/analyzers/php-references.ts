@@ -104,18 +104,27 @@ export function resolvePhpReferences(context: AnalysisContext, classes: Map<stri
     // Locals: typed parameters, then variables whose every assignment has one known class type.
     const locals = new Map<string, Type>();
     for (const parameter of args(method.node)) { const fqn = typeName(parameter.type); if (fqn && name(parameter.name)) locals.set(name(parameter.name)!, { kind: 'class', fqn }); }
-    walk(method.node, node => {
-      // Typed closure parameters and caught exceptions are declared types too.
-      if ((node.kind === 'closure' || node.kind === 'arrowfunc') && node !== method.node) for (const parameter of args(node)) { const fqn = typeName(parameter.type); const variable = name(parameter.name); if (fqn && variable && !locals.has(variable)) locals.set(variable, { kind: 'class', fqn }); }
+    const walkLocals=(node:Ast,visit:(node:Ast)=>void)=>{
+      const pending=[node];while(pending.length){const current=pending.pop()!;if(current!==method.node&&['closure','arrowfunc','function','class'].includes(current.kind))continue;visit(current);for(const [field,value]of Object.entries(current)){if(['loc','comments','leadingComments','trailingComments'].includes(field))continue;if(Array.isArray(value))pending.push(...nodes(value));else if(ast(value))pending.push(ast(value)!);}}
+    };
+    walkLocals(method.node, node => {
       if (node.kind === 'catch') { const variable = ast(node.variable)?.name; const types = nodes(node.what).map(item => resolve(item, scope)).filter((item): item is string => !!item); if (typeof variable === 'string' && types.length && !locals.has(variable)) locals.set(variable, types.length === 1 ? { kind: 'class', fqn: types[0]! } : { kind: 'external', via: 'caught exception' }); }
     });
     const assigned = new Map<string, Ast[]>();
-    walk(method.node, node => { if (node.kind === 'assign' && ast(node.left)?.kind === 'variable' && typeof ast(node.left)!.name === 'string' && node.operator === '=') assigned.set(ast(node.left)!.name as string, [...assigned.get(ast(node.left)!.name as string) ?? [], ast(node.right)!]); });
+    walkLocals(method.node, node => { if (node.kind === 'assign' && ast(node.left)?.kind === 'variable' && typeof ast(node.left)!.name === 'string' && node.operator === '=') assigned.set(ast(node.left)!.name as string, [...assigned.get(ast(node.left)!.name as string) ?? [], ast(node.right)!]); });
+    const mutableLocals=new Set<string>();
+    const invalidate=(value:Ast|undefined)=>{if(value?.kind==='variable'&&typeof value.name==='string')mutableLocals.add(value.name);};
+    walkLocals(method.node,node=>{
+      if(node.kind==='assignref'){invalidate(ast(node.left));invalidate(ast(node.right));}
+      if(['pre','post','unset','foreach','catch'].includes(node.kind))for(const value of [ast(node.what),ast(node.key),ast(node.value),ast(node.variable),...nodes(node.variables)])invalidate(value);
+    });
+    walk(method.node,node=>{if(node.kind==='closure')for(const capture of nodes(node.uses))if(capture.byref)invalidate(capture);});
     const typeOf = (node: Ast | undefined, depth = 0): Type => {
       if (!node || depth > 6) return undefined;
       if (node.kind === 'variable') {
         const variable = node.name as string;
-        if (variable === 'this') return { kind: 'class', fqn: owner.fqn };
+        if(mutableLocals.has(variable))return undefined;
+        if (variable === 'this') return method.node.isStatic?undefined:{ kind: 'class', fqn: owner.fqn };
         if (locals.has(variable)) return locals.get(variable);
         const values = assigned.get(variable);
         if (values?.length) {
@@ -199,7 +208,7 @@ export function resolvePhpReferences(context: AnalysisContext, classes: Map<stri
     const isChained = (node: Ast, parent: Ast | undefined) => !!parent && (parent.kind === 'propertylookup' || parent.kind === 'nullsafepropertylookup') && ast(parent.what) === node;
     const parents = new Map<Ast, Ast>();
     walk(method.node, node => { for (const value of Object.values(node)) { if (Array.isArray(value)) for (const child of nodes(value)) parents.set(child, node); else { const child = ast(value); if (child && child !== node) parents.set(child, node); } } });
-    const insideClosure = (node: Ast) => { for (let current = parents.get(node); current && current !== method.node; current = parents.get(current)) if (current.kind === 'closure' || current.kind === 'arrowfunc') return true; return false; };
+    const insideClosure = (node: Ast) => { for (let current = parents.get(node); current && current !== method.node; current = parents.get(current)) if (['closure','arrowfunc','function','class'].includes(current.kind)) return true; return false; };
     const controllerMethod = owner.entity.type === 'controller' && method.node.visibility !== 'private' && method.node.visibility !== 'protected';
     /** A console command run by name: an `invokes` relation, or a finding when the name is not literal or not indexed. */
     const runCommand = (node: Ast, argument: Ast | undefined, how: string) => {
@@ -210,6 +219,7 @@ export function resolvePhpReferences(context: AnalysisContext, classes: Map<stri
     };
     /** A job class handled by its `handle` method: the dispatch is a call of it. */
     const dispatchJob = (node: Ast, fqn: string | undefined) => {
+      if(insideClosure(node))return;
       const handler = fqn ? lookup(app, fqn, 'handle') ?? lookup(app, fqn, '__invoke') : undefined;
       if (handler) sites.add({ from: from.id, to: handler.id, type: 'calls', form: 'dispatch', evidence: fact(node, `Dispatches ${fqn!.split('\\').at(-1)}, which runs its ${handler.name}() method`) });
     };
@@ -225,7 +235,7 @@ export function resolvePhpReferences(context: AnalysisContext, classes: Map<stri
       if (node.kind === 'new') {
         const fqn = classTarget(node.what);
         const target = fqn ? classOf(app, fqn) : undefined;
-        if (target) { sites.add({ from: from.id, to: target.entity.id, type: 'calls', form: 'new', evidence: fact(node, `Constructs new ${fqn!.split('\\').at(-1)}(…)`) }); sites.count(from.id, 'resolved'); }
+        if (target && !insideClosure(node)) { sites.add({ from: from.id, to: target.entity.id, type: 'calls', form: 'new', evidence: fact(node, `Constructs new ${fqn!.split('\\').at(-1)}(…)`) }); sites.count(from.id, 'resolved'); }
         else if (fqn) sites.count(from.id, 'external');
         if (parent?.kind === 'throw' && fqn) {
           const status = EXCEPTION_STATUS[fqn.toLowerCase()] ?? (fqn.toLowerCase() === 'symfony\\component\\httpkernel\\exception\\httpexception' ? statusArgument(args(node)[0], 500) : undefined);
@@ -315,6 +325,7 @@ export function resolvePhpReferences(context: AnalysisContext, classes: Map<stri
         return;
       }
       // The call itself.
+      if(insideClosure(node))return; // The shared source binder owns named deferred callables.
       if (what.kind === 'name') { sites.count(from.id, 'external'); return; }
       const methodName = name(what.offset);
       if (!methodName) { sites.count(from.id, 'unresolved'); return; }

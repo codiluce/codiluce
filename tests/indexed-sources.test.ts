@@ -151,5 +151,5 @@ test('capability outcomes distinguish parsed, failed, type-input, skipped and un
   assert.equal(analysis('example.liquid').features.imports.status, 'unsupported');
   assert.equal(analysis('example.php').features.structure.status, 'supported');
   assert.equal(analysis('example.php').features.imports.status, 'partial');
-  assert.equal(analysis('example.php').features.references.status, 'unsupported');
+  assert.equal(analysis('example.php').features.references.status, 'partial');
 });

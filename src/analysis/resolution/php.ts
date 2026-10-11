@@ -6,7 +6,7 @@ import { ANALYZER_VERSION, evidence, type Evidence } from '../../core/graph.js';
 import type { DeclarationFact, ImportOutcome, PhpImportFact, PhpPathExpression, PhpSyntaxFacts } from '../facts.js';
 import { IndexedSources } from '../indexed-sources.js';
 
-export const PHP_RESOLVER_VERSION = `${ANALYZER_VERSION}:php-indexed-imports:1`;
+export const PHP_RESOLVER_VERSION = `${ANALYZER_VERSION}:php-indexed-imports:2`;
 const ROOT = '/__codiluce_php_repository__', MAX_MAPS = 4096, MAX_PROJECTS = 256, MAX_REACHABLE = 4096;
 type ObjectValue = Record<string,unknown>;
 const object = (value: unknown): ObjectValue|undefined => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as ObjectValue : undefined;
@@ -36,16 +36,24 @@ export class PhpResolver {
   private readonly projects = new Map<string,Project>();
   private readonly owners = new Map<string,Project>();
   private readonly symbols = new Map<string,SymbolSite[]>();
+  private readonly namespacePrefixes = new Set<string>();
   private readonly loadCache = new Map<string,PhpLoad[]>();
   private readonly reachCache = new Map<string,Reachability>();
   private readonly classCache = new Map<string,ClassCatalog>();
   constructor(private readonly context:AnalysisContext) {
-    this.sources = context.sources ?? new IndexedSources(context);
+    // Revalidate this service's inputs independently of earlier analyzers.
+    this.sources = new IndexedSources(context);
     for (const [file,syntax] of context.syntax ?? []) if (syntax.facts.php && !syntax.facts.truncated && !syntax.facts.issues.some(issue=>issue.code==='php-original-token-gap')) {
       const items:SymbolSite[] = [];
       for (const fact of syntax.facts.declarations) {
         const id = syntax.declarations.get(fact.key);
-        if (id && ['class','interface','trait','enum','function','constant'].includes(fact.kind)) items.push({file,id,fact});
+        if (id && ['class','interface','trait','enum','function','constant'].includes(fact.kind)) {
+          items.push({file,id,fact});
+          // Concrete uses often miss before Laravel's source catalog fallback.
+          // Index prefix membership once instead of rescanning every original
+          // declaration (and rebuilding a prefix) for each missing name.
+          for(let separator=fact.qualifiedName.indexOf('\\');separator>=0;separator=fact.qualifiedName.indexOf('\\',separator+1))this.namespacePrefixes.add(fact.qualifiedName.slice(0,separator));
+        }
       }
       this.symbols.set(file,items);
     }
@@ -268,7 +276,7 @@ export class PhpResolver {
     if(queue.length)result.gaps.push('PHP source load traversal budget exceeded');
     this.reachCache.set(file,result);return result;
   }
-  private match(items:SymbolSite[],imported:PhpImportFact,exact=false):SymbolSite[] {
+  private match(items:SymbolSite[],imported:Pick<PhpImportFact,'kind'|'specifier'>,exact=false):SymbolSite[] {
     const kinds=imported.kind==='class'?['class','interface','trait','enum']:imported.kind==='function'?['function']:['constant'];
     return items.filter(item=>kinds.includes(item.fact.kind)&&(exact?item.fact.qualifiedName===imported.specifier:imported.kind==='const'?constantKey(item.fact.qualifiedName)===constantKey(imported.specifier):phpFold(item.fact.qualifiedName)===phpFold(imported.specifier)));
   }
@@ -314,6 +322,11 @@ export class PhpResolver {
     if(imported.conditions.length)return {status:'unsupported',reason:'PHP namespace imports must occur in original outermost namespace scope'};
     const siblings=(this.facts(file)?.imports??[]).filter(item=>item.scope===imported.scope&&item.kind===imported.kind&&(imported.kind==='const'?item.alias===imported.alias:phpFold(item.alias)===phpFold(imported.alias)));
     if(siblings.length>1)return {status:'ambiguous',candidates:siblings.map(item=>item.specifier),reason:'Duplicate original aliases in the same namespace import table'};
+    return this.resolveQualified(file,imported.kind,imported.specifier);
+  }
+  /** Concrete original name use, separate from a namespace use declaration. */
+  resolveQualified(file:string,kind:PhpImportFact['kind'],specifier:string):ImportOutcome {
+    const imported={kind,specifier};
     const reachable=this.reachable(file),loadedSites=[...reachable.files.keys()].flatMap(input=>this.match(this.symbols.get(input)??[],imported));
     const loaded=this.finish(loadedSites,loadedSites.length===1?reachable.files.get(loadedSites[0]!.file)??[]:[]);
     if(loaded)return loaded;
@@ -371,7 +384,7 @@ export class PhpResolver {
       if(external.length>1)return {status:'ambiguous',candidates:external.map(pkg=>pkg.name),reason:'Multiple indexed locked packages advertise this namespace prefix'};
     }
     if(reachable.gaps.length)return {status:'unsupported',reason:reachable.gaps.join('; ')};
-    if(imported.kind==='class'&&[...this.symbols.values()].some(items=>items.some(item=>item.fact.qualifiedName.startsWith(`${imported.specifier}\\`))))return {status:'unsupported',reason:'Original namespace alias needs a concrete qualified use site; namespace aliasing itself does not autoload a class'};
+    if(imported.kind==='class'&&this.namespacePrefixes.has(imported.specifier))return {status:'unsupported',reason:'Original namespace alias needs a concrete qualified use site; namespace aliasing itself does not autoload a class'};
     return {status:'unresolved',reason:`No indexed original ${imported.kind} declaration is reachable through the recorded Composer/literal-load source contracts: ${imported.specifier}`};
   }
   composerFiles(file:string):{specifier:string;manifest:string;outcome:ImportOutcome;dev:boolean}[] {

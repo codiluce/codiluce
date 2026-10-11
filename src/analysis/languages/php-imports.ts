@@ -32,7 +32,7 @@ export const phpImportsAnalyzer:Analyzer = {
       for(const load of resolver.composerFiles(file.path))record({kind:'composer-files',specifier:load.specifier,manifest:load.manifest,dev:load.dev,conditions:['Original Composer loader activation and dependency ordering are unverified']},load.outcome);
       for(const change of facts.loaderChanges)context.graph.diagnose({analyzer:'php-imports',severity:'warning',code:'php-loader-change-gap',file:file.path,entityId:file.id,line:change.range.startLine,reason:`Original ${change.name} call may change the runtime lookup/loader state; it is not executed`});
       entity.metadata.importOutcomes=outcomes;entity.metadata.externalImports=[...new Set(external)].sort();
-      analysis.features.imports={status:'partial',reason:'Indexed Composer PSR-4/PSR-0/classmap/files and original literal-load/namespace source contracts; namespace use does not execute a loader. Runtime plugins, dynamic loads, namespace-only aliases and scoped references require further profiles'};
+      analysis.features.imports={status:'partial',reason:'Indexed Composer PSR-4/PSR-0/classmap/files and original literal-load/namespace source contracts; namespace use does not execute a loader. Runtime plugins and dynamic loads retain gaps; namespace-only aliases require concrete use-site binding'};
     }
   },
 };

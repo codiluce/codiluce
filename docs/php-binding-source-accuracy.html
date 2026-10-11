@@ -1,0 +1,747 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PHP scoped source binding qualification</title><style>body{font:16px/1.6 system-ui,sans-serif;background:#101822;color:#e5ecf4;margin:0;padding:clamp(16px,4vw,48px)}main{max-width:1120px;margin:auto}h1{font-size:clamp(28px,5vw,42px);line-height:1.2}p,code{overflow-wrap:anywhere}a,code{color:#8bddd8}.status{padding:18px;border:1px solid #b69459;border-radius:8px}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;min-width:720px}th,td{padding:12px;text-align:left;border-bottom:1px solid #344353}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}summary{cursor:pointer;padding:12px 0}</style></head><body><main><h1>PHP scoped source binding qualification</h1><p>P10c3b · 2026-10-11T13:07:37.941Z · v22.12.0 · linux/x64. Fourteen byte-pinned Symfony 8.0.0 and Laravel 12.0.0 originals.</p><p class="status"><strong>11/11 reviewed outcomes · one direct source call · two nominal method references · six explicit gaps · two original Laravel properties</strong><br>Thirteen native source-unit cache hits preserve cold/warm/revision identities. All 23 prior Laravel starter entities and 23 touching edges retain their original fields and proofs, allowing new structure/capability metadata and source evidence.</p><div class="scroll"><table><thead><tr><th>Original source</th><th>Original use / declaration</th><th>Reviewed outcome</th><th>Original target</th></tr></thead><tbody><tr><td><a href="https://github.com/symfony/symfony/blob/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php#L49">src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php:49</a></td><td>$this-&gt;read(</td><td>resolved nominal</td><td>read:55</td></tr><tr><td><a href="https://github.com/symfony/symfony/blob/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php#L80">src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php:80</a></td><td>$this-&gt;destroy(</td><td>resolved nominal</td><td>destroy:87</td></tr><tr><td><a href="https://github.com/symfony/symfony/blob/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php#L93">src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php:93</a></td><td>SessionUtils::popSessionCookie(</td><td>resolved direct</td><td>popSessionCookie:28</td></tr><tr><td><a href="https://github.com/symfony/symfony/blob/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php#L69">src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php:69</a></td><td>$this-&gt;doRead(</td><td>unsupported </td><td>Explicit gap / original class owner</td></tr><tr><td><a href="https://github.com/symfony/symfony/blob/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php#L84">src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php:84</a></td><td>$this-&gt;doWrite(</td><td>unsupported </td><td>Explicit gap / original class owner</td></tr><tr><td><a href="https://github.com/symfony/symfony/blob/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php#L109">src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php:109</a></td><td>$this-&gt;doDestroy(</td><td>unsupported </td><td>Explicit gap / original class owner</td></tr><tr><td><a href="https://github.com/symfony/symfony/blob/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/String/Resources/functions.php#L17">src/Symfony/Component/String/Resources/functions.php:17</a></td><td>new UnicodeString(</td><td>unresolved </td><td>Explicit gap / original class owner</td></tr><tr><td><a href="https://github.com/symfony/symfony/blob/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/String/Resources/functions.php#L24">src/Symfony/Component/String/Resources/functions.php:24</a></td><td>new ByteString(</td><td>unresolved </td><td>Explicit gap / original class owner</td></tr><tr><td><a href="https://github.com/laravel/laravel/blob/fd51890716808d984eb467cc668b5b3a247161da/routes/console.php#L7">routes/console.php:7</a></td><td>$this-&gt;comment(</td><td>unsupported </td><td>Explicit gap / original class owner</td></tr><tr><td><a href="https://github.com/laravel/laravel/blob/fd51890716808d984eb467cc668b5b3a247161da/app/Models/User.php#L20">app/Models/User.php:20</a></td><td>$fillable</td><td>property </td><td>Explicit gap / original class owner</td></tr><tr><td><a href="https://github.com/laravel/laravel/blob/fd51890716808d984eb467cc668b5b3a247161da/app/Models/User.php#L31">app/Models/User.php:31</a></td><td>$hidden</td><td>property </td><td>Explicit gap / original class owner</td></tr></tbody></table></div><p>This is a reviewed subset from two source families. Typed virtual receivers produce nominal references; abstract methods, unavailable classes and unbound anonymous owners keep gaps. The authored Symfony qualification manifest selects indexed PSR-4 source paths and is recorded below; it is not an upstream manifest or proof of runtime installation. All upstream bytes remain unchanged. No PHP runtime, Composer, autoloader, dependency or target application executes.</p><p>Conformance separately covers independent class/function/constant namespace tables, repeated blocks, ASCII-only folding, namespace fallback, literal loads, callable scopes, local writes, captures/arrows, static/$this boundaries, reference escapes, callbacks/first-class captures, inherited constructors/methods, plain traits, original promoted/property and return types, exact UTF-16 coordinates, source races and bounded-tree failures. Dynamic values, flow/activation order, by-reference state, trait adaptations, protected inheritance access, union/intersection types, magic dispatch and anonymous callback ownership remain explicit gaps. Existing Laravel framework/effect/guard observations retain their established profile; general PHP framework/effects/guards remain unsupported. Broader source accuracy, full mixed-history/process-tree memory, native OS and documentation release gates remain open.</p><p><a href="https://www.php.net/manual/en/language.namespaces.rules.php">PHP namespace rules</a> · <a href="https://www.php.net/manual/en/functions.anonymous.php">Closure scopes</a> · <a href="https://www.php.net/manual/en/functions.arrow.php">Arrow captures</a> · <a href="php-binding-compatibility-performance.html">Performance evidence</a> · <a href="language-framework-compatibility.html#implementation">Roadmap</a></p><p>Implementation digest (287 files): <code>d8d744da723614b586234fe4f170f0d94dd7123b3804a7ea53d35cd52364b2b3</code>. Reproduce <code>node --experimental-sqlite --import tsx scripts/qualify-php-binding.mjs --output docs/php-binding-source-accuracy.html</code>. Optional <code>--symfony-source</code> and <code>--laravel-source</code> verify originals offline.</p><details><summary>Raw original proofs, pins, configuration, legacy projection and replay results</summary><pre>{
+  &quot;phase&quot;: &quot;P10c3b&quot;,
+  &quot;measuredAt&quot;: &quot;2026-10-11T13:07:37.941Z&quot;,
+  &quot;binder&quot;: &quot;0.9.3:php-source-binding:1&quot;,
+  &quot;node&quot;: &quot;v22.12.0&quot;,
+  &quot;platform&quot;: &quot;linux/x64&quot;,
+  &quot;pins&quot;: [
+    {
+      &quot;indexed&quot;: &quot;generic/src/Symfony/Component/String/Resources/functions.php&quot;,
+      &quot;file&quot;: &quot;src/Symfony/Component/String/Resources/functions.php&quot;,
+      &quot;repository&quot;: &quot;symfony/symfony&quot;,
+      &quot;revision&quot;: &quot;2e913a829cfbbf9cb38b321bdff1806b44b192eb&quot;,
+      &quot;bytes&quot;: 852,
+      &quot;sha256&quot;: &quot;974e6a19bccfc71615061207a08243311152b4759ce416b8f2bc3390790b1644&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/String/Resources/functions.php&quot;
+    },
+    {
+      &quot;indexed&quot;: &quot;generic/src/Symfony/Contracts/Service/ResetInterface.php&quot;,
+      &quot;file&quot;: &quot;src/Symfony/Contracts/Service/ResetInterface.php&quot;,
+      &quot;repository&quot;: &quot;symfony/symfony&quot;,
+      &quot;revision&quot;: &quot;2e913a829cfbbf9cb38b321bdff1806b44b192eb&quot;,
+      &quot;bytes&quot;: 1035,
+      &quot;sha256&quot;: &quot;b30147365ddd947981ebe55fa112433e02a53eef25c5f7f9ee4c74f53e29fdfc&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Contracts/Service/ResetInterface.php&quot;
+    },
+    {
+      &quot;indexed&quot;: &quot;generic/src/Symfony/Contracts/EventDispatcher/Event.php&quot;,
+      &quot;file&quot;: &quot;src/Symfony/Contracts/EventDispatcher/Event.php&quot;,
+      &quot;repository&quot;: &quot;symfony/symfony&quot;,
+      &quot;revision&quot;: &quot;2e913a829cfbbf9cb38b321bdff1806b44b192eb&quot;,
+      &quot;bytes&quot;: 1479,
+      &quot;sha256&quot;: &quot;fefa2d1a68a006824e21d3baeb8c2b6e0c18d175fa5087148996b664646177ad&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Contracts/EventDispatcher/Event.php&quot;
+    },
+    {
+      &quot;indexed&quot;: &quot;generic/src/Symfony/Component/HttpKernel/Event/RequestEvent.php&quot;,
+      &quot;file&quot;: &quot;src/Symfony/Component/HttpKernel/Event/RequestEvent.php&quot;,
+      &quot;repository&quot;: &quot;symfony/symfony&quot;,
+      &quot;revision&quot;: &quot;2e913a829cfbbf9cb38b321bdff1806b44b192eb&quot;,
+      &quot;bytes&quot;: 1262,
+      &quot;sha256&quot;: &quot;2594fb6b3b2f2a17c25d7ac6719aee9fc81352218ab59a9c3db5e66537f8efba&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpKernel/Event/RequestEvent.php&quot;
+    },
+    {
+      &quot;indexed&quot;: &quot;generic/src/Symfony/Component/Workflow/Metadata/GetMetadataTrait.php&quot;,
+      &quot;file&quot;: &quot;src/Symfony/Component/Workflow/Metadata/GetMetadataTrait.php&quot;,
+      &quot;repository&quot;: &quot;symfony/symfony&quot;,
+      &quot;revision&quot;: &quot;2e913a829cfbbf9cb38b321bdff1806b44b192eb&quot;,
+      &quot;bytes&quot;: 791,
+      &quot;sha256&quot;: &quot;5690dabe901d185e7d7a23ecedbc48b67901633f8a08dbcfce35d6c365a186f8&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/Workflow/Metadata/GetMetadataTrait.php&quot;
+    },
+    {
+      &quot;indexed&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+      &quot;file&quot;: &quot;src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+      &quot;repository&quot;: &quot;symfony/symfony&quot;,
+      &quot;revision&quot;: &quot;2e913a829cfbbf9cb38b321bdff1806b44b192eb&quot;,
+      &quot;bytes&quot;: 4097,
+      &quot;sha256&quot;: &quot;860aaa606180e1be6c72eff7f4871263b30652ccef0c7e4635c6d03e1a817272&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;
+    },
+    {
+      &quot;indexed&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/SessionUtils.php&quot;,
+      &quot;file&quot;: &quot;src/Symfony/Component/HttpFoundation/Session/SessionUtils.php&quot;,
+      &quot;repository&quot;: &quot;symfony/symfony&quot;,
+      &quot;revision&quot;: &quot;2e913a829cfbbf9cb38b321bdff1806b44b192eb&quot;,
+      &quot;bytes&quot;: 1654,
+      &quot;sha256&quot;: &quot;122be93319ce972b0845a8a9b838d5fd1b5394976db98db79d72fc1907bd8040&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpFoundation/Session/SessionUtils.php&quot;
+    },
+    {
+      &quot;indexed&quot;: &quot;laravel/composer.json&quot;,
+      &quot;file&quot;: &quot;composer.json&quot;,
+      &quot;repository&quot;: &quot;laravel/laravel&quot;,
+      &quot;revision&quot;: &quot;fd51890716808d984eb467cc668b5b3a247161da&quot;,
+      &quot;bytes&quot;: 2381,
+      &quot;sha256&quot;: &quot;2c2ee477271a0dcdf9ae5830b75da13049f5236e556d9e086d8f0cbb5e645bf5&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/laravel/laravel/fd51890716808d984eb467cc668b5b3a247161da/composer.json&quot;
+    },
+    {
+      &quot;indexed&quot;: &quot;laravel/bootstrap/app.php&quot;,
+      &quot;file&quot;: &quot;bootstrap/app.php&quot;,
+      &quot;repository&quot;: &quot;laravel/laravel&quot;,
+      &quot;revision&quot;: &quot;fd51890716808d984eb467cc668b5b3a247161da&quot;,
+      &quot;bytes&quot;: 513,
+      &quot;sha256&quot;: &quot;bba9ff06394e0df3dc993a33d0dacc60fcbfc169266abf6a4b230aa33892571a&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/laravel/laravel/fd51890716808d984eb467cc668b5b3a247161da/bootstrap/app.php&quot;
+    },
+    {
+      &quot;indexed&quot;: &quot;laravel/routes/web.php&quot;,
+      &quot;file&quot;: &quot;routes/web.php&quot;,
+      &quot;repository&quot;: &quot;laravel/laravel&quot;,
+      &quot;revision&quot;: &quot;fd51890716808d984eb467cc668b5b3a247161da&quot;,
+      &quot;bytes&quot;: 108,
+      &quot;sha256&quot;: &quot;248c7eeeb43bb61ee4fb6603e52b44843c64f72a841d671bcd41871aab23f970&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/laravel/laravel/fd51890716808d984eb467cc668b5b3a247161da/routes/web.php&quot;
+    },
+    {
+      &quot;indexed&quot;: &quot;laravel/routes/console.php&quot;,
+      &quot;file&quot;: &quot;routes/console.php&quot;,
+      &quot;repository&quot;: &quot;laravel/laravel&quot;,
+      &quot;revision&quot;: &quot;fd51890716808d984eb467cc668b5b3a247161da&quot;,
+      &quot;bytes&quot;: 210,
+      &quot;sha256&quot;: &quot;9adccc33e7dd400683e434774077c7fdb2f299c5712cedf16a43fdf56f2850fa&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/laravel/laravel/fd51890716808d984eb467cc668b5b3a247161da/routes/console.php&quot;
+    },
+    {
+      &quot;indexed&quot;: &quot;laravel/app/Models/User.php&quot;,
+      &quot;file&quot;: &quot;app/Models/User.php&quot;,
+      &quot;repository&quot;: &quot;laravel/laravel&quot;,
+      &quot;revision&quot;: &quot;fd51890716808d984eb467cc668b5b3a247161da&quot;,
+      &quot;bytes&quot;: 1009,
+      &quot;sha256&quot;: &quot;e0f171d54e3f65fdca8442e730ee7f75a1ed8985ad8f1585682b28d60ee99467&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/laravel/laravel/fd51890716808d984eb467cc668b5b3a247161da/app/Models/User.php&quot;
+    },
+    {
+      &quot;indexed&quot;: &quot;laravel/app/Http/Controllers/Controller.php&quot;,
+      &quot;file&quot;: &quot;app/Http/Controllers/Controller.php&quot;,
+      &quot;repository&quot;: &quot;laravel/laravel&quot;,
+      &quot;revision&quot;: &quot;fd51890716808d984eb467cc668b5b3a247161da&quot;,
+      &quot;bytes&quot;: 77,
+      &quot;sha256&quot;: &quot;25d1c1ef8e6cc8a376553faacfba2b07d9dfaee9bdbb84f14f77517580e9deb1&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/laravel/laravel/fd51890716808d984eb467cc668b5b3a247161da/app/Http/Controllers/Controller.php&quot;
+    },
+    {
+      &quot;indexed&quot;: &quot;laravel/app/Providers/AppServiceProvider.php&quot;,
+      &quot;file&quot;: &quot;app/Providers/AppServiceProvider.php&quot;,
+      &quot;repository&quot;: &quot;laravel/laravel&quot;,
+      &quot;revision&quot;: &quot;fd51890716808d984eb467cc668b5b3a247161da&quot;,
+      &quot;bytes&quot;: 361,
+      &quot;sha256&quot;: &quot;caf306ef6a25a547bbb7edd5508a39b51c365083eb6dd58378cf2242018e94c7&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/laravel/laravel/fd51890716808d984eb467cc668b5b3a247161da/app/Providers/AppServiceProvider.php&quot;
+    }
+  ],
+  &quot;reviewed&quot;: 11,
+  &quot;matched&quot;: 11,
+  &quot;sourceUses&quot;: 9,
+  &quot;resolvedUses&quot;: 3,
+  &quot;nominalReferences&quot;: 2,
+  &quot;directCalls&quot;: 1,
+  &quot;explicitGaps&quot;: 6,
+  &quot;newLaravelProperties&quot;: 2,
+  &quot;legacyEntities&quot;: 23,
+  &quot;legacyEdges&quot;: 23,
+  &quot;legacyFieldsAndProofsPreserved&quot;: true,
+  &quot;baselineRevision&quot;: &quot;02be614862f84121a41ba1e506a17c8eded243de&quot;,
+  &quot;syntaxCacheHits&quot;: 13,
+  &quot;coldWarmEqual&quot;: true,
+  &quot;revisionEqual&quot;: true,
+  &quot;authoredManifest&quot;: {
+    &quot;autoload&quot;: {
+      &quot;psr-4&quot;: {
+        &quot;Symfony\\Component\\&quot;: &quot;src/Symfony/Component/&quot;,
+        &quot;Symfony\\Contracts\\&quot;: &quot;src/Symfony/Contracts/&quot;
+      }
+    }
+  },
+  &quot;authoredConfig&quot;: {
+    &quot;repository&quot;: {
+      &quot;name&quot;: &quot;php-binding-original-audit&quot;
+    },
+    &quot;applications&quot;: [
+      {
+        &quot;name&quot;: &quot;generic&quot;,
+        &quot;path&quot;: &quot;generic&quot;,
+        &quot;frameworks&quot;: [],
+        &quot;ecosystems&quot;: [
+          &quot;php&quot;
+        ],
+        &quot;php&quot;: {
+          &quot;composer&quot;: &quot;qualification-composer.json&quot;,
+          &quot;autoloadDev&quot;: false
+        }
+      },
+      {
+        &quot;name&quot;: &quot;laravel&quot;,
+        &quot;path&quot;: &quot;laravel&quot;,
+        &quot;frameworks&quot;: [
+          &quot;laravel&quot;
+        ],
+        &quot;ecosystems&quot;: [
+          &quot;php&quot;
+        ]
+      }
+    ],
+    &quot;ignore&quot;: [
+      &quot;**/.codiluce/**&quot;
+    ],
+    &quot;maxFileBytes&quot;: 2097152
+  },
+  &quot;results&quot;: [
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+        &quot;line&quot;: 49,
+        &quot;expression&quot;: &quot;$this-&gt;read(&quot;,
+        &quot;status&quot;: &quot;resolved&quot;,
+        &quot;dispatch&quot;: &quot;nominal&quot;,
+        &quot;target&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+        &quot;targetLine&quot;: 55,
+        &quot;name&quot;: &quot;read&quot;
+      },
+      &quot;originalLine&quot;: &quot;        $this-&gt;prefetchData = $this-&gt;read($sessionId);&quot;,
+      &quot;actual&quot;: {
+        &quot;kind&quot;: &quot;call&quot;,
+        &quot;scope&quot;: &quot;php-callable:1582:1807&quot;,
+        &quot;owner&quot;: &quot;symbol:600791af77c2a92ced038f29&quot;,
+        &quot;range&quot;: {
+          &quot;startLine&quot;: 49,
+          &quot;startColumn&quot;: 31,
+          &quot;endLine&quot;: 49,
+          &quot;endColumn&quot;: 54
+        },
+        &quot;expression&quot;: &quot;$this-&gt;read($sessionId)&quot;,
+        &quot;status&quot;: &quot;resolved&quot;,
+        &quot;target&quot;: &quot;symbol:efde186a72d0d92817b79f7e&quot;,
+        &quot;dispatch&quot;: &quot;nominal&quot;,
+        &quot;targetConditions&quot;: [],
+        &quot;proof&quot;: [
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-symbols&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-source-binding:1&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+            &quot;line&quot;: 49,
+            &quot;explanation&quot;: &quot;Original PHP source use; execution, loader activation and runtime dispatch remain unverified&quot;,
+            &quot;endLine&quot;: 49
+          },
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-symbols&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-source-binding:1&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+            &quot;line&quot;: 49,
+            &quot;explanation&quot;: &quot;Original non-static lexical $this binding&quot;,
+            &quot;endLine&quot;: 49
+          },
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-symbols&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-source-binding:1&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+            &quot;line&quot;: 55,
+            &quot;explanation&quot;: &quot;Original method declaration; virtual runtime dispatch remains unverified&quot;,
+            &quot;endLine&quot;: 73
+          }
+        ],
+        &quot;executionUnverified&quot;: true
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+        &quot;line&quot;: 80,
+        &quot;expression&quot;: &quot;$this-&gt;destroy(&quot;,
+        &quot;status&quot;: &quot;resolved&quot;,
+        &quot;dispatch&quot;: &quot;nominal&quot;,
+        &quot;target&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+        &quot;targetLine&quot;: 87,
+        &quot;name&quot;: &quot;destroy&quot;
+      },
+      &quot;originalLine&quot;: &quot;            return $this-&gt;destroy($sessionId);&quot;,
+      &quot;actual&quot;: {
+        &quot;kind&quot;: &quot;call&quot;,
+        &quot;scope&quot;: &quot;php-callable:2439:2914&quot;,
+        &quot;owner&quot;: &quot;symbol:141f0115d39384eb59736025&quot;,
+        &quot;range&quot;: {
+          &quot;startLine&quot;: 80,
+          &quot;startColumn&quot;: 20,
+          &quot;endLine&quot;: 80,
+          &quot;endColumn&quot;: 46
+        },
+        &quot;expression&quot;: &quot;$this-&gt;destroy($sessionId)&quot;,
+        &quot;status&quot;: &quot;resolved&quot;,
+        &quot;target&quot;: &quot;symbol:7bcdbd2e072ff785b87450be&quot;,
+        &quot;dispatch&quot;: &quot;nominal&quot;,
+        &quot;targetConditions&quot;: [],
+        &quot;proof&quot;: [
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-symbols&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-source-binding:1&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+            &quot;line&quot;: 80,
+            &quot;explanation&quot;: &quot;Original PHP source use; execution, loader activation and runtime dispatch remain unverified&quot;,
+            &quot;endLine&quot;: 80
+          },
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-symbols&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-source-binding:1&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+            &quot;line&quot;: 80,
+            &quot;explanation&quot;: &quot;Original non-static lexical $this binding&quot;,
+            &quot;endLine&quot;: 80
+          },
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-symbols&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-source-binding:1&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+            &quot;line&quot;: 87,
+            &quot;explanation&quot;: &quot;Original method declaration; virtual runtime dispatch remains unverified&quot;,
+            &quot;endLine&quot;: 110
+          }
+        ],
+        &quot;executionUnverified&quot;: true
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+        &quot;line&quot;: 93,
+        &quot;expression&quot;: &quot;SessionUtils::popSessionCookie(&quot;,
+        &quot;status&quot;: &quot;resolved&quot;,
+        &quot;dispatch&quot;: &quot;direct&quot;,
+        &quot;target&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/SessionUtils.php&quot;,
+        &quot;targetLine&quot;: 28,
+        &quot;name&quot;: &quot;popSessionCookie&quot;
+      },
+      &quot;originalLine&quot;: &quot;            $cookie = SessionUtils::popSessionCookie($this-&gt;sessionName, $sessionId);&quot;,
+      &quot;actual&quot;: {
+        &quot;kind&quot;: &quot;call&quot;,
+        &quot;scope&quot;: &quot;php-callable:2920:4094&quot;,
+        &quot;owner&quot;: &quot;symbol:7bcdbd2e072ff785b87450be&quot;,
+        &quot;range&quot;: {
+          &quot;startLine&quot;: 93,
+          &quot;startColumn&quot;: 23,
+          &quot;endLine&quot;: 93,
+          &quot;endColumn&quot;: 85
+        },
+        &quot;expression&quot;: &quot;SessionUtils::popSessionCookie($this-&gt;sessionName, $sessionId)&quot;,
+        &quot;status&quot;: &quot;resolved&quot;,
+        &quot;target&quot;: &quot;symbol:32cf30e939e71da39d8b64a2&quot;,
+        &quot;dispatch&quot;: &quot;direct&quot;,
+        &quot;targetConditions&quot;: [],
+        &quot;proof&quot;: [
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-symbols&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-source-binding:1&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+            &quot;line&quot;: 93,
+            &quot;explanation&quot;: &quot;Original PHP source use; execution, loader activation and runtime dispatch remain unverified&quot;,
+            &quot;endLine&quot;: 93
+          },
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-imports&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-indexed-imports:2&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;generic/qualification-composer.json&quot;,
+            &quot;explanation&quot;: &quot;Indexed Composer psr-4 prefix Symfony\\Component\\ and ordered roots&quot;
+          },
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-imports&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-indexed-imports:2&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/SessionUtils.php&quot;,
+            &quot;line&quot;: 22,
+            &quot;explanation&quot;: &quot;Original declaration matched by PHP name/kind; activation remains unverified&quot;
+          },
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-symbols&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-source-binding:1&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/SessionUtils.php&quot;,
+            &quot;line&quot;: 28,
+            &quot;explanation&quot;: &quot;Original method declaration; virtual runtime dispatch remains unverified&quot;,
+            &quot;endLine&quot;: 58
+          }
+        ],
+        &quot;executionUnverified&quot;: true
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+        &quot;line&quot;: 69,
+        &quot;expression&quot;: &quot;$this-&gt;doRead(&quot;,
+        &quot;status&quot;: &quot;unsupported&quot;
+      },
+      &quot;originalLine&quot;: &quot;        $data = $this-&gt;doRead($sessionId);&quot;,
+      &quot;actual&quot;: {
+        &quot;kind&quot;: &quot;call&quot;,
+        &quot;scope&quot;: &quot;php-callable:1813:2433&quot;,
+        &quot;owner&quot;: &quot;symbol:efde186a72d0d92817b79f7e&quot;,
+        &quot;range&quot;: {
+          &quot;startLine&quot;: 69,
+          &quot;startColumn&quot;: 17,
+          &quot;endLine&quot;: 69,
+          &quot;endColumn&quot;: 42
+        },
+        &quot;expression&quot;: &quot;$this-&gt;doRead($sessionId)&quot;,
+        &quot;status&quot;: &quot;unsupported&quot;,
+        &quot;reason&quot;: &quot;Abstract/interface member has no original callable implementation&quot;,
+        &quot;proof&quot;: [
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-symbols&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-source-binding:1&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+            &quot;line&quot;: 69,
+            &quot;explanation&quot;: &quot;Original PHP source use; execution, loader activation and runtime dispatch remain unverified&quot;,
+            &quot;endLine&quot;: 69
+          }
+        ],
+        &quot;executionUnverified&quot;: true
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+        &quot;line&quot;: 84,
+        &quot;expression&quot;: &quot;$this-&gt;doWrite(&quot;,
+        &quot;status&quot;: &quot;unsupported&quot;
+      },
+      &quot;originalLine&quot;: &quot;        return $this-&gt;doWrite($sessionId, $data);&quot;,
+      &quot;actual&quot;: {
+        &quot;kind&quot;: &quot;call&quot;,
+        &quot;scope&quot;: &quot;php-callable:2439:2914&quot;,
+        &quot;owner&quot;: &quot;symbol:141f0115d39384eb59736025&quot;,
+        &quot;range&quot;: {
+          &quot;startLine&quot;: 84,
+          &quot;startColumn&quot;: 16,
+          &quot;endLine&quot;: 84,
+          &quot;endColumn&quot;: 49
+        },
+        &quot;expression&quot;: &quot;$this-&gt;doWrite($sessionId, $data)&quot;,
+        &quot;status&quot;: &quot;unsupported&quot;,
+        &quot;reason&quot;: &quot;Abstract/interface member has no original callable implementation&quot;,
+        &quot;proof&quot;: [
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-symbols&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-source-binding:1&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+            &quot;line&quot;: 84,
+            &quot;explanation&quot;: &quot;Original PHP source use; execution, loader activation and runtime dispatch remain unverified&quot;,
+            &quot;endLine&quot;: 84
+          }
+        ],
+        &quot;executionUnverified&quot;: true
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+        &quot;line&quot;: 109,
+        &quot;expression&quot;: &quot;$this-&gt;doDestroy(&quot;,
+        &quot;status&quot;: &quot;unsupported&quot;
+      },
+      &quot;originalLine&quot;: &quot;        return $this-&gt;newSessionId === $sessionId || $this-&gt;doDestroy($sessionId);&quot;,
+      &quot;actual&quot;: {
+        &quot;kind&quot;: &quot;call&quot;,
+        &quot;scope&quot;: &quot;php-callable:2920:4094&quot;,
+        &quot;owner&quot;: &quot;symbol:7bcdbd2e072ff785b87450be&quot;,
+        &quot;range&quot;: {
+          &quot;startLine&quot;: 109,
+          &quot;startColumn&quot;: 54,
+          &quot;endLine&quot;: 109,
+          &quot;endColumn&quot;: 82
+        },
+        &quot;expression&quot;: &quot;$this-&gt;doDestroy($sessionId)&quot;,
+        &quot;status&quot;: &quot;unsupported&quot;,
+        &quot;reason&quot;: &quot;Abstract/interface member has no original callable implementation&quot;,
+        &quot;proof&quot;: [
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-symbols&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-source-binding:1&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;generic/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+            &quot;line&quot;: 109,
+            &quot;explanation&quot;: &quot;Original PHP source use; execution, loader activation and runtime dispatch remain unverified&quot;,
+            &quot;endLine&quot;: 109
+          }
+        ],
+        &quot;executionUnverified&quot;: true
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;generic/src/Symfony/Component/String/Resources/functions.php&quot;,
+        &quot;line&quot;: 17,
+        &quot;expression&quot;: &quot;new UnicodeString(&quot;,
+        &quot;status&quot;: &quot;unresolved&quot;
+      },
+      &quot;originalLine&quot;: &quot;        return new UnicodeString($string ?? &#39;&#39;);&quot;,
+      &quot;actual&quot;: {
+        &quot;kind&quot;: &quot;constructor&quot;,
+        &quot;scope&quot;: &quot;php-callable:314:422&quot;,
+        &quot;owner&quot;: &quot;symbol:90eb4f139c32e4dea3f6afcf&quot;,
+        &quot;range&quot;: {
+          &quot;startLine&quot;: 17,
+          &quot;startColumn&quot;: 16,
+          &quot;endLine&quot;: 17,
+          &quot;endColumn&quot;: 48
+        },
+        &quot;expression&quot;: &quot;new UnicodeString($string ?? &#39;&#39;)&quot;,
+        &quot;status&quot;: &quot;unresolved&quot;,
+        &quot;reason&quot;: &quot;No indexed original class declaration is reachable through the recorded Composer/literal-load source contracts: Symfony\\Component\\String\\UnicodeString&quot;,
+        &quot;proof&quot;: [
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-symbols&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-source-binding:1&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;generic/src/Symfony/Component/String/Resources/functions.php&quot;,
+            &quot;line&quot;: 17,
+            &quot;explanation&quot;: &quot;Original PHP source use; execution, loader activation and runtime dispatch remain unverified&quot;,
+            &quot;endLine&quot;: 17
+          }
+        ],
+        &quot;executionUnverified&quot;: true
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;generic/src/Symfony/Component/String/Resources/functions.php&quot;,
+        &quot;line&quot;: 24,
+        &quot;expression&quot;: &quot;new ByteString(&quot;,
+        &quot;status&quot;: &quot;unresolved&quot;
+      },
+      &quot;originalLine&quot;: &quot;        return new ByteString($string ?? &#39;&#39;);&quot;,
+      &quot;actual&quot;: {
+        &quot;kind&quot;: &quot;constructor&quot;,
+        &quot;scope&quot;: &quot;php-callable:465:567&quot;,
+        &quot;owner&quot;: &quot;symbol:0448c44950948e4cdc8fb20e&quot;,
+        &quot;range&quot;: {
+          &quot;startLine&quot;: 24,
+          &quot;startColumn&quot;: 16,
+          &quot;endLine&quot;: 24,
+          &quot;endColumn&quot;: 45
+        },
+        &quot;expression&quot;: &quot;new ByteString($string ?? &#39;&#39;)&quot;,
+        &quot;status&quot;: &quot;unresolved&quot;,
+        &quot;reason&quot;: &quot;No indexed original class declaration is reachable through the recorded Composer/literal-load source contracts: Symfony\\Component\\String\\ByteString&quot;,
+        &quot;proof&quot;: [
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-symbols&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-source-binding:1&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;generic/src/Symfony/Component/String/Resources/functions.php&quot;,
+            &quot;line&quot;: 24,
+            &quot;explanation&quot;: &quot;Original PHP source use; execution, loader activation and runtime dispatch remain unverified&quot;,
+            &quot;endLine&quot;: 24
+          }
+        ],
+        &quot;executionUnverified&quot;: true
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;laravel/routes/console.php&quot;,
+        &quot;line&quot;: 7,
+        &quot;expression&quot;: &quot;$this-&gt;comment(&quot;,
+        &quot;status&quot;: &quot;unsupported&quot;
+      },
+      &quot;originalLine&quot;: &quot;    $this-&gt;comment(Inspiring::quote());&quot;,
+      &quot;actual&quot;: {
+        &quot;kind&quot;: &quot;call&quot;,
+        &quot;scope&quot;: &quot;php-callable:113:168&quot;,
+        &quot;range&quot;: {
+          &quot;startLine&quot;: 7,
+          &quot;startColumn&quot;: 5,
+          &quot;endLine&quot;: 7,
+          &quot;endColumn&quot;: 40
+        },
+        &quot;expression&quot;: &quot;$this-&gt;comment(Inspiring::quote());&quot;,
+        &quot;status&quot;: &quot;unsupported&quot;,
+        &quot;reason&quot;: &quot;Original anonymous/type region has no named callable source owner&quot;,
+        &quot;proof&quot;: [
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-symbols&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-source-binding:1&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;laravel/routes/console.php&quot;,
+            &quot;line&quot;: 7,
+            &quot;explanation&quot;: &quot;Original PHP source use; execution, loader activation and runtime dispatch remain unverified&quot;,
+            &quot;endLine&quot;: 7
+          }
+        ],
+        &quot;executionUnverified&quot;: true
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;laravel/app/Models/User.php&quot;,
+        &quot;line&quot;: 20,
+        &quot;name&quot;: &quot;$fillable&quot;,
+        &quot;declarationKind&quot;: &quot;property&quot;
+      },
+      &quot;originalLine&quot;: &quot;    protected $fillable = [&quot;,
+      &quot;actual&quot;: {
+        &quot;id&quot;: &quot;symbol:5f36ca0a48c61eaf1b6b4a7d&quot;,
+        &quot;type&quot;: &quot;method&quot;,
+        &quot;name&quot;: &quot;$fillable&quot;,
+        &quot;path&quot;: &quot;laravel/app/Models/User.php&quot;,
+        &quot;language&quot;: &quot;php&quot;,
+        &quot;parentId&quot;: &quot;symbol:d5477e4faaeb1d43275d7b2b&quot;,
+        &quot;sourceRange&quot;: {
+          &quot;startLine&quot;: 20,
+          &quot;startColumn&quot;: 15,
+          &quot;endLine&quot;: 24,
+          &quot;endColumn&quot;: 6
+        },
+        &quot;metrics&quot;: {
+          &quot;loc&quot;: 5
+        },
+        &quot;metadata&quot;: {
+          &quot;qualifiedName&quot;: &quot;App\\Models\\User::$fillable&quot;,
+          &quot;declarationKind&quot;: &quot;property&quot;,
+          &quot;role&quot;: &quot;property&quot;,
+          &quot;signature&quot;: &quot;$fillable&quot;,
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;visibility&quot;: &quot;protected&quot;,
+          &quot;modifiers&quot;: [],
+          &quot;static&quot;: false,
+          &quot;sourceConditions&quot;: [],
+          &quot;phpDeclaration&quot;: {
+            &quot;key&quot;: &quot;php:473:545:property:473&quot;,
+            &quot;namespace&quot;: &quot;App\\Models&quot;,
+            &quot;scope&quot;: &quot;php-namespace:7:1008&quot;,
+            &quot;nameRange&quot;: {
+              &quot;startLine&quot;: 20,
+              &quot;startColumn&quot;: 15,
+              &quot;endLine&quot;: 20,
+              &quot;endColumn&quot;: 24
+            },
+            &quot;headerRange&quot;: {
+              &quot;startLine&quot;: 20,
+              &quot;startColumn&quot;: 15,
+              &quot;endLine&quot;: 20,
+              &quot;endColumn&quot;: 25
+            },
+            &quot;attributes&quot;: [],
+            &quot;bases&quot;: [],
+            &quot;sharedHeader&quot;: &quot;protected&quot;
+          },
+          &quot;executionUnverified&quot;: true,
+          &quot;contentHash&quot;: &quot;1c95e9dc5302c797e6932b0e694c7e89260685ad57b3664a259498daa8ba886b&quot;,
+          &quot;bodyHash&quot;: &quot;b3b4bcb4ce826bf40aff5ea5eec6ed52&quot;
+        },
+        &quot;evidence&quot;: [
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-laravel-structure&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-original-structure:4&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;laravel/app/Models/User.php&quot;,
+            &quot;line&quot;: 20,
+            &quot;explanation&quot;: &quot;Original PHP property source declaration; no autoloading, rendering or execution is inferred&quot;,
+            &quot;endLine&quot;: 24
+          }
+        ]
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;laravel/app/Models/User.php&quot;,
+        &quot;line&quot;: 31,
+        &quot;name&quot;: &quot;$hidden&quot;,
+        &quot;declarationKind&quot;: &quot;property&quot;
+      },
+      &quot;originalLine&quot;: &quot;    protected $hidden = [&quot;,
+      &quot;actual&quot;: {
+        &quot;id&quot;: &quot;symbol:c9204ff07039ba7dfb44da5f&quot;,
+        &quot;type&quot;: &quot;method&quot;,
+        &quot;name&quot;: &quot;$hidden&quot;,
+        &quot;path&quot;: &quot;laravel/app/Models/User.php&quot;,
+        &quot;language&quot;: &quot;php&quot;,
+        &quot;parentId&quot;: &quot;symbol:d5477e4faaeb1d43275d7b2b&quot;,
+        &quot;sourceRange&quot;: {
+          &quot;startLine&quot;: 31,
+          &quot;startColumn&quot;: 15,
+          &quot;endLine&quot;: 34,
+          &quot;endColumn&quot;: 6
+        },
+        &quot;metrics&quot;: {
+          &quot;loc&quot;: 4
+        },
+        &quot;metadata&quot;: {
+          &quot;qualifiedName&quot;: &quot;App\\Models\\User::$hidden&quot;,
+          &quot;declarationKind&quot;: &quot;property&quot;,
+          &quot;role&quot;: &quot;property&quot;,
+          &quot;signature&quot;: &quot;$hidden&quot;,
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;visibility&quot;: &quot;protected&quot;,
+          &quot;modifiers&quot;: [],
+          &quot;static&quot;: false,
+          &quot;sourceConditions&quot;: [],
+          &quot;phpDeclaration&quot;: {
+            &quot;key&quot;: &quot;php:673:736:property:673&quot;,
+            &quot;namespace&quot;: &quot;App\\Models&quot;,
+            &quot;scope&quot;: &quot;php-namespace:7:1008&quot;,
+            &quot;nameRange&quot;: {
+              &quot;startLine&quot;: 31,
+              &quot;startColumn&quot;: 15,
+              &quot;endLine&quot;: 31,
+              &quot;endColumn&quot;: 22
+            },
+            &quot;headerRange&quot;: {
+              &quot;startLine&quot;: 31,
+              &quot;startColumn&quot;: 15,
+              &quot;endLine&quot;: 31,
+              &quot;endColumn&quot;: 23
+            },
+            &quot;attributes&quot;: [],
+            &quot;bases&quot;: [],
+            &quot;sharedHeader&quot;: &quot;protected&quot;
+          },
+          &quot;executionUnverified&quot;: true,
+          &quot;contentHash&quot;: &quot;b5d00584be560ae1d02f62fad66c003185479ae7955b6ca397c143c1e729e249&quot;,
+          &quot;bodyHash&quot;: &quot;217c11102f288ca9839e2289847de82d&quot;
+        },
+        &quot;evidence&quot;: [
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-laravel-structure&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3:php-original-structure:4&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;laravel/app/Models/User.php&quot;,
+            &quot;line&quot;: 31,
+            &quot;explanation&quot;: &quot;Original PHP property source declaration; no autoloading, rendering or execution is inferred&quot;,
+            &quot;endLine&quot;: 34
+          }
+        ]
+      }
+    }
+  ],
+  &quot;implementationFiles&quot;: 287,
+  &quot;implementationDigest&quot;: &quot;d8d744da723614b586234fe4f170f0d94dd7123b3804a7ea53d35cd52364b2b3&quot;
+}</pre></details></main></body></html>
