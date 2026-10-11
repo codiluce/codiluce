@@ -24,6 +24,52 @@ async function repository(files: Record<string, string>): Promise<string> {
 async function config(root: string, ignore: string[] = []) {
   return resolveConfig(root, { repository: { name: 'fixture' }, applications: [{ name: 'app', path: '.', ecosystems: ['node'] }], ignore });
 }
+async function scanned(root: string): Promise<AnalysisContext> {
+  const settings = await config(root), graph = new GraphBuilder(settings.repository.name);
+  const context: AnalysisContext = { root, config: settings, graph, repositoryId: graph.id('repository'), files: new Map(), applicationIds: new Map(), http: [], sourceReads: new Set() };
+  await filesystemAnalyzer.analyze(context); return context;
+}
+
+test('bounded source memo evicts the least recently read file and validates evicted originals', async () => {
+  const root = await repository({ 'a.py': 'alpha', 'b.py': 'bravo', 'c.py': 'charlie' }), context = await scanned(root);
+  const sources = new IndexedSources(context, { maxBytes: 64, maxEntries: 2 });
+  sources.readText('a.py'); sources.readText('b.py'); sources.readText('a.py'); sources.readText('c.py');
+  assert.equal(sources.memoStats().entries, 2); assert.equal(sources.memoStats().evictions, 1);
+  assert.equal(sources.memoStats().hits, 1); assert.ok(sources.memoStats().bytes <= 64);
+  context.sourceReads = new Set(); sources.readText('a.py'); assert.deepEqual([...context.sourceReads], ['a.py']);
+  await writeFile(path.join(root, 'b.py'), 'changed');
+  assert.throws(() => sources.readText('b.py'), /changed after the scan/);
+  assert.equal(sources.memoStats().entries, 2);
+  sources.clear(); assert.equal(sources.memoStats().bytes, 0); assert.equal(sources.memoStats().entries, 0);
+});
+
+test('source memo byte pressure, Unicode, empty and oversized entries preserve all readable input', async () => {
+  const root = await repository({ 'empty.py': '', 'emoji.py': '😀é\r\n'.repeat(12), 'large.py': 'x'.repeat(100), 'one.py': 'abc', 'two.py': 'def' }), context = await scanned(root);
+  const sources = new IndexedSources(context, { maxBytes: 48, maxEntries: 8 });
+  for (let repeat = 0; repeat < 3; repeat++) for (const [file, content] of [['empty.py', ''], ['emoji.py', '😀é\r\n'.repeat(12)], ['large.py', 'x'.repeat(100)], ['one.py', 'abc'], ['two.py', 'def']]) {
+    assert.equal(sources.readText(file!), content); assert.ok(sources.memoStats().bytes <= 48);
+  }
+  assert.ok(sources.memoStats().evictions > 0); assert.equal(sources.memoStats().bypasses, 6);
+  assert.equal(sources.memoStats().bytes, 2 * ('one.py'.length + 3 + 'two.py'.length + 3));
+  for (const options of [{ maxBytes: 0 }, { maxEntries: 0 }]) {
+    const disabled = new IndexedSources(context, options);
+    assert.equal(disabled.readText('emoji.py'), '😀é\r\n'.repeat(12)); assert.equal(disabled.memoStats().entries, 0);
+  }
+  for (const limit of [-1, 0.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+    assert.throws(() => new IndexedSources(context, { maxBytes: limit }), /non-negative safe integers/);
+    assert.throws(() => new IndexedSources(context, { maxEntries: limit }), /non-negative safe integers/);
+  }
+});
+
+test('failed forced source validation removes the old memo and denies replacement symlinks', async () => {
+  const root = await repository({ 'a.py': 'original', 'b.py': 'target' }), context = await scanned(root);
+  const sources = new IndexedSources(context); sources.readText('a.py');
+  await writeFile(path.join(root, 'a.py'), 'changed');
+  assert.throws(() => sources.readText('a.py', { revalidate: true }), /changed after the scan/);
+  assert.throws(() => sources.readText('a.py'), /changed after the scan/); assert.equal(sources.memoStats().entries, 0);
+  await rm(path.join(root, 'a.py')); await symlink(path.join(root, 'b.py'), path.join(root, 'a.py'));
+  assert.equal(sources.readFile('a.py'), undefined); assert.match(sources.failures.get('a.py')!, /symlink or non-file/);
+});
 
 test('indexed source lookups cannot see excluded, external, symlinked or oversized files', async () => {
   const root = await repository({ 'source/main.ts': 'export function run() {}', 'hidden/secret.ts': 'secret', 'large.ts': 'x'.repeat(1025) });

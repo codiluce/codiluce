@@ -18,7 +18,9 @@ export class PhpSources {
   private released=false;
   readonly failures=new Map<string,string>();
   private readonly sources:IndexedSources;
-  constructor(private readonly context:AnalysisContext) {this.sources=new IndexedSources(context);}
+  // Units already own their original text. Revalidation reads must not keep
+  // a second, independently decoded copy in the resolver's text memo.
+  constructor(private readonly context:AnalysisContext) {this.sources=new IndexedSources(context,{maxBytes:0});}
   get(file:string):PhpSource|undefined {return this.units.get(file);}
   /** Keep a small bounded queue in flight while other language services work.
    * Each worker parses synchronously; original extraction stays on the parent.

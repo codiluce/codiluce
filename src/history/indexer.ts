@@ -18,6 +18,7 @@ import { computeLineage } from './lineage.js';
 import type { SnapshotEntity } from './snapshot.js';
 import { fetchGitHubPullRequests } from './pull-requests.js';
 import { HISTORY_SCHEMA_VERSION, HistoryStore, type SnapshotRecord, type SnapshotStats } from './store.js';
+import type { WorkerResult, WorkerAcknowledgment } from './worker-channel.js';
 
 export const HISTORY_DATABASE = 'history.db';
 /** How applications are chosen at a revision; part of the snapshot identity. */
@@ -179,7 +180,7 @@ async function analyzeInProcess(root: string, raw: RawConfig, shas: string[], sa
 /** Node options for child processes: loaders and experimental flags, never test-runner options. */
 export function childExecArgv(): string[] { return process.execArgv.filter(arg => !arg.startsWith('--test') && !arg.startsWith('--watch')); }
 const WORKER = fileURLToPath(new URL(`./worker${path.extname(fileURLToPath(import.meta.url))}`, import.meta.url));
-export type WorkerMessage = { type: 'result'; result: AnalyzedCommit } | { type: 'error'; sha: string; message: string } | { type: 'done' };
+export type WorkerMessage = WorkerResult | { type: 'done' };
 export interface WorkerJob { root: string; directory: string; raw: RawConfig; commits: string[] }
 /** Contiguous chunks keep each worker's tree mirror applying small diffs. */
 async function analyzeInWorkers(root: string, raw: RawConfig, shas: string[], jobs: number, save: (result: AnalyzedCommit) => void, fail: (sha: string, error: string) => void): Promise<void> {
@@ -192,10 +193,17 @@ async function analyzeInWorkers(root: string, raw: RawConfig, shas: string[], jo
       await new Promise<void>(resolve => {
         const child = fork(WORKER, [], { execArgv: childExecArgv(), serialization: 'advanced', stdio: ['ignore', 'inherit', 'inherit', 'ipc'] });
         child.on('message', (message: WorkerMessage) => {
-          if (message.type === 'result') { remaining.delete(message.result.sha); save(message.result); }
-          else if (message.type === 'error') { remaining.delete(message.sha); fail(message.sha, message.message); }
+          if (message.type === 'done') return;
+          const sha = message.type === 'result' ? message.result.sha : message.sha;
+          if (!remaining.delete(sha)) return;
+          if (message.type === 'result') save(message.result);
+          else fail(sha, message.message);
+          // Includes a recorded save failure: only this commit fails, and the
+          // worker may proceed after its graph has been handled by the store.
+          child.send({ type: 'stored', sha } satisfies WorkerAcknowledgment, error => { if (error) child.kill(); });
         });
-        child.on('exit', code => { for (const sha of remaining) fail(sha, `Analysis process exited (${code ?? 'signal'})`); remaining.clear(); resolve(); });
+        child.once('error', error => { for (const sha of remaining) fail(sha, error.message); remaining.clear(); child.kill(); });
+        child.once('close', code => { for (const sha of remaining) fail(sha, `Analysis process exited (${code ?? 'signal'})`); remaining.clear(); resolve(); });
         child.send({ root, directory: path.join(directory, 'tree'), raw, commits } satisfies WorkerJob);
       });
     } finally { await rm(directory, { recursive: true, force: true }); }
