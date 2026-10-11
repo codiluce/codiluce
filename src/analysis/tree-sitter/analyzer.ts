@@ -4,7 +4,7 @@ import type { DeclarationFact, FileAnalysis, StructureFacts } from '../facts.js'
 import { featureOutcomes } from '../facts.js';
 import { AnalysisRegistry } from '../registry.js';
 import { GRAMMAR_CATALOG_VERSION, STRUCTURAL_LANGUAGES, grammarCatalog, grammarManifest, grammarManifestError, hashText, queryText, verifiedGrammar } from './grammars.js';
-import { StructureParser } from './client.js';
+import { IndexedStructureParser } from './native-budget.js';
 import {finishTemplateFacts,literalScriptTemplate,TemplateScriptParser} from './template-scripts.js';
 import { fileKey } from '../../pipeline/cache.js';
 import { IndexedSources } from '../indexed-sources.js';
@@ -25,15 +25,21 @@ for (const language of STRUCTURAL_LANGUAGES) analysisRegistry.registerLanguage({
 export const structureAnalyzer: Analyzer = {
   name: 'tree-sitter-structure', version: STRUCTURE_VERSION,
   async analyze(context): Promise<void> {
-    const parser = new StructureParser(), scripts = new TemplateScriptParser();
+    const parser = new IndexedStructureParser(), scripts = new TemplateScriptParser();
     const completed: Array<() => Promise<void>> = [];
-    let nativeJobs=Promise.resolve(),scriptJobs=Promise.resolve(),nativeClosed=false;
+    let scriptJobs=Promise.resolve(),nativeClosed=false;
     let releaseScripts!:()=>void;
     const scriptsReady=new Promise<void>(resolve=>{releaseScripts=resolve;});
     const sources = context.sources ?? new IndexedSources(context);
     const integrity = new Map<string, string | undefined>();
     try {
-      for (const file of [...context.files.values()].sort((a, b) => a.path.localeCompare(b.path, 'en'))) {
+      // Group original jobs by grammar family, then original path. Template
+      // providers share Ruby/HTML; C-family providers share auxiliary C++.
+      // This avoids loading the same grammars again for separate application
+      // directories while preserving per-file declaration identities.
+      const grammarName=(file:ScannedFile)=>file.language==='fsharp'&&file.path.toLowerCase().endsWith('.fsi')?'fsharp-signature':file.language??'';
+      const family=(file:ScannedFile)=>['erb','liquid','razor','ruby'].includes(file.language??'')?'0:template-hosts':['c','cpp','objective-c'].includes(file.language??'')?'1:c-family':`2:${grammarName(file)}`;
+      for (const file of [...context.files.values()].sort((a, b) => family(a).localeCompare(family(b),'en')||grammarName(a).localeCompare(grammarName(b),'en')||a.path.localeCompare(b.path, 'en'))) {
         const grammar = grammarCatalog.get(file.language==='fsharp'&&file.path.toLowerCase().endsWith('.fsi')?'fsharp-signature':file.language ?? '');
         if (!(STRUCTURAL_LANGUAGES as readonly string[]).includes(file.language ?? '') || !file.analyzable) continue;
         const fileEntity = context.graph.entities.get(file.id)!;
@@ -57,7 +63,7 @@ export const structureAnalyzer: Analyzer = {
             catch (error) { integrity.set(grammar.language, error instanceof Error ? error.message : String(error)); }
           }
           if (integrity.get(grammar.language)) throw new Error(integrity.get(grammar.language));
-          const content = sources.readText(file.path);
+          let content: string | undefined = sources.readText(file.path);
           const liquidProfile=file.language==='liquid'?selectLiquidProfile(context,file,content):undefined;
           if(liquidProfile)fileEntity.metadata.liquidProfile=liquidProfile;
           const razorKind=file.language==='razor'?(file.path.toLowerCase().endsWith('.cshtml')?'view':'component'):undefined;
@@ -79,25 +85,34 @@ export const structureAnalyzer: Analyzer = {
             catch(error){integrity.set('cpp',error instanceof Error?error.message:String(error));}
             analysis.parser.auxiliary=[{language:'cpp',grammar:cpp.sourceRevision,grammarHash:cpp.sha256,queryHash,abi:cpp.abi,...integrity.get('cpp')?{unavailable:integrity.get('cpp')}:{}}];
           }
+          let deferred=false,releaseNative!:()=>void;
+          const nativeReady=new Promise<void>(resolve=>{releaseNative=resolve;});
           const compute = async () => {
-            // One native job at a time: a failed worker cannot cancel another
-            // file's queued parse. Complete cache records contain both phases.
-            const native=nativeJobs.then(()=>parser.parse(grammar.language,content,{nativeOnly:true,objectiveCpp,...erbHost?{erbHost}:{},...razorKind?{razorKind}:{},...liquidProfile?{liquidHost:liquidProfile.host,liquidEngine:liquidProfile.engine,liquidBodyTags:liquidProfile.bodyTags}:{}}));
-            nativeJobs=native.then(()=>{},()=>parser.closeAndWait());
-            const facts=await native;if(!literalScriptTemplate(facts))return finishTemplateFacts(facts);
-            scripts.prewarm();
-            await scriptsReady;
-            if(!nativeClosed)throw Error('Native parser phase did not complete');
-            const scripted=scriptJobs.then(()=>scripts.finish(content,facts));
-            scriptJobs=scripted.then(()=>{},()=>scripts.closeAndWait());return scripted;
+            try {
+              // Dispatch and finish one original at a time. No queued closure
+              // keeps the entire repository's original text or ordinary facts.
+              const facts=await parser.parse(grammar.language,content!,{nativeOnly:true,objectiveCpp,...erbHost?{erbHost}:{},...razorKind?{razorKind}:{},...liquidProfile?{liquidHost:liquidProfile.host,liquidEngine:liquidProfile.engine,liquidBodyTags:liquidProfile.bodyTags}:{}});
+              if(!literalScriptTemplate(facts))return finishTemplateFacts(facts);
+              deferred=true;scripts.prewarm();content=undefined;releaseNative();
+              await scriptsReady;
+              if(!nativeClosed)throw Error('Native parser phase did not complete');
+              const scripted=scriptJobs.then(async()=>{
+                // The indexed boundary revalidates the original before its
+                // delayed compiler job. A changed/missing source fails only
+                // this file and cannot store partial native-only cache facts.
+                const original=sources.readText(file.path,{revalidate:true});
+                const complete=await scripts.finish(original,facts);content=original;return complete;
+              });
+              scriptJobs=scripted.then(()=>{},()=>scripts.closeAndWait());return scripted;
+            } finally { releaseNative(); }
           };
           const result=(context.cache ? context.cache.value('syntax-facts', file.path, { version: STRUCTURE_VERSION, file: fileKey(context, file.path), parser: analysis.parser,...liquidProfile?{liquidProfile}:{} }, compute) : compute()).then(facts=>({facts}),error=>({error}));
-          completed.push(async()=>{
+          const finishFile=async()=>{
             try{
             const outcome=await result;
             if('error' in outcome){failed(file,analysis,outcome.error);return;}
             const facts=outcome.facts;
-            const declarations = declare(context, file, content, facts,file.language==='erb'||file.language==='razor'||file.language==='liquid'?fileEntity.metadata.component as string|undefined:undefined);
+            const declarations = declare(context, file, content!, facts,file.language==='erb'||file.language==='razor'||file.language==='liquid'?fileEntity.metadata.component as string|undefined:undefined);
             if(facts.cfamily)fileEntity.metadata.cfamilySyntax=facts.cfamily;
             if(facts.swift)fileEntity.metadata.swiftSyntax=facts.swift;
             if(facts.scala)fileEntity.metadata.scalaSyntax=facts.scala;
@@ -116,20 +131,36 @@ export const structureAnalyzer: Analyzer = {
             }
             for (const issue of facts.issues) context.graph.diagnose({ analyzer: 'tree-sitter-structure', severity: 'warning', code: issue.code, file: file.path, entityId: file.id, ...(issue.range ? { line: issue.range.startLine } : {}), reason: issue.reason });
             }catch(error){failed(file,analysis,error);}
-          });
+            finally{content=undefined;sources.releaseText(file.path);}
+          };
+          // A hit or ordinary native result can be consumed now. Only the
+          // compact template facts await the post-native compiler phase.
+          await Promise.race([result,nativeReady]);
+          if(deferred)completed.push(finishFile);else await finishFile();
         } catch (error) {
           failed(file,analysis,error);
+        } finally {
+          // Ordinary facts have been consumed, or compact deferred template
+          // facts own the pending job. Neither needs a retained original memo.
+          sources.releaseText(file.path);
         }
       }
-      await nativeJobs;
       await parser.closeAndWait();nativeClosed=true;releaseScripts();
       for(const finish of completed)await finish();
     } finally {
       // Release blocked jobs even on a preparation error; they must not start
       // a compiler while native completion/termination is unproven.
       releaseScripts();
-      try { await nativeJobs; await scriptJobs; }
-      finally { await Promise.all([parser.closeAndWait(),scripts.closeAndWait()]); }
+      try { await scriptJobs; }
+      finally {
+        try { await Promise.all([parser.closeAndWait(),scripts.closeAndWait()]); }
+        finally {
+          // All original-dependent declarations and deferred scripts are now
+          // consumed. Later adapters can reread through the indexed boundary;
+          // do not keep this phase's source memo alive with their compiler IR.
+          sources.clear();
+        }
+      }
     }
     function failed(file:ScannedFile,analysis:FileAnalysis,error:unknown):void {
       const reason=error instanceof Error?error.message:String(error);

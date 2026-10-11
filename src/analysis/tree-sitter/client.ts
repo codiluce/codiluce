@@ -1,18 +1,8 @@
 import { fork, type ChildProcess } from 'node:child_process';
-import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { StructureFacts } from '../facts.js';
 
-const WORKER = fileURLToPath(new URL(`./worker${path.extname(fileURLToPath(import.meta.url))}`, import.meta.url));
-function workerArguments(): string[] {
-  const args: string[] = [];
-  for (let index = 0; index < process.execArgv.length; index++) {
-    const arg = process.execArgv[index]!;
-    if (/^--(?:import|loader|experimental-loader)=/.test(arg) || ['--experimental-sqlite', '--enable-source-maps', '--no-warnings'].includes(arg)) args.push(arg);
-    else if (['--import', '--loader', '--experimental-loader'].includes(arg) && process.execArgv[index + 1]) args.push(arg, process.execArgv[++index]!);
-  }
-  return [...args, '--max-old-space-size=256'];
-}
+const WORKER = fileURLToPath(new URL('./native-worker.mjs', import.meta.url));
 export class StructureParser {
   private child?: ChildProcess;
   private readonly retiring=new Set<ChildProcess>();
@@ -49,7 +39,7 @@ export class StructureParser {
   protected start():ChildProcess {
     if(this.child&&(this.child.exitCode!==null||this.child.signalCode!==null))this.close();
     if (!this.child) this.child = fork(this.worker, [], {
-      execArgv: this.execArguments ?? workerArguments(),
+      execArgv: this.execArguments ?? ['--max-old-space-size=256'],
       serialization: 'advanced', stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
     });
     return this.child;

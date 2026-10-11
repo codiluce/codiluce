@@ -57,4 +57,6 @@ export class PhpSources {
   }
   closeParser():void {this.parser.close();}
   release():void {this.released=true;this.closeParser();this.units.clear();this.pending.clear();this.failures.clear();}
+  /** Index completion must prove every retired parser address space exited. */
+  async releaseAndWait():Promise<void> {this.release();await this.parser.closeAndWait();}
 }

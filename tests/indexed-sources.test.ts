@@ -61,6 +61,18 @@ test('source memo byte pressure, Unicode, empty and oversized entries preserve a
   }
 });
 
+test('releasing one consumed original preserves other memos and revalidates its next read', async () => {
+  const root=await repository({'a.py':'original','b.py':'independent'}),context=await scanned(root),sources=new IndexedSources(context);
+  sources.readText('a.py');sources.readText('b.py');
+  sources.releaseText(path.join(root,'a.py'));sources.releaseText('a.py');sources.releaseText('../outside.py');
+  assert.equal(sources.memoStats().entries,1);assert.equal(sources.memoStats().bytes,2*('b.py'.length+'independent'.length));
+  assert.equal(sources.readText('b.py'),'independent');
+  assert.equal(sources.readText('a.py'),'original');sources.releaseText('a.py');
+  await writeFile(path.join(root,'a.py'),'changed');
+  assert.throws(()=>sources.readText('a.py'),/changed after the scan/);
+  assert.equal(sources.memoStats().entries,1);
+});
+
 test('failed forced source validation removes the old memo and denies replacement symlinks', async () => {
   const root = await repository({ 'a.py': 'original', 'b.py': 'target' }), context = await scanned(root);
   const sources = new IndexedSources(context); sources.readText('a.py');

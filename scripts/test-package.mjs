@@ -301,7 +301,7 @@ try {
   const tarball = path.join(temporary, tarballs[0]);
   const report = JSON.parse((await npm(['pack', '--dry-run', '--ignore-scripts', '--json'])).stdout)[0];
   const files = report.files.map(file => file.path);
-  for (const required of ['bin/codiluce.js', 'dist/src/cli.js', 'dist/src/history/worker.js', 'web/out/index.html', 'LICENSE', 'web/out/licenses/react.txt','dist/src/analysis/languages/rust-symbols.js','dist/src/analysis/tree-sitter/rust-semantic.js','dist/src/analysis/frameworks/rust-derive-namespace.js','dist/src/analysis/php/native-worker.mjs','dist/src/analysis/php/sources.js','dist/src/analysis/languages/php-symbols.js']) {
+  for (const required of ['bin/codiluce.js', 'dist/src/cli.js', 'dist/src/history/worker.js', 'web/out/index.html', 'LICENSE', 'web/out/licenses/react.txt','dist/src/analysis/languages/rust-symbols.js','dist/src/analysis/tree-sitter/rust-semantic.js','dist/src/analysis/frameworks/rust-derive-namespace.js','dist/src/analysis/php/native-worker.mjs','dist/src/analysis/tree-sitter/native-worker.mjs','dist/src/analysis/tree-sitter/native-budget.js','dist/src/analysis/php/sources.js','dist/src/analysis/languages/php-symbols.js']) {
     assert.ok(files.includes(required), `tarball is missing ${required}`);
   }
   const grammarManifest = JSON.parse(await readFile(path.join(root, 'grammars/manifest.json'), 'utf8'));

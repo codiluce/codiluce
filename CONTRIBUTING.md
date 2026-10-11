@@ -36,6 +36,29 @@ contains only the approved helpers, and loads TypeScript inside a source job.
 The compiler worker runs without a source TypeScript loader in both a checkout
 and the installed package.
 
+The native Tree-sitter worker is also bundled from owned typed helpers. Run
+`npm run build:native-worker` after changing any helper listed in
+`scripts/build-native-worker.mjs`. Its byte equality, approved dependencies and
+job-local optional compiler imports are checked before CLI builds and in tests.
+The worker starts without a TypeScript source loader. Changes to shared
+`source-map.ts` or template helpers may require rebuilding both worker bundles.
+Indexed native dispatch groups shared template-host and C-family grammars, then
+remaining grammars and original paths, to avoid duplicate loads across
+applications. Declaration identities and complete facts remain per original file.
+Indexed native jobs reserve at most six primary/auxiliary grammars or 16 MiB of
+cumulative original UTF-8 input per generation, then await process exit before
+reusing a fresh generation. One allowed larger input still parses in its own
+generation. If retirement fails, later indexed jobs remain blocked until exit is
+proven; they cannot silently overlap another worker. These are lifetime
+thresholds, not a WASM allocation or RSS cap.
+Structure consumes ordinary originals immediately and releases each original's
+source memo before reading the next file. Deferred scripts drop their memo during
+the native phase, validate their reread after native retirement, and release it
+after compiler consumption. Once declarations, deferred scripts and parser
+shutdown finish, structure also clears the shared memo. Later consumers reread
+needed originals through the indexed boundary, including the scan hash check.
+Index completion awaits PHP parser retirement as well.
+
 ## Before a pull request
 
 ```bash

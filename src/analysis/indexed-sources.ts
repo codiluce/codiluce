@@ -35,6 +35,12 @@ export class IndexedSources {
    * or compiler trees independently; eviction never changes the input limit. */
   memoStats() { return { bytes: this.bytes, entries: this.texts.size, maxBytes: this.maxBytes, maxEntries: this.maxEntries, hits: this.hits, misses: this.misses, evictions: this.evictions, bypasses: this.bypasses }; }
   clear(): void { this.texts.clear(); this.bytes = 0; }
+  /** A streaming consumer has finished with this original. Other consumers
+   * can reread through scan/hash validation instead of retaining its memo. */
+  releaseText(fileName: string): void {
+    const relative = this.relative(fileName);
+    if (relative !== undefined) this.forget(relative);
+  }
   private forget(file: string): void {
     const text = this.texts.get(file);
     if (text !== undefined) { this.bytes -= 2 * (file.length + text.length); this.texts.delete(file); }

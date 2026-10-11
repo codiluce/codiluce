@@ -40,7 +40,8 @@
     "build:script-worker": "node scripts/build-script-worker.mjs",
     "grammars:sync": "node scripts/sync-grammars.mjs",
     "build": "npm run build:cli && npm run build:web",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "build:native-worker": "node scripts/build-native-worker.mjs"
   },
   "dependencies": {
     "@astrojs/compiler-rs": "0.5.1",
