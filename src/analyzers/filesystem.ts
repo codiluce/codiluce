@@ -16,6 +16,7 @@ export const filesystemAnalyzer: Analyzer = {
     const { root, config, graph } = context;
     const directoryInventory = context.directoryInventory = new Set(['.']);
     const fileInventory = context.fileInventory = new Set<string>();
+    const scannedDirectories = context.scannedDirectories = new Set<string>();
     const goManifestInventory = context.goManifestInventory = new Set<string>();
     graph.addEntity({ id: context.repositoryId, type: 'repository', name: config.repository.name, metadata: {}, evidence: [evidence('filesystem', 'filesystem', undefined, undefined, 'Repository scan root')] });
     // A materialized commit holds tracked files only: there is nothing ignored to prune.
@@ -27,7 +28,9 @@ export const filesystemAnalyzer: Analyzer = {
     const appAt = (relative: string) => config.applications.find(app => app.path === relative);
     async function scan(relative: string, parentId: string): Promise<void> {
       const absolute = path.join(root, relative);
-      for (const entry of (await readdir(absolute, { withFileTypes: true })).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) {
+      const entries = await readdir(absolute, { withFileTypes: true });
+      scannedDirectories.add(relative || '.');
+      for (const entry of entries.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) {
         const rel = relative ? `${relative}/${entry.name}` : entry.name;
         if (entry.isDirectory() || entry.isSymbolicLink()) directoryInventory.add(rel);
         if (entry.isFile() || entry.isSymbolicLink()) fileInventory.add(rel);
@@ -56,9 +59,12 @@ export const filesystemAnalyzer: Analyzer = {
             if (buffer.includes(0)) skipReason = 'Binary content';
             else {
               const content = buffer.toString('utf8');
-              loc = content.length === 0 ? 0 : content.split('\n').length - (content.endsWith('\n') ? 1 : 0);
-              digest = createHash('sha256').update(buffer).digest('hex');
-              analyzable = true;
+              if (language === 'php' && !Buffer.from(content,'utf8').equals(buffer)) skipReason = 'PHP source is outside the UTF-8 original-source profile';
+              else {
+                loc = content.length === 0 ? 0 : content.split('\n').length - (content.endsWith('\n') ? 1 : 0);
+                digest = createHash('sha256').update(buffer).digest('hex');
+                analyzable = true;
+              }
             }
           } else skipReason = 'Unsupported text extension or binary asset';
           const application = applicationAt(config.applications, rel);

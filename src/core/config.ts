@@ -22,6 +22,10 @@ export interface RubyAutoloadConfig {
   collapse?: string[];
 }
 export interface RubyRuntimeConfig { cwd?: string; environment?: string; autoload?: RubyAutoloadConfig }
+/** Recorded PHP lookup inputs; paths are repository-bound, relative to the
+ * application. includePath is an ordered list of normalized search roots,
+ * not a lookup of the host's php.ini. No PHP/Composer code is executed. */
+export interface PhpRuntimeConfig { cwd?: string; includePath?: string[]; autoloadDev?: boolean; composer?: string }
 /** Recorded JVM compilation inputs; target Maven/Gradle/compiler never runs. */
 export interface SpringMvcConfig {
   version?: string; bootVersion?: string;
@@ -63,6 +67,7 @@ export interface ApplicationConfig {
   entrypoints?: Record<string, string[]>;
   go?: GoBuildConfig;
   ruby?: RubyRuntimeConfig;
+  php?: PhpRuntimeConfig;
   jvm?: JvmConfig;
   dotnet?: DotnetConfig;
   rust?: RustConfig;
@@ -254,6 +259,15 @@ export async function resolveConfig(root: string, raw: RawConfig): Promise<Atlas
   const names = new Set<string>();
   const paths = new Set<string>();
   for (const app of config.applications) {
+    if (app.php !== undefined) {
+      const php = app.php;
+      const relative = (value: unknown) => typeof value === 'string' && value.length > 0 && value.length <= 2048 && !path.isAbsolute(value) && !/[\\\0\r\n*?\[\]{}:]/.test(value);
+      if (!php || typeof php !== 'object' || Array.isArray(php) || Object.keys(php).some(key => !['cwd','includePath','autoloadDev','composer'].includes(key))
+        || [php.cwd,php.composer].some(value => value !== undefined && !relative(value))
+        || php.autoloadDev !== undefined && typeof php.autoloadDev !== 'boolean'
+        || php.includePath !== undefined && (!Array.isArray(php.includePath) || php.includePath.length > 128 || !php.includePath.every(relative))) throw new Error('Invalid PHP runtime configuration');
+      for (const value of [php.cwd,php.composer,...php.includePath ?? []]) if (typeof value === 'string') repoPath(root, path.posix.join(app.path,value));
+    }
     if (app.rust !== undefined) {
       const value=app.rust, list=(items:unknown)=>Array.isArray(items)&&items.length<=256&&new Set(items).size===items.length&&items.every(item=>typeof item==='string'&&item.length>0&&item.length<=256&&!/[\0\r\n]/.test(item));
       if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(key=>!['package','target','targetTriple','features','defaultFeatures','cfg','includeTests'].includes(key))

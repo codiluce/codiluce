@@ -10,7 +10,7 @@
 const EXTENSIONS: Record<string, string> = {
   '.ts': 'typescript', '.tsx': 'typescript', '.mts': 'typescript', '.cts': 'typescript',
   '.js': 'javascript', '.jsx': 'javascript', '.mjs': 'javascript', '.cjs': 'javascript',
-  '.php': 'php',
+  '.php': 'php', '.inc': 'php', '.phtml': 'php',
   '.vue': 'vue', '.svelte': 'svelte', '.astro': 'astro', '.liquid': 'liquid', '.erb': 'erb', '.rhtml': 'erb', '.cshtml': 'razor', '.razor': 'razor',
   '.py': 'python', '.pyi': 'python', '.pyw': 'python',
   '.go': 'go', '.rs': 'rust',
@@ -30,7 +30,7 @@ const EXTENSIONS: Record<string, string> = {
 const NAMES: Record<string, string> = {
   Gemfile: 'ruby', 'Gemfile.lock': 'ruby-lock', Rakefile: 'ruby', Podfile: 'ruby', Fastfile: 'ruby', Appfile: 'ruby', Brewfile: 'ruby', Guardfile: 'ruby', Vagrantfile: 'ruby',
   Makefile: 'makefile', GNUmakefile: 'makefile', makefile: 'makefile', 'CMakeLists.txt': 'cmake', Jenkinsfile: 'groovy', Pipfile: 'toml', 'go.mod': 'go-module', 'go.work': 'go-workspace',
-  'setup.cfg': 'ini', 'Cargo.lock': 'toml',
+  'setup.cfg': 'ini', 'Cargo.lock': 'toml', 'composer.lock': 'json',
 };
 /** Languages whose files are code (the others: styles, data, configuration, documents). */
 export const CODE_LANGUAGES = new Set([

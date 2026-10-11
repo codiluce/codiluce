@@ -203,14 +203,17 @@ export interface LiquidRegion {key:string;kind:'literal'|'tag'|'output'|'control
 export interface LiquidImportFact {kind:'render'|'include'|'include_relative'|'section'|'sections'|'layout';text:string;specifier?:string;start:number;end:number;range:SourceRange;supported:boolean;conditions:string[]}
 export interface LiquidSyntaxFacts {regions:LiquidRegion[];imports:LiquidImportFact[];bindings:{name:string;kind:string;range:SourceRange;nameRange:SourceRange}[];host:EmbeddedHostFacts;engine:'shopify'|'unknown';nativeComplete:boolean;complete:boolean;executionUnverified:true}
 export interface PhpSite { start: number; end: number; range: SourceRange }
-export interface PhpImportFact extends PhpSite { namespace: string; scope: string; kind: 'class'|'function'|'const'; specifier: string; alias: string }
+export interface PhpImportFact extends PhpSite { namespace: string; scope: string; kind: 'class'|'function'|'const'; specifier: string; alias: string; conditions: string[] }
+/** A bounded original native expression tree, never source text reparsing. */
+export type PhpPathExpression = { kind: 'literal'; value: string } | { kind: 'dir' } | { kind: 'file' } | { kind: 'concat'; left: PhpPathExpression; right: PhpPathExpression } | { kind: 'dirname'; argument: PhpPathExpression; levels: number; name: string } | { kind: 'unknown'; reason: string };
 export interface PhpDeclarationSource { key: string; namespace: string; scope: string; nameRange: SourceRange; headerRange: SourceRange; attributes: { text: string; range: SourceRange }[]; bases: { kind: 'extends'|'implements'; text: string; range: SourceRange }[]; type?: string; sharedHeader?: string; visibilitySet?: string; promoted?: boolean; bindingOnly?: boolean }
 export interface PhpSyntaxFacts {
   profile: 'php-parser-8.4-original-source'; executionUnverified: true; complete: boolean;
   namespaces: (PhpSite & { key: string; name: string; bracketed: boolean })[];
   declarations: PhpDeclarationSource[];
   imports: PhpImportFact[];
-  loads: (PhpSite & { kind: 'include'|'include_once'|'require'|'require_once'; expression: string; conditions: string[] })[];
+  loads: (PhpSite & { kind: 'include'|'include_once'|'require'|'require_once'; expression: string; path: PhpPathExpression; namespace: string; scope: string; conditions: string[] })[];
+  loaderChanges: (PhpSite & { name: string; conditions: string[] })[];
   traits: (PhpSite & { owner?: string; names: string[]; adaptations: { kind: string; text: string; range: SourceRange }[] })[];
   bindings: (PhpSite & { name: string; kind: 'parameter'|'closure-capture'; owner?: string; promoted?: boolean })[];
   regions: (PhpSite & { kind: 'inline-html'|'anonymous-class'|'closure'|'arrow-function'; conditions: string[] })[];

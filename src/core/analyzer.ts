@@ -57,6 +57,9 @@ export interface AnalysisContext {
   /** Directory entries observed by the scanner, including pruned roots; their
    * contents are never read through the indexed source boundary. */
   directoryInventory?: Set<string>;
+  /** Directories actually enumerated, as opposed to merely observed/pruned.
+   * Together with entry inventories this proves absence for ordered lookup. */
+  scannedDirectories?: Set<string>;
   /** Observed file/symlink names, including excluded inputs, without reading them. */
   fileInventory?: Set<string>;
   goManifestInventory?: Set<string>;

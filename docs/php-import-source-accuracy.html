@@ -1,0 +1,394 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PHP import original-source qualification</title><style>body{font:16px/1.6 system-ui,sans-serif;background:#101822;color:#e5ecf4;margin:0;padding:clamp(16px,4vw,48px)}main{max-width:1120px;margin:auto}h1{font-size:clamp(28px,5vw,42px);line-height:1.2}p,code{overflow-wrap:anywhere}a,code{color:#8bddd8}.status{padding:18px;border:1px solid #b69459;border-radius:8px}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;min-width:760px}th,td{padding:12px;text-align:left;border-bottom:1px solid #344353}td{overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}summary{cursor:pointer;padding:12px 0}</style></head><body><main><h1>PHP import original-source qualification</h1><p>P10c2 · 2026-10-11T10:55:26.579Z · v22.12.0 · linux/x64. Four original namespace import sites and their original component Composer maps, pinned to Symfony 8.0.0 revision <code>2e913a829cfbbf9cb38b321bdff1806b44b192eb</code>.</p><p class="status"><strong>4/4 reviewed outcomes · three original source dependency edges · one explicit unavailable PSR target</strong><br>Original use lines/ranges, exact declaration identity/kind/line and manifest proof hops match an independent inventory. Cold/warm/revision graph identities match. No PHP, Composer, autoloader, target dependency or application executes.</p><div class="scroll"><table><thead><tr><th>Original source</th><th>Imported name</th><th>Expected / actual</th><th>Original target</th></tr></thead><tbody><tr><td><a href="https://github.com/symfony/symfony/blob/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Contracts/EventDispatcher/Event.php#L14">src/Symfony/Contracts/EventDispatcher/Event.php:14</a></td><td>Psr\EventDispatcher\StoppableEventInterface</td><td>unresolved / unresolved</td><td>Not present in indexed originals</td></tr><tr><td><a href="https://github.com/symfony/symfony/blob/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpKernel/Event/RequestEvent.php#L14">src/Symfony/Component/HttpKernel/Event/RequestEvent.php:14</a></td><td>Symfony\Component\HttpFoundation\Response</td><td>resolved / resolved</td><td>src/Symfony/Component/HttpFoundation/Response.php</td></tr><tr><td><a href="https://github.com/symfony/symfony/blob/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/Workflow/Metadata/GetMetadataTrait.php#L14">src/Symfony/Component/Workflow/Metadata/GetMetadataTrait.php:14</a></td><td>Symfony\Component\Workflow\Transition</td><td>resolved / resolved</td><td>src/Symfony/Component/Workflow/Transition.php</td></tr><tr><td><a href="https://github.com/symfony/symfony/blob/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php#L14">src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php:14</a></td><td>Symfony\Component\HttpFoundation\Session\SessionUtils</td><td>resolved / resolved</td><td>src/Symfony/Component/HttpFoundation/Session/SessionUtils.php</td></tr></tbody></table></div><p>The component case uses a clearly authored qualification workspace to select immutable original component manifests as local path dependencies. Its generated root manifest is recorded below; it is not claimed as upstream configuration. Dependencies and version solving are unexecuted source contracts. The unmodified upstream root case retains four unsupported outcomes because its classmap contains a non-UTF-8 byte identifier. That source is rejected explicitly, without a replacement-character symbol or a guessed classmap winner. All fourteen upstream inputs retain their original bytes and SHA-256 pins.</p><p>This is a reviewed subset from one library family. PSR-0, classmap wildcard/exclusion/ambiguity, Composer files, dev selection, include-path/cwd precedence, source-anchor provenance, literal load cycles, mutation aliases, unavailable targets, cache invalidation and unchanged Laravel IDs are separately exercised by conformance and installed-package fixtures. Scoped PHP references/direct call binding and shared Laravel provider integration remain P10c3 work. Runtime plugins, arbitrary expressions, custom loaders, install solving, non-UTF-8 source profiles, full history/process-tree memory and native OS qualification remain open gates.</p><p><a href="https://getcomposer.org/doc/04-schema.md#autoload">Composer autoload contracts</a> · <a href="https://www.php-fig.org/psr/psr-4/">PSR-4</a> · <a href="https://www.php-fig.org/psr/psr-0/">PSR-0</a> · <a href="https://www.php.net/manual/en/language.namespaces.importing.php">PHP namespace imports</a> · <a href="https://www.php.net/manual/en/function.include.php">PHP loads</a>. Recorded lookup uses indexed POSIX source paths; host defaults are never used. Edges express source dependency with execution unverified.</p><p>Implementation digest (284 files): <code>2486b548e0073598019d7f8b45b022503ffc67efa96acd10178d910e3e08f89a</code>. Reproduce <code>node --experimental-sqlite --import tsx scripts/qualify-php-import-source.mjs --output docs/php-import-source-accuracy.html</code>. <code>--source DIRECTORY</code> verifies all immutable files offline. <a href="php-source-accuracy.html">Earlier original structure audit</a> · <a href="language-framework-compatibility.html#implementation">Roadmap</a></p><details><summary>Raw original proofs, authored workspace, root gaps, pins and replay results</summary><pre>{
+  &quot;phase&quot;: &quot;P10c2&quot;,
+  &quot;measuredAt&quot;: &quot;2026-10-11T10:55:26.579Z&quot;,
+  &quot;resolver&quot;: &quot;0.9.3:php-indexed-imports:1&quot;,
+  &quot;node&quot;: &quot;v22.12.0&quot;,
+  &quot;platform&quot;: &quot;linux/x64&quot;,
+  &quot;revision&quot;: &quot;2e913a829cfbbf9cb38b321bdff1806b44b192eb&quot;,
+  &quot;pins&quot;: [
+    {
+      &quot;file&quot;: &quot;composer.json&quot;,
+      &quot;bytes&quot;: 9032,
+      &quot;sha256&quot;: &quot;6d65f1b3ac16c532939bf3a841a3f4f7c7b5925ce2257f6c6790f60a12b80b55&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/composer.json&quot;
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/String/Resources/functions.php&quot;,
+      &quot;bytes&quot;: 852,
+      &quot;sha256&quot;: &quot;974e6a19bccfc71615061207a08243311152b4759ce416b8f2bc3390790b1644&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/String/Resources/functions.php&quot;
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Contracts/EventDispatcher/Event.php&quot;,
+      &quot;bytes&quot;: 1479,
+      &quot;sha256&quot;: &quot;fefa2d1a68a006824e21d3baeb8c2b6e0c18d175fa5087148996b664646177ad&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Contracts/EventDispatcher/Event.php&quot;
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/HttpKernel/Event/RequestEvent.php&quot;,
+      &quot;bytes&quot;: 1262,
+      &quot;sha256&quot;: &quot;2594fb6b3b2f2a17c25d7ac6719aee9fc81352218ab59a9c3db5e66537f8efba&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpKernel/Event/RequestEvent.php&quot;
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/Workflow/Metadata/GetMetadataTrait.php&quot;,
+      &quot;bytes&quot;: 791,
+      &quot;sha256&quot;: &quot;5690dabe901d185e7d7a23ecedbc48b67901633f8a08dbcfce35d6c365a186f8&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/Workflow/Metadata/GetMetadataTrait.php&quot;
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+      &quot;bytes&quot;: 4097,
+      &quot;sha256&quot;: &quot;860aaa606180e1be6c72eff7f4871263b30652ccef0c7e4635c6d03e1a817272&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/HttpFoundation/Response.php&quot;,
+      &quot;bytes&quot;: 40303,
+      &quot;sha256&quot;: &quot;5438bdc0483da16ca74766f7b95002524de89749aee00abc0d1bb0670f317905&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpFoundation/Response.php&quot;
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/Workflow/Transition.php&quot;,
+      &quot;bytes&quot;: 1913,
+      &quot;sha256&quot;: &quot;a0fda35cf0e41f86834470b904e9873d322b67a60465d5b544e368e3ee9f4d10&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/Workflow/Transition.php&quot;
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/HttpFoundation/Session/SessionUtils.php&quot;,
+      &quot;bytes&quot;: 1654,
+      &quot;sha256&quot;: &quot;122be93319ce972b0845a8a9b838d5fd1b5394976db98db79d72fc1907bd8040&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpFoundation/Session/SessionUtils.php&quot;
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/Cache/Traits/ValueWrapper.php&quot;,
+      &quot;bytes&quot;: 2102,
+      &quot;sha256&quot;: &quot;f03ed4b4d0eb8f1b928003bf57f875049e4c395845f7aa0a82facccec86ffc93&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/Cache/Traits/ValueWrapper.php&quot;
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/HttpKernel/composer.json&quot;,
+      &quot;bytes&quot;: 2204,
+      &quot;sha256&quot;: &quot;198a276133e5f4fa8d1008942d93f5095a4556351d8b44c16154b64434cd8ecb&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpKernel/composer.json&quot;
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/HttpFoundation/composer.json&quot;,
+      &quot;bytes&quot;: 1218,
+      &quot;sha256&quot;: &quot;6ad32a4d69ddc3011b42fea3dea975d76500c3d40ec5491b6c999fd7de62d12c&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpFoundation/composer.json&quot;
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/Workflow/composer.json&quot;,
+      &quot;bytes&quot;: 1385,
+      &quot;sha256&quot;: &quot;d87007765494c2fc34d2a9811e02575859dbbcb093a0f59293708003128a9979&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/Workflow/composer.json&quot;
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Contracts/EventDispatcher/composer.json&quot;,
+      &quot;bytes&quot;: 986,
+      &quot;sha256&quot;: &quot;ed5b8cdc2a6ade1cf7ae9000e642e87064e0a5327481d481d0b9791766a57981&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Contracts/EventDispatcher/composer.json&quot;
+    }
+  ],
+  &quot;authoredWorkspace&quot;: {
+    &quot;name&quot;: &quot;qualification/php-original-workspace&quot;,
+    &quot;require&quot;: {
+      &quot;symfony/http-kernel&quot;: &quot;*&quot;,
+      &quot;symfony/http-foundation&quot;: &quot;*&quot;,
+      &quot;symfony/workflow&quot;: &quot;*&quot;,
+      &quot;symfony/event-dispatcher-contracts&quot;: &quot;*&quot;
+    },
+    &quot;repositories&quot;: [
+      {
+        &quot;type&quot;: &quot;path&quot;,
+        &quot;url&quot;: &quot;src/Symfony/Component/HttpKernel&quot;
+      },
+      {
+        &quot;type&quot;: &quot;path&quot;,
+        &quot;url&quot;: &quot;src/Symfony/Component/HttpFoundation&quot;
+      },
+      {
+        &quot;type&quot;: &quot;path&quot;,
+        &quot;url&quot;: &quot;src/Symfony/Component/Workflow&quot;
+      },
+      {
+        &quot;type&quot;: &quot;path&quot;,
+        &quot;url&quot;: &quot;src/Symfony/Contracts/EventDispatcher&quot;
+      }
+    ]
+  },
+  &quot;originalRootGaps&quot;: [
+    {
+      &quot;file&quot;: &quot;src/Symfony/Contracts/EventDispatcher/Event.php&quot;,
+      &quot;specifier&quot;: &quot;Psr\\EventDispatcher\\StoppableEventInterface&quot;,
+      &quot;outcome&quot;: {
+        &quot;status&quot;: &quot;unsupported&quot;,
+        &quot;reason&quot;: &quot;Indexed target is not readable: src/Symfony/Component/Cache/Traits/ValueWrapper.php&quot;
+      }
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/HttpKernel/Event/RequestEvent.php&quot;,
+      &quot;specifier&quot;: &quot;Symfony\\Component\\HttpFoundation\\Response&quot;,
+      &quot;outcome&quot;: {
+        &quot;status&quot;: &quot;unsupported&quot;,
+        &quot;reason&quot;: &quot;Indexed target is not readable: src/Symfony/Component/Cache/Traits/ValueWrapper.php&quot;
+      }
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/Workflow/Metadata/GetMetadataTrait.php&quot;,
+      &quot;specifier&quot;: &quot;Symfony\\Component\\Workflow\\Transition&quot;,
+      &quot;outcome&quot;: {
+        &quot;status&quot;: &quot;unsupported&quot;,
+        &quot;reason&quot;: &quot;Indexed target is not readable: src/Symfony/Component/Cache/Traits/ValueWrapper.php&quot;
+      }
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+      &quot;specifier&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\SessionUtils&quot;,
+      &quot;outcome&quot;: {
+        &quot;status&quot;: &quot;unsupported&quot;,
+        &quot;reason&quot;: &quot;Indexed target is not readable: src/Symfony/Component/Cache/Traits/ValueWrapper.php&quot;
+      }
+    }
+  ],
+  &quot;results&quot;: [
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;src/Symfony/Contracts/EventDispatcher/Event.php&quot;,
+        &quot;specifier&quot;: &quot;Psr\\EventDispatcher\\StoppableEventInterface&quot;,
+        &quot;line&quot;: 14,
+        &quot;status&quot;: &quot;unresolved&quot;
+      },
+      &quot;originalUseLine&quot;: &quot;use Psr\\EventDispatcher\\StoppableEventInterface;&quot;,
+      &quot;actual&quot;: {
+        &quot;adapter&quot;: &quot;php&quot;,
+        &quot;version&quot;: 1,
+        &quot;executionUnverified&quot;: true,
+        &quot;kind&quot;: &quot;use-class&quot;,
+        &quot;specifier&quot;: &quot;Psr\\EventDispatcher\\StoppableEventInterface&quot;,
+        &quot;alias&quot;: &quot;StoppableEventInterface&quot;,
+        &quot;namespace&quot;: &quot;Symfony\\Contracts\\EventDispatcher&quot;,
+        &quot;scope&quot;: &quot;php-namespace:238:1478&quot;,
+        &quot;range&quot;: {
+          &quot;startLine&quot;: 14,
+          &quot;startColumn&quot;: 5,
+          &quot;endLine&quot;: 14,
+          &quot;endColumn&quot;: 48
+        },
+        &quot;conditions&quot;: [],
+        &quot;outcome&quot;: {
+          &quot;status&quot;: &quot;unresolved&quot;,
+          &quot;reason&quot;: &quot;No indexed original class declaration is reachable through the recorded Composer/literal-load source contracts: Psr\\EventDispatcher\\StoppableEventInterface&quot;
+        }
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;src/Symfony/Component/HttpKernel/Event/RequestEvent.php&quot;,
+        &quot;specifier&quot;: &quot;Symfony\\Component\\HttpFoundation\\Response&quot;,
+        &quot;line&quot;: 14,
+        &quot;status&quot;: &quot;resolved&quot;,
+        &quot;target&quot;: &quot;src/Symfony/Component/HttpFoundation/Response.php&quot;,
+        &quot;name&quot;: &quot;Response&quot;,
+        &quot;targetLine&quot;: 22
+      },
+      &quot;originalUseLine&quot;: &quot;use Symfony\\Component\\HttpFoundation\\Response;&quot;,
+      &quot;actual&quot;: {
+        &quot;adapter&quot;: &quot;php&quot;,
+        &quot;version&quot;: 1,
+        &quot;executionUnverified&quot;: true,
+        &quot;kind&quot;: &quot;use-class&quot;,
+        &quot;specifier&quot;: &quot;Symfony\\Component\\HttpFoundation\\Response&quot;,
+        &quot;alias&quot;: &quot;Response&quot;,
+        &quot;namespace&quot;: &quot;Symfony\\Component\\HttpKernel\\Event&quot;,
+        &quot;scope&quot;: &quot;php-namespace:238:1261&quot;,
+        &quot;range&quot;: {
+          &quot;startLine&quot;: 14,
+          &quot;startColumn&quot;: 5,
+          &quot;endLine&quot;: 14,
+          &quot;endColumn&quot;: 46
+        },
+        &quot;conditions&quot;: [],
+        &quot;targetConditions&quot;: {
+          &quot;symbol:9528a841e83baeaa476fcc5d&quot;: []
+        },
+        &quot;outcome&quot;: {
+          &quot;status&quot;: &quot;resolved&quot;,
+          &quot;targets&quot;: [
+            &quot;symbol:9528a841e83baeaa476fcc5d&quot;
+          ],
+          &quot;proof&quot;: [
+            {
+              &quot;source&quot;: &quot;php&quot;,
+              &quot;analyzer&quot;: &quot;php-imports&quot;,
+              &quot;analyzerVersion&quot;: &quot;0.9.3:php-indexed-imports:1&quot;,
+              &quot;confidence&quot;: 1,
+              &quot;file&quot;: &quot;src/Symfony/Component/HttpKernel/Event/RequestEvent.php&quot;,
+              &quot;line&quot;: 14,
+              &quot;explanation&quot;: &quot;Original PHP import/load source dependency; runtime activation is unverified&quot;
+            },
+            {
+              &quot;source&quot;: &quot;php&quot;,
+              &quot;analyzer&quot;: &quot;php-imports&quot;,
+              &quot;analyzerVersion&quot;: &quot;0.9.3:php-indexed-imports:1&quot;,
+              &quot;confidence&quot;: 1,
+              &quot;file&quot;: &quot;src/Symfony/Component/HttpFoundation/composer.json&quot;,
+              &quot;explanation&quot;: &quot;Indexed Composer psr-4 prefix Symfony\\Component\\HttpFoundation\\ and ordered roots&quot;
+            },
+            {
+              &quot;source&quot;: &quot;php&quot;,
+              &quot;analyzer&quot;: &quot;php-imports&quot;,
+              &quot;analyzerVersion&quot;: &quot;0.9.3:php-indexed-imports:1&quot;,
+              &quot;confidence&quot;: 1,
+              &quot;file&quot;: &quot;src/Symfony/Component/HttpFoundation/Response.php&quot;,
+              &quot;line&quot;: 22,
+              &quot;explanation&quot;: &quot;Original declaration matched by PHP name/kind; activation remains unverified&quot;
+            }
+          ]
+        }
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;src/Symfony/Component/Workflow/Metadata/GetMetadataTrait.php&quot;,
+        &quot;specifier&quot;: &quot;Symfony\\Component\\Workflow\\Transition&quot;,
+        &quot;line&quot;: 14,
+        &quot;status&quot;: &quot;resolved&quot;,
+        &quot;target&quot;: &quot;src/Symfony/Component/Workflow/Transition.php&quot;,
+        &quot;name&quot;: &quot;Transition&quot;,
+        &quot;targetLine&quot;: 18
+      },
+      &quot;originalUseLine&quot;: &quot;use Symfony\\Component\\Workflow\\Transition;&quot;,
+      &quot;actual&quot;: {
+        &quot;adapter&quot;: &quot;php&quot;,
+        &quot;version&quot;: 1,
+        &quot;executionUnverified&quot;: true,
+        &quot;kind&quot;: &quot;use-class&quot;,
+        &quot;specifier&quot;: &quot;Symfony\\Component\\Workflow\\Transition&quot;,
+        &quot;alias&quot;: &quot;Transition&quot;,
+        &quot;namespace&quot;: &quot;Symfony\\Component\\Workflow\\Metadata&quot;,
+        &quot;scope&quot;: &quot;php-namespace:238:789&quot;,
+        &quot;range&quot;: {
+          &quot;startLine&quot;: 14,
+          &quot;startColumn&quot;: 5,
+          &quot;endLine&quot;: 14,
+          &quot;endColumn&quot;: 42
+        },
+        &quot;conditions&quot;: [],
+        &quot;targetConditions&quot;: {
+          &quot;symbol:00687418b4750ba9880ca8c8&quot;: []
+        },
+        &quot;outcome&quot;: {
+          &quot;status&quot;: &quot;resolved&quot;,
+          &quot;targets&quot;: [
+            &quot;symbol:00687418b4750ba9880ca8c8&quot;
+          ],
+          &quot;proof&quot;: [
+            {
+              &quot;source&quot;: &quot;php&quot;,
+              &quot;analyzer&quot;: &quot;php-imports&quot;,
+              &quot;analyzerVersion&quot;: &quot;0.9.3:php-indexed-imports:1&quot;,
+              &quot;confidence&quot;: 1,
+              &quot;file&quot;: &quot;src/Symfony/Component/Workflow/Metadata/GetMetadataTrait.php&quot;,
+              &quot;line&quot;: 14,
+              &quot;explanation&quot;: &quot;Original PHP import/load source dependency; runtime activation is unverified&quot;
+            },
+            {
+              &quot;source&quot;: &quot;php&quot;,
+              &quot;analyzer&quot;: &quot;php-imports&quot;,
+              &quot;analyzerVersion&quot;: &quot;0.9.3:php-indexed-imports:1&quot;,
+              &quot;confidence&quot;: 1,
+              &quot;file&quot;: &quot;src/Symfony/Component/Workflow/composer.json&quot;,
+              &quot;explanation&quot;: &quot;Indexed Composer psr-4 prefix Symfony\\Component\\Workflow\\ and ordered roots&quot;
+            },
+            {
+              &quot;source&quot;: &quot;php&quot;,
+              &quot;analyzer&quot;: &quot;php-imports&quot;,
+              &quot;analyzerVersion&quot;: &quot;0.9.3:php-indexed-imports:1&quot;,
+              &quot;confidence&quot;: 1,
+              &quot;file&quot;: &quot;src/Symfony/Component/Workflow/Transition.php&quot;,
+              &quot;line&quot;: 18,
+              &quot;explanation&quot;: &quot;Original declaration matched by PHP name/kind; activation remains unverified&quot;
+            }
+          ]
+        }
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+        &quot;specifier&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\SessionUtils&quot;,
+        &quot;line&quot;: 14,
+        &quot;status&quot;: &quot;resolved&quot;,
+        &quot;target&quot;: &quot;src/Symfony/Component/HttpFoundation/Session/SessionUtils.php&quot;,
+        &quot;name&quot;: &quot;SessionUtils&quot;,
+        &quot;targetLine&quot;: 22
+      },
+      &quot;originalUseLine&quot;: &quot;use Symfony\\Component\\HttpFoundation\\Session\\SessionUtils;&quot;,
+      &quot;actual&quot;: {
+        &quot;adapter&quot;: &quot;php&quot;,
+        &quot;version&quot;: 1,
+        &quot;executionUnverified&quot;: true,
+        &quot;kind&quot;: &quot;use-class&quot;,
+        &quot;specifier&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\SessionUtils&quot;,
+        &quot;alias&quot;: &quot;SessionUtils&quot;,
+        &quot;namespace&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler&quot;,
+        &quot;scope&quot;: &quot;php-namespace:238:4096&quot;,
+        &quot;range&quot;: {
+          &quot;startLine&quot;: 14,
+          &quot;startColumn&quot;: 5,
+          &quot;endLine&quot;: 14,
+          &quot;endColumn&quot;: 58
+        },
+        &quot;conditions&quot;: [],
+        &quot;targetConditions&quot;: {
+          &quot;symbol:0cfc8e12e4c596f29ac4fa44&quot;: []
+        },
+        &quot;outcome&quot;: {
+          &quot;status&quot;: &quot;resolved&quot;,
+          &quot;targets&quot;: [
+            &quot;symbol:0cfc8e12e4c596f29ac4fa44&quot;
+          ],
+          &quot;proof&quot;: [
+            {
+              &quot;source&quot;: &quot;php&quot;,
+              &quot;analyzer&quot;: &quot;php-imports&quot;,
+              &quot;analyzerVersion&quot;: &quot;0.9.3:php-indexed-imports:1&quot;,
+              &quot;confidence&quot;: 1,
+              &quot;file&quot;: &quot;src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+              &quot;line&quot;: 14,
+              &quot;explanation&quot;: &quot;Original PHP import/load source dependency; runtime activation is unverified&quot;
+            },
+            {
+              &quot;source&quot;: &quot;php&quot;,
+              &quot;analyzer&quot;: &quot;php-imports&quot;,
+              &quot;analyzerVersion&quot;: &quot;0.9.3:php-indexed-imports:1&quot;,
+              &quot;confidence&quot;: 1,
+              &quot;file&quot;: &quot;src/Symfony/Component/HttpFoundation/composer.json&quot;,
+              &quot;explanation&quot;: &quot;Indexed Composer psr-4 prefix Symfony\\Component\\HttpFoundation\\ and ordered roots&quot;
+            },
+            {
+              &quot;source&quot;: &quot;php&quot;,
+              &quot;analyzer&quot;: &quot;php-imports&quot;,
+              &quot;analyzerVersion&quot;: &quot;0.9.3:php-indexed-imports:1&quot;,
+              &quot;confidence&quot;: 1,
+              &quot;file&quot;: &quot;src/Symfony/Component/HttpFoundation/Session/SessionUtils.php&quot;,
+              &quot;line&quot;: 22,
+              &quot;explanation&quot;: &quot;Original declaration matched by PHP name/kind; activation remains unverified&quot;
+            }
+          ]
+        }
+      }
+    }
+  ],
+  &quot;reviewed&quot;: 4,
+  &quot;matched&quot;: 4,
+  &quot;sourceEdges&quot;: 3,
+  &quot;unavailablePsrTarget&quot;: 1,
+  &quot;syntaxCacheHits&quot;: 8,
+  &quot;coldWarmEqual&quot;: true,
+  &quot;revisionModeEqual&quot;: true,
+  &quot;implementationFiles&quot;: 284,
+  &quot;implementationDigest&quot;: &quot;2486b548e0073598019d7f8b45b022503ffc67efa96acd10178d910e3e08f89a&quot;
+}</pre></details></main></body></html>

@@ -1,0 +1,1 @@
+{"name":"fixture/php-imports","autoload":{"psr-4":{"PhpPacked\\":"src/"},"files":["functions.inc"]}}

@@ -1,5 +1,5 @@
 import { ast, name, nodes, type Ast } from '../../analyzers/php-ast.js';
-import type { DeclarationFact, PhpDeclarationSource, PhpSyntaxFacts, StructureFacts } from '../facts.js';
+import type { DeclarationFact, PhpDeclarationSource, PhpPathExpression, PhpSyntaxFacts, StructureFacts } from '../facts.js';
 import { SourceText } from '../source-map.js';
 
 const MAX_NODES = 200_000, MAX_DEPTH = 128, MAX_SITES = 4096, MAX_HEADER = 4096;
@@ -11,7 +11,7 @@ interface Scope { namespace: string; scope: string; owner?: DeclarationFact; typ
  * declared inside another function still belongs to its PHP namespace. */
 export function extractPhp(root: Ast, content: string): StructureFacts {
   const source = new SourceText(content);
-  const php: PhpSyntaxFacts = { profile: 'php-parser-8.4-original-source', executionUnverified: true, complete: true, namespaces: [], declarations: [], imports: [], loads: [], traits: [], bindings: [], regions: [] };
+  const php: PhpSyntaxFacts = { profile: 'php-parser-8.4-original-source', executionUnverified: true, complete: true, namespaces: [], declarations: [], imports: [], loads: [], loaderChanges: [], traits: [], bindings: [], regions: [] };
   const facts: StructureFacts = { declarations: [], issues: [], truncated: false, php };
   const issue = (code: string, reason: string, node?: Ast) => {
     php.complete = false;
@@ -25,6 +25,19 @@ export function extractPhp(root: Ast, content: string): StructureFacts {
   };
   const text = (node: Ast|undefined) => node?.loc ? content.slice(site(node).start, site(node).end) : '';
   const append = <T>(items: T[], value: T) => { if (items.length >= MAX_SITES) limit(); else items.push(value); };
+  function pathExpression(node: Ast|undefined, depth = 0): PhpPathExpression {
+    if (!node || depth > 32) return { kind: 'unknown', reason: 'Missing or over-budget original path expression' };
+    if (['string','nowdoc'].includes(node.kind) && typeof node.value === 'string') return { kind: 'literal', value: node.value };
+    if (node.kind === 'encapsed' && Array.isArray(node.value) && nodes(node.value).every(part=>part.kind==='encapsedpart'&&ast(part.expression)?.kind==='string'&&typeof ast(part.expression)?.value==='string')) return {kind:'literal',value:nodes(node.value).map(part=>String(ast(part.expression)!.value)).join('')};
+    if (node.kind === 'magic' && ['__DIR__','__FILE__'].includes(String(node.value))) return { kind: node.value === '__DIR__' ? 'dir' : 'file' };
+    if (node.kind === 'bin' && node.type === '.') return { kind: 'concat', left: pathExpression(ast(node.left),depth+1), right: pathExpression(ast(node.right),depth+1) };
+    const callee = ast(node.what), args = nodes(node.arguments);
+    if (node.kind === 'call' && callee?.kind === 'name' && ['dirname','\\dirname'].includes(String(callee.name).toLowerCase()) && args.length >= 1 && args.length <= 2) {
+      const levels = args.length === 1 ? 1 : args[1]?.kind === 'number' ? Number(args[1].value) : NaN;
+      if (Number.isSafeInteger(levels) && levels >= 1 && levels <= 32) return { kind: 'dirname', argument: pathExpression(args[0],depth+1), levels, name: String(callee.name) };
+    }
+    return { kind: 'unknown', reason: `Original ${node.kind} expression needs runtime evaluation or a separate binding profile` };
+  }
   if (!Array.isArray(root.tokens) || root.tokens.length > MAX_NODES) { limit(); return facts; }
   const nativeTokens: Token[] = root.tokens.map(value => {
     if (!Array.isArray(value) || typeof value[1] !== 'string' || !Number.isSafeInteger(value[3]) || !Number.isSafeInteger(value[4]) || value[3] < 0 || value[4] < value[3] || value[4] > content.length || content.slice(value[3], value[4]) !== value[1]) throw Error('PHP provider returned invalid original tokens');
@@ -111,12 +124,14 @@ export function extractPhp(root: Ast, content: string): StructureFacts {
     return fact;
   }
   const closureBindings = new Map<Ast, DeclarationFact>();
+  const namedCalls: {node:Ast;namespace:string;scope:string;conditions:string[]}[] = [];
   const stack: { node: Ast; scope: Scope; depth: number }[] = [{ node: root, scope: { namespace: '', scope: `php-file:0:${content.length}`, conditions: [], deferred: false }, depth: 0 }];
   let visited = 0;
   while (stack.length && !facts.truncated) {
     const { node, scope, depth } = stack.pop()!;
     if (++visited > MAX_NODES || depth > MAX_DEPTH) { limit(); break; }
     let next: Scope = scope;
+    if(node.kind==='call'&&ast(node.what)?.kind==='name')append(namedCalls,{node,namespace:scope.namespace,scope:scope.scope,conditions:scope.conditions});
     if (node.kind === 'namespace') {
       const span = site(node), key = `php-namespace:${span.start}:${span.end}`;
       append(php.namespaces, { ...span, key, name: String(node.name ?? ''), bracketed: node.withBrackets === true });
@@ -166,10 +181,11 @@ export function extractPhp(root: Ast, content: string): StructureFacts {
       for (const item of nodes(node.items)) {
         const specifier = [typeof node.name === 'string' ? node.name : '', String(item.name ?? '')].filter(Boolean).join('\\').replace(/^\\/, '');
         const kind = item.type ?? node.type ?? 'class';
-        append(php.imports, { ...site(item), namespace: scope.namespace, scope: scope.scope, kind: kind === 'function' ? 'function' : kind === 'const' ? 'const' : 'class', specifier, alias: name(item.alias) ?? specifier.split('\\').at(-1)! });
+        append(php.imports, { ...site(item), namespace: scope.namespace, scope: scope.scope, kind: kind === 'function' ? 'function' : kind === 'const' ? 'const' : 'class', specifier, alias: name(item.alias) ?? specifier.split('\\').at(-1)!, conditions: scope.conditions });
       }
     } else if (node.kind === 'traituse') append(php.traits, { ...site(node), ...scope.type ? { owner: scope.type.key } : {}, names: nodes(node.traits).map(text), adaptations: nodes(node.adaptations).map(adaptation => ({ kind: adaptation.kind, text: text(adaptation), range: site(adaptation).range })) });
-    else if (node.kind === 'include') append(php.loads, { ...site(node), kind: `${node.require ? 'require' : 'include'}${node.once ? '_once' : ''}` as PhpSyntaxFacts['loads'][number]['kind'], expression: text(ast(node.target)), conditions: scope.conditions });
+    else if (node.kind === 'include') append(php.loads, { ...site(node), kind: `${node.require ? 'require' : 'include'}${node.once ? '_once' : ''}` as PhpSyntaxFacts['loads'][number]['kind'], expression: text(ast(node.target)), path: pathExpression(ast(node.target)), namespace: scope.namespace, scope: scope.scope, conditions: scope.conditions });
+    else if (node.kind === 'call' && ast(node.what)?.kind === 'name' && ['chdir','set_include_path','restore_include_path','ini_set','ini_restore','spl_autoload_register','spl_autoload_unregister','stream_wrapper_register','stream_wrapper_unregister','stream_wrapper_restore'].includes(String(ast(node.what)!.name).split('\\').at(-1)!.toLowerCase())) append(php.loaderChanges, { ...site(node), name: String(ast(node.what)!.name), conditions: scope.conditions });
     else if (node.kind === 'inline') append(php.regions, { ...site(node), kind: 'inline-html', conditions: scope.conditions });
     else if (['if', 'while', 'do', 'for', 'foreach', 'switch', 'case', 'try', 'catch', 'finally'].includes(node.kind)) next = { ...scope, conditions: [...scope.conditions, `Declaration occurs in original ${node.kind} syntax; activation is unverified`] };
     const children: Ast[] = [];
@@ -180,5 +196,11 @@ export function extractPhp(root: Ast, content: string): StructureFacts {
     for (let i = children.length - 1; i >= 0; i--) stack.push({ node: children[i]!, scope: next, depth: depth + 1 });
   }
   facts.declarations.sort((a, b) => a.start - b.start || a.end - b.end || a.kind.localeCompare(b.kind, 'en'));
+  const mutations=new Set(['chdir','set_include_path','restore_include_path','ini_set','ini_restore','spl_autoload_register','spl_autoload_unregister','stream_wrapper_register','stream_wrapper_unregister','stream_wrapper_restore']);
+  for(const call of namedCalls) {
+    const callee=String(ast(call.node.what)!.name);
+    const imported=php.imports.find(item=>item.scope===call.scope&&item.kind==='function'&&item.alias.toLowerCase()===callee.toLowerCase());
+    if(imported&&mutations.has(imported.specifier.toLowerCase())&&!php.loaderChanges.some(change=>change.start===site(call.node).start))append(php.loaderChanges,{...site(call.node),name:imported.specifier,conditions:call.conditions});
+  }
   return facts;
 }
