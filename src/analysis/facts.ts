@@ -23,7 +23,7 @@ export interface DeclarationFact {
   swiftName?:string;
   scalaExtension?:{signature:string;range:SourceRange};
   vbnetIdentity?:{qualifiedName:string;signature:string};
-  embeddedSource?:{language:'ruby'|'javascript';executionContext:'server'|'browser';headerRange:SourceRange;regions:SourceRange[]};
+  embeddedSource?:{language:'ruby'|'javascript'|'csharp';executionContext:'server'|'browser'|'unknown';headerRange:SourceRange;regions:SourceRange[]};
 }
 export interface ParseIssue { code: string; reason: string; range?: SourceRange }
 export interface PythonGuardFact { expression: string; branch: boolean; scope?: string }
@@ -195,8 +195,11 @@ export interface GroovySyntaxFacts {packages:{name:string;text:string;range:Sour
 export interface FsharpSyntaxFacts {sourceKind:'implementation'|'signature';attributes:{text:string;range:SourceRange}[];imports:{text:string;path:string;range:SourceRange}[];directives:{text:string;range:SourceRange}[];conditions:{text:string;range:SourceRange}[];quotations:{text:string;range:SourceRange}[];complete:boolean}
 export interface VbnetSyntaxFacts {options:{text:string;range:SourceRange}[];imports:{text:string;paths:string[];range:SourceRange}[];attributes:{text:string;range:SourceRange}[];directives:{text:string;range:SourceRange}[];projectContextUnverified:true;complete:boolean}
 export interface ErbRegion {key:string;kind:'code'|'output'|'comment'|'literal';start:number;end:number;range:SourceRange;bodyStart:number;bodyEnd:number;bodyRange:SourceRange;opening?:string;closing?:string;executionContext:'server'|'none';supported:boolean;conditions:string[]}
-export interface ErbSyntaxFacts {regions:ErbRegion[];host:{language:'html'|'javascript'|'css'|'unknown';regions:{kind:'script'|'style';start:number;end:number;range:SourceRange;bodyStart:number;bodyEnd:number;bodyRange:SourceRange;attributes:{name:string;text:string;value?:string;range:SourceRange}[];executionContext:'browser'|'none';language:'javascript'|'css'|'unknown';supported:boolean;conditions:string[]}[];complete:boolean};rubyComplete:boolean;complete:boolean;executionUnverified:true}
-export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; cfamily?:CfamilySyntaxFacts; objc?:ObjcSyntaxFacts; swift?:SwiftSyntaxFacts; scala?:ScalaSyntaxFacts; groovy?:GroovySyntaxFacts; fsharp?:FsharpSyntaxFacts; vbnet?:VbnetSyntaxFacts; erb?:ErbSyntaxFacts; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts; csharp?: CsharpSyntaxFacts; rust?:RustSyntaxFacts }
+export interface EmbeddedHostFacts {language:'html'|'javascript'|'css'|'unknown';regions:{kind:'script'|'style';start:number;end:number;range:SourceRange;bodyStart:number;bodyEnd:number;bodyRange:SourceRange;attributes:{name:string;text:string;value?:string;range:SourceRange}[];executionContext:'browser'|'none';language:'javascript'|'css'|'unknown';supported:boolean;conditions:string[]}[];complete:boolean}
+export interface ErbSyntaxFacts {regions:ErbRegion[];host:EmbeddedHostFacts;rubyComplete:boolean;complete:boolean;executionUnverified:true}
+export interface RazorRegion {key:string;kind:'member-block'|'render-block'|'control'|'expression'|'comment'|'escape'|'line-markup'|'attribute'|'directive'|'recovery';nativeKind:string;start:number;end:number;range:SourceRange;bodyStart:number;bodyEnd:number;bodyRange:SourceRange;supported:boolean;executionContext:'server'|'unknown'|'none';conditions:string[]}
+export interface RazorSyntaxFacts {sourceKind:'component'|'view';regions:RazorRegion[];directives:{kind:string;text:string;range:SourceRange;supported:boolean}[];host:EmbeddedHostFacts;csharpComplete:boolean;complete:boolean;executionUnverified:true;projectContextUnverified:true}
+export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; cfamily?:CfamilySyntaxFacts; objc?:ObjcSyntaxFacts; swift?:SwiftSyntaxFacts; scala?:ScalaSyntaxFacts; groovy?:GroovySyntaxFacts; fsharp?:FsharpSyntaxFacts; vbnet?:VbnetSyntaxFacts; erb?:ErbSyntaxFacts; razor?:RazorSyntaxFacts; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts; csharp?: CsharpSyntaxFacts; rust?:RustSyntaxFacts }
 export interface ImportBinding { imported: string; local: string; typeOnly?: boolean }
 export type ImportOutcome =
   | { status: 'resolved'; targets: string[]; proof: Evidence[] }

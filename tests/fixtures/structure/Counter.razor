@@ -1,0 +1,14 @@
+@page "/source-counter"
+@using System.Text
+<h1>Original Razor component</h1>
+@code {
+    private int count = 0;
+    [Parameter] public string Name { get; set; } = "Original";
+    public class RazorBox {
+        public RazorBox() {}
+        public int RazorRead(int value) { return value; }
+    }
+    public void RazorIncrement() { count++; }
+}
+<script>function razorClientHelper(){return 1} const razorBoundHelper = function(){return 2};</script>
+<style>h1 { color: red; }</style>

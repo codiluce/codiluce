@@ -7,7 +7,9 @@ import {recoverObjcRegions} from './objc-regions.js';
 import {extractObjcMacroProfiles} from './objc-macros.js';
 import {composeObjcCpp,recoverOriginalCppMethods,originalObjcDeclarations} from './objc-cpp.js';
 import {erbHostProjection,erbIssue,erbRubyProjection,extractErbHost,extractErbRegions,extractErbRuby,finishErb} from './erb-structure.js';
-import {extractErbScripts} from './erb-script.js';
+import {extractErbScripts,extractLiteralScripts} from './erb-script.js';
+import {extractRazor,razorHostProjection,razorIssue,finishRazor} from './razor-structure.js';
+import {extractTemplateHost} from './embedded-host.js';
 
 const loaded = new Map<string, { parser: Parser; query: Query }>();
 const initialized = Parser.init();
@@ -24,7 +26,7 @@ async function load(language: string): Promise<{ parser: Parser; query: Query }>
   entry = { parser, query }; loaded.set(language, entry);
   return entry;
 }
-async function handle(job: { id: number; language: string; content: string; objectiveCpp?:boolean;erbHost?:'html'|'javascript'|'css'|'unknown' }): Promise<void> {
+async function handle(job: { id: number; language: string; content: string; objectiveCpp?:boolean;erbHost?:'html'|'javascript'|'css'|'unknown';razorKind?:'component'|'view' }): Promise<void> {
   try {
     const { parser, query } = await load(job.language);
     parser.reset();
@@ -34,7 +36,7 @@ async function handle(job: { id: number; language: string; content: string; obje
     const tree = parser.parse(input);
     if (!tree) throw new Error('Parser returned no tree');
     try {
-      let facts=job.language==='erb'?extractErbRegions(tree.rootNode,query,job.content,job.erbHost):extractStructure(tree.rootNode, query, job.language, job.content);
+      let facts=job.language==='erb'?extractErbRegions(tree.rootNode,query,job.content,job.erbHost):job.language==='razor'?extractRazor(tree.rootNode,query,job.content,job.razorKind):extractStructure(tree.rootNode, query, job.language, job.content);
       if(job.language==='erb'){
         const projection=erbRubyProjection(job.content,facts);
         if(projection?.trim())try{const ruby=await load('ruby');ruby.parser.reset();const rubyTree=ruby.parser.parse(projection);if(!rubyTree)throw Error('Ruby projection returned no tree');try{extractErbRuby(rubyTree.rootNode,ruby.query,job.content,facts);}finally{rubyTree.delete();}}
@@ -43,6 +45,13 @@ async function handle(job: { id: number; language: string; content: string; obje
         catch(error){if(error instanceof WebAssembly.RuntimeError)throw error;facts.erb!.host.complete=false;erbIssue(facts,'erb-html-unavailable',`Original ERB/Ruby regions retained; HTML grammar/query unavailable: ${error instanceof Error?error.message:String(error)}`);}
         if(facts.erb!.host.regions.some(r=>r.kind==='script'&&r.supported&&r.language==='javascript')){const compiler=(await import('typescript')).default;extractErbScripts(compiler,job.content,facts);}
         facts=finishErb(facts);
+      }
+      if(job.language==='razor'){
+        if(facts.truncated)facts.razor!.host.complete=false;
+        else try{const html=await load('html');html.parser.reset();const host=html.parser.parse(razorHostProjection(tree.rootNode,query,job.content,facts));if(!host)throw Error('HTML projection returned no tree');try{extractTemplateHost(host.rootNode,html.query,job.content,facts,'razor');}finally{host.delete();}}
+        catch(error){if(error instanceof WebAssembly.RuntimeError)throw error;facts.razor!.host.complete=false;razorIssue(facts,'razor-html-unavailable',`Original Razor/C# source retained; HTML grammar/query unavailable: ${error instanceof Error?error.message:String(error)}`);}
+        if(!facts.truncated&&facts.razor!.host.regions.some(r=>r.kind==='script'&&r.supported&&r.language==='javascript')){const compiler=(await import('typescript')).default;extractLiteralScripts(compiler,job.content,facts,'razor');}
+        facts=finishRazor(facts);
       }
       if(job.language==='objective-c'){
         facts=recoverObjcRegions(facts,job.content,parser,query);
@@ -59,7 +68,7 @@ async function handle(job: { id: number; language: string; content: string; obje
   } catch (error) { process.send?.({ id: job.id, error: error instanceof Error ? error.message : String(error) }); }
 }
 let pending = Promise.resolve();
-process.on('message', (job: { id: number; language: string; content: string; objectiveCpp?:boolean;erbHost?:'html'|'javascript'|'css'|'unknown' }) => { pending = pending.then(() => handle(job)); });
+process.on('message', (job: { id: number; language: string; content: string; objectiveCpp?:boolean;erbHost?:'html'|'javascript'|'css'|'unknown';razorKind?:'component'|'view' }) => { pending = pending.then(() => handle(job)); });
 process.once('disconnect', () => {
   for (const { parser, query } of loaded.values()) { query.delete(); parser.delete(); }
   process.exit(0);

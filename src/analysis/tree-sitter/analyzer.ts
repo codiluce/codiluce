@@ -13,7 +13,7 @@ import {SourceText} from '../source-map.js';
 import {selectErbHost} from './erb-structure.js';
 import ts from 'typescript';
 
-export const STRUCTURE_VERSION = `${ANALYZER_VERSION}:${GRAMMAR_CATALOG_VERSION}:53`;
+export const STRUCTURE_VERSION = `${ANALYZER_VERSION}:${GRAMMAR_CATALOG_VERSION}:56`;
 export const analysisRegistry = new AnalysisRegistry();
 analysisRegistry.registerLanguage({ id: 'typescript', version: ANALYZER_VERSION, languages: ['typescript', 'javascript'], features: { structure: 'supported', imports: 'partial', references: 'partial', effects: 'partial', guards: 'supported' } });
 analysisRegistry.registerLanguage({ id: 'php', version: ANALYZER_VERSION, languages: ['php'], features: { structure: 'partial', imports: 'partial', references: 'partial', effects: 'partial', guards: 'supported' } });
@@ -35,8 +35,9 @@ export const structureAnalyzer: Analyzer = {
           features: featureOutcomes('unsupported', 'This language adapter currently extracts declarations only'),
         };
         fileEntity.metadata.analysis = analysis;
-        if(file.language==='erb'){
-          const original=sources.readFile(file.absolutePath);if(original!==undefined){const id=context.graph.id('component','erb',file.application?.name??'.',file.path);context.graph.contain({id,type:'component',name:path.basename(file.path,path.extname(file.path)),path:file.path,language:'erb',parentId:file.id,sourceRange:new SourceText(original).range(0,original.length),metadata:{role:'template',templateLanguage:'erb',componentFile:true,synthetic:false,executionContext:'server',executionUnverified:true,registration:'original-file'},evidence:[evidence('syntax',this.name,file.path,1,'Original ERB template file identity; no compiled render function or generated class is invented')]});fileEntity.metadata.component=id;}
+        if(file.language==='erb'||file.language==='razor'){
+          const template=file.language,executionContext=template==='erb'||file.path.toLowerCase().endsWith('.cshtml')?'server':'unknown';
+          const original=sources.readFile(file.absolutePath);if(original!==undefined){const id=context.graph.id('component',template,file.application?.name??'.',file.path);context.graph.contain({id,type:'component',name:path.basename(file.path,path.extname(file.path)),path:file.path,language:template,parentId:file.id,sourceRange:new SourceText(original).range(0,original.length),metadata:{role:'template',templateLanguage:template,componentFile:true,synthetic:false,executionContext,executionUnverified:true,registration:'original-file'},evidence:[evidence('syntax',this.name,file.path,1,`Original ${template.toUpperCase()} template file identity; no compiled render function or generated class is invented`)]});fileEntity.metadata.component=id;}
         }
         try {
           if (grammarManifestError) throw new Error(grammarManifestError);
@@ -50,15 +51,16 @@ export const structureAnalyzer: Analyzer = {
           }
           if (integrity.get(grammar.language)) throw new Error(integrity.get(grammar.language));
           const content = sources.readText(file.path);
+          const razorKind=file.language==='razor'?(file.path.toLowerCase().endsWith('.cshtml')?'view':'component'):undefined;
           const hostSelection=file.language==='erb'?selectErbHost(file.path,content):undefined,erbHost=hostSelection?.language;
           if(hostSelection)fileEntity.metadata.erbHostSelection=hostSelection;
-          if(file.language==='erb'){
+          if(file.language==='erb'||file.language==='razor'){
             analysis.parser.auxiliary=[];
             // Main indexing already uses TypeScript; parser children still load
             // it lazily only for qualified literal scripts. Record the potential
             // provider before fact lookup, including upgraded compiler versions.
-            if(erbHost==='html')analysis.parser.embedded=[{language:'javascript',name:'typescript',version:ts.version,profile:'erb-original-literal-js-v1'}];
-            for(const language of ['ruby',...erbHost==='html'?['html']:[]]){const auxiliary=grammarCatalog.get(language);if(!auxiliary)throw Error(`Auxiliary ${language} grammar missing from catalog`);let queryHash=hashText(`${language}:query-unavailable`);try{queryHash=hashText(queryText(language));if(!integrity.has(language)){verifiedGrammar(auxiliary);integrity.set(language,undefined);}}catch(error){integrity.set(language,error instanceof Error?error.message:String(error));}analysis.parser.auxiliary.push({language,grammar:auxiliary.sourceRevision,grammarHash:auxiliary.sha256,queryHash,abi:auxiliary.abi,...integrity.get(language)?{unavailable:integrity.get(language)}:{}});}
+            if(erbHost==='html'||razorKind)analysis.parser.embedded=[{language:'javascript',name:'typescript',version:ts.version,profile:`${file.language}-original-literal-js-v1`}];
+            for(const language of [...file.language==='erb'?['ruby']:[],...erbHost==='html'||razorKind?['html']:[]]){const auxiliary=grammarCatalog.get(language);if(!auxiliary)throw Error(`Auxiliary ${language} grammar missing from catalog`);let queryHash=hashText(`${language}:query-unavailable`);try{queryHash=hashText(queryText(language));if(!integrity.has(language)){verifiedGrammar(auxiliary);integrity.set(language,undefined);}}catch(error){integrity.set(language,error instanceof Error?error.message:String(error));}analysis.parser.auxiliary.push({language,grammar:auxiliary.sourceRevision,grammarHash:auxiliary.sha256,queryHash,abi:auxiliary.abi,...integrity.get(language)?{unavailable:integrity.get(language)}:{}});}
           }
           const objectiveCpp=grammar.language==='objective-c'&&(file.path.toLowerCase().endsWith('.mm')||objectiveCppSource(content));
           if(objectiveCpp){
@@ -68,9 +70,9 @@ export const structureAnalyzer: Analyzer = {
             catch(error){integrity.set('cpp',error instanceof Error?error.message:String(error));}
             analysis.parser.auxiliary=[{language:'cpp',grammar:cpp.sourceRevision,grammarHash:cpp.sha256,queryHash,abi:cpp.abi,...integrity.get('cpp')?{unavailable:integrity.get('cpp')}:{}}];
           }
-          const compute = () => parser.parse(grammar.language, content, {objectiveCpp,...erbHost?{erbHost}:{}});
+          const compute = () => parser.parse(grammar.language, content, {objectiveCpp,...erbHost?{erbHost}:{},...razorKind?{razorKind}:{}});
           const facts = context.cache ? await context.cache.value('syntax-facts', file.path, { version: STRUCTURE_VERSION, file: fileKey(context, file.path), parser: analysis.parser }, compute) : await compute();
-          const declarations = declare(context, file, content, facts,file.language==='erb'?fileEntity.metadata.component as string|undefined:undefined);
+          const declarations = declare(context, file, content, facts,file.language==='erb'||file.language==='razor'?fileEntity.metadata.component as string|undefined:undefined);
           if(facts.cfamily)fileEntity.metadata.cfamilySyntax=facts.cfamily;
           if(facts.swift)fileEntity.metadata.swiftSyntax=facts.swift;
           if(facts.scala)fileEntity.metadata.scalaSyntax=facts.scala;
@@ -78,6 +80,7 @@ export const structureAnalyzer: Analyzer = {
           if(facts.fsharp)fileEntity.metadata.fsharpSyntax=facts.fsharp;
           if(facts.vbnet)fileEntity.metadata.vbnetSyntax=facts.vbnet;
           if(facts.erb)fileEntity.metadata.erbSyntax=facts.erb;
+          if(facts.razor)fileEntity.metadata.razorSyntax=facts.razor;
           if(facts.objc)fileEntity.metadata.objcSyntax={...facts.objc,sourceProfile:objectiveCpp?'objective-cpp-partial':'objective-c'};
           if (facts.python || facts.go || facts.ruby || facts.jvm || facts.csharp || facts.rust) { context.syntax ??= new Map(); context.syntax.set(file.path, { facts, declarations }); }
           analysis.features.structure = { status: facts.issues.length ? 'partial' : 'supported', ...(facts.issues.length ? { reason: `${facts.issues.length} syntax or extraction finding(s); valid declarations retained` } : {}) };

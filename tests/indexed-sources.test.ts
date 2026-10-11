@@ -144,6 +144,7 @@ test('capability outcomes distinguish parsed, failed, type-input, skipped and un
   assert.equal(analysis('example.fs').features.structure.status, 'supported');
   assert.equal(analysis('example.vb').features.structure.status, 'supported');
   assert.equal(analysis('example.vb').features.imports.status, 'unsupported');
-  assert.equal(analysis('example.cshtml').features.structure.status, 'unsupported');
+  assert.equal(analysis('example.cshtml').features.structure.status, 'supported');
+  assert.equal(analysis('example.cshtml').features.imports.status, 'unsupported');
   assert.equal(analysis('example.php').features.structure.status, 'disabled');
 });

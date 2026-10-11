@@ -108,6 +108,8 @@ How far Codiluce follows the code depends on the stack:
 - **ERB templates:** original server Ruby regions and declarations, literal HTML script/style regions and named
   literal JavaScript declarations, with one original template identity. Rendering, interpolated scripts and Rails
   template lookup remain visible gaps.
+- **Razor templates:** original component/view identity, C# member and render-local declarations, source directives
+  and literal JavaScript/script/style regions. Compiler output, partial code-behind, imports and navigation stay open.
 - **Map:** Angular, Remix, Fastify, Symfony, Quarkus, Blazor and every other language and framework are detected and
   mapped with their files, lines and Git metrics.
 
@@ -159,7 +161,13 @@ before HTML, preserves UTF-16 source ranges and original declarations spanning b
 inline JavaScript without execution or emit. Unknown engine/trim modes, recovery, rendered interpolation and external
 scripts remain explicit gaps. The [immutable ERB source audit](docs/erb-source-accuracy.html) qualifies reviewed original
 region boundaries; named Ruby/JavaScript declarations are additionally covered by conformance and installed-package
-checks. Import/reference/framework binding and Razor/Liquid remain open.
+checks. Import/reference/framework binding remains open.
+
+Razor now preserves native original component/view regions and C# members, render-local functions and qualified literal
+JavaScript. It uses a reproducible pinned generated-C grammar build with original MIT notices and nineteen verified
+local WASM assets. The [immutable Microsoft source audit](docs/razor-source-accuracy.html) qualifies 13 declarations
+and 28 of 29 reviewed source regions; valid route-less `@page`, HTML doctype and some literal text cause visible grammar
+gaps. Runtime/component compilation, code-behind, imports, Razor Pages/Blazor routing and Liquid remain open.
 
 Java and Kotlin now resolve original local import declarations within selected Maven reactors, literal Gradle projects
 and recorded source/classpath inputs. Explicit, wildcard, static and alias imports retain source evidence and visibility

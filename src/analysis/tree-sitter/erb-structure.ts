@@ -1,3 +1,4 @@
+import {extractTemplateHost} from './embedded-host.js';
 import type {Node,Query} from 'web-tree-sitter';
 import type {DeclarationFact,ErbSyntaxFacts,StructureFacts} from '../facts.js';
 import {SourceText} from '../source-map.js';
@@ -71,16 +72,4 @@ export function extractErbRuby(root:Node,query:Query,content:string,facts:Struct
   if(node.type==='singleton_method')fact.sourceConditions!.push('Original singleton receiver header retained; receiver/dispatch binding is unverified');facts.declarations.push(fact);byNode.set(node.id,fact);
  }
 }
-export function extractErbHost(root:Node,query:Query,content:string,facts:StructureFacts):void {
- const source=new SourceText(content),syntax=facts.erb!;
- if(!withinBudget(root)){facts.truncated=true;syntax.host.complete=false;return;}
- if(root.hasError){syntax.host.complete=false;erbIssue(facts,'erb-html-gap','Literal HTML projection recovered; script/style ownership is unqualified and regions are omitted');return;}
- for(const capture of query.captures(root,{matchLimit:4096}))if(capture.name==='region'){
-  if(syntax.host.regions.length===MAX_REGIONS){facts.truncated=true;break;}const node=capture.node,start=node.namedChildren.find(n=>n.type==='start_tag'),end=node.namedChildren.find(n=>n.type==='end_tag');if(!start||!end)continue;
-  const raw=node.namedChildren.find(n=>n.type==='raw_text'),bodyStart=raw?.startIndex??start.endIndex,bodyEnd=raw?.endIndex??end.startIndex,attributes=start.namedChildren.filter(n=>n.type==='attribute').map(n=>({name:n.namedChildren.find(c=>c.type==='attribute_name')?.text??'',text:content.slice(n.startIndex,n.endIndex),...n.descendantsOfType('attribute_value')[0]?{value:content.slice(n.descendantsOfType('attribute_value')[0]!.startIndex,n.descendantsOfType('attribute_value')[0]!.endIndex)}:{},range:source.range(n.startIndex,n.endIndex)})),dynamic=syntax.regions.some(r=>r.kind!=='literal'&&r.start<node.endIndex&&r.end>node.startIndex),external=attributes.some(a=>a.name.toLowerCase()==='src'),conditions=['Original literal HTML source region; rendering/runtime execution is unverified'];
-  const attribute=(name:string)=>attributes.find(a=>a.name.toLowerCase()===name)?.value?.trim().toLowerCase()??'',scriptType=attribute('type'),processor=attribute('lang'),legacy=attribute('language'),script=node.type==='script_element',javascript=(!scriptType||['module','text/javascript','application/javascript'].includes(scriptType))&&(!processor||['js','javascript'].includes(processor))&&(!legacy||legacy==='javascript'),css=(!scriptType||scriptType==='text/css')&&(!processor||processor==='css');if(script&&!javascript)conditions.push('Script MIME/processor type is outside the qualified literal JavaScript profile');if(!script&&!css)conditions.push('Style MIME/processor type is outside the literal CSS region profile');
-  if(dynamic)conditions.push('ERB processing intersects this HTML region; original client/style declarations cannot be inferred from rendered source');if(external)conditions.push('External script URL retained as source syntax only');
-  const supported=!dynamic&&!external&&(script?javascript:css);if(!supported){syntax.host.complete=false;erbIssue(facts,'erb-host-source-gap',conditions.slice(1).join('; '),source.range(node.startIndex,node.endIndex));}
-  syntax.host.regions.push({kind:node.type==='script_element'?'script':'style',start:node.startIndex,end:node.endIndex,range:source.range(node.startIndex,node.endIndex),bodyStart,bodyEnd,bodyRange:source.range(bodyStart,bodyEnd),attributes,executionContext:script&&javascript?'browser':'none',language:script?javascript?'javascript':'unknown':css?'css':'unknown',supported,conditions});
- }if(query.didExceedMatchLimit())facts.truncated=true;
-}
+export function extractErbHost(root:Node,query:Query,content:string,facts:StructureFacts):void {extractTemplateHost(root,query,content,facts,'erb');}

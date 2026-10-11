@@ -1,0 +1,1917 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Razor original source qualification</title><style>body{font:16px/1.6 system-ui,sans-serif;background:#101822;color:#e5ecf4;margin:0;padding:clamp(16px,4vw,48px)}main{max-width:1120px;margin:auto}p,code{overflow-wrap:anywhere}h1{font-size:clamp(28px,5vw,42px);line-height:1.2}a,code{color:#8bddd8}table{border-collapse:collapse;width:100%;min-width:700px}th,td{padding:12px;text-align:left;border-bottom:1px solid #344353;overflow-wrap:anywhere}th{overflow-wrap:normal}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}.scroll{overflow:auto}.status{padding:18px;border:1px solid #b69459;border-radius:8px}summary{cursor:pointer;padding:12px 0}</style></head><body><main><h1>Razor original source qualification</h1><p>P10b4c2 · 2026-10-11T07:54:13.913Z · v22.12.0 · linux/x64. Seven immutable original Microsoft Blazor/ASP.NET samples, pinned byte counts and SHA-256, with independently reviewed binder and region inventories.</p><p class="status"><strong>13/13 reviewed C# declarations · 0 misses · 0 extras</strong><br>Fields, properties, methods and an original nested type retain names, lexical ownership and UTF-16 coordinates. <strong>28/29 reviewed Razor regions</strong>: a valid route-less <code>@page</code> is omitted by the native grammar and remains a visible recovery gap. No extra regions are asserted.</p><div class="scroll"><table><thead><tr><th>Immutable original source</th><th>C# binders</th><th>Razor regions</th><th>Structure</th></tr></thead><tbody><tr><td><a href="https://github.com/dotnet/blazor-samples/blob/504bb3174749ea691a390bfc4ebed195dd022e3b/10.0/BlazorSample_BlazorWebApp/Components/Pages/Counter.razor">10.0/BlazorSample_BlazorWebApp/Components/Pages/Counter.razor</a></td><td>2/2</td><td>4/4</td><td>supported</td></tr><tr><td><a href="https://github.com/dotnet/blazor-samples/blob/504bb3174749ea691a390bfc4ebed195dd022e3b/10.0/BlazorSample_BlazorWebApp/Components/Pages/Weather.razor">10.0/BlazorSample_BlazorWebApp/Components/Pages/Weather.razor</a></td><td>7/7</td><td>10/10</td><td>supported</td></tr><tr><td><a href="https://github.com/dotnet/blazor-samples/blob/504bb3174749ea691a390bfc4ebed195dd022e3b/10.0/BlazorSample_BlazorWebApp/Components/Pages/ThemedCounter.razor">10.0/BlazorSample_BlazorWebApp/Components/Pages/ThemedCounter.razor</a></td><td>3/3</td><td>6/6</td><td>supported</td></tr><tr><td><a href="https://github.com/dotnet/AspNetCore.Docs/blob/e073388af85c37ed5207ca8bed5ea3445fcefcdd/aspnetcore/mvc/views/razor/sample/Views/Home/Index.cshtml">aspnetcore/mvc/views/razor/sample/Views/Home/Index.cshtml</a></td><td>0/0</td><td>2/2</td><td>supported</td></tr><tr><td><a href="https://github.com/dotnet/AspNetCore.Docs/blob/e073388af85c37ed5207ca8bed5ea3445fcefcdd/aspnetcore/mvc/views/razor/sample/Views/Shared/_Layout.cshtml">aspnetcore/mvc/views/razor/sample/Views/Shared/_Layout.cshtml</a></td><td>0/0</td><td>2/2</td><td>partial</td></tr><tr><td><a href="https://github.com/dotnet/AspNetCore.Docs/blob/e073388af85c37ed5207ca8bed5ea3445fcefcdd/aspnetcore/tutorials/razor-pages/razor-pages-start/snapshot-sample10/Pages/Index.cshtml">aspnetcore/tutorials/razor-pages/razor-pages-start/snapshot-sample10/Pages/Index.cshtml</a></td><td>0/0</td><td>2/3</td><td>partial</td></tr><tr><td><a href="https://github.com/dotnet/AspNetCore.Docs/blob/e073388af85c37ed5207ca8bed5ea3445fcefcdd/aspnetcore/mvc/views/razor/sample/Views/Home/Contact6.cshtml">aspnetcore/mvc/views/razor/sample/Views/Home/Contact6.cshtml</a></td><td>1/1</td><td>2/2</td><td>supported</td></tr></tbody></table></div><p>The narrow source portfolio covers three .NET 10 Blazor components and four original ASP.NET view/page samples. The grammar recovers on the layout doctype and a literal trailing period after a tag; those files stay partial. The source files contain no inline script/style units, so this audit does not establish JavaScript accuracy. Thirty-four conformance cases and installed-package CLI/API/full original-source/two-history checks cover additional original declarations and qualified literal scripts. Seven real syntax-cache hits preserve cold/warm/revision graphs and original template identities. These samples do not establish broad template/compiler or framework accuracy.</p><p>Native <code>@code</code>/<code>@functions</code> members, original nested types and explicit constructors, C# fields/properties/methods/events/indexers/operators, render-local functions, directives, expressions, controls, comments and source attributes remain original syntax. The <a href="https://learn.microsoft.com/en-us/aspnet/core/mvc/views/razor?view=aspnetcore-10.0">Microsoft Razor reference</a> distinguishes component-only <code>@code</code>, member functions and render-local functions. A single original template component exists before parser checks; no generated class, compiled render method, injected property or virtual graph file is invented. .cshtml C# is server source; .razor runtime context remains unknown without a qualified host. Directives do not imply imports, routes, event handlers, layouts or project binding.</p><p>Offset-preserving whitespace projections use only native original markup and original HTML script/style units. Literal JavaScript parsing is in-memory, source-only, noResolve/noLib/noEmit, without filesystem reads or execution. Native Razor raw-text recovery can coexist with independently qualified literal JavaScript; original @ transitions, interpolation, controls, external/data/processor scripts and uncertain HTML ownership prevent client declaration inference. CSS retains source regions only. Opaque HTML-comment/@: transitions, preprocessors, unsupported namespace/conversion syntax, recovered owners and oversized headers stay explicit gaps. C#/JavaScript import/reference/effect/guard/framework binding, Razor Pages/Blazor navigation, partial code-behind, Tag Helpers, template/layout lookup and rendered-output equivalence remain open. Liquid is the next separate template subphase.</p><p><a href="https://github.com/tris203/tree-sitter-razor/tree/d4664e409caaea12f73c9525484e3cf88b1cf718">Pinned Razor grammar 0.1.1</a>: ABI 15, 10,723,839-byte WASM, SHA-256 <code>3d9a20a7e4b1b6599e0a23ea758ec6bd9207c03a0a88944b4ddaac24ad96152a</code>. The committed generated C/scanner builds reproducibly with checksum-pinned Tree-sitter CLI 0.26.9, WASI SDK 29.0 and an immutable Linux container; a second offline build reproduces identical bytes. Both Razor and inherited C# MIT notices ship. Ordinary sync/build/index uses nineteen verified local assets. No upstream npm hooks or grammar-generation JavaScript executes, and no target .NET/Razor compiler, build or application runs.</p><h2>Fresh direct parser observations</h2><p><strong>immutable original Microsoft Counter</strong><br>Three fresh processes: median runtime initialization 9.5 ms; Razor/HTML grammar-and-query loads 76.7/2.4 ms; native extraction 12.9 ms; JavaScript load/extraction 0.0/0.0 ms; combined first extraction excluding load 12.9 ms; process-image peak 147.1 MiB.</p><p><strong>Codiluce original C#/literal-JavaScript conformance fixture</strong><br>Three fresh processes: median runtime initialization 9.6 ms; Razor/HTML grammar-and-query loads 79.8/2.4 ms; native extraction 15.6 ms; JavaScript load/extraction 937.9/11.4 ms; combined first extraction excluding load 25.8 ms; process-image peak 302.7 MiB.</p><p>Linux /proc VmHWM measures one process image since exec; it excludes IPC and concurrent process-tree memory. Other Codiluce validation jobs were idle during measurement. Existing TS/Laravel workloads are qualified separately by the <a href="razor-compatibility-performance.html">five-repeat comparison against 3ea60e5</a>. Mixed-history, parser-child/process-tree memory, broader original accuracy and native Windows/macOS remain full P10 release gates.</p><p>Implementation digest (268 source/asset/pin/build/audit/memory/package/conformance files): <code>0f1dfa45d9ad7c4011d3f185c62236823def9830b9ad72ff86c29c974b7ecd7f</code>. Reproduce <code>node --experimental-sqlite --import tsx scripts/qualify-razor-source.mjs --output docs/razor-source-accuracy.html</code>; <code>--source DIRECTORY</code> verifies the flat mirror names in this audit, preserving upstream relative paths when indexing. <a href="language-framework-compatibility.html#implementation">Implementation roadmap</a></p><details><summary>Independent inventories, original source proofs, omissions, hashes and raw startup measurements</summary><pre>{
+  &quot;phase&quot;: &quot;P10b4c2&quot;,
+  &quot;measuredAt&quot;: &quot;2026-10-11T07:54:13.913Z&quot;,
+  &quot;baseline&quot;: &quot;3ea60e5&quot;,
+  &quot;node&quot;: &quot;v22.12.0&quot;,
+  &quot;platform&quot;: &quot;linux/x64&quot;,
+  &quot;memoryMethod&quot;: &quot;linux-proc-vmhwm&quot;,
+  &quot;implementationDigest&quot;: &quot;0f1dfa45d9ad7c4011d3f185c62236823def9830b9ad72ff86c29c974b7ecd7f&quot;,
+  &quot;implementationFiles&quot;: 268,
+  &quot;reviewedDeclarations&quot;: 13,
+  &quot;matchedDeclarations&quot;: 13,
+  &quot;missedDeclarations&quot;: 0,
+  &quot;extraDeclarations&quot;: 0,
+  &quot;reviewedRegions&quot;: 29,
+  &quot;matchedRegions&quot;: 28,
+  &quot;missedRegions&quot;: 1,
+  &quot;extraRegions&quot;: 0,
+  &quot;canonicalOriginalTemplates&quot;: 7,
+  &quot;syntaxFactCacheHits&quot;: 7,
+  &quot;coldWarmEqual&quot;: true,
+  &quot;revisionModeEqual&quot;: true,
+  &quot;startup&quot;: {
+    &quot;profiles&quot;: [
+      {
+        &quot;file&quot;: &quot;blazor/10.0/BlazorSample_BlazorWebApp/Components/Pages/Counter.razor&quot;,
+        &quot;label&quot;: &quot;immutable original Microsoft Counter&quot;,
+        &quot;repetitions&quot;: 3,
+        &quot;median&quot;: {
+          &quot;runtimeMs&quot;: 9.491601000000003,
+          &quot;razorLoadMs&quot;: 76.7158,
+          &quot;htmlLoadMs&quot;: 2.4283760000000143,
+          &quot;nativeExtractionMs&quot;: 12.895891000000006,
+          &quot;javascriptLoadMs&quot;: 0,
+          &quot;javascriptExtractionMs&quot;: 0,
+          &quot;firstExtractionMs&quot;: 12.895891000000006,
+          &quot;peakRssKiB&quot;: 150656
+        },
+        &quot;runs&quot;: [
+          {
+            &quot;runtimeMs&quot;: 9.491601000000003,
+            &quot;razorLoadMs&quot;: 78.14933400000001,
+            &quot;htmlLoadMs&quot;: 2.0845620000000054,
+            &quot;nativeExtractionMs&quot;: 13.511670999999978,
+            &quot;javascriptLoadMs&quot;: 0,
+            &quot;javascriptExtractionMs&quot;: 0,
+            &quot;firstExtractionMs&quot;: 13.511670999999978,
+            &quot;peakRssKiB&quot;: 150456
+          },
+          {
+            &quot;runtimeMs&quot;: 11.261504000000002,
+            &quot;razorLoadMs&quot;: 76.608024,
+            &quot;htmlLoadMs&quot;: 2.4283760000000143,
+            &quot;nativeExtractionMs&quot;: 12.895891000000006,
+            &quot;javascriptLoadMs&quot;: 0,
+            &quot;javascriptExtractionMs&quot;: 0,
+            &quot;firstExtractionMs&quot;: 12.895891000000006,
+            &quot;peakRssKiB&quot;: 150656
+          },
+          {
+            &quot;runtimeMs&quot;: 8.986689999999982,
+            &quot;razorLoadMs&quot;: 76.7158,
+            &quot;htmlLoadMs&quot;: 2.677839000000006,
+            &quot;nativeExtractionMs&quot;: 12.139302999999984,
+            &quot;javascriptLoadMs&quot;: 0,
+            &quot;javascriptExtractionMs&quot;: 0,
+            &quot;firstExtractionMs&quot;: 12.139302999999984,
+            &quot;peakRssKiB&quot;: 152592
+          }
+        ]
+      },
+      {
+        &quot;file&quot;: &quot;tests/fixtures/structure/Counter.razor&quot;,
+        &quot;label&quot;: &quot;Codiluce original C#/literal-JavaScript conformance fixture&quot;,
+        &quot;repetitions&quot;: 3,
+        &quot;median&quot;: {
+          &quot;runtimeMs&quot;: 9.635073000000006,
+          &quot;razorLoadMs&quot;: 79.78029400000003,
+          &quot;htmlLoadMs&quot;: 2.3540239999999812,
+          &quot;nativeExtractionMs&quot;: 15.580934000000013,
+          &quot;javascriptLoadMs&quot;: 937.8617989999999,
+          &quot;javascriptExtractionMs&quot;: 11.439512999999806,
+          &quot;firstExtractionMs&quot;: 25.796540999999877,
+          &quot;peakRssKiB&quot;: 309932
+        },
+        &quot;runs&quot;: [
+          {
+            &quot;runtimeMs&quot;: 9.71248,
+            &quot;razorLoadMs&quot;: 78.87452200000001,
+            &quot;htmlLoadMs&quot;: 2.3540239999999812,
+            &quot;nativeExtractionMs&quot;: 18.154506000000026,
+            &quot;javascriptLoadMs&quot;: 960.462246,
+            &quot;javascriptExtractionMs&quot;: 12.234643000000005,
+            &quot;firstExtractionMs&quot;: 30.38914900000003,
+            &quot;peakRssKiB&quot;: 309932
+          },
+          {
+            &quot;runtimeMs&quot;: 9.139571000000018,
+            &quot;razorLoadMs&quot;: 80.04762200000002,
+            &quot;htmlLoadMs&quot;: 2.079461999999978,
+            &quot;nativeExtractionMs&quot;: 14.246297000000027,
+            &quot;javascriptLoadMs&quot;: 937.8617989999999,
+            &quot;javascriptExtractionMs&quot;: 11.439512999999806,
+            &quot;firstExtractionMs&quot;: 25.685809999999833,
+            &quot;peakRssKiB&quot;: 295136
+          },
+          {
+            &quot;runtimeMs&quot;: 9.635073000000006,
+            &quot;razorLoadMs&quot;: 79.78029400000003,
+            &quot;htmlLoadMs&quot;: 3.526792999999998,
+            &quot;nativeExtractionMs&quot;: 15.580934000000013,
+            &quot;javascriptLoadMs&quot;: 916.749251,
+            &quot;javascriptExtractionMs&quot;: 10.215606999999864,
+            &quot;firstExtractionMs&quot;: 25.796540999999877,
+            &quot;peakRssKiB&quot;: 341148
+          }
+        ]
+      }
+    ]
+  },
+  &quot;results&quot;: [
+    {
+      &quot;repo&quot;: &quot;dotnet/blazor-samples&quot;,
+      &quot;commit&quot;: &quot;504bb3174749ea691a390bfc4ebed195dd022e3b&quot;,
+      &quot;file&quot;: &quot;10.0/BlazorSample_BlazorWebApp/Components/Pages/Counter.razor&quot;,
+      &quot;mirror&quot;: &quot;counter.razor&quot;,
+      &quot;bytes&quot;: 294,
+      &quot;sha256&quot;: &quot;fa90dc1a6850fe26ab76c34c73bb6639029938857abb034369af3c44c41baa3b&quot;,
+      &quot;names&quot;: [
+        [
+          &quot;currentCount&quot;,
+          &quot;field&quot;,
+          12
+        ],
+        [
+          &quot;IncrementCount&quot;,
+          &quot;method&quot;,
+          14
+        ]
+      ],
+      &quot;regions&quot;: [
+        [
+          &quot;razor_page_directive&quot;,
+          1,
+          1
+        ],
+        [
+          &quot;razor_implicit_expression&quot;,
+          7,
+          7
+        ],
+        [
+          &quot;razor_html_attribute&quot;,
+          9,
+          9
+        ],
+        [
+          &quot;razor_block&quot;,
+          11,
+          15
+        ]
+      ],
+      &quot;status&quot;: &quot;supported&quot;,
+      &quot;indexPath&quot;: &quot;blazor/10.0/BlazorSample_BlazorWebApp/Components/Pages/Counter.razor&quot;,
+      &quot;url&quot;: &quot;https://github.com/dotnet/blazor-samples/blob/504bb3174749ea691a390bfc4ebed195dd022e3b/10.0/BlazorSample_BlazorWebApp/Components/Pages/Counter.razor&quot;,
+      &quot;matchedRegions&quot;: 4,
+      &quot;reviewedRegions&quot;: 4,
+      &quot;missedRegions&quot;: [],
+      &quot;extraRegions&quot;: 0,
+      &quot;matchedDeclarations&quot;: 2,
+      &quot;issues&quot;: [],
+      &quot;regionProof&quot;: [
+        {
+          &quot;key&quot;: &quot;directive:0&quot;,
+          &quot;kind&quot;: &quot;directive&quot;,
+          &quot;nativeKind&quot;: &quot;razor_page_directive&quot;,
+          &quot;start&quot;: 0,
+          &quot;end&quot;: 16,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 1,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 1,
+            &quot;endColumn&quot;: 17
+          },
+          &quot;bodyStart&quot;: 0,
+          &quot;bodyEnd&quot;: 16,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 1,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 1,
+            &quot;endColumn&quot;: 17
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;expression:1&quot;,
+          &quot;kind&quot;: &quot;expression&quot;,
+          &quot;nativeKind&quot;: &quot;razor_implicit_expression&quot;,
+          &quot;start&quot;: 100,
+          &quot;end&quot;: 113,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 7,
+            &quot;startColumn&quot;: 33,
+            &quot;endLine&quot;: 7,
+            &quot;endColumn&quot;: 46
+          },
+          &quot;bodyStart&quot;: 100,
+          &quot;bodyEnd&quot;: 113,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 7,
+            &quot;startColumn&quot;: 33,
+            &quot;endLine&quot;: 7,
+            &quot;endColumn&quot;: 46
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;attribute:2&quot;,
+          &quot;kind&quot;: &quot;attribute&quot;,
+          &quot;nativeKind&quot;: &quot;razor_html_attribute&quot;,
+          &quot;start&quot;: 151,
+          &quot;end&quot;: 176,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 9,
+            &quot;startColumn&quot;: 33,
+            &quot;endLine&quot;: 9,
+            &quot;endColumn&quot;: 58
+          },
+          &quot;bodyStart&quot;: 151,
+          &quot;bodyEnd&quot;: 176,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 9,
+            &quot;startColumn&quot;: 33,
+            &quot;endLine&quot;: 9,
+            &quot;endColumn&quot;: 58
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;member-block:3&quot;,
+          &quot;kind&quot;: &quot;member-block&quot;,
+          &quot;nativeKind&quot;: &quot;razor_block&quot;,
+          &quot;start&quot;: 196,
+          &quot;end&quot;: 293,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 11,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 15,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;bodyStart&quot;: 203,
+          &quot;bodyEnd&quot;: 292,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 11,
+            &quot;startColumn&quot;: 8,
+            &quot;endLine&quot;: 15,
+            &quot;endColumn&quot;: 1
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        }
+      ],
+      &quot;directiveProof&quot;: [
+        {
+          &quot;kind&quot;: &quot;page&quot;,
+          &quot;text&quot;: &quot;@page \&quot;/counter\&quot;&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 1,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 1,
+            &quot;endColumn&quot;: 17
+          },
+          &quot;supported&quot;: true
+        }
+      ],
+      &quot;declarationProof&quot;: [
+        {
+          &quot;key&quot;: &quot;razor-csharp:216:236:220:field&quot;,
+          &quot;name&quot;: &quot;currentCount&quot;,
+          &quot;qualifiedName&quot;: &quot;currentCount&quot;,
+          &quot;kind&quot;: &quot;field&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;private int currentCount&quot;,
+          &quot;start&quot;: 208,
+          &quot;end&quot;: 236,
+          &quot;nameEnd&quot;: 232,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 12,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 12,
+            &quot;endColumn&quot;: 33
+          },
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;Original C# source declaration; generated class/render methods, namespaces/partial component binding, imports, routes and runtime execution remain unverified&quot;,
+            &quot;Field signature consists only of original shared type/modifier bytes and the original declarator name; initializer execution remains unverified&quot;
+          ],
+          &quot;embeddedSource&quot;: {
+            &quot;language&quot;: &quot;csharp&quot;,
+            &quot;executionContext&quot;: &quot;unknown&quot;,
+            &quot;headerRange&quot;: {
+              &quot;startLine&quot;: 12,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 12,
+              &quot;endColumn&quot;: 29
+            },
+            &quot;regions&quot;: [
+              {
+                &quot;startLine&quot;: 12,
+                &quot;startColumn&quot;: 5,
+                &quot;endLine&quot;: 12,
+                &quot;endColumn&quot;: 16
+              },
+              {
+                &quot;startLine&quot;: 12,
+                &quot;startColumn&quot;: 17,
+                &quot;endLine&quot;: 12,
+                &quot;endColumn&quot;: 33
+              }
+            ]
+          }
+        },
+        {
+          &quot;key&quot;: &quot;razor-csharp:243:291:256:method&quot;,
+          &quot;name&quot;: &quot;IncrementCount&quot;,
+          &quot;qualifiedName&quot;: &quot;IncrementCount&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;private void IncrementCount()&quot;,
+          &quot;start&quot;: 243,
+          &quot;end&quot;: 291,
+          &quot;nameEnd&quot;: 270,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 14,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 14,
+            &quot;endColumn&quot;: 53
+          },
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;Original C# source declaration; generated class/render methods, namespaces/partial component binding, imports, routes and runtime execution remain unverified&quot;
+          ],
+          &quot;embeddedSource&quot;: {
+            &quot;language&quot;: &quot;csharp&quot;,
+            &quot;executionContext&quot;: &quot;unknown&quot;,
+            &quot;headerRange&quot;: {
+              &quot;startLine&quot;: 14,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 14,
+              &quot;endColumn&quot;: 35
+            },
+            &quot;regions&quot;: [
+              {
+                &quot;startLine&quot;: 14,
+                &quot;startColumn&quot;: 5,
+                &quot;endLine&quot;: 14,
+                &quot;endColumn&quot;: 53
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      &quot;repo&quot;: &quot;dotnet/blazor-samples&quot;,
+      &quot;commit&quot;: &quot;504bb3174749ea691a390bfc4ebed195dd022e3b&quot;,
+      &quot;file&quot;: &quot;10.0/BlazorSample_BlazorWebApp/Components/Pages/Weather.razor&quot;,
+      &quot;mirror&quot;: &quot;weather.razor&quot;,
+      &quot;bytes&quot;: 1931,
+      &quot;sha256&quot;: &quot;5d28718b6802906c41b0c36b184f6849f9387529a14ca3866e804beeab114c16&quot;,
+      &quot;names&quot;: [
+        [
+          &quot;forecasts&quot;,
+          &quot;field&quot;,
+          40
+        ],
+        [
+          &quot;OnInitializedAsync&quot;,
+          &quot;method&quot;,
+          42
+        ],
+        [
+          &quot;WeatherForecast&quot;,
+          &quot;class&quot;,
+          71
+        ],
+        [
+          &quot;Date&quot;,
+          &quot;property&quot;,
+          73
+        ],
+        [
+          &quot;TemperatureC&quot;,
+          &quot;property&quot;,
+          74
+        ],
+        [
+          &quot;Summary&quot;,
+          &quot;property&quot;,
+          75
+        ],
+        [
+          &quot;TemperatureF&quot;,
+          &quot;property&quot;,
+          76
+        ]
+      ],
+      &quot;regions&quot;: [
+        [
+          &quot;razor_page_directive&quot;,
+          1,
+          1
+        ],
+        [
+          &quot;razor_attribute_directive&quot;,
+          2,
+          2
+        ],
+        [
+          &quot;razor_if&quot;,
+          10,
+          37
+        ],
+        [
+          &quot;razor_else&quot;,
+          14,
+          37
+        ],
+        [
+          &quot;razor_foreach&quot;,
+          26,
+          34
+        ],
+        [
+          &quot;razor_implicit_expression&quot;,
+          29,
+          29
+        ],
+        [
+          &quot;razor_implicit_expression&quot;,
+          30,
+          30
+        ],
+        [
+          &quot;razor_implicit_expression&quot;,
+          31,
+          31
+        ],
+        [
+          &quot;razor_implicit_expression&quot;,
+          32,
+          32
+        ],
+        [
+          &quot;razor_block&quot;,
+          39,
+          78
+        ]
+      ],
+      &quot;status&quot;: &quot;supported&quot;,
+      &quot;indexPath&quot;: &quot;blazor/10.0/BlazorSample_BlazorWebApp/Components/Pages/Weather.razor&quot;,
+      &quot;url&quot;: &quot;https://github.com/dotnet/blazor-samples/blob/504bb3174749ea691a390bfc4ebed195dd022e3b/10.0/BlazorSample_BlazorWebApp/Components/Pages/Weather.razor&quot;,
+      &quot;matchedRegions&quot;: 10,
+      &quot;reviewedRegions&quot;: 10,
+      &quot;missedRegions&quot;: [],
+      &quot;extraRegions&quot;: 0,
+      &quot;matchedDeclarations&quot;: 7,
+      &quot;issues&quot;: [],
+      &quot;regionProof&quot;: [
+        {
+          &quot;key&quot;: &quot;directive:0&quot;,
+          &quot;kind&quot;: &quot;directive&quot;,
+          &quot;nativeKind&quot;: &quot;razor_page_directive&quot;,
+          &quot;start&quot;: 1,
+          &quot;end&quot;: 17,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 1,
+            &quot;startColumn&quot;: 2,
+            &quot;endLine&quot;: 1,
+            &quot;endColumn&quot;: 18
+          },
+          &quot;bodyStart&quot;: 1,
+          &quot;bodyEnd&quot;: 17,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 1,
+            &quot;startColumn&quot;: 2,
+            &quot;endLine&quot;: 1,
+            &quot;endColumn&quot;: 18
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;directive:1&quot;,
+          &quot;kind&quot;: &quot;directive&quot;,
+          &quot;nativeKind&quot;: &quot;razor_attribute_directive&quot;,
+          &quot;start&quot;: 18,
+          &quot;end&quot;: 46,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 2,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 2,
+            &quot;endColumn&quot;: 29
+          },
+          &quot;bodyStart&quot;: 18,
+          &quot;bodyEnd&quot;: 46,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 2,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 2,
+            &quot;endColumn&quot;: 29
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;control:2&quot;,
+          &quot;kind&quot;: &quot;control&quot;,
+          &quot;nativeKind&quot;: &quot;razor_if&quot;,
+          &quot;start&quot;: 148,
+          &quot;end&quot;: 823,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 10,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 37,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;bodyStart&quot;: 148,
+          &quot;bodyEnd&quot;: 823,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 10,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 37,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;control:3&quot;,
+          &quot;kind&quot;: &quot;control&quot;,
+          &quot;nativeKind&quot;: &quot;razor_else&quot;,
+          &quot;start&quot;: 207,
+          &quot;end&quot;: 823,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 14,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 37,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;bodyStart&quot;: 207,
+          &quot;bodyEnd&quot;: 823,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 14,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 37,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;control:4&quot;,
+          &quot;kind&quot;: &quot;control&quot;,
+          &quot;nativeKind&quot;: &quot;razor_foreach&quot;,
+          &quot;start&quot;: 469,
+          &quot;end&quot;: 791,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 26,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 34,
+            &quot;endColumn&quot;: 14
+          },
+          &quot;bodyStart&quot;: 469,
+          &quot;bodyEnd&quot;: 791,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 26,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 34,
+            &quot;endColumn&quot;: 14
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;expression:5&quot;,
+          &quot;kind&quot;: &quot;expression&quot;,
+          &quot;nativeKind&quot;: &quot;razor_implicit_expression&quot;,
+          &quot;start&quot;: 565,
+          &quot;end&quot;: 599,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 29,
+            &quot;startColumn&quot;: 25,
+            &quot;endLine&quot;: 29,
+            &quot;endColumn&quot;: 59
+          },
+          &quot;bodyStart&quot;: 565,
+          &quot;bodyEnd&quot;: 599,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 29,
+            &quot;startColumn&quot;: 25,
+            &quot;endLine&quot;: 29,
+            &quot;endColumn&quot;: 59
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;expression:6&quot;,
+          &quot;kind&quot;: &quot;expression&quot;,
+          &quot;nativeKind&quot;: &quot;razor_implicit_expression&quot;,
+          &quot;start&quot;: 629,
+          &quot;end&quot;: 651,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 30,
+            &quot;startColumn&quot;: 25,
+            &quot;endLine&quot;: 30,
+            &quot;endColumn&quot;: 47
+          },
+          &quot;bodyStart&quot;: 629,
+          &quot;bodyEnd&quot;: 651,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 30,
+            &quot;startColumn&quot;: 25,
+            &quot;endLine&quot;: 30,
+            &quot;endColumn&quot;: 47
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;expression:7&quot;,
+          &quot;kind&quot;: &quot;expression&quot;,
+          &quot;nativeKind&quot;: &quot;razor_implicit_expression&quot;,
+          &quot;start&quot;: 681,
+          &quot;end&quot;: 703,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 31,
+            &quot;startColumn&quot;: 25,
+            &quot;endLine&quot;: 31,
+            &quot;endColumn&quot;: 47
+          },
+          &quot;bodyStart&quot;: 681,
+          &quot;bodyEnd&quot;: 703,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 31,
+            &quot;startColumn&quot;: 25,
+            &quot;endLine&quot;: 31,
+            &quot;endColumn&quot;: 47
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;expression:8&quot;,
+          &quot;kind&quot;: &quot;expression&quot;,
+          &quot;nativeKind&quot;: &quot;razor_implicit_expression&quot;,
+          &quot;start&quot;: 733,
+          &quot;end&quot;: 750,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 25,
+            &quot;endLine&quot;: 32,
+            &quot;endColumn&quot;: 42
+          },
+          &quot;bodyStart&quot;: 733,
+          &quot;bodyEnd&quot;: 750,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 25,
+            &quot;endLine&quot;: 32,
+            &quot;endColumn&quot;: 42
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;member-block:9&quot;,
+          &quot;kind&quot;: &quot;member-block&quot;,
+          &quot;nativeKind&quot;: &quot;razor_block&quot;,
+          &quot;start&quot;: 825,
+          &quot;end&quot;: 1928,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 39,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 78,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;bodyStart&quot;: 832,
+          &quot;bodyEnd&quot;: 1927,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 39,
+            &quot;startColumn&quot;: 8,
+            &quot;endLine&quot;: 78,
+            &quot;endColumn&quot;: 1
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        }
+      ],
+      &quot;directiveProof&quot;: [
+        {
+          &quot;kind&quot;: &quot;page&quot;,
+          &quot;text&quot;: &quot;@page \&quot;/weather\&quot;&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 1,
+            &quot;startColumn&quot;: 2,
+            &quot;endLine&quot;: 1,
+            &quot;endColumn&quot;: 18
+          },
+          &quot;supported&quot;: true
+        },
+        {
+          &quot;kind&quot;: &quot;attribute&quot;,
+          &quot;text&quot;: &quot;@attribute [StreamRendering]&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 2,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 2,
+            &quot;endColumn&quot;: 29
+          },
+          &quot;supported&quot;: true
+        }
+      ],
+      &quot;declarationProof&quot;: [
+        {
+          &quot;key&quot;: &quot;razor-csharp:845:873:864:field&quot;,
+          &quot;name&quot;: &quot;forecasts&quot;,
+          &quot;qualifiedName&quot;: &quot;forecasts&quot;,
+          &quot;kind&quot;: &quot;field&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;private WeatherForecast[]? forecasts&quot;,
+          &quot;start&quot;: 837,
+          &quot;end&quot;: 873,
+          &quot;nameEnd&quot;: 873,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 40,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 40,
+            &quot;endColumn&quot;: 41
+          },
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;Original C# source declaration; generated class/render methods, namespaces/partial component binding, imports, routes and runtime execution remain unverified&quot;,
+            &quot;Field signature consists only of original shared type/modifier bytes and the original declarator name; initializer execution remains unverified&quot;
+          ],
+          &quot;embeddedSource&quot;: {
+            &quot;language&quot;: &quot;csharp&quot;,
+            &quot;executionContext&quot;: &quot;unknown&quot;,
+            &quot;headerRange&quot;: {
+              &quot;startLine&quot;: 40,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 40,
+              &quot;endColumn&quot;: 41
+            },
+            &quot;regions&quot;: [
+              {
+                &quot;startLine&quot;: 40,
+                &quot;startColumn&quot;: 5,
+                &quot;endLine&quot;: 40,
+                &quot;endColumn&quot;: 31
+              },
+              {
+                &quot;startLine&quot;: 40,
+                &quot;startColumn&quot;: 32,
+                &quot;endLine&quot;: 40,
+                &quot;endColumn&quot;: 41
+              }
+            ]
+          }
+        },
+        {
+          &quot;key&quot;: &quot;razor-csharp:880:1675:910:method&quot;,
+          &quot;name&quot;: &quot;OnInitializedAsync&quot;,
+          &quot;qualifiedName&quot;: &quot;OnInitializedAsync&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;protected override async Task OnInitializedAsync()&quot;,
+          &quot;start&quot;: 880,
+          &quot;end&quot;: 1675,
+          &quot;nameEnd&quot;: 928,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 42,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 69,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;Original C# source declaration; generated class/render methods, namespaces/partial component binding, imports, routes and runtime execution remain unverified&quot;
+          ],
+          &quot;embeddedSource&quot;: {
+            &quot;language&quot;: &quot;csharp&quot;,
+            &quot;executionContext&quot;: &quot;unknown&quot;,
+            &quot;headerRange&quot;: {
+              &quot;startLine&quot;: 42,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 43,
+              &quot;endColumn&quot;: 5
+            },
+            &quot;regions&quot;: [
+              {
+                &quot;startLine&quot;: 42,
+                &quot;startColumn&quot;: 5,
+                &quot;endLine&quot;: 69,
+                &quot;endColumn&quot;: 6
+              }
+            ]
+          }
+        },
+        {
+          &quot;key&quot;: &quot;razor-csharp:1681:1926:1695:class&quot;,
+          &quot;name&quot;: &quot;WeatherForecast&quot;,
+          &quot;qualifiedName&quot;: &quot;WeatherForecast&quot;,
+          &quot;kind&quot;: &quot;class&quot;,
+          &quot;entityType&quot;: &quot;class&quot;,
+          &quot;signature&quot;: &quot;private class WeatherForecast&quot;,
+          &quot;start&quot;: 1681,
+          &quot;end&quot;: 1926,
+          &quot;nameEnd&quot;: 1710,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 71,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 77,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;Original C# source declaration; generated class/render methods, namespaces/partial component binding, imports, routes and runtime execution remain unverified&quot;
+          ],
+          &quot;embeddedSource&quot;: {
+            &quot;language&quot;: &quot;csharp&quot;,
+            &quot;executionContext&quot;: &quot;unknown&quot;,
+            &quot;headerRange&quot;: {
+              &quot;startLine&quot;: 71,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 72,
+              &quot;endColumn&quot;: 5
+            },
+            &quot;regions&quot;: [
+              {
+                &quot;startLine&quot;: 71,
+                &quot;startColumn&quot;: 5,
+                &quot;endLine&quot;: 77,
+                &quot;endColumn&quot;: 6
+              }
+            ]
+          }
+        },
+        {
+          &quot;key&quot;: &quot;razor-csharp:1725:1759:1741:property&quot;,
+          &quot;name&quot;: &quot;Date&quot;,
+          &quot;qualifiedName&quot;: &quot;WeatherForecast::Date&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;public DateOnly Date&quot;,
+          &quot;start&quot;: 1725,
+          &quot;end&quot;: 1759,
+          &quot;nameEnd&quot;: 1745,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 73,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 73,
+            &quot;endColumn&quot;: 43
+          },
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;Original C# source declaration; generated class/render methods, namespaces/partial component binding, imports, routes and runtime execution remain unverified&quot;
+          ],
+          &quot;embeddedSource&quot;: {
+            &quot;language&quot;: &quot;csharp&quot;,
+            &quot;executionContext&quot;: &quot;unknown&quot;,
+            &quot;headerRange&quot;: {
+              &quot;startLine&quot;: 73,
+              &quot;startColumn&quot;: 9,
+              &quot;endLine&quot;: 73,
+              &quot;endColumn&quot;: 30
+            },
+            &quot;regions&quot;: [
+              {
+                &quot;startLine&quot;: 73,
+                &quot;startColumn&quot;: 9,
+                &quot;endLine&quot;: 73,
+                &quot;endColumn&quot;: 43
+              }
+            ]
+          },
+          &quot;parent&quot;: &quot;razor-csharp:1681:1926:1695:class&quot;
+        },
+        {
+          &quot;key&quot;: &quot;razor-csharp:1768:1805:1779:property&quot;,
+          &quot;name&quot;: &quot;TemperatureC&quot;,
+          &quot;qualifiedName&quot;: &quot;WeatherForecast::TemperatureC&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;public int TemperatureC&quot;,
+          &quot;start&quot;: 1768,
+          &quot;end&quot;: 1805,
+          &quot;nameEnd&quot;: 1791,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 74,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 74,
+            &quot;endColumn&quot;: 46
+          },
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;Original C# source declaration; generated class/render methods, namespaces/partial component binding, imports, routes and runtime execution remain unverified&quot;
+          ],
+          &quot;embeddedSource&quot;: {
+            &quot;language&quot;: &quot;csharp&quot;,
+            &quot;executionContext&quot;: &quot;unknown&quot;,
+            &quot;headerRange&quot;: {
+              &quot;startLine&quot;: 74,
+              &quot;startColumn&quot;: 9,
+              &quot;endLine&quot;: 74,
+              &quot;endColumn&quot;: 33
+            },
+            &quot;regions&quot;: [
+              {
+                &quot;startLine&quot;: 74,
+                &quot;startColumn&quot;: 9,
+                &quot;endLine&quot;: 74,
+                &quot;endColumn&quot;: 46
+              }
+            ]
+          },
+          &quot;parent&quot;: &quot;razor-csharp:1681:1926:1695:class&quot;
+        },
+        {
+          &quot;key&quot;: &quot;razor-csharp:1814:1850:1829:property&quot;,
+          &quot;name&quot;: &quot;Summary&quot;,
+          &quot;qualifiedName&quot;: &quot;WeatherForecast::Summary&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;public string? Summary&quot;,
+          &quot;start&quot;: 1814,
+          &quot;end&quot;: 1850,
+          &quot;nameEnd&quot;: 1836,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 75,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 75,
+            &quot;endColumn&quot;: 45
+          },
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;Original C# source declaration; generated class/render methods, namespaces/partial component binding, imports, routes and runtime execution remain unverified&quot;
+          ],
+          &quot;embeddedSource&quot;: {
+            &quot;language&quot;: &quot;csharp&quot;,
+            &quot;executionContext&quot;: &quot;unknown&quot;,
+            &quot;headerRange&quot;: {
+              &quot;startLine&quot;: 75,
+              &quot;startColumn&quot;: 9,
+              &quot;endLine&quot;: 75,
+              &quot;endColumn&quot;: 32
+            },
+            &quot;regions&quot;: [
+              {
+                &quot;startLine&quot;: 75,
+                &quot;startColumn&quot;: 9,
+                &quot;endLine&quot;: 75,
+                &quot;endColumn&quot;: 45
+              }
+            ]
+          },
+          &quot;parent&quot;: &quot;razor-csharp:1681:1926:1695:class&quot;
+        },
+        {
+          &quot;key&quot;: &quot;razor-csharp:1859:1920:1870:property&quot;,
+          &quot;name&quot;: &quot;TemperatureF&quot;,
+          &quot;qualifiedName&quot;: &quot;WeatherForecast::TemperatureF&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;public int TemperatureF&quot;,
+          &quot;start&quot;: 1859,
+          &quot;end&quot;: 1920,
+          &quot;nameEnd&quot;: 1882,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 76,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 76,
+            &quot;endColumn&quot;: 70
+          },
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;Original C# source declaration; generated class/render methods, namespaces/partial component binding, imports, routes and runtime execution remain unverified&quot;
+          ],
+          &quot;embeddedSource&quot;: {
+            &quot;language&quot;: &quot;csharp&quot;,
+            &quot;executionContext&quot;: &quot;unknown&quot;,
+            &quot;headerRange&quot;: {
+              &quot;startLine&quot;: 76,
+              &quot;startColumn&quot;: 9,
+              &quot;endLine&quot;: 76,
+              &quot;endColumn&quot;: 33
+            },
+            &quot;regions&quot;: [
+              {
+                &quot;startLine&quot;: 76,
+                &quot;startColumn&quot;: 9,
+                &quot;endLine&quot;: 76,
+                &quot;endColumn&quot;: 70
+              }
+            ]
+          },
+          &quot;parent&quot;: &quot;razor-csharp:1681:1926:1695:class&quot;
+        }
+      ]
+    },
+    {
+      &quot;repo&quot;: &quot;dotnet/blazor-samples&quot;,
+      &quot;commit&quot;: &quot;504bb3174749ea691a390bfc4ebed195dd022e3b&quot;,
+      &quot;file&quot;: &quot;10.0/BlazorSample_BlazorWebApp/Components/Pages/ThemedCounter.razor&quot;,
+      &quot;mirror&quot;: &quot;themed.razor&quot;,
+      &quot;bytes&quot;: 597,
+      &quot;sha256&quot;: &quot;f8c2300b1031fb1b4eaa8ea9b572e9d59c4043cdda3b5c8c18247b869218d22f&quot;,
+      &quot;names&quot;: [
+        [
+          &quot;currentCount&quot;,
+          &quot;field&quot;,
+          24
+        ],
+        [
+          &quot;ThemeInfo&quot;,
+          &quot;property&quot;,
+          27
+        ],
+        [
+          &quot;IncrementCount&quot;,
+          &quot;method&quot;,
+          29
+        ]
+      ],
+      &quot;regions&quot;: [
+        [
+          &quot;razor_page_directive&quot;,
+          1,
+          1
+        ],
+        [
+          &quot;razor_implicit_expression&quot;,
+          7,
+          7
+        ],
+        [
+          &quot;razor_html_attribute&quot;,
+          10,
+          10
+        ],
+        [
+          &quot;razor_explicit_expression&quot;,
+          17,
+          17
+        ],
+        [
+          &quot;razor_html_attribute&quot;,
+          18,
+          18
+        ],
+        [
+          &quot;razor_block&quot;,
+          23,
+          30
+        ]
+      ],
+      &quot;status&quot;: &quot;supported&quot;,
+      &quot;indexPath&quot;: &quot;blazor/10.0/BlazorSample_BlazorWebApp/Components/Pages/ThemedCounter.razor&quot;,
+      &quot;url&quot;: &quot;https://github.com/dotnet/blazor-samples/blob/504bb3174749ea691a390bfc4ebed195dd022e3b/10.0/BlazorSample_BlazorWebApp/Components/Pages/ThemedCounter.razor&quot;,
+      &quot;matchedRegions&quot;: 6,
+      &quot;reviewedRegions&quot;: 6,
+      &quot;missedRegions&quot;: [],
+      &quot;extraRegions&quot;: 0,
+      &quot;matchedDeclarations&quot;: 3,
+      &quot;issues&quot;: [],
+      &quot;regionProof&quot;: [
+        {
+          &quot;key&quot;: &quot;directive:0&quot;,
+          &quot;kind&quot;: &quot;directive&quot;,
+          &quot;nativeKind&quot;: &quot;razor_page_directive&quot;,
+          &quot;start&quot;: 0,
+          &quot;end&quot;: 23,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 1,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 1,
+            &quot;endColumn&quot;: 24
+          },
+          &quot;bodyStart&quot;: 0,
+          &quot;bodyEnd&quot;: 23,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 1,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 1,
+            &quot;endColumn&quot;: 24
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;expression:1&quot;,
+          &quot;kind&quot;: &quot;expression&quot;,
+          &quot;nativeKind&quot;: &quot;razor_implicit_expression&quot;,
+          &quot;start&quot;: 115,
+          &quot;end&quot;: 128,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 7,
+            &quot;startColumn&quot;: 19,
+            &quot;endLine&quot;: 7,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;bodyStart&quot;: 115,
+          &quot;bodyEnd&quot;: 128,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 7,
+            &quot;startColumn&quot;: 19,
+            &quot;endLine&quot;: 7,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;attribute:2&quot;,
+          &quot;kind&quot;: &quot;attribute&quot;,
+          &quot;nativeKind&quot;: &quot;razor_html_attribute&quot;,
+          &quot;start&quot;: 150,
+          &quot;end&quot;: 175,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 10,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 10,
+            &quot;endColumn&quot;: 38
+          },
+          &quot;bodyStart&quot;: 150,
+          &quot;bodyEnd&quot;: 175,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 10,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 10,
+            &quot;endColumn&quot;: 38
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;expression:3&quot;,
+          &quot;kind&quot;: &quot;expression&quot;,
+          &quot;nativeKind&quot;: &quot;razor_explicit_expression&quot;,
+          &quot;start&quot;: 270,
+          &quot;end&quot;: 333,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 17,
+            &quot;startColumn&quot;: 20,
+            &quot;endLine&quot;: 17,
+            &quot;endColumn&quot;: 83
+          },
+          &quot;bodyStart&quot;: 270,
+          &quot;bodyEnd&quot;: 333,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 17,
+            &quot;startColumn&quot;: 20,
+            &quot;endLine&quot;: 17,
+            &quot;endColumn&quot;: 83
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;attribute:4&quot;,
+          &quot;kind&quot;: &quot;attribute&quot;,
+          &quot;nativeKind&quot;: &quot;razor_html_attribute&quot;,
+          &quot;start&quot;: 344,
+          &quot;end&quot;: 369,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 18,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 18,
+            &quot;endColumn&quot;: 34
+          },
+          &quot;bodyStart&quot;: 344,
+          &quot;bodyEnd&quot;: 369,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 18,
+            &quot;startColumn&quot;: 9,
+            &quot;endLine&quot;: 18,
+            &quot;endColumn&quot;: 34
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;member-block:5&quot;,
+          &quot;kind&quot;: &quot;member-block&quot;,
+          &quot;nativeKind&quot;: &quot;razor_block&quot;,
+          &quot;start&quot;: 426,
+          &quot;end&quot;: 596,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 23,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 30,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;bodyStart&quot;: 433,
+          &quot;bodyEnd&quot;: 595,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 23,
+            &quot;startColumn&quot;: 8,
+            &quot;endLine&quot;: 30,
+            &quot;endColumn&quot;: 1
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;unknown&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        }
+      ],
+      &quot;directiveProof&quot;: [
+        {
+          &quot;kind&quot;: &quot;page&quot;,
+          &quot;text&quot;: &quot;@page \&quot;/themed-counter\&quot;&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 1,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 1,
+            &quot;endColumn&quot;: 24
+          },
+          &quot;supported&quot;: true
+        }
+      ],
+      &quot;declarationProof&quot;: [
+        {
+          &quot;key&quot;: &quot;razor-csharp:446:466:450:field&quot;,
+          &quot;name&quot;: &quot;currentCount&quot;,
+          &quot;qualifiedName&quot;: &quot;currentCount&quot;,
+          &quot;kind&quot;: &quot;field&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;private int currentCount&quot;,
+          &quot;start&quot;: 438,
+          &quot;end&quot;: 466,
+          &quot;nameEnd&quot;: 462,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 24,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 24,
+            &quot;endColumn&quot;: 33
+          },
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;Original C# source declaration; generated class/render methods, namespaces/partial component binding, imports, routes and runtime execution remain unverified&quot;,
+            &quot;Field signature consists only of original shared type/modifier bytes and the original declarator name; initializer execution remains unverified&quot;
+          ],
+          &quot;embeddedSource&quot;: {
+            &quot;language&quot;: &quot;csharp&quot;,
+            &quot;executionContext&quot;: &quot;unknown&quot;,
+            &quot;headerRange&quot;: {
+              &quot;startLine&quot;: 24,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 24,
+              &quot;endColumn&quot;: 29
+            },
+            &quot;regions&quot;: [
+              {
+                &quot;startLine&quot;: 24,
+                &quot;startColumn&quot;: 5,
+                &quot;endLine&quot;: 24,
+                &quot;endColumn&quot;: 16
+              },
+              {
+                &quot;startLine&quot;: 24,
+                &quot;startColumn&quot;: 17,
+                &quot;endLine&quot;: 24,
+                &quot;endColumn&quot;: 33
+              }
+            ]
+          }
+        },
+        {
+          &quot;key&quot;: &quot;razor-csharp:473:540:517:property&quot;,
+          &quot;name&quot;: &quot;ThemeInfo&quot;,
+          &quot;qualifiedName&quot;: &quot;ThemeInfo&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;[CascadingParameter]\n    private ThemeInfo? ThemeInfo&quot;,
+          &quot;start&quot;: 473,
+          &quot;end&quot;: 540,
+          &quot;nameEnd&quot;: 526,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 26,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 27,
+            &quot;endColumn&quot;: 47
+          },
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;Original C# source declaration; generated class/render methods, namespaces/partial component binding, imports, routes and runtime execution remain unverified&quot;
+          ],
+          &quot;embeddedSource&quot;: {
+            &quot;language&quot;: &quot;csharp&quot;,
+            &quot;executionContext&quot;: &quot;unknown&quot;,
+            &quot;headerRange&quot;: {
+              &quot;startLine&quot;: 26,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 27,
+              &quot;endColumn&quot;: 34
+            },
+            &quot;regions&quot;: [
+              {
+                &quot;startLine&quot;: 26,
+                &quot;startColumn&quot;: 5,
+                &quot;endLine&quot;: 27,
+                &quot;endColumn&quot;: 47
+              }
+            ]
+          }
+        },
+        {
+          &quot;key&quot;: &quot;razor-csharp:546:594:559:method&quot;,
+          &quot;name&quot;: &quot;IncrementCount&quot;,
+          &quot;qualifiedName&quot;: &quot;IncrementCount&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;private void IncrementCount()&quot;,
+          &quot;start&quot;: 546,
+          &quot;end&quot;: 594,
+          &quot;nameEnd&quot;: 573,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 29,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 29,
+            &quot;endColumn&quot;: 53
+          },
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;Original C# source declaration; generated class/render methods, namespaces/partial component binding, imports, routes and runtime execution remain unverified&quot;
+          ],
+          &quot;embeddedSource&quot;: {
+            &quot;language&quot;: &quot;csharp&quot;,
+            &quot;executionContext&quot;: &quot;unknown&quot;,
+            &quot;headerRange&quot;: {
+              &quot;startLine&quot;: 29,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 29,
+              &quot;endColumn&quot;: 35
+            },
+            &quot;regions&quot;: [
+              {
+                &quot;startLine&quot;: 29,
+                &quot;startColumn&quot;: 5,
+                &quot;endLine&quot;: 29,
+                &quot;endColumn&quot;: 53
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      &quot;repo&quot;: &quot;dotnet/AspNetCore.Docs&quot;,
+      &quot;commit&quot;: &quot;e073388af85c37ed5207ca8bed5ea3445fcefcdd&quot;,
+      &quot;file&quot;: &quot;aspnetcore/mvc/views/razor/sample/Views/Home/Index.cshtml&quot;,
+      &quot;mirror&quot;: &quot;index.cshtml&quot;,
+      &quot;bytes&quot;: 64,
+      &quot;sha256&quot;: &quot;9a657d070a08a3b48ffad382ba6af99c96dc4534eeb6c73f37397a967af247ed&quot;,
+      &quot;names&quot;: [],
+      &quot;regions&quot;: [
+        [
+          &quot;razor_block&quot;,
+          1,
+          3
+        ],
+        [
+          &quot;razor_escape&quot;,
+          5,
+          5
+        ]
+      ],
+      &quot;status&quot;: &quot;supported&quot;,
+      &quot;indexPath&quot;: &quot;docs/aspnetcore/mvc/views/razor/sample/Views/Home/Index.cshtml&quot;,
+      &quot;url&quot;: &quot;https://github.com/dotnet/AspNetCore.Docs/blob/e073388af85c37ed5207ca8bed5ea3445fcefcdd/aspnetcore/mvc/views/razor/sample/Views/Home/Index.cshtml&quot;,
+      &quot;matchedRegions&quot;: 2,
+      &quot;reviewedRegions&quot;: 2,
+      &quot;missedRegions&quot;: [],
+      &quot;extraRegions&quot;: 0,
+      &quot;matchedDeclarations&quot;: 0,
+      &quot;issues&quot;: [],
+      &quot;regionProof&quot;: [
+        {
+          &quot;key&quot;: &quot;render-block:0&quot;,
+          &quot;kind&quot;: &quot;render-block&quot;,
+          &quot;nativeKind&quot;: &quot;razor_block&quot;,
+          &quot;start&quot;: 1,
+          &quot;end&quot;: 42,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 1,
+            &quot;startColumn&quot;: 2,
+            &quot;endLine&quot;: 3,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;bodyStart&quot;: 3,
+          &quot;bodyEnd&quot;: 41,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 1,
+            &quot;startColumn&quot;: 4,
+            &quot;endLine&quot;: 3,
+            &quot;endColumn&quot;: 1
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;server&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;escape:1&quot;,
+          &quot;kind&quot;: &quot;escape&quot;,
+          &quot;nativeKind&quot;: &quot;razor_escape&quot;,
+          &quot;start&quot;: 47,
+          &quot;end&quot;: 57,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 5,
+            &quot;startColumn&quot;: 4,
+            &quot;endLine&quot;: 5,
+            &quot;endColumn&quot;: 14
+          },
+          &quot;bodyStart&quot;: 47,
+          &quot;bodyEnd&quot;: 57,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 5,
+            &quot;startColumn&quot;: 4,
+            &quot;endLine&quot;: 5,
+            &quot;endColumn&quot;: 14
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;none&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        }
+      ],
+      &quot;directiveProof&quot;: [],
+      &quot;declarationProof&quot;: []
+    },
+    {
+      &quot;repo&quot;: &quot;dotnet/AspNetCore.Docs&quot;,
+      &quot;commit&quot;: &quot;e073388af85c37ed5207ca8bed5ea3445fcefcdd&quot;,
+      &quot;file&quot;: &quot;aspnetcore/mvc/views/razor/sample/Views/Shared/_Layout.cshtml&quot;,
+      &quot;mirror&quot;: &quot;layout.cshtml&quot;,
+      &quot;bytes&quot;: 250,
+      &quot;sha256&quot;: &quot;d74c3456e70987aff0ffddedebe55102850bdc4e051dd4827cf9aac41034db57&quot;,
+      &quot;names&quot;: [],
+      &quot;regions&quot;: [
+        [
+          &quot;razor_implicit_expression&quot;,
+          6,
+          6
+        ],
+        [
+          &quot;razor_implicit_expression&quot;,
+          9,
+          9
+        ]
+      ],
+      &quot;status&quot;: &quot;partial&quot;,
+      &quot;gaps&quot;: [
+        &quot;Original HTML doctype causes native Razor recovery; literal HTML/C# source binding remains unverified&quot;
+      ],
+      &quot;indexPath&quot;: &quot;docs/aspnetcore/mvc/views/razor/sample/Views/Shared/_Layout.cshtml&quot;,
+      &quot;url&quot;: &quot;https://github.com/dotnet/AspNetCore.Docs/blob/e073388af85c37ed5207ca8bed5ea3445fcefcdd/aspnetcore/mvc/views/razor/sample/Views/Shared/_Layout.cshtml&quot;,
+      &quot;matchedRegions&quot;: 2,
+      &quot;reviewedRegions&quot;: 2,
+      &quot;missedRegions&quot;: [],
+      &quot;extraRegions&quot;: 0,
+      &quot;matchedDeclarations&quot;: 0,
+      &quot;issues&quot;: [
+        &quot;razor-parse-error&quot;
+      ],
+      &quot;regionProof&quot;: [
+        {
+          &quot;key&quot;: &quot;recovery:ERROR:1:16&quot;,
+          &quot;kind&quot;: &quot;recovery&quot;,
+          &quot;nativeKind&quot;: &quot;ERROR&quot;,
+          &quot;start&quot;: 1,
+          &quot;end&quot;: 16,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 1,
+            &quot;startColumn&quot;: 2,
+            &quot;endLine&quot;: 1,
+            &quot;endColumn&quot;: 17
+          },
+          &quot;bodyStart&quot;: 1,
+          &quot;bodyEnd&quot;: 16,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 1,
+            &quot;startColumn&quot;: 2,
+            &quot;endLine&quot;: 1,
+            &quot;endColumn&quot;: 17
+          },
+          &quot;supported&quot;: false,
+          &quot;executionContext&quot;: &quot;server&quot;,
+          &quot;conditions&quot;: [
+            &quot;Native recovery prevents qualified source ownership&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;expression:1&quot;,
+          &quot;kind&quot;: &quot;expression&quot;,
+          &quot;nativeKind&quot;: &quot;razor_implicit_expression&quot;,
+          &quot;start&quot;: 158,
+          &quot;end&quot;: 167,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 6,
+            &quot;startColumn&quot;: 12,
+            &quot;endLine&quot;: 6,
+            &quot;endColumn&quot;: 21
+          },
+          &quot;bodyStart&quot;: 158,
+          &quot;bodyEnd&quot;: 167,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 6,
+            &quot;startColumn&quot;: 12,
+            &quot;endLine&quot;: 6,
+            &quot;endColumn&quot;: 21
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;server&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;expression:2&quot;,
+          &quot;kind&quot;: &quot;expression&quot;,
+          &quot;nativeKind&quot;: &quot;razor_implicit_expression&quot;,
+          &quot;start&quot;: 218,
+          &quot;end&quot;: 231,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 9,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 9,
+            &quot;endColumn&quot;: 18
+          },
+          &quot;bodyStart&quot;: 218,
+          &quot;bodyEnd&quot;: 231,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 9,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 9,
+            &quot;endColumn&quot;: 18
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;server&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        }
+      ],
+      &quot;directiveProof&quot;: [],
+      &quot;declarationProof&quot;: []
+    },
+    {
+      &quot;repo&quot;: &quot;dotnet/AspNetCore.Docs&quot;,
+      &quot;commit&quot;: &quot;e073388af85c37ed5207ca8bed5ea3445fcefcdd&quot;,
+      &quot;file&quot;: &quot;aspnetcore/tutorials/razor-pages/razor-pages-start/snapshot-sample10/Pages/Index.cshtml&quot;,
+      &quot;mirror&quot;: &quot;page.cshtml&quot;,
+      &quot;bytes&quot;: 256,
+      &quot;sha256&quot;: &quot;a5c432fe10784da2646ca8f328524ff579ab211ef18d3b31a8a4b43d23480649&quot;,
+      &quot;names&quot;: [],
+      &quot;regions&quot;: [
+        [
+          &quot;razor_model_directive&quot;,
+          2,
+          2
+        ],
+        [
+          &quot;razor_block&quot;,
+          3,
+          5
+        ]
+      ],
+      &quot;missedRegions&quot;: [
+        [
+          &quot;razor_page_directive&quot;,
+          1,
+          1
+        ]
+      ],
+      &quot;status&quot;: &quot;partial&quot;,
+      &quot;gaps&quot;: [
+        &quot;Valid @page without a route string is omitted by this native grammar&quot;,
+        &quot;A literal trailing period after an HTML element causes native recovery&quot;
+      ],
+      &quot;indexPath&quot;: &quot;docs/aspnetcore/tutorials/razor-pages/razor-pages-start/snapshot-sample10/Pages/Index.cshtml&quot;,
+      &quot;url&quot;: &quot;https://github.com/dotnet/AspNetCore.Docs/blob/e073388af85c37ed5207ca8bed5ea3445fcefcdd/aspnetcore/tutorials/razor-pages/razor-pages-start/snapshot-sample10/Pages/Index.cshtml&quot;,
+      &quot;matchedRegions&quot;: 2,
+      &quot;reviewedRegions&quot;: 3,
+      &quot;extraRegions&quot;: 0,
+      &quot;matchedDeclarations&quot;: 0,
+      &quot;issues&quot;: [
+        &quot;razor-parse-error&quot;
+      ],
+      &quot;regionProof&quot;: [
+        {
+          &quot;key&quot;: &quot;recovery:ERROR:1:6&quot;,
+          &quot;kind&quot;: &quot;recovery&quot;,
+          &quot;nativeKind&quot;: &quot;ERROR&quot;,
+          &quot;start&quot;: 1,
+          &quot;end&quot;: 6,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 1,
+            &quot;startColumn&quot;: 2,
+            &quot;endLine&quot;: 1,
+            &quot;endColumn&quot;: 7
+          },
+          &quot;bodyStart&quot;: 1,
+          &quot;bodyEnd&quot;: 6,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 1,
+            &quot;startColumn&quot;: 2,
+            &quot;endLine&quot;: 1,
+            &quot;endColumn&quot;: 7
+          },
+          &quot;supported&quot;: false,
+          &quot;executionContext&quot;: &quot;server&quot;,
+          &quot;conditions&quot;: [
+            &quot;Native recovery prevents qualified source ownership&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;directive:2&quot;,
+          &quot;kind&quot;: &quot;directive&quot;,
+          &quot;nativeKind&quot;: &quot;razor_model_directive&quot;,
+          &quot;start&quot;: 7,
+          &quot;end&quot;: 24,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 2,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 2,
+            &quot;endColumn&quot;: 18
+          },
+          &quot;bodyStart&quot;: 7,
+          &quot;bodyEnd&quot;: 24,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 2,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 2,
+            &quot;endColumn&quot;: 18
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;server&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;render-block:3&quot;,
+          &quot;kind&quot;: &quot;render-block&quot;,
+          &quot;nativeKind&quot;: &quot;razor_block&quot;,
+          &quot;start&quot;: 25,
+          &quot;end&quot;: 66,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 3,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 5,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;bodyStart&quot;: 27,
+          &quot;bodyEnd&quot;: 65,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 3,
+            &quot;startColumn&quot;: 3,
+            &quot;endLine&quot;: 5,
+            &quot;endColumn&quot;: 1
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;server&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;recovery:ERROR:241:242&quot;,
+          &quot;kind&quot;: &quot;recovery&quot;,
+          &quot;nativeKind&quot;: &quot;ERROR&quot;,
+          &quot;start&quot;: 241,
+          &quot;end&quot;: 242,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 9,
+            &quot;startColumn&quot;: 109,
+            &quot;endLine&quot;: 9,
+            &quot;endColumn&quot;: 110
+          },
+          &quot;bodyStart&quot;: 241,
+          &quot;bodyEnd&quot;: 242,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 9,
+            &quot;startColumn&quot;: 109,
+            &quot;endLine&quot;: 9,
+            &quot;endColumn&quot;: 110
+          },
+          &quot;supported&quot;: false,
+          &quot;executionContext&quot;: &quot;server&quot;,
+          &quot;conditions&quot;: [
+            &quot;Native recovery prevents qualified source ownership&quot;
+          ]
+        }
+      ],
+      &quot;directiveProof&quot;: [
+        {
+          &quot;kind&quot;: &quot;model&quot;,
+          &quot;text&quot;: &quot;@model IndexModel&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 2,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 2,
+            &quot;endColumn&quot;: 18
+          },
+          &quot;supported&quot;: true
+        }
+      ],
+      &quot;declarationProof&quot;: []
+    },
+    {
+      &quot;repo&quot;: &quot;dotnet/AspNetCore.Docs&quot;,
+      &quot;commit&quot;: &quot;e073388af85c37ed5207ca8bed5ea3445fcefcdd&quot;,
+      &quot;file&quot;: &quot;aspnetcore/mvc/views/razor/sample/Views/Home/Contact6.cshtml&quot;,
+      &quot;mirror&quot;: &quot;functions.cshtml&quot;,
+      &quot;bytes&quot;: 121,
+      &quot;sha256&quot;: &quot;a1bfda57a11285787e1c5365927da346f2d5c97202da62df6ec43af030b9cef6&quot;,
+      &quot;names&quot;: [
+        [
+          &quot;GetHello&quot;,
+          &quot;method&quot;,
+          2
+        ]
+      ],
+      &quot;regions&quot;: [
+        [
+          &quot;razor_block&quot;,
+          1,
+          6
+        ],
+        [
+          &quot;razor_implicit_expression&quot;,
+          8,
+          8
+        ]
+      ],
+      &quot;status&quot;: &quot;supported&quot;,
+      &quot;indexPath&quot;: &quot;docs/aspnetcore/mvc/views/razor/sample/Views/Home/Contact6.cshtml&quot;,
+      &quot;url&quot;: &quot;https://github.com/dotnet/AspNetCore.Docs/blob/e073388af85c37ed5207ca8bed5ea3445fcefcdd/aspnetcore/mvc/views/razor/sample/Views/Home/Contact6.cshtml&quot;,
+      &quot;matchedRegions&quot;: 2,
+      &quot;reviewedRegions&quot;: 2,
+      &quot;missedRegions&quot;: [],
+      &quot;extraRegions&quot;: 0,
+      &quot;matchedDeclarations&quot;: 1,
+      &quot;issues&quot;: [],
+      &quot;regionProof&quot;: [
+        {
+          &quot;key&quot;: &quot;member-block:0&quot;,
+          &quot;kind&quot;: &quot;member-block&quot;,
+          &quot;nativeKind&quot;: &quot;razor_block&quot;,
+          &quot;start&quot;: 1,
+          &quot;end&quot;: 80,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 1,
+            &quot;startColumn&quot;: 2,
+            &quot;endLine&quot;: 6,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;bodyStart&quot;: 13,
+          &quot;bodyEnd&quot;: 79,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 1,
+            &quot;startColumn&quot;: 14,
+            &quot;endLine&quot;: 6,
+            &quot;endColumn&quot;: 1
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;server&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        },
+        {
+          &quot;key&quot;: &quot;expression:1&quot;,
+          &quot;kind&quot;: &quot;expression&quot;,
+          &quot;nativeKind&quot;: &quot;razor_implicit_expression&quot;,
+          &quot;start&quot;: 100,
+          &quot;end&quot;: 111,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 8,
+            &quot;startColumn&quot;: 19,
+            &quot;endLine&quot;: 8,
+            &quot;endColumn&quot;: 30
+          },
+          &quot;bodyStart&quot;: 100,
+          &quot;bodyEnd&quot;: 111,
+          &quot;bodyRange&quot;: {
+            &quot;startLine&quot;: 8,
+            &quot;startColumn&quot;: 19,
+            &quot;endLine&quot;: 8,
+            &quot;endColumn&quot;: 30
+          },
+          &quot;supported&quot;: true,
+          &quot;executionContext&quot;: &quot;server&quot;,
+          &quot;conditions&quot;: [
+            &quot;Original Razor syntax; compilation, rendering, project imports and runtime binding are unverified&quot;
+          ]
+        }
+      ],
+      &quot;directiveProof&quot;: [],
+      &quot;declarationProof&quot;: [
+        {
+          &quot;key&quot;: &quot;razor-csharp:18:78:32:method&quot;,
+          &quot;name&quot;: &quot;GetHello&quot;,
+          &quot;qualifiedName&quot;: &quot;GetHello&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;entityType&quot;: &quot;method&quot;,
+          &quot;signature&quot;: &quot;public string GetHello()&quot;,
+          &quot;start&quot;: 18,
+          &quot;end&quot;: 78,
+          &quot;nameEnd&quot;: 40,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 2,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 5,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;declarationForm&quot;: &quot;definition&quot;,
+          &quot;sourceConditions&quot;: [
+            &quot;Original C# source declaration; generated class/render methods, namespaces/partial component binding, imports, routes and runtime execution remain unverified&quot;
+          ],
+          &quot;embeddedSource&quot;: {
+            &quot;language&quot;: &quot;csharp&quot;,
+            &quot;executionContext&quot;: &quot;server&quot;,
+            &quot;headerRange&quot;: {
+              &quot;startLine&quot;: 2,
+              &quot;startColumn&quot;: 5,
+              &quot;endLine&quot;: 3,
+              &quot;endColumn&quot;: 5
+            },
+            &quot;regions&quot;: [
+              {
+                &quot;startLine&quot;: 2,
+                &quot;startColumn&quot;: 5,
+                &quot;endLine&quot;: 5,
+                &quot;endColumn&quot;: 6
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}</pre></details></main></body></html>
