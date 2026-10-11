@@ -19,6 +19,7 @@ import type {CsharpSymbols} from '../analysis/languages/csharp-symbols.js';
 import type { CsharpResolver } from '../analysis/resolution/csharp.js';
 import type { RustResolver } from '../analysis/resolution/rust.js';
 import type {RustSymbols} from '../analysis/languages/rust-symbols.js';
+import type { PhpSources } from '../analysis/php/sources.js';
 export interface ScannedFile { path: string; absolutePath: string; id: string; language?: string; analyzable: boolean; application?: ApplicationConfig; embedded?: EmbeddedRegion }
 export interface HttpObservation {
   callerId: string; fileId: string; method?: string; url?: string; expression: string; evidence: Evidence;
@@ -54,6 +55,7 @@ export interface AnalysisContext {
   csharpSymbols?:CsharpSymbols;
   rust?:RustResolver;
   rustSymbols?:RustSymbols;
+  phpSources?:PhpSources;
   /** Directory entries observed by the scanner, including pruned roots; their
    * contents are never read through the indexed source boundary. */
   directoryInventory?: Set<string>;

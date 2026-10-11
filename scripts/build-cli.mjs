@@ -16,6 +16,7 @@ try {
     if (createHash('sha256').update(bytes).digest('hex') !== grammar.sha256) throw new Error(`Grammar checksum mismatch: ${grammar.language}`);
   }
   cpSync(new URL('../grammars/', import.meta.url), new URL('../dist/grammars/', import.meta.url), { recursive: true });
+  cpSync(new URL('../src/analysis/php/native-worker.mjs', import.meta.url), new URL('../dist/src/analysis/php/native-worker.mjs', import.meta.url));
 } catch (error) {
   if (!error.status) console.error(error.message);
   process.exitCode = error.status ?? 1;

@@ -44,6 +44,11 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
     for (const asset of assets) assert.equal((await fetch(new URL(asset, url))).status, 200, asset);
     const summary = await (await fetch(`${url}api/summary`)).json();
     assert.ok(summary.counts.entities > 0 && summary.counts.relations > 0);
+    {
+      const found=await(await fetch(`${url}api/entities?search=backend%2Fapp%2FServices%2FAuthService.php&type=file`)).json(),file=found.items.find(item=>item.path==='backend/app/Services/AuthService.php');assert.ok(file);
+      const detail=await(await fetch(`${url}api/entities/${file.id}`)).json();assert.equal(detail.metadata.analysis.features.structure.status,'supported');assert.equal(detail.metadata.phpSourceProvider.available,true);assert.ok(detail.metadata.phpSourceProvider.nativeBytes>0);assert.match(detail.metadata.phpSourceProvider.version,/php-source-unit:1$/);assert.ok(!JSON.stringify(detail).includes('"phpAst"'));
+      const failed=await(await fetch(`${url}api/entities?search=structure%2Fbad-php.php&type=file`)).json(),bad=failed.items.find(item=>item.path==='structure/bad-php.php');assert.ok(bad);const badDetail=await(await fetch(`${url}api/entities/${bad.id}`)).json();assert.equal(badDetail.metadata.analysis.features.structure.status,'failed');
+    }
     const search = await (await fetch(`${url}api/projection/search?q=LoginForm`)).json();
     assert.ok(search.items.some(item => item.name.includes('LoginForm')));
     for (const language of ['python', 'go', 'ruby', 'rust', 'java', 'csharp', 'kotlin']) {
@@ -274,7 +279,7 @@ try {
   const tarball = path.join(temporary, tarballs[0]);
   const report = JSON.parse((await npm(['pack', '--dry-run', '--ignore-scripts', '--json'])).stdout)[0];
   const files = report.files.map(file => file.path);
-  for (const required of ['bin/codiluce.js', 'dist/src/cli.js', 'dist/src/history/worker.js', 'web/out/index.html', 'LICENSE', 'web/out/licenses/react.txt','dist/src/analysis/languages/rust-symbols.js','dist/src/analysis/tree-sitter/rust-semantic.js','dist/src/analysis/frameworks/rust-derive-namespace.js']) {
+  for (const required of ['bin/codiluce.js', 'dist/src/cli.js', 'dist/src/history/worker.js', 'web/out/index.html', 'LICENSE', 'web/out/licenses/react.txt','dist/src/analysis/languages/rust-symbols.js','dist/src/analysis/tree-sitter/rust-semantic.js','dist/src/analysis/frameworks/rust-derive-namespace.js','dist/src/analysis/php/native-worker.mjs','dist/src/analysis/php/sources.js']) {
     assert.ok(files.includes(required), `tarball is missing ${required}`);
   }
   const grammarManifest = JSON.parse(await readFile(path.join(root, 'grammars/manifest.json'), 'utf8'));
@@ -304,6 +309,7 @@ try {
   const repo = path.join(consumer, 'repository with spaces');
   await cp(path.join(root, 'tests/fixtures/repository'), repo, { recursive: true });
   await cp(path.join(root, 'tests/fixtures/structure'), path.join(repo, 'structure'), { recursive: true });
+  await writeFile(path.join(repo,'structure/bad-php.php'),'<?php class PackagedBroken {');
   await writeFile(path.join(repo, 'package.json'), JSON.stringify({ private: true, workspaces: ['shared-workspace/**'] }));
   const workspaceConsumer = path.join(repo, 'shared-workspace/deep/consumer'), workspaceShared = path.join(repo, 'shared-workspace/deep/shared');
   await mkdir(workspaceConsumer, { recursive: true }); await mkdir(workspaceShared, { recursive: true });
@@ -936,6 +942,7 @@ class PackagedWebFluxKotlin {
     const {HistoryStore}=await import(pathToFileURL(process.argv[1]).href),store=new HistoryStore(process.argv[2],true);
     try{const snapshots=store.snapshots();assert.equal(snapshots.length,2);let prior;
       for(const snapshot of snapshots){const entities=store.entities(snapshot.seq),ids=[];
+        {const file=entities.find(item=>item.type==='file'&&item.path==='backend/app/Services/AuthService.php');assert.ok(file);const detail=store.entity(snapshot.seq,file.id);assert.equal(detail.metadata.phpSourceProvider.available,true);assert.match(detail.metadata.phpSourceProvider.version,/php-source-unit:1$/);assert.ok(!JSON.stringify(detail).includes('"phpAst"'));const service=entities.find(item=>item.name==='AuthService'&&item.path===file.path);assert.ok(service);ids.push(service.id);}
         for(const [name,file,line]of [['StructureCFunction','structure/c.c',4],['get','structure/cpp.cpp',10],['load:with:','structure/objc.m',4],['native','structure/objc-cpp.mm',12],['StructureMaskRead','structure/objc-cpp.mm',2],['read','structure/objc-cpp.mm',4],['read','structure/swift.swift',6],['read','structure/scala.scala',5],['read','structure/groovy.groovy',7],['fsharpHelper','structure/fsharp.fs',9],['Read','structure/fsharp.fs',6],['vbnetHelper','structure/vbnet.vb',15],['New','structure/vbnet.vb',7],['RazorBox','structure/Counter.razor',7],['RazorRead','structure/Counter.razor',9],['RazorIncrement','structure/Counter.razor',11],['razorClientHelper','structure/Counter.razor',13],['razorBoundHelper','structure/Counter.razor',13],['RazorRender','structure/SourceView.cshtml',3],['liquidClientHelper','structure/template.html.liquid',9],['liquidBoundHelper','structure/template.html.liquid',10],['liquidPacked','structure/liquid-theme/snippets/packed.liquid',2],['ErbBox','structure/erb.html.erb',2],['erb_read','structure/erb.html.erb',3],['erbClientHelper','structure/erb.html.erb',13],['erbBoundHelper','structure/erb.html.erb',13]]){
           const symbol=entities.find(item=>item.name===name&&item.path===file&&item.sourceRange?.startLine===line);assert.ok(symbol);const detail=store.entity(snapshot.seq,symbol.id);assert.equal(detail.metadata.declarationForm,'definition');assert.ok(detail.evidence.some(fact=>fact.source==='syntax'&&fact.file===file&&fact.line===line));ids.push(symbol.id);
         }

@@ -1,0 +1,429 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Shared PHP source provider qualification</title><style>body{font:16px/1.6 system-ui,sans-serif;background:#101822;color:#e5ecf4;margin:0;padding:clamp(16px,4vw,48px)}main{max-width:1100px;margin:auto}h1{font-size:clamp(28px,5vw,42px);line-height:1.2}p,code{overflow-wrap:anywhere}a,code{color:#8bddd8}.status{padding:18px;border:1px solid #5b8f88;border-radius:8px}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;min-width:660px}th,td{padding:12px;text-align:left;border-bottom:1px solid #344353}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}summary{cursor:pointer;padding:12px 0}</style></head><body><main><h1>Shared PHP source provider qualification</h1><p>P10c3a · 2026-10-11T11:37:52.083Z · v22.12.0 · linux/x64. Seven byte-pinned Laravel 12.0.0 originals at <code>fd51890716808d984eb467cc668b5b3a247161da</code>.</p><p class="status"><strong>7/7 reviewed original sites · six qualified PHP files · prior Laravel semantic graph preserved</strong><br>All existing entity and relation identities, evidence, effects, guards and diagnostics match 50b54e6aa822ce5cff0f0da2421e4e3ebdd7a306, after removing the new provider metadata. Cold/warm and revision graph identities match; all six original native syntax units replay from cache.</p><div class="scroll"><table><thead><tr><th>Original source</th><th>Original name</th><th>Reviewed line</th><th>Retained identity</th></tr></thead><tbody><tr><td><a href="https://github.com/laravel/laravel/blob/fd51890716808d984eb467cc668b5b3a247161da/app/Models/User.php#L10">app/Models/User.php</a></td><td>User</td><td>10</td><td><code>symbol:9dbc724499890bf1ed222680</code></td></tr><tr><td><a href="https://github.com/laravel/laravel/blob/fd51890716808d984eb467cc668b5b3a247161da/app/Models/User.php#L41">app/Models/User.php</a></td><td>casts</td><td>41</td><td><code>symbol:ffc406eece61cdf6790656cd</code></td></tr><tr><td><a href="https://github.com/laravel/laravel/blob/fd51890716808d984eb467cc668b5b3a247161da/app/Http/Controllers/Controller.php#L5">app/Http/Controllers/Controller.php</a></td><td>Controller</td><td>5</td><td><code>symbol:d653d2008b8ebf78c30a572d</code></td></tr><tr><td><a href="https://github.com/laravel/laravel/blob/fd51890716808d984eb467cc668b5b3a247161da/app/Providers/AppServiceProvider.php#L7">app/Providers/AppServiceProvider.php</a></td><td>AppServiceProvider</td><td>7</td><td><code>symbol:5dffa6895c1e12653ea75b15</code></td></tr><tr><td><a href="https://github.com/laravel/laravel/blob/fd51890716808d984eb467cc668b5b3a247161da/app/Providers/AppServiceProvider.php#L12">app/Providers/AppServiceProvider.php</a></td><td>register</td><td>12</td><td><code>symbol:b46d2a67303dbd2e9a85a11a</code></td></tr><tr><td><a href="https://github.com/laravel/laravel/blob/fd51890716808d984eb467cc668b5b3a247161da/app/Providers/AppServiceProvider.php#L20">app/Providers/AppServiceProvider.php</a></td><td>boot</td><td>20</td><td><code>symbol:b0b9a21f07ef0fcb35404f50</code></td></tr><tr><td><a href="https://github.com/laravel/laravel/blob/fd51890716808d984eb467cc668b5b3a247161da/routes/web.php#L5">routes/web.php</a></td><td>GET /</td><td>5</td><td><code>endpoint:bde4a833302bff79340a1b3b</code></td></tr></tbody></table></div><p>Original bytes and manifest remain unchanged. The explicit audit configuration selects Laravel static analysis and is recorded below; the target app, framework, dependencies, PHP runtime, Composer and autoloaders never execute. General PHP and Laravel now share a parse-only source-unit service, indexed unchanged-source validation, actual provider-version cache keys, cancellable 10-second worker jobs, a 256 MiB worker heap and a 16 MiB native payload cap. Original extraction remains bounded at 200,000 nodes/tokens, depth 128 and 4,096 sites. Partial or failed bounded trees cannot authorize Laravel semantic replay. Native comments and tokens are stripped from retained trees, and native ASTs never enter graph metadata. A six-job queue overlaps provider work with other language services, and pipeline completion releases retained trees and closes the worker.</p><p>This audit covers one starter repository subset. Source-race, symlink, token/declaration budgets, worker recovery, pending-queue cancellation, original UTF-16 spans and cache checks use separate conformance fixtures. General PHP scoped binding and wider Laravel original structure integration remain P10c3b. Full process-tree/history memory, broader repository accuracy and native OS qualification remain open. Parent-memory performance measurements exclude concurrent worker RSS.</p><p>Implementation digest (283 files): <code>c38f6e19cfee8845ce9545f35951ab21a7d4af93d8cef0030ab4d258dc5e4779</code>. Reproduce <code>node --experimental-sqlite --import tsx scripts/qualify-php-provider.mjs --output docs/php-provider-source-accuracy.html</code>; <code>--source DIRECTORY</code> verifies immutable inputs offline. <a href="php-provider-compatibility-performance.html">Performance measurements</a> · <a href="language-framework-compatibility.html#implementation">Roadmap</a></p><details><summary>Raw original proofs, pins, configuration and replay qualification</summary><pre>{
+  &quot;phase&quot;: &quot;P10c3a&quot;,
+  &quot;measuredAt&quot;: &quot;2026-10-11T11:37:52.083Z&quot;,
+  &quot;provider&quot;: &quot;0.9.3:php-source-unit:1&quot;,
+  &quot;node&quot;: &quot;v22.12.0&quot;,
+  &quot;platform&quot;: &quot;linux/x64&quot;,
+  &quot;revision&quot;: &quot;fd51890716808d984eb467cc668b5b3a247161da&quot;,
+  &quot;pins&quot;: [
+    {
+      &quot;file&quot;: &quot;composer.json&quot;,
+      &quot;bytes&quot;: 2381,
+      &quot;sha256&quot;: &quot;2c2ee477271a0dcdf9ae5830b75da13049f5236e556d9e086d8f0cbb5e645bf5&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/laravel/laravel/fd51890716808d984eb467cc668b5b3a247161da/composer.json&quot;
+    },
+    {
+      &quot;file&quot;: &quot;bootstrap/app.php&quot;,
+      &quot;bytes&quot;: 513,
+      &quot;sha256&quot;: &quot;bba9ff06394e0df3dc993a33d0dacc60fcbfc169266abf6a4b230aa33892571a&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/laravel/laravel/fd51890716808d984eb467cc668b5b3a247161da/bootstrap/app.php&quot;
+    },
+    {
+      &quot;file&quot;: &quot;routes/web.php&quot;,
+      &quot;bytes&quot;: 108,
+      &quot;sha256&quot;: &quot;248c7eeeb43bb61ee4fb6603e52b44843c64f72a841d671bcd41871aab23f970&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/laravel/laravel/fd51890716808d984eb467cc668b5b3a247161da/routes/web.php&quot;
+    },
+    {
+      &quot;file&quot;: &quot;routes/console.php&quot;,
+      &quot;bytes&quot;: 210,
+      &quot;sha256&quot;: &quot;9adccc33e7dd400683e434774077c7fdb2f299c5712cedf16a43fdf56f2850fa&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/laravel/laravel/fd51890716808d984eb467cc668b5b3a247161da/routes/console.php&quot;
+    },
+    {
+      &quot;file&quot;: &quot;app/Models/User.php&quot;,
+      &quot;bytes&quot;: 1009,
+      &quot;sha256&quot;: &quot;e0f171d54e3f65fdca8442e730ee7f75a1ed8985ad8f1585682b28d60ee99467&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/laravel/laravel/fd51890716808d984eb467cc668b5b3a247161da/app/Models/User.php&quot;
+    },
+    {
+      &quot;file&quot;: &quot;app/Http/Controllers/Controller.php&quot;,
+      &quot;bytes&quot;: 77,
+      &quot;sha256&quot;: &quot;25d1c1ef8e6cc8a376553faacfba2b07d9dfaee9bdbb84f14f77517580e9deb1&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/laravel/laravel/fd51890716808d984eb467cc668b5b3a247161da/app/Http/Controllers/Controller.php&quot;
+    },
+    {
+      &quot;file&quot;: &quot;app/Providers/AppServiceProvider.php&quot;,
+      &quot;bytes&quot;: 361,
+      &quot;sha256&quot;: &quot;caf306ef6a25a547bbb7edd5508a39b51c365083eb6dd58378cf2242018e94c7&quot;,
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/laravel/laravel/fd51890716808d984eb467cc668b5b3a247161da/app/Providers/AppServiceProvider.php&quot;
+    }
+  ],
+  &quot;reviewed&quot;: 7,
+  &quot;matched&quot;: 7,
+  &quot;qualifiedFiles&quot;: 6,
+  &quot;syntaxCacheHits&quot;: 6,
+  &quot;coldWarmEqual&quot;: true,
+  &quot;revisionEqual&quot;: true,
+  &quot;priorSemanticGraphEqual&quot;: true,
+  &quot;baselineRevision&quot;: &quot;50b54e6aa822ce5cff0f0da2421e4e3ebdd7a306&quot;,
+  &quot;authoredConfig&quot;: {
+    &quot;repository&quot;: {
+      &quot;name&quot;: &quot;php-provider-original-audit&quot;
+    },
+    &quot;applications&quot;: [
+      {
+        &quot;name&quot;: &quot;laravel&quot;,
+        &quot;path&quot;: &quot;.&quot;,
+        &quot;frameworks&quot;: [
+          &quot;laravel&quot;
+        ],
+        &quot;ecosystems&quot;: [
+          &quot;php&quot;
+        ]
+      }
+    ],
+    &quot;ignore&quot;: [
+      &quot;**/.codiluce/**&quot;
+    ],
+    &quot;maxFileBytes&quot;: 2097152
+  },
+  &quot;results&quot;: [
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;app/Models/User.php&quot;,
+        &quot;name&quot;: &quot;User&quot;,
+        &quot;line&quot;: 10
+      },
+      &quot;actual&quot;: {
+        &quot;id&quot;: &quot;symbol:9dbc724499890bf1ed222680&quot;,
+        &quot;type&quot;: &quot;model&quot;,
+        &quot;name&quot;: &quot;User&quot;,
+        &quot;path&quot;: &quot;app/Models/User.php&quot;,
+        &quot;language&quot;: &quot;php&quot;,
+        &quot;parentId&quot;: &quot;file:f0c69923d750fbad2e82905e&quot;,
+        &quot;sourceRange&quot;: {
+          &quot;startLine&quot;: 10,
+          &quot;endLine&quot;: 48,
+          &quot;startColumn&quot;: 1,
+          &quot;endColumn&quot;: 2
+        },
+        &quot;metadata&quot;: {
+          &quot;qualifiedName&quot;: &quot;App\\Models\\User&quot;,
+          &quot;extends&quot;: &quot;Illuminate\\Foundation\\Auth\\User&quot;,
+          &quot;contentHash&quot;: &quot;d09bca4ef7bf1fe0f7db519e7d0f7dac16af099c0c3254b3e10b2dfcf9e0a634&quot;,
+          &quot;bodyHash&quot;: &quot;85e202f0dd98054c8a59cdb4ab72bfc3&quot;
+        },
+        &quot;evidence&quot;: [
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-laravel&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;app/Models/User.php&quot;,
+            &quot;line&quot;: 10,
+            &quot;explanation&quot;: &quot;PHP class declaration&quot;,
+            &quot;endLine&quot;: 48
+          }
+        ]
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;app/Models/User.php&quot;,
+        &quot;name&quot;: &quot;casts&quot;,
+        &quot;line&quot;: 41
+      },
+      &quot;actual&quot;: {
+        &quot;id&quot;: &quot;symbol:ffc406eece61cdf6790656cd&quot;,
+        &quot;type&quot;: &quot;method&quot;,
+        &quot;name&quot;: &quot;casts&quot;,
+        &quot;path&quot;: &quot;app/Models/User.php&quot;,
+        &quot;language&quot;: &quot;php&quot;,
+        &quot;parentId&quot;: &quot;symbol:9dbc724499890bf1ed222680&quot;,
+        &quot;sourceRange&quot;: {
+          &quot;startLine&quot;: 41,
+          &quot;endLine&quot;: 47,
+          &quot;startColumn&quot;: 5,
+          &quot;endColumn&quot;: 6
+        },
+        &quot;metrics&quot;: {
+          &quot;loc&quot;: 7
+        },
+        &quot;metadata&quot;: {
+          &quot;qualifiedName&quot;: &quot;App\\Models\\User::casts&quot;,
+          &quot;signature&quot;: &quot;()&quot;,
+          &quot;visibility&quot;: &quot;protected&quot;,
+          &quot;static&quot;: false,
+          &quot;contentHash&quot;: &quot;41274934516239466b543344c26a4e4b8448a55036d4d83522bad04030a423a6&quot;,
+          &quot;bodyHash&quot;: &quot;33f04109efa7ab801a56c42736e1f9e0&quot;
+        },
+        &quot;evidence&quot;: [
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-laravel&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;app/Models/User.php&quot;,
+            &quot;line&quot;: 41,
+            &quot;explanation&quot;: &quot;PHP method declaration&quot;,
+            &quot;endLine&quot;: 47
+          }
+        ]
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;app/Http/Controllers/Controller.php&quot;,
+        &quot;name&quot;: &quot;Controller&quot;,
+        &quot;line&quot;: 5
+      },
+      &quot;actual&quot;: {
+        &quot;id&quot;: &quot;symbol:d653d2008b8ebf78c30a572d&quot;,
+        &quot;type&quot;: &quot;controller&quot;,
+        &quot;name&quot;: &quot;Controller&quot;,
+        &quot;path&quot;: &quot;app/Http/Controllers/Controller.php&quot;,
+        &quot;language&quot;: &quot;php&quot;,
+        &quot;parentId&quot;: &quot;file:4b9933348327e25825fd5d66&quot;,
+        &quot;sourceRange&quot;: {
+          &quot;startLine&quot;: 5,
+          &quot;endLine&quot;: 8,
+          &quot;startColumn&quot;: 1,
+          &quot;endColumn&quot;: 2
+        },
+        &quot;metadata&quot;: {
+          &quot;qualifiedName&quot;: &quot;App\\Http\\Controllers\\Controller&quot;,
+          &quot;contentHash&quot;: &quot;d4dd7fe7cab2c35b7612cbbe438a7a36ea4cdfbb8b289ea621c85c8c2647b64d&quot;,
+          &quot;bodyHash&quot;: &quot;446f6a1c3d32d38747df192861b318a3&quot;
+        },
+        &quot;evidence&quot;: [
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-laravel&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;app/Http/Controllers/Controller.php&quot;,
+            &quot;line&quot;: 5,
+            &quot;explanation&quot;: &quot;PHP class declaration&quot;,
+            &quot;endLine&quot;: 8
+          }
+        ]
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;app/Providers/AppServiceProvider.php&quot;,
+        &quot;name&quot;: &quot;AppServiceProvider&quot;,
+        &quot;line&quot;: 7
+      },
+      &quot;actual&quot;: {
+        &quot;id&quot;: &quot;symbol:5dffa6895c1e12653ea75b15&quot;,
+        &quot;type&quot;: &quot;class&quot;,
+        &quot;name&quot;: &quot;AppServiceProvider&quot;,
+        &quot;path&quot;: &quot;app/Providers/AppServiceProvider.php&quot;,
+        &quot;language&quot;: &quot;php&quot;,
+        &quot;parentId&quot;: &quot;file:d4018920e066aca1e90d1720&quot;,
+        &quot;sourceRange&quot;: {
+          &quot;startLine&quot;: 7,
+          &quot;endLine&quot;: 24,
+          &quot;startColumn&quot;: 1,
+          &quot;endColumn&quot;: 2
+        },
+        &quot;metadata&quot;: {
+          &quot;qualifiedName&quot;: &quot;App\\Providers\\AppServiceProvider&quot;,
+          &quot;extends&quot;: &quot;Illuminate\\Support\\ServiceProvider&quot;,
+          &quot;contentHash&quot;: &quot;29bb1e59266a751cb1db59de13e37b8d0c5a5cc771b923e60d387240d3f2a0f9&quot;,
+          &quot;bodyHash&quot;: &quot;f2de4664930d01d1f0e5028d3953cfa7&quot;
+        },
+        &quot;evidence&quot;: [
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-laravel&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;app/Providers/AppServiceProvider.php&quot;,
+            &quot;line&quot;: 7,
+            &quot;explanation&quot;: &quot;PHP class declaration&quot;,
+            &quot;endLine&quot;: 24
+          }
+        ]
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;app/Providers/AppServiceProvider.php&quot;,
+        &quot;name&quot;: &quot;register&quot;,
+        &quot;line&quot;: 12
+      },
+      &quot;actual&quot;: {
+        &quot;id&quot;: &quot;symbol:b46d2a67303dbd2e9a85a11a&quot;,
+        &quot;type&quot;: &quot;method&quot;,
+        &quot;name&quot;: &quot;register&quot;,
+        &quot;path&quot;: &quot;app/Providers/AppServiceProvider.php&quot;,
+        &quot;language&quot;: &quot;php&quot;,
+        &quot;parentId&quot;: &quot;symbol:5dffa6895c1e12653ea75b15&quot;,
+        &quot;sourceRange&quot;: {
+          &quot;startLine&quot;: 12,
+          &quot;endLine&quot;: 15,
+          &quot;startColumn&quot;: 5,
+          &quot;endColumn&quot;: 6
+        },
+        &quot;metrics&quot;: {
+          &quot;loc&quot;: 4
+        },
+        &quot;metadata&quot;: {
+          &quot;qualifiedName&quot;: &quot;App\\Providers\\AppServiceProvider::register&quot;,
+          &quot;signature&quot;: &quot;()&quot;,
+          &quot;visibility&quot;: &quot;public&quot;,
+          &quot;static&quot;: false,
+          &quot;contentHash&quot;: &quot;20978432c72e2f28137a25555bd725784d79385630358c4d6bd1e2f518170f63&quot;,
+          &quot;bodyHash&quot;: &quot;e1fc867b29b42511a5e82c9789b3a901&quot;
+        },
+        &quot;evidence&quot;: [
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-laravel&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;app/Providers/AppServiceProvider.php&quot;,
+            &quot;line&quot;: 12,
+            &quot;explanation&quot;: &quot;PHP method declaration&quot;,
+            &quot;endLine&quot;: 15
+          }
+        ]
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;app/Providers/AppServiceProvider.php&quot;,
+        &quot;name&quot;: &quot;boot&quot;,
+        &quot;line&quot;: 20
+      },
+      &quot;actual&quot;: {
+        &quot;id&quot;: &quot;symbol:b0b9a21f07ef0fcb35404f50&quot;,
+        &quot;type&quot;: &quot;method&quot;,
+        &quot;name&quot;: &quot;boot&quot;,
+        &quot;path&quot;: &quot;app/Providers/AppServiceProvider.php&quot;,
+        &quot;language&quot;: &quot;php&quot;,
+        &quot;parentId&quot;: &quot;symbol:5dffa6895c1e12653ea75b15&quot;,
+        &quot;sourceRange&quot;: {
+          &quot;startLine&quot;: 20,
+          &quot;endLine&quot;: 23,
+          &quot;startColumn&quot;: 5,
+          &quot;endColumn&quot;: 6
+        },
+        &quot;metrics&quot;: {
+          &quot;loc&quot;: 4
+        },
+        &quot;metadata&quot;: {
+          &quot;qualifiedName&quot;: &quot;App\\Providers\\AppServiceProvider::boot&quot;,
+          &quot;signature&quot;: &quot;()&quot;,
+          &quot;visibility&quot;: &quot;public&quot;,
+          &quot;static&quot;: false,
+          &quot;contentHash&quot;: &quot;0ff8ea23277105198c90fd695626929713fcb18a294ea150fa13dff0af76e95e&quot;,
+          &quot;bodyHash&quot;: &quot;e1fc867b29b42511a5e82c9789b3a901&quot;
+        },
+        &quot;evidence&quot;: [
+          {
+            &quot;source&quot;: &quot;php&quot;,
+            &quot;analyzer&quot;: &quot;php-laravel&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;app/Providers/AppServiceProvider.php&quot;,
+            &quot;line&quot;: 20,
+            &quot;explanation&quot;: &quot;PHP method declaration&quot;,
+            &quot;endLine&quot;: 23
+          }
+        ]
+      }
+    },
+    {
+      &quot;expected&quot;: {
+        &quot;file&quot;: &quot;routes/web.php&quot;,
+        &quot;name&quot;: &quot;GET /&quot;,
+        &quot;line&quot;: 5
+      },
+      &quot;actual&quot;: {
+        &quot;id&quot;: &quot;endpoint:bde4a833302bff79340a1b3b&quot;,
+        &quot;type&quot;: &quot;api_endpoint&quot;,
+        &quot;name&quot;: &quot;GET /&quot;,
+        &quot;path&quot;: &quot;routes/web.php&quot;,
+        &quot;parentId&quot;: &quot;application:76e34c9ce486e927597ad986&quot;,
+        &quot;sourceRange&quot;: {
+          &quot;startLine&quot;: 5,
+          &quot;endLine&quot;: 7
+        },
+        &quot;metadata&quot;: {
+          &quot;method&quot;: &quot;GET&quot;,
+          &quot;routePath&quot;: &quot;/&quot;,
+          &quot;framework&quot;: &quot;laravel&quot;,
+          &quot;routeFile&quot;: &quot;routes/web.php&quot;,
+          &quot;api&quot;: false,
+          &quot;registration&quot;: &quot;static&quot;,
+          &quot;middleware&quot;: [],
+          &quot;constraintsUnresolved&quot;: false,
+          &quot;handlerKind&quot;: &quot;closure&quot;
+        },
+        &quot;evidence&quot;: [
+          {
+            &quot;source&quot;: &quot;framework&quot;,
+            &quot;analyzer&quot;: &quot;php-laravel&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;bootstrap/app.php&quot;,
+            &quot;line&quot;: 7,
+            &quot;explanation&quot;: &quot;Laravel withRouting registration and API prefix&quot;,
+            &quot;endLine&quot;: 12
+          },
+          {
+            &quot;source&quot;: &quot;framework&quot;,
+            &quot;analyzer&quot;: &quot;php-laravel&quot;,
+            &quot;analyzerVersion&quot;: &quot;0.9.3&quot;,
+            &quot;confidence&quot;: 1,
+            &quot;file&quot;: &quot;routes/web.php&quot;,
+            &quot;line&quot;: 5,
+            &quot;explanation&quot;: &quot;Laravel Route facade declaration&quot;,
+            &quot;endLine&quot;: 7
+          }
+        ]
+      }
+    }
+  ],
+  &quot;diagnostics&quot;: [
+    {
+      &quot;id&quot;: &quot;diagnostic:33fb00aeb89f6ae4a2a2be53&quot;,
+      &quot;resolution&quot;: &quot;unresolved&quot;,
+      &quot;analyzer&quot;: &quot;indexer&quot;,
+      &quot;severity&quot;: &quot;info&quot;,
+      &quot;code&quot;: &quot;git-metadata-unavailable&quot;,
+      &quot;reason&quot;: &quot;No readable Git HEAD/status; this is still a valid working-tree scan&quot;
+    },
+    {
+      &quot;id&quot;: &quot;diagnostic:6c3163f814ef47dfbe9afe03&quot;,
+      &quot;resolution&quot;: &quot;unresolved&quot;,
+      &quot;analyzer&quot;: &quot;php-laravel&quot;,
+      &quot;severity&quot;: &quot;info&quot;,
+      &quot;code&quot;: &quot;framework-route-coverage&quot;,
+      &quot;reason&quot;: &quot;laravel: package/provider routes and implicit framework health endpoints are outside the static route-file inventory&quot;
+    },
+    {
+      &quot;id&quot;: &quot;diagnostic:c1aa50eb987d977fae3b59dd&quot;,
+      &quot;resolution&quot;: &quot;unresolved&quot;,
+      &quot;analyzer&quot;: &quot;php-laravel&quot;,
+      &quot;severity&quot;: &quot;info&quot;,
+      &quot;code&quot;: &quot;model-table-not-indexed&quot;,
+      &quot;reason&quot;: &quot;App\\Models\\User maps to table users (Laravel naming convention), which no indexed migration declares&quot;,
+      &quot;file&quot;: &quot;app/Models/User.php&quot;,
+      &quot;entityId&quot;: &quot;symbol:9dbc724499890bf1ed222680&quot;,
+      &quot;line&quot;: 10
+    },
+    {
+      &quot;id&quot;: &quot;diagnostic:d52ce7a3611574efeeedce85&quot;,
+      &quot;resolution&quot;: &quot;unresolved&quot;,
+      &quot;analyzer&quot;: &quot;filesystem&quot;,
+      &quot;severity&quot;: &quot;info&quot;,
+      &quot;code&quot;: &quot;git-ignore-unavailable&quot;,
+      &quot;reason&quot;: &quot;Git ignored-file inventory unavailable; using configured/default ignores&quot;
+    },
+    {
+      &quot;id&quot;: &quot;diagnostic:d88892fb432401ed9e2c21f5&quot;,
+      &quot;resolution&quot;: &quot;unresolved&quot;,
+      &quot;analyzer&quot;: &quot;git-metrics&quot;,
+      &quot;severity&quot;: &quot;info&quot;,
+      &quot;code&quot;: &quot;git-metrics-unavailable&quot;,
+      &quot;reason&quot;: &quot;No per-file Git metrics: no Git HEAD&quot;
+    }
+  ],
+  &quot;implementationFiles&quot;: 283,
+  &quot;implementationDigest&quot;: &quot;c38f6e19cfee8845ce9545f35951ab21a7d4af93d8cef0030ab4d258dc5e4779&quot;
+}</pre></details></main></body></html>

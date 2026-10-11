@@ -34,11 +34,11 @@ export class IndexedSources {
     const relative = this.relative(directory);
     return relative === undefined ? [] : [...this.directories].filter(item => item !== relative && path.posix.dirname(item) === relative).map(item => path.posix.basename(item)).sort();
   };
-  readText(fileName: string): string {
+  readText(fileName: string, options: { revalidate?:boolean } = {}): string {
     const relative = this.relative(fileName), file = relative === undefined ? undefined : this.context.files.get(relative);
     if (!file?.analyzable) throw new Error(`Source is not an indexed readable file: ${relative ?? 'outside repository'}`);
     const cached = this.texts.get(file.path);
-    if (cached !== undefined) return cached;
+    if (cached !== undefined && !options.revalidate) return cached;
     const expected = path.join(this.context.root, ...file.path.split('/'));
     const resolved = realpathSync(expected), info = lstatSync(expected);
     if (resolved !== expected || !info.isFile()) throw new Error(`Source became a symlink or non-file: ${file.path}`);

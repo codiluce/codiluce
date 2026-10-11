@@ -1,5 +1,3 @@
-import { Engine } from 'php-parser';
-import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { Analyzer, AnalysisContext, ScannedFile } from '../core/analyzer.js';
 import { ANALYZER_VERSION, declarationHashes, evidence, type Entity, type Evidence } from '../core/graph.js';
@@ -11,6 +9,10 @@ import { declareConsole, type ConsoleRegistration } from './laravel-console.js';
 import { declareFortify } from './laravel-fortify.js';
 import { fileKey, pathSetKey } from '../pipeline/cache.js';
 import { SiteCollector } from './references.js';
+import { PhpSources } from '../analysis/php/sources.js';
+import { PHP_PARSER_VERSION, PHP_SOURCE_PROFILE, PHP_SOURCE_PROVIDER_VERSION, PHP_STRUCTURE_VERSION } from '../analysis/php/version.js';
+
+export const LARAVEL_VERSION = `${ANALYZER_VERSION}:laravel-indexed-php:1`;
 
 interface ChainItem { name: string; args: Ast[]; ast: Ast }
 interface RouteContext { prefix: string; namePrefix: string; controller?: string; middleware: string[]; constraints: boolean; facts: Evidence[]; registration: 'static' | 'convention'; api: boolean }
@@ -53,16 +55,36 @@ function configuredLaravelBuilder(node: Ast | undefined, scope: Scope): boolean 
   return what?.kind === 'propertylookup' && configuredLaravelBuilder(ast(what.what), scope);
 }
 export const laravelAnalyzer: Analyzer = {
-  name: 'php-laravel', version: ANALYZER_VERSION,
+  name: 'php-laravel', version: LARAVEL_VERSION,
   async analyze(context): Promise<void> {
     // Route registration, call resolution and tables are application-wide facts: the PHP of every Laravel application is one cache unit.
-    const files = [...context.files.values()].filter(file => file.language === 'php' && hasFramework(file.application, 'laravel')).map(file => fileKey(context, file.path));
-    if (context.cache && files.length) await context.cache.unit(context, 'php-laravel', 'laravel', { files, paths: pathSetKey(context), config: context.config, applications: [...context.applicationIds], parser: 'php-parser 8.4' }, () => analyzeLaravel(context));
-    else await analyzeLaravel(context);
+    const files = [...context.files.values()].filter(file => file.language === 'php' && hasFramework(file.application, 'laravel'));
+    if (!files.length) return;
+    const sources = context.phpSources ??= new PhpSources(context);
+    try {
+      // Validate and qualify every input before an application cache can replay
+      // its strong framework facts. A source race or bounded tree failure must
+      // invalidate the old application result even when its scanned hash matches.
+      const availability: { file:string; available:boolean; reason?:string }[] = [];
+      for (const file of files) {
+        if (!file.analyzable) { availability.push({file:file.path,available:false}); continue; }
+        try {
+          const source = await sources.read(file);
+          context.graph.entities.get(file.id)!.metadata.phpSourceProvider = { version:PHP_SOURCE_PROVIDER_VERSION, profile:PHP_SOURCE_PROFILE, available:!!source.ast, nativeBytes:source.astBytes, ...source.astGap ? {reason:source.astGap} : {} };
+          availability.push({file:file.path,available:!!source.ast,...source.ast ? {} : {reason:source.astGap}});
+        } catch (error) {
+          const reason = error instanceof Error ? error.message : String(error);
+          context.graph.entities.get(file.id)!.metadata.phpSourceProvider = { version:PHP_SOURCE_PROVIDER_VERSION, profile:PHP_SOURCE_PROFILE, available:false, reason };
+          availability.push({file:file.path,available:false,reason});
+        }
+      }
+      const inputs = { version:LARAVEL_VERSION, files:files.map(file=>fileKey(context,file.path)), availability, paths:pathSetKey(context), config:context.config, applications:[...context.applicationIds], parser:{name:'php-parser',version:PHP_PARSER_VERSION}, profile:PHP_SOURCE_PROFILE, provider:PHP_SOURCE_PROVIDER_VERSION, structure:PHP_STRUCTURE_VERSION };
+      if (context.cache) await context.cache.unit(context, 'php-laravel', 'laravel', inputs, () => analyzeLaravel(context));
+      else await analyzeLaravel(context);
+    } finally { sources.closeParser(); }
   },
 };
 async function analyzeLaravel(context: AnalysisContext): Promise<void> {
-  const parser = new Engine({ parser: { version: '8.4', suppressErrors: false }, ast: { withPositions: true } });
   const parsedFiles = new Map<string, ParsedFile>();
   const classes = new Map<string, Entity>();
   const methods = new Map<string, Entity>();
@@ -74,13 +96,12 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
   const facts = (parsed: ParsedFile, node: Ast, explanation: string, framework = false): Evidence[] => [{ ...evidence(framework ? 'framework' : 'php', 'php-laravel', parsed.file.path, node.loc?.start.line, explanation), endLine: node.loc?.end.line }];
   for (const file of context.files.values()) {
     if (file.language !== 'php' || !file.analyzable || !hasFramework(file.application, 'laravel')) continue;
-    const content = await readFile(file.absolutePath, 'utf8');
-    let root: Ast;
-    try { root = parser.parseCode(content, file.path) as unknown as Ast; }
-    catch (error) {
-      graph.diagnose({ analyzer: 'php-laravel', severity: 'error', code: 'php-parse-error', file: file.path, entityId: file.id, reason: error instanceof Error ? error.message : String(error) });
+    const source = context.phpSources!.get(file.path);
+    if (!source?.ast) {
+      graph.diagnose({ analyzer: 'php-laravel', severity: 'error', code: 'php-parse-error', file: file.path, entityId: file.id, reason: context.phpSources!.failures.get(file.path) ?? source?.astGap ?? 'Bounded indexed original PHP source is unavailable' });
       continue;
     }
+    const { content, ast:root } = source;
     const parsed = { file, ast: root, content };
     parsedFiles.set(file.path, parsed);
     scopedChildren(root, { namespace: '', imports: new Map() }, (children, scope) => {

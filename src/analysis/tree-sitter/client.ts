@@ -16,10 +16,10 @@ function workerArguments(): string[] {
 export class StructureParser {
   private child?: ChildProcess;
   private sequence = 0;
-  constructor(private readonly timeoutMs = 10_000, private readonly worker = WORKER) {}
+  constructor(private readonly timeoutMs = 10_000, private readonly worker = WORKER, private readonly execArguments?:string[], private readonly resetOnReportedError=true) {}
   async parse(language: string, content: string, options: {objectiveCpp?:boolean;erbHost?:'html'|'javascript'|'css'|'unknown';razorKind?:'component'|'view';liquidHost?:'html'|'javascript'|'css'|'unknown';liquidEngine?:'shopify'|'unknown';liquidBodyTags?:boolean} = {}): Promise<StructureFacts> {
     if (!this.child) this.child = fork(this.worker, [], {
-      execArgv: workerArguments(),
+      execArgv: this.execArguments ?? workerArguments(),
       serialization: 'advanced', stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
     });
     const child = this.child, id = ++this.sequence;
@@ -32,8 +32,9 @@ export class StructureParser {
         cleanup();
         if (result.error || !result.facts) {
           // A WASM trap can leave the runtime/loaded parsers unusable. Never
-          // reuse that process for the next file, even after a caught error.
-          if (this.child === child) this.close();
+          // reuse that process after a caught error. Providers which create a
+          // fresh engine per job can opt out for ordinary reported source errors.
+          if (this.child === child && (this.resetOnReportedError || !result.error)) this.close();
           reject(new Error(result.error ?? 'Invalid parser result'));
         }
         else resolve(result.facts);

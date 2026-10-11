@@ -1,15 +1,14 @@
 import type { Analyzer } from '../../core/analyzer.js';
 import { declarationHashes, evidence } from '../../core/graph.js';
-import { fileKey } from '../../pipeline/cache.js';
 import { featureOutcomes, type FileAnalysis } from '../facts.js';
-import { IndexedSources } from '../indexed-sources.js';
-import { PhpParser } from '../php/client.js';
+import { PhpSources } from '../php/sources.js';
 import { PHP_PARSER_VERSION, PHP_SOURCE_PROFILE, PHP_STRUCTURE_VERSION } from '../php/version.js';
 
 export const phpStructureAnalyzer: Analyzer = {
   name: 'php-structure', version: PHP_STRUCTURE_VERSION,
   async analyze(context) {
-    const parser = new PhpParser(), sources = context.sources ?? new IndexedSources(context);
+    const sources = context.phpSources ??= new PhpSources(context);
+    await sources.prepared();
     try {
       for (const file of [...context.files.values()].sort((a, b) => a.path.localeCompare(b.path, 'en'))) {
         // Laravel keeps its established graph IDs and semantic pipeline. Its
@@ -20,9 +19,7 @@ export const phpStructureAnalyzer: Analyzer = {
         fileEntity.metadata.analysis = analysis;
         fileEntity.metadata.phpSourceProfile = PHP_SOURCE_PROFILE;
         try {
-          const content = sources.readText(file.path);
-          const compute = () => parser.parseSource(content);
-          const facts = context.cache ? await context.cache.value('php-syntax-facts', file.path, { version: PHP_STRUCTURE_VERSION, file: fileKey(context, file.path), parser: analysis.parser, profile: PHP_SOURCE_PROFILE }, compute) : await compute();
+          const { content, facts } = await sources.read(file);
           if (!facts.php) throw Error('PHP provider returned no original-source facts');
           const ids = new Map<string,string>(), occurrences = new Map<string,number>();
           for (const declaration of facts.declarations) {
@@ -45,6 +42,6 @@ export const phpStructureAnalyzer: Analyzer = {
           context.graph.diagnose({ analyzer: this.name, severity: 'warning', code: 'php-structure-failed', file: file.path, entityId: file.id, reason });
         }
       }
-    } finally { parser.close(); }
+    } finally { sources.closeParser(); }
   },
 };

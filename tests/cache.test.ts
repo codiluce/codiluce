@@ -27,10 +27,11 @@ function same(actual: SoftwareGraph, expected: SoftwareGraph, message: string): 
   assert.deepEqual(stored(actual.relations), stored(expected.relations), `${message}: relations`);
   assert.deepEqual(stored(actual.diagnostics), stored(expected.diagnostics), `${message}: diagnostics`);
 }
-async function indexWith(root: string, cache: string): Promise<{ graph: SoftwareGraph; hits: string[]; misses: string[] }> {
+async function indexWith(root: string, cache: string): Promise<{ graph: SoftwareGraph; hits: string[]; misses: string[]; syntax:CacheEvent[] }> {
   const events: CacheEvent[] = [];
   const graph = await indexRepository(root, { cache, onCache: event => events.push(event) });
-  return { graph, hits: events.filter(event => event.hit).map(event => `${event.analyzer}:${event.unit}`).sort(), misses: events.filter(event => !event.hit).map(event => `${event.analyzer}:${event.unit}`).sort() };
+  const applications=events.filter(event=>event.analyzer!=='php-syntax-facts');
+  return { graph, hits: applications.filter(event => event.hit).map(event => `${event.analyzer}:${event.unit}`).sort(), misses: applications.filter(event => !event.hit).map(event => `${event.analyzer}:${event.unit}`).sort(),syntax:events.filter(event=>event.analyzer==='php-syntax-facts') };
 }
 const UNITS = ['php-laravel:laravel', 'typescript-nextjs:backend', 'typescript-nextjs:frontend'];
 
@@ -38,8 +39,10 @@ test('indexing again replays every unchanged application and builds exactly the 
   const root = await createFixture(), cache = await directory('atlas-cache-dir-');
   const first = await indexWith(root, cache);
   assert.deepEqual(first.misses, UNITS);
+  assert.equal(first.syntax.length,24);assert.ok(first.syntax.every(event=>!event.hit));
   const second = await indexWith(root, cache);
   assert.deepEqual([second.hits, second.misses], [UNITS, []]);
+  assert.equal(second.syntax.length,24);assert.ok(second.syntax.every(event=>event.hit));
   same(second.graph, first.graph, 'replayed');
   same(second.graph, await indexRepository(root), 'versus no cache');
   // Effects updated by the API matcher (the endpoint a request reaches) are rebuilt on replay, not stored.
@@ -52,6 +55,7 @@ test('a change re-analyzes only the application it belongs to; new files invalid
   await writeFile(path.join(root, 'backend/app/Services/AuditLog.php'), "<?php\nnamespace App\\Services;\nclass AuditLog {\n    public function record(int $id): void {}\n    public function clear(): void {}\n}\n");
   const backend = await indexWith(root, cache);
   assert.deepEqual([backend.hits, backend.misses], [['typescript-nextjs:backend', 'typescript-nextjs:frontend'], ['php-laravel:laravel']]);
+  assert.deepEqual(backend.syntax.filter(event=>!event.hit).map(event=>event.unit),['backend/app/Services/AuditLog.php']);
   same(backend.graph, await indexRepository(root), 'after a PHP edit');
   await writeFile(path.join(root, 'frontend/src/components/LoginForm.tsx'), "export async function login(email: string) {\n  return fetch('https://api.fixture.test/auth/login', { method: 'POST', body: email.trim() });\n}\nexport function LoginForm() {\n  return <form onSubmit={() => login('demo@example.com')}><button>Login</button></form>;\n}\n");
   const frontend = await indexWith(root, cache);

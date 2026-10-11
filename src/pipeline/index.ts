@@ -41,9 +41,19 @@ import { csharpAnalyzer } from '../analysis/languages/csharp.js';
 import { rustAnalyzer } from '../analysis/languages/rust.js';
 import {rustSymbolsAnalyzer} from '../analysis/languages/rust-symbols.js';
 import {rustRoutersAnalyzer} from '../analysis/frameworks/rust-routers.js';
+import { PhpSources } from '../analysis/php/sources.js';
+import { PHP_SOURCE_PROVIDER_VERSION } from '../analysis/php/version.js';
+
+const phpSourcePreparation:Analyzer = {
+  name:'php-source-units',version:PHP_SOURCE_PROVIDER_VERSION,
+  async analyze(context){
+    const files=[...context.files.values()].filter(file=>file.language==='php'&&file.analyzable);
+    if(files.length)(context.phpSources??=new PhpSources(context)).prepare(files);
+  },
+};
 
 const execute = promisify(execFile);
-export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, structureAnalyzer, liquidAnalyzer, pythonAnalyzer, goAnalyzer, rubyAnalyzer, jvmAnalyzer, csharpAnalyzer, rustAnalyzer, rustSymbolsAnalyzer, rustRoutersAnalyzer, embeddedAnalyzer, typescriptAnalyzer, typescriptServicesRelease, phpStructureAnalyzer, phpImportsAnalyzer, laravelAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
+export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, phpSourcePreparation, structureAnalyzer, liquidAnalyzer, pythonAnalyzer, goAnalyzer, rubyAnalyzer, jvmAnalyzer, csharpAnalyzer, rustAnalyzer, rustSymbolsAnalyzer, rustRoutersAnalyzer, embeddedAnalyzer, typescriptAnalyzer, typescriptServicesRelease, phpStructureAnalyzer, phpImportsAnalyzer, laravelAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
 export interface IndexOptions {
   stateDirectory?: string; config?: AtlasConfig; onProgress?: (name: string) => void;
   /** Index a materialized commit tree: Git is not consulted and the run records this commit, clean. */
@@ -70,7 +80,9 @@ export async function indexRepository(repository: string, options: IndexOptions 
   } catch {
     graph.diagnose({ analyzer: 'indexer', severity: 'info', code: 'git-metadata-unavailable', reason: 'No readable Git HEAD/status; this is still a valid working-tree scan' });
   }
-  for (const analyzer of analyzers) { options.onProgress?.(analyzer.name); await analyzer.analyze(context); }
+  try {
+    for (const analyzer of analyzers) { options.onProgress?.(analyzer.name); await analyzer.analyze(context); }
+  } finally { await context.phpSources?.prepared(); context.phpSources?.release(); }
   const run: AnalysisRun = { id: randomUUID(), repositoryId, repositoryName: config.repository.name, ...(commitSha ? { commitSha } : {}), ...(dirty !==undefined ? { dirty } : {}), analyzedAt: new Date().toISOString(), configDigest: createHash('sha256').update(JSON.stringify(config)).digest('hex'), schemaVersion: SCHEMA_VERSION, analyzerVersions: Object.fromEntries([...analyzers.map(analyzer => [analyzer.name, analyzer.version]), ...typescriptFrameworkPacks.map(pack => [pack.id, pack.version]), ['fastapi', FASTAPI_VERSION], ['flask', FLASK_VERSION], ['django', DJANGO_VERSION], ['go-routers', GO_ROUTER_VERSION], ['rails', RAILS_VERSION], ['jvm-symbols',JVM_SYMBOL_VERSION],['csharp-symbols',CSHARP_SYMBOL_VERSION],['csharp-types',CSHARP_TYPE_VERSION],['aspnet-minimal',ASPNET_VERSION], ['spring-mvc',SPRING_VERSION], ['spring-webflux',WEBFLUX_VERSION]]) };
   return graph.finish(run);
 }
