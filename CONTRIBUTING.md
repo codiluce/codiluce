@@ -28,6 +28,14 @@ command, the HTTP API and the internals.
 One rule for analyzers: **name-only matching never creates an edge.** Prove a relationship with evidence, or report it
 as a finding.
 
+The literal-script parser worker is a plain JavaScript bundle of Codiluce’s typed
+source helpers. After changing `script-worker.ts`, `erb-script.ts`,
+`template-facts.ts` or `source-map.ts`, run `npm run build:script-worker`.
+CLI builds and the conformance suite check that the bundle matches its source,
+contains only the approved helpers, and loads TypeScript inside a source job.
+The compiler worker runs without a source TypeScript loader in both a checkout
+and the installed package.
+
 ## Before a pull request
 
 ```bash

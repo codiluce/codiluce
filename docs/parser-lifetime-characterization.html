@@ -1,0 +1,2335 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mixed compatibility and history qualification</title><style>body{margin:0;padding:clamp(16px,4vw,40px);font:16px/1.6 system-ui,sans-serif;background:#101822;color:#e5ecf4}main{max-width:1200px;margin:auto}h1{line-height:1.2;font-size:clamp(28px,5vw,40px)}a,code{color:#8bddd8}p,code{overflow-wrap:anywhere}.status{border:1px solid #b69459;border-radius:8px;padding:18px}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;min-width:850px}th,td{padding:12px;text-align:left;border-bottom:1px solid #344353}small{display:block;color:#b6c5d6}pre{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}summary{cursor:pointer;padding:12px 0}</style></head><body><main><h1>Mixed language, cache and history qualification</h1><p>P10d2b1-characterization · 2026-10-11T15:57:16.576Z · v22.12.0 · linux/x64 · AMD Ryzen 7 5800H with Radeon Graphics. 3 alternating fresh processes per implementation and size.</p><p class="status"><strong>Superseded characterization — latency guard failed.</strong> This preserves every observation from an earlier working-tree prototype. Its recorded source hash differs from the qualified implementation. The initial split worker and then its first bootstrap prewarming attempt reduced sampled memory but failed latency guards. <a href="parser-lifetime-performance.html">Final parser qualification and implementation</a> · <a href="parser-lifetime-mixed-performance.html">Final mixed comparison</a>.</p><p class="status"><strong>Local cold/warm/history/tree-memory comparison: NEEDS WORK</strong><br>Ten-percent limits against the archived baseline implementation on identical authored mixed workloads. Exact full graph digests hold across cold/population/warm, edited dependency replay versus uncached source, every baseline/current run, and all four stored historical snapshots. Every first repetition also compares two history jobs with an independent single-job run. History resume skips all four completed snapshots.</p><div class="scroll"><table><thead><tr><th>Sample</th><th>Cold before / after ms</th><th>Warm before / after ms</th><th>Four-commit history before / after ms</th><th>Current sampled history tree MiB</th><th>Current cache KiB</th></tr></thead><tbody><tr><th>Small<small>145 files · 48 endpoints · 96 requests</small></th><td>3362 / 3875<small>15.2%</small></td><td>312 / 265<small>-15.2%</small></td><td>9276 / 9226<small>-0.5%</small></td><td>2157.5<small>-8.9%</small></td><td>241.3</td></tr></tbody></table></div><p>The monorepo combines all eighteen Tree-sitter structural adapters, PHP, TypeScript and original Vue/Svelte/Astro sources; Express/Nest, FastAPI/Flask/Django, Rails/Laravel, eight Go router profiles, Java/Kotlin MVC/WebFlux and ASP.NET 8/9/10, and six Rust router/version profiles. Recorded target inputs qualify source contracts on Linux; they do not establish native Windows/macOS execution or framework runtime validity. Target dependencies, toolchains, applications, plugins and hooks never run. The literal fixtures are authored qualification inputs, not upstream repository accuracy evidence.</p><p>Cold scans have no cache. Population, warm and a shared Node dependency edit are timed separately. Both original consumer call targets bind to the shared source; the edit invalidates their connected cache unit while unrelated TypeScript units stay hits. Warm graph, syntax and semantic cache events are recorded by analyzer; a qualified PHP graph hit skips native-tree hydration. The cache keeps at most two versions per unit, 256 MiB compressed overall and 64 MiB decoded per entry; oversized/corrupt entries fall back to source rather than blocking indexing.</p><p>The four-commit history edits the shared dependency and an original PHP body, then renames a Vue component. Two history workers materialize original Git trees; snapshots include complete entities, relations and diagnostics, not just counts. Only working-tree Git metrics and Git-availability diagnostics are normalized for live-versus-revision comparisons. All semantic metadata, evidence and original ranges remain in the digest.</p><p>A separate process polls every thread's descendant list every 25 ms, with an acknowledged start marker before synchronous work. RSS sums include history and parser children; shared pages can be counted repeatedly, exiting processes can make a poll incomplete, and peaks between polls can be missed. Raw parent VmHWM is cumulative since exec, not an isolated warm/history peak. Native OS readers, isolated grammar-load latency, deeper histories, production-repository accuracy remain additional P10d gates. This report records the current PHP warm profile against its named baseline.</p><p>Baseline: <code>055e6d2fde933f14a295888b251d569d72db5f48</code>. Frozen current source: <code>c7b9d061fc7a8b189e53096eb1e5b6e8e0e2d58e1e2b8f305f18bac7e2b90906</code> (320 files). Reproduce: <code>node --import tsx scripts/benchmark-mixed-compatibility.mjs --baseline-ref 055e6d2fde933f14a295888b251d569d72db5f48 --repetitions 3 --phase P10d2b1-characterization --output .codiluce/validation-parser-memory/mixed-small.html</code>. <a href="language-framework-compatibility.html#implementation">Roadmap</a>.</p><details><summary>Raw phase timings, cache events, snapshot digests, profiles and limits</summary><pre>{
+  &quot;phase&quot;: &quot;P10d2b1-characterization&quot;,
+  &quot;measuredAt&quot;: &quot;2026-10-11T15:57:16.576Z&quot;,
+  &quot;baseline&quot;: &quot;055e6d2fde933f14a295888b251d569d72db5f48&quot;,
+  &quot;current&quot;: &quot;qualified working tree&quot;,
+  &quot;implementationFiles&quot;: 320,
+  &quot;implementationDigest&quot;: &quot;c7b9d061fc7a8b189e53096eb1e5b6e8e0e2d58e1e2b8f305f18bac7e2b90906&quot;,
+  &quot;node&quot;: &quot;v22.12.0&quot;,
+  &quot;platform&quot;: &quot;linux/x64&quot;,
+  &quot;cpu&quot;: &quot;AMD Ryzen 7 5800H with Radeon Graphics&quot;,
+  &quot;repetitions&quot;: 3,
+  &quot;pollMilliseconds&quot;: 25,
+  &quot;memoryMethod&quot;: &quot;linux-proc-all-thread-descendants-sampled-rss&quot;,
+  &quot;cacheLimits&quot;: {
+    &quot;perUnit&quot;: 2,
+    &quot;maxBytes&quot;: 268435456,
+    &quot;maxEntryBytes&quot;: 67108864
+  },
+  &quot;passed&quot;: false,
+  &quot;gates&quot;: [
+    {
+      &quot;name&quot;: &quot;Small&quot;,
+      &quot;cold&quot;: false,
+      &quot;warm&quot;: true,
+      &quot;history&quot;: true,
+      &quot;memory&quot;: true
+    }
+  ],
+  &quot;results&quot;: [
+    {
+      &quot;name&quot;: &quot;Small&quot;,
+      &quot;resourcesPerProfile&quot;: 1,
+      &quot;fixtureDigest&quot;: &quot;a5f83299cce3cc7cca81df660571ad8e4b8127c8ee6a1b73d4ba8ca60736e84b&quot;,
+      &quot;commits&quot;: [
+        &quot;3e252806ef7433dfa80b027e0c152e6971101cf8&quot;,
+        &quot;c1d86bf7eb7e98cceae279fc1c4d9b2ba75d2f9e&quot;,
+        &quot;1b07d0b232000f3cca83457f39c584602682084e&quot;,
+        &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;
+      ],
+      &quot;profiles&quot;: [
+        &quot;jvm-ts&quot;,
+        &quot;jvm-vue&quot;,
+        &quot;jvm-svelte&quot;,
+        &quot;jvm-astro&quot;,
+        &quot;jvm-mvc-java-62&quot;,
+        &quot;jvm-mvc-java-70&quot;,
+        &quot;jvm-mvc-kotlin-62&quot;,
+        &quot;jvm-mvc-kotlin-70&quot;,
+        &quot;jvm-webflux-java-62&quot;,
+        &quot;jvm-webflux-java-70&quot;,
+        &quot;jvm-webflux-kotlin-62&quot;,
+        &quot;jvm-webflux-kotlin-70&quot;,
+        &quot;jvm-aspnet8&quot;,
+        &quot;jvm-aspnet9&quot;,
+        &quot;jvm-aspnet10&quot;,
+        &quot;rust-ts&quot;,
+        &quot;rust-vue&quot;,
+        &quot;rust-svelte&quot;,
+        &quot;rust-astro&quot;,
+        &quot;rust-axum7&quot;,
+        &quot;rust-axum8&quot;,
+        &quot;rust-actix4&quot;,
+        &quot;rust-rocket5&quot;,
+        &quot;rust-warp3&quot;,
+        &quot;rust-warp4&quot;,
+        &quot;express&quot;,
+        &quot;nest&quot;,
+        &quot;fastapi&quot;,
+        &quot;flask&quot;,
+        &quot;django&quot;,
+        &quot;rails&quot;,
+        &quot;laravel&quot;,
+        &quot;go-net-http&quot;,
+        &quot;go-chi&quot;,
+        &quot;go-gin&quot;,
+        &quot;go-echo4&quot;,
+        &quot;go-echo5&quot;,
+        &quot;go-fiber2&quot;,
+        &quot;go-fiber3&quot;,
+        &quot;go-gorilla&quot;,
+        &quot;client&quot;,
+        &quot;node-web&quot;,
+        &quot;node-admin&quot;,
+        &quot;node-shared&quot;,
+        &quot;structure&quot;
+      ],
+      &quot;baseline&quot;: {
+        &quot;phases&quot;: {
+          &quot;cold&quot;: {
+            &quot;ms&quot;: 3362.184807,
+            &quot;treePeakKiB&quot;: 929356,
+            &quot;childPeakKiB&quot;: 611032,
+            &quot;maxProcesses&quot;: 3,
+            &quot;parentVmHwmKiB&quot;: 409544
+          },
+          &quot;population&quot;: {
+            &quot;ms&quot;: 2975.7890210000005,
+            &quot;treePeakKiB&quot;: 988036,
+            &quot;childPeakKiB&quot;: 585708,
+            &quot;maxProcesses&quot;: 3,
+            &quot;parentVmHwmKiB&quot;: 414952
+          },
+          &quot;warm&quot;: {
+            &quot;ms&quot;: 312.07393200000024,
+            &quot;treePeakKiB&quot;: 415904,
+            &quot;childPeakKiB&quot;: 8,
+            &quot;maxProcesses&quot;: 2,
+            &quot;parentVmHwmKiB&quot;: 416808
+          },
+          &quot;invalidation&quot;: {
+            &quot;ms&quot;: 392.7419689999997,
+            &quot;treePeakKiB&quot;: 473832,
+            &quot;childPeakKiB&quot;: 4436,
+            &quot;maxProcesses&quot;: 2,
+            &quot;parentVmHwmKiB&quot;: 468740
+          },
+          &quot;history&quot;: {
+            &quot;ms&quot;: 9275.780114000001,
+            &quot;treePeakKiB&quot;: 2425520,
+            &quot;childPeakKiB&quot;: 1955784,
+            &quot;maxProcesses&quot;: 7,
+            &quot;parentVmHwmKiB&quot;: 476556
+          },
+          &quot;resume&quot;: {
+            &quot;ms&quot;: 63.174927000000025,
+            &quot;treePeakKiB&quot;: 473564,
+            &quot;childPeakKiB&quot;: 0,
+            &quot;maxProcesses&quot;: 1,
+            &quot;parentVmHwmKiB&quot;: 477296
+          }
+        },
+        &quot;files&quot;: 145,
+        &quot;entities&quot;: 676,
+        &quot;relations&quot;: 1014,
+        &quot;diagnostics&quot;: 97,
+        &quot;endpoints&quot;: 48,
+        &quot;requests&quot;: 96,
+        &quot;cacheFiles&quot;: 120,
+        &quot;cacheBytes&quot;: 247049
+      },
+      &quot;current&quot;: {
+        &quot;phases&quot;: {
+          &quot;cold&quot;: {
+            &quot;ms&quot;: 3874.8738559999997,
+            &quot;treePeakKiB&quot;: 753132,
+            &quot;childPeakKiB&quot;: 446148,
+            &quot;maxProcesses&quot;: 3,
+            &quot;parentVmHwmKiB&quot;: 406624
+          },
+          &quot;population&quot;: {
+            &quot;ms&quot;: 3141.2613389999997,
+            &quot;treePeakKiB&quot;: 861428,
+            &quot;childPeakKiB&quot;: 450748,
+            &quot;maxProcesses&quot;: 3,
+            &quot;parentVmHwmKiB&quot;: 413120
+          },
+          &quot;warm&quot;: {
+            &quot;ms&quot;: 264.71060599999964,
+            &quot;treePeakKiB&quot;: 426800,
+            &quot;childPeakKiB&quot;: 540,
+            &quot;maxProcesses&quot;: 2,
+            &quot;parentVmHwmKiB&quot;: 427320
+          },
+          &quot;invalidation&quot;: {
+            &quot;ms&quot;: 329.67809000000125,
+            &quot;treePeakKiB&quot;: 482120,
+            &quot;childPeakKiB&quot;: 8,
+            &quot;maxProcesses&quot;: 2,
+            &quot;parentVmHwmKiB&quot;: 482124
+          },
+          &quot;history&quot;: {
+            &quot;ms&quot;: 9226.058414999998,
+            &quot;treePeakKiB&quot;: 2209240,
+            &quot;childPeakKiB&quot;: 1748148,
+            &quot;maxProcesses&quot;: 7,
+            &quot;parentVmHwmKiB&quot;: 484232
+          },
+          &quot;resume&quot;: {
+            &quot;ms&quot;: 90.47961399999986,
+            &quot;treePeakKiB&quot;: 470816,
+            &quot;childPeakKiB&quot;: 8,
+            &quot;maxProcesses&quot;: 2,
+            &quot;parentVmHwmKiB&quot;: 484232
+          }
+        },
+        &quot;files&quot;: 145,
+        &quot;entities&quot;: 676,
+        &quot;relations&quot;: 1014,
+        &quot;diagnostics&quot;: 97,
+        &quot;endpoints&quot;: 48,
+        &quot;requests&quot;: 96,
+        &quot;cacheFiles&quot;: 120,
+        &quot;cacheBytes&quot;: 247049
+      },
+      &quot;runs&quot;: {
+        &quot;baseline&quot;: [
+          {
+            &quot;phases&quot;: {
+              &quot;cold&quot;: {
+                &quot;ms&quot;: 5390.888849999999,
+                &quot;parentVmHwmKiB&quot;: 412856,
+                &quot;polls&quot;: 216,
+                &quot;incompletePolls&quot;: 2,
+                &quot;treePeakKiB&quot;: 936216,
+                &quot;childPeakKiB&quot;: 611032,
+                &quot;maxProcesses&quot;: 5
+              },
+              &quot;population&quot;: {
+                &quot;ms&quot;: 4031.285329999999,
+                &quot;parentVmHwmKiB&quot;: 418120,
+                &quot;polls&quot;: 161,
+                &quot;incompletePolls&quot;: 1,
+                &quot;treePeakKiB&quot;: 961044,
+                &quot;childPeakKiB&quot;: 585708,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;warm&quot;: {
+                &quot;ms&quot;: 403.9666620000007,
+                &quot;parentVmHwmKiB&quot;: 418120,
+                &quot;polls&quot;: 18,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 399156,
+                &quot;childPeakKiB&quot;: 19192,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;invalidation&quot;: {
+                &quot;ms&quot;: 517.8674109999993,
+                &quot;parentVmHwmKiB&quot;: 435024,
+                &quot;polls&quot;: 23,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 549396,
+                &quot;childPeakKiB&quot;: 114504,
+                &quot;maxProcesses&quot;: 3
+              },
+              &quot;invalidation-check&quot;: {
+                &quot;ms&quot;: 3673.797548999999,
+                &quot;parentVmHwmKiB&quot;: 436244,
+                &quot;polls&quot;: 148,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 1029008,
+                &quot;childPeakKiB&quot;: 596988,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;history&quot;: {
+                &quot;ms&quot;: 12069.359616000002,
+                &quot;parentVmHwmKiB&quot;: 476556,
+                &quot;polls&quot;: 482,
+                &quot;incompletePolls&quot;: 3,
+                &quot;treePeakKiB&quot;: 2425520,
+                &quot;childPeakKiB&quot;: 1955784,
+                &quot;maxProcesses&quot;: 10
+              },
+              &quot;resume&quot;: {
+                &quot;ms&quot;: 103.74994399999923,
+                &quot;parentVmHwmKiB&quot;: 477296,
+                &quot;polls&quot;: 6,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 496488,
+                &quot;childPeakKiB&quot;: 19192,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;serial-check&quot;: {
+                &quot;ms&quot;: 14813.215624000004,
+                &quot;parentVmHwmKiB&quot;: 573900,
+                &quot;polls&quot;: 590,
+                &quot;incompletePolls&quot;: 3,
+                &quot;treePeakKiB&quot;: 1168764,
+                &quot;childPeakKiB&quot;: 607960,
+                &quot;maxProcesses&quot;: 4
+              }
+            },
+            &quot;graphs&quot;: {
+              &quot;cold&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;population&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;warm&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;changed&quot;: &quot;f742ec2c6770c990794f13bfe1698eefd1ace565ebd1506ecfc994498443241a&quot;
+            },
+            &quot;serialEqual&quot;: true,
+            &quot;files&quot;: 145,
+            &quot;entities&quot;: 676,
+            &quot;relations&quot;: 1014,
+            &quot;diagnostics&quot;: 97,
+            &quot;endpoints&quot;: 48,
+            &quot;requests&quot;: 96,
+            &quot;cacheFiles&quot;: 120,
+            &quot;cacheBytes&quot;: 247049,
+            &quot;cache&quot;: {
+              &quot;population&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 19
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 5,
+                  &quot;ms&quot;: 810
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 83,
+                  &quot;ms&quot;: 2911
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 21
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 28
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 10
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 31
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 39
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 25
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 27
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 40
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 6,
+                  &quot;ms&quot;: 8
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 12,
+                  &quot;ms&quot;: 390
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 22
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 61
+                }
+              },
+              &quot;warm&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 83,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 27
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 4
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 6
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 12,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 13
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                }
+              },
+              &quot;invalidation&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 5,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 83,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 17
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 44
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 4
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 11,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 65
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 33
+                }
+              }
+            },
+            &quot;history&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+              &quot;indexed&quot;: 4,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 0,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;resume&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+              &quot;indexed&quot;: 0,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 4,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;snapshots&quot;: [
+              {
+                &quot;sha&quot;: &quot;1b07d0b232000f3cca83457f39c584602682084e&quot;,
+                &quot;digest&quot;: &quot;4b18fd1005642453a5d7a126ed68d73b8be985dfc4bcd2d8bb2e7aac983cd4b1&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;3e252806ef7433dfa80b027e0c152e6971101cf8&quot;,
+                &quot;digest&quot;: &quot;6270f51c51a19d7a7f61daa305270cd3efd82e94f6e5f43b702dbd41c9c01967&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;c1d86bf7eb7e98cceae279fc1c4d9b2ba75d2f9e&quot;,
+                &quot;digest&quot;: &quot;b83769ff588652c6c8f82f22f78c5d4bc3218a5f6764454ace9bfdc2733b385b&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+                &quot;digest&quot;: &quot;845de0a87b9d42427f9c5fffaa001e448258724ae1b772612fa9951e3f7b07fd&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              }
+            ],
+            &quot;replayEqual&quot;: true,
+            &quot;invalidationEqual&quot;: true
+          },
+          {
+            &quot;phases&quot;: {
+              &quot;cold&quot;: {
+                &quot;ms&quot;: 3362.184807,
+                &quot;parentVmHwmKiB&quot;: 409192,
+                &quot;polls&quot;: 136,
+                &quot;incompletePolls&quot;: 2,
+                &quot;treePeakKiB&quot;: 897320,
+                &quot;childPeakKiB&quot;: 591556,
+                &quot;maxProcesses&quot;: 3
+              },
+              &quot;population&quot;: {
+                &quot;ms&quot;: 2645.8935660000006,
+                &quot;parentVmHwmKiB&quot;: 414880,
+                &quot;polls&quot;: 107,
+                &quot;incompletePolls&quot;: 1,
+                &quot;treePeakKiB&quot;: 988036,
+                &quot;childPeakKiB&quot;: 575312,
+                &quot;maxProcesses&quot;: 3
+              },
+              &quot;warm&quot;: {
+                &quot;ms&quot;: 273.20087199999944,
+                &quot;parentVmHwmKiB&quot;: 416808,
+                &quot;polls&quot;: 13,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 415904,
+                &quot;childPeakKiB&quot;: 8,
+                &quot;maxProcesses&quot;: 3
+              },
+              &quot;invalidation&quot;: {
+                &quot;ms&quot;: 334.18934399999944,
+                &quot;parentVmHwmKiB&quot;: 469656,
+                &quot;polls&quot;: 15,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 473832,
+                &quot;childPeakKiB&quot;: 4436,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;invalidation-check&quot;: {
+                &quot;ms&quot;: 2265.7646380000006,
+                &quot;parentVmHwmKiB&quot;: 469656,
+                &quot;polls&quot;: 91,
+                &quot;incompletePolls&quot;: 1,
+                &quot;treePeakKiB&quot;: 1027784,
+                &quot;childPeakKiB&quot;: 599228,
+                &quot;maxProcesses&quot;: 3
+              },
+              &quot;history&quot;: {
+                &quot;ms&quot;: 8103.848920999999,
+                &quot;parentVmHwmKiB&quot;: 473336,
+                &quot;polls&quot;: 325,
+                &quot;incompletePolls&quot;: 5,
+                &quot;treePeakKiB&quot;: 2394712,
+                &quot;childPeakKiB&quot;: 1928272,
+                &quot;maxProcesses&quot;: 7
+              },
+              &quot;resume&quot;: {
+                &quot;ms&quot;: 53.12050700000327,
+                &quot;parentVmHwmKiB&quot;: 473584,
+                &quot;polls&quot;: 4,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 473564,
+                &quot;childPeakKiB&quot;: 0,
+                &quot;maxProcesses&quot;: 1
+              }
+            },
+            &quot;graphs&quot;: {
+              &quot;cold&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;population&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;warm&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;changed&quot;: &quot;f742ec2c6770c990794f13bfe1698eefd1ace565ebd1506ecfc994498443241a&quot;
+            },
+            &quot;files&quot;: 145,
+            &quot;entities&quot;: 676,
+            &quot;relations&quot;: 1014,
+            &quot;diagnostics&quot;: 97,
+            &quot;endpoints&quot;: 48,
+            &quot;requests&quot;: 96,
+            &quot;cacheFiles&quot;: 120,
+            &quot;cacheBytes&quot;: 247049,
+            &quot;cache&quot;: {
+              &quot;population&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 17
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 5,
+                  &quot;ms&quot;: 480
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 83,
+                  &quot;ms&quot;: 1939
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 16
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 21
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 15
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 19
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 30
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 14
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 17
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 29
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 6,
+                  &quot;ms&quot;: 6
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 12,
+                  &quot;ms&quot;: 237
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 15
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 40
+                }
+              },
+              &quot;warm&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 83,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 21
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 4
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 12,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 4
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                }
+              },
+              &quot;invalidation&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 5,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 83,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 14
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 26
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 11,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 29
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 20
+                }
+              }
+            },
+            &quot;history&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+              &quot;indexed&quot;: 4,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 0,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;resume&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+              &quot;indexed&quot;: 0,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 4,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;snapshots&quot;: [
+              {
+                &quot;sha&quot;: &quot;1b07d0b232000f3cca83457f39c584602682084e&quot;,
+                &quot;digest&quot;: &quot;4b18fd1005642453a5d7a126ed68d73b8be985dfc4bcd2d8bb2e7aac983cd4b1&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;3e252806ef7433dfa80b027e0c152e6971101cf8&quot;,
+                &quot;digest&quot;: &quot;6270f51c51a19d7a7f61daa305270cd3efd82e94f6e5f43b702dbd41c9c01967&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;c1d86bf7eb7e98cceae279fc1c4d9b2ba75d2f9e&quot;,
+                &quot;digest&quot;: &quot;b83769ff588652c6c8f82f22f78c5d4bc3218a5f6764454ace9bfdc2733b385b&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+                &quot;digest&quot;: &quot;845de0a87b9d42427f9c5fffaa001e448258724ae1b772612fa9951e3f7b07fd&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              }
+            ],
+            &quot;replayEqual&quot;: true,
+            &quot;invalidationEqual&quot;: true
+          },
+          {
+            &quot;phases&quot;: {
+              &quot;cold&quot;: {
+                &quot;ms&quot;: 3312.3896609999997,
+                &quot;parentVmHwmKiB&quot;: 409544,
+                &quot;polls&quot;: 134,
+                &quot;incompletePolls&quot;: 2,
+                &quot;treePeakKiB&quot;: 929356,
+                &quot;childPeakKiB&quot;: 621796,
+                &quot;maxProcesses&quot;: 3
+              },
+              &quot;population&quot;: {
+                &quot;ms&quot;: 2975.7890210000005,
+                &quot;parentVmHwmKiB&quot;: 414952,
+                &quot;polls&quot;: 120,
+                &quot;incompletePolls&quot;: 1,
+                &quot;treePeakKiB&quot;: 1002232,
+                &quot;childPeakKiB&quot;: 589072,
+                &quot;maxProcesses&quot;: 3
+              },
+              &quot;warm&quot;: {
+                &quot;ms&quot;: 312.07393200000024,
+                &quot;parentVmHwmKiB&quot;: 416428,
+                &quot;polls&quot;: 15,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 416052,
+                &quot;childPeakKiB&quot;: 8,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;invalidation&quot;: {
+                &quot;ms&quot;: 392.7419689999997,
+                &quot;parentVmHwmKiB&quot;: 468740,
+                &quot;polls&quot;: 17,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 468736,
+                &quot;childPeakKiB&quot;: 0,
+                &quot;maxProcesses&quot;: 1
+              },
+              &quot;invalidation-check&quot;: {
+                &quot;ms&quot;: 2681.8256839999995,
+                &quot;parentVmHwmKiB&quot;: 471660,
+                &quot;polls&quot;: 109,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 1050768,
+                &quot;childPeakKiB&quot;: 583128,
+                &quot;maxProcesses&quot;: 3
+              },
+              &quot;history&quot;: {
+                &quot;ms&quot;: 9275.780114000001,
+                &quot;parentVmHwmKiB&quot;: 510080,
+                &quot;polls&quot;: 371,
+                &quot;incompletePolls&quot;: 6,
+                &quot;treePeakKiB&quot;: 2431952,
+                &quot;childPeakKiB&quot;: 1966088,
+                &quot;maxProcesses&quot;: 7
+              },
+              &quot;resume&quot;: {
+                &quot;ms&quot;: 63.174927000000025,
+                &quot;parentVmHwmKiB&quot;: 510080,
+                &quot;polls&quot;: 4,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 473204,
+                &quot;childPeakKiB&quot;: 0,
+                &quot;maxProcesses&quot;: 1
+              }
+            },
+            &quot;graphs&quot;: {
+              &quot;cold&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;population&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;warm&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;changed&quot;: &quot;f742ec2c6770c990794f13bfe1698eefd1ace565ebd1506ecfc994498443241a&quot;
+            },
+            &quot;files&quot;: 145,
+            &quot;entities&quot;: 676,
+            &quot;relations&quot;: 1014,
+            &quot;diagnostics&quot;: 97,
+            &quot;endpoints&quot;: 48,
+            &quot;requests&quot;: 96,
+            &quot;cacheFiles&quot;: 120,
+            &quot;cacheBytes&quot;: 247049,
+            &quot;cache&quot;: {
+              &quot;population&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 13
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 5,
+                  &quot;ms&quot;: 465
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 83,
+                  &quot;ms&quot;: 2227
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 18
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 22
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 12
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 23
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 28
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 14
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 18
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 32
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 6,
+                  &quot;ms&quot;: 6
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 12,
+                  &quot;ms&quot;: 259
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 18
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 41
+                }
+              },
+              &quot;warm&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 83,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 21
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 12,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 8
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                }
+              },
+              &quot;invalidation&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 5,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 5
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 83,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 30
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 29
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 4
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 11,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 31
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 28
+                }
+              }
+            },
+            &quot;history&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+              &quot;indexed&quot;: 4,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 0,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;resume&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+              &quot;indexed&quot;: 0,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 4,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;snapshots&quot;: [
+              {
+                &quot;sha&quot;: &quot;1b07d0b232000f3cca83457f39c584602682084e&quot;,
+                &quot;digest&quot;: &quot;4b18fd1005642453a5d7a126ed68d73b8be985dfc4bcd2d8bb2e7aac983cd4b1&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;3e252806ef7433dfa80b027e0c152e6971101cf8&quot;,
+                &quot;digest&quot;: &quot;6270f51c51a19d7a7f61daa305270cd3efd82e94f6e5f43b702dbd41c9c01967&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;c1d86bf7eb7e98cceae279fc1c4d9b2ba75d2f9e&quot;,
+                &quot;digest&quot;: &quot;b83769ff588652c6c8f82f22f78c5d4bc3218a5f6764454ace9bfdc2733b385b&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+                &quot;digest&quot;: &quot;845de0a87b9d42427f9c5fffaa001e448258724ae1b772612fa9951e3f7b07fd&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              }
+            ],
+            &quot;replayEqual&quot;: true,
+            &quot;invalidationEqual&quot;: true
+          }
+        ],
+        &quot;current&quot;: [
+          {
+            &quot;phases&quot;: {
+              &quot;cold&quot;: {
+                &quot;ms&quot;: 5977.168808,
+                &quot;parentVmHwmKiB&quot;: 404516,
+                &quot;polls&quot;: 239,
+                &quot;incompletePolls&quot;: 2,
+                &quot;treePeakKiB&quot;: 763840,
+                &quot;childPeakKiB&quot;: 455496,
+                &quot;maxProcesses&quot;: 3
+              },
+              &quot;population&quot;: {
+                &quot;ms&quot;: 4714.3034290000005,
+                &quot;parentVmHwmKiB&quot;: 411580,
+                &quot;polls&quot;: 189,
+                &quot;incompletePolls&quot;: 2,
+                &quot;treePeakKiB&quot;: 829272,
+                &quot;childPeakKiB&quot;: 419536,
+                &quot;maxProcesses&quot;: 3
+              },
+              &quot;warm&quot;: {
+                &quot;ms&quot;: 377.42515000000094,
+                &quot;parentVmHwmKiB&quot;: 427316,
+                &quot;polls&quot;: 17,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 426800,
+                &quot;childPeakKiB&quot;: 8,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;invalidation&quot;: {
+                &quot;ms&quot;: 492.4184839999998,
+                &quot;parentVmHwmKiB&quot;: 484232,
+                &quot;polls&quot;: 22,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 484232,
+                &quot;childPeakKiB&quot;: 8,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;invalidation-check&quot;: {
+                &quot;ms&quot;: 4267.822166,
+                &quot;parentVmHwmKiB&quot;: 484232,
+                &quot;polls&quot;: 171,
+                &quot;incompletePolls&quot;: 1,
+                &quot;treePeakKiB&quot;: 921360,
+                &quot;childPeakKiB&quot;: 458412,
+                &quot;maxProcesses&quot;: 3
+              },
+              &quot;history&quot;: {
+                &quot;ms&quot;: 13356.305594999998,
+                &quot;parentVmHwmKiB&quot;: 484232,
+                &quot;polls&quot;: 532,
+                &quot;incompletePolls&quot;: 3,
+                &quot;treePeakKiB&quot;: 2072644,
+                &quot;childPeakKiB&quot;: 1608716,
+                &quot;maxProcesses&quot;: 7
+              },
+              &quot;resume&quot;: {
+                &quot;ms&quot;: 90.47961399999986,
+                &quot;parentVmHwmKiB&quot;: 484232,
+                &quot;polls&quot;: 6,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 470816,
+                &quot;childPeakKiB&quot;: 8,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;serial-check&quot;: {
+                &quot;ms&quot;: 14833.588635,
+                &quot;parentVmHwmKiB&quot;: 592244,
+                &quot;polls&quot;: 593,
+                &quot;incompletePolls&quot;: 4,
+                &quot;treePeakKiB&quot;: 1067284,
+                &quot;childPeakKiB&quot;: 486104,
+                &quot;maxProcesses&quot;: 3
+              }
+            },
+            &quot;graphs&quot;: {
+              &quot;cold&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;population&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;warm&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;changed&quot;: &quot;f742ec2c6770c990794f13bfe1698eefd1ace565ebd1506ecfc994498443241a&quot;
+            },
+            &quot;serialEqual&quot;: true,
+            &quot;files&quot;: 145,
+            &quot;entities&quot;: 676,
+            &quot;relations&quot;: 1014,
+            &quot;diagnostics&quot;: 97,
+            &quot;endpoints&quot;: 48,
+            &quot;requests&quot;: 96,
+            &quot;cacheFiles&quot;: 120,
+            &quot;cacheBytes&quot;: 247049,
+            &quot;cache&quot;: {
+              &quot;population&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 18
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 5,
+                  &quot;ms&quot;: 723
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 83,
+                  &quot;ms&quot;: 86941
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 20
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 33
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 20
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 29
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 42
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 20
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 30
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 45
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 6,
+                  &quot;ms&quot;: 6
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 12,
+                  &quot;ms&quot;: 413
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 22
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 56
+                }
+              },
+              &quot;warm&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 83,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 25
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 4
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 6
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 9
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 12,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 10
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                }
+              },
+              &quot;invalidation&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 5,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 83,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 26
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 37
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 4
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 11,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 44
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 37
+                }
+              }
+            },
+            &quot;history&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+              &quot;indexed&quot;: 4,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 0,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;resume&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+              &quot;indexed&quot;: 0,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 4,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;snapshots&quot;: [
+              {
+                &quot;sha&quot;: &quot;1b07d0b232000f3cca83457f39c584602682084e&quot;,
+                &quot;digest&quot;: &quot;4b18fd1005642453a5d7a126ed68d73b8be985dfc4bcd2d8bb2e7aac983cd4b1&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;3e252806ef7433dfa80b027e0c152e6971101cf8&quot;,
+                &quot;digest&quot;: &quot;6270f51c51a19d7a7f61daa305270cd3efd82e94f6e5f43b702dbd41c9c01967&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;c1d86bf7eb7e98cceae279fc1c4d9b2ba75d2f9e&quot;,
+                &quot;digest&quot;: &quot;b83769ff588652c6c8f82f22f78c5d4bc3218a5f6764454ace9bfdc2733b385b&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+                &quot;digest&quot;: &quot;845de0a87b9d42427f9c5fffaa001e448258724ae1b772612fa9951e3f7b07fd&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              }
+            ],
+            &quot;replayEqual&quot;: true,
+            &quot;invalidationEqual&quot;: true
+          },
+          {
+            &quot;phases&quot;: {
+              &quot;cold&quot;: {
+                &quot;ms&quot;: 3874.8738559999997,
+                &quot;parentVmHwmKiB&quot;: 406624,
+                &quot;polls&quot;: 156,
+                &quot;incompletePolls&quot;: 1,
+                &quot;treePeakKiB&quot;: 722920,
+                &quot;childPeakKiB&quot;: 420452,
+                &quot;maxProcesses&quot;: 3
+              },
+              &quot;population&quot;: {
+                &quot;ms&quot;: 3077.138511,
+                &quot;parentVmHwmKiB&quot;: 413120,
+                &quot;polls&quot;: 124,
+                &quot;incompletePolls&quot;: 2,
+                &quot;treePeakKiB&quot;: 861428,
+                &quot;childPeakKiB&quot;: 450748,
+                &quot;maxProcesses&quot;: 3
+              },
+              &quot;warm&quot;: {
+                &quot;ms&quot;: 264.71060599999964,
+                &quot;parentVmHwmKiB&quot;: 427320,
+                &quot;polls&quot;: 12,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 417444,
+                &quot;childPeakKiB&quot;: 4112,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;invalidation&quot;: {
+                &quot;ms&quot;: 324.76340699999855,
+                &quot;parentVmHwmKiB&quot;: 451256,
+                &quot;polls&quot;: 15,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 437696,
+                &quot;childPeakKiB&quot;: 8,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;invalidation-check&quot;: {
+                &quot;ms&quot;: 2804.884293000001,
+                &quot;parentVmHwmKiB&quot;: 451256,
+                &quot;polls&quot;: 114,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 899276,
+                &quot;childPeakKiB&quot;: 475516,
+                &quot;maxProcesses&quot;: 3
+              },
+              &quot;history&quot;: {
+                &quot;ms&quot;: 9226.058414999998,
+                &quot;parentVmHwmKiB&quot;: 468068,
+                &quot;polls&quot;: 368,
+                &quot;incompletePolls&quot;: 3,
+                &quot;treePeakKiB&quot;: 2209240,
+                &quot;childPeakKiB&quot;: 1748148,
+                &quot;maxProcesses&quot;: 7
+              },
+              &quot;resume&quot;: {
+                &quot;ms&quot;: 53.71831700000257,
+                &quot;parentVmHwmKiB&quot;: 468288,
+                &quot;polls&quot;: 4,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 468288,
+                &quot;childPeakKiB&quot;: 0,
+                &quot;maxProcesses&quot;: 2
+              }
+            },
+            &quot;graphs&quot;: {
+              &quot;cold&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;population&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;warm&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;changed&quot;: &quot;f742ec2c6770c990794f13bfe1698eefd1ace565ebd1506ecfc994498443241a&quot;
+            },
+            &quot;files&quot;: 145,
+            &quot;entities&quot;: 676,
+            &quot;relations&quot;: 1014,
+            &quot;diagnostics&quot;: 97,
+            &quot;endpoints&quot;: 48,
+            &quot;requests&quot;: 96,
+            &quot;cacheFiles&quot;: 120,
+            &quot;cacheBytes&quot;: 247049,
+            &quot;cache&quot;: {
+              &quot;population&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 10
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 5,
+                  &quot;ms&quot;: 509
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 83,
+                  &quot;ms&quot;: 58312
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 16
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 21
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 11
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 24
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 23
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 14
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 18
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 25
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 6,
+                  &quot;ms&quot;: 4
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 12,
+                  &quot;ms&quot;: 249
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 13
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 40
+                }
+              },
+              &quot;warm&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 83,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 20
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 7
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 12,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 7
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                }
+              },
+              &quot;invalidation&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 5,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 83,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 20
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 24
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 11,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 35
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 22
+                }
+              }
+            },
+            &quot;history&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+              &quot;indexed&quot;: 4,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 0,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;resume&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+              &quot;indexed&quot;: 0,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 4,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;snapshots&quot;: [
+              {
+                &quot;sha&quot;: &quot;1b07d0b232000f3cca83457f39c584602682084e&quot;,
+                &quot;digest&quot;: &quot;4b18fd1005642453a5d7a126ed68d73b8be985dfc4bcd2d8bb2e7aac983cd4b1&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;3e252806ef7433dfa80b027e0c152e6971101cf8&quot;,
+                &quot;digest&quot;: &quot;6270f51c51a19d7a7f61daa305270cd3efd82e94f6e5f43b702dbd41c9c01967&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;c1d86bf7eb7e98cceae279fc1c4d9b2ba75d2f9e&quot;,
+                &quot;digest&quot;: &quot;b83769ff588652c6c8f82f22f78c5d4bc3218a5f6764454ace9bfdc2733b385b&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+                &quot;digest&quot;: &quot;845de0a87b9d42427f9c5fffaa001e448258724ae1b772612fa9951e3f7b07fd&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              }
+            ],
+            &quot;replayEqual&quot;: true,
+            &quot;invalidationEqual&quot;: true
+          },
+          {
+            &quot;phases&quot;: {
+              &quot;cold&quot;: {
+                &quot;ms&quot;: 3842.810321,
+                &quot;parentVmHwmKiB&quot;: 406644,
+                &quot;polls&quot;: 155,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 753132,
+                &quot;childPeakKiB&quot;: 446148,
+                &quot;maxProcesses&quot;: 3
+              },
+              &quot;population&quot;: {
+                &quot;ms&quot;: 3141.2613389999997,
+                &quot;parentVmHwmKiB&quot;: 414356,
+                &quot;polls&quot;: 127,
+                &quot;incompletePolls&quot;: 2,
+                &quot;treePeakKiB&quot;: 867896,
+                &quot;childPeakKiB&quot;: 455908,
+                &quot;maxProcesses&quot;: 3
+              },
+              &quot;warm&quot;: {
+                &quot;ms&quot;: 261.75793799999883,
+                &quot;parentVmHwmKiB&quot;: 429108,
+                &quot;polls&quot;: 13,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 428864,
+                &quot;childPeakKiB&quot;: 540,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;invalidation&quot;: {
+                &quot;ms&quot;: 329.67809000000125,
+                &quot;parentVmHwmKiB&quot;: 482124,
+                &quot;polls&quot;: 15,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 482120,
+                &quot;childPeakKiB&quot;: 8,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;invalidation-check&quot;: {
+                &quot;ms&quot;: 2777.8633599999994,
+                &quot;parentVmHwmKiB&quot;: 486588,
+                &quot;polls&quot;: 113,
+                &quot;incompletePolls&quot;: 2,
+                &quot;treePeakKiB&quot;: 970880,
+                &quot;childPeakKiB&quot;: 487908,
+                &quot;maxProcesses&quot;: 3
+              },
+              &quot;history&quot;: {
+                &quot;ms&quot;: 9165.074441,
+                &quot;parentVmHwmKiB&quot;: 524876,
+                &quot;polls&quot;: 367,
+                &quot;incompletePolls&quot;: 5,
+                &quot;treePeakKiB&quot;: 2245040,
+                &quot;childPeakKiB&quot;: 1763368,
+                &quot;maxProcesses&quot;: 7
+              },
+              &quot;resume&quot;: {
+                &quot;ms&quot;: 108.66112900000007,
+                &quot;parentVmHwmKiB&quot;: 524876,
+                &quot;polls&quot;: 6,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 489548,
+                &quot;childPeakKiB&quot;: 1400,
+                &quot;maxProcesses&quot;: 2
+              }
+            },
+            &quot;graphs&quot;: {
+              &quot;cold&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;population&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;warm&quot;: &quot;2bffdef03840470dfcfb1ebfec33e0a58584f4964d0414c66a3cf6abb5a4e661&quot;,
+              &quot;changed&quot;: &quot;f742ec2c6770c990794f13bfe1698eefd1ace565ebd1506ecfc994498443241a&quot;
+            },
+            &quot;files&quot;: 145,
+            &quot;entities&quot;: 676,
+            &quot;relations&quot;: 1014,
+            &quot;diagnostics&quot;: 97,
+            &quot;endpoints&quot;: 48,
+            &quot;requests&quot;: 96,
+            &quot;cacheFiles&quot;: 120,
+            &quot;cacheBytes&quot;: 247049,
+            &quot;cache&quot;: {
+              &quot;population&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 15
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 5,
+                  &quot;ms&quot;: 661
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 83,
+                  &quot;ms&quot;: 60731
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 13
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 27
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 10
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 22
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 23
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 14
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 17
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 26
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 6,
+                  &quot;ms&quot;: 7
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 12,
+                  &quot;ms&quot;: 231
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 13
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 35
+                }
+              },
+              &quot;warm&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 83,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 17
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 4
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 12,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 6
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                }
+              },
+              &quot;invalidation&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 5,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 83,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 10
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 23
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 11,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 31
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 20
+                }
+              }
+            },
+            &quot;history&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+              &quot;indexed&quot;: 4,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 0,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;resume&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+              &quot;indexed&quot;: 0,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 4,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;snapshots&quot;: [
+              {
+                &quot;sha&quot;: &quot;1b07d0b232000f3cca83457f39c584602682084e&quot;,
+                &quot;digest&quot;: &quot;4b18fd1005642453a5d7a126ed68d73b8be985dfc4bcd2d8bb2e7aac983cd4b1&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;3e252806ef7433dfa80b027e0c152e6971101cf8&quot;,
+                &quot;digest&quot;: &quot;6270f51c51a19d7a7f61daa305270cd3efd82e94f6e5f43b702dbd41c9c01967&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;c1d86bf7eb7e98cceae279fc1c4d9b2ba75d2f9e&quot;,
+                &quot;digest&quot;: &quot;b83769ff588652c6c8f82f22f78c5d4bc3218a5f6764454ace9bfdc2733b385b&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;e0baaeb068f64325b29d45db25077727eae1f8ae&quot;,
+                &quot;digest&quot;: &quot;845de0a87b9d42427f9c5fffaa001e448258724ae1b772612fa9951e3f7b07fd&quot;,
+                &quot;entities&quot;: 676,
+                &quot;relations&quot;: 1014,
+                &quot;diagnostics&quot;: 97
+              }
+            ],
+            &quot;replayEqual&quot;: true,
+            &quot;invalidationEqual&quot;: true
+          }
+        ]
+      }
+    }
+  ]
+}</pre></details></main></body></html>

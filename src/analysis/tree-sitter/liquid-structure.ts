@@ -1,3 +1,5 @@
+import {liquidIssue,finishLiquid} from './template-facts.js';
+export {liquidIssue,finishLiquid} from './template-facts.js';
 import type {Node,Query} from 'web-tree-sitter';
 import type {AnalysisContext,ScannedFile} from '../../core/analyzer.js';
 import type {LiquidRegion,LiquidSyntaxFacts,StructureFacts} from '../facts.js';
@@ -19,14 +21,6 @@ export function selectLiquidProfile(context:AnalysisContext,file:ScannedFile,con
  else if(engine==='shopify'&&/^(?:layout|templates|sections|snippets|blocks)\//.test(relative)&&!/[.](?:json|xml|md|scss|sass)[.]liquid$/i.test(relative))host='html';
  const lookup=/^(?:layout|templates|sections|snippets|blocks)\/.+[.]liquid$/.test(relative)&&!/[.](?:js|css|json|xml|md|scss|sass)[.]liquid$/i.test(relative),bodyTags=/^(?:sections|snippets|blocks)\/[^/]+[.]liquid$/.test(relative)&&lookup;
  return {host,engine,bodyTags,lookup,...app&&engine==='shopify'?{root:app.path}:{},reason};
-}
-export function liquidIssue(facts:StructureFacts,code:string,reason:string,start?:number,end?:number,content?:string):void {
- if(facts.issues.length<100)facts.issues.push({code,reason,...start!==undefined&&content!==undefined?{range:new SourceText(content).range(start,end??start)}:{}});else facts.truncated=true;
-}
-export function finishLiquid(facts:StructureFacts):StructureFacts {
- const syntax=facts.liquid!;
- if(facts.truncated){syntax.host.complete=false;syntax.nativeComplete=false;if(!facts.issues.some(i=>i.code==='liquid-budget-exceeded')){if(facts.issues.length===100)facts.issues.pop();facts.issues.push({code:'liquid-budget-exceeded',reason:'Original Liquid extraction reached its node, depth, region, binding, import, diagnostic or query budget'});}}
- syntax.complete=!facts.truncated&&!facts.issues.length&&syntax.nativeComplete&&syntax.host.complete;return facts;
 }
 /** Tag delimiters are native children. Derive body bounds from those original
  * children rather than the scanner's occasionally empty raw_content node. */

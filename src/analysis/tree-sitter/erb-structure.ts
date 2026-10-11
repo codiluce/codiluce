@@ -1,9 +1,11 @@
+import {erbIssue,finishErb} from './template-facts.js';
+export {erbIssue,finishErb} from './template-facts.js';
 import {extractTemplateHost} from './embedded-host.js';
 import type {Node,Query} from 'web-tree-sitter';
 import type {DeclarationFact,ErbSyntaxFacts,StructureFacts} from '../facts.js';
 import {SourceText} from '../source-map.js';
 
-const MAX_NODES=200_000,MAX_REGIONS=4096,MAX_DECLARATIONS=20_000,MAX_ISSUES=100;
+const MAX_NODES=200_000,MAX_REGIONS=4096,MAX_DECLARATIONS=20_000;
 export function selectErbHost(file:string,content:string):{language:ErbSyntaxFacts['host']['language'];reason:'file-extension'|'original-doctype'|'unknown';range?:ReturnType<SourceText['range']>} {
  const lower=file.toLowerCase();
  if(lower.endsWith('.html.erb')||lower.endsWith('.rhtml'))return {language:'html',reason:'file-extension'};
@@ -14,13 +16,6 @@ export function selectErbHost(file:string,content:string):{language:ErbSyntaxFac
  return {language:'unknown',reason:'unknown'};
 }
 function withinBudget(root:Node):boolean {const pending=[root];let count=0;while(pending.length){const node=pending.pop()!;if(++count>MAX_NODES)return false;for(let i=node.childCount-1;i>=0;i--){const child=node.child(i);if(child)pending.push(child);}}return true;}
-export function erbIssue(facts:StructureFacts,code:string,reason:string,range?:ReturnType<SourceText['range']>):void {
- if(facts.issues.length<MAX_ISSUES)facts.issues.push({code,reason,...range?{range}:{}});else facts.truncated=true;
-}
-export function finishErb(facts:StructureFacts):StructureFacts {
- if(facts.truncated&&!facts.issues.some(i=>i.code==='erb-budget-exceeded')){if(facts.issues.length===MAX_ISSUES)facts.issues.pop();facts.issues.push({code:'erb-budget-exceeded',reason:'Original ERB extraction reached its node, region, declaration, header, context, diagnostic or query budget'});}
- facts.erb!.complete=!facts.issues.length&&!facts.truncated&&facts.erb!.rubyComplete&&facts.erb!.host.complete;return facts;
-}
 /** Native template delimiters first: ERB executes even inside HTML comments,
  * script strings and style text. No ERB compiler, Ruby or target code runs. */
 export function extractErbRegions(root:Node,query:Query,content:string,host:ErbSyntaxFacts['host']['language']='unknown'):StructureFacts {

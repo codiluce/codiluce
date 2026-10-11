@@ -1,0 +1,2 @@
+# Keep the checked parser bundle reproducible across native checkouts.
+src/analysis/tree-sitter/native-script-worker.mjs text eol=lf

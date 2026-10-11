@@ -5,6 +5,7 @@ import { featureOutcomes } from '../facts.js';
 import { AnalysisRegistry } from '../registry.js';
 import { GRAMMAR_CATALOG_VERSION, STRUCTURAL_LANGUAGES, grammarCatalog, grammarManifest, grammarManifestError, hashText, queryText, verifiedGrammar } from './grammars.js';
 import { StructureParser } from './client.js';
+import {finishTemplateFacts,literalScriptTemplate,TemplateScriptParser} from './template-scripts.js';
 import { fileKey } from '../../pipeline/cache.js';
 import { IndexedSources } from '../indexed-sources.js';
 import {objectiveCppSource} from './objc-cpp.js';
@@ -24,7 +25,11 @@ for (const language of STRUCTURAL_LANGUAGES) analysisRegistry.registerLanguage({
 export const structureAnalyzer: Analyzer = {
   name: 'tree-sitter-structure', version: STRUCTURE_VERSION,
   async analyze(context): Promise<void> {
-    const parser = new StructureParser();
+    const parser = new StructureParser(), scripts = new TemplateScriptParser();
+    const completed: Array<() => Promise<void>> = [];
+    let nativeJobs=Promise.resolve(),scriptJobs=Promise.resolve(),nativeClosed=false;
+    let releaseScripts!:()=>void;
+    const scriptsReady=new Promise<void>(resolve=>{releaseScripts=resolve;});
     const sources = context.sources ?? new IndexedSources(context);
     const integrity = new Map<string, string | undefined>();
     try {
@@ -74,33 +79,63 @@ export const structureAnalyzer: Analyzer = {
             catch(error){integrity.set('cpp',error instanceof Error?error.message:String(error));}
             analysis.parser.auxiliary=[{language:'cpp',grammar:cpp.sourceRevision,grammarHash:cpp.sha256,queryHash,abi:cpp.abi,...integrity.get('cpp')?{unavailable:integrity.get('cpp')}:{}}];
           }
-          const compute = () => parser.parse(grammar.language, content, {objectiveCpp,...erbHost?{erbHost}:{},...razorKind?{razorKind}:{},...liquidProfile?{liquidHost:liquidProfile.host,liquidEngine:liquidProfile.engine,liquidBodyTags:liquidProfile.bodyTags}:{}});
-          const facts = context.cache ? await context.cache.value('syntax-facts', file.path, { version: STRUCTURE_VERSION, file: fileKey(context, file.path), parser: analysis.parser,...liquidProfile?{liquidProfile}:{} }, compute) : await compute();
-          const declarations = declare(context, file, content, facts,file.language==='erb'||file.language==='razor'||file.language==='liquid'?fileEntity.metadata.component as string|undefined:undefined);
-          if(facts.cfamily)fileEntity.metadata.cfamilySyntax=facts.cfamily;
-          if(facts.swift)fileEntity.metadata.swiftSyntax=facts.swift;
-          if(facts.scala)fileEntity.metadata.scalaSyntax=facts.scala;
-          if(facts.groovy)fileEntity.metadata.groovySyntax=facts.groovy;
-          if(facts.fsharp)fileEntity.metadata.fsharpSyntax=facts.fsharp;
-          if(facts.vbnet)fileEntity.metadata.vbnetSyntax=facts.vbnet;
-          if(facts.erb)fileEntity.metadata.erbSyntax=facts.erb;
-          if(facts.razor)fileEntity.metadata.razorSyntax=facts.razor;
-          if(facts.liquid)fileEntity.metadata.liquidSyntax=facts.liquid;
-          if(facts.objc)fileEntity.metadata.objcSyntax={...facts.objc,sourceProfile:objectiveCpp?'objective-cpp-partial':'objective-c'};
-          if (facts.liquid || facts.python || facts.go || facts.ruby || facts.jvm || facts.csharp || facts.rust) { context.syntax ??= new Map(); context.syntax.set(file.path, { facts, declarations }); }
-          analysis.features.structure = { status: facts.issues.length ? 'partial' : 'supported', ...(facts.issues.length ? { reason: `${facts.issues.length} syntax or extraction finding(s); valid declarations retained` } : {}) };
-          if(facts.objc&&objectiveCpp){
-            const reason='Original Objective-C/C++ source profiles retain declarations; shared types, macros and cross-language binding remain unverified';
-            analysis.features.structure={status:'partial',reason};if(!facts.issues.some(issue=>issue.code==='objc-cpp-structure-gap'))context.graph.diagnose({analyzer:'tree-sitter-structure',severity:'warning',code:'objc-cpp-structure-gap',file:file.path,entityId:file.id,reason});
-          }
-          for (const issue of facts.issues) context.graph.diagnose({ analyzer: 'tree-sitter-structure', severity: 'warning', code: issue.code, file: file.path, entityId: file.id, ...(issue.range ? { line: issue.range.startLine } : {}), reason: issue.reason });
+          const compute = async () => {
+            // One native job at a time: a failed worker cannot cancel another
+            // file's queued parse. Complete cache records contain both phases.
+            const native=nativeJobs.then(()=>parser.parse(grammar.language,content,{nativeOnly:true,objectiveCpp,...erbHost?{erbHost}:{},...razorKind?{razorKind}:{},...liquidProfile?{liquidHost:liquidProfile.host,liquidEngine:liquidProfile.engine,liquidBodyTags:liquidProfile.bodyTags}:{}}));
+            nativeJobs=native.then(()=>{},()=>parser.closeAndWait());
+            const facts=await native;if(!literalScriptTemplate(facts))return finishTemplateFacts(facts);
+            scripts.prewarm();
+            await scriptsReady;
+            if(!nativeClosed)throw Error('Native parser phase did not complete');
+            const scripted=scriptJobs.then(()=>scripts.finish(content,facts));
+            scriptJobs=scripted.then(()=>{},()=>scripts.closeAndWait());return scripted;
+          };
+          const result=(context.cache ? context.cache.value('syntax-facts', file.path, { version: STRUCTURE_VERSION, file: fileKey(context, file.path), parser: analysis.parser,...liquidProfile?{liquidProfile}:{} }, compute) : compute()).then(facts=>({facts}),error=>({error}));
+          completed.push(async()=>{
+            try{
+            const outcome=await result;
+            if('error' in outcome){failed(file,analysis,outcome.error);return;}
+            const facts=outcome.facts;
+            const declarations = declare(context, file, content, facts,file.language==='erb'||file.language==='razor'||file.language==='liquid'?fileEntity.metadata.component as string|undefined:undefined);
+            if(facts.cfamily)fileEntity.metadata.cfamilySyntax=facts.cfamily;
+            if(facts.swift)fileEntity.metadata.swiftSyntax=facts.swift;
+            if(facts.scala)fileEntity.metadata.scalaSyntax=facts.scala;
+            if(facts.groovy)fileEntity.metadata.groovySyntax=facts.groovy;
+            if(facts.fsharp)fileEntity.metadata.fsharpSyntax=facts.fsharp;
+            if(facts.vbnet)fileEntity.metadata.vbnetSyntax=facts.vbnet;
+            if(facts.erb)fileEntity.metadata.erbSyntax=facts.erb;
+            if(facts.razor)fileEntity.metadata.razorSyntax=facts.razor;
+            if(facts.liquid)fileEntity.metadata.liquidSyntax=facts.liquid;
+            if(facts.objc)fileEntity.metadata.objcSyntax={...facts.objc,sourceProfile:objectiveCpp?'objective-cpp-partial':'objective-c'};
+            if (facts.liquid || facts.python || facts.go || facts.ruby || facts.jvm || facts.csharp || facts.rust) { context.syntax ??= new Map(); context.syntax.set(file.path, { facts, declarations }); }
+            analysis.features.structure = { status: facts.issues.length ? 'partial' : 'supported', ...(facts.issues.length ? { reason: `${facts.issues.length} syntax or extraction finding(s); valid declarations retained` } : {}) };
+            if(facts.objc&&objectiveCpp){
+              const reason='Original Objective-C/C++ source profiles retain declarations; shared types, macros and cross-language binding remain unverified';
+              analysis.features.structure={status:'partial',reason};if(!facts.issues.some(issue=>issue.code==='objc-cpp-structure-gap'))context.graph.diagnose({analyzer:'tree-sitter-structure',severity:'warning',code:'objc-cpp-structure-gap',file:file.path,entityId:file.id,reason});
+            }
+            for (const issue of facts.issues) context.graph.diagnose({ analyzer: 'tree-sitter-structure', severity: 'warning', code: issue.code, file: file.path, entityId: file.id, ...(issue.range ? { line: issue.range.startLine } : {}), reason: issue.reason });
+            }catch(error){failed(file,analysis,error);}
+          });
         } catch (error) {
-          const reason = error instanceof Error ? error.message : String(error);
-          analysis.features.structure = { status: 'failed', reason };
-          context.graph.diagnose({ analyzer: 'tree-sitter-structure', severity: 'warning', code: 'syntax-analysis-failed', file: file.path, entityId: file.id, reason });
+          failed(file,analysis,error);
         }
       }
-    } finally { parser.close(); }
+      await nativeJobs;
+      await parser.closeAndWait();nativeClosed=true;releaseScripts();
+      for(const finish of completed)await finish();
+    } finally {
+      // Release blocked jobs even on a preparation error; they must not start
+      // a compiler while native completion/termination is unproven.
+      releaseScripts();
+      try { await nativeJobs; await scriptJobs; }
+      finally { await Promise.all([parser.closeAndWait(),scripts.closeAndWait()]); }
+    }
+    function failed(file:ScannedFile,analysis:FileAnalysis,error:unknown):void {
+      const reason=error instanceof Error?error.message:String(error);
+      analysis.features.structure={status:'failed',reason};
+      context.graph.diagnose({analyzer:'tree-sitter-structure',severity:'warning',code:'syntax-analysis-failed',file:file.path,entityId:file.id,reason});
+    }
   },
 };
 

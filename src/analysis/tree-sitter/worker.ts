@@ -27,7 +27,7 @@ async function load(language: string): Promise<{ parser: Parser; query: Query }>
   entry = { parser, query }; loaded.set(language, entry);
   return entry;
 }
-async function handle(job: { id: number; language: string; content: string; objectiveCpp?:boolean;erbHost?:'html'|'javascript'|'css'|'unknown';razorKind?:'component'|'view';liquidHost?:'html'|'javascript'|'css'|'unknown';liquidEngine?:'shopify'|'unknown';liquidBodyTags?:boolean }): Promise<void> {
+async function handle(job: { id: number; language: string; content: string; objectiveCpp?:boolean;erbHost?:'html'|'javascript'|'css'|'unknown';razorKind?:'component'|'view';liquidHost?:'html'|'javascript'|'css'|'unknown';liquidEngine?:'shopify'|'unknown';liquidBodyTags?:boolean;nativeOnly?:boolean }): Promise<void> {
   try {
     const { parser, query } = await load(job.language);
     parser.reset();
@@ -44,22 +44,22 @@ async function handle(job: { id: number; language: string; content: string; obje
         catch(error){if(error instanceof WebAssembly.RuntimeError)throw error;facts.erb!.rubyComplete=false;erbIssue(facts,'erb-ruby-unavailable',`Original ERB regions retained; Ruby grammar/query unavailable: ${error instanceof Error?error.message:String(error)}`);}
         if(job.erbHost==='html')try{const html=await load('html');html.parser.reset();const htmlTree=html.parser.parse(erbHostProjection(job.content,facts));if(!htmlTree)throw Error('HTML projection returned no tree');try{extractErbHost(htmlTree.rootNode,html.query,job.content,facts);}finally{htmlTree.delete();}}
         catch(error){if(error instanceof WebAssembly.RuntimeError)throw error;facts.erb!.host.complete=false;erbIssue(facts,'erb-html-unavailable',`Original ERB/Ruby regions retained; HTML grammar/query unavailable: ${error instanceof Error?error.message:String(error)}`);}
-        if(facts.erb!.host.regions.some(r=>r.kind==='script'&&r.supported&&r.language==='javascript')){const compiler=(await import('typescript')).default;extractErbScripts(compiler,job.content,facts);}
-        facts=finishErb(facts);
+        if(!job.nativeOnly&&facts.erb!.host.regions.some(r=>r.kind==='script'&&r.supported&&r.language==='javascript')){const compiler=(await import('typescript')).default;extractErbScripts(compiler,job.content,facts);}
+        if(!job.nativeOnly)facts=finishErb(facts);
       }
       if(job.language==='razor'){
         if(facts.truncated)facts.razor!.host.complete=false;
         else try{const html=await load('html');html.parser.reset();const host=html.parser.parse(razorHostProjection(tree.rootNode,query,job.content,facts));if(!host)throw Error('HTML projection returned no tree');try{extractTemplateHost(host.rootNode,html.query,job.content,facts,'razor');}finally{host.delete();}}
         catch(error){if(error instanceof WebAssembly.RuntimeError)throw error;facts.razor!.host.complete=false;razorIssue(facts,'razor-html-unavailable',`Original Razor/C# source retained; HTML grammar/query unavailable: ${error instanceof Error?error.message:String(error)}`);}
-        if(!facts.truncated&&facts.razor!.host.regions.some(r=>r.kind==='script'&&r.supported&&r.language==='javascript')){const compiler=(await import('typescript')).default;extractLiteralScripts(compiler,job.content,facts,'razor');}
-        facts=finishRazor(facts);
+        if(!job.nativeOnly&&!facts.truncated&&facts.razor!.host.regions.some(r=>r.kind==='script'&&r.supported&&r.language==='javascript')){const compiler=(await import('typescript')).default;extractLiteralScripts(compiler,job.content,facts,'razor');}
+        if(!job.nativeOnly)facts=finishRazor(facts);
       }
       if(job.language==='liquid'){
         if(!facts.truncated&&facts.liquid!.nativeComplete&&job.liquidHost==='html')try{const html=await load('html');html.parser.reset();const host=html.parser.parse(liquidHostProjection(job.content,facts));if(!host)throw Error('HTML projection returned no tree');try{extractTemplateHost(host.rootNode,html.query,job.content,facts,'liquid');}finally{host.delete();}}
         catch(error){if(error instanceof WebAssembly.RuntimeError)throw error;facts.liquid!.host.complete=false;liquidIssue(facts,'liquid-html-unavailable',`Original Liquid regions retained; HTML grammar/query unavailable: ${error instanceof Error?error.message:String(error)}`);}
         extractLiquidBodyHosts(job.content,facts,job.liquidBodyTags);
-        if(!facts.truncated&&facts.liquid!.host.regions.some(r=>r.kind==='script'&&r.supported&&r.language==='javascript')){const compiler=(await import('typescript')).default;extractLiteralScripts(compiler,job.content,facts,'liquid');}
-        facts=finishLiquid(facts);
+        if(!job.nativeOnly&&!facts.truncated&&facts.liquid!.host.regions.some(r=>r.kind==='script'&&r.supported&&r.language==='javascript')){const compiler=(await import('typescript')).default;extractLiteralScripts(compiler,job.content,facts,'liquid');}
+        if(!job.nativeOnly)facts=finishLiquid(facts);
       }
       if(job.language==='objective-c'){
         facts=recoverObjcRegions(facts,job.content,parser,query);
@@ -76,7 +76,7 @@ async function handle(job: { id: number; language: string; content: string; obje
   } catch (error) { process.send?.({ id: job.id, error: error instanceof Error ? error.message : String(error) }); }
 }
 let pending = Promise.resolve();
-process.on('message', (job: { id: number; language: string; content: string; objectiveCpp?:boolean;erbHost?:'html'|'javascript'|'css'|'unknown';razorKind?:'component'|'view';liquidHost?:'html'|'javascript'|'css'|'unknown';liquidEngine?:'shopify'|'unknown';liquidBodyTags?:boolean }) => { pending = pending.then(() => handle(job)); });
+process.on('message', (job: Parameters<typeof handle>[0]) => { pending = pending.then(() => handle(job)); });
 process.once('disconnect', () => {
   for (const { parser, query } of loaded.values()) { query.delete(); parser.delete(); }
   process.exit(0);

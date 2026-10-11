@@ -1,13 +1,10 @@
+import {razorIssue,finishRazor} from './template-facts.js';
+export {razorIssue,finishRazor} from './template-facts.js';
 import type {Node,Query} from 'web-tree-sitter';
 import type {DeclarationFact,RazorRegion,RazorSyntaxFacts,StructureFacts} from '../facts.js';
 import {SourceText} from '../source-map.js';
 
 const MAX_NODES=200_000,MAX_REGIONS=4096,MAX_DECLARATIONS=20_000;
-export function razorIssue(facts:StructureFacts,code:string,reason:string,range?:ReturnType<SourceText['range']>):void {if(facts.issues.length<100)facts.issues.push({code,reason,...range?{range}:{}});else facts.truncated=true;}
-export function finishRazor(facts:StructureFacts):StructureFacts {
- if(facts.truncated){facts.razor!.csharpComplete=false;if(facts.issues.length===100)facts.issues.pop();razorIssue(facts,'razor-budget-exceeded','Original Razor extraction reached its node, region, declaration, header, context, diagnostic or query budget');}
- facts.razor!.complete=!facts.truncated&&!facts.issues.length&&facts.razor!.csharpComplete&&facts.razor!.host.complete;return facts;
-}
 function blockKind(node:Node):'code'|'functions'|'render' {const brace=node.children.find(n=>n.type==='{');const open=node.text.slice(0,(brace?.startIndex??node.startIndex)-node.startIndex);return open.includes('functions')?'functions':open.includes('code')?'code':'render';}
 function missingDelimiter(node:Node):boolean {return node.children.some(n=>n.isMissing||n.isError);}
 function intersects(a:number,b:number,c:number,d:number):boolean {return c===d?c>=a&&c<=b:a<d&&b>c;}

@@ -1,7 +1,7 @@
 import type ts from 'typescript';
 import type {DeclarationFact,StructureFacts} from '../facts.js';
 import {SourceText} from '../source-map.js';
-import {erbIssue} from './erb-structure.js';
+import {erbIssue} from './template-facts.js';
 
 /** Parse-only original literal scripts. No compiler output, virtual source file,
  * import execution/resolution, browser evaluation or rendered source is indexed. */
