@@ -103,6 +103,11 @@ How far Codiluce follows the code depends on the stack:
 - **Groovy structure:** original types, traits, records/components, methods, constructors, properties/fields and
   script bindings. Imports and annotations retain source syntax; unsupported grammar, generation and DSL binding
   remain visible gaps. Gradle and Jenkins sources are read without execution.
+- **F# and VB.NET structure:** original source declarations with exact ranges and explicit parser gaps.
+  F# includes dedicated signature files; VB.NET preserves original source headers without project/compiler binding.
+- **ERB templates:** original server Ruby regions and declarations, literal HTML script/style regions and named
+  literal JavaScript declarations, with one original template identity. Rendering, interpolated scripts and Rails
+  template lookup remain visible gaps.
 - **Map:** Angular, Remix, Fastify, Symfony, Quarkus, Blazor and every other language and framework are detected and
   mapped with their files, lines and Git metrics.
 
@@ -148,6 +153,13 @@ library/build logic, Gradle and Jenkins sources. The audit retains 13 of 23 revi
 a builder with annotated parameters are omitted with an explicit ownership gap. Nested types, Unicode names and
 some command-style named arguments remain unqualified. No JVM, Groovy compiler, AST transform, Grape download,
 Gradle/Jenkins or target code executes. Imports, references and framework semantics remain unsupported.
+
+ERB now has an initial original-region adapter with pinned native template/Ruby/HTML parsing. It processes tags
+before HTML, preserves UTF-16 source ranges and original declarations spanning blocks, and parses qualified literal
+inline JavaScript without execution or emit. Unknown engine/trim modes, recovery, rendered interpolation and external
+scripts remain explicit gaps. The [immutable ERB source audit](docs/erb-source-accuracy.html) qualifies reviewed original
+region boundaries; named Ruby/JavaScript declarations are additionally covered by conformance and installed-package
+checks. Import/reference/framework binding and Razor/Liquid remain open.
 
 Java and Kotlin now resolve original local import declarations within selected Maven reactors, literal Gradle projects
 and recorded source/classpath inputs. Explicit, wildcard, static and alias imports retain source evidence and visibility

@@ -1,0 +1,15 @@
+<% module ErbStore %>
+<% class ErbBox %>
+<% def erb_read(value) %>
+<p><%= value %></p>
+<% end %>
+<% end %>
+<% end %>
+<script type="module">
+export class ErbClient {
+  constructor() {}
+  click(value) { return value; }
+}
+export function erbClientHelper() { return 1; } export const erbBoundHelper = (value) => value;
+</script>
+<style>.card { color: navy; }</style>

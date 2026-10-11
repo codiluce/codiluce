@@ -7,7 +7,7 @@ the authoritative parsers for their languages.
 
 `manifest.json` records each grammar's upstream revision, artifact package and
 version, SHA-256, language ABI and license. Six artifacts come from the pinned
-VS Code grammar bundle; Kotlin, C, C++ and Objective-C come from their upstream grammar packages. The
+VS Code grammar bundle; Kotlin, C, C++, Objective-C, ERB and auxiliary HTML come from their upstream grammar packages. The
 bundle's build revision and each upstream license are retained here. Swift 0.7.3 and Scala 0.26.2 come from pinned upstream release WASM assets,
 with immutable source revisions and artifact URLs/checksums; these are not npm artifacts. F# uses the distinct upstream 0.3.12 implementation/signature releases (ABI 15), with the original MIT notice. The public language stays `fsharp`; `.fsi` selects `fsharp-signature`, while `.fs`/`.fsx` select `fsharp`. Both artifact/query hashes participate in cache identity. The
 runtime is pinned in `package.json` and the manifest. Groovy uses generated C from the
@@ -16,7 +16,7 @@ Tree-sitter CLI 0.26.9, wasi-sdk 29.0 and a Linux container digest. Its MIT lice
 option is retained. `artifactBuild` records source SHA-512, toolchain SHA-256,
 container and rebuild script; its WASM is a source build, not an upstream WASM release.
 
-`npm run grammars:sync` restores the ten npm WASM artifacts from installed
+`npm run grammars:sync` restores the twelve npm WASM artifacts from installed
 development dependencies after verifying versions/checksums, and verifies the
 committed Swift/Scala/F# source and signature release assets and source-built Groovy/VB.NET assets. It runs offline and compiles nothing. To restore
 the Swift/Scala/F# source and signature release assets explicitly, run
@@ -247,3 +247,33 @@ metadata/diagnostic limits are explicit. The conformance cases and
 [immutable original VB source audit](../docs/vbnet-source-accuracy.html) qualify this
 limited profile; wider VB grammar/project/import/framework accuracy, mixed process-tree
 memory and native OS release gates remain open.
+
+
+ERB adds a sixteenth structural adapter and two pinned MIT npm WASM assets:
+`tree-sitter-embedded-template` 0.25.0 (ABI 15, 5,531 bytes) and auxiliary
+`tree-sitter-html` 0.23.2 (ABI 14, 18,385 bytes). Together with the existing
+Ruby grammar these preserve native original ERB code/output/comment/literal
+regions, original Ruby module/class/method headers and lexical owners spanning
+template blocks. `.html.erb`, legacy `.rhtml` and an original leading HTML doctype also select HTML and retain original HTML
+script/style ranges, literal attributes and named literal JavaScript functions/callable variable initializers,
+classes, methods/accessors and explicit constructors. Other ERB host extensions
+retain Ruby source without guessing HTML. One original template component owns
+source declarations; no generated render function, output helper or virtual graph
+file is created. Ruby/HTML artifact/query hashes and the actual TypeScript version/literal-JavaScript profile participate in cache identity;
+missing auxiliary assets preserve the independent source regions.
+
+ERB processing precedes HTML, including tags inside HTML comments and script
+strings. Ruby/host syntax projections preserve UTF-16 positions and newlines;
+only original code bytes enter the Ruby projection, with delimiter separators.
+Original headers retain literal spelling. Unknown percent-line engine options,
+EJS/Erubi extension delimiters, trim/escape agreement, recovery and rendered
+client interpolation produce explicit gaps. Only literal JavaScript in explicit
+HTML hosts is qualified; processor/data/external/dynamic scripts and typed syntax
+are excluded. JavaScript syntax checks use an in-memory host with no filesystem
+reads, resolution, emit or target execution. CSS retains regions only.
+Imports/references/framework/effects/guards, Rails rendering/layout/partial binding,
+view/receiver/runtime ownership, compiled-output equivalence and Razor/Liquid
+remain unimplemented. Bounded conformance, installed-package/history/isolation,
+and the [immutable original ERB region audit](../docs/erb-source-accuracy.html)
+qualify this initial profile; broader grammar/template/engine accuracy and native
+platform/process-tree budgets remain open.

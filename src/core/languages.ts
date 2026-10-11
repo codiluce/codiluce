@@ -11,7 +11,7 @@ const EXTENSIONS: Record<string, string> = {
   '.ts': 'typescript', '.tsx': 'typescript', '.mts': 'typescript', '.cts': 'typescript',
   '.js': 'javascript', '.jsx': 'javascript', '.mjs': 'javascript', '.cjs': 'javascript',
   '.php': 'php',
-  '.vue': 'vue', '.svelte': 'svelte', '.astro': 'astro', '.liquid': 'liquid', '.erb': 'erb', '.cshtml': 'razor', '.razor': 'razor',
+  '.vue': 'vue', '.svelte': 'svelte', '.astro': 'astro', '.liquid': 'liquid', '.erb': 'erb', '.rhtml': 'erb', '.cshtml': 'razor', '.razor': 'razor',
   '.py': 'python', '.pyi': 'python', '.pyw': 'python',
   '.go': 'go', '.rs': 'rust',
   '.java': 'java', '.kt': 'kotlin', '.kts': 'kotlin', '.scala': 'scala', '.sc': 'scala',
