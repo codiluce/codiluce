@@ -13,11 +13,12 @@ import {SourceText} from '../source-map.js';
 import {selectErbHost} from './erb-structure.js';
 import ts from 'typescript';
 import {selectLiquidProfile} from './liquid-structure.js';
+import { PHP_STRUCTURE_VERSION } from '../php/version.js';
 
 export const STRUCTURE_VERSION = `${ANALYZER_VERSION}:${GRAMMAR_CATALOG_VERSION}:59`;
 export const analysisRegistry = new AnalysisRegistry();
 analysisRegistry.registerLanguage({ id: 'typescript', version: ANALYZER_VERSION, languages: ['typescript', 'javascript'], features: { structure: 'supported', imports: 'partial', references: 'partial', effects: 'partial', guards: 'supported' } });
-analysisRegistry.registerLanguage({ id: 'php', version: ANALYZER_VERSION, languages: ['php'], features: { structure: 'partial', imports: 'partial', references: 'partial', effects: 'partial', guards: 'supported' } });
+analysisRegistry.registerLanguage({ id: 'php', version: PHP_STRUCTURE_VERSION, languages: ['php'], features: { structure: 'partial', imports: 'partial', references: 'partial', effects: 'partial', guards: 'supported' } });
 for (const language of STRUCTURAL_LANGUAGES) analysisRegistry.registerLanguage({ id: `syntax-${language}`, version: STRUCTURE_VERSION, languages: [language], features: { structure: 'supported', ...(['python', 'go', 'ruby','rust','java','kotlin','csharp','liquid'].includes(language) ? { imports: 'partial', ...(['csharp','rust'].includes(language)?{references:'partial' as const}:{}) } : {}) } });
 
 export const structureAnalyzer: Analyzer = {

@@ -202,7 +202,20 @@ export interface RazorSyntaxFacts {sourceKind:'component'|'view';regions:RazorRe
 export interface LiquidRegion {key:string;kind:'literal'|'tag'|'output'|'control'|'comment'|'doc'|'raw'|'javascript'|'stylesheet'|'style'|'schema'|'front-matter'|'recovery';nativeKind:string;start:number;end:number;range:SourceRange;bodyStart:number;bodyEnd:number;bodyRange:SourceRange;supported:boolean;conditions:string[]}
 export interface LiquidImportFact {kind:'render'|'include'|'include_relative'|'section'|'sections'|'layout';text:string;specifier?:string;start:number;end:number;range:SourceRange;supported:boolean;conditions:string[]}
 export interface LiquidSyntaxFacts {regions:LiquidRegion[];imports:LiquidImportFact[];bindings:{name:string;kind:string;range:SourceRange;nameRange:SourceRange}[];host:EmbeddedHostFacts;engine:'shopify'|'unknown';nativeComplete:boolean;complete:boolean;executionUnverified:true}
-export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; cfamily?:CfamilySyntaxFacts; objc?:ObjcSyntaxFacts; swift?:SwiftSyntaxFacts; scala?:ScalaSyntaxFacts; groovy?:GroovySyntaxFacts; fsharp?:FsharpSyntaxFacts; vbnet?:VbnetSyntaxFacts; erb?:ErbSyntaxFacts; razor?:RazorSyntaxFacts; liquid?:LiquidSyntaxFacts; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts; csharp?: CsharpSyntaxFacts; rust?:RustSyntaxFacts }
+export interface PhpSite { start: number; end: number; range: SourceRange }
+export interface PhpImportFact extends PhpSite { namespace: string; scope: string; kind: 'class'|'function'|'const'; specifier: string; alias: string }
+export interface PhpDeclarationSource { key: string; namespace: string; scope: string; nameRange: SourceRange; headerRange: SourceRange; attributes: { text: string; range: SourceRange }[]; bases: { kind: 'extends'|'implements'; text: string; range: SourceRange }[]; type?: string; sharedHeader?: string; visibilitySet?: string; promoted?: boolean; bindingOnly?: boolean }
+export interface PhpSyntaxFacts {
+  profile: 'php-parser-8.4-original-source'; executionUnverified: true; complete: boolean;
+  namespaces: (PhpSite & { key: string; name: string; bracketed: boolean })[];
+  declarations: PhpDeclarationSource[];
+  imports: PhpImportFact[];
+  loads: (PhpSite & { kind: 'include'|'include_once'|'require'|'require_once'; expression: string; conditions: string[] })[];
+  traits: (PhpSite & { owner?: string; names: string[]; adaptations: { kind: string; text: string; range: SourceRange }[] })[];
+  bindings: (PhpSite & { name: string; kind: 'parameter'|'closure-capture'; owner?: string; promoted?: boolean })[];
+  regions: (PhpSite & { kind: 'inline-html'|'anonymous-class'|'closure'|'arrow-function'; conditions: string[] })[];
+}
+export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; php?:PhpSyntaxFacts; cfamily?:CfamilySyntaxFacts; objc?:ObjcSyntaxFacts; swift?:SwiftSyntaxFacts; scala?:ScalaSyntaxFacts; groovy?:GroovySyntaxFacts; fsharp?:FsharpSyntaxFacts; vbnet?:VbnetSyntaxFacts; erb?:ErbSyntaxFacts; razor?:RazorSyntaxFacts; liquid?:LiquidSyntaxFacts; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts; csharp?: CsharpSyntaxFacts; rust?:RustSyntaxFacts }
 export interface ImportBinding { imported: string; local: string; typeOnly?: boolean }
 export type ImportOutcome =
   | { status: 'resolved'; targets: string[]; proof: Evidence[] }

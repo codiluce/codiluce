@@ -10,6 +10,7 @@ import { filesystemAnalyzer } from '../analyzers/filesystem.js';
 import { gitMetricsAnalyzer } from '../analyzers/git-metrics.js';
 import { typescriptAnalyzer } from '../analyzers/typescript.js';
 import { laravelAnalyzer } from '../analyzers/laravel.js';
+import { phpStructureAnalyzer } from '../analysis/languages/php.js';
 import { apiMatcher } from './api-matcher.js';
 import { inertiaLinker } from './inertia-linker.js';
 import { AnalysisCache, type CacheEvent } from './cache.js';
@@ -41,7 +42,7 @@ import {rustSymbolsAnalyzer} from '../analysis/languages/rust-symbols.js';
 import {rustRoutersAnalyzer} from '../analysis/frameworks/rust-routers.js';
 
 const execute = promisify(execFile);
-export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, structureAnalyzer, liquidAnalyzer, pythonAnalyzer, goAnalyzer, rubyAnalyzer, jvmAnalyzer, csharpAnalyzer, rustAnalyzer, rustSymbolsAnalyzer, rustRoutersAnalyzer, embeddedAnalyzer, typescriptAnalyzer, typescriptServicesRelease, laravelAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
+export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, structureAnalyzer, liquidAnalyzer, pythonAnalyzer, goAnalyzer, rubyAnalyzer, jvmAnalyzer, csharpAnalyzer, rustAnalyzer, rustSymbolsAnalyzer, rustRoutersAnalyzer, embeddedAnalyzer, typescriptAnalyzer, typescriptServicesRelease, phpStructureAnalyzer, laravelAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
 export interface IndexOptions {
   stateDirectory?: string; config?: AtlasConfig; onProgress?: (name: string) => void;
   /** Index a materialized commit tree: Git is not consulted and the run records this commit, clean. */

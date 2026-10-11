@@ -1,0 +1,1967 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Generic PHP original source qualification</title><style>body{font:16px/1.6 system-ui,sans-serif;background:#101822;color:#e5ecf4;margin:0;padding:clamp(16px,4vw,48px)}main{max-width:1120px;margin:auto}h1{font-size:clamp(28px,5vw,42px);line-height:1.2}p,code{overflow-wrap:anywhere}a,code{color:#8bddd8}.status{padding:18px;border:1px solid #b69459;border-radius:8px}table{border-collapse:collapse;width:100%;min-width:720px}th,td{padding:12px;text-align:left;border-bottom:1px solid #344353;overflow-wrap:anywhere}th{overflow-wrap:normal}.scroll{overflow:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}summary{cursor:pointer;padding:12px 0}</style></head><body><main><h1>Generic PHP original source qualification</h1><p>P10c1 · 2026-10-11T09:38:13.665Z · v22.12.0 · linux/x64. Six original Symfony 8.0.0 files, with byte/SHA-256 pins at immutable revision <code>2e913a829cfbbf9cb38b321bdff1806b44b192eb</code>.</p><p class="status"><strong>30/30 reviewed declarations · 0 misses · 0 extras</strong><br>Exact original names, kinds, line/UTF-16 ranges, lexical owners, qualified names, headers and name/header ranges match an independent original-source inventory. Four namespace import sites are syntax metadata; no import, call or inheritance edge is inferred.</p><div class="scroll"><table><thead><tr><th>Immutable original source</th><th>Declarations</th><th>Import sites</th><th>Findings</th></tr></thead><tbody><tr><td><a href="https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/String/Resources/functions.php">src/Symfony/Component/String/Resources/functions.php</a></td><td>3/3</td><td>0</td><td>0</td></tr><tr><td><a href="https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Contracts/Service/ResetInterface.php">src/Symfony/Contracts/Service/ResetInterface.php</a></td><td>2/2</td><td>0</td><td>0</td></tr><tr><td><a href="https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Contracts/EventDispatcher/Event.php">src/Symfony/Contracts/EventDispatcher/Event.php</a></td><td>4/4</td><td>1</td><td>0</td></tr><tr><td><a href="https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpKernel/Event/RequestEvent.php">src/Symfony/Component/HttpKernel/Event/RequestEvent.php</a></td><td>5/5</td><td>1</td><td>0</td></tr><tr><td><a href="https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/Workflow/Metadata/GetMetadataTrait.php">src/Symfony/Component/Workflow/Metadata/GetMetadataTrait.php</a></td><td>2/2</td><td>1</td><td>0</td></tr><tr><td><a href="https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php">src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php</a></td><td>14/14</td><td>1</td><td>0</td></tr></tbody></table></div><p>Conditional Symfony string functions retain original activation conditions. Interfaces, abstract methods, traits, named classes, typed properties and source parameter attributes remain original declarations; inherited/trait-generated members and runtime registration are not invented. Six actual syntax-cache hits preserve cold/warm/revision graphs. The portfolio covers one library family; enum/promotion/property-hook/closure examples are separately qualified by conformance and installed-package fixtures, not by these original sources.</p><p>The existing <a href="https://github.com/glayzzle/php-parser/tree/v3.7.0">php-parser 3.7.0 provider</a> uses an explicit PHP 8.4 parse-only source profile. A child process with a 10-second deadline and 256 MiB V8 old-space cap isolates failures. Extraction bounds 200,000 native nodes/tokens, depth 128, 4,096 sites and 100 findings. Original lookahead tokens are ordered and deduplicated by source spans, without repeating nullable/union type text. Syntax parsing does not establish PHP compiler/type/runtime validity. No PHP executable, Composer script, autoloader, target dependency, application or build executes.</p><p>Non-Laravel files use the indexed readable/unchanged/no-symlink source boundary, even before cache replay. Existing Laravel IDs and semantic analysis retain their separate provider. Wider Laravel structure integration, indexed Composer/literal-load resolution, references and runtime effects remain P10c follow-on work. Anonymous classes and unbound callbacks retain regions and explicit gaps; inline HTML stays source metadata without guessed JavaScript or renderer output. PHP engine versions beyond the selected parser profile, broader repositories, full history/process-tree memory and native operating systems remain release gates.</p><p><a href="https://www.php.net/manual/en/language.namespaces.importing.php">PHP namespace imports</a> are per-file compile-time aliases; runtime loading is separate. <a href="https://www.php.net/manual/en/language.oop5.property-hooks.php">Original property hooks</a> and <a href="https://www.php.net/manual/en/language.oop5.decon.php">property promotions</a> retain source syntax without synthesized constructor assignments or backing fields.</p><p>Implementation digest (277 source/asset/pin/provider/audit/package/conformance files): <code>a78757573e7f986eec6c2de421cd2318fa0246230fb4551373d10e7a330d1904</code>. Reproduce <code>node --experimental-sqlite --import tsx scripts/qualify-php-source.mjs --output docs/php-source-accuracy.html</code>; <code>--source DIRECTORY</code> verifies these immutable paths offline. <a href="language-framework-compatibility.html#implementation">Roadmap and validation</a> · <a href="php-compatibility-performance.html">Existing-stack performance comparison</a></p><details><summary>Independent inventory, original range/header proofs, hashes and cache results</summary><pre>{
+  &quot;phase&quot;: &quot;P10c1&quot;,
+  &quot;measuredAt&quot;: &quot;2026-10-11T09:38:13.665Z&quot;,
+  &quot;baseline&quot;: &quot;cb6ba6a&quot;,
+  &quot;parser&quot;: &quot;3.7.0&quot;,
+  &quot;adapter&quot;: &quot;0.9.3:php-original-structure:1&quot;,
+  &quot;profile&quot;: &quot;php-parser-8.4-original-source&quot;,
+  &quot;node&quot;: &quot;v22.12.0&quot;,
+  &quot;platform&quot;: &quot;linux/x64&quot;,
+  &quot;revision&quot;: &quot;2e913a829cfbbf9cb38b321bdff1806b44b192eb&quot;,
+  &quot;implementationFiles&quot;: 277,
+  &quot;implementationDigest&quot;: &quot;a78757573e7f986eec6c2de421cd2318fa0246230fb4551373d10e7a330d1904&quot;,
+  &quot;reviewedDeclarations&quot;: 30,
+  &quot;matchedDeclarations&quot;: 30,
+  &quot;misses&quot;: 0,
+  &quot;extras&quot;: 0,
+  &quot;reviewedImports&quot;: 4,
+  &quot;syntaxCacheHits&quot;: 6,
+  &quot;coldWarmEqual&quot;: true,
+  &quot;revisionModeEqual&quot;: true,
+  &quot;results&quot;: [
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/String/Resources/functions.php&quot;,
+      &quot;bytes&quot;: 852,
+      &quot;sha256&quot;: &quot;974e6a19bccfc71615061207a08243311152b4759ce416b8f2bc3390790b1644&quot;,
+      &quot;inventory&quot;: [
+        [
+          &quot;u&quot;,
+          &quot;function&quot;,
+          15,
+          18
+        ],
+        [
+          &quot;b&quot;,
+          &quot;function&quot;,
+          22,
+          25
+        ],
+        [
+          &quot;s&quot;,
+          &quot;function&quot;,
+          32,
+          37
+        ]
+      ],
+      &quot;imports&quot;: [],
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/String/Resources/functions.php&quot;,
+      &quot;expected&quot;: [
+        {
+          &quot;name&quot;: &quot;u&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;owner&quot;: null,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\String\\u&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 15,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 18,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;function u(?string $string = &#39;&#39;): UnicodeString&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 15,
+            &quot;startColumn&quot;: 14,
+            &quot;endLine&quot;: 15,
+            &quot;endColumn&quot;: 15
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 15,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 16,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;b&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;owner&quot;: null,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\String\\b&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 22,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 25,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;function b(?string $string = &#39;&#39;): ByteString&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 22,
+            &quot;startColumn&quot;: 14,
+            &quot;endLine&quot;: 22,
+            &quot;endColumn&quot;: 15
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 22,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 23,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;s&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;owner&quot;: null,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\String\\s&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 37,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;function s(?string $string = &#39;&#39;): AbstractString&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 14,
+            &quot;endLine&quot;: 32,
+            &quot;endColumn&quot;: 15
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 33,
+            &quot;endColumn&quot;: 5
+          }
+        }
+      ],
+      &quot;actual&quot;: [
+        {
+          &quot;name&quot;: &quot;u&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;owner&quot;: null,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\String\\u&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 15,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 18,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;function u(?string $string = &#39;&#39;): UnicodeString&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 15,
+            &quot;startColumn&quot;: 14,
+            &quot;endLine&quot;: 15,
+            &quot;endColumn&quot;: 15
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 15,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 16,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;b&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;owner&quot;: null,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\String\\b&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 22,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 25,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;function b(?string $string = &#39;&#39;): ByteString&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 22,
+            &quot;startColumn&quot;: 14,
+            &quot;endLine&quot;: 22,
+            &quot;endColumn&quot;: 15
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 22,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 23,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;s&quot;,
+          &quot;kind&quot;: &quot;function&quot;,
+          &quot;owner&quot;: null,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\String\\s&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 37,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;function s(?string $string = &#39;&#39;): AbstractString&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 14,
+            &quot;endLine&quot;: 32,
+            &quot;endColumn&quot;: 15
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 33,
+            &quot;endColumn&quot;: 5
+          }
+        }
+      ],
+      &quot;issues&quot;: [],
+      &quot;sourceConditions&quot;: [
+        {
+          &quot;name&quot;: &quot;u&quot;,
+          &quot;conditions&quot;: [
+            &quot;Declaration occurs in original if syntax; activation is unverified&quot;
+          ]
+        },
+        {
+          &quot;name&quot;: &quot;b&quot;,
+          &quot;conditions&quot;: [
+            &quot;Declaration occurs in original if syntax; activation is unverified&quot;
+          ]
+        },
+        {
+          &quot;name&quot;: &quot;s&quot;,
+          &quot;conditions&quot;: [
+            &quot;Declaration occurs in original if syntax; activation is unverified&quot;
+          ]
+        }
+      ]
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Contracts/Service/ResetInterface.php&quot;,
+      &quot;bytes&quot;: 1035,
+      &quot;sha256&quot;: &quot;b30147365ddd947981ebe55fa112433e02a53eef25c5f7f9ee4c74f53e29fdfc&quot;,
+      &quot;inventory&quot;: [
+        [
+          &quot;ResetInterface&quot;,
+          &quot;interface&quot;,
+          27,
+          33
+        ],
+        [
+          &quot;reset&quot;,
+          &quot;method&quot;,
+          32,
+          32,
+          &quot;ResetInterface&quot;
+        ]
+      ],
+      &quot;imports&quot;: [],
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Contracts/Service/ResetInterface.php&quot;,
+      &quot;expected&quot;: [
+        {
+          &quot;name&quot;: &quot;ResetInterface&quot;,
+          &quot;kind&quot;: &quot;interface&quot;,
+          &quot;owner&quot;: null,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Contracts\\Service\\ResetInterface&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 33,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;header&quot;: &quot;interface ResetInterface&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 11,
+            &quot;endLine&quot;: 27,
+            &quot;endColumn&quot;: 25
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 28,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;name&quot;: &quot;reset&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;ResetInterface&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Contracts\\Service\\ResetInterface::reset&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 32,
+            &quot;endColumn&quot;: 28
+          },
+          &quot;header&quot;: &quot;public function reset()&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 32,
+            &quot;endColumn&quot;: 26
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 32,
+            &quot;endColumn&quot;: 28
+          }
+        }
+      ],
+      &quot;actual&quot;: [
+        {
+          &quot;name&quot;: &quot;ResetInterface&quot;,
+          &quot;kind&quot;: &quot;interface&quot;,
+          &quot;owner&quot;: null,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Contracts\\Service\\ResetInterface&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 33,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;header&quot;: &quot;interface ResetInterface&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 11,
+            &quot;endLine&quot;: 27,
+            &quot;endColumn&quot;: 25
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 28,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;name&quot;: &quot;reset&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;ResetInterface&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Contracts\\Service\\ResetInterface::reset&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 32,
+            &quot;endColumn&quot;: 28
+          },
+          &quot;header&quot;: &quot;public function reset()&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 32,
+            &quot;endColumn&quot;: 26
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 32,
+            &quot;endColumn&quot;: 28
+          }
+        }
+      ],
+      &quot;issues&quot;: [],
+      &quot;sourceConditions&quot;: [
+        {
+          &quot;name&quot;: &quot;ResetInterface&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;reset&quot;,
+          &quot;conditions&quot;: []
+        }
+      ]
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Contracts/EventDispatcher/Event.php&quot;,
+      &quot;bytes&quot;: 1479,
+      &quot;sha256&quot;: &quot;fefa2d1a68a006824e21d3baeb8c2b6e0c18d175fa5087148996b664646177ad&quot;,
+      &quot;inventory&quot;: [
+        [
+          &quot;Event&quot;,
+          &quot;class&quot;,
+          31,
+          51
+        ],
+        [
+          &quot;$propagationStopped&quot;,
+          &quot;property&quot;,
+          33,
+          33,
+          &quot;Event&quot;
+        ],
+        [
+          &quot;isPropagationStopped&quot;,
+          &quot;method&quot;,
+          35,
+          38,
+          &quot;Event&quot;
+        ],
+        [
+          &quot;stopPropagation&quot;,
+          &quot;method&quot;,
+          47,
+          50,
+          &quot;Event&quot;
+        ]
+      ],
+      &quot;imports&quot;: [
+        [
+          &quot;Psr\\EventDispatcher\\StoppableEventInterface&quot;,
+          14
+        ]
+      ],
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Contracts/EventDispatcher/Event.php&quot;,
+      &quot;expected&quot;: [
+        {
+          &quot;name&quot;: &quot;Event&quot;,
+          &quot;kind&quot;: &quot;class&quot;,
+          &quot;owner&quot;: null,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Contracts\\EventDispatcher\\Event&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 31,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 51,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;header&quot;: &quot;class Event implements StoppableEventInterface&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 31,
+            &quot;startColumn&quot;: 7,
+            &quot;endLine&quot;: 31,
+            &quot;endColumn&quot;: 12
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 31,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 32,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;name&quot;: &quot;$propagationStopped&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;owner&quot;: &quot;Event&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Contracts\\EventDispatcher\\Event::$propagationStopped&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 33,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 33,
+            &quot;endColumn&quot;: 45
+          },
+          &quot;header&quot;: &quot;bool $propagationStopped&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 33,
+            &quot;startColumn&quot;: 18,
+            &quot;endLine&quot;: 33,
+            &quot;endColumn&quot;: 37
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 33,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 33,
+            &quot;endColumn&quot;: 38
+          }
+        },
+        {
+          &quot;name&quot;: &quot;isPropagationStopped&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;Event&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Contracts\\EventDispatcher\\Event::isPropagationStopped&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 35,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 38,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function isPropagationStopped(): bool&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 35,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 35,
+            &quot;endColumn&quot;: 41
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 35,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 36,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;stopPropagation&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;Event&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Contracts\\EventDispatcher\\Event::stopPropagation&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 47,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 50,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function stopPropagation(): void&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 47,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 47,
+            &quot;endColumn&quot;: 36
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 47,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 48,
+            &quot;endColumn&quot;: 5
+          }
+        }
+      ],
+      &quot;actual&quot;: [
+        {
+          &quot;name&quot;: &quot;Event&quot;,
+          &quot;kind&quot;: &quot;class&quot;,
+          &quot;owner&quot;: null,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Contracts\\EventDispatcher\\Event&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 31,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 51,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;header&quot;: &quot;class Event implements StoppableEventInterface&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 31,
+            &quot;startColumn&quot;: 7,
+            &quot;endLine&quot;: 31,
+            &quot;endColumn&quot;: 12
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 31,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 32,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;name&quot;: &quot;$propagationStopped&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;owner&quot;: &quot;Event&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Contracts\\EventDispatcher\\Event::$propagationStopped&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 33,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 33,
+            &quot;endColumn&quot;: 45
+          },
+          &quot;header&quot;: &quot;bool $propagationStopped&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 33,
+            &quot;startColumn&quot;: 18,
+            &quot;endLine&quot;: 33,
+            &quot;endColumn&quot;: 37
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 33,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 33,
+            &quot;endColumn&quot;: 38
+          }
+        },
+        {
+          &quot;name&quot;: &quot;isPropagationStopped&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;Event&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Contracts\\EventDispatcher\\Event::isPropagationStopped&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 35,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 38,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function isPropagationStopped(): bool&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 35,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 35,
+            &quot;endColumn&quot;: 41
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 35,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 36,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;stopPropagation&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;Event&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Contracts\\EventDispatcher\\Event::stopPropagation&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 47,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 50,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function stopPropagation(): void&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 47,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 47,
+            &quot;endColumn&quot;: 36
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 47,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 48,
+            &quot;endColumn&quot;: 5
+          }
+        }
+      ],
+      &quot;issues&quot;: [],
+      &quot;sourceConditions&quot;: [
+        {
+          &quot;name&quot;: &quot;Event&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;$propagationStopped&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;isPropagationStopped&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;stopPropagation&quot;,
+          &quot;conditions&quot;: []
+        }
+      ]
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/HttpKernel/Event/RequestEvent.php&quot;,
+      &quot;bytes&quot;: 1262,
+      &quot;sha256&quot;: &quot;2594fb6b3b2f2a17c25d7ac6719aee9fc81352218ab59a9c3db5e66537f8efba&quot;,
+      &quot;inventory&quot;: [
+        [
+          &quot;RequestEvent&quot;,
+          &quot;class&quot;,
+          25,
+          56
+        ],
+        [
+          &quot;$response&quot;,
+          &quot;property&quot;,
+          27,
+          27,
+          &quot;RequestEvent&quot;
+        ],
+        [
+          &quot;getResponse&quot;,
+          &quot;method&quot;,
+          32,
+          35,
+          &quot;RequestEvent&quot;
+        ],
+        [
+          &quot;setResponse&quot;,
+          &quot;method&quot;,
+          40,
+          45,
+          &quot;RequestEvent&quot;
+        ],
+        [
+          &quot;hasResponse&quot;,
+          &quot;method&quot;,
+          52,
+          55,
+          &quot;RequestEvent&quot;
+        ]
+      ],
+      &quot;imports&quot;: [
+        [
+          &quot;Symfony\\Component\\HttpFoundation\\Response&quot;,
+          14
+        ]
+      ],
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpKernel/Event/RequestEvent.php&quot;,
+      &quot;expected&quot;: [
+        {
+          &quot;name&quot;: &quot;RequestEvent&quot;,
+          &quot;kind&quot;: &quot;class&quot;,
+          &quot;owner&quot;: null,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpKernel\\Event\\RequestEvent&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 25,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 56,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;header&quot;: &quot;class RequestEvent extends KernelEvent&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 25,
+            &quot;startColumn&quot;: 7,
+            &quot;endLine&quot;: 25,
+            &quot;endColumn&quot;: 19
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 25,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 26,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;name&quot;: &quot;$response&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;owner&quot;: &quot;RequestEvent&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpKernel\\Event\\RequestEvent::$response&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 27,
+            &quot;endColumn&quot;: 39
+          },
+          &quot;header&quot;: &quot;?Response $response&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 23,
+            &quot;endLine&quot;: 27,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 27,
+            &quot;endColumn&quot;: 33
+          }
+        },
+        {
+          &quot;name&quot;: &quot;getResponse&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;RequestEvent&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpKernel\\Event\\RequestEvent::getResponse&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 35,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function getResponse(): ?Response&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 32,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 33,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;setResponse&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;RequestEvent&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpKernel\\Event\\RequestEvent::setResponse&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 40,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 45,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function setResponse(Response $response): void&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 40,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 40,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 40,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 41,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;hasResponse&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;RequestEvent&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpKernel\\Event\\RequestEvent::hasResponse&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 52,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 55,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function hasResponse(): bool&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 52,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 52,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 52,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 53,
+            &quot;endColumn&quot;: 5
+          }
+        }
+      ],
+      &quot;actual&quot;: [
+        {
+          &quot;name&quot;: &quot;RequestEvent&quot;,
+          &quot;kind&quot;: &quot;class&quot;,
+          &quot;owner&quot;: null,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpKernel\\Event\\RequestEvent&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 25,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 56,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;header&quot;: &quot;class RequestEvent extends KernelEvent&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 25,
+            &quot;startColumn&quot;: 7,
+            &quot;endLine&quot;: 25,
+            &quot;endColumn&quot;: 19
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 25,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 26,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;name&quot;: &quot;$response&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;owner&quot;: &quot;RequestEvent&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpKernel\\Event\\RequestEvent::$response&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 27,
+            &quot;endColumn&quot;: 39
+          },
+          &quot;header&quot;: &quot;?Response $response&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 23,
+            &quot;endLine&quot;: 27,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 27,
+            &quot;endColumn&quot;: 33
+          }
+        },
+        {
+          &quot;name&quot;: &quot;getResponse&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;RequestEvent&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpKernel\\Event\\RequestEvent::getResponse&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 35,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function getResponse(): ?Response&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 32,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 32,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 33,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;setResponse&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;RequestEvent&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpKernel\\Event\\RequestEvent::setResponse&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 40,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 45,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function setResponse(Response $response): void&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 40,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 40,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 40,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 41,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;hasResponse&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;RequestEvent&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpKernel\\Event\\RequestEvent::hasResponse&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 52,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 55,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function hasResponse(): bool&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 52,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 52,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 52,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 53,
+            &quot;endColumn&quot;: 5
+          }
+        }
+      ],
+      &quot;issues&quot;: [],
+      &quot;sourceConditions&quot;: [
+        {
+          &quot;name&quot;: &quot;RequestEvent&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;$response&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;getResponse&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;setResponse&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;hasResponse&quot;,
+          &quot;conditions&quot;: []
+        }
+      ]
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/Workflow/Metadata/GetMetadataTrait.php&quot;,
+      &quot;bytes&quot;: 791,
+      &quot;sha256&quot;: &quot;5690dabe901d185e7d7a23ecedbc48b67901633f8a08dbcfce35d6c365a186f8&quot;,
+      &quot;inventory&quot;: [
+        [
+          &quot;GetMetadataTrait&quot;,
+          &quot;trait&quot;,
+          19,
+          31
+        ],
+        [
+          &quot;getMetadata&quot;,
+          &quot;method&quot;,
+          21,
+          30,
+          &quot;GetMetadataTrait&quot;
+        ]
+      ],
+      &quot;imports&quot;: [
+        [
+          &quot;Symfony\\Component\\Workflow\\Transition&quot;,
+          14
+        ]
+      ],
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/Workflow/Metadata/GetMetadataTrait.php&quot;,
+      &quot;expected&quot;: [
+        {
+          &quot;name&quot;: &quot;GetMetadataTrait&quot;,
+          &quot;kind&quot;: &quot;trait&quot;,
+          &quot;owner&quot;: null,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\Workflow\\Metadata\\GetMetadataTrait&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 19,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 31,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;header&quot;: &quot;trait GetMetadataTrait&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 19,
+            &quot;startColumn&quot;: 7,
+            &quot;endLine&quot;: 19,
+            &quot;endColumn&quot;: 23
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 19,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 20,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;name&quot;: &quot;getMetadata&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;GetMetadataTrait&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\Workflow\\Metadata\\GetMetadataTrait::getMetadata&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 21,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 30,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function getMetadata(string $key, string|Transition|null $subject = null): mixed&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 21,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 21,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 21,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 22,
+            &quot;endColumn&quot;: 5
+          }
+        }
+      ],
+      &quot;actual&quot;: [
+        {
+          &quot;name&quot;: &quot;GetMetadataTrait&quot;,
+          &quot;kind&quot;: &quot;trait&quot;,
+          &quot;owner&quot;: null,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\Workflow\\Metadata\\GetMetadataTrait&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 19,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 31,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;header&quot;: &quot;trait GetMetadataTrait&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 19,
+            &quot;startColumn&quot;: 7,
+            &quot;endLine&quot;: 19,
+            &quot;endColumn&quot;: 23
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 19,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 20,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;name&quot;: &quot;getMetadata&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;GetMetadataTrait&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\Workflow\\Metadata\\GetMetadataTrait::getMetadata&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 21,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 30,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function getMetadata(string $key, string|Transition|null $subject = null): mixed&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 21,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 21,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 21,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 22,
+            &quot;endColumn&quot;: 5
+          }
+        }
+      ],
+      &quot;issues&quot;: [],
+      &quot;sourceConditions&quot;: [
+        {
+          &quot;name&quot;: &quot;GetMetadataTrait&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;getMetadata&quot;,
+          &quot;conditions&quot;: []
+        }
+      ]
+    },
+    {
+      &quot;file&quot;: &quot;src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+      &quot;bytes&quot;: 4097,
+      &quot;sha256&quot;: &quot;860aaa606180e1be6c72eff7f4871263b30652ccef0c7e4635c6d03e1a817272&quot;,
+      &quot;inventory&quot;: [
+        [
+          &quot;AbstractSessionHandler&quot;,
+          &quot;class&quot;,
+          23,
+          111
+        ],
+        [
+          &quot;$sessionName&quot;,
+          &quot;property&quot;,
+          25,
+          25,
+          &quot;AbstractSessionHandler&quot;
+        ],
+        [
+          &quot;$prefetchId&quot;,
+          &quot;property&quot;,
+          26,
+          26,
+          &quot;AbstractSessionHandler&quot;
+        ],
+        [
+          &quot;$prefetchData&quot;,
+          &quot;property&quot;,
+          27,
+          27,
+          &quot;AbstractSessionHandler&quot;
+        ],
+        [
+          &quot;$newSessionId&quot;,
+          &quot;property&quot;,
+          28,
+          28,
+          &quot;AbstractSessionHandler&quot;
+        ],
+        [
+          &quot;$igbinaryEmptyData&quot;,
+          &quot;property&quot;,
+          29,
+          29,
+          &quot;AbstractSessionHandler&quot;
+        ],
+        [
+          &quot;open&quot;,
+          &quot;method&quot;,
+          31,
+          39,
+          &quot;AbstractSessionHandler&quot;
+        ],
+        [
+          &quot;doRead&quot;,
+          &quot;method&quot;,
+          41,
+          41,
+          &quot;AbstractSessionHandler&quot;
+        ],
+        [
+          &quot;doWrite&quot;,
+          &quot;method&quot;,
+          43,
+          43,
+          &quot;AbstractSessionHandler&quot;
+        ],
+        [
+          &quot;doDestroy&quot;,
+          &quot;method&quot;,
+          45,
+          45,
+          &quot;AbstractSessionHandler&quot;
+        ],
+        [
+          &quot;validateId&quot;,
+          &quot;method&quot;,
+          47,
+          53,
+          &quot;AbstractSessionHandler&quot;
+        ],
+        [
+          &quot;read&quot;,
+          &quot;method&quot;,
+          55,
+          73,
+          &quot;AbstractSessionHandler&quot;
+        ],
+        [
+          &quot;write&quot;,
+          &quot;method&quot;,
+          75,
+          85,
+          &quot;AbstractSessionHandler&quot;
+        ],
+        [
+          &quot;destroy&quot;,
+          &quot;method&quot;,
+          87,
+          110,
+          &quot;AbstractSessionHandler&quot;
+        ]
+      ],
+      &quot;imports&quot;: [
+        [
+          &quot;Symfony\\Component\\HttpFoundation\\Session\\SessionUtils&quot;,
+          14
+        ]
+      ],
+      &quot;url&quot;: &quot;https://raw.githubusercontent.com/symfony/symfony/2e913a829cfbbf9cb38b321bdff1806b44b192eb/src/Symfony/Component/HttpFoundation/Session/Storage/Handler/AbstractSessionHandler.php&quot;,
+      &quot;expected&quot;: [
+        {
+          &quot;name&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;kind&quot;: &quot;class&quot;,
+          &quot;owner&quot;: null,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 23,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 111,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;header&quot;: &quot;abstract class AbstractSessionHandler implements \\SessionHandlerInterface, \\SessionUpdateTimestampHandlerInterface&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 23,
+            &quot;startColumn&quot;: 16,
+            &quot;endLine&quot;: 23,
+            &quot;endColumn&quot;: 38
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 23,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 24,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;name&quot;: &quot;$sessionName&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::$sessionName&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 25,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 25,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;header&quot;: &quot;string $sessionName&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 25,
+            &quot;startColumn&quot;: 20,
+            &quot;endLine&quot;: 25,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 25,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 25,
+            &quot;endColumn&quot;: 32
+          }
+        },
+        {
+          &quot;name&quot;: &quot;$prefetchId&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::$prefetchId&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 26,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 26,
+            &quot;endColumn&quot;: 31
+          },
+          &quot;header&quot;: &quot;string $prefetchId&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 26,
+            &quot;startColumn&quot;: 20,
+            &quot;endLine&quot;: 26,
+            &quot;endColumn&quot;: 31
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 26,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 26,
+            &quot;endColumn&quot;: 31
+          }
+        },
+        {
+          &quot;name&quot;: &quot;$prefetchData&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::$prefetchData&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 27,
+            &quot;endColumn&quot;: 33
+          },
+          &quot;header&quot;: &quot;string $prefetchData&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 20,
+            &quot;endLine&quot;: 27,
+            &quot;endColumn&quot;: 33
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 27,
+            &quot;endColumn&quot;: 33
+          }
+        },
+        {
+          &quot;name&quot;: &quot;$newSessionId&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::$newSessionId&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 28,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 28,
+            &quot;endColumn&quot;: 41
+          },
+          &quot;header&quot;: &quot;?string $newSessionId&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 28,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 28,
+            &quot;endColumn&quot;: 34
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 28,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 28,
+            &quot;endColumn&quot;: 35
+          }
+        },
+        {
+          &quot;name&quot;: &quot;$igbinaryEmptyData&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::$igbinaryEmptyData&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 29,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 29,
+            &quot;endColumn&quot;: 38
+          },
+          &quot;header&quot;: &quot;string $igbinaryEmptyData&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 29,
+            &quot;startColumn&quot;: 20,
+            &quot;endLine&quot;: 29,
+            &quot;endColumn&quot;: 38
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 29,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 29,
+            &quot;endColumn&quot;: 38
+          }
+        },
+        {
+          &quot;name&quot;: &quot;open&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::open&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 31,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 39,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function open(string $savePath, string $sessionName): bool&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 31,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 31,
+            &quot;endColumn&quot;: 25
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 31,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 32,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;doRead&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::doRead&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 41,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 41,
+            &quot;endColumn&quot;: 89
+          },
+          &quot;header&quot;: &quot;abstract protected function doRead(#[\\SensitiveParameter] string $sessionId): string&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 41,
+            &quot;startColumn&quot;: 33,
+            &quot;endLine&quot;: 41,
+            &quot;endColumn&quot;: 39
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 41,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 41,
+            &quot;endColumn&quot;: 89
+          }
+        },
+        {
+          &quot;name&quot;: &quot;doWrite&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::doWrite&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 43,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 43,
+            &quot;endColumn&quot;: 102
+          },
+          &quot;header&quot;: &quot;abstract protected function doWrite(#[\\SensitiveParameter] string $sessionId, string $data): bool&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 43,
+            &quot;startColumn&quot;: 33,
+            &quot;endLine&quot;: 43,
+            &quot;endColumn&quot;: 40
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 43,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 43,
+            &quot;endColumn&quot;: 102
+          }
+        },
+        {
+          &quot;name&quot;: &quot;doDestroy&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::doDestroy&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 45,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 45,
+            &quot;endColumn&quot;: 90
+          },
+          &quot;header&quot;: &quot;abstract protected function doDestroy(#[\\SensitiveParameter] string $sessionId): bool&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 45,
+            &quot;startColumn&quot;: 33,
+            &quot;endLine&quot;: 45,
+            &quot;endColumn&quot;: 42
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 45,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 45,
+            &quot;endColumn&quot;: 90
+          }
+        },
+        {
+          &quot;name&quot;: &quot;validateId&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::validateId&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 47,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 53,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function validateId(#[\\SensitiveParameter] string $sessionId): bool&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 47,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 47,
+            &quot;endColumn&quot;: 31
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 47,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 48,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;read&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::read&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 55,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 73,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function read(#[\\SensitiveParameter] string $sessionId): string&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 55,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 55,
+            &quot;endColumn&quot;: 25
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 55,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 56,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;write&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::write&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 75,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 85,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function write(#[\\SensitiveParameter] string $sessionId, string $data): bool&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 75,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 75,
+            &quot;endColumn&quot;: 26
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 75,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 76,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;destroy&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::destroy&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 87,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 110,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function destroy(#[\\SensitiveParameter] string $sessionId): bool&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 87,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 87,
+            &quot;endColumn&quot;: 28
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 87,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 88,
+            &quot;endColumn&quot;: 5
+          }
+        }
+      ],
+      &quot;actual&quot;: [
+        {
+          &quot;name&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;kind&quot;: &quot;class&quot;,
+          &quot;owner&quot;: null,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 23,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 111,
+            &quot;endColumn&quot;: 2
+          },
+          &quot;header&quot;: &quot;abstract class AbstractSessionHandler implements \\SessionHandlerInterface, \\SessionUpdateTimestampHandlerInterface&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 23,
+            &quot;startColumn&quot;: 16,
+            &quot;endLine&quot;: 23,
+            &quot;endColumn&quot;: 38
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 23,
+            &quot;startColumn&quot;: 1,
+            &quot;endLine&quot;: 24,
+            &quot;endColumn&quot;: 1
+          }
+        },
+        {
+          &quot;name&quot;: &quot;$sessionName&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::$sessionName&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 25,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 25,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;header&quot;: &quot;string $sessionName&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 25,
+            &quot;startColumn&quot;: 20,
+            &quot;endLine&quot;: 25,
+            &quot;endColumn&quot;: 32
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 25,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 25,
+            &quot;endColumn&quot;: 32
+          }
+        },
+        {
+          &quot;name&quot;: &quot;$prefetchId&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::$prefetchId&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 26,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 26,
+            &quot;endColumn&quot;: 31
+          },
+          &quot;header&quot;: &quot;string $prefetchId&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 26,
+            &quot;startColumn&quot;: 20,
+            &quot;endLine&quot;: 26,
+            &quot;endColumn&quot;: 31
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 26,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 26,
+            &quot;endColumn&quot;: 31
+          }
+        },
+        {
+          &quot;name&quot;: &quot;$prefetchData&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::$prefetchData&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 27,
+            &quot;endColumn&quot;: 33
+          },
+          &quot;header&quot;: &quot;string $prefetchData&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 20,
+            &quot;endLine&quot;: 27,
+            &quot;endColumn&quot;: 33
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 27,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 27,
+            &quot;endColumn&quot;: 33
+          }
+        },
+        {
+          &quot;name&quot;: &quot;$newSessionId&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::$newSessionId&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 28,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 28,
+            &quot;endColumn&quot;: 41
+          },
+          &quot;header&quot;: &quot;?string $newSessionId&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 28,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 28,
+            &quot;endColumn&quot;: 34
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 28,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 28,
+            &quot;endColumn&quot;: 35
+          }
+        },
+        {
+          &quot;name&quot;: &quot;$igbinaryEmptyData&quot;,
+          &quot;kind&quot;: &quot;property&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::$igbinaryEmptyData&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 29,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 29,
+            &quot;endColumn&quot;: 38
+          },
+          &quot;header&quot;: &quot;string $igbinaryEmptyData&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 29,
+            &quot;startColumn&quot;: 20,
+            &quot;endLine&quot;: 29,
+            &quot;endColumn&quot;: 38
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 29,
+            &quot;startColumn&quot;: 13,
+            &quot;endLine&quot;: 29,
+            &quot;endColumn&quot;: 38
+          }
+        },
+        {
+          &quot;name&quot;: &quot;open&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::open&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 31,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 39,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function open(string $savePath, string $sessionName): bool&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 31,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 31,
+            &quot;endColumn&quot;: 25
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 31,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 32,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;doRead&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::doRead&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 41,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 41,
+            &quot;endColumn&quot;: 89
+          },
+          &quot;header&quot;: &quot;abstract protected function doRead(#[\\SensitiveParameter] string $sessionId): string&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 41,
+            &quot;startColumn&quot;: 33,
+            &quot;endLine&quot;: 41,
+            &quot;endColumn&quot;: 39
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 41,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 41,
+            &quot;endColumn&quot;: 89
+          }
+        },
+        {
+          &quot;name&quot;: &quot;doWrite&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::doWrite&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 43,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 43,
+            &quot;endColumn&quot;: 102
+          },
+          &quot;header&quot;: &quot;abstract protected function doWrite(#[\\SensitiveParameter] string $sessionId, string $data): bool&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 43,
+            &quot;startColumn&quot;: 33,
+            &quot;endLine&quot;: 43,
+            &quot;endColumn&quot;: 40
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 43,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 43,
+            &quot;endColumn&quot;: 102
+          }
+        },
+        {
+          &quot;name&quot;: &quot;doDestroy&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::doDestroy&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 45,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 45,
+            &quot;endColumn&quot;: 90
+          },
+          &quot;header&quot;: &quot;abstract protected function doDestroy(#[\\SensitiveParameter] string $sessionId): bool&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 45,
+            &quot;startColumn&quot;: 33,
+            &quot;endLine&quot;: 45,
+            &quot;endColumn&quot;: 42
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 45,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 45,
+            &quot;endColumn&quot;: 90
+          }
+        },
+        {
+          &quot;name&quot;: &quot;validateId&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::validateId&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 47,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 53,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function validateId(#[\\SensitiveParameter] string $sessionId): bool&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 47,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 47,
+            &quot;endColumn&quot;: 31
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 47,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 48,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;read&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::read&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 55,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 73,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function read(#[\\SensitiveParameter] string $sessionId): string&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 55,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 55,
+            &quot;endColumn&quot;: 25
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 55,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 56,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;write&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::write&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 75,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 85,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function write(#[\\SensitiveParameter] string $sessionId, string $data): bool&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 75,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 75,
+            &quot;endColumn&quot;: 26
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 75,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 76,
+            &quot;endColumn&quot;: 5
+          }
+        },
+        {
+          &quot;name&quot;: &quot;destroy&quot;,
+          &quot;kind&quot;: &quot;method&quot;,
+          &quot;owner&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;qualifiedName&quot;: &quot;Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\AbstractSessionHandler::destroy&quot;,
+          &quot;range&quot;: {
+            &quot;startLine&quot;: 87,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 110,
+            &quot;endColumn&quot;: 6
+          },
+          &quot;header&quot;: &quot;public function destroy(#[\\SensitiveParameter] string $sessionId): bool&quot;,
+          &quot;nameRange&quot;: {
+            &quot;startLine&quot;: 87,
+            &quot;startColumn&quot;: 21,
+            &quot;endLine&quot;: 87,
+            &quot;endColumn&quot;: 28
+          },
+          &quot;headerRange&quot;: {
+            &quot;startLine&quot;: 87,
+            &quot;startColumn&quot;: 5,
+            &quot;endLine&quot;: 88,
+            &quot;endColumn&quot;: 5
+          }
+        }
+      ],
+      &quot;issues&quot;: [],
+      &quot;sourceConditions&quot;: [
+        {
+          &quot;name&quot;: &quot;AbstractSessionHandler&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;$sessionName&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;$prefetchId&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;$prefetchData&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;$newSessionId&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;$igbinaryEmptyData&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;open&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;doRead&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;doWrite&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;doDestroy&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;validateId&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;read&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;write&quot;,
+          &quot;conditions&quot;: []
+        },
+        {
+          &quot;name&quot;: &quot;destroy&quot;,
+          &quot;conditions&quot;: []
+        }
+      ]
+    }
+  ]
+}</pre></details></main></body></html>

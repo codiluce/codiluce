@@ -16,9 +16,9 @@ function workerArguments(): string[] {
 export class StructureParser {
   private child?: ChildProcess;
   private sequence = 0;
-  constructor(private readonly timeoutMs = 10_000) {}
+  constructor(private readonly timeoutMs = 10_000, private readonly worker = WORKER) {}
   async parse(language: string, content: string, options: {objectiveCpp?:boolean;erbHost?:'html'|'javascript'|'css'|'unknown';razorKind?:'component'|'view';liquidHost?:'html'|'javascript'|'css'|'unknown';liquidEngine?:'shopify'|'unknown';liquidBodyTags?:boolean} = {}): Promise<StructureFacts> {
-    if (!this.child) this.child = fork(WORKER, [], {
+    if (!this.child) this.child = fork(this.worker, [], {
       execArgv: workerArguments(),
       serialization: 'advanced', stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
     });

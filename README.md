@@ -86,8 +86,11 @@ How far Codiluce follows the code depends on the stack:
 - **Routes and handlers:** Express, NestJS, Vue Router, Nuxt, SvelteKit and Astro; Django, FastAPI and Flask; Spring
   MVC and WebFlux; ASP.NET Core; Ruby on Rails; Gin, Echo, Fiber, Chi, Gorilla Mux and net/http; Axum, Actix Web,
   Rocket and Warp. Every route links to the exact handler that serves it.
-- **Structure:** TypeScript, JavaScript, PHP, Python, Go, Ruby, Java, Kotlin, C# and Rust get declarations, imports,
-  references and direct calls.
+- **Structure and binding:** TypeScript, JavaScript, Laravel PHP, Python, Go, Ruby, Java, Kotlin, C# and Rust get
+  declarations and bounded imports, references and direct calls.
+- **General PHP structure:** original classes, interfaces, traits, enums, functions, members, property promotions/hooks
+  and named closure bindings outside Laravel. Namespace/import/load syntax and anonymous/inline regions retain exact
+  source positions; Composer/load resolution, references and runtime behavior remain follow-on work.
 - **C/C++ structure:** original declarations, prototypes, definitions, types, fields, namespaces and macros, with
   source ranges and preprocessor context. Includes and type binding remain visible gaps.
 - **Objective-C structure:** original interfaces, implementations, categories, protocols, properties, ivars and signed
@@ -179,6 +182,15 @@ declarations, 42 reviewed template dependency sites and 1,626 original delimiter
 render/include/section/layout dependencies resolve only to eligible original files within the indexed/configured
 `shopify-theme` application. Recovery, app blocks, section groups, generic/Jekyll engine lookup, non-HTML asset processors,
 interpolated/control-dependent scripts, rendered output, reference/framework/effect binding and broader accuracy remain open.
+
+General PHP now uses the existing `php-parser` provider with an explicit PHP 8.4 source profile in a cancellable,
+memory-bounded parse-only child process. It reads indexed unchanged files, including files outside configured
+applications, and retains original declarations without invoking PHP, Composer, autoloaders or target code.
+The [immutable Symfony source audit](docs/php-source-accuracy.html) qualifies 30 reviewed declarations across six
+original files, with exact source/header/name ranges, qualified names, owners and cold/warm/revision agreement.
+Per-file outcomes distinguish supported structures, anonymous-source gaps and parser failures; generic imports,
+references, frameworks, effects and guards remain unsupported. Existing Laravel IDs and semantics retain their separate
+provider; broader Laravel structure integration and PHP indexed imports/scoped binding are the next subphases.
 
 Java and Kotlin now resolve original local import declarations within selected Maven reactors, literal Gradle projects
 and recorded source/classpath inputs. Explicit, wildcard, static and alias imports retain source evidence and visibility
