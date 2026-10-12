@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "passed": true,
+  "phase": "P10d2b2b2b2c7c2a",
+  "scope": "Fresh entrypoint observer implementation and owned conformance; original 195-revision entrypoint corpus qualification remains pending",
+  "targetedTests": 142,
+  "failedFinalTests": 0,
+  "logs": {
+    "entrypoint-tests-first.log": "29ff539558bae6f3dd6454f65f195aa9fe911a58389c33fc13292696c698adb8",
+    "entrypoint-tests-extended.log": "ba4fbe1272a818385222d4276ba6001bf1b935f9550ce91aab2921c89cb10c50",
+    "entrypoint-tests-diagnostic.log": "86dc286309f1bfa851d181092efa4ff10df9e30e0f6faf9abf35c27285c6d0b2",
+    "entrypoint-targeted-final.log": "6d5ce7259184f7882aca97010f6a6c03f84f22ab30328ba3e3f9f22ce9abf50c"
+  },
+  "observerFiles": {
+    "scripts/observe-production-history-entrypoint.mjs": "d134df64342a2bcf1a469597ce2a0821e46da9111e2334f641af46c3cb7be9a6",
+    "scripts/production-history-tree-sync.mjs": "80b2f6dea5789558728b5e03e2170033b0bde4ec75b989bd7a6aea31d281af11",
+    "scripts/tests/production-history-entrypoint.test.mjs": "1b583615095487b217aa366bdbfb440588a6b3b69478edc145397ac7ff07f1cd"
+  },
+  "runtimeSourceChanged": false,
+  "engineSha256": "ca1b330152267c80ce02d35c57138928da4f69e4d3817f61ff03987584dded4a",
+  "engineFiles": 1924,
+  "checks": [
+    "Actual indexHistory with two original contiguous worker jobs, including reverse startup order",
+    "Every complete original regular/literal-symlink/gitlink tree entry and byte identity checked synchronously before real acknowledgement",
+    "Full actual worker graph agrees with actual durable save/read-only reopen without normalization",
+    "Original previous graph comparison changes run.id and run.analyzedAt only; every other field/storage/proof/version exact",
+    "Real no-pending resume preserves all seven complete SQLite column ledgers and the saved registry",
+    "Every public node/source field/geometry/pagination checked through two fresh real services",
+    "Incorrect baseline full payload and hidden post-save SQLite field changes rejected; actual graph/tree/terminal evidence retained",
+    "Output inside original source rejected; original databases remain byte-identical; target code never executes"
+  ],
+  "initialFailure": {
+    "log": "entrypoint-tests-extended.log",
+    "passed": 1,
+    "failed": 1,
+    "details": "Initial expanded fixture exited 1 without sufficient receipt diagnostics; its original disposable fixture had already been removed. Diagnostic output and retention of unexpected failing fixtures were added. Code review then removed an unsupported worker-birth-order assumption; an owned delayed-first-chunk engine now verifies reversed actual worker startup with exact chunk membership/order. All final 142 checks pass."
+  },
+  "full195RevisionEntrypointQualified": false,
+  "relativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullGoalFinished": false,
+  "foreignFiles": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  }
+}
