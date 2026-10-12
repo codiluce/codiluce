@@ -1,0 +1,283 @@
+{
+  "schema": 1,
+  "phase": "P10d2b2b2b2c6a observer and retained qualification gaps",
+  "observationCompleted": true,
+  "productionQualified": false,
+  "focusedObserverTests": {
+    "tests": 17,
+    "passed": 17,
+    "logSha256": "87f7aa752108c8ab5417d41d2f2d3bacb3a77dc72f44b56a169c162ec31d1a22"
+  },
+  "allScriptTests": {
+    "tests": 81,
+    "passed": 81,
+    "logSha256": "0ac545d9dda04fd69a1abd5ef21bff0039681ec8a45dabf4b7a7b1a68a6093e2"
+  },
+  "originalReceiptSha256": "ae299f9ce69e65171cee900bc415347f6b389d4ca5ba7bfc20f1e26b84a1e893",
+  "completeLogicalParity": [
+    {
+      "id": "flask",
+      "runs": 18,
+      "complete": true,
+      "equal": true,
+      "logicalSha256": "0a91de82b9bb3341334d46201207dbfec396d82421b783a2e78c91896deae171"
+    },
+    {
+      "id": "memos",
+      "runs": 18,
+      "complete": true,
+      "equal": true,
+      "logicalSha256": "73a52a4fbd328052de47673525286f857fb9c2489a9a9e37680ac53401d60e48"
+    },
+    {
+      "id": "bookstack",
+      "runs": 18,
+      "complete": true,
+      "equal": true,
+      "logicalSha256": "cdf550d46a5e1b6eedfb717c2aa59cfe9302487640302c6348011bae0ad8de1d"
+    },
+    {
+      "id": "firefly-iii",
+      "runs": 18,
+      "complete": true,
+      "equal": true,
+      "logicalSha256": "2fc29a65fe1e7ea455281c190d5a23018f37e5f1a445e668cd3e990acbe4cf28"
+    },
+    {
+      "id": "axum",
+      "runs": 18,
+      "complete": true,
+      "equal": true,
+      "logicalSha256": "1f05af2005cc67e250578139352a717115fafa5f9fe4517182f6d07a4fdfb969"
+    },
+    {
+      "id": "full-stack-fastapi",
+      "runs": 18,
+      "complete": true,
+      "equal": true,
+      "logicalSha256": "71bd36fb69dd004c13625eac0c1492fb7e35cfd56aff95906376c9aebae9ffad"
+    }
+  ],
+  "namedSourceContractOccurrencesVerified": 216,
+  "knownSourceGaps": [
+    {
+      "id": "flask",
+      "originalArtifactSha256": "c7eea21c8245d3281efeab5a63d17277925370daa17f37ccce99a6276c4d8ae1",
+      "originalArtifactBytes": 4004558,
+      "scope": "frozen revision-only source graph; working-tree comparison also includes Git metadata outcomes",
+      "diagnosticCounts": {
+        "flask-dynamic-config": 1,
+        "flask-receiver-mutation": 1,
+        "flask-unresolved-handler": 2,
+        "flask-version-profile": 5,
+        "python-dynamic-import": 2,
+        "python-import-unsupported": 67,
+        "python-runtime-import-path": 4
+      },
+      "errors": []
+    },
+    {
+      "id": "memos",
+      "originalArtifactSha256": "eece57552e99251b52218dceed2e0af8af194d1836f16c2b93db13235712c349",
+      "originalArtifactBytes": 67344062,
+      "scope": "frozen revision-only source graph; working-tree comparison also includes Git metadata outcomes",
+      "diagnosticCounts": {
+        "duplicate-symbol": 6,
+        "dynamic-import": 1,
+        "file-content-skipped": 1,
+        "go-import-excluded": 4,
+        "go-import-unresolved": 3,
+        "go-router-version-profile": 20,
+        "syntax-parse-error": 32,
+        "unmatched-http-call": 1,
+        "unresolved-http-call": 3,
+        "unresolved-local-import": 3,
+        "unsupported-local-import": 1
+      },
+      "errors": []
+    },
+    {
+      "id": "bookstack",
+      "originalArtifactSha256": "a05711359fb5dfd6665a75e61e46980b8ae8ac12f55173c826735e0b271633d0",
+      "originalArtifactBytes": 77118866,
+      "scope": "frozen revision-only source graph; working-tree comparison also includes Git metadata outcomes",
+      "diagnosticCounts": {
+        "duplicate-symbol": 126,
+        "dynamic-blueprint": 7,
+        "dynamic-import": 1,
+        "dynamic-migration-table": 3,
+        "foreign-key-target-not-indexed": 1,
+        "framework-route-coverage": 1,
+        "model-table-not-indexed": 1,
+        "routing-bootstrap-unresolved": 1,
+        "unresolved-artisan-call": 1,
+        "unresolved-http-call": 1,
+        "unresolved-local-import": 5
+      },
+      "errors": []
+    },
+    {
+      "id": "firefly-iii",
+      "originalArtifactSha256": "1d5db6c6a19fda843f05c5622707b8a862a7920fb4865af87df3e27e14ba2d1a",
+      "originalArtifactBytes": 110767552,
+      "scope": "frozen revision-only source graph; working-tree comparison also includes Git metadata outcomes",
+      "diagnosticCounts": {
+        "duplicate-symbol": 2,
+        "dynamic-migration-table": 4,
+        "foreign-key-target-not-indexed": 2,
+        "framework-route-coverage": 1,
+        "model-table-not-indexed": 9,
+        "php-binding-source-unavailable": 3,
+        "php-parse-error": 3,
+        "php-structure-failed": 3,
+        "table-created-elsewhere": 17,
+        "unmatched-http-call": 35,
+        "unresolved-artisan-call": 11,
+        "unresolved-http-call": 23,
+        "unresolved-local-import": 24
+      },
+      "errors": [
+        {
+          "id": "diagnostic:235c0a19e4f98e4fa4a67f54",
+          "resolution": "unresolved",
+          "analyzer": "php-laravel",
+          "severity": "error",
+          "code": "php-parse-error",
+          "file": "app/Http/Controllers/Controller.php",
+          "entityId": "file:85c7b89fa9f8915e7c022a94",
+          "reason": "PHP 8.5+ is required to use pipe operator on line 99"
+        },
+        {
+          "id": "diagnostic:3ed38569890c8cce28c01c30",
+          "resolution": "unresolved",
+          "analyzer": "php-laravel",
+          "severity": "error",
+          "code": "php-parse-error",
+          "file": "bootstrap/app.php",
+          "entityId": "file:4d97dcdfe69918ae249886f0",
+          "reason": "Parse Error : syntax error, unexpected ':', expecting ')' on line 70"
+        },
+        {
+          "id": "diagnostic:8cec95c67ad3e1a6e30dc002",
+          "resolution": "unresolved",
+          "analyzer": "php-laravel",
+          "severity": "error",
+          "code": "php-parse-error",
+          "file": "app/Support/JsonApi/Enrichments/RecurringEnrichment.php",
+          "entityId": "file:601f8fe9b561526c162e39ba",
+          "reason": "Parse Error : syntax error, unexpected '(' on line 358"
+        }
+      ]
+    },
+    {
+      "id": "axum",
+      "originalArtifactSha256": "3da9d3adf484b45d7cb0754e9a4b82af80dd103a58d0e90b906415276d6e24a2",
+      "originalArtifactBytes": 186565696,
+      "scope": "frozen revision-only source graph; working-tree comparison also includes Git metadata outcomes",
+      "diagnosticCounts": {
+        "rust-call-unsupported": 2380,
+        "rust-compilation-gap": 474,
+        "rust-import-excluded": 11,
+        "rust-import-unresolved": 160,
+        "rust-import-unsupported": 495,
+        "rust-reference-unsupported": 6819,
+        "rust-registration-gap": 8
+      },
+      "errors": []
+    },
+    {
+      "id": "full-stack-fastapi",
+      "originalArtifactSha256": "9aca4bb6cf64a44d68f5cf184dd6717b3647dc493d460cf8300e070329b94adf",
+      "originalArtifactBytes": 2616397,
+      "scope": "frozen revision-only source graph; working-tree comparison also includes Git metadata outcomes",
+      "diagnosticCounts": {
+        "fastapi-middleware-execution": 1,
+        "fastapi-runtime-registration": 1,
+        "fastapi-unresolved-dependency": 1,
+        "fastapi-version-profile": 6
+      },
+      "errors": []
+    }
+  ],
+  "gitMetadataGaps": [
+    {
+      "id": "bookstack",
+      "reason": "Original shallow boundary file was absent from isolated metadata; Git metrics were unavailable and warm Git-metrics cache proof failed",
+      "originalShallowSha256": "ce54a111c3fb6bf2668f8272cd3c4606f36143af7f10af0e3acb31c7f16ced3e",
+      "boundaryCount": 12,
+      "originalShallowPath": "examples/bookstack/.git/shallow"
+    },
+    {
+      "id": "firefly-iii",
+      "reason": "Original shallow boundary file was absent from isolated metadata; Git metrics were unavailable and warm Git-metrics cache proof failed",
+      "originalShallowSha256": "2a4684468be9dd28efb9a1611649d7f32849f003836c18adfaa8cabc0d91fd04",
+      "boundaryCount": 8,
+      "originalShallowPath": "examples/firefly-iii/.git/shallow"
+    }
+  ],
+  "runtimeComparisonGaps": [
+    {
+      "id": "axum",
+      "mode": "cold",
+      "complete": true,
+      "passed": false,
+      "baseline": {
+        "milliseconds": 9995.50294,
+        "treePeakKiB": 777392
+      },
+      "current": {
+        "milliseconds": 14794.879411,
+        "treePeakKiB": 884196
+      },
+      "timeRatio": 1.4801535750436186,
+      "memoryRatio": 1.137387572807541
+    },
+    {
+      "id": "axum",
+      "mode": "warm",
+      "complete": true,
+      "passed": false,
+      "baseline": {
+        "milliseconds": 10060.075787,
+        "treePeakKiB": 1495724
+      },
+      "current": {
+        "milliseconds": 13175.776625999999,
+        "treePeakKiB": 1237552
+      },
+      "timeRatio": 1.3097094798258102,
+      "memoryRatio": 0.827393289136231
+    }
+  ],
+  "qualifiedComparisons": 6,
+  "completedProcesses": 108,
+  "workerFailures": 0,
+  "baselineCommit": "a8277593270e8dd0e7510c612f0d8ef6dad902fc",
+  "currentRuntimeCommit": "da173ff2c4547321c48bb196ef0965ab7b1ad143",
+  "controllerTerminal": {
+    "controllerPid": 2131407,
+    "childPid": 2131408,
+    "exitCode": 1,
+    "seconds": 2277.601191520691,
+    "completedAt": 1791811315.3475173
+  },
+  "sourceUnchangedSincePreviousRuntimeQualification": true,
+  "nativeWindowsMacOSQualified": false,
+  "full195RevisionHistoryQualified": false,
+  "retainedArtifacts": {
+    "observation": "http://127.0.0.1:37851/validation-production-cache/receipt.json",
+    "observerArchive": "http://127.0.0.1:37851/production-cache-preparation/observer-and-conformance.tar.gz",
+    "finalArchive": "http://127.0.0.1:37851/production-cache-preparation/final-observer-and-receipts.tar.gz"
+  },
+  "browserChecks": {
+    "url": "http://127.0.0.1:37845/production-cache-qualification.html",
+    "viewportWidth": 1920,
+    "bodyScrollWidth": 1905,
+    "observationDisclosureRows": 108,
+    "logicalParityRows": 6,
+    "qualifiedComparisonRows": 6,
+    "unqualifiedComparisonRows": 6
+  },
+  "finalArchiveSha256": "f45b9e22c1467020e3e92e53f1bbf4cfe7846fadca63e62aad9b3b7c2004057e",
+  "finalArchiveBytes": 5767274
+}
