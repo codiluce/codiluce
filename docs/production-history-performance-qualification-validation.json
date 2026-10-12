@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-12T20:42:34.237600+00:00",
+  "phase": "exact-terminal-full-history-performance-qualification-tooling",
+  "scope": "New final qualifier and portable conformance only; real 36-probe production run remains live",
+  "files": [
+    {
+      "file": "scripts/qualify-production-history-performance.mjs",
+      "sha256": "d15b098df974cd9fbef2ce92866fac0fe6a25a047cae8381ead11a0ad506a281"
+    },
+    {
+      "file": "scripts/tests/production-history-performance-qualification.test.mjs",
+      "sha256": "c1cf1e5bcf0c3faeb9d2cbf48905a6d657c4982c20e9d76d0bb48171574ea58a"
+    }
+  ],
+  "dedicatedTests": 37,
+  "qualificationAndReportTests": 62,
+  "failedFinalTests": 0,
+  "skippedTests": 0,
+  "log": {
+    "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/performance-qualification-conformance-final-after-command-join.log",
+    "sha256": "4d7f34f94ae0ddc96d790f109b4a5565e9c6952246131abffae1393ed633c41c"
+  },
+  "checks": [
+    "Exact predetermined six-repository/195-revision/36-probe artifact scope, three counterbalanced pairs per repository and unchanged 10% thresholds",
+    "Raw measured result and request records joined to exact qualified original histories and complete graph digests; only UUID/time canonicalization",
+    "Independent Python audits joined to exact result bytes, actual database identities and all seven raw column ledgers",
+    "Verified successful state retirement, nonoverlapping probe times, actual terminal process/launch/controller identities and frozen 1924-file baseline/current runtimes",
+    "Complete threshold failures remain failures without dropping outliers, selecting smaller workloads or changing guards",
+    "Authored smaller corpus refused before runtime/process inspection; no fixture emits a production qualification artifact"
+  ],
+  "runtimeSourceChanged": false,
+  "measuredHarnessChanged": false,
+  "currentEngineSha256": "ca1b330152267c80ce02d35c57138928da4f69e4d3817f61ff03987584dded4a",
+  "baselineEngineSha256": "34af4e73bfa404aded51e8e7bd91140282470d78ca946e6ae1cf03f228235da8",
+  "runtimeFilesVerified": 3848,
+  "liveObservation": {
+    "controllerPid": 3116124,
+    "childPid": 3116142,
+    "liveProcessIdentityVerified": true,
+    "terminalArtifactAbsent": true,
+    "capturedReceipt": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/qualification-tooling-live-input.json",
+    "capturedReceiptSha256": "a3a6527d3cd39d2b3283dc1e9270bb136b181cf0d7eaf536d47f07301684b321",
+    "completedProbes": 6,
+    "lastProbe": {
+      "id": "memos",
+      "label": "baseline",
+      "repetition": 0,
+      "status": "running"
+    },
+    "restartedUnchanged": false
+  },
+  "full195RevisionEntrypointQualified": true,
+  "relativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "sourceAccuracyQualified": false,
+  "fullGoalFinished": false,
+  "foreignFiles": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  }
+}
