@@ -1,0 +1,422 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-12T18:05:44.953Z",
+  "phase": "complete-original-corpus-worker-storage-independent-audit-layout-resume-and-public-views",
+  "runInputs": {
+    "engineSha256": "34af4e73bfa404aded51e8e7bd91140282470d78ca946e6ae1cf03f228235da8",
+    "engineFiles": 1924,
+    "observerFiles": 9,
+    "corpusSha256": "d98b9eb8ae23b7202ed05ae1ceabc08543bcf3b88d2fc26d4b7bf1715b075e3b",
+    "profilesSha256": "540a45877decb71aa080a6ef0c5f563e41e5bea6e0998b6e18d73c76ba6175bc"
+  },
+  "repositories": [
+    {
+      "id": "flask",
+      "head": "d086db856be187255b8ec61ef409357393020f32",
+      "revisions": 35,
+      "originalDatabaseSha256": "c2b8abde7405fc88148416609380ec381eaa81b7b0f219cc153c2ee344a3d44f",
+      "resumedDatabaseSha256": "94c7282eae53ca1683407aeab4628c79ef1e8c62528139be4a531a19e90faa8e",
+      "originalBlobObjects": 471,
+      "cachedFirstParentSnapshots": 33,
+      "offFirstParentSnapshots": 2,
+      "firstParentRectangles": 63793,
+      "stableRelativePositions": 61493,
+      "publicViewNodes": 67531,
+      "completeColumnLedgers": 14
+    },
+    {
+      "id": "memos",
+      "head": "b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e",
+      "revisions": 32,
+      "originalDatabaseSha256": "35250930d6ed260aa5f0f6601019a83afc9fcede4941da047518fe91225d696f",
+      "resumedDatabaseSha256": "ea2148e8f5204716234893dc28edfa0d543a09ce2129be9524178131508a5e26",
+      "originalBlobObjects": 1976,
+      "cachedFirstParentSnapshots": 32,
+      "offFirstParentSnapshots": 0,
+      "firstParentRectangles": 361954,
+      "stableRelativePositions": 350478,
+      "publicViewNodes": 361954,
+      "completeColumnLedgers": 14
+    },
+    {
+      "id": "bookstack",
+      "head": "ff661b59f6f605bf768fe850c0d0a8a2dc09d203",
+      "revisions": 32,
+      "originalDatabaseSha256": "6fc674d6f94a2a547f4603a73a3eab0c9e157fa6ce7351df00204b8cf39d45e9",
+      "resumedDatabaseSha256": "1217e603fde819663679ab53b1f22437276789d9debaac9c46e66242b80bed38",
+      "originalBlobObjects": 3255,
+      "cachedFirstParentSnapshots": 32,
+      "offFirstParentSnapshots": 0,
+      "firstParentRectangles": 389458,
+      "stableRelativePositions": 376953,
+      "publicViewNodes": 389458,
+      "completeColumnLedgers": 14
+    },
+    {
+      "id": "firefly-iii",
+      "head": "57371b9f82debbf90e6453aba8af585e8c382617",
+      "revisions": 32,
+      "originalDatabaseSha256": "abdd9c5ef2a093124f52ec4178fceb6d17636b131a0d8f641ffbc69ec47d5aee",
+      "resumedDatabaseSha256": "d1fc5d0418c781dc5b7efe892228c4d1ed2082b6d6d1e3728a723b5c0b88e3e7",
+      "originalBlobObjects": 3977,
+      "cachedFirstParentSnapshots": 32,
+      "offFirstParentSnapshots": 0,
+      "firstParentRectangles": 456490,
+      "stableRelativePositions": 439920,
+      "publicViewNodes": 456490,
+      "completeColumnLedgers": 14
+    },
+    {
+      "id": "axum",
+      "head": "618496288c41da835683ec149432c4869722779f",
+      "revisions": 32,
+      "originalDatabaseSha256": "a947d875fc11f65593235d31cec96cb036ea42ce549d7ebe3b846f623cbe6aeb",
+      "resumedDatabaseSha256": "77f3d4e6c4d77f70c29db9b1df42e680aa13e069c4846df506b2d8a7248c45d1",
+      "originalBlobObjects": 553,
+      "cachedFirstParentSnapshots": 32,
+      "offFirstParentSnapshots": 0,
+      "firstParentRectangles": 183389,
+      "stableRelativePositions": 177498,
+      "publicViewNodes": 183389,
+      "completeColumnLedgers": 14
+    },
+    {
+      "id": "full-stack-fastapi",
+      "head": "f27b4721507824e57ebd0286ff1a84d82e83bf59",
+      "revisions": 32,
+      "originalDatabaseSha256": "f503fc45dbbab8582153e6f7e8d15a25cea0817160aa3edaa8cf289c93a0e904",
+      "resumedDatabaseSha256": "7439cd0b7053699b990feb3e63f4e8e70ad58acaf217888cd88ced250cfabdcf",
+      "originalBlobObjects": 294,
+      "cachedFirstParentSnapshots": 32,
+      "offFirstParentSnapshots": 0,
+      "firstParentRectangles": 25472,
+      "stableRelativePositions": 24645,
+      "publicViewNodes": 25472,
+      "completeColumnLedgers": 14
+    }
+  ],
+  "revisions": 195,
+  "cachedFirstParentSnapshots": 193,
+  "offFirstParentSnapshots": 2,
+  "firstParentRectangles": 1480556,
+  "stableRelativePositions": 1430987,
+  "publicViewNodes": 1484294,
+  "completeColumnLedgers": 84,
+  "databases": [
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-corpus-exact/flask/state/history.db",
+      "sha256": "c2b8abde7405fc88148416609380ec381eaa81b7b0f219cc153c2ee344a3d44f",
+      "bytes": 21475328
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/flask-original/flask/state/history.db",
+      "sha256": "94c7282eae53ca1683407aeab4628c79ef1e8c62528139be4a531a19e90faa8e",
+      "bytes": 22667264
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-corpus-exact/memos/state/history.db",
+      "sha256": "35250930d6ed260aa5f0f6601019a83afc9fcede4941da047518fe91225d696f",
+      "bytes": 132775936
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/memos-original/memos/state/history.db",
+      "sha256": "ea2148e8f5204716234893dc28edfa0d543a09ce2129be9524178131508a5e26",
+      "bytes": 136400896
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-corpus-exact/bookstack/state/history.db",
+      "sha256": "6fc674d6f94a2a547f4603a73a3eab0c9e157fa6ce7351df00204b8cf39d45e9",
+      "bytes": 180473856
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/bookstack-original/bookstack/state/history.db",
+      "sha256": "1217e603fde819663679ab53b1f22437276789d9debaac9c46e66242b80bed38",
+      "bytes": 182476800
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-corpus-exact/firefly-iii/state/history.db",
+      "sha256": "abdd9c5ef2a093124f52ec4178fceb6d17636b131a0d8f641ffbc69ec47d5aee",
+      "bytes": 293752832
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/firefly-original/firefly-iii/state/history.db",
+      "sha256": "d1fc5d0418c781dc5b7efe892228c4d1ed2082b6d6d1e3728a723b5c0b88e3e7",
+      "bytes": 295956480
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-corpus-exact/axum/state/history.db",
+      "sha256": "a947d875fc11f65593235d31cec96cb036ea42ce549d7ebe3b846f623cbe6aeb",
+      "bytes": 525393920
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/axum-original/axum/state/history.db",
+      "sha256": "77f3d4e6c4d77f70c29db9b1df42e680aa13e069c4846df506b2d8a7248c45d1",
+      "bytes": 526962688
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-corpus-exact/full-stack-fastapi/state/history.db",
+      "sha256": "f503fc45dbbab8582153e6f7e8d15a25cea0817160aa3edaa8cf289c93a0e904",
+      "bytes": 5840896
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/full-stack-fastapi-original/full-stack-fastapi/state/history.db",
+      "sha256": "7439cd0b7053699b990feb3e63f4e8e70ad58acaf217888cd88ced250cfabdcf",
+      "bytes": 6688768
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/complete-history-manifest.json",
+      "sha256": "54488865e1da568e6569aafebbf8e3e317a0a04b6ae14de9b1839241b108dee0"
+    },
+    {
+      "file": "/var/www/html/codiluce/docs/production-head-profiles.json",
+      "sha256": "540a45877decb71aa080a6ef0c5f563e41e5bea6e0998b6e18d73c76ba6175bc"
+    },
+    {
+      "file": "/var/www/html/codiluce/docs/production-history-corpus.json",
+      "sha256": "d98b9eb8ae23b7202ed05ae1ceabc08543bcf3b88d2fc26d4b7bf1715b075e3b"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-corpus-exact/receipt.json",
+      "sha256": "ef32017c6f3f73960dcb0d409b1fc85fe54c0771f5961e16184d94b636367cf6"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-exact/flask-independent-audit-retained.json",
+      "sha256": "5275a1f68e924c99fd9444ebf7b76db5e24690dbae93e09e88ac09ca5241f9de"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/flask-original/receipt.json",
+      "sha256": "ed14c252004defe184eac1f1b79e79d9ce64f19a7bf95395945afbd48e7aae41"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/flask-public-views.json",
+      "sha256": "84ae18c9403567ccdb9f70c74b4e2c9ffb73bd9eb346f1065e535800b7e429c2"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/flask-columns-independent.json",
+      "sha256": "f89eda485aa99e3d9fd767c21ced06a97e783208b378089e7e7349ce7bda1060"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-exact/flask-independent-audit-retained.json.inputs.json",
+      "sha256": "a907c6d1b55fd4ad8854ef2d69d1f9115c0ca9ed6667985e71ce4ec75a5e7e50"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/flask-original/input-receipt.json",
+      "sha256": "d270f02f34194aeef83025b59ba257b5f73b53075937a24d84a6eb90efa169e1"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/flask-original/input-corpus.json",
+      "sha256": "d98b9eb8ae23b7202ed05ae1ceabc08543bcf3b88d2fc26d4b7bf1715b075e3b"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/flask-original/input-profiles.json",
+      "sha256": "540a45877decb71aa080a6ef0c5f563e41e5bea6e0998b6e18d73c76ba6175bc"
+    },
+    {
+      "file": "/var/www/html/codiluce/scripts/audit-production-history.mjs",
+      "sha256": "ed134cf144500bcbc54a73a00f09dcea4158858bc63e83294ab5ef8f027783dc"
+    },
+    {
+      "file": "/var/www/html/codiluce/scripts/audit-history-columns.py",
+      "sha256": "f432ad1445f4dde2ed21cba8ce91382b8417f28e73d0f3f491706fd4e75698ff"
+    },
+    {
+      "file": "/var/www/html/codiluce/scripts/observe-production-history-resume.mjs",
+      "sha256": "1282cf73f3d22a9d6a67a53be511e2edf88feaf4117dce2557c40549c1f1a3eb"
+    },
+    {
+      "file": "/var/www/html/codiluce/scripts/production-history-storage-ledger.mjs",
+      "sha256": "766c976065126d1ef5ea2afc3a3d9c9ac9f57921dd10a28f792d2bccc9183199"
+    },
+    {
+      "file": "/var/www/html/codiluce/scripts/production-history-inputs.mjs",
+      "sha256": "dc513fb268388e07441b5c979668ba2d16ac1ddf53f56b2426a4ff6434d7b4c8"
+    },
+    {
+      "file": "/var/www/html/codiluce/scripts/production-cache-git.mjs",
+      "sha256": "6fa78a2f93d7702d29a8f924c9d0e8dca570f04fc811ff2ff1223253ffcd9c6c"
+    },
+    {
+      "file": "/var/www/html/codiluce/scripts/process-memory.mjs",
+      "sha256": "16ca20fed24e5e46d4574c04cad567ee007087fd48bbef1c40cb698aa3763ed3"
+    },
+    {
+      "file": "/var/www/html/codiluce/scripts/observe-production-history-views.mjs",
+      "sha256": "a1ee1cc4806c82e2c38242b0a3956f4de3d66e9fc3c1bc73fdd01499e6878ef5"
+    },
+    {
+      "file": "/var/www/html/codiluce/scripts/production-history-public-views.mjs",
+      "sha256": "3258281950ac8c9064de6787a8236715d41b20a8aaa0c24e04a319c2171a81c2"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-exact/memos-independent-audit-retained.json",
+      "sha256": "20f5f00377bf365a50a3ac2844d2245c3b3d70547eaf1b7d759ead46e35b64ea"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/memos-columns-independent.json",
+      "sha256": "f448392f944f7a6a31eb82151710e123226a0b7f37e4d1eb0e95a993174f3a51"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/memos-original/receipt.json",
+      "sha256": "d350f4621e09bbea3afda62ca40e6d42878bcf75e3a8aa6f38c0f37b314ac29e"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/memos-public-views.json",
+      "sha256": "c29af68517e45a763acb2c6a218ebf85be66a4b608123631b6763243e108588a"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/memos-original/input-receipt.json",
+      "sha256": "d270f02f34194aeef83025b59ba257b5f73b53075937a24d84a6eb90efa169e1"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-exact/memos-independent-audit-retained.json.inputs.json",
+      "sha256": "a907c6d1b55fd4ad8854ef2d69d1f9115c0ca9ed6667985e71ce4ec75a5e7e50"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/memos-original/input-corpus.json",
+      "sha256": "d98b9eb8ae23b7202ed05ae1ceabc08543bcf3b88d2fc26d4b7bf1715b075e3b"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/memos-original/input-profiles.json",
+      "sha256": "540a45877decb71aa080a6ef0c5f563e41e5bea6e0998b6e18d73c76ba6175bc"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/bookstack-original/receipt.json",
+      "sha256": "006fc30c4a9f236c637cae78faac5387480b016d99e49e6a5ce90f450ba3d3e6"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/bookstack-independent-audit.json",
+      "sha256": "f7a4ba5274d9bcff97ba8a75a9ed74cdf822dcd837f78d57dfaaffc69f01ddc7"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/bookstack-public-views.json",
+      "sha256": "864dbd62cabd0cf31c8fd686c9d5cfd6dc471ca05979e45e3dbd92b9b06ee24c"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/bookstack-columns-independent.json",
+      "sha256": "17e24b0e06ef1a556ae7a437962ec045f0fd58b2e7dc53c7facdd9ad7a0d3142"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/bookstack-independent-audit.json.inputs.json",
+      "sha256": "fedc686464690ff62c2fa6fbc4fc4813bbaef52ed0549590bd56416bb0561f51"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/bookstack-original/input-receipt.json",
+      "sha256": "d270f02f34194aeef83025b59ba257b5f73b53075937a24d84a6eb90efa169e1"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/bookstack-original/input-corpus.json",
+      "sha256": "d98b9eb8ae23b7202ed05ae1ceabc08543bcf3b88d2fc26d4b7bf1715b075e3b"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/bookstack-original/input-profiles.json",
+      "sha256": "540a45877decb71aa080a6ef0c5f563e41e5bea6e0998b6e18d73c76ba6175bc"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/firefly-original/receipt.json",
+      "sha256": "dca8d5a19df8bf28eab3ef7145757063172efbd9b97d2b2bb219a32b38989473"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/firefly-independent-audit.json",
+      "sha256": "8c9ea7ca2aa4d7578b1280c941e3108a4b78ab59ead1501c118358ee0ca9afba"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/firefly-public-views.json",
+      "sha256": "faffce7ecc59e56cf3031800bf771eca5800400a330037c8801303091ad63441"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/firefly-columns-independent.json",
+      "sha256": "0617d2ae159fd1f16c1639a1eac15a0607a01b78905d1f2bfbcabf2973a956c0"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/firefly-original/input-receipt.json",
+      "sha256": "ab1e82cdf7b13ef7e15b881906d0b3e3b02b66dad477e3b5f47388e02011ab77"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/firefly-independent-audit.json.inputs.json",
+      "sha256": "5e175be149283ad9eff35f7f1e21121b104d79f1b4367602f3b8d14c7b0ddeed"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/firefly-original/input-corpus.json",
+      "sha256": "d98b9eb8ae23b7202ed05ae1ceabc08543bcf3b88d2fc26d4b7bf1715b075e3b"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/firefly-original/input-profiles.json",
+      "sha256": "540a45877decb71aa080a6ef0c5f563e41e5bea6e0998b6e18d73c76ba6175bc"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/axum-independent-audit.json",
+      "sha256": "0dfdf96fc8041eff95e8dc89400ade3b43957d0328cf44ff2071619024541169"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/axum-original/receipt.json",
+      "sha256": "4bce2cc7ca7c9660c039ffc1150f2fdf11adb8d019f2cedebe281b39dc9e5f48"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/axum-public-views.json",
+      "sha256": "43c8a941d93e75c95a3af6fb7618efc91be4e35118504f5c82fd319767ffb733"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/axum-columns-independent.json",
+      "sha256": "ec6736312dbddafb8f68c84bab2aae663b258d44f6eee392dc57b5d55386e816"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/axum-independent-audit.json.inputs.json",
+      "sha256": "8fa2097b29ecedcb409527f93f9a4f810503a3b987228cc86900061c9ee6e4e0"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/axum-original/input-receipt.json",
+      "sha256": "ef32017c6f3f73960dcb0d409b1fc85fe54c0771f5961e16184d94b636367cf6"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/axum-original/input-corpus.json",
+      "sha256": "d98b9eb8ae23b7202ed05ae1ceabc08543bcf3b88d2fc26d4b7bf1715b075e3b"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/axum-original/input-profiles.json",
+      "sha256": "540a45877decb71aa080a6ef0c5f563e41e5bea6e0998b6e18d73c76ba6175bc"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/full-stack-fastapi-independent-audit.json",
+      "sha256": "29eccd9aa79a6a656e954e91b1c90c94aea171c6b3971f29039a509a2f1b09f2"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/full-stack-fastapi-original/receipt.json",
+      "sha256": "b0096beefa813628f2c14b7146dceef967eec0990cb4e7c28b86ce390da494be"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/full-stack-fastapi-public-views.json",
+      "sha256": "ff0b853f6dca7509064faf3457261332d44edafcf317a418999a19515be2fdad"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/full-stack-fastapi-columns-independent.json",
+      "sha256": "242fe0026a27299b86670b8e0ec06c16b598958888f4fc6b4c00200cb0f4a048"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/full-stack-fastapi-original/input-receipt.json",
+      "sha256": "ef32017c6f3f73960dcb0d409b1fc85fe54c0771f5961e16184d94b636367cf6"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/full-stack-fastapi-independent-audit.json.inputs.json",
+      "sha256": "8fa2097b29ecedcb409527f93f9a4f810503a3b987228cc86900061c9ee6e4e0"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/full-stack-fastapi-original/input-corpus.json",
+      "sha256": "d98b9eb8ae23b7202ed05ae1ceabc08543bcf3b88d2fc26d4b7bf1715b075e3b"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/full-stack-fastapi-original/input-profiles.json",
+      "sha256": "540a45877decb71aa080a6ef0c5f563e41e5bea6e0998b6e18d73c76ba6175bc"
+    }
+  ],
+  "manifestSha256": "54488865e1da568e6569aafebbf8e3e317a0a04b6ae14de9b1839241b108dee0",
+  "qualifierSha256": "ab6fa4619eedc09799c5b66c44a3fa8e5ef22f6a7f4ba25589db8415511ef04e",
+  "full195RevisionOriginalWorkerStorageResumeViewsQualified": true,
+  "freshIndexHistoryWorkerOrchestrationQualified": false,
+  "relativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "sourceAccuracyQualified": false,
+  "method": "Exact terminal six-repository receipt join; complete original graph/source digests, UUIDs and revisions; actual indexHistory cached resume and complete public views; 84 independent Python SQLite column ledgers. Current original/copied database bytes, frozen runtime/observer and all receipt bytes verified before/after. Targets never execute."
+}

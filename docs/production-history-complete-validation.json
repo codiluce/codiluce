@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "passed": true,
+  "phase": "P10d2b2b2b2c7b5",
+  "targetedTests": {
+    "passed": 140,
+    "failed": 0,
+    "log": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/complete-history-targeted-tests.log",
+    "sha256": "0d90a2dd586be6c041b32e63119d8e44a95fbe8e83b2e8433dbeb130347b5507"
+  },
+  "qualificationReceiptSha256": "f4a95a1182ae2d12ba7ff83addbe506b57987764393cff6949c9eaf1f7d91adf",
+  "originalTerminal": {
+    "pid": 2550185,
+    "childPid": 2550218,
+    "exitCode": 0,
+    "seconds": 5934.055429458618,
+    "completedAt": 1791826942.0553687
+  },
+  "archive": {
+    "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/complete-original-history-evidence.tar.gz",
+    "sha256": "9b156ee2fbfa3e98cb10c166eeacca331b3b28181806c2a471ab47c46ab3d1ef",
+    "bytes": 22808469,
+    "regularMembers": 264,
+    "originalSourceReceipts": 195,
+    "allMembersAndOriginalBytesVerified": true
+  },
+  "runtimeSourceChanged": false,
+  "fullGoalFinished": false,
+  "browserInspection": {
+    "url": "http://127.0.0.1:37845/production-history-complete.html",
+    "title": "Complete original history qualification \u00b7 Codiluce",
+    "viewportWidth": 1920,
+    "documentScrollWidth": 1905,
+    "horizontalOverflow": false,
+    "repositoryRows": 6,
+    "visibleTerminalGate": true
+  },
+  "foreignFiles": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  },
+  "initialTestFixtureCorrection": "Two adversarial fixture checks initially shared references with their expected inputs; JSON round-trip now creates independent receipt objects and all 21 qualification tests pass.",
+  "links": [
+    {
+      "url": "http://127.0.0.1:37845/language-framework-compatibility.html#p10d2b2b2b2c7b5",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:37845/production-history-complete-receipt.json",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:37845/production-history-complete-validation.json",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:37857/complete-original-history-evidence.tar.gz",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:37845/production-history-firefly.html",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:37845/production-history-resume.html",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:37845/production-history-audit.html",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:37857/qualified-engine-and-conformance.tar.gz",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:37857/",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:37857/registry-refresh-characterization.json",
+      "status": 200
+    }
+  ],
+  "artifactServerCorrection": "Previous transient resume artifact server was confirmed gone; new detached server serves exact retained artifacts on 37857. Runtime archive link corrected from unrelated runner server to verified archive in the evidence directory."
+}
