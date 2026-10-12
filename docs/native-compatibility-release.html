@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Native compatibility release gate · Codiluce</title><style>body{margin:0;padding:clamp(16px,4vw,40px);font:16px/1.6 system-ui,sans-serif;background:#101822;color:#e5ecf4}main{max-width:1000px;margin:auto}h1,h2{line-height:1.25}a,code{color:#8bddd8}p,code{overflow-wrap:anywhere}.status{padding:18px;border:1px solid #b69459;border-radius:8px}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;min-width:560px}td,th{padding:12px;text-align:left;border-bottom:1px solid #344353}pre{padding:16px;background:#192433;white-space:pre-wrap;overflow-wrap:anywhere;border-radius:8px}.small{font-size:14px;color:#b6c5d6}</style></head><body><main>
+<p class="small">Codiluce maintainer documentation · 12 October 2026</p>
+<h1>Native compatibility release gate</h1>
+<p class="status"><strong>P10d3a: native validation infrastructure.</strong> The matrix and evidence runner are implemented. Native Windows/macOS execution remains unqualified until the actual jobs finish successfully. This document does not certify a host or complete P10d3.</p>
+<p><a href="language-framework-compatibility.html#p10d3a">Implementation roadmap</a> · <a href="analysis-capabilities.html">Capability/version matrix</a> · <a href="framework-pack-author-guide.html">Framework-pack author guide</a></p>
+<h2>What runs</h2>
+<p><code>.github/workflows/native-compatibility.yml</code> runs on pull requests, main-branch pushes and manual dispatch. Six independent jobs use real Ubuntu, Windows and macOS runners, each with the minimum supported Node 22.12.0 and the selected Node 24 line. Each receipt records the resolved Node version, architecture, OS type/release, Git version, checked-out commit and SHA-256 inventory of exact tracked source bytes. Runner-image labels and the Node 24 patch may change; the recorded host, rather than its label, is the evidence.</p>
+<div class="scroll"><table><thead><tr><th>Gate</th><th>Required evidence</th></tr></thead><tbody>
+<tr><td>Dependencies</td><td>Own locked Codiluce dependencies install with <code>npm ci --ignore-scripts</code>; target dependencies are never installed.</td></tr>
+<tr><td>Conformance</td><td>All engine, framework, projection, frontend and release-runner tests; four test files at a time. Static target inputs are read, never executed.</td></tr>
+<tr><td>Types</td><td>Engine and web typechecks.</td></tr>
+<tr><td>Documentation</td><td>Deterministic capability/grammar/version checks against the tested checkout.</td></tr>
+<tr><td>Installed package</td><td>Production-only tarball installation, compiled CLI/API, all parser assets and licenses, original source coordinates/IDs, handler and request-inspector flows, cache invalidation, compiled history, missing-asset fallback, signals and npm-exec.</td></tr>
+</tbody></table></div>
+<h2>Run a clean checkout locally</h2>
+<p>Use a supported Node installation and Git. The runner resolves npm's JavaScript CLI beside Node, so command execution needs no platform shell or Windows <code>npm.cmd</code> invocation.</p>
+<pre>node scripts/qualify-native-release.mjs --install --output test-results/native-release
+
+# Inspect the exact command plan without executing checks:
+node scripts/qualify-native-release.mjs --install --plan</pre>
+<p>Every output directory must be new. For a repeat, choose a different directory and retain the old observations. The runner writes <code>receipt.json</code>, a browser-accessible <code>index.html</code> and complete per-check logs. Open the HTML directly in a browser, or serve the downloaded artifact directory with a static HTTP server.</p>
+<h2>Interpret the result</h2>
+<p>A pass requires every selected check to finish with exit code zero and no signal or spawn failure, a clean checkout and identical before/after source bytes and commit. The runner writes progress before starting each child, waits for its completion and closes the log descriptor before hashing evidence. Nonzero exits, missing executables, interrupted jobs, unavailable source identity, dirty or changed sources and dependency skips cannot qualify a host. A failed validation check does not discard later independent checks; a failed dependency installation records prerequisite skips.</p>
+<p>The matrix keeps <code>fail-fast: false</code>. Every job attempts artifact upload even after failure, with a distinct host/Node/attempt name and a missing-artifact error. Download each job's native-release artifact and open <code>index.html</code>; <code>receipt.json</code> and SHA-256 log checksums retain machine-readable evidence. All configured jobs must qualify before the native release gate can be closed. This matrix does not establish other architectures, runtime versions, production performance or wider original-source accuracy.</p>
+<h2>Workflow inputs</h2>
+<p>Official actions are pinned to immutable commits, with read-only repository permissions and no persisted checkout credentials. The action usage and artifact behavior follow <a href="https://github.com/actions/checkout/tree/3d3c42e5aac5ba805825da76410c181273ba90b1">checkout v7.0.1</a>, <a href="https://github.com/actions/setup-node/tree/949feb2413d6458794dcd2491c4babbbce0c15c1">setup-node v7.1.0</a> and <a href="https://github.com/actions/upload-artifact/tree/cf430e030ddbb5b0abf93d22962f4752f3646cd9">upload-artifact v7.0.2</a>. Updates require reviewing their real source and retaining this qualification contract.</p>
+</main></body></html>
