@@ -1,6 +1,13 @@
 // Pure JS keeps source-checkout parsing independent of a TypeScript loader.
 // Only Codiluce's parse-only provider executes; no target PHP/autoloader does.
 import { Engine } from 'php-parser';
+import { serialize } from 'node:v8';
+
+function reply(id,response) {
+  const payload=serialize(response);
+  process.send?.({id,type:'completed',completedAtNs:process.hrtime.bigint().toString(),bytes:payload.byteLength});
+  process.send?.({id,type:'result',payload});
+}
 
 process.on('message',job=>{
   try {
@@ -21,6 +28,6 @@ process.on('message',job=>{
     }
     const phpAstBytes=Buffer.byteLength(JSON.stringify(root));
     if(phpAstBytes>16*1024*1024)throw Error('PHP native source-unit payload exceeds 16 MiB');
-    process.send?.({id:job.id,facts:{declarations:[],issues:[],truncated:false,phpAst:root,phpAstBytes}});
-  }catch(error){process.send?.({id:job.id,error:error instanceof Error?error.message:String(error)});}
+    reply(job.id,{facts:{declarations:[],issues:[],truncated:false,phpAst:root,phpAstBytes}});
+  }catch(error){reply(job.id,{error:error instanceof Error?error.message:String(error)});}
 });

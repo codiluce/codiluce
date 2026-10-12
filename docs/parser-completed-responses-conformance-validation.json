@@ -1,0 +1,154 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-12T23:31:56.935615+00:00",
+  "phase": "Worker-completed response timing and safe IPC retirement source/compiled conformance",
+  "parentCommit": "5231d6afa1f3720676e8cdc63ff23333bf56d1ab",
+  "runtimeSha256": "91f414f2359345c2fd67cec88abec56bcad255875e9d20014f038a5d7716e6b9",
+  "runtimeInputs": 1924,
+  "changedRuntimeFiles": [
+    "src/analysis/php/native-worker.mjs",
+    "src/analysis/tree-sitter/client.ts",
+    "src/analysis/tree-sitter/native-script-worker.mjs",
+    "src/analysis/tree-sitter/native-worker.mjs",
+    "src/analysis/tree-sitter/script-worker.ts",
+    "src/analysis/tree-sitter/worker.ts"
+  ],
+  "newTransportTests": 17,
+  "newCasesComparedWithPriorPhase": 10,
+  "beforeFixBusyParentTests": {
+    "passed": 0,
+    "failed": 2,
+    "originalTimerExpiredWhileParentBlocked": true
+  },
+  "firstTargetedResult": {
+    "passed": 84,
+    "failed": 2,
+    "issue": "Explicit IPC disconnect while two decoded frames were pending nulls Node channel; source fix now terminates without premature channel disconnect",
+    "failedLogRetained": true
+  },
+  "finalTargetedResult": {
+    "passed": 86,
+    "failed": 0,
+    "skipped": 0
+  },
+  "finalEngineWebTests": {
+    "passed": 1701,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 182025.721938
+  },
+  "ordinaryCompiledNodeTests": 17,
+  "bothTypechecksPassed": true,
+  "deterministicCapabilityDocumentationPassed": true,
+  "approvedNativeHelpers": 33,
+  "approvedScriptHelpers": 4,
+  "newApprovedBuiltin": "node:v8",
+  "targetCompilerImportStillJobLocal": true,
+  "sourceJobDeadlineMs": 10000,
+  "sourceJobInterval": "Parent dispatch to worker completion after response serialization; startup, input IPC, parsing and extraction included",
+  "lateWorkerCompletionsAccepted": false,
+  "completedPayloadIdleDeliveryAllowanceMs": 10000,
+  "parentActiveAnalysisConsumesIdleDeliveryAllowance": false,
+  "completionMetadataStoredInGraphFacts": false,
+  "payloadEncoding": "Node v8 serialization retains the original structured response; private completion frame precedes encoded bytes",
+  "physicalFailedWorkerExitRequiredBeforeQueuedReplacement": true,
+  "normalInstalledPackageGatePending": true,
+  "newRuntimeOriginalProductionHistoryQualified": false,
+  "relativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullGoalFinished": false,
+  "oldFailedObservationsRetried": false,
+  "sourceReferences": [
+    {
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.12.0/src/node_process_methods.cc",
+      "review": "hrtime BigInt reads uv_hrtime without the process uptime offset"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.12.0/deps/uv/src/unix/linux.c",
+      "review": "Precise hrtime uses the host CLOCK_MONOTONIC"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.12.0/deps/uv/src/unix/darwin.c",
+      "review": "hrtime uses mach_continuous_time and the host timebase"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.12.0/deps/uv/src/win/util.c",
+      "review": "hrtime uses QueryPerformanceCounter and the shared frequency"
+    },
+    {
+      "url": "https://nodejs.org/download/release/v22.12.0/docs/api/perf_hooks.html#performanceeventlooputilizationutilization1-utilization2",
+      "review": "Parent event-loop idle milliseconds distinguish idle delivery wait from synchronous analysis; source review is not native OS execution"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.12.0/lib/internal/child_process.js",
+      "review": "Queued message emission uses channel pending-message state; terminate rather than manually disconnect inside the callback"
+    }
+  ],
+  "logs": [
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/busy-parent-before-fix.log",
+      "sha256": "fd4e490c6d66ddf7110d88479d69f924c772dd9b6ea2b9ccece40daacad80189"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/response-conformance-first.log",
+      "sha256": "b68b804404843eb2d449c4d7c65cf0a1c7838a4dca826636aad2c93ba69e60c1"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/response-targeted-conformance.log",
+      "sha256": "fc529e336ae8341a3b3d77e5e29c56d893b2bee644bcd0f40c91275995814112"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/response-targeted-conformance-after-channel-fix.log",
+      "sha256": "5c4927b809f386a5e92be78dbbc21237fd4427f2de0b58895089fdaadde210e7"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/response-typecheck-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/response-typecheck-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/response-full-engine-web-first.log",
+      "sha256": "88bda0404c6b25e25cd007f7fd906561294482f40a5847ee47de96b90ad20220"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/response-web-typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/response-compiled-cli-build.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/response-compiled-conformance-first.log",
+      "sha256": "d25ddd3638d5399e7e4d77acb6a1e05a483100036d0bd25fdf479d770b74f803"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/native-worker-regeneration.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/script-worker-regeneration.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/response-docs-check-first.log",
+      "sha256": "4d552c878f86492e9450c46adcda71409aef89f25e60ab74c100b75830d01ef7"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/response-docs-check-after-package-cases.log",
+      "sha256": "4d552c878f86492e9450c46adcda71409aef89f25e60ab74c100b75830d01ef7"
+    }
+  ],
+  "compiledDriverSha256": "adab2ff361caea173a9730b536edcd393eb5b9a006ee0ee422a201a4ad6a0afd",
+  "foreignFilesUnchanged": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  }
+}

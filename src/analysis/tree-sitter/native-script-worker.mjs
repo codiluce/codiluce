@@ -1,6 +1,9 @@
 // Generated from Codiluce’s typed source-only parser. Do not edit.
 // Rebuild: npm run build:script-worker
 
+// src/analysis/tree-sitter/script-worker.ts
+import { serialize } from "node:v8";
+
 // src/analysis/source-map.ts
 var SourceText = class {
   constructor(text) {
@@ -174,14 +177,19 @@ function extractLiteralScripts(compiler, content, facts, template) {
 }
 
 // src/analysis/tree-sitter/script-worker.ts
+function reply(id, response) {
+  const payload = serialize(response);
+  process.send?.({ id, type: "completed", completedAtNs: process.hrtime.bigint().toString(), bytes: payload.byteLength });
+  process.send?.({ id, type: "result", payload });
+}
 async function handle(job) {
   try {
     const compiler = (await import("typescript")).default;
     extractLiteralScripts(compiler, job.content, job.facts, job.template);
     const facts = job.template === "erb" ? finishErb(job.facts) : job.template === "razor" ? finishRazor(job.facts) : finishLiquid(job.facts);
-    process.send?.({ id: job.id, facts });
+    reply(job.id, { facts });
   } catch (error) {
-    process.send?.({ id: job.id, error: error instanceof Error ? error.message : String(error) });
+    reply(job.id, { error: error instanceof Error ? error.message : String(error) });
   }
 }
 var pending = Promise.resolve();

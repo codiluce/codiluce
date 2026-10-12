@@ -1,5 +1,7 @@
 import { fork, type ChildProcess } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { performance } from 'node:perf_hooks';
+import { deserialize } from 'node:v8';
 import type { StructureFacts } from '../facts.js';
 
 const WORKER = fileURLToPath(new URL('./native-worker.mjs', import.meta.url));
@@ -32,26 +34,62 @@ export class StructureParser {
   }
   private dispatch(language:string,payload:Record<string,unknown>):Promise<StructureFacts> {
     const child = this.start(), id = ++this.sequence;
+    const started = process.hrtime.bigint(), deadline = started + BigInt(Math.ceil(this.timeoutMs * 1_000_000));
     return new Promise((resolve, reject) => {
       let settled = false;
-      const cleanup = () => { clearTimeout(timer); child.off('message', message); child.off('error', failure); child.off('exit', exited); };
+      let completedBytes: number | undefined, expiry: ReturnType<typeof setImmediate> | undefined;
+      let deliveryTimer: ReturnType<typeof setTimeout> | undefined;
+      const cleanup = () => { clearTimeout(timer); clearTimeout(deliveryTimer); clearImmediate(expiry); child.off('message', message); child.off('error', failure); child.off('exit', exited); };
       const failure = (error: Error) => { if (settled) return; settled = true; cleanup(); if (this.child === child) this.retire(); reject(error); };
+      const exceeded = () => failure(new Error(`Parser exceeded ${this.timeoutMs} ms for ${language}`));
       const exited = (code: number | null, signal: string | null) => failure(new Error(`Parser worker exited (${signal ?? code})`));
-      const message = (result: { id: number; facts?: StructureFacts; error?: string }) => {
+      const message = (result: { id: number; type?: string; completedAtNs?: unknown; bytes?: unknown; payload?: unknown }) => {
         if (result.id !== id) return;
         if (settled) return;
+        if (result.type === 'completed') {
+          if (completedBytes !== undefined || typeof result.completedAtNs !== 'string' || !/^\d{1,20}$/.test(result.completedAtNs) || typeof result.bytes !== 'number' || !Number.isSafeInteger(result.bytes) || result.bytes < 1) {
+            failure(Error('Invalid parser completion')); return;
+          }
+          // Forked workers share the host's monotonic clock. Include startup,
+          // input delivery, parsing, extraction and response serialization in
+          // the original budget, independently of the parent's busy loop.
+          const completed = BigInt(result.completedAtNs);
+          if (completed < started || completed > process.hrtime.bigint()) { failure(Error('Invalid parser completion clock')); return; }
+          if (completed > deadline) { exceeded(); return; }
+          completedBytes = result.bytes;
+          clearTimeout(timer); clearImmediate(expiry);
+          // A small completion frame precedes the encoded response. Bound a
+          // missing payload by time the parent is idle and can receive IPC;
+          // synchronous analysis must not consume this delivery allowance.
+          const usage = performance.eventLoopUtilization();
+          const awaitPayload = () => {
+            const remaining = this.timeoutMs - performance.eventLoopUtilization(usage).idle;
+            if (remaining <= 0) failure(Error(`Parser response exceeded ${this.timeoutMs} idle ms for ${language}`));
+            else deliveryTimer = setTimeout(awaitPayload, Math.max(1, Math.ceil(remaining)));
+          };
+          deliveryTimer = setTimeout(awaitPayload, this.timeoutMs);
+          return;
+        }
+        if (result.type !== 'result' || completedBytes === undefined || !Buffer.isBuffer(result.payload) || result.payload.byteLength !== completedBytes) {
+          failure(Error('Invalid parser response')); return;
+        }
+        let decoded: {facts?: StructureFacts; error?: string};
+        try { decoded = deserialize(result.payload); if (!decoded || typeof decoded !== 'object') throw Error('Invalid parser response'); }
+        catch { failure(Error('Invalid parser response')); return; }
         settled = true;
         cleanup();
-        if (result.error || !result.facts) {
+        if (decoded.error || !decoded.facts) {
           // A WASM trap can leave the runtime/loaded parsers unusable. Never
           // reuse that process after a caught error. Providers which create a
           // fresh engine per job can opt out for ordinary reported source errors.
-          if (this.child === child && (this.resetOnReportedError || !result.error)) this.retire();
-          reject(new Error(result.error ?? 'Invalid parser result'));
+          if (this.child === child && (this.resetOnReportedError || !decoded.error)) this.retire();
+          reject(new Error(decoded.error ?? 'Invalid parser result'));
         }
-        else resolve(result.facts);
+        else resolve(decoded.facts);
       };
-      const timer = setTimeout(() => failure(new Error(`Parser exceeded ${this.timeoutMs} ms for ${language}`)), this.timeoutMs);
+      // Give pending IPC one poll before expiring. Only a worker completion
+      // stamped inside the original deadline can cancel this expiry.
+      const timer = setTimeout(() => { expiry = setImmediate(() => { if (completedBytes === undefined) exceeded(); }); }, this.timeoutMs);
       child.on('message', message); child.once('error', failure); child.once('exit', exited);
       child.send({ id,...payload }, error => { if (error) failure(error); });
     });
@@ -72,7 +110,10 @@ export class StructureParser {
   private retire(): void {
     const child=this.child;this.child=undefined;if(!child)return;
     if(child.pid&&child.exitCode===null&&child.signalCode===null){this.retiring.add(child);child.once('exit',()=>this.retiring.delete(child));}
-    if(child.connected)child.disconnect();child.kill();
+    // Termination closes IPC itself. Explicit disconnect during a message
+    // callback can null Node's channel while another decoded frame is still
+    // queued; keep it intact until the process exits and pending frames drain.
+    child.kill();
   }
   /** Wait for the native address space to disappear before starting another
    * parser phase. A deadline cannot silently authorize overlapping workers. */

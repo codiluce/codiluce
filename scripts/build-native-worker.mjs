@@ -49,7 +49,7 @@ export async function nativeWorkerBundle(){
   assert.deepEqual(Object.keys(result.metafile.inputs).sort(),inputs,'Native worker must include only the approved source-only helpers');
   const imports=Object.values(result.metafile.outputs).flatMap(item=>item.imports);
   assert.deepEqual(imports.map(({path,kind,external})=>({path,kind,external})),[
-    ...['web-tree-sitter','node:crypto','node:fs','node:url'].map(path=>({path,kind:'import-statement',external:true})),
+    ...['web-tree-sitter','node:v8','node:crypto','node:fs','node:url'].map(path=>({path,kind:'import-statement',external:true})),
     ...Array.from({length:3},()=>({path:'typescript',kind:'dynamic-import',external:true})),
   ]);
   const text=result.outputFiles[0].text,source=ts.createSourceFile('owned-native-worker.mjs',text,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);

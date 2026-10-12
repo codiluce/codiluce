@@ -1,6 +1,8 @@
 // A cancellable parser process. A pathological grammar/query cannot block the
 // indexer, and all WASM resources disappear when this process is terminated.
 import { Parser, Language, Query } from 'web-tree-sitter';
+import { serialize } from 'node:v8';
+import type {StructureFacts} from '../facts.js';
 import { grammarCatalog, queryText, verifiedGrammar } from './grammars.js';
 import { extractStructure } from './extract.js';
 import {recoverObjcRegions} from './objc-regions.js';
@@ -13,6 +15,11 @@ import {extractLiquid,liquidHostProjection,liquidIssue,extractLiquidBodyHosts,fi
 import {extractTemplateHost} from './embedded-host.js';
 
 const loaded = new Map<string, { parser: Parser; query: Query }>();
+function reply(id:number,response:{facts?:StructureFacts;error?:string}):void {
+  const payload=serialize(response);
+  process.send?.({id,type:'completed',completedAtNs:process.hrtime.bigint().toString(),bytes:payload.byteLength});
+  process.send?.({id,type:'result',payload});
+}
 const initialized = Parser.init();
 async function load(language: string): Promise<{ parser: Parser; query: Query }> {
   await initialized;
@@ -70,10 +77,10 @@ async function handle(job: { id: number; language: string; content: string; obje
         }
         facts=extractObjcMacroProfiles(facts,job.content);
       }
-      process.send?.({id:job.id,facts});
+      reply(job.id,{facts});
     }
     finally { tree.delete(); }
-  } catch (error) { process.send?.({ id: job.id, error: error instanceof Error ? error.message : String(error) }); }
+  } catch (error) { reply(job.id,{error:error instanceof Error?error.message:String(error)}); }
 }
 let pending = Promise.resolve();
 process.on('message', (job: Parameters<typeof handle>[0]) => { pending = pending.then(() => handle(job)); });

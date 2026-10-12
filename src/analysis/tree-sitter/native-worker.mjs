@@ -3,6 +3,7 @@
 
 // src/analysis/tree-sitter/worker.ts
 import { Parser, Language, Query } from "web-tree-sitter";
+import { serialize } from "node:v8";
 
 // src/analysis/tree-sitter/grammars.ts
 import { createHash } from "node:crypto";
@@ -5292,6 +5293,11 @@ function extractLiquidBodyHosts(content, facts, bodyTags = true) {
 
 // src/analysis/tree-sitter/worker.ts
 var loaded = /* @__PURE__ */ new Map();
+function reply(id, response) {
+  const payload = serialize(response);
+  process.send?.({ id, type: "completed", completedAtNs: process.hrtime.bigint().toString(), bytes: payload.byteLength });
+  process.send?.({ id, type: "result", payload });
+}
 var initialized = Parser.init();
 async function load(language) {
   await initialized;
@@ -5428,12 +5434,12 @@ async function handle(job) {
         }
         facts = extractObjcMacroProfiles(facts, job.content);
       }
-      process.send?.({ id: job.id, facts });
+      reply(job.id, { facts });
     } finally {
       tree.delete();
     }
   } catch (error) {
-    process.send?.({ id: job.id, error: error instanceof Error ? error.message : String(error) });
+    reply(job.id, { error: error instanceof Error ? error.message : String(error) });
   }
 }
 var pending = Promise.resolve();

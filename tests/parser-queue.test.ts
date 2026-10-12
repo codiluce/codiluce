@@ -32,6 +32,81 @@ test('six queued source jobs each retain the full active deadline beyond one bat
   } finally {await parser.closeAndWait();}
 });
 
+for (const bytes of [0, 2 * 1024 * 1024]) test(`a completed native response survives a busy parent (${bytes} payload bytes)`, async () => {
+  const observed = observe(), parser = new StructureParser(1000, worker);
+  try {
+    await parse(parser, 'warm');
+    const child = observed.children[0]!;
+    let stalled = false;
+    child.on('message', (message: {kind?: string; job?: string}) => {
+      if (message.kind === 'started' && message.job === 'parent-busy') {
+        stalled = true;
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
+      }
+    });
+    const result = await parse(parser, 'parent-busy', {delay: 50, bytes});
+    assert.equal(stalled, true);
+    assert.equal(result.language, 'parent-busy');
+    assert.equal((result as Reply & {payload: string}).payload.length, bytes);
+    assert.equal((await parse(parser, 'after-parent-busy')).pid, result.pid);
+  } finally {await parser.closeAndWait(); observed.restore();}
+});
+
+test('a late worker completion still fails when the parent misses its timer while busy', async () => {
+  const observed = observe(), parser = new StructureParser(1000, worker);
+  try {
+    await parse(parser, 'warm');
+    const child = observed.children[0]!;
+    let completed: string | undefined;
+    child.on('message', (message: {kind?: string; job?: string; type?: string; completedAtNs?: string}) => {
+      if (message.kind === 'started' && message.job === 'late') Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
+      if (message.type === 'completed') completed = message.completedAtNs;
+    });
+    const started = process.hrtime.bigint();
+    await assert.rejects(parse(parser, 'late', {delay: 1200}), /exceeded 1000 ms for late/);
+    assert.ok(completed && BigInt(completed) - started > 1_000_000_000n);
+    assert.equal((await parse(parser, 'after-late')).language, 'after-late');
+    assert.deepEqual(observed.overlap, [0, 0]);
+  } finally {await parser.closeAndWait(); observed.restore();}
+});
+
+test('completed payload delivery excludes a parent stall after the completion frame', async () => {
+  const observed = observe(), parser = new StructureParser(1000, worker);
+  try {
+    await parse(parser, 'warm');
+    let stalled = false;
+    observed.children[0]!.on('message', (message: {type?: string}) => {
+      if (message.type === 'completed') setImmediate(() => {
+        if (!stalled) {stalled = true; Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);}
+      });
+    });
+    const result = await parse(parser, 'payload-after-parent-busy', {bytes: 2 * 1024 * 1024, delayPayload: 100});
+    assert.equal(stalled, true);
+    assert.equal((result as Reply & {payload: string}).payload.length, 2 * 1024 * 1024);
+  } finally {await parser.closeAndWait(); observed.restore();}
+});
+
+test('an encoded completion without a response still has a finite idle delivery deadline', async () => {
+  const observed = observe(), parser = new StructureParser(500, worker);
+  try {
+    await assert.rejects(parse(parser, 'missing-payload', {noPayload: true}), /response exceeded 500 idle ms/);
+    assert.equal((await parse(parser, 'after-missing-payload')).language, 'after-missing-payload');
+    assert.deepEqual(observed.overlap, [0, 0]);
+  } finally {await parser.closeAndWait(); observed.restore();}
+});
+
+for (const fault of ['badClock', 'badSize', 'badPayload', 'missingCompletion', 'duplicateCompletion']) test(`invalid ${fault} response retires its worker without changing queued facts`, async () => {
+  const observed = observe(), parser = new StructureParser(2000, worker);
+  try {
+    const results = await Promise.allSettled([parse(parser, 'bad', {[fault]: true}), parse(parser, 'healthy')]);
+    assert.equal(results[0]!.status, 'rejected');
+    assert.match(String((results[0] as PromiseRejectedResult).reason), /Invalid parser/);
+    assert.equal(results[1]!.status, 'fulfilled');
+    assert.equal((results[1] as PromiseFulfilledResult<Reply>).value.language, 'healthy');
+    assert.deepEqual(observed.overlap, [0, 0]);
+  } finally {await parser.closeAndWait(); observed.restore();}
+});
+
 test('reported PHP-style source errors preserve the queued healthy job and reusable worker', async () => {
   const parser = new StructureParser(2000, worker, undefined, false);
   try {
