@@ -22,7 +22,7 @@ function fact(value){
  if(typeof value.source!=='string'||typeof value.analyzer!=='string'||typeof value.analyzerVersion!=='string'||typeof value.confidence!=='number'||!Number.isFinite(value.confidence)||value.confidence<0||value.confidence>1)throw Error('Invalid original Evidence identity');
  for(const item of Object.values(value))if(item!==null&&item!==undefined&&!['string','number','boolean'].includes(typeof item))throw Error('Encoded original Evidence fields must be primitive');
 }
-function project(entity,stats){
+function project(entity,stats,expand=true){
  keys(entity);const metadata=entity.metadata;if(!metadata||typeof metadata!=='object')return entity;keys(metadata);
  if(Object.hasOwn(metadata,'rustEvidenceRetention'))throw Error('Failed Rust retention cannot qualify logical production parity');
  const table=metadata.rustSymbolEvidence;
@@ -47,25 +47,26 @@ function project(entity,stats){
  }
  assert.equal(proofs,table.proofs);assert.equal(bytes,table.referenceBytes);assert.ok(bytes<=table.limits.maxReferenceBytes);assert.equal(used.size,table.entries.length,'Unreferenced table data cannot be discarded');
  stats.files++;stats.proofs+=proofs;stats.references+=references;stats.entries+=table.entries.length;
- return {...entity,metadata:result};
+ return expand?{...entity,metadata:result}:entity;
 }
 function* quoted(text){
  yield '"';
  for(let start=0;start<text.length;){let end=Math.min(start+4096,text.length);if(end<text.length&&text.charCodeAt(end-1)>=0xd800&&text.charCodeAt(end-1)<=0xdbff&&text.charCodeAt(end)>=0xdc00&&text.charCodeAt(end)<=0xdfff)end--;yield JSON.stringify(text.slice(start,end)).slice(1,-1);start=end;}
  yield '"';
 }
-function replacement(object,key,value){
+function replacement(object,key,value,normalize=true){
+ if(!normalize)return value;
  if(key==='analyzerVersion'&&object.analyzer==='rust-symbols'&&typeof object.source==='string'&&typeof object.confidence==='number')return version(value);
  if(key==='version'&&object.adapter==='rust'&&typeof object.compilation==='string'&&typeof object.scope==='string'&&typeof object.owner==='string')return version(value);
  return value;
 }
-function* tokens(root,maxDepth,memo){
+function* tokens(root,maxDepth,memo,normalize){
  const stack=[{value:root,depth:0}],active=new WeakSet();
  while(stack.length){
   const task=stack.pop();
   if(task.frame){
    const {value,list}=task;let key,item,found=false;
-   while(task.index<(list?list.length:value.length)){key=list?list[task.index]:task.index;task.index++;item=replacement(value,key,value[key]);if(list&&omitted(item))continue;found=true;break;}
+   while(task.index<(list?list.length:value.length)){key=list?list[task.index]:task.index;task.index++;item=replacement(value,key,value[key],normalize);if(list&&omitted(item))continue;found=true;break;}
    if(!found){active.delete(value);yield list?'}':']';continue;}
    if(task.emitted++)yield ',';if(list){yield* quoted(key);yield ':';}
    stack.push(task,{value:list?item:omitted(item)?null:item,depth:task.depth+1});continue;
@@ -80,7 +81,7 @@ function* tokens(root,maxDepth,memo){
   // occurrence emits its complete canonical fact; memoization never drops it.
   if(!array&&typeof value.source==='string'&&typeof value.analyzer==='string'&&typeof value.analyzerVersion==='string'&&typeof value.confidence==='number'&&Object.values(value).every(item=>item===null||item===undefined||['string','number','boolean'].includes(typeof item))&&Object.values(value).reduce((n,item)=>n+(typeof item==='string'?item.length:0),0)<=16384){
    if(task.depth+1>maxDepth)throw Error('Logical graph depth budget exceeded');
-   const text='{'+list.filter(key=>!omitted(value[key])).map(key=>JSON.stringify(key)+':'+JSON.stringify(replacement(value,key,value[key]))).join(',')+'}';memo.set(value,text);yield text;continue;
+   const text='{'+list.filter(key=>!omitted(value[key])).map(key=>JSON.stringify(key)+':'+JSON.stringify(replacement(value,key,value[key],normalize))).join(',')+'}';memo.set(value,text);yield text;continue;
   }
   active.add(value);yield array?'[':'{';stack.push({frame:true,value,list:array?undefined:list,index:0,emitted:0,depth:task.depth});
  }
@@ -94,22 +95,23 @@ export function productionGraphDigest(graph,options={}){
 
 /** Consume complete sorted records one at a time, including SQLite JSON
  * readback. This emits the identical public graph JSON, not a projection. */
-export function productionRecordDigest(originalRun,records,{maxBytes=1024*1024*1024,maxDepth=4096}={}){
+export function productionRecordDigest(originalRun,records,{maxBytes=1024*1024*1024,maxDepth=4096,normalize=true}={}){
+ assert.equal(typeof normalize,'boolean');
  assert.ok(Number.isSafeInteger(maxBytes)&&maxBytes>0&&Number.isSafeInteger(maxDepth)&&maxDepth>0);keys(records);assert.deepEqual(Object.keys(records).sort(),['diagnostics','entities','relations']);keys(originalRun);assert.equal(originalRun.schemaVersion,1);keys(originalRun.analyzerVersions);
- const run={...originalRun,analyzerVersions:{...originalRun.analyzerVersions,'rust-symbols':version(originalRun.analyzerVersions['rust-symbols'])}};delete run.id;delete run.analyzedAt;
+ const run=normalize?{...originalRun,analyzerVersions:{...originalRun.analyzerVersions,'rust-symbols':version(originalRun.analyzerVersions['rust-symbols'])}}:originalRun;if(normalize){delete run.id;delete run.analyzedAt;}
  const hash=createHash('sha256'),memo=new WeakMap(),storage={files:0,proofs:0,references:0,entries:0},buffer=Buffer.allocUnsafe(65536);let bytes=0,used=0,peakChunkBytes=0;
  const emit=text=>{const chunk=Buffer.from(text);if(bytes+chunk.length>maxBytes)throw Error('Logical graph byte budget exceeded');bytes+=chunk.length;let offset=0;while(offset<chunk.length){const size=Math.min(buffer.length-used,chunk.length-offset);chunk.copy(buffer,used,offset,offset+size);used+=size;offset+=size;if(used===buffer.length){peakChunkBytes=Math.max(peakChunkBytes,used);hash.update(buffer);used=0;}}};
- emit('{"schemaVersion":1,"run":');for(const token of tokens(run,maxDepth,memo))emit(token);
+ emit('{"schemaVersion":1,"run":');for(const token of tokens(run,maxDepth,memo,normalize))emit(token);
  const counts={};
  for(const group of ['entities','relations','diagnostics']){
   assert.ok(records[group]&&typeof records[group][Symbol.iterator]==='function','Complete record stream unavailable');emit(',"'+group+'":[');const ids=new Set();let previous,index=0;
   for(const original of records[group]){
    keys(original);assert.equal(typeof original.id,'string');assert.ok(!ids.has(original.id)&&(!previous||previous<original.id),'Complete graph records must have unique sorted IDs');ids.add(original.id);previous=original.id;
-   if(index++)emit(',');const value=group==='entities'?project(original,storage):original;
-   for(const token of tokens(value,maxDepth,memo))emit(token);
+   if(index++)emit(',');const value=group==='entities'?project(original,storage,normalize):original;
+   for(const token of tokens(value,maxDepth,memo,normalize))emit(token);
   }
   counts[group]=index;emit(']');
  }
  emit('}');if(used){peakChunkBytes=Math.max(peakChunkBytes,used);hash.update(buffer.subarray(0,used));}
- return {format:'complete-logical-production-json-v1',sha256:hash.digest('hex'),bytes,counts,storage,peakChunkBytes,normalization:['run UUID/time','Rust symbol Evidence/outcome producer 2 to 1','exact ordered file-table proof expansion; storage container only']};
+ return {format:'complete-logical-production-json-v1',sha256:hash.digest('hex'),bytes,counts,storage,peakChunkBytes,normalization:normalize?['run UUID/time','Rust symbol Evidence/outcome producer 2 to 1','exact ordered file-table proof expansion; storage container only']:[]};
 }

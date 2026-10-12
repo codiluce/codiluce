@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "phase": "P10d2b2b2b2c7b1 exact public JSON history storage parity",
+  "observerVerified": true,
+  "full195RevisionRunVerified": false,
+  "tests": {
+    "passed": 113,
+    "failed": 0,
+    "logSha256": "0326ca391375ef9d37c1c5dc056a494b4351e28e8e92298a54299594c8fb9d2f"
+  },
+  "normalization": [],
+  "publicJSONFieldsRetained": [
+    "run UUID",
+    "timestamp",
+    "all analyzer/producer versions",
+    "original compact storage containers/entries/limits/accounting",
+    "every complete entity/relation/diagnostic/evidence field",
+    "unknown fields and array positions"
+  ],
+  "regressions": "Actual SQLite run UUID/time/producer mutations and complete live streamed graph storage/version mutations change the exact digest; reviewed cross-version mode remains separate and unchanged.",
+  "interruptedObservation": {
+    "controllerPid": 2524747,
+    "observerPid": 2524749,
+    "workerPids": [
+      2528081
+    ],
+    "actualControllersExited": true,
+    "reason": "Cross-version Rust provenance/storage normalization is too permissive for exact same-worker SQLite readback; every public JSON field, including run and compact storage fields, must be compared",
+    "scope": "Retained initial partial 195-revision observation; not a completed corpus gate",
+    "completedRepositories": [
+      {
+        "id": "flask",
+        "status": "verified",
+        "verifiedRevisions": 35
+      },
+      {
+        "id": "memos",
+        "status": "starting",
+        "verifiedRevisions": 9
+      }
+    ],
+    "inputArchiveSha256": "130de78def2bb581d65ed2ed11d8bcc892ac6923ba1703a45d8a5f8b0f9fef8d",
+    "databasesAndReceiptsRetained": ".codiluce/validation-production-history-corpus",
+    "activeTreesPreserved": "interrupted-original-tree",
+    "nextAction": "Exact public JSON mode and provenance/storage mutation regression cases; new distinct observation"
+  },
+  "runtimeSourceChanged": false,
+  "runtimeEngineSha256": "34af4e73bfa404aded51e8e7bd91140282470d78ca946e6ae1cf03f228235da8",
+  "archive": {
+    "sha256": "f5e2f0d4601220c452a8af4a3215696e03b71b953605f792ed17dd47d6263a3a",
+    "bytes": 134736,
+    "files": 19,
+    "allMembersRegularAndBytesVerified": true
+  },
+  "observer": {
+    "scripts/observe-production-history.mjs": "9a18d82d4732a62cbd35ba62478d2894de576c160eb8ac44aa3d18ad4ed5938f",
+    "scripts/production-history-tree.mjs": "6c7580b14a3c761c2b519b48b48861cc5d4cd4695c7d8cabd88c5f84bfb801dd",
+    "scripts/production-history-storage.mjs": "a54011cca54f74f6550fed53467b631c453391d22fcfb3e716e13e25a37afe79",
+    "scripts/production-graph-digest.mjs": "9c59eb5dfa103713015eb886e1ce74a66b49a49d4e87a8de8215fbd577aaddc8",
+    "scripts/production-cache-git.mjs": "6fa78a2f93d7702d29a8f924c9d0e8dca570f04fc811ff2ff1223253ffcd9c6c",
+    "scripts/production-history-inputs.mjs": "dc513fb268388e07441b5c979668ba2d16ac1ddf53f56b2426a4ff6434d7b4c8",
+    "scripts/production-history-blobs.mjs": "da9e5451d850b1842a87933e58d56fe6386758c282cf7a1755e008314e88efe7",
+    "scripts/graph-json-artifact.mjs": "d47899976c5d7b2ec73625d9b3f8d622d116ae8039cb0f4e01edb8afe190ad1e",
+    "scripts/process-memory.mjs": "16ca20fed24e5e46d4574c04cad567ee007087fd48bbef1c40cb698aa3763ed3",
+    "scripts/tests/production-graph-digest.test.mjs": "9ccd62e0d4867c72d0952af61d37f152baaf3b48eefa0515d31daef2371f53dd",
+    "scripts/tests/production-history-tree.test.mjs": "96b352209e6a86e6963ac6f116f6ecbd0f8a8c0b09ee1c01fd6c00e482f2185b",
+    "scripts/tests/production-history-storage.test.mjs": "c4a8a6cc94c2727da3a57ea01136121f83178593fe8ada73fea242a20ebd0d39",
+    "scripts/tests/production-history-observer.test.mjs": "274be9bdd9151268ead1af9668d2f9060b913007a4700e91a5234c22c2b22d70"
+  },
+  "artifactURLs": {
+    "archive": "http://127.0.0.1:37856/exact-history-observer-and-tests.tar.gz",
+    "priorInputs": "http://127.0.0.1:37855/pre-exact-json-observer-inputs.tar.gz"
+  },
+  "relativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "browserChecks": {
+    "url": "http://127.0.0.1:37845/production-history-exact.html",
+    "viewportWidth": 1920,
+    "bodyScrollWidth": 1905,
+    "exactComparisonScopeAndPendingCorpusVisible": true
+  }
+}
