@@ -95,6 +95,8 @@ export class ProjectionService {
   private readonly data = new Map<string, SnapshotData>();
   private readonly renames = new Map<string, Map<string, string>>();
   private timeline?: { stamp: string; registry: TimelineRegistry; snapshots: Set<string>; layouts: Map<string, { registry: TimelineRegistry; layout: TimelineLayout }> };
+  private timelineRead?: { history: HistoryStore; version: number; snapshots?: string; state?: string };
+  private timelineRevision = 0;
   private evolutionRun?: { key: string; job: EvolutionJob; done: Promise<void>; result?: EvolutionResponse; error?: string };
   private readonly authorLogs: AuthorLogs;
   constructor(private readonly store: GraphStore, private readonly options: ProjectionOptions = {}) { this.authorLogs = new AuthorLogs(options.root, options.stateDirectory); }
@@ -145,14 +147,31 @@ export class ProjectionService {
   /** The timeline registry as last saved by the history indexer (re-read when it changes). */
   private timelineBase(): { stamp: string; registry: TimelineRegistry } | undefined {
     const history = this.options.history?.();
-    if (!history) return undefined;
-    const row = history.db.prepare("SELECT json_array_length(snapshots) AS n, json_extract(snapshots, '$[#-1]') AS last, json_extract(state, '$.version') AS version FROM layout_registry WHERE id=1").get();
-    if (!row || !Number(row.n) || row.version !== TIMELINE_LAYOUT_VERSION) return undefined;
-    const stamp = `${row.n}:${row.last}`;
-    if (this.timeline?.stamp !== stamp) {
-      const saved = history.layoutRegistry()!;
-      this.timeline = { stamp, registry: saved.state, snapshots: new Set(saved.snapshots), layouts: new Map() };
+    if (!history) {
+      if (this.timelineRead) { this.timelineRead = undefined; this.timeline = undefined; this.views.clear(); }
+      return undefined;
     }
+    // data_version is connection-local and observes other connections' commits.
+    // The production history reader is read-only, so unchanged versions avoid
+    // decoding a potentially large registry on every public node/page request.
+    // Writable callers are reread: their own writes and rollbacks do not change
+    // data_version, and must not keep an uncommitted registry in the cache.
+    const version = Number(history.db.prepare('PRAGMA data_version').get()!.data_version);
+    const previous = this.timelineRead;
+    if (history.readOnly && previous?.history === history && previous.version === version) return this.timeline;
+    const row = history.db.prepare('SELECT snapshots, state FROM layout_registry WHERE id=1').get();
+    const snapshots = row ? String(row.snapshots) : undefined, state = row ? String(row.state) : undefined;
+    const observed = { history, version, snapshots, state };
+    if (previous?.history === history && previous.snapshots === snapshots && previous.state === state) { this.timelineRead = observed; return this.timeline; }
+    this.timeline = undefined; this.views.clear();
+    if (previous && previous.history !== history) { this.data.clear(); this.renames.clear(); }
+    if (!snapshots || !state) { this.timelineRead = observed; return undefined; }
+    const ids = JSON.parse(snapshots) as string[], registry = JSON.parse(state) as TimelineRegistry;
+    // Publish the read marker only after decoding succeeds. Otherwise a bad
+    // JSON payload could throw once, then silently become a cached absence.
+    this.timelineRead = observed;
+    if (!Array.isArray(ids) || !ids.length || !registry || registry.version !== TIMELINE_LAYOUT_VERSION) return undefined;
+    this.timeline = { stamp: `registry:${++this.timelineRevision}`, registry, snapshots: new Set(ids), layouts: new Map() };
     return this.timeline;
   }
   /** The union layout covering the registry plus any snapshot of this view it does not include yet (e.g. the live working tree). */

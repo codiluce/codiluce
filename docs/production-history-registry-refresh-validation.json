@@ -1,0 +1,124 @@
+{
+  "schema": 1,
+  "passed": true,
+  "phase": "P10d2b2b2b2c7c1",
+  "checks": {
+    "engineWeb": {
+      "passed": 1671,
+      "failed": 0,
+      "log": "registry-refresh-candidate-suite-final.log",
+      "sha256": "23556c6af9b0485bf5a6a958172b81d9e6cc928889545d31431b18e5dec6766c"
+    },
+    "focused": {
+      "passed": 28,
+      "failed": 0,
+      "log": "registry-refresh-integrated-focused.log",
+      "sha256": "a84872d3b8033a44a1ee0d657863ef55996f2ca57ba1a290f09829c451fdf58f"
+    },
+    "compiledRefresh": {
+      "passed": 6,
+      "failed": 0,
+      "log": "registry-refresh-candidate-compiled-tests.log",
+      "sha256": "5a319673a3c92c042ecc5b896bc0bba4bdc0d898c144bad14ae3c2ca64a13a3f"
+    },
+    "package": {
+      "passed": true,
+      "tarballMegabytes": 6.89,
+      "files": 369,
+      "cliApiHistoryFallbackSignalsNpmExec": true,
+      "log": "registry-refresh-candidate-package.log",
+      "sha256": "2ee1e3bfc219dc5de768dc65c9a3872b6b86989e5cd964368fa4fc7c9e944dbf"
+    },
+    "typecheck": {
+      "engine": true,
+      "web": true,
+      "log": "registry-refresh-integrated-types.log",
+      "sha256": "c1fee42b4fa7e6e1a30e8e81426f7690f45767a53800385021e8cd468ec6e8d9"
+    }
+  },
+  "candidatePublicViewReceiptSha256": "d61b2671572f5171621c4fbd24327c8049bffa93fb9f12ffc5ded67a10979d3e",
+  "integration": {
+    "sourceSha256": "07729579844ab7cad9c81cca3f48b3fbfa8bd8e8846668555e8859eedcd63fa4",
+    "engineSha256": "ca1b330152267c80ce02d35c57138928da4f69e4d3817f61ff03987584dded4a",
+    "engineFiles": 1924,
+    "candidateByteIdentical": true,
+    "foreignFilesUnchanged": true,
+    "qualifiedRepositories": 6,
+    "qualifiedRevisions": 195
+  },
+  "archive": {
+    "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/qualified-registry-refresh-engine-and-evidence-regular.tar.gz",
+    "sha256": "49d428993a647d8a5c1ee7477411a8d75fee01f058b5895df9c9ed31f3dcd2b5",
+    "bytes": 43863245,
+    "regularMembers": 2610,
+    "engineFiles": 1924,
+    "engineSha256": "ca1b330152267c80ce02d35c57138928da4f69e4d3817f61ff03987584dded4a",
+    "allMembersAndOriginalBytesVerified": true,
+    "previousFailedArchive": {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/qualified-registry-refresh-engine-and-evidence.tar.gz",
+      "sha256": "39d70d9197e9fa180cc19c677c3a0837926cf0ae070bb852af6013dbd4d0ce42",
+      "qualificationPassed": false,
+      "reason": "Tar encoded the owned esbuild binary hard link as a link member; this failed the all-regular-member archive gate. Original failed archive retained. Corrected archive dereferences hard links into independent regular members."
+    }
+  },
+  "browserInspection": {
+    "url": "http://127.0.0.1:37845/production-history-registry-refresh.html",
+    "title": "History layout refresh fix \u00b7 Codiluce",
+    "viewportWidth": 1920,
+    "documentScrollWidth": 1905,
+    "horizontalOverflow": false,
+    "repositoryRows": 6,
+    "visibleIntegratedFix": true
+  },
+  "foreignFiles": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  },
+  "preservedCorrections": [
+    {
+      "stage": "candidate typecheck",
+      "reason": "The additional optional HistoryStore test handle initially lacked a TypeScript annotation; corrected source passes both type checks."
+    },
+    {
+      "stage": "worktree static UI build",
+      "reason": "Turbopack refused an out-of-root node_modules symlink; immutable owned dependencies were hard-linked into the candidate root and the normal prepack build passed."
+    },
+    {
+      "stage": "evidence archive",
+      "reason": "Tar encoded the owned esbuild binary hard link as a link member; this failed the all-regular-member archive gate. Original failed archive retained. Corrected archive dereferences hard links into independent regular members."
+    }
+  ],
+  "fullGoalFinished": false,
+  "freshIndexHistoryWorkerOrchestrationQualified": false,
+  "relativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "links": [
+    {
+      "url": "http://127.0.0.1:37845/language-framework-compatibility.html#p10d2b2b2b2c7c1",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:37845/production-history-registry-refresh-receipt.json",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:37845/production-history-registry-refresh-validation.json",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:37857/qualified-registry-refresh-engine-and-evidence-regular.tar.gz",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:37857/qualified-registry-refresh-engine-and-evidence-regular.tar.gz",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:37845/production-history-complete.html",
+      "status": 200
+    }
+  ]
+}
