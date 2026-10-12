@@ -1,0 +1,112 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-12T21:30:10.085146+00:00",
+  "phase": "TypeScript source-cache candidate complete source and compiled CLI conformance",
+  "scope": "Isolated candidate source/compiled conformance and completed normal prepack; entire production-only installed-package gate remains live",
+  "sourceBranch": "compat/typescript-source-cache",
+  "constructionCommit": "ec3a61d9a60e04c24c02e957595e7da8d5c0b897",
+  "engineTests": 1642,
+  "webTests": 37,
+  "totalEngineWebTests": 1679,
+  "compiledCacheAndCliTests": 4,
+  "failedFinalTests": 0,
+  "skippedTests": 0,
+  "engineAndWebTypechecksPassed": true,
+  "capabilityDocumentationCheckPassed": true,
+  "capabilityDocumentationSourceInputs": 71,
+  "normalPrepackPassed": true,
+  "releaseTarball": {
+    "file": "/var/www/html/codiluce/.codiluce/validation-typescript-source-cache/candidate-normal-prepack-release.tgz",
+    "sha256": "12147a4647b96b9003c6cd8f301f057f8280e854ad25a051fb5bef69f73a5ec6",
+    "bytes": 7139421,
+    "verifiedRegularMembers": 367,
+    "compiledSourceCacheSha256": "0c25ab8fe787c6af4756eda1919f4eb36c41f22a2c33c39d9a37c984c96c1555"
+  },
+  "files": [
+    {
+      "file": "src/analyzers/ts-program.ts",
+      "sha256": "4da65f7f87eea679bb6f3ba43e1d17cad34ba909ed685e9c2b2344ec6849fba8"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-source-cache/compiled-cache.test.mjs",
+      "sha256": "4a92b3f524461ad86e6bc94d4a2bccfdfd2ad33c0a81940b03459f175d2df9c7"
+    }
+  ],
+  "logs": [
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-source-cache/cache-full-engine-regressions-first.log",
+      "sha256": "5501f127920721a0c0a114bd7b765fb4b65e59d028d016b49fae33841814851b"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-source-cache/cache-web-regressions-first.log",
+      "sha256": "06694992ddcc21c5cb8c9af66c017d6432f2d5df2f392eda80e6f4948d60395f"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-source-cache/cache-typecheck-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-source-cache/cache-web-typecheck-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-source-cache/cache-capability-docs-check-first.log",
+      "sha256": "8be523310ff448edf1d515c3827ac4f23d98b621cd77d5ff3ee0029adb3a8c6b"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-source-cache/cache-compiled-cli-build-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-source-cache/cache-compiled-conformance-first.log",
+      "sha256": "c6fc9fcd494f7e3258448a8a220f1866afa5d7cefe13c6a0b23d4db9b3434ccf"
+    }
+  ],
+  "installedPackageGate": {
+    "status": "running",
+    "sessionId": 89388,
+    "actualParentPid": 3252920,
+    "currentLog": "/var/www/html/codiluce/.codiluce/validation-typescript-source-cache/cache-installed-package-first.log",
+    "newInstalledSourceCacheCheckPassed": true,
+    "allChecksPassed": false,
+    "testDriverSha256": "3bb3e6266600b519dd54f3d7894d1220426592c36cbec35bb5463c58ba514001"
+  },
+  "checks": [
+    "All 1642 source engine tests and 37 unchanged web tests pass with zero skips",
+    "Existing structure/import/framework/cache/history/projection and source-I/O regressions retained",
+    "Both typechecks and deterministic capability documentation pass",
+    "Ordinary compiled Node CLI starts without a TypeScript loader; profiles, source/import binding and oversized input preservation pass",
+    "Normal prepack creates the fresh CLI, all grammar assets and static UI; retained tarball regular members and exact compiled cache bytes checked",
+    "All 1924 main runtime files and unrelated user files unchanged throughout isolated verification"
+  ],
+  "mainRuntimeSha256": "ca1b330152267c80ce02d35c57138928da4f69e4d3817f61ff03987584dded4a",
+  "mainRuntimeChanged": false,
+  "candidateSourceAndCompiledConformancePassed": true,
+  "candidateFullReleaseQualified": false,
+  "candidateOriginalProductionHistoryQualified": false,
+  "candidateRelativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "broaderConsumerCompilerWasmBudgetQualified": false,
+  "mainIntegrationPending": true,
+  "fullGoalFinished": false,
+  "performanceRun": {
+    "liveControllerPid": 3116124,
+    "liveChildPid": 3116142,
+    "completedProbes": 9,
+    "currentProbe": {
+      "id": "memos",
+      "label": "baseline",
+      "repetition": 1,
+      "status": "running"
+    },
+    "sameRunAndRuntime": true
+  },
+  "foreignFiles": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  }
+}
