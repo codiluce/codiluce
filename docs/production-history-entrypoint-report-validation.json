@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-12T20:09:35.657447+00:00",
+  "phase": "P10d2b2b2b2c7c2c-exact-terminal-entrypoint-report-renderer",
+  "scope": "Reusable renderer and three in-memory fixture checks; full real corpus report is pending the original live job",
+  "files": [
+    {
+      "file": "scripts/render-production-history-entrypoint.mjs",
+      "sha256": "c33b051f60bacb21f44b8a75a2b4e1768b998aa00792397d438b7955578536fc"
+    },
+    {
+      "file": "scripts/tests/production-history-entrypoint-report.test.mjs",
+      "sha256": "7f881844c10f2bf8391a8b48539c1c54468356a2338c1b72d972665d89a40f8a"
+    }
+  ],
+  "rendererTests": 3,
+  "targetedTests": 178,
+  "failedFinalTests": 0,
+  "logs": [
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-fresh/entrypoint-report-conformance.log",
+      "sha256": "b906dbbc192b56225ad69a672f0585dbac97928508ae1d0e4e1f6b08f52df391"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-fresh/entrypoint-report-native-scope-final.log",
+      "sha256": "5cd9c6707a633aa92f57f55c0851c9deeb4605c8a542ec80134675a8ac142d33"
+    }
+  ],
+  "checks": [
+    "Only terminal passed exact six-repository/full195 scope can render the completed report",
+    "Actual qualification artifact hash must match the raw corpus receipt before/after rendering",
+    "Repository, worker, revision, database, view, resume and aggregate counts agree with the qualification",
+    "Pending, changed, smaller or equal-count substituted observations refused",
+    "Source text and link attributes escaped; executable/non-HTTP(S) links refused",
+    "No fixture emits a machine-readable production qualification or a standalone report artifact"
+  ],
+  "runtimeSourceChanged": false,
+  "full195RevisionEntrypointQualified": false,
+  "relativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullGoalFinished": false
+}
