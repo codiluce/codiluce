@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "phase": "P10d2b2b2b2c7b4 original Firefly history and reusable independent column audit",
+  "fireflyOriginalRevisions": 32,
+  "fireflyResumeAndPublicViewsVerified": true,
+  "independentlyAuditedAndResumedOriginalRevisionsTotal": 131,
+  "tests": {
+    "passed": 119,
+    "failed": 0,
+    "logSha256": "e766d518fa23940f1f35eca0b6b7569ff91070deda3b6917a6c6f11e0a487046"
+  },
+  "pythonColumnAuditorSha256": "f432ad1445f4dde2ed21cba8ce91382b8417f28e73d0f3f491706fd4e75698ff",
+  "allOriginalAndCopiedSnapshotColumnsVerified": true,
+  "originalObservationUnchanged": true,
+  "runtimeSourceChanged": false,
+  "runtimeEngineSha256": "34af4e73bfa404aded51e8e7bd91140282470d78ca946e6ae1cf03f228235da8",
+  "geometry": {
+    "firstParentSnapshots": 32,
+    "rectangles": 456490,
+    "stableRelativePositions": 439920,
+    "publicSnapshots": 32,
+    "missingSlots": 0
+  },
+  "originalBlobObjects": 3977,
+  "archive": {
+    "sha256": "0ae98c0214c2ae6bf534838c687e773c89598ab478b241400c3c0d8dd5857e49",
+    "bytes": 966362,
+    "files": 24,
+    "allMembersRegularAndBytesVerified": true,
+    "url": "http://127.0.0.1:37857/firefly-original-history-and-column-auditor.tar.gz"
+  },
+  "liveCorpus": {
+    "observerPid": 2550218,
+    "confirmedLiveAt": "2026-10-12T17:41:59.957126+00:00",
+    "progress": [
+      {
+        "id": "flask",
+        "status": "verified",
+        "verifiedRevisions": 35,
+        "error": null
+      },
+      {
+        "id": "memos",
+        "status": "verified",
+        "verifiedRevisions": 32,
+        "error": null
+      },
+      {
+        "id": "bookstack",
+        "status": "verified",
+        "verifiedRevisions": 32,
+        "error": null
+      },
+      {
+        "id": "firefly-iii",
+        "status": "verified",
+        "verifiedRevisions": 32,
+        "error": null
+      },
+      {
+        "id": "axum",
+        "status": "verified",
+        "verifiedRevisions": 32,
+        "error": null
+      },
+      {
+        "id": "full-stack-fastapi",
+        "status": "starting",
+        "verifiedRevisions": 25,
+        "error": null
+      }
+    ]
+  },
+  "full195RevisionGateQualified": false,
+  "sameSnapshotRegistryRefreshKnownIssue": {
+    "schema": 1,
+    "phase": "owned same-snapshot-ID external layout-registry refresh characterization",
+    "database": "/tmp/codiluce-layout-refresh-9PrvNa/history.db",
+    "targetCodeExecuted": false,
+    "snapshotPayloadsUnchanged": true,
+    "sameSnapshotId": "d9086a47-bafa-402f-a966-c9d3ba7b0289",
+    "sqliteDataVersion": {
+      "before": 2,
+      "after": 3
+    },
+    "before": {
+      "x": 83,
+      "y": 48,
+      "w": 11,
+      "h": 11
+    },
+    "cached": {
+      "x": 83,
+      "y": 48,
+      "w": 11,
+      "h": 11
+    },
+    "fresh": {
+      "x": 48,
+      "y": 584,
+      "w": 11,
+      "h": 11
+    },
+    "existingServiceRefreshes": false,
+    "scope": "Owned static fixture; actual unchanged ProjectionService, readonly reader and external writer. Correctness characterization, not a runtime fix or performance claim."
+  },
+  "freshIndexHistoryOrchestrationQualified": false,
+  "relativeHistoryTimeRssQualified": false,
+  "semanticCompilerWasmBudgetsQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "browserChecks": {
+    "url": "http://127.0.0.1:37845/production-history-firefly.html",
+    "viewportWidth": 1920,
+    "bodyScrollWidth": 1905,
+    "verified131AndPendingRegistryRefreshAndFullScopeVisible": true
+  }
+}

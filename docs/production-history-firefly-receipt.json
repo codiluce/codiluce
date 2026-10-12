@@ -1,0 +1,2049 @@
+{
+  "schema": 1,
+  "resume": {
+    "schema": 1,
+    "startedAt": "2026-10-12T17:18:38.072Z",
+    "passed": true,
+    "phase": "actual-production-indexHistory-layout-resume-on-closed-snapshot-copies",
+    "runInputs": {
+      "engineSha256": "34af4e73bfa404aded51e8e7bd91140282470d78ca946e6ae1cf03f228235da8",
+      "engineFiles": 1924,
+      "observerFiles": 9,
+      "corpusSha256": "d98b9eb8ae23b7202ed05ae1ceabc08543bcf3b88d2fc26d4b7bf1715b075e3b",
+      "profilesSha256": "540a45877decb71aa080a6ef0c5f563e41e5bea6e0998b6e18d73c76ba6175bc"
+    },
+    "frozen": {
+      "observe-production-history-resume.mjs": "1282cf73f3d22a9d6a67a53be511e2edf88feaf4117dce2557c40549c1f1a3eb",
+      "production-history-storage-ledger.mjs": "766c976065126d1ef5ea2afc3a3d9c9ac9f57921dd10a28f792d2bccc9183199",
+      "audit-production-history.mjs": "ed134cf144500bcbc54a73a00f09dcea4158858bc63e83294ab5ef8f027783dc",
+      "production-history-inputs.mjs": "dc513fb268388e07441b5c979668ba2d16ac1ddf53f56b2426a4ff6434d7b4c8",
+      "production-cache-git.mjs": "6fa78a2f93d7702d29a8f924c9d0e8dca570f04fc811ff2ff1223253ffcd9c6c",
+      "process-memory.mjs": "16ca20fed24e5e46d4574c04cad567ee007087fd48bbef1c40cb698aa3763ed3"
+    },
+    "originalReceiptSha256": "ab1e82cdf7b13ef7e15b881906d0b3e3b02b66dad477e3b5f47388e02011ab77",
+    "repositories": [
+      {
+        "id": "firefly-iii",
+        "passed": true,
+        "originalDatabaseSha256": "abdd9c5ef2a093124f52ec4178fceb6d17636b131a0d8f641ffbc69ec47d5aee",
+        "worker": {
+          "pid": 2676707,
+          "samples": 2265,
+          "incompleteSamples": 2,
+          "treePeakKiB": 644072,
+          "exitCode": 0,
+          "signal": null
+        },
+        "child": {
+          "schema": 1,
+          "id": "firefly-iii",
+          "pid": 2676707,
+          "startedAt": "2026-10-12T17:18:39.458Z",
+          "passed": true,
+          "stages": [
+            {
+              "name": "layout-build",
+              "indexed": {
+                "ref": "57371b9f82debbf90e6453aba8af585e8c382617",
+                "head": "57371b9f82debbf90e6453aba8af585e8c382617",
+                "indexed": 0,
+                "failed": 0,
+                "skipped": 32,
+                "snapshots": 32
+              },
+              "plan": {
+                "type": "plan",
+                "ref": "57371b9f82debbf90e6453aba8af585e8c382617",
+                "head": "57371b9f82debbf90e6453aba8af585e8c382617",
+                "timeline": 636,
+                "targets": 32,
+                "pending": 0,
+                "jobs": 1
+              },
+              "layout": {
+                "type": "layout",
+                "snapshots": 32,
+                "rebuilt": true,
+                "durationMs": 13086
+              },
+              "durationMs": 13314.859583000001,
+              "geometry": {
+                "snapshots": [
+                  {
+                    "id": "b19512fa-d8b8-4e2f-9215-32d4a0f5ab5a",
+                    "commit": "fd8791d08d4d9e6467519a78048cd038e26b8878",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "1a20ebea-85cb-4ce4-acf3-91b29875bab1",
+                    "commit": "46728cb71e55fbd137ee7edfdee2c217dfadcc34",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "9883dfc9-d3bd-4381-928f-abe1f9771557",
+                    "commit": "ebddb4fb9c1810c999c1c4ec414882c56a9c519a",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "c8139b2a-5d22-410b-b614-b8462d9c5b67",
+                    "commit": "0022024d1f442d034897934ceb5f297756333d62",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "71118377-e89b-4f0c-953e-28f906500566",
+                    "commit": "969295e1e37f8d2f78b1fdf942efb06fa55b6c98",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "b6ff4029-a28a-4ac5-b6bd-67b8e7479792",
+                    "commit": "9e9d6f493218bc7a0652210735febe713b22df87",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "e5882850-844b-4e80-940a-e3e7807621ed",
+                    "commit": "531cd4ecd0f53d48ce7bf6c95fed29cf961064f6",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "65bb3d12-0843-4668-bacc-ebca188e9d31",
+                    "commit": "c6be2ed111f599b40ba38f7d8074e77920cf0f40",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "020bcc52-f0f8-429b-bde3-4af32985d1b1",
+                    "commit": "d30aa499fe31bac5d269c047ec069f8d41ee83b6",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "4efb8c0e-2c2c-41fb-8bc2-4440473c6b4d",
+                    "commit": "c3fc7b49d3e1c634aada2bde4c3c01bf874e3eff",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "7b503d56-086b-47f3-98bb-9406371c9efd",
+                    "commit": "6b82da5edf54cb0056e0741357cd7f724c305ccc",
+                    "entities": 13782,
+                    "projectedNodes": 13784,
+                    "holes": 0,
+                    "rectangleSha256": "f6bf0cd20ad177ccc94512e22910f5295f2080b8317e2e7b6812d555440155ab"
+                  },
+                  {
+                    "id": "91b445c0-b360-464b-b6d3-e23bad92c489",
+                    "commit": "6118fbc5baaf3b0be4f1fdc5cda7a84cd2d2332c",
+                    "entities": 13784,
+                    "projectedNodes": 13786,
+                    "holes": 0,
+                    "rectangleSha256": "7bbea82a3f4d9d15b40a52139ed38046f76197c7dc266c935ba1e156b9c85c94"
+                  },
+                  {
+                    "id": "a404b8c7-c770-4e40-a50e-e9ddb86468b8",
+                    "commit": "6143c0f14f490ee374f5aac344a9491ba162a8c1",
+                    "entities": 13787,
+                    "projectedNodes": 13789,
+                    "holes": 0,
+                    "rectangleSha256": "3605f75e6b04eea7a9df42513bf672764ccabff29a1370a837c6a518b0b17195"
+                  },
+                  {
+                    "id": "4ee7a335-fbeb-4f45-a2ac-f4ac4e258278",
+                    "commit": "e36b2ab28e838a47b6073288eb3273c67abf3380",
+                    "entities": 13805,
+                    "projectedNodes": 13807,
+                    "holes": 0,
+                    "rectangleSha256": "2e944f21c7fd513c71daa554b285b7ab842a7a3f7a8346dd629c3d7b286b8dd5"
+                  },
+                  {
+                    "id": "4d85bc13-4df1-4b87-a62e-38769a8b5836",
+                    "commit": "64ab179e1c93f5624b21f044e9c807a1df4f9b32",
+                    "entities": 13805,
+                    "projectedNodes": 13807,
+                    "holes": 0,
+                    "rectangleSha256": "2e944f21c7fd513c71daa554b285b7ab842a7a3f7a8346dd629c3d7b286b8dd5"
+                  },
+                  {
+                    "id": "9e84b2aa-8734-4299-80ea-c65807b11bfd",
+                    "commit": "99f9b7477d064b1d1729a4348e43fffef1b385ce",
+                    "entities": 13814,
+                    "projectedNodes": 13816,
+                    "holes": 0,
+                    "rectangleSha256": "5e0b29f2a86336ca28a397ea1a96d5a1533955b5a1d27b16df92e8f013f40226"
+                  },
+                  {
+                    "id": "f4e329f1-7870-45cd-8fe1-69591fd7a874",
+                    "commit": "82d5ac6760cd82cba16b56bcee49b15506a1ae38",
+                    "entities": 13812,
+                    "projectedNodes": 13814,
+                    "holes": 0,
+                    "rectangleSha256": "04af4cea8a7fd96fb0f2bfa28429853f6f7bd3a0416a14bfbb8bf4d1d6df2d64"
+                  },
+                  {
+                    "id": "5b019bdd-b071-4305-9bc4-dc29d994ccf7",
+                    "commit": "f0858f911c7285a6009ffb68e6c91509fbada70f",
+                    "entities": 13812,
+                    "projectedNodes": 13814,
+                    "holes": 0,
+                    "rectangleSha256": "04af4cea8a7fd96fb0f2bfa28429853f6f7bd3a0416a14bfbb8bf4d1d6df2d64"
+                  },
+                  {
+                    "id": "fefba209-a032-4093-830f-d18e30ecc64d",
+                    "commit": "725839935381f8faef5959997a091cf6a68394c9",
+                    "entities": 13812,
+                    "projectedNodes": 13814,
+                    "holes": 0,
+                    "rectangleSha256": "04af4cea8a7fd96fb0f2bfa28429853f6f7bd3a0416a14bfbb8bf4d1d6df2d64"
+                  },
+                  {
+                    "id": "7763efa6-a130-4a06-afa8-0c4a41f325f0",
+                    "commit": "24dba21e4c44ebd6e41929ad4f53cd8c92ce6152",
+                    "entities": 13812,
+                    "projectedNodes": 13814,
+                    "holes": 0,
+                    "rectangleSha256": "04af4cea8a7fd96fb0f2bfa28429853f6f7bd3a0416a14bfbb8bf4d1d6df2d64"
+                  },
+                  {
+                    "id": "58bf15ca-c512-4372-821d-02a3b470632d",
+                    "commit": "c196cdc9a5b0436b87186044c02d2154846a25ac",
+                    "entities": 13858,
+                    "projectedNodes": 13860,
+                    "holes": 0,
+                    "rectangleSha256": "4779b2c35d64b0d15650950954b226c93403c17e097ea758b13bb3dd1066765b"
+                  },
+                  {
+                    "id": "2478af15-07a9-4429-be9d-19262fa7cdd8",
+                    "commit": "495ecc9f3db1edd294b2a8c230674703d562502c",
+                    "entities": 13858,
+                    "projectedNodes": 13860,
+                    "holes": 0,
+                    "rectangleSha256": "4779b2c35d64b0d15650950954b226c93403c17e097ea758b13bb3dd1066765b"
+                  },
+                  {
+                    "id": "777fbaba-fbbf-463a-be59-53a8a2e84a1a",
+                    "commit": "02b6a4d18faf874a616f53f58e7d33ad3a19b975",
+                    "entities": 13858,
+                    "projectedNodes": 13860,
+                    "holes": 0,
+                    "rectangleSha256": "ac57ac81d955162d918f06aa6d1cde71caa2d58314e5aaafc347b56681ce7443"
+                  },
+                  {
+                    "id": "383486f8-8747-467a-8eb6-8d884ba7f788",
+                    "commit": "2ce7132d2a89a77afbc64e2d3e3f53ba8a0260c2",
+                    "entities": 13858,
+                    "projectedNodes": 13860,
+                    "holes": 0,
+                    "rectangleSha256": "ac57ac81d955162d918f06aa6d1cde71caa2d58314e5aaafc347b56681ce7443"
+                  },
+                  {
+                    "id": "4badb232-fe81-4d82-8b04-8b76c5cf5b74",
+                    "commit": "8f46cdfed8b5ddc46bdf1ba0fa6b83770ed3226c",
+                    "entities": 13858,
+                    "projectedNodes": 13860,
+                    "holes": 0,
+                    "rectangleSha256": "ac57ac81d955162d918f06aa6d1cde71caa2d58314e5aaafc347b56681ce7443"
+                  },
+                  {
+                    "id": "7d7595b1-44d5-4b36-a1f3-7141d7040186",
+                    "commit": "e23f89d449666629c027bb96dc514c36d41e93c9",
+                    "entities": 13862,
+                    "projectedNodes": 13864,
+                    "holes": 0,
+                    "rectangleSha256": "ad513619f4e769c4fb0aa5e91e80b4c917b30679deb436dde3de2455f53d6f7b"
+                  },
+                  {
+                    "id": "d67ce654-055b-405a-a430-3813367e9f47",
+                    "commit": "7879e01a0f6aab52e9b5ae00d04b3f7e4c912079",
+                    "entities": 13863,
+                    "projectedNodes": 13865,
+                    "holes": 0,
+                    "rectangleSha256": "88d68ee05c3ebe25e5eeded070319ad64dea3ee44bd98754f407cfaee64a600a"
+                  },
+                  {
+                    "id": "27c33f51-b2be-4b4d-9c02-2ec14b804071",
+                    "commit": "0b209ccae3c1a8de078c9c8338f6aeca7836e9d3",
+                    "entities": 13863,
+                    "projectedNodes": 13865,
+                    "holes": 0,
+                    "rectangleSha256": "88d68ee05c3ebe25e5eeded070319ad64dea3ee44bd98754f407cfaee64a600a"
+                  },
+                  {
+                    "id": "92774f3c-a81a-4346-b953-2dd3e10101da",
+                    "commit": "42c092731190affdc2e2273a319ae29b7b5af657",
+                    "entities": 13863,
+                    "projectedNodes": 13865,
+                    "holes": 0,
+                    "rectangleSha256": "88d68ee05c3ebe25e5eeded070319ad64dea3ee44bd98754f407cfaee64a600a"
+                  },
+                  {
+                    "id": "6d8a2c61-042b-42ad-9ed1-b702a0cdf138",
+                    "commit": "8760263fa182650302452128e3b992bc79e7fe51",
+                    "entities": 13863,
+                    "projectedNodes": 13865,
+                    "holes": 0,
+                    "rectangleSha256": "88d68ee05c3ebe25e5eeded070319ad64dea3ee44bd98754f407cfaee64a600a"
+                  },
+                  {
+                    "id": "dc3f170c-0f75-4723-b530-a15052aa6b6f",
+                    "commit": "7901862ffb6fe90addbaaff2e38fed34a3208df5",
+                    "entities": 13863,
+                    "projectedNodes": 13865,
+                    "holes": 0,
+                    "rectangleSha256": "88d68ee05c3ebe25e5eeded070319ad64dea3ee44bd98754f407cfaee64a600a"
+                  },
+                  {
+                    "id": "b6c50df6-b641-4d65-9819-287d3b3281d1",
+                    "commit": "57371b9f82debbf90e6453aba8af585e8c382617",
+                    "entities": 13894,
+                    "projectedNodes": 13896,
+                    "holes": 0,
+                    "rectangleSha256": "fee6dba611b7aa5ad6fbc053f08af16e484ba3e9767b3951c400260f509eee01"
+                  }
+                ],
+                "positions": 456490,
+                "stableRelativePositions": 439920,
+                "roots": 1
+              }
+            },
+            {
+              "name": "resume",
+              "indexed": {
+                "ref": "57371b9f82debbf90e6453aba8af585e8c382617",
+                "head": "57371b9f82debbf90e6453aba8af585e8c382617",
+                "indexed": 0,
+                "failed": 0,
+                "skipped": 32,
+                "snapshots": 32
+              },
+              "plan": {
+                "type": "plan",
+                "ref": "57371b9f82debbf90e6453aba8af585e8c382617",
+                "head": "57371b9f82debbf90e6453aba8af585e8c382617",
+                "timeline": 636,
+                "targets": 32,
+                "pending": 0,
+                "jobs": 1
+              },
+              "layout": {
+                "type": "layout",
+                "snapshots": 32,
+                "rebuilt": false,
+                "durationMs": 310
+              },
+              "durationMs": 547.5134469999975,
+              "geometry": {
+                "snapshots": [
+                  {
+                    "id": "b19512fa-d8b8-4e2f-9215-32d4a0f5ab5a",
+                    "commit": "fd8791d08d4d9e6467519a78048cd038e26b8878",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "1a20ebea-85cb-4ce4-acf3-91b29875bab1",
+                    "commit": "46728cb71e55fbd137ee7edfdee2c217dfadcc34",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "9883dfc9-d3bd-4381-928f-abe1f9771557",
+                    "commit": "ebddb4fb9c1810c999c1c4ec414882c56a9c519a",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "c8139b2a-5d22-410b-b614-b8462d9c5b67",
+                    "commit": "0022024d1f442d034897934ceb5f297756333d62",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "71118377-e89b-4f0c-953e-28f906500566",
+                    "commit": "969295e1e37f8d2f78b1fdf942efb06fa55b6c98",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "b6ff4029-a28a-4ac5-b6bd-67b8e7479792",
+                    "commit": "9e9d6f493218bc7a0652210735febe713b22df87",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "e5882850-844b-4e80-940a-e3e7807621ed",
+                    "commit": "531cd4ecd0f53d48ce7bf6c95fed29cf961064f6",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "65bb3d12-0843-4668-bacc-ebca188e9d31",
+                    "commit": "c6be2ed111f599b40ba38f7d8074e77920cf0f40",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "020bcc52-f0f8-429b-bde3-4af32985d1b1",
+                    "commit": "d30aa499fe31bac5d269c047ec069f8d41ee83b6",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "4efb8c0e-2c2c-41fb-8bc2-4440473c6b4d",
+                    "commit": "c3fc7b49d3e1c634aada2bde4c3c01bf874e3eff",
+                    "entities": 15204,
+                    "projectedNodes": 15206,
+                    "holes": 0,
+                    "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+                  },
+                  {
+                    "id": "7b503d56-086b-47f3-98bb-9406371c9efd",
+                    "commit": "6b82da5edf54cb0056e0741357cd7f724c305ccc",
+                    "entities": 13782,
+                    "projectedNodes": 13784,
+                    "holes": 0,
+                    "rectangleSha256": "f6bf0cd20ad177ccc94512e22910f5295f2080b8317e2e7b6812d555440155ab"
+                  },
+                  {
+                    "id": "91b445c0-b360-464b-b6d3-e23bad92c489",
+                    "commit": "6118fbc5baaf3b0be4f1fdc5cda7a84cd2d2332c",
+                    "entities": 13784,
+                    "projectedNodes": 13786,
+                    "holes": 0,
+                    "rectangleSha256": "7bbea82a3f4d9d15b40a52139ed38046f76197c7dc266c935ba1e156b9c85c94"
+                  },
+                  {
+                    "id": "a404b8c7-c770-4e40-a50e-e9ddb86468b8",
+                    "commit": "6143c0f14f490ee374f5aac344a9491ba162a8c1",
+                    "entities": 13787,
+                    "projectedNodes": 13789,
+                    "holes": 0,
+                    "rectangleSha256": "3605f75e6b04eea7a9df42513bf672764ccabff29a1370a837c6a518b0b17195"
+                  },
+                  {
+                    "id": "4ee7a335-fbeb-4f45-a2ac-f4ac4e258278",
+                    "commit": "e36b2ab28e838a47b6073288eb3273c67abf3380",
+                    "entities": 13805,
+                    "projectedNodes": 13807,
+                    "holes": 0,
+                    "rectangleSha256": "2e944f21c7fd513c71daa554b285b7ab842a7a3f7a8346dd629c3d7b286b8dd5"
+                  },
+                  {
+                    "id": "4d85bc13-4df1-4b87-a62e-38769a8b5836",
+                    "commit": "64ab179e1c93f5624b21f044e9c807a1df4f9b32",
+                    "entities": 13805,
+                    "projectedNodes": 13807,
+                    "holes": 0,
+                    "rectangleSha256": "2e944f21c7fd513c71daa554b285b7ab842a7a3f7a8346dd629c3d7b286b8dd5"
+                  },
+                  {
+                    "id": "9e84b2aa-8734-4299-80ea-c65807b11bfd",
+                    "commit": "99f9b7477d064b1d1729a4348e43fffef1b385ce",
+                    "entities": 13814,
+                    "projectedNodes": 13816,
+                    "holes": 0,
+                    "rectangleSha256": "5e0b29f2a86336ca28a397ea1a96d5a1533955b5a1d27b16df92e8f013f40226"
+                  },
+                  {
+                    "id": "f4e329f1-7870-45cd-8fe1-69591fd7a874",
+                    "commit": "82d5ac6760cd82cba16b56bcee49b15506a1ae38",
+                    "entities": 13812,
+                    "projectedNodes": 13814,
+                    "holes": 0,
+                    "rectangleSha256": "04af4cea8a7fd96fb0f2bfa28429853f6f7bd3a0416a14bfbb8bf4d1d6df2d64"
+                  },
+                  {
+                    "id": "5b019bdd-b071-4305-9bc4-dc29d994ccf7",
+                    "commit": "f0858f911c7285a6009ffb68e6c91509fbada70f",
+                    "entities": 13812,
+                    "projectedNodes": 13814,
+                    "holes": 0,
+                    "rectangleSha256": "04af4cea8a7fd96fb0f2bfa28429853f6f7bd3a0416a14bfbb8bf4d1d6df2d64"
+                  },
+                  {
+                    "id": "fefba209-a032-4093-830f-d18e30ecc64d",
+                    "commit": "725839935381f8faef5959997a091cf6a68394c9",
+                    "entities": 13812,
+                    "projectedNodes": 13814,
+                    "holes": 0,
+                    "rectangleSha256": "04af4cea8a7fd96fb0f2bfa28429853f6f7bd3a0416a14bfbb8bf4d1d6df2d64"
+                  },
+                  {
+                    "id": "7763efa6-a130-4a06-afa8-0c4a41f325f0",
+                    "commit": "24dba21e4c44ebd6e41929ad4f53cd8c92ce6152",
+                    "entities": 13812,
+                    "projectedNodes": 13814,
+                    "holes": 0,
+                    "rectangleSha256": "04af4cea8a7fd96fb0f2bfa28429853f6f7bd3a0416a14bfbb8bf4d1d6df2d64"
+                  },
+                  {
+                    "id": "58bf15ca-c512-4372-821d-02a3b470632d",
+                    "commit": "c196cdc9a5b0436b87186044c02d2154846a25ac",
+                    "entities": 13858,
+                    "projectedNodes": 13860,
+                    "holes": 0,
+                    "rectangleSha256": "4779b2c35d64b0d15650950954b226c93403c17e097ea758b13bb3dd1066765b"
+                  },
+                  {
+                    "id": "2478af15-07a9-4429-be9d-19262fa7cdd8",
+                    "commit": "495ecc9f3db1edd294b2a8c230674703d562502c",
+                    "entities": 13858,
+                    "projectedNodes": 13860,
+                    "holes": 0,
+                    "rectangleSha256": "4779b2c35d64b0d15650950954b226c93403c17e097ea758b13bb3dd1066765b"
+                  },
+                  {
+                    "id": "777fbaba-fbbf-463a-be59-53a8a2e84a1a",
+                    "commit": "02b6a4d18faf874a616f53f58e7d33ad3a19b975",
+                    "entities": 13858,
+                    "projectedNodes": 13860,
+                    "holes": 0,
+                    "rectangleSha256": "ac57ac81d955162d918f06aa6d1cde71caa2d58314e5aaafc347b56681ce7443"
+                  },
+                  {
+                    "id": "383486f8-8747-467a-8eb6-8d884ba7f788",
+                    "commit": "2ce7132d2a89a77afbc64e2d3e3f53ba8a0260c2",
+                    "entities": 13858,
+                    "projectedNodes": 13860,
+                    "holes": 0,
+                    "rectangleSha256": "ac57ac81d955162d918f06aa6d1cde71caa2d58314e5aaafc347b56681ce7443"
+                  },
+                  {
+                    "id": "4badb232-fe81-4d82-8b04-8b76c5cf5b74",
+                    "commit": "8f46cdfed8b5ddc46bdf1ba0fa6b83770ed3226c",
+                    "entities": 13858,
+                    "projectedNodes": 13860,
+                    "holes": 0,
+                    "rectangleSha256": "ac57ac81d955162d918f06aa6d1cde71caa2d58314e5aaafc347b56681ce7443"
+                  },
+                  {
+                    "id": "7d7595b1-44d5-4b36-a1f3-7141d7040186",
+                    "commit": "e23f89d449666629c027bb96dc514c36d41e93c9",
+                    "entities": 13862,
+                    "projectedNodes": 13864,
+                    "holes": 0,
+                    "rectangleSha256": "ad513619f4e769c4fb0aa5e91e80b4c917b30679deb436dde3de2455f53d6f7b"
+                  },
+                  {
+                    "id": "d67ce654-055b-405a-a430-3813367e9f47",
+                    "commit": "7879e01a0f6aab52e9b5ae00d04b3f7e4c912079",
+                    "entities": 13863,
+                    "projectedNodes": 13865,
+                    "holes": 0,
+                    "rectangleSha256": "88d68ee05c3ebe25e5eeded070319ad64dea3ee44bd98754f407cfaee64a600a"
+                  },
+                  {
+                    "id": "27c33f51-b2be-4b4d-9c02-2ec14b804071",
+                    "commit": "0b209ccae3c1a8de078c9c8338f6aeca7836e9d3",
+                    "entities": 13863,
+                    "projectedNodes": 13865,
+                    "holes": 0,
+                    "rectangleSha256": "88d68ee05c3ebe25e5eeded070319ad64dea3ee44bd98754f407cfaee64a600a"
+                  },
+                  {
+                    "id": "92774f3c-a81a-4346-b953-2dd3e10101da",
+                    "commit": "42c092731190affdc2e2273a319ae29b7b5af657",
+                    "entities": 13863,
+                    "projectedNodes": 13865,
+                    "holes": 0,
+                    "rectangleSha256": "88d68ee05c3ebe25e5eeded070319ad64dea3ee44bd98754f407cfaee64a600a"
+                  },
+                  {
+                    "id": "6d8a2c61-042b-42ad-9ed1-b702a0cdf138",
+                    "commit": "8760263fa182650302452128e3b992bc79e7fe51",
+                    "entities": 13863,
+                    "projectedNodes": 13865,
+                    "holes": 0,
+                    "rectangleSha256": "88d68ee05c3ebe25e5eeded070319ad64dea3ee44bd98754f407cfaee64a600a"
+                  },
+                  {
+                    "id": "dc3f170c-0f75-4723-b530-a15052aa6b6f",
+                    "commit": "7901862ffb6fe90addbaaff2e38fed34a3208df5",
+                    "entities": 13863,
+                    "projectedNodes": 13865,
+                    "holes": 0,
+                    "rectangleSha256": "88d68ee05c3ebe25e5eeded070319ad64dea3ee44bd98754f407cfaee64a600a"
+                  },
+                  {
+                    "id": "b6c50df6-b641-4d65-9819-287d3b3281d1",
+                    "commit": "57371b9f82debbf90e6453aba8af585e8c382617",
+                    "entities": 13894,
+                    "projectedNodes": 13896,
+                    "holes": 0,
+                    "rectangleSha256": "fee6dba611b7aa5ad6fbc053f08af16e484ba3e9767b3951c400260f509eee01"
+                  }
+                ],
+                "positions": 456490,
+                "stableRelativePositions": 439920,
+                "roots": 1
+              }
+            }
+          ],
+          "originalSnapshotLedger": {
+            "schema": 1,
+            "format": "complete-snapshot-sqlite-column-ledger-v1",
+            "pageSize": 128,
+            "maxTableBytes": 17179869184,
+            "maxRows": 10000000,
+            "tables": {
+              "snapshots": {
+                "sha256": "3ba7e7d633dd3a6b4117d4d075cb87a09ed559d51090734dacf4daaffd3b1c58",
+                "bytes": 62133,
+                "rows": 32,
+                "columns": [
+                  "seq",
+                  "id",
+                  "commit_sha",
+                  "identity",
+                  "analyzed_at",
+                  "run",
+                  "stats"
+                ],
+                "largestTextBytes": 1550
+              },
+              "entity_versions": {
+                "sha256": "2d05361e0c4866e4f33b3967a40e952921051edbf4ffe59f6ed0aa2b3f4d5d43",
+                "bytes": 206988949,
+                "rows": 24050,
+                "columns": [
+                  "vid",
+                  "hash",
+                  "entity_id",
+                  "type",
+                  "name",
+                  "path",
+                  "language",
+                  "parent_id",
+                  "source_range",
+                  "loc",
+                  "qualified_name",
+                  "signature",
+                  "route_path",
+                  "method",
+                  "framework",
+                  "role",
+                  "skipped",
+                  "content_key",
+                  "body_hash",
+                  "shape_hash",
+                  "data"
+                ],
+                "largestTextBytes": 1203249
+              },
+              "relation_versions": {
+                "sha256": "e6687eafd97ee05dfd64d26990295a2949bbc989c17e8966a87a73f8a5642286",
+                "bytes": 40455952,
+                "rows": 45394,
+                "columns": [
+                  "vid",
+                  "hash",
+                  "relation_id",
+                  "from_id",
+                  "to_id",
+                  "type",
+                  "data"
+                ],
+                "largestTextBytes": 22339
+              },
+              "diagnostic_versions": {
+                "sha256": "fa5911fdada8bad0ec4ee3585b8d4677b3a2d9ec8ba7bca0144e9e74a5cf40aa",
+                "bytes": 146785,
+                "rows": 383,
+                "columns": [
+                  "vid",
+                  "id",
+                  "data"
+                ],
+                "largestTextBytes": 404
+              },
+              "snapshot_entities": {
+                "sha256": "dad909bd47734ca47cfe1355d1db03e01e8bb0726b37c069d8d8b32672acb3f3",
+                "bytes": 8753426,
+                "rows": 456426,
+                "columns": [
+                  "snapshot",
+                  "version"
+                ],
+                "largestTextBytes": 0
+              },
+              "snapshot_relations": {
+                "sha256": "20514402ba55b9f9b9751faf88159b37d59ef23b42892f4986ad9ca2776f1280",
+                "bytes": 19446860,
+                "rows": 1000979,
+                "columns": [
+                  "snapshot",
+                  "version"
+                ],
+                "largestTextBytes": 0
+              },
+              "snapshot_diagnostics": {
+                "sha256": "17e43a14623eed206dad3b5e0930ef51390e56f9b6fb071cebcb063c635ea5f5",
+                "bytes": 102004,
+                "rows": 5896,
+                "columns": [
+                  "snapshot",
+                  "version"
+                ],
+                "largestTextBytes": 0
+              }
+            }
+          },
+          "originalGitTimeline": {
+            "commits": 636,
+            "sha256": "f372701cb57a94772f2daddefb3e29ea1d480778f60e7318e6ce0e99cfa62ddc",
+            "selectedSnapshots": 32
+          },
+          "completedAt": "2026-10-12T17:19:36.134Z"
+        },
+        "originalDatabaseSha256After": "abdd9c5ef2a093124f52ec4178fceb6d17636b131a0d8f641ffbc69ec47d5aee",
+        "originalObservationUnchanged": true,
+        "completedAt": "2026-10-12T17:19:36.764Z"
+      }
+    ],
+    "full195RevisionResumeQualified": false,
+    "relativeHistoryTimeRssQualified": false,
+    "nativeWindowsMacOSQualified": false,
+    "execution": "Actual owned indexHistory and projection on copied closed snapshots; owned metadata-only Git root exposes exact original ancestry/shallow bytes. No source analysis pending, and target applications/dependencies/hooks/compilers never execute.",
+    "memoryMethod": "25 ms sampled all-thread descendant RSS over the complete probe lifetime, including raw payload/storage/geometry checks. No relative history performance gate claimed.",
+    "completedAt": "2026-10-12T17:19:37.085Z"
+  },
+  "views": {
+    "schema": 1,
+    "id": "firefly-iii",
+    "startedAt": "2026-10-12T17:25:14.772Z",
+    "passed": true,
+    "runInputs": {
+      "engineSha256": "34af4e73bfa404aded51e8e7bd91140282470d78ca946e6ae1cf03f228235da8",
+      "engineFiles": 1924,
+      "observerFiles": 9,
+      "corpusSha256": "d98b9eb8ae23b7202ed05ae1ceabc08543bcf3b88d2fc26d4b7bf1715b075e3b",
+      "profilesSha256": "540a45877decb71aa080a6ef0c5f563e41e5bea6e0998b6e18d73c76ba6175bc"
+    },
+    "frozen": {
+      "observe-production-history-views.mjs": "a1ee1cc4806c82e2c38242b0a3956f4de3d66e9fc3c1bc73fdd01499e6878ef5",
+      "production-history-public-views.mjs": "3258281950ac8c9064de6787a8236715d41b20a8aaa0c24e04a319c2171a81c2",
+      "production-history-storage-ledger.mjs": "766c976065126d1ef5ea2afc3a3d9c9ac9f57921dd10a28f792d2bccc9183199",
+      "audit-production-history.mjs": "ed134cf144500bcbc54a73a00f09dcea4158858bc63e83294ab5ef8f027783dc",
+      "production-history-inputs.mjs": "dc513fb268388e07441b5c979668ba2d16ac1ddf53f56b2426a4ff6434d7b4c8"
+    },
+    "resumeReceiptSha256": "dca8d5a19df8bf28eab3ef7145757063172efbd9b97d2b2bb219a32b38989473",
+    "databaseSha256": "d1fc5d0418c781dc5b7efe892228c4d1ed2082b6d6d1e3728a723b5c0b88e3e7",
+    "full195RevisionPublicViewsQualified": false,
+    "relativeHistoryTimeRssQualified": false,
+    "nativeWindowsMacOSQualified": false,
+    "views": {
+      "schema": 1,
+      "passed": true,
+      "snapshots": [
+        {
+          "id": "b19512fa-d8b8-4e2f-9215-32d4a0f5ab5a",
+          "commit": "fd8791d08d4d9e6467519a78048cd038e26b8878",
+          "cachedFirstParent": true,
+          "entities": 15204,
+          "projectedNodes": 15206,
+          "childPageRequests": 4149,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+        },
+        {
+          "id": "1a20ebea-85cb-4ce4-acf3-91b29875bab1",
+          "commit": "46728cb71e55fbd137ee7edfdee2c217dfadcc34",
+          "cachedFirstParent": true,
+          "entities": 15204,
+          "projectedNodes": 15206,
+          "childPageRequests": 4149,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+        },
+        {
+          "id": "9883dfc9-d3bd-4381-928f-abe1f9771557",
+          "commit": "ebddb4fb9c1810c999c1c4ec414882c56a9c519a",
+          "cachedFirstParent": true,
+          "entities": 15204,
+          "projectedNodes": 15206,
+          "childPageRequests": 4149,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+        },
+        {
+          "id": "c8139b2a-5d22-410b-b614-b8462d9c5b67",
+          "commit": "0022024d1f442d034897934ceb5f297756333d62",
+          "cachedFirstParent": true,
+          "entities": 15204,
+          "projectedNodes": 15206,
+          "childPageRequests": 4149,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+        },
+        {
+          "id": "71118377-e89b-4f0c-953e-28f906500566",
+          "commit": "969295e1e37f8d2f78b1fdf942efb06fa55b6c98",
+          "cachedFirstParent": true,
+          "entities": 15204,
+          "projectedNodes": 15206,
+          "childPageRequests": 4149,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+        },
+        {
+          "id": "b6ff4029-a28a-4ac5-b6bd-67b8e7479792",
+          "commit": "9e9d6f493218bc7a0652210735febe713b22df87",
+          "cachedFirstParent": true,
+          "entities": 15204,
+          "projectedNodes": 15206,
+          "childPageRequests": 4149,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+        },
+        {
+          "id": "e5882850-844b-4e80-940a-e3e7807621ed",
+          "commit": "531cd4ecd0f53d48ce7bf6c95fed29cf961064f6",
+          "cachedFirstParent": true,
+          "entities": 15204,
+          "projectedNodes": 15206,
+          "childPageRequests": 4149,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+        },
+        {
+          "id": "65bb3d12-0843-4668-bacc-ebca188e9d31",
+          "commit": "c6be2ed111f599b40ba38f7d8074e77920cf0f40",
+          "cachedFirstParent": true,
+          "entities": 15204,
+          "projectedNodes": 15206,
+          "childPageRequests": 4149,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+        },
+        {
+          "id": "020bcc52-f0f8-429b-bde3-4af32985d1b1",
+          "commit": "d30aa499fe31bac5d269c047ec069f8d41ee83b6",
+          "cachedFirstParent": true,
+          "entities": 15204,
+          "projectedNodes": 15206,
+          "childPageRequests": 4149,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+        },
+        {
+          "id": "4efb8c0e-2c2c-41fb-8bc2-4440473c6b4d",
+          "commit": "c3fc7b49d3e1c634aada2bde4c3c01bf874e3eff",
+          "cachedFirstParent": true,
+          "entities": 15204,
+          "projectedNodes": 15206,
+          "childPageRequests": 4149,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "36aa3aed87796a659f625f52d1752291867c6cc842dbaecbcab63cfc02ed9b80"
+        },
+        {
+          "id": "7b503d56-086b-47f3-98bb-9406371c9efd",
+          "commit": "6b82da5edf54cb0056e0741357cd7f724c305ccc",
+          "cachedFirstParent": true,
+          "entities": 13782,
+          "projectedNodes": 13784,
+          "childPageRequests": 3957,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "f6bf0cd20ad177ccc94512e22910f5295f2080b8317e2e7b6812d555440155ab"
+        },
+        {
+          "id": "91b445c0-b360-464b-b6d3-e23bad92c489",
+          "commit": "6118fbc5baaf3b0be4f1fdc5cda7a84cd2d2332c",
+          "cachedFirstParent": true,
+          "entities": 13784,
+          "projectedNodes": 13786,
+          "childPageRequests": 3957,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "7bbea82a3f4d9d15b40a52139ed38046f76197c7dc266c935ba1e156b9c85c94"
+        },
+        {
+          "id": "a404b8c7-c770-4e40-a50e-e9ddb86468b8",
+          "commit": "6143c0f14f490ee374f5aac344a9491ba162a8c1",
+          "cachedFirstParent": true,
+          "entities": 13787,
+          "projectedNodes": 13789,
+          "childPageRequests": 3957,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "3605f75e6b04eea7a9df42513bf672764ccabff29a1370a837c6a518b0b17195"
+        },
+        {
+          "id": "4ee7a335-fbeb-4f45-a2ac-f4ac4e258278",
+          "commit": "e36b2ab28e838a47b6073288eb3273c67abf3380",
+          "cachedFirstParent": true,
+          "entities": 13805,
+          "projectedNodes": 13807,
+          "childPageRequests": 3965,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "2e944f21c7fd513c71daa554b285b7ab842a7a3f7a8346dd629c3d7b286b8dd5"
+        },
+        {
+          "id": "4d85bc13-4df1-4b87-a62e-38769a8b5836",
+          "commit": "64ab179e1c93f5624b21f044e9c807a1df4f9b32",
+          "cachedFirstParent": true,
+          "entities": 13805,
+          "projectedNodes": 13807,
+          "childPageRequests": 3965,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "2e944f21c7fd513c71daa554b285b7ab842a7a3f7a8346dd629c3d7b286b8dd5"
+        },
+        {
+          "id": "9e84b2aa-8734-4299-80ea-c65807b11bfd",
+          "commit": "99f9b7477d064b1d1729a4348e43fffef1b385ce",
+          "cachedFirstParent": true,
+          "entities": 13814,
+          "projectedNodes": 13816,
+          "childPageRequests": 3968,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "5e0b29f2a86336ca28a397ea1a96d5a1533955b5a1d27b16df92e8f013f40226"
+        },
+        {
+          "id": "f4e329f1-7870-45cd-8fe1-69591fd7a874",
+          "commit": "82d5ac6760cd82cba16b56bcee49b15506a1ae38",
+          "cachedFirstParent": true,
+          "entities": 13812,
+          "projectedNodes": 13814,
+          "childPageRequests": 3968,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "04af4cea8a7fd96fb0f2bfa28429853f6f7bd3a0416a14bfbb8bf4d1d6df2d64"
+        },
+        {
+          "id": "5b019bdd-b071-4305-9bc4-dc29d994ccf7",
+          "commit": "f0858f911c7285a6009ffb68e6c91509fbada70f",
+          "cachedFirstParent": true,
+          "entities": 13812,
+          "projectedNodes": 13814,
+          "childPageRequests": 3968,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "04af4cea8a7fd96fb0f2bfa28429853f6f7bd3a0416a14bfbb8bf4d1d6df2d64"
+        },
+        {
+          "id": "fefba209-a032-4093-830f-d18e30ecc64d",
+          "commit": "725839935381f8faef5959997a091cf6a68394c9",
+          "cachedFirstParent": true,
+          "entities": 13812,
+          "projectedNodes": 13814,
+          "childPageRequests": 3968,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "04af4cea8a7fd96fb0f2bfa28429853f6f7bd3a0416a14bfbb8bf4d1d6df2d64"
+        },
+        {
+          "id": "7763efa6-a130-4a06-afa8-0c4a41f325f0",
+          "commit": "24dba21e4c44ebd6e41929ad4f53cd8c92ce6152",
+          "cachedFirstParent": true,
+          "entities": 13812,
+          "projectedNodes": 13814,
+          "childPageRequests": 3968,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "04af4cea8a7fd96fb0f2bfa28429853f6f7bd3a0416a14bfbb8bf4d1d6df2d64"
+        },
+        {
+          "id": "58bf15ca-c512-4372-821d-02a3b470632d",
+          "commit": "c196cdc9a5b0436b87186044c02d2154846a25ac",
+          "cachedFirstParent": true,
+          "entities": 13858,
+          "projectedNodes": 13860,
+          "childPageRequests": 3978,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "4779b2c35d64b0d15650950954b226c93403c17e097ea758b13bb3dd1066765b"
+        },
+        {
+          "id": "2478af15-07a9-4429-be9d-19262fa7cdd8",
+          "commit": "495ecc9f3db1edd294b2a8c230674703d562502c",
+          "cachedFirstParent": true,
+          "entities": 13858,
+          "projectedNodes": 13860,
+          "childPageRequests": 3978,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "4779b2c35d64b0d15650950954b226c93403c17e097ea758b13bb3dd1066765b"
+        },
+        {
+          "id": "777fbaba-fbbf-463a-be59-53a8a2e84a1a",
+          "commit": "02b6a4d18faf874a616f53f58e7d33ad3a19b975",
+          "cachedFirstParent": true,
+          "entities": 13858,
+          "projectedNodes": 13860,
+          "childPageRequests": 3978,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "ac57ac81d955162d918f06aa6d1cde71caa2d58314e5aaafc347b56681ce7443"
+        },
+        {
+          "id": "383486f8-8747-467a-8eb6-8d884ba7f788",
+          "commit": "2ce7132d2a89a77afbc64e2d3e3f53ba8a0260c2",
+          "cachedFirstParent": true,
+          "entities": 13858,
+          "projectedNodes": 13860,
+          "childPageRequests": 3978,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "ac57ac81d955162d918f06aa6d1cde71caa2d58314e5aaafc347b56681ce7443"
+        },
+        {
+          "id": "4badb232-fe81-4d82-8b04-8b76c5cf5b74",
+          "commit": "8f46cdfed8b5ddc46bdf1ba0fa6b83770ed3226c",
+          "cachedFirstParent": true,
+          "entities": 13858,
+          "projectedNodes": 13860,
+          "childPageRequests": 3978,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "ac57ac81d955162d918f06aa6d1cde71caa2d58314e5aaafc347b56681ce7443"
+        },
+        {
+          "id": "7d7595b1-44d5-4b36-a1f3-7141d7040186",
+          "commit": "e23f89d449666629c027bb96dc514c36d41e93c9",
+          "cachedFirstParent": true,
+          "entities": 13862,
+          "projectedNodes": 13864,
+          "childPageRequests": 3977,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "ad513619f4e769c4fb0aa5e91e80b4c917b30679deb436dde3de2455f53d6f7b"
+        },
+        {
+          "id": "d67ce654-055b-405a-a430-3813367e9f47",
+          "commit": "7879e01a0f6aab52e9b5ae00d04b3f7e4c912079",
+          "cachedFirstParent": true,
+          "entities": 13863,
+          "projectedNodes": 13865,
+          "childPageRequests": 3977,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "88d68ee05c3ebe25e5eeded070319ad64dea3ee44bd98754f407cfaee64a600a"
+        },
+        {
+          "id": "27c33f51-b2be-4b4d-9c02-2ec14b804071",
+          "commit": "0b209ccae3c1a8de078c9c8338f6aeca7836e9d3",
+          "cachedFirstParent": true,
+          "entities": 13863,
+          "projectedNodes": 13865,
+          "childPageRequests": 3977,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "88d68ee05c3ebe25e5eeded070319ad64dea3ee44bd98754f407cfaee64a600a"
+        },
+        {
+          "id": "92774f3c-a81a-4346-b953-2dd3e10101da",
+          "commit": "42c092731190affdc2e2273a319ae29b7b5af657",
+          "cachedFirstParent": true,
+          "entities": 13863,
+          "projectedNodes": 13865,
+          "childPageRequests": 3977,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "88d68ee05c3ebe25e5eeded070319ad64dea3ee44bd98754f407cfaee64a600a"
+        },
+        {
+          "id": "6d8a2c61-042b-42ad-9ed1-b702a0cdf138",
+          "commit": "8760263fa182650302452128e3b992bc79e7fe51",
+          "cachedFirstParent": true,
+          "entities": 13863,
+          "projectedNodes": 13865,
+          "childPageRequests": 3977,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "88d68ee05c3ebe25e5eeded070319ad64dea3ee44bd98754f407cfaee64a600a"
+        },
+        {
+          "id": "dc3f170c-0f75-4723-b530-a15052aa6b6f",
+          "commit": "7901862ffb6fe90addbaaff2e38fed34a3208df5",
+          "cachedFirstParent": true,
+          "entities": 13863,
+          "projectedNodes": 13865,
+          "childPageRequests": 3977,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "88d68ee05c3ebe25e5eeded070319ad64dea3ee44bd98754f407cfaee64a600a"
+        },
+        {
+          "id": "b6c50df6-b641-4d65-9819-287d3b3281d1",
+          "commit": "57371b9f82debbf90e6453aba8af585e8c382617",
+          "cachedFirstParent": true,
+          "entities": 13894,
+          "projectedNodes": 13896,
+          "childPageRequests": 3987,
+          "layoutSource": "timeline",
+          "holes": 0,
+          "rectangleSha256": "fee6dba611b7aa5ad6fbc053f08af16e484ba3e9767b3951c400260f509eee01"
+        }
+      ],
+      "freshServicePasses": 2,
+      "offFirstParentSnapshots": 0,
+      "persistedBaseRegistryUnchanged": true
+    },
+    "databaseSha256After": "d1fc5d0418c781dc5b7efe892228c4d1ed2082b6d6d1e3728a723b5c0b88e3e7",
+    "databaseUnchanged": true,
+    "completedAt": "2026-10-12T17:36:51.376Z"
+  },
+  "originalPayloadAudit": {
+    "schema": 1,
+    "startedAt": "2026-10-12T17:18:37.842Z",
+    "scope": "completed-repository",
+    "runInputs": {
+      "engineSha256": "34af4e73bfa404aded51e8e7bd91140282470d78ca946e6ae1cf03f228235da8",
+      "engineFiles": 1924,
+      "observerFiles": 9,
+      "corpusSha256": "d98b9eb8ae23b7202ed05ae1ceabc08543bcf3b88d2fc26d4b7bf1715b075e3b",
+      "profilesSha256": "540a45877decb71aa080a6ef0c5f563e41e5bea6e0998b6e18d73c76ba6175bc"
+    },
+    "repositories": [
+      {
+        "id": "firefly-iii",
+        "status": "verified",
+        "database": "firefly-iii/state/history.db",
+        "databaseSha256": "abdd9c5ef2a093124f52ec4178fceb6d17636b131a0d8f641ffbc69ec47d5aee",
+        "wal": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "originalBlobObjects": 3977,
+        "revisions": [
+          {
+            "commit": "fd8791d08d4d9e6467519a78048cd038e26b8878",
+            "seq": 1,
+            "id": "b19512fa-d8b8-4e2f-9215-32d4a0f5ab5a",
+            "exact": {
+              "sha256": "df6644b5d6283025da2889fbfc5b930f7a9709f16274115b0c7710c34227db7f",
+              "bytes": 111393322,
+              "counts": {
+                "entities": 15204,
+                "relations": 33179,
+                "diagnostics": 290
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "0c354ff57182de8259c2345102728c2760b54fc4041629b03385398ed27ef985",
+            "sourceFiles": 2366,
+            "hashedOriginalSources": 1901,
+            "newVersions": 48673
+          },
+          {
+            "commit": "46728cb71e55fbd137ee7edfdee2c217dfadcc34",
+            "seq": 2,
+            "id": "1a20ebea-85cb-4ce4-acf3-91b29875bab1",
+            "exact": {
+              "sha256": "b3f3a41a7a1d6f558174d3bd283e4499b9b4be4348aee6dabba9de711d02abf3",
+              "bytes": 111393323,
+              "counts": {
+                "entities": 15204,
+                "relations": 33179,
+                "diagnostics": 290
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "9497cfbed3fe31c763d14e65125e1fa10d7117410abac52438a0ae1f27ab2e82",
+            "sourceFiles": 2366,
+            "hashedOriginalSources": 1901,
+            "newVersions": 1
+          },
+          {
+            "commit": "ebddb4fb9c1810c999c1c4ec414882c56a9c519a",
+            "seq": 3,
+            "id": "9883dfc9-d3bd-4381-928f-abe1f9771557",
+            "exact": {
+              "sha256": "a0bc2835460a2bd9e64590bb5cc2f8053ab288eafe7b6a9610930f404a1f3d3b",
+              "bytes": 111393323,
+              "counts": {
+                "entities": 15204,
+                "relations": 33179,
+                "diagnostics": 290
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "97c90a0ac12facf73d9aacdb1282ff92021a0b7db4ea64c7e4f6744b1fdfb12d",
+            "sourceFiles": 2366,
+            "hashedOriginalSources": 1901,
+            "newVersions": 1
+          },
+          {
+            "commit": "0022024d1f442d034897934ceb5f297756333d62",
+            "seq": 4,
+            "id": "c8139b2a-5d22-410b-b614-b8462d9c5b67",
+            "exact": {
+              "sha256": "6d4e7f04ff4d9d0ff6454778e35aa4aba428b3a168e81ebce513529aad8f674c",
+              "bytes": 111393323,
+              "counts": {
+                "entities": 15204,
+                "relations": 33179,
+                "diagnostics": 290
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "253dbe476a00ed957078a8368a9ad2806f748e453438518cfb56b6ac28739d75",
+            "sourceFiles": 2366,
+            "hashedOriginalSources": 1901,
+            "newVersions": 1
+          },
+          {
+            "commit": "969295e1e37f8d2f78b1fdf942efb06fa55b6c98",
+            "seq": 5,
+            "id": "71118377-e89b-4f0c-953e-28f906500566",
+            "exact": {
+              "sha256": "e70ff0f5f67a0de233bfe25853aac6297f661f1c21d8229fff25f3db81977f07",
+              "bytes": 111393323,
+              "counts": {
+                "entities": 15204,
+                "relations": 33179,
+                "diagnostics": 290
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "62a3add95d2047d7963b282731ecbcfcad5369401d5c963efe63de1aac8b4c59",
+            "sourceFiles": 2366,
+            "hashedOriginalSources": 1901,
+            "newVersions": 1
+          },
+          {
+            "commit": "9e9d6f493218bc7a0652210735febe713b22df87",
+            "seq": 6,
+            "id": "b6ff4029-a28a-4ac5-b6bd-67b8e7479792",
+            "exact": {
+              "sha256": "b5dbf20b8dd51cf71128d5602c736246a6fc5570eef018cc44375b4aae45777d",
+              "bytes": 111393323,
+              "counts": {
+                "entities": 15204,
+                "relations": 33179,
+                "diagnostics": 290
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "3ef430d613f5f358e28aca01ff64b690149eb56c8ccb21cd2518500353499e09",
+            "sourceFiles": 2366,
+            "hashedOriginalSources": 1901,
+            "newVersions": 1
+          },
+          {
+            "commit": "531cd4ecd0f53d48ce7bf6c95fed29cf961064f6",
+            "seq": 7,
+            "id": "e5882850-844b-4e80-940a-e3e7807621ed",
+            "exact": {
+              "sha256": "27ab6a087ef1cd45f3e7605d3a09040dae57806392d9f033e846db536459c859",
+              "bytes": 111393323,
+              "counts": {
+                "entities": 15204,
+                "relations": 33179,
+                "diagnostics": 290
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "ab21caf45cc448fd792d5f6aa7f19cd508838899fac6f2227263d17dd49715d7",
+            "sourceFiles": 2366,
+            "hashedOriginalSources": 1901,
+            "newVersions": 2
+          },
+          {
+            "commit": "c6be2ed111f599b40ba38f7d8074e77920cf0f40",
+            "seq": 8,
+            "id": "65bb3d12-0843-4668-bacc-ebca188e9d31",
+            "exact": {
+              "sha256": "d274769d21b0983dcd32c3879490dcda57c63e456ee8b2d5da3a37f937c257eb",
+              "bytes": 111393323,
+              "counts": {
+                "entities": 15204,
+                "relations": 33179,
+                "diagnostics": 290
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "383a872b71cc0acbfee1fb80e31f7999bd6092d7811fb89764f14f5272e6bb73",
+            "sourceFiles": 2366,
+            "hashedOriginalSources": 1901,
+            "newVersions": 1
+          },
+          {
+            "commit": "d30aa499fe31bac5d269c047ec069f8d41ee83b6",
+            "seq": 9,
+            "id": "020bcc52-f0f8-429b-bde3-4af32985d1b1",
+            "exact": {
+              "sha256": "d4ec1b89f54674ce41e9129330adea81666c4aa986f2e7843caeabdfb8ea093d",
+              "bytes": 111393323,
+              "counts": {
+                "entities": 15204,
+                "relations": 33179,
+                "diagnostics": 290
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "a0ef6860c664e9885d2d7c6c48569d47a953d351380bf67cd32f542b9a73ce55",
+            "sourceFiles": 2366,
+            "hashedOriginalSources": 1901,
+            "newVersions": 1
+          },
+          {
+            "commit": "c3fc7b49d3e1c634aada2bde4c3c01bf874e3eff",
+            "seq": 10,
+            "id": "4efb8c0e-2c2c-41fb-8bc2-4440473c6b4d",
+            "exact": {
+              "sha256": "db01d6e4fa47b776b52242ccaa1b49999ab671de27e4a939540b1f29c68f525d",
+              "bytes": 111393323,
+              "counts": {
+                "entities": 15204,
+                "relations": 33179,
+                "diagnostics": 290
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "ec94160cb44092cc7609b9bbccd60ac1919fadf06f01520b5863534ec511cd6d",
+            "sourceFiles": 2366,
+            "hashedOriginalSources": 1901,
+            "newVersions": 1
+          },
+          {
+            "commit": "6b82da5edf54cb0056e0741357cd7f724c305ccc",
+            "seq": 11,
+            "id": "7b503d56-086b-47f3-98bb-9406371c9efd",
+            "exact": {
+              "sha256": "3741c5aaa0eeb436501b087a9bcfb451390b08383c6c2bb4cc648a4c7710c8f2",
+              "bytes": 110230367,
+              "counts": {
+                "entities": 13782,
+                "relations": 30288,
+                "diagnostics": 134
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "18184853babe53d4fac652c39043931d4f817e657ddfe4884cc67b98acb54896",
+            "sourceFiles": 2166,
+            "hashedOriginalSources": 2039,
+            "newVersions": 13360
+          },
+          {
+            "commit": "6118fbc5baaf3b0be4f1fdc5cda7a84cd2d2332c",
+            "seq": 12,
+            "id": "91b445c0-b360-464b-b6d3-e23bad92c489",
+            "exact": {
+              "sha256": "abab80f0d0b029e24d85e09304c09be5fcd7394a4f9fb51c360b7c1a7a6135f1",
+              "bytes": 110237415,
+              "counts": {
+                "entities": 13784,
+                "relations": 30293,
+                "diagnostics": 134
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "5f8da73c46fdf9ef52315cf638274890c23893499d2cb98d7d7000aa765a2260",
+            "sourceFiles": 2166,
+            "hashedOriginalSources": 2039,
+            "newVersions": 67
+          },
+          {
+            "commit": "6143c0f14f490ee374f5aac344a9491ba162a8c1",
+            "seq": 13,
+            "id": "a404b8c7-c770-4e40-a50e-e9ddb86468b8",
+            "exact": {
+              "sha256": "d171ca90e6ba61fa23f1fc07e1096c473de4e4afd5d6c6f1cf08cbb57faa28ef",
+              "bytes": 110309626,
+              "counts": {
+                "entities": 13787,
+                "relations": 30303,
+                "diagnostics": 134
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "7df769df2694fad24928b31309aa877b469f74bc3bd8369239316a24db8bd033",
+            "sourceFiles": 2166,
+            "hashedOriginalSources": 2039,
+            "newVersions": 450
+          },
+          {
+            "commit": "e36b2ab28e838a47b6073288eb3273c67abf3380",
+            "seq": 14,
+            "id": "4ee7a335-fbeb-4f45-a2ac-f4ac4e258278",
+            "exact": {
+              "sha256": "25a0a43e7518ecb0a175043be2330dd656aa87b180e6dc3a23266ad26e86fbf2",
+              "bytes": 110365665,
+              "counts": {
+                "entities": 13805,
+                "relations": 30353,
+                "diagnostics": 135
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "a8a2274a69a9b9c2cacff34650f052eea66605b2bbd40b1558b50b4f9ec9849b",
+            "sourceFiles": 2171,
+            "hashedOriginalSources": 2044,
+            "newVersions": 1292
+          },
+          {
+            "commit": "64ab179e1c93f5624b21f044e9c807a1df4f9b32",
+            "seq": 15,
+            "id": "4d85bc13-4df1-4b87-a62e-38769a8b5836",
+            "exact": {
+              "sha256": "0ea768fcae1780b1d5377fb95ffe6e5eea8035b2912fc6f71f1e73b72a670bbf",
+              "bytes": 110365665,
+              "counts": {
+                "entities": 13805,
+                "relations": 30353,
+                "diagnostics": 135
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "2d9cef948958684c89e9f0d344dc6a82ef85c078c1eca31726fa9088a69134fd",
+            "sourceFiles": 2171,
+            "hashedOriginalSources": 2044,
+            "newVersions": 1
+          },
+          {
+            "commit": "99f9b7477d064b1d1729a4348e43fffef1b385ce",
+            "seq": 16,
+            "id": "9e84b2aa-8734-4299-80ea-c65807b11bfd",
+            "exact": {
+              "sha256": "419ed72a9391bebdc3d0b7eff9284f0fd25b99d645b678d480fea3f2d8d40f51",
+              "bytes": 110392155,
+              "counts": {
+                "entities": 13814,
+                "relations": 30377,
+                "diagnostics": 136
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "1e40bf5cb643f017a1fa2e8cd19ed72296b5d3829b3e8873e44ebc10cc0796b9",
+            "sourceFiles": 2173,
+            "hashedOriginalSources": 2046,
+            "newVersions": 1267
+          },
+          {
+            "commit": "82d5ac6760cd82cba16b56bcee49b15506a1ae38",
+            "seq": 17,
+            "id": "f4e329f1-7870-45cd-8fe1-69591fd7a874",
+            "exact": {
+              "sha256": "9f8bf2fe27319f31aa1e0a01e690f7d3b2f8db37feca20605a0771e8a224916b",
+              "bytes": 110390598,
+              "counts": {
+                "entities": 13812,
+                "relations": 30375,
+                "diagnostics": 136
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "46988ed7103fc1b69c738cbfefcfa01d8da846a36e31ba746f1355808ad58f7e",
+            "sourceFiles": 2171,
+            "hashedOriginalSources": 2044,
+            "newVersions": 3
+          },
+          {
+            "commit": "f0858f911c7285a6009ffb68e6c91509fbada70f",
+            "seq": 18,
+            "id": "5b019bdd-b071-4305-9bc4-dc29d994ccf7",
+            "exact": {
+              "sha256": "88edfcc90faf7eeffefe7761e727eefe171959a31b4f4ed2748781394ae49ce7",
+              "bytes": 110390598,
+              "counts": {
+                "entities": 13812,
+                "relations": 30375,
+                "diagnostics": 136
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "c7d136e858d04c168362feb2bd16bfc0d717c180c55290d0a444dbc33998e6bd",
+            "sourceFiles": 2171,
+            "hashedOriginalSources": 2044,
+            "newVersions": 1
+          },
+          {
+            "commit": "725839935381f8faef5959997a091cf6a68394c9",
+            "seq": 19,
+            "id": "fefba209-a032-4093-830f-d18e30ecc64d",
+            "exact": {
+              "sha256": "28844f4895ff46882f2f96371d5f0846764e24cab341e081f501fd1ddea89191",
+              "bytes": 110390598,
+              "counts": {
+                "entities": 13812,
+                "relations": 30375,
+                "diagnostics": 136
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "c022b7c4b1c0c06a650ed87499f185e133f7468819cec7d0a8b1f1edcb467122",
+            "sourceFiles": 2171,
+            "hashedOriginalSources": 2044,
+            "newVersions": 1
+          },
+          {
+            "commit": "24dba21e4c44ebd6e41929ad4f53cd8c92ce6152",
+            "seq": 20,
+            "id": "7763efa6-a130-4a06-afa8-0c4a41f325f0",
+            "exact": {
+              "sha256": "02799e9d3eee93b1f949e76cddc78fb283880d47229004e03a74636eba1a23ce",
+              "bytes": 110390598,
+              "counts": {
+                "entities": 13812,
+                "relations": 30375,
+                "diagnostics": 136
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "413ea15be5dd21bdcea70c44eb0440101a991cb57afba34e1bf374efd8afa8bb",
+            "sourceFiles": 2171,
+            "hashedOriginalSources": 2044,
+            "newVersions": 1
+          },
+          {
+            "commit": "c196cdc9a5b0436b87186044c02d2154846a25ac",
+            "seq": 21,
+            "id": "58bf15ca-c512-4372-821d-02a3b470632d",
+            "exact": {
+              "sha256": "c5d206d392f6b41b31de8c0ab0175ae8b1b087e8eebafffff58df7817721dfdc",
+              "bytes": 110649999,
+              "counts": {
+                "entities": 13858,
+                "relations": 30463,
+                "diagnostics": 137
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "1e997a9e08dab4e202b194f66cd582f83ed42ffd6ab6d14d0c536fe9849d43e8",
+            "sourceFiles": 2176,
+            "hashedOriginalSources": 2049,
+            "newVersions": 2247
+          },
+          {
+            "commit": "495ecc9f3db1edd294b2a8c230674703d562502c",
+            "seq": 22,
+            "id": "2478af15-07a9-4429-be9d-19262fa7cdd8",
+            "exact": {
+              "sha256": "d1d54a0cd793682e069748600a02ff21eb7c94f8e45aab6467e37507bddcd316",
+              "bytes": 110649999,
+              "counts": {
+                "entities": 13858,
+                "relations": 30463,
+                "diagnostics": 137
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "142872fe4f466af089d956e5bbc3e728b141f165ee726296e82a14f0b731c732",
+            "sourceFiles": 2176,
+            "hashedOriginalSources": 2049,
+            "newVersions": 17
+          },
+          {
+            "commit": "02b6a4d18faf874a616f53f58e7d33ad3a19b975",
+            "seq": 23,
+            "id": "777fbaba-fbbf-463a-be59-53a8a2e84a1a",
+            "exact": {
+              "sha256": "2dde94ab2e79c5bf6bbedce1fcff198265d4b0feb9aa4749bc21b71750b4397c",
+              "bytes": 110649993,
+              "counts": {
+                "entities": 13858,
+                "relations": 30463,
+                "diagnostics": 137
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "1a22522d1a020840cde38e9d464fa87d74a6e11be00066b2beeb889d6702cdaf",
+            "sourceFiles": 2176,
+            "hashedOriginalSources": 2049,
+            "newVersions": 3
+          },
+          {
+            "commit": "2ce7132d2a89a77afbc64e2d3e3f53ba8a0260c2",
+            "seq": 24,
+            "id": "383486f8-8747-467a-8eb6-8d884ba7f788",
+            "exact": {
+              "sha256": "6bd24cbff0ee0d3a7b86eb55a3cf048e56b31f3db117199e122d2ff6ecea4c1c",
+              "bytes": 110649999,
+              "counts": {
+                "entities": 13858,
+                "relations": 30463,
+                "diagnostics": 137
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "5c9596d1612d2c4d811ecb49234418b30738f6e751894b61e80aef8bb8fff851",
+            "sourceFiles": 2176,
+            "hashedOriginalSources": 2049,
+            "newVersions": 36
+          },
+          {
+            "commit": "8f46cdfed8b5ddc46bdf1ba0fa6b83770ed3226c",
+            "seq": 25,
+            "id": "4badb232-fe81-4d82-8b04-8b76c5cf5b74",
+            "exact": {
+              "sha256": "f6e71621523f77f94d6efae37d30cb2581ecc96959ce880c6dc5e55d073d06b0",
+              "bytes": 110649999,
+              "counts": {
+                "entities": 13858,
+                "relations": 30463,
+                "diagnostics": 137
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "0ca23e6dfee3f89c2f1abc8a91d2e9ba316df35f4fd626f0bdde298cfea620c9",
+            "sourceFiles": 2176,
+            "hashedOriginalSources": 2049,
+            "newVersions": 2
+          },
+          {
+            "commit": "e23f89d449666629c027bb96dc514c36d41e93c9",
+            "seq": 26,
+            "id": "7d7595b1-44d5-4b36-a1f3-7141d7040186",
+            "exact": {
+              "sha256": "d07f90295fa3b3818f4db702b88ff80f9b647f24b59db7c18a84f00265611c7d",
+              "bytes": 110590896,
+              "counts": {
+                "entities": 13862,
+                "relations": 30475,
+                "diagnostics": 137
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "3870ada32c6c6f3d12da869105e0ef5babe00961e9eec94749cb3c7404eccc8f",
+            "sourceFiles": 2177,
+            "hashedOriginalSources": 2050,
+            "newVersions": 486
+          },
+          {
+            "commit": "7879e01a0f6aab52e9b5ae00d04b3f7e4c912079",
+            "seq": 27,
+            "id": "d67ce654-055b-405a-a430-3813367e9f47",
+            "exact": {
+              "sha256": "2dc309892a64a7fd98c748e51048e02eb58a1ca58a82b8e3036582270e0fb260",
+              "bytes": 110596346,
+              "counts": {
+                "entities": 13863,
+                "relations": 30476,
+                "diagnostics": 137
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "b6f44716d05f5e06b72c4a2279625208ecc32d109d06c72321b89ed6f0e14f9e",
+            "sourceFiles": 2177,
+            "hashedOriginalSources": 2050,
+            "newVersions": 131
+          },
+          {
+            "commit": "0b209ccae3c1a8de078c9c8338f6aeca7836e9d3",
+            "seq": 28,
+            "id": "27c33f51-b2be-4b4d-9c02-2ec14b804071",
+            "exact": {
+              "sha256": "896e9cf52159555dd4f2ec699fa4640725b7b826ef31e010d3e47320bd678f5d",
+              "bytes": 110596346,
+              "counts": {
+                "entities": 13863,
+                "relations": 30476,
+                "diagnostics": 137
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "3f60b63dac2a7ce608f0ac05b858e7b51f146dfbc909735fd3c46ba271fdf05f",
+            "sourceFiles": 2177,
+            "hashedOriginalSources": 2050,
+            "newVersions": 0
+          },
+          {
+            "commit": "42c092731190affdc2e2273a319ae29b7b5af657",
+            "seq": 29,
+            "id": "92774f3c-a81a-4346-b953-2dd3e10101da",
+            "exact": {
+              "sha256": "8a9843c9009574bff9f34b3b0b06ba88027138f7530e85e24b80ec596b09dc84",
+              "bytes": 110596346,
+              "counts": {
+                "entities": 13863,
+                "relations": 30476,
+                "diagnostics": 137
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "68a5169d6d4b3680a99329d1c3da7eb642dd9b57e2ebecd94accd5690df4bf3f",
+            "sourceFiles": 2177,
+            "hashedOriginalSources": 2050,
+            "newVersions": 1
+          },
+          {
+            "commit": "8760263fa182650302452128e3b992bc79e7fe51",
+            "seq": 30,
+            "id": "6d8a2c61-042b-42ad-9ed1-b702a0cdf138",
+            "exact": {
+              "sha256": "c4c4867725afd1f20eb9c05e75f47bc4e1015a208b5559c6b0dfcfa2f1868b11",
+              "bytes": 110596346,
+              "counts": {
+                "entities": 13863,
+                "relations": 30476,
+                "diagnostics": 137
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "3f60b63dac2a7ce608f0ac05b858e7b51f146dfbc909735fd3c46ba271fdf05f",
+            "sourceFiles": 2177,
+            "hashedOriginalSources": 2050,
+            "newVersions": 0
+          },
+          {
+            "commit": "7901862ffb6fe90addbaaff2e38fed34a3208df5",
+            "seq": 31,
+            "id": "dc3f170c-0f75-4723-b530-a15052aa6b6f",
+            "exact": {
+              "sha256": "e189a576b411a6aabb74fcc1356591d3fa959ce97a886d11893689298c498b69",
+              "bytes": 110596346,
+              "counts": {
+                "entities": 13863,
+                "relations": 30476,
+                "diagnostics": 137
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "37a998abd01fd516e8ec2b50b2f2a16b95e333667ed1f9f10ac393adcb1cb003",
+            "sourceFiles": 2177,
+            "hashedOriginalSources": 2050,
+            "newVersions": 1
+          },
+          {
+            "commit": "57371b9f82debbf90e6453aba8af585e8c382617",
+            "seq": 32,
+            "id": "b6c50df6-b641-4d65-9819-287d3b3281d1",
+            "exact": {
+              "sha256": "feb255ac8f6be02593633c9572fcb99ee73eca7a13eb1177800b6d59ce1d5f6d",
+              "bytes": 110767558,
+              "counts": {
+                "entities": 13894,
+                "relations": 30552,
+                "diagnostics": 137
+              },
+              "normalization": []
+            },
+            "originalRecordDigest": "7f4cee668f1113ba533a7f80bf8d309d051653a5af6f225fcc101cb8ec9aae3d",
+            "sourceFiles": 2182,
+            "hashedOriginalSources": 2055,
+            "newVersions": 1777
+          }
+        ],
+        "method": "Independent JSON token hashing, raw complete SQLite payloads, original Git blob identities and SHA-256, integrity/membership/metadata/statistics checks; no target execution or UI projection",
+        "relativeHistoryTimeRssQualified": false,
+        "layoutResumeQualified": false,
+        "nativeWindowsMacOSQualified": false,
+        "storage": {
+          "snapshots": 32,
+          "commits": 32,
+          "versions": {
+            "entities": 24050,
+            "relations": 45394,
+            "diagnostics": 383
+          },
+          "memberships": {
+            "entities": 456426,
+            "relations": 1000979,
+            "diagnostics": 5896
+          },
+          "pullRequests": 0,
+          "bytes": 293752832
+        },
+        "completedAt": "2026-10-12T17:25:31.453Z",
+        "walAfter": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    ],
+    "passed": true,
+    "full195RevisionGateQualified": false,
+    "relativeHistoryTimeRssQualified": false,
+    "layoutResumeQualified": false,
+    "nativeWindowsMacOSQualified": false,
+    "completedAt": "2026-10-12T17:25:31.735Z",
+    "auditorSha256": "ed134cf144500bcbc54a73a00f09dcea4158858bc63e83294ab5ef8f027783dc",
+    "receiptSha256": "c29013929e15446fbcf0f62e22517417b131987e17f5c8cafb982ee8e71c4549",
+    "inputSnapshot": {
+      "file": "firefly-independent-audit.json.inputs.json",
+      "bytes": 1050526,
+      "sha256": "5e175be149283ad9eff35f7f1e21121b104d79f1b4367602f3b8d14c7b0ddeed"
+    }
+  },
+  "independentColumns": {
+    "schema": 1,
+    "startedAt": "2026-10-12T17:26:58.227453+00:00",
+    "passed": true,
+    "method": "Independent Python sqlite3 streaming cursors and UTF-8 typed byte framing; every SQLite column in seven complete snapshot/version/membership tables",
+    "auditorSha256": "f432ad1445f4dde2ed21cba8ce91382b8417f28e73d0f3f491706fd4e75698ff",
+    "databases": [
+      {
+        "database": "/var/www/html/codiluce/.codiluce/validation-production-history-corpus-exact/firefly-iii/state/history.db",
+        "sha256": "abdd9c5ef2a093124f52ec4178fceb6d17636b131a0d8f641ffbc69ec47d5aee",
+        "sha256After": "abdd9c5ef2a093124f52ec4178fceb6d17636b131a0d8f641ffbc69ec47d5aee",
+        "completeColumnLedgersMatch": true,
+        "tables": {
+          "snapshots": {
+            "sha256": "3ba7e7d633dd3a6b4117d4d075cb87a09ed559d51090734dacf4daaffd3b1c58",
+            "bytes": 62133,
+            "rows": 32,
+            "columns": [
+              "seq",
+              "id",
+              "commit_sha",
+              "identity",
+              "analyzed_at",
+              "run",
+              "stats"
+            ],
+            "largestTextBytes": 1550
+          },
+          "entity_versions": {
+            "sha256": "2d05361e0c4866e4f33b3967a40e952921051edbf4ffe59f6ed0aa2b3f4d5d43",
+            "bytes": 206988949,
+            "rows": 24050,
+            "columns": [
+              "vid",
+              "hash",
+              "entity_id",
+              "type",
+              "name",
+              "path",
+              "language",
+              "parent_id",
+              "source_range",
+              "loc",
+              "qualified_name",
+              "signature",
+              "route_path",
+              "method",
+              "framework",
+              "role",
+              "skipped",
+              "content_key",
+              "body_hash",
+              "shape_hash",
+              "data"
+            ],
+            "largestTextBytes": 1203249
+          },
+          "relation_versions": {
+            "sha256": "e6687eafd97ee05dfd64d26990295a2949bbc989c17e8966a87a73f8a5642286",
+            "bytes": 40455952,
+            "rows": 45394,
+            "columns": [
+              "vid",
+              "hash",
+              "relation_id",
+              "from_id",
+              "to_id",
+              "type",
+              "data"
+            ],
+            "largestTextBytes": 22339
+          },
+          "diagnostic_versions": {
+            "sha256": "fa5911fdada8bad0ec4ee3585b8d4677b3a2d9ec8ba7bca0144e9e74a5cf40aa",
+            "bytes": 146785,
+            "rows": 383,
+            "columns": [
+              "vid",
+              "id",
+              "data"
+            ],
+            "largestTextBytes": 404
+          },
+          "snapshot_entities": {
+            "sha256": "dad909bd47734ca47cfe1355d1db03e01e8bb0726b37c069d8d8b32672acb3f3",
+            "bytes": 8753426,
+            "rows": 456426,
+            "columns": [
+              "snapshot",
+              "version"
+            ],
+            "largestTextBytes": 0
+          },
+          "snapshot_relations": {
+            "sha256": "20514402ba55b9f9b9751faf88159b37d59ef23b42892f4986ad9ca2776f1280",
+            "bytes": 19446860,
+            "rows": 1000979,
+            "columns": [
+              "snapshot",
+              "version"
+            ],
+            "largestTextBytes": 0
+          },
+          "snapshot_diagnostics": {
+            "sha256": "17e43a14623eed206dad3b5e0930ef51390e56f9b6fb071cebcb063c635ea5f5",
+            "bytes": 102004,
+            "rows": 5896,
+            "columns": [
+              "snapshot",
+              "version"
+            ],
+            "largestTextBytes": 0
+          }
+        },
+        "id": "firefly-iii",
+        "role": "original"
+      },
+      {
+        "database": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/firefly-original/firefly-iii/state/history.db",
+        "sha256": "d1fc5d0418c781dc5b7efe892228c4d1ed2082b6d6d1e3728a723b5c0b88e3e7",
+        "sha256After": "d1fc5d0418c781dc5b7efe892228c4d1ed2082b6d6d1e3728a723b5c0b88e3e7",
+        "completeColumnLedgersMatch": true,
+        "tables": {
+          "snapshots": {
+            "sha256": "3ba7e7d633dd3a6b4117d4d075cb87a09ed559d51090734dacf4daaffd3b1c58",
+            "bytes": 62133,
+            "rows": 32,
+            "columns": [
+              "seq",
+              "id",
+              "commit_sha",
+              "identity",
+              "analyzed_at",
+              "run",
+              "stats"
+            ],
+            "largestTextBytes": 1550
+          },
+          "entity_versions": {
+            "sha256": "2d05361e0c4866e4f33b3967a40e952921051edbf4ffe59f6ed0aa2b3f4d5d43",
+            "bytes": 206988949,
+            "rows": 24050,
+            "columns": [
+              "vid",
+              "hash",
+              "entity_id",
+              "type",
+              "name",
+              "path",
+              "language",
+              "parent_id",
+              "source_range",
+              "loc",
+              "qualified_name",
+              "signature",
+              "route_path",
+              "method",
+              "framework",
+              "role",
+              "skipped",
+              "content_key",
+              "body_hash",
+              "shape_hash",
+              "data"
+            ],
+            "largestTextBytes": 1203249
+          },
+          "relation_versions": {
+            "sha256": "e6687eafd97ee05dfd64d26990295a2949bbc989c17e8966a87a73f8a5642286",
+            "bytes": 40455952,
+            "rows": 45394,
+            "columns": [
+              "vid",
+              "hash",
+              "relation_id",
+              "from_id",
+              "to_id",
+              "type",
+              "data"
+            ],
+            "largestTextBytes": 22339
+          },
+          "diagnostic_versions": {
+            "sha256": "fa5911fdada8bad0ec4ee3585b8d4677b3a2d9ec8ba7bca0144e9e74a5cf40aa",
+            "bytes": 146785,
+            "rows": 383,
+            "columns": [
+              "vid",
+              "id",
+              "data"
+            ],
+            "largestTextBytes": 404
+          },
+          "snapshot_entities": {
+            "sha256": "dad909bd47734ca47cfe1355d1db03e01e8bb0726b37c069d8d8b32672acb3f3",
+            "bytes": 8753426,
+            "rows": 456426,
+            "columns": [
+              "snapshot",
+              "version"
+            ],
+            "largestTextBytes": 0
+          },
+          "snapshot_relations": {
+            "sha256": "20514402ba55b9f9b9751faf88159b37d59ef23b42892f4986ad9ca2776f1280",
+            "bytes": 19446860,
+            "rows": 1000979,
+            "columns": [
+              "snapshot",
+              "version"
+            ],
+            "largestTextBytes": 0
+          },
+          "snapshot_diagnostics": {
+            "sha256": "17e43a14623eed206dad3b5e0930ef51390e56f9b6fb071cebcb063c635ea5f5",
+            "bytes": 102004,
+            "rows": 5896,
+            "columns": [
+              "snapshot",
+              "version"
+            ],
+            "largestTextBytes": 0
+          }
+        },
+        "id": "firefly-iii",
+        "role": "resumed-copy"
+      }
+    ],
+    "full195RevisionGateQualified": false,
+    "relativeHistoryTimeRssQualified": false,
+    "nativeWindowsMacOSQualified": false,
+    "resumeReceiptSha256": "dca8d5a19df8bf28eab3ef7145757063172efbd9b97d2b2bb219a32b38989473",
+    "completedAt": "2026-10-12T17:27:08.700823+00:00"
+  }
+}
