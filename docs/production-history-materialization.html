@@ -1,0 +1,60 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Production history original-byte materialization</title><style>body{margin:0;padding:clamp(16px,4vw,40px);font:16px/1.6 system-ui;background:#101822;color:#e5ecf4}main{max-width:1120px;margin:auto}h1{font-size:clamp(28px,5vw,42px);line-height:1.2}h2{margin-top:30px;font-size:24px}.status{padding:18px;border:1px solid #8293a8;border-radius:8px}a,code{color:#8bddd8}p,code,pre,td{overflow-wrap:anywhere}.scroll{overflow:auto}table{width:100%;min-width:700px;border-collapse:collapse}th,td{padding:12px;text-align:left;border-bottom:1px solid #344353}pre{padding:16px;background:#172332;border-radius:8px;font-size:13px;white-space:pre-wrap}li{margin:10px 0}</style></head><body><main><h1>Production history original-byte materialization</h1><p>P10d2b2b2b2b · 12 October 2026 · materializer and six pinned-head input proofs.</p><p class="status"><strong>7,169 original regular files materialized and verified · nine symlink blobs verified and skipped.</strong><br>All six target checkout states and materializer sources remain unchanged. The 195-revision analysis, source accuracy, cache/history parity and performance qualification are pending.</p><p>The <a href="production-history-materialization-receipt.json">complete machine-readable receipt</a> retains all 7,178 original entries, Git object IDs, original-byte SHA-256 hashes, independent written-file hashes, limits, explicit skips and exact materializer identities. These six original pinned heads belong to the <a href="production-history-release.html">195-revision reviewed corpus</a>. This slice implements original-byte materialization; it does not qualify analysis of those histories.</p><div class="scroll"><table><thead><tr><th>Original repository</th><th>Regular files</th><th>Skipped symlinks</th><th>Input outcome</th><th>Complete immutable head</th></tr></thead><tbody><tr><th><a href="https://github.com/pallets/flask/tree/d086db856be187255b8ec61ef409357393020f32">flask</a></th><td>236</td><td>0</td><td>materialized</td><td><code>d086db856be187255b8ec61ef409357393020f32</code></td></tr><tr><th><a href="https://github.com/usememos/memos/tree/b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e">memos</a></th><td>1,322</td><td>0</td><td>materialized</td><td><code>b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e</code></td></tr><tr><th><a href="https://github.com/BookStackApp/BookStack/tree/ff661b59f6f605bf768fe850c0d0a8a2dc09d203">bookstack</a></th><td>2,615</td><td>0</td><td>materialized</td><td><code>ff661b59f6f605bf768fe850c0d0a8a2dc09d203</code></td></tr><tr><th><a href="https://github.com/firefly-iii/firefly-iii/tree/57371b9f82debbf90e6453aba8af585e8c382617">firefly-iii</a></th><td>2,248</td><td>0</td><td>materialized</td><td><code>57371b9f82debbf90e6453aba8af585e8c382617</code></td></tr><tr><th><a href="https://github.com/tokio-rs/axum/tree/618496288c41da835683ec149432c4869722779f">axum</a></th><td>500</td><td>5</td><td>materialized-with-skips</td><td><code>618496288c41da835683ec149432c4869722779f</code></td></tr><tr><th><a href="https://github.com/fastapi/full-stack-fastapi-template/tree/f27b4721507824e57ebd0286ff1a84d82e83bf59">full-stack-fastapi</a></th><td>248</td><td>4</td><td>materialized-with-skips</td><td><code>f27b4721507824e57ebd0286ff1a84d82e83bf59</code></td></tr></tbody></table></div><h2>Original bytes, bounded inputs</h2><p>The runner reads Git object bytes directly, checks their full SHA-1 or SHA-256 Git blob identity, computes original-byte SHA-256 and independently hashes every written file. A separate Python audit reconstructs every written file's Git blob identity, compares the exact original NUL-delimited Git tree inventories and checks all nine original symlink blobs. The portfolio contains 53,076,006 admitted original bytes. Every regular file in these heads was materialized; the nine symlinks were never created or followed.</p><p>One fresh observation holds one isolated tree. A future history qualifier can analyze and retire that tree before the next revision. Defaults admit at most 8 MiB per blob, 512 MiB of cumulative original bytes and 100,000 tree entries. The API accepts explicitly reviewed limits and additional protected repository roots. These limits govern materialization input, not analyzer AST/semantic/WASM allocation or physical RSS.</p><p>Symlinks, gitlinks, LFS pointers, unsupported path bytes, unsafe or nonportable paths, portable filesystem alias collisions and size-limit exclusions remain named inventory entries. Admitted symlink and LFS pointer bytes are hashed before skipping. Skipped size or path entries cannot claim complete original-blob verification. Failed originals produce a failure receipt; a successful materialization with skips never claims every regular file was written. Executable Git modes preserve their original bytes as ordinary, non-executable source files.</p><h2>Materialize a reviewed revision offline</h2><pre>node scripts/materialize-production-history.mjs \
+  --repository flask \
+  --commit d086db856be187255b8ec61ef409357393020f32 \
+  --source examples/flask \
+  --output test-results/production-materialization-flask-RUN-ID</pre><p><code>--corpus FILE</code> selects a reviewed alternative corpus. The repository and full commit must belong to that corpus. Choose a fresh output directory outside the source repository; existing directories and paths through symlink aliases into the target are refused. Open its <code>index.html</code> in a browser. <code>receipt.json</code> and <code>revision.json</code> retain the exact observation; <code>tree/</code> contains the isolated regular-file originals.</p><p>The original worktree, index and refs supply no source bytes. Git replacement objects, inherited Git overrides, global/system configuration and filesystem monitoring are disabled. No checkout, filter, submodule, LFS hydration, target dependency, application, hook, runtime, compiler or build executes. The separate analyzer and packaged-runtime qualification uses only Codiluce's owned Node/parser code.</p><h2>Conformance and remaining work</h2><p>Twelve owned Node/Git tests cover independent binary/Unicode identities, dirty and different heads, replacement objects, executable modes, symlink/gitlink isolation, LFS pointers, blob/cumulative/entry limits, failed and missing originals, fresh protected output paths, portable alias collisions, literal special-character filenames, BOM/non-UTF-8 path bytes, complete reviewed CLI pins and escaped receipts.</p><details><summary>Nine original symlink exclusions and their byte hashes</summary><pre>[
+  {
+    &quot;repository&quot;: &quot;axum&quot;,
+    &quot;path&quot;: &quot;README.md&quot;,
+    &quot;reason&quot;: &quot;symlink-not-followed&quot;,
+    &quot;originalSha256&quot;: &quot;686118c46e57e581fd4bc65305aeeb71ab9c4052ac534914f15c62ac0c189b9d&quot;
+  },
+  {
+    &quot;repository&quot;: &quot;axum&quot;,
+    &quot;path&quot;: &quot;axum-core/LICENSE&quot;,
+    &quot;reason&quot;: &quot;symlink-not-followed&quot;,
+    &quot;originalSha256&quot;: &quot;1e881ecf2862d01e6e5bc2b861e46886d2a6fb01499c0c508a209a7271b13cf2&quot;
+  },
+  {
+    &quot;repository&quot;: &quot;axum&quot;,
+    &quot;path&quot;: &quot;axum-extra/LICENSE&quot;,
+    &quot;reason&quot;: &quot;symlink-not-followed&quot;,
+    &quot;originalSha256&quot;: &quot;1e881ecf2862d01e6e5bc2b861e46886d2a6fb01499c0c508a209a7271b13cf2&quot;
+  },
+  {
+    &quot;repository&quot;: &quot;axum&quot;,
+    &quot;path&quot;: &quot;axum-macros/LICENSE&quot;,
+    &quot;reason&quot;: &quot;symlink-not-followed&quot;,
+    &quot;originalSha256&quot;: &quot;1e881ecf2862d01e6e5bc2b861e46886d2a6fb01499c0c508a209a7271b13cf2&quot;
+  },
+  {
+    &quot;repository&quot;: &quot;axum&quot;,
+    &quot;path&quot;: &quot;axum/LICENSE&quot;,
+    &quot;reason&quot;: &quot;symlink-not-followed&quot;,
+    &quot;originalSha256&quot;: &quot;1e881ecf2862d01e6e5bc2b861e46886d2a6fb01499c0c508a209a7271b13cf2&quot;
+  },
+  {
+    &quot;repository&quot;: &quot;full-stack-fastapi&quot;,
+    &quot;path&quot;: &quot;.agents/skills/fastapi&quot;,
+    &quot;reason&quot;: &quot;symlink-not-followed&quot;,
+    &quot;originalSha256&quot;: &quot;e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f&quot;
+  },
+  {
+    &quot;repository&quot;: &quot;full-stack-fastapi&quot;,
+    &quot;path&quot;: &quot;.agents/skills/sqlmodel&quot;,
+    &quot;reason&quot;: &quot;symlink-not-followed&quot;,
+    &quot;originalSha256&quot;: &quot;2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e&quot;
+  },
+  {
+    &quot;repository&quot;: &quot;full-stack-fastapi&quot;,
+    &quot;path&quot;: &quot;.claude/skills/fastapi&quot;,
+    &quot;reason&quot;: &quot;symlink-not-followed&quot;,
+    &quot;originalSha256&quot;: &quot;e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f&quot;
+  },
+  {
+    &quot;repository&quot;: &quot;full-stack-fastapi&quot;,
+    &quot;path&quot;: &quot;.claude/skills/sqlmodel&quot;,
+    &quot;reason&quot;: &quot;symlink-not-followed&quot;,
+    &quot;originalSha256&quot;: &quot;2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e&quot;
+  }
+]</pre></details><ol><li>Materialize and analyze all 195 selected original revisions, retaining every partial, failed and skipped outcome and detected application/source-version profile.</li><li>Independently review original declarations, imports and routes. Compare complete cold/population/warm graphs, historical snapshots, serial/parallel histories and resume behavior against a committed baseline.</li><li>Run the frozen alternating fresh-process performance and process-tree memory gates. Finish broader semantic/compiler/WASM budgets, remaining production framework corpora and actual native-platform qualification separately.</li></ol><p><a href="production-history-release.html">Production history corpus</a> · <a href="language-framework-compatibility.html#implementation">Full implementation roadmap</a> · <a href="native-compatibility-release.html">Native release matrix</a></p></main></body></html>
