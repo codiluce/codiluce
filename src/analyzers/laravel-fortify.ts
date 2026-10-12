@@ -12,10 +12,12 @@
 // action endpoint is handled by the bound class's method. Endpoints served
 // only by Fortify's own controllers still exist, so client requests match.
 import path from 'node:path';
-import type { AnalysisContext } from '../core/analyzer.js';
+import type { ScannedFile, AnalysisContext } from '../core/analyzer.js';
 import { evidence, type Entity, type Evidence } from '../core/graph.js';
 import type { ApplicationConfig } from '../core/config.js';
 import { args, ast, classConstant, inertiaPageOf, literal, name, nodes, resolve, scopedChildren, text, walk, type Ast, type ParsedFile } from './php-ast.js';
+
+import type {LaravelFiles} from '../analysis/php/laravel-files.js';
 
 const FORTIFY = 'laravel\\fortify\\fortify';
 type Feature = 'registration' | 'resetPasswords' | 'emailVerification' | 'updateProfileInformation' | 'updatePasswords' | 'twoFactorAuthentication';
@@ -60,11 +62,11 @@ export const FORTIFY_ROUTES: FortifyRoute[] = [
 /** RoutePath::for keys: a route's `fortify.paths` override is keyed by its name without `.store`. */
 const pathKey = (route: FortifyRoute) => route.name === 'password.confirm.store' ? 'password.confirm' : route.name === 'two-factor.regenerate-recovery-codes' ? 'two-factor.recovery-codes' : route.name.replace(/\.store$/, '');
 
-interface Binding { parsed: ParsedFile; node: Ast; page?: string; view?: string; actionClass?: string }
-interface FortifyConfig { parsed: ParsedFile; features: Set<string>; prefix: string; views: boolean; middleware: string[]; paths: Map<string, string>; facts: Evidence[] }
+interface Binding { file:ScannedFile; node:Ast; argumentText?:string; page?: string; view?: string; actionClass?: string }
+interface FortifyConfig { file: ScannedFile; features: Set<string>; prefix: string; views: boolean; middleware: string[]; paths: Map<string, string>; facts: Evidence[] }
 
 function readConfig(parsed: ParsedFile): FortifyConfig {
-  const config: FortifyConfig = { parsed, features: new Set(), prefix: '', views: true, middleware: ['web'], paths: new Map(), facts: [evidence('framework', 'php-laravel', parsed.file.path, 1, 'Fortify configuration (config/fortify.php): features, prefix, middleware, views')] };
+  const config: FortifyConfig = { file:parsed.file, features: new Set(), prefix: '', views: true, middleware: ['web'], paths: new Map(), facts: [evidence('framework', 'php-laravel', parsed.file.path, 1, 'Fortify configuration (config/fortify.php): features, prefix, middleware, views')] };
   let returned: Ast | undefined;
   walk(parsed.ast, node => { if (!returned && node.kind === 'return' && ast(node.expr)?.kind === 'array') returned = ast(node.expr); });
   for (const item of nodes(returned?.items)) {
@@ -84,14 +86,16 @@ function readConfig(parsed: ParsedFile): FortifyConfig {
 }
 
 /** Declare an application's Fortify endpoints; true when Fortify is configured or bound in it. */
-export function declareFortify(context: AnalysisContext, app: ApplicationConfig, appId: string, parsedFiles: Map<string, ParsedFile>, methods: Map<string, Entity>): boolean {
+export async function declareFortify(context: AnalysisContext, app: ApplicationConfig, appId: string, parsedFiles: LaravelFiles, methods: Map<string, Entity>): Promise<boolean> {
   const { graph } = context;
   const base = app.path === '.' ? '' : app.path;
-  const configFile = parsedFiles.get(path.posix.join(base, 'config/fortify.php'));
+  let config:FortifyConfig|undefined;
+  {const parsed=await parsedFiles.get(path.posix.join(base,'config/fortify.php'));if(parsed)config=readConfig(parsed);}
   const bindings = new Map<string, Binding>();
   let ignoreRoutes: Binding | undefined;
-  for (const parsed of parsedFiles.values()) {
-    if (parsed.file.application?.name !== app.name || !/\bFortify\b/.test(parsed.content)) continue;
+  for (const file of parsedFiles.fortifyFiles()) {
+    if(file.application?.name!==app.name)continue;
+    const parsed=await parsedFiles.get(file.path);if(!parsed||!/\bFortify\b/.test(parsed.content))continue;
     scopedChildren(parsed.ast, { namespace: '', imports: new Map() }, (children, scope) => {
       for (const child of children) walk(child, node => {
         if (node.kind !== 'call') return;
@@ -100,23 +104,24 @@ export function declareFortify(context: AnalysisContext, app: ApplicationConfig,
         const method = name(what.offset);
         if (!method) return;
         const argument = args(node)[0];
-        if (method === 'ignoreRoutes') ignoreRoutes = { parsed, node };
-        else if (method.endsWith('View')) bindings.set(method, { parsed, node, ...(argument && ['closure', 'arrowfunc'].includes(argument.kind) ? { page: inertiaPageOf(argument, scope) } : literal(argument) ? { view: literal(argument) } : {}) });
-        else if (method.endsWith('Using')) bindings.set(method, { parsed, node, actionClass: classConstant(argument, scope) ?? literal(argument)?.replace(/^\\/, '') });
+        const location:Ast={kind:node.kind,...node.loc?{loc:{start:{...node.loc.start},end:{...node.loc.end}}}:{}};
+        const binding={file:parsed.file,node:location,argumentText:Buffer.from(text(argument,parsed).slice(0,60),'utf16le').toString('utf16le')};
+        if (method === 'ignoreRoutes') ignoreRoutes = binding;
+        else if (method.endsWith('View')) bindings.set(method, { ...binding, ...(argument && ['closure', 'arrowfunc'].includes(argument.kind) ? { page: inertiaPageOf(argument, scope) } : literal(argument) ? { view: literal(argument) } : {}) });
+        else if (method.endsWith('Using')) bindings.set(method, { ...binding, actionClass: classConstant(argument, scope) ?? literal(argument)?.replace(/^\\/, '') });
       });
     });
   }
-  if (!configFile && !bindings.size) return false;
+  if (!config && !bindings.size) return false;
   if (ignoreRoutes) {
-    graph.diagnose({ analyzer: 'php-laravel', severity: 'info', code: 'fortify-routes-ignored', file: ignoreRoutes.parsed.file.path, line: ignoreRoutes.node.loc?.start.line, reason: 'Fortify::ignoreRoutes(): the application registers its own authentication routes' });
+    graph.diagnose({ analyzer: 'php-laravel', severity: 'info', code: 'fortify-routes-ignored', file: ignoreRoutes.file.path, line: ignoreRoutes.node.loc?.start.line, reason: 'Fortify::ignoreRoutes(): the application registers its own authentication routes' });
     return true;
   }
   // Without config/fortify.php, Fortify reads no features and serves views.
-  const config = configFile ? readConfig(configFile) : undefined;
   const features = config?.features ?? new Set<string>();
   const views = config?.views ?? true;
-  const anchor = config?.parsed ?? [...bindings.values()][0]!.parsed;
-  const anchorFacts = config?.facts ?? [evidence('framework', 'php-laravel', anchor.file.path, 1, 'Fortify bindings (no config/fortify.php: default prefix, middleware and views)')];
+  const anchor = config?.file ?? [...bindings.values()][0]!.file;
+  const anchorFacts = config?.facts ?? [evidence('framework', 'php-laravel', anchor.path, 1, 'Fortify bindings (no config/fortify.php: default prefix, middleware and views)')];
   // A route the application declares itself wins over the package's (as Laravel's route collection does with a later registration).
   const own = new Set([...graph.entities.values()].filter(entity => entity.type === 'api_endpoint' && entity.parentId === appId).map(entity => entity.name));
   let declared = 0;
@@ -127,19 +132,19 @@ export function declareFortify(context: AnalysisContext, app: ApplicationConfig,
     const uri = config?.paths.get(pathKey(route)) ?? route.uri;
     const fullPath = `/${[config?.prefix ?? '', uri].map(part => part.replace(/^\/+|\/+$/g, '')).filter(Boolean).join('/')}`;
     const handler = binding?.actionClass && route.binding ? methods.get(`${app.name}:${binding.actionClass.toLowerCase()}::${route.binding.method}`) : undefined;
-    const where = binding?.parsed ?? anchor;
-    const bound = binding ? [{ ...evidence('framework', 'php-laravel', binding.parsed.file.path, binding.node.loc?.start.line, `Fortify::${route.view ?? route.binding!.register}(${text(args(binding.node)[0], binding.parsed).slice(0, 60)}) serves ${route.method} ${fullPath}`), endLine: binding.node.loc?.end.line }] : [];
-    const facts = [...anchorFacts, ...bound, evidence('framework', 'php-laravel', where.file.path, binding?.node.loc?.start.line, `laravel/fortify registers ${route.method} ${fullPath} (${route.name}) → ${route.controller}@${route.action}${route.feature ? `, with Features::${route.feature}()` : ''}`)];
+    const where = binding?.file ?? anchor;
+    const bound = binding ? [{ ...evidence('framework', 'php-laravel', binding.file.path, binding.node.loc?.start.line, `Fortify::${route.view ?? route.binding!.register}(${binding.argumentText??''}) serves ${route.method} ${fullPath}`), endLine: binding.node.loc?.end.line }] : [];
+    const facts = [...anchorFacts, ...bound, evidence('framework', 'php-laravel', where.path, binding?.node.loc?.start.line, `laravel/fortify registers ${route.method} ${fullPath} (${route.name}) → ${route.controller}@${route.action}${route.feature ? `, with Features::${route.feature}()` : ''}`)];
     const handlerKind = handler ? 'method' : binding?.page ? 'closure' : 'package';
     for (const method of route.method === 'GET' ? ['GET', 'HEAD'] : [route.method]) {
       const id = graph.id('endpoint', app.name, method, fullPath, 'laravel/fortify', route.name);
       if (graph.entities.has(id) || own.has(`${method} ${fullPath}`)) continue;
-      const endpoint = graph.contain({ id, type: 'api_endpoint', name: `${method} ${fullPath}`, path: where.file.path, parentId: appId, sourceRange: binding?.node.loc ? { startLine: binding.node.loc.start.line, endLine: binding.node.loc.end.line } : undefined, metadata: { method, routePath: fullPath, framework: 'laravel', routeFile: where.file.path, api: false, registration: 'package', package: 'laravel/fortify', middleware: config?.middleware ?? ['web'], constraintsUnresolved: false, handlerKind, routeName: route.name, controller: C + route.controller, controllerMethod: route.action, ...(binding?.page ? { inertiaPage: binding.page } : {}), ...(binding?.view ? { view: binding.view } : {}) }, evidence: facts });
+      const endpoint = graph.contain({ id, type: 'api_endpoint', name: `${method} ${fullPath}`, path: where.path, parentId: appId, sourceRange: binding?.node.loc ? { startLine: binding.node.loc.start.line, endLine: binding.node.loc.end.line } : undefined, metadata: { method, routePath: fullPath, framework: 'laravel', routeFile: where.path, api: false, registration: 'package', package: 'laravel/fortify', middleware: config?.middleware ?? ['web'], constraintsUnresolved: false, handlerKind, routeName: route.name, controller: C + route.controller, controllerMethod: route.action, ...(binding?.page ? { inertiaPage: binding.page } : {}), ...(binding?.view ? { view: binding.view } : {}) }, evidence: facts });
       if (handler) graph.relate(endpoint.id, handler.id, 'handles', [...facts, ...handler.evidence]);
       declared++;
     }
-    if (route.binding && binding?.actionClass && !handler) graph.diagnose({ analyzer: 'php-laravel', severity: 'warning', code: 'fortify-action-unresolved', file: binding.parsed.file.path, line: binding.node.loc?.start.line, reason: `Fortify::${route.binding.register} binds ${binding.actionClass}, but no ${binding.actionClass}::${route.binding.method}() is indexed` });
+    if (route.binding && binding?.actionClass && !handler) graph.diagnose({ analyzer: 'php-laravel', severity: 'warning', code: 'fortify-action-unresolved', file: binding.file.path, line: binding.node.loc?.start.line, reason: `Fortify::${route.binding.register} binds ${binding.actionClass}, but no ${binding.actionClass}::${route.binding.method}() is indexed` });
   }
-  graph.diagnose({ analyzer: 'php-laravel', severity: 'info', code: 'package-routes', file: anchor.file.path, reason: `${app.name}: ${declared} laravel/fortify endpoints from ${config ? `config/fortify.php (features: ${[...features].join(', ') || 'none'})` : 'Fortify bindings'}; the package's own controllers are not indexed` });
+  graph.diagnose({ analyzer: 'php-laravel', severity: 'info', code: 'package-routes', file: anchor.path, reason: `${app.name}: ${declared} laravel/fortify endpoints from ${config ? `config/fortify.php (features: ${[...features].join(', ') || 'none'})` : 'Fortify bindings'}; the package's own controllers are not indexed` });
   return true;
 }

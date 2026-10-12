@@ -21,6 +21,7 @@ import type { Entity, Evidence } from '../core/graph.js';
 import { evidence } from '../core/graph.js';
 import { args, ast, classConstant, literal, name, nodes, resolve, scopedChildren, text, type Ast, type ParsedFile, type Scope } from './php-ast.js';
 import { classChain, isEloquentModel, type PhpClass, type TableLookup } from './php-references.js';
+import type {LaravelFiles} from '../analysis/php/laravel-files.js';
 import { MAX_SITE_EVIDENCE } from './references.js';
 
 export interface TableColumn { name: string; type: string; nullable?: boolean; unique?: boolean; primary?: boolean; default?: string }
@@ -123,9 +124,9 @@ function stringList(value: Ast | undefined): string[] | undefined {
 }
 
 /** Replay the migrations of one application. Files must belong to it; order is by file name. */
-export function extractSchema(files: ParsedFile[], analyzer: string): { tables: Map<string, TableDefinition>; diagnostics: SchemaDiagnostic[] } {
-  const tables = new Map<string, TableDefinition>();
-  const diagnostics: SchemaDiagnostic[] = [];
+export function extractSchema(files: ParsedFile[], analyzer: string, state?:{tables:Map<string,TableDefinition>;diagnostics:SchemaDiagnostic[]}, final=true): { tables: Map<string, TableDefinition>; diagnostics: SchemaDiagnostic[] } {
+  const tables = state?.tables??new Map<string, TableDefinition>();
+  const diagnostics: SchemaDiagnostic[] = state?.diagnostics??[];
   const ordered = [...files].sort((a, b) => path.posix.basename(a.file.path) < path.posix.basename(b.file.path) ? -1 : path.posix.basename(a.file.path) > path.posix.basename(b.file.path) ? 1 : 0);
   for (const parsed of ordered) {
     const file = parsed.file.path;
@@ -303,7 +304,7 @@ export function extractSchema(files: ParsedFile[], analyzer: string): { tables: 
       for (const statement of nodes(ast(method.body)?.children)) visit(statement, false);
     }
   }
-  for (const table of tables.values()) if (!table.created) diagnostics.push({ file: table.operations[0]!.file, line: table.operations[0]!.line, code: 'table-created-elsewhere', severity: 'info', reason: `Migrations alter ${table.name} but none creates it (an older schema dump, a package or another application may)` });
+  if(final)for (const table of tables.values()) if (!table.created) diagnostics.push({ file: table.operations[0]!.file, line: table.operations[0]!.line, code: 'table-created-elsewhere', severity: 'info', reason: `Migrations alter ${table.name} but none creates it (an older schema dump, a package or another application may)` });
   return { tables, diagnostics };
 }
 const TYPE_NAMES: Record<string, string> = {
@@ -330,7 +331,7 @@ function onDelete(modifiers: Call[]): string | undefined {
  * them. Eloquent models (an `extends` chain reaching an Eloquent base) become
  * `model` entities. Returns the lookup call resolution uses for table reads and writes.
  */
-export function declareTables(context: AnalysisContext, parsedFiles: Map<string, ParsedFile>, classes: Map<string, PhpClass>): TableLookup {
+export async function declareTables(context: AnalysisContext, parsedFiles: LaravelFiles, classes: Map<string, PhpClass>): Promise<TableLookup> {
   const { graph } = context;
   const analyzer = 'php-laravel';
   const byApp = new Map<string, Map<string, Entity>>();
@@ -339,8 +340,10 @@ export function declareTables(context: AnalysisContext, parsedFiles: Map<string,
     const appId = context.applicationIds.get(app.name);
     if (!appId) continue;
     const prefix = app.path === '.' ? '' : `${app.path}/`;
-    const migrations = [...parsedFiles.values()].filter(parsed => parsed.file.application?.name === app.name && /^database\/migrations\/[^/]+\.php$/.test(parsed.file.path.slice(prefix.length)));
-    const { tables, diagnostics } = extractSchema(migrations, analyzer);
+    const migrations = [...parsedFiles.values()].filter(file => file.application?.name === app.name && /^database\/migrations\/[^/]+\.php$/.test(file.path.slice(prefix.length))).sort((a,b)=>path.posix.basename(a.path)<path.posix.basename(b.path)?-1:path.posix.basename(a.path)>path.posix.basename(b.path)?1:0);
+    let state=extractSchema([],analyzer,undefined,false);
+    for(const file of migrations){const parsed=await parsedFiles.get(file.path);if(parsed)state=extractSchema([parsed],analyzer,state,false);}
+    const { tables, diagnostics } = extractSchema([],analyzer,state);
     for (const item of diagnostics) graph.diagnose({ analyzer, severity: item.severity, code: item.code, reason: item.reason, file: item.file, ...(item.line ? { line: item.line } : {}), ...(context.files.get(item.file) ? { entityId: context.files.get(item.file)!.id } : {}) });
     const entities = new Map<string, Entity>();
     byApp.set(app.name, entities);
@@ -375,7 +378,7 @@ export function declareTables(context: AnalysisContext, parsedFiles: Map<string,
       if (phpClass.app !== app.name || phpClass.node.isAbstract || !isEloquentModel(classes, app.name, phpClass.fqn)) continue;
       if (phpClass.entity.type === 'class') phpClass.entity.type = 'model';
       const declared = declaredTable(classes, app.name, phpClass);
-      const file = phpClass.parsed.file;
+      const file = phpClass.file;
       if (declared === 'custom') { graph.diagnose({ analyzer, severity: 'info', code: 'custom-model-table', reason: `${phpClass.fqn} overrides getTable() or sets $table dynamically; its table is not inferred`, file: file.path, entityId: phpClass.entity.id, ...(phpClass.node.loc ? { line: phpClass.node.loc.start.line } : {}) }); continue; }
       const tableName = declared?.value ?? conventionTable(phpClass.entity.name);
       const target = entities.get(tableName);
@@ -401,7 +404,7 @@ function declaredTable(classes: Map<string, PhpClass>, app: string, model: PhpCl
         if (name(property.name) !== 'table') continue;
         const value = literal(property.value);
         if (value === undefined) return 'custom';
-        return { value, file: info.parsed.file.path, ...(item.loc ? { line: item.loc.start.line, endLine: item.loc.end.line } : {}), ...(info !== model ? { inherited: info.fqn } : {}) };
+        return { value, file: info.file.path, ...(item.loc ? { line: item.loc.start.line, endLine: item.loc.end.line } : {}), ...(info !== model ? { inherited: info.fqn } : {}) };
       }
     }
   }

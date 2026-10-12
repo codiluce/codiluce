@@ -4,11 +4,13 @@ import { ast, name, nodes, type Ast } from '../../analyzers/php-ast.js';
 import { fileAnalysis, type DeclarationFact, type ImportOutcome, type PhpImportFact } from '../facts.js';
 import { PhpResolver } from '../resolution/php.js';
 import { SourceText } from '../source-map.js';
+import {bindingNode} from '../php/binding-node.js';
+import type {PhpSource} from '../php/sources.js';
 
 export const PHP_SYMBOL_VERSION=`${ANALYZER_VERSION}:php-source-binding:1`;
 const fold=(value:string)=>value.replace(/[A-Z]/g,c=>c.toLowerCase());
 const TYPE_KINDS=['class','interface','trait','enum'];
-interface Definition {id:string;fact:DeclarationFact;node:Ast;unit:Unit;frame:Frame;type?:Ast}
+interface Definition {id:string;fact:DeclarationFact;node:Ast;unit:Unit;frame:Frame;type?:Ast;detached?:boolean}
 interface Write {node:Ast;frame:Frame;value?:Ast;start:number;conditional:boolean;unsafe:boolean}
 interface Variable {parameter?:Ast;writes:Write[];capture?:{frame:Frame;name:string;start:number;byref:boolean}}
 interface Frame {key:string;kind:'file'|'namespace'|'type'|'function'|'closure'|'arrow';unit:Unit;namespace:string;importScope:string;owner?:string;definition?:Definition;cls?:Definition;thisClass?:Definition;parent?:Frame;variables:Map<string,Variable>;dynamic?:string}
@@ -24,9 +26,11 @@ const gap=(reason:string,proof:Evidence[]=[],status:Extract<Value,{kind:'gap'}>[
  * variables live in callable scopes; namespaces only select name import tables.
  * Direct calls and nominal type references have distinct graph edge types. */
 export class PhpSymbols {
-  private readonly units=new Map<string,Unit>();
+  private readonly files=new Map<string,ScannedFile>();
+  private active?:Unit;
+  private totalSites=0;private totalExpressionBytes=0;private peakUnits=0;
   private readonly definitions=new Map<string,Definition>();
-  private readonly boundClosures=new Map<Ast,Definition>();
+  private readonly boundClosures=new Map<string,Definition>();
   private readonly applicationTypes=new Map<string,Definition[]>();
   private readonly qualifiedNames=new Map<string,Value>();
   private readonly methods=new Map<string,Map<string,Definition[]>>();
@@ -34,21 +38,63 @@ export class PhpSymbols {
   private peakOriginalBytes=0;
   constructor(private readonly context:AnalysisContext,private readonly resolver:PhpResolver){}
   /** Numeric ownership evidence only; never included in semantic graphs. */
-  sourceRetentionStats(){const units=[...this.units.values()];return {units:units.length,sites:units.reduce((count,unit)=>count+unit.sites.length,0),originalBytes:units.reduce((bytes,unit)=>bytes+('source' in unit&&unit.source instanceof SourceText?2*unit.source.text.length:0),0),expressionBytes:units.reduce((bytes,unit)=>bytes+unit.sites.reduce((sum,site)=>sum+2*site.expression.length,0),0),peakOriginalBytes:this.peakOriginalBytes};}
+  sourceRetentionStats(){return {units:this.files.size,sites:this.totalSites,originalBytes:0,expressionBytes:this.totalExpressionBytes,peakOriginalBytes:this.peakOriginalBytes,activeUnits:this.active?1:0,peakUnits:this.peakUnits,catalogDefinitions:this.definitions.size};}
+  private closureKey(file:string,node:Ast){return JSON.stringify([file,node.kind,node.loc?.start.offset,node.loc?.end.offset]);}
+  private async source(file:ScannedFile):Promise<PhpSource|undefined>{
+    try{return await this.context.phpSources?.read(file);}
+    catch(error){
+      const reason=error instanceof Error?error.message:String(error),analysis=fileAnalysis(this.context.graph.entities.get(file.id)!.metadata.analysis);
+      this.context.syntax?.delete(file.path);if(analysis)analysis.features.references={status:'failed',reason};
+      this.context.graph.diagnose({analyzer:'php-symbols',severity:'warning',code:'php-binding-source-unavailable',file:file.path,entityId:file.id,reason});return undefined;
+    }
+  }
   async prepare():Promise<void> {
     for(const file of this.context.files.values()) {
-      const syntax=this.context.syntax?.get(file.path);
-      if(file.language!=='php'||!file.analyzable||!syntax?.facts.php||syntax.facts.truncated)continue;
-      let source;
-      try{source=await this.context.phpSources?.read(file);}
-      catch(error){
-        const reason=error instanceof Error?error.message:String(error),analysis=fileAnalysis(this.context.graph.entities.get(file.id)!.metadata.analysis);
-        this.context.syntax?.delete(file.path);if(analysis)analysis.features.references={status:'failed',reason};
-        this.context.graph.diagnose({analyzer:'php-symbols',severity:'warning',code:'php-binding-source-unavailable',file:file.path,entityId:file.id,reason});continue;
+      if(file.language!=='php'||!file.analyzable)continue;
+      // Source availability and catalog construction share one validated read.
+      // Unavailable/truncated inputs still retain their explicit outcomes; a
+      // later emission read independently validates the original body again.
+      const source=await this.source(file);
+      if(!source?.ast){
+        const analysis=fileAnalysis(this.context.graph.entities.get(file.id)!.metadata.analysis);
+        if(analysis&&(source||analysis.features.references.status!=='failed'))analysis.features.references={status:'failed',reason:source?.astGap??'Qualified original PHP source tree is unavailable'};
+        continue;
       }
-      if(!source?.ast)continue;
-      const original=new SourceText(source.content);this.peakOriginalBytes=Math.max(this.peakOriginalBytes,2*source.content.length);
-      const unit:Unit={file,definitions:[],frames:[],sites:[],work:0};this.units.set(file.path,unit);
+      const syntax=this.context.syntax?.get(file.path);
+      if(!syntax?.facts.php||syntax.facts.truncated)continue;
+      const unit=this.unit(file,source,true);this.files.set(file.path,file);
+      // The cross-file catalog owns signatures and lexical name context only.
+      // Frames in this catalog cannot reach a unit's sites, writes or AST body.
+      const stub:Unit={file,definitions:[],frames:[],sites:[],work:0},known=new WeakMap<Ast,Ast>();
+      for(const definition of unit.definitions){
+        definition.node=bindingNode(definition.node,known);if(definition.type)definition.type=bindingNode(definition.type,known);
+        definition.detached=true;
+        definition.unit=stub;
+        definition.frame={...definition.frame,unit:stub,parent:undefined,variables:new Map()};
+      }
+    }
+    for(const definition of this.definitions.values()) {
+      const parent=definition.fact.parent?this.context.syntax?.get(definition.unit.file.path)?.declarations.get(definition.fact.parent):undefined;
+      if(!parent)continue;
+      const catalog=['method','constructor','destructor'].includes(definition.fact.kind)?this.methods:['property','promoted-property','class-constant','enum-case'].includes(definition.fact.kind)?this.properties:undefined;
+      if(catalog){const entries=catalog.get(parent)??new Map(),key=catalog===this.methods?fold(definition.fact.name):definition.fact.name;entries.set(key,[...entries.get(key)??[],definition]);catalog.set(parent,entries);}
+    }
+  }
+  private unit(file:ScannedFile,source:PhpSource,catalog:boolean):Unit {
+      if(!source.ast)throw Error('Qualified PHP binding tree is unavailable');
+      const syntax=this.context.syntax!.get(file.path)!;
+      const original=catalog?undefined:new SourceText(source.content);this.peakOriginalBytes=Math.max(this.peakOriginalBytes,2*source.content.length);
+      const unit:Unit={file,definitions:[],frames:[],sites:[],work:0};
+      // Catalog traversal needs only ancestors of exact original declaration
+      // names. A callable's enclosing end offset also covers its body, so end
+      // offsets alone would keep every unrelated expression in that body.
+      const declarationNames=catalog?syntax.facts.declarations.map(fact=>fact.nameEnd).sort((a,b)=>a-b):[];
+      const hasDeclaration=(node:Ast):boolean=>{
+        if(!node.loc)return true;
+        let low=0,high=declarationNames.length;
+        while(low<high){const middle=(low+high)>>>1;if(declarationNames[middle]!<=node.loc.start.offset)low=middle+1;else high=middle;}
+        return low<declarationNames.length&&declarationNames[low]!<=node.loc.end.offset;
+      };
       const matches=new Map<string,DeclarationFact>();
       for(const fact of syntax.facts.declarations)matches.set(`${fact.end}:${fact.kind}:${fact.name}`,fact);
       const root:Frame={key:`php-file:0:${source.content.length}`,kind:'file',unit,namespace:'',importScope:`php-file:0:${source.content.length}`,owner:file.id,variables:new Map()};unit.frames.push(root);
@@ -65,31 +111,37 @@ export class PhpSymbols {
         if(kind==='enumcase')kind='enum-case';
         if(kind==='propertyhook')kind=`property-${label}`;
         const fact=matches.get(`${node.loc?.end.offset}:${kind}:${label}`),id=fact?syntax.declarations.get(fact.key):undefined;
-        const definition=fact&&id?{id,fact,node:['closure-binding','arrow-binding'].includes(kind)?ast(node.right)!:node,unit,frame,type:ast(node.type)??ast(statement?.type)}:undefined;
+        // The validated original still defines scopes and writes. Its exact
+        // declaration identity can reuse the catalog's immutable signature;
+        // the emission definition and lexical frame remain file-local.
+        const header=!catalog&&id?this.definitions.get(id):undefined;
+        const detached=header?.detached?header:undefined;
+        const definition:Definition|undefined=fact&&id?{id,fact,node:detached?.node??(['closure-binding','arrow-binding'].includes(kind)?ast(node.right)!:node),unit,frame,type:detached?detached.type:ast(node.type)??ast(statement?.type),detached:!!detached}:undefined;
         if(definition){
-          unit.definitions.push(definition);this.definitions.set(definition.id,definition);
-          if(TYPE_KINDS.includes(kind)){const key=JSON.stringify([file.application?.name,fold(fact!.qualifiedName)]),entries=this.applicationTypes.get(key)??[];entries.push(definition);this.applicationTypes.set(key,entries);}
-          if(['closure-binding','arrow-binding'].includes(kind))this.boundClosures.set(ast(node.right)!,definition);
+          unit.definitions.push(definition);if(catalog)this.definitions.set(definition.id,definition);
+          if(catalog&&TYPE_KINDS.includes(kind)){const key=JSON.stringify([file.application?.name,fold(fact!.qualifiedName)]),entries=this.applicationTypes.get(key)??[];entries.push(definition);this.applicationTypes.set(key,entries);}
+          if(catalog&&['closure-binding','arrow-binding'].includes(kind))this.boundClosures.set(this.closureKey(file.path,ast(node.right)!),definition);
         }
         if(node.kind==='namespace') {
           frame={...root,key:`php-namespace:${node.loc!.start.offset}:${node.loc!.end.offset}`,kind:'namespace',namespace:String(node.name??''),importScope:`php-namespace:${node.loc!.start.offset}:${node.loc!.end.offset}`,parent:root};unit.frames.push(frame);
         }else if(TYPE_KINDS.includes(node.kind)) {
           frame={...frame,key:`php-type:${node.loc?.start.offset}`,kind:'type',owner:definition?.id,definition,cls:definition,thisClass:undefined,parent:frame,variables:new Map()};unit.frames.push(frame);
         }else if(['function','method','closure','arrowfunc','propertyhook'].includes(node.kind)) {
-          const closure=['closure','arrowfunc'].includes(node.kind),owner=definition??this.boundClosures.get(node);
+          const closure=['closure','arrowfunc'].includes(node.kind),owner=definition??this.boundClosures.get(this.closureKey(frame.unit.file.path,node));
           const parent=frame;
           frame={key:`php-callable:${node.loc?.start.offset}:${node.loc?.end.offset}`,kind:closure?node.kind==='closure'?'closure':'arrow':'function',unit,namespace:parent.namespace,importScope:parent.importScope,owner:owner?.id,definition:owner,parent,cls:node.kind==='function'?undefined:parent.cls,thisClass:node.isStatic?undefined:closure?parent.thisClass:['method','propertyhook'].includes(node.kind)?parent.cls:undefined,variables:new Map()};unit.frames.push(frame);
           // Named nested functions keep namespace identity but cannot inherit
           // their enclosing method's lexical self/parent return-type context.
           if(owner?.fact.kind==='function')owner.frame=frame;
-          if(node.kind==='closure')for(const capture of nodes(node.uses))if(typeof capture.name==='string'){
+          if(!catalog&&node.kind==='closure')for(const capture of nodes(node.uses))if(typeof capture.name==='string'){
             frame.variables.set(capture.name,{writes:[],capture:{frame:parent,name:capture.name,start:node.loc!.start.offset,byref:!!capture.byref}});
             if(capture.byref){const variable=this.variable(parent,capture.name);variable.writes.push({node:capture,frame:parent,start:capture.loc!.start.offset,conditional:false,unsafe:true});}
           }
           const parameters=nodes(node.arguments),hookParameter=ast(node.parameter);if(hookParameter)parameters.push(hookParameter);
-          for(const parameter of parameters)if(name(parameter.name))frame.variables.set(name(parameter.name)!,{parameter,writes:[]});
+          if(!catalog)for(const parameter of parameters)if(name(parameter.name))frame.variables.set(name(parameter.name)!,{parameter,writes:[]});
           conditional=false;
         }
+        if(!catalog){
         if(node.kind==='assign'||node.kind==='assignref') {
           const left=ast(node.left);if(left?.kind==='variable'&&typeof left.name==='string')this.variable(frame,left.name).writes.push({node,frame,value:ast(node.right),start:node.loc!.start.offset,conditional,unsafe:node.kind==='assignref'||node.operator!=='='});
           else if(left?.kind==='variable')frame.dynamic='Dynamic original variable assignment';
@@ -112,24 +164,33 @@ export class PhpSymbols {
             // string. Copy UTF-16 code units, including a truncated surrogate,
             // so bounded expressions own no original-source backing storage.
             const expression=Buffer.from(source.content.slice(node.loc!.start.offset,Math.min(node.loc!.end.offset,node.loc!.start.offset+2048)),'utf16le').toString('utf16le');
-            unit.sites.push({node,frame,kind:referenceKind,range:original.range(node.loc!.start.offset,node.loc!.end.offset),expression});
+            unit.sites.push({node,frame,kind:referenceKind,range:original!.range(node.loc!.start.offset,node.loc!.end.offset),expression});
           }else unit.gap='Original PHP reference site budget exceeded';
+        }
         }
         if(['propertystatement','classconstant','constantstatement'].includes(node.kind))statement=node;
         if(['if','while','do','for','foreach','switch','case','try','catch','finally','retif','match','matcharm'].includes(node.kind)||node.kind==='bin'&&['&&','||','and','or','??'].includes(String(node.type)))conditional=true;
         const children:{node:Ast;field:string}[]=[];for(const [field,value]of Object.entries(node)){if(['loc','tokens','comments','leadingComments','trailingComments'].includes(field))continue;if(Array.isArray(value))children.push(...nodes(value).map(node=>({node,field})));else if(ast(value))children.push({node:ast(value)!,field});}
-        for(let index=children.length-1;index>=0;index--)pending.push({...children[index]!,frame,conditional,statement,parent:node});
+        for(let index=children.length-1;index>=0;index--){
+          const child=children[index]!;if(catalog&&!hasDeclaration(child.node))continue;
+          pending.push({...child,frame,conditional,statement,parent:node});
+        }
       }
-    }
-    for(const definition of this.definitions.values()) {
-      const parent=definition.fact.parent?this.context.syntax?.get(definition.unit.file.path)?.declarations.get(definition.fact.parent):undefined;
-      if(!parent)continue;
-      const catalog=['method','constructor','destructor'].includes(definition.fact.kind)?this.methods:['property','promoted-property','class-constant','enum-case'].includes(definition.fact.kind)?this.properties:undefined;
-      if(catalog){const entries=catalog.get(parent)??new Map(),key=catalog===this.methods?fold(definition.fact.name):definition.fact.name;entries.set(key,[...entries.get(key)??[],definition]);catalog.set(parent,entries);}
-    }
+      if(!catalog){
+        const known=new WeakMap<Ast,Ast>();
+        for(const definition of unit.definitions)if(!definition.detached){definition.node=bindingNode(definition.node,known);if(definition.type)definition.type=bindingNode(definition.type,known);definition.detached=true;}
+        for(const frame of unit.frames)for(const variable of frame.variables.values()){
+          if(variable.parameter)variable.parameter=bindingNode(variable.parameter,known);
+          for(const write of variable.writes){write.node=bindingNode(write.node,known);if(write.value)write.value=bindingNode(write.value,known);}
+        }
+        for(const site of unit.sites)site.node=bindingNode(site.node,known);
+      }
+      return unit;
+  }
+  private invalidateArguments(unit:Unit):void {
     // A call can rebind an argument through a reference parameter. Unknown
     // callees cannot certify unchanged local bindings after such an escape.
-    for(const unit of this.units.values())for(const {node,frame}of unit.sites)if(node.kind==='call'||node.kind==='new') {
+    for(const {node,frame}of unit.sites)if(node.kind==='call'||node.kind==='new') {
       const arguments_=nodes(node.arguments);
       // Only direct variable arguments can escape through this profile's
       // reference parameters. Resolving every zero/literal-argument call here
@@ -242,7 +303,7 @@ export class PhpSymbols {
       const result=this.value(write.frame,write.value,write.start,depth+1);return {...result,proof:[...result.proof,this.proof(write.frame,write.node,'One prior unconditional original variable assignment')]};
     }
     if(node.kind==='new') {const type=this.classValue(frame,ast(node.what),depth+1);return type.kind==='class'&&type.definition.fact.kind==='class'&&!type.definition.node.isAbstract?{...type,kind:'instance',exact:true}:type.kind==='class'?gap('Original type cannot be certified as instantiable'):type;}
-    if(node.kind==='closure'||node.kind==='arrowfunc'){const definition=this.boundClosures.get(node);return definition?{kind:'callable',definition,proof:[this.proof(frame,node,'Original named callable source binding')]}:gap('Anonymous callable has no original named source owner');}
+    if(node.kind==='closure'||node.kind==='arrowfunc'){const definition=this.boundClosures.get(this.closureKey(frame.unit.file.path,node));return definition?{kind:'callable',definition,proof:[this.proof(frame,node,'Original named callable source binding')]}:gap('Anonymous callable has no original named source owner');}
     if(node.kind==='string'&&typeof node.value==='string') {
       const parts=node.value.replace(/^\\/,'').split('::');
       if(parts.length===1)return this.qualified(frame,'function',parts[0]!);
@@ -292,9 +353,19 @@ export class PhpSymbols {
     const target=this.value(frame,callee,node.loc!.start.offset,depth+1);
     return target.kind==='instance'?this.member(target,'__invoke',frame,false,depth+1):target;
   }
-  emit():void {
+  async emit():Promise<void> {
+    for(const file of this.files.values()){
+      // A source may have changed since catalog preparation. Validate it before
+      // compiling this file's scopes; never replay a retained raw parser tree.
+      const source=await this.source(file);if(!source?.ast||!this.context.syntax?.has(file.path))continue;
+      const unit=this.unit(file,source,false);this.active=unit;this.peakUnits=Math.max(this.peakUnits,1);
+      this.totalSites+=unit.sites.length;this.totalExpressionBytes+=unit.sites.reduce((bytes,site)=>bytes+2*site.expression.length,0);
+      try{this.invalidateArguments(unit);this.emitUnit(unit);}finally{this.active=undefined;}
+    }
+  }
+  private emitUnit(unit:Unit):void {
     const {graph}=this.context;
-    for(const unit of this.units.values()) {
+    {
       const outcomes:unknown[]=[],counts=new Map<string,{resolved:number;external:number;unresolved:number}>();
       const callCounts=new Map<string,{resolved:number;external:number;unresolved:number;unresolvedNames:Record<string,number>}>();
       const record=(site:Site,kind:string,value:Value,edgeType:RelationType)=>{
@@ -341,13 +412,6 @@ export class PhpSymbols {
 }
 export const phpSymbolsAnalyzer:Analyzer={name:'php-symbols',version:PHP_SYMBOL_VERSION,async analyze(context){
   const files=[...context.files.values()].filter(file=>file.language==='php'&&file.analyzable);
-  for(const file of files)try{
-    const source=await context.phpSources?.read(file);
-    if(!source?.ast){const entity=context.graph.entities.get(file.id)!,analysis=fileAnalysis(entity.metadata.analysis);if(analysis)analysis.features.references={status:'failed',reason:source?.astGap??'Qualified original PHP source tree is unavailable'};}
-  }catch(error){
-    const reason=error instanceof Error?error.message:String(error),entity=context.graph.entities.get(file.id)!,analysis=fileAnalysis(entity.metadata.analysis);
-    context.syntax?.delete(file.path);if(analysis)analysis.features.references={status:'failed',reason};
-    context.graph.diagnose({analyzer:'php-symbols',severity:'warning',code:'php-binding-source-unavailable',file:file.path,entityId:file.id,reason});
-  }
-  const resolver=new PhpResolver(context);resolver.prepare(files);const symbols=new PhpSymbols(context,resolver);await symbols.prepare();symbols.emit();
+  const resolver=new PhpResolver(context),symbols=new PhpSymbols(context,resolver);
+  await symbols.prepare();resolver.prepare(files);await symbols.emit();
 }};

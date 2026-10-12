@@ -28,3 +28,46 @@ export function matchIndexedPath(pattern: IndexedPathPattern, request: readonly 
   }
   return cursor === request.length;
 }
+
+type PrefixEntry<T> = { value: T; order: number };
+interface PrefixNode<T> { entries: PrefixEntry<T>[]; children: Map<string, PrefixNode<T>> }
+
+/** Candidate selection only: the authoritative matcher still decides every
+ * match. Index the existing Next/Laravel dialect's leading literal segments;
+ * other dialects, root parameters and catch-alls remain in the fallback set.
+ * Preserve registration order, including interleaved fallback candidates. */
+export class IndexedPathCandidates<T> {
+  private readonly root: PrefixNode<T> = { entries: [], children: new Map() };
+  private readonly all: T[];
+  private indexed = false;
+  constructor(entries: readonly { value: T; pattern?: IndexedPathPattern }[]) {
+    this.all = entries.map(entry => entry.value);
+    entries.forEach(({ value, pattern }, order) => {
+      let node = this.root;
+      for (const segment of pattern?.segments ?? []) {
+        if (segment.kind !== 'literal') break;
+        let child = node.children.get(segment.value);
+        if (!child) { child = { entries: [], children: new Map() }; node.children.set(segment.value, child); }
+        node = child;
+      }
+      if (node !== this.root) this.indexed = true;
+      node.entries.push({ value, order });
+    });
+  }
+  candidates(path: string): readonly T[] {
+    if (!this.indexed) return this.all;
+    const segments = requestPathSegments(path);
+    // Loose matching of holes can match literals. Keep the full inventory
+    // when a caller supplies a dynamic request summary.
+    if (segments.includes('{*}')) return this.all;
+    let node = this.root;
+    const selected = [...node.entries];
+    for (const segment of segments) {
+      const child = node.children.get(segment);
+      if (!child) break;
+      node = child;
+      for (const entry of node.entries) selected.push(entry);
+    }
+    return selected.sort((a, b) => a.order - b.order).map(entry => entry.value);
+  }
+}

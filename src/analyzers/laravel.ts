@@ -10,6 +10,7 @@ import { declareFortify } from './laravel-fortify.js';
 import { fileKey, pathSetKey } from '../pipeline/cache.js';
 import { SiteCollector } from './references.js';
 import { PhpSources } from '../analysis/php/sources.js';
+import {LaravelFiles,laravelClassHeader} from '../analysis/php/laravel-files.js';
 import { PHP_PARSER_VERSION, PHP_SOURCE_PROFILE, PHP_SOURCE_PROVIDER_VERSION, PHP_STRUCTURE_VERSION } from '../analysis/php/version.js';
 
 export const LARAVEL_VERSION = `${ANALYZER_VERSION}:laravel-indexed-php:2`;
@@ -85,7 +86,7 @@ export const laravelAnalyzer: Analyzer = {
   },
 };
 async function analyzeLaravel(context: AnalysisContext): Promise<void> {
-  const parsedFiles = new Map<string, ParsedFile>();
+  const parsedFiles = new LaravelFiles(context);
   const classes = new Map<string, Entity>();
   const methods = new Map<string, Entity>();
   const inheritance: { from: string; target: string; facts: Evidence[]; app: string }[] = [];
@@ -105,7 +106,7 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
     }
     const { content, ast:root } = source;
     const parsed = { file, ast: root, content };
-    parsedFiles.set(file.path, parsed);
+    parsedFiles.register(file,{mentionsFortify:/\bFortify\b/.test(content)});
     scopedChildren(root, { namespace: '', imports: new Map() }, (children, scope) => {
       for (const child of children) walk(child, node => {
         if (node.kind !== 'class' || node.isAnonymous || !name(node.name)) return;
@@ -116,17 +117,18 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
         const entity = graph.contain({ id: classId, type: controller ? 'controller' : 'class', name: name(node.name)!, path: file.path, language: 'php', parentId: file.id, sourceRange: node.loc ? { startLine: node.loc.start.line, endLine: node.loc.end.line, startColumn: node.loc.start.column + 1, endColumn: node.loc.end.column + 1 } : undefined, metadata: { qualifiedName: fqn, extends: resolve(node.extends, scope), ...fingerprint(node, parsed) }, evidence: facts(parsed, node, 'PHP class declaration') });
         classes.set(`${file.application!.name}:${fqn.toLowerCase()}`, entity);
         const base = resolve(node.extends, scope);
-        const phpClass: PhpClass = { entity, fqn, app: file.application!.name, scope, parsed, node, ...(base ? { extends: base } : {}) };
+        const phpClass: PhpClass = { entity, fqn, app: file.application!.name, scope, file, node:laravelClassHeader(node), ...(base ? { extends: base } : {}) };
         phpClasses.set(`${file.application!.name}:${fqn.toLowerCase()}`, phpClass);
         if (base) inheritance.push({ from: entity.id, target: base, facts: facts(parsed, node, 'PHP extends declaration'), app: file.application!.name });
-        for (const method of nodes(node.body).filter(item => item.kind === 'method')) {
+        const methodHeaders=nodes(phpClass.node.body).filter(item=>item.kind==='method');
+        for (const [methodIndex,method] of nodes(node.body).filter(item => item.kind === 'method').entries()) {
           const methodName = name(method.name)!;
           const signature = `(${args(method).map(param => `${param.variadic ? '...' : ''}${param.nullable ? '?' : ''}${text(ast(param.type), parsed).replace(/\s+/g, '') || 'unknown'}${param.value ? '?' : ''}`).join(',')})`;
           const id = graph.id('symbol', 'php', file.application!.name, `${fqn}::${methodName}`, signature);
           if (graph.entities.has(id)) { diagnostic(parsed, method, 'duplicate-php-method', `Duplicate method ${fqn}::${methodName}`, 'error'); continue; }
           const methodEntity = graph.contain({ id, type: 'method', name: methodName, path: file.path, language: 'php', parentId: classId, sourceRange: method.loc ? { startLine: method.loc.start.line, endLine: method.loc.end.line, startColumn: method.loc.start.column + 1, endColumn: method.loc.end.column + 1 } : undefined, metrics: method.loc ? { loc: method.loc.end.line - method.loc.start.line + 1 } : undefined, metadata: { qualifiedName: `${fqn}::${methodName}`, signature, visibility: method.visibility, static: !!method.isStatic, ...fingerprint(method, parsed) }, evidence: facts(parsed, method, 'PHP method declaration') });
           methods.set(`${file.application!.name}:${fqn.toLowerCase()}::${methodName.toLowerCase()}`, methodEntity);
-          phpMethods.push({ entity: methodEntity, node: method, owner: phpClass });
+          phpMethods.push({ entity: methodEntity, node: methodHeaders[methodIndex]!, owner: phpClass });
         }
       });
     });
@@ -138,8 +140,8 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
     const appId = context.applicationIds.get(app.name);
     if (!appId) continue;
     const bootstrapPath = path.posix.join(app.path === '.' ? '' : app.path, 'bootstrap/app.php');
-    const bootstrap = parsedFiles.get(bootstrapPath);
     const registrations: { file: string; prefix: string; api: boolean; facts: Evidence[]; registration: 'static' | 'convention' }[] = [];
+    {const bootstrap = await parsedFiles.get(bootstrapPath);
     if (bootstrap) {
       let routingFound = false;
       scopedChildren(bootstrap.ast, { namespace: '', imports: new Map() }, (children, scope) => {
@@ -181,29 +183,47 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
       }
       graph.diagnose({ analyzer: 'php-laravel', severity: 'warning', code: 'route-registration-unverified', reason: `No bootstrap/app.php in ${app.name}; conventional route candidates are not eligible for exact HTTP linking` });
     }
+    }
     // Laravel ≤ 10 loads routes/console.php from the console Kernel: a conventional console route file.
     const consolePath = path.posix.join(app.path === '.' ? '' : app.path, 'routes/console.php');
     if (!consoleRegistrations.some(item => item.app === app.name) && parsedFiles.has(consolePath)) consoleRegistrations.push({ app: app.name, file: consolePath, registration: 'convention', facts: [evidence('framework', 'php-laravel', consolePath, 1, 'Conventional console route file (routes/console.php)')] });
     const seen = new Set<string>();
-    function processFile(relative: string, routeContext: RouteContext, ancestry: Set<string>): void {
+    type RouteDiagnostic=Parameters<typeof graph.diagnose>[0];
+    type RouteEvent={kind:'diagnostic';value:RouteDiagnostic}|{kind:'include';file:string;context:RouteContext}|{kind:'endpoint';value:Parameters<typeof graph.contain>[0];handler?:Entity;facts:Evidence[];duplicate:RouteDiagnostic};
+    async function processFile(relative: string, routeContext: RouteContext, ancestry: Set<string>): Promise<void> {
       try { repoPath(context.root, relative); } catch { graph.diagnose({ analyzer: 'php-laravel', severity: 'warning', code: 'route-include-outside-repository', file: relative, reason: 'Route include escapes repository' }); return; }
-      const parsed = parsedFiles.get(relative);
-      if (!parsed) { graph.diagnose({ analyzer: 'php-laravel', severity: 'warning', code: 'route-file-unavailable', file: relative, reason: 'Registered route file is missing, ignored or unparseable' }); return; }
-      if (ancestry.has(relative)) { diagnostic(parsed, undefined, 'cyclic-route-include', 'Cyclic route include'); return; }
+      if (ancestry.has(relative)) { graph.diagnose({analyzer:'php-laravel',severity:'warning',code:'cyclic-route-include',reason:'Cyclic route include',file:relative,entityId:context.files.get(relative)?.id}); return; }
       const key = JSON.stringify([relative, routeContext]);
       if (seen.has(key)) return;
       seen.add(key);
+      // Compile source into detached operations before following an include.
+      // A deep include chain retains only metadata, never its parents' trees.
+      const events=await compileFile(relative,routeContext);if(!events)return;
       const nextAncestry = new Set([...ancestry, relative]);
-      scopedChildren(parsed.ast, { namespace: '', imports: new Map() }, (children, scope) => processStatements(children, scope, parsed, routeContext, nextAncestry));
+      for(const event of events){
+        if(event.kind==='include')await processFile(event.file,event.context,nextAncestry);
+        else if(event.kind==='diagnostic')graph.diagnose(event.value);
+        else if(graph.entities.has(event.value.id!))graph.diagnose(event.duplicate);
+        else {const endpoint=graph.contain(event.value);if(event.handler)graph.relate(endpoint.id,event.handler.id,'handles',[...event.facts,...event.handler.evidence]);}
+      }
     }
-    function processStatements(children: Ast[], scope: Scope, parsed: ParsedFile, parent: RouteContext, ancestry: Set<string>): void {
+    async function compileFile(relative:string,routeContext:RouteContext):Promise<RouteEvent[]|undefined>{
+      const parsed=await parsedFiles.get(relative);
+      if(!parsed){graph.diagnose({analyzer:'php-laravel',severity:'warning',code:'route-file-unavailable',file:relative,reason:'Registered route file is missing, ignored or unparseable'});return;}
+      const events:RouteEvent[]=[];
+      scopedChildren(parsed.ast,{namespace:'',imports:new Map()},(children,scope)=>processStatements(children,scope,parsed,routeContext,events));
+      return events;
+    }
+    function processStatements(children: Ast[], scope: Scope, parsed: ParsedFile, parent: RouteContext, events:RouteEvent[]): void {
+      const diagnostic=(parsed:ParsedFile,node:Ast|undefined,code:string,reason:string)=>events.push({kind:'diagnostic',value:{analyzer:'php-laravel',severity:'warning',code,reason,file:parsed.file.path,line:node?.loc?.start.line,entityId:parsed.file.id}});
+      const routeText=(node:Ast|undefined,parsed:ParsedFile)=>Buffer.from(text(node,parsed),'utf16le').toString('utf16le');
       for (const statement of children) {
         const expression = statement.kind === 'expressionstatement' ? ast(statement.expression) : statement;
         if (!expression) continue;
         if (expression.kind === 'include') {
           const include = fileLiteral(ast(expression.target), parsed);
           if (!include) diagnostic(parsed, expression, 'dynamic-route-include', 'Cannot resolve route include');
-          else processFile(path.relative(context.root, path.resolve(path.dirname(parsed.file.absolutePath), include)).split(path.sep).join('/'), { ...parent, facts: [...parent.facts, ...facts(parsed, expression, 'Route file include', true)] }, ancestry);
+          else events.push({kind:'include',file:path.relative(context.root,path.resolve(path.dirname(parsed.file.absolutePath),include)).split(path.sep).join('/'),context:{...parent,facts:[...parent.facts,...facts(parsed,expression,'Route file include',true)]}});
           continue;
         }
         const calls = chain(expression, scope);
@@ -223,7 +243,7 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
             if (prefix === undefined) { diagnostic(parsed, call.ast, 'dynamic-route-prefix', 'Route prefix is not a literal'); unsupported = true; break; }
             current.prefix = routePath(current.prefix, prefix);
           } else if (call.name === 'middleware' || call.name === 'withoutmiddleware') {
-            current.middleware.push(...(call.args[0]?.kind === 'array' ? nodes(call.args[0].items).map(item => literal(item.value) ?? text(ast(item.value), parsed)) : [literal(call.args[0]) ?? text(call.args[0], parsed)]));
+            current.middleware.push(...(call.args[0]?.kind === 'array' ? nodes(call.args[0].items).map(item => literal(item.value) ?? routeText(ast(item.value), parsed)) : [literal(call.args[0]) ?? routeText(call.args[0], parsed)]));
           } else if (call.name === 'controller') {
             current.controller = classConstant(call.args[0], scope);
             if (!current.controller) { diagnostic(parsed, call.ast, 'dynamic-route-controller', 'Cannot resolve controller group'); unsupported = true; break; }
@@ -239,7 +259,7 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
         const group = calls.find(item => item.name === 'group');
         if (group) {
           const closure = group.args[0];
-          if (closure?.kind === 'closure') processStatements(nodes(ast(closure.body)?.children), scope, parsed, current, ancestry);
+          if (closure?.kind === 'closure') processStatements(nodes(ast(closure.body)?.children), scope, parsed, current, events);
           else diagnostic(parsed, group.ast, 'unsupported-route-group', 'Only closure route groups are resolved in Phase 1');
           continue;
         }
@@ -263,27 +283,26 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
         const inertiaPage = handlerKind === 'closure' ? inertiaPageOf(action!, scope) : undefined;
         const handler = handlerClass && handlerMethod ? methods.get(`${app.name}:${handlerClass.toLowerCase()}::${handlerMethod.toLowerCase()}`) : undefined;
         if (handler) handlerKind = 'method';
-        if (handlerKind === 'unresolved') diagnostic(parsed, http.ast, 'unresolved-route-handler', `Cannot resolve route handler ${handlerClass ?? text(action, parsed)}${handlerMethod ? `::${handlerMethod}` : ''}`);
+        if (handlerKind === 'unresolved') diagnostic(parsed, http.ast, 'unresolved-route-handler', `Cannot resolve route handler ${handlerClass ?? routeText(action, parsed)}${handlerMethod ? `::${handlerMethod}` : ''}`);
         for (const method of methodsList as string[]) {
           const fullPath = routePath(current.prefix, uri);
           const id = graph.id('endpoint', app.name, method, fullPath, parsed.file.path, handlerClass ?? handlerKind, handlerMethod ?? '');
-          if (graph.entities.has(id)) { diagnostic(parsed, http.ast, 'duplicate-route-declaration', `Repeated ${method} ${fullPath} registration`); continue; }
-          const endpoint = graph.contain({ id, type: 'api_endpoint', name: `${method} ${fullPath}`, path: parsed.file.path, parentId: appId, sourceRange: http.ast.loc ? { startLine: http.ast.loc.start.line, endLine: http.ast.loc.end.line } : undefined, metadata: { method, routePath: fullPath, framework: 'laravel', routeFile: parsed.file.path, api: current.api, registration: current.registration, middleware: current.middleware, constraintsUnresolved: current.constraints, handlerKind, ...(routeName ? { routeName } : {}), ...(inertiaPage ? { inertiaPage } : {}), ...(handlerClass ? { controller: handlerClass, controllerMethod: handlerMethod } : {}) }, evidence: current.facts });
-          if (handler) graph.relate(endpoint.id, handler.id, 'handles', [...current.facts, ...handler.evidence]);
+          const value:Parameters<typeof graph.contain>[0] = { id, type: 'api_endpoint', name: `${method} ${fullPath}`, path: parsed.file.path, parentId: appId, sourceRange: http.ast.loc ? { startLine: http.ast.loc.start.line, endLine: http.ast.loc.end.line } : undefined, metadata: { method, routePath: fullPath, framework: 'laravel', routeFile: parsed.file.path, api: current.api, registration: current.registration, middleware: current.middleware, constraintsUnresolved: current.constraints, handlerKind, ...(routeName ? { routeName } : {}), ...(inertiaPage ? { inertiaPage } : {}), ...(handlerClass ? { controller: handlerClass, controllerMethod: handlerMethod } : {}) }, evidence: current.facts };
+          events.push({kind:'endpoint',value,handler,facts:current.facts,duplicate:{analyzer:'php-laravel',severity:'warning',code:'duplicate-route-declaration',reason:`Repeated ${method} ${fullPath} registration`,file:parsed.file.path,line:http.ast.loc?.start.line,entityId:parsed.file.id}});
         }
       }
     }
-    for (const registration of registrations) processFile(registration.file, { ...registration, namePrefix: '', middleware: [], constraints: false }, new Set());
+    for (const registration of registrations) await processFile(registration.file, { ...registration, namePrefix: '', middleware: [], constraints: false }, new Set());
     // Packages that register routes from their own route files: Fortify's are declared from the application's configuration.
-    const fortify = declareFortify(context, app, appId, parsedFiles, methods);
+    const fortify = await declareFortify(context, app, appId, parsedFiles, methods);
     graph.diagnose({ analyzer: 'php-laravel', severity: 'info', code: 'framework-route-coverage', reason: `${app.name}: package/provider routes${fortify ? ' other than laravel/fortify\'s' : ''} and implicit framework health endpoints are outside the static route-file inventory` });
   }
   // Tables declared by migrations, and the Eloquent models that map to them.
-  const tables = declareTables(context, parsedFiles, phpClasses);
+  const tables = await declareTables(context, parsedFiles, phpClasses);
   // Artisan commands and scheduled tasks: entry points without an HTTP request.
-  const commands = declareConsole(context, phpClasses, methods, parsedFiles, consoleRegistrations);
+  const commands = await declareConsole(context, phpClasses, methods, parsedFiles, consoleRegistrations);
   // Calls between methods, constructions, effects and table access, once every class, table and command is known.
   const sites = new SiteCollector();
-  resolvePhpReferences(context, phpClasses, phpMethods, sites, tables, commands);
+  await resolvePhpReferences(context, phpClasses, phpMethods, sites, parsedFiles, tables, commands);
   sites.flush(graph);
 }

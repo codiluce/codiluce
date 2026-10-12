@@ -138,7 +138,7 @@ test('PHP binding retires full originals while detached bounded snippets preserv
   const root=await fixture(),expression=`take("${'x'.repeat(2041)}😀tail")`,source=`<?php /* ${'x'.repeat(384*1024)} */\r\nfunction take($value){}\r\nfunction run(){${expression};}`;
   await writeFile(path.join(root,'generic/snippets.php'),source);
   const value=await context(root,forced),emit=PhpSymbols.prototype.emit,observations:ReturnType<PhpSymbols['sourceRetentionStats']>[]=[];
-  const observer=mock.method(PhpSymbols.prototype,'emit',function(this:PhpSymbols){observations.push(this.sourceRetentionStats());return emit.call(this);});
+  const observer=mock.method(PhpSymbols.prototype,'emit',async function(this:PhpSymbols){await emit.call(this);observations.push(this.sourceRetentionStats());});
   try{await analyzePhp(value);}finally{observer.mock.restore();}
   assert.equal(observations.length,1);assert.equal(observations[0]!.originalBytes,0);assert.ok(observations[0]!.peakOriginalBytes>=2*384*1024);
   assert.ok(observations[0]!.expressionBytes<=observations[0]!.sites*4096);

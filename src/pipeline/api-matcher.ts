@@ -1,7 +1,7 @@
 import type { AnalysisContext, Analyzer, HttpObservation } from '../core/analyzer.js';
 import { hasFramework } from '../core/config.js';
 import { ANALYZER_VERSION, evidence, type Entity, type Evidence } from '../core/graph.js';
-import { compileIndexedPath, matchIndexedPath, requestPathSegments } from '../analysis/routes/pattern.js';
+import { compileIndexedPath, IndexedPathCandidates, matchIndexedPath, requestPathSegments } from '../analysis/routes/pattern.js';
 import { routingContract, matchRoutePattern } from '../analysis/routes/contracts.js';
 import { configuredProxy, proxyPath, relativeApiBoundary, requestApplication } from '../analysis/routes/boundaries.js';
 import { preferGoRoutes } from '../analysis/routes/go-patterns.js';
@@ -13,7 +13,7 @@ import {preferRocketRoutes,matchRocketQuery} from '../analysis/routes/rocket-pat
 import { preferRustRoutes } from '../analysis/routes/rust-patterns.js';
 import { preferWarpRoutes } from '../analysis/routes/warp-patterns.js';
 export const apiMatcher: Analyzer = {
-  name: 'api-matcher', version: `${ANALYZER_VERSION}:16`,
+  name: 'api-matcher', version: `${ANALYZER_VERSION}:17`,
   async analyze(context: AnalysisContext): Promise<void> {
     const endpoints = [...context.graph.entities.values()].filter(entity => entity.type === 'api_endpoint');
     const appsById = new Map(context.config.applications.map(app => [context.applicationIds.get(app.name), app]));
@@ -40,7 +40,7 @@ export const apiMatcher: Analyzer = {
       if (contract?.guards?.some(guard => guard.excludedMethods?.includes(method) || guard.methods !== '*' && !guard.methods.includes(method))) return false;
       return endpoint.metadata.method === method || methods === '*' || Array.isArray(methods) && methods.includes(method);
     };
-    const literalEligible = new Map<string, Entity[]>(), resolvedEligible = new Map<string, Entity[]>();
+    const literalEligible = new Map<string, IndexedPathCandidates<Entity>>(), resolvedEligible = new Map<string, Entity[]>();
     const link = (observation: HttpObservation, endpoint: Entity, facts: Evidence[], metadata: Record<string, unknown>) => {
       context.graph.relate(observation.callerId, endpoint.id, 'requests', facts, metadata);
       if (observation.effect) { observation.effect.endpoint = endpoint.id; observation.effect.targetName = endpoint.name; }
@@ -59,7 +59,7 @@ export const apiMatcher: Analyzer = {
       const key = JSON.stringify([observation.method, origin, callerApp?.name, observation.transport]);
       let eligible = literalEligible.get(key);
       if (!eligible) {
-        eligible = endpoints.filter(endpoint => {
+        const selected = endpoints.filter(endpoint => {
           const app = appFor(endpoint);
           if (!app || !methodMatches(endpoint, observation.method!) || endpoint.metadata.registration === 'convention' && endpoint.metadata.framework === 'laravel') return false;
           if (!origin && contracts.get(endpoint.id)?.rust?.fallback === 'path' && app.name !== callerApp?.name && !callerApp?.apiProxies?.some(proxy=>proxy.target===app.name)) return false;
@@ -71,18 +71,21 @@ export const apiMatcher: Analyzer = {
           // Relative requests can target a local Next endpoint or a unique backend.
           return !!origin || !hasFramework(app, 'nextjs') || app.name === callerApp?.name;
         });
+        eligible = new IndexedPathCandidates(selected.map(endpoint => ({ value: endpoint, ...(!contracts.get(endpoint.id) ? { pattern: patterns.get(endpoint.id)! } : {}) })));
         literalEligible.set(key, eligible);
       }
       const proxy = !origin ? configuredProxy(callerApp, pathname) : undefined;
-      const selectors = [...new URLSearchParams(search).keys()].filter(key => key.startsWith('/'));
-      let candidates = eligible.filter(endpoint => {
+      const query = new URLSearchParams(search);
+      const selectors = [...query.keys()].filter(key => key.startsWith('/'));
+      const targetPath = proxy ? proxyPath(proxy, pathname) : pathname;
+      let candidates = eligible.candidates(targetPath).filter(endpoint => {
         const action = contracts.get(endpoint.id)?.action;
-        return observedConstraints(endpoint, origin, new URLSearchParams(search)) && (!action || (action.name === 'default' ? selectors.length === 0 : selectors.length === 1 && selectors[0] === `/${action.name}`)) && (!proxy || appFor(endpoint)?.name === proxy.target) && matchPath(endpoint, proxy ? proxyPath(proxy, pathname) : pathname);
+        return observedConstraints(endpoint, origin, query) && (!action || (action.name === 'default' ? selectors.length === 0 : selectors.length === 1 && selectors[0] === `/${action.name}`)) && (!proxy || appFor(endpoint)?.name === proxy.target) && matchPath(endpoint, targetPath);
       });
       if (origin || !candidates.some(needsOrigin)) candidates = preferSpringRoutes(preferRailsRoutes(preferGoRoutes(candidates, endpoint => contracts.get(endpoint.id), observation.method), endpoint => contracts.get(endpoint.id), observation.method),endpoint=>contracts.get(endpoint.id),observation.method);
       if (origin || !candidates.some(needsOrigin)) candidates = preferWebFluxRoutes(candidates,endpoint=>contracts.get(endpoint.id));
       if ((origin || !candidates.some(needsOrigin)) && reviewedAspNetRequest(proxy ? proxyPath(proxy,pathname):pathname)) candidates=preferAspNetRoutes(candidates,endpoint=>contracts.get(endpoint.id));
-      if (origin || !candidates.some(needsOrigin)) candidates=preferRocketRoutes(preferRustRoutes(candidates,endpoints,endpoint=>contracts.get(endpoint.id),endpoint=>observedConstraints(endpoint,origin,new URLSearchParams(search))&&matchPath(endpoint,proxy?proxyPath(proxy,pathname):pathname),observation.method),endpoint=>contracts.get(endpoint.id),observation.method);
+      if (origin || !candidates.some(needsOrigin)) candidates=preferRocketRoutes(preferRustRoutes(candidates,endpoints,endpoint=>contracts.get(endpoint.id),endpoint=>observedConstraints(endpoint,origin,query)&&matchPath(endpoint,targetPath),observation.method),endpoint=>contracts.get(endpoint.id),observation.method);
       if (origin || !candidates.some(needsOrigin)) candidates=preferWarpRoutes(candidates,endpoint=>contracts.get(endpoint.id),proxy?proxyPath(proxy,pathname):pathname,observation.method);
       // Keep constrained candidates in ambiguity detection: ignoring one could
       // falsely select another route with the same HTTP method/path.

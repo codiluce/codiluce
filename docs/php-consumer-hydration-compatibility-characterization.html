@@ -1,0 +1,429 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Codiluce compatibility performance</title><style>body{font:16px/1.55 system-ui,sans-serif;background:#101822;color:#e5ecf4;margin:0;padding:clamp(16px,4vw,40px)}main{max-width:1200px;margin:auto}h1{font-size:36px;line-height:1.15}p{max-width:1000px;color:#bdcbdc}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;border-bottom:1px solid #344353;padding:12px}thead{color:#79ced3}small{display:block;color:#9dafc4;font-weight:400}.scroll{overflow:auto}.status{border:1px solid #5a7882;padding:16px;border-radius:8px}code{color:#a6d7df;overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere}a{color:#7ad0d6}</style><main><p class="status"><strong>Superseded consumer-hydration characterization.</strong> This exact frozen implementation failed PHP-pressure cold/history time guards (+12.16%/+10.48%) and legacy Small warm time (+12.10%) and Medium/Large cold time (+14.55%/+13.94%). All 54 completed observations and complete graph/snapshot digests are preserved across these five named comparisons. Ordinary mixed, original-source pressure and 24-commit history comparisons passed. This is predecessor evidence, not qualification of a later implementation. Original raw data and limits remain unchanged.</p><h1>Compatibility performance baseline</h1><p>P10d2b2b2b1 · 2026-10-12T04:43:04.186Z · v22.12.0 · linux/x64 · AMD Ryzen 7 5800H with Radeon Graphics. Medians of 3 fresh processes per implementation/sample, alternating baseline/current order. Both use identical installed compiler/parser dependencies.</p><p class="status"><strong>TS/Laravel cold/warm guardrails: NEEDS WORK</strong> — at most 10% slower median cold/warm indexing and 10% higher parent high-water memory against the archived baseline on these fixed samples. These measurements qualify this host and sample set.</p><div class="scroll"><table><thead><tr><th>Sample</th><th>Baseline cold ms</th><th>Current cold ms</th><th>Time change</th><th>Baseline warm ms</th><th>Current warm ms</th><th>Baseline cold peak MiB</th><th>Current cold peak MiB</th><th>Memory change</th></tr></thead><tbody><tr><th>Small · integration fixture<small>49 files · 224 entities · 392 relations</small></th><td>830</td><td>875</td><td>5.5%</td><td>59</td><td>66</td><td>332.8</td><td>332.8</td><td>-0.0%</td></tr><tr><th>Medium · generated mixed stack<small>505 files · 2014 entities · 4011 relations</small></th><td>1523</td><td>1745</td><td>14.5%</td><td>247</td><td>243</td><td>360.4</td><td>360.1</td><td>-0.1%</td></tr><tr><th>Large · generated mixed stack<small>3005 files · 12014 entities · 24011 relations</small></th><td>5284</td><td>6020</td><td>13.9%</td><td>1568</td><td>1684</td><td>480.9</td><td>493.6</td><td>2.6%</td></tr></tbody></table></div><p>The small sample is the existing Next/Laravel integration fixture. Medium and large samples contain 250/1500 TS modules plus as many PHP controllers, indexed local calls, HTTP requests and registered API routes. Cold indexing starts with no parser/graph cache. Warm replay follows a cache-population pass in the same process. Peak memory is the parent process's Linux /proc VmHWM since exec (kernel RSS accounting can be approximate) at the end of cold indexing; it does not include concurrent parser child memory.</p><p>Every complete baseline/current graph digest also agrees; this phase permits no semantic additions. Every raw run preserves the exact full cold/warm graph and stable graph digests within its implementation. Baseline and current runs also retain the same Laravel source symbol identities, original ranges and established relationship projection, recorded as a SHA-256 legacyIdentity. Wider original structure and separately qualified source references may deliberately add graph facts; total cross-implementation counts are recorded separately rather than assumed equal. These additions remain subject to the same cold-time and parent-memory guards.</p><p>Baseline commit: <code>caad123e9755e6ba399b6e34b291d4a021508c98</code>. Current source digest (350 files): <code>df0dfad582b7645a9e1a454baf3bb5da3df9524e27da0734ffd2b82e430f6335</code>. This comparison measures existing TS/Laravel workloads. Mixed Tree-sitter/workspace samples, grammar-load latency, full-history throughput and supported-OS qualification remain additional measurements. Synthetic module depth and framework features are bounded; production repositories can behave differently.</p><p>Reproduce: <code>node scripts/benchmark-compatibility.mjs --baseline-ref caad123e9755e6ba399b6e34b291d4a021508c98 --repetitions 3 --phase P10d2b2b2b1 --require-equal-graphs --require-warm-guard --output docs/php-consumer-compatibility-performance.html</code>. The command archives the baseline into a temporary directory and cleans its samples afterward. <a href="language-framework-compatibility.html#implementation">Implementation audit</a></p><details><summary>Raw measurements</summary><pre>{
+  &quot;implementationFiles&quot;: 350,
+  &quot;implementationDigest&quot;: &quot;df0dfad582b7645a9e1a454baf3bb5da3df9524e27da0734ffd2b82e430f6335&quot;,
+  &quot;sourceScope&quot;: [
+    &quot;src&quot;,
+    &quot;grammars&quot;,
+    &quot;package.json&quot;,
+    &quot;package-lock.json&quot;,
+    &quot;scripts/benchmark-compatibility.mjs&quot;,
+    &quot;scripts/process-memory.mjs&quot;,
+    &quot;scripts/build-native-worker.mjs&quot;,
+    &quot;scripts/build-native-worker.d.mts&quot;,
+    &quot;scripts/build-script-worker.mjs&quot;,
+    &quot;scripts/build-script-worker.d.mts&quot;,
+    &quot;scripts/build-cli.mjs&quot;,
+    &quot;scripts/test-package.mjs&quot;,
+    &quot;tests/cache.test.ts&quot;,
+    &quot;tests/php-analysis-cache.test.ts&quot;,
+    &quot;tests/php-structure.test.ts&quot;,
+    &quot;tests/native-generation.test.ts&quot;,
+    &quot;tests/parser-lifetimes.test.ts&quot;,
+    &quot;tests/php-residency.test.ts&quot;,
+    &quot;tests/php-consumers.test.ts&quot;,
+    &quot;tests/php-provider.test.ts&quot;,
+    &quot;tests/php-symbols.test.ts&quot;,
+    &quot;tests/fixtures/repository&quot;
+  ],
+  &quot;sourceFrozenVerified&quot;: true,
+  &quot;requireEqualGraphs&quot;: true,
+  &quot;requireWarmGuard&quot;: true,
+  &quot;phase&quot;: &quot;P10d2b2b2b1&quot;,
+  &quot;memoryMethod&quot;: &quot;linux-proc-vmhwm&quot;,
+  &quot;measuredAt&quot;: &quot;2026-10-12T04:43:04.186Z&quot;,
+  &quot;baseline&quot;: &quot;caad123e9755e6ba399b6e34b291d4a021508c98&quot;,
+  &quot;current&quot;: &quot;working tree&quot;,
+  &quot;node&quot;: &quot;v22.12.0&quot;,
+  &quot;platform&quot;: &quot;linux/x64&quot;,
+  &quot;cpu&quot;: &quot;AMD Ryzen 7 5800H with Radeon Graphics&quot;,
+  &quot;repetitions&quot;: 3,
+  &quot;results&quot;: [
+    {
+      &quot;name&quot;: &quot;Small · integration fixture&quot;,
+      &quot;generatedModulesPerLanguage&quot;: 0,
+      &quot;baseline&quot;: {
+        &quot;coldMs&quot;: 829.611975,
+        &quot;coldPeakRssKiB&quot;: 340792,
+        &quot;warmMs&quot;: 58.85799399999996,
+        &quot;warmPeakRssKiB&quot;: 355972,
+        &quot;files&quot;: 49,
+        &quot;entities&quot;: 224,
+        &quot;relations&quot;: 392,
+        &quot;diagnostics&quot;: 35,
+        &quot;legacyPhpSymbols&quot;: 78,
+        &quot;legacyPhpRelations&quot;: 142,
+        &quot;legacyIdentity&quot;: &quot;5e8e1550b36db81cc429e4bef496e9296f32170866bd4a9fa0a57a8398189d0d&quot;,
+        &quot;graphDigest&quot;: &quot;f03b381ee8b027b4d9bcc5398c7b19e7a59b61ffb8e70c53cbbf705e08b8d5d2&quot;
+      },
+      &quot;current&quot;: {
+        &quot;coldMs&quot;: 874.8548339999998,
+        &quot;coldPeakRssKiB&quot;: 340744,
+        &quot;warmMs&quot;: 65.97857199999999,
+        &quot;warmPeakRssKiB&quot;: 361932,
+        &quot;files&quot;: 49,
+        &quot;entities&quot;: 224,
+        &quot;relations&quot;: 392,
+        &quot;diagnostics&quot;: 35,
+        &quot;legacyPhpSymbols&quot;: 78,
+        &quot;legacyPhpRelations&quot;: 142,
+        &quot;legacyIdentity&quot;: &quot;5e8e1550b36db81cc429e4bef496e9296f32170866bd4a9fa0a57a8398189d0d&quot;,
+        &quot;graphDigest&quot;: &quot;f03b381ee8b027b4d9bcc5398c7b19e7a59b61ffb8e70c53cbbf705e08b8d5d2&quot;
+      },
+      &quot;runs&quot;: {
+        &quot;baseline&quot;: [
+          {
+            &quot;coldMs&quot;: 829.611975,
+            &quot;coldPeakRssKiB&quot;: 353408,
+            &quot;warmMs&quot;: 94.57603800000015,
+            &quot;warmPeakRssKiB&quot;: 368920,
+            &quot;files&quot;: 49,
+            &quot;entities&quot;: 224,
+            &quot;relations&quot;: 392,
+            &quot;diagnostics&quot;: 35,
+            &quot;legacyPhpSymbols&quot;: 78,
+            &quot;legacyPhpRelations&quot;: 142,
+            &quot;legacyIdentity&quot;: &quot;5e8e1550b36db81cc429e4bef496e9296f32170866bd4a9fa0a57a8398189d0d&quot;,
+            &quot;graphDigest&quot;: &quot;f03b381ee8b027b4d9bcc5398c7b19e7a59b61ffb8e70c53cbbf705e08b8d5d2&quot;
+          },
+          {
+            &quot;coldMs&quot;: 824.267004,
+            &quot;coldPeakRssKiB&quot;: 335316,
+            &quot;warmMs&quot;: 57.7169429999999,
+            &quot;warmPeakRssKiB&quot;: 350332,
+            &quot;files&quot;: 49,
+            &quot;entities&quot;: 224,
+            &quot;relations&quot;: 392,
+            &quot;diagnostics&quot;: 35,
+            &quot;legacyPhpSymbols&quot;: 78,
+            &quot;legacyPhpRelations&quot;: 142,
+            &quot;legacyIdentity&quot;: &quot;5e8e1550b36db81cc429e4bef496e9296f32170866bd4a9fa0a57a8398189d0d&quot;,
+            &quot;graphDigest&quot;: &quot;f03b381ee8b027b4d9bcc5398c7b19e7a59b61ffb8e70c53cbbf705e08b8d5d2&quot;
+          },
+          {
+            &quot;coldMs&quot;: 876.1042790000001,
+            &quot;coldPeakRssKiB&quot;: 340792,
+            &quot;warmMs&quot;: 58.85799399999996,
+            &quot;warmPeakRssKiB&quot;: 355972,
+            &quot;files&quot;: 49,
+            &quot;entities&quot;: 224,
+            &quot;relations&quot;: 392,
+            &quot;diagnostics&quot;: 35,
+            &quot;legacyPhpSymbols&quot;: 78,
+            &quot;legacyPhpRelations&quot;: 142,
+            &quot;legacyIdentity&quot;: &quot;5e8e1550b36db81cc429e4bef496e9296f32170866bd4a9fa0a57a8398189d0d&quot;,
+            &quot;graphDigest&quot;: &quot;f03b381ee8b027b4d9bcc5398c7b19e7a59b61ffb8e70c53cbbf705e08b8d5d2&quot;
+          }
+        ],
+        &quot;current&quot;: [
+          {
+            &quot;coldMs&quot;: 874.8548339999998,
+            &quot;coldPeakRssKiB&quot;: 347152,
+            &quot;warmMs&quot;: 67.79341699999986,
+            &quot;warmPeakRssKiB&quot;: 367632,
+            &quot;files&quot;: 49,
+            &quot;entities&quot;: 224,
+            &quot;relations&quot;: 392,
+            &quot;diagnostics&quot;: 35,
+            &quot;legacyPhpSymbols&quot;: 78,
+            &quot;legacyPhpRelations&quot;: 142,
+            &quot;legacyIdentity&quot;: &quot;5e8e1550b36db81cc429e4bef496e9296f32170866bd4a9fa0a57a8398189d0d&quot;,
+            &quot;graphDigest&quot;: &quot;f03b381ee8b027b4d9bcc5398c7b19e7a59b61ffb8e70c53cbbf705e08b8d5d2&quot;
+          },
+          {
+            &quot;coldMs&quot;: 834.6354029999998,
+            &quot;coldPeakRssKiB&quot;: 338504,
+            &quot;warmMs&quot;: 65.17074599999978,
+            &quot;warmPeakRssKiB&quot;: 361000,
+            &quot;files&quot;: 49,
+            &quot;entities&quot;: 224,
+            &quot;relations&quot;: 392,
+            &quot;diagnostics&quot;: 35,
+            &quot;legacyPhpSymbols&quot;: 78,
+            &quot;legacyPhpRelations&quot;: 142,
+            &quot;legacyIdentity&quot;: &quot;5e8e1550b36db81cc429e4bef496e9296f32170866bd4a9fa0a57a8398189d0d&quot;,
+            &quot;graphDigest&quot;: &quot;f03b381ee8b027b4d9bcc5398c7b19e7a59b61ffb8e70c53cbbf705e08b8d5d2&quot;
+          },
+          {
+            &quot;coldMs&quot;: 895.6323169999998,
+            &quot;coldPeakRssKiB&quot;: 340744,
+            &quot;warmMs&quot;: 65.97857199999999,
+            &quot;warmPeakRssKiB&quot;: 361932,
+            &quot;files&quot;: 49,
+            &quot;entities&quot;: 224,
+            &quot;relations&quot;: 392,
+            &quot;diagnostics&quot;: 35,
+            &quot;legacyPhpSymbols&quot;: 78,
+            &quot;legacyPhpRelations&quot;: 142,
+            &quot;legacyIdentity&quot;: &quot;5e8e1550b36db81cc429e4bef496e9296f32170866bd4a9fa0a57a8398189d0d&quot;,
+            &quot;graphDigest&quot;: &quot;f03b381ee8b027b4d9bcc5398c7b19e7a59b61ffb8e70c53cbbf705e08b8d5d2&quot;
+          }
+        ]
+      }
+    },
+    {
+      &quot;name&quot;: &quot;Medium · generated mixed stack&quot;,
+      &quot;generatedModulesPerLanguage&quot;: 250,
+      &quot;baseline&quot;: {
+        &quot;coldMs&quot;: 1523.1642160000001,
+        &quot;coldPeakRssKiB&quot;: 369092,
+        &quot;warmMs&quot;: 247.46058400000038,
+        &quot;warmPeakRssKiB&quot;: 495928,
+        &quot;files&quot;: 505,
+        &quot;entities&quot;: 2014,
+        &quot;relations&quot;: 4011,
+        &quot;diagnostics&quot;: 4,
+        &quot;legacyPhpSymbols&quot;: 1000,
+        &quot;legacyPhpRelations&quot;: 1750,
+        &quot;legacyIdentity&quot;: &quot;610f1e89328243bf1f96423c8ab8a8731c98ac28e9b1cb0a8324ecd32d0eb73e&quot;,
+        &quot;graphDigest&quot;: &quot;686df2863f0d88eff694c8d4806c1c3692cd4f3b54bf9b1dab5be2e81702297e&quot;
+      },
+      &quot;current&quot;: {
+        &quot;coldMs&quot;: 1744.755474,
+        &quot;coldPeakRssKiB&quot;: 368748,
+        &quot;warmMs&quot;: 242.77621100000033,
+        &quot;warmPeakRssKiB&quot;: 491252,
+        &quot;files&quot;: 505,
+        &quot;entities&quot;: 2014,
+        &quot;relations&quot;: 4011,
+        &quot;diagnostics&quot;: 4,
+        &quot;legacyPhpSymbols&quot;: 1000,
+        &quot;legacyPhpRelations&quot;: 1750,
+        &quot;legacyIdentity&quot;: &quot;610f1e89328243bf1f96423c8ab8a8731c98ac28e9b1cb0a8324ecd32d0eb73e&quot;,
+        &quot;graphDigest&quot;: &quot;686df2863f0d88eff694c8d4806c1c3692cd4f3b54bf9b1dab5be2e81702297e&quot;
+      },
+      &quot;runs&quot;: {
+        &quot;baseline&quot;: [
+          {
+            &quot;coldMs&quot;: 1523.1642160000001,
+            &quot;coldPeakRssKiB&quot;: 364552,
+            &quot;warmMs&quot;: 498.492244,
+            &quot;warmPeakRssKiB&quot;: 495928,
+            &quot;files&quot;: 505,
+            &quot;entities&quot;: 2014,
+            &quot;relations&quot;: 4011,
+            &quot;diagnostics&quot;: 4,
+            &quot;legacyPhpSymbols&quot;: 1000,
+            &quot;legacyPhpRelations&quot;: 1750,
+            &quot;legacyIdentity&quot;: &quot;610f1e89328243bf1f96423c8ab8a8731c98ac28e9b1cb0a8324ecd32d0eb73e&quot;,
+            &quot;graphDigest&quot;: &quot;686df2863f0d88eff694c8d4806c1c3692cd4f3b54bf9b1dab5be2e81702297e&quot;
+          },
+          {
+            &quot;coldMs&quot;: 1585.568835,
+            &quot;coldPeakRssKiB&quot;: 369092,
+            &quot;warmMs&quot;: 247.46058400000038,
+            &quot;warmPeakRssKiB&quot;: 495012,
+            &quot;files&quot;: 505,
+            &quot;entities&quot;: 2014,
+            &quot;relations&quot;: 4011,
+            &quot;diagnostics&quot;: 4,
+            &quot;legacyPhpSymbols&quot;: 1000,
+            &quot;legacyPhpRelations&quot;: 1750,
+            &quot;legacyIdentity&quot;: &quot;610f1e89328243bf1f96423c8ab8a8731c98ac28e9b1cb0a8324ecd32d0eb73e&quot;,
+            &quot;graphDigest&quot;: &quot;686df2863f0d88eff694c8d4806c1c3692cd4f3b54bf9b1dab5be2e81702297e&quot;
+          },
+          {
+            &quot;coldMs&quot;: 1495.953355,
+            &quot;coldPeakRssKiB&quot;: 373736,
+            &quot;warmMs&quot;: 236.93808200000012,
+            &quot;warmPeakRssKiB&quot;: 497172,
+            &quot;files&quot;: 505,
+            &quot;entities&quot;: 2014,
+            &quot;relations&quot;: 4011,
+            &quot;diagnostics&quot;: 4,
+            &quot;legacyPhpSymbols&quot;: 1000,
+            &quot;legacyPhpRelations&quot;: 1750,
+            &quot;legacyIdentity&quot;: &quot;610f1e89328243bf1f96423c8ab8a8731c98ac28e9b1cb0a8324ecd32d0eb73e&quot;,
+            &quot;graphDigest&quot;: &quot;686df2863f0d88eff694c8d4806c1c3692cd4f3b54bf9b1dab5be2e81702297e&quot;
+          }
+        ],
+        &quot;current&quot;: [
+          {
+            &quot;coldMs&quot;: 1735.8120169999997,
+            &quot;coldPeakRssKiB&quot;: 368748,
+            &quot;warmMs&quot;: 254.05900999999994,
+            &quot;warmPeakRssKiB&quot;: 491252,
+            &quot;files&quot;: 505,
+            &quot;entities&quot;: 2014,
+            &quot;relations&quot;: 4011,
+            &quot;diagnostics&quot;: 4,
+            &quot;legacyPhpSymbols&quot;: 1000,
+            &quot;legacyPhpRelations&quot;: 1750,
+            &quot;legacyIdentity&quot;: &quot;610f1e89328243bf1f96423c8ab8a8731c98ac28e9b1cb0a8324ecd32d0eb73e&quot;,
+            &quot;graphDigest&quot;: &quot;686df2863f0d88eff694c8d4806c1c3692cd4f3b54bf9b1dab5be2e81702297e&quot;
+          },
+          {
+            &quot;coldMs&quot;: 1744.755474,
+            &quot;coldPeakRssKiB&quot;: 370872,
+            &quot;warmMs&quot;: 242.77621100000033,
+            &quot;warmPeakRssKiB&quot;: 498472,
+            &quot;files&quot;: 505,
+            &quot;entities&quot;: 2014,
+            &quot;relations&quot;: 4011,
+            &quot;diagnostics&quot;: 4,
+            &quot;legacyPhpSymbols&quot;: 1000,
+            &quot;legacyPhpRelations&quot;: 1750,
+            &quot;legacyIdentity&quot;: &quot;610f1e89328243bf1f96423c8ab8a8731c98ac28e9b1cb0a8324ecd32d0eb73e&quot;,
+            &quot;graphDigest&quot;: &quot;686df2863f0d88eff694c8d4806c1c3692cd4f3b54bf9b1dab5be2e81702297e&quot;
+          },
+          {
+            &quot;coldMs&quot;: 1749.275261,
+            &quot;coldPeakRssKiB&quot;: 365984,
+            &quot;warmMs&quot;: 238.47899299999972,
+            &quot;warmPeakRssKiB&quot;: 485776,
+            &quot;files&quot;: 505,
+            &quot;entities&quot;: 2014,
+            &quot;relations&quot;: 4011,
+            &quot;diagnostics&quot;: 4,
+            &quot;legacyPhpSymbols&quot;: 1000,
+            &quot;legacyPhpRelations&quot;: 1750,
+            &quot;legacyIdentity&quot;: &quot;610f1e89328243bf1f96423c8ab8a8731c98ac28e9b1cb0a8324ecd32d0eb73e&quot;,
+            &quot;graphDigest&quot;: &quot;686df2863f0d88eff694c8d4806c1c3692cd4f3b54bf9b1dab5be2e81702297e&quot;
+          }
+        ]
+      }
+    },
+    {
+      &quot;name&quot;: &quot;Large · generated mixed stack&quot;,
+      &quot;generatedModulesPerLanguage&quot;: 1500,
+      &quot;baseline&quot;: {
+        &quot;coldMs&quot;: 5283.707083,
+        &quot;coldPeakRssKiB&quot;: 492432,
+        &quot;warmMs&quot;: 1568.138551,
+        &quot;warmPeakRssKiB&quot;: 1274512,
+        &quot;files&quot;: 3005,
+        &quot;entities&quot;: 12014,
+        &quot;relations&quot;: 24011,
+        &quot;diagnostics&quot;: 4,
+        &quot;legacyPhpSymbols&quot;: 6000,
+        &quot;legacyPhpRelations&quot;: 10500,
+        &quot;legacyIdentity&quot;: &quot;1c1229d4848df51307d572cddeb74fc86898a0254fb1ee9701625d2718644184&quot;,
+        &quot;graphDigest&quot;: &quot;a300da2f9ae6219258c5a81cdd77081757207286946ebf0b5eefbd593def65f3&quot;
+      },
+      &quot;current&quot;: {
+        &quot;coldMs&quot;: 6020.303368,
+        &quot;coldPeakRssKiB&quot;: 505432,
+        &quot;warmMs&quot;: 1683.8796279999988,
+        &quot;warmPeakRssKiB&quot;: 1287052,
+        &quot;files&quot;: 3005,
+        &quot;entities&quot;: 12014,
+        &quot;relations&quot;: 24011,
+        &quot;diagnostics&quot;: 4,
+        &quot;legacyPhpSymbols&quot;: 6000,
+        &quot;legacyPhpRelations&quot;: 10500,
+        &quot;legacyIdentity&quot;: &quot;1c1229d4848df51307d572cddeb74fc86898a0254fb1ee9701625d2718644184&quot;,
+        &quot;graphDigest&quot;: &quot;a300da2f9ae6219258c5a81cdd77081757207286946ebf0b5eefbd593def65f3&quot;
+      },
+      &quot;runs&quot;: {
+        &quot;baseline&quot;: [
+          {
+            &quot;coldMs&quot;: 5283.707083,
+            &quot;coldPeakRssKiB&quot;: 490232,
+            &quot;warmMs&quot;: 2880.3121709999978,
+            &quot;warmPeakRssKiB&quot;: 1322440,
+            &quot;files&quot;: 3005,
+            &quot;entities&quot;: 12014,
+            &quot;relations&quot;: 24011,
+            &quot;diagnostics&quot;: 4,
+            &quot;legacyPhpSymbols&quot;: 6000,
+            &quot;legacyPhpRelations&quot;: 10500,
+            &quot;legacyIdentity&quot;: &quot;1c1229d4848df51307d572cddeb74fc86898a0254fb1ee9701625d2718644184&quot;,
+            &quot;graphDigest&quot;: &quot;a300da2f9ae6219258c5a81cdd77081757207286946ebf0b5eefbd593def65f3&quot;
+          },
+          {
+            &quot;coldMs&quot;: 5401.953016,
+            &quot;coldPeakRssKiB&quot;: 492432,
+            &quot;warmMs&quot;: 1568.138551,
+            &quot;warmPeakRssKiB&quot;: 1263612,
+            &quot;files&quot;: 3005,
+            &quot;entities&quot;: 12014,
+            &quot;relations&quot;: 24011,
+            &quot;diagnostics&quot;: 4,
+            &quot;legacyPhpSymbols&quot;: 6000,
+            &quot;legacyPhpRelations&quot;: 10500,
+            &quot;legacyIdentity&quot;: &quot;1c1229d4848df51307d572cddeb74fc86898a0254fb1ee9701625d2718644184&quot;,
+            &quot;graphDigest&quot;: &quot;a300da2f9ae6219258c5a81cdd77081757207286946ebf0b5eefbd593def65f3&quot;
+          },
+          {
+            &quot;coldMs&quot;: 5282.200822,
+            &quot;coldPeakRssKiB&quot;: 494744,
+            &quot;warmMs&quot;: 1558.2897780000021,
+            &quot;warmPeakRssKiB&quot;: 1274512,
+            &quot;files&quot;: 3005,
+            &quot;entities&quot;: 12014,
+            &quot;relations&quot;: 24011,
+            &quot;diagnostics&quot;: 4,
+            &quot;legacyPhpSymbols&quot;: 6000,
+            &quot;legacyPhpRelations&quot;: 10500,
+            &quot;legacyIdentity&quot;: &quot;1c1229d4848df51307d572cddeb74fc86898a0254fb1ee9701625d2718644184&quot;,
+            &quot;graphDigest&quot;: &quot;a300da2f9ae6219258c5a81cdd77081757207286946ebf0b5eefbd593def65f3&quot;
+          }
+        ],
+        &quot;current&quot;: [
+          {
+            &quot;coldMs&quot;: 6020.303368,
+            &quot;coldPeakRssKiB&quot;: 505432,
+            &quot;warmMs&quot;: 1683.8796279999988,
+            &quot;warmPeakRssKiB&quot;: 1287052,
+            &quot;files&quot;: 3005,
+            &quot;entities&quot;: 12014,
+            &quot;relations&quot;: 24011,
+            &quot;diagnostics&quot;: 4,
+            &quot;legacyPhpSymbols&quot;: 6000,
+            &quot;legacyPhpRelations&quot;: 10500,
+            &quot;legacyIdentity&quot;: &quot;1c1229d4848df51307d572cddeb74fc86898a0254fb1ee9701625d2718644184&quot;,
+            &quot;graphDigest&quot;: &quot;a300da2f9ae6219258c5a81cdd77081757207286946ebf0b5eefbd593def65f3&quot;
+          },
+          {
+            &quot;coldMs&quot;: 5889.969937,
+            &quot;coldPeakRssKiB&quot;: 503832,
+            &quot;warmMs&quot;: 1703.2099949999974,
+            &quot;warmPeakRssKiB&quot;: 1305924,
+            &quot;files&quot;: 3005,
+            &quot;entities&quot;: 12014,
+            &quot;relations&quot;: 24011,
+            &quot;diagnostics&quot;: 4,
+            &quot;legacyPhpSymbols&quot;: 6000,
+            &quot;legacyPhpRelations&quot;: 10500,
+            &quot;legacyIdentity&quot;: &quot;1c1229d4848df51307d572cddeb74fc86898a0254fb1ee9701625d2718644184&quot;,
+            &quot;graphDigest&quot;: &quot;a300da2f9ae6219258c5a81cdd77081757207286946ebf0b5eefbd593def65f3&quot;
+          },
+          {
+            &quot;coldMs&quot;: 6144.48583,
+            &quot;coldPeakRssKiB&quot;: 508144,
+            &quot;warmMs&quot;: 1650.0446919999995,
+            &quot;warmPeakRssKiB&quot;: 1282100,
+            &quot;files&quot;: 3005,
+            &quot;entities&quot;: 12014,
+            &quot;relations&quot;: 24011,
+            &quot;diagnostics&quot;: 4,
+            &quot;legacyPhpSymbols&quot;: 6000,
+            &quot;legacyPhpRelations&quot;: 10500,
+            &quot;legacyIdentity&quot;: &quot;1c1229d4848df51307d572cddeb74fc86898a0254fb1ee9701625d2718644184&quot;,
+            &quot;graphDigest&quot;: &quot;a300da2f9ae6219258c5a81cdd77081757207286946ebf0b5eefbd593def65f3&quot;
+          }
+        ]
+      }
+    }
+  ],
+  &quot;gates&quot;: [
+    {
+      &quot;name&quot;: &quot;Small · integration fixture&quot;,
+      &quot;cold&quot;: true,
+      &quot;warm&quot;: false,
+      &quot;parentMemory&quot;: true
+    },
+    {
+      &quot;name&quot;: &quot;Medium · generated mixed stack&quot;,
+      &quot;cold&quot;: false,
+      &quot;warm&quot;: true,
+      &quot;parentMemory&quot;: true
+    },
+    {
+      &quot;name&quot;: &quot;Large · generated mixed stack&quot;,
+      &quot;cold&quot;: false,
+      &quot;warm&quot;: true,
+      &quot;parentMemory&quot;: true
+    }
+  ],
+  &quot;passed&quot;: false
+}</pre></details></main></html>

@@ -73,7 +73,28 @@ semantic facts have separate ownership; these controls are not an RSS cap.
 PHP binding units prepare original site ranges and detached expressions capped
 at 2,048 UTF-16 code units, then retire each full original. Copies preserve
 truncated surrogates and prevent sliced strings from retaining full source.
-Decoded AST/semantic IR and Laravel parsed-file ownership remain separate.
+The binding catalog owns detached declaration/signature inputs and lexical
+name context. It cannot reach callable bodies, comments or native nodes.
+Scopes, writes and sites compile and emit for one validated file at a time;
+closure identity uses original file/kind/offset coordinates across hydration.
+The catalog's validated source read also establishes PHP availability. Emission
+independently validates the original again, and reuses immutable detached
+signature headers with separate per-file lexical frames and binding units.
+Laravel application passes retain indexed file identities and detached
+class/method headers. Migrations replay in filename order one original at a
+time. Fortify bindings keep locations and copied argument prefixes; console
+and effect passes hydrate only the original currently being consumed.
+Route files compile into detached ordered operations before following an
+include, preserving depth-first registration and duplicate/cycle behavior
+without retaining parent originals. All rereads use the indexed provider;
+late source failures block cache persistence. Repository-wide signature,
+semantic/graph bytes and other compiler/WASM consumers remain separate
+budgets; these ownership limits do not bound decoded-object overhead or RSS.
+
+Literal HTTP matching indexes leading literal segments of the existing
+Next/Laravel path dialect. Framework contracts stay in the fallback inventory;
+dynamic request holes retain the full inventory. The authoritative matchers,
+candidate order and ambiguity checks still decide every relationship.
 
 ## Before a pull request
 
@@ -137,3 +158,5 @@ profile and conformance inputs, then run
 `node scripts/generate-compatibility-docs.mjs --check` verifies that the language
 inventory, profile fragments, conformance paths, grammar/query inputs and
 packaged grammar checksums/licenses still match the generated pages.
+
+PHP consumer qualification keeps the unchanged original-pressure workload and 10% timing/memory guards. Candidate flags must come from already validated originals, and unknown inputs must remain candidates; every actual declaration use revalidates source. Catalog traversal pruning must preserve exact nested declaration and lexical type identities against a complete original traversal. Preserve failed source digests, complete graph/snapshot records and all observations before evaluating a changed implementation.

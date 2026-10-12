@@ -1057,3 +1057,51 @@ typechecks. The production build and installed CLI/API conditional helper/middle
 292 files), plus compiled history workers, missing-parser fallback, signals and npm-exec. The four-consumer audit
 matches the final implementation digest and original checkouts remain clean. Desktop/mobile report layout,
 expanded raw proof, horizontal table scrolling and roadmap Rust filtering/expand/collapse are verified.
+
+
+## 39. PHP binding and Laravel consumer ownership
+
+The PHP binder keeps detached declaration/signature inputs and original lexical
+name context across files. Catalog frames cannot reach source units, variables,
+write lists or native callable bodies. Binding scopes and bounded original
+expressions are compiled and emitted for one validated file at a time. Closure
+identity follows original file, kind and start/end offsets across provider
+eviction and hydration. Iterative detachment preserves unsupported expression
+kinds and locations while removing statements, comments, tokens and native
+object identity.
+
+The catalog read also establishes source availability, avoiding an additional
+repository-wide validation pass. Emission still revalidates every original
+independently. Detached declaration headers are immutable and shared between
+catalog and emission; their lexical frames and binding units remain separate.
+Laravel method signatures reuse detached class headers while effect analysis
+continues to hydrate and visit original method bodies.
+
+`analysis/php/laravel-files.ts` holds indexed identities without decoded originals
+or trees. Class headers preserve properties, promoted parameter types, return
+signatures and command attributes; they exclude every method body. Migrations
+replay in filename order through a shared compact table state. Console and
+effect passes hydrate the file they consume; inherited return/property contracts
+come from detached headers. Fortify retains configuration values, binding
+locations and copied 60-code-unit argument prefixes. Route interpretation
+compiles ordered metadata operations before following includes, so depth-first
+registration order, duplicates and cycles preserve their original behavior
+without retaining parent source trees. Every hydration validates scanned source
+through `PhpSources`; late failures diagnose the original file and prevent cache
+persistence.
+
+These controls retire consumer-owned bodies and originals. The provider retains
+its independently bounded representations and snapshots. The repository-wide
+declaration/signature catalog, emitted graph and other embedded compiler/WASM
+consumers still have separate semantic budgets; decoded-object and physical RSS
+limits are additional release work.
+
+The Laravel identity registry records only a boolean candidate check for the original `Fortify` token during the existing class/header read. Explicit negatives skip the Fortify pass; unknown registrations remain candidates, and every positive candidate still validates its indexed source before reading declarations. The generic binding catalog traverses ancestors of exact indexed declaration-name offsets, retaining nested functions, classes, callable bindings and promoted properties while avoiding unrelated body expressions. Full binding emission still compiles the original callable scopes and mutation guards. Failed predecessor pressure and existing-stack time comparisons are preserved as separate HTML characterizations.
+
+Literal HTTP requests use a candidate index built from the existing
+Next/Laravel dialect's leading literal segments. Other framework contracts,
+root parameters and catch-alls remain fallback candidates; dynamic request
+holes retain the entire inventory. Candidate registration order, authoritative
+path/constraint matching and ambiguity detection remain unchanged. Query
+selectors are parsed once per observation. CPU profiles are diagnostic evidence;
+release qualification still requires the complete fixed benchmark series.

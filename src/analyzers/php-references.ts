@@ -16,13 +16,14 @@
 // command) become `invokes` relations to the command; a dispatched job class
 // (`Job::dispatch()`, `dispatch(new Job)`) is a call of its `handle` method;
 // `Inertia::render('page')` is a response that renders that page component.
-import type { AnalysisContext } from '../core/analyzer.js';
+import type { ScannedFile, AnalysisContext } from '../core/analyzer.js';
 import { evidence, type EffectCategory, type Entity } from '../core/graph.js';
 import { args, ast, classConstant, literal, name, nodes, resolve, text, walk, type Ast, type ParsedFile, type Scope } from './php-ast.js';
 import type { SiteCollector } from './references.js';
 import type { CommandLookup } from './laravel-console.js';
+import type {LaravelFiles} from '../analysis/php/laravel-files.js';
 
-export interface PhpClass { entity: Entity; fqn: string; app: string; scope: Scope; parsed: ParsedFile; node: Ast; extends?: string }
+export interface PhpClass { entity: Entity; fqn: string; app: string; scope: Scope; file: ScannedFile; node: Ast; extends?: string }
 export interface PhpMethod { entity: Entity; node: Ast; owner: PhpClass }
 type Type = { kind: 'class'; fqn: string } | { kind: 'query'; model: string } | { kind: 'external'; via: string } | undefined;
 /** Database tables of the application (laravel-schema.ts): the table a model maps to, or a table by name. */
@@ -54,7 +55,7 @@ export function classChain(classes: Map<string, PhpClass>, app: string, fqn: str
 /** Whether a class's `extends` chain reaches an Eloquent base class. */
 export function isEloquentModel(classes: Map<string, PhpClass>, app: string, fqn: string): boolean { return classChain(classes, app, fqn).some(item => ELOQUENT_BASES.has(item)); }
 
-export function resolvePhpReferences(context: AnalysisContext, classes: Map<string, PhpClass>, methods: PhpMethod[], sites: SiteCollector, tables?: TableLookup, commands?: CommandLookup): void {
+export async function resolvePhpReferences(context: AnalysisContext, classes: Map<string, PhpClass>, methods: PhpMethod[], sites: SiteCollector, parsedFiles:LaravelFiles, tables?: TableLookup, commands?: CommandLookup): Promise<void> {
   const key = (app: string, fqn: string) => `${app}:${fqn.toLowerCase()}`;
   const classOf = (app: string, fqn: string | undefined) => fqn ? classes.get(key(app, fqn)) : undefined;
   const chain = (app: string, fqn: string): string[] => classChain(classes, app, fqn);
@@ -76,9 +77,19 @@ export function resolvePhpReferences(context: AnalysisContext, classes: Map<stri
     return short && FACADES[short] ? short : undefined;
   };
 
-  for (const method of methods) {
-    const { owner } = method;
-    const { parsed, scope, app } = { parsed: owner.parsed, scope: owner.scope, app: owner.app };
+  let activeParsed:ParsedFile|undefined,previousFile:string|undefined;
+  const bodies=new Map<number,Ast>();
+  for (const header of methods) {
+    const {owner}=header;
+    if(previousFile!==owner.file.path){
+      previousFile=owner.file.path;activeParsed=undefined;bodies.clear();activeParsed=await parsedFiles.get(previousFile);
+      if(activeParsed)walk(activeParsed.ast,node=>{if(node.kind==='method'&&node.loc)bodies.set(node.loc.start.offset,node);});
+    }
+    const body=header.node.loc?bodies.get(header.node.loc.start.offset):undefined;
+    const parsed=activeParsed;
+    if(!parsed||!body)continue;
+    const method:PhpMethod={...header,node:body};
+    const {scope,app}=owner;
     const from = method.entity;
     const lineOf = (node: Ast) => node.loc?.start.line ?? method.node.loc?.start.line ?? 1;
     const fact = (node: Ast, explanation: string) => ({ ...evidence('php', 'php-laravel', parsed.file.path, lineOf(node), explanation), endLine: node.loc?.end.line });

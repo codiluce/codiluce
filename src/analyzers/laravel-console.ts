@@ -20,6 +20,7 @@ import { hasFramework } from '../core/config.js';
 import { evidence, type Entity, type Evidence } from '../core/graph.js';
 import { args, ast, classConstant, literal, name, nodes, resolve, scopedChildren, text, walk, type Ast, type ParsedFile, type Scope } from './php-ast.js';
 import { classChain, type PhpClass } from './php-references.js';
+import {originalPhpNode,type LaravelFiles} from '../analysis/php/laravel-files.js';
 
 const CONSOLE_COMMAND = 'illuminate\\console\\command';
 const CONSOLE_KERNEL = 'illuminate\\foundation\\console\\kernel';
@@ -63,7 +64,7 @@ function callChain(node: Ast): { root: Ast; chain: ChainItem[] } | undefined {
   return undefined;
 }
 
-export function declareConsole(context: AnalysisContext, classes: Map<string, PhpClass>, methods: Map<string, Entity>, parsedFiles: Map<string, ParsedFile>, registrations: ConsoleRegistration[]): CommandLookup {
+export async function declareConsole(context: AnalysisContext, classes: Map<string, PhpClass>, methods: Map<string, Entity>, parsedFiles: LaravelFiles, registrations: ConsoleRegistration[]): Promise<CommandLookup> {
   const { graph } = context;
   const byName = new Map<string, Entity>(), byClass = new Map<string, Entity>();
   const key = (app: string, value: string) => `${app}:${value.toLowerCase()}`;
@@ -87,7 +88,8 @@ export function declareConsole(context: AnalysisContext, classes: Map<string, Ph
   for (const phpClass of [...classes.values()].sort((a, b) => a.entity.id < b.entity.id ? -1 : 1)) {
     const chain = classChain(classes, phpClass.app, phpClass.fqn);
     if (!chain.includes(CONSOLE_COMMAND) || chain[0] === CONSOLE_COMMAND) continue;
-    const { parsed, node, scope } = phpClass;
+    const { node, scope } = phpClass;
+    const parsed:ParsedFile={file:phpClass.file,ast:node,content:''};
     let signature: string | undefined, signatureNode: Ast | undefined, description: string | undefined, dynamic = false;
     for (const group of nodes(node.attrGroups)) for (const attribute of nodes(group.attrs)) {
       if (!/(^|\\)AsCommand$/.test(resolve(attribute.name, scope) ?? String(attribute.name))) continue;
@@ -196,7 +198,7 @@ export function declareConsole(context: AnalysisContext, classes: Map<string, Ph
 
   // Console route files: closure commands and the Schedule facade.
   for (const registration of registrations) {
-    const parsed = parsedFiles.get(registration.file);
+    const parsed = await parsedFiles.get(registration.file);
     if (!parsed) { graph.diagnose({ analyzer: 'php-laravel', severity: 'warning', code: 'console-routes-unavailable', file: registration.file, reason: 'Registered console route file is missing, ignored or unparseable' }); continue; }
     const visit = (children: Ast[], scope: Scope) => {
       for (const statement of children) {
@@ -220,7 +222,7 @@ export function declareConsole(context: AnalysisContext, classes: Map<string, Ph
   }
   // bootstrap/app.php withSchedule(fn (Schedule $schedule) => …) and the console Kernel's schedule().
   for (const app of context.config.applications.filter(item => hasFramework(item, 'laravel'))) {
-    const bootstrap = parsedFiles.get(path.posix.join(app.path === '.' ? '' : app.path, 'bootstrap/app.php'));
+    const bootstrap = await parsedFiles.get(path.posix.join(app.path === '.' ? '' : app.path, 'bootstrap/app.php'));
     if (bootstrap) scopedChildren(bootstrap.ast, { namespace: '', imports: new Map() }, (children, scope) => {
       for (const statement of children) walk(statement, node => {
         const what = ast(node.what);
@@ -234,10 +236,12 @@ export function declareConsole(context: AnalysisContext, classes: Map<string, Ph
   }
   for (const phpClass of classes.values()) {
     if (!classChain(classes, phpClass.app, phpClass.fqn).includes(CONSOLE_KERNEL)) continue;
-    for (const method of nodes(phpClass.node.body)) {
-      if (method.kind !== 'method' || name(method.name) !== 'schedule') continue;
+    const parsed=await parsedFiles.get(phpClass.file.path);if(!parsed)continue;
+    for (const header of nodes(phpClass.node.body)) {
+      if (header.kind !== 'method' || name(header.name) !== 'schedule') continue;
+      const method=originalPhpNode(parsed,header);if(!method)continue;
       const variables = scheduleParameters(method, phpClass.scope);
-      if (variables.size) schedule(phpClass.app, phpClass.parsed, method, phpClass.scope, variableVerb(variables), [fact(phpClass.parsed, method, 'The console Kernel schedule() method defines scheduled tasks')]);
+      if (variables.size) schedule(phpClass.app, parsed, method, phpClass.scope, variableVerb(variables), [fact(parsed, method, 'The console Kernel schedule() method defines scheduled tasks')]);
     }
   }
   return lookup;
