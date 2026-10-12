@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-12T20:22:25.410717+00:00",
+  "phase": "complete-original-production-fresh-history-entrypoint",
+  "scope": "Actual terminal six-repository 195-revision fresh entrypoint qualification and retained evidence; performance, broad source accuracy and native platforms remain separate",
+  "qualificationSha256": "2e3da791d268f2b9b3d7c3624559a8884e54b7fd27c5728d196dd1d2b89b057a",
+  "revisions": 195,
+  "actualNativeWorkers": 12,
+  "independentCompleteColumnLedgers": 42,
+  "publicViewNodes": 1484294,
+  "cachedFirstParentSnapshots": 193,
+  "offFirstParentSnapshots": 2,
+  "engineSha256": "ca1b330152267c80ce02d35c57138928da4f69e4d3817f61ff03987584dded4a",
+  "baselineEngineSha256": "34af4e73bfa404aded51e8e7bd91140282470d78ca946e6ae1cf03f228235da8",
+  "engineFilesVerified": 1924,
+  "frozenArtifactsVerified": 2168,
+  "originalAndFreshDatabasesVerified": 12,
+  "archive": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791836263.1720705,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-production-history-fresh/fresh-history-entrypoint-evidence.tar.gz",
+    "sha256": "a5fe09c25d994c43e66fdb55650bf8615ab3f3aeb76e00da301dcad777c2ac5f",
+    "bytes": 150511604,
+    "verifiedRegularMembers": 1465,
+    "manifestSha256": "53b1d10456f318ef45d270a067f73944faa1ec12846ad9a61f344fd25d8e0b27",
+    "actualFreshDatabases": 6,
+    "originalSourceByteReceipts": 195,
+    "seconds": 29.436272859573364
+  },
+  "archiveUrl": "http://127.0.0.1:37858/fresh-history-entrypoint-evidence.tar.gz",
+  "runtimeArchive": {
+    "url": "http://127.0.0.1:37857/qualified-registry-refresh-engine-and-evidence-regular.tar.gz",
+    "sha256": "49d428993a647d8a5c1ee7477411a8d75fee01f058b5895df9c9ed31f3dcd2b5"
+  },
+  "actualControllerTerminal": {
+    "pid": 2946494,
+    "childPid": 2946495,
+    "exitCode": 0,
+    "seconds": 4984.289570569992,
+    "completedAt": 1791835983.269155
+  },
+  "targetedTests": 178,
+  "failedFinalTests": 0,
+  "targetedLog": {
+    "file": "/var/www/html/codiluce/.codiluce/validation-production-history-fresh/entrypoint-report-native-scope-final.log",
+    "sha256": "5cd9c6707a633aa92f57f55c0851c9deeb4605c8a542ec80134675a8ac142d33"
+  },
+  "checks": [
+    "All original byte/source/complete graph digests match exact qualified original snapshots after only run UUID/time changes",
+    "Actual fresh workers and durable readback payloads agree without normalization; prescribed contiguous jobs, saves and ACKs remain exact",
+    "Every raw column in all seven tables independently streamed and joined by actual snapshot UUID/sequence/commit",
+    "All public nodes and geometry checked twice with two fresh services; pending-zero cached resume keeps complete storage and registry",
+    "Archive reopened and all 1465 regular members checked by byte/size/SHA; six actual fresh databases and 195 original byte receipts retained",
+    "Runtime, artifacts, all twelve databases and foreign files independently rehashed after archive completion; native worker and controller PIDs terminal"
+  ],
+  "runtimeSourceChanged": false,
+  "full195RevisionEntrypointQualified": true,
+  "relativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "sourceAccuracyQualified": false,
+  "fullGoalFinished": false,
+  "foreignFiles": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  },
+  "browserReview": {
+    "url": "http://127.0.0.1:37845/production-history-entrypoint-complete.html",
+    "desktop": {
+      "viewport": 1920,
+      "documentWidth": 1905,
+      "scrollWidth": 1905,
+      "repositoryRows": 6
+    },
+    "mobile": {
+      "viewport": 390,
+      "documentWidth": 375,
+      "scrollWidth": 375,
+      "repositoryRows": 6,
+      "tableWidth": 481,
+      "tableContainerWidth": 305
+    },
+    "consoleWarningsAndErrors": 0,
+    "viewportRestored": true,
+    "allSixLinksHttp200": true
+  },
+  "reportSha256": "6b7870af3decd1b9fd7d4a97269ca70dbcad51874b274d5cbd2f1624a0e2f20f",
+  "trackedQualificationSha256": "2e3da791d268f2b9b3d7c3624559a8884e54b7fd27c5728d196dd1d2b89b057a"
+}
