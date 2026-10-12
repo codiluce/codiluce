@@ -1,0 +1,229 @@
+{
+  "schema": 1,
+  "scope": "Twelve manually reviewed original declaration spans at the six pinned heads; graph verification and broader source accuracy remain pending",
+  "coordinateProfile": "one-based UTF-16 columns with exclusive end; original CR/LF and Unicode separators preserved",
+  "contracts": [
+    {
+      "id": "flask-blueprint",
+      "repository": "flask",
+      "commit": "d086db856be187255b8ec61ef409357393020f32",
+      "path": "src/flask/blueprints.py",
+      "name": "Blueprint",
+      "entityType": "class",
+      "language": "python",
+      "range": {
+        "startLine": 18,
+        "startColumn": 1,
+        "endLine": 128,
+        "endColumn": 51
+      },
+      "header": "class Blueprint(SansioBlueprint):",
+      "fileSha256": "a79404da5635f0622d6ddaff44a46967c0e8d7b8343ef4062206644940e15f69",
+      "spanSha256": "28d0e00faa802018f07f5a10bd53fba278c5979227af543c89ea5297a44a01da"
+    },
+    {
+      "id": "flask-open-resource",
+      "repository": "flask",
+      "commit": "d086db856be187255b8ec61ef409357393020f32",
+      "path": "src/flask/blueprints.py",
+      "name": "open_resource",
+      "entityType": "method",
+      "language": "python",
+      "range": {
+        "startLine": 104,
+        "startColumn": 5,
+        "endLine": 128,
+        "endColumn": 51
+      },
+      "header": "def open_resource(",
+      "owner": "Blueprint",
+      "fileSha256": "a79404da5635f0622d6ddaff44a46967c0e8d7b8343ef4062206644940e15f69",
+      "spanSha256": "3dfb15b3bd4e2f2e02e662ef403752f576d2dc0477ca790577a6831130634507"
+    },
+    {
+      "id": "memos-server",
+      "repository": "memos",
+      "commit": "b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e",
+      "path": "server/server.go",
+      "name": "Server",
+      "entityType": "class",
+      "language": "go",
+      "range": {
+        "startLine": 39,
+        "startColumn": 6,
+        "endLine": 47,
+        "endColumn": 2
+      },
+      "header": "Server struct {",
+      "fileSha256": "6bb3a6b268400a5d482b7e9f4a10c407847b9e635a1780629050b4f3b8cf53de",
+      "spanSha256": "c19595fee63872d9105fde05d2b034b4065df80a33e62d458aa22b19414b68a0",
+      "sourceProfile": "Go original type_spec; the shared type-declaration keyword is outside the individual type span"
+    },
+    {
+      "id": "memos-close-long-lived-connections",
+      "repository": "memos",
+      "commit": "b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e",
+      "path": "server/server.go",
+      "name": "closeLongLivedConnections",
+      "entityType": "method",
+      "language": "go",
+      "range": {
+        "startLine": 162,
+        "startColumn": 1,
+        "endLine": 165,
+        "endColumn": 2
+      },
+      "header": "func (s *Server) closeLongLivedConnections() {",
+      "owner": "Server",
+      "fileSha256": "6bb3a6b268400a5d482b7e9f4a10c407847b9e635a1780629050b4f3b8cf53de",
+      "spanSha256": "8ab9e1a38a5e9c5409a4fbad1e857d215212a3ea1b6ec6039c0fc98bed523050"
+    },
+    {
+      "id": "bookstack-show",
+      "repository": "bookstack",
+      "commit": "ff661b59f6f605bf768fe850c0d0a8a2dc09d203",
+      "path": "app/Entities/Controllers/PageController.php",
+      "name": "show",
+      "entityType": "method",
+      "language": "php",
+      "range": {
+        "startLine": 139,
+        "startColumn": 5,
+        "endLine": 171,
+        "endColumn": 6
+      },
+      "header": "public function show(string $bookSlug, string $pageSlug)",
+      "owner": "PageController",
+      "fileSha256": "4e3507874d4d6a96f19caa596201674f19d02b46f7b20b8b133f0acf6fe16be8",
+      "spanSha256": "40cee3497d83360c02f87596612007fec832ab1da05ed0c692c9c4e19d255bce"
+    },
+    {
+      "id": "bookstack-get-page-ajax",
+      "repository": "bookstack",
+      "commit": "ff661b59f6f605bf768fe850c0d0a8a2dc09d203",
+      "path": "app/Entities/Controllers/PageController.php",
+      "name": "getPageAjax",
+      "entityType": "method",
+      "language": "php",
+      "range": {
+        "startLine": 178,
+        "startColumn": 5,
+        "endLine": 189,
+        "endColumn": 6
+      },
+      "header": "public function getPageAjax(int $pageId)",
+      "owner": "PageController",
+      "fileSha256": "4e3507874d4d6a96f19caa596201674f19d02b46f7b20b8b133f0acf6fe16be8",
+      "spanSha256": "a48e0bd738cf364b4bb7a8a6861c2e0ca9a1ee1f3486644a479b40ae1a56524b"
+    },
+    {
+      "id": "firefly-iii-index-controller",
+      "repository": "firefly-iii",
+      "commit": "57371b9f82debbf90e6453aba8af585e8c382617",
+      "path": "app/Http/Controllers/Transaction/IndexController.php",
+      "name": "IndexController",
+      "entityType": "controller",
+      "language": "php",
+      "range": {
+        "startLine": 45,
+        "startColumn": 1,
+        "endLine": 192,
+        "endColumn": 2
+      },
+      "header": "final class IndexController extends Controller",
+      "fileSha256": "15853b54ac7ee30ceddc82070e0df379fb6e1ce0f8bbd205f1db37d8ef5eedaf",
+      "spanSha256": "07b00839d4a75df25477f931986e6aa11409c02cc9621cf155b2b101875c26bc"
+    },
+    {
+      "id": "firefly-iii-construct",
+      "repository": "firefly-iii",
+      "commit": "57371b9f82debbf90e6453aba8af585e8c382617",
+      "path": "app/Http/Controllers/Transaction/IndexController.php",
+      "name": "__construct",
+      "entityType": "method",
+      "language": "php",
+      "range": {
+        "startLine": 54,
+        "startColumn": 5,
+        "endLine": 67,
+        "endColumn": 6
+      },
+      "header": "public function __construct()",
+      "owner": "IndexController",
+      "fileSha256": "15853b54ac7ee30ceddc82070e0df379fb6e1ce0f8bbd205f1db37d8ef5eedaf",
+      "spanSha256": "ca7bf3e8038e146b031760cac8e2124ae424c7739dbf64ca0ee3647d1f62b150"
+    },
+    {
+      "id": "axum-main",
+      "repository": "axum",
+      "commit": "618496288c41da835683ec149432c4869722779f",
+      "path": "examples/hello-world/src/main.rs",
+      "name": "main",
+      "entityType": "function",
+      "language": "rust",
+      "range": {
+        "startLine": 10,
+        "startColumn": 1,
+        "endLine": 20,
+        "endColumn": 2
+      },
+      "header": "async fn main() {",
+      "fileSha256": "512df9aab9dc36e66c35f23a76bda87901641e7547413231ae4e520d94fab302",
+      "spanSha256": "65080e06501a4a7be48b9b059e178e79b95ecefff1a3f1fd58e970592391eff8"
+    },
+    {
+      "id": "axum-handler",
+      "repository": "axum",
+      "commit": "618496288c41da835683ec149432c4869722779f",
+      "path": "examples/hello-world/src/main.rs",
+      "name": "handler",
+      "entityType": "function",
+      "language": "rust",
+      "range": {
+        "startLine": 22,
+        "startColumn": 1,
+        "endLine": 24,
+        "endColumn": 2
+      },
+      "header": "async fn handler() -> Html<&'static str> {",
+      "fileSha256": "512df9aab9dc36e66c35f23a76bda87901641e7547413231ae4e520d94fab302",
+      "spanSha256": "bd0d8dd9ecf52d321cb7d39481f88975422857addc7e2197ce46a08ee1e4c544"
+    },
+    {
+      "id": "full-stack-fastapi-read-item",
+      "repository": "full-stack-fastapi",
+      "commit": "f27b4721507824e57ebd0286ff1a84d82e83bf59",
+      "path": "backend/app/api/routes/items.py",
+      "name": "read_item",
+      "entityType": "function",
+      "language": "python",
+      "range": {
+        "startLine": 48,
+        "startColumn": 1,
+        "endLine": 58,
+        "endColumn": 16
+      },
+      "header": "@router.get(\"/{id}\", response_model=ItemPublic)",
+      "fileSha256": "7f0fa55d1f7b02188c4abd4f88aa6db92fe03de38258b765ed050ec72032b410",
+      "spanSha256": "870cfab8d486df87fae7301f6a511abc9ee27631ed8e4e0408b5b6b52c10c5d8"
+    },
+    {
+      "id": "full-stack-fastapi-create-item",
+      "repository": "full-stack-fastapi",
+      "commit": "f27b4721507824e57ebd0286ff1a84d82e83bf59",
+      "path": "backend/app/api/routes/items.py",
+      "name": "create_item",
+      "entityType": "function",
+      "language": "python",
+      "range": {
+        "startLine": 61,
+        "startColumn": 1,
+        "endLine": 72,
+        "endColumn": 16
+      },
+      "header": "@router.post(\"/\", response_model=ItemPublic)",
+      "fileSha256": "7f0fa55d1f7b02188c4abd4f88aa6db92fe03de38258b765ed050ec72032b410",
+      "spanSha256": "2651c63ecb96761600a856480ae2d8c3306b0ceb63dc2061530ff23d7ac53780"
+    }
+  ]
+}
