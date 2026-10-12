@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-12T21:03:54.250196+00:00",
+  "phase": "TypeScript parse-cache ownership construction candidate",
+  "scope": "Isolated local candidate; complete release and original production-corpus qualification remain pending",
+  "branch": "compat/typescript-source-cache",
+  "baseCommit": "c7a0583c48c514181d96e291d371b7fd8b1f98a1",
+  "mainRuntimeSha256": "ca1b330152267c80ce02d35c57138928da4f69e4d3817f61ff03987584dded4a",
+  "runtimeDifferences": [
+    {
+      "file": "src/analyzers/ts-program.ts",
+      "before": "40dca834c0c2d14eb249da342551fb85c8435b7253d25929665bb09d3018cd44",
+      "after": "4da65f7f87eea679bb6f3ba43e1d17cad34ba909ed685e9c2b2344ec6849fba8"
+    }
+  ],
+  "files": [
+    {
+      "file": "src/analyzers/ts-program.ts",
+      "sha256": "4da65f7f87eea679bb6f3ba43e1d17cad34ba909ed685e9c2b2344ec6849fba8"
+    },
+    {
+      "file": "tests/typescript-source-cache.test.ts",
+      "sha256": "54833ce1c39c5c6d940bb6b145c5411fffd287f48039829bf07c93bc78cff482"
+    }
+  ],
+  "targetedTests": 40,
+  "newConformanceTests": 8,
+  "failedFinalTests": 0,
+  "engineAndTestTypecheckPassed": true,
+  "checks": [
+    "Independent byte/node/entry cache admission and LRU reuse; stale text/options invalidated",
+    "Unicode/CRLF full source preserved; oversized and disabled cache inputs still parse normally",
+    "Actual imports, alias/direct call symbols, exact source identity and target nonexecution retained",
+    "Compiler-owned standard-library types preserved under separate bounded library admission",
+    "Complete original Express fixture cold/warm/revision graph equality, normalizing only run UUID/time, with forced AST eviction and actual graph-cache hits",
+    "Existing Express/workspace/indexed-I/O regressions pass; all 1924 main runtime files and measured helper files remain byte-identical"
+  ],
+  "sourceCacheLimits": {
+    "maxBytes": 33554432,
+    "maxCompilerChildVisitorNodes": 1000000,
+    "maxEntries": 4096
+  },
+  "libraryCacheLimits": {
+    "maxBytes": 16777216,
+    "maxCompilerChildVisitorNodes": 500000,
+    "maxEntries": 128
+  },
+  "limitations": [
+    "Admission accounting covers UTF-16 source/key payload and compiler child-visitor nodes, not JS object size, checker symbols/token caches or RSS",
+    "Active programs and other consumers can retain SourceFiles independently; total consumer/compiler/WASM budgets remain open",
+    "Full engine/web regression, compiled installed package and original production histories/performance are pending before main integration"
+  ],
+  "logs": [
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-source-cache/cache-conformance-first.log",
+      "sha256": "000c2a664bb429b21381016bf512da9b70daa4267a72095981dd069181682805"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-source-cache/cache-conformance-final.log",
+      "sha256": "ca95e88b468d3365b430dadd266b74e16c1d0b087c7024bf90362210c8916a62"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-source-cache/cache-library-conformance.log",
+      "sha256": "32ab06d53b867c18c93acef466cbc3d7e481e15b081ce6ed13a5eb3cbdec9999"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-source-cache/cache-graph-conformance-first.log",
+      "sha256": "f18be282a764585a58a77618f50466bfa988ce23c005ff12790f4b510134d285"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-source-cache/cache-targeted-regressions.log",
+      "sha256": "40dfed0ad7656705b71f07816fb38e1715eaeb4da98037cd2dd8592d51f12f4f"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-source-cache/cache-typecheck-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "initialTestExpectationCorrection": "Initial exact-text assertion used getText, which excludes leading comments. Corrected to getFullText; initial 5/6 failed receipt remains. Candidate runtime source was unchanged by that correction.",
+  "mainRuntimeChanged": false,
+  "candidateConstructionPassed": true,
+  "candidateFullReleaseQualified": false,
+  "candidateProductionHistoryQualified": false,
+  "candidateRelativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullGoalFinished": false,
+  "performanceRun": {
+    "liveControllerPid": 3116124,
+    "liveChildPid": 3116142,
+    "completedProbes": 7,
+    "currentProbe": {
+      "id": "memos",
+      "label": "current",
+      "repetition": 0,
+      "status": "running"
+    },
+    "runtimeOrHarnessChanged": false
+  },
+  "foreignFiles": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  }
+}

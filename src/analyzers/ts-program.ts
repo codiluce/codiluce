@@ -12,9 +12,49 @@
 import ts from 'typescript';
 import path from 'node:path';
 
-const LIB_CACHE = new Map<string, ts.SourceFile>();
-const FILE_CACHE = new Map<string, { text: string; key: string; source: ts.SourceFile }>();
-const FILE_CACHE_LIMIT = 20_000;
+export interface TypeScriptCacheLimits {maxBytes:number;maxNodes:number;maxEntries:number}
+export const TYPESCRIPT_SOURCE_CACHE_LIMITS:Readonly<TypeScriptCacheLimits>=Object.freeze({maxBytes:32*1024*1024,maxNodes:1_000_000,maxEntries:4096});
+export const TYPESCRIPT_LIBRARY_CACHE_LIMITS:Readonly<TypeScriptCacheLimits>=Object.freeze({maxBytes:16*1024*1024,maxNodes:500_000,maxEntries:128});
+interface CachedSource {source:ts.SourceFile;parseKey:string;bytes:number;nodes:number}
+
+/** Process-owned parse reuse, bounded separately from live compiler programs.
+ * UTF-16 source/key payload and compiler child-visitor nodes are admission
+ * measures, not JS object size, checker memory or an RSS cap. An oversized
+ * original remains a valid program input; only its cached ownership is denied. */
+export class TypeScriptSourceCache {
+  private readonly entries=new Map<string,CachedSource>();
+  private bytes=0;private nodes=0;private peakBytes=0;private peakNodes=0;private peakEntries=0;
+  private hits=0;private misses=0;private evictions=0;private invalidations=0;private bypasses=0;
+  readonly limits:Readonly<TypeScriptCacheLimits>;
+  constructor(limits:TypeScriptCacheLimits=TYPESCRIPT_SOURCE_CACHE_LIMITS){
+    for(const name of ['maxBytes','maxNodes','maxEntries']as const)if(!Number.isSafeInteger(limits[name])||limits[name]<0)throw Error('TypeScript source cache limits require nonnegative safe integers');
+    this.limits=Object.freeze({...limits});
+  }
+  stats(){return {limits:this.limits,bytes:this.bytes,nodes:this.nodes,entries:this.entries.size,peakBytes:this.peakBytes,peakNodes:this.peakNodes,peakEntries:this.peakEntries,hits:this.hits,misses:this.misses,evictions:this.evictions,invalidations:this.invalidations,bypasses:this.bypasses};}
+  get(cacheKey:string,text:string|undefined,parseKey:string):ts.SourceFile|undefined {
+    const cached=this.entries.get(cacheKey);
+    if(!cached){this.misses++;return undefined;}
+    if(cached.parseKey!==parseKey||text!==undefined&&cached.source.text!==text){this.forget(cacheKey);this.invalidations++;this.misses++;return undefined;}
+    this.entries.delete(cacheKey);this.entries.set(cacheKey,cached);this.hits++;return cached.source;
+  }
+  put(cacheKey:string,parseKey:string,source:ts.SourceFile):void {
+    this.forget(cacheKey);
+    const bytes=2*(cacheKey.length+parseKey.length+source.fileName.length+source.text.length);
+    if(!this.limits.maxEntries||bytes>this.limits.maxBytes){this.bypasses++;return;}
+    // Stop admission counting once this cache cannot retain the tree. No
+    // parent links, checker symbols or compiler token caches are traversed.
+    let nodes=0;const pending:ts.Node[]=[source];
+    while(pending.length){const node=pending.pop()!;if(++nodes>this.limits.maxNodes){this.bypasses++;return;}const overflow=ts.forEachChild(node,child=>{if(nodes+pending.length>=this.limits.maxNodes)return true;pending.push(child);return undefined;});if(overflow){this.bypasses++;return;}}
+    while(this.entries.size>=this.limits.maxEntries||this.bytes+bytes>this.limits.maxBytes||this.nodes+nodes>this.limits.maxNodes){this.forget(this.entries.keys().next().value!);this.evictions++;}
+    this.entries.set(cacheKey,{source,parseKey,bytes,nodes});this.bytes+=bytes;this.nodes+=nodes;
+    this.peakBytes=Math.max(this.peakBytes,this.bytes);this.peakNodes=Math.max(this.peakNodes,this.nodes);this.peakEntries=Math.max(this.peakEntries,this.entries.size);
+  }
+  private forget(cacheKey:string):void {const cached=this.entries.get(cacheKey);if(cached){this.entries.delete(cacheKey);this.bytes-=cached.bytes;this.nodes-=cached.nodes;}}
+  clear():void {this.entries.clear();this.bytes=0;this.nodes=0;}
+}
+const LIB_CACHE = new TypeScriptSourceCache(TYPESCRIPT_LIBRARY_CACHE_LIMITS);
+const FILE_CACHE = new TypeScriptSourceCache();
+export function applicationSourceCacheStats(){return {source:FILE_CACHE.stats(),libraries:LIB_CACHE.stats()};}
 
 export function scriptKind(fileName: string): ts.ScriptKind {
   const extension = path.extname(fileName).toLowerCase();
@@ -29,6 +69,9 @@ export interface ProgramInputs {
   readSource?: (fileName: string) => string | undefined;
   moduleHost?: ts.ModuleResolutionHost;
   resolveModuleNameLiterals?: ts.CompilerHost['resolveModuleNameLiterals'];
+  /** Owned parser-cache profiles; changing admission never changes inputs. */
+  sourceCache?:TypeScriptSourceCache;
+  libraryCache?:TypeScriptSourceCache;
 }
 export function createApplicationProgram(files: Map<string, string>, options: ts.CompilerOptions, currentDirectory: string, inputs: ProgramInputs = {}): ts.Program {
   const compilerOptions = programOptions(options);
@@ -43,23 +86,22 @@ export function createApplicationProgram(files: Map<string, string>, options: ts
       const text = files.get(fileName) ?? inputs.readSource?.(fileName);
       if (text !== undefined) {
         const cacheKey = `${currentDirectory}\0${fileName}`;
-        const cached = FILE_CACHE.get(cacheKey);
-        if (cached && cached.text === text && cached.key === key) return cached.source;
+        const cache=inputs.sourceCache??FILE_CACHE,cached=cache.get(cacheKey,text,key);
+        if (cached) return cached;
         const source = ts.createSourceFile(fileName, text, languageVersionOrOptions, true, scriptKind(fileName));
-        if (FILE_CACHE.size > FILE_CACHE_LIMIT) FILE_CACHE.clear();
-        FILE_CACHE.set(cacheKey, { text, key, source });
+        cache.put(cacheKey,key,source);
         return source;
       }
       if (!isLib(fileName)) return undefined;
       // Compiler-owned declaration libraries are safe to share, as in the
       // original host. Project source ASTs keep their own scope/cache key.
-      const libKey = `${fileName}\0${parseKey}`;
-      let source = LIB_CACHE.get(libKey);
+      const libKey = fileName,cache=inputs.libraryCache??LIB_CACHE;
+      let source = cache.get(libKey,undefined,parseKey);
       if (!source) {
         const content = ts.sys.readFile(fileName);
         if (content === undefined) return undefined;
         source = ts.createSourceFile(fileName, content, languageVersionOrOptions, false);
-        LIB_CACHE.set(libKey, source);
+        cache.put(libKey,parseKey,source);
       }
       return source;
     },
