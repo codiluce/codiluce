@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-12T19:29:23.174060+00:00",
+  "phase": "P10d2b2b2b2c7d1-full-history-performance-observer-and-conformance",
+  "scope": "Reusable measurement/verification implementation and owned four-commit actual-worker conformance; actual production measurements have not started",
+  "targetedTests": 170,
+  "failedFinalTests": 0,
+  "implementationFiles": [
+    {
+      "file": "scripts/observe-production-history-performance.mjs",
+      "sha256": "2aa107e38bca128951a0c84ded527e06c9b3117f6ca4900a261e74a7989464ea"
+    },
+    {
+      "file": "scripts/production-history-performance-worker.mjs",
+      "sha256": "dfd8128544a424fa63dbd7ee07cc631ef6b0630a9734ad1e69d03009765ca6ad"
+    },
+    {
+      "file": "scripts/production-history-performance-results.mjs",
+      "sha256": "6fc24272ca7a77ec75d7863de980d13c6345421b7006e4682efc998f8255e549"
+    },
+    {
+      "file": "scripts/audit-history-performance-columns.py",
+      "sha256": "6f571578f99a0f9730869ffb71d67b911737efe9a1df51c3f21967ced2260ac2"
+    },
+    {
+      "file": "scripts/tests/production-history-performance.test.mjs",
+      "sha256": "650b72807d413b50b33d3a59a8dde0cbbb08c907a367f3295d01f0f7fef8e1ce"
+    }
+  ],
+  "logs": [
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-fresh/history-performance-conformance-first.log",
+      "sha256": "00d2aa6986770eebdcd5d2d73a67ff6bf90566ffc22a745b06f26961a2eafc3a"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-fresh/history-performance-targeted-final.log",
+      "sha256": "f2b123f7a3c6d36fd873940e0188589f709959fa30fcec5e8893107cc7483def"
+    }
+  ],
+  "baselinePreparation": {
+    "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/baseline-preparation.json",
+    "sha256": "be0fae931f13a00b271367e30849a6ae77667bb164073d12267d59f9a35c70af",
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791833234.1455264,
+    "baselineEngine": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/baseline-engine",
+    "baselineEngineSha256": "34af4e73bfa404aded51e8e7bd91140282470d78ca946e6ae1cf03f228235da8",
+    "currentEngineSha256": "ca1b330152267c80ce02d35c57138928da4f69e4d3817f61ff03987584dded4a",
+    "archive": "/var/www/html/codiluce/.codiluce/validation-production-history-resume/qualified-engine-and-conformance.tar.gz",
+    "archiveSha256": "ead9b2d9fad764a6a8f67a0d46ebf9042fef42ce9dc458e43aaeda0319b34a56",
+    "regularFilesVerified": 1924,
+    "copiedSourceFiles": 233,
+    "hardlinkedImmutableVendorOrGrammarFiles": 1691,
+    "sourceDifferences": [
+      "src/projection/service.ts"
+    ],
+    "measurementStarted": false,
+    "relativeHistoryTimeRssQualified": false,
+    "method": "Original qualified archive supplies the changed baseline service; every other baseline runtime byte matches the immutable current runtime. Source files copied, vendor/grammar files hardlinked without altering bytes. All 1924 regular runtime files independently hashed."
+  },
+  "retainedPreparationFailure": {
+    "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/baseline-preparation-failed-first.json",
+    "sha256": "dd47b2bbbbd3961bb631ad0eef8a8193acc80d8b0cb3b883026539d7d4ba1f3f"
+  },
+  "checks": [
+    "Actual empty-store indexHistory with both real contiguous workers and native jobs/messages/save/acknowledgements",
+    "External all-thread-descendant RSS sampling and monotonic time end before complete payload or column verification",
+    "All saved graph fields/proofs compared to independently qualified originals; only run UUID/time replaced across runs",
+    "Independent Python streaming checks every column of all seven snapshot/version/membership tables",
+    "Three predetermined counterbalanced baseline/current pairs per repository; medians and unchanged <=10% time/RSS thresholds",
+    "Missing, duplicated, failed, invalid or selectively shortened observations cannot qualify; actual child RSS is required",
+    "Equal-count graph/revision substitutions, hidden durable payload changes and unverified column bytes rejected",
+    "A smaller valid authored corpus with a claimed full-production flag is refused before any production measurement",
+    "Successful owned states retire only after complete verification; failed states/logs/receipts remain",
+    "Frozen original/fresh databases, both exact runtimes, source observer and owned Git metadata checked before/after each production probe"
+  ],
+  "runtimeSourceChanged": false,
+  "engineSha256": "ca1b330152267c80ce02d35c57138928da4f69e4d3817f61ff03987584dded4a",
+  "engineFiles": 1924,
+  "full195RevisionEntrypointQualified": false,
+  "relativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullGoalFinished": false,
+  "foreignFiles": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  }
+}
