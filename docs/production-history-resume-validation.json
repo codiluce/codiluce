@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "phase": "P10d2b2b2b2c7b3 actual original history layout, resume and public views",
+  "observerImplementationVerified": true,
+  "resumedOriginalRevisions": 99,
+  "originalRevisionsIndependentlyByteAudited": 99,
+  "firstParentRegistrySnapshots": 97,
+  "publicViewSnapshots": 99,
+  "offFirstParentPublicViews": 2,
+  "freshPublicServicePasses": 2,
+  "tests": {
+    "passed": 118,
+    "failed": 0,
+    "logSha256": "a82fe660b46b39162be70cdc768e19ef23b364fa7d8abef99ca60cb905eb1ad7"
+  },
+  "everyOriginalAndCopiedSnapshotColumnIndependentlyAudited": true,
+  "allOriginalDatabasesUnchanged": true,
+  "allCopiedPayloadsAndMembershipsPreserved": true,
+  "allPublicNodeNamesTypesPathsLanguagesOwnershipRangesRetained": true,
+  "geometry": {
+    "firstParentRectangles": 815205,
+    "stableRelativePositions": 788924,
+    "missingSlots": 0,
+    "overlappingSiblings": 0,
+    "escapingChildren": 0
+  },
+  "runtimeSourceChanged": false,
+  "runtimeEngineSha256": "34af4e73bfa404aded51e8e7bd91140282470d78ca946e6ae1cf03f228235da8",
+  "resumeObserver": {
+    "scripts/observe-production-history-resume.mjs": "1282cf73f3d22a9d6a67a53be511e2edf88feaf4117dce2557c40549c1f1a3eb",
+    "scripts/production-history-storage-ledger.mjs": "766c976065126d1ef5ea2afc3a3d9c9ac9f57921dd10a28f792d2bccc9183199",
+    "scripts/observe-production-history-views.mjs": "a1ee1cc4806c82e2c38242b0a3956f4de3d66e9fc3c1bc73fdd01499e6878ef5",
+    "scripts/production-history-public-views.mjs": "3258281950ac8c9064de6787a8236715d41b20a8aaa0c24e04a319c2171a81c2",
+    "scripts/tests/production-history-resume.test.mjs": "b9635da506213dfad8397feb3e3a0349bfe22d6e7c5e10c6024afe19a0bf1150"
+  },
+  "archive": {
+    "sha256": "c794dffaff9336dcf89801b50ed4e425e51d435a0363168fac9dd3155a59eede",
+    "bytes": 1648745,
+    "files": 44,
+    "allMembersRegularAndBytesVerified": true,
+    "url": "http://127.0.0.1:37857/original-history-resume-and-views.tar.gz"
+  },
+  "liveCorpus": {
+    "observerPid": 2550218,
+    "confirmedLiveAt": "2026-10-12T17:14:27.823749+00:00",
+    "progress": [
+      {
+        "id": "flask",
+        "status": "verified",
+        "verifiedRevisions": 35,
+        "error": null
+      },
+      {
+        "id": "memos",
+        "status": "verified",
+        "verifiedRevisions": 32,
+        "error": null
+      },
+      {
+        "id": "bookstack",
+        "status": "verified",
+        "verifiedRevisions": 32,
+        "error": null
+      },
+      {
+        "id": "firefly-iii",
+        "status": "verified",
+        "verifiedRevisions": 32,
+        "error": null
+      },
+      {
+        "id": "axum",
+        "status": "starting",
+        "verifiedRevisions": 1,
+        "error": null
+      }
+    ]
+  },
+  "full195RevisionGateQualified": false,
+  "freshIndexHistoryOrchestrationQualified": false,
+  "relativeHistoryTimeRssQualified": false,
+  "remainingSemanticCompilerWasmBudgetsQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "retainedDevelopmentFailure": "The original owned fixture expected 12 entity memberships; its literal two revisions have 14 (repository/application/two files/directory/two functions each). Initial failed log retained; runtime code unchanged.",
+  "browserChecks": {
+    "url": "http://127.0.0.1:37845/production-history-resume.html",
+    "viewportWidth": 1920,
+    "bodyScrollWidth": 1905,
+    "allThreeCoverageRowsAndSideBranchDistinctionVisible": true,
+    "fullGoalPendingVisible": true
+  }
+}

@@ -1,0 +1,673 @@
+{
+  "schema": 1,
+  "startedAt": "2026-10-12T16:50:15.170Z",
+  "scope": "completed-repository",
+  "runInputs": {
+    "engineSha256": "34af4e73bfa404aded51e8e7bd91140282470d78ca946e6ae1cf03f228235da8",
+    "engineFiles": 1924,
+    "observerFiles": 9,
+    "corpusSha256": "d98b9eb8ae23b7202ed05ae1ceabc08543bcf3b88d2fc26d4b7bf1715b075e3b",
+    "profilesSha256": "540a45877decb71aa080a6ef0c5f563e41e5bea6e0998b6e18d73c76ba6175bc"
+  },
+  "repositories": [
+    {
+      "id": "bookstack",
+      "status": "verified",
+      "database": "bookstack/state/history.db",
+      "databaseSha256": "6fc674d6f94a2a547f4603a73a3eab0c9e157fa6ce7351df00204b8cf39d45e9",
+      "wal": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "originalBlobObjects": 3255,
+      "revisions": [
+        {
+          "commit": "79a2e017bbf5d4d634e890199e3267d9280f1db1",
+          "seq": 1,
+          "id": "2c4bea3c-5913-4b85-9c0e-662cad266775",
+          "exact": {
+            "sha256": "d22aa4231c7595d68e18e16cb54985951271dac314686f0d27204c4b1882f825",
+            "bytes": 74321092,
+            "counts": {
+              "entities": 11871,
+              "relations": 35863,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "a2bd7bdfea290130f0679457502d0832f40aa507829761421c0b103ab5217e12",
+          "sourceFiles": 2477,
+          "hashedOriginalSources": 2426,
+          "newVersions": 47882
+        },
+        {
+          "commit": "c511f7d9356a73cb96e6ecd605736946dcfb6cbd",
+          "seq": 2,
+          "id": "f62b0b80-5b37-402f-a225-7dd2cbbb4112",
+          "exact": {
+            "sha256": "4a3d0acfb7e8fc771b8aa9599d82b14fee6c913c78521fa217cbbae09981b6dd",
+            "bytes": 74321860,
+            "counts": {
+              "entities": 11872,
+              "relations": 35864,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "a3afa6005b84e324b2d62701c23124eab280bb78bb664eadf9944a9260c3dd50",
+          "sourceFiles": 2478,
+          "hashedOriginalSources": 2427,
+          "newVersions": 2
+        },
+        {
+          "commit": "f7df78b91b12ff1d8e248ded7747e76203904b8e",
+          "seq": 3,
+          "id": "cd75a395-df55-499a-88f2-c03c060ad2df",
+          "exact": {
+            "sha256": "422f959bd42c625570d97d6631e494a963e1f648fe95bd0a583e806247abc4a1",
+            "bytes": 74321860,
+            "counts": {
+              "entities": 11872,
+              "relations": 35864,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "e06cf8b32bbfce46c314c8c591db5e03b755d47cc96833a78e1eae2b3f1a7a7f",
+          "sourceFiles": 2478,
+          "hashedOriginalSources": 2427,
+          "newVersions": 1
+        },
+        {
+          "commit": "6bba39196c36bd4ac386ca974df6d87480bb7872",
+          "seq": 4,
+          "id": "0b3aac35-0b30-4e55-a057-7f6a61a5585c",
+          "exact": {
+            "sha256": "a97f09a37429005cf6ea99212d00c1797adc80cd7a614afdd38edca5332f22d2",
+            "bytes": 74321860,
+            "counts": {
+              "entities": 11872,
+              "relations": 35864,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "0a4ae0ba8fcd74d43b9ec1ca57a7bc4708e5f6ef4c2b4b61f4d604e743a29ac5",
+          "sourceFiles": 2478,
+          "hashedOriginalSources": 2427,
+          "newVersions": 2
+        },
+        {
+          "commit": "a21317500495051a9ca1c6aa055214c95c008a39",
+          "seq": 5,
+          "id": "72eed69c-b34d-4525-9b03-148542a62bfb",
+          "exact": {
+            "sha256": "ad6de1de91aca2401709fc4ae104e18036089631a45b5caa88a4489e08d55fcf",
+            "bytes": 74321862,
+            "counts": {
+              "entities": 11872,
+              "relations": 35864,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "2e7a811153dc1175570cf4c8ff4cb2a4f777e07a3fcf0d742203b7df564b9d9f",
+          "sourceFiles": 2478,
+          "hashedOriginalSources": 2427,
+          "newVersions": 87
+        },
+        {
+          "commit": "b87789dde61b5c0a87108694a84162d0450fc339",
+          "seq": 6,
+          "id": "97ddae7c-8718-47fd-be89-eccab43f770f",
+          "exact": {
+            "sha256": "2609bd9532a2245a8602e93bb0e30e98a05dfa6612e5d0e26aaf25c114a1de14",
+            "bytes": 74490416,
+            "counts": {
+              "entities": 11900,
+              "relations": 35935,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "9f0e8318fdef0b59e4bdcbec854d0810592f6d998d090dec8f9dab2e26345ce0",
+          "sourceFiles": 2483,
+          "hashedOriginalSources": 2432,
+          "newVersions": 732
+        },
+        {
+          "commit": "ad283ef0ed91d5d70f392a78b62d973d491d3240",
+          "seq": 7,
+          "id": "2af4ccb2-d56b-41ea-bf7f-a98fd7a97650",
+          "exact": {
+            "sha256": "6cd76483eed64258df0509615048b067097393edcdaa7dd9248dc2c6fa9e8302",
+            "bytes": 74490416,
+            "counts": {
+              "entities": 11900,
+              "relations": 35935,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "ed7cffb76cda52fc1d301be122bb3c5f695efd4047ca3201a28838f284b13907",
+          "sourceFiles": 2483,
+          "hashedOriginalSources": 2432,
+          "newVersions": 3
+        },
+        {
+          "commit": "6107161275b3594e17847d9f5362b9786fa8bf09",
+          "seq": 8,
+          "id": "7e2d7b26-8f1e-42af-b667-32ffc668a614",
+          "exact": {
+            "sha256": "4d8f7c748b841018c8a00679f902f78b3a455d6b9d8b72ce537791ab34ff84f2",
+            "bytes": 74490416,
+            "counts": {
+              "entities": 11900,
+              "relations": 35935,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "58aa95b06cf377fe8d9c1c3b114cbcf6df8c0166c19711b0743404e206db9449",
+          "sourceFiles": 2483,
+          "hashedOriginalSources": 2432,
+          "newVersions": 7
+        },
+        {
+          "commit": "4e406c41c4c8060a5795e74c66fb96362e54f400",
+          "seq": 9,
+          "id": "37936905-ad12-4e79-abd0-52370a5118a5",
+          "exact": {
+            "sha256": "4d347e49f53ff26dba3df261db039d041c9653b2708f8cedbe16411e41023dc9",
+            "bytes": 74515279,
+            "counts": {
+              "entities": 11901,
+              "relations": 35946,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "aa31c6a6869c9789ffe08df6bcfea1173f118d934f17e2466223b7ddadd3652e",
+          "sourceFiles": 2483,
+          "hashedOriginalSources": 2432,
+          "newVersions": 190
+        },
+        {
+          "commit": "652ce537205d0ef1a4c263e6a63c49b28a16ad8d",
+          "seq": 10,
+          "id": "ed44362b-6699-4777-89ae-f49a24e088d8",
+          "exact": {
+            "sha256": "86d03b3341b662421bde124b65b0b2da3743250cc551c9f571ddc20651494cfd",
+            "bytes": 74515279,
+            "counts": {
+              "entities": 11901,
+              "relations": 35946,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "1124dab971ed8268cddf5ca2b2253c29a7c828a275f9e52bbe3d750b7ec31b9e",
+          "sourceFiles": 2483,
+          "hashedOriginalSources": 2432,
+          "newVersions": 22
+        },
+        {
+          "commit": "1a1d7248922da5b4724eb01bde7f7d8bbf7c52c5",
+          "seq": 11,
+          "id": "86e830a5-08fc-4335-8e05-2d0087078f09",
+          "exact": {
+            "sha256": "18c8aac3cf9c03070b7c3a6d5c5df42fa1fb369342ea3587876794c1dcb55be0",
+            "bytes": 74798296,
+            "counts": {
+              "entities": 11935,
+              "relations": 36028,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "5ff67fc7109db9a5ddce535bb4231e6ab279820d31970dffbce009380a53a644",
+          "sourceFiles": 2487,
+          "hashedOriginalSources": 2436,
+          "newVersions": 1577
+        },
+        {
+          "commit": "de6e6f3dd97cafbe960f29a858c7a456b704d629",
+          "seq": 12,
+          "id": "087e770a-2a66-4610-a639-a6b2c7e1eaa3",
+          "exact": {
+            "sha256": "b4103c7d1eb1a5f25a33e168d00c576613515e800971e4595e9d7d9e8a161b53",
+            "bytes": 74798296,
+            "counts": {
+              "entities": 11935,
+              "relations": 36028,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "8dd01fb5c072779ddbbb3be3d8420237017f675de0664269cead4734ea6e8366",
+          "sourceFiles": 2487,
+          "hashedOriginalSources": 2436,
+          "newVersions": 1
+        },
+        {
+          "commit": "c813c1b3628c0b6bd757c12cadaa56f50724117d",
+          "seq": 13,
+          "id": "a2a7efb9-0e78-4c1c-b693-5c4697ef54ea",
+          "exact": {
+            "sha256": "60d5ff3a97aa6798002badc77d02f6ce7d1a8c9ac774489969b090d9abdd62f6",
+            "bytes": 74798296,
+            "counts": {
+              "entities": 11935,
+              "relations": 36028,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "da53a1b7696e254b41f9d821d0e9b436bba3f8866fd6dc17b3cd62c3b48eb83b",
+          "sourceFiles": 2487,
+          "hashedOriginalSources": 2436,
+          "newVersions": 1
+        },
+        {
+          "commit": "47f761c519fe0ab7030342b45f681f2b8c14f7b5",
+          "seq": 14,
+          "id": "fea1da7b-e2f6-431d-9100-39fa428b6352",
+          "exact": {
+            "sha256": "8b731c97cfee3bdd4b2c92035874f936e02bf829d53a81520bdd6da3af90837f",
+            "bytes": 74915823,
+            "counts": {
+              "entities": 11945,
+              "relations": 36063,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "f16a7b299bc0dfd561e191ec43e6e5875ac4664a474c628b8cc2fa1ddfa0a485",
+          "sourceFiles": 2489,
+          "hashedOriginalSources": 2438,
+          "newVersions": 285
+        },
+        {
+          "commit": "f791ce0eef1840f8d367a87792874c8c5cf5da98",
+          "seq": 15,
+          "id": "8445e012-d092-432b-b952-b9acf7b7d55b",
+          "exact": {
+            "sha256": "03ea0c331cb0b1fb7830be7704df855c512b7f4b01ccf9e1a31fdad88a98fd15",
+            "bytes": 77031257,
+            "counts": {
+              "entities": 12372,
+              "relations": 37002,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "33aff570585a4109e96405e53f5555c01a7872c65a3806f574f4fd917afc316d",
+          "sourceFiles": 2559,
+          "hashedOriginalSources": 2508,
+          "newVersions": 8622
+        },
+        {
+          "commit": "cf133540b13073e18e08f10b65a2aff2be0f155e",
+          "seq": 16,
+          "id": "03930027-bd53-4db8-9e07-527b9115f039",
+          "exact": {
+            "sha256": "f11492b5545e47faa8b1b92b9d9c0cec7ce2f768a81f50d88d22aa0026b766ad",
+            "bytes": 77023623,
+            "counts": {
+              "entities": 12373,
+              "relations": 36999,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "545451089bb9fe9f79f7b86704baa362062838b34989a46fede87319a6f48c5d",
+          "sourceFiles": 2559,
+          "hashedOriginalSources": 2508,
+          "newVersions": 105
+        },
+        {
+          "commit": "97fe7cca9dfe6618e258a5333ac19d4b1fa15ec9",
+          "seq": 17,
+          "id": "49fd0408-1dfa-4a96-b117-d30af0a4974a",
+          "exact": {
+            "sha256": "0c9d21c2294205bb687a300edcf00e1a053d142efe4c87d9b67b3073ce19c3ed",
+            "bytes": 77023040,
+            "counts": {
+              "entities": 12375,
+              "relations": 37003,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "472d4dc8188e25ae1b039b241bce354572088e40ab3942d8b6d32d3d8b45dd03",
+          "sourceFiles": 2560,
+          "hashedOriginalSources": 2509,
+          "newVersions": 1493
+        },
+        {
+          "commit": "769c198f41e79aecd6096c72d83cdb46e47ce662",
+          "seq": 18,
+          "id": "e6b4ca12-06b7-443d-a8bc-86adb649dbf9",
+          "exact": {
+            "sha256": "a1e2eb3b2d6c71895bb4ec56268a507146ab5ab524eeb57088e58a7a3cf6b786",
+            "bytes": 77023764,
+            "counts": {
+              "entities": 12375,
+              "relations": 37003,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "5122078dd62afcc91b1049e81a8428ac88a43159faad7e21dd4bb725ba17ea31",
+          "sourceFiles": 2560,
+          "hashedOriginalSources": 2509,
+          "newVersions": 93
+        },
+        {
+          "commit": "27f35a38955676bc1d356559372cc7b741d75482",
+          "seq": 19,
+          "id": "a86d6076-443e-482e-be49-4bdb7d1ced43",
+          "exact": {
+            "sha256": "90704f690f9a3ec33825cb2ad659ca26f5c79661d704efce1a88148f523ad315",
+            "bytes": 77023764,
+            "counts": {
+              "entities": 12375,
+              "relations": 37003,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "5aab923a4053bbd138471a629239966507b8cccc8ec9253bd21030f9e1dd0858",
+          "sourceFiles": 2560,
+          "hashedOriginalSources": 2509,
+          "newVersions": 4
+        },
+        {
+          "commit": "f31273a10d3a9aad9a28561cc0b9ff5a3e1bb8db",
+          "seq": 20,
+          "id": "dbdc4e66-2da4-40cc-9977-6e15f6043aa1",
+          "exact": {
+            "sha256": "8054760a1f2574ba0f8a0649c52196f7ac1564fa16de328ee0da3886bfffef3e",
+            "bytes": 77023777,
+            "counts": {
+              "entities": 12375,
+              "relations": 37003,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "5746238d63bc8cb902f023c04a75ac1faf3d40a414399515fb0463d60ddeb348",
+          "sourceFiles": 2560,
+          "hashedOriginalSources": 2509,
+          "newVersions": 47
+        },
+        {
+          "commit": "1633b3ab281b2df34a1c03e9370a2b756ba4d894",
+          "seq": 21,
+          "id": "5dddd6c8-cd9c-4650-b301-56a114ab392f",
+          "exact": {
+            "sha256": "8d7dc2a1b343ce21aee2d2a41a58b6d831dd082552e82e34dffb455ab17a8632",
+            "bytes": 77023803,
+            "counts": {
+              "entities": 12375,
+              "relations": 37003,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "f09b918b464fe55cd404bbfb52b8db43a2b7e4fe6f7c8623a86c16db90202735",
+          "sourceFiles": 2560,
+          "hashedOriginalSources": 2509,
+          "newVersions": 266
+        },
+        {
+          "commit": "9f2c10cb49446e3b8914a37449c106c533ea04e3",
+          "seq": 22,
+          "id": "dfb3c203-71d9-49ab-8f92-aa198db6dcd5",
+          "exact": {
+            "sha256": "5028c0c37a2531afcf5433388116b08f0392f3642700f69f0824e4cd12993453",
+            "bytes": 77023803,
+            "counts": {
+              "entities": 12375,
+              "relations": 37003,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "663da846dec2cd69cf35b061c5607c0968e008bc783fc79de084fe3fb229e72d",
+          "sourceFiles": 2560,
+          "hashedOriginalSources": 2509,
+          "newVersions": 1
+        },
+        {
+          "commit": "89978409cfaae51d5c9405c8186f43405cf27b5b",
+          "seq": 23,
+          "id": "b82e8853-9b54-49af-8434-b875152614ba",
+          "exact": {
+            "sha256": "aca38863b6b25bbf088b2c995477e8406174ce83145483c4b6ac45db03eaf430",
+            "bytes": 77047469,
+            "counts": {
+              "entities": 12376,
+              "relations": 37012,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "686129ad2322fb83fadaff98c4a88737f5f423a538d4a46aad7f08d4d90e35af",
+          "sourceFiles": 2560,
+          "hashedOriginalSources": 2509,
+          "newVersions": 79
+        },
+        {
+          "commit": "a09aa8aac65e5a0aee786143c0e184cfdb2f67ea",
+          "seq": 24,
+          "id": "e3a1d3f0-462a-4754-8bc9-32a09386858a",
+          "exact": {
+            "sha256": "55616322686e38ea53092075cb07333ddb616eb11c079747a55d2e43712692e0",
+            "bytes": 77059041,
+            "counts": {
+              "entities": 12377,
+              "relations": 37017,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "b09d9a718b8fcb12d351fecdcd03ec8b9af837d4ea16fb4b10756f28fb25e82a",
+          "sourceFiles": 2560,
+          "hashedOriginalSources": 2509,
+          "newVersions": 155
+        },
+        {
+          "commit": "849ed6f1ec03b9932dda83ecdcb72f43415454f0",
+          "seq": 25,
+          "id": "5c50b42e-8428-4d29-8fee-2424f7266a8e",
+          "exact": {
+            "sha256": "37b5d53e9cfa062f944db025546a1453bb92711fbdecbcf6b833451ed313bd23",
+            "bytes": 77093103,
+            "counts": {
+              "entities": 12379,
+              "relations": 37030,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "4551a260096caaa79a252de9d7fa9c64232f1d438f676e8d7bc96b330a6d04d6",
+          "sourceFiles": 2560,
+          "hashedOriginalSources": 2509,
+          "newVersions": 150
+        },
+        {
+          "commit": "ea7113aff370dab3ed75cc39eba3e3343a7af424",
+          "seq": 26,
+          "id": "52374171-6584-4d0a-b498-5d2d650699f2",
+          "exact": {
+            "sha256": "6c53012df18c01b417847202fdf6f860d220afaec5049a80fb157e9922872e60",
+            "bytes": 77093103,
+            "counts": {
+              "entities": 12379,
+              "relations": 37030,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "820709c37c4710dc6c2c591f4b700dc603939f75111828a543709f3df9a57ef7",
+          "sourceFiles": 2560,
+          "hashedOriginalSources": 2509,
+          "newVersions": 18
+        },
+        {
+          "commit": "aa6f42e929764d5a30f2e0370738d734d03428d8",
+          "seq": 27,
+          "id": "8bb87f5a-fa5a-460f-aa95-59adf9808577",
+          "exact": {
+            "sha256": "334e475b2ae812fca82f0af913a1d5f9a67ad910205ef8110213b98771c77265",
+            "bytes": 77093103,
+            "counts": {
+              "entities": 12379,
+              "relations": 37030,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "028b008a4a4d58761c296022d154f0e3e9ea178d50f2a09cc39486a26ca4156c",
+          "sourceFiles": 2560,
+          "hashedOriginalSources": 2509,
+          "newVersions": 1
+        },
+        {
+          "commit": "d9989d7b50c683c313df11dac1633d00dacabd57",
+          "seq": 28,
+          "id": "1e80083e-6ed4-4ced-94e2-cc13038d34a9",
+          "exact": {
+            "sha256": "054ead97eccbf12a644fd3d2193179eb58de2376809351c88f6f4e6deb1a84ff",
+            "bytes": 77093103,
+            "counts": {
+              "entities": 12379,
+              "relations": 37030,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "290a1ca144b945ce8544d5f87dd8860be2d23dba3d00acd5057b9eec9af607a5",
+          "sourceFiles": 2560,
+          "hashedOriginalSources": 2509,
+          "newVersions": 15
+        },
+        {
+          "commit": "066240e8330cb489ba2385f646ef617c154348fe",
+          "seq": 29,
+          "id": "98e0a9a5-1c1b-40fa-8ed3-de8e50068dcc",
+          "exact": {
+            "sha256": "3d1f4196de1941c770de43bd4b1122f4f77ca715475280bd880fc6e897bca63f",
+            "bytes": 77093103,
+            "counts": {
+              "entities": 12379,
+              "relations": 37030,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "6ab68c56d9079a0bc7ba5fb9b9af5e2c98410f11abb48bbdc861636ff11d7e7a",
+          "sourceFiles": 2560,
+          "hashedOriginalSources": 2509,
+          "newVersions": 1
+        },
+        {
+          "commit": "89794dc9c825df2c31fada0dc8822d51d83b6422",
+          "seq": 30,
+          "id": "d81fb760-9e86-48f9-b58c-240685464969",
+          "exact": {
+            "sha256": "11e9822b5f5d797e7dccf603b8a524cfe53583ba9417d179b40d598a96f92825",
+            "bytes": 77115043,
+            "counts": {
+              "entities": 12380,
+              "relations": 37038,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "6ef7694955d304cf724d5201f612d0c7222919c137ed90769febea4e96dec317",
+          "sourceFiles": 2560,
+          "hashedOriginalSources": 2509,
+          "newVersions": 96
+        },
+        {
+          "commit": "f585a7d9100a99cba8479c1ef5fd56e05562daea",
+          "seq": 31,
+          "id": "ab49d56a-1ee1-45fe-af4b-d89edf146f6a",
+          "exact": {
+            "sha256": "35f8b4457b0debdbf9156c837d8c5adaeb4f378b20311e05520535bf9010a96b",
+            "bytes": 77118872,
+            "counts": {
+              "entities": 12380,
+              "relations": 37038,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "a4aaf760bba86526a23f613b1d7c31f94dcc1ec6d459458da1783cb45406f330",
+          "sourceFiles": 2560,
+          "hashedOriginalSources": 2509,
+          "newVersions": 155
+        },
+        {
+          "commit": "ff661b59f6f605bf768fe850c0d0a8a2dc09d203",
+          "seq": 32,
+          "id": "fc29f5f0-059d-4cd4-b56b-43274645695d",
+          "exact": {
+            "sha256": "0f6a4b158807166724a5780aa2ce0fa89d1f0bcc52b277f481cf9c5d8fc78bce",
+            "bytes": 77118872,
+            "counts": {
+              "entities": 12380,
+              "relations": 37038,
+              "diagnostics": 148
+            },
+            "normalization": []
+          },
+          "originalRecordDigest": "da1e7d7f4a45f5fc7124f80985386c46e60cdeb9badfaee8fd6a7d406c89b2dc",
+          "sourceFiles": 2560,
+          "hashedOriginalSources": 2509,
+          "newVersions": 7
+        }
+      ],
+      "method": "Independent JSON token hashing, raw complete SQLite payloads, original Git blob identities and SHA-256, integrity/membership/metadata/statistics checks; no target execution or UI projection",
+      "relativeHistoryTimeRssQualified": false,
+      "layoutResumeQualified": false,
+      "nativeWindowsMacOSQualified": false,
+      "storage": {
+        "snapshots": 32,
+        "commits": 32,
+        "versions": {
+          "entities": 16708,
+          "relations": 45229,
+          "diagnostics": 163
+        },
+        "memberships": {
+          "entities": 389394,
+          "relations": 1169475,
+          "diagnostics": 4736
+        },
+        "pullRequests": 0,
+        "bytes": 180473856
+      },
+      "completedAt": "2026-10-12T16:55:47.996Z",
+      "walAfter": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  ],
+  "passed": true,
+  "full195RevisionGateQualified": false,
+  "relativeHistoryTimeRssQualified": false,
+  "layoutResumeQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "completedAt": "2026-10-12T16:55:48.182Z",
+  "auditorSha256": "ed134cf144500bcbc54a73a00f09dcea4158858bc63e83294ab5ef8f027783dc",
+  "receiptSha256": "d270f02f34194aeef83025b59ba257b5f73b53075937a24d84a6eb90efa169e1",
+  "inputSnapshot": {
+    "file": "bookstack-independent-audit.json.inputs.json",
+    "bytes": 921967,
+    "sha256": "fedc686464690ff62c2fa6fbc4fc4813bbaef52ed0549590bd56416bb0561f51"
+  }
+}
