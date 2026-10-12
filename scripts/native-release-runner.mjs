@@ -27,7 +27,7 @@ export async function sourceIdentity(root){
   const revision=(await git(['rev-parse','HEAD'])).trim(),gitVersion=(await git(['--version'])).trim();
   const files=(await git(['ls-files','-z'])).split('\0').filter(Boolean).sort(),hash=createHash('sha256');
   for(const file of files)hash.update(file+'\0').update(await readFile(path.join(root,file))).update('\0');
-  return {revision,gitVersion,trackedFiles:files.length,sourceDigest:hash.digest('hex'),dirty:!!(await git(['status','--porcelain','--untracked-files=no'])).trim()};
+  return {revision,gitVersion,trackedFiles:files.length,sourceDigest:hash.digest('hex'),dirty:!!(await git(['status','--porcelain','--untracked-files=normal'])).trim()};
 }
 
 /** Await child completion and close its inherited log descriptor before hashing

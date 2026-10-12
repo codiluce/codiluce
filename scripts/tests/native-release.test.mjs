@@ -66,6 +66,7 @@ test('source identity records exact tracked bytes and revision without running r
   await git(['init','--quiet']);await git(['config','user.email','fixture@example.test']);await git(['config','user.name','Owned fixture']);await writeFile(path.join(root,'source.txt'),'original');await git(['add','source.txt']);await git(['commit','--quiet','-m','owned fixture']);
   const first=await sourceIdentity(root);assert.equal(first.trackedFiles,1);assert.equal(first.dirty,false);assert.match(first.revision,/^[a-f0-9]{40}$/);assert.match(first.sourceDigest,/^[a-f0-9]{64}$/);
   await writeFile(path.join(root,'source.txt'),'changed');const second=await sourceIdentity(root);assert.equal(second.revision,first.revision);assert.equal(second.dirty,true);assert.notEqual(second.sourceDigest,first.sourceDigest);
+  await writeFile(path.join(root,'source.txt'),'original');await writeFile(path.join(root,'untracked.txt'),'additional input');const third=await sourceIdentity(root);assert.equal(third.sourceDigest,first.sourceDigest);assert.equal(third.dirty,true,'An untracked source must not qualify as a clean exact checkout');
 });
 
 test('the production plan includes the complete native release gates without running them',async()=>{
