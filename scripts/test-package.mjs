@@ -21,7 +21,7 @@ const npm = (args, cwd) => run(process.execPath, [npmCli, ...args], cwd);
 
 function assertPhpBinding(file) {
   assert.equal(file.metadata.analysis.features.references.status,'partial');
-  assert.match(file.metadata.phpBinding.version,/php-source-binding:1$/);
+  assert.match(file.metadata.phpBinding.version,/php-source-binding:2$/);
   assert.equal(file.metadata.phpBinding.profile,'original-callable-scopes');
   const sites=file.metadata.phpCallOutcomes,at=expression=>sites.find(item=>item.expression.replace(/;$/,'')===expression);
   for(const expression of ['$closure()','$callback()','new Worker()','$service->read()','$service->shared()']){
@@ -31,6 +31,16 @@ function assertPhpBinding(file) {
   assert.equal(at('$nominal->read()').dispatch,'nominal');
   assert.equal(at('$unknown()').status,'unresolved');
   assert.ok(!JSON.stringify(file).includes('"phpAst"'));
+}
+
+function assertPhpAnonymous(file) {
+  assert.equal(file.metadata.analysis.features.structure.status,'supported');
+  const regions=file.metadata.phpSyntax.regions.filter(region=>region.callable);
+  assert.deepEqual(regions.map(region=>[region.range.startLine,region.kind,region.callable.signature]),[[5,'closure','function (int $value) use ($captured): int'],[6,'arrow-function','fn (int $left)'],[6,'arrow-function','fn (int $right)']]);
+  assert.equal(regions[2].callable.parent,regions[1].callable.key);
+  const calls=file.metadata.phpCallOutcomes.filter(site=>site.expression==='target()');
+  assert.equal(calls.length,2);assert.ok(calls.every(site=>site.status==='resolved'&&site.owner&&site.target));assert.notEqual(calls[0].owner,calls[1].owner);
+  return calls;
 }
 
 async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
@@ -222,6 +232,7 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
       const source=await(await fetch(`${url}api/source?entity=${symbol.id}&start=1&end=14`)).json();assert.equal(source.file.path,'structure/generic.php');assert.equal(source.focus.startLine,line);assert.equal(source.lines.join('\n'),(await readFile(path.join(repo,'structure/generic.php'),'utf8')).trimEnd());
     }
     {const found=await(await fetch(`${url}api/entities?search=structure%2Fgeneric.php&type=file`)).json(),file=found.items.find(e=>e.path==='structure/generic.php'),data=await(await fetch(`${url}api/entities/${file.id}`)).json();assert.equal(data.metadata.analysis.adapter,'php-original-structure');assert.equal(data.metadata.analysis.features.structure.status,'supported');assert.equal(data.metadata.phpSourceProfile,'php-parser-8.4-original-source');assert.equal(data.metadata.phpSyntax.traits.length,1);assert.equal(data.metadata.analysis.features.imports.status,'partial');assert.equal(data.metadata.analysis.features.references.status,'partial');for(const feature of ['framework','effects','guards'])assert.equal(data.metadata.analysis.features[feature].status,'unsupported');}
+    {const found=await(await fetch(`${url}api/entities?search=structure%2Fphp-anonymous.php&type=file`)).json(),file=found.items.find(item=>item.path==='structure/php-anonymous.php');assert.ok(file);const detail=await(await fetch(`${url}api/entities/${file.id}`)).json();for(const call of assertPhpAnonymous(detail)){const owner=await(await fetch(`${url}api/entities/${call.owner}`)).json();assert.equal(owner.metadata.anonymous,true);assert.equal(owner.metadata.qualifiedName,undefined);const source=await(await fetch(`${url}api/source?entity=${owner.id}`)).json();assert.equal(source.file.path,'structure/php-anonymous.php');assert.equal(source.focus.startLine,owner.sourceRange.startLine);}}
     {
       const found=await(await fetch(`${url}api/entities?search=structure%2Fphp-binding.php&type=file`)).json(),file=found.items.find(item=>item.path==='structure/php-binding.php');assert.ok(file);
       const detail=await(await fetch(`${url}api/entities/${file.id}`)).json();assertPhpBinding(detail);
@@ -692,6 +703,7 @@ class PackagedWebFluxKotlin {
   const genericPhp=JSON.parse((await run(process.execPath,[bin,'inspect','entities','--search','phpStructureHelper'],repo)).stdout).items.find(i=>i.path==='structure/generic.php'&&i.sourceRange?.startLine===13);assert.ok(genericPhp);const genericPhpDetail=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',genericPhp.id],repo)).stdout);assert.equal(genericPhpDetail.metadata.declarationKind,'function');assert.ok(genericPhpDetail.evidence.some(p=>p.source==='php'&&p.analyzer==='php-structure'&&p.file==='structure/generic.php'&&p.line===13));
   {const file=JSON.parse((await run(process.execPath,[bin,'inspect','entities','--search','structure/php-imports/entry.php','--type','file'],repo)).stdout).items.find(item=>item.path==='structure/php-imports/entry.php');assert.ok(file);const detail=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',file.id],repo)).stdout);assert.deepEqual(detail.metadata.importOutcomes.map(item=>item.outcome.status),Array(6).fill('resolved'));assert.equal(detail.metadata.analysis.features.imports.status,'partial');}
   {const file=JSON.parse((await run(process.execPath,[bin,'inspect','entities','--search','structure/php-binding.php','--type','file'],repo)).stdout).items.find(item=>item.path==='structure/php-binding.php');assert.ok(file);assertPhpBinding(JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',file.id],repo)).stdout));}
+  {const file=JSON.parse((await run(process.execPath,[bin,'inspect','entities','--search','structure/php-anonymous.php','--type','file'],repo)).stdout).items.find(item=>item.path==='structure/php-anonymous.php');assert.ok(file);for(const call of assertPhpAnonymous(JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',file.id],repo)).stdout))){const owner=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',call.owner],repo)).stdout);assert.equal(owner.metadata.anonymous,true);assert.equal(owner.metadata.qualifiedName,undefined);}}
   const liquid=JSON.parse((await run(process.execPath,[bin,'inspect','entities','--search','liquidClientHelper'],repo)).stdout).items.find(i=>i.path==='structure/template.html.liquid'&&i.sourceRange?.startLine===9);assert.ok(liquid);const liquidDetail=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',liquid.id],repo)).stdout);assert.equal(liquidDetail.metadata.embeddedSource.language,'javascript');assert.ok(liquidDetail.evidence.some(p=>p.file==='structure/template.html.liquid'&&p.line===9));
   {const found=JSON.parse((await run(process.execPath,[bin,'inspect','entities','--search','structure/liquid-theme/layout/theme.liquid'],repo)).stdout).items,f=found.find(e=>e.type==='file'),data=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',f.id],repo)).stdout);assert.deepEqual(data.metadata.importOutcomes.map(i=>i.outcome.status),['resolved','resolved']);assert.equal(JSON.parse((await run(process.execPath,[bin,'inspect','relations','--id',f.id,'--type','imports'],repo)).stdout).items.length,2);}
   const razor=JSON.parse((await run(process.execPath,[bin,'inspect','entities','--search','RazorRead'],repo)).stdout).items.find(item=>item.path==='structure/Counter.razor'&&item.sourceRange?.startLine===9);assert.ok(razor);const razorDetail=JSON.parse((await run(process.execPath,[bin,'inspect','entity','--id',razor.id],repo)).stdout);assert.equal(razorDetail.metadata.embeddedSource.language,'csharp');assert.equal(razorDetail.metadata.embeddedSource.executionContext,'unknown');assert.ok(razorDetail.evidence.some(fact=>fact.file==='structure/Counter.razor'&&fact.line===9));

@@ -207,6 +207,9 @@ export interface PhpImportFact extends PhpSite { namespace: string; scope: strin
 /** A bounded original native expression tree, never source text reparsing. */
 export type PhpPathExpression = { kind: 'literal'; value: string } | { kind: 'dir' } | { kind: 'file' } | { kind: 'concat'; left: PhpPathExpression; right: PhpPathExpression } | { kind: 'dirname'; argument: PhpPathExpression; levels: number; name: string } | { kind: 'unknown'; reason: string };
 export interface PhpDeclarationSource { key: string; namespace: string; scope: string; nameRange: SourceRange; headerRange: SourceRange; attributes: { text: string; range: SourceRange }[]; bases: { kind: 'extends'|'implements'; text: string; range: SourceRange }[]; type?: string; sharedHeader?: string; visibilitySet?: string; promoted?: boolean; bindingOnly?: boolean }
+/** Original anonymous callable identity, distinct from a PHP named symbol.
+ * A literal variable binding can own the same region without a second entity. */
+export interface PhpCallableSource { key: string; nativeStart: number; parent?: string; namespace: string; scope: string; keyword: string; keywordRange: SourceRange; headerRange: SourceRange; bodyRange: SourceRange; signature: string; modifiers: string[]; attributes: { text: string; range: SourceRange }[]; binding?: string }
 export interface PhpSyntaxFacts {
   profile: 'php-parser-8.4-original-source'; executionUnverified: true; complete: boolean;
   namespaces: (PhpSite & { key: string; name: string; bracketed: boolean })[];
@@ -215,8 +218,8 @@ export interface PhpSyntaxFacts {
   loads: (PhpSite & { kind: 'include'|'include_once'|'require'|'require_once'; expression: string; path: PhpPathExpression; namespace: string; scope: string; conditions: string[] })[];
   loaderChanges: (PhpSite & { name: string; conditions: string[] })[];
   traits: (PhpSite & { owner?: string; names: string[]; adaptations: { kind: string; text: string; range: SourceRange }[] })[];
-  bindings: (PhpSite & { name: string; kind: 'parameter'|'closure-capture'; owner?: string; promoted?: boolean })[];
-  regions: (PhpSite & { kind: 'inline-html'|'anonymous-class'|'closure'|'arrow-function'; conditions: string[] })[];
+  bindings: (PhpSite & { name: string; kind: 'parameter'|'closure-capture'; owner?: string; promoted?: boolean; byReference?: boolean })[];
+  regions: (PhpSite & { kind: 'inline-html'|'anonymous-class'|'closure'|'arrow-function'; conditions: string[]; callable?: PhpCallableSource })[];
 }
 export interface StructureFacts { declarations: DeclarationFact[]; issues: ParseIssue[]; truncated: boolean; php?:PhpSyntaxFacts; cfamily?:CfamilySyntaxFacts; objc?:ObjcSyntaxFacts; swift?:SwiftSyntaxFacts; scala?:ScalaSyntaxFacts; groovy?:GroovySyntaxFacts; fsharp?:FsharpSyntaxFacts; vbnet?:VbnetSyntaxFacts; erb?:ErbSyntaxFacts; razor?:RazorSyntaxFacts; liquid?:LiquidSyntaxFacts; python?: PythonSyntaxFacts; go?: GoSyntaxFacts; ruby?: RubySyntaxFacts; jvm?: JvmSyntaxFacts; csharp?: CsharpSyntaxFacts; rust?:RustSyntaxFacts }
 export interface ImportBinding { imported: string; local: string; typeOnly?: boolean }

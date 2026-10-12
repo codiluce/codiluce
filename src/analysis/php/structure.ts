@@ -4,7 +4,7 @@ import { SourceText } from '../source-map.js';
 
 const MAX_NODES = 200_000, MAX_DEPTH = 128, MAX_SITES = 4096, MAX_HEADER = 4096;
 interface Token { kind: string|null; text: string; start: number; end: number }
-interface Scope { namespace: string; scope: string; owner?: DeclarationFact; type?: DeclarationFact; statement?: Ast; conditions: string[]; deferred: boolean }
+interface Scope { namespace: string; scope: string; owner?: DeclarationFact; lexicalOwner?: string; type?: DeclarationFact; statement?: Ast; conditions: string[]; deferred: boolean }
 
 /** Extract only original source declarations from the parse-only provider.
  * PHP namespace identity is independent of lexical containment: a function
@@ -104,11 +104,11 @@ export function extractPhp(root: Ast, content: string): StructureFacts {
     const own = site(node), start = Math.min(own.start, ...nodes(node.attrGroups).map(attribute => site(attribute).start));
     const headerEnd = boundary(options.headerNode ?? node, nameToken, kind);
     const member = ['method', 'constructor', 'destructor', 'property', 'promoted-property', 'class-constant', 'enum-case'].includes(kind);
-    const parent = options.promoted ? scope.type : scope.owner;
-    const qualifiedName = member ? `${scope.type!.qualifiedName}::${variable ? '$' : ''}${expected}` : options.bindingOnly ? `${scope.owner?.qualifiedName ?? scope.namespace}::$${expected}` : ['property-get', 'property-set'].includes(kind) ? `${parent!.qualifiedName}::${expected}` : [scope.namespace, expected].filter(Boolean).join('\\');
+    const parent = options.promoted ? scope.type?.key : scope.lexicalOwner ?? scope.owner?.key;
+    const qualifiedName = member ? `${scope.type!.qualifiedName}::${variable ? '$' : ''}${expected}` : options.bindingOnly ? `${scope.owner?.qualifiedName ?? scope.namespace}::$${expected}` : ['property-get', 'property-set'].includes(kind) ? `${scope.owner!.qualifiedName}::${expected}` : [scope.namespace, expected].filter(Boolean).join('\\');
     const key = `php:${start}:${own.end}:${kind}:${nameToken.start}`;
     const callable = ['function', 'method', 'constructor', 'destructor', 'property-get', 'property-set', 'closure-binding', 'arrow-binding'].includes(kind);
-    const fact: DeclarationFact = { key, name: variable ? `$${expected}` : expected, qualifiedName, kind, entityType: callable ? kind === 'function' || options.bindingOnly ? 'function' : 'method' : kind === 'property' || kind === 'promoted-property' ? 'method' : 'class', signature: header(start, headerEnd), start, end: own.end, nameEnd: nameToken.end, range: source.range(start, own.end), declarationForm: callable && !ast(providerNode.body) ? 'declaration' : 'definition', ...parent ? { parent: parent.key } : {}, modifiers: modifiers(providerNode, scope.statement), ...scope.conditions.length ? { sourceConditions: [...scope.conditions] } : {} };
+    const fact: DeclarationFact = { key, name: variable ? `$${expected}` : expected, qualifiedName, kind, entityType: callable ? kind === 'function' || options.bindingOnly ? 'function' : 'method' : kind === 'property' || kind === 'promoted-property' ? 'method' : 'class', signature: header(start, headerEnd), start, end: own.end, nameEnd: nameToken.end, range: source.range(start, own.end), declarationForm: callable && !ast(providerNode.body) ? 'declaration' : 'definition', ...parent ? { parent } : {}, modifiers: modifiers(providerNode, scope.statement), ...scope.conditions.length ? { sourceConditions: [...scope.conditions] } : {} };
     const visibility = options.promoted ? ({ 1: 'public', 2: 'protected', 4: 'private' } as Record<number,string>)[Number(node.flags)] : typeof (scope.statement ?? node).visibility === 'string' ? String((scope.statement ?? node).visibility) || (member ? 'public' : undefined) : member ? 'public' : undefined;
     if (visibility) fact.visibility = visibility;
     if (attributes.length) fact.annotations = attributes.map(attribute => attribute.text);
@@ -140,31 +140,32 @@ export function extractPhp(root: Ast, content: string): StructureFacts {
       if (node.isAnonymous || !name(node.name)) {
         append(php.regions, { ...site(node), kind: 'anonymous-class', conditions: scope.conditions });
         issue('php-anonymous-class-gap', 'Original anonymous class region retained; members have no qualified named type owner', node);
-        next = { ...scope, owner: undefined, type: undefined, statement: undefined, conditions: [...scope.conditions, 'Original anonymous-class activation is unverified'], deferred: true };
+        next = { ...scope, owner: undefined, lexicalOwner: undefined, type: undefined, statement: undefined, conditions: [...scope.conditions, 'Original anonymous-class activation is unverified'], deferred: true };
       } else {
         const declaration = declare(node, scope, node.kind, name(node.name)!);
-        next = { ...scope, owner: declaration, type: declaration, statement: undefined };
+        next = { ...scope, owner: declaration, lexicalOwner: declaration?.key, type: declaration, statement: undefined };
       }
     } else if (node.kind === 'function' && name(node.name)) {
       const declaration = declare(node, scope, 'function', name(node.name)!);
-      next = { ...scope, owner: declaration, type: undefined, statement: undefined, conditions: [...scope.conditions, 'Original function body executes only when invoked'], deferred: true };
+      next = { ...scope, owner: declaration, lexicalOwner: declaration?.key, type: undefined, statement: undefined, conditions: [...scope.conditions, 'Original function body executes only when invoked'], deferred: true };
     } else if (node.kind === 'method') {
       const methodName = name(node.name);
       const declaration = scope.type && methodName ? declare(node, scope, methodName.toLowerCase() === '__construct' ? 'constructor' : methodName.toLowerCase() === '__destruct' ? 'destructor' : 'method', methodName) : undefined;
-      next = { ...scope, owner: declaration, statement: undefined, conditions: [...scope.conditions, 'Original method body executes only when invoked'], deferred: true };
+      next = { ...scope, owner: declaration, lexicalOwner: declaration?.key, statement: undefined, conditions: [...scope.conditions, 'Original method body executes only when invoked'], deferred: true };
     } else if (['propertystatement', 'classconstant', 'constantstatement'].includes(node.kind)) next = { ...scope, statement: node };
     else if (node.kind === 'property' && scope.type && name(node.name)) {
       const declaration = declare(node, scope, 'property', name(node.name)!, true);
-      next = { ...scope, owner: declaration, statement: undefined };
+      next = { ...scope, owner: declaration, lexicalOwner: declaration?.key, statement: undefined };
     } else if (node.kind === 'constant' && name(node.name)) declare(node, scope, scope.type ? 'class-constant' : 'constant', name(node.name)!);
     else if (node.kind === 'enumcase' && scope.type && name(node.name)) declare(node, scope, 'enum-case', name(node.name)!);
     else if (node.kind === 'propertyhook' && ['property','promoted-property'].includes(scope.owner?.kind ?? '') && name(node.name)) {
       const declaration = declare(node, scope, `property-${name(node.name)}`, name(node.name)!);
-      next = { ...scope, owner: declaration, conditions: [...scope.conditions, 'Original property hook execution is unverified'], deferred: true };
+      next = { ...scope, owner: declaration, lexicalOwner: declaration?.key, conditions: [...scope.conditions, 'Original property hook execution is unverified'], deferred: true };
     } else if (node.kind === 'parameter' && name(node.name)) {
       const promoted = Number(node.flags) !== 0 && scope.owner?.kind === 'constructor' && !!scope.type;
-      append(php.bindings, { ...site(node), name: name(node.name)!, kind: 'parameter', ...scope.owner ? { owner: scope.owner.key } : {}, ...promoted ? { promoted: true } : {} });
-      if (promoted) { const declaration = declare(node, scope, 'promoted-property', name(node.name)!, true, { promoted: true }); next = { ...scope, owner: declaration }; }
+      const owner = scope.lexicalOwner ?? scope.owner?.key;
+      append(php.bindings, { ...site(node), name: name(node.name)!, kind: 'parameter', ...owner ? { owner } : {}, ...promoted ? { promoted: true } : {} });
+      if (promoted) { const declaration = declare(node, scope, 'promoted-property', name(node.name)!, true, { promoted: true }); next = { ...scope, owner: declaration, lexicalOwner: declaration?.key }; }
     } else if (node.kind === 'assign' && node.operator === '=') {
       const left = ast(node.left), right = ast(node.right);
       if (left?.kind === 'variable' && typeof left.name === 'string' && right && ['closure', 'arrowfunc'].includes(right.kind)) {
@@ -173,10 +174,22 @@ export function extractPhp(root: Ast, content: string): StructureFacts {
       }
     } else if (node.kind === 'closure' || node.kind === 'arrowfunc') {
       const owner = closureBindings.get(node);
-      append(php.regions, { ...site(node), kind: node.kind === 'closure' ? 'closure' : 'arrow-function', conditions: scope.conditions });
-      if (!owner) issue('php-unbound-callable-gap', 'Original anonymous callable region retained; no named binding or generated function is invented', node);
-      for (const capture of nodes(node.uses)) if (typeof capture.name === 'string') append(php.bindings, { ...site(capture), name: capture.name, kind: 'closure-capture', ...owner ? { owner: owner.key } : {} });
-      next = { ...scope, owner, type: undefined, statement: undefined, conditions: [...scope.conditions, 'Original anonymous callable executes only when invoked'], deferred: true };
+      const own = site(node), attributes = nodes(node.attrGroups).map(attribute => ({ text: text(attribute), range: site(attribute).range }));
+      const start = Math.min(own.start, ...nodes(node.attrGroups).map(attribute => site(attribute).start)), kind = node.kind === 'closure' ? 'closure' : 'arrow-function';
+      const key = `php-callable:${start}:${own.end}:${kind}`, parent = scope.lexicalOwner ?? scope.owner?.key;
+      const body = ast(node.body);
+      let keyword: Token|undefined;
+      for (let i = tokenIndex(own.start); i < tokens.length && tokens[i]!.start < (body?.loc?.start.offset ?? own.end); i++) if (tokens[i]!.kind === (node.kind === 'closure' ? 'T_FUNCTION' : 'T_FN')) { keyword = tokens[i]; break; }
+      let callable: PhpSyntaxFacts['regions'][number]['callable'];
+      if (!keyword || !body?.loc) issue('php-callable-source-gap', 'Anonymous callable lacks an exact original keyword or body span', node);
+      else {
+        const headerEnd = boundary(node, keyword, node.kind === 'closure' ? 'closure-binding' : 'arrow-binding');
+        callable = { key, nativeStart: own.start, ...parent ? { parent } : {}, namespace: scope.namespace, scope: scope.scope, keyword: keyword.text, keywordRange: source.range(keyword.start, keyword.end), headerRange: source.range(start, headerEnd), bodyRange: site(body).range, signature: header(start, headerEnd), modifiers: modifiers(node), attributes, ...owner ? { binding: owner.key } : {} };
+      }
+      append(php.regions, { start, end: own.end, range: source.range(start, own.end), kind, conditions: scope.conditions, ...callable ? { callable } : {} });
+      const lexicalOwner = owner?.key ?? callable?.key;
+      for (const capture of nodes(node.uses)) if (typeof capture.name === 'string') append(php.bindings, { ...site(capture), name: capture.name, kind: 'closure-capture', ...lexicalOwner ? { owner: lexicalOwner } : {}, byReference: capture.byref === true });
+      next = { ...scope, owner, lexicalOwner, type: undefined, statement: undefined, conditions: [...scope.conditions, 'Original anonymous callable executes only when invoked'], deferred: true };
     } else if (node.kind === 'usegroup' && !scope.owner && !scope.deferred) {
       for (const item of nodes(node.items)) {
         const specifier = [typeof node.name === 'string' ? node.name : '', String(item.name ?? '')].filter(Boolean).join('\\').replace(/^\\/, '');

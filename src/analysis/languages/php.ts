@@ -42,6 +42,19 @@ async function analyzeOriginalPhp(context:AnalysisContext,laravel:boolean):Promi
             const existing=laravel?legacy.find(entity=>!reused.has(entity.id)&&entity.metadata.qualifiedName===declaration.qualifiedName&&entity.sourceRange?.endLine===declaration.range.endLine&&entity.sourceRange.endColumn===declaration.range.endColumn):undefined;
             if(existing){ids.set(declaration.key,existing.id);reused.add(existing.id);}else ids.set(declaration.key, context.graph.id('symbol', 'php-original', ...identity, ...ordinal ? [`declaration:${ordinal + 1}`] : []));
           }
+          // Anonymous source regions have lexical identities, never qualified
+          // PHP names. Preorder places an outer region before its descendants.
+          const regions = facts.php.regions.filter(region => region.callable);
+          const anonymousOccurrences = new Map<string,number>();
+          for (const region of regions) {
+            const callable = region.callable!;
+            if (callable.binding) { ids.set(callable.key, ids.get(callable.binding)!); continue; }
+            const parent = callable.parent ? ids.get(callable.parent) ?? file.id : file.id;
+            const identity = [file.application?.name ?? '', file.path, parent, region.kind, callable.signature];
+            const base = JSON.stringify(identity), ordinal = anonymousOccurrences.get(base) ?? 0;
+            anonymousOccurrences.set(base, ordinal + 1);
+            ids.set(callable.key, context.graph.id('symbol', 'php-anonymous-source', ...identity, String(ordinal + 1)));
+          }
           const details = new Map(facts.php.declarations.map(declaration => [declaration.key, declaration]));
           for (const declaration of facts.declarations) {
             if(reused.has(ids.get(declaration.key)!)) {
@@ -49,6 +62,11 @@ async function analyzeOriginalPhp(context:AnalysisContext,laravel:boolean):Promi
               Object.assign(existing.metadata,{originalSignature:declaration.signature,declarationKind:declaration.kind,declarationForm:declaration.declarationForm,modifiers:declaration.modifiers,sourceConditions:declaration.sourceConditions??[],phpDeclaration:details.get(declaration.key),executionUnverified:true});continue;
             }
             context.graph.contain({ id: ids.get(declaration.key)!, type: declaration.entityType, name: declaration.name, path: file.path, language: 'php', parentId: declaration.parent ? ids.get(declaration.parent) ?? file.id : file.id, sourceRange: declaration.range, metrics: { loc: declaration.range.endLine - declaration.range.startLine + 1 }, metadata: { qualifiedName: declaration.qualifiedName, declarationKind: declaration.kind, role: declaration.kind, signature: declaration.signature, declarationForm: declaration.declarationForm, visibility: declaration.visibility, modifiers: declaration.modifiers, static: declaration.modifiers?.includes('static') ?? false, sourceConditions: declaration.sourceConditions ?? [], phpDeclaration: details.get(declaration.key), executionUnverified: true, ...declarationHashes(content.slice(declaration.start, declaration.end), declaration.nameEnd - declaration.start) }, evidence: [{ ...evidence('php', analyzer, file.path, declaration.range.startLine, `Original PHP ${declaration.kind} source declaration; no autoloading, rendering or execution is inferred`), analyzerVersion: PHP_STRUCTURE_VERSION, endLine: declaration.range.endLine }] });
+          }
+          for (const region of regions) {
+            const callable = region.callable!;
+            if (callable.binding) continue;
+            context.graph.contain({ id: ids.get(callable.key)!, type: 'function', name: callable.keyword, path: file.path, language: 'php', parentId: callable.parent ? ids.get(callable.parent) ?? file.id : file.id, sourceRange: region.range, metrics: { loc: region.range.endLine - region.range.startLine + 1 }, metadata: { anonymous: true, declarationKind: region.kind, role: region.kind, signature: callable.signature, declarationForm: 'definition', modifiers: callable.modifiers, static: callable.modifiers.includes('static'), sourceConditions: region.conditions, phpCallable: callable, executionUnverified: true, ...declarationHashes(content.slice(region.start, region.end), 0) }, evidence: [{ ...evidence('php', analyzer, file.path, region.range.startLine, `Original PHP anonymous ${region.kind} region; label is its source keyword, not a named PHP symbol. Invocation and runtime capture remain unverified`), analyzerVersion: PHP_STRUCTURE_VERSION, endLine: region.range.endLine }] });
           }
           fileEntity.metadata.phpSyntax = facts.php;
           context.syntax ??= new Map(); context.syntax.set(file.path, { facts, declarations: ids });

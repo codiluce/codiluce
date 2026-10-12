@@ -31,16 +31,19 @@
     {
       "id": "php",
       "label": "PHP",
-      "parser": "php-parser original PHP 8.4 source profile",
+      "parser": "php-parser original PHP 8.4 source profile; named declarations and anonymous lexical regions",
       "imports": "Indexed Composer maps, literal loads and namespace imports",
-      "binding": "Partial source functions, constructors, methods, aliases and concrete callbacks",
+      "binding": "Partial named functions, constructors, methods, aliases and concrete bound callbacks; anonymous-body source call ownership",
       "frameworks": "Laravel; generic PHP structure and binding",
-      "gaps": "Runtime Composer/autoload execution, dynamic values, reference state, trait adaptations and full dispatch; Laravel effects/guards have a separate profile",
+      "gaps": "Runtime Composer/autoload execution, unbound callback invocation, anonymous classes, dynamic/reference state, trait adaptations and full dispatch; Laravel effects/guards have a separate profile",
       "sources": [
         "src/analysis/languages/php.ts",
         "src/analysis/languages/php-imports.ts",
         "src/analysis/languages/php-symbols.ts",
-        "src/analyzers/laravel.ts"
+        "src/analyzers/laravel.ts",
+        "src/analysis/php/structure.ts",
+        "src/analysis/php/version.ts",
+        "src/analysis/facts.ts"
       ]
     },
     {
@@ -380,7 +383,7 @@
     {
       "id": "nestjs",
       "label": "Nest",
-      "versions": "9–10 (Express 4 path profile); 11 (Express 5); proven Fastify adapter retains its own constraints",
+      "versions": "9\u201310 (Express 4 path profile); 11 (Express 5); proven Fastify adapter retains its own constraints",
       "scope": "Bootstrap-reachable controllers/modules, router modules, URI/default/neutral versions and dependency references",
       "gaps": "Custom decorators/dynamic modules, host/header/media/custom versions and unknown bootstrap policy remain gaps",
       "tests": [

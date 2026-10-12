@@ -85,7 +85,44 @@ test('PHP named closure/arrow variable bindings retain source only and lexical o
 });
 test('PHP anonymous callbacks/class bodies are explicit regions with no invented named owners', async () => {
   const f=await parse('<?php register(function($x){return $x;}); $object=new class {public function hidden(){}}; function visible(){}');
-  assert.deepEqual(names(f),[['visible','function']]); assert.deepEqual(f.php!.regions.map(r=>r.kind),['closure','anonymous-class']); assert.ok(f.issues.some(i=>i.code==='php-anonymous-class-gap')); assert.ok(f.issues.some(i=>i.code==='php-unbound-callable-gap'));
+  assert.deepEqual(names(f),[['visible','function']]); assert.deepEqual(f.php!.regions.map(r=>r.kind),['closure','anonymous-class']); assert.ok(f.issues.some(i=>i.code==='php-anonymous-class-gap')); assert.ok(!f.issues.some(i=>i.code==='php-unbound-callable-gap')); assert.equal(f.php!.bindings[0]!.owner,f.php!.regions[0]!.callable!.key);
+});
+test('PHP anonymous regions retain original headers, bodies, attributes, modifiers and capture binders', async () => {
+  const original='😀\r\n<?php namespace Demo; function outer(){register(#[Tag("😀")] static function &($x) use (&$captured): int {function nested(){} return $x;});}';
+  const f=await parse(original), region=f.php!.regions.find(region=>region.kind==='closure')!, callable=region.callable!, map=new SourceText(original);
+  assert.deepEqual(f.issues,[]);assert.equal(f.php!.complete,true);assert.deepEqual(names(f),[['outer','function'],['nested','function']]);
+  assert.equal(callable.signature,'#[Tag("😀")] static function &($x) use (&$captured): int');assert.deepEqual(callable.modifiers,['static','by-reference']);assert.equal(callable.attributes[0]!.text,'#[Tag("😀")]');assert.equal(callable.namespace,'Demo');assert.equal(callable.parent,f.declarations[0]!.key);assert.equal(f.declarations[1]!.parent,callable.key);assert.equal(f.declarations[1]!.qualifiedName,'Demo\\nested');
+  const start=original.indexOf('#[Tag'),end=original.indexOf('return $x;')+'return $x;}'.length,keyword=original.indexOf('function &'),body=original.indexOf('{function nested');
+  assert.equal(region.start,start);assert.equal(region.end,end);assert.deepEqual(region.range,map.range(start,end));assert.deepEqual(callable.keywordRange,map.range(keyword,keyword+'function'.length));assert.deepEqual(callable.bodyRange,map.range(body,end));assert.deepEqual(callable.headerRange,map.range(start,body));
+  assert.deepEqual(f.php!.bindings.map(binding=>[binding.name,binding.kind,binding.owner,binding.byReference]),[['captured','closure-capture',callable.key,true],['x','parameter',callable.key,undefined]]);
+});
+test('PHP nested arrow regions sharing an end offset keep separate lexical source owners', async () => {
+  const original='<?php register(fn($a)=>fn($b)=>$a+$b);';const f=await parse(original),[outer,inner]=f.php!.regions;
+  assert.deepEqual(f.issues,[]);assert.equal(outer!.end,inner!.end);assert.notEqual(outer!.callable!.key,inner!.callable!.key);assert.equal(inner!.callable!.parent,outer!.callable!.key);assert.equal(outer!.callable!.signature,'fn($a)');assert.equal(inner!.callable!.signature,'fn($b)');assert.deepEqual(f.php!.bindings.map(binding=>[binding.name,binding.owner]),[['a',outer!.callable!.key],['b',inner!.callable!.key]]);
+});
+test('PHP anonymous callable extraction retains explicit source budgets and subsequent healthy jobs', async () => {
+  const header=await parse('<?php register(function($text="'+'x'.repeat(5000)+'"){return $text;});');assert.ok(header.issues.some(issue=>issue.code==='php-header-budget'));assert.equal(header.php!.complete,false);assert.ok(header.php!.regions[0]!.callable!.signature.length<=4096);
+  const many=await parse('<?php '+Array.from({length:4100},()=>`register(function(){});`).join(''));assert.equal(many.truncated,true);assert.ok(many.php!.regions.length<=4096);assert.ok(many.issues.some(issue=>issue.code==='php-structure-budget'));assert.deepEqual((await parse('<?php register(fn()=>1);')).issues,[]);
+});
+test('PHP anonymous graph identity owns nested declarations and calls while named bindings have one entity', async () => {
+  const source='<?php namespace Demo; function target(){} function outer(){register(function($arg) use ($captured){function nested(){} target();}); $bound=fn()=>target(); register(fn()=>fn()=>target());}';
+  const root=await repository({'entry.php':source}),cache=new AnalysisCache(path.join(root,'.codiluce/cache'));
+  const graphs=[await indexRepository(root,{cache}),await indexRepository(root,{cache}),await indexRepository(root,{revision:'original'})];
+  for(const graph of graphs){
+    const file=graph.entities.find(entity=>entity.type==='file'&&entity.path==='entry.php')!,outer=graph.entities.find(entity=>entity.name==='outer')!,nested=graph.entities.find(entity=>entity.name==='nested')!,target=graph.entities.find(entity=>entity.name==='target')!,anonymous=graph.entities.filter(entity=>entity.metadata.anonymous===true);
+    assert.equal(fileAnalysis(file.metadata.analysis)!.features.structure.status,'supported');assert.equal(anonymous.length,3);assert.ok(anonymous.every(entity=>entity.type==='function'&&['function','fn'].includes(entity.name)&&entity.metadata.qualifiedName===undefined));
+    const closure=anonymous.find(entity=>entity.name==='function')!;assert.equal(closure.parentId,outer.id);assert.equal(nested.parentId,closure.id);assert.ok(graph.relations.some(edge=>edge.type==='contains'&&edge.from===closure.id&&edge.to===nested.id));assert.ok(graph.relations.some(edge=>edge.type==='calls'&&edge.from===closure.id&&edge.to===target.id));assert.ok(!graph.relations.some(edge=>edge.type==='calls'&&edge.from===outer.id&&edge.to===target.id));
+    assert.equal(graph.entities.filter(entity=>entity.name==='$bound').length,1);const arrows=anonymous.filter(entity=>entity.name==='fn'),inner=arrows.find(entity=>arrows.some(parent=>parent.id===entity.parentId))!;assert.ok(inner);assert.ok(graph.relations.some(edge=>edge.type==='calls'&&edge.from===inner.id&&edge.to===target.id));
+    const syntax=file.metadata.phpSyntax as Awaited<ReturnType<typeof parse>>['php'];assert.ok(syntax!.bindings.filter(binding=>binding.name==='arg'||binding.name==='captured').every(binding=>binding.owner===(closure.metadata.phpCallable as {key:string}).key));
+  }
+  for(const field of ['entities','relations']as const)for(const graph of graphs.slice(1))assert.equal(canonicalJson(graph[field]),canonicalJson(graphs[0]![field]));
+  const before=graphs[0]!.entities.filter(entity=>entity.metadata.anonymous===true).map(entity=>entity.id).sort();await writeFile(path.join(root,'entry.php'),source.replace('function nested(){} target();','function nested(){} target(); $extra=1;'));
+  const after=await indexRepository(root,{cache});assert.deepEqual(after.entities.filter(entity=>entity.metadata.anonymous===true).map(entity=>entity.id).sort(),before);
+});
+test('PHP Laravel original callbacks retain source containment without named runtime registrations', async () => {
+  const root=await repository({'app/Http/Controllers/IndexController.php':'<?php namespace App\\Http\\Controllers; class IndexController {public function __construct(){ $this->middleware(function($request,$next){return $next($request);}); } }'}),config=await resolveConfig(root,{repository:{name:'fixture'},applications:[{name:'laravel',path:'.',frameworks:['laravel'],ecosystems:['php']}]});
+  const graph=await indexRepository(root,{config}),file=graph.entities.find(entity=>entity.type==='file'&&entity.path?.endsWith('IndexController.php'))!,constructor=graph.entities.find(entity=>entity.name==='__construct')!,callback=graph.entities.find(entity=>entity.metadata.anonymous===true)!;
+  assert.equal(fileAnalysis(file.metadata.analysis)!.features.structure.status,'supported');assert.ok(constructor);assert.equal(callback.parentId,constructor.id);assert.equal(callback.name,'function');assert.equal(callback.metadata.qualifiedName,undefined);assert.equal(callback.metadata.executionUnverified,true);assert.ok(callback.evidence.every(proof=>proof.analyzer==='php-laravel-structure'));assert.ok(!graph.entities.some(entity=>entity.name.includes('{closure')));
 });
 test('PHP literal/comment/heredoc/inline HTML contents cannot invent declarations', async () => {
   const f=await parse('<?php /* class Fake {} */ $text="function Fake() {}"; $doc=<<<\'TEXT\'\nclass Pretend {}\nTEXT;\nfunction real() {} ?> <script>function Client(){}</script>');

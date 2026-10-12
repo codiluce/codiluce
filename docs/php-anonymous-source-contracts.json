@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "reviewedAt": "2026-10-12T10:31:12.928042+00:00",
+  "scope": "Two original callable regions reviewed before the current graph observation; complete source-only denominator, not broad PHP or production accuracy",
+  "reviewMethod": "Original pinned materialized regular-file bytes, manually reviewed lexical parent/binding/parameters and literal source line boundaries; no analyzer-generated expected ranges",
+  "contracts": [
+    {
+      "id": "firefly-index-middleware",
+      "repository": "firefly-iii",
+      "commit": "57371b9f82debbf90e6453aba8af585e8c382617",
+      "path": "app/Http/Controllers/Transaction/IndexController.php",
+      "signature": "function ($request, $next)",
+      "kind": "closure",
+      "parentName": "__construct",
+      "parentQualifiedName": "FireflyIII\\Http\\Controllers\\Transaction\\IndexController::__construct",
+      "binding": null,
+      "parameters": [
+        "request",
+        "next"
+      ],
+      "captures": [],
+      "range": {
+        "startLine": 59,
+        "endLine": 66,
+        "startColumn": 27,
+        "endColumn": 10
+      },
+      "keywordRange": {
+        "startLine": 59,
+        "endLine": 59,
+        "startColumn": 27,
+        "endColumn": 35
+      },
+      "bodyRange": {
+        "startLine": 59,
+        "endLine": 66,
+        "startColumn": 54,
+        "endColumn": 10
+      },
+      "headerRange": {
+        "startLine": 59,
+        "endLine": 59,
+        "startColumn": 27,
+        "endColumn": 54
+      },
+      "spanSha256": "144baf62a1a1c33be7c81163f78f39ac72141a3e268773cf9f261af438608898",
+      "fileSha256": "15853b54ac7ee30ceddc82070e0df379fb6e1ce0f8bbd205f1db37d8ef5eedaf"
+    },
+    {
+      "id": "bookstack-recent-visible-scope",
+      "repository": "bookstack",
+      "commit": "ff661b59f6f605bf768fe850c0d0a8a2dc09d203",
+      "path": "app/Entities/Controllers/PageController.php",
+      "signature": "function (Relation $relation): void",
+      "kind": "closure",
+      "parentName": "showRecentlyUpdated",
+      "parentQualifiedName": "BookStack\\Entities\\Controllers\\PageController::showRecentlyUpdated",
+      "binding": "$visibleBelongsScope",
+      "parameters": [
+        "relation"
+      ],
+      "captures": [],
+      "range": {
+        "startLine": 367,
+        "endLine": 369,
+        "startColumn": 32,
+        "endColumn": 10
+      },
+      "keywordRange": {
+        "startLine": 367,
+        "endLine": 367,
+        "startColumn": 32,
+        "endColumn": 40
+      },
+      "bodyRange": {
+        "startLine": 367,
+        "endLine": 369,
+        "startColumn": 68,
+        "endColumn": 10
+      },
+      "headerRange": {
+        "startLine": 367,
+        "endLine": 367,
+        "startColumn": 32,
+        "endColumn": 68
+      },
+      "spanSha256": "5ae611e66696905cc0e10384510515bb7a563df65f24b29a00ab3270e273f65d",
+      "fileSha256": "4e3507874d4d6a96f19caa596201674f19d02b46f7b20b8b133f0acf6fe16be8"
+    }
+  ]
+}

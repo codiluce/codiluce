@@ -7,7 +7,7 @@ import { SourceText } from '../source-map.js';
 import {bindingNode} from '../php/binding-node.js';
 import type {PhpSource} from '../php/sources.js';
 
-export const PHP_SYMBOL_VERSION=`${ANALYZER_VERSION}:php-source-binding:1`;
+export const PHP_SYMBOL_VERSION=`${ANALYZER_VERSION}:php-source-binding:2`;
 const fold=(value:string)=>value.replace(/[A-Z]/g,c=>c.toLowerCase());
 const TYPE_KINDS=['class','interface','trait','enum'];
 interface Definition {id:string;fact:DeclarationFact;node:Ast;unit:Unit;frame:Frame;type?:Ast;detached?:boolean}
@@ -97,6 +97,7 @@ export class PhpSymbols {
       };
       const matches=new Map<string,DeclarationFact>();
       for(const fact of syntax.facts.declarations)matches.set(`${fact.end}:${fact.kind}:${fact.name}`,fact);
+      const anonymousOwners=new Map((syntax.facts.php?.regions??[]).filter(region=>region.callable&&!region.callable.binding).map(region=>[`${region.callable!.nativeStart}:${region.end}:${region.kind}`,syntax.declarations.get(region.callable!.key)]));
       const root:Frame={key:`php-file:0:${source.content.length}`,kind:'file',unit,namespace:'',importScope:`php-file:0:${source.content.length}`,owner:file.id,variables:new Map()};unit.frames.push(root);
       const pending=[{node:source.ast,frame:root,conditional:false,statement:undefined as Ast|undefined,parent:undefined as Ast|undefined,field:''}];
       while(pending.length) {
@@ -129,7 +130,7 @@ export class PhpSymbols {
         }else if(['function','method','closure','arrowfunc','propertyhook'].includes(node.kind)) {
           const closure=['closure','arrowfunc'].includes(node.kind),owner=definition??this.boundClosures.get(this.closureKey(frame.unit.file.path,node));
           const parent=frame;
-          frame={key:`php-callable:${node.loc?.start.offset}:${node.loc?.end.offset}`,kind:closure?node.kind==='closure'?'closure':'arrow':'function',unit,namespace:parent.namespace,importScope:parent.importScope,owner:owner?.id,definition:owner,parent,cls:node.kind==='function'?undefined:parent.cls,thisClass:node.isStatic?undefined:closure?parent.thisClass:['method','propertyhook'].includes(node.kind)?parent.cls:undefined,variables:new Map()};unit.frames.push(frame);
+          frame={key:`php-callable:${node.loc?.start.offset}:${node.loc?.end.offset}`,kind:closure?node.kind==='closure'?'closure':'arrow':'function',unit,namespace:parent.namespace,importScope:parent.importScope,owner:owner?.id??(closure?anonymousOwners.get(`${node.loc?.start.offset}:${node.loc?.end.offset}:${node.kind==='closure'?'closure':'arrow-function'}`):undefined),definition:owner,parent,cls:node.kind==='function'?undefined:parent.cls,thisClass:node.isStatic?undefined:closure?parent.thisClass:['method','propertyhook'].includes(node.kind)?parent.cls:undefined,variables:new Map()};unit.frames.push(frame);
           // Named nested functions keep namespace identity but cannot inherit
           // their enclosing method's lexical self/parent return-type context.
           if(owner?.fact.kind==='function')owner.frame=frame;

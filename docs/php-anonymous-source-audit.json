@@ -1,0 +1,223 @@
+{
+  "engineFiles": 1923,
+  "changedEngineFiles": [
+    "src/analysis/facts.ts",
+    "src/analysis/languages/php-symbols.ts",
+    "src/analysis/languages/php.ts",
+    "src/analysis/php/structure.ts",
+    "src/analysis/php/version.ts"
+  ],
+  "allSixCompleteJSONGraphsIndependentlyDecoded": true,
+  "allGraphIdentitiesAndContainmentValid": true,
+  "allFourNonPHPFullBodiesEqual": true,
+  "onlyRunIdAnalyzedAtAndExpectedPHPVersionsDifferInRun": true,
+  "strictOriginalNamedSamplesVerified": 12,
+  "originalCallbackSamplesVerified": 2,
+  "callbackManifestSha256": "49cc7aae2bff567d4821848bfa7e751355c175443605a2457f9c6db4dc6f496c",
+  "fullProductionQualified": false,
+  "runtimePerformanceQualified": false,
+  "results": [
+    {
+      "id": "flask",
+      "originalInputsUnchanged": true,
+      "sha256": "86e16e3dba61583892ff57473c860897daf53030f4a30e54e86f1cc4395f4cb8",
+      "bytes": 4004558,
+      "counts": {
+        "entities": 1930,
+        "relations": 3424,
+        "diagnostics": 82
+      },
+      "fullBodyParityWithPriorSavedGraph": true,
+      "reviewedContractStatus": "reviewed-contracts-verified",
+      "peakChunkBytes": 65536,
+      "callbackContracts": [],
+      "expectedAnalyzerVersionChanges": {
+        "php-structure": [
+          "0.9.3:php-original-structure:4",
+          "0.9.3:php-original-structure:5"
+        ],
+        "php-laravel-structure": [
+          "0.9.3:php-original-structure:4",
+          "0.9.3:php-original-structure:5"
+        ],
+        "php-symbols": [
+          "0.9.3:php-source-binding:1",
+          "0.9.3:php-source-binding:2"
+        ]
+      }
+    },
+    {
+      "id": "memos",
+      "originalInputsUnchanged": true,
+      "sha256": "a91cc76c328ebf4852134579ef9a06e399b138fb62a3b85f18e4a01b35c44974",
+      "bytes": 67344062,
+      "counts": {
+        "entities": 11356,
+        "relations": 44453,
+        "diagnostics": 75
+      },
+      "fullBodyParityWithPriorSavedGraph": true,
+      "reviewedContractStatus": "reviewed-contracts-verified",
+      "peakChunkBytes": 65536,
+      "callbackContracts": [],
+      "expectedAnalyzerVersionChanges": {
+        "php-structure": [
+          "0.9.3:php-original-structure:4",
+          "0.9.3:php-original-structure:5"
+        ],
+        "php-laravel-structure": [
+          "0.9.3:php-original-structure:4",
+          "0.9.3:php-original-structure:5"
+        ],
+        "php-symbols": [
+          "0.9.3:php-source-binding:1",
+          "0.9.3:php-source-binding:2"
+        ]
+      }
+    },
+    {
+      "id": "bookstack",
+      "originalInputsUnchanged": true,
+      "sha256": "91286314951a9ef07e28fffb57556c480b3c6980351c0b119012152d6b7014df",
+      "bytes": 77118866,
+      "counts": {
+        "entities": 12380,
+        "relations": 37038,
+        "diagnostics": 148
+      },
+      "fullBodyParityWithPriorSavedGraph": null,
+      "reviewedContractStatus": "reviewed-contracts-verified",
+      "peakChunkBytes": 65536,
+      "callbackContracts": [
+        {
+          "id": "bookstack-recent-visible-scope",
+          "range": {
+            "startLine": 367,
+            "endLine": 369,
+            "startColumn": 32,
+            "endColumn": 10
+          },
+          "spanSha256": "5ae611e66696905cc0e10384510515bb7a563df65f24b29a00ab3270e273f65d",
+          "parent": "BookStack\\Entities\\Controllers\\PageController::showRecentlyUpdated",
+          "binding": "$visibleBelongsScope",
+          "verified": true
+        }
+      ],
+      "expectedAnalyzerVersionChanges": {
+        "php-structure": [
+          "0.9.3:php-original-structure:4",
+          "0.9.3:php-original-structure:5"
+        ],
+        "php-laravel-structure": [
+          "0.9.3:php-original-structure:4",
+          "0.9.3:php-original-structure:5"
+        ],
+        "php-symbols": [
+          "0.9.3:php-source-binding:1",
+          "0.9.3:php-source-binding:2"
+        ]
+      }
+    },
+    {
+      "id": "firefly-iii",
+      "originalInputsUnchanged": true,
+      "sha256": "5b9913f2f5981dc7d1298c24c271f4a8c966fba4dca19a98414d8ae60a97dc38",
+      "bytes": 110767552,
+      "counts": {
+        "entities": 13894,
+        "relations": 30552,
+        "diagnostics": 137
+      },
+      "fullBodyParityWithPriorSavedGraph": null,
+      "reviewedContractStatus": "reviewed-contracts-verified",
+      "peakChunkBytes": 65536,
+      "callbackContracts": [
+        {
+          "id": "firefly-index-middleware",
+          "range": {
+            "startLine": 59,
+            "endLine": 66,
+            "startColumn": 27,
+            "endColumn": 10
+          },
+          "spanSha256": "144baf62a1a1c33be7c81163f78f39ac72141a3e268773cf9f261af438608898",
+          "parent": "FireflyIII\\Http\\Controllers\\Transaction\\IndexController::__construct",
+          "binding": null,
+          "verified": true
+        }
+      ],
+      "expectedAnalyzerVersionChanges": {
+        "php-structure": [
+          "0.9.3:php-original-structure:4",
+          "0.9.3:php-original-structure:5"
+        ],
+        "php-laravel-structure": [
+          "0.9.3:php-original-structure:4",
+          "0.9.3:php-original-structure:5"
+        ],
+        "php-symbols": [
+          "0.9.3:php-source-binding:1",
+          "0.9.3:php-source-binding:2"
+        ]
+      }
+    },
+    {
+      "id": "axum",
+      "originalInputsUnchanged": true,
+      "sha256": "eab5ee8270a4431f2147d7732a47d3ced93d8ee29e120dbaec32e2fa4b690500",
+      "bytes": 655090729,
+      "counts": {
+        "entities": 5831,
+        "relations": 5830,
+        "diagnostics": 10347
+      },
+      "fullBodyParityWithPriorSavedGraph": true,
+      "reviewedContractStatus": "reviewed-contracts-verified",
+      "peakChunkBytes": 65536,
+      "callbackContracts": [],
+      "expectedAnalyzerVersionChanges": {
+        "php-structure": [
+          "0.9.3:php-original-structure:4",
+          "0.9.3:php-original-structure:5"
+        ],
+        "php-laravel-structure": [
+          "0.9.3:php-original-structure:4",
+          "0.9.3:php-original-structure:5"
+        ],
+        "php-symbols": [
+          "0.9.3:php-source-binding:1",
+          "0.9.3:php-source-binding:2"
+        ]
+      }
+    },
+    {
+      "id": "full-stack-fastapi",
+      "originalInputsUnchanged": true,
+      "sha256": "f67cf01ff7154feb9912179ae6c4d0c1926840112f083a50d7cf5341ac977fe1",
+      "bytes": 2616397,
+      "counts": {
+        "entities": 787,
+        "relations": 2678,
+        "diagnostics": 9
+      },
+      "fullBodyParityWithPriorSavedGraph": true,
+      "reviewedContractStatus": "reviewed-contracts-verified",
+      "peakChunkBytes": 65536,
+      "callbackContracts": [],
+      "expectedAnalyzerVersionChanges": {
+        "php-structure": [
+          "0.9.3:php-original-structure:4",
+          "0.9.3:php-original-structure:5"
+        ],
+        "php-laravel-structure": [
+          "0.9.3:php-original-structure:4",
+          "0.9.3:php-original-structure:5"
+        ],
+        "php-symbols": [
+          "0.9.3:php-source-binding:1",
+          "0.9.3:php-source-binding:2"
+        ]
+      }
+    }
+  ]
+}

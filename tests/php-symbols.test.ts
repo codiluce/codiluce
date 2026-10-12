@@ -77,8 +77,8 @@ test('Original array reference entries cannot certify an unmutated callable loca
 test('Static methods and static closures cannot inherit $this',async()=>{
   const graph=await scan('<?php final class A{function read(){}static function run(){$this->read();}function other(){$yes=fn()=>$this->read();$no=static fn()=>$this->read();}}');const sites=calls(graph).filter(outcome=>outcome.expression.startsWith('$this->read'));assert.deepEqual(sites.map(outcome=>outcome.status),['unsupported','resolved','unsupported']);
 });
-test('Unbound anonymous callables have original scope gaps and no invented callable owner',async()=>{
-  const graph=await scan('<?php function helper(){}register(function(){helper();});');const outcome=by(graph,'helper(');assert.equal(outcome.owner,undefined);assert.equal(outcome.status,'unsupported');assert.ok(!graph.entities.some(entity=>entity.name==='<closure>'));
+test('Unbound anonymous bodies use original lexical owners without a named callable registration',async()=>{
+  const graph=await scan('<?php function helper(){}register(function(){helper();});');const outcome=by(graph,'helper('),callback=owner(graph,outcome)!;assert.equal(callback.metadata.anonymous,true);assert.equal(callback.name,'function');assert.equal(callback.metadata.qualifiedName,undefined);assert.equal(outcome.status,'resolved');assert.equal(target(graph,outcome)!.name,'helper');assert.ok(graph.relations.some(edge=>edge.type==='calls'&&edge.from===callback.id&&edge.to===outcome.target));assert.ok(!graph.entities.some(entity=>entity.name==='<closure>'));
 });
 test('Original named closures and arrow bindings become concrete invocation targets',async()=>{
   const graph=await scan('<?php function run(){$one=function(){};$one();$two=fn()=>1;$two();}');assert.equal(target(graph,by(graph,'$one('))!.metadata.declarationKind,'closure-binding');assert.equal(target(graph,by(graph,'$two('))!.metadata.declarationKind,'arrow-binding');
