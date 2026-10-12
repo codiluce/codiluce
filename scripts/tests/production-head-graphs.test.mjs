@@ -66,6 +66,11 @@ test('incomplete observations and HTML rendering keep failures and full-corpus b
   const value=await fixture(t),result=await observeProductionHeads({...value,observations:{},output:path.join(value.root,'result'),identity,analyze:async()=>graph()});assert.equal(result.reviewedHeadsVerified,false);result.repositories[0].error='<script>unsafe</script>';const html=renderHeadReceipt(result);assert.match(html,/QUALIFICATION FAILED/);assert.match(html,/&lt;script&gt;unsafe/);assert.doesNotMatch(html,/<script>unsafe/);assert.match(html,/Full-corpus accuracy/);
 });
 
+test('graph output byte failures remain partial, unqualified, and isolated from later healthy repositories',async t=>{
+  const value=await fixture(t,['owned','second']),output=path.join(value.root,'result');const result=await observeProductionHeads({...value,output,identity,graphArtifactLimits:{maxBytes:2000,chunkBytes:64},analyze:async(_root,{config})=>{const value=graph(config.repository.name);if(config.repository.name==='owned')value.entities[0].metadata.large='x'.repeat(4000);return value;}});
+  const failed=result.repositories[0];assert.equal(result.reviewedHeadsVerified,false);assert.equal(failed.failureStage,'serializing');assert.ok(failed.partialArtifact.bytes<=2000);assert.equal(failed.graph,undefined);assert.equal(result.repositories[1].status,'reviewed-contracts-verified');await assert.rejects(readFile(path.join(output,'owned-graph.json')),{code:'ENOENT'});assert.ok(await readFile(failed.partialArtifact.file));
+});
+
 test('the installed CLI inventories ESM-only own dependencies and retains every missing source failure without indexing',async t=>{
   const root=await mkdtemp(path.join(tmpdir(),'codiluce-head-cli-test-'));t.after(()=>rm(root,{recursive:true,force:true}));const output=path.join(root,'observation'),project=fileURLToPath(new URL('../../',import.meta.url));
   await assert.rejects(promisify(execFile)(process.execPath,['--import','tsx','scripts/qualify-production-heads.mjs','--output',output],{cwd:project,maxBuffer:1024*1024}),error=>error.code===1);

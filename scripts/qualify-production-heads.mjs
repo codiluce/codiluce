@@ -45,7 +45,7 @@ async function identity(){
     if(info.isDirectory()){for(const entry of (await readdir(file)).sort())if(entry!=='node_modules')await collect(path.join(file,entry));}
     else{if(!info.isFile())throw Error('Own engine identity contains a nonregular file');const bytes=await readFile(file);files.push({file:path.relative(project,file),bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});}
   }
-  for(const relative of ['src','grammars','package.json','package-lock.json','scripts/production-head-graphs.mjs','scripts/qualify-production-heads.mjs','scripts/production-source-contracts.mjs','scripts/production-history-blobs.mjs','scripts/production-history-inputs.mjs'])await collect(path.join(project,relative));
+  for(const relative of ['src','grammars','package.json','package-lock.json','scripts/production-head-graphs.mjs','scripts/graph-json-artifact.mjs','scripts/qualify-production-heads.mjs','scripts/production-source-contracts.mjs','scripts/production-history-blobs.mjs','scripts/production-history-inputs.mjs'])await collect(path.join(project,relative));
   for(const file of new Set(Object.values(inputs)))await collect(file);
   for(const dependency of dependencies.packages)await collect(dependency.root);
   files.sort((a,b)=>a.file<b.file?-1:a.file>b.file?1:0);

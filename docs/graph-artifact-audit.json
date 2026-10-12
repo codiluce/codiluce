@@ -1,0 +1,97 @@
+{
+  "engineFiles": 1923,
+  "ownedRuntimeAndDependenciesUnchanged": true,
+  "allSixCompleteJSONGraphsIndependentlyDecoded": true,
+  "allFivePriorFullBodiesEqual": true,
+  "onlyRunIdAndAnalyzedAtNormalized": true,
+  "axumExpandedPayloadMatchesIndependentDiagnostic": true,
+  "strictSourceSamplesVerified": 10,
+  "fireflyPartialNotQualified": true,
+  "fullProductionQualified": false,
+  "results": [
+    {
+      "id": "flask",
+      "originalInputsUnchanged": true,
+      "sha256": "e6455260e3cc3330dc8a28050578ae77d6ada0974e3dc17bd635748930a13410",
+      "bytes": 4004558,
+      "counts": {
+        "entities": 1930,
+        "relations": 3424,
+        "diagnostics": 82
+      },
+      "fullBodyParityWithPriorSavedGraph": true,
+      "reviewedContractStatus": "reviewed-contracts-verified",
+      "peakChunkBytes": 65536
+    },
+    {
+      "id": "memos",
+      "originalInputsUnchanged": true,
+      "sha256": "898d722550a0b23812bd7a6135808ac43b88d6904513d8c10e3fbb40560f4d6d",
+      "bytes": 67344062,
+      "counts": {
+        "entities": 11356,
+        "relations": 44453,
+        "diagnostics": 75
+      },
+      "fullBodyParityWithPriorSavedGraph": true,
+      "reviewedContractStatus": "reviewed-contracts-verified",
+      "peakChunkBytes": 65536
+    },
+    {
+      "id": "bookstack",
+      "originalInputsUnchanged": true,
+      "sha256": "1fd512b0c94d2545b87b705f3391ea763e5b00b409ec957ce3c0f958edc1254a",
+      "bytes": 74904027,
+      "counts": {
+        "entities": 11816,
+        "relations": 36103,
+        "diagnostics": 148
+      },
+      "fullBodyParityWithPriorSavedGraph": true,
+      "reviewedContractStatus": "reviewed-contracts-verified",
+      "peakChunkBytes": 65536
+    },
+    {
+      "id": "firefly-iii",
+      "originalInputsUnchanged": true,
+      "sha256": "1611754dd300efbecb5cf8b7450a72076d30739714d3d0af56e218afbdde2937",
+      "bytes": 106560266,
+      "counts": {
+        "entities": 12791,
+        "relations": 28797,
+        "diagnostics": 137
+      },
+      "fullBodyParityWithPriorSavedGraph": true,
+      "reviewedContractStatus": "failed",
+      "peakChunkBytes": 65536
+    },
+    {
+      "id": "axum",
+      "originalInputsUnchanged": true,
+      "sha256": "46745b4661bc6c3a1810755112c8c2d9c2f030666cff3f9afcf8f3bc03bab02f",
+      "bytes": 655090729,
+      "counts": {
+        "entities": 5831,
+        "relations": 5830,
+        "diagnostics": 10347
+      },
+      "fullBodyParityWithPriorSavedGraph": null,
+      "reviewedContractStatus": "reviewed-contracts-verified",
+      "peakChunkBytes": 65536
+    },
+    {
+      "id": "full-stack-fastapi",
+      "originalInputsUnchanged": true,
+      "sha256": "17df31baef96066384a431c9a5fbb3f9d577e69ce907e43b3715619108cdd282",
+      "bytes": 2616397,
+      "counts": {
+        "entities": 787,
+        "relations": 2678,
+        "diagnostics": 9
+      },
+      "fullBodyParityWithPriorSavedGraph": true,
+      "reviewedContractStatus": "reviewed-contracts-verified",
+      "peakChunkBytes": 65536
+    }
+  ]
+}
