@@ -86,21 +86,29 @@ function* tokens(root,maxDepth,memo){
  }
 }
 
-export function productionGraphDigest(graph,{maxBytes=1024*1024*1024,maxDepth=4096}={}){
- assert.ok(Number.isSafeInteger(maxBytes)&&maxBytes>0&&Number.isSafeInteger(maxDepth)&&maxDepth>0);keys(graph);assert.deepEqual(Object.keys(graph).sort(),['diagnostics','entities','relations','run','schemaVersion']);assert.equal(graph.schemaVersion,1);keys(graph.run);keys(graph.run.analyzerVersions);
- const run={...graph.run,analyzerVersions:{...graph.run.analyzerVersions,'rust-symbols':version(graph.run.analyzerVersions['rust-symbols'])}};delete run.id;delete run.analyzedAt;
+export function productionGraphDigest(graph,options={}){
+ keys(graph);assert.deepEqual(Object.keys(graph).sort(),['diagnostics','entities','relations','run','schemaVersion']);assert.equal(graph.schemaVersion,1);
+ for(const group of ['entities','relations','diagnostics'])assert.ok(Array.isArray(graph[group]));
+ return productionRecordDigest(graph.run,{entities:graph.entities,relations:graph.relations,diagnostics:graph.diagnostics},options);
+}
+
+/** Consume complete sorted records one at a time, including SQLite JSON
+ * readback. This emits the identical public graph JSON, not a projection. */
+export function productionRecordDigest(originalRun,records,{maxBytes=1024*1024*1024,maxDepth=4096}={}){
+ assert.ok(Number.isSafeInteger(maxBytes)&&maxBytes>0&&Number.isSafeInteger(maxDepth)&&maxDepth>0);keys(records);assert.deepEqual(Object.keys(records).sort(),['diagnostics','entities','relations']);keys(originalRun);assert.equal(originalRun.schemaVersion,1);keys(originalRun.analyzerVersions);
+ const run={...originalRun,analyzerVersions:{...originalRun.analyzerVersions,'rust-symbols':version(originalRun.analyzerVersions['rust-symbols'])}};delete run.id;delete run.analyzedAt;
  const hash=createHash('sha256'),memo=new WeakMap(),storage={files:0,proofs:0,references:0,entries:0},buffer=Buffer.allocUnsafe(65536);let bytes=0,used=0,peakChunkBytes=0;
  const emit=text=>{const chunk=Buffer.from(text);if(bytes+chunk.length>maxBytes)throw Error('Logical graph byte budget exceeded');bytes+=chunk.length;let offset=0;while(offset<chunk.length){const size=Math.min(buffer.length-used,chunk.length-offset);chunk.copy(buffer,used,offset,offset+size);used+=size;offset+=size;if(used===buffer.length){peakChunkBytes=Math.max(peakChunkBytes,used);hash.update(buffer);used=0;}}};
  emit('{"schemaVersion":1,"run":');for(const token of tokens(run,maxDepth,memo))emit(token);
  const counts={};
  for(const group of ['entities','relations','diagnostics']){
-  assert.ok(Array.isArray(graph[group]));emit(',"'+group+'":[');const ids=new Set();let previous;
-  for(let index=0;index<graph[group].length;index++){
-   const original=graph[group][index];keys(original);assert.equal(typeof original.id,'string');assert.ok(!ids.has(original.id)&&(!previous||previous<original.id),'Complete graph records must have unique sorted IDs');ids.add(original.id);previous=original.id;
-   if(index)emit(',');const value=group==='entities'?project(original,storage):original;
+  assert.ok(records[group]&&typeof records[group][Symbol.iterator]==='function','Complete record stream unavailable');emit(',"'+group+'":[');const ids=new Set();let previous,index=0;
+  for(const original of records[group]){
+   keys(original);assert.equal(typeof original.id,'string');assert.ok(!ids.has(original.id)&&(!previous||previous<original.id),'Complete graph records must have unique sorted IDs');ids.add(original.id);previous=original.id;
+   if(index++)emit(',');const value=group==='entities'?project(original,storage):original;
    for(const token of tokens(value,maxDepth,memo))emit(token);
   }
-  counts[group]=graph[group].length;emit(']');
+  counts[group]=index;emit(']');
  }
  emit('}');if(used){peakChunkBytes=Math.max(peakChunkBytes,used);hash.update(buffer.subarray(0,used));}
  return {format:'complete-logical-production-json-v1',sha256:hash.digest('hex'),bytes,counts,storage,peakChunkBytes,normalization:['run UUID/time','Rust symbol Evidence/outcome producer 2 to 1','exact ordered file-table proof expansion; storage container only']};

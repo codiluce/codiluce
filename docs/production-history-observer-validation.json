@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "phase": "P10d2b2b2b2c7a production history original-input and stored-proof observer",
+  "observerImplementationVerified": true,
+  "full195RevisionRunVerified": false,
+  "relativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "tests": {
+    "passed": 112,
+    "failed": 0,
+    "logSha256": "0126f8e697a471539fccafb50c036869bf6be6f32d4851a3e02d1aa30d0946ab",
+    "scope": "All script tests plus actual history and worker-memory/backpressure conformance"
+  },
+  "actualWorkerFixture": {
+    "originalRevisions": 2,
+    "actualAdvancedIPCAndStoredAcknowledgments": true,
+    "completeSQLiteReadbackParity": true,
+    "readOnlyReopenVerified": true,
+    "literalSymlinksNotFollowed": true,
+    "injectedSourceCorruptionRejected": true,
+    "failedActualTreeAndCompleteGraphRetained": true
+  },
+  "streamedReadback": {
+    "minimumNode": "22.12.0",
+    "sqliteIterateAvailable": false,
+    "policy": "Sort/load membership IDs only; one complete JSON payload per primary-key lookup; same whole-graph logical JSON digest, all fields/proofs/diagnostics retained",
+    "projectionUsedForParity": false
+  },
+  "currentRuntimeEngineSha256": "34af4e73bfa404aded51e8e7bd91140282470d78ca946e6ae1cf03f228235da8",
+  "runtimeSourceChanged": false,
+  "previousRuntimeQualification": {
+    "tests": 1748,
+    "typesPackagePassed": true,
+    "sourceGraphs": 6,
+    "headPerformanceComparisonsPassed": 12
+  },
+  "archive": {
+    "sha256": "9577cfb2580a8f9818ea7f3afda472e744794b77133810d3d2b5f161668963e6",
+    "bytes": 134937,
+    "files": 25,
+    "allMembersRegularAndBytesVerified": true
+  },
+  "observer": {
+    "scripts/observe-production-history.mjs": "7c823af403a8e5c1f22fc9542fbd9b0a28e0836aaef886064b577b043bba9f04",
+    "scripts/production-history-tree.mjs": "6c7580b14a3c761c2b519b48b48861cc5d4cd4695c7d8cabd88c5f84bfb801dd",
+    "scripts/production-history-storage.mjs": "5c8240ca3bd3cbcda692990b425c58208e4509f7225da98e29aa22c2338b1e77",
+    "scripts/production-graph-digest.mjs": "f713fcdc9d92cb7280bb0530e1200e3c5344eb0b168af6bd82d8c8965d0e8907",
+    "scripts/production-cache-git.mjs": "6fa78a2f93d7702d29a8f924c9d0e8dca570f04fc811ff2ff1223253ffcd9c6c",
+    "scripts/production-history-inputs.mjs": "dc513fb268388e07441b5c979668ba2d16ac1ddf53f56b2426a4ff6434d7b4c8",
+    "scripts/production-history-blobs.mjs": "da9e5451d850b1842a87933e58d56fe6386758c282cf7a1755e008314e88efe7",
+    "scripts/graph-json-artifact.mjs": "d47899976c5d7b2ec73625d9b3f8d622d116ae8039cb0f4e01edb8afe190ad1e",
+    "scripts/process-memory.mjs": "16ca20fed24e5e46d4574c04cad567ee007087fd48bbef1c40cb698aa3763ed3",
+    "scripts/tests/production-graph-digest.test.mjs": "1f5be6e8f68a4f6955891a37e18b5332653eded85c29f5b08ace881aff71362f",
+    "scripts/tests/production-history-tree.test.mjs": "96b352209e6a86e6963ac6f116f6ecbd0f8a8c0b09ee1c01fd6c00e482f2185b",
+    "scripts/tests/production-history-storage.test.mjs": "b1b2463abe3bf41caa5367ee4473ede3b6785b8962a4868aed1c39b6bd8bbf6c",
+    "scripts/tests/production-history-observer.test.mjs": "274be9bdd9151268ead1af9668d2f9060b913007a4700e91a5234c22c2b22d70"
+  },
+  "retainedDevelopmentObservations": {
+    "firstStorageFixtureLogSha256": "a78ca782e7587a2b272c126c22aa2b80f5974acd4fb9c77e21093fb0959da515",
+    "firstStorageFixtureFailure": "Wrong status-method name in owned fixture; corrected to actual HistoryStore.status API",
+    "shutdown": {
+      "workerPid": 2500899,
+      "workerAlreadyExited": true,
+      "observerPid": 2500835,
+      "testPids": [
+        2500857,
+        2500835,
+        2500640,
+        2500628
+      ],
+      "reason": "Source corruption rejected and graph/tree retained, but parent-initiated IPC disconnection left close-event observation pending after worker exit",
+      "cleanup": "SIGTERM sent only to the known owned test/controller/loader processes",
+      "livePidsAfterCleanup": [],
+      "archiveSha256": "8186dec09db29b7655729153c126565525327357b319f6e7c667dcb47768c33f"
+    }
+  },
+  "artifactURLs": {
+    "archive": "http://127.0.0.1:37855/qualified-history-observer-and-tests.tar.gz",
+    "retainedShutdown": "http://127.0.0.1:37855/failed-shutdown-observation.tar.gz"
+  },
+  "browserChecks": {
+    "url": "http://127.0.0.1:37845/production-history-observer.html",
+    "viewportWidth": 1920,
+    "bodyScrollWidth": 1905,
+    "fixtureTests": 112,
+    "fixtureRevisions": 2,
+    "full195CorpusPendingVisible": true
+  }
+}

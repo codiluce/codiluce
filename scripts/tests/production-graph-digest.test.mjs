@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {createHash} from 'node:crypto';
-import {productionGraphDigest as digest} from '../production-graph-digest.mjs';
+import {productionGraphDigest as digest,productionRecordDigest} from '../production-graph-digest.mjs';
 
 const hash=text=>createHash('sha256').update(text).digest('hex');
 const fact=line=>({source:'syntax',analyzer:'rust-symbols',analyzerVersion:'1',confidence:1,file:'src/😀.rs',line,explanation:'Original "source"\r\n\ud800'});
 const row={adapter:'rust',version:'1',compilation:'crate',scope:'module',owner:'run',range:{startLine:2,startColumn:1,endLine:2,endColumn:6},conditions:['original condition'],reason:'original reason',status:'unresolved',proof:[fact(1),fact(2),fact(1)]};
-function graph(){return {schemaVersion:1,run:{id:'one',analyzedAt:'now',repositoryId:'original',configDigest:'selected',analyzerVersions:{'rust-symbols':'1',php:'same'}},entities:[{id:'file',type:'file',language:'rust',path:'src/😀.rs',metadata:{rustCallOutcomes:[structuredClone(row)],rustReferenceOutcomes:[],other:{retained:'field'}},evidence:[fact(1)]}],relations:[],diagnostics:[]};}
+function graph(){return {schemaVersion:1,run:{id:'one',analyzedAt:'now',schemaVersion:1,repositoryId:'original',configDigest:'selected',analyzerVersions:{'rust-symbols':'1',php:'same'}},entities:[{id:'file',type:'file',language:'rust',path:'src/😀.rs',metadata:{rustCallOutcomes:[structuredClone(row)],rustReferenceOutcomes:[],other:{retained:'field'}},evidence:[fact(1)]}],relations:[],diagnostics:[]};}
 function compact(original){
  const current=structuredClone(original),metadata=current.entities[0].metadata;current.run.id='two';current.run.analyzedAt='later';current.run.analyzerVersions['rust-symbols']='2';current.entities[0].evidence[0].analyzerVersion='2';
  const entries=[fact(1),fact(2)].map(entry=>({...entry,analyzerVersion:'2'})),proofRefs=[0,1,0];metadata.rustCallOutcomes[0]={...metadata.rustCallOutcomes[0],version:'2',proofRefs};delete metadata.rustCallOutcomes[0].proof;
@@ -36,4 +36,16 @@ test('complete sorted record identities and top-level schema are mandatory',()=>
 test('exact logical byte limits and depth exhaustion fail rather than return partial success',()=>{const value=graph(),bytes=digest(value).bytes;assert.equal(digest(value,{maxBytes:bytes}).bytes,bytes);assert.throws(()=>digest(value,{maxBytes:bytes-1}),/byte budget/);assert.throws(()=>digest(value,{maxDepth:2}),/depth budget/);});
 test('a complete record larger than the V8 whole-string ceiling hashes in bounded chunks',()=>{
  const value=graph(),text='original '.repeat(1400),count=45000;delete value.entities[0].metadata.rustCallOutcomes;delete value.entities[0].metadata.rustReferenceOutcomes;value.entities[0].metadata.large=['marker'];const template=reference(value),needle='["marker"]',at=template.indexOf(needle);assert.ok(at>=0);const expected=createHash('sha256').update(template.slice(0,at)+'['),encoded=JSON.stringify(text);for(let i=0;i<count;i++)expected.update((i?',':'')+encoded);expected.update(']'+template.slice(at+needle.length));value.entities[0].metadata.large=Array(count).fill(text);const result=digest(value);assert.ok(result.bytes>536870888);assert.ok(result.peakChunkBytes<=65536);assert.equal(result.sha256,expected.digest('hex'));
+});
+test('streamed complete JSON records match the original live graph without projection loss',()=>{
+ const value=compact(graph());value.relations=[{id:'edge',from:'file',to:'file',type:'references',evidence:[fact(1)],metadata:{retained:['every','field']}}];value.diagnostics=[{id:'warning',severity:'warning',reason:'Original gap',extra:{retained:1}}];
+ let loaded=0;const rows=Object.fromEntries(['entities','relations','diagnostics'].map(key=>[key,{*[Symbol.iterator](){for(const row of value[key]){loaded++;yield JSON.parse(JSON.stringify(row));}}}]));
+ assert.deepEqual(productionRecordDigest(value.run,rows),digest(value));assert.equal(loaded,3);
+});
+test('missing, altered, duplicated or unsorted streamed records cannot match a complete source graph',()=>{
+ const value=graph(),expected=digest(value).sha256;
+ for(const entities of [[],[{...value.entities[0],metadata:{lost:'original facts'}}]])assert.notEqual(productionRecordDigest(value.run,{entities,relations:[],diagnostics:[]}).sha256,expected);
+ for(const entities of [[...value.entities,...value.entities],[{...value.entities[0],id:'z'},value.entities[0]]])assert.throws(()=>productionRecordDigest(value.run,{entities,relations:[],diagnostics:[]}));
+ assert.throws(()=>productionRecordDigest(value.run,{entities:[],relations:[]}));assert.throws(()=>productionRecordDigest(value.run,{entities:[],relations:[],diagnostics:[],unexpected:[]}));
+ const failing={*[Symbol.iterator](){yield value.entities[0];throw Error('Incomplete SQLite readback');}};assert.throws(()=>productionRecordDigest(value.run,{entities:failing,relations:[],diagnostics:[]}),/Incomplete SQLite/);
 });
