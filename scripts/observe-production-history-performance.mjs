@@ -20,6 +20,15 @@ async function fileHash(file){const digest=createHash('sha256');for await(const 
 const outside=(root,file)=>{const relative=path.relative(root,file);return relative==='..'||relative.startsWith('..'+path.sep)||path.isAbsolute(relative);};
 async function regular(file){assert.equal(await realpath(file),file);assert.equal((await lstat(file)).isFile(),true);}
 
+/** A file ledger omits empty directories. Git still requires refs alongside
+ * HEAD and objects to recognize the fresh owned metadata as a repository. */
+export async function copyHistoryPerformanceGit(group,directory){
+ assert.equal(await realpath(group.directory),group.directory);assert.equal(await realpath(path.dirname(directory)),path.dirname(directory));assert.ok(outside(group.directory,directory));
+ await mkdir(directory);await mkdir(path.join(directory,'refs'));
+ for(const item of group.files){const source=path.resolve(group.directory,item.file),target=path.resolve(directory,item.file);assert.ok(!outside(group.directory,source)&&!outside(directory,target));await regular(source);assert.equal(await fileHash(source),item.sha256);await mkdir(path.dirname(target),{recursive:true});await copyFile(source,target);assert.equal(await fileHash(target),item.sha256);}
+ return {...group,directory};
+}
+
 export async function observeHistoryPerformance(options,sources){
  assert.equal(process.platform,'linux');const repetitions=Number(options.repetitions??3);assert.ok(Number.isSafeInteger(repetitions)&&repetitions>=3&&repetitions<=20);
  const frozen=new Map(),load=async file=>{file=path.resolve(file);await regular(file);const bytes=await readFile(file),digest=sha(bytes);if(frozen.has(file))assert.equal(frozen.get(file),digest);frozen.set(file,digest);return {file,bytes,value:JSON.parse(bytes)};};
@@ -53,10 +62,10 @@ export async function observeHistoryPerformance(options,sources){
    const name=specification.id+'-'+label+'-'+repetition,unit=path.join(destination,name),row={id:specification.id,label,repetition,status:'running',startedAt:new Date().toISOString(),unit:name};receipt.runs.push(row);await publish();
    try{
     await verify();const space=await statfs(destination),database=path.join(path.dirname(baselineInput.file),record.database);assert.ok(Number(space.bavail)*Number(space.bsize)>=(await lstat(database)).size+1024*1024*1024,'Insufficient space for a new history plus 1 GiB reserve');
-    const root=path.join(unit,'metadata-root'),state=path.join(unit,'state'),scratch=path.join(unit,'scratch'),git=path.join(unit,'git');for(const directory of [root,state,scratch,git])await mkdir(directory,{recursive:true});await writeFile(path.join(state,'config.yml'),stringify(record.config));
-    for(const item of group.files){const source=path.resolve(group.directory,item.file),target=path.resolve(git,item.file);assert.ok(!outside(group.directory,source)&&!outside(git,target));await regular(source);assert.equal(await fileHash(source),item.sha256);await mkdir(path.dirname(target),{recursive:true});await copyFile(source,target);}
+    const root=path.join(unit,'metadata-root'),state=path.join(unit,'state'),scratch=path.join(unit,'scratch'),git=path.join(unit,'git');for(const directory of [root,state,scratch])await mkdir(directory,{recursive:true});await writeFile(path.join(state,'config.yml'),stringify(record.config));
+    const copiedGit=await copyHistoryPerformanceGit(group,git);
     const request={engine:engines[label],root,state,scratch,record,baselineDirectory:path.dirname(baselineInput.file),result:path.join(unit,'worker-result.json')},requestFile=path.join(unit,'request.json');await writeFile(requestFile,JSON.stringify(request,null,2)+'\n',{flag:'wx'});
-    Object.assign(row,await measureProductionWorker({worker:path.join(project,'scripts/production-history-performance-worker.mjs'),request:requestFile,log:path.join(unit,'worker.log'),cwd:project,env:{...productionGitEnvironment({...group,directory:git},root),TMPDIR:scratch}}));assert.equal(row.passed,true);assert.ok(row.processes>=3,'Sampler did not observe the real indexer and both actual history workers');
+    Object.assign(row,await measureProductionWorker({worker:path.join(project,'scripts/production-history-performance-worker.mjs'),request:requestFile,log:path.join(unit,'worker.log'),cwd:project,env:{...productionGitEnvironment(copiedGit,root),TMPDIR:scratch}}));assert.equal(row.passed,true);assert.ok(row.processes>=3,'Sampler did not observe the real indexer and both actual history workers');
     row.databaseSha256=await fileHash(row.database);const auditFile=path.join(unit,'columns.json');
     try{await execute('python3',['scripts/audit-history-performance-columns.py','--result',request.result,'--output',auditFile],{cwd:project,maxBuffer:1024*1024});}catch(error){row.auditStdout=error.stdout;row.auditStderr=error.stderr;throw error;}
     row.columns=JSON.parse(await readFile(auditFile));assert.equal(row.columns.passed,true);assert.equal(row.columns.measurementResultSha256,await fileHash(request.result));assert.equal(row.columns.databaseSha256,row.databaseSha256);assert.equal(row.columns.columnAuditorSha256,frozen.get(path.join(project,'scripts/audit-history-columns.py')));assert.equal(row.columns.auditorSha256,frozen.get(path.join(project,'scripts/audit-history-performance-columns.py')));

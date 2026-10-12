@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {execFile} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {mkdir,mkdtemp,readFile,rm,symlink,writeFile} from 'node:fs/promises';
+import {mkdir,mkdtemp,readFile,readdir,rm,symlink,writeFile} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -12,7 +12,7 @@ import {HistoryStore} from '../../src/history/store.ts';
 import {measureProductionWorker} from '../production-cache-measure.mjs';
 import {prepareProductionGit,productionGitEnvironment} from '../production-cache-git.mjs';
 import {qualifyHistoryPerformance} from '../production-history-performance-results.mjs';
-import {observeHistoryPerformance} from '../observe-production-history-performance.mjs';
+import {copyHistoryPerformanceGit,observeHistoryPerformance} from '../observe-production-history-performance.mjs';
 import {readRevision} from '../production-history-inputs.mjs';
 
 const execute=promisify(execFile),project=fileURLToPath(new URL('../../',import.meta.url)),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -44,7 +44,12 @@ test('actual history measurement uses both native workers, ends before full audi
   const baseline=path.join(root,'baseline');await execute(process.execPath,['--experimental-sqlite','--import','tsx','scripts/observe-production-history.mjs','--corpus',path.join(root,'corpus.json'),'--profiles',path.join(root,'profiles.json'),'--engine-identity',path.join(root,'identity.json'),'--git-metadata',path.join(root,'metadata.json'),'--source','owned='+source,'--output',baseline],{cwd:project,maxBuffer:1024*1024});
   const originalDb=path.join(baseline,'owned/state/history.db'),originalSha=hash(await readFile(originalDb)),record=JSON.parse(await readFile(path.join(baseline,'receipt.json'))).repositories[0];
   const run=async(name,changed=false)=>{
-   const unit=path.join(root,name),state=path.join(unit,'state'),tree=path.join(unit,'metadata-root'),scratch=path.join(unit,'scratch');for(const dir of [state,tree,scratch])await mkdir(dir,{recursive:true});await writeFile(path.join(state,'config.yml'),stringify(config));const selected=structuredClone(record);if(changed)selected.revisions[0].logical.sha256='0'.repeat(64);const request={engine:project,root:tree,state,scratch,record:selected,baselineDirectory:baseline,result:path.join(unit,'worker-result.json')},file=path.join(unit,'request.json');await writeFile(file,JSON.stringify(request));const args={worker:path.join(project,'scripts/production-history-performance-worker.mjs'),request:file,log:path.join(unit,'worker.log'),cwd:project,env:{...productionGitEnvironment(group,tree),TMPDIR:scratch}};
+   const unit=path.join(root,name),state=path.join(unit,'state'),tree=path.join(unit,'metadata-root'),scratch=path.join(unit,'scratch');for(const dir of [state,tree,scratch])await mkdir(dir,{recursive:true});await writeFile(path.join(state,'config.yml'),stringify(config));
+   // Exercise the actual file-only metadata ledger copy, including required
+   // empty refs. Directly reusing prepareProductionGit's directory hid this.
+   assert.equal(group.files.some(row=>row.file.startsWith('refs/')),false);const copiedGit=await copyHistoryPerformanceGit(group,path.join(unit,'git'));assert.deepEqual(await readdir(path.join(copiedGit.directory,'refs')),[]);for(const item of group.files)assert.equal(hash(await readFile(path.join(copiedGit.directory,item.file))),item.sha256);await assert.rejects(copyHistoryPerformanceGit(group,copiedGit.directory),error=>error.code==='EEXIST');
+   assert.equal((await execute('git',['rev-parse','HEAD'],{env:productionGitEnvironment(copiedGit,tree),cwd:tree})).stdout.trim(),head);
+   const selected=structuredClone(record);if(changed)selected.revisions[0].logical.sha256='0'.repeat(64);const request={engine:project,root:tree,state,scratch,record:selected,baselineDirectory:baseline,result:path.join(unit,'worker-result.json')},file=path.join(unit,'request.json');await writeFile(file,JSON.stringify(request));const args={worker:path.join(project,'scripts/production-history-performance-worker.mjs'),request:file,log:path.join(unit,'worker.log'),cwd:project,env:{...productionGitEnvironment(copiedGit,tree),TMPDIR:scratch}};
    if(changed){await assert.rejects(measureProductionWorker(args),error=>error.worker.exitCode===1&&error.worker.ended===true);const result=JSON.parse(await readFile(request.result));assert.equal(result.passed,false);assert.ok((await readFile(path.join(state,'history.db'))).length>0);return;}
    const observed=await measureProductionWorker(args);assert.equal(observed.passed,true);assert.equal(observed.indexed.indexed,4);assert.equal(observed.plan.jobs,2);assert.ok(observed.processes>=3);assert.ok(observed.treePeakKiB>0);assert.ok(observed.milliseconds>0);assert.equal(observed.revisions.length,4);assert.equal(observed.snapshotColumnLedger.tables.snapshots.rows,4);for(const r of observed.revisions){assert.deepEqual(r.logical.normalization,[]);assert.deepEqual(r.volatileFields,['run.id','run.analyzedAt']);}
    const output=path.join(unit,'columns.json');await execute('python3',['scripts/audit-history-performance-columns.py','--result',request.result,'--output',output],{cwd:project});const columns=JSON.parse(await readFile(output));assert.equal(columns.passed,true);assert.equal(Object.keys(columns.database.tables).length,7);assert.equal(columns.measurementResultSha256,hash(await readFile(request.result)));

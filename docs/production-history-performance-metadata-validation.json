@@ -1,0 +1,96 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-12T20:29:29.908745+00:00",
+  "phase": "full-history-performance-owned-git-metadata-copy-fix",
+  "scope": "Corrected harness and real copied-metadata conformance; initial production attempt failed before completed measurement, retained in full",
+  "files": [
+    {
+      "file": "scripts/observe-production-history-performance.mjs",
+      "sha256": "5fb2a8e27fd39aede6f99a94d4305737b84b1df20e85d5d0246ba01ac6d308c7"
+    },
+    {
+      "file": "scripts/tests/production-history-performance.test.mjs",
+      "sha256": "b954f54577075009c800ceeb05859840f463aab0e93a17fc53b8005fdc9f5c9b"
+    }
+  ],
+  "dedicatedTests": 5,
+  "targetedTests": 178,
+  "failedFinalTests": 0,
+  "skippedLinuxTests": 0,
+  "metadataPreflightRepositories": 6,
+  "failedOriginalAttempt": {
+    "terminal": {
+      "pid": 3102684,
+      "childPid": 3102690,
+      "exitCode": 1,
+      "seconds": 12.625892877578735,
+      "completedAt": 1791836712.6312416
+    },
+    "receiptSha256": "91314205e1571f89eebe11e800c1d14dc32ea8f427da15a5d774d140c3705bc7",
+    "error": "Git refused a copied file-only metadata directory without its required empty refs directory",
+    "measurementBegan": true,
+    "measurementEnded": false,
+    "qualifiedPerformanceSample": false,
+    "failedEvidenceRetained": true
+  },
+  "checks": [
+    "Fresh owned Git metadata creates the required empty refs directory before copying original ledger files",
+    "Each metadata file SHA checked before and after copy; original metadata files remain unchanged",
+    "All six original HEAD/tree identities verified with read-only Git through corrected owned copies",
+    "Actual four-revision native worker measurement runs against copied metadata rather than the original prepared directory",
+    "Existing destination refused; both workers, full graph and independent complete column audits pass; hidden payload failure retained",
+    "Both 1924-file baseline/current runtimes and unrelated user files remain unchanged"
+  ],
+  "artifacts": [
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/corpus/receipt.json",
+      "sha256": "91314205e1571f89eebe11e800c1d14dc32ea8f427da15a5d774d140c3705bc7"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/corpus/flask-baseline-0/worker.log",
+      "sha256": "e4d15c87f5c257fa2bddae17342f5de1f3b8f5eca9d3348e88a19a980a59bf77"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/performance-terminal.json",
+      "sha256": "4f2c03bde27dade605eda27e5fd6b5db4ff35451c9dcd9b9f502c0caffb56015"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/performance-controller.json",
+      "sha256": "1275cdb162ee1cd33215365790df0ce7644a2862a56f5624edd5f88728003769"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/performance-controller-launch.json",
+      "sha256": "7b264a895f33d48cbf6c3e7ba26e3dc449fed497a1a2ff926587208305744535"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/performance-controller.py",
+      "sha256": "2e04c0768a2d583dbc9c5af918565d8de3854bfff090589ce707ee574febfc8e"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/metadata-copy-preflight.json",
+      "sha256": "b6481c2350439b0e6022ca1d012963f848ae154aa60e2571a3f3644553c8674d"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/performance-metadata-copy-conformance.log",
+      "sha256": "c186cc4a89d3f30dedae00931b83510e4d2ecc754f0f071df8084d4a437f51af"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/performance-metadata-copy-targeted-final.log",
+      "sha256": "417d60828a0cd39d27d00e9e09fb71bad564d1a18b48d973871b63d4bcf839d3"
+    }
+  ],
+  "runtimeSourceChanged": false,
+  "engineSha256": "ca1b330152267c80ce02d35c57138928da4f69e4d3817f61ff03987584dded4a",
+  "relativeHistoryTimeRssQualified": false,
+  "full195RevisionEntrypointQualified": true,
+  "nativeWindowsMacOSQualified": false,
+  "fullGoalFinished": false,
+  "foreignFiles": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  }
+}
