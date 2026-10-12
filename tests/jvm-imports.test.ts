@@ -235,7 +235,7 @@ test('Competing build systems and Gradle settings constrain every selected works
 test('Truncated Java declaration budgets cannot certify a partial import export set', async () => {
     const source = 'package demo; public class Large {' + Array.from({ length: 21000 }, (_, i) => `public static void member${i}(){}`).join('') + '}';
     const root = await repository({ 'java/demo/Large.java': source, 'java/client/Use.java': 'package client; import static demo.Large.*; public class Use {}' }), graph = await index(root, [configured]);
-    assert.ok(graph.diagnostics.some(item => item.file === 'java/demo/Large.java' && item.code === 'syntax-budget-exceeded'));
+    assert.ok(graph.diagnostics.some(item => item.file === 'java/demo/Large.java' && item.code === 'syntax-budget-exceeded'), JSON.stringify(graph.diagnostics.filter(item => item.file === 'java/demo/Large.java')));
     assert.deepEqual(statuses(graph, 'java/client/Use.java'), ['unsupported']);
     assert.equal(graph.relations.filter(edge => edge.type === 'imports').length, 0);
 });

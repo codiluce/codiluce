@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-12T22:45:45.041003+00:00",
+  "phase": "Sequential active parser jobs, retirement recovery and bounded conformance scheduling",
+  "engineRuntimeSha256": "dfe5fc91b55f770555dc85f5288ef3e756d7823b3c73a4837a49efca0dd3a52a",
+  "engineFilesVerified": 1924,
+  "sourceChanges": [
+    "src/analysis/tree-sitter/client.ts",
+    "package.json",
+    "scripts/test-package.mjs"
+  ],
+  "newTransportTests": 7,
+  "beforeFixTransportTests": {
+    "passed": 2,
+    "failed": 5
+  },
+  "afterFixTransportTests": {
+    "passed": 7,
+    "failed": 0
+  },
+  "firstFullSuite": {
+    "passed": 1690,
+    "failed": 1,
+    "skipped": 0,
+    "failedCase": "Truncated Java declaration budgets cannot certify a partial import export set",
+    "reasonDetailsUnavailableInOriginalAssertion": true,
+    "logRetained": true
+  },
+  "changedValidationScheduler": "npm test now shares native release validation --test-concurrency=4; original Java budget/import assertions retained and diagnostic failure details added",
+  "finalFullSuite": {
+    "passed": 1691,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 179699.945635
+  },
+  "compiledOrdinaryNodeTransportTests": 7,
+  "bothTypechecksPassed": true,
+  "capabilityDocumentationPassed": true,
+  "documentationChanges": "Only selected source fingerprints; language/profile/layout content unchanged",
+  "activeJobDeadlineMs": 10000,
+  "queueWaitConsumesActiveDeadline": false,
+  "workerHeapOldSpaceMiB": 256,
+  "failedGenerationExitRequiredBeforeNextDispatch": true,
+  "explicitShutdownCancelsQueuedInputs": true,
+  "previousProductionBenchmarkRetried": false,
+  "previousProductionBenchmarkQualified": false,
+  "historicalBookStackSchedulingCauseEstablished": false,
+  "newRuntimeOriginalProductionHistoryQualified": false,
+  "newRuntimeRelativeHistoryTimeRssQualified": false,
+  "normalInstalledPackageGatePending": true,
+  "nativeWindowsMacOSQualified": false,
+  "broaderConsumerCompilerWasmRssBudgetQualified": false,
+  "fullGoalFinished": false,
+  "scope": "Own source/compiled transport and complete bounded engine/web conformance. Active timeout includes worker startup, IPC and parsing after dispatch; no CPU-time or RSS cap is claimed. Historical failure is preserved. Original-production and installed package evidence are separate gates.",
+  "logs": [
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/queue-conformance-before-fix.log",
+      "sha256": "3f18367e94dacbfc96040f7045689fcca4d79e65716f842f7d26ae8b0e461f77"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/queue-conformance-after-fix.log",
+      "sha256": "f0abd655c82d129b8fca240409182c1c850555244d79558fb420815c275ca102"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/queue-typecheck-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/queue-web-typecheck-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/queue-full-engine-web-first.log",
+      "sha256": "e0a0d1230f3508fd8ca6aefae094ae8b1fe8b0b012b8b38aca0f6a09e6cf4468"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/queue-full-engine-web-bounded-concurrency.log",
+      "sha256": "9f12daa4c533a312defb36b184f3b2ca8bb02e9d5bb50352345360aa25068d5e"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/queue-compiled-cli-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/queue-compiled-conformance-first.log",
+      "sha256": "973a16657ddb17032faddd7c6d2d739d9b91ac1a46ced13c4e79b2417c15f484"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/queue-capability-docs-check-first.log",
+      "sha256": "34192c18ce9bd53547e4ee0a383c27d5f7a448194309ad21afe5ecf9663985a1"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/queue-docs-check-after-test-scheduler.log",
+      "sha256": "f2e4a56d214cab9e19286cfbb83e7c9bd09edb24ace3b297782be8f196a3b95e"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/queue-docs-regeneration.log",
+      "sha256": "9ecd8baedb491379c88964634a5551989a6748de5dec51f3772bb0a31ec77da7"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/queue-docs-check-final.log",
+      "sha256": "4d552c878f86492e9450c46adcda71409aef89f25e60ab74c100b75830d01ef7"
+    }
+  ],
+  "compiledDriver": {
+    "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/compiled-queue.test.mjs",
+    "sha256": "a2e1440419b46578ba8cbfe2ec30da07e7c54191e8a72af07044dfe4a3601041"
+  },
+  "foreignFilesUnchanged": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  }
+}

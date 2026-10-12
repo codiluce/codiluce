@@ -32,7 +32,7 @@
     "codiluce": "node --experimental-sqlite --import tsx src/cli.ts",
     "dev:web": "next dev web --port 4310",
     "build:web": "next build web && node scripts/copy-ui-licenses.mjs",
-    "test": "node --experimental-sqlite --import tsx --test tests/*.test.ts web/tests/*.test.ts",
+    "test": "node --experimental-sqlite --import tsx --test --test-concurrency=4 tests/*.test.ts web/tests/*.test.ts",
     "test:e2e": "next build web && playwright test",
     "test:package": "node scripts/test-package.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit -p web",
