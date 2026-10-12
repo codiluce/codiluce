@@ -1,0 +1,136 @@
+{
+  "schema": 1,
+  "phase": "P10d2b2b2b2c7b2 independent complete history payload audit",
+  "auditorVerified": true,
+  "independentlyVerifiedOriginalRevisions": 67,
+  "full195RevisionRunVerified": false,
+  "tests": {
+    "passed": 117,
+    "failed": 0,
+    "logSha256": "275b6c72d14f1f6827c8e83f5402becd31ce15b1a092dd7ecd830a06cefd5336"
+  },
+  "normalization": [],
+  "runtimeSourceChanged": false,
+  "runtimeEngineSha256": "34af4e73bfa404aded51e8e7bd91140282470d78ca946e6ae1cf03f228235da8",
+  "auditorSha256": "ed134cf144500bcbc54a73a00f09dcea4158858bc63e83294ab5ef8f027783dc",
+  "inputSnapshotsRetained": true,
+  "databaseMode": "Read-only SQLite transaction, complete payloads; main database and any nonempty WAL bytes unchanged; empty sidecar creation recorded",
+  "repositories": [
+    {
+      "id": "flask",
+      "status": "verified",
+      "database": "flask/state/history.db",
+      "databaseSha256": "c2b8abde7405fc88148416609380ec381eaa81b7b0f219cc153c2ee344a3d44f",
+      "wal": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "originalBlobObjects": 471,
+      "method": "Independent JSON token hashing, raw complete SQLite payloads, original Git blob identities and SHA-256, integrity/membership/metadata/statistics checks; no target execution or UI projection",
+      "relativeHistoryTimeRssQualified": false,
+      "layoutResumeQualified": false,
+      "nativeWindowsMacOSQualified": false,
+      "storage": {
+        "snapshots": 35,
+        "commits": 35,
+        "versions": {
+          "entities": 5494,
+          "relations": 9206,
+          "diagnostics": 188
+        },
+        "memberships": {
+          "entities": 67321,
+          "relations": 119089,
+          "diagnostics": 2969
+        },
+        "pullRequests": 0,
+        "bytes": 21475328
+      },
+      "completedAt": "2026-10-12T16:24:34.253Z",
+      "walAfter": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "id": "memos",
+      "status": "verified",
+      "database": "memos/state/history.db",
+      "databaseSha256": "35250930d6ed260aa5f0f6601019a83afc9fcede4941da047518fe91225d696f",
+      "wal": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "originalBlobObjects": 1976,
+      "method": "Independent JSON token hashing, raw complete SQLite payloads, original Git blob identities and SHA-256, integrity/membership/metadata/statistics checks; no target execution or UI projection",
+      "relativeHistoryTimeRssQualified": false,
+      "layoutResumeQualified": false,
+      "nativeWindowsMacOSQualified": false,
+      "storage": {
+        "snapshots": 32,
+        "commits": 32,
+        "versions": {
+          "entities": 13161,
+          "relations": 50027,
+          "diagnostics": 79
+        },
+        "memberships": {
+          "entities": 361954,
+          "relations": 1418119,
+          "diagnostics": 2399
+        },
+        "pullRequests": 0,
+        "bytes": 132775936
+      },
+      "completedAt": "2026-10-12T16:28:42.530Z",
+      "walAfter": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  ],
+  "retainedDevelopmentFailures": [
+    "Fixture graph initially lacked mandatory evidence; original failed test log retained",
+    "Read-only SQLite created an empty WAL; initial strict absent-versus-empty test failure retained, empty sidecar observation now recorded separately"
+  ],
+  "archive": {
+    "sha256": "13f999373e447e49a52c62fbf6a832017710a2cef3eaabb015491d1a447f8bd4",
+    "bytes": 444279,
+    "files": 16,
+    "allMembersRegularAndBytesVerified": true,
+    "url": "http://127.0.0.1:37856/independent-history-audit-inputs.tar.gz"
+  },
+  "liveCorpusObservation": {
+    "observerPid": 2550218,
+    "confirmedLiveAt": "2026-10-12T16:30:20.434236+00:00",
+    "progress": [
+      {
+        "id": "flask",
+        "status": "verified",
+        "verifiedRevisions": 35,
+        "error": null
+      },
+      {
+        "id": "memos",
+        "status": "verified",
+        "verifiedRevisions": 32,
+        "error": null
+      },
+      {
+        "id": "bookstack",
+        "status": "starting",
+        "verifiedRevisions": 11,
+        "error": null
+      }
+    ]
+  },
+  "relativeHistoryTimeRssQualified": false,
+  "layoutResumeQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "browserChecks": {
+    "url": "http://127.0.0.1:37845/production-history-audit.html",
+    "viewportWidth": 1920,
+    "bodyScrollWidth": 1905,
+    "bothOriginalAuditRowsAndPendingFullCorpusVisible": true
+  }
+}
