@@ -1,0 +1,374 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-12T22:32:39.906699+00:00",
+  "phase": "TypeScript component program and declaration-node lifetime Linux release qualification",
+  "sourceBranch": "compat/typescript-component-lifetimes",
+  "sourceConformanceCommit": "20e275c348a20307b5727b9ba84665927ed0272c",
+  "candidateEngineSha256": "8cd3d8d6011357d276ef0cae045d236b5f263a42093fba03e78c347aadc64455",
+  "previousCandidateEngineSha256": "24ecfc98e0a04ad5eacfdaa75f3914632e215dbbd1972b6aee445031cb2a2f67",
+  "mainEngineSha256": "ca1b330152267c80ce02d35c57138928da4f69e4d3817f61ff03987584dded4a",
+  "engineFilesVerified": 1924,
+  "sourceChanges": [
+    "src/analysis/languages/typescript-services.ts",
+    "src/analyzers/typescript.ts"
+  ],
+  "inheritedSourceCacheChanges": [
+    "src/analyzers/ts-program.ts"
+  ],
+  "totalEngineWebTests": 1684,
+  "newLifecycleTests": 5,
+  "compiledLifecycleTests": 2,
+  "failedFinalTests": 0,
+  "skippedTests": 0,
+  "engineAndWebTypechecksPassed": true,
+  "capabilityDocumentationCheckPassed": true,
+  "capabilityDocumentationSourceFiles": 71,
+  "normalPrepackAndProductionOnlyInstalledPackagePassed": true,
+  "installedPackageTerminal": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791843660.4204443,
+    "actualExitCode": 0,
+    "actualUnifiedExecSession": 75633,
+    "actualPackagePid": 3390416,
+    "actualNpmPid": 3390415,
+    "processesGone": true,
+    "log": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-installed-package-first.log",
+    "logSha256": "068fa66885161ec4b5fabd6961964cf1e83837a24e2a35724400124c549ffb1a",
+    "normalPrepackPassed": true,
+    "productionOnlyInstalledDependencies": true,
+    "installedSourceCacheAndLifecycleChecksPassed": true,
+    "fullCliApiSourceFrameworkHistoryAssetSignalsNpmExecPassed": true
+  },
+  "installedTestDriverSha256": "f599c537ba36f9fb235d2169e4e03fc4a9f9cc4159b01d27bb00b2eea8370d90",
+  "releaseArchive": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791843101.8742194,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-normal-prepack-release.tgz",
+    "sha256": "654859dcd7d2103d9dd439ea94711c1e66c26050149d59b8a2d80afc64ea375f",
+    "bytes": 7139719,
+    "verifiedRegularMembers": 367,
+    "compiledRuntimeSourceChecks": {
+      "analysis/languages/typescript-services.js": "6c55e754aa43fe91fda9997f5121cc332e6e6a495077cc92332d13be0c914791",
+      "analyzers/typescript.js": "83b60b26d743ac742607f1a0abd3d95aaa68088ac6013e99ea2841b104094b47",
+      "analyzers/ts-program.js": "0c25ab8fe787c6af4756eda1919f4eb36c41f22a2c33c39d9a37c984c96c1555"
+    },
+    "installedPackageGatePendingAtArchiveRetention": true
+  },
+  "runtimeAndEvidenceArchive": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791843668.455741,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-runtime-release-and-evidence.tar.gz",
+    "sha256": "9c68c9139ed5799421521489755c40ae7555039580bd13426e4165788090d6b1",
+    "bytes": 53538025,
+    "verifiedRegularMembers": 2960,
+    "manifestSha256": "381df681515a5801afde369f036919949792e9c62beadf9905bb95967c5d4e25",
+    "candidateEngineSha256": "8cd3d8d6011357d276ef0cae045d236b5f263a42093fba03e78c347aadc64455",
+    "seconds": 7.38595724105835,
+    "normalPrepackAndInstalledPackagePassed": true,
+    "mainIntegrationPending": true,
+    "candidateOriginalProductionHistoryQualified": false,
+    "candidateRelativeHistoryTimeRssQualified": false,
+    "nativeWindowsMacOSQualified": false
+  },
+  "logs": [
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-full-engine-web-first.log",
+      "sha256": "1201d39cf73ca70b45b9e7b6466c5ab2a522281d190cf33351abb3ac6265b92a"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-typecheck-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-web-typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-capability-docs-check-first.log",
+      "sha256": "aceba82061e063d23967e33b2572318b520aad9473469073131d37a9113c9721"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-capability-docs-regeneration.log",
+      "sha256": "bfa672ec8effb0f4da60a349942abfecdb3178b4e2e60303d01f78fbc3601c03"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-capability-docs-check-final.log",
+      "sha256": "34192c18ce9bd53547e4ee0a383c27d5f7a448194309ad21afe5ecf9663985a1"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-compiled-cli-build.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-compiled-conformance-first.log",
+      "sha256": "a98060929d3077cd11de0a456c9592bd2720ea31a89539b024d1b355974f699f"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-installed-package-first.log",
+      "sha256": "068fa66885161ec4b5fabd6961964cf1e83837a24e2a35724400124c549ffb1a"
+    }
+  ],
+  "changes": [
+    "Each completed dependency component retires its project programs and source-node declaration map keys in finally, including framework failures",
+    "Original plain source-site identities remain available across AST generations; lazy handler/compiler recovery preserves entity IDs without duplicates",
+    "Release preserves indexed-only I/O, dependency ordering, exact original source ranges and complete cold/warm/revision graphs",
+    "Production-only installed ordinary Node checks verify exact node retirement, cross-AST identity, real project analysis and lazy recovery"
+  ],
+  "scopeLimits": [
+    "Provider program/node ownership retirement does not bound consumer-held programs, checker/symbol/token caches, all source-site facts, native WASM allocations or RSS",
+    "Original-production history, relative time/RSS, broader source/import/version accuracy and native Windows/macOS remain unqualified for this candidate",
+    "The old frozen 36-probe performance run terminated with an exact BookStack graph mismatch; its failed state and all diagnostics remain unchanged"
+  ],
+  "candidateLinuxSourceCompiledPackageQualified": true,
+  "candidateOriginalProductionHistoryQualified": false,
+  "candidateRelativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "broaderConsumerCompilerWasmRssBudgetQualified": false,
+  "mainRuntimeChanged": false,
+  "previousCandidateChanged": false,
+  "mainIntegrationPending": true,
+  "fullGoalFinished": false,
+  "previousFrozenBenchmark": {
+    "status": "terminal-failed",
+    "passed": false,
+    "fullGateQualified": false,
+    "actualTerminal": {
+      "pid": 3116124,
+      "childPid": 3116142,
+      "exitCode": 1,
+      "seconds": 6515.819827079773,
+      "completedAt": 1791843513.5115237
+    },
+    "actualCollectorTerminal": {
+      "pid": 3146957,
+      "completedAt": 1791843519.182757,
+      "qualificationExitCode": 1,
+      "qualificationComplete": false,
+      "performancePassed": false,
+      "output": null
+    },
+    "completedProbes": 12,
+    "failedProbes": 1,
+    "requiredProbes": 36,
+    "comparisons": [
+      {
+        "id": "flask",
+        "revisions": 35,
+        "repetitions": 3,
+        "complete": true,
+        "passed": true,
+        "baseline": {
+          "milliseconds": 42192.319096,
+          "treePeakKiB": 1566776
+        },
+        "current": {
+          "milliseconds": 39378.737324,
+          "treePeakKiB": 1487144
+        },
+        "timeRatio": 0.9333153087509064,
+        "memoryRatio": 0.9491746107931192
+      },
+      {
+        "id": "memos",
+        "revisions": 32,
+        "repetitions": 3,
+        "complete": true,
+        "passed": true,
+        "baseline": {
+          "milliseconds": 472434.476548,
+          "treePeakKiB": 6304552
+        },
+        "current": {
+          "milliseconds": 481147.16469999996,
+          "treePeakKiB": 6096772
+        },
+        "timeRatio": 1.0184421090849722,
+        "memoryRatio": 0.9670428604601882
+      },
+      {
+        "id": "bookstack",
+        "revisions": 32,
+        "repetitions": 3,
+        "complete": false,
+        "passed": false
+      },
+      {
+        "id": "firefly-iii",
+        "revisions": 32,
+        "repetitions": 3,
+        "complete": false,
+        "passed": false
+      },
+      {
+        "id": "axum",
+        "revisions": 32,
+        "repetitions": 3,
+        "complete": false,
+        "passed": false
+      },
+      {
+        "id": "full-stack-fastapi",
+        "revisions": 32,
+        "repetitions": 3,
+        "complete": false,
+        "passed": false
+      }
+    ],
+    "failedProbe": {
+      "id": "bookstack",
+      "label": "baseline",
+      "repetition": 0,
+      "status": "failed",
+      "startedAt": "2026-10-12T22:07:42.072Z",
+      "unit": "bookstack-baseline-0",
+      "error": "Production worker failed or lacks completed measurement",
+      "worker": {
+        "pid": 3388924,
+        "exitCode": 1,
+        "signal": null,
+        "sample": {
+          "treePeakKiB": 4260748,
+          "childPeakKiB": 3508476,
+          "processes": 9,
+          "samples": 25049,
+          "incompleteSamples": 11
+        },
+        "log": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/corpus-corrected/bookstack-baseline-0/worker.log",
+        "began": true,
+        "ended": true
+      },
+      "completedAt": "2026-10-12T22:18:30.131Z"
+    },
+    "sameCommitDiagnosticDifference": {
+      "originalSnapshot": {
+        "seq": 1,
+        "id": "2c4bea3c-5913-4b85-9c0e-662cad266775",
+        "commit": "79a2e017bbf5d4d634e890199e3267d9280f1db1"
+      },
+      "measuredSnapshot": {
+        "seq": 1,
+        "id": "22ed1d1b-0b53-4e11-bf5b-1551625cadd5",
+        "commit": "79a2e017bbf5d4d634e890199e3267d9280f1db1"
+      },
+      "added": 18,
+      "removed": 0,
+      "changed": 0,
+      "files": [
+        "app/Access/Controllers/ConfirmEmailController.php",
+        "app/Access/Controllers/ForgotPasswordController.php",
+        "app/Access/Controllers/HandlesPartialLogins.php",
+        "app/Access/Controllers/LoginController.php",
+        "app/Access/Controllers/MfaBackupCodesController.php",
+        "app/Access/Controllers/MfaController.php"
+      ],
+      "codes": {
+        "php-binding-source-unavailable": 6,
+        "php-parse-error": 6,
+        "php-structure-failed": 6
+      },
+      "reason": "Parser exceeded 10000 ms for php-native-unit",
+      "schedulingCauseEstablished": false
+    },
+    "actualGraph": {
+      "bytes": 73850347,
+      "entities": 11827,
+      "relations": 35698,
+      "diagnostics": 166,
+      "sha256": "86d76de2250f2a39064e91956a1a6c79469f2c0c3b5b8cdcdb8106d6c1df6e63"
+    },
+    "expectedGraph": {
+      "bytes": 74321092,
+      "entities": 11871,
+      "relations": 35863,
+      "diagnostics": 148,
+      "sha256": "d22aa4231c7595d68e18e16cb54985951271dac314686f0d27204c4b1882f825"
+    },
+    "artifacts": [
+      {
+        "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/corpus-corrected/receipt.json",
+        "sha256": "94aaaf04aa567d9b20e9219a6e228e72ec7b14a4472d4e5d61195ba8c7a64d02"
+      },
+      {
+        "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/performance-corrected-terminal.json",
+        "sha256": "8ba198fafd360afdf94e3d6267ee41d6888ff330eb4ec1df6fd7e39d9ac23776"
+      },
+      {
+        "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/performance-qualification-collector-terminal.json",
+        "sha256": "be665b7f39a02cb4f546255bec91848d8904b80a887500cfae57039ab95fac09"
+      },
+      {
+        "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/bookstack-first-snapshot-diagnostic-difference.json",
+        "sha256": "5b5f599d3960d75dab7cbb3916add0cbc110b88d1c589482550b1ae79a824b62"
+      },
+      {
+        "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/corpus-corrected/bookstack-baseline-0/worker.log",
+        "sha256": "68d3c87738dc2abf4c0efa568dabee72e7a7a911da607271de4c56f1d737e9d6"
+      },
+      {
+        "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/corpus-corrected/bookstack-baseline-0/worker-result.json",
+        "sha256": "694bda122909f1f98d3b1273abbd2fcc38ec58ad2868b2ae8b032225464d5ece"
+      },
+      {
+        "file": "/var/www/html/codiluce/.codiluce/validation-production-history-performance/corpus-corrected/bookstack-baseline-0/state/history.db",
+        "sha256": "03139e3bca3b6be47635e62094062c30cb6319ab2a191260a002e5f34345a946"
+      }
+    ],
+    "failedStateRetained": true,
+    "sameRunRestarted": false,
+    "checksOrThresholdsRelaxed": false
+  },
+  "foreignFiles": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  },
+  "reportSha256": "3be9ced3b577ae2d5dec4dfedb1f98fbddf6f582b2d9eddee5e8e6a745619238",
+  "browserReview": {
+    "url": "http://127.0.0.1:37860/typescript-component-lifetimes-release.html",
+    "desktop": {
+      "viewport": 1920,
+      "documentWidth": 1905,
+      "scrollWidth": 1905
+    },
+    "mobile": {
+      "viewport": 390,
+      "documentWidth": 375,
+      "scrollWidth": 375
+    },
+    "warningsAndErrors": 0,
+    "viewportRestored": true,
+    "allReportAndArtifactLinksHttp200": [
+      {
+        "url": "http://127.0.0.1:37860/typescript-component-lifetimes-release.html",
+        "status": 200,
+        "bytes": "4396"
+      },
+      {
+        "url": "http://127.0.0.1:37860/typescript-component-lifetimes-release-validation.json",
+        "status": 200,
+        "bytes": "13946"
+      },
+      {
+        "url": "http://127.0.0.1:37860/component-normal-prepack-release.tgz",
+        "status": 200,
+        "bytes": "7139719"
+      },
+      {
+        "url": "http://127.0.0.1:37860/component-runtime-release-and-evidence.tar.gz",
+        "status": 200,
+        "bytes": "53538025"
+      },
+      {
+        "url": "http://127.0.0.1:37845/language-framework-compatibility.html",
+        "status": 200,
+        "bytes": "374045"
+      }
+    ]
+  }
+}
