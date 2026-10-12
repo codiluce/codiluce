@@ -1,0 +1,99 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Production history input verification</title><style>body{margin:0;padding:clamp(16px,4vw,40px);font:16px/1.6 system-ui;background:#101822;color:#e5ecf4}main{max-width:1080px;margin:auto}h1{line-height:1.2}.status{padding:16px;border:1px solid #8293a8;border-radius:8px}table{border-collapse:collapse;width:100%;min-width:620px}th,td{padding:12px;text-align:left;border-bottom:1px solid #344353}.scroll{overflow:auto}p,td,pre{overflow-wrap:anywhere}pre{white-space:pre-wrap;font-size:12px}a{color:#8bddd8}</style></head><body><main><h1>Production history input verification</h1><p class="status"><strong>PINNED INPUT METADATA VERIFIED</strong><br>Production analysis and performance are pending.</p><p>This receipt compares complete immutable commit/tree/parent identities and SHA-256 hashes of original Git tree inventories. Inventory hashes identify paths, modes and Git object IDs; they do not establish SHA-256 of original file bytes, semantic accuracy, cache/history parity or runtime/performance budgets. Target working trees, hooks, filters, submodules, LFS, dependencies and applications never execute or supply analysis inputs.</p><div class="scroll"><table><thead><tr><th>Repository</th><th>Input outcome</th><th>Consecutive / extra revisions</th><th>Original identity or failure</th></tr></thead><tbody><tr><td><a href="https://github.com/pallets/flask/tree/d086db856be187255b8ec61ef409357393020f32">flask</a></td><td>verified</td><td>32 / 3</td><td>d086db856be187255b8ec61ef409357393020f32</td></tr><tr><td><a href="https://github.com/usememos/memos/tree/b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e">memos</a></td><td>verified</td><td>32 / 0</td><td>b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e</td></tr><tr><td><a href="https://github.com/BookStackApp/BookStack/tree/ff661b59f6f605bf768fe850c0d0a8a2dc09d203">bookstack</a></td><td>verified</td><td>32 / 0</td><td>ff661b59f6f605bf768fe850c0d0a8a2dc09d203</td></tr><tr><td><a href="https://github.com/firefly-iii/firefly-iii/tree/57371b9f82debbf90e6453aba8af585e8c382617">firefly-iii</a></td><td>verified</td><td>32 / 0</td><td>57371b9f82debbf90e6453aba8af585e8c382617</td></tr><tr><td><a href="https://github.com/tokio-rs/axum/tree/618496288c41da835683ec149432c4869722779f">axum</a></td><td>verified</td><td>32 / 0</td><td>618496288c41da835683ec149432c4869722779f</td></tr><tr><td><a href="https://github.com/fastapi/full-stack-fastapi-template/tree/f27b4721507824e57ebd0286ff1a84d82e83bf59">full-stack-fastapi</a></td><td>verified</td><td>32 / 0</td><td>f27b4721507824e57ebd0286ff1a84d82e83bf59</td></tr></tbody></table></div><details><summary>Exact corpus identity and input receipts</summary><pre>{
+  &quot;schema&quot;: 1,
+  &quot;startedAt&quot;: &quot;2026-10-12T05:51:21.748Z&quot;,
+  &quot;inputsVerified&quot;: true,
+  &quot;analysisQualified&quot;: false,
+  &quot;corpusCanonicalSha256&quot;: &quot;dc21e2dbfa059f3c210dc3736457bb1944d7387de2521e434cd454bd04d3d6c6&quot;,
+  &quot;verifierBefore&quot;: [
+    {
+      &quot;file&quot;: &quot;production-history-inputs.mjs&quot;,
+      &quot;sha256&quot;: &quot;dc513fb268388e07441b5c979668ba2d16ac1ddf53f56b2426a4ff6434d7b4c8&quot;
+    },
+    {
+      &quot;file&quot;: &quot;qualify-production-history-inputs.mjs&quot;,
+      &quot;sha256&quot;: &quot;7d37cdd5a53c0f3a1eb8c0fa4a02d723ae479fb559c63f3ae8e1df9fa976d220&quot;
+    }
+  ],
+  &quot;node&quot;: &quot;v22.12.0&quot;,
+  &quot;platform&quot;: &quot;linux&quot;,
+  &quot;repositories&quot;: [
+    {
+      &quot;id&quot;: &quot;flask&quot;,
+      &quot;status&quot;: &quot;verified&quot;,
+      &quot;repository&quot;: &quot;https://github.com/pallets/flask&quot;,
+      &quot;pinnedHead&quot;: &quot;d086db856be187255b8ec61ef409357393020f32&quot;,
+      &quot;checkedOutHead&quot;: &quot;d086db856be187255b8ec61ef409357393020f32&quot;,
+      &quot;revisions&quot;: 32,
+      &quot;extraRevisions&quot;: 3,
+      &quot;workingTreeUsed&quot;: false,
+      &quot;blobBytesVerified&quot;: false
+    },
+    {
+      &quot;id&quot;: &quot;memos&quot;,
+      &quot;status&quot;: &quot;verified&quot;,
+      &quot;repository&quot;: &quot;https://github.com/usememos/memos&quot;,
+      &quot;pinnedHead&quot;: &quot;b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e&quot;,
+      &quot;checkedOutHead&quot;: &quot;b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e&quot;,
+      &quot;revisions&quot;: 32,
+      &quot;extraRevisions&quot;: 0,
+      &quot;workingTreeUsed&quot;: false,
+      &quot;blobBytesVerified&quot;: false
+    },
+    {
+      &quot;id&quot;: &quot;bookstack&quot;,
+      &quot;status&quot;: &quot;verified&quot;,
+      &quot;repository&quot;: &quot;https://github.com/BookStackApp/BookStack&quot;,
+      &quot;pinnedHead&quot;: &quot;ff661b59f6f605bf768fe850c0d0a8a2dc09d203&quot;,
+      &quot;checkedOutHead&quot;: &quot;ff661b59f6f605bf768fe850c0d0a8a2dc09d203&quot;,
+      &quot;revisions&quot;: 32,
+      &quot;extraRevisions&quot;: 0,
+      &quot;workingTreeUsed&quot;: false,
+      &quot;blobBytesVerified&quot;: false
+    },
+    {
+      &quot;id&quot;: &quot;firefly-iii&quot;,
+      &quot;status&quot;: &quot;verified&quot;,
+      &quot;repository&quot;: &quot;https://github.com/firefly-iii/firefly-iii&quot;,
+      &quot;pinnedHead&quot;: &quot;57371b9f82debbf90e6453aba8af585e8c382617&quot;,
+      &quot;checkedOutHead&quot;: &quot;57371b9f82debbf90e6453aba8af585e8c382617&quot;,
+      &quot;revisions&quot;: 32,
+      &quot;extraRevisions&quot;: 0,
+      &quot;workingTreeUsed&quot;: false,
+      &quot;blobBytesVerified&quot;: false
+    },
+    {
+      &quot;id&quot;: &quot;axum&quot;,
+      &quot;status&quot;: &quot;verified&quot;,
+      &quot;repository&quot;: &quot;https://github.com/tokio-rs/axum&quot;,
+      &quot;pinnedHead&quot;: &quot;618496288c41da835683ec149432c4869722779f&quot;,
+      &quot;checkedOutHead&quot;: &quot;618496288c41da835683ec149432c4869722779f&quot;,
+      &quot;revisions&quot;: 32,
+      &quot;extraRevisions&quot;: 0,
+      &quot;workingTreeUsed&quot;: false,
+      &quot;blobBytesVerified&quot;: false
+    },
+    {
+      &quot;id&quot;: &quot;full-stack-fastapi&quot;,
+      &quot;status&quot;: &quot;verified&quot;,
+      &quot;repository&quot;: &quot;https://github.com/fastapi/full-stack-fastapi-template&quot;,
+      &quot;pinnedHead&quot;: &quot;f27b4721507824e57ebd0286ff1a84d82e83bf59&quot;,
+      &quot;checkedOutHead&quot;: &quot;f27b4721507824e57ebd0286ff1a84d82e83bf59&quot;,
+      &quot;revisions&quot;: 32,
+      &quot;extraRevisions&quot;: 0,
+      &quot;workingTreeUsed&quot;: false,
+      &quot;blobBytesVerified&quot;: false
+    }
+  ],
+  &quot;verifierAfter&quot;: [
+    {
+      &quot;file&quot;: &quot;production-history-inputs.mjs&quot;,
+      &quot;sha256&quot;: &quot;dc513fb268388e07441b5c979668ba2d16ac1ddf53f56b2426a4ff6434d7b4c8&quot;
+    },
+    {
+      &quot;file&quot;: &quot;qualify-production-history-inputs.mjs&quot;,
+      &quot;sha256&quot;: &quot;7d37cdd5a53c0f3a1eb8c0fa4a02d723ae479fb559c63f3ae8e1df9fa976d220&quot;
+    }
+  ],
+  &quot;verifierUnchanged&quot;: true,
+  &quot;completedAt&quot;: &quot;2026-10-12T05:51:23.811Z&quot;
+}</pre></details></main></body></html>

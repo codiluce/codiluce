@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "startedAt": "2026-10-12T05:51:21.748Z",
+  "inputsVerified": true,
+  "analysisQualified": false,
+  "corpusCanonicalSha256": "dc21e2dbfa059f3c210dc3736457bb1944d7387de2521e434cd454bd04d3d6c6",
+  "verifierBefore": [
+    {
+      "file": "production-history-inputs.mjs",
+      "sha256": "dc513fb268388e07441b5c979668ba2d16ac1ddf53f56b2426a4ff6434d7b4c8"
+    },
+    {
+      "file": "qualify-production-history-inputs.mjs",
+      "sha256": "7d37cdd5a53c0f3a1eb8c0fa4a02d723ae479fb559c63f3ae8e1df9fa976d220"
+    }
+  ],
+  "node": "v22.12.0",
+  "platform": "linux",
+  "repositories": [
+    {
+      "id": "flask",
+      "status": "verified",
+      "repository": "https://github.com/pallets/flask",
+      "pinnedHead": "d086db856be187255b8ec61ef409357393020f32",
+      "checkedOutHead": "d086db856be187255b8ec61ef409357393020f32",
+      "revisions": 32,
+      "extraRevisions": 3,
+      "workingTreeUsed": false,
+      "blobBytesVerified": false
+    },
+    {
+      "id": "memos",
+      "status": "verified",
+      "repository": "https://github.com/usememos/memos",
+      "pinnedHead": "b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e",
+      "checkedOutHead": "b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e",
+      "revisions": 32,
+      "extraRevisions": 0,
+      "workingTreeUsed": false,
+      "blobBytesVerified": false
+    },
+    {
+      "id": "bookstack",
+      "status": "verified",
+      "repository": "https://github.com/BookStackApp/BookStack",
+      "pinnedHead": "ff661b59f6f605bf768fe850c0d0a8a2dc09d203",
+      "checkedOutHead": "ff661b59f6f605bf768fe850c0d0a8a2dc09d203",
+      "revisions": 32,
+      "extraRevisions": 0,
+      "workingTreeUsed": false,
+      "blobBytesVerified": false
+    },
+    {
+      "id": "firefly-iii",
+      "status": "verified",
+      "repository": "https://github.com/firefly-iii/firefly-iii",
+      "pinnedHead": "57371b9f82debbf90e6453aba8af585e8c382617",
+      "checkedOutHead": "57371b9f82debbf90e6453aba8af585e8c382617",
+      "revisions": 32,
+      "extraRevisions": 0,
+      "workingTreeUsed": false,
+      "blobBytesVerified": false
+    },
+    {
+      "id": "axum",
+      "status": "verified",
+      "repository": "https://github.com/tokio-rs/axum",
+      "pinnedHead": "618496288c41da835683ec149432c4869722779f",
+      "checkedOutHead": "618496288c41da835683ec149432c4869722779f",
+      "revisions": 32,
+      "extraRevisions": 0,
+      "workingTreeUsed": false,
+      "blobBytesVerified": false
+    },
+    {
+      "id": "full-stack-fastapi",
+      "status": "verified",
+      "repository": "https://github.com/fastapi/full-stack-fastapi-template",
+      "pinnedHead": "f27b4721507824e57ebd0286ff1a84d82e83bf59",
+      "checkedOutHead": "f27b4721507824e57ebd0286ff1a84d82e83bf59",
+      "revisions": 32,
+      "extraRevisions": 0,
+      "workingTreeUsed": false,
+      "blobBytesVerified": false
+    }
+  ],
+  "verifierAfter": [
+    {
+      "file": "production-history-inputs.mjs",
+      "sha256": "dc513fb268388e07441b5c979668ba2d16ac1ddf53f56b2426a4ff6434d7b4c8"
+    },
+    {
+      "file": "qualify-production-history-inputs.mjs",
+      "sha256": "7d37cdd5a53c0f3a1eb8c0fa4a02d723ae479fb559c63f3ae8e1df9fa976d220"
+    }
+  ],
+  "verifierUnchanged": true,
+  "completedAt": "2026-10-12T05:51:23.811Z"
+}
