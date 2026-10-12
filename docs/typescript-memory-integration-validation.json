@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "passed": true,
+  "phase": "Integrated qualified TypeScript cache and component ownership changes",
+  "completedAt": "2026-10-12T22:35:36.538943+00:00",
+  "integratedCommit": "a39a9f686a639c0910ce27074db49ed1c596172f",
+  "integrationMethod": "fast-forward main to the separately committed qualified candidate; no remote operation",
+  "runtimeSha256": "8cd3d8d6011357d276ef0cae045d236b5f263a42093fba03e78c347aadc64455",
+  "runtimeInputsVerified": 1924,
+  "candidateEvidence": "docs/typescript-component-lifetimes-release-validation.json",
+  "candidateRuntimeAndEvidenceArchiveSha256": "9c68c9139ed5799421521489755c40ae7555039580bd13426e4165788090d6b1",
+  "engineWebTestsPreviouslyPassed": 1684,
+  "bothTypechecksCompiledAndInstalledPackagePreviouslyPassed": true,
+  "mainIntegrationPending": false,
+  "newRuntimeOriginalProductionHistoryQualified": false,
+  "newRuntimeRelativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullGoalFinished": false,
+  "foreignFilesUnchanged": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  }
+}
