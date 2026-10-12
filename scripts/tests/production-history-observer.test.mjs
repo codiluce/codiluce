@@ -11,7 +11,7 @@ import {readRevision} from '../production-history-inputs.mjs';
 import {prepareProductionGit} from '../production-cache-git.mjs';
 
 const execute=promisify(execFile),project=fileURLToPath(new URL('../../',import.meta.url)),sha=bytes=>createHash('sha256').update(bytes).digest('hex');
-test('actual shipped history worker and acknowledgment/store/readback verify two original revisions and real symlinks',async()=>{
+test('actual shipped history worker and acknowledgment/store/readback verify two original revisions and real symlinks',{skip:process.platform!=='linux'&&'This production observer requires Linux /proc RSS; native history tests remain enabled'},async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'codiluce-history-observer-'));
  try{
   const source=path.join(root,'source');await mkdir(source);const env=Object.fromEntries(Object.entries(process.env).filter(([key])=>!key.startsWith('GIT_')));Object.assign(env,{GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null'});

@@ -13,7 +13,7 @@ test('one missing, failed, duplicated, unverified or invalid observation cannot 
 });
 test('all graph fields must agree across populations, implementations and repetitions',()=>{for(const mode of ['cold','population','warm']){const rows=runs();for(const row of rows.filter(row=>row.repetition===1&&row.mode===mode))row.logical.sha256='b'.repeat(64);assert.equal(qualifyProductionRuns(rows,['source'],3).passed,false);}});
 test('a cache-disabled revision run cannot masquerade as a warm replay',()=>{const rows=runs();for(const row of rows)row.cacheEvents=[];assert.equal(qualifyProductionRuns(rows,['source'],3).passed,false);});
-test('fresh worker handshake excludes verification RSS and retains actual terminal failures',async()=>{
+test('fresh worker handshake excludes verification RSS and retains actual terminal failures',{skip:process.platform!=='linux'&&'This observer measures Linux /proc RSS; native package/history checks run separately'},async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'codiluce-cache-observer-'));
  try{
   const worker=path.join(root,'owned-worker.mjs');await writeFile(worker,`import {readFileSync} from 'node:fs';

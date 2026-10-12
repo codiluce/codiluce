@@ -14,7 +14,7 @@ import {inspectProductionHistoryTree} from '../production-history-tree.mjs';
 import {inspectHistoryTreeSync} from '../production-history-tree-sync.mjs';
 
 const execute=promisify(execFile),project=fileURLToPath(new URL('../../',import.meta.url)),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-test('actual fresh entrypoint observes both contiguous workers, exact original payloads, durable storage and complete resume/views',async()=>{
+test('actual fresh entrypoint observes both contiguous workers, exact original payloads, durable storage and complete resume/views',{skip:process.platform!=='linux'&&'The production observer explicitly requires Linux /proc RSS; native history/package checks remain enabled'},async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'codiluce-entrypoint-'));let passed=false;
  try{
   const source=path.join(root,'source');await mkdir(source);const env=Object.fromEntries(Object.entries(process.env).filter(([key])=>!key.startsWith('GIT_')));Object.assign(env,{GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null'});

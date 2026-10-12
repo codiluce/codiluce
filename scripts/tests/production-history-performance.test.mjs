@@ -33,7 +33,7 @@ test('full-history comparisons require three predetermined pairs rather than a s
  const {runs,corpus,baseline}=observations();assert.throws(()=>qualifyHistoryPerformance(runs,corpus,baseline,2));assert.throws(()=>qualifyHistoryPerformance(runs,corpus,baseline,21));assert.equal(qualifyHistoryPerformance(runs,corpus,baseline,4).passed,false);for(const row of runs.filter(r=>r.label==='current'))row.milliseconds=111;assert.equal(qualifyHistoryPerformance(runs,corpus,baseline,3).passed,false);
 });
 
-test('actual history measurement uses both native workers, ends before full audits, and preserves hidden-payload failures',async()=>{
+test('actual history measurement uses both native workers, ends before full audits, and preserves hidden-payload failures',{skip:process.platform!=='linux'&&'This performance method uses Linux /proc RSS; native history/package conformance remains enabled'},async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'codiluce-history-performance-'));let passed=false;
  try{
   const source=path.join(root,'source');await mkdir(source);const env=Object.fromEntries(Object.entries(process.env).filter(([key])=>!key.startsWith('GIT_')));Object.assign(env,{GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null'});

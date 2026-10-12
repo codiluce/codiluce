@@ -73,10 +73,11 @@ test('the production plan includes the complete native release gates without run
   const project=fileURLToPath(new URL('../../',import.meta.url)),output=path.join(await directory(),'uncreated-report');
   const {stdout}=await execute(process.execPath,['scripts/qualify-native-release.mjs','--install','--plan','--output',output],{cwd:project});
   const plan=JSON.parse(stdout);assert.deepEqual(plan.commands.map(item=>item.name),['dependencies','tests','typecheck','capability-docs','installed-package']);
-  assert.ok(plan.commands[0].parameters.includes('--ignore-scripts'));assert.ok(plan.commands[1].parameters.includes('tests/mixed-release.test.ts'));assert.ok(plan.commands[1].parameters.includes('tests/indexed-sources.test.ts'));assert.ok(plan.commands[1].parameters.includes('web/tests/request-flows.test.ts'));assert.ok(plan.commands[1].parameters.includes('scripts/tests/native-release.test.mjs'));
+  assert.ok(plan.commands[0].parameters.includes('--ignore-scripts'));assert.ok(plan.commands[1].parameters.includes('tests/mixed-release.test.ts'));assert.ok(plan.commands[1].parameters.includes('tests/indexed-sources.test.ts'));assert.ok(plan.commands[1].parameters.includes('tests/history.test.ts'));assert.ok(plan.commands[1].parameters.includes('web/tests/request-flows.test.ts'));assert.ok(plan.commands[1].parameters.includes('scripts/tests/native-release.test.mjs'));
   await assert.rejects(readFile(path.join(output,'receipt.json')),/ENOENT/,'Planning must not execute checks or publish a receipt');
   const workflow=parseYaml(await readFile(path.join(project,'.github/workflows/native-compatibility.yml'),'utf8')),matrix=workflow.jobs.qualify.strategy.matrix;
   assert.deepEqual(new Set(matrix.os),new Set(['ubuntu-latest','windows-latest','macos-latest']));assert.ok(matrix.node.includes(plan.minimum.slice(2)));assert.equal(workflow.jobs.qualify.strategy['fail-fast'],false);
   const artifact=workflow.jobs.qualify.steps.find(step=>step.uses?.startsWith('actions/upload-artifact@'));assert.equal(artifact.if,'always()');assert.equal(artifact.with['if-no-files-found'],'error');
   for(const step of workflow.jobs.qualify.steps.filter(step=>step.uses))assert.match(step.uses,/@[a-f0-9]{40}$/,'CI action versions must be immutable');
+  const python=workflow.jobs.qualify.steps.find(step=>step.uses?.startsWith('actions/setup-python@'));assert.equal(python.with['python-version'],'3.13');assert.ok(workflow.jobs.qualify.steps.indexOf(python)<workflow.jobs.qualify.steps.findIndex(step=>step.run?.includes('qualify-native-release.mjs')));
 });

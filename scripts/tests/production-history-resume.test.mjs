@@ -17,7 +17,7 @@ import {readRevision} from '../production-history-inputs.mjs';
 import {prepareProductionGit} from '../production-cache-git.mjs';
 
 const execute=promisify(execFile),project=fileURLToPath(new URL('../../',import.meta.url)),sha=bytes=>createHash('sha256').update(bytes).digest('hex');
-test('actual indexHistory resumes closed original snapshots, preserves every SQLite payload and produces stable complete geometry',async()=>{
+test('actual indexHistory resumes closed original snapshots, preserves every SQLite payload and produces stable complete geometry',{skip:process.platform!=='linux'&&'This observation includes Linux /proc RSS; native indexHistory/package conformance remains enabled'},async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'codiluce-history-resume-'));
  try{
   const source=path.join(root,'source');await mkdir(source);const env=Object.fromEntries(Object.entries(process.env).filter(([key])=>!key.startsWith('GIT_')));Object.assign(env,{GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null'});

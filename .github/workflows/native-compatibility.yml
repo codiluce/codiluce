@@ -29,6 +29,10 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           package-manager-cache: false
+      - name: Install Python for independent SQLite audit conformance
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.13'
       - name: Validate and record this native host
         run: node scripts/qualify-native-release.mjs --install --output test-results/native-release
       - name: Retain success, failure and incomplete evidence

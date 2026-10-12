@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-12T20:05:58.799420+00:00",
+  "phase": "P10d3a-native-workflow-independent-audit-dependencies-and-Linux-observation-scope",
+  "scope": "Local Linux conformance and workflow plan; no native Windows/macOS or remote workflow execution claim",
+  "targetedTests": 178,
+  "failedFinalTests": 0,
+  "skippedLinuxTests": 0,
+  "files": [
+    {
+      "file": ".github/workflows/native-compatibility.yml",
+      "sha256": "b857327a04a66a35d21ea7566b9d04663537985959901b4c0035b8fea68b76d8"
+    },
+    {
+      "file": "scripts/tests/native-release.test.mjs",
+      "sha256": "4d09e59b48318e415236a869c986c8b9a3c31d5158636147e67654e54e341f29"
+    },
+    {
+      "file": "scripts/tests/production-cache-observer.test.mjs",
+      "sha256": "fc4a923bf64d5b5eb84f6fd519998f1d1564ca03857f50870f685f79b280b77a"
+    },
+    {
+      "file": "scripts/tests/production-history-observer.test.mjs",
+      "sha256": "186e02475f7347f9b5b7045f71aa46cfa987097802948a0d347ab62c4a6ece8f"
+    },
+    {
+      "file": "scripts/tests/production-history-resume.test.mjs",
+      "sha256": "49296b7a65c661c0277ece8ca7ac49cc600db2f72fe17fd1b2a841ed7882af82"
+    },
+    {
+      "file": "scripts/tests/production-history-entrypoint.test.mjs",
+      "sha256": "f03effac6d6e8c1208e03dac4575655a702f0af453bd64e5ab85e3608d6bb52d"
+    },
+    {
+      "file": "scripts/tests/production-history-performance.test.mjs",
+      "sha256": "165ea467c7b87a4476a7eb55ac184673e95503a16f4fe3123e753a2615a0fa98"
+    },
+    {
+      "file": "scripts/tests/production-history-columns.test.mjs",
+      "sha256": "6429e12b4bc59f8d041a51559b8a50b40eb3350b95f8b7f9165a228f62f7af12"
+    },
+    {
+      "file": "scripts/tests/production-history-entrypoint-columns.test.mjs",
+      "sha256": "5fbb03ee3117885a70a3ae8fd8350a08a3e67f36c23ddb2f5f8f08988051e6ab"
+    }
+  ],
+  "log": {
+    "file": "/var/www/html/codiluce/.codiluce/validation-production-history-fresh/entrypoint-report-native-scope-final.log",
+    "sha256": "5cd9c6707a633aa92f57f55c0851c9deeb4605c8a542ec80134675a8ac142d33"
+  },
+  "linuxSpecificIntegrations": 5,
+  "nativeHistoryAndPackageConformanceEnabled": true,
+  "portableIndependentAuditTestsEnabled": true,
+  "pythonVersion": "3.13",
+  "setupPython": {
+    "ref": "v7",
+    "commit": "5fda3b95a4ea91299a34e894583c3862153e4b97",
+    "type": "commit",
+    "verifiedReadOnlyPublicApi": "https://api.github.com/repos/actions/setup-python/git/ref/tags/v7",
+    "documentation": "https://github.com/actions/setup-python"
+  },
+  "changes": [
+    "Five production observation integrations explicitly scope their existing Linux /proc methods to Linux; their portable mathematical/source/payload tests and all core history/installed-package gates stay enabled",
+    "Native workflow explicitly installs Python 3.13 for separately implemented SQLite audit conformance, with an immutable action SHA",
+    "Portable column tests invoke python on Windows and python3 on POSIX",
+    "Existing six-host/Node matrix, complete conformance/typecheck/docs/package commands, exact source identity and always-retained success/failure evidence remain required"
+  ],
+  "runtimeSourceChanged": false,
+  "engineSha256": "ca1b330152267c80ce02d35c57138928da4f69e4d3817f61ff03987584dded4a",
+  "nativeWindowsMacOSQualified": false,
+  "fullGoalFinished": false,
+  "foreignFiles": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  }
+}

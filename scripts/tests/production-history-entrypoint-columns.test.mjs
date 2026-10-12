@@ -12,7 +12,7 @@ import {GraphBuilder} from '../../src/core/graph.ts';
 import {productionGraphDigest} from '../production-graph-digest.mjs';
 import {snapshotStorageLedger} from '../production-history-storage-ledger.mjs';
 
-const execute=promisify(execFile),project=fileURLToPath(new URL('../../',import.meta.url)),sha=bytes=>createHash('sha256').update(bytes).digest('hex');
+const execute=promisify(execFile),project=fileURLToPath(new URL('../../',import.meta.url)),sha=bytes=>createHash('sha256').update(bytes).digest('hex'),python=process.platform==='win32'?'python':'python3';
 test('independent fresh-entrypoint column audit joins terminal worker UUIDs and retains failed evidence',async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'codiluce-fresh-columns-'));let store,passed=false;
  try{
@@ -27,7 +27,7 @@ test('independent fresh-entrypoint column audit joins terminal worker UUIDs and 
   await writeFile(receiptFile,JSON.stringify(receipt));await writeFile(childFile,JSON.stringify(child));await writeFile(path.join(unit,'job.json'),JSON.stringify({state:path.dirname(database),record:{id:'owned',revisions:commits.map(commit=>({commit}))}}));
   const audit=async(name,success=true)=>{
    const output=path.join(root,name+'.json'),args=['scripts/audit-history-entrypoint-columns.py','--receipt',receiptFile,'--repository','owned','--output',output];
-   if(success)await execute('python3',args,{cwd:project,maxBuffer:1024*1024});else await assert.rejects(execute('python3',args,{cwd:project,maxBuffer:1024*1024}),error=>error.code===1);
+   if(success)await execute(python,args,{cwd:project,maxBuffer:1024*1024});else await assert.rejects(execute(python,args,{cwd:project,maxBuffer:1024*1024}),error=>error.code===1);
    const value=JSON.parse(await readFile(output)),captured=JSON.parse(await readFile(output+'.inputs.json'));assert.equal(value.passed,success);assert.equal(value.inputSnapshot.sha256,sha(await readFile(output+'.inputs.json')));assert.equal(value.inputReceiptSha256,sha(Buffer.from(captured.receiptUtf8)));return value;
   };
   const observed=await audit('passed');assert.equal(observed.revisions,2);assert.equal(observed.full195RevisionEntrypointQualified,false);assert.equal(Object.keys(observed.database.tables).length,7);assert.deepEqual(observed.actualSnapshotIdentities,revisions.map(row=>({id:row.snapshot.id,seq:row.snapshot.seq,commit:row.commit})));
@@ -36,7 +36,7 @@ test('independent fresh-entrypoint column audit joins terminal worker UUIDs and 
   child.revisions[0].snapshot.id=randomUUID();await writeFile(receiptFile,JSON.stringify(receipt));await writeFile(childFile,JSON.stringify(child));assert.match((await audit('uuid',false)).error,/snapshot UUID/);child.revisions[0].snapshot.id=observed.actualSnapshotIdentities[0].id;
   const hidden=new HistoryStore(database);try{const row=hidden.db.prepare("SELECT vid,data FROM entity_versions WHERE type='file'").get(),value=JSON.parse(row.data);value.metadata.unknown='Hidden detail lost';hidden.db.prepare('UPDATE entity_versions SET data=? WHERE vid=?').run(JSON.stringify(value),row.vid);hidden.db.prepare('PRAGMA wal_checkpoint(TRUNCATE)').get();}finally{hidden.close();}
   receipt.repositories[0].databaseSha256=sha(await readFile(database));await writeFile(receiptFile,JSON.stringify(receipt));await writeFile(childFile,JSON.stringify(child));assert.match((await audit('hidden-column',false)).error,/Complete column ledger differs: entity_versions/);
-  await assert.rejects(execute('python3',['scripts/audit-history-entrypoint-columns.py','--receipt',receiptFile,'--repository','owned','--output',path.join(observation,'unsafe.json')],{cwd:project}),error=>/inside an observation/.test(error.stderr));
+  await assert.rejects(execute(python,['scripts/audit-history-entrypoint-columns.py','--receipt',receiptFile,'--repository','owned','--output',path.join(observation,'unsafe.json')],{cwd:project}),error=>/inside an observation/.test(error.stderr));
   passed=true;
  }finally{store?.close();if(passed)await rm(root,{recursive:true,force:true});else console.error('Retained fresh column fixture',root);}
 });
