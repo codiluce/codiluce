@@ -6,19 +6,31 @@ export const RUST_EVIDENCE_LIMITS: Readonly<RustEvidenceLimits> = Object.freeze(
 type Limits = RustEvidenceLimits;
 export interface RustEvidenceTable { version: 1; entries: Evidence[]; limits: Limits; evidenceBytes: number; referenceBytes: number; proofs: number }
 type Plain = Record<string, unknown>;
+type CachedFact = {json:string;index?:number} & ({immutable:true}|{immutable:false;keys:string[];values:unknown[]});
+const snapshotJson = new WeakMap<object,string>();
 const sources = new Set(['filesystem','typescript','php','syntax','framework','git','runtime','heuristic','ai']);
 function plain(value: unknown): value is Plain {
   return !!value && typeof value === 'object' && !Array.isArray(value) && [Object.prototype,null].includes(Object.getPrototypeOf(value));
 }
 function evidence(value: unknown): Evidence {
   if (!plain(value)) throw Error('Rust evidence must be a plain original fact');
-  for (const descriptor of Object.values(Object.getOwnPropertyDescriptors(value))) {
+  const descriptors = Object.getOwnPropertyDescriptors(value);
+  for (const key of Reflect.ownKeys(descriptors)) {
+    const descriptor = descriptors[key as keyof typeof descriptors]!;
     if (descriptor.get || descriptor.set) throw Error('Rust evidence cannot execute accessors');
     const item = descriptor.value;
     if (item !== null && item !== undefined && !['string','number','boolean'].includes(typeof item)) throw Error('Rust evidence requires primitive original fields');
   }
   if (!sources.has(String(value.source)) || typeof value.analyzer !== 'string' || !value.analyzer || typeof value.analyzerVersion !== 'string' || !value.analyzerVersion || typeof value.confidence !== 'number' || !Number.isFinite(value.confidence) || value.confidence < 0 || value.confidence > 1) throw Error('Invalid original Rust evidence identity');
   return value as unknown as Evidence;
+}
+
+/** Private consumers can retain immutable copies without freezing the original
+ * public relation facts. Admission validates all fields before any copy/hook. */
+export function snapshotRustEvidence(value: Evidence): Evidence {
+  const original = evidence(value), json = JSON.stringify(original), snapshot = Object.freeze(JSON.parse(json) as Evidence);
+  snapshotJson.set(snapshot,json);
+  return snapshot;
 }
 function limits(options: Partial<Limits>): Limits {
   for (const key of Object.keys(options)) if (!Object.hasOwn(RUST_EVIDENCE_LIMITS,key)) throw Error('Unknown Rust evidence limit');
@@ -35,7 +47,7 @@ export class RustEvidenceEncoder {
   private readonly selected: Limits;
   private readonly entries: Evidence[] = [];
   private readonly lookup = new Map<string,number>();
-  private cached = new WeakMap<object,{keys:string[];values:unknown[];json:string}>();
+  private cached = new WeakMap<object,CachedFact>();
   private evidenceBytes = 2;
   private referenceBytes = 0;
   private proofs = 0;
@@ -44,27 +56,39 @@ export class RustEvidenceEncoder {
   reference(proof: readonly Evidence[]): number[] {
     if (this.sealed) throw Error('Rust evidence file table is sealed');
     if (!Array.isArray(proof) || proof.length > this.selected.maxProofReferences) throw Error('Rust evidence per-proof reference budget exceeded');
-    const pending = new Map<string,number>(), values: string[] = [], refs: number[] = [];
+    const pending = new Map<string,number>(), values: string[] = [], refs: number[] = [], admitted:CachedFact[] = [];
     let bytes = this.evidenceBytes, referenceBytes = 2;
     for (const item of proof) {
-      const fact = evidence(item), keys = Object.keys(fact), old = this.cached.get(fact);
-      // Reused source facts are common, but mutation must never reuse a stale
-      // JSON identity. All admitted fields are primitives, including extras.
-      const same = old && keys.length === old.keys.length && keys.every((key,i) => key === old.keys[i] && Object.is((fact as unknown as Plain)[key],old.values[i]));
-      const json = same ? old.json : JSON.stringify(fact);
-      if (!same) this.cached.set(fact,{keys,values:keys.map(key=>(fact as unknown as Plain)[key]),json});
-      let index = this.lookup.get(json) ?? pending.get(json);
+      let cached = this.cached.get(item);
+      if (!cached?.immutable) {
+        const prepared = snapshotJson.get(item);
+        if (prepared !== undefined) cached = {immutable:true,json:prepared};
+        else {
+          const fact = evidence(item), keys = Object.keys(fact), old = cached;
+          // Mutable callers still require complete primitive-field freshness;
+          // frozen facts have already passed the same hook/identity checks.
+          const same = old && !old.immutable && keys.length === old.keys.length && keys.every((key,i) => key === old.keys[i] && Object.is((fact as unknown as Plain)[key],old.values[i]));
+          const json = same ? old.json : JSON.stringify(fact);
+          cached = Object.isFrozen(fact) ? {immutable:true,json,...same&&old.index!==undefined?{index:old.index}:{}} : same ? old : {immutable:false,keys,values:keys.map(key=>(fact as unknown as Plain)[key]),json};
+        }
+        this.cached.set(item,cached);
+      }
+      const json = cached.json, committed = cached.index ?? this.lookup.get(json);
+      let index = committed ?? pending.get(json);
       if (index === undefined) {
         index = this.entries.length + values.length;
         bytes += Buffer.byteLength(json) + (index ? 1 : 0);
         if (index >= this.selected.maxEntries || bytes > this.selected.maxEvidenceBytes) throw Error('Rust evidence table payload budget exceeded');
         pending.set(json,index);values.push(json);
       }
-      referenceBytes += String(index).length + (refs.length ? 1 : 0);refs.push(index);
+      if (committed !== undefined) cached.index = committed;
+      else admitted.push(cached); // Publish pending indices only on row commit.
+      referenceBytes += (index<10?1:index<100?2:index<1000?3:index<10000?4:5) + (refs.length ? 1 : 0);refs.push(index);
       if (this.referenceBytes + referenceBytes > this.selected.maxReferenceBytes) throw Error('Rust evidence reference payload budget exceeded');
     }
     if (this.referenceBytes + referenceBytes > this.selected.maxReferenceBytes) throw Error('Rust evidence reference payload budget exceeded');
     for (const [json,index] of pending) { this.lookup.set(json,index);this.entries.push(JSON.parse(json) as Evidence); }
+    for (const cached of admitted) cached.index = this.lookup.get(cached.json)!;
     this.evidenceBytes = bytes;this.referenceBytes += referenceBytes;this.proofs++;return refs;
   }
   seal(): RustEvidenceTable {

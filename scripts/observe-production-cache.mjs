@@ -9,6 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {inspectHeadTree,validateHeadProfiles} from './production-head-graphs.mjs';
 import {measureProductionWorker} from './production-cache-measure.mjs';
 import {qualifyProductionRuns} from './production-cache-results.mjs';
+import {productionGitEnvironment} from './production-cache-git.mjs';
 
 const project=fileURLToPath(new URL('../',import.meta.url)),args=process.argv.slice(2),options={},observations={};
 for(let i=0;i<args.length;i++){
@@ -21,12 +22,13 @@ const repetitions=Number(options['--repetitions']??3);assert.ok(Number.isSafeInt
 const profiles=JSON.parse(await readFile(path.join(project,'docs/production-head-profiles.json'))),manifest=JSON.parse(await readFile(path.join(project,'docs/production-source-contracts.json'))),corpus=JSON.parse(await readFile(path.join(project,'docs/production-history-corpus.json')));
 validateHeadProfiles(profiles,manifest,corpus);assert.deepEqual(Object.keys(observations).sort(),profiles.repositories.map(row=>row.id).sort());
 const gitMetadata=JSON.parse(await readFile(options['--git-metadata']));assert.deepEqual(Object.keys(gitMetadata.repositories).sort(),Object.keys(observations).sort());
-for(const profile of profiles.repositories)assert.equal(gitMetadata.repositories[profile.id].commit,profile.commit);
+assert.ok(gitMetadata.completedAt,'Git metadata preparation must be terminal');
+for(const profile of profiles.repositories){const metadata=gitMetadata.repositories[profile.id];assert.equal(metadata.commit,profile.commit);assert.ok(metadata.logPreflight?.commits>0,'Original Git metrics preflight required');}
 const engines={baseline:await realpath(options['--baseline-engine']),current:await realpath(options['--current-engine']??project)},identities={};
 for(const label of Object.keys(engines))identities[label]=JSON.parse(await readFile(options['--'+label+'-identity']));
 const destination=path.resolve(options['--output']);await mkdir(path.dirname(destination),{recursive:true});await mkdir(destination);
 for(const observation of Object.values(observations)){const relative=path.relative(await realpath(observation),await realpath(destination));assert.ok(relative==='..'||relative.startsWith('../')||path.isAbsolute(relative),'Output must remain outside originals');}
-const sha=bytes=>createHash('sha256').update(bytes).digest('hex'),observerFiles=['production-cache-measure.mjs','production-cache-results.mjs','production-graph-digest.mjs','production-cache-worker.mjs','observe-production-cache.mjs','process-memory.mjs','production-head-graphs.mjs','production-source-contracts.mjs'];
+const sha=bytes=>createHash('sha256').update(bytes).digest('hex'),observerFiles=['production-cache-git.mjs','production-history-blobs.mjs','production-history-inputs.mjs','graph-json-artifact.mjs','production-cache-measure.mjs','production-cache-results.mjs','production-graph-digest.mjs','production-cache-worker.mjs','observe-production-cache.mjs','process-memory.mjs','production-head-graphs.mjs','production-source-contracts.mjs'];
 const observer=Object.fromEntries(await Promise.all(observerFiles.map(async name=>[name,sha(await readFile(new URL(name,import.meta.url)))])));
 async function verify(){
  for(const [name,digest] of Object.entries(observer))assert.equal(sha(await readFile(new URL(name,import.meta.url))),digest,'Observer changed');
@@ -38,8 +40,7 @@ const receipt={schema:1,startedAt:new Date().toISOString(),completedAt:null,phas
 await publish('receipt.json',receipt);
 async function measure(request,file){
  const log=path.join(destination,path.basename(file)+'.log');
- const metadata=gitMetadata.repositories[request.profile.id],env=Object.fromEntries(Object.entries(process.env).filter(([key])=>!key.startsWith('GIT_')));
- Object.assign(env,{GIT_DIR:metadata.directory,GIT_WORK_TREE:request.tree,GIT_INDEX_FILE:path.join(metadata.directory,'index'),GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null',GIT_OPTIONAL_LOCKS:'0',GIT_NO_REPLACE_OBJECTS:'1',GIT_TERMINAL_PROMPT:'0',GIT_CONFIG_COUNT:'2',GIT_CONFIG_KEY_0:'core.fsmonitor',GIT_CONFIG_VALUE_0:'false',GIT_CONFIG_KEY_1:'core.hooksPath',GIT_CONFIG_VALUE_1:'/dev/null'});
+ const env=productionGitEnvironment(gitMetadata.repositories[request.profile.id],request.tree);
  const result=await measureProductionWorker({worker:fileURLToPath(new URL('production-cache-worker.mjs',import.meta.url)),request:file,log,cwd:project,env});
  return {...result,log:path.basename(log)};
 }

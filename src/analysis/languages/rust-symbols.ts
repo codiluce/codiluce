@@ -6,7 +6,7 @@ import { sourceRustResolver } from '../resolution/rust-runtime-namespace.js';
 import { rustAttributes, rustAnd } from './rust-cfg.js';
 import { STRUCTURE_VERSION } from '../tree-sitter/analyzer.js';
 import { fileKey } from '../../pipeline/cache.js';
-import { RustEvidenceEncoder, RUST_EVIDENCE_LIMITS, type RustEvidenceLimits } from '../rust-evidence.js';
+import { RustEvidenceEncoder, RUST_EVIDENCE_LIMITS, snapshotRustEvidence, type RustEvidenceLimits } from '../rust-evidence.js';
 export const RUST_SYMBOL_VERSION = '2';
 interface Unit {
     file: ScannedFile;
@@ -126,7 +126,14 @@ export class RustSymbols {
             result.push(s);
         return result;
     }
-    private proof(file: string, site: RustSite, reason: string): Evidence[] { return [{ ...evidence('syntax', 'rust-symbols', file, site.range.startLine, reason), analyzerVersion: RUST_SYMBOL_VERSION, endLine: site.range.endLine }]; }
+    private readonly originalProofs = new WeakMap<RustSite,Map<string,Evidence[]>>();
+    private proof(file: string, site: RustSite, reason: string): Evidence[] {
+        const key = JSON.stringify([file,reason,site.range.startLine,site.range.endLine]), known = this.originalProofs.get(site), proof = known?.get(key);
+        if (proof) return proof;
+        const original = [{ ...evidence('syntax', 'rust-symbols', file, site.range.startLine, reason), analyzerVersion: RUST_SYMBOL_VERSION, endLine: site.range.endLine }];
+        const facts = known ?? new Map<string,Evidence[]>();facts.set(key,original);if(!known)this.originalProofs.set(site,facts);
+        return original;
+    }
     private attributes(scope: RustScope, attributes: string[],at?:number) { const attrs = this.resolver.attributes(attributes, scope.compilation, scope.file.path, scope.fact.key,at); return { active: rustAnd([scope.active, attrs.active]), gaps: unique([...scope.gaps, ...attrs.gaps]) }; }
     private definitionScope(def: RustDefinition, from: RustScope): RustScope | undefined { return this.scope(def.unit.file.path, def.fact.scope, from.compilation.id); }
     private sourceSymbol(def: RustDefinition, scope: RustScope): RustSymbol {
@@ -506,6 +513,12 @@ export class RustSymbols {
             name: string;
             target?: string;
         }[]>>();
+        const originalEvidenceSnapshots = new WeakMap<Evidence,Evidence>();
+        const snapshotProof = (proof:Evidence[]) => proof.map(original => {
+            let snapshot = originalEvidenceSnapshots.get(original);
+            if (!snapshot) { snapshot = snapshotRustEvidence(original);originalEvidenceSnapshots.set(original,snapshot); }
+            return snapshot;
+        });
         for (const unit of this.units.values()) {
             const fileEntity = this.context.graph.entities.get(unit.file.id)!, analysis = fileAnalysis(fileEntity.metadata.analysis), contexts = this.resolver.membership.get(unit.file.path) ?? [], calls: unknown[] = [], references: unknown[] = [];
             const evidenceTable = new RustEvidenceEncoder(this.evidenceLimits);
@@ -532,7 +545,7 @@ export class RustSymbols {
                         const targets = value.kind === 'callable' ? value.definitions.map(d => d.definition.id) : value.kind === 'type' || value.kind === 'instance' ? [value.symbol.id] : value.kind === 'source' ? [value.definition.id] : value.kind === 'future' && value.definition ? [value.definition.id] : [], conditions = unique([...attrs.gaps, ...value.conditions]), status = attrs.active === false ? 'excluded' : attrs.active !== true || conditions.length ? 'unsupported' : value.kind === 'external' ? 'external' : targets.length === 1 && (kind === 'reference' || value.kind === 'callable') ? 'resolved' : 'unresolved';
                         const owner = this.owner(scope), proof = [...scope.namespaceProof, ...this.proof(unit.file.path, site, `Original Rust ${kind} operand`), ...scope.compilation.proof, ...value.proof];
                         let retained: {proofRefs:number[];proof?:undefined}|{proof:Evidence[];proofRefs?:undefined};
-                        try { if(evidenceGap) throw Error(evidenceGap); retained = {proofRefs:evidenceTable.reference(proof)}; }
+                        try { if(evidenceGap) throw Error(evidenceGap); retained = {proofRefs:evidenceTable.reference(snapshotProof(proof))}; }
                         catch(error) {
                             // Keep every original fact when compact admission
                             // fails. Such a file explicitly fails the retention

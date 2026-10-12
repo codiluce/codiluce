@@ -1,0 +1,244 @@
+{
+  "schema": 1,
+  "startedAt": "2026-10-12T13:50:29.788Z",
+  "completedAt": "2026-10-12T13:50:42.456Z",
+  "policy": "Isolated owned config/index/HEAD and exact shallow boundaries; read-only original Git objects; no target Git config, hooks, replacement refs, dependencies or code execute",
+  "repositories": {
+    "flask": {
+      "commit": "d086db856be187255b8ec61ef409357393020f32",
+      "directory": "/var/www/html/codiluce/.codiluce/validation-rust-evidence-fast/git-metadata-final/flask-git",
+      "objectDirectory": "/var/www/html/codiluce/examples/flask/.git/objects",
+      "files": [
+        {
+          "file": "HEAD",
+          "bytes": 41,
+          "sha256": "2ae09ec7dbe53c34c542dea5680c2ed2efd59886f0bc763b7a625b8117723974"
+        },
+        {
+          "file": "config",
+          "bytes": 66,
+          "sha256": "dd548269913b6adbdfa7049170ea86850050cb762ea3b9c510a0b2986d2113e3"
+        },
+        {
+          "file": "index",
+          "bytes": 24080,
+          "sha256": "4618957417b7a01e932d845825bb0f234f9621502f0edc2ff7dd1ca7feeeecc0"
+        },
+        {
+          "file": "objects/info/alternates",
+          "bytes": 51,
+          "sha256": "6937469abc2f44d0b9ffc24f419133a1ce4874d2648adc86801cdb02587d6247"
+        }
+      ],
+      "shallow": null,
+      "tree": "b7c01f0b37b4ebe6c21d107b5f02632211f1c18b",
+      "status": " M .devcontainer/on-create-command.sh\u0000",
+      "logPreflight": {
+        "sha256": "fb481f7c68e6922950b2bc90b3b371667f96543703ad87f1a82ce927f576736f",
+        "bytes": 599807,
+        "commits": 3829,
+        "maxCommits": 10000
+      }
+    },
+    "memos": {
+      "commit": "b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e",
+      "directory": "/var/www/html/codiluce/.codiluce/validation-rust-evidence-fast/git-metadata-final/memos-git",
+      "objectDirectory": "/var/www/html/codiluce/examples/memos/.git/objects",
+      "files": [
+        {
+          "file": "HEAD",
+          "bytes": 41,
+          "sha256": "5b57aa7ab33e6ec8fe839b384f734579ef6c4bcbbcc90313eff11c21d41f7b10"
+        },
+        {
+          "file": "config",
+          "bytes": 66,
+          "sha256": "dd548269913b6adbdfa7049170ea86850050cb762ea3b9c510a0b2986d2113e3"
+        },
+        {
+          "file": "index",
+          "bytes": 139317,
+          "sha256": "fab37c60a12896ecd842a55bf6b473fed24ce2d9fe02ee2a89f59cf802f92151"
+        },
+        {
+          "file": "objects/info/alternates",
+          "bytes": 51,
+          "sha256": "eb87c0a0dbceffb6b4bb9958a81d21452966077afb466bc3ad9b7a29feb69800"
+        }
+      ],
+      "shallow": null,
+      "tree": "4d81ab9d2ecc2b44100945206fa956796fdf9f30",
+      "status": " M scripts/build.sh\u0000 M scripts/entrypoint.sh\u0000 M scripts/entrypoint_test.sh\u0000 M scripts/install.sh\u0000 M scripts/release_smoke_test.sh\u0000 M scripts/release_version.sh\u0000",
+      "logPreflight": {
+        "sha256": "7c572d29ffb0767a164428ad43acd720e51fcee91d32f0d69d360fbfa83071bf",
+        "bytes": 1684580,
+        "commits": 4843,
+        "maxCommits": 10000
+      }
+    },
+    "bookstack": {
+      "commit": "ff661b59f6f605bf768fe850c0d0a8a2dc09d203",
+      "directory": "/var/www/html/codiluce/.codiluce/validation-rust-evidence-fast/git-metadata-final/bookstack-git",
+      "objectDirectory": "/var/www/html/codiluce/examples/bookstack/.git/objects",
+      "files": [
+        {
+          "file": "HEAD",
+          "bytes": 41,
+          "sha256": "5bfdfbfc3cb476d6e00243f70da8a79c26e0d7bd9c25d0165a9ef35a1c5d7c93"
+        },
+        {
+          "file": "config",
+          "bytes": 66,
+          "sha256": "dd548269913b6adbdfa7049170ea86850050cb762ea3b9c510a0b2986d2113e3"
+        },
+        {
+          "file": "index",
+          "bytes": 281716,
+          "sha256": "6c74a9bb0ed3842a8bc49b20b2c0c31224baaeff7ff6040eaed55af2087dfb32"
+        },
+        {
+          "file": "objects/info/alternates",
+          "bytes": 55,
+          "sha256": "4d40e0f6b5acd130fb86afe3c5ac7cb6fb3ed10d76f8fffe8d065cf9b1aef328"
+        },
+        {
+          "file": "shallow",
+          "bytes": 492,
+          "sha256": "ce54a111c3fb6bf2668f8272cd3c4606f36143af7f10af0e3acb31c7f16ced3e"
+        }
+      ],
+      "shallow": {
+        "source": "/var/www/html/codiluce/examples/bookstack/.git/shallow",
+        "bytes": 492,
+        "sha256": "ce54a111c3fb6bf2668f8272cd3c4606f36143af7f10af0e3acb31c7f16ced3e",
+        "boundaries": 12
+      },
+      "tree": "64eeb57beb4cc2901df22d5d7be9138eb928a37c",
+      "status": " M artisan\u0000 M bookstack-system-cli\u0000 M bootstrap/cache/.gitignore\u0000 M dev/docker/db-testing/run.sh\u0000 M dev/docker/entrypoint.app.sh\u0000 M dev/docker/entrypoint.node.sh\u0000 M public/uploads/.gitignore\u0000 M public/uploads/.htaccess\u0000 M resources/sass/_pages.scss\u0000 M storage/app/.gitignore\u0000 M storage/fonts/.gitignore\u0000 M storage/framework/.gitignore\u0000 M storage/framework/cache/.gitignore\u0000 M storage/framework/sessions/.gitignore\u0000 M storage/framework/views/.gitignore\u0000 M storage/logs/.gitignore\u0000 M storage/uploads/files/.gitignore\u0000 M storage/uploads/images/.gitignore\u0000 M themes/.gitignore\u0000",
+      "logPreflight": {
+        "sha256": "b64069d3adfefe3906b19cd0c1736fd123bac1f97b40cae67be8ad0999becfaf",
+        "bytes": 1834892,
+        "commits": 3407,
+        "maxCommits": 10000
+      }
+    },
+    "firefly-iii": {
+      "commit": "57371b9f82debbf90e6453aba8af585e8c382617",
+      "directory": "/var/www/html/codiluce/.codiluce/validation-rust-evidence-fast/git-metadata-final/firefly-iii-git",
+      "objectDirectory": "/var/www/html/codiluce/examples/firefly-iii/.git/objects",
+      "files": [
+        {
+          "file": "HEAD",
+          "bytes": 41,
+          "sha256": "675163c6bbaf9911bc4b6cc1cad1977f61911d40f10ea2444227a3f69d2bc653"
+        },
+        {
+          "file": "config",
+          "bytes": 66,
+          "sha256": "dd548269913b6adbdfa7049170ea86850050cb762ea3b9c510a0b2986d2113e3"
+        },
+        {
+          "file": "index",
+          "bytes": 271951,
+          "sha256": "cce9247bd028b48a6cf519282fc43a0ba0cb7796a9b64c319bbc314f030f70e1"
+        },
+        {
+          "file": "objects/info/alternates",
+          "bytes": 57,
+          "sha256": "383276f3539fbd0e2dc72f6011734ea2d9021fc564f30bbfb7903600ec76daee"
+        },
+        {
+          "file": "shallow",
+          "bytes": 328,
+          "sha256": "2a4684468be9dd28efb9a1611649d7f32849f003836c18adfaa8cabc0d91fd04"
+        }
+      ],
+      "shallow": {
+        "source": "/var/www/html/codiluce/examples/firefly-iii/.git/shallow",
+        "bytes": 328,
+        "sha256": "2a4684468be9dd28efb9a1611649d7f32849f003836c18adfaa8cabc0d91fd04",
+        "boundaries": 8
+      },
+      "tree": "146aa52b489c7b515723b135b11075b9e0cdd987",
+      "status": " M .ci/all.sh\u0000 M .ci/phpcs.sh\u0000 M .ci/phpmd.sh\u0000 M .ci/phpstan.sh\u0000 M .ci/rector.sh\u0000 M THANKS.md\u0000 M artisan\u0000 M public/images/vendor/leaflet/dist/layers-2x.png\u0000 M public/images/vendor/leaflet/dist/layers.png\u0000 M public/images/vendor/leaflet/dist/marker-icon-2x.png\u0000 M public/images/vendor/leaflet/dist/marker-icon.png\u0000 M public/images/vendor/leaflet/dist/marker-shadow.png\u0000 M public/v1/css/bootstrap-sortable.css\u0000 M public/v1/js/.gitkeep\u0000 M public/v1/js/lib/bootstrap-sortable.js\u0000 M public/v1/js/lib/chartjs-plugin-annotation.min.js\u0000",
+      "logPreflight": {
+        "sha256": "998f503b96795088c6d724e4eff14d42eabcf47dc659e369cca972ae0c024755",
+        "bytes": 2734484,
+        "commits": 3458,
+        "maxCommits": 10000
+      }
+    },
+    "axum": {
+      "commit": "618496288c41da835683ec149432c4869722779f",
+      "directory": "/var/www/html/codiluce/.codiluce/validation-rust-evidence-fast/git-metadata-final/axum-git",
+      "objectDirectory": "/var/www/html/codiluce/examples/axum/.git/objects",
+      "files": [
+        {
+          "file": "HEAD",
+          "bytes": 41,
+          "sha256": "d19416f7e3ce3f491e513afc73152e29a37b9cc5246dcdf6f98fbc101dad0687"
+        },
+        {
+          "file": "config",
+          "bytes": 66,
+          "sha256": "dd548269913b6adbdfa7049170ea86850050cb762ea3b9c510a0b2986d2113e3"
+        },
+        {
+          "file": "index",
+          "bytes": 61089,
+          "sha256": "9108f5d8649c06a3dc2805bd0d5a9c32f825185ce89f2575f34df441c5069ee1"
+        },
+        {
+          "file": "objects/info/alternates",
+          "bytes": 50,
+          "sha256": "682012db1e3d3982eab771b890e6c98ccfe32df6633f94728bea8e59bed3570f"
+        }
+      ],
+      "shallow": null,
+      "tree": "edf459c54d131cb943debe0822980d24746c51b7",
+      "status": " D README.md\u0000 D axum-core/LICENSE\u0000 D axum-extra/LICENSE\u0000 M axum-extra/src/either.rs\u0000 D axum-macros/LICENSE\u0000 D axum/LICENSE\u0000",
+      "logPreflight": {
+        "sha256": "86228add1462fa03b1ef5352a5826c09496841c85a9e54428bf6673ee2875deb",
+        "bytes": 480525,
+        "commits": 2003,
+        "maxCommits": 10000
+      }
+    },
+    "full-stack-fastapi": {
+      "commit": "f27b4721507824e57ebd0286ff1a84d82e83bf59",
+      "directory": "/var/www/html/codiluce/.codiluce/validation-rust-evidence-fast/git-metadata-final/full-stack-fastapi-git",
+      "objectDirectory": "/var/www/html/codiluce/examples/full-stack-fastapi/.git/objects",
+      "files": [
+        {
+          "file": "HEAD",
+          "bytes": 41,
+          "sha256": "84a9cf4b2598da8129cdf980c498ee696bb501371423e655e686babfee5941e1"
+        },
+        {
+          "file": "config",
+          "bytes": 66,
+          "sha256": "dd548269913b6adbdfa7049170ea86850050cb762ea3b9c510a0b2986d2113e3"
+        },
+        {
+          "file": "index",
+          "bytes": 26683,
+          "sha256": "62ff4e4f534d72b07f427910f380bd6493f1ac2249f52658722f4d5ff0f95b3c"
+        },
+        {
+          "file": "objects/info/alternates",
+          "bytes": 64,
+          "sha256": "1853252c6cd41e1a9a412d8995bb85cf8cb57d27f8de0a10cef51c7dd235d722"
+        }
+      ],
+      "shallow": null,
+      "tree": "77cffde56fe380836729edd49c7485a6c96fb193",
+      "status": " D .agents/skills/fastapi\u0000 D .agents/skills/sqlmodel\u0000 D .claude/skills/fastapi\u0000 D .claude/skills/sqlmodel\u0000 M backend/alembic.ini\u0000 M backend/app/alembic/README\u0000 M backend/app/alembic/env.py\u0000 M backend/app/alembic/script.py.mako\u0000 M backend/app/alembic/versions/.keep\u0000 M backend/app/alembic/versions/9c0a54914c78_add_max_length_for_string_varchar_.py\u0000 M backend/app/alembic/versions/d98dd8ec85a3_edit_replace_id_integers_in_all_models_.py\u0000 M backend/scripts/format.sh\u0000 M backend/scripts/test.sh\u0000",
+      "logPreflight": {
+        "sha256": "a2dcce7ed7892c47b1d7b864663c8678ccd8a4789fd169814ede77b0c3e11ef9",
+        "bytes": 380389,
+        "commits": 1533,
+        "maxCommits": 10000
+      }
+    }
+  }
+}
