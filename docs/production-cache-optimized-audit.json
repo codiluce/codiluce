@@ -1,0 +1,1460 @@
+{
+  "schema": 1,
+  "receiptSha256": "5330e98b0885c81df6e647787b8467a9f7920ee45007cc20a3bf1d9113de8ee3",
+  "terminalOutcomeVerified": true,
+  "workers": 108,
+  "sourceAnchorOccurrences": 216,
+  "allOriginalInputsUnchanged": true,
+  "allEngineObserverMetadataBytesUnchanged": true,
+  "foreignBytesUnchanged": true,
+  "completeLogicalParity": [
+    {
+      "id": "flask",
+      "runs": 18,
+      "complete": true,
+      "equal": true,
+      "logicalSha256": "0a91de82b9bb3341334d46201207dbfec396d82421b783a2e78c91896deae171",
+      "logicalBytes": 4037715,
+      "cacheEvents": [
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 83,
+            "python-imports": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "warm",
+          "hits": 85,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 83,
+            "python-imports": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "warm",
+          "hits": 85,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 83,
+            "python-imports": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "warm",
+          "hits": 85,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 83,
+            "python-imports": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "warm",
+          "hits": 85,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 83,
+            "python-imports": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "warm",
+          "hits": 85,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 83,
+            "python-imports": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "warm",
+          "hits": 85,
+          "misses": {}
+        }
+      ]
+    },
+    {
+      "id": "memos",
+      "runs": 18,
+      "complete": true,
+      "equal": true,
+      "logicalSha256": "73a52a4fbd328052de47673525286f857fb9c2489a9a9e37680ac53401d60e48",
+      "logicalBytes": 67523141,
+      "cacheEvents": [
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 500,
+            "go-imports": 1,
+            "typescript-nextjs": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "warm",
+          "hits": 503,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 500,
+            "go-imports": 1,
+            "typescript-nextjs": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "warm",
+          "hits": 503,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 500,
+            "go-imports": 1,
+            "typescript-nextjs": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "warm",
+          "hits": 503,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 500,
+            "go-imports": 1,
+            "typescript-nextjs": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "warm",
+          "hits": 503,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 500,
+            "go-imports": 1,
+            "typescript-nextjs": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "warm",
+          "hits": 503,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 500,
+            "go-imports": 1,
+            "typescript-nextjs": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "warm",
+          "hits": 503,
+          "misses": {}
+        }
+      ]
+    },
+    {
+      "id": "bookstack",
+      "runs": 18,
+      "complete": true,
+      "equal": true,
+      "logicalSha256": "5adc0b1f879c6b7e64df67d8050cd0bccdc693c22b5b1337f630a23c04c8d497",
+      "logicalBytes": 77467805,
+      "cacheEvents": [
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "typescript-nextjs": 1,
+            "php-syntax-facts": 1835,
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "warm",
+          "hits": 3,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "typescript-nextjs": 1,
+            "php-syntax-facts": 1835,
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "warm",
+          "hits": 3,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "typescript-nextjs": 1,
+            "php-syntax-facts": 1835,
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "warm",
+          "hits": 3,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "typescript-nextjs": 1,
+            "php-syntax-facts": 1835,
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "warm",
+          "hits": 3,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "typescript-nextjs": 1,
+            "php-syntax-facts": 1835,
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "warm",
+          "hits": 3,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "typescript-nextjs": 1,
+            "php-syntax-facts": 1835,
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "warm",
+          "hits": 3,
+          "misses": {}
+        }
+      ]
+    },
+    {
+      "id": "firefly-iii",
+      "runs": 18,
+      "complete": true,
+      "equal": true,
+      "logicalSha256": "0ed8f59c9056a9baeafbad458d021ea9b98adefa1032c1bc1a73e5b26554bce1",
+      "logicalBytes": 111066850,
+      "cacheEvents": [
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "typescript-nextjs": 2,
+            "php-syntax-facts": 1737,
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "warm",
+          "hits": 1740,
+          "misses": {
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "typescript-nextjs": 2,
+            "php-syntax-facts": 1737,
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "warm",
+          "hits": 1740,
+          "misses": {
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "typescript-nextjs": 2,
+            "php-syntax-facts": 1737,
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "warm",
+          "hits": 1740,
+          "misses": {
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "typescript-nextjs": 2,
+            "php-syntax-facts": 1737,
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "warm",
+          "hits": 1740,
+          "misses": {
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "typescript-nextjs": 2,
+            "php-syntax-facts": 1737,
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "warm",
+          "hits": 1740,
+          "misses": {
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "typescript-nextjs": 2,
+            "php-syntax-facts": 1737,
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "warm",
+          "hits": 1740,
+          "misses": {
+            "php-laravel": 1,
+            "php-analysis": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "axum",
+      "runs": 18,
+      "complete": true,
+      "equal": true,
+      "logicalSha256": "1f05af2005cc67e250578139352a717115fafa5f9fe4517182f6d07a4fdfb969",
+      "logicalBytes": 655157668,
+      "cacheEvents": [
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 302,
+            "rust-imports": 1,
+            "rust-symbols": 1,
+            "rust-routers": 1,
+            "typescript-nextjs": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "warm",
+          "hits": 306,
+          "misses": {
+            "rust-symbols": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 302,
+            "rust-imports": 1,
+            "rust-symbols": 1,
+            "rust-routers": 1,
+            "typescript-nextjs": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "warm",
+          "hits": 306,
+          "misses": {
+            "rust-symbols": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 302,
+            "rust-imports": 1,
+            "rust-symbols": 1,
+            "rust-routers": 1,
+            "typescript-nextjs": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "warm",
+          "hits": 306,
+          "misses": {
+            "rust-symbols": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 302,
+            "rust-imports": 1,
+            "rust-symbols": 1,
+            "rust-routers": 1,
+            "typescript-nextjs": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "warm",
+          "hits": 306,
+          "misses": {
+            "rust-symbols": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 302,
+            "rust-imports": 1,
+            "rust-symbols": 1,
+            "rust-routers": 1,
+            "typescript-nextjs": 1
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "warm",
+          "hits": 306,
+          "misses": {
+            "rust-symbols": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 302,
+            "rust-imports": 1,
+            "rust-symbols": 1,
+            "rust-routers": 1,
+            "typescript-nextjs": 1
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "warm",
+          "hits": 306,
+          "misses": {
+            "rust-symbols": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "full-stack-fastapi",
+      "runs": 18,
+      "complete": true,
+      "equal": true,
+      "logicalSha256": "71bd36fb69dd004c13625eac0c1492fb7e35cfd56aff95906376c9aebae9ffad",
+      "logicalBytes": 2649725,
+      "cacheEvents": [
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 43,
+            "python-imports": 1,
+            "typescript-nextjs": 2
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 0,
+          "mode": "warm",
+          "hits": 47,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 43,
+            "python-imports": 1,
+            "typescript-nextjs": 2
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 0,
+          "mode": "warm",
+          "hits": 47,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 43,
+            "python-imports": 1,
+            "typescript-nextjs": 2
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 1,
+          "mode": "warm",
+          "hits": 47,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 43,
+            "python-imports": 1,
+            "typescript-nextjs": 2
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 1,
+          "mode": "warm",
+          "hits": 47,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 43,
+            "python-imports": 1,
+            "typescript-nextjs": 2
+          }
+        },
+        {
+          "label": "baseline",
+          "repetition": 2,
+          "mode": "warm",
+          "hits": 47,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "cold",
+          "hits": 0,
+          "misses": {}
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "population",
+          "hits": 0,
+          "misses": {
+            "git-metrics": 1,
+            "syntax-facts": 43,
+            "python-imports": 1,
+            "typescript-nextjs": 2
+          }
+        },
+        {
+          "label": "current",
+          "repetition": 2,
+          "mode": "warm",
+          "hits": 47,
+          "misses": {}
+        }
+      ]
+    }
+  ],
+  "independentlyRecomputedComparisons": [
+    {
+      "id": "flask",
+      "mode": "cold",
+      "baseline": {
+        "milliseconds": 2114.3419569999996,
+        "treePeakKiB": 454668
+      },
+      "current": {
+        "milliseconds": 2129.211494,
+        "treePeakKiB": 440332
+      },
+      "timeRatio": 1.007032702042719,
+      "memoryRatio": 0.9684693006765376,
+      "passed": true
+    },
+    {
+      "id": "flask",
+      "mode": "warm",
+      "baseline": {
+        "milliseconds": 277.3093409999999,
+        "treePeakKiB": 301440
+      },
+      "current": {
+        "milliseconds": 280.548596,
+        "treePeakKiB": 302640
+      },
+      "timeRatio": 1.0116810165439039,
+      "memoryRatio": 1.0039808917197452,
+      "passed": true
+    },
+    {
+      "id": "memos",
+      "mode": "cold",
+      "baseline": {
+        "milliseconds": 21905.559807,
+        "treePeakKiB": 995844
+      },
+      "current": {
+        "milliseconds": 22024.529089000003,
+        "treePeakKiB": 996520
+      },
+      "timeRatio": 1.005431008522411,
+      "memoryRatio": 1.0006788211808275,
+      "passed": true
+    },
+    {
+      "id": "memos",
+      "mode": "warm",
+      "baseline": {
+        "milliseconds": 5414.176406,
+        "treePeakKiB": 905828
+      },
+      "current": {
+        "milliseconds": 5468.816619,
+        "treePeakKiB": 888104
+      },
+      "timeRatio": 1.0100920636681598,
+      "memoryRatio": 0.9804333714568328,
+      "passed": true
+    },
+    {
+      "id": "bookstack",
+      "mode": "cold",
+      "baseline": {
+        "milliseconds": 27627.054245,
+        "treePeakKiB": 1300884
+      },
+      "current": {
+        "milliseconds": 27635.112604,
+        "treePeakKiB": 1304636
+      },
+      "timeRatio": 1.0002916836130462,
+      "memoryRatio": 1.002884192595189,
+      "passed": true
+    },
+    {
+      "id": "bookstack",
+      "mode": "warm",
+      "baseline": {
+        "milliseconds": 2448.915028,
+        "treePeakKiB": 679196
+      },
+      "current": {
+        "milliseconds": 2470.811027,
+        "treePeakKiB": 685836
+      },
+      "timeRatio": 1.0089411019776715,
+      "memoryRatio": 1.009776264877885,
+      "passed": true
+    },
+    {
+      "id": "firefly-iii",
+      "mode": "cold",
+      "baseline": {
+        "milliseconds": 29099.460269,
+        "treePeakKiB": 1104428
+      },
+      "current": {
+        "milliseconds": 29502.468555,
+        "treePeakKiB": 1103444
+      },
+      "timeRatio": 1.0138493388631449,
+      "memoryRatio": 0.9991090410601687,
+      "passed": true
+    },
+    {
+      "id": "firefly-iii",
+      "mode": "warm",
+      "baseline": {
+        "milliseconds": 18375.120684999998,
+        "treePeakKiB": 1048984
+      },
+      "current": {
+        "milliseconds": 18320.990058,
+        "treePeakKiB": 1052640
+      },
+      "timeRatio": 0.9970541348855365,
+      "memoryRatio": 1.0034852771824927,
+      "passed": true
+    },
+    {
+      "id": "axum",
+      "mode": "cold",
+      "baseline": {
+        "milliseconds": 9883.728097000001,
+        "treePeakKiB": 778340
+      },
+      "current": {
+        "milliseconds": 10590.246118,
+        "treePeakKiB": 774360
+      },
+      "timeRatio": 1.0714829479388903,
+      "memoryRatio": 0.9948865534342318,
+      "passed": true
+    },
+    {
+      "id": "axum",
+      "mode": "warm",
+      "baseline": {
+        "milliseconds": 10074.205143,
+        "treePeakKiB": 1500512
+      },
+      "current": {
+        "milliseconds": 8765.204287,
+        "treePeakKiB": 1214680
+      },
+      "timeRatio": 0.8700641055627549,
+      "memoryRatio": 0.8095103537992365,
+      "passed": true
+    },
+    {
+      "id": "full-stack-fastapi",
+      "mode": "cold",
+      "baseline": {
+        "milliseconds": 3159.882767,
+        "treePeakKiB": 426384
+      },
+      "current": {
+        "milliseconds": 3101.5539179999996,
+        "treePeakKiB": 423344
+      },
+      "timeRatio": 0.9815408186629094,
+      "memoryRatio": 0.9928702765582198,
+      "passed": true
+    },
+    {
+      "id": "full-stack-fastapi",
+      "mode": "warm",
+      "baseline": {
+        "milliseconds": 525.6271449999999,
+        "treePeakKiB": 314380
+      },
+      "current": {
+        "milliseconds": 539.3401819999999,
+        "treePeakKiB": 313012
+      },
+      "timeRatio": 1.026088905663348,
+      "memoryRatio": 0.9956485781538266,
+      "passed": true
+    }
+  ],
+  "compressedCacheLedgers": [
+    {
+      "file": ".codiluce/validation-production-cache-optimized/flask-baseline-0-cache-ledger.json",
+      "sha256": "d6b16360d0bcd108e6eff4387cf7049b8bb9ff391d77f96419d81bf47b17f7a6",
+      "entries": 85,
+      "compressedBytes": 826869
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/flask-baseline-1-cache-ledger.json",
+      "sha256": "d6b16360d0bcd108e6eff4387cf7049b8bb9ff391d77f96419d81bf47b17f7a6",
+      "entries": 85,
+      "compressedBytes": 826869
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/flask-baseline-2-cache-ledger.json",
+      "sha256": "d6b16360d0bcd108e6eff4387cf7049b8bb9ff391d77f96419d81bf47b17f7a6",
+      "entries": 85,
+      "compressedBytes": 826869
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/flask-current-0-cache-ledger.json",
+      "sha256": "d6b16360d0bcd108e6eff4387cf7049b8bb9ff391d77f96419d81bf47b17f7a6",
+      "entries": 85,
+      "compressedBytes": 826869
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/flask-current-1-cache-ledger.json",
+      "sha256": "d6b16360d0bcd108e6eff4387cf7049b8bb9ff391d77f96419d81bf47b17f7a6",
+      "entries": 85,
+      "compressedBytes": 826869
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/flask-current-2-cache-ledger.json",
+      "sha256": "d6b16360d0bcd108e6eff4387cf7049b8bb9ff391d77f96419d81bf47b17f7a6",
+      "entries": 85,
+      "compressedBytes": 826869
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/memos-baseline-0-cache-ledger.json",
+      "sha256": "777535de80ea90f1295b202d23e10b58bbe4ae3147f5963948e8e7d064dd37b1",
+      "entries": 503,
+      "compressedBytes": 18787675
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/memos-baseline-1-cache-ledger.json",
+      "sha256": "777535de80ea90f1295b202d23e10b58bbe4ae3147f5963948e8e7d064dd37b1",
+      "entries": 503,
+      "compressedBytes": 18787675
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/memos-baseline-2-cache-ledger.json",
+      "sha256": "777535de80ea90f1295b202d23e10b58bbe4ae3147f5963948e8e7d064dd37b1",
+      "entries": 503,
+      "compressedBytes": 18787675
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/memos-current-0-cache-ledger.json",
+      "sha256": "777535de80ea90f1295b202d23e10b58bbe4ae3147f5963948e8e7d064dd37b1",
+      "entries": 503,
+      "compressedBytes": 18787675
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/memos-current-1-cache-ledger.json",
+      "sha256": "777535de80ea90f1295b202d23e10b58bbe4ae3147f5963948e8e7d064dd37b1",
+      "entries": 503,
+      "compressedBytes": 18787675
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/memos-current-2-cache-ledger.json",
+      "sha256": "777535de80ea90f1295b202d23e10b58bbe4ae3147f5963948e8e7d064dd37b1",
+      "entries": 503,
+      "compressedBytes": 18787675
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/bookstack-baseline-0-cache-ledger.json",
+      "sha256": "06786e5f600c96fb1a7b283892d344d40219dd914f7e8d7a8212604833fbb723",
+      "entries": 1839,
+      "compressedBytes": 20244846
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/bookstack-baseline-1-cache-ledger.json",
+      "sha256": "06786e5f600c96fb1a7b283892d344d40219dd914f7e8d7a8212604833fbb723",
+      "entries": 1839,
+      "compressedBytes": 20244846
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/bookstack-baseline-2-cache-ledger.json",
+      "sha256": "06786e5f600c96fb1a7b283892d344d40219dd914f7e8d7a8212604833fbb723",
+      "entries": 1839,
+      "compressedBytes": 20244846
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/bookstack-current-0-cache-ledger.json",
+      "sha256": "06786e5f600c96fb1a7b283892d344d40219dd914f7e8d7a8212604833fbb723",
+      "entries": 1839,
+      "compressedBytes": 20244846
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/bookstack-current-1-cache-ledger.json",
+      "sha256": "06786e5f600c96fb1a7b283892d344d40219dd914f7e8d7a8212604833fbb723",
+      "entries": 1839,
+      "compressedBytes": 20244846
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/bookstack-current-2-cache-ledger.json",
+      "sha256": "06786e5f600c96fb1a7b283892d344d40219dd914f7e8d7a8212604833fbb723",
+      "entries": 1839,
+      "compressedBytes": 20244846
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/firefly-iii-baseline-0-cache-ledger.json",
+      "sha256": "e3dc456c9dcfa1fbd574a0e79dc655319bb953046e97e4f88e502414d6ba9515",
+      "entries": 1740,
+      "compressedBytes": 12062222
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/firefly-iii-baseline-1-cache-ledger.json",
+      "sha256": "e3dc456c9dcfa1fbd574a0e79dc655319bb953046e97e4f88e502414d6ba9515",
+      "entries": 1740,
+      "compressedBytes": 12062222
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/firefly-iii-baseline-2-cache-ledger.json",
+      "sha256": "e3dc456c9dcfa1fbd574a0e79dc655319bb953046e97e4f88e502414d6ba9515",
+      "entries": 1740,
+      "compressedBytes": 12062222
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/firefly-iii-current-0-cache-ledger.json",
+      "sha256": "e3dc456c9dcfa1fbd574a0e79dc655319bb953046e97e4f88e502414d6ba9515",
+      "entries": 1740,
+      "compressedBytes": 12062222
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/firefly-iii-current-1-cache-ledger.json",
+      "sha256": "e3dc456c9dcfa1fbd574a0e79dc655319bb953046e97e4f88e502414d6ba9515",
+      "entries": 1740,
+      "compressedBytes": 12062222
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/firefly-iii-current-2-cache-ledger.json",
+      "sha256": "e3dc456c9dcfa1fbd574a0e79dc655319bb953046e97e4f88e502414d6ba9515",
+      "entries": 1740,
+      "compressedBytes": 12062222
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/axum-baseline-0-cache-ledger.json",
+      "sha256": "f6cb79aa80cd6822ef8cfe6837826f7c676ef9261f6e39e54b628d86da64aafa",
+      "entries": 306,
+      "compressedBytes": 4186577
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/axum-baseline-1-cache-ledger.json",
+      "sha256": "f6cb79aa80cd6822ef8cfe6837826f7c676ef9261f6e39e54b628d86da64aafa",
+      "entries": 306,
+      "compressedBytes": 4186577
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/axum-baseline-2-cache-ledger.json",
+      "sha256": "f6cb79aa80cd6822ef8cfe6837826f7c676ef9261f6e39e54b628d86da64aafa",
+      "entries": 306,
+      "compressedBytes": 4186577
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/axum-current-0-cache-ledger.json",
+      "sha256": "dd9f794bc32cf60728acad81a5a4b708be55fca85989cd7205badd4d7099f914",
+      "entries": 306,
+      "compressedBytes": 4186577
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/axum-current-1-cache-ledger.json",
+      "sha256": "dd9f794bc32cf60728acad81a5a4b708be55fca85989cd7205badd4d7099f914",
+      "entries": 306,
+      "compressedBytes": 4186577
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/axum-current-2-cache-ledger.json",
+      "sha256": "dd9f794bc32cf60728acad81a5a4b708be55fca85989cd7205badd4d7099f914",
+      "entries": 306,
+      "compressedBytes": 4186577
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/full-stack-fastapi-baseline-0-cache-ledger.json",
+      "sha256": "154bd8a56936f8dbb1fa93db24c20630a63d606d3b7d4754bf66fa30f6797bf4",
+      "entries": 47,
+      "compressedBytes": 331924
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/full-stack-fastapi-baseline-1-cache-ledger.json",
+      "sha256": "154bd8a56936f8dbb1fa93db24c20630a63d606d3b7d4754bf66fa30f6797bf4",
+      "entries": 47,
+      "compressedBytes": 331924
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/full-stack-fastapi-baseline-2-cache-ledger.json",
+      "sha256": "154bd8a56936f8dbb1fa93db24c20630a63d606d3b7d4754bf66fa30f6797bf4",
+      "entries": 47,
+      "compressedBytes": 331924
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/full-stack-fastapi-current-0-cache-ledger.json",
+      "sha256": "154bd8a56936f8dbb1fa93db24c20630a63d606d3b7d4754bf66fa30f6797bf4",
+      "entries": 47,
+      "compressedBytes": 331924
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/full-stack-fastapi-current-1-cache-ledger.json",
+      "sha256": "154bd8a56936f8dbb1fa93db24c20630a63d606d3b7d4754bf66fa30f6797bf4",
+      "entries": 47,
+      "compressedBytes": 331924
+    },
+    {
+      "file": ".codiluce/validation-production-cache-optimized/full-stack-fastapi-current-2-cache-ledger.json",
+      "sha256": "154bd8a56936f8dbb1fa93db24c20630a63d606d3b7d4754bf66fa30f6797bf4",
+      "entries": 47,
+      "compressedBytes": 331924
+    }
+  ],
+  "qualifiedComparisons": 12,
+  "passed": true,
+  "history195Qualified": false,
+  "nativeWindowsMacOSQualified": false
+}
