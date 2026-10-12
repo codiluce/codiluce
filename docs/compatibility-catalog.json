@@ -1,0 +1,794 @@
+{
+  "format": 1,
+  "reviewedOn": "2026-10-12",
+  "languages": [
+    {
+      "id": "typescript",
+      "label": "TypeScript",
+      "parser": "TypeScript compiler",
+      "imports": "Indexed Node projects, workspace packages, aliases and shared compiler configs",
+      "binding": "Partial lexical, source-type, callable and HTTP-wrapper binding",
+      "frameworks": "Next.js, Express, Nest; component scripts",
+      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior",
+      "sources": [
+        "src/analyzers/typescript.ts",
+        "src/analysis/resolution/typescript.ts"
+      ]
+    },
+    {
+      "id": "javascript",
+      "label": "JavaScript",
+      "parser": "TypeScript compiler",
+      "imports": "Indexed Node projects, workspace packages, aliases and shared compiler configs",
+      "binding": "Partial lexical, source-type, callable and HTTP-wrapper binding",
+      "frameworks": "Next.js, Express, Nest; component scripts",
+      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior",
+      "sources": [
+        "src/analyzers/typescript.ts",
+        "src/analysis/resolution/typescript.ts"
+      ]
+    },
+    {
+      "id": "php",
+      "label": "PHP",
+      "parser": "php-parser original PHP 8.4 source profile",
+      "imports": "Indexed Composer maps, literal loads and namespace imports",
+      "binding": "Partial source functions, constructors, methods, aliases and concrete callbacks",
+      "frameworks": "Laravel; generic PHP structure and binding",
+      "gaps": "Runtime Composer/autoload execution, dynamic values, reference state, trait adaptations and full dispatch; Laravel effects/guards have a separate profile",
+      "sources": [
+        "src/analysis/languages/php.ts",
+        "src/analysis/languages/php-imports.ts",
+        "src/analysis/languages/php-symbols.ts",
+        "src/analyzers/laravel.ts"
+      ]
+    },
+    {
+      "id": "python",
+      "label": "Python",
+      "parser": "Tree-sitter Python",
+      "imports": "Flat/src/package/namespace roots, absolute/relative aliases and bounded re-exports",
+      "binding": "Partial lexical names, direct class members and calls",
+      "frameworks": "FastAPI, Flask, Django",
+      "gaps": "Dynamic imports/exports, sys.path mutations, executable packaging/settings and runtime instance dispatch; stubs and launch-file semantics stay separate",
+      "sources": [
+        "src/analysis/languages/python.ts",
+        "src/analysis/languages/python-symbols.ts"
+      ]
+    },
+    {
+      "id": "go",
+      "label": "Go",
+      "parser": "Tree-sitter Go",
+      "imports": "Module/workspace/package imports and recorded build/test contexts",
+      "binding": "Partial package/file/block scopes, concrete receivers and callbacks",
+      "frameworks": "net/http, Chi, Gin, Echo, Fiber, Gorilla Mux",
+      "gaps": "Transitive MVS, vendor/GOPATH, interfaces, promoted selectors, full generics/type checking and effects",
+      "sources": [
+        "src/analysis/languages/go.ts",
+        "src/analysis/languages/go-symbols.ts"
+      ]
+    },
+    {
+      "id": "ruby",
+      "label": "Ruby",
+      "parser": "Tree-sitter Ruby",
+      "imports": "Literal loads, recorded cwd/load paths and bounded Rails/Zeitwerk autoload",
+      "binding": "Partial scoped constants, source-ordered reopenings and concrete direct methods",
+      "frameworks": "Rails",
+      "gaps": "Runtime gem activation, executable loader hooks, dynamic self, mixins, reflection, reload and higher-order values",
+      "sources": [
+        "src/analysis/languages/ruby.ts",
+        "src/analysis/languages/ruby-symbols.ts"
+      ]
+    },
+    {
+      "id": "rust",
+      "label": "Rust",
+      "parser": "Tree-sitter Rust",
+      "imports": "Cargo/workspaces, local crates, module/target/cfg inputs, scoped use and re-exports",
+      "binding": "Partial compilation-scoped functions, inherent methods and source closures",
+      "frameworks": "Axum, Actix Web, Rocket, Warp",
+      "gaps": "General macro expansion/hygiene, binary exports, generated items, traits, borrow/type checking and effects",
+      "sources": [
+        "src/analysis/languages/rust.ts",
+        "src/analysis/languages/rust-symbols.ts"
+      ]
+    },
+    {
+      "id": "java",
+      "label": "Java",
+      "parser": "Tree-sitter Java",
+      "imports": "Indexed Maven/Gradle/configured roots, source sets, project references and imports",
+      "binding": "Partial scoped source types, exact signatures and selected direct calls",
+      "frameworks": "Spring MVC, WebFlux",
+      "gaps": "Executable build models, binary classpaths, virtual/generic/inherited dispatch and compiler interop",
+      "sources": [
+        "src/analysis/languages/jvm.ts",
+        "src/analysis/languages/jvm-symbols.ts"
+      ]
+    },
+    {
+      "id": "kotlin",
+      "label": "Kotlin",
+      "parser": "Tree-sitter Kotlin",
+      "imports": "Indexed Maven/Gradle/configured roots, source sets, project references and imports",
+      "binding": "Partial scoped source types, exact signatures and selected direct calls",
+      "frameworks": "Spring MVC, WebFlux",
+      "gaps": "Executable build models, binary classpaths, virtual/generic/inherited dispatch and compiler interop",
+      "sources": [
+        "src/analysis/languages/jvm.ts",
+        "src/analysis/languages/jvm-symbols.ts"
+      ]
+    },
+    {
+      "id": "csharp",
+      "label": "C#",
+      "parser": "Tree-sitter C#",
+      "imports": "Indexed MSBuild compile/project inputs and namespace/static/alias/global usings",
+      "binding": "Partial scoped references, exact source handlers and logical partial types",
+      "frameworks": "ASP.NET minimal APIs and MVC",
+      "gaps": "Generated source, executable MSBuild tasks, binary symbols, conversions/generics/ambiguous overloads and wider dispatch",
+      "sources": [
+        "src/analysis/languages/csharp.ts",
+        "src/analysis/languages/csharp-symbols.ts"
+      ]
+    },
+    {
+      "id": "c",
+      "label": "C",
+      "parser": "Tree-sitter",
+      "imports": "Unsupported semantic import resolution",
+      "binding": "Original structural declarations only",
+      "frameworks": "No semantic web pack",
+      "gaps": "No preprocessor execution or include/type resolution",
+      "sources": [
+        "src/analysis/tree-sitter/grammars.ts",
+        "src/analysis/tree-sitter/analyzer.ts"
+      ]
+    },
+    {
+      "id": "cpp",
+      "label": "C++",
+      "parser": "Tree-sitter",
+      "imports": "Unsupported semantic import resolution",
+      "binding": "Original structural declarations only",
+      "frameworks": "No semantic web pack",
+      "gaps": "No template instantiation, compiler type checking or include resolution",
+      "sources": [
+        "src/analysis/tree-sitter/grammars.ts",
+        "src/analysis/tree-sitter/analyzer.ts"
+      ]
+    },
+    {
+      "id": "objective-c",
+      "label": "Objective-C / Objective-C++",
+      "parser": "Tree-sitter",
+      "imports": "Unsupported semantic import resolution",
+      "binding": "Original structural declarations only",
+      "frameworks": "No semantic web pack",
+      "gaps": "Original selector/header and reviewed enum/options macro structures; mixed C++ remains partial",
+      "sources": [
+        "src/analysis/tree-sitter/grammars.ts",
+        "src/analysis/tree-sitter/analyzer.ts"
+      ]
+    },
+    {
+      "id": "swift",
+      "label": "Swift",
+      "parser": "Tree-sitter",
+      "imports": "Unsupported semantic import resolution",
+      "binding": "Original structural declarations only",
+      "frameworks": "No semantic web pack",
+      "gaps": "Original labels/subscripts/extensions; compiler imports and SwiftUI conventions remain open",
+      "sources": [
+        "src/analysis/tree-sitter/grammars.ts",
+        "src/analysis/tree-sitter/analyzer.ts"
+      ]
+    },
+    {
+      "id": "scala",
+      "label": "Scala",
+      "parser": "Tree-sitter",
+      "imports": "Unsupported semantic import resolution",
+      "binding": "Original structural declarations only",
+      "frameworks": "No semantic web pack",
+      "gaps": "Original objects/givens/extension headers/enum cases; semantic imports remain open",
+      "sources": [
+        "src/analysis/tree-sitter/grammars.ts",
+        "src/analysis/tree-sitter/analyzer.ts"
+      ]
+    },
+    {
+      "id": "groovy",
+      "label": "Groovy",
+      "parser": "Tree-sitter",
+      "imports": "Unsupported semantic import resolution",
+      "binding": "Original structural declarations only",
+      "frameworks": "No semantic web pack",
+      "gaps": "Original traits/records/script declarations; documented grammar recovery gaps",
+      "sources": [
+        "src/analysis/tree-sitter/grammars.ts",
+        "src/analysis/tree-sitter/analyzer.ts"
+      ]
+    },
+    {
+      "id": "fsharp",
+      "label": "F#",
+      "parser": "Tree-sitter",
+      "imports": "Unsupported semantic import resolution",
+      "binding": "Original structural declarations only",
+      "frameworks": "No semantic web pack",
+      "gaps": "Separate source/signature grammars; compiler imports and semantics remain open",
+      "sources": [
+        "src/analysis/tree-sitter/grammars.ts",
+        "src/analysis/tree-sitter/analyzer.ts"
+      ]
+    },
+    {
+      "id": "vbnet",
+      "label": "VB.NET",
+      "parser": "Tree-sitter",
+      "imports": "Unsupported semantic import resolution",
+      "binding": "Original structural declarations only",
+      "frameworks": "No semantic web pack",
+      "gaps": "Initial limited original namespace/module/member grammar; documented omitted syntax",
+      "sources": [
+        "src/analysis/tree-sitter/grammars.ts",
+        "src/analysis/tree-sitter/analyzer.ts"
+      ]
+    },
+    {
+      "id": "vue",
+      "label": "Vue",
+      "parser": "Original component regions + TypeScript; official parse-only providers where applicable",
+      "imports": "Indexed component/TS relative, alias and workspace imports",
+      "binding": "Partial original components, template callbacks and script source binding",
+      "frameworks": "Vue 3 + Vue Router 4/5",
+      "gaps": "Preprocessors, compiler-generated declarations and dynamic component/configuration behavior remain constrained; browser/server/static scopes stay distinct",
+      "sources": [
+        "src/analysis/embedded/index.ts",
+        "src/analysis/frameworks/vue.ts"
+      ]
+    },
+    {
+      "id": "svelte",
+      "label": "Svelte",
+      "parser": "Original component regions + TypeScript; official parse-only providers where applicable",
+      "imports": "Indexed component/TS relative, alias and workspace imports",
+      "binding": "Partial original components, template callbacks and script source binding",
+      "frameworks": "Svelte 4/5 + SvelteKit 2/3",
+      "gaps": "Preprocessors, compiler-generated declarations and dynamic component/configuration behavior remain constrained; browser/server/static scopes stay distinct",
+      "sources": [
+        "src/analysis/embedded/index.ts",
+        "src/analysis/frameworks/svelte.ts"
+      ]
+    },
+    {
+      "id": "astro",
+      "label": "Astro",
+      "parser": "Original component regions + TypeScript; official parse-only providers where applicable",
+      "imports": "Indexed component/TS relative, alias and workspace imports",
+      "binding": "Partial original components, template callbacks and script source binding",
+      "frameworks": "Astro 5/6/7",
+      "gaps": "Preprocessors, compiler-generated declarations and dynamic component/configuration behavior remain constrained; browser/server/static scopes stay distinct",
+      "sources": [
+        "src/analysis/embedded/index.ts",
+        "src/analysis/frameworks/astro.ts"
+      ]
+    },
+    {
+      "id": "erb",
+      "label": "ERB",
+      "parser": "Tree-sitter template + host/literal-script providers",
+      "imports": "Unsupported semantic import resolution",
+      "binding": "Original structural/template declarations only",
+      "frameworks": "Template source profile",
+      "gaps": "Original Ruby regions and literal JavaScript declarations; no ERB runtime or template semantic import pack",
+      "sources": [
+        "src/analysis/tree-sitter/analyzer.ts"
+      ]
+    },
+    {
+      "id": "razor",
+      "label": "Razor",
+      "parser": "Tree-sitter template + host/literal-script providers",
+      "imports": "Unsupported semantic import resolution",
+      "binding": "Original structural/template declarations only",
+      "frameworks": "Template source profile",
+      "gaps": "Original C# regions and literal JavaScript declarations; no generated Razor classes or general template semantic imports",
+      "sources": [
+        "src/analysis/tree-sitter/analyzer.ts"
+      ]
+    },
+    {
+      "id": "liquid",
+      "label": "Liquid",
+      "parser": "Tree-sitter template + host/literal-script providers",
+      "imports": "Partial indexed Shopify template lookup",
+      "binding": "Original structural/template declarations only",
+      "frameworks": "Template source profile",
+      "gaps": "Original regions and literal JavaScript declarations; quoted Shopify theme dependencies are partial, other engine lookups remain unsupported",
+      "sources": [
+        "src/analysis/tree-sitter/analyzer.ts",
+        "src/analysis/languages/liquid.ts"
+      ]
+    }
+  ],
+  "frameworks": [
+    {
+      "id": "nextjs",
+      "label": "Next.js",
+      "versions": "Existing source-convention profile; no comprehensive framework version gate",
+      "scope": "File routes/components, original handlers and qualified HTTP requests",
+      "gaps": "Wider runtime/plugin/generated conventions remain outside the source profile",
+      "tests": [
+        "tests/graph.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analyzers/typescript.ts",
+          "contains": []
+        }
+      ]
+    },
+    {
+      "id": "laravel",
+      "label": "Laravel / Fortify",
+      "versions": "Existing source conventions; Fortify 1.x route table, without a comprehensive dependency-version gate",
+      "scope": "Registered route files/includes/groups, controllers, models/migrations, console/scheduler, Fortify, direct method effects",
+      "gaps": "Dynamic route macros/resources, runtime providers/autoloaders and unindexed package controllers remain gaps",
+      "tests": [
+        "tests/graph.test.ts",
+        "tests/schema.test.ts",
+        "tests/php-provider.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analyzers/laravel.ts",
+          "contains": [
+            "LARAVEL_VERSION"
+          ]
+        },
+        {
+          "file": "src/analyzers/laravel-fortify.ts",
+          "contains": [
+            "Fortify 1.x"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "express",
+      "label": "Express",
+      "versions": "4.x or 5.x bounded declared ranges",
+      "scope": "Proven app/router instances, nested mounts, static helpers and original handlers",
+      "gaps": "Unknown version keeps common syntax; regex/dynamic paths, unmounted routers and custom behavior remain constrained",
+      "tests": [
+        "tests/express.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/frameworks/express.ts",
+          "contains": [
+            ">=4.0.0 <5.0.0",
+            ">=5.0.0 <6.0.0"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nestjs",
+      "label": "Nest",
+      "versions": "9–10 (Express 4 path profile); 11 (Express 5); proven Fastify adapter retains its own constraints",
+      "scope": "Bootstrap-reachable controllers/modules, router modules, URI/default/neutral versions and dependency references",
+      "gaps": "Custom decorators/dynamic modules, host/header/media/custom versions and unknown bootstrap policy remain gaps",
+      "tests": [
+        "tests/nest.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/frameworks/nest.ts",
+          "contains": [
+            ">=9.0.0 <11.0.0",
+            ">=11.0.0 <12.0.0"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fastapi",
+      "label": "FastAPI",
+      "versions": ">=0.115.0 <0.116.0 snapshot; >=0.141.1 <0.142.0 live inclusion",
+      "scope": "Proven apps/routers, nested/reused inclusion, invoked factories, direct/Annotated dependencies and statuses",
+      "gaps": "Broader versions and dynamic routing/dependency behavior remain constrained",
+      "tests": [
+        "tests/fastapi.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/frameworks/fastapi.ts",
+          "contains": [
+            ">=0.115.0 <0.116.0",
+            ">=0.141.1 <0.142.0"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "flask",
+      "label": "Flask",
+      "versions": ">=3.1.0 <3.2.0",
+      "scope": "Blueprint registration/sealing, invoked/configured factories, direct/MethodView handlers, HEAD and automatic OPTIONS",
+      "gaps": "Runtime factories/mutations, unknown registration options and wider versions remain constrained",
+      "tests": [
+        "tests/flask.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/frameworks/flask.ts",
+          "contains": [
+            ">=3.1.0 <3.2.0"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "django",
+      "label": "Django",
+      "versions": ">=5.2.0 <5.3.0",
+      "scope": "Selected URLconf/settings roots, lists/includes/namespaces, function guards and bounded class dispatch",
+      "gaps": "Executable/dynamic settings, arbitrary regex/dispatch, middleware policy and broader versions remain gaps",
+      "tests": [
+        "tests/django.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/frameworks/django.ts",
+          "contains": [
+            ">=5.2.0 <5.3.0"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vue",
+      "label": "Vue / Vue Router",
+      "versions": "Vue 3; Vue Router 4/5 manual route records",
+      "scope": "Original script-setup/Options/Composition components, template callbacks and installed nested/lazy routes",
+      "gaps": "Generated routes/macros, preprocessors, dynamic components, guards/loaders and deferred callbacks remain gaps",
+      "tests": [
+        "tests/vue.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/frameworks/vue.ts",
+          "contains": [
+            "profile(dependency, 3)"
+          ]
+        },
+        {
+          "file": "src/analysis/frameworks/vue-router.ts",
+          "contains": [
+            "profile(dependency, 5)",
+            "profile(dependency, 4)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "svelte",
+      "label": "Svelte / SvelteKit",
+      "versions": "Svelte 4/5; SvelteKit 2/3; owned parser svelte/compiler 5.57.2",
+      "scope": "Original callbacks/scopes, filesystem pages/layouts/loads, runtime endpoints and default/named actions",
+      "gaps": "Dynamic config, hooks/matchers, custom extensions, deeper form/prop/navigation invocation and newer QUERY remain gaps",
+      "tests": [
+        "tests/svelte.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/frameworks/svelte.ts",
+          "contains": [
+            "parser-5.57.2",
+            "profile(version, 4)",
+            "profile(version, 5)"
+          ]
+        },
+        {
+          "file": "src/analysis/frameworks/sveltekit-config.ts",
+          "contains": [
+            "profile(version, 2)",
+            "profile(version, 3)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "astro",
+      "label": "Astro",
+      "versions": "5/6/7; owned parse-only compiler @astrojs/compiler-rs 0.5.1",
+      "scope": "Original layouts/components/renderers, pages, runtime endpoints, islands and separate static/build operations",
+      "gaps": "Dynamic integrations/config, custom pipelines, Markdown/MDX, actions and generated concrete URLs remain gaps",
+      "tests": [
+        "tests/astro.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/frameworks/astro-config.ts",
+          "contains": [
+            "[5, 6, 7]"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nuxt",
+      "label": "Nuxt / Nitro / H3",
+      "versions": ">=3.21.11 <4.0.0 or >=4.6.0 <5.0.0; Nitro 2 / H3 1",
+      "scope": "Literal config, nested pages/layouts, original component conventions, Nitro endpoints and contextual fetch",
+      "gaps": "Older/broader ranges, layers/modules/generated imports, dynamic runtime options and deeper composables remain gaps",
+      "tests": [
+        "tests/nuxt.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/frameworks/nuxt-config.ts",
+          "contains": [
+            ">=3.21.11 <4.0.0",
+            ">=4.6.0 <5.0.0",
+            "nitro-2-h3-1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rails",
+      "label": "Rails / Zeitwerk",
+      "versions": "Rails >=7.1 <7.3 or >=8.0 <8.2; Zeitwerk >=2.6 <2.8",
+      "scope": "Recorded roots/load order/inflections, route DSL/resources/concerns/draw, controller actions and callbacks",
+      "gaps": "Runtime engine internals, executable loaders/reload, dynamic DSL and deep ActiveRecord effects remain gaps",
+      "tests": [
+        "tests/rails.test.ts",
+        "tests/ruby-autoload.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/languages/ruby-profile.ts",
+          "contains": [
+            "[['7.1', '7.3'], ['8.0', '8.2']]",
+            "[['2.6', '2.8']]"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "spring",
+      "label": "Spring MVC / WebFlux",
+      "versions": "Framework 6.2.x / 7.0.x; optional Boot 3.5.x / 4.0.x compatible family",
+      "scope": "Original annotations or bounded Java/Kotlin router builders, exact handlers and native path/method contracts",
+      "gaps": "Boot starter alone does not prove BOM version; executable build models, broad reactive typing and unknown policies remain gaps",
+      "tests": [
+        "tests/spring-mvc.test.ts",
+        "tests/spring-webflux.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/frameworks/spring-profile.ts",
+          "contains": [
+            "reviewed 6.2/7.0 families",
+            "reviewed 3.5/4.0 families"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "aspnet",
+      "label": "ASP.NET Core minimal APIs / MVC",
+      "versions": "Bare net8.0 / net9.0 / net10.0 families; declared/recorded matching 8.0.x / 9.0.x / 10.0.x runtime where present",
+      "scope": "Web SDK/FrameworkReference input, groups/helpers/lambdas, partial controllers and attribute/conventional registrations",
+      "gaps": "Generated/binary symbols, executable MSBuild, unreviewed dependencies/constraints and dynamic registration remain gaps",
+      "tests": [
+        "tests/aspnet-minimal.test.ts",
+        "tests/aspnet-mvc.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/frameworks/aspnet-profile.ts",
+          "contains": [
+            "reviewed bare .NET 8/9/10 families"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "net-http",
+      "label": "Go net/http",
+      "versions": "Recorded toolchain/language/debug inputs choose Go 1.21 legacy or Go 1.22+ ServeMux semantics",
+      "scope": "Original handlers, receiver ServeHTTP, mux/server construction, helper factories and proven serving",
+      "gaps": "No host defaults; absent/unknown startup inputs, dynamic serving and receiver dispatch remain constrained",
+      "tests": [
+        "tests/go-routers.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/frameworks/go-profile.ts",
+          "contains": [
+            "httpMuxGo121",
+            "Unreviewed GODEBUG default version"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chi",
+      "label": "Chi",
+      "versions": ">=5.2.0 <5.3.0",
+      "scope": "Canonical declared Go module, original reachable routers/groups/mounts/helpers and direct callbacks",
+      "gaps": "Lookalike/local replacements, broader versions, unknown options, custom middleware and dynamic/concurrent setup remain constrained",
+      "tests": [
+        "tests/go-routers.test.ts",
+        "tests/go-router-packs.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/languages/go-api.ts",
+          "contains": [
+            ">=5.2.0 <5.3.0"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gin",
+      "label": "Gin",
+      "versions": ">=1.10.0 <1.12.0",
+      "scope": "Canonical declared Go module, original reachable routers/groups/mounts/helpers and direct callbacks",
+      "gaps": "Lookalike/local replacements, broader versions, unknown options, custom middleware and dynamic/concurrent setup remain constrained",
+      "tests": [
+        "tests/go-routers.test.ts",
+        "tests/go-router-packs.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/languages/go-api.ts",
+          "contains": [
+            ">=1.10.0 <1.12.0"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "echo",
+      "label": "Echo",
+      "versions": ">=4.13.0 <4.14.0 or >=5.4.0 <5.5.0",
+      "scope": "Canonical declared Go module, original reachable routers/groups/mounts/helpers and direct callbacks",
+      "gaps": "Lookalike/local replacements, broader versions, unknown options, custom middleware and dynamic/concurrent setup remain constrained",
+      "tests": [
+        "tests/go-routers.test.ts",
+        "tests/go-router-packs.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/languages/go-api.ts",
+          "contains": [
+            ">=4.13.0 <4.14.0",
+            ">=5.4.0 <5.5.0"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fiber",
+      "label": "Fiber",
+      "versions": ">=2.52.0 <2.53.0 or >=3.5.0 <3.6.0",
+      "scope": "Canonical declared Go module, original reachable routers/groups/mounts/helpers and direct callbacks",
+      "gaps": "Lookalike/local replacements, broader versions, unknown options, custom middleware and dynamic/concurrent setup remain constrained",
+      "tests": [
+        "tests/go-routers.test.ts",
+        "tests/go-router-packs.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/languages/go-api.ts",
+          "contains": [
+            ">=2.52.0 <2.53.0",
+            ">=3.5.0 <3.6.0"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gorilla",
+      "label": "Gorilla Mux",
+      "versions": ">=1.8.0 <1.9.0",
+      "scope": "Canonical declared Go module, original reachable routers/groups/mounts/helpers and direct callbacks",
+      "gaps": "Lookalike/local replacements, broader versions, unknown options, custom middleware and dynamic/concurrent setup remain constrained",
+      "tests": [
+        "tests/go-routers.test.ts",
+        "tests/go-router-packs.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/languages/go-api.ts",
+          "contains": [
+            ">=1.8.0 <1.9.0"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "axum",
+      "label": "Axum",
+      "versions": ">=0.7.0 <0.8.0 or >=0.8.0 <0.9.0",
+      "scope": "Canonical crates.io identity under recorded Cargo targets/features/cfg, original router registrations, mounts and callbacks",
+      "gaps": "General proc-macro/type/trait expansion and unknown middleware/state/extractor runtime behavior remain constrained; reviewed wrapper contracts have narrower inputs",
+      "tests": [
+        "tests/rust-routers.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/frameworks/rust-profile.ts",
+          "contains": [
+            ">=0.7.0 <0.8.0",
+            ">=0.8.0 <0.9.0"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "actix",
+      "label": "Actix Web",
+      "versions": ">=4.0.0 <5.0.0",
+      "scope": "Canonical crates.io identity under recorded Cargo targets/features/cfg, original router registrations, mounts and callbacks",
+      "gaps": "General proc-macro/type/trait expansion and unknown middleware/state/extractor runtime behavior remain constrained; reviewed wrapper contracts have narrower inputs",
+      "tests": [
+        "tests/rust-routers.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/frameworks/rust-profile.ts",
+          "contains": [
+            ">=4.0.0 <5.0.0"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rocket",
+      "label": "Rocket",
+      "versions": ">=0.5.0 <0.6.0",
+      "scope": "Canonical crates.io identity under recorded Cargo targets/features/cfg, original router registrations, mounts and callbacks",
+      "gaps": "General proc-macro/type/trait expansion and unknown middleware/state/extractor runtime behavior remain constrained; reviewed wrapper contracts have narrower inputs",
+      "tests": [
+        "tests/rocket-routers.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/frameworks/rust-profile.ts",
+          "contains": [
+            ">=0.5.0 <0.6.0"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "warp",
+      "label": "Warp",
+      "versions": ">=0.3.0 <0.4.0 or >=0.4.0 <0.5.0; 0.4 serving requires server feature",
+      "scope": "Canonical crates.io identity under recorded Cargo targets/features/cfg, original router registrations, mounts and callbacks",
+      "gaps": "General proc-macro/type/trait expansion and unknown middleware/state/extractor runtime behavior remain constrained; reviewed wrapper contracts have narrower inputs",
+      "tests": [
+        "tests/warp-routers.test.ts"
+      ],
+      "sources": [
+        {
+          "file": "src/analysis/frameworks/rust-profile.ts",
+          "contains": [
+            ">=0.3.0 <0.4.0",
+            ">=0.4.0 <0.5.0"
+          ]
+        }
+      ]
+    }
+  ]
+}

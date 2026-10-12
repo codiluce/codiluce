@@ -121,3 +121,19 @@ Codiluce is licensed under [MIT](LICENSE). The package is configured for the pub
    Complete npm's authentication prompt. After publishing, verify the registry release with `npx codiluce@latest --version` and `npx codiluce@latest start /path/to/a/repository` (use the scoped name if applicable).
 
 For subsequent releases, commit your changes, run `npm version patch` (or `minor`/`major`), repeat validation and publish. Each published name/version pair can be used only once, even after unpublishing; see [npm publish](https://docs.npmjs.com/cli/v11/commands/npm-publish/). `npm pack` can also produce a tarball for testing or sharing before any registry release.
+
+## Language and framework profiles
+
+The [capability/version matrix](docs/analysis-capabilities.html) records every
+code language, reviewed framework family, original-source boundary and pinned
+parser asset. The [pack-author guide](docs/framework-pack-author-guide.html)
+describes the actual integration paths, indexed input and identity contracts,
+routing semantics, cache/history behavior and release evidence. Both are
+browser-accessible HTML pages.
+
+Edit `docs/compatibility-catalog.json` after reviewing the corresponding source
+profile and conformance inputs, then run
+`node scripts/generate-compatibility-docs.mjs`.
+`node scripts/generate-compatibility-docs.mjs --check` verifies that the language
+inventory, profile fragments, conformance paths, grammar/query inputs and
+packaged grammar checksums/licenses still match the generated pages.
