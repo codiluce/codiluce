@@ -1,0 +1,531 @@
+{
+  "schema": 1,
+  "scope": "Cold regular-file-only profiles of six pinned upstream heads. Explicit selected applications are source-analysis inputs, not runtime defaults or execution evidence. All 195 revisions, replay/history/performance and broader accuracy remain pending.",
+  "repositories": [
+    {
+      "id": "flask",
+      "commit": "d086db856be187255b8ec61ef409357393020f32",
+      "scope": "Reviewed source declarations at the pinned head; applications selected from original tracked manifests and paths. Unspecified build/runtime inputs remain unknown.",
+      "config": {
+        "repository": {
+          "name": "flask",
+          "id": "production-head-flask"
+        },
+        "applications": [
+          {
+            "name": "flask",
+            "path": ".",
+            "frameworks": [
+              "flask"
+            ],
+            "ecosystems": [
+              "python"
+            ],
+            "sourceRoots": {
+              "python": [
+                "src"
+              ]
+            }
+          }
+        ],
+        "ignore": [
+          "**/node_modules/**",
+          "**/vendor/**",
+          "**/.git/**",
+          "**/.next/**",
+          "**/storage/**",
+          "**/coverage/**",
+          "**/build/**",
+          "**/dist/**",
+          "**/out/**",
+          "**/.codiluce/**",
+          "**/.cache/**",
+          "**/.gradle/**",
+          "**/Pods/**",
+          "**/.venv/**",
+          "**/__pycache__/**",
+          "**/bootstrap/cache/**",
+          "**/public/phpmyadmin/**",
+          "**/__db__/**",
+          "**/.cursor/**",
+          "**/.agents/**",
+          "**/next-env.d.ts",
+          "**/*.generated.*",
+          "**/*.min.js",
+          "**/*.map",
+          "**/.env",
+          "**/.env.*",
+          "**/.htpasswd",
+          "**/*.pem",
+          "**/*.key",
+          "**/*.sqlite",
+          "**/*.db",
+          "**/*.log",
+          "**/target/**",
+          "**/obj/**",
+          "**/.build/**",
+          "**/DerivedData/**",
+          "**/.tox/**",
+          "**/.mypy_cache/**",
+          "**/.pytest_cache/**",
+          "**/.ruff_cache/**",
+          "**/*.egg-info/**",
+          "**/.svelte-kit/**",
+          "**/.nuxt/**",
+          "**/.output/**",
+          "**/.astro/**",
+          "**/.turbo/**",
+          "**/.parcel-cache/**",
+          "**/.vs/**",
+          "**/.bundle/**",
+          "**/.dart_tool/**",
+          "**/.kotlin/**",
+          "**/.bsp/**",
+          "**/.metals/**",
+          "**/.bloop/**",
+          "**/cmake-build-*/**"
+        ],
+        "maxFileBytes": 8388608
+      }
+    },
+    {
+      "id": "memos",
+      "commit": "b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e",
+      "scope": "Reviewed source declarations at the pinned head; applications selected from original tracked manifests and paths. Unspecified build/runtime inputs remain unknown.",
+      "config": {
+        "repository": {
+          "name": "memos",
+          "id": "production-head-memos"
+        },
+        "applications": [
+          {
+            "name": "memos",
+            "path": ".",
+            "frameworks": [],
+            "ecosystems": [
+              "go"
+            ]
+          },
+          {
+            "name": "memos-web",
+            "path": "web",
+            "frameworks": [],
+            "ecosystems": [
+              "node"
+            ]
+          }
+        ],
+        "ignore": [
+          "**/node_modules/**",
+          "**/vendor/**",
+          "**/.git/**",
+          "**/.next/**",
+          "**/storage/**",
+          "**/coverage/**",
+          "**/build/**",
+          "**/dist/**",
+          "**/out/**",
+          "**/.codiluce/**",
+          "**/.cache/**",
+          "**/.gradle/**",
+          "**/Pods/**",
+          "**/.venv/**",
+          "**/__pycache__/**",
+          "**/bootstrap/cache/**",
+          "**/public/phpmyadmin/**",
+          "**/__db__/**",
+          "**/.cursor/**",
+          "**/.agents/**",
+          "**/next-env.d.ts",
+          "**/*.generated.*",
+          "**/*.min.js",
+          "**/*.map",
+          "**/.env",
+          "**/.env.*",
+          "**/.htpasswd",
+          "**/*.pem",
+          "**/*.key",
+          "**/*.sqlite",
+          "**/*.db",
+          "**/*.log",
+          "**/target/**",
+          "**/obj/**",
+          "**/.build/**",
+          "**/DerivedData/**",
+          "**/.tox/**",
+          "**/.mypy_cache/**",
+          "**/.pytest_cache/**",
+          "**/.ruff_cache/**",
+          "**/*.egg-info/**",
+          "**/.svelte-kit/**",
+          "**/.nuxt/**",
+          "**/.output/**",
+          "**/.astro/**",
+          "**/.turbo/**",
+          "**/.parcel-cache/**",
+          "**/.vs/**",
+          "**/.bundle/**",
+          "**/.dart_tool/**",
+          "**/.kotlin/**",
+          "**/.bsp/**",
+          "**/.metals/**",
+          "**/.bloop/**",
+          "**/cmake-build-*/**"
+        ],
+        "maxFileBytes": 8388608
+      }
+    },
+    {
+      "id": "bookstack",
+      "commit": "ff661b59f6f605bf768fe850c0d0a8a2dc09d203",
+      "scope": "Reviewed source declarations at the pinned head; applications selected from original tracked manifests and paths. Unspecified build/runtime inputs remain unknown.",
+      "config": {
+        "repository": {
+          "name": "bookstack",
+          "id": "production-head-bookstack"
+        },
+        "applications": [
+          {
+            "name": "bookstack",
+            "path": ".",
+            "frameworks": [
+              "laravel"
+            ],
+            "ecosystems": [
+              "php"
+            ]
+          }
+        ],
+        "ignore": [
+          "**/node_modules/**",
+          "**/vendor/**",
+          "**/.git/**",
+          "**/.next/**",
+          "**/storage/**",
+          "**/coverage/**",
+          "**/build/**",
+          "**/dist/**",
+          "**/out/**",
+          "**/.codiluce/**",
+          "**/.cache/**",
+          "**/.gradle/**",
+          "**/Pods/**",
+          "**/.venv/**",
+          "**/__pycache__/**",
+          "**/bootstrap/cache/**",
+          "**/public/phpmyadmin/**",
+          "**/__db__/**",
+          "**/.cursor/**",
+          "**/.agents/**",
+          "**/next-env.d.ts",
+          "**/*.generated.*",
+          "**/*.min.js",
+          "**/*.map",
+          "**/.env",
+          "**/.env.*",
+          "**/.htpasswd",
+          "**/*.pem",
+          "**/*.key",
+          "**/*.sqlite",
+          "**/*.db",
+          "**/*.log",
+          "**/target/**",
+          "**/obj/**",
+          "**/.build/**",
+          "**/DerivedData/**",
+          "**/.tox/**",
+          "**/.mypy_cache/**",
+          "**/.pytest_cache/**",
+          "**/.ruff_cache/**",
+          "**/*.egg-info/**",
+          "**/.svelte-kit/**",
+          "**/.nuxt/**",
+          "**/.output/**",
+          "**/.astro/**",
+          "**/.turbo/**",
+          "**/.parcel-cache/**",
+          "**/.vs/**",
+          "**/.bundle/**",
+          "**/.dart_tool/**",
+          "**/.kotlin/**",
+          "**/.bsp/**",
+          "**/.metals/**",
+          "**/.bloop/**",
+          "**/cmake-build-*/**"
+        ],
+        "maxFileBytes": 8388608
+      }
+    },
+    {
+      "id": "firefly-iii",
+      "commit": "57371b9f82debbf90e6453aba8af585e8c382617",
+      "scope": "Reviewed source declarations at the pinned head; applications selected from original tracked manifests and paths. Unspecified build/runtime inputs remain unknown.",
+      "config": {
+        "repository": {
+          "name": "firefly-iii",
+          "id": "production-head-firefly-iii"
+        },
+        "applications": [
+          {
+            "name": "firefly-iii",
+            "path": ".",
+            "frameworks": [
+              "laravel"
+            ],
+            "ecosystems": [
+              "php"
+            ]
+          }
+        ],
+        "ignore": [
+          "**/node_modules/**",
+          "**/vendor/**",
+          "**/.git/**",
+          "**/.next/**",
+          "**/storage/**",
+          "**/coverage/**",
+          "**/build/**",
+          "**/dist/**",
+          "**/out/**",
+          "**/.codiluce/**",
+          "**/.cache/**",
+          "**/.gradle/**",
+          "**/Pods/**",
+          "**/.venv/**",
+          "**/__pycache__/**",
+          "**/bootstrap/cache/**",
+          "**/public/phpmyadmin/**",
+          "**/__db__/**",
+          "**/.cursor/**",
+          "**/.agents/**",
+          "**/next-env.d.ts",
+          "**/*.generated.*",
+          "**/*.min.js",
+          "**/*.map",
+          "**/.env",
+          "**/.env.*",
+          "**/.htpasswd",
+          "**/*.pem",
+          "**/*.key",
+          "**/*.sqlite",
+          "**/*.db",
+          "**/*.log",
+          "**/target/**",
+          "**/obj/**",
+          "**/.build/**",
+          "**/DerivedData/**",
+          "**/.tox/**",
+          "**/.mypy_cache/**",
+          "**/.pytest_cache/**",
+          "**/.ruff_cache/**",
+          "**/*.egg-info/**",
+          "**/.svelte-kit/**",
+          "**/.nuxt/**",
+          "**/.output/**",
+          "**/.astro/**",
+          "**/.turbo/**",
+          "**/.parcel-cache/**",
+          "**/.vs/**",
+          "**/.bundle/**",
+          "**/.dart_tool/**",
+          "**/.kotlin/**",
+          "**/.bsp/**",
+          "**/.metals/**",
+          "**/.bloop/**",
+          "**/cmake-build-*/**"
+        ],
+        "maxFileBytes": 8388608
+      }
+    },
+    {
+      "id": "axum",
+      "commit": "618496288c41da835683ec149432c4869722779f",
+      "scope": "Reviewed source declarations at the pinned head; applications selected from original tracked manifests and paths. Unspecified build/runtime inputs remain unknown.",
+      "config": {
+        "repository": {
+          "name": "axum",
+          "id": "production-head-axum"
+        },
+        "applications": [
+          {
+            "name": "axum",
+            "path": ".",
+            "frameworks": [
+              "axum"
+            ],
+            "ecosystems": [
+              "rust"
+            ]
+          },
+          {
+            "name": "axum-hello-world",
+            "path": "examples/hello-world",
+            "frameworks": [
+              "axum"
+            ],
+            "ecosystems": [
+              "rust"
+            ]
+          }
+        ],
+        "ignore": [
+          "**/node_modules/**",
+          "**/vendor/**",
+          "**/.git/**",
+          "**/.next/**",
+          "**/storage/**",
+          "**/coverage/**",
+          "**/build/**",
+          "**/dist/**",
+          "**/out/**",
+          "**/.codiluce/**",
+          "**/.cache/**",
+          "**/.gradle/**",
+          "**/Pods/**",
+          "**/.venv/**",
+          "**/__pycache__/**",
+          "**/bootstrap/cache/**",
+          "**/public/phpmyadmin/**",
+          "**/__db__/**",
+          "**/.cursor/**",
+          "**/.agents/**",
+          "**/next-env.d.ts",
+          "**/*.generated.*",
+          "**/*.min.js",
+          "**/*.map",
+          "**/.env",
+          "**/.env.*",
+          "**/.htpasswd",
+          "**/*.pem",
+          "**/*.key",
+          "**/*.sqlite",
+          "**/*.db",
+          "**/*.log",
+          "**/target/**",
+          "**/obj/**",
+          "**/.build/**",
+          "**/DerivedData/**",
+          "**/.tox/**",
+          "**/.mypy_cache/**",
+          "**/.pytest_cache/**",
+          "**/.ruff_cache/**",
+          "**/*.egg-info/**",
+          "**/.svelte-kit/**",
+          "**/.nuxt/**",
+          "**/.output/**",
+          "**/.astro/**",
+          "**/.turbo/**",
+          "**/.parcel-cache/**",
+          "**/.vs/**",
+          "**/.bundle/**",
+          "**/.dart_tool/**",
+          "**/.kotlin/**",
+          "**/.bsp/**",
+          "**/.metals/**",
+          "**/.bloop/**",
+          "**/cmake-build-*/**"
+        ],
+        "maxFileBytes": 8388608
+      }
+    },
+    {
+      "id": "full-stack-fastapi",
+      "commit": "f27b4721507824e57ebd0286ff1a84d82e83bf59",
+      "scope": "Reviewed source declarations at the pinned head; applications selected from original tracked manifests and paths. Unspecified build/runtime inputs remain unknown.",
+      "config": {
+        "repository": {
+          "name": "full-stack-fastapi",
+          "id": "production-head-full-stack-fastapi"
+        },
+        "applications": [
+          {
+            "name": "fastapi-backend",
+            "path": "backend",
+            "frameworks": [
+              "fastapi"
+            ],
+            "ecosystems": [
+              "python"
+            ],
+            "sourceRoots": {
+              "python": [
+                "."
+              ]
+            },
+            "entrypoints": {
+              "fastapi": [
+                "app.main:app"
+              ]
+            }
+          },
+          {
+            "name": "fastapi-frontend",
+            "path": "frontend",
+            "frameworks": [],
+            "ecosystems": [
+              "node"
+            ]
+          }
+        ],
+        "ignore": [
+          "**/node_modules/**",
+          "**/vendor/**",
+          "**/.git/**",
+          "**/.next/**",
+          "**/storage/**",
+          "**/coverage/**",
+          "**/build/**",
+          "**/dist/**",
+          "**/out/**",
+          "**/.codiluce/**",
+          "**/.cache/**",
+          "**/.gradle/**",
+          "**/Pods/**",
+          "**/.venv/**",
+          "**/__pycache__/**",
+          "**/bootstrap/cache/**",
+          "**/public/phpmyadmin/**",
+          "**/__db__/**",
+          "**/.cursor/**",
+          "**/.agents/**",
+          "**/next-env.d.ts",
+          "**/*.generated.*",
+          "**/*.min.js",
+          "**/*.map",
+          "**/.env",
+          "**/.env.*",
+          "**/.htpasswd",
+          "**/*.pem",
+          "**/*.key",
+          "**/*.sqlite",
+          "**/*.db",
+          "**/*.log",
+          "**/target/**",
+          "**/obj/**",
+          "**/.build/**",
+          "**/DerivedData/**",
+          "**/.tox/**",
+          "**/.mypy_cache/**",
+          "**/.pytest_cache/**",
+          "**/.ruff_cache/**",
+          "**/*.egg-info/**",
+          "**/.svelte-kit/**",
+          "**/.nuxt/**",
+          "**/.output/**",
+          "**/.astro/**",
+          "**/.turbo/**",
+          "**/.parcel-cache/**",
+          "**/.vs/**",
+          "**/.bundle/**",
+          "**/.dart_tool/**",
+          "**/.kotlin/**",
+          "**/.bsp/**",
+          "**/.metals/**",
+          "**/.bloop/**",
+          "**/cmake-build-*/**"
+        ],
+        "maxFileBytes": 8388608
+      }
+    }
+  ]
+}
