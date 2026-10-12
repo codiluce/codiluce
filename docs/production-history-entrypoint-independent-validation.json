@@ -1,0 +1,123 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-12T19:09:13.322140+00:00",
+  "phase": "P10d2b2b2b2c7c2b-independent-entrypoint-column-auditor-and-exact-qualification-conformance",
+  "scope": "Reusable implementation/conformance plus completed Flask/Memos observations; full six-repository fresh job remains active",
+  "targetedTests": 165,
+  "failedFinalTests": 0,
+  "implementationFiles": [
+    {
+      "file": "scripts/audit-history-entrypoint-columns.py",
+      "sha256": "ffc691b4fc847f6e72869fc7c64d3e7b14a7d3130ecad1df618d8d9b9ed771b4"
+    },
+    {
+      "file": "scripts/qualify-production-history-entrypoint.mjs",
+      "sha256": "11452fd85fe684e993eb761dedbfb3d0044d1a3017215412928b781666d7e87d"
+    },
+    {
+      "file": "scripts/tests/production-history-entrypoint-columns.test.mjs",
+      "sha256": "e727280ff836fbc15014a52a6cc9dcd5dd2934c4cc0969a1378513c156ce1b80"
+    },
+    {
+      "file": "scripts/tests/production-history-entrypoint-qualification.test.mjs",
+      "sha256": "45bde87824f7289b4debf07f137429ba8877d27a052f4a7a21767413b5954354"
+    }
+  ],
+  "logs": [
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-fresh/entrypoint-column-conformance.log",
+      "sha256": "7255705e8625da926fd4be0a2c4ccdb929e12a63eb53827bbdcb2701728eb1fd"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-fresh/entrypoint-qualification-conformance-first.log",
+      "sha256": "597888250f821fba30dff0e2d89929690710d755bb107b8cdbea32886b233813"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-fresh/entrypoint-independent-targeted-final.log",
+      "sha256": "586120807938b7556933d42737f64a74e990176e25f83e709748d23101e1ba64"
+    }
+  ],
+  "completedIndependentAudits": [
+    {
+      "id": "flask",
+      "revisions": 35,
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-fresh/flask-entrypoint-terminal-columns.json",
+      "sha256": "612f4f06f181bedccbb257d0411b5cefff1bc2374a746dfb559152a3177415dd",
+      "inputSnapshot": {
+        "file": "/var/www/html/codiluce/.codiluce/validation-production-history-fresh/flask-entrypoint-terminal-columns.json.inputs.json",
+        "sha256": "fcb38c9817a53e3997e098dfd5c6e3aa3e05ce1d3364dffc942c4b0330204f31"
+      },
+      "databaseSha256": "2128d2960792eaee9c0e487c3af2f5f5a071faefbd452672ec8dfa51bae62077",
+      "tables": 7
+    },
+    {
+      "id": "memos",
+      "revisions": 32,
+      "file": "/var/www/html/codiluce/.codiluce/validation-production-history-fresh/memos-entrypoint-terminal-columns.json",
+      "sha256": "c71dcfd488a54c5b64ab890accb43ad66a56739e81de8f7c8c2258a0505f08db",
+      "inputSnapshot": {
+        "file": "/var/www/html/codiluce/.codiluce/validation-production-history-fresh/memos-entrypoint-terminal-columns.json.inputs.json",
+        "sha256": "eae1ce2898430fadee3258229604766fbf78a2e8e89d0b1784b2f2763093bb88"
+      },
+      "databaseSha256": "43593d8a174fc25a3e0a3d13dfd43de993cabe82b1e6bb482c35c26bf2b1946a",
+      "tables": 7
+    }
+  ],
+  "runtimeSourceChanged": false,
+  "engineSha256": "ca1b330152267c80ce02d35c57138928da4f69e4d3817f61ff03987584dded4a",
+  "engineFiles": 1924,
+  "corpusController": {
+    "pid": 2946494,
+    "childPid": 2946495,
+    "startedAt": 1791830998.9795837,
+    "args": [
+      "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+      "--experimental-sqlite",
+      "--import",
+      "tsx",
+      "scripts/observe-production-history-entrypoint.mjs",
+      "--engine-identity",
+      "/var/www/html/codiluce/.codiluce/validation-production-history-fresh/engine-identity.json",
+      "--git-metadata",
+      "/var/www/html/codiluce/.codiluce/validation-rust-evidence-fast/git-metadata-final/git-metadata.json",
+      "--baseline",
+      "/var/www/html/codiluce/.codiluce/validation-production-history-corpus-exact/receipt.json",
+      "--qualification",
+      "/var/www/html/codiluce/docs/production-history-complete-receipt.json",
+      "--output",
+      "/var/www/html/codiluce/.codiluce/validation-production-history-fresh/corpus",
+      "--source",
+      "flask=/var/www/html/codiluce/examples/flask",
+      "--source",
+      "memos=/var/www/html/codiluce/examples/memos",
+      "--source",
+      "bookstack=/var/www/html/codiluce/examples/bookstack",
+      "--source",
+      "firefly-iii=/var/www/html/codiluce/examples/firefly-iii",
+      "--source",
+      "axum=/var/www/html/codiluce/examples/axum",
+      "--source",
+      "full-stack-fastapi=/var/www/html/codiluce/examples/full-stack-fastapi"
+    ]
+  },
+  "checks": [
+    "All seven SQLite snapshot/version/membership tables independently streamed by standard-library Python",
+    "Actual worker UUID/sequence/commit join; completed row immutable while other parent rows advance",
+    "Pending/live process, hidden Unicode payload loss, UUID substitution and output-inside-observation refusal",
+    "Twenty-two exact-qualification conformance cases with reversed worker birth and source/graph/commit/ACK/geometry/registry substitutions",
+    "Final artifact command requires exact full original six-repository corpus, process terminal/controller identity, frozen runtime and original/fresh database bytes; actual full-corpus execution still pending",
+    "Failure receipts and captured input bytes retained; no evidence overwrite"
+  ],
+  "full195RevisionEntrypointQualified": false,
+  "relativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullGoalFinished": false,
+  "foreignFiles": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  }
+}
