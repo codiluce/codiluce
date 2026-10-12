@@ -62,6 +62,7 @@ export const typescriptAnalyzer: Analyzer = {
     for (const file of resolutionFiles) if (file.analyzable) sources.readFile(file.absolutePath);
     const services = createTypeScriptServices(context);
     for (const component of typescriptComponents(context, services)) {
+      try {
       const files = component.flatMap(project => project.inputs);
       const inputsAvailable = files.map(file => sources.readFile(file.absolutePath) !== undefined).every(Boolean) && !sources.failures.size;
       const run = () => analyzeComponent(context, component, services);
@@ -69,6 +70,12 @@ export const typescriptAnalyzer: Analyzer = {
       const unit = component.length === 1 ? component[0]!.project.name : `group:${component.map(runtime => runtime.project.root).sort().join(',')}`;
       if (context.cache && inputsAvailable) await context.cache.unit(context, 'typescript-nextjs', unit, { projects: component.map(runtime => runtime.project), options: component.map(runtime => services.resolver.options.get(runtime.project.id)), files: files.map(file => fileKey(context, file.path)), resolutionInputs, paths: pathSetKey(context), config: context.config, applications: [...context.applicationIds], typescript: ts.version, http: HTTP_ANALYSIS_VERSION, embedded: EMBEDDED_VERSION, packs: typescriptFrameworkPacks.map(pack => [pack.id, pack.version]) }, run);
       else await run();
+      } finally {
+        // Every framework/reference/HTTP consumer in this dependency component
+        // has completed. Later programs recover identities by exact source site
+        // and graph ranges, rather than keeping earlier programs and AST owners.
+        for(const runtime of component)runtime.releaseProgram();
+      }
     }
     for (const [file, reason] of sources.failures) context.graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'indexed-source-unavailable', file, entityId: context.files.get(file)?.id, reason });
   },

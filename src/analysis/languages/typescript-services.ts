@@ -16,11 +16,21 @@ import { nuxtConfiguration, type NuxtConfig } from '../frameworks/nuxt-config.js
  * programs. Each program keeps its own options, checker and global scope. */
 export class DeclarationIndex extends Map<ts.Node, Entity> {
   private readonly bySite = new Map<string, Entity>();
+  private sourceNodes = new WeakMap<ts.SourceFile,Set<ts.Node>>();
   private site(node: ts.Node): string | undefined { const source = node.getSourceFile(); return source ? JSON.stringify([source.fileName, node.kind, node.getStart(source), node.end]) : undefined; }
-  override set(node: ts.Node, entity: Entity): this { const site = this.site(node); if (site) this.bySite.set(site, entity); return super.set(node, entity); }
+  override set(node: ts.Node, entity: Entity): this {
+    const site = this.site(node); if (site) this.bySite.set(site, entity);
+    const source=node.getSourceFile();if(source){let nodes=this.sourceNodes.get(source);if(!nodes){nodes=new Set();this.sourceNodes.set(source,nodes);}nodes.add(node);}
+    return super.set(node, entity);
+  }
   override get(node: ts.Node): Entity | undefined { const direct = super.get(node); if (direct) return direct; const site = this.site(node); return site ? this.bySite.get(site) : undefined; }
   override has(node: ts.Node): boolean { return this.get(node) !== undefined; }
-  override clear(): void { super.clear(); this.bySite.clear(); }
+  override delete(node:ts.Node):boolean {const source=node.getSourceFile();if(source){const nodes=this.sourceNodes.get(source);nodes?.delete(node);if(!nodes?.size)this.sourceNodes.delete(source);}return super.delete(node);}
+  /** Keep exact source-site identities without owning retired compiler trees.
+   * The graph already owns each entity; these keys contain only plain spans. */
+  releaseSourceFiles(sources:readonly ts.SourceFile[]):void {for(const source of sources){for(const node of this.sourceNodes.get(source)??[])super.delete(node);this.sourceNodes.delete(source);}}
+  ownershipStats(){return {nodeKeys:this.size,sourceSites:this.bySite.size};}
+  override clear(): void { super.clear(); this.bySite.clear(); this.sourceNodes=new WeakMap(); }
 }
 export interface TypeScriptProject {
   project: NodeProject; files: ScannedFile[]; inputs: ScannedFile[];
@@ -122,7 +132,7 @@ export function createTypeScriptServices(context: AnalysisContext): TypeScriptSe
       },
       owners(source) { let owners = bySource.get(source); if (!owners) { owners = restoreOwners(context, source, declarations); bySource.set(source, owners); } return owners; },
       rememberOwners(source, owners) { bySource.set(source, owners); },
-      releaseProgram() { program = undefined; bySource.clear(); },
+      releaseProgram() { if(program)declarations.releaseSourceFiles(program.getSourceFiles());program = undefined;bySource.clear(); },
     };
     return runtime;
   }).filter(project => project.inputs.length);

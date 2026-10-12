@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-12T21:57:53.782091+00:00",
+  "phase": "TypeScript compiler dependency-component lifetime construction candidate",
+  "scope": "Isolated constructor and 165 targeted regressions; complete release/original-production qualification pending",
+  "sourceBranch": "compat/typescript-component-lifetimes",
+  "baselineCommit": "5659e31a573d640b7430a62ba8a0235764460a16",
+  "baselineCandidateEngineSha256": "24ecfc98e0a04ad5eacfdaa75f3914632e215dbbd1972b6aee445031cb2a2f67",
+  "mainEngineSha256": "ca1b330152267c80ce02d35c57138928da4f69e4d3817f61ff03987584dded4a",
+  "runtimeSourceDifferences": [
+    {
+      "file": "src/analysis/languages/typescript-services.ts",
+      "before": "d9c1d62e7e8389722f7fffab33b28b81eec23ee33abb7dbc0c50bf2db2aa236d",
+      "after": "a55a5f9de6d1f9b25125eee5cb8f52d56ea75dca0f73d39dca03ec3f5348ffac"
+    },
+    {
+      "file": "src/analyzers/typescript.ts",
+      "before": "9a7ec787bd1dfedbe4db03ee7ed07ace9b9c408a769942436e8c8cf2ad5cc6cd",
+      "after": "d7d31fdf8dc5d741a9f5f7017b2d22fdc692536437315613bbe6064dd47214ee"
+    }
+  ],
+  "newTests": 5,
+  "targetedTests": 165,
+  "failedFinalTests": 0,
+  "skippedTests": 0,
+  "engineAndTestTypecheckPassed": true,
+  "changes": [
+    "Finished dependency components release each project program and per-source AST owner maps after all framework/reference/HTTP consumers complete",
+    "Declaration index removes only node-key ownership for retired source files; exact plain source-site entity identities remain available across separate compiler instances",
+    "Failure paths release all prepared projects in the component through finally; lazy requests recover declaration owners from original graph ranges",
+    "Default graph producer versions and semantic facts unchanged; no input, declaration, diagnostic, route or handler is discarded"
+  ],
+  "checks": [
+    "Only retired source-file AST keys released; separate source-node registration, replacement, explicit deletion and clear remain coherent",
+    "Actual independent workspace components release prior AST owner keys before another component begins; connected imported handler producer remains in the same component",
+    "Complete working-tree cold, actual graph-cache warm and revision graphs match the prior retained-program lifetime, changing only run UUID/time",
+    "Actual Express imported handler and direct source-leaf relations retain original identity and ranges",
+    "Injected framework failure releases prepared compiler owners; post-release lazy rebuild preserves exact original graph entity IDs without duplicate declarations",
+    "Existing Express/Nest/component/workspace/cache/indexed-I/O and source-cache regressions pass"
+  ],
+  "retainedFailures": [
+    "Initial observer incorrectly required declarations in every file; corrected to component-level ownership",
+    "Observer wrongly assumed project-name ordering; revised to accept the actual deterministic component identity ordering",
+    "Duplicate mock wrapping corrected and readonly pack array cast confined to owned test observers",
+    "Slow failed observation completed terminally after about 128 seconds; exact timing cause remains unproven. New diagnostic run completes in about 2.5 seconds. All initial logs/fixtures remain."
+  ],
+  "files": [
+    {
+      "file": "src/analysis/languages/typescript-services.ts",
+      "sha256": "a55a5f9de6d1f9b25125eee5cb8f52d56ea75dca0f73d39dca03ec3f5348ffac"
+    },
+    {
+      "file": "src/analyzers/typescript.ts",
+      "sha256": "d7d31fdf8dc5d741a9f5f7017b2d22fdc692536437315613bbe6064dd47214ee"
+    },
+    {
+      "file": "tests/typescript-component-lifetimes.test.ts",
+      "sha256": "db72beb37cc85e8061579ef1ce6cada5bf1a8d56254106a8ca986b0903fc3c68"
+    }
+  ],
+  "logs": [
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-conformance-first.log",
+      "sha256": "a1d93f089962c783184ae4f6e32b33cca6c6b5c2184497b99ceb583f68ac3b54"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-conformance-final.log",
+      "sha256": "bc570fe25deb490570d9ee95adac7631b5029598b4fefcd70e815f77f2aa7ba6"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-conformance-order-diagnostic.log",
+      "sha256": "7deb146da79fba48482d91d75680dc9ff49c3d787362d3637d78c480d3d975fd"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-typecheck-first.log",
+      "sha256": "3905646c4808bb318995d82deec1310d7090dc97bf241797fd6a03a97b3d2ee2"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-typecheck-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/component-targeted-regressions.log",
+      "sha256": "928bb9e4bb84c1c52f9404425fa9e08b7f37548b2a94be2bebc6e6190081ee9b"
+    }
+  ],
+  "mainRuntimeChanged": false,
+  "previousQualifiedCandidateChanged": false,
+  "candidateConstructionPassed": true,
+  "candidateFullReleaseQualified": false,
+  "candidateOriginalProductionHistoryQualified": false,
+  "candidateRelativeHistoryTimeRssQualified": false,
+  "broaderCompilerConsumerWasmRssBudgetQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "mainIntegrationPending": true,
+  "fullGoalFinished": false,
+  "liveBenchmark": {
+    "controllerPid": 3116124,
+    "childPid": 3116142,
+    "completedProbes": 11,
+    "currentProbe": {
+      "id": "memos",
+      "label": "current",
+      "repetition": 2,
+      "status": "running"
+    },
+    "sameFrozenRun": true
+  },
+  "foreignFiles": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  }
+}
