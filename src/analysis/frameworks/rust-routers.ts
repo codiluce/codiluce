@@ -1,7 +1,7 @@
 import type { AnalysisContext, Analyzer } from '../../core/analyzer.js';
 import { evidence, type Evidence, type SourceRange } from '../../core/graph.js';
 import { fileAnalysis, type RustBindingFact, type RustExpression, type RustSite } from '../facts.js';
-import { RustSymbols, type RustDefinition } from '../languages/rust-symbols.js';
+import { RustSymbols, RUST_SYMBOL_VERSION, type RustDefinition } from '../languages/rust-symbols.js';
 import { rustAnd, rustCfg, rustEmptyTokenTree, rustSplit } from '../languages/rust-cfg.js';
 import { RustResolver, RUST_RESOLVER_VERSION, type RustScope } from '../resolution/rust.js';
 import { rustWebNamespaceReader } from './rust-derive-namespace.js';
@@ -1457,7 +1457,7 @@ export const rustRoutersAnalyzer: Analyzer = { name: 'rust-routers', version: RU
             return;
         const base = context.rust, macros = new RustWebMacros(base), resolver = new RustResolver(context, rustWebAttributeReader(base,macros.recordExclusion), macros.read, rustWebNamespaceReader(base)), symbols = new RustSymbols(context, resolver);
         const run = async () => { new RustRegistrations(context, base, symbols, macros).run(); };
-        const key = { version: RUST_ROUTER_VERSION, resolver: RUST_RESOLVER_VERSION, structure: STRUCTURE_VERSION, config: context.config, compilations: resolver.projects.describeCompilations(), projects: resolver.projects.describe(), files: [...context.files.values()].filter(file => file.language === 'rust' || file.language === 'toml').map(file => [fileKey(context, file.path), context.syntax?.get(file.path)?.facts.rust?.semantic?.complete ?? false]), inventory: [...context.fileInventory ?? []].sort(), directories: [...context.directoryInventory ?? []].sort() };
+        const key = { version: RUST_ROUTER_VERSION, symbols: RUST_SYMBOL_VERSION, resolver: RUST_RESOLVER_VERSION, structure: STRUCTURE_VERSION, config: context.config, compilations: resolver.projects.describeCompilations(), projects: resolver.projects.describe(), files: [...context.files.values()].filter(file => file.language === 'rust' || file.language === 'toml').map(file => [fileKey(context, file.path), context.syntax?.get(file.path)?.facts.rust?.semantic?.complete ?? false]), inventory: [...context.fileInventory ?? []].sort(), directories: [...context.directoryInventory ?? []].sort() };
         if (context.cache)
             await context.cache.unit(context, 'rust-routers', 'repository', key, run);
         else

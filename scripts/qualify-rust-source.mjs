@@ -10,6 +10,7 @@ import { indexRepository } from '../src/pipeline/index.ts';
 import { resolveConfig } from '../src/core/config.ts';
 import { AnalysisCache } from '../src/pipeline/cache.ts';
 import { canonicalJson } from '../src/history/fingerprint.ts';
+import { rustOutcomeEvidence } from '../src/analysis/rust-evidence.ts';
 const args = process.argv.slice(2), option = name => args.includes(name) ? args[args.indexOf(name) + 1] : undefined;
 assert.ok(option('--source') && option('--commit'), '--source and --commit required');
 const source = path.resolve(option('--source')), git = params => execFileSync('git', params, { cwd: source, maxBuffer: 32 << 20 });
@@ -70,7 +71,8 @@ try {
             range(original.path, original.sourceRange);
         }
     }
-    const calls=units.flatMap(unit=>(unit.metadata.rustCallOutcomes??[]).map(item=>({file:unit.path,...item}))), references=units.flatMap(unit=>(unit.metadata.rustReferenceOutcomes??[]).map(item=>({file:unit.path,...item}))), symbols=cold.relations.filter(e=>['calls','references'].includes(e.type)&&e.metadata?.adapter==='rust');
+    const outcomes=(key)=>units.flatMap(unit=>(unit.metadata[key]??[]).map(item=>({file:unit.path,...item,proof:rustOutcomeEvidence(unit.metadata,item)})));
+    const calls=outcomes('rustCallOutcomes'), references=outcomes('rustReferenceOutcomes'), symbols=cold.relations.filter(e=>['calls','references'].includes(e.type)&&e.metadata?.adapter==='rust');
     for(const item of [...calls,...references]){range(item.file,item.range);assert.ok(compilationIds.has(item.compilation));assert.ok(identities.has(item.owner));if(item.status==='resolved'){assert.equal(item.conditions.length,0);const target=identities.get(item.target);assert.ok(target?.language==='rust');range(target.path,target.sourceRange);}else assert.equal(item.target,undefined,'uncertified operand has no winner');}
     for(const edge of symbols){const from=identities.get(edge.from),to=identities.get(edge.to);assert.ok(blobs.has(from.path)&&blobs.has(to.path));assert.ok(compilationIds.has(edge.metadata.compilation));assert.equal(edge.metadata.status,'resolved');assert.equal(edge.metadata.conditions.length,0);range(to.path,to.sourceRange);assert.ok(edge.evidence.some(e=>e.file===from.path&&e.line>0));for(const fact of edge.evidence){assert.ok(blobs.has(fact.file));assert.ok(fact.line>0&&fact.line<=blobs.get(fact.file).split('\n').length);}}
     const routers=cold.entities.filter(entity=>entity.type==='api_endpoint'&&entity.language==='rust'),handles=cold.relations.filter(relation=>relation.type==='handles'&&routers.some(endpoint=>endpoint.id===relation.from)),frameworkCalls=cold.relations.filter(relation=>relation.type==='calls'&&relation.metadata?.adapter==='rust-routers');

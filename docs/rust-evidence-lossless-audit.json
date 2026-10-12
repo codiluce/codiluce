@@ -1,0 +1,180 @@
+{
+  "schema": 1,
+  "completeOriginalRecordsIndependentlyDecodedAndCompared": true,
+  "sixHeadsCompared": 6,
+  "normalizationOnly": [
+    "Run UUID and analyzedAt",
+    "Rust symbol producer 2 to predecessor 1 in source Evidence and Rust symbol outcome/relation metadata",
+    "Expand file-local ordered proofRefs using every table entry field; remove only the storage container"
+  ],
+  "noProofOrderMultiplicityOrSemanticFieldsDropped": true,
+  "allFiveNonRustFullBodiesEqual": true,
+  "allCompactAdmissionFailures": 0,
+  "runtimePerformanceQualified": false,
+  "physicalRSSQualified": false,
+  "underExisting256MiBGraphReader": true,
+  "elapsedSeconds": 52.20019578933716,
+  "totals": {
+    "files": 147,
+    "proofs": 157579,
+    "proofReferences": 1919353,
+    "distinctEvidence": 14172,
+    "evidenceBytes": 2928199,
+    "referenceBytes": 4623057
+  },
+  "results": [
+    {
+      "id": "flask",
+      "oldBytes": 4004558,
+      "newBytes": 4004558,
+      "counts": {
+        "entities": 1930,
+        "relations": 3424,
+        "diagnostics": 82
+      },
+      "completeRecordEquivalence": true,
+      "allOriginalJSONFieldsAndOrderedArraysRetained": true,
+      "storage": {},
+      "largestTables": [],
+      "largestReferenceFiles": []
+    },
+    {
+      "id": "memos",
+      "oldBytes": 67344062,
+      "newBytes": 67344062,
+      "counts": {
+        "entities": 11356,
+        "relations": 44453,
+        "diagnostics": 75
+      },
+      "completeRecordEquivalence": true,
+      "allOriginalJSONFieldsAndOrderedArraysRetained": true,
+      "storage": {},
+      "largestTables": [],
+      "largestReferenceFiles": []
+    },
+    {
+      "id": "bookstack",
+      "oldBytes": 77118866,
+      "newBytes": 77118866,
+      "counts": {
+        "entities": 12380,
+        "relations": 37038,
+        "diagnostics": 148
+      },
+      "completeRecordEquivalence": true,
+      "allOriginalJSONFieldsAndOrderedArraysRetained": true,
+      "storage": {},
+      "largestTables": [],
+      "largestReferenceFiles": []
+    },
+    {
+      "id": "firefly-iii",
+      "oldBytes": 110767552,
+      "newBytes": 110767552,
+      "counts": {
+        "entities": 13894,
+        "relations": 30552,
+        "diagnostics": 137
+      },
+      "completeRecordEquivalence": true,
+      "allOriginalJSONFieldsAndOrderedArraysRetained": true,
+      "storage": {},
+      "largestTables": [],
+      "largestReferenceFiles": []
+    },
+    {
+      "id": "axum",
+      "oldBytes": 655090729,
+      "newBytes": 186565696,
+      "counts": {
+        "entities": 5831,
+        "relations": 5830,
+        "diagnostics": 10347
+      },
+      "completeRecordEquivalence": true,
+      "allOriginalJSONFieldsAndOrderedArraysRetained": true,
+      "storage": {
+        "files": 147,
+        "proofs": 157579,
+        "proofReferences": 1919353,
+        "distinctEvidence": 14172,
+        "evidenceBytes": 2928199,
+        "referenceBytes": 4623057
+      },
+      "largestTables": [
+        {
+          "path": "axum/src/routing/method_routing.rs",
+          "entries": 624,
+          "evidenceBytes": 128214,
+          "referenceBytes": 627320,
+          "proofs": 10760,
+          "proofReferences": 273010,
+          "longestProof": 131
+        },
+        {
+          "path": "axum/src/extract/ws.rs",
+          "entries": 590,
+          "evidenceBytes": 112392,
+          "referenceBytes": 104599,
+          "proofs": 9823,
+          "proofReferences": 33375,
+          "longestProof": 41
+        },
+        {
+          "path": "axum-macros/src/from_request/mod.rs",
+          "entries": 487,
+          "evidenceBytes": 97323,
+          "referenceBytes": 88786,
+          "proofs": 9174,
+          "proofReferences": 28798,
+          "longestProof": 6
+        }
+      ],
+      "largestReferenceFiles": [
+        {
+          "path": "axum/src/response/sse.rs",
+          "entries": 391,
+          "evidenceBytes": 77220,
+          "referenceBytes": 654736,
+          "proofs": 6324,
+          "proofReferences": 274773,
+          "longestProof": 147
+        },
+        {
+          "path": "axum/src/routing/method_routing.rs",
+          "entries": 624,
+          "evidenceBytes": 128214,
+          "referenceBytes": 627320,
+          "proofs": 10760,
+          "proofReferences": 273010,
+          "longestProof": 131
+        },
+        {
+          "path": "axum/src/routing/path_router.rs",
+          "entries": 397,
+          "evidenceBytes": 78780,
+          "referenceBytes": 348190,
+          "proofs": 6030,
+          "proofReferences": 152030,
+          "longestProof": 131
+        }
+      ]
+    },
+    {
+      "id": "full-stack-fastapi",
+      "oldBytes": 2616397,
+      "newBytes": 2616397,
+      "counts": {
+        "entities": 787,
+        "relations": 2678,
+        "diagnostics": 9
+      },
+      "completeRecordEquivalence": true,
+      "allOriginalJSONFieldsAndOrderedArraysRetained": true,
+      "storage": {},
+      "largestTables": [],
+      "largestReferenceFiles": []
+    }
+  ]
+}

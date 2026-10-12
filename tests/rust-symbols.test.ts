@@ -10,6 +10,8 @@ import { canonicalJson } from '../src/history/fingerprint.js';
 import { GraphBuilder, type SoftwareGraph } from '../src/core/graph.js';
 import type { AnalysisContext } from '../src/core/analyzer.js';
 import { StructureParser } from '../src/analysis/tree-sitter/client.js';
+import { rustOutcomeEvidence } from '../src/analysis/rust-evidence.js';
+import { RustSymbols } from '../src/analysis/languages/rust-symbols.js';
 
 const roots: string[] = [];
 after(async () => { await Promise.all(roots.map(root => rm(root, { recursive: true, force: true }))); });
@@ -25,8 +27,9 @@ async function index(root: string, rust: RustConfig = selected, cache?: Analysis
 }
 type Outcome = { name?: string; start: number; compilation: string; owner: string; status: string; target?: string; reason?: string; execution?: string; range: { startLine: number }; proof: { file?: string; line?: number }[] };
 const unit = (g: SoftwareGraph, file = 'src/lib.rs') => g.entities.find(e => e.type === 'file' && e.path === file)!;
-const calls = (g: SoftwareGraph, file = 'src/lib.rs') => (unit(g, file).metadata.rustCallOutcomes ?? []) as Outcome[];
-const references = (g: SoftwareGraph, file = 'src/lib.rs') => (unit(g, file).metadata.rustReferenceOutcomes ?? []) as Outcome[];
+const readOutcomes = (g:SoftwareGraph, file:string, key:string) => {const metadata=unit(g,file).metadata;return ((metadata[key]??[]) as Record<string,unknown>[]).map(row=>({...row,proof:rustOutcomeEvidence(metadata,row)})) as unknown as Outcome[];};
+const calls = (g: SoftwareGraph, file = 'src/lib.rs') => readOutcomes(g,file,'rustCallOutcomes');
+const references = (g: SoftwareGraph, file = 'src/lib.rs') => readOutcomes(g,file,'rustReferenceOutcomes');
 const entity = (g: SoftwareGraph, name: string, file = 'src/lib.rs') => g.entities.find(e => e.name === name && e.path === file && e.type !== 'file')!;
 const call = (g: SoftwareGraph, name: string) => calls(g).filter(c => c.name === name);
 const targets = (g: SoftwareGraph) => calls(g).filter(c => c.status === 'resolved').map(c => g.entities.find(e => e.id === c.target)?.name);
@@ -194,6 +197,50 @@ test('Cold/warm/revision Rust symbols replay exactly and shared source/config/de
   await put(root, 'src/shared.rs', 'pub fn other(){}'); const changed = await index(root, selected, new AnalysisCache(state)); assert.ok(call(changed, 'shared::leaf').every(c => c.status !== 'resolved')); assert.equal(shape(changed), shape(await index(root)));
   await put(root, 'src/shared.rs', 'pub fn leaf(){}'); const denied = await index(root, selected, new AnalysisCache(state), undefined, ['src/shared.rs']); assert.ok(call(denied, 'shared::leaf').every(c => c.status !== 'resolved'));
   await put(root, 'Cargo.toml', '[package]\nname="api"\nversion="1.0.0"\nedition="2021"\n[lib]\npath="other.rs"'); const excluded = await index(root, selected, new AnalysisCache(state)); assert.equal(calls(excluded).length, 0);
+});
+test('An upgrade rejects legacy Rust symbol and router cache records before replaying fresh proofs', async () => {
+  class LegacyRustCache extends AnalysisCache {
+    override async unit(...args: Parameters<AnalysisCache['unit']>): Promise<void> {
+      const [context, analyzer, unit, parts, work, policy] = args;
+      if (!['rust-symbols', 'rust-routers'].includes(analyzer)) return super.unit(...args);
+      const legacy = { ...parts as Record<string, unknown> };
+      if (analyzer === 'rust-symbols') { legacy.version = '1'; delete legacy.evidence; }
+      else delete legacy.symbols;
+      return super.unit(context, analyzer, unit, legacy, async () => {
+        await work();
+        context.graph.entities.get(context.repositoryId)!.metadata[analyzer + '-legacy-proof'] = 'producer-1';
+      }, policy);
+    }
+  }
+  const root = await repo('use axum::{Router,routing::get};async fn handler(){}fn app()->Router{Router::new().route("/ready",get(handler))}', {}, '[dependencies]\naxum="0.8.1"\n'), state = await mkdtemp(path.join(tmpdir(), 'codiluce-rust-upgrade-cache-')); roots.push(state);
+  const seeded = await index(root, selected, new LegacyRustCache(state));
+  assert.equal(seeded.entities.find(e => e.type === 'repository')!.metadata['rust-routers-legacy-proof'], 'producer-1');
+  const upgradedCache = new AnalysisCache(state), upgraded = await index(root, selected, upgradedCache), cold = await index(root);
+  for (const analyzer of ['rust-symbols', 'rust-routers']) assert.ok(upgradedCache.events.some(e => e.analyzer === analyzer && !e.hit), analyzer);
+  assert.equal(shape(upgraded), shape(cold));
+  const warmCache = new AnalysisCache(state), warm = await index(root, selected, warmCache);
+  for (const analyzer of ['rust-symbols', 'rust-routers']) assert.ok(warmCache.events.some(e => e.analyzer === analyzer && e.hit), analyzer);
+  assert.equal(shape(warm), shape(cold));
+});
+test('Rust evidence budget failure retains every inline fact and resolved relation with explicit failed coverage', async () => {
+  const root = await repo('mod shared;fn run(){shared::leaf();let cb=||shared::leaf();cb();}', { 'src/shared.rs': 'pub fn leaf(){}' });
+  const graphs: SoftwareGraph[] = [];
+  for (const bounded of [false, true]) {
+    const config = await resolveConfig(root, { applications: [{ name: 'api', path: '.', rust: selected }] }), graph = new GraphBuilder(config.repository.name), context: AnalysisContext = { root, config, graph, repositoryId: graph.id('repository'), applicationIds: new Map(), files: new Map(), http: [] };
+    for (const analyzer of analyzers) { if (analyzer.name === 'rust-symbols') break; await analyzer.analyze(context); }
+    new RustSymbols(context, context.rust!, bounded ? { maxProofReferences: 1 } : {}).analyze();
+    graphs.push(graph.finish({ id: 'retention-test', repositoryId: context.repositoryId, repositoryName: config.repository.name, analyzedAt: '2026-10-12T00:00:00.000Z', configDigest: 'retention-test', schemaVersion: 1, analyzerVersions: {} }));
+  }
+  const [normal, failed] = graphs as [SoftwareGraph, SoftwareGraph];
+  for (const key of ['rustCallOutcomes', 'rustReferenceOutcomes']) {
+    const expanded = (g: SoftwareGraph) => ((unit(g).metadata[key] ?? []) as Record<string, unknown>[]).map(row => { const { proofRefs: _refs, ...rest } = row; return { ...rest, proof: rustOutcomeEvidence(unit(g).metadata, row) }; });
+    assert.deepEqual(expanded(failed), expanded(normal));
+  }
+  assert.deepEqual(failed.relations, normal.relations);
+  assert.ok((unit(failed).metadata.rustEvidenceRetention as any).inlineProofs > 0);
+  assert.equal((unit(failed).metadata.analysis as any).features.references.status, 'failed');
+  assert.ok(failed.diagnostics.some(d => d.code === 'rust-evidence-retention-budget'));
+  assert.equal((unit(failed, 'src/shared.rs').metadata.analysis as any).features.references.status, (unit(normal, 'src/shared.rs').metadata.analysis as any).features.references.status);
 });
 test('Direct handler service binds original functions/closures/helper-return aliases after warm cache replay', async () => {
   const root = await repo('fn leaf(){}fn generic<T>(){}fn identity(cb:fn())->fn(){cb}fn run(){let alias=identity(leaf);register(alias);register(||leaf());register(generic);}'), state = await mkdtemp(path.join(tmpdir(), 'codiluce-rust-handler-cache-')); roots.push(state);

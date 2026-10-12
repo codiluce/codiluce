@@ -1,0 +1,175 @@
+{
+  "engineFiles": 1924,
+  "changedEngineFiles": [
+    "src/analysis/frameworks/rust-routers.ts",
+    "src/analysis/languages/rust-symbols.ts"
+  ],
+  "addedEngineFiles": [
+    "src/analysis/rust-evidence.ts"
+  ],
+  "allSixCompleteJSONGraphsIndependentlyDecoded": true,
+  "allGraphIdentitiesAndContainmentValid": true,
+  "allFiveNonRustFullBodiesEqual": true,
+  "onlyRunIdAnalyzedAtAndExpectedRustVersionsDifferInRun": true,
+  "strictOriginalNamedSamplesVerified": 12,
+  "originalCallbackSamplesVerified": 2,
+  "callbackManifestSha256": "49cc7aae2bff567d4821848bfa7e751355c175443605a2457f9c6db4dc6f496c",
+  "fullProductionQualified": false,
+  "runtimePerformanceQualified": false,
+  "results": [
+    {
+      "id": "flask",
+      "originalInputsUnchanged": true,
+      "sha256": "c7eea21c8245d3281efeab5a63d17277925370daa17f37ccce99a6276c4d8ae1",
+      "bytes": 4004558,
+      "counts": {
+        "entities": 1930,
+        "relations": 3424,
+        "diagnostics": 82
+      },
+      "fullBodyParityWithPriorSavedGraph": true,
+      "reviewedContractStatus": "reviewed-contracts-verified",
+      "peakChunkBytes": 65536,
+      "callbackContracts": [],
+      "expectedAnalyzerVersionChanges": {
+        "rust-symbols": [
+          "1",
+          "2"
+        ]
+      }
+    },
+    {
+      "id": "memos",
+      "originalInputsUnchanged": true,
+      "sha256": "eece57552e99251b52218dceed2e0af8af194d1836f16c2b93db13235712c349",
+      "bytes": 67344062,
+      "counts": {
+        "entities": 11356,
+        "relations": 44453,
+        "diagnostics": 75
+      },
+      "fullBodyParityWithPriorSavedGraph": true,
+      "reviewedContractStatus": "reviewed-contracts-verified",
+      "peakChunkBytes": 65536,
+      "callbackContracts": [],
+      "expectedAnalyzerVersionChanges": {
+        "rust-symbols": [
+          "1",
+          "2"
+        ]
+      }
+    },
+    {
+      "id": "bookstack",
+      "originalInputsUnchanged": true,
+      "sha256": "a05711359fb5dfd6665a75e61e46980b8ae8ac12f55173c826735e0b271633d0",
+      "bytes": 77118866,
+      "counts": {
+        "entities": 12380,
+        "relations": 37038,
+        "diagnostics": 148
+      },
+      "fullBodyParityWithPriorSavedGraph": true,
+      "reviewedContractStatus": "reviewed-contracts-verified",
+      "peakChunkBytes": 65536,
+      "callbackContracts": [
+        {
+          "id": "bookstack-recent-visible-scope",
+          "range": {
+            "startLine": 367,
+            "endLine": 369,
+            "startColumn": 32,
+            "endColumn": 10
+          },
+          "spanSha256": "5ae611e66696905cc0e10384510515bb7a563df65f24b29a00ab3270e273f65d",
+          "parent": "BookStack\\Entities\\Controllers\\PageController::showRecentlyUpdated",
+          "binding": "$visibleBelongsScope",
+          "verified": true
+        }
+      ],
+      "expectedAnalyzerVersionChanges": {
+        "rust-symbols": [
+          "1",
+          "2"
+        ]
+      }
+    },
+    {
+      "id": "firefly-iii",
+      "originalInputsUnchanged": true,
+      "sha256": "1d5db6c6a19fda843f05c5622707b8a862a7920fb4865af87df3e27e14ba2d1a",
+      "bytes": 110767552,
+      "counts": {
+        "entities": 13894,
+        "relations": 30552,
+        "diagnostics": 137
+      },
+      "fullBodyParityWithPriorSavedGraph": true,
+      "reviewedContractStatus": "reviewed-contracts-verified",
+      "peakChunkBytes": 65536,
+      "callbackContracts": [
+        {
+          "id": "firefly-index-middleware",
+          "range": {
+            "startLine": 59,
+            "endLine": 66,
+            "startColumn": 27,
+            "endColumn": 10
+          },
+          "spanSha256": "144baf62a1a1c33be7c81163f78f39ac72141a3e268773cf9f261af438608898",
+          "parent": "FireflyIII\\Http\\Controllers\\Transaction\\IndexController::__construct",
+          "binding": null,
+          "verified": true
+        }
+      ],
+      "expectedAnalyzerVersionChanges": {
+        "rust-symbols": [
+          "1",
+          "2"
+        ]
+      }
+    },
+    {
+      "id": "axum",
+      "originalInputsUnchanged": true,
+      "sha256": "3da9d3adf484b45d7cb0754e9a4b82af80dd103a58d0e90b906415276d6e24a2",
+      "bytes": 186565696,
+      "counts": {
+        "entities": 5831,
+        "relations": 5830,
+        "diagnostics": 10347
+      },
+      "fullBodyParityWithPriorSavedGraph": null,
+      "reviewedContractStatus": "reviewed-contracts-verified",
+      "peakChunkBytes": 65536,
+      "callbackContracts": [],
+      "expectedAnalyzerVersionChanges": {
+        "rust-symbols": [
+          "1",
+          "2"
+        ]
+      }
+    },
+    {
+      "id": "full-stack-fastapi",
+      "originalInputsUnchanged": true,
+      "sha256": "9aca4bb6cf64a44d68f5cf184dd6717b3647dc493d460cf8300e070329b94adf",
+      "bytes": 2616397,
+      "counts": {
+        "entities": 787,
+        "relations": 2678,
+        "diagnostics": 9
+      },
+      "fullBodyParityWithPriorSavedGraph": true,
+      "reviewedContractStatus": "reviewed-contracts-verified",
+      "peakChunkBytes": 65536,
+      "callbackContracts": [],
+      "expectedAnalyzerVersionChanges": {
+        "rust-symbols": [
+          "1",
+          "2"
+        ]
+      }
+    }
+  ]
+}

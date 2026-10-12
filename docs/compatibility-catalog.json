@@ -90,12 +90,13 @@
       "label": "Rust",
       "parser": "Tree-sitter Rust",
       "imports": "Cargo/workspaces, local crates, module/target/cfg inputs, scoped use and re-exports",
-      "binding": "Partial compilation-scoped functions, inherent methods and source closures",
+      "binding": "Partial compilation-scoped functions, inherent methods and source closures; lossless file-local ordered evidence references",
       "frameworks": "Axum, Actix Web, Rocket, Warp",
       "gaps": "General macro expansion/hygiene, binary exports, generated items, traits, borrow/type checking and effects",
       "sources": [
         "src/analysis/languages/rust.ts",
-        "src/analysis/languages/rust-symbols.ts"
+        "src/analysis/languages/rust-symbols.ts",
+        "src/analysis/rust-evidence.ts"
       ]
     },
     {
