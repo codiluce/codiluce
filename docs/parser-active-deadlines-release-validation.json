@@ -1,0 +1,213 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-12T23:06:37.092751+00:00",
+  "phase": "Parser active-queue local Linux source, compiled and installed release qualification",
+  "scope": "Local source/compiled/production-only installed package and exact archive integrity pass. Original BookStack graph regression failed and remains unqualified; raw failed-state integrity does not qualify its graph.",
+  "implementationCommit": "9494b0f",
+  "runtimeSha256": "dfe5fc91b55f770555dc85f5288ef3e756d7823b3c73a4837a49efca0dd3a52a",
+  "runtimeFilesVerified": 1924,
+  "engineWebTests": 1691,
+  "finalFailedTests": 0,
+  "skippedTests": 0,
+  "newTransportTests": 7,
+  "compiledOrdinaryNodeTests": 7,
+  "bothTypechecksPassed": true,
+  "capabilityDocumentationPassed": true,
+  "normalPrepackAndProductionOnlyInstalledPackagePassed": true,
+  "installedPackageTerminal": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791845854.8452508,
+    "actualUnifiedExecSession": 88884,
+    "actualExitCode": 0,
+    "actualDriverPid": 3570404,
+    "actualNpmPid": 3570384,
+    "processesGone": true,
+    "log": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/queue-installed-package-complete-build-inputs.log",
+    "logSha256": "2ee1e3bfc219dc5de768dc65c9a3872b6b86989e5cd964368fa4fc7c9e944dbf",
+    "driverSha256": "a89519d2615af44a64d452078d983cb39dafab522d02271aaa34ea3e0e5a137a",
+    "normalPrepack": true,
+    "productionOnlyInstalledDependencies": true,
+    "installedQueueCacheAndLifecycleChecksPassed": true,
+    "completeCliApiSourceFrameworkHistoryAssetIsolationSignalsNpmExecPassed": true,
+    "targetExecution": false
+  },
+  "normalPrepackArchive": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791845436.9456115,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/parser-active-deadlines-normal-prepack-release.tgz",
+    "source": "/tmp/codiluce-package-Ebco6k/codiluce-0.1.1.tgz",
+    "sha256": "9077eb31e84669c623fef076d40c2f1c8afcf4319a72050e60c0368620d8e389",
+    "bytes": 7221691,
+    "verifiedRegularMembers": 369,
+    "normalPrepackPassed": true,
+    "installedGatePendingAtRetention": true
+  },
+  "runtimeReleaseAndEvidenceArchive": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791846269.5123267,
+    "seconds": 26.520920276641846,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/parser-active-deadlines-runtime-release-and-evidence.tar.gz",
+    "sha256": "328f333a788a062d32da990612e71264caf07e73c21b4cac758125b700a06126",
+    "bytes": 88638153,
+    "verifiedRegularMembers": 5800,
+    "manifestSha256": "5cfe646d71e8a3922a7793c4c5cc15ebe0c25786c20634f6f64ce979087029dd",
+    "runtimeSha256": "dfe5fc91b55f770555dc85f5288ef3e756d7823b3c73a4837a49efca0dd3a52a",
+    "normalPrepackAndInstalledPackagePassed": true,
+    "originalBookStackRevisionsQualified": 0,
+    "failedOriginalBookStackSnapshotsRetained": 1,
+    "independentRawColumnAuditPassed": true,
+    "full195RevisionEntrypointQualified": false,
+    "relativeHistoryTimeRssQualified": false,
+    "nativeWindowsMacOSQualified": false,
+    "fullGoalFinished": false
+  },
+  "sourceConformance": {
+    "file": "docs/parser-active-deadlines-conformance-validation.json",
+    "sha256": "57f76352ce0cfc95b845e971d008123c023a9a925d89daa3b286ae1333e30776"
+  },
+  "retainedFailedSetupChecks": [
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/queue-installed-package-first.log",
+      "sha256": "f5c45ab62c7597fb2ad3cacbd6f8fc11aafe849d1263a9d5d663568c8339304c"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/queue-installed-package-npm.log",
+      "sha256": "39d81bfebe750dffc2e758f853b5be453f3e52e4592ad31eb1201982cd8edc50"
+    }
+  ],
+  "productionRegression": {
+    "passed": false,
+    "selectedOriginalRevisions": 2,
+    "actualSavedSnapshots": 1,
+    "sameCommit": "79a2e017bbf5d4d634e890199e3267d9280f1db1",
+    "addedDiagnostics": [
+      {
+        "id": "diagnostic:8612fce9b9104ef0408af672",
+        "resolution": "unresolved",
+        "analyzer": "php-laravel-structure",
+        "severity": "warning",
+        "code": "php-structure-failed",
+        "file": "app/Access/Controllers/ConfirmEmailController.php",
+        "entityId": "file:4177a706454bcb5fdf193217",
+        "reason": "Parser exceeded 10000 ms for php-native-unit"
+      },
+      {
+        "id": "diagnostic:963bb301759f716f538e0a76",
+        "resolution": "unresolved",
+        "analyzer": "php-laravel",
+        "severity": "error",
+        "code": "php-parse-error",
+        "file": "app/Access/Controllers/ConfirmEmailController.php",
+        "entityId": "file:4177a706454bcb5fdf193217",
+        "reason": "Parser exceeded 10000 ms for php-native-unit"
+      },
+      {
+        "id": "diagnostic:c893585fb5ec4bfa686db4dc",
+        "resolution": "unresolved",
+        "analyzer": "php-symbols",
+        "severity": "warning",
+        "code": "php-binding-source-unavailable",
+        "file": "app/Access/Controllers/ConfirmEmailController.php",
+        "entityId": "file:4177a706454bcb5fdf193217",
+        "reason": "Parser exceeded 10000 ms for php-native-unit"
+      }
+    ],
+    "removedDiagnostics": [],
+    "changedDiagnostics": [],
+    "entitiesMissing": 10,
+    "relationsMissing": 36,
+    "actualCanonicalGraphSha256": "5f9545f501f33813796c3c90d3c9e78ccc167f6601f5c18dfae40c935281d8f0",
+    "originalCanonicalGraphSha256": "d22aa4231c7595d68e18e16cb54985951271dac314686f0d27204c4b1882f825",
+    "failedTreeGraphAndDatabaseRetained": true,
+    "originalDatabaseSha256": "6fc674d6f94a2a547f4603a73a3eab0c9e157fa6ce7351df00204b8cf39d45e9",
+    "failedDatabaseSha256": "8774362b077d23814398146955cfe20c2f88c002211337d7957c813091e9f738",
+    "independentSevenTableRawColumnIntegrityPassed": true,
+    "graphQualified": false,
+    "deadlineSchedulingCauseEstablished": false,
+    "unchangedRetry": false,
+    "graphChecksRelaxed": false,
+    "artifacts": [
+      {
+        "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/original-bookstack-two/receipt.json",
+        "sha256": "8c26cf586d2ec6283cbd70f9d9acbb88512e893b5e496ecabb32634584c742fb"
+      },
+      {
+        "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/original-bookstack-two/bookstack/child-receipt.json",
+        "sha256": "40875c188d951a75417dce05f3472fff7770a1e530c0cff15211f81f9f91ad7d"
+      },
+      {
+        "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/original-bookstack-two-diagnostic-difference.json",
+        "sha256": "3c3b568f15e2c681404bd5204b0ed0f069dbaaf03d2192ded00a3a9ab4d6a6cd"
+      },
+      {
+        "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/failed-regression-node-columns.json",
+        "sha256": "0a67d680fb0ef4a1e5da9f5e137da1ff847e054bf5f97a22e6cb9a2f275c9bf0"
+      },
+      {
+        "file": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/failed-regression-independent-columns.json",
+        "sha256": "dd1d76d000aa9a9f2670b44ca9e0dfb703b48fba8649289490124eae4f9d87dc"
+      }
+    ]
+  },
+  "nextInvestigation": "Distinguish actual native parser completion from delayed parent IPC handling during synchronous analysis without relaxing the ten-second parser deadline",
+  "previousFullPerformanceBenchmarkRetried": false,
+  "newRuntimeFull195RevisionHistoryQualified": false,
+  "newRuntimeRelativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "broaderCompilerConsumerWasmRssBudgetQualified": false,
+  "fullGoalFinished": false,
+  "foreignFilesUnchanged": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  },
+  "reportSha256": "1049004e1bd7a6b5ed69719c8c97c13422cb3b56350c271c4304f584fec1eab6",
+  "browserReview": {
+    "url": "http://127.0.0.1:37861/parser-active-deadlines-release.html",
+    "desktop": {
+      "viewport": 1920,
+      "documentWidth": 1905,
+      "scrollWidth": 1905
+    },
+    "mobile": {
+      "viewport": 390,
+      "documentWidth": 375,
+      "scrollWidth": 375
+    },
+    "warningsAndErrors": 0,
+    "viewportRestored": true,
+    "allReportAndArtifactLinksHttp200": [
+      {
+        "url": "http://127.0.0.1:37861/parser-active-deadlines-release.html",
+        "status": 200,
+        "bytes": "4603"
+      },
+      {
+        "url": "http://127.0.0.1:37861/parser-active-deadlines-release-validation.json",
+        "status": 200,
+        "bytes": "8247"
+      },
+      {
+        "url": "http://127.0.0.1:37861/parser-active-deadlines-normal-prepack-release.tgz",
+        "status": 200,
+        "bytes": "7221691"
+      },
+      {
+        "url": "http://127.0.0.1:37861/parser-active-deadlines-runtime-release-and-evidence.tar.gz",
+        "status": 200,
+        "bytes": "88638153"
+      },
+      {
+        "url": "http://127.0.0.1:37845/language-framework-compatibility.html",
+        "status": 200,
+        "bytes": "381401"
+      }
+    ]
+  }
+}
