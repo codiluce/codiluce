@@ -1,5 +1,5 @@
 import type { AnalysisContext, Analyzer, ScannedFile } from '../../core/analyzer.js';
-import { ANALYZER_VERSION, evidence, type Evidence, type RelationType } from '../../core/graph.js';
+import { ANALYZER_VERSION, evidence, type Evidence, type RelationType, type SourceRange } from '../../core/graph.js';
 import { ast, name, nodes, type Ast } from '../../analyzers/php-ast.js';
 import { fileAnalysis, type DeclarationFact, type ImportOutcome, type PhpImportFact } from '../facts.js';
 import { PhpResolver } from '../resolution/php.js';
@@ -12,7 +12,8 @@ interface Definition {id:string;fact:DeclarationFact;node:Ast;unit:Unit;frame:Fr
 interface Write {node:Ast;frame:Frame;value?:Ast;start:number;conditional:boolean;unsafe:boolean}
 interface Variable {parameter?:Ast;writes:Write[];capture?:{frame:Frame;name:string;start:number;byref:boolean}}
 interface Frame {key:string;kind:'file'|'namespace'|'type'|'function'|'closure'|'arrow';unit:Unit;namespace:string;importScope:string;owner?:string;definition?:Definition;cls?:Definition;thisClass?:Definition;parent?:Frame;variables:Map<string,Variable>;dynamic?:string}
-interface Unit {file:ScannedFile;source:SourceText;definitions:Definition[];frames:Frame[];sites:{node:Ast;frame:Frame;kind:string}[];work:number;gap?:string}
+interface Site {node:Ast;frame:Frame;kind:string;range:SourceRange;expression:string}
+interface Unit {file:ScannedFile;definitions:Definition[];frames:Frame[];sites:Site[];work:number;gap?:string}
 type Value=
  | {kind:'instance'|'class';definition:Definition;exact:boolean;nullable?:boolean;proof:Evidence[]}
  | {kind:'callable';definition:Definition;nominal?:boolean;proof:Evidence[]}
@@ -30,12 +31,24 @@ export class PhpSymbols {
   private readonly qualifiedNames=new Map<string,Value>();
   private readonly methods=new Map<string,Map<string,Definition[]>>();
   private readonly properties=new Map<string,Map<string,Definition[]>>();
+  private peakOriginalBytes=0;
   constructor(private readonly context:AnalysisContext,private readonly resolver:PhpResolver){}
-  prepare():void {
+  /** Numeric ownership evidence only; never included in semantic graphs. */
+  sourceRetentionStats(){const units=[...this.units.values()];return {units:units.length,sites:units.reduce((count,unit)=>count+unit.sites.length,0),originalBytes:units.reduce((bytes,unit)=>bytes+('source' in unit&&unit.source instanceof SourceText?2*unit.source.text.length:0),0),expressionBytes:units.reduce((bytes,unit)=>bytes+unit.sites.reduce((sum,site)=>sum+2*site.expression.length,0),0),peakOriginalBytes:this.peakOriginalBytes};}
+  async prepare():Promise<void> {
     for(const file of this.context.files.values()) {
-      const source=this.context.phpSources?.get(file.path),syntax=this.context.syntax?.get(file.path);
-      if(file.language!=='php'||!source?.ast||!syntax?.facts.php||syntax.facts.truncated)continue;
-      const unit:Unit={file,source:new SourceText(source.content),definitions:[],frames:[],sites:[],work:0};this.units.set(file.path,unit);
+      const syntax=this.context.syntax?.get(file.path);
+      if(file.language!=='php'||!file.analyzable||!syntax?.facts.php||syntax.facts.truncated)continue;
+      let source;
+      try{source=await this.context.phpSources?.read(file);}
+      catch(error){
+        const reason=error instanceof Error?error.message:String(error),analysis=fileAnalysis(this.context.graph.entities.get(file.id)!.metadata.analysis);
+        this.context.syntax?.delete(file.path);if(analysis)analysis.features.references={status:'failed',reason};
+        this.context.graph.diagnose({analyzer:'php-symbols',severity:'warning',code:'php-binding-source-unavailable',file:file.path,entityId:file.id,reason});continue;
+      }
+      if(!source?.ast)continue;
+      const original=new SourceText(source.content);this.peakOriginalBytes=Math.max(this.peakOriginalBytes,2*source.content.length);
+      const unit:Unit={file,definitions:[],frames:[],sites:[],work:0};this.units.set(file.path,unit);
       const matches=new Map<string,DeclarationFact>();
       for(const fact of syntax.facts.declarations)matches.set(`${fact.end}:${fact.kind}:${fact.name}`,fact);
       const root:Frame={key:`php-file:0:${source.content.length}`,kind:'file',unit,namespace:'',importScope:`php-file:0:${source.content.length}`,owner:file.id,variables:new Map()};unit.frames.push(root);
@@ -94,7 +107,13 @@ export class PhpSymbols {
         if(node.kind==='call'&&ast(node.what)?.kind==='name'&&(this.resolver.facts(file.path)?.imports??[]).some(imported=>imported.scope===frame.importScope&&imported.kind==='function'&&fold(imported.specifier)==='extract'&&fold(imported.alias)===fold(name(node.what)??'')))frame.dynamic='Original aliased extract call can overwrite callable-local bindings';
         if(node.kind==='call'||node.kind==='new'||node.kind==='staticlookup'&&!(item.parent?.kind==='call'&&item.field==='what')||node.kind==='name'&&!['what','name','alias','traits'].includes(item.field)){
           const referenceKind=node.kind==='name'?['type','extends','implements'].includes(item.field)||['uniontype','intersectiontype'].includes(item.parent?.kind??'')?'type-reference':'constant-reference':node.kind;
-          if(unit.sites.length<4096)unit.sites.push({node,frame,kind:referenceKind});else unit.gap='Original PHP reference site budget exceeded';
+          if(unit.sites.length<4096){
+            // A substring can retain the entire original through a V8 sliced
+            // string. Copy UTF-16 code units, including a truncated surrogate,
+            // so bounded expressions own no original-source backing storage.
+            const expression=Buffer.from(source.content.slice(node.loc!.start.offset,Math.min(node.loc!.end.offset,node.loc!.start.offset+2048)),'utf16le').toString('utf16le');
+            unit.sites.push({node,frame,kind:referenceKind,range:original.range(node.loc!.start.offset,node.loc!.end.offset),expression});
+          }else unit.gap='Original PHP reference site budget exceeded';
         }
         if(['propertystatement','classconstant','constantstatement'].includes(node.kind))statement=node;
         if(['if','while','do','for','foreach','switch','case','try','catch','finally','retif','match','matcharm'].includes(node.kind)||node.kind==='bin'&&['&&','||','and','or','??'].includes(String(node.type)))conditional=true;
@@ -278,12 +297,13 @@ export class PhpSymbols {
     for(const unit of this.units.values()) {
       const outcomes:unknown[]=[],counts=new Map<string,{resolved:number;external:number;unresolved:number}>();
       const callCounts=new Map<string,{resolved:number;external:number;unresolved:number;unresolvedNames:Record<string,number>}>();
-      const record=(node:Ast,frame:Frame,kind:string,value:Value,edgeType:RelationType)=>{
+      const record=(site:Site,kind:string,value:Value,edgeType:RelationType)=>{
+        const {node,frame,range,expression}=site;
         const proof=[this.proof(frame,node,'Original PHP source use; execution, loader activation and runtime dispatch remain unverified'),...value.proof];
         if(proof.length>128)value=gap('Original PHP source proof-hop budget exceeded');
         if(!frame.owner)value=gap('Original anonymous/type region has no named callable source owner');
         const target=value.kind==='gap'?undefined:value.definition.id;
-        const outcome={kind,scope:frame.key,owner:frame.owner,range:unit.source.range(node.loc!.start.offset,node.loc!.end.offset),expression:unit.source.text.slice(node.loc!.start.offset,Math.min(node.loc!.end.offset,node.loc!.start.offset+2048)),status:value.kind==='gap'?value.status:'resolved',...value.kind==='gap'?{reason:value.reason,candidates:value.candidates}:{target,dispatch:value.kind==='callable'&&value.nominal?'nominal':'direct',targetConditions:value.definition.fact.sourceConditions??[]},proof,executionUnverified:true};
+        const outcome={kind,scope:frame.key,owner:frame.owner,range,expression,status:value.kind==='gap'?value.status:'resolved',...value.kind==='gap'?{reason:value.reason,candidates:value.candidates}:{target,dispatch:value.kind==='callable'&&value.nominal?'nominal':'direct',targetConditions:value.definition.fact.sourceConditions??[]},proof,executionUnverified:true};
         outcomes.push(outcome);
         if(frame.owner){const count=counts.get(frame.owner)??{resolved:0,external:0,unresolved:0};count[value.kind==='gap'?value.status==='external'?'external':'unresolved':'resolved']++;counts.set(frame.owner,count);}
         if(frame.owner&&['call','constructor'].includes(kind)){
@@ -295,19 +315,20 @@ export class PhpSymbols {
         }
         if(target&&frame.owner)graph.relate(frame.owner,target,edgeType,proof,{adapter:'php-source-binding',executionUnverified:true,dispatch:value.kind==='callable'&&value.nominal?'nominal':'direct'});
       };
-      for(const {node,frame,kind}of unit.sites) {
-        if(unit.gap){record(node,frame,kind,gap(unit.gap),'references');continue;}
-        if(node.kind==='name'){record(node,frame,kind,this.named(frame,node,kind==='type-reference'?'class':'const'),'references');}
-        else if(node.kind==='call'){const target=this.call(frame,node),reference=nodes(node.arguments).some(arg=>arg.kind==='variadicplaceholder');record(node,frame,reference?'callable-reference':'call',target,reference||target.kind==='callable'&&target.nominal?'references':'calls');}
+      for(const site of unit.sites) {
+        const {node,frame,kind}=site;
+        if(unit.gap){record(site,kind,gap(unit.gap),'references');continue;}
+        if(node.kind==='name'){record(site,kind,this.named(frame,node,kind==='type-reference'?'class':'const'),'references');}
+        else if(node.kind==='call'){const target=this.call(frame,node),reference=nodes(node.arguments).some(arg=>arg.kind==='variadicplaceholder');record(site,reference?'callable-reference':'call',target,reference||target.kind==='callable'&&target.nominal?'references':'calls');}
         else if(node.kind==='new') {
           const receiver=this.value(frame,node,node.loc!.start.offset);
-          if(receiver.kind==='instance'){record(node,frame,'construction-type',receiver,'references');const ctor=this.member(receiver,'__construct',frame,false,0);record(node,frame,'constructor',ctor.kind==='gap'&&ctor.status==='unresolved'?receiver:ctor,'calls');}
-          else record(node,frame,'constructor',receiver,'calls');
+          if(receiver.kind==='instance'){record(site,'construction-type',receiver,'references');const ctor=this.member(receiver,'__construct',frame,false,0);record(site,'constructor',ctor.kind==='gap'&&ctor.status==='unresolved'?receiver:ctor,'calls');}
+          else record(site,'constructor',receiver,'calls');
         }else {
           const offset=ast(node.offset);if(offset?.kind!=='identifier')continue;
-          if(fold(name(offset)??'')==='class'){record(node,frame,'class-type',this.classValue(frame,ast(node.what),0),'references');continue;}
+          if(fold(name(offset)??'')==='class'){record(site,'class-type',this.classValue(frame,ast(node.what),0),'references');continue;}
           const receiver=this.classValue(frame,ast(node.what),0),target=receiver.kind==='class'?this.member(receiver,name(offset)!,frame,true,0,true):receiver;
-          record(node,frame,'class-member',target,'references');
+          record(site,'class-member',target,'references');
         }
       }
       for(const definition of unit.definitions)if(TYPE_KINDS.includes(definition.fact.kind))for(const [field,relation]of [['extends','extends'],['implements','implements']]as const)for(const node of Array.isArray(definition.node[field])?nodes(definition.node[field]):ast(definition.node[field])?[ast(definition.node[field])!]:[]){const target=this.named(definition.frame,node,'class');if(target.kind==='class')graph.relate(definition.id,target.definition.id,relation,[...target.proof,this.proof(definition.frame,node,'Original named inheritance/type contract; runtime activation unverified')]);}
@@ -328,5 +349,5 @@ export const phpSymbolsAnalyzer:Analyzer={name:'php-symbols',version:PHP_SYMBOL_
     context.syntax?.delete(file.path);if(analysis)analysis.features.references={status:'failed',reason};
     context.graph.diagnose({analyzer:'php-symbols',severity:'warning',code:'php-binding-source-unavailable',file:file.path,entityId:file.id,reason});
   }
-  const resolver=new PhpResolver(context);resolver.prepare(files);const symbols=new PhpSymbols(context,resolver);symbols.prepare();symbols.emit();
+  const resolver=new PhpResolver(context);resolver.prepare(files);const symbols=new PhpSymbols(context,resolver);await symbols.prepare();symbols.emit();
 }};

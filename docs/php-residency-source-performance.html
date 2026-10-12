@@ -1,0 +1,4106 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Native generations under original source pressure</title><style>body{margin:0;padding:clamp(16px,4vw,40px);font:16px/1.6 system-ui,sans-serif;background:#101822;color:#e5ecf4}main{max-width:1200px;margin:auto}h1{line-height:1.2;font-size:clamp(28px,5vw,40px)}a,code{color:#8bddd8}p,code{overflow-wrap:anywhere}.status{border:1px solid #b69459;border-radius:8px;padding:18px}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;min-width:850px}th,td{padding:12px;text-align:left;border-bottom:1px solid #344353}small{display:block;color:#b6c5d6}pre{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}summary{cursor:pointer;padding:12px 0}</style></head><body><main><h1>Native generations under original source pressure</h1><p>P10d2b2b2a · 2026-10-12T02:14:03.723Z · v22.12.0 · linux/x64 · AMD Ryzen 7 5800H with Radeon Graphics. 3 alternating fresh processes per implementation and size; compiled-cli. Both archived/current CLI sources build before timing; measured workers and historical children run without a TypeScript source loader. Builds execute only owned Codiluce code and are excluded from indexing times.</p><p class="status"><strong>Local cold/warm/history/tree-memory comparison: PASS</strong><br>Ten-percent limits against the archived baseline implementation on identical authored mixed workloads. Exact full graph digests hold across cold/population/warm, edited dependency replay versus uncached source, every baseline/current run, and all 4 stored historical snapshots. Every first repetition also compares two history jobs with an independent single-job run. History resume skips all 4 completed snapshots.</p><div class="scroll"><table><thead><tr><th>Sample</th><th>Cold before / after ms</th><th>Warm before / after ms</th><th>4-commit history before / after ms</th><th>Current sampled history tree MiB</th><th>Current cache KiB</th></tr></thead><tbody><tr><th>Small<small>193 files · 48 endpoints · 96 requests</small></th><td>6973 / 6966<small>-0.1%</small></td><td>417 / 414<small>-0.7%</small></td><td>14854 / 14891<small>0.2%</small></td><td>1443.6<small>-0.4%</small></td><td>259.2</td></tr></tbody></table></div><p>The monorepo combines all eighteen Tree-sitter structural adapters, PHP, TypeScript and original Vue/Svelte/Astro sources; Express/Nest, FastAPI/Flask/Django, Rails/Laravel, eight Go router profiles, Java/Kotlin MVC/WebFlux and ASP.NET 8/9/10, and six Rust router/version profiles. Recorded target inputs qualify source contracts on Linux; they do not establish native Windows/macOS execution or framework runtime validity. Target dependencies, toolchains, applications, plugins and hooks never run. The literal fixtures are authored qualification inputs, not upstream repository accuracy evidence.</p><p>Cold scans have no cache. Population, warm and a shared Node dependency edit are timed separately. Both original consumer call targets bind to the shared source; the edit invalidates their connected cache unit while unrelated TypeScript units stay hits. Warm graph, syntax and semantic cache events are recorded by analyzer; a qualified PHP graph hit skips native-tree hydration. The cache keeps at most two versions per unit, 256 MiB compressed overall and 64 MiB decoded per entry; oversized/corrupt entries fall back to source rather than blocking indexing.</p><p>The 4-commit history edits the shared dependency and an original PHP body, then renames a Vue component; deeper revisions also edit and repeatedly rename an original Python file. Two history workers materialize original Git trees; snapshots include complete entities, relations and diagnostics, not just counts. Only working-tree Git metrics (including absence after removing all Git-only fields) and Git-availability diagnostics are normalized for live-versus-revision comparisons. All semantic metadata, evidence and original ranges remain in the digest.</p><p>A separate process polls every thread's descendant list every 25 ms, with an acknowledged start marker before synchronous work. RSS sums include history and parser children; shared pages can be counted repeatedly, exiting processes can make a poll incomplete, and peaks between polls can be missed. Raw parent VmHWM is cumulative since exec, not an isolated warm/history peak. Source memos are limited to 32 MiB of conservative UTF-16 text/key payload and 4,096 entries per instance; compiler/semantic consumers can retain their own text and ASTs, so this is not an RSS cap. Each historical worker now waits until the parent stores or records failure for its one graph before analyzing another commit. 48 additional 768 KiB Python originals force baseline cold memo eviction; current indexing admits every complete original, then releases its memo before the next job. Released payloads must cover all these large originals, and all complete graph/source coordinates still match. Indexed native jobs reserve at most six primary/auxiliary grammars or 16 MiB cumulative original UTF-8 source per generation, then await its exit before a successor. One allowed larger original remains analyzable. Dispatch groups template-host and C-family grammars, then remaining grammars and original paths, so different applications reuse loaded grammars without changing per-file identities. Ordinary originals and their memos are released immediately after declaration consumption; compact deferred template jobs also release their original memo before the next native job. Deferred scripts reread and validate original bytes after the native phase, then release that memo after consumption. Indexing awaits PHP parser retirement too, so no parser child survives completion into warm replay or the next historical revision. Once all declarations and deferred scripts are consumed and parser retirement completes, the shared source memo is cleared; subsequent consumers validate any needed rereads through the indexed boundary. Main-process per-original release counts, phase retirement counts and released payloads are recorded below. <a href="native-generation-retained-source-characterization.html">The superseded retained-source characterization</a> preserves all 60 completed observations, including its failed warm-pressure memory guard. <a href="native-generation-phase-memo-characterization.html">Phase-end clearing alone also failed</a>; its full sixty-process record and preceding narrowly passing characterization remain available. Native observations cover main-process indexing only; history children follow the same policy. These thresholds bound lifetimes, not native allocation or RSS. Per-commit RSS checkpoints are observations after result delivery, not instantaneous or independent peaks. Native OS readers, broader AST/consumer budgets, much longer production histories and production-repository accuracy remain additional P10d gates. PHP provider-owned residency accounts twice the original native serialized AST payload plus UTF-16 source/key text, capped at 32 MiB or 4,096 units. Evicted units use checksum-verified private ephemeral snapshots, limited to 256 MiB or 4,096 entries; unavailable snapshots reparse validated originals. Six source reads/native jobs share a 16 MiB original-input reservation, with one allowed larger original admitted alone. PHP binding prepares original site ranges and standalone UTF-16 expressions capped at 2,048 code units, then retires each full original before reading the next. Detached strings preserve a truncated surrogate and cannot hold a full original through a V8 sliced string. Its numeric original/expression ownership observations cover main-process emission; historical children apply the same policy. The retained-source predecessor preserves all 54 observations, including its +11.15% PHP-pressure history-memory failure. <a href="php-residency-retained-binding-pressure-characterization.html">That failed comparison remains available</a>. Consumer-owned AST/semantic references and Laravel parsed files remain separate; these are representation/ownership limits, not a decoded-object or RSS cap. Main-process PHP counters are recorded; historical children use the same policy.  This report records its named phase against the archived baseline.</p><p>Baseline: <code>558027f5ee54319901396bc385bac143574e8bca</code>. Frozen current source: <code>835d188a4dbb62cd7408a08d99a05fc1be006202858fbf35aaf5b40c74814f1d</code> (340 files). Reproduce: <code>node --import tsx scripts/benchmark-mixed-compatibility.mjs --baseline-ref 558027f5ee54319901396bc385bac143574e8bca --compiled --repetitions 3 --history-depth 4 --source-pressure-files 48 --php-pressure-files 0 --sample Small --phase P10d2b2b2a --output docs/php-residency-source-performance.html</code>. <a href="language-framework-compatibility.html#implementation">Roadmap</a>.</p><details><summary>Raw phase timings, cache events, snapshot digests, profiles and limits</summary><pre>{
+  &quot;execution&quot;: &quot;compiled-cli&quot;,
+  &quot;phase&quot;: &quot;P10d2b2b2a&quot;,
+  &quot;measuredAt&quot;: &quot;2026-10-12T02:14:03.723Z&quot;,
+  &quot;baseline&quot;: &quot;558027f5ee54319901396bc385bac143574e8bca&quot;,
+  &quot;current&quot;: &quot;qualified working tree&quot;,
+  &quot;implementationFiles&quot;: 340,
+  &quot;implementationDigest&quot;: &quot;835d188a4dbb62cd7408a08d99a05fc1be006202858fbf35aaf5b40c74814f1d&quot;,
+  &quot;sourceScope&quot;: [
+    &quot;src&quot;,
+    &quot;grammars&quot;,
+    &quot;package.json&quot;,
+    &quot;package-lock.json&quot;,
+    &quot;scripts/fixtures/mixed-workload.ts&quot;,
+    &quot;scripts/fixtures/jvm-dotnet-workload.ts&quot;,
+    &quot;scripts/fixtures/rust-workload.ts&quot;,
+    &quot;scripts/benchmark-mixed-compatibility.mjs&quot;,
+    &quot;scripts/process-memory.mjs&quot;,
+    &quot;tests/cache.test.ts&quot;,
+    &quot;tests/php-analysis-cache.test.ts&quot;,
+    &quot;tests/process-memory.test.ts&quot;,
+    &quot;tests/mixed-release.test.ts&quot;,
+    &quot;tests/indexed-sources.test.ts&quot;,
+    &quot;tests/history-worker-memory.test.ts&quot;,
+    &quot;tests/fixtures/history-worker-channel.ts&quot;,
+    &quot;tests/native-generation.test.ts&quot;,
+    &quot;tests/parser-lifetimes.test.ts&quot;,
+    &quot;tests/php-residency.test.ts&quot;,
+    &quot;tests/php-provider.test.ts&quot;,
+    &quot;tests/php-symbols.test.ts&quot;,
+    &quot;scripts/build-native-worker.mjs&quot;,
+    &quot;scripts/build-native-worker.d.mts&quot;,
+    &quot;scripts/build-script-worker.mjs&quot;,
+    &quot;scripts/build-script-worker.d.mts&quot;,
+    &quot;scripts/build-cli.mjs&quot;,
+    &quot;scripts/test-package.mjs&quot;,
+    &quot;tests/fixtures/structure&quot;
+  ],
+  &quot;historyDepth&quot;: 4,
+  &quot;sourcePressureFiles&quot;: 48,
+  &quot;phpPressureFiles&quot;: 0,
+  &quot;phpResidencyLimits&quot;: {
+    &quot;maxResidentBytes&quot;: 33554432,
+    &quot;maxResidentUnits&quot;: 4096,
+    &quot;maxSpoolBytes&quot;: 268435456,
+    &quot;maxSpoolUnits&quot;: 4096,
+    &quot;maxInputJobs&quot;: 6,
+    &quot;maxInputSourceBytes&quot;: 16777216
+  },
+  &quot;sourceMemoLimits&quot;: {
+    &quot;maxBytes&quot;: 33554432,
+    &quot;maxEntries&quot;: 4096
+  },
+  &quot;historyResultLimit&quot;: &quot;one unacknowledged graph per worker&quot;,
+  &quot;nativeGenerationLimits&quot;: {
+    &quot;maxGrammars&quot;: 6,
+    &quot;maxSourceBytes&quot;: 16777216
+  },
+  &quot;sourceMemoRetirement&quot;: &quot;per original after fact/declaration consumption; deferred templates release before the next native job and after compiler consumption; phase-end clear; later consumers validate rereads&quot;,
+  &quot;parserCompletion&quot;: &quot;index return awaits native, literal-script and PHP parser exits&quot;,
+  &quot;nativeDispatchOrder&quot;: &quot;template-host / C-family / remaining grammar, then original path&quot;,
+  &quot;nativeObservations&quot;: &quot;main-process indexed jobs only; history children enforce the same source policy but are not instrumented here&quot;,
+  &quot;node&quot;: &quot;v22.12.0&quot;,
+  &quot;platform&quot;: &quot;linux/x64&quot;,
+  &quot;cpu&quot;: &quot;AMD Ryzen 7 5800H with Radeon Graphics&quot;,
+  &quot;repetitions&quot;: 3,
+  &quot;pollMilliseconds&quot;: 25,
+  &quot;memoryMethod&quot;: &quot;linux-proc-all-thread-descendants-sampled-rss&quot;,
+  &quot;cacheLimits&quot;: {
+    &quot;perUnit&quot;: 2,
+    &quot;maxBytes&quot;: 268435456,
+    &quot;maxEntryBytes&quot;: 67108864
+  },
+  &quot;passed&quot;: true,
+  &quot;gates&quot;: [
+    {
+      &quot;name&quot;: &quot;Small&quot;,
+      &quot;cold&quot;: true,
+      &quot;warm&quot;: true,
+      &quot;history&quot;: true,
+      &quot;memory&quot;: true
+    }
+  ],
+  &quot;results&quot;: [
+    {
+      &quot;name&quot;: &quot;Small&quot;,
+      &quot;resourcesPerProfile&quot;: 1,
+      &quot;fixtureDigest&quot;: &quot;371062cf8cfb74933f6d0c68e1d264882c54bb05883b19d6a6ec25add81863d8&quot;,
+      &quot;commits&quot;: [
+        &quot;cbd441459e6c9df4d4884ede6d3c9d0c6f253b29&quot;,
+        &quot;5516c14e534f4068da046d3bad83ff60b5befda3&quot;,
+        &quot;2ea4a039f04f5e8ee4a10682e3f76a34ef2d654f&quot;,
+        &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;
+      ],
+      &quot;profiles&quot;: [
+        &quot;jvm-ts&quot;,
+        &quot;jvm-vue&quot;,
+        &quot;jvm-svelte&quot;,
+        &quot;jvm-astro&quot;,
+        &quot;jvm-mvc-java-62&quot;,
+        &quot;jvm-mvc-java-70&quot;,
+        &quot;jvm-mvc-kotlin-62&quot;,
+        &quot;jvm-mvc-kotlin-70&quot;,
+        &quot;jvm-webflux-java-62&quot;,
+        &quot;jvm-webflux-java-70&quot;,
+        &quot;jvm-webflux-kotlin-62&quot;,
+        &quot;jvm-webflux-kotlin-70&quot;,
+        &quot;jvm-aspnet8&quot;,
+        &quot;jvm-aspnet9&quot;,
+        &quot;jvm-aspnet10&quot;,
+        &quot;rust-ts&quot;,
+        &quot;rust-vue&quot;,
+        &quot;rust-svelte&quot;,
+        &quot;rust-astro&quot;,
+        &quot;rust-axum7&quot;,
+        &quot;rust-axum8&quot;,
+        &quot;rust-actix4&quot;,
+        &quot;rust-rocket5&quot;,
+        &quot;rust-warp3&quot;,
+        &quot;rust-warp4&quot;,
+        &quot;express&quot;,
+        &quot;nest&quot;,
+        &quot;fastapi&quot;,
+        &quot;flask&quot;,
+        &quot;django&quot;,
+        &quot;rails&quot;,
+        &quot;laravel&quot;,
+        &quot;go-net-http&quot;,
+        &quot;go-chi&quot;,
+        &quot;go-gin&quot;,
+        &quot;go-echo4&quot;,
+        &quot;go-echo5&quot;,
+        &quot;go-fiber2&quot;,
+        &quot;go-fiber3&quot;,
+        &quot;go-gorilla&quot;,
+        &quot;client&quot;,
+        &quot;node-web&quot;,
+        &quot;node-admin&quot;,
+        &quot;node-shared&quot;,
+        &quot;structure&quot;
+      ],
+      &quot;baseline&quot;: {
+        &quot;phases&quot;: {
+          &quot;cold&quot;: {
+            &quot;ms&quot;: 6972.773305000001,
+            &quot;treePeakKiB&quot;: 501984,
+            &quot;childPeakKiB&quot;: 319128,
+            &quot;maxProcesses&quot;: 4,
+            &quot;parentVmHwmKiB&quot;: 285256
+          },
+          &quot;population&quot;: {
+            &quot;ms&quot;: 6495.9169679999995,
+            &quot;treePeakKiB&quot;: 592896,
+            &quot;childPeakKiB&quot;: 318996,
+            &quot;maxProcesses&quot;: 4,
+            &quot;parentVmHwmKiB&quot;: 311592
+          },
+          &quot;warm&quot;: {
+            &quot;ms&quot;: 416.6346199999989,
+            &quot;treePeakKiB&quot;: 319844,
+            &quot;childPeakKiB&quot;: 0,
+            &quot;maxProcesses&quot;: 2,
+            &quot;parentVmHwmKiB&quot;: 322028
+          },
+          &quot;invalidation&quot;: {
+            &quot;ms&quot;: 467.28206599999976,
+            &quot;treePeakKiB&quot;: 360584,
+            &quot;childPeakKiB&quot;: 0,
+            &quot;maxProcesses&quot;: 1,
+            &quot;parentVmHwmKiB&quot;: 360584
+          },
+          &quot;history&quot;: {
+            &quot;ms&quot;: 14853.509855999997,
+            &quot;treePeakKiB&quot;: 1483896,
+            &quot;childPeakKiB&quot;: 1171488,
+            &quot;maxProcesses&quot;: 9,
+            &quot;parentVmHwmKiB&quot;: 370876
+          },
+          &quot;resume&quot;: {
+            &quot;ms&quot;: 51.425962999994226,
+            &quot;treePeakKiB&quot;: 287368,
+            &quot;childPeakKiB&quot;: 8,
+            &quot;maxProcesses&quot;: 2,
+            &quot;parentVmHwmKiB&quot;: 370876
+          }
+        },
+        &quot;files&quot;: 193,
+        &quot;entities&quot;: 773,
+        &quot;relations&quot;: 1111,
+        &quot;diagnostics&quot;: 97,
+        &quot;endpoints&quot;: 48,
+        &quot;requests&quot;: 96,
+        &quot;cacheFiles&quot;: 168,
+        &quot;cacheBytes&quot;: 265388
+      },
+      &quot;current&quot;: {
+        &quot;phases&quot;: {
+          &quot;cold&quot;: {
+            &quot;ms&quot;: 6965.609015,
+            &quot;treePeakKiB&quot;: 512148,
+            &quot;childPeakKiB&quot;: 332544,
+            &quot;maxProcesses&quot;: 4,
+            &quot;parentVmHwmKiB&quot;: 280632
+          },
+          &quot;population&quot;: {
+            &quot;ms&quot;: 6543.3458359999995,
+            &quot;treePeakKiB&quot;: 589168,
+            &quot;childPeakKiB&quot;: 314860,
+            &quot;maxProcesses&quot;: 4,
+            &quot;parentVmHwmKiB&quot;: 322308
+          },
+          &quot;warm&quot;: {
+            &quot;ms&quot;: 413.8304989999997,
+            &quot;treePeakKiB&quot;: 336876,
+            &quot;childPeakKiB&quot;: 8,
+            &quot;maxProcesses&quot;: 2,
+            &quot;parentVmHwmKiB&quot;: 340988
+          },
+          &quot;invalidation&quot;: {
+            &quot;ms&quot;: 484.03365999999914,
+            &quot;treePeakKiB&quot;: 356728,
+            &quot;childPeakKiB&quot;: 4268,
+            &quot;maxProcesses&quot;: 2,
+            &quot;parentVmHwmKiB&quot;: 374056
+          },
+          &quot;history&quot;: {
+            &quot;ms&quot;: 14890.519651999995,
+            &quot;treePeakKiB&quot;: 1478216,
+            &quot;childPeakKiB&quot;: 1175364,
+            &quot;maxProcesses&quot;: 9,
+            &quot;parentVmHwmKiB&quot;: 439380
+          },
+          &quot;resume&quot;: {
+            &quot;ms&quot;: 53.10493200000201,
+            &quot;treePeakKiB&quot;: 303592,
+            &quot;childPeakKiB&quot;: 0,
+            &quot;maxProcesses&quot;: 1,
+            &quot;parentVmHwmKiB&quot;: 439380
+          }
+        },
+        &quot;files&quot;: 193,
+        &quot;entities&quot;: 773,
+        &quot;relations&quot;: 1111,
+        &quot;diagnostics&quot;: 97,
+        &quot;endpoints&quot;: 48,
+        &quot;requests&quot;: 96,
+        &quot;cacheFiles&quot;: 168,
+        &quot;cacheBytes&quot;: 265388
+      },
+      &quot;runs&quot;: {
+        &quot;baseline&quot;: [
+          {
+            &quot;phases&quot;: {
+              &quot;cold&quot;: {
+                &quot;ms&quot;: 6972.773305000001,
+                &quot;parentVmHwmKiB&quot;: 307552,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 18,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 279,
+                &quot;incompletePolls&quot;: 2,
+                &quot;treePeakKiB&quot;: 498684,
+                &quot;childPeakKiB&quot;: 319128,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;population&quot;: {
+                &quot;ms&quot;: 6495.9169679999995,
+                &quot;parentVmHwmKiB&quot;: 311592,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 18,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 261,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 595104,
+                &quot;childPeakKiB&quot;: 329244,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;warm&quot;: {
+                &quot;ms&quot;: 397.25534399999924,
+                &quot;parentVmHwmKiB&quot;: 322028,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 77,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 131,
+                  &quot;releasedBytes&quot;: 75541290,
+                  &quot;releasedEntries&quot;: 131
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 18,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 319844,
+                &quot;childPeakKiB&quot;: 0,
+                &quot;maxProcesses&quot;: 1
+              },
+              &quot;invalidation&quot;: {
+                &quot;ms&quot;: 467.28206599999976,
+                &quot;parentVmHwmKiB&quot;: 342092,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 80,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 18,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 131,
+                  &quot;releasedBytes&quot;: 75541290,
+                  &quot;releasedEntries&quot;: 131
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 21,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 301500,
+                &quot;childPeakKiB&quot;: 0,
+                &quot;maxProcesses&quot;: 1
+              },
+              &quot;invalidation-check&quot;: {
+                &quot;ms&quot;: 6344.782815999999,
+                &quot;parentVmHwmKiB&quot;: 342092,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 18,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 254,
+                &quot;incompletePolls&quot;: 1,
+                &quot;treePeakKiB&quot;: 634388,
+                &quot;childPeakKiB&quot;: 328224,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;history&quot;: {
+                &quot;ms&quot;: 14853.509855999997,
+                &quot;parentVmHwmKiB&quot;: 364124,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 0,
+                  &quot;maxEntries&quot;: 0,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 0,
+                  &quot;retiredBytes&quot;: 0,
+                  &quot;retiredEntries&quot;: 0,
+                  &quot;releases&quot;: 0,
+                  &quot;releasedBytes&quot;: 0,
+                  &quot;releasedEntries&quot;: 0
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 593,
+                &quot;incompletePolls&quot;: 6,
+                &quot;treePeakKiB&quot;: 1455760,
+                &quot;childPeakKiB&quot;: 1169016,
+                &quot;maxProcesses&quot;: 9
+              },
+              &quot;resume&quot;: {
+                &quot;ms&quot;: 51.425962999994226,
+                &quot;parentVmHwmKiB&quot;: 364124,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 0,
+                  &quot;maxEntries&quot;: 0,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 0,
+                  &quot;retiredBytes&quot;: 0,
+                  &quot;retiredEntries&quot;: 0,
+                  &quot;releases&quot;: 0,
+                  &quot;releasedBytes&quot;: 0,
+                  &quot;releasedEntries&quot;: 0
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 4,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 287368,
+                &quot;childPeakKiB&quot;: 8,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;serial-check&quot;: {
+                &quot;ms&quot;: 24073.394666,
+                &quot;parentVmHwmKiB&quot;: 380580,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 72,
+                  &quot;retirements&quot;: 4,
+                  &quot;retiredBytes&quot;: 6080,
+                  &quot;retiredEntries&quot;: 48,
+                  &quot;releases&quot;: 536,
+                  &quot;releasedBytes&quot;: 302175000,
+                  &quot;releasedEntries&quot;: 536
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 524,
+                  &quot;rotations&quot;: 16,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 959,
+                &quot;incompletePolls&quot;: 7,
+                &quot;treePeakKiB&quot;: 682844,
+                &quot;childPeakKiB&quot;: 340436,
+                &quot;maxProcesses&quot;: 4
+              }
+            },
+            &quot;graphs&quot;: {
+              &quot;cold&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;population&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;warm&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;changed&quot;: &quot;c1c5010f53407d1143eeaa90f0ad622694d9574aaa10e6d155c12ced09b61f25&quot;
+            },
+            &quot;serialEqual&quot;: true,
+            &quot;files&quot;: 193,
+            &quot;entities&quot;: 773,
+            &quot;relations&quot;: 1111,
+            &quot;diagnostics&quot;: 97,
+            &quot;endpoints&quot;: 48,
+            &quot;requests&quot;: 96,
+            &quot;cacheFiles&quot;: 168,
+            &quot;cacheBytes&quot;: 265388,
+            &quot;cache&quot;: {
+              &quot;population&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 99
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 5,
+                  &quot;ms&quot;: 440
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 131,
+                  &quot;ms&quot;: 21777
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 23
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 26
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 12
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 22
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 29
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 12
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 19
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 26
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 6,
+                  &quot;ms&quot;: 6
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 12,
+                  &quot;ms&quot;: 237
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 16
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 36
+                }
+              },
+              &quot;warm&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 131,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 32
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 5
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 12,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 7
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                }
+              },
+              &quot;invalidation&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 5,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 131,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 25
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 27
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 5
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 11,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 29
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 20
+                }
+              }
+            },
+            &quot;history&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+              &quot;indexed&quot;: 4,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 0,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;resume&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+              &quot;indexed&quot;: 0,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 4,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;snapshots&quot;: [
+              {
+                &quot;sha&quot;: &quot;2ea4a039f04f5e8ee4a10682e3f76a34ef2d654f&quot;,
+                &quot;digest&quot;: &quot;1a4418157b94853dfe4b4db9920521d47cf5372a078a3c6d97a5008b6c8b22d1&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+                &quot;digest&quot;: &quot;5ec410ad054fdbbca4fa473b92f628ea649d9d2e94a36e2b1de6afbb87f23fd7&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;5516c14e534f4068da046d3bad83ff60b5befda3&quot;,
+                &quot;digest&quot;: &quot;4421d8ae45f898ca700e098aa7a8f0d6731b2a455ea3227d8124e763e73166ce&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;cbd441459e6c9df4d4884ede6d3c9d0c6f253b29&quot;,
+                &quot;digest&quot;: &quot;89e9cf280fe6ef4c9ae5433de1b89103006301470bca107296d4e169b036af45&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              }
+            ],
+            &quot;replayEqual&quot;: true,
+            &quot;invalidationEqual&quot;: true,
+            &quot;historyCheckpoints&quot;: [
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 1,
+                &quot;sha&quot;: &quot;2ea4a039f04f5e8ee4a10682e3f76a34ef2d654f&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 821252,
+                &quot;childRssKiB&quot;: 534708,
+                &quot;processes&quot;: 3,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  469034,
+                  469982,
+                  469983
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 2,
+                &quot;sha&quot;: &quot;cbd441459e6c9df4d4884ede6d3c9d0c6f253b29&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 825700,
+                &quot;childRssKiB&quot;: 538956,
+                &quot;processes&quot;: 3,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  469034,
+                  469982,
+                  469983
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 3,
+                &quot;sha&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 972760,
+                &quot;childRssKiB&quot;: 685800,
+                &quot;processes&quot;: 4,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  469034,
+                  469982,
+                  470504,
+                  469983
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 4,
+                &quot;sha&quot;: &quot;5516c14e534f4068da046d3bad83ff60b5befda3&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 603232,
+                &quot;childRssKiB&quot;: 316172,
+                &quot;processes&quot;: 2,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  469034,
+                  469982
+                ]
+              }
+            ]
+          },
+          {
+            &quot;phases&quot;: {
+              &quot;cold&quot;: {
+                &quot;ms&quot;: 6855.8208939999995,
+                &quot;parentVmHwmKiB&quot;: 267292,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 18,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 274,
+                &quot;incompletePolls&quot;: 2,
+                &quot;treePeakKiB&quot;: 501984,
+                &quot;childPeakKiB&quot;: 318840,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;population&quot;: {
+                &quot;ms&quot;: 6545.658463,
+                &quot;parentVmHwmKiB&quot;: 298484,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 18,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 263,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 592896,
+                &quot;childPeakKiB&quot;: 318996,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;warm&quot;: {
+                &quot;ms&quot;: 416.6346199999989,
+                &quot;parentVmHwmKiB&quot;: 301364,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 77,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 131,
+                  &quot;releasedBytes&quot;: 75541290,
+                  &quot;releasedEntries&quot;: 131
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 19,
+                &quot;incompletePolls&quot;: 1,
+                &quot;treePeakKiB&quot;: 300584,
+                &quot;childPeakKiB&quot;: 0,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;invalidation&quot;: {
+                &quot;ms&quot;: 440.70776099999966,
+                &quot;parentVmHwmKiB&quot;: 360584,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 80,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 18,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 131,
+                  &quot;releasedBytes&quot;: 75541290,
+                  &quot;releasedEntries&quot;: 131
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 19,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 360584,
+                &quot;childPeakKiB&quot;: 0,
+                &quot;maxProcesses&quot;: 1
+              },
+              &quot;invalidation-check&quot;: {
+                &quot;ms&quot;: 6133.447598000001,
+                &quot;parentVmHwmKiB&quot;: 370876,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 18,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 246,
+                &quot;incompletePolls&quot;: 2,
+                &quot;treePeakKiB&quot;: 698684,
+                &quot;childPeakKiB&quot;: 335096,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;history&quot;: {
+                &quot;ms&quot;: 14847.467137999996,
+                &quot;parentVmHwmKiB&quot;: 370876,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 0,
+                  &quot;maxEntries&quot;: 0,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 0,
+                  &quot;retiredBytes&quot;: 0,
+                  &quot;retiredEntries&quot;: 0,
+                  &quot;releases&quot;: 0,
+                  &quot;releasedBytes&quot;: 0,
+                  &quot;releasedEntries&quot;: 0
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 593,
+                &quot;incompletePolls&quot;: 7,
+                &quot;treePeakKiB&quot;: 1483896,
+                &quot;childPeakKiB&quot;: 1203280,
+                &quot;maxProcesses&quot;: 9
+              },
+              &quot;resume&quot;: {
+                &quot;ms&quot;: 51.12815299999784,
+                &quot;parentVmHwmKiB&quot;: 370876,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 0,
+                  &quot;maxEntries&quot;: 0,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 0,
+                  &quot;retiredBytes&quot;: 0,
+                  &quot;retiredEntries&quot;: 0,
+                  &quot;releases&quot;: 0,
+                  &quot;releasedBytes&quot;: 0,
+                  &quot;releasedEntries&quot;: 0
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 4,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 274992,
+                &quot;childPeakKiB&quot;: 0,
+                &quot;maxProcesses&quot;: 1
+              }
+            },
+            &quot;graphs&quot;: {
+              &quot;cold&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;population&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;warm&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;changed&quot;: &quot;c1c5010f53407d1143eeaa90f0ad622694d9574aaa10e6d155c12ced09b61f25&quot;
+            },
+            &quot;files&quot;: 193,
+            &quot;entities&quot;: 773,
+            &quot;relations&quot;: 1111,
+            &quot;diagnostics&quot;: 97,
+            &quot;endpoints&quot;: 48,
+            &quot;requests&quot;: 96,
+            &quot;cacheFiles&quot;: 168,
+            &quot;cacheBytes&quot;: 265388,
+            &quot;cache&quot;: {
+              &quot;population&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 99
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 5,
+                  &quot;ms&quot;: 458
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 131,
+                  &quot;ms&quot;: 22034
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 16
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 20
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 11
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 22
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 25
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 12
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 20
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 24
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 6,
+                  &quot;ms&quot;: 7
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 12,
+                  &quot;ms&quot;: 231
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 17
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 38
+                }
+              },
+              &quot;warm&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 131,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 31
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 5
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 12,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 8
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 6
+                }
+              },
+              &quot;invalidation&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 5,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 131,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 26
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 25
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 11,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 29
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 18
+                }
+              }
+            },
+            &quot;history&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+              &quot;indexed&quot;: 4,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 0,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;resume&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+              &quot;indexed&quot;: 0,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 4,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;snapshots&quot;: [
+              {
+                &quot;sha&quot;: &quot;2ea4a039f04f5e8ee4a10682e3f76a34ef2d654f&quot;,
+                &quot;digest&quot;: &quot;1a4418157b94853dfe4b4db9920521d47cf5372a078a3c6d97a5008b6c8b22d1&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+                &quot;digest&quot;: &quot;5ec410ad054fdbbca4fa473b92f628ea649d9d2e94a36e2b1de6afbb87f23fd7&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;5516c14e534f4068da046d3bad83ff60b5befda3&quot;,
+                &quot;digest&quot;: &quot;4421d8ae45f898ca700e098aa7a8f0d6731b2a455ea3227d8124e763e73166ce&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;cbd441459e6c9df4d4884ede6d3c9d0c6f253b29&quot;,
+                &quot;digest&quot;: &quot;89e9cf280fe6ef4c9ae5433de1b89103006301470bca107296d4e169b036af45&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              }
+            ],
+            &quot;replayEqual&quot;: true,
+            &quot;invalidationEqual&quot;: true,
+            &quot;historyCheckpoints&quot;: [
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 1,
+                &quot;sha&quot;: &quot;cbd441459e6c9df4d4884ede6d3c9d0c6f253b29&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 816128,
+                &quot;childRssKiB&quot;: 535680,
+                &quot;processes&quot;: 3,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  476578,
+                  477450,
+                  477451
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 2,
+                &quot;sha&quot;: &quot;2ea4a039f04f5e8ee4a10682e3f76a34ef2d654f&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 821392,
+                &quot;childRssKiB&quot;: 540776,
+                &quot;processes&quot;: 3,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  476578,
+                  477450,
+                  477451
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 3,
+                &quot;sha&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 914608,
+                &quot;childRssKiB&quot;: 633796,
+                &quot;processes&quot;: 3,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  476578,
+                  477450,
+                  477451
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 4,
+                &quot;sha&quot;: &quot;5516c14e534f4068da046d3bad83ff60b5befda3&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 597276,
+                &quot;childRssKiB&quot;: 316304,
+                &quot;processes&quot;: 3,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  476578,
+                  477450,
+                  477451
+                ]
+              }
+            ]
+          },
+          {
+            &quot;phases&quot;: {
+              &quot;cold&quot;: {
+                &quot;ms&quot;: 7023.055047000001,
+                &quot;parentVmHwmKiB&quot;: 285256,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 18,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 282,
+                &quot;incompletePolls&quot;: 1,
+                &quot;treePeakKiB&quot;: 514428,
+                &quot;childPeakKiB&quot;: 326712,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;population&quot;: {
+                &quot;ms&quot;: 6443.71447,
+                &quot;parentVmHwmKiB&quot;: 321864,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 18,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 258,
+                &quot;incompletePolls&quot;: 2,
+                &quot;treePeakKiB&quot;: 581448,
+                &quot;childPeakKiB&quot;: 308200,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;warm&quot;: {
+                &quot;ms&quot;: 438.2342229999995,
+                &quot;parentVmHwmKiB&quot;: 339672,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 77,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 131,
+                  &quot;releasedBytes&quot;: 75541290,
+                  &quot;releasedEntries&quot;: 131
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 20,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 396176,
+                &quot;childPeakKiB&quot;: 74272,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;invalidation&quot;: {
+                &quot;ms&quot;: 500.21405799999957,
+                &quot;parentVmHwmKiB&quot;: 376504,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 80,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 18,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 131,
+                  &quot;releasedBytes&quot;: 75541290,
+                  &quot;releasedEntries&quot;: 131
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 22,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 375696,
+                &quot;childPeakKiB&quot;: 8,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;invalidation-check&quot;: {
+                &quot;ms&quot;: 5937.525548999998,
+                &quot;parentVmHwmKiB&quot;: 376504,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 18,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 238,
+                &quot;incompletePolls&quot;: 2,
+                &quot;treePeakKiB&quot;: 640824,
+                &quot;childPeakKiB&quot;: 340920,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;history&quot;: {
+                &quot;ms&quot;: 14875.908828,
+                &quot;parentVmHwmKiB&quot;: 376504,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 0,
+                  &quot;maxEntries&quot;: 0,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 0,
+                  &quot;retiredBytes&quot;: 0,
+                  &quot;retiredEntries&quot;: 0,
+                  &quot;releases&quot;: 0,
+                  &quot;releasedBytes&quot;: 0,
+                  &quot;releasedEntries&quot;: 0
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 595,
+                &quot;incompletePolls&quot;: 5,
+                &quot;treePeakKiB&quot;: 1519668,
+                &quot;childPeakKiB&quot;: 1171488,
+                &quot;maxProcesses&quot;: 9
+              },
+              &quot;resume&quot;: {
+                &quot;ms&quot;: 53.798953000004985,
+                &quot;parentVmHwmKiB&quot;: 376504,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 0,
+                  &quot;maxEntries&quot;: 0,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 0,
+                  &quot;retiredBytes&quot;: 0,
+                  &quot;retiredEntries&quot;: 0,
+                  &quot;releases&quot;: 0,
+                  &quot;releasedBytes&quot;: 0,
+                  &quot;releasedEntries&quot;: 0
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;legacyUnbounded&quot;: true
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;legacyRetained&quot;: true
+                },
+                &quot;polls&quot;: 4,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 291828,
+                &quot;childPeakKiB&quot;: 1384,
+                &quot;maxProcesses&quot;: 2
+              }
+            },
+            &quot;graphs&quot;: {
+              &quot;cold&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;population&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;warm&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;changed&quot;: &quot;c1c5010f53407d1143eeaa90f0ad622694d9574aaa10e6d155c12ced09b61f25&quot;
+            },
+            &quot;files&quot;: 193,
+            &quot;entities&quot;: 773,
+            &quot;relations&quot;: 1111,
+            &quot;diagnostics&quot;: 97,
+            &quot;endpoints&quot;: 48,
+            &quot;requests&quot;: 96,
+            &quot;cacheFiles&quot;: 168,
+            &quot;cacheBytes&quot;: 265388,
+            &quot;cache&quot;: {
+              &quot;population&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 98
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 5,
+                  &quot;ms&quot;: 434
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 131,
+                  &quot;ms&quot;: 21687
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 18
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 24
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 12
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 20
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 30
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 13
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 19
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 31
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 6,
+                  &quot;ms&quot;: 7
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 12,
+                  &quot;ms&quot;: 216
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 14
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 33
+                }
+              },
+              &quot;warm&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 131,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 28
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 6
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 12,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 7
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                }
+              },
+              &quot;invalidation&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 5,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 131,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 25
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 27
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 7
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 11,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 26
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 21
+                }
+              }
+            },
+            &quot;history&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+              &quot;indexed&quot;: 4,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 0,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;resume&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+              &quot;indexed&quot;: 0,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 4,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;snapshots&quot;: [
+              {
+                &quot;sha&quot;: &quot;2ea4a039f04f5e8ee4a10682e3f76a34ef2d654f&quot;,
+                &quot;digest&quot;: &quot;1a4418157b94853dfe4b4db9920521d47cf5372a078a3c6d97a5008b6c8b22d1&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+                &quot;digest&quot;: &quot;5ec410ad054fdbbca4fa473b92f628ea649d9d2e94a36e2b1de6afbb87f23fd7&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;5516c14e534f4068da046d3bad83ff60b5befda3&quot;,
+                &quot;digest&quot;: &quot;4421d8ae45f898ca700e098aa7a8f0d6731b2a455ea3227d8124e763e73166ce&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;cbd441459e6c9df4d4884ede6d3c9d0c6f253b29&quot;,
+                &quot;digest&quot;: &quot;89e9cf280fe6ef4c9ae5433de1b89103006301470bca107296d4e169b036af45&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              }
+            ],
+            &quot;replayEqual&quot;: true,
+            &quot;invalidationEqual&quot;: true,
+            &quot;historyCheckpoints&quot;: [
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 1,
+                &quot;sha&quot;: &quot;2ea4a039f04f5e8ee4a10682e3f76a34ef2d654f&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 867532,
+                &quot;childRssKiB&quot;: 519776,
+                &quot;processes&quot;: 3,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  478391,
+                  479254,
+                  479255
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 2,
+                &quot;sha&quot;: &quot;cbd441459e6c9df4d4884ede6d3c9d0c6f253b29&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 873156,
+                &quot;childRssKiB&quot;: 524976,
+                &quot;processes&quot;: 3,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  478391,
+                  479254,
+                  479255
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 3,
+                &quot;sha&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 1143868,
+                &quot;childRssKiB&quot;: 795400,
+                &quot;processes&quot;: 5,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  478391,
+                  479254,
+                  479771,
+                  479822,
+                  479255
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 4,
+                &quot;sha&quot;: &quot;5516c14e534f4068da046d3bad83ff60b5befda3&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 606352,
+                &quot;childRssKiB&quot;: 316172,
+                &quot;processes&quot;: 2,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  478391,
+                  479254
+                ]
+              }
+            ]
+          }
+        ],
+        &quot;current&quot;: [
+          {
+            &quot;phases&quot;: {
+              &quot;cold&quot;: {
+                &quot;ms&quot;: 7247.234202,
+                &quot;parentVmHwmKiB&quot;: 266872,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 26,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 118664,
+                  &quot;peakResidentUnits&quot;: 5,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 5,
+                  &quot;peakInputBytes&quot;: 1824
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 5,
+                  &quot;sites&quot;: 21,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 1238,
+                  &quot;peakOriginalBytes&quot;: 1462
+                },
+                &quot;polls&quot;: 291,
+                &quot;incompletePolls&quot;: 2,
+                &quot;treePeakKiB&quot;: 501976,
+                &quot;childPeakKiB&quot;: 319000,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;population&quot;: {
+                &quot;ms&quot;: 6654.703689999999,
+                &quot;parentVmHwmKiB&quot;: 322308,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 26,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 118664,
+                  &quot;peakResidentUnits&quot;: 5,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 5,
+                  &quot;peakInputBytes&quot;: 1824
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 5,
+                  &quot;sites&quot;: 21,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 1238,
+                  &quot;peakOriginalBytes&quot;: 1462
+                },
+                &quot;polls&quot;: 267,
+                &quot;incompletePolls&quot;: 2,
+                &quot;treePeakKiB&quot;: 589168,
+                &quot;childPeakKiB&quot;: 314860,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;warm&quot;: {
+                &quot;ms&quot;: 386.7439720000002,
+                &quot;parentVmHwmKiB&quot;: 346636,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 77,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 131,
+                  &quot;releasedBytes&quot;: 75541290,
+                  &quot;releasedEntries&quot;: 131
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 0,
+                  &quot;peakResidentUnits&quot;: 0,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 0,
+                  &quot;peakInputBytes&quot;: 0
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 0,
+                  &quot;sites&quot;: 0,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 0,
+                  &quot;peakOriginalBytes&quot;: 0
+                },
+                &quot;polls&quot;: 17,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 339240,
+                &quot;childPeakKiB&quot;: 0,
+                &quot;maxProcesses&quot;: 1
+              },
+              &quot;invalidation&quot;: {
+                &quot;ms&quot;: 492.498028,
+                &quot;parentVmHwmKiB&quot;: 399340,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 80,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 23,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 131,
+                  &quot;releasedBytes&quot;: 75541290,
+                  &quot;releasedEntries&quot;: 131
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 118664,
+                  &quot;peakResidentUnits&quot;: 5,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 5,
+                  &quot;peakInputBytes&quot;: 1824
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 5,
+                  &quot;sites&quot;: 21,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 1238,
+                  &quot;peakOriginalBytes&quot;: 1462
+                },
+                &quot;polls&quot;: 22,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 314468,
+                &quot;childPeakKiB&quot;: 0,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;invalidation-check&quot;: {
+                &quot;ms&quot;: 5965.429914,
+                &quot;parentVmHwmKiB&quot;: 399340,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 26,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 118664,
+                  &quot;peakResidentUnits&quot;: 5,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 5,
+                  &quot;peakInputBytes&quot;: 1824
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 5,
+                  &quot;sites&quot;: 21,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 1238,
+                  &quot;peakOriginalBytes&quot;: 1462
+                },
+                &quot;polls&quot;: 239,
+                &quot;incompletePolls&quot;: 1,
+                &quot;treePeakKiB&quot;: 644864,
+                &quot;childPeakKiB&quot;: 339564,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;history&quot;: {
+                &quot;ms&quot;: 14940.456115,
+                &quot;parentVmHwmKiB&quot;: 399340,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 0,
+                  &quot;maxEntries&quot;: 0,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 0,
+                  &quot;retiredBytes&quot;: 0,
+                  &quot;retiredEntries&quot;: 0,
+                  &quot;releases&quot;: 0,
+                  &quot;releasedBytes&quot;: 0,
+                  &quot;releasedEntries&quot;: 0
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 0,
+                  &quot;peakResidentUnits&quot;: 0,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 0,
+                  &quot;peakInputBytes&quot;: 0
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 0,
+                  &quot;sites&quot;: 0,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 0,
+                  &quot;peakOriginalBytes&quot;: 0
+                },
+                &quot;polls&quot;: 597,
+                &quot;incompletePolls&quot;: 5,
+                &quot;treePeakKiB&quot;: 1478216,
+                &quot;childPeakKiB&quot;: 1175364,
+                &quot;maxProcesses&quot;: 9
+              },
+              &quot;resume&quot;: {
+                &quot;ms&quot;: 53.75751400000445,
+                &quot;parentVmHwmKiB&quot;: 399340,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 0,
+                  &quot;maxEntries&quot;: 0,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 0,
+                  &quot;retiredBytes&quot;: 0,
+                  &quot;retiredEntries&quot;: 0,
+                  &quot;releases&quot;: 0,
+                  &quot;releasedBytes&quot;: 0,
+                  &quot;releasedEntries&quot;: 0
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 0,
+                  &quot;peakResidentUnits&quot;: 0,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 0,
+                  &quot;peakInputBytes&quot;: 0
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 0,
+                  &quot;sites&quot;: 0,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 0,
+                  &quot;peakOriginalBytes&quot;: 0
+                },
+                &quot;polls&quot;: 4,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 303592,
+                &quot;childPeakKiB&quot;: 0,
+                &quot;maxProcesses&quot;: 1
+              },
+              &quot;serial-check&quot;: {
+                &quot;ms&quot;: 24493.296973000004,
+                &quot;parentVmHwmKiB&quot;: 402872,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 104,
+                  &quot;retirements&quot;: 4,
+                  &quot;retiredBytes&quot;: 6080,
+                  &quot;retiredEntries&quot;: 48,
+                  &quot;releases&quot;: 536,
+                  &quot;releasedBytes&quot;: 302175000,
+                  &quot;releasedEntries&quot;: 536
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 524,
+                  &quot;rotations&quot;: 16,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 118664,
+                  &quot;peakResidentUnits&quot;: 5,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 5,
+                  &quot;peakInputBytes&quot;: 1824
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 20,
+                  &quot;sites&quot;: 84,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 4952,
+                  &quot;peakOriginalBytes&quot;: 1462
+                },
+                &quot;polls&quot;: 977,
+                &quot;incompletePolls&quot;: 7,
+                &quot;treePeakKiB&quot;: 719920,
+                &quot;childPeakKiB&quot;: 332116,
+                &quot;maxProcesses&quot;: 4
+              }
+            },
+            &quot;graphs&quot;: {
+              &quot;cold&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;population&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;warm&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;changed&quot;: &quot;c1c5010f53407d1143eeaa90f0ad622694d9574aaa10e6d155c12ced09b61f25&quot;
+            },
+            &quot;serialEqual&quot;: true,
+            &quot;files&quot;: 193,
+            &quot;entities&quot;: 773,
+            &quot;relations&quot;: 1111,
+            &quot;diagnostics&quot;: 97,
+            &quot;endpoints&quot;: 48,
+            &quot;requests&quot;: 96,
+            &quot;cacheFiles&quot;: 168,
+            &quot;cacheBytes&quot;: 265388,
+            &quot;cache&quot;: {
+              &quot;population&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 97
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 5,
+                  &quot;ms&quot;: 434
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 131,
+                  &quot;ms&quot;: 22572
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 22
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 21
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 9
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 20
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 23
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 11
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 18
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 25
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 6,
+                  &quot;ms&quot;: 6
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 12,
+                  &quot;ms&quot;: 217
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 15
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 36
+                }
+              },
+              &quot;warm&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 131,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 31
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 5
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 12,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 7
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                }
+              },
+              &quot;invalidation&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 5,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 131,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 27
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 28
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 5
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 11,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 30
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 23
+                }
+              }
+            },
+            &quot;history&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+              &quot;indexed&quot;: 4,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 0,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;resume&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+              &quot;indexed&quot;: 0,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 4,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;snapshots&quot;: [
+              {
+                &quot;sha&quot;: &quot;2ea4a039f04f5e8ee4a10682e3f76a34ef2d654f&quot;,
+                &quot;digest&quot;: &quot;1a4418157b94853dfe4b4db9920521d47cf5372a078a3c6d97a5008b6c8b22d1&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+                &quot;digest&quot;: &quot;5ec410ad054fdbbca4fa473b92f628ea649d9d2e94a36e2b1de6afbb87f23fd7&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;5516c14e534f4068da046d3bad83ff60b5befda3&quot;,
+                &quot;digest&quot;: &quot;4421d8ae45f898ca700e098aa7a8f0d6731b2a455ea3227d8124e763e73166ce&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;cbd441459e6c9df4d4884ede6d3c9d0c6f253b29&quot;,
+                &quot;digest&quot;: &quot;89e9cf280fe6ef4c9ae5433de1b89103006301470bca107296d4e169b036af45&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              }
+            ],
+            &quot;replayEqual&quot;: true,
+            &quot;invalidationEqual&quot;: true,
+            &quot;historyCheckpoints&quot;: [
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 1,
+                &quot;sha&quot;: &quot;cbd441459e6c9df4d4884ede6d3c9d0c6f253b29&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 874892,
+                &quot;childRssKiB&quot;: 513880,
+                &quot;processes&quot;: 3,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  471852,
+                  472823,
+                  472824
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 2,
+                &quot;sha&quot;: &quot;2ea4a039f04f5e8ee4a10682e3f76a34ef2d654f&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 881244,
+                &quot;childRssKiB&quot;: 519984,
+                &quot;processes&quot;: 3,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  471852,
+                  472823,
+                  472824
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 3,
+                &quot;sha&quot;: &quot;5516c14e534f4068da046d3bad83ff60b5befda3&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 932284,
+                &quot;childRssKiB&quot;: 629292,
+                &quot;processes&quot;: 4,
+                &quot;incomplete&quot;: true,
+                &quot;pids&quot;: [
+                  471852,
+                  472823,
+                  472824,
+                  473336
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 4,
+                &quot;sha&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 618376,
+                &quot;childRssKiB&quot;: 315340,
+                &quot;processes&quot;: 3,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  471852,
+                  472823,
+                  472824
+                ]
+              }
+            ]
+          },
+          {
+            &quot;phases&quot;: {
+              &quot;cold&quot;: {
+                &quot;ms&quot;: 6965.609015,
+                &quot;parentVmHwmKiB&quot;: 280632,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 26,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 118664,
+                  &quot;peakResidentUnits&quot;: 5,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 5,
+                  &quot;peakInputBytes&quot;: 1824
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 5,
+                  &quot;sites&quot;: 21,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 1238,
+                  &quot;peakOriginalBytes&quot;: 1462
+                },
+                &quot;polls&quot;: 279,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 513056,
+                &quot;childPeakKiB&quot;: 332864,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;population&quot;: {
+                &quot;ms&quot;: 6543.3458359999995,
+                &quot;parentVmHwmKiB&quot;: 320264,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 26,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 118664,
+                  &quot;peakResidentUnits&quot;: 5,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 5,
+                  &quot;peakInputBytes&quot;: 1824
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 5,
+                  &quot;sites&quot;: 21,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 1238,
+                  &quot;peakOriginalBytes&quot;: 1462
+                },
+                &quot;polls&quot;: 262,
+                &quot;incompletePolls&quot;: 1,
+                &quot;treePeakKiB&quot;: 601356,
+                &quot;childPeakKiB&quot;: 332000,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;warm&quot;: {
+                &quot;ms&quot;: 415.44506,
+                &quot;parentVmHwmKiB&quot;: 337768,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 77,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 131,
+                  &quot;releasedBytes&quot;: 75541290,
+                  &quot;releasedEntries&quot;: 131
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 0,
+                  &quot;peakResidentUnits&quot;: 0,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 0,
+                  &quot;peakInputBytes&quot;: 0
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 0,
+                  &quot;sites&quot;: 0,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 0,
+                  &quot;peakOriginalBytes&quot;: 0
+                },
+                &quot;polls&quot;: 19,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 335184,
+                &quot;childPeakKiB&quot;: 1368,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;invalidation&quot;: {
+                &quot;ms&quot;: 479.05141000000003,
+                &quot;parentVmHwmKiB&quot;: 361824,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 80,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 23,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 131,
+                  &quot;releasedBytes&quot;: 75541290,
+                  &quot;releasedEntries&quot;: 131
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 118664,
+                  &quot;peakResidentUnits&quot;: 5,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 5,
+                  &quot;peakInputBytes&quot;: 1824
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 5,
+                  &quot;sites&quot;: 21,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 1238,
+                  &quot;peakOriginalBytes&quot;: 1462
+                },
+                &quot;polls&quot;: 21,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 356728,
+                &quot;childPeakKiB&quot;: 4452,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;invalidation-check&quot;: {
+                &quot;ms&quot;: 6029.293416999999,
+                &quot;parentVmHwmKiB&quot;: 400464,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 26,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 118664,
+                  &quot;peakResidentUnits&quot;: 5,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 5,
+                  &quot;peakInputBytes&quot;: 1824
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 5,
+                  &quot;sites&quot;: 21,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 1238,
+                  &quot;peakOriginalBytes&quot;: 1462
+                },
+                &quot;polls&quot;: 242,
+                &quot;incompletePolls&quot;: 1,
+                &quot;treePeakKiB&quot;: 697504,
+                &quot;childPeakKiB&quot;: 326200,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;history&quot;: {
+                &quot;ms&quot;: 14890.519651999995,
+                &quot;parentVmHwmKiB&quot;: 439380,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 0,
+                  &quot;maxEntries&quot;: 0,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 0,
+                  &quot;retiredBytes&quot;: 0,
+                  &quot;retiredEntries&quot;: 0,
+                  &quot;releases&quot;: 0,
+                  &quot;releasedBytes&quot;: 0,
+                  &quot;releasedEntries&quot;: 0
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 0,
+                  &quot;peakResidentUnits&quot;: 0,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 0,
+                  &quot;peakInputBytes&quot;: 0
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 0,
+                  &quot;sites&quot;: 0,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 0,
+                  &quot;peakOriginalBytes&quot;: 0
+                },
+                &quot;polls&quot;: 595,
+                &quot;incompletePolls&quot;: 6,
+                &quot;treePeakKiB&quot;: 1451236,
+                &quot;childPeakKiB&quot;: 1182120,
+                &quot;maxProcesses&quot;: 9
+              },
+              &quot;resume&quot;: {
+                &quot;ms&quot;: 50.35127400000056,
+                &quot;parentVmHwmKiB&quot;: 439380,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 0,
+                  &quot;maxEntries&quot;: 0,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 0,
+                  &quot;retiredBytes&quot;: 0,
+                  &quot;retiredEntries&quot;: 0,
+                  &quot;releases&quot;: 0,
+                  &quot;releasedBytes&quot;: 0,
+                  &quot;releasedEntries&quot;: 0
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 0,
+                  &quot;peakResidentUnits&quot;: 0,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 0,
+                  &quot;peakInputBytes&quot;: 0
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 0,
+                  &quot;sites&quot;: 0,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 0,
+                  &quot;peakOriginalBytes&quot;: 0
+                },
+                &quot;polls&quot;: 4,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 269320,
+                &quot;childPeakKiB&quot;: 0,
+                &quot;maxProcesses&quot;: 1
+              }
+            },
+            &quot;graphs&quot;: {
+              &quot;cold&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;population&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;warm&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;changed&quot;: &quot;c1c5010f53407d1143eeaa90f0ad622694d9574aaa10e6d155c12ced09b61f25&quot;
+            },
+            &quot;files&quot;: 193,
+            &quot;entities&quot;: 773,
+            &quot;relations&quot;: 1111,
+            &quot;diagnostics&quot;: 97,
+            &quot;endpoints&quot;: 48,
+            &quot;requests&quot;: 96,
+            &quot;cacheFiles&quot;: 168,
+            &quot;cacheBytes&quot;: 265388,
+            &quot;cache&quot;: {
+              &quot;population&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 103
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 5,
+                  &quot;ms&quot;: 431
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 131,
+                  &quot;ms&quot;: 22185
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 15
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 24
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 8
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 20
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 24
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 12
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 18
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 24
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 6,
+                  &quot;ms&quot;: 7
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 12,
+                  &quot;ms&quot;: 214
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 17
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 37
+                }
+              },
+              &quot;warm&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 131,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 28
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 4
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 12,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 7
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 7
+                }
+              },
+              &quot;invalidation&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 5,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 131,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 35
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 27
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 5
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 11,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 26
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 20
+                }
+              }
+            },
+            &quot;history&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+              &quot;indexed&quot;: 4,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 0,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;resume&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+              &quot;indexed&quot;: 0,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 4,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;snapshots&quot;: [
+              {
+                &quot;sha&quot;: &quot;2ea4a039f04f5e8ee4a10682e3f76a34ef2d654f&quot;,
+                &quot;digest&quot;: &quot;1a4418157b94853dfe4b4db9920521d47cf5372a078a3c6d97a5008b6c8b22d1&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+                &quot;digest&quot;: &quot;5ec410ad054fdbbca4fa473b92f628ea649d9d2e94a36e2b1de6afbb87f23fd7&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;5516c14e534f4068da046d3bad83ff60b5befda3&quot;,
+                &quot;digest&quot;: &quot;4421d8ae45f898ca700e098aa7a8f0d6731b2a455ea3227d8124e763e73166ce&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;cbd441459e6c9df4d4884ede6d3c9d0c6f253b29&quot;,
+                &quot;digest&quot;: &quot;89e9cf280fe6ef4c9ae5433de1b89103006301470bca107296d4e169b036af45&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              }
+            ],
+            &quot;replayEqual&quot;: true,
+            &quot;invalidationEqual&quot;: true,
+            &quot;historyCheckpoints&quot;: [
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 1,
+                &quot;sha&quot;: &quot;2ea4a039f04f5e8ee4a10682e3f76a34ef2d654f&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 798988,
+                &quot;childRssKiB&quot;: 530040,
+                &quot;processes&quot;: 3,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  474730,
+                  475715,
+                  475716
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 2,
+                &quot;sha&quot;: &quot;cbd441459e6c9df4d4884ede6d3c9d0c6f253b29&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 802648,
+                &quot;childRssKiB&quot;: 533532,
+                &quot;processes&quot;: 3,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  474730,
+                  475715,
+                  475716
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 3,
+                &quot;sha&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 937464,
+                &quot;childRssKiB&quot;: 668152,
+                &quot;processes&quot;: 4,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  474730,
+                  475715,
+                  476213,
+                  475716
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 4,
+                &quot;sha&quot;: &quot;5516c14e534f4068da046d3bad83ff60b5befda3&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 562156,
+                &quot;childRssKiB&quot;: 292944,
+                &quot;processes&quot;: 2,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  474730,
+                  475715
+                ]
+              }
+            ]
+          },
+          {
+            &quot;phases&quot;: {
+              &quot;cold&quot;: {
+                &quot;ms&quot;: 6873.055963000001,
+                &quot;parentVmHwmKiB&quot;: 284956,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 26,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 118664,
+                  &quot;peakResidentUnits&quot;: 5,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 5,
+                  &quot;peakInputBytes&quot;: 1824
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 5,
+                  &quot;sites&quot;: 21,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 1238,
+                  &quot;peakOriginalBytes&quot;: 1462
+                },
+                &quot;polls&quot;: 275,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 512148,
+                &quot;childPeakKiB&quot;: 332544,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;population&quot;: {
+                &quot;ms&quot;: 6499.166631,
+                &quot;parentVmHwmKiB&quot;: 323328,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 26,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 118664,
+                  &quot;peakResidentUnits&quot;: 5,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 5,
+                  &quot;peakInputBytes&quot;: 1824
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 5,
+                  &quot;sites&quot;: 21,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 1238,
+                  &quot;peakOriginalBytes&quot;: 1462
+                },
+                &quot;polls&quot;: 260,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 584340,
+                &quot;childPeakKiB&quot;: 309908,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;warm&quot;: {
+                &quot;ms&quot;: 413.8304989999997,
+                &quot;parentVmHwmKiB&quot;: 340988,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 77,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 131,
+                  &quot;releasedBytes&quot;: 75541290,
+                  &quot;releasedEntries&quot;: 131
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 0,
+                  &quot;peakResidentUnits&quot;: 0,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 0,
+                  &quot;peakInputBytes&quot;: 0
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 0,
+                  &quot;sites&quot;: 0,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 0,
+                  &quot;peakOriginalBytes&quot;: 0
+                },
+                &quot;polls&quot;: 18,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 336876,
+                &quot;childPeakKiB&quot;: 8,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;invalidation&quot;: {
+                &quot;ms&quot;: 484.03365999999914,
+                &quot;parentVmHwmKiB&quot;: 374056,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 80,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 23,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 131,
+                  &quot;releasedBytes&quot;: 75541290,
+                  &quot;releasedEntries&quot;: 131
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 118664,
+                  &quot;peakResidentUnits&quot;: 5,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 5,
+                  &quot;peakInputBytes&quot;: 1824
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 5,
+                  &quot;sites&quot;: 21,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 1238,
+                  &quot;peakOriginalBytes&quot;: 1462
+                },
+                &quot;polls&quot;: 21,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 368608,
+                &quot;childPeakKiB&quot;: 4268,
+                &quot;maxProcesses&quot;: 2
+              },
+              &quot;invalidation-check&quot;: {
+                &quot;ms&quot;: 5986.318236000001,
+                &quot;parentVmHwmKiB&quot;: 419060,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 1574484,
+                  &quot;maxEntries&quot;: 88,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 26,
+                  &quot;retirements&quot;: 1,
+                  &quot;retiredBytes&quot;: 1520,
+                  &quot;retiredEntries&quot;: 12,
+                  &quot;releases&quot;: 134,
+                  &quot;releasedBytes&quot;: 75543750,
+                  &quot;releasedEntries&quot;: 134
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 131,
+                  &quot;rotations&quot;: 4,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 6,
+                  &quot;maxSourceBytes&quot;: 16521207
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 118664,
+                  &quot;peakResidentUnits&quot;: 5,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 5,
+                  &quot;peakInputBytes&quot;: 1824
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 5,
+                  &quot;sites&quot;: 21,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 1238,
+                  &quot;peakOriginalBytes&quot;: 1462
+                },
+                &quot;polls&quot;: 240,
+                &quot;incompletePolls&quot;: 1,
+                &quot;treePeakKiB&quot;: 708412,
+                &quot;childPeakKiB&quot;: 330112,
+                &quot;maxProcesses&quot;: 4
+              },
+              &quot;history&quot;: {
+                &quot;ms&quot;: 14854.007562000003,
+                &quot;parentVmHwmKiB&quot;: 458056,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 0,
+                  &quot;maxEntries&quot;: 0,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 0,
+                  &quot;retiredBytes&quot;: 0,
+                  &quot;retiredEntries&quot;: 0,
+                  &quot;releases&quot;: 0,
+                  &quot;releasedBytes&quot;: 0,
+                  &quot;releasedEntries&quot;: 0
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 0,
+                  &quot;peakResidentUnits&quot;: 0,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 0,
+                  &quot;peakInputBytes&quot;: 0
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 0,
+                  &quot;sites&quot;: 0,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 0,
+                  &quot;peakOriginalBytes&quot;: 0
+                },
+                &quot;polls&quot;: 593,
+                &quot;incompletePolls&quot;: 7,
+                &quot;treePeakKiB&quot;: 1505932,
+                &quot;childPeakKiB&quot;: 1169008,
+                &quot;maxProcesses&quot;: 9
+              },
+              &quot;resume&quot;: {
+                &quot;ms&quot;: 53.10493200000201,
+                &quot;parentVmHwmKiB&quot;: 458056,
+                &quot;sourceMemo&quot;: {
+                  &quot;maxBytes&quot;: 0,
+                  &quot;maxEntries&quot;: 0,
+                  &quot;evictions&quot;: 0,
+                  &quot;bypasses&quot;: 0,
+                  &quot;retirements&quot;: 0,
+                  &quot;retiredBytes&quot;: 0,
+                  &quot;retiredEntries&quot;: 0,
+                  &quot;releases&quot;: 0,
+                  &quot;releasedBytes&quot;: 0,
+                  &quot;releasedEntries&quot;: 0
+                },
+                &quot;nativeGenerations&quot;: {
+                  &quot;jobs&quot;: 0,
+                  &quot;rotations&quot;: 0,
+                  &quot;oversizedJobs&quot;: 0,
+                  &quot;maxGrammars&quot;: 0,
+                  &quot;maxSourceBytes&quot;: 0
+                },
+                &quot;phpResidency&quot;: {
+                  &quot;evictions&quot;: 0,
+                  &quot;spills&quot;: 0,
+                  &quot;reloads&quot;: 0,
+                  &quot;peakResidentBytes&quot;: 0,
+                  &quot;peakResidentUnits&quot;: 0,
+                  &quot;peakSpoolBytes&quot;: 0,
+                  &quot;peakInputJobs&quot;: 0,
+                  &quot;peakInputBytes&quot;: 0
+                },
+                &quot;phpBinding&quot;: {
+                  &quot;units&quot;: 0,
+                  &quot;sites&quot;: 0,
+                  &quot;originalBytes&quot;: 0,
+                  &quot;expressionBytes&quot;: 0,
+                  &quot;peakOriginalBytes&quot;: 0
+                },
+                &quot;polls&quot;: 4,
+                &quot;incompletePolls&quot;: 0,
+                &quot;treePeakKiB&quot;: 341080,
+                &quot;childPeakKiB&quot;: 8,
+                &quot;maxProcesses&quot;: 2
+              }
+            },
+            &quot;graphs&quot;: {
+              &quot;cold&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;population&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;warm&quot;: &quot;3fcf1e2cbd469fa852ad3fabd23a9b9d6c4d31070ff33bd9835c93836a9f183e&quot;,
+              &quot;changed&quot;: &quot;c1c5010f53407d1143eeaa90f0ad622694d9574aaa10e6d155c12ced09b61f25&quot;
+            },
+            &quot;files&quot;: 193,
+            &quot;entities&quot;: 773,
+            &quot;relations&quot;: 1111,
+            &quot;diagnostics&quot;: 97,
+            &quot;endpoints&quot;: 48,
+            &quot;requests&quot;: 96,
+            &quot;cacheFiles&quot;: 168,
+            &quot;cacheBytes&quot;: 265388,
+            &quot;cache&quot;: {
+              &quot;population&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 96
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 5,
+                  &quot;ms&quot;: 461
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 131,
+                  &quot;ms&quot;: 21911
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 22
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 20
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 11
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 21
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 22
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 12
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 18
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 23
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 6,
+                  &quot;ms&quot;: 7
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 12,
+                  &quot;ms&quot;: 216
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 15
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 38
+                }
+              },
+              &quot;warm&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 131,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 37
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 3
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 5
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 12,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 7
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 6
+                }
+              },
+              &quot;invalidation&quot;: {
+                &quot;git-metrics&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;php-syntax-facts&quot;: {
+                  &quot;hits&quot;: 5,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;syntax-facts&quot;: {
+                  &quot;hits&quot;: 131,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 31
+                },
+                &quot;python-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;go-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;ruby-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 1
+                },
+                &quot;jvm-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;csharp-imports&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 28
+                },
+                &quot;rust-imports&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-symbols&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 2
+                },
+                &quot;rust-routers&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 4
+                },
+                &quot;embedded-source&quot;: {
+                  &quot;hits&quot;: 6,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;typescript-nextjs&quot;: {
+                  &quot;hits&quot;: 11,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 26
+                },
+                &quot;php-laravel&quot;: {
+                  &quot;hits&quot;: 1,
+                  &quot;misses&quot;: 0,
+                  &quot;ms&quot;: 0
+                },
+                &quot;php-analysis&quot;: {
+                  &quot;hits&quot;: 0,
+                  &quot;misses&quot;: 1,
+                  &quot;ms&quot;: 20
+                }
+              }
+            },
+            &quot;history&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+              &quot;indexed&quot;: 4,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 0,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;resume&quot;: {
+              &quot;ref&quot;: &quot;main&quot;,
+              &quot;head&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+              &quot;indexed&quot;: 0,
+              &quot;failed&quot;: 0,
+              &quot;skipped&quot;: 4,
+              &quot;snapshots&quot;: 4
+            },
+            &quot;snapshots&quot;: [
+              {
+                &quot;sha&quot;: &quot;2ea4a039f04f5e8ee4a10682e3f76a34ef2d654f&quot;,
+                &quot;digest&quot;: &quot;1a4418157b94853dfe4b4db9920521d47cf5372a078a3c6d97a5008b6c8b22d1&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+                &quot;digest&quot;: &quot;5ec410ad054fdbbca4fa473b92f628ea649d9d2e94a36e2b1de6afbb87f23fd7&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;5516c14e534f4068da046d3bad83ff60b5befda3&quot;,
+                &quot;digest&quot;: &quot;4421d8ae45f898ca700e098aa7a8f0d6731b2a455ea3227d8124e763e73166ce&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              },
+              {
+                &quot;sha&quot;: &quot;cbd441459e6c9df4d4884ede6d3c9d0c6f253b29&quot;,
+                &quot;digest&quot;: &quot;89e9cf280fe6ef4c9ae5433de1b89103006301470bca107296d4e169b036af45&quot;,
+                &quot;entities&quot;: 773,
+                &quot;relations&quot;: 1111,
+                &quot;diagnostics&quot;: 97
+              }
+            ],
+            &quot;replayEqual&quot;: true,
+            &quot;invalidationEqual&quot;: true,
+            &quot;historyCheckpoints&quot;: [
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 1,
+                &quot;sha&quot;: &quot;cbd441459e6c9df4d4884ede6d3c9d0c6f253b29&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 871084,
+                &quot;childRssKiB&quot;: 534368,
+                &quot;processes&quot;: 3,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  480140,
+                  481078,
+                  481079
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 2,
+                &quot;sha&quot;: &quot;2ea4a039f04f5e8ee4a10682e3f76a34ef2d654f&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 878924,
+                &quot;childRssKiB&quot;: 542000,
+                &quot;processes&quot;: 3,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  480140,
+                  481078,
+                  481079
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 3,
+                &quot;sha&quot;: &quot;5516c14e534f4068da046d3bad83ff60b5befda3&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 970644,
+                &quot;childRssKiB&quot;: 633676,
+                &quot;processes&quot;: 4,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  480140,
+                  481078,
+                  481604,
+                  481079
+                ]
+              },
+              {
+                &quot;type&quot;: &quot;history-checkpoint&quot;,
+                &quot;done&quot;: 4,
+                &quot;sha&quot;: &quot;3c36848e52e5ef8ccbcebd3791c77e79cb5ae5e8&quot;,
+                &quot;available&quot;: true,
+                &quot;rssKiB&quot;: 658692,
+                &quot;childRssKiB&quot;: 318152,
+                &quot;processes&quot;: 2,
+                &quot;incomplete&quot;: false,
+                &quot;pids&quot;: [
+                  480140,
+                  481078
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}</pre></details></main></body></html>

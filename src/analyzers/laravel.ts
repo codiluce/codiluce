@@ -79,7 +79,7 @@ export const laravelAnalyzer: Analyzer = {
         }
       }
       const inputs = { version:LARAVEL_VERSION, files:files.map(file=>fileKey(context,file.path)), availability, paths:pathSetKey(context), config:context.config, applications:[...context.applicationIds], parser:{name:'php-parser',version:PHP_PARSER_VERSION}, profile:PHP_SOURCE_PROFILE, provider:PHP_SOURCE_PROVIDER_VERSION, structure:PHP_STRUCTURE_VERSION };
-      if (context.cache) await context.cache.unit(context, 'php-laravel', 'laravel', inputs, () => analyzeLaravel(context));
+      if (context.cache) await context.cache.unit(context, 'php-laravel', 'laravel', inputs, () => analyzeLaravel(context), {shouldStore:()=>files.every(file=>!file.analyzable||!sources.failures.has(file.path))});
       else await analyzeLaravel(context);
     } finally { sources.closeParser(); }
   },
@@ -96,7 +96,9 @@ async function analyzeLaravel(context: AnalysisContext): Promise<void> {
   const facts = (parsed: ParsedFile, node: Ast, explanation: string, framework = false): Evidence[] => [{ ...evidence(framework ? 'framework' : 'php', 'php-laravel', parsed.file.path, node.loc?.start.line, explanation), endLine: node.loc?.end.line }];
   for (const file of context.files.values()) {
     if (file.language !== 'php' || !file.analyzable || !hasFramework(file.application, 'laravel')) continue;
-    const source = context.phpSources!.get(file.path);
+    let source;
+    try {source=await context.phpSources!.read(file);}
+    catch{/* The indexed provider retains the source failure reason below. */}
     if (!source?.ast) {
       graph.diagnose({ analyzer: 'php-laravel', severity: 'error', code: 'php-parse-error', file: file.path, entityId: file.id, reason: context.phpSources!.failures.get(file.path) ?? source?.astGap ?? 'Bounded indexed original PHP source is unavailable' });
       continue;

@@ -59,6 +59,22 @@ shutdown finish, structure also clears the shared memo. Later consumers reread
 needed originals through the indexed boundary, including the scan hash check.
 Index completion awaits PHP parser retirement as well.
 
+PHP source providers account twice the native serialized AST payload plus
+UTF-16 source/key text, retaining at most 32 MiB or 4,096 units. Evicted units
+use private ephemeral V8 snapshots, capped at 256 MiB or 4,096 entries.
+Snapshot writes reserve their entire possible payload first; a partial file
+whose removal fails remains charged and cannot be replayed. Source
+reads still validate the scanned original; corrupt, missing or unavailable
+snapshots fall back to original parsing. Consumers must use `read()` when they
+need a tree, and aggregate cache eligibility uses `hasQualified()` without
+hydrating every AST. Six admitted reads share a 16 MiB original-byte budget;
+one allowed larger original runs alone. Returned consumer references and
+semantic facts have separate ownership; these controls are not an RSS cap.
+PHP binding units prepare original site ranges and detached expressions capped
+at 2,048 UTF-16 code units, then retire each full original. Copies preserve
+truncated surrogates and prevent sliced strings from retaining full source.
+Decoded AST/semantic IR and Laravel parsed-file ownership remain separate.
+
 ## Before a pull request
 
 ```bash

@@ -301,7 +301,7 @@ try {
   const tarball = path.join(temporary, tarballs[0]);
   const report = JSON.parse((await npm(['pack', '--dry-run', '--ignore-scripts', '--json'])).stdout)[0];
   const files = report.files.map(file => file.path);
-  for (const required of ['bin/codiluce.js', 'dist/src/cli.js', 'dist/src/history/worker.js', 'web/out/index.html', 'LICENSE', 'web/out/licenses/react.txt','dist/src/analysis/languages/rust-symbols.js','dist/src/analysis/tree-sitter/rust-semantic.js','dist/src/analysis/frameworks/rust-derive-namespace.js','dist/src/analysis/php/native-worker.mjs','dist/src/analysis/tree-sitter/native-worker.mjs','dist/src/analysis/tree-sitter/native-budget.js','dist/src/analysis/php/sources.js','dist/src/analysis/languages/php-symbols.js']) {
+  for (const required of ['bin/codiluce.js', 'dist/src/cli.js', 'dist/src/history/worker.js', 'web/out/index.html', 'LICENSE', 'web/out/licenses/react.txt','dist/src/analysis/languages/rust-symbols.js','dist/src/analysis/tree-sitter/rust-semantic.js','dist/src/analysis/frameworks/rust-derive-namespace.js','dist/src/analysis/php/native-worker.mjs','dist/src/analysis/tree-sitter/native-worker.mjs','dist/src/analysis/tree-sitter/native-budget.js','dist/src/analysis/php/sources.js','dist/src/analysis/php/residency.js','dist/src/analysis/languages/php-symbols.js']) {
     assert.ok(files.includes(required), `tarball is missing ${required}`);
   }
   const grammarManifest = JSON.parse(await readFile(path.join(root, 'grammars/manifest.json'), 'utf8'));
@@ -320,6 +320,9 @@ try {
   console.log('Installing with production dependencies and install scripts disabled…');
   await npm(['install', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund', '--package-lock=false', tarball], consumer);
   const installed = path.join(consumer, 'node_modules', ...manifest.name.split('/'));
+  const residencyCheck=path.join(consumer,'check-php-residency.mjs');
+  await writeFile(residencyCheck,`import assert from 'node:assert/strict';\nimport {existsSync} from 'node:fs';\nimport {PhpResidency,PhpInputAdmission} from './node_modules/${manifest.name}/dist/src/analysis/php/residency.js';\nconst store=new PhpResidency({maxResidentBytes:1,maxResidentUnits:1,maxSpoolBytes:4096,maxSpoolUnits:4});\ntry{store.put('original',{content:'é😀\\r\\n',ast:{kind:'program'}},8);assert.deepEqual(store.get('original'),{content:'é😀\\r\\n',ast:{kind:'program'}});assert.ok(store.stats().reloads>0);const directory=store.directory();store.clear();assert.ok(!existsSync(directory));const gate=new PhpInputAdmission({maxJobs:1,maxSourceBytes:1});const release=await gate.acquire(2);assert.equal(gate.stats().oversized,1);release();gate.close();}finally{store.clear();}\n`);
+  await run(process.execPath,[residencyCheck],consumer);
   const bin = path.join(installed, 'bin/codiluce.js');
   for (const grammar of grammarManifest.grammars) assert.equal(createHash('sha256').update(await readFile(path.join(installed, 'dist/grammars', grammar.file))).digest('hex'), grammar.sha256);
   const dependencies = JSON.parse((await npm(['ls', '--omit=dev', '--all', '--json'], consumer)).stdout).dependencies[manifest.name].dependencies;

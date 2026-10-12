@@ -45,8 +45,7 @@ export async function analyzePhp(context:AnalysisContext,onProgress?: (name:stri
     return validate(paths);
    },
    shouldStore:()=>files.every(file=>{
-    const source=context.phpSources?.get(file.path);
-    return !!source?.ast&&!source.facts.truncated&&!source.facts.issues.some(issue=>issue.code==='php-original-token-gap');
+    return context.phpSources?.hasQualified(file.path)??false;
    })&&validate([...reads]),
    inputs:()=>[...reads].sort(),
   });
