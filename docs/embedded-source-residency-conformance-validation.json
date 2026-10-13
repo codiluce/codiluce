@@ -1,0 +1,375 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-13T00:41:41.234427+00:00",
+  "phase": "Lazy bounded embedded compiler source ownership source/compiled qualification",
+  "parentCommit": "7934d87",
+  "parentRuntimeSha256": "dcd55f1b6c30bcec6718d90b9a779409f1677c8dda1d9f39635c653769ebb8d1",
+  "runtimeSha256": "6df4377933624de1e83e6d44fe0fc46fdd387b19527488fd9ced5b08b7ecb220",
+  "runtimeInputsVerified": 1924,
+  "changedRuntimeFiles": [
+    "src/analysis/embedded/index.ts",
+    "src/analysis/languages/typescript-services.ts",
+    "src/analyzers/typescript.ts"
+  ],
+  "sourceOnlyCompilerInputsGeneratedLazily": true,
+  "persistentExpandedTextDataProperties": 0,
+  "virtualSourceMemo": {
+    "maxBytes": 33554432,
+    "maxEntries": 4096,
+    "accounting": "Conservative UTF-16 virtual text and key payload; descriptors/recipes, compiler inputs/programs/AST/checker/semantic facts and physical RSS are separate",
+    "oversizedOriginalDenied": false,
+    "oversizedMemoAdmissionBypassed": true,
+    "missesRevalidateScannedOriginal": true,
+    "failedOriginalReloadInvalidatesAllSiblingAndFacadeMemos": true,
+    "componentSuccessAndFailureReleaseMemo": true
+  },
+  "actualPriorAndCurrentOwnership": {
+    "schema": 1,
+    "passed": true,
+    "observedAt": "2026-10-13T00:40:18.200Z",
+    "scope": "Same original and all 32 exact prior expanded texts; memo ownership only, not RSS/live compiler memory or performance qualification",
+    "originalSha256": "249c529608a6b6b061e5ca1e4b2c6e20e8ff68d8bab2a5a1f9cbd8880610810e",
+    "priorOwnedVirtualUtf16PayloadBytes": 38515244,
+    "beforeReads": {
+      "bytes": 0,
+      "entries": 0,
+      "maxBytes": 33554432,
+      "maxEntries": 4096,
+      "peakBytes": 0,
+      "peakEntries": 0,
+      "hits": 0,
+      "misses": 0,
+      "evictions": 0,
+      "bypasses": 0
+    },
+    "afterReads": {
+      "bytes": 32497244,
+      "entries": 27,
+      "maxBytes": 33554432,
+      "maxEntries": 4096,
+      "peakBytes": 32497244,
+      "peakEntries": 27,
+      "hits": 0,
+      "misses": 32,
+      "evictions": 5,
+      "bypasses": 0
+    },
+    "afterRelease": {
+      "bytes": 0,
+      "entries": 0,
+      "maxBytes": 33554432,
+      "maxEntries": 4096,
+      "peakBytes": 32497244,
+      "peakEntries": 27,
+      "hits": 0,
+      "misses": 32,
+      "evictions": 5,
+      "bypasses": 0
+    },
+    "originalRegionsDropped": 0,
+    "persistentExpandedTextDataProperties": 0,
+    "originalAndEveryVirtualTextMatch": true,
+    "targetExecution": false,
+    "files": [
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_0.ts",
+        "sha256": "2bba03489353ebabfde0a031461f80bb3d17ac8cc1bdd3c1564c640ea9b2e15e"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_1.ts",
+        "sha256": "eafa80706e04b1a8e06f4094ece60c38cce9999773ae668e98e6219d958e40a0"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_2.ts",
+        "sha256": "9dbd0620601a76e661397513338f8dff3153e9250542d49705a5f440ee3805e4"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_3.ts",
+        "sha256": "d029d87d82c01233b46b9c9139165990ac7725e33decb2f9094f9e857f4981c1"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_4.ts",
+        "sha256": "a5267fbaa11ccd9b12777231c95edd1d7a34c79d47f8b3cf75da4429a4db91ac"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_5.ts",
+        "sha256": "439e052e287d317bfae5f0305b3b3bb246aa857d97d860902557c47b11c700cf"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_6.ts",
+        "sha256": "1f132a6e796c13d575a25e152b5eb103d95601c72d27672b73067d56c01abb1c"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_7.ts",
+        "sha256": "ffd882c09e2f97695519a095209c4e480dd7fa02d0bb00622dbab410bda2ea78"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_8.ts",
+        "sha256": "af3792a5d3720eaac16efd10633208a4b143d107f018fd9a6ea74774836350fc"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_9.ts",
+        "sha256": "7996d5f5efeeb6a712a0b51522e4b0dbfc00ebb42f4c0563b3ca62c3a6a42f14"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_10.ts",
+        "sha256": "02fde7de91276aaa104eee52b447fa3998817d30e5b98461aa9cd8c8ac5e964c"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_11.ts",
+        "sha256": "a57ffe84ae4a1726cea32d02991cf6912463d63961f1cf3ba415e3216d29cb4e"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_12.ts",
+        "sha256": "3cc05f959ac8d62c7704aed69ec9557f5d7ddaa839982fcf5596ee3afa080b55"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_13.ts",
+        "sha256": "7f5ca79e6f5dad98476a0ae85854dc86e33b0ec38847f3bf10eaf51693a9d459"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_14.ts",
+        "sha256": "046567862c27eb25b87e17d2dc6c80f554490fc6fbc79ba4d91e6cd9550c6bf2"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_15.ts",
+        "sha256": "7c2c6f60d60f92a8f8e9150572190dd563c6de20e959ee697653f4fb5fdd93bb"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_16.ts",
+        "sha256": "11e982a926386336150b070651796066456a4e798547619f1b0b000cf1cc1199"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_17.ts",
+        "sha256": "d44c037ec818a53109894e01f8ff9a059ac0f4baf6468f61780b1095d18168ba"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_18.ts",
+        "sha256": "88c929add9781a0b06444866153d5be2aaf07862346d97eeeae7d6c24ac485a9"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_19.ts",
+        "sha256": "fd9df8fd6afc7722ad120cfe4959a8597f2f5cf1597d89cbae8ba71170299a03"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_20.ts",
+        "sha256": "fbe2d2443d27f127d2693f867bbb607c8ea14e2f6f297a5192a2fa15d669ad24"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_21.ts",
+        "sha256": "35dad53b41766e74451e7e288f9334f77e461d1722344419079bce86f32a4045"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_22.ts",
+        "sha256": "1d4348f0dfcad64a9208431072e1b5a5669140eda9fd5b1c122f12fc350edfd8"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_23.ts",
+        "sha256": "71f11c8251aea15ad995b9a5cb592c90fdcff038d009a647bd0807ff55432e0d"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_24.ts",
+        "sha256": "f346efc2ab50156634a8f2bed9b260647365f310319c9d14f34b134496baac37"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_25.ts",
+        "sha256": "77b727f155cd635b983437af2be98a440aca0121e80a0429e5d39f8ac7a9f37f"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_26.ts",
+        "sha256": "bd7079af3539f6ef58a50651f883b804f2a31df00ff6eae0e815563b2d0a5b3c"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_27.ts",
+        "sha256": "f44a0254a63cf7f28d6b6e14d2ede076e045990537dd9f99f1a6806a1704b2d6"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_28.ts",
+        "sha256": "0ada9a951bdcb899bd3ee15fa98bee88cc7a5e8442bc107c26e0faa0688c091f"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_29.ts",
+        "sha256": "aa9a57a0760896c2591a47b0b58ef8323e8884bb5305537b073ff1429eb24f79"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_30.ts",
+        "sha256": "7cfe161245c7fb3195c343ec1424fc046ff11e3cb3fa50b5968be5bd98632cdd"
+      },
+      {
+        "file": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-retention-qKUeJr/Page.astro.__codiluce_client_31.ts",
+        "sha256": "62fb52fae56ed57ddf984bd7802f7129185b990e2586e0911411f5672e652fb1"
+      }
+    ]
+  },
+  "frozenPriorCompilerInputs": 13,
+  "targetedCases": 25,
+  "newCases": 6,
+  "fullEngineWebTests": 1709,
+  "failedFinalTests": 0,
+  "skippedTests": 0,
+  "fullTestDurationMs": 157099.988951,
+  "ordinaryCompiledNodeChecks": 6,
+  "bothTypechecksPassed": true,
+  "deterministicDocumentationPassed": true,
+  "completePriorColdWarmRevisionGraphParity": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": "2026-10-13T00:37:32.260Z",
+    "priorRuntime": "dcd55f1b6c30bcec6718d90b9a779409f1677c8dda1d9f39635c653769ebb8d1",
+    "scope": "Complete cold/warm/revision original fixture graphs against the retained prior production runtime; all entities/relations/diagnostics and producer versions compared, only run UUID/time replaced",
+    "retainedFixture": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-embedded-graph-parity-YqyojB",
+    "normalizations": [],
+    "volatileFields": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "cacheWarmReplayObserved": true,
+    "graphs": [
+      {
+        "mode": "cold",
+        "bytes": 58958,
+        "sha256": "750a30aa106ed51c2a16e9d90964043b7d181d4fdf49697406aa9299f1b52166",
+        "entities": 36,
+        "relations": 56,
+        "diagnostics": 7
+      },
+      {
+        "mode": "warm",
+        "bytes": 58958,
+        "sha256": "750a30aa106ed51c2a16e9d90964043b7d181d4fdf49697406aa9299f1b52166",
+        "entities": 36,
+        "relations": 56,
+        "diagnostics": 7
+      },
+      {
+        "mode": "revision",
+        "bytes": 58379,
+        "sha256": "634576e0fcb4c14a809e5425012d38bfaa725522db069bd4e1b4eaa50d1cf89d",
+        "entities": 36,
+        "relations": 56,
+        "diagnostics": 4
+      }
+    ],
+    "targetExecution": false
+  },
+  "actualTerminalObservations": [
+    {
+      "session": 80310,
+      "exitCode": 0,
+      "scope": "full engine/web tests"
+    },
+    {
+      "session": 23809,
+      "exitCode": 0,
+      "scope": "engine typecheck"
+    },
+    {
+      "session": 7042,
+      "exitCode": 0,
+      "scope": "web typecheck"
+    },
+    {
+      "session": 53538,
+      "exitCode": 0,
+      "scope": "compiled build"
+    },
+    {
+      "session": 57036,
+      "exitCode": 0,
+      "scope": "ordinary compiled Node tests"
+    }
+  ],
+  "initialFixtureCountErrorRetained": true,
+  "initialReloadTestOracleErrorRetained": true,
+  "initialStaleGeneratedDocsCheckRetained": true,
+  "normalInstalledPackageForNewRuntimeQualified": false,
+  "parentRuntimeInstalledPackageQualified": true,
+  "newRuntimeFull195RevisionHistoryQualified": false,
+  "newRuntimeRelativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "broaderCompilerConsumerWasmRssBudgetQualified": false,
+  "oldFailedProductionObservationsRetried": false,
+  "originalHistoryReserveRelaxed": false,
+  "availableWorkspaceBytes": 514277376,
+  "additionalCapacityRequested": true,
+  "targetExecution": false,
+  "fullGoalFinished": false,
+  "artifacts": [
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/embedded-targeted-first.log",
+      "sha256": "5525d5b90c61fa9583badfb096637de45bd1c4983147c8bd3270aa063bc66c44"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/embedded-targeted-final.log",
+      "sha256": "74c14ec37c414fc983dd17e0ed243c1b3308da6d2bcfbc097a7a1a94abc25829"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/initial-embedded-component-tests.log",
+      "sha256": "d373e6768b8c00a01ec93ce57971410f1ce2fd66599445342784ec0b91c71bd4"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/full-engine-web-first.log",
+      "sha256": "72dc57dd8fd97631d525416fac939f3ad3058f6b6996b453c84f6e51a9e07894"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/engine-typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/web-typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/docs-first-check.log",
+      "sha256": "f2e4a56d214cab9e19286cfbb83e7c9bd09edb24ace3b297782be8f196a3b95e"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/docs-regeneration.log",
+      "sha256": "e5af718114e6297d94c3174166f9190f8b4bb3a8d12873e6b218150239ac8e15"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/docs-final-check.log",
+      "sha256": "cb28fa2c23e9fc198d7d3b40301477f21153efaa0f29cdf9007932f6991c5742"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/compiled-build-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/compiled-conformance-first.log",
+      "sha256": "d4433245ae5433b82300a4e6e93d74858f87a13f38c9ed1745463eac65ac1dcc"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/compiled-conformance-inputs.json",
+      "sha256": "45d08155ce82e767afe5d09ff8a3866b3def4acf0b9e1dbcf24e125b9c9d15e2"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/complete-prior-graph-comparison.json",
+      "sha256": "a2c00c677c3c66b4d922952103f1196377355a252e6bded488598ca6bd83657d"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/prior-expanded-source-ownership.json",
+      "sha256": "f99bb79cf83f2ecd39ee2242b0a8a32745e77589ff5bb8e0cd10984b89f670ad"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/current-source-ownership.json",
+      "sha256": "5650f6e10673107667f989b9ad5d35be9c3aec35f75fb28a6d87fa3dfb406dcb"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/frozen-prior-inputs.log",
+      "sha256": "5ad9bef5ce9ff89908f0f677a5bba2c6aaa7bec4a4c45da3ea93bfc28dc08476"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/engine-identity.json",
+      "sha256": "3da944310c7278d1211df4c26b5bfa47fa8065860d7ae78c668fc68679cc531f"
+    }
+  ],
+  "foreignFilesUnchanged": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  }
+}

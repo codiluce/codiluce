@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": 1791852185.786214,
+  "seconds": 16.43155789375305,
+  "archive": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/embedded-source-residency-source-compiled-and-evidence.tar.gz",
+  "sha256": "86ea556fb1643887c4323e7d719a3cfc3cd8e58adf21e41e6d9d36f265ef97ca",
+  "bytes": 33457104,
+  "verifiedRegularMembers": 2256,
+  "manifestSha256": "f40c5c6c96d8b9029c7e2e8441226181e2fbe5e80d995646b30651c28490067c",
+  "runtimeSha256": "6df4377933624de1e83e6d44fe0fc46fdd387b19527488fd9ced5b08b7ecb220",
+  "normalInstalledPackageForNewRuntimeQualified": false,
+  "fullGoalFinished": false
+}

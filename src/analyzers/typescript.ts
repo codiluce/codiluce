@@ -75,6 +75,7 @@ export const typescriptAnalyzer: Analyzer = {
         // has completed. Later programs recover identities by exact source site
         // and graph ranges, rather than keeping earlier programs and AST owners.
         for(const runtime of component)runtime.releaseProgram();
+        context.embedded?.clearTextMemo();
       }
     }
     for (const [file, reason] of sources.failures) context.graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'indexed-source-unavailable', file, entityId: context.files.get(file)?.id, reason });

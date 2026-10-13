@@ -122,7 +122,7 @@ export function createTypeScriptServices(context: AnalysisContext): TypeScriptSe
         if (!program) {
           const texts = new Map<string, string>();
           for (const file of files) { const text = context.embedded?.readFile(file.absolutePath) ?? sources.readFile(file.absolutePath); if (text !== undefined) texts.set(file.absolutePath, text); }
-          for (const facade of facades) texts.set(facade, context.embedded!.readFile(facade)!);
+          for (const facade of facades) { const text = context.embedded!.readFile(facade); if (text !== undefined) texts.set(facade, text); }
           program = createApplicationProgram(texts, resolver.options.get(project.id)!, path.join(context.root, project.root), {
             rootNames: [...texts.keys()], moduleHost: sources.moduleHost, readSource: fileName => context.embedded?.readFile(fileName) ?? sources.readFile(fileName),
             resolveModuleNameLiterals: (literals, containingFile, _redirect, _options, source) => literals.map(literal => resolver.resolve(literal.text, containingFile, ts.getModeForUsageLocation(source, literal, resolver.options.get(resolver.owner(containingFile).id)!), !!context.embedded?.input(containingFile)?.facade || literal.pos >= 0 && !sourceMapped(context, containingFile, literal.pos, literal.end))),
@@ -139,7 +139,7 @@ export function createTypeScriptServices(context: AnalysisContext): TypeScriptSe
   const byProject = new Map(projects.map(runtime => [runtime.project.id, runtime]));
   const services: TypeScriptServices = {
     projects, declarations, resolver, sveltekit, astro, nuxt, projectFor: relative => byProject.get(catalog.nodeOwner(relative).id),
-    releasePrograms() { for (const runtime of projects) runtime.releaseProgram(); declarations.clear(); },
+    releasePrograms() { for (const runtime of projects) runtime.releaseProgram(); declarations.clear(); context.embedded?.clearTextMemo(); },
   };
   context.typescript = services;
   const repository = context.graph.entities.get(context.repositoryId)!;

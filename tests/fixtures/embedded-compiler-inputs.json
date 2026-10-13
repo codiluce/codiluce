@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "producer": "Prior committed e9d29b5 embedded compiler input implementation from retained immutable engine",
+  "fixtures": {
+    "Pair.vue": "<template>é😀</template>\r\n<script lang=\"ts\">\r\nimport type { Imported } from \"./types\";\r\nexport type Shape={value:string};\r\nexport const {left,right:renamed}={left:1,right:2};\r\nfunction privateLeaf(){return \"😀\";}\r\nexport function shared(){return privateLeaf();}\r\nexport { shared as \"quoted-name\" };\r\nexport * from \"./extra\";\r\n</script>\r\n<script setup lang=\"ts\">\r\nconst renamed=3;\r\nfunction caller(){return shared()+privateLeaf();}\r\n</script>",
+    "Pair.svelte": "<script module lang=\"ts\">export interface Contract{};export function shared(){return 1;}const local=2;</script>\r<script lang=\"ts\">const local=3;function instance(){return shared();}</script><div>{local}</div>",
+    "Page.astro": "---\r\nimport View from \"./Pair.vue\";\r\nconst server=\"é😀\";\r\n---\r\n<View/><script>function first(){return 1;}</script> <script>function second(){return 2;}</script> <script is:inline>window.nativeOnly()</script>",
+    "NoScripts.vue": "<template>😀 plain</template>",
+    "Invalid.vue": "<script>function wrong(){}</script><script>function duplicate(){}</script>",
+    "Collision.vue": "<script setup>function hidden(){}</script>",
+    "Collision.vue.__codiluce_setup.js": "export function originalCollision(){}"
+  },
+  "expected": {
+    "Pair.vue": [
+      {
+        "virtualFile": "Pair.vue.__codiluce_module.ts",
+        "text": "                        \r\n                  \r\nimport type { Imported } from \"./types\";\r\nexport type Shape={value:string};\r\nexport const {left,right:renamed}={left:1,right:2};\r\nfunction privateLeaf(){return \"😀\";}\r\nexport function shared(){return privateLeaf();}\r\nexport { shared as \"quoted-name\" };\r\nexport * from \"./extra\";\r\n         \r\n                        \r\n                \r\n                                                 \r\n         \nexport {};\n\nexport type { Imported as __codiluce_private_Imported };\nexport type { Shape as __codiluce_private_Shape };\nexport { left as __codiluce_private_left };\nexport { renamed as __codiluce_private_renamed };\nexport { privateLeaf as __codiluce_private_privateLeaf };\nexport { shared as __codiluce_private_shared };"
+      },
+      {
+        "virtualFile": "Pair.vue.__codiluce_setup.ts",
+        "text": "                        \r\n                  \r\n                                        \r\n                                 \r\n                                                   \r\n                                    \r\n                                               \r\n                                   \r\n                        \r\n         \r\n                        \r\nconst renamed=3;\r\nfunction caller(){return shared()+privateLeaf();}\r\n         \nexport {};\n\nimport type { __codiluce_private_Imported as Imported } from \"./Pair.vue.__codiluce_module.ts\";\nimport type { __codiluce_private_Shape as Shape } from \"./Pair.vue.__codiluce_module.ts\";\nimport { __codiluce_private_left as left } from \"./Pair.vue.__codiluce_module.ts\";\nimport { __codiluce_private_privateLeaf as privateLeaf } from \"./Pair.vue.__codiluce_module.ts\";\nimport { __codiluce_private_shared as shared } from \"./Pair.vue.__codiluce_module.ts\";"
+      },
+      {
+        "virtualFile": "Pair.vue.__codiluce_component.ts",
+        "text": "export type { \"Shape\" } from \"./Pair.vue.__codiluce_module.ts\";\nexport { \"left\" } from \"./Pair.vue.__codiluce_module.ts\";\nexport { \"renamed\" } from \"./Pair.vue.__codiluce_module.ts\";\nexport { \"shared\" } from \"./Pair.vue.__codiluce_module.ts\";\nexport { \"quoted-name\" } from \"./Pair.vue.__codiluce_module.ts\";\nexport * from \"./extra\";\ndeclare const __codiluce_component: unknown;\nexport default __codiluce_component;\n"
+      }
+    ],
+    "Pair.svelte": [
+      {
+        "virtualFile": "Pair.svelte.__codiluce_module.ts",
+        "text": "                         export interface Contract{};export function shared(){return 1;}const local=2;         \r                                                                                                \nexport {};\n\nexport type { Contract as __codiluce_private_Contract };\nexport { shared as __codiluce_private_shared };\nexport { local as __codiluce_private_local };"
+      },
+      {
+        "virtualFile": "Pair.svelte.__codiluce_instance.ts",
+        "text": "                                                                                                               \r                  const local=3;function instance(){return shared();}                           \nexport {};\n\nimport type { __codiluce_private_Contract as Contract } from \"./Pair.svelte.__codiluce_module.ts\";\nimport { __codiluce_private_shared as shared } from \"./Pair.svelte.__codiluce_module.ts\";"
+      },
+      {
+        "virtualFile": "Pair.svelte.__codiluce_component.ts",
+        "text": "export type { \"Contract\" } from \"./Pair.svelte.__codiluce_module.ts\";\nexport { \"shared\" } from \"./Pair.svelte.__codiluce_module.ts\";\ndeclare const __codiluce_component: unknown;\nexport default __codiluce_component;\n"
+      }
+    ],
+    "Page.astro": [
+      {
+        "virtualFile": "Page.astro.__codiluce_frontmatter.ts",
+        "text": "   \r\nimport View from \"./Pair.vue\";\r\nconst server=\"é😀\";\r\n   \r\n                                                                                                                                                \nexport {};\n"
+      },
+      {
+        "virtualFile": "Page.astro.__codiluce_client_0.ts",
+        "text": "   \r\n                              \r\n                   \r\n   \r\n               function first(){return 1;}                                                                                                      \nexport {};\n"
+      },
+      {
+        "virtualFile": "Page.astro.__codiluce_client_1.ts",
+        "text": "   \r\n                              \r\n                   \r\n   \r\n                                                            function second(){return 2;}                                                        \nexport {};\n"
+      },
+      {
+        "virtualFile": "Page.astro.__codiluce_component.ts",
+        "text": "\ndeclare const __codiluce_component: unknown;\nexport default __codiluce_component;\n"
+      }
+    ],
+    "NoScripts.vue": [
+      {
+        "virtualFile": "NoScripts.vue.__codiluce_component.ts",
+        "text": "\ndeclare const __codiluce_component: unknown;\nexport default __codiluce_component;\n"
+      }
+    ],
+    "Invalid.vue": [
+      {
+        "virtualFile": "Invalid.vue.__codiluce_component.ts",
+        "text": "\ndeclare const __codiluce_component: unknown;\nexport default __codiluce_component;\n"
+      }
+    ],
+    "Collision.vue": [
+      {
+        "virtualFile": "Collision.vue.__codiluce_component.ts",
+        "text": "\ndeclare const __codiluce_component: unknown;\nexport default __codiluce_component;\n"
+      }
+    ]
+  }
+}
