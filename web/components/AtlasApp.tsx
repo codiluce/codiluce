@@ -14,6 +14,7 @@ import { Inspector } from './Inspector';
 import { SearchBox } from './SearchBox';
 import { Timeline } from './Timeline';
 import { Workbench } from './Workbench';
+import { ArchetypeLegend } from './ArchetypeMark';
 
 function createStore(): AtlasStore {
   const storage = (() => { try { return window.localStorage; } catch { return undefined; } })();
@@ -184,6 +185,7 @@ const TAB_TEXT = { features: 'Features', flows: 'Flows', people: 'People' } as c
 function SettingsDialog({ onClose }: { onClose: () => void }) {
   const store = useStore();
   const moreThemes = useAtlas(state => state.moreThemes);
+  const shapes = useAtlas(state => state.shapes);
   const close = useRef<HTMLButtonElement>(null);
   useEffect(() => { close.current?.focus(); const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, [onClose]);
   return (
@@ -192,6 +194,8 @@ function SettingsDialog({ onClose }: { onClose: () => void }) {
         <h2 id="settings-title" style={{ marginTop: 0, fontSize: 15 }}>Settings</h2>
         <label className="toggle"><input type="checkbox" checked={moreThemes} onChange={event => store.setMoreThemes(event.target.checked)} /> More themes</label>
         <p className="note">The theme menu offers Codiluce Dusk and Codiluce Dawn. With more themes on, it also offers {THEMES.filter(item => !MAIN_THEMES.includes(item.id)).map(item => item.name).join(', ')}.</p>
+        <label className="toggle"><input type="checkbox" checked={shapes} onChange={event => store.setShapes(event.target.checked)} /> Building shapes</label>
+        <p className="note">Each kind of block gets its own shape on the map: controllers are traffic cops, tables are storage drums, pages are towers with windows. Small blocks show the kind as a mark on their roof. Turn it off for plain blocks.</p>
         <button ref={close} className="button" onClick={onClose}>Close</button>
       </div>
     </div>
@@ -208,10 +212,13 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
   ];
   return (
     <div className="center-state" style={{ pointerEvents: 'auto', background: 'rgba(0,0,0,0.35)', zIndex: 30 }} onClick={onClose}>
-      <div className="card" role="dialog" aria-modal="true" aria-labelledby="help-title" onClick={event => event.stopPropagation()} style={{ textAlign: 'left' }}>
+      <div className="card" role="dialog" aria-modal="true" aria-labelledby="help-title" onClick={event => event.stopPropagation()} style={{ textAlign: 'left', maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}>
         <h2 id="help-title" style={{ marginTop: 0, fontSize: 15 }}>Keyboard and pointer</h2>
         <dl className="facts">{rows.map(([key, text]) => [<dt key={`k${key}`}><kbd>{key}</kbd></dt>, <dd key={`d${key}`}>{text}</dd>])}</dl>
         <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout and never change with selection, search or filters. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing. Dragging the timeline or pressing play shows each commit at once as a time-lapse; the full view of a commit loads when you let go or pause. When comparing, the split map shows one view on each place that changed around an overview of the whole repository, where numbered frames show what each view shows. Flows, steps, a blast radius (<strong>Impact</strong>, also of your uncommitted changes), the files a highlight lights and the code of the selection (<strong>Code</strong>, which follows what you select) open in the middle of the screen as tabs beside <strong>Map</strong>; the map then stays in a corner as an overview of what they light, and a click on it brings it back. Search results offer the same: a flow on the map or in lanes, what happens from it, its impact (<kbd>Tab</kbd> reaches them). <strong>Features</strong> (once the code is described) lists what the product does: selecting a feature lights its files on the map, with the flows that start in it; a folder's inspector shows which data families its files belong to. <strong>People</strong> lists who changed the code, from the Git history (authors and co-authors, agents and bots told apart), in a window of time ending at the commit shown: selecting a person lights the files they changed, and every inspector says who changed its selection and when.</p>
+        <h2 style={{ fontSize: 15 }}>Building shapes</h2>
+        <p className="note">Each kind of block has a shape, the same in every language and framework. It comes from the index where it can (a controller class, endpoints declared in a file, a page route) and from folder and name conventions otherwise; the inspector says which. Small blocks show it as a mark on their roof. Settings turns shapes off.</p>
+        <ArchetypeLegend />
         <button ref={close} className="button" onClick={onClose}>Close</button>
       </div>
     </div>

@@ -4,9 +4,14 @@
 import type { NodeSummary } from '@engine/projection/dto';
 import { fromScreen, intersects, projectedBounds, unproject, visibleBounds, type Camera, type Viewport } from './camera';
 import { DEFAULT_LOD, labelTier, openProgress, screenSize, shouldOpen, type LabelTier, type LodConfig } from './lod';
+import { SHAPE_GROW_PX, SHAPE_PX, shapeHeight } from './shapes';
 
 export interface ChildList { ids: string[]; total: number; loadedPages: number; complete: boolean; loading: boolean; error?: string }
-export interface VisibleItem { node: NodeSummary; zBase: number; zTop: number; open: boolean; alpha: number; tier: LabelTier; size: number; parent: number }
+/**
+ * `shape`: drawn as its archetype's shape, grown this far (0..1) from the
+ * plain block's height to the shape's; absent for plain blocks.
+ */
+export interface VisibleItem { node: NodeSummary; zBase: number; zTop: number; open: boolean; alpha: number; tier: LabelTier; size: number; parent: number; shape?: number }
 export interface VisibleSet {
   items: VisibleItem[];
   index: Map<string, number>;
@@ -48,6 +53,8 @@ export class Scene {
   revision = ++revisions;
   /** Time-lapse scenes: the frame they show (settled views have none). */
   frame?: number;
+  /** Closed blocks with an archetype are drawn as its shape (Settings can turn this off). */
+  shapes = true;
 
   reset(root: NodeSummary): void {
     this.nodes.clear(); this.children.clear(); this.base.clear(); this.ordered.clear();
@@ -119,17 +126,20 @@ export class Scene {
     const center = { x: camera.x, y: camera.y };
     const visit = (id: string, parent: number, inheritedAlpha: number): void => {
       const node = this.nodes.get(id)!;
-      const zBase = this.zBase(id), zTop = zBase + nodeHeight(node);
-      if (!intersects(projectedBounds(node.rect, zBase, zTop), view)) return;
-      const size = screenSize(node.rect, camera.scale);
+      const zBase = this.zBase(id), size = screenSize(node.rect, camera.scale);
+      const kind = this.shapes && size >= SHAPE_PX ? node.archetype?.kind : undefined;
+      const plain = nodeHeight(node), tall = kind ? Math.max(plain, shapeHeight(kind, Math.min(node.rect.w, node.rect.h), node.loc)) : plain;
+      if (!intersects(projectedBounds(node.rect, zBase, zBase + tall), view)) return;
       const forced = !!force?.has(id) && node.childCount > 0;
       const wantsOpen = forced || shouldOpen(node, camera.scale, lod);
       const list = this.children.get(id);
       const open = wantsOpen && set.items.length < lod.budget && !!list?.ids.length;
+      const grown = kind && !open ? Math.min(1, (size - SHAPE_PX) / SHAPE_GROW_PX) : undefined;
+      const zTop = zBase + (grown === undefined ? plain : plain + (tall - plain) * grown);
       if (wantsOpen && set.items.length >= lod.budget) set.truncated = true;
       if (wantsOpen && (!list || (!list.complete && !list.loading && !list.error))) pending.push({ id, size });
       const index = set.items.length;
-      const item: VisibleItem = { node, zBase, zTop, open, alpha: inheritedAlpha, tier: labelTier(node, camera.scale, open, lod), size, parent };
+      const item: VisibleItem = { node, zBase, zTop, open, alpha: inheritedAlpha, tier: labelTier(node, camera.scale, open, lod), size, parent, ...(grown === undefined ? {} : { shape: grown }) };
       set.items.push(item); set.index.set(id, index);
       if (!open) return;
       const ground = unproject(center.x, center.y, zTop);

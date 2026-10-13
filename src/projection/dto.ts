@@ -20,6 +20,8 @@ export interface NodeChange {
 export interface ChangeCounts { added: number; removed: number; modified: number; moved: number }
 
 export type { Rect } from './layout.js';
+export type { Archetype, ArchetypeBasis, ArchetypeInfo } from './archetypes.js';
+import type { Archetype, ArchetypeInfo } from './archetypes.js';
 export interface NodeStats { files: number; symbols: number; endpoints: number; measuredLoc: number; unmeasuredFiles: number; descendants: number }
 export interface NodeSummary {
   id: string;
@@ -33,6 +35,8 @@ export interface NodeSummary {
   /** Own LOC metric, absent when not measured. */
   loc?: number;
   detail?: string; qualifiedName?: string; role?: string; explanation?: string;
+  /** What kind of building block it is (its shape on the map), and why. */
+  archetype?: ArchetypeInfo;
   /** Unresolved findings attached within this node's spatial subtree. */
   diagnostics: number;
   stats: NodeStats;
@@ -145,7 +149,8 @@ export interface TimelineResponse {
 export interface EntityHistoryPoint { sha: string; snapshotId: string; status: 'introduced' | 'modified' | 'moved' | 'removed' | 'reintroduced'; name: string; path?: string }
 export interface EntityHistoryResponse { id: string; points: EntityHistoryPoint[]; indexedSnapshots: number; present: number }
 /** A node of the time-lapse: everything that exists in some frame. */
-export interface EvolutionNode { id: string; kind: 'entity' | 'group'; type: string; name: string; detail?: string; language?: string; path?: string }
+/** `archetype`: the kind of building block where the node first appears (its shape in the time-lapse). */
+export interface EvolutionNode { id: string; kind: 'entity' | 'group'; type: string; name: string; detail?: string; language?: string; path?: string; archetype?: Archetype }
 /**
  * One indexed commit of the time-lapse, as a change to the frame before it (the first: to an empty map).
  * `set`: nodes that appear, or whose parent, rectangle or measured lines changed: [node, parent (-1: none), x, y, w, h, loc (-1: not measured)].

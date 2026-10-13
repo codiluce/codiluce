@@ -9,6 +9,7 @@ import { coverageCss, familyCss, familyHues, featureHues, personHue, themeById }
 import { COVERAGE_TEXT, NOT_MEASURED } from '../lib/coverage';
 import { useAtlas, useStore } from './context';
 import { TypeBadge } from './TypeBadge';
+import { ArchetypeChip } from './ArchetypeMark';
 import { AnalysisSupport } from './AnalysisSupport';
 import { CallSitesSection, CommitImpactChip, EffectsSection } from './Analysis';
 import { CommitList, KindTag, PersonDot, WindowPicker, windowText } from './PeoplePanel';
@@ -101,6 +102,7 @@ function Selection() {
       </div>
       <SummaryCard node={node} />
       <FamilyChip node={node} />
+      <ArchetypeChip node={node} />
       {node.kind === 'group' && <p className="note">{node.explanation}</p>}
       {(node.type === 'api_endpoint' || node.type === 'route') && <p className="note">Shown in the <strong>Routes &amp; endpoints</strong> district of its application. That district is only a spatial grouping; the canonical parent is the application.</p>}
       {node.type === 'database_table' && <p className="note">Declared by the application's migrations, replayed in order: the schema they intend, not the live database. Shown in the <strong>Database</strong> district; the canonical parent is the application.</p>}

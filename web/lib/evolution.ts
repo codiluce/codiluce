@@ -126,6 +126,8 @@ export class Evolution {
       ...(node.path ? { path: node.path } : {}), ...(node.language ? { language: node.language } : {}), ...(node.detail ? { detail: node.detail } : {}),
       ...(parent! >= 0 ? { spatialParentId: this.nodes[parent!]!.id } : {}),
       depth, rect: { x: x!, y: y!, w: w!, h: h! }, childCount, ...(loc! >= 0 ? { loc } : {}),
+      // Only the shape: the reason is shown for the settled view's selection, never for a time-lapse frame.
+      ...(node.archetype ? { archetype: { kind: node.archetype, basis: 'indexed' as const, reason: '' } } : {}),
       diagnostics: 0, stats, ...(status ? { change: { status, facets: [] } } : {}),
     };
   }

@@ -30,11 +30,11 @@ export type CoverageCounts = Record<CoverageCategory, number>;
 const SLICE_FOLLOW = new Set(['routes_to', 'renders', 'calls', 'references', 'requests', 'handles', 'invokes', 'reads', 'writes']);
 const SUPPORT_TYPES = new Set(['imports', 'exports', 'extends', 'implements']);
 export const SLICE_LIMIT = 6000;
-const TEST_PATH = /(^|\/)(tests?|__tests__|__mocks__|e2e|cypress|spec)\/|\.(test|spec)\.[cm]?[jt]sx?$|Test\.php$|(^|\/)database\/(seeders|factories)\//i;
-const CONFIG_PATH = /(^|\/)(config|bootstrap)\/|(^|\/)[^/]*\.config\.[cm]?[jt]s$|(^|\/)(next-env\.d|vite-env\.d|env\.d)\.ts$|(^|\/)(artisan|server\.php|index\.php)$/;
+export const TEST_PATH = /(^|\/)(tests?|__tests__|__mocks__|e2e|cypress|spec)\/|\.(test|spec)\.[cm]?[jt]sx?$|Test\.php$|(^|\/)database\/(seeders|factories)\//i;
+export const CONFIG_PATH = /(^|\/)(config|bootstrap)\/|(^|\/)[^/]*\.config\.[cm]?[jt]s$|(^|\/)(next-env\.d|vite-env\.d|env\.d)\.ts$|(^|\/)(artisan|server\.php|index\.php)$/;
 /** Classes the framework calls by registration: middleware, providers, kernels, exception handlers. */
-const FRAMEWORK_PATH = /(^|\/)app\/(Http\/Middleware|Providers|Exceptions)\/|(^|\/)app\/(Http|Console)\/Kernel\.php$/;
-const MIGRATION_PATH = /(^|\/)database\/migrations\//;
+export const FRAMEWORK_PATH = /(^|\/)app\/(Http\/Middleware|Providers|Exceptions)\/|(^|\/)app\/(Http|Console)\/Kernel\.php$/;
+export const MIGRATION_PATH = /(^|\/)database\/migrations\//;
 
 export function emptyCounts(): CoverageCounts { return { entry: 0, flow: 0, supporting: 0, test: 0, config: 0, explained: 0, unreached: 0, outside: 0, unanalyzed: 0, asset: 0 }; }
 export function isCodeFile(node: Pick<ProjectionNode, 'type' | 'language'>): boolean { return node.type === 'file' && CODE_LANGUAGES.has(node.language ?? ''); }

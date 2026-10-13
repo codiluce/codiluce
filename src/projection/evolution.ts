@@ -15,6 +15,7 @@ import type { HistoryStore, SnapshotRecord } from '../history/store.js';
 import type { EvolutionFrame, EvolutionNode } from './dto.js';
 import { INTERFACE_TYPES, ProjectionIndex, type ProjectionNode } from './hierarchy.js';
 import { leafSide, placeOnTimeline, type TimelineLayout, type TimelineRegistry } from './layout.js';
+import { computeArchetypes, type ArchetypeInfo } from './archetypes.js';
 
 export const EVOLUTION_STATUS = { added: 1, modified: 2, moved: 3, removed: 4 } as const;
 export interface EvolutionData { nodes: EvolutionNode[]; frames: EvolutionFrame[] }
@@ -49,11 +50,13 @@ export function evolutionChange(before: SnapshotEntity, after: SnapshotEntity, p
 export async function computeEvolution(history: HistoryStore, snapshots: SnapshotRecord[], placement: TimelinePlacement, job: EvolutionJob = { cancelled: false, progress: 0 }): Promise<EvolutionData | undefined> {
   const versions = history.entityVersions();
   const nodes: EvolutionNode[] = [], indexOf = new Map<string, number>();
-  const register = (node: ProjectionNode): number => {
+  /** `archetypes`: those of the frame's hierarchy, computed only when a frame brings a node not seen before. */
+  const register = (node: ProjectionNode, archetypes: () => Map<string, ArchetypeInfo>): number => {
     let index = indexOf.get(node.id);
     if (index === undefined) {
       index = nodes.length; indexOf.set(node.id, index);
-      nodes.push({ id: node.id, kind: node.kind, type: node.type, name: node.name, ...(DETAIL_TYPES.has(node.type) && node.detail ? { detail: node.detail } : {}), ...(node.language ? { language: node.language } : {}), ...(node.path && PATH_TYPES.has(node.type) ? { path: node.path } : {}) });
+      const archetype = archetypes().get(node.id)?.kind;
+      nodes.push({ id: node.id, kind: node.kind, type: node.type, name: node.name, ...(DETAIL_TYPES.has(node.type) && node.detail ? { detail: node.detail } : {}), ...(node.language ? { language: node.language } : {}), ...(node.path && PATH_TYPES.has(node.type) ? { path: node.path } : {}), ...(archetype ? { archetype } : {}) });
     }
     return index;
   };
@@ -111,11 +114,13 @@ export async function computeEvolution(history: HistoryStore, snapshots: Snapsho
       const index = new ProjectionIndex(snapshot.id, [...present.values(), ...ghosts], [], []);
       const { rects } = placeOnTimeline(index.layoutNodes(), index.rootId, registry, layout);
       next = new Map();
+      let archetypes: Map<string, ArchetypeInfo> | undefined;
+      const frameArchetypes = () => archetypes ??= computeArchetypes(index);
       for (const node of index.nodes.values()) {
         const rect = rects.get(node.id);
         if (!rect) continue;
         const parent = node.spatialParentId !== undefined ? indexOf.get(node.spatialParentId) ?? -1 : -1;
-        next.set(register(node), [parent, rect.x, rect.y, rect.w, rect.h, node.loc ?? -1]);
+        next.set(register(node, frameArchetypes), [parent, rect.x, rect.y, rect.w, rect.h, node.loc ?? -1]);
       }
     } else {
       // Same places and sizes: only measured lines (block heights) can differ.

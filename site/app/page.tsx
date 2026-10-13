@@ -4,6 +4,7 @@ import { EclipseMark } from '../components/EclipseMark';
 import { FlowChain } from '../components/FlowChain';
 import { HeroShader } from '../components/HeroShader';
 import { InstallCommand } from '../components/InstallCommand';
+import { ShapeGallery } from '../components/ShapeGallery';
 import { Shot } from '../components/Shot';
 import { Stacks } from '../components/Stacks';
 import { GitHubIcon } from '../components/SiteChrome';
@@ -49,8 +50,8 @@ export default function Home() {
         <div className="container">
           <Shot
             src="/shots/map.webp"
-            alt="Codiluce map of the BookStack repository at file level: isometric blocks for the files in app/Entities, with the PageRepo class selected and its details in the inspector."
-            caption="BookStack, an open-source wiki, at file level. Blocks are files sized by their code; the inspector shows the selected class."
+            alt="Codiluce map of the BookStack repository at file level: its Blade views drawn as towers with lit windows and its layouts as open frames, with one view selected and the inspector saying why it is a page."
+            caption="BookStack, an open-source wiki, at file level. Each file is drawn as the shape of its kind, sized by its code; the inspector says why the selected view is a page."
             priority
           />
         </div>
@@ -135,6 +136,25 @@ export default function Home() {
               </ul>
             </div>
             <Shot src="/shots/data.webp" alt="The Data view: BookStack's code arranged by data family, such as Roles, Entities, Images and Attachments, each in its own color." />
+          </div>
+
+          <div className="feature stacked">
+            <div className="feature-text">
+              <p className="eyebrow">Shapes</p>
+              <h2 className="section-title">Every kind of file has a shape.</h2>
+              <p>
+                Controllers are traffic cops directing requests, services are workshops, tables are storage drums, pages are
+                towers with lit windows and tests are lab benches. Codiluce takes each file&apos;s kind from the index where it can (a controller class, the endpoints a
+                file declares, a page route) and from folder conventions otherwise, with one set of shapes for every language and
+                framework. A folder of components and a folder of migrations look different before you read a label.
+              </p>
+              <ul className="ticks">
+                <li>Eighteen shapes, from entry points to tests</li>
+                <li>Lenses still color them: coverage, data families, people</li>
+                <li>A playing flow lights each stop it reaches</li>
+              </ul>
+            </div>
+            <ShapeGallery />
           </div>
         </div>
       </section>

@@ -551,3 +551,15 @@ code, pre { font-family: var(--font-mono); }
 .prose .fine-print { margin-top: 40px; font-size: 13px; color: var(--subtle); }
 .prose .callout .stack-status { margin: 0 2px; }
 @media (max-width: 640px) { .fw-grid { grid-template-columns: 1fr; } }
+
+/* Shapes: the district demo and the legend of every building shape. */
+.feature.stacked { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+.feature.stacked .feature-text { max-width: 760px; }
+.shape-gallery { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); align-items: start; gap: 18px; min-width: 0; }
+@media (max-width: 960px) { .shape-gallery { grid-template-columns: minmax(0, 1fr); } }
+.shape-stage { background: radial-gradient(120% 90% at 50% 40%, #121214 0%, var(--panel) 70%); }
+.shape-stage canvas { display: block; width: 100%; aspect-ratio: 16 / 10; }
+.shape-legend { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; }
+.shape-legend button { width: 100%; display: grid; gap: 1px; text-align: left; padding: 7px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; color: var(--muted); font: inherit; font-size: 12.5px; line-height: 1.35; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.shape-legend button b { color: var(--text); font-weight: 600; font-size: 13px; }
+.shape-legend button:hover, .shape-legend button[aria-pressed='true'], .shape-legend button:focus-visible { border-color: var(--accent); background: var(--accent-soft); outline: none; }

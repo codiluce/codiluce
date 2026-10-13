@@ -29,6 +29,7 @@ import { readSnapshotFile, readSnapshotSource, snapshotRef, SourceError, splitLi
 import type { AggregateResult, ChangeRegionsResult, ChangesPage, CoverageDetail, CoverageExport, CoverageExportSymbol, CoverageResult, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, FamiliesResult, FeaturesResult, FileListResult, FlowList, FlowSummary, ImpactGroup, ImpactGroupBy, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowEdge, RequestFlowList, RequestFlowNode, RequestFlowSummary, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
 import { computeImpact, DEFAULT_IMPACT_DEPTH, FILE_IMPACT_TYPES, impactPath, MAX_IMPACT_SEEDS, seedsOf, SYMBOL_IMPACT_TYPES, type ImpactComputation } from './impact.js';
 import { walkSteps } from './steps.js';
+import { computeArchetypes, type ArchetypeInfo } from './archetypes.js';
 import { changeRegions, isRegionLevel } from './regions.js';
 import { commandFlow, displayName, endpointFlow, FLOW_LANES, scheduleFlow, unmatchedFlow, type FlowContext, type RawFlow } from './request-flows.js';
 import { CATALOG_KINDS, computeCoverage, fileResolver, forwardSlice, pageEndpoints, type CatalogKind, type CoverageComputation } from './catalog.js';
@@ -56,6 +57,8 @@ interface View {
   persisted: boolean; holes: number; layoutSource: 'timeline' | 'persisted' | 'fresh';
   diff?: SnapshotDiff;
   addedDiagnostics: Set<string>;
+  /** Lazily computed: the archetype (map shape) of each entity that has one. */
+  archetypes?: Map<string, ArchetypeInfo>;
   /** Lazily loaded: unresolved call sites by called name. */
   unresolvedNames?: Map<string, { sites: number; entities: Set<string> }>;
   /** Recent impact computations of this view. */
@@ -249,6 +252,7 @@ export class ProjectionService {
     return { result, persisted: false, layoutSource: 'fresh' };
   }
   private summary(current: View, node: ProjectionNode): NodeSummary {
+    const archetype = (current.archetypes ??= computeArchetypes(current.index)).get(node.id);
     return {
       id: node.id, kind: node.kind, type: node.type, name: node.name,
       ...(node.path ? { path: node.path } : {}), ...(node.language ? { language: node.language } : {}), ...(node.sourceRange ? { sourceRange: node.sourceRange } : {}),
@@ -257,6 +261,7 @@ export class ProjectionService {
       depth: node.depth, rect: current.rects.get(node.id)!, childCount: node.children.length,
       ...(node.loc !== undefined ? { loc: node.loc } : {}), ...(node.detail ? { detail: node.detail } : {}), ...(node.qualifiedName ? { qualifiedName: node.qualifiedName } : {}),
       ...(node.role ? { role: node.role } : {}), ...(node.explanation ? { explanation: node.explanation } : {}),
+      ...(archetype ? { archetype } : {}),
       diagnostics: node.diagnostics, stats: node.stats,
       ...(node.change ? { change: node.change } : {}), ...(node.changes && (node.changes.added || node.changes.removed || node.changes.modified || node.changes.moved) ? { changes: node.changes } : {}),
     };

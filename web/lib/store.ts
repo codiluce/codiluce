@@ -210,6 +210,8 @@ export interface AtlasState {
   themeId: string;
   /** Settings: the theme menu offers every theme, not only Dusk and Dawn. */
   moreThemes: boolean;
+  /** Draw blocks as their archetype's shape (a controller a hall, a table drums…) instead of plain boxes. */
+  shapes: boolean;
   staleIndex: boolean;
   sceneRevision: number;
   impact: ImpactState;
@@ -311,12 +313,12 @@ export class AtlasStore {
   private openingHash?: string;
   constructor(readonly api: AtlasApi, private readonly options: StoreOptions = {}) {
     this.openingHash = options.location?.hash;
-    let prefs: { themeId?: string; moreThemes?: boolean; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey } = {};
+    let prefs: { themeId?: string; moreThemes?: boolean; shapes?: boolean; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey } = {};
     try { prefs = JSON.parse(options.storage?.getItem('codiluce:prefs') ?? '{}'); } catch { /* defaults */ }
     this.state = {
       status: 'loading', view: { level: 'Applications', focus: [], zoom: 1, visible: [], truncated: false },
       relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' },
-      history: { entries: [], index: -1 }, showDiagnostics: prefs.showDiagnostics ?? true, themeId: prefs.themeId ?? DEFAULT_THEME, moreThemes: prefs.moreThemes ?? false,
+      history: { entries: [], index: -1 }, showDiagnostics: prefs.showDiagnostics ?? true, themeId: prefs.themeId ?? DEFAULT_THEME, moreThemes: prefs.moreThemes ?? false, shapes: prefs.shapes ?? true,
       staleIndex: false, sceneRevision: 0,
       impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '', open: {} }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, families: { show: false, status: 'idle' }, features: { status: 'idle', open: {} },
       people: { window: prefs.peopleWindow ?? 'all', show: false, status: 'idle', open: {} }, center: 'map',
@@ -338,7 +340,7 @@ export class AtlasStore {
   }
   private bumpScene(): void { this.set(state => ({ sceneRevision: state.sceneRevision + 1 })); }
   private savePrefs(): void {
-    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, moreThemes: this.state.moreThemes, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window })); } catch { /* preferences are optional */ }
+    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, moreThemes: this.state.moreThemes, shapes: this.state.shapes, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window })); } catch { /* preferences are optional */ }
   }
   dispose(): void { this.disposed = true; for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
 
@@ -613,6 +615,7 @@ export class AtlasStore {
   setTheme(themeId: string): void { this.set({ themeId }); this.savePrefs(); }
   /** Settings: offer every theme in the theme menu (otherwise Dusk and Dawn, and the theme in use). */
   setMoreThemes(moreThemes: boolean): void { this.set({ moreThemes }); this.savePrefs(); }
+  setShapes(shapes: boolean): void { this.set({ shapes }); this.savePrefs(); }
 
   // History -----------------------------------------------------------------
   private setTimeline(patch: Partial<TimelineState>): void { this.set(state => ({ timeline: { ...state.timeline, ...patch } })); }

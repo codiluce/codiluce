@@ -8,6 +8,8 @@ import { familyHashHue, PaletteCache, paletteKey, type Theme } from './themes';
 import type { StopTone } from './map-flow';
 import { compactNumber, typeLabel } from './format';
 import { NOT_MEASURED } from './coverage';
+import { drawIcon, drawShape, hexToHsl, ICON_PX, mixHsl, seedOf, shapeTheme, type ShapeTheme, type ShapeView } from './shapes';
+import type { Hsl } from './themes';
 
 export interface EdgeOverlay { key: string; from: string; to: string; fromAncestors: string[]; toAncestors: string[]; type: string; count: number; emphasized?: boolean; change?: 'added' | 'removed' }
 /**
@@ -67,6 +69,8 @@ export interface RenderState {
   /** One person in focus: the files they changed and the areas holding them stay lit. */
   person?: FamilyOverlay;
   frames?: FrameOverlay[];
+  /** Archetype shapes and roof icons (default on). */
+  shapes?: boolean;
   time: number;
   reducedMotion: boolean;
 }
@@ -77,7 +81,7 @@ export interface MotionState { appear: Map<string, number>; flash: Map<string, n
  * everything unreached recedes.
  */
 export interface ImpactOverlay { distances: Map<string, number>; areas: Map<string, { count: number; distance: number }>; depth: number; dimOthers: boolean }
-interface Label { x: number; y: number; lines: { text: string; font: string; color: string }[]; priority: number; align: 'center' | 'above' }
+interface Label { x: number; y: number; lines: { text: string; font: string; color: string }[]; priority: number; align: 'center' | 'above' | 'below' }
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 const MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
 /** Duration of a block rising into place, and of a change flash. */
@@ -91,12 +95,13 @@ export class MapRenderer {
   private palettes: PaletteCache;
   private font = FONT;
   private dpr = 1;
-  constructor(private theme: Theme) { this.palettes = new PaletteCache(theme); this.font = theme.style?.font ?? FONT; }
-  setTheme(theme: Theme): void { this.theme = theme; this.palettes = new PaletteCache(theme); this.font = theme.style?.font ?? FONT; }
+  private shapeTheme: ShapeTheme;
+  constructor(private theme: Theme) { this.palettes = new PaletteCache(theme); this.font = theme.style?.font ?? FONT; this.shapeTheme = shapeTheme(theme); }
+  setTheme(theme: Theme): void { this.theme = theme; this.palettes = new PaletteCache(theme); this.font = theme.style?.font ?? FONT; this.shapeTheme = shapeTheme(theme); }
 
   render(ctx: CanvasRenderingContext2D, dpr: number, viewport: Viewport, camera: Camera, scene: Scene, set: VisibleSet, state: RenderState, lod: LodConfig): void {
     const theme = this.theme;
-    this.dpr = dpr;
+    this.dpr = dpr; this.ctxRef = ctx;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.background(ctx, viewport);
     if (theme.style?.grid === 'dots') this.dotGrid(ctx, viewport, camera); else if (theme.style?.grid !== 'none') this.grid(ctx, viewport, camera);
@@ -112,6 +117,7 @@ export class MapRenderer {
     const peopleOf = state.people ? this.familyResolver(scene, state.people) : undefined;
     const focusLit = state.feature?.focus ? this.familyLit(scene, state.feature, this.familyResolver(scene, state.feature))
       : state.person?.focus ? this.familyLit(scene, state.person, this.familyResolver(scene, state.person)) : familyLit;
+    const hot = this.flowHeat(state.flow);
     // Items come parents first: one inside a subtree kept whole is lit through its parent.
     const inside = state.within && emphasis ? new Uint8Array(items.length) : undefined;
     // What the selection, a feature or a person does not reach recedes far, so what it does reach reads at a glance.
@@ -128,7 +134,9 @@ export class MapRenderer {
       const category = coverageOf?.(item.node);
       const family = category ? undefined : familyOf?.(item.node);
       const person = category || family ? undefined : peopleOf?.(item.node);
-      this.prism(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId, category ? `coverage:${category}` : family ? `family:${this.familyHue(family, state.families!)}` : person ? `family:${this.familyHue(person, state.people!)}` : undefined);
+      const paletteOverride = category ? `coverage:${category}` : family ? `family:${this.familyHue(family, state.families!)}` : person ? `family:${this.familyHue(person, state.people!)}` : undefined;
+      if (item.shape !== undefined) this.shape(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId, paletteOverride, hot.get(item.node.id) ?? 0, this.shapeTint(item, state), state);
+      else this.prism(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId, paletteOverride, state.shapes !== false);
       if (state.coverage && !item.open && !category && state.coverage.areas.has(item.node.id)) this.coverageBadge(ctx, viewport, camera, item, alpha, state.coverage.areas.get(item.node.id)!);
       if (state.families && !item.open && !family && state.families.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.families.areas.get(item.node.id)!, state.families);
       else if (state.feature && !state.coverage && !item.open && state.feature.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.feature.areas.get(item.node.id)!, state.feature);
@@ -302,6 +310,12 @@ export class MapRenderer {
     ctx.setTransform(d, 0, 0, d, 0, 0);
   }
   private topPath(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, r: number): void {
+    if (item.shape !== undefined) {
+      // A shape is ringed by its silhouette: the outline of its box from the ground to its top.
+      const top = this.corners(viewport, camera, item, item.zTop), bottom = this.corners(viewport, camera, item, item.zBase);
+      polygon(ctx, [top[0], top[1], bottom[1], bottom[2], bottom[3], top[3]]);
+      return;
+    }
     if (r > 0) this.footprint(ctx, viewport, camera, item.node.rect, item.zTop, r);
     else polygon(ctx, this.corners(viewport, camera, item, item.zTop));
   }
@@ -318,7 +332,7 @@ export class MapRenderer {
     }
     ctx.globalAlpha = 1;
   }
-  private prism(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, hovered: boolean, paletteOverride?: string): void {
+  private prism(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, hovered: boolean, paletteOverride?: string, icons = false): void {
     const palette = this.palettes.get(paletteOverride ?? paletteKey(item.node), item.node.depth);
     const r = this.radius(item, camera);
     ctx.globalAlpha = alpha;
@@ -347,7 +361,64 @@ export class MapRenderer {
       // Projection districts get a dashed rim: they are spatial groupings, not entities.
       ctx.setLineDash([4, 4]); ctx.strokeStyle = this.theme.text.secondary; ctx.lineWidth = 1; this.topPath(ctx, viewport, camera, item, r); ctx.stroke(); ctx.setLineDash([]);
     }
+    const archetype = item.node.archetype?.kind;
+    if (icons && archetype && (item.open ? item.size > 160 : item.size >= ICON_PX)) {
+      // Too small for its shape: the archetype's mark on the roof. An open file keeps it as a trim at its front corner.
+      const { x, y, w, h } = item.node.rect, base = this.palettes.base(paletteOverride ?? paletteKey(item.node), item.node.depth);
+      drawIcon(this.view(viewport, camera), archetype, x, y, item.zTop, w, h, hovered ? { ...base, l: base.l + (this.theme.dark ? 9 : -7) } : base, item.open ? 0.7 : 1, item.open ? Math.min(0.22, 60 / Math.max(1, item.size)) : 1, item.open ? 'front-left' : 'center');
+    }
     ctx.globalAlpha = 1;
+  }
+  private view(viewport: Viewport, camera: Camera): ShapeView {
+    return { ctx: this.ctxRef!, s: camera.scale, ox: viewport.width / 2 - camera.x * camera.scale, oy: viewport.height / 2 - camera.y * camera.scale, T: this.shapeTheme };
+  }
+  private ctxRef?: CanvasRenderingContext2D;
+  /** A closed block with an archetype, drawn as its shape: in its palette (or tinted by a comparison or blast radius), lit while a flow passes. */
+  private shape(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, hovered: boolean, paletteOverride: string | undefined, hot: number, tint: Hsl | undefined, state: RenderState): void {
+    const node = item.node;
+    let color = this.palettes.base(paletteOverride ?? paletteKey(node), node.depth);
+    if (tint) color = mixHsl(color, tint, 0.6);
+    if (hovered) color = { ...color, l: color.l + (this.theme.dark ? 9 : -7) };
+    const input = { x: node.rect.x, y: node.rect.y, z: item.zBase, w: node.rect.w, d: node.rect.h, H: item.zTop - item.zBase, c: color, t: state.reducedMotion ? 0 : state.time / 1000, hot, seed: seedOf(node.id) };
+    if (alpha >= 0.98) { drawShape(this.view(viewport, camera), node.archetype!.kind, input); return; }
+    // A faded shape is drawn whole on a layer and faded as one picture, so its inner faces never show through each other.
+    const top = this.corners(viewport, camera, item, item.zTop), bottom = this.corners(viewport, camera, item, item.zBase), margin = 4 + item.size * 0.5;
+    const x0 = Math.max(0, Math.floor(top[3].x - margin)), x1 = Math.min(viewport.width, Math.ceil(top[1].x + margin));
+    const y0 = Math.max(0, Math.floor(top[0].y - margin)), y1 = Math.min(viewport.height, Math.ceil(bottom[2].y + 2));
+    if (x1 <= x0 || y1 <= y0) return;
+    const layer = this.layer(viewport), lctx = layer.getContext('2d')!, d = this.dpr;
+    lctx.setTransform(d, 0, 0, d, 0, 0); lctx.clearRect(x0, y0, x1 - x0, y1 - y0);
+    drawShape({ ...this.view(viewport, camera), ctx: lctx }, node.archetype!.kind, input);
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = alpha;
+    ctx.drawImage(layer, x0 * d, y0 * d, (x1 - x0) * d, (y1 - y0) * d, x0 * d, y0 * d, (x1 - x0) * d, (y1 - y0) * d);
+    ctx.restore();
+  }
+  private layerCanvas?: HTMLCanvasElement;
+  /** A scratch canvas the size of the map, for drawing a shape whole before fading it. */
+  private layer(viewport: Viewport): HTMLCanvasElement {
+    const canvas = this.layerCanvas ??= document.createElement('canvas');
+    const w = Math.ceil(viewport.width * this.dpr), h = Math.ceil(viewport.height * this.dpr);
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+    return canvas;
+  }
+  /** How lit each block is by the flow on the map: its front stop fully, stops it has reached partly (and the closed blocks holding them). */
+  private flowHeat(flow: FlowOverlay | undefined): Map<string, number> {
+    const heat = new Map<string, number>();
+    for (const stop of flow?.stops ?? []) {
+      const value = stop.state === 'front' ? 1 : stop.state === 'reached' ? 0.55 : 0;
+      if (!value) continue;
+      for (const id of [stop.entityId, ...stop.ancestors]) heat.set(id, Math.max(heat.get(id) ?? 0, value));
+    }
+    return heat;
+  }
+  /** A comparison's status color, or the blast radius's color by hop count: shapes take it as their own instead of a tinted roof. */
+  private shapeTint(item: VisibleItem, state: RenderState): Hsl | undefined {
+    const status = state.comparison ? item.node.change?.status : undefined;
+    if (status && status !== 'unchanged') return hexToHsl(this.theme.change[status]);
+    const distance = state.impact?.distances.get(item.node.id);
+    if (distance === undefined || distance === 0 || !state.impact) return undefined;
+    const colors = impactColors(this.theme);
+    return hexToHsl(mixHex(colors.near, colors.far, state.impact.depth > 1 ? (distance - 1) / (state.impact.depth - 1) : 0));
   }
   /**
    * Walls of a rounded block. A vertically extruded convex footprint is the
@@ -386,7 +457,7 @@ export class MapRenderer {
       const color = colors[status];
       ctx.save();
       // Open containers keep their children readable: outline only.
-      if (!item.open) { ctx.globalAlpha = Math.min(1, alpha * (status === 'removed' ? 0.35 : 0.42) * (1 + 1.3 * boost)); ctx.fillStyle = color; this.topPath(ctx, viewport, camera, item, r); ctx.fill(); }
+      if (!item.open && item.shape === undefined) { ctx.globalAlpha = Math.min(1, alpha * (status === 'removed' ? 0.35 : 0.42) * (1 + 1.3 * boost)); ctx.fillStyle = color; this.topPath(ctx, viewport, camera, item, r); ctx.fill(); }
       ctx.globalAlpha = Math.min(1, alpha * 1.6);
       ctx.strokeStyle = color; ctx.lineWidth = (item.open ? 2 : 1.6) + 2 * boost; ctx.lineJoin = 'round';
       if (status === 'removed') ctx.setLineDash([5, 4]);
@@ -394,7 +465,7 @@ export class MapRenderer {
       if (boost > 0.02 && !item.open && status !== 'removed') {
         // A ripple spreading out from the changed block.
         ctx.setLineDash([]); ctx.globalAlpha = alpha * boost * 0.9; ctx.lineWidth = 1.5;
-        this.footprint(ctx, viewport, camera, node.rect, item.zTop, r, (1 - boost) * 10 / camera.scale); ctx.stroke();
+        this.footprint(ctx, viewport, camera, node.rect, item.shape === undefined ? item.zTop : item.zBase, r, (1 - boost) * 10 / camera.scale); ctx.stroke();
       }
       ctx.restore();
     } else if (node.change?.facets.length && item.size > 10) {
@@ -428,7 +499,7 @@ export class MapRenderer {
       this.topPath(ctx, viewport, camera, item, r); ctx.stroke();
     } else if (distance !== undefined) {
       const color = mixHex(colors.near, colors.far, impact.depth > 1 ? (distance - 1) / (impact.depth - 1) : 0);
-      if (!item.open) { ctx.globalAlpha = Math.min(1, alpha * 0.5); ctx.fillStyle = color; this.topPath(ctx, viewport, camera, item, r); ctx.fill(); }
+      if (!item.open && item.shape === undefined) { ctx.globalAlpha = Math.min(1, alpha * 0.5); ctx.fillStyle = color; this.topPath(ctx, viewport, camera, item, r); ctx.fill(); }
       ctx.globalAlpha = Math.min(1, alpha * 1.5); ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.lineJoin = 'round';
       this.topPath(ctx, viewport, camera, item, r); ctx.stroke();
       if (!item.open && item.size > 18) {
@@ -510,7 +581,8 @@ export class MapRenderer {
       return;
     }
     const { x, y, w, h } = node.rect;
-    const center = worldToScreen(camera, viewport, x + w / 2, y + h / 2, item.zTop);
+    // Shapes keep their label off the roof: under their front corner, like a street sign.
+    const center = item.shape !== undefined ? worldToScreen(camera, viewport, x + w, y + h, item.zBase) : worldToScreen(camera, viewport, x + w / 2, y + h / 2, item.zTop);
     const big = node.type === 'application';
     const nameSize = big ? Math.min(22, 13 + item.size / 60) : Math.min(14, 10 + item.size / 70);
     const lines: Label['lines'] = [{ text: `${state.comparison ? changeGlyph(node) : ''}${displayName(node)}`, font: `${big || important ? 700 : 600} ${nameSize.toFixed(1)}px ${this.font}`, color }];
@@ -522,7 +594,7 @@ export class MapRenderer {
       const detail = detailLine(node);
       if (detail) lines.push({ text: detail, font: `400 ${Math.max(9, nameSize - 3).toFixed(1)}px ${node.detail?.startsWith('(') ? MONO : this.font}`, color: theme.text.secondary });
     }
-    labels.push({ x: center.x, y: center.y, align: 'center', priority: (important ? 2e9 : 0) + item.size, lines });
+    labels.push({ x: center.x, y: center.y, align: item.shape !== undefined ? 'below' : 'center', priority: (important ? 2e9 : 0) + item.size, lines });
   }
   private labels(ctx: CanvasRenderingContext2D, labels: Label[]): void {
     labels.sort((a, b) => b.priority - a.priority);
@@ -533,7 +605,7 @@ export class MapRenderer {
       if (count > 450) break;
       let width = 0, height = 0;
       const metrics = label.lines.map(line => { ctx.font = line.font; const w = Math.min(320, ctx.measureText(line.text).width); const h = parseFloat(/(\d+(?:\.\d+)?)px/.exec(line.font)![1]!) * 1.25; width = Math.max(width, w); height += h; return { w, h }; });
-      const y0 = label.align === 'above' ? label.y - height : label.y - height / 2;
+      const y0 = label.align === 'above' ? label.y - height : label.align === 'below' ? label.y + 2 : label.y - height / 2;
       const box = { x0: label.x - width / 2 - 3, y0: y0 - 2, x1: label.x + width / 2 + 3, y1: y0 + height + 2 };
       if (placed.some(other => box.x0 < other.x1 && box.x1 > other.x0 && box.y0 < other.y1 && box.y1 > other.y0)) continue;
       placed.push(box); count++;

@@ -6,6 +6,18 @@ import { Shot } from '../../../components/Shot';
 
 export const metadata: Metadata = { title: 'Using the map', description: 'Zoom levels, the inspector, flows, coverage, blast radius, data families and descriptions.' };
 
+const SHAPES: [string, string, string][] = [
+  ['Lighthouse', 'Entry point', 'public/index.php, artisan, main.tsx'], ['Gate', 'Routes', 'routes/web.php, urls.py, route.ts'],
+  ['Checkpoint', 'Middleware', 'app/Http/Middleware/, middleware.ts'], ['Traffic cop at a crossroads', 'Controller', 'app/Http/Controllers/, views.py'],
+  ['Workshop', 'Service', 'app/Services/, *Service.ts'], ['Tool shed', 'Helper', 'helpers.php, utils/'],
+  ['Terminal kiosk', 'Command', 'app/Console/Commands/, management/commands/'], ['Clock tower', 'Scheduled task', 'routes/console.php'],
+  ['Conveyor belt', 'Job or listener', 'app/Jobs/, app/Listeners/'], ['Stacked records', 'Model', 'app/Models/, models.py'],
+  ['Storage drums', 'Database table', 'database/migrations/'], ['Tower with windows', 'Page', 'app/**/page.tsx, resources/views/'],
+  ['Open frame', 'Layout', 'layout.tsx, layouts/'], ['Building block', 'Component', 'components/, *.vue, *.svelte'],
+  ['Crane', 'Hook or store', 'use*.ts, composables/, stores/'], ["Painter's easel", 'Style sheet', '*.css, *.scss'],
+  ['Control desk', 'Configuration', 'config/, *.config.ts'], ['Lab bench with test tubes', 'Test', 'tests/, *.test.ts'],
+];
+
 export default function MapDocs() {
   return (
     <>
@@ -25,7 +37,7 @@ export default function MapDocs() {
       </p>
       <p>
         Routes and endpoints are drawn in a <strong>Routes &amp; endpoints</strong> district inside their application,
-        commands and scheduled tasks in a <strong>Console</strong> district, and tables in a <strong>Database</strong>
+        commands and scheduled tasks in a <strong>Console</strong> district, and tables in a <strong>Database</strong>{' '}
         district.
       </p>
       <p>
@@ -33,11 +45,39 @@ export default function MapDocs() {
         new files take new slots instead of pushing the others around.
       </p>
 
+      <h2 id="shapes" className="anchor">Building shapes</h2>
+      <p>
+        Each kind of block has its own shape, the same in every language and framework: a gate for routes, a traffic cop
+        for a controller, a workshop for a service, storage drums for a table, a tower with windows for a page. Far
+        away a block is plain; once it is a few dozen pixels across it shows its kind as a mark on its roof, and closer still
+        it grows into its shape. Zoom into a file and it opens into its symbols as usual.
+      </p>
+      <p>
+        A file&apos;s kind comes from the index where it can: the endpoints, page routes, commands, scheduled tasks or tables it
+        declares, and the controllers, models, components and hooks it contains. Otherwise it comes from folder and name
+        conventions shared by most frameworks (<code>Services/</code>, <code>helpers</code>, <code>Jobs/</code>,{' '}
+        <code>layouts/</code>…). The inspector names the kind and says which rule gave it. Files no rule claims stay plain
+        blocks.
+      </p>
+      <div className="table-wrap">
+        <table>
+          <thead><tr><th>Shape</th><th>Kind</th><th>For example</th></tr></thead>
+          <tbody>
+            {SHAPES.map(([shape, kind, example]) => <tr key={kind}><td>{shape}</td><td>{kind}</td><td><code>{example}</code></td></tr>)}
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Lenses keep working: coverage, data families and people color the shapes, a comparison tints what changed, and a
+        flow on the map lights the stops it reaches. <strong>Settings → Building shapes</strong> turns them off for plain
+        blocks.
+      </p>
+
       <h2 id="inspector" className="anchor">The inspector and evidence</h2>
       <Shot
         src="/shots/map.webp"
-        alt="A file-level view with the PageRepo class selected and its facts listed in the inspector."
-        caption="Selecting a class: its canonical path, source range, flows, facts and relationships."
+        alt="A file-level view of BookStack's views with one Blade view selected and its kind, flows, people and latest changes in the inspector."
+        caption="Selecting a file: its kind and why, the flows that reach it, who changed it and when."
       />
       <p>
         Select anything to see its type, canonical path, source range and metrics. Incoming and outgoing relationships are

@@ -502,15 +502,19 @@ export class PaletteCache {
     const key = `${type}:${depth}`;
     let palette = this.cache.get(key);
     if (!palette) {
-      const base = type.startsWith('coverage:') ? coverageHsl(type.slice(9), this.theme.dark)
-        : type.startsWith('family:') ? familyHsl(type === 'family:none' ? 'none' : Number(type.slice(7)), this.theme.dark)
-        : this.theme.entity[type] ?? this.theme.entity[type.split(':')[0]!] ?? this.theme.fallbackEntity;
-      const structural = type === 'directory' || type === 'group' || type.startsWith('application');
-      const l = Math.max(4, Math.min(96, base.l + (structural ? depth * this.theme.depthStep : 0)));
+      const base = this.base(type, depth), l = base.l;
       const color = (lightness: number) => `hsl(${base.h} ${base.s}% ${Math.max(2, Math.min(98, lightness)).toFixed(1)}%)`;
       palette = { top: color(l), left: color(l * this.theme.wallShade[0]), right: color(l * this.theme.wallShade[1]), hoverTop: color(l + (this.theme.dark ? 9 : -7)) };
       this.cache.set(key, palette);
     }
     return palette;
+  }
+  /** The top color of a (type, depth) combination, from which walls and shapes are shaded. */
+  base(type: string, depth: number): Hsl {
+    const base = type.startsWith('coverage:') ? coverageHsl(type.slice(9), this.theme.dark)
+      : type.startsWith('family:') ? familyHsl(type === 'family:none' ? 'none' : Number(type.slice(7)), this.theme.dark)
+      : this.theme.entity[type] ?? this.theme.entity[type.split(':')[0]!] ?? this.theme.fallbackEntity;
+    const structural = type === 'directory' || type === 'group' || type.startsWith('application');
+    return { h: base.h, s: base.s, l: Math.max(4, Math.min(96, base.l + (structural ? depth * this.theme.depthStep : 0))) };
   }
 }
