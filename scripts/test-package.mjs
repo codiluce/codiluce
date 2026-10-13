@@ -443,6 +443,11 @@ const compiler=new TemplateScriptParser();try{compiler.prewarm();const retiremen
   console.log('Checking installed explicit external Boot Maven parent, original Java handlers and retained compiler/BOM boundaries…');
   const bootMavenConformance=await run(process.execPath,['--experimental-sqlite',bootMavenCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'spring-boot-maven-validation.json')],consumer);
   console.log(bootMavenConformance.stdout.trim());
+  const kotlinSpringCheck=path.join(consumer,'check-kotlin-spring-compiler.mjs');
+  await cp(path.join(root,'tests/fixtures/kotlin-spring-compiler-qualification.mjs'),kotlinSpringCheck);
+  console.log('Checking installed Kotlin/Spring compiler source contracts, original handlers and preserved modality/annotation boundaries…');
+  const kotlinSpringConformance=await run(process.execPath,['--experimental-sqlite',kotlinSpringCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'kotlin-spring-compiler-validation.json')],consumer);
+  console.log(kotlinSpringConformance.stdout.trim());
   const bin = path.join(installed, 'bin/codiluce.js');
   for (const grammar of grammarManifest.grammars) assert.equal(createHash('sha256').update(await readFile(path.join(installed, 'dist/grammars', grammar.file))).digest('hex'), grammar.sha256);
   const dependencies = JSON.parse((await npm(['ls', '--omit=dev', '--all', '--json'], consumer)).stdout).dependencies[manifest.name].dependencies;

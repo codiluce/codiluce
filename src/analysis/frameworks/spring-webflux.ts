@@ -6,7 +6,7 @@ import { compileSpringPath, combineSpringPath } from '../routes/spring-patterns.
 import type { RoutingContract } from '../routes/contracts.js';
 import { springWebFluxProfile } from './spring-profile.js';
 
-export const WEBFLUX_VERSION = '1';
+export const WEBFLUX_VERSION = '2';
 const SERVER='org.springframework.web.reactive.function.server.', REQUEST=SERVER+'RequestPredicates.', ROUTERS=SERVER+'RouterFunctions.';
 const CONFIG='org.springframework.context.annotation.', METHODS=new Set(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']);
 interface Origin { file:string; scope:string; expression:JvmExpression; proof?:Evidence[] }
@@ -39,7 +39,7 @@ export class SpringWebFlux {
   private configurationGaps(definition:JvmDefinition):string[]{
     const index=definition.fact.annotations.findIndex((_item,index)=>this.annotation(definition,index)===CONFIG+'Configuration'),annotation=definition.fact.annotations[index],gaps:string[]=[];let proxy=true;
     if(annotation)for(const argument of annotation.args){const value=this.symbols.constant(definition.unit.file.path,definition.fact.scope,argument.value);if(argument.name!=='proxyBeanMethods'||value.status!=='resolved'||typeof value.value!=='boolean')gaps.push('Custom/opaque Configuration options require a reviewed bean activation profile');else proxy=value.value;}
-    if(proxy&&(definition.fact.modifiers.includes('final')||definition.unit.file.language==='kotlin'&&!definition.fact.modifiers.includes('open')))gaps.push('Final configuration requires explicit proxyBeanMethods=false; compiler all-open/proxy transformation is not inferred');
+    if(proxy&&(definition.fact.modifiers.includes('final')||definition.unit.file.language==='kotlin'&&this.symbols.kotlinModality(definition)!=='open'))gaps.push('Final/unreviewed configuration requires explicit proxyBeanMethods=false or a proven compiler all-open source profile');
     return gaps;
   }
   private string(origin:Origin):string|undefined{

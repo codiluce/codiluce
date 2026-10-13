@@ -3,7 +3,8 @@ import type { AnalysisContext, ScannedFile } from '../../core/analyzer.js';
 import { evidence, type Evidence } from '../../core/graph.js';
 import type { DeclarationFact, JvmDeclarationFact, JvmImportFact, JvmSyntaxFacts } from '../facts.js';
 import { JvmProjects, type JvmProject } from './jvm-projects.js';
-export const JVM_RESOLVER_VERSION = '2';
+import { kotlinAnnotationPlacementGap } from './jvm-kotlin-compiler.js';
+export const JVM_RESOLVER_VERSION = '3';
 export interface JvmSymbol {
     id: string;
     file: ScannedFile;
@@ -103,6 +104,10 @@ export class JvmResolver {
         for (const candidate of this.context.files.values())
             if (sourceVisible(candidate.path)) {
                 const chosen = this.projects.selection(candidate.path);
+                if (candidate.language === 'kotlin' && chosen.project?.kotlinCompiler) {
+                    const gap = kotlinAnnotationPlacementGap(this.facts(candidate.path)?.semantic);
+                    if (gap) return { status: 'unsupported', reason: `${gap}: ${candidate.path}` };
+                }
                 if (chosen.project && projects.has(chosen.project.id) && !chosen.reason && (!candidate.analyzable || !this.facts(candidate.path)?.complete || this.facts(candidate.path)?.gaps.length || this.facts(candidate.path)?.module))
                     return { status: 'unsupported', reason: `Visible JVM source has unavailable syntax or an unreviewed compilation/lexical boundary: ${candidate.path}` };
             }

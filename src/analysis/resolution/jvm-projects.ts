@@ -6,7 +6,8 @@ import { IndexedSources } from '../indexed-sources.js';
 import { readPomXml, xmlChild, xmlChildren, xmlValue, jvmPath, gradleTokens, readGradleSettings, readGradleBuild, type XmlNode } from './jvm-manifest.js';
 import { bootGradleBom, bootManagedCoordinate, bootDefaultManagedCoordinates, bootStarterFrameworkModule, bootStarterVersionMismatch, BOOT_BOM_COORDINATE, BOOT_FRAMEWORK_VERSION } from './jvm-spring-boot.js';
 import { reviewedBootMavenParent, reviewedBootMavenPlugin, bootMavenDefaults, bootMavenPropertyGap, BOOT_MAVEN_PARENT } from './jvm-spring-boot-maven.js';
-export const JVM_PROJECT_VERSION = '6';
+import type { KotlinCompilerProfile } from './jvm-kotlin-compiler.js';
+export const JVM_PROJECT_VERSION = '7';
 export interface JvmDependency {
     path?: string;
     coordinate?: string;
@@ -40,6 +41,7 @@ export interface JvmProject {
         testPlatforms: { selector: string; platform: 'junit-platform'; proof: Evidence[] }[];
     };
     bootBom?: { coordinate: string; frameworkVersion: string; externalResolutionVerified: false; proof: Evidence[] };
+    kotlinCompiler?: Omit<KotlinCompilerProfile, 'jvmPluginStart' | 'springPluginStart' | 'effectiveArguments'> & { effectiveArguments: { value: string; proof: Evidence[] }[]; proof: Evidence[]; externalResolutionVerified: false };
     bootMavenParent?: { coordinate: string; proof: Evidence[]; compilerParameters: true; sourceEncoding: 'UTF-8' };
     modules: string[];
     reactor: string;
@@ -455,6 +457,14 @@ export class JvmProjects {
             if (bom) project.bootBom = { coordinate: bom.coordinate, frameworkVersion: bom.frameworkVersion, externalResolutionVerified: false,
                 proof: [...this.fact(manifest, bom.pluginStart, 'Reviewed Spring Boot Gradle plugin selects its published default BOM source contract; target dependencies/plugins never resolve or execute'),
                     ...this.fact(manifest, bom.managementStart, 'Reviewed dependency-management plugin application imports the declared Boot BOM; custom model statements remain gaps')] };
+            if (model.kotlinCompiler) {
+                const { jvmPluginStart, springPluginStart, effectiveArguments, ...profile } = model.kotlinCompiler;
+                project.kotlinCompiler = { ...profile, javaParameters: profile.javaParameters || !!bom,
+                    effectiveArguments: effectiveArguments.map(argument => ({ value: argument.value, proof: this.fact(manifest, argument.start, 'Literal effective Kotlin compiler argument under the pinned published source contract; target compiler never executes') })),
+                    externalResolutionVerified: false, proof: [...this.fact(manifest, jvmPluginStart, 'Pinned Kotlin 2.2.21 JVM compiler source contract; source declarations remain original and generated/binary declarations stay unverified'),
+                        ...springPluginStart === undefined ? [] : this.fact(manifest, springPluginStart, 'Pinned Kotlin Spring preset applies published all-open modality rules; target compiler/plugin never executes'),
+                        ...bom ? this.fact(manifest, bom.pluginStart, 'Reviewed Boot Kotlin plugin action aligns Kotlin dependency versions and enables Java parameter metadata; source contract only') : []] };
+            }
             if (bom && observed.some(item => path.posix.basename(item) === 'gradle.properties' && inside(root, path.posix.dirname(item))))
                 project.gaps.push('Indexed Gradle properties can override the reviewed Boot BOM/compiler defaults; a selected property model is required');
             const inputs = model.compiler;
@@ -465,6 +475,8 @@ export class JvmProjects {
                     testPlatforms: inputs.testPlatforms.map(item => ({ selector: item.selector, platform: item.platform, proof: this.fact(manifest, item.start, 'Observed literal JUnit Platform task selection; target test tasks were not executed') })),
                 };
             const jvmPlugins = model.plugins.filter(plugin => ['java', 'java-library', 'org.jetbrains.kotlin.jvm'].includes(plugin.id));
+            const unreviewedKotlinAlignment = !!bom && jvmPlugins.some(plugin => plugin.id === 'org.jetbrains.kotlin.jvm') && !model.kotlinCompiler;
+            if (unreviewedKotlinAlignment) project.gaps.push('Boot Kotlin dependency alignment requires the pinned reviewed Kotlin compiler/version selection');
             if (!jvmPlugins.length)
                 project.gaps.push('No literal reviewed Java/Kotlin JVM plugin selects conventional source roots');
             const languages: ('java' | 'kotlin')[] = jvmPlugins.some(plugin => plugin.id === 'org.jetbrains.kotlin.jvm') ? ['java', 'kotlin'] : ['java'];
@@ -476,12 +488,12 @@ export class JvmProjects {
                 const target = item.project && members.get(item.project);
                 if (['api', 'compileOnlyApi'].includes(item.scope) && !model.plugins.some(plugin => plugin.id === 'java-library'))
                     project.gaps.push('Gradle api configuration requires the literal java-library plugin');
-                const coordinate = item.coordinate && bom ? bootManagedCoordinate(item.coordinate) ?? item.coordinate : item.coordinate;
+                const coordinate = item.coordinate && bom && !(unreviewedKotlinAlignment && item.coordinate.startsWith('org.jetbrains.kotlin:')) ? bootManagedCoordinate(item.coordinate, bom.version) ?? item.coordinate : item.coordinate;
                 const managed = coordinate !== item.coordinate;
                 project.dependencies.push({ path: target || undefined, coordinate, ...managed ? { declaredCoordinate: item.coordinate, managedBy: bom!.coordinate } : {}, scope: item.scope, exported: ['api', 'compileOnlyApi'].includes(item.scope), optional: false, exclusions: [], proof: [...this.fact(manifest, item.start, 'Literal Gradle dependency DSL selection'), ...managed ? project.bootBom!.proof : []], reason: item.project && !target ? 'Gradle project dependency is absent from selected settings' : coordinate && !/^[^:\s]+:[^:\s]+:[^:\s]+$/.test(coordinate) ? 'Unreviewed Gradle artifact variant or coordinate' : undefined });
                 if (bom && coordinate) {
-                    if (bootStarterVersionMismatch(coordinate)) project.gaps.push('Reviewed Boot starter version differs from the selected Gradle Boot/BOM contract');
-                    const module = bootStarterFrameworkModule(coordinate);
+                    if (bootStarterVersionMismatch(coordinate, bom.version)) project.gaps.push('Reviewed Boot starter version differs from the selected Gradle Boot/BOM contract');
+                    const module = bootStarterFrameworkModule(coordinate, bom.version);
                     if (module) project.dependencies.push({ coordinate: module, derivedFrom: coordinate, managedBy: bom.coordinate, scope: item.scope, exported: ['api', 'compileOnlyApi'].includes(item.scope), optional: false, exclusions: [],
                         proof: [...this.fact(manifest, item.start, 'Reviewed published Boot starter/module POM chain selects this Spring Framework source profile; external binary/transitive resolution remains unverified'), ...project.bootBom!.proof] });
                 }

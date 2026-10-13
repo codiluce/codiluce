@@ -2,8 +2,9 @@ import type { AnalysisContext, ScannedFile } from '../../core/analyzer.js';
 import { declarationHashes, evidence, type CallSites, type Evidence } from '../../core/graph.js';
 import { fileAnalysis, type JvmBindingFact, type JvmDefinitionFact, type JvmExpression, type JvmSemanticFacts } from '../facts.js';
 import { JvmResolver, type JvmResolution, type JvmSymbol } from '../resolution/jvm.js';
+import { KOTLIN_SPRING_PRESETS, KOTLIN_SPRING_COMPONENT_META } from '../resolution/jvm-kotlin-compiler.js';
 
-export const JVM_SYMBOL_VERSION = '2';
+export const JVM_SYMBOL_VERSION = '3';
 const TYPE_KINDS = new Set(['class', 'interface', 'enum', 'record', 'annotation', 'object', 'typealias']);
 const CALLABLE_KINDS = new Set(['method', 'function', 'constructor', 'lambda']);
 const PRIMITIVES = new Set(['byte', 'short', 'char', 'int', 'long', 'float', 'double', 'boolean', 'void']);
@@ -39,6 +40,8 @@ export class JvmSymbols {
   private operations = 0;
   private inferenceDepth = 0;
   private selectedCallableScopes = new Set<string>();
+  private readonly kotlinOpenPredicates = new Map<string, boolean | undefined>();
+  private readonly kotlinOpenActive = new Set<string>();
   constructor(readonly context: AnalysisContext, readonly resolver: JvmResolver) {
     const symbols = new Map(resolver.symbols.map(symbol => [symbol.id, symbol]));
     for (const file of context.files.values()) {
@@ -176,10 +179,75 @@ export class JvmSymbols {
     if (definition.symbol?.syntax.static || definition.fact.modifiers.includes('private') || definition.fact.modifiers.includes('final')) return true;
     if (owner && this.finalType(owner)) return true;
     if (exact && owner && ['class', 'object'].includes(owner.fact.kind)) return true;
-    return definition.unit.file.language === 'kotlin' && !definition.fact.modifiers.some(modifier => ['open', 'override', 'abstract'].includes(modifier));
+    return definition.unit.file.language === 'kotlin' && !definition.fact.modifiers.some(modifier => ['open', 'override', 'abstract'].includes(modifier)) && this.compilerOpenedMember(definition) === false;
   }
   private finalType(definition: JvmDefinition): boolean {
-    return definition.fact.modifiers.includes('final') || ['enum', 'record', 'object'].includes(definition.fact.kind) || definition.unit.file.language === 'kotlin' && definition.fact.kind === 'class' && !definition.fact.modifiers.some(modifier => ['open', 'abstract', 'sealed'].includes(modifier));
+    return definition.fact.modifiers.includes('final') || ['enum', 'record', 'object'].includes(definition.fact.kind) || definition.unit.file.language === 'kotlin' && definition.fact.modifiers.includes('annotation') || definition.unit.file.language === 'kotlin' && definition.fact.kind === 'class' && !definition.fact.modifiers.some(modifier => ['open', 'abstract', 'sealed'].includes(modifier)) && this.compilerOpenPredicate(definition) === false;
+  }
+  /** Effective source-contract modality, separately from unchanged syntax facts. */
+  kotlinModality(definition: JvmDefinition): 'open' | 'final' | 'unknown' {
+    if (this.finalType(definition)) return 'final';
+    if (definition.fact.modifiers.includes('open') || this.compilerOpenPredicate(definition) === true) return 'open';
+    return 'unknown';
+  }
+  private compilerOpenedMember(definition: JvmDefinition): boolean | undefined {
+    const owner = definition.fact.parent ? definition.unit.definitions.get(definition.fact.parent) : undefined;
+    if (!owner || owner.fact.kind !== 'class') return false;
+    // K2 all-open excludes callables whose parent class ID is local.
+    if (this.chain(owner.unit, owner.fact.scope).some(scope => ['function', 'lambda', 'initializer'].includes(scope.kind))) return false;
+    return this.compilerOpenPredicate(owner);
+  }
+  private compilerOpenPredicate(definition: JvmDefinition, seen = new Set<string>()): boolean | undefined {
+    if (definition.unit.file.language !== 'kotlin' || !definition.symbol?.project.kotlinCompiler?.springAllOpen) return false;
+    return this.compilerClassPredicate(definition, seen, !!definition.symbol.project.bootBom);
+  }
+  private compilerClassPredicate(definition: JvmDefinition, seen: Set<string>, springMeta: boolean): boolean | undefined {
+    const key = `${definition.id}:${springMeta}`;
+    if (this.kotlinOpenPredicates.has(key)) return this.kotlinOpenPredicates.get(key);
+    if (this.kotlinOpenActive.has(key)) return undefined;
+    if (seen.has(definition.id) || seen.size >= 64) return undefined;
+    this.kotlinOpenActive.add(key);
+    try {
+    const next = new Set(seen).add(definition.id);
+    let unknownPredicate = false;
+    for (const annotation of definition.fact.annotations) {
+      if (annotation.target) continue;
+      const value = this.typeName(definition.unit, definition.fact.scope, annotation.type);
+      const name = value.kind === 'external' ? value.name : value.kind === 'type' ? value.definition.symbol?.syntax.qualifiedName : undefined;
+      if (name && KOTLIN_SPRING_PRESETS.has(name)) { this.kotlinOpenPredicates.set(key, true); return true; }
+      if (value.kind === 'type' && (value.definition.fact.kind === 'annotation' || value.definition.unit.file.language === 'kotlin' && value.definition.fact.modifiers.includes('annotation'))) {
+        const predicate = this.compilerAnnotationPredicate(value.definition, next, springMeta);
+        if (predicate === true) { this.kotlinOpenPredicates.set(key, true); return true; }
+        if (predicate === undefined) unknownPredicate = true;
+      } else if (value.kind === 'external' && KOTLIN_SPRING_COMPONENT_META.has(value.name) && springMeta) {
+        this.kotlinOpenPredicates.set(key, true); return true;
+      } else unknownPredicate = true;
+    }
+    for (const base of definition.fact.bases) {
+      const value = this.typeName(definition.unit, definition.fact.scope, base);
+      if (value.kind !== 'type') { unknownPredicate = true; continue; }
+      const predicate = this.compilerClassPredicate(value.definition, next, springMeta);
+      if (predicate === true) { this.kotlinOpenPredicates.set(key, true); return true; }
+      if (predicate === undefined) unknownPredicate = true;
+    }
+    const result = unknownPredicate ? undefined : false;
+    this.kotlinOpenPredicates.set(key, result); return result;
+    } finally { this.kotlinOpenActive.delete(key); }
+  }
+  private compilerAnnotationPredicate(annotation: JvmDefinition, seen: Set<string>, springMeta: boolean): boolean | undefined {
+    if (seen.has(annotation.id) || seen.size >= 64) return undefined;
+    const next = new Set(seen).add(annotation.id); let uncertain = false;
+    for (const fact of annotation.fact.annotations) {
+      if (fact.target) continue;
+      const value = this.typeName(annotation.unit, annotation.fact.scope, fact.type);
+      const name = value.kind === 'external' ? value.name : value.kind === 'type' ? value.definition.symbol?.syntax.qualifiedName : undefined;
+      if (name && KOTLIN_SPRING_PRESETS.has(name)) return true;
+      if (value.kind === 'type' && (value.definition.fact.kind === 'annotation' || value.definition.unit.file.language === 'kotlin' && value.definition.fact.modifiers.includes('annotation'))) {
+        const match = this.compilerAnnotationPredicate(value.definition, next, springMeta); if (match === true) return true; if (match === undefined) uncertain = true;
+      } else if (value.kind === 'external' && KOTLIN_SPRING_COMPONENT_META.has(value.name) && springMeta) return true;
+      else uncertain = true;
+    }
+    return uncertain ? undefined : false;
   }
   private importValue(unit: Unit, scope: string, outcome: JvmResolution): JvmBoundValue {
     if (outcome.status === 'resolved') return this.fromDefinitions(outcome.symbols.flatMap(symbol => this.byId.get(symbol.id) ? [this.byId.get(symbol.id)!] : []), unit, scope, outcome.proof);
@@ -277,7 +345,7 @@ export class JvmSymbols {
     const immutable = definition.fact.immutable === true;
     // Properties can have custom getters, delegates and open overrides. Only
     // original immutable fields with literal/new initializers are propagated.
-    if (!immutable || definition.fact.gaps.length || !definition.fact.value || definition.fact.modifiers.some(modifier => ['open', 'override', 'lateinit', 'expect', 'actual'].includes(modifier))) return unknown('Mutable/custom/injected JVM property is not a proven initialized receiver', value.proof);
+    if (!immutable || definition.fact.gaps.length || !definition.fact.value || definition.fact.annotations.length || definition.fact.modifiers.some(modifier => ['open', 'override', 'lateinit', 'expect', 'actual'].includes(modifier)) || !definition.fact.modifiers.some(modifier => ['private','final','const'].includes(modifier)) && this.compilerOpenedMember(definition) !== false) return unknown('Mutable/custom/injected or compiler-open JVM property is not a proven initialized receiver', value.proof);
     seen.add(definition.id);
     const expression = definition.fact.value;
     if (!['literal', 'new', 'call', 'lambda'].includes(expression.kind)) return unknown('JVM property initializer requires a reviewed constant/receiver profile', value.proof);
@@ -365,7 +433,7 @@ export class JvmSymbols {
       const value=this.value(unit,scope,expression);
       if(value.kind!=='property')return;
       const definition=value.definition,fact=definition.fact;
-      if(!fact.immutable||!fact.value||fact.gaps.length||fact.modifiers.some(item=>['open','override','lateinit','expect','actual'].includes(item)))return;
+      if(!fact.immutable||!fact.value||fact.gaps.length||fact.annotations.length||fact.modifiers.some(item=>['open','override','lateinit','expect','actual'].includes(item))||!fact.modifiers.some(item=>['private','final','const'].includes(item))&&this.compilerOpenedMember(definition)!==false)return;
       if(definition.unit.facts.writes.some(write=>write.target.kind==='name'&&write.target.name===fact.name||write.target.kind==='member'&&write.target.name===fact.name))return;
       return {file:definition.unit.file.path,scope:fact.scope,expression:fact.value,type:fact.returnType,storage:'property',proof:value.proof};
     }finally{this.selectedCallableScopes.clear();}

@@ -80,6 +80,7 @@ export const springMvcProfile = (context:AnalysisContext, projects:JvmProjects, 
 export function springWebFluxProfile(context:AnalysisContext, projects:JvmProjects, project:JvmProject, app:ApplicationConfig):SpringMvcProfile {
   const profile=springProfile(context,projects,project,app,'webflux');
   profile.gaps=profile.gaps.map(gap=>gap.replaceAll('Spring MVC','Spring WebFlux').replaceAll('Boot MVC','Boot WebFlux'));
-  profile.proof=profile.proof.map(item=>({...item,analyzer:'spring-webflux'}));
+  // Retain each input proof's actual analyzer and producer version. Profile
+  // selection does not turn JVM build/compiler evidence into WebFlux output.
   return profile;
 }

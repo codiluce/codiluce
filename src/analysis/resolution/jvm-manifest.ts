@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { emptyGradleCompilerInputs, readGradleCompilerBlock, type GradleCompilerInputs } from './jvm-gradle-compiler.js';
 import { reviewedBootGradlePlugin, bootGradlePluginGaps } from './jvm-spring-boot.js';
+import { KOTLIN_SPRING_PLUGIN, readKotlinCompilerProfile, type KotlinCompilerProfile } from './jvm-kotlin-compiler.js';
 /** Bounded XML data reader. Never expands DTDs, external entities or schemas. */
 export interface XmlNode {
     name: string;
@@ -240,6 +241,7 @@ export function readGradleSettings(tokens: GradleToken[], kotlinDsl = false): Gr
     return model;
 }
 export interface GradleBuildModel {
+    kotlinCompiler?: KotlinCompilerProfile;
     compiler: GradleCompilerInputs;
     plugins: {
         id: string;
@@ -336,7 +338,7 @@ export function readGradleBuild(tokens: GradleToken[], kotlinDsl = false): Gradl
                     failed = true;
                     break;
                 }
-                if (['java', 'java-library', 'org.jetbrains.kotlin.jvm'].includes(id) || reviewedBootGradlePlugin(id))
+                if (['java', 'java-library', 'org.jetbrains.kotlin.jvm', KOTLIN_SPRING_PLUGIN].includes(id) || reviewedBootGradlePlugin(id))
                     model.plugins.push({ id, version, start: item.start });
                 else model.gaps.push('Unreviewed Gradle plugin selection can change source/classpath inputs: ' + id);
                 i = end;
@@ -391,5 +393,8 @@ export function readGradleBuild(tokens: GradleToken[], kotlinDsl = false): Gradl
         i++;
     }
     model.gaps.push(...bootGradlePluginGaps(model.plugins));
+    const kotlinCompiler = readKotlinCompilerProfile(model.plugins, model.compiler.kotlinArgumentUpdates);
+    model.gaps.push(...kotlinCompiler.gaps);
+    model.kotlinCompiler = kotlinCompiler.profile;
     return model;
 }

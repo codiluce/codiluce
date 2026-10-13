@@ -1,0 +1,1148 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-13T18:37:17.837458+00:00",
+  "phase": "Pinned Kotlin 2.2.21 Gradle/Spring compiler and Boot 4.0.1 source contracts",
+  "baselineCommit": "e1a7058b7dfdc2a6af065357c94e8e8b79670b68",
+  "fullNode22Cases": 2010,
+  "engineAndWebNode22Cases": 1791,
+  "toolingNode22Cases": 219,
+  "node22SuiteObservedInTwoCommands": true,
+  "focusedNode22Cases": 131,
+  "focusedNode24Cases": 131,
+  "additionalFinalCompilerSourceCases": 11,
+  "ordinaryCompiledKotlinCasesPerRuntime": 11,
+  "ordinaryCompiledGradleCasesPerRuntime": 6,
+  "ordinaryCompiledMavenCasesPerRuntime": 9,
+  "ordinaryCompiledCompilerCasesPerRuntime": 14,
+  "ordinaryCompiledRuntimeVersions": [
+    "v22.12.0",
+    "v24.21.0"
+  ],
+  "sourceAndCompiledOriginalWholeGraphs": 120,
+  "sourceCompiledWholeGraphComparisons": 60,
+  "originalSnapshots": 4,
+  "recordedBuildContexts": 12,
+  "originalInputFiles": 37,
+  "originalInputsOutsideGit": true,
+  "originalNamedIdentitiesAndRangesPreserved": true,
+  "newOriginalLambdaRangesIndependentlyVerified": true,
+  "actualOriginalGuideResults": [
+    {
+      "sample": "mvc-java",
+      "buildSystem": null,
+      "originalIdentitiesPreserved": 16,
+      "newOriginalLambdasValidated": 0,
+      "routes": []
+    },
+    {
+      "sample": "mvc-java",
+      "buildSystem": "maven",
+      "originalIdentitiesPreserved": 16,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET|HEAD /greeting",
+          "sourceRange": {
+            "startLine": 15,
+            "startColumn": 3,
+            "endLine": 18,
+            "endColumn": 4
+          },
+          "constraintsUnresolved": false,
+          "conditions": []
+        }
+      ]
+    },
+    {
+      "sample": "mvc-java",
+      "buildSystem": "gradle",
+      "originalIdentitiesPreserved": 16,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET|HEAD /greeting",
+          "sourceRange": {
+            "startLine": 15,
+            "startColumn": 3,
+            "endLine": 18,
+            "endColumn": 4
+          },
+          "constraintsUnresolved": false,
+          "conditions": []
+        }
+      ]
+    },
+    {
+      "sample": "mvc-kotlin",
+      "buildSystem": null,
+      "originalIdentitiesPreserved": 17,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET|HEAD /greeting",
+          "sourceRange": {
+            "startLine": 16,
+            "startColumn": 3,
+            "endLine": 18,
+            "endColumn": 63
+          },
+          "constraintsUnresolved": false,
+          "conditions": []
+        }
+      ]
+    },
+    {
+      "sample": "mvc-kotlin",
+      "buildSystem": "maven",
+      "originalIdentitiesPreserved": 17,
+      "newOriginalLambdasValidated": 0,
+      "routes": []
+    },
+    {
+      "sample": "mvc-kotlin",
+      "buildSystem": "gradle",
+      "originalIdentitiesPreserved": 17,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET|HEAD /greeting",
+          "sourceRange": {
+            "startLine": 16,
+            "startColumn": 3,
+            "endLine": 18,
+            "endColumn": 63
+          },
+          "constraintsUnresolved": false,
+          "conditions": []
+        }
+      ]
+    },
+    {
+      "sample": "webflux-java",
+      "buildSystem": null,
+      "originalIdentitiesPreserved": 21,
+      "newOriginalLambdasValidated": 0,
+      "routes": []
+    },
+    {
+      "sample": "webflux-java",
+      "buildSystem": "maven",
+      "originalIdentitiesPreserved": 21,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET /hello",
+          "sourceRange": {
+            "startLine": 19,
+            "startColumn": 12,
+            "endLine": 20,
+            "endColumn": 74
+          },
+          "constraintsUnresolved": true,
+          "conditions": [
+            "Conditional/injected/custom WebFlux bean factory requires a reviewed registration profile",
+            "Virtual/interface receiver dispatch is not an exact original handler call",
+            "Unobserved/custom WebFlux predicate accept requires a reviewed restriction summary"
+          ]
+        }
+      ]
+    },
+    {
+      "sample": "webflux-java",
+      "buildSystem": "gradle",
+      "originalIdentitiesPreserved": 21,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET /hello",
+          "sourceRange": {
+            "startLine": 19,
+            "startColumn": 12,
+            "endLine": 20,
+            "endColumn": 74
+          },
+          "constraintsUnresolved": true,
+          "conditions": [
+            "Conditional/injected/custom WebFlux bean factory requires a reviewed registration profile",
+            "Virtual/interface receiver dispatch is not an exact original handler call",
+            "Unobserved/custom WebFlux predicate accept requires a reviewed restriction summary"
+          ]
+        }
+      ]
+    },
+    {
+      "sample": "webflux-kotlin",
+      "buildSystem": null,
+      "originalIdentitiesPreserved": 23,
+      "newOriginalLambdasValidated": 2,
+      "routes": [
+        {
+          "name": "ANY /{*rest}",
+          "sourceRange": {
+            "startLine": 13,
+            "startColumn": 3,
+            "endLine": 16,
+            "endColumn": 4
+          },
+          "constraintsUnresolved": true,
+          "conditions": [
+            "Conditional/injected/custom WebFlux bean factory requires a reviewed registration profile",
+            "Standalone/custom builder mutation in a Kotlin DSL block requires a reviewed activation/order summary",
+            "Incomplete empty WebFlux router registration"
+          ]
+        }
+      ]
+    },
+    {
+      "sample": "webflux-kotlin",
+      "buildSystem": "maven",
+      "originalIdentitiesPreserved": 23,
+      "newOriginalLambdasValidated": 0,
+      "routes": []
+    },
+    {
+      "sample": "webflux-kotlin",
+      "buildSystem": "gradle",
+      "originalIdentitiesPreserved": 23,
+      "newOriginalLambdasValidated": 2,
+      "routes": [
+        {
+          "name": "ANY /{*rest}",
+          "sourceRange": {
+            "startLine": 13,
+            "startColumn": 3,
+            "endLine": 16,
+            "endColumn": 4
+          },
+          "constraintsUnresolved": true,
+          "conditions": [
+            "Conditional/injected/custom WebFlux bean factory requires a reviewed registration profile",
+            "Standalone/custom builder mutation in a Kotlin DSL block requires a reviewed activation/order summary",
+            "Incomplete empty WebFlux router registration"
+          ]
+        }
+      ]
+    }
+  ],
+  "producerChanges": {
+    "jvmProjects": [
+      "6",
+      "7"
+    ],
+    "jvmResolver": [
+      "2",
+      "3"
+    ],
+    "jvmSymbols": [
+      "2",
+      "3"
+    ],
+    "springWebflux": [
+      "1",
+      "2"
+    ]
+  },
+  "normalization": [
+    "run.id",
+    "run.analyzedAt"
+  ],
+  "producerFieldsNormalized": false,
+  "sourceFiles": [
+    {
+      "file": "src/analysis/resolution/jvm-kotlin-compiler.ts",
+      "sha256": "a8dccc7623e5dd1566ba11e58355d455359c65b9d2c7efbd0faded322aca0eea"
+    },
+    {
+      "file": "src/analysis/resolution/jvm-spring-boot.ts",
+      "sha256": "10c049673d2c37ba9b4b9851bb0bc07eef649ef1777f2bbd6ca1bd0d8dd0120b"
+    },
+    {
+      "file": "src/analysis/resolution/jvm-projects.ts",
+      "sha256": "ba569c9077184168563bccd13496c39235a31e5697645917ef4cdc2fa2978ec4"
+    },
+    {
+      "file": "src/analysis/resolution/jvm.ts",
+      "sha256": "af7d1672a00a645b3de4509ee1c7e47e51f1e65703bfc72e6a21af53246d3d1b"
+    },
+    {
+      "file": "src/analysis/resolution/jvm-manifest.ts",
+      "sha256": "c4b52b23bc5c665d6246ebb3d4bad3de01069428a2b7e47111ab6c69bfc3c2db"
+    },
+    {
+      "file": "src/analysis/resolution/jvm-gradle-compiler.ts",
+      "sha256": "22dc0fba55c59b9d1a88f2bc480f0ecf9c91e71f565bce3d89475b58c30648a9"
+    },
+    {
+      "file": "src/analysis/languages/jvm-symbols.ts",
+      "sha256": "d21262675496d2b9aa06bd00b777760223cd73acb3ae1b835c6587894d35069a"
+    },
+    {
+      "file": "src/analysis/frameworks/spring-profile.ts",
+      "sha256": "151e1fc85ceb824c1a31641160f5778e79ab32fc6e52bb5a6eaef39eb0298d22"
+    },
+    {
+      "file": "src/analysis/frameworks/spring-webflux.ts",
+      "sha256": "cfc309fa54d442a1b3e2f1416b774a6cdeefaaa97d0a6f7d38ecccd78bbca1ef"
+    },
+    {
+      "file": "tests/kotlin-spring-compiler.test.ts",
+      "sha256": "0769c478a9c665ca48b2821bbf804b66cb3afa0ad0131f95524bd76ee7d5d2d3"
+    },
+    {
+      "file": "tests/fixtures/kotlin-spring-compiler-qualification.mjs",
+      "sha256": "03c1d3f73f52dd0c8c269cb9de424f340d8b6cd988c6b1df3c31ef6d43e270e6"
+    },
+    {
+      "file": "tests/gradle-compiler-inputs.test.ts",
+      "sha256": "01eabd238ca7a23384cc3cb19e1a5ffe4f7e69bba4942203ed63f955db8696ed"
+    },
+    {
+      "file": "tests/fixtures/gradle-compiler-inputs-qualification.mjs",
+      "sha256": "d5199dd34bce2175d94d0f22ceb2c2cbd1d2b46ecad417eb0578a38b8f71a5b3"
+    },
+    {
+      "file": "tests/spring-boot-gradle.test.ts",
+      "sha256": "87d302f7bf5229fae263d5a44129967e9d9f0e85f594665831a1335ea122fb28"
+    },
+    {
+      "file": "tests/fixtures/spring-boot-gradle-qualification.mjs",
+      "sha256": "0d7d213dec98d3e74e327411b48088d1af65ff5d19c0d539ce23f26eaee71934"
+    },
+    {
+      "file": "tests/spring-boot-maven.test.ts",
+      "sha256": "aae06c522b31939f5187085151403ffb6aab4184b82e07a8745648c094aa052b"
+    },
+    {
+      "file": "tests/fixtures/spring-boot-maven-qualification.mjs",
+      "sha256": "3e16d6d4b41b037c991c24fd7a420d94b1433efcaf320e05af83907d364c2ce1"
+    },
+    {
+      "file": "tests/spring-webflux.test.ts",
+      "sha256": "c3db8a2e18d62a395bf729b9c61c0228755e5edcded26cd7bfedaf9834f5f636"
+    },
+    {
+      "file": "scripts/test-package.mjs",
+      "sha256": "615b5293a74a0eba0de1cf8294d67bbf4159b94ba38938ade5e90d5d5bd8456c"
+    },
+    {
+      "file": "docs/compatibility-catalog.json",
+      "sha256": "378c90b1264cf22dae2152d6f3267e632f5f66c9c5d53a9fcc7df58852bdb0f9"
+    },
+    {
+      "file": "docs/analysis-capabilities.html",
+      "sha256": "3e696470085eed19c8437d9362b56a8ced1add2477da08547f0363512a3615c0"
+    },
+    {
+      "file": "docs/framework-pack-author-guide.html",
+      "sha256": "85d89148ddc96918f5cf6b2c5adff255d20ef72d88d6b7ec4091f8a20c4a9782"
+    },
+    {
+      "file": "package.json",
+      "sha256": "4c6db1b0e1700f5374331b467d40b85c2e6f61b0da9c2a31c7c8e6590b693623"
+    },
+    {
+      "file": "package-lock.json",
+      "sha256": "691f16cfb44abf881dd9bf107524556cc3911f82fdbe05aebc9c273fb0270f28"
+    },
+    {
+      "file": "tsconfig.json",
+      "sha256": "7618aa85118138951ebb601a4c0e1dcf62185c9c6da1b71441afcc937e7f21b6"
+    },
+    {
+      "file": "tsconfig.build.json",
+      "sha256": "da8ddd95e95d53a8427312534c92128beac2c79d01d4a2a9c150aed08d84c38d"
+    }
+  ],
+  "primaryInputs": [
+    {
+      "url": "https://raw.githubusercontent.com/JetBrains/kotlin/v2.2.21/compiler/config/src/org/jetbrains/kotlin/config/AnnotationDefaultTargetMode.kt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/AnnotationDefaultTargetMode-2.2.21.kt",
+      "bytes": 1062,
+      "sha256": "0bccf70366cf0a8d8e4f6ed458309a4f3315b4e3b21a531d71ba93e5b0a031ac"
+    },
+    {
+      "url": "https://api.github.com/repos/JetBrains/kotlin/contents/plugins/allopen?ref=v2.2.21",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/allopen-directory-2.2.21.json",
+      "bytes": 6931,
+      "sha256": "3bf660f6d503d4162b6461621ae14db3beceadf82f71663697cf5a4af57f99a4"
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-dependencies/4.0.1/spring-boot-dependencies-4.0.1.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/spring-boot-dependencies-4.0.1.pom",
+      "bytes": 136518,
+      "sha256": "73a8d72536c9dc116b72aa8362993afd576ebd1daf7bc8def748d55d6b693b1c"
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-starter-webmvc/4.0.1/spring-boot-starter-webmvc-4.0.1.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/spring-boot-starter-webmvc-4.0.1.pom",
+      "bytes": 2889,
+      "sha256": "35667c51d71199c785056009eb6c89b2ad2461f90c6ea6329434f0e19f8f0f84"
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-webmvc/4.0.1/spring-boot-webmvc-4.0.1.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/spring-boot-webmvc-4.0.1.pom",
+      "bytes": 2618,
+      "sha256": "770967502ba6df9a244b27ac29e6667435d676d048af5d1a2145a51175683edd"
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-starter-webflux/4.0.1/spring-boot-starter-webflux-4.0.1.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/spring-boot-starter-webflux-4.0.1.pom",
+      "bytes": 2700,
+      "sha256": "81521f551223d1efad9b627aa451126f411c34d88e10f95bfdaf4c0194c475c5"
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-webflux/4.0.1/spring-boot-webflux-4.0.1.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/spring-boot-webflux-4.0.1.pom",
+      "bytes": 2626,
+      "sha256": "f7f3a4489984ebd7ba41de4f7119e3b9bf589e48cea9472fe3f8fe6aaf693074"
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-starter-webclient/4.0.1/spring-boot-starter-webclient-4.0.1.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/spring-boot-starter-webclient-4.0.1.pom",
+      "bytes": 2728,
+      "sha256": "b0080c4db9690388f85f2379122e1b9e9048962bf61d551f6d471063efc15b2c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-boot/v4.0.1/build-plugin/spring-boot-gradle-plugin/src/main/java/org/springframework/boot/gradle/plugin/KotlinPluginAction.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/KotlinPluginAction-4.0.1.java",
+      "bytes": 2526,
+      "sha256": "7875f9d827b80c5fdddd3ebde19f291200a73f89c9d9b564e61a9bc594bcb85b"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-boot/v4.0.8/build-plugin/spring-boot-gradle-plugin/src/main/java/org/springframework/boot/gradle/plugin/KotlinPluginAction.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/KotlinPluginAction-4.0.8.java",
+      "bytes": 2526,
+      "sha256": "7875f9d827b80c5fdddd3ebde19f291200a73f89c9d9b564e61a9bc594bcb85b"
+    },
+    {
+      "url": "https://api.github.com/repos/JetBrains/kotlin/git/trees/bfae43defa2da56fb8cdb04e486482a2e775b0f2?recursive=1",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/allopen.cli-tree.json",
+      "sha256": "f859f0fc8f5d42628aa7d8a86d8d49bf217a87cbea6299da2cd7853a2fb6eeb4",
+      "bytes": 2952
+    },
+    {
+      "url": "https://raw.githubusercontent.com/JetBrains/kotlin/v2.2.21/plugins/allopen/allopen.cli/src/org/jetbrains/kotlin/allopen/AllOpenPlugin.kt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/AllOpenPlugin.kt",
+      "sha256": "92786088d44a30489dfde40138d3398b4228f4abb2661f633fe04100155d3de5",
+      "bytes": 2881
+    },
+    {
+      "url": "https://api.github.com/repos/JetBrains/kotlin/git/trees/f5ec1b09651a3bc83f9eee343f3accea929ec62e?recursive=1",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/allopen.common-tree.json",
+      "sha256": "66234ba2a70bbb6e9e3a260cf1f018bc10d8a1752ba3e1685f623efbdcd481ac",
+      "bytes": 1730
+    },
+    {
+      "url": "https://raw.githubusercontent.com/JetBrains/kotlin/v2.2.21/plugins/allopen/allopen.common/src/org/jetbrains/kotlin/allopen/AllOpenPluginNames.kt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/AllOpenPluginNames.kt",
+      "sha256": "9f088828a97a4de97ca2a9df5b359ba4ec7a24e0050e293787b92e0b03e84530",
+      "bytes": 1243
+    },
+    {
+      "url": "https://api.github.com/repos/JetBrains/kotlin/git/trees/9988d2210c4efbce7d904774518bdd35cf6b84f6?recursive=1",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/allopen.k2-tree.json",
+      "sha256": "a133e13791c85982c813697a8b0568f9f2f25758283cf6bfcd275e33c76840a5",
+      "bytes": 2250
+    },
+    {
+      "url": "https://raw.githubusercontent.com/JetBrains/kotlin/v2.2.21/plugins/allopen/allopen.k2/src/org/jetbrains/kotlin/allopen/fir/FirAllOpenExtensionRegistrar.kt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/FirAllOpenExtensionRegistrar.kt",
+      "sha256": "a659efd412dc95a30a197079d8a029f777db9b9f9cc4daf1c30b61d55e393658",
+      "bytes": 608
+    },
+    {
+      "url": "https://raw.githubusercontent.com/JetBrains/kotlin/v2.2.21/plugins/allopen/allopen.k2/src/org/jetbrains/kotlin/allopen/fir/FirAllOpenStatusTransformer.kt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/FirAllOpenStatusTransformer.kt",
+      "sha256": "1c81b65a0a7431330ad120a4222b5cdeb5ab6d113beb7839b75b7f76427d3725",
+      "bytes": 3065
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-bom/2.2.21/kotlin-bom-2.2.21.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/kotlin-bom-2.2.21.pom",
+      "sha256": "aad0027622794373257223f13d91c5a27da98b319c02b945bade05546e16ff32",
+      "bytes": 9438
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/com/fasterxml/jackson/jackson-bom/2.20.1/jackson-bom-2.20.1.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/jackson-bom-2.20.1.pom",
+      "sha256": "0c6467ed4c8c7392524ce703ca6ce3ed88596eec390f13b0c264f2f961308a54",
+      "bytes": 20225
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/io/projectreactor/reactor-bom/2025.0.1/reactor-bom-2025.0.1.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/reactor-bom-2025.0.1.pom",
+      "sha256": "5808b705246b1f0eb2457d5b3493b1bc940c3d64d9eaef1c5044e2f775682be4",
+      "bytes": 4602
+    },
+    {
+      "url": "https://raw.githubusercontent.com/JetBrains/kotlin/v2.2.21/compiler/fir/providers/src/org/jetbrains/kotlin/fir/extensions/utils/AbstractSimpleClassPredicateMatchingService.kt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/AbstractSimpleClassPredicateMatchingService.kt",
+      "sha256": "d8cfe2a0064cde5037a208353ba5207ebcd89ed315382817e3242d55713e08b3",
+      "bytes": 1925
+    },
+    {
+      "url": "https://raw.githubusercontent.com/JetBrains/kotlin/v2.2.21/license/LICENSE.txt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/KOTLIN-LICENSE.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.2/spring-context/src/main/java/org/springframework/stereotype/Component.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/Component-7.0.2.java",
+      "sha256": "67dad88d99db8b3ac4a418ec4e1f4dc07846ced2d86166d61b3319e345748575",
+      "bytes": 3343
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.2/spring-context/src/main/java/org/springframework/stereotype/Controller.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/Controller-7.0.2.java",
+      "sha256": "7b857759edf539e2c48e69939020ce0c7a8efe1e24c4a6f4b8d709101421f1ad",
+      "bytes": 1817
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.2/spring-context/src/main/java/org/springframework/context/annotation/Configuration.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/Configuration-7.0.2.java",
+      "sha256": "4b6f1652f4166e6e4e72d6147815e4cf2a5c4ee11eeb4533ec70d8ab4b789b9c",
+      "bytes": 19403
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.2/spring-web/src/main/java/org/springframework/web/bind/annotation/RestController.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/RestController-7.0.2.java",
+      "sha256": "667c617afe5813a137d5252825c98d5cef0e94931ffb798d1542033d1257922a",
+      "bytes": 2151
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-context/src/main/java/org/springframework/stereotype/Component.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/Component-7.0.9.java",
+      "sha256": "67dad88d99db8b3ac4a418ec4e1f4dc07846ced2d86166d61b3319e345748575",
+      "bytes": 3343
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-context/src/main/java/org/springframework/stereotype/Controller.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/Controller-7.0.9.java",
+      "sha256": "7b857759edf539e2c48e69939020ce0c7a8efe1e24c4a6f4b8d709101421f1ad",
+      "bytes": 1817
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-context/src/main/java/org/springframework/context/annotation/Configuration.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/Configuration-7.0.9.java",
+      "sha256": "34b75012dfeca16f4f8631ad75d81cfe530fd5e32ad644ca42d48349f6e4dcfa",
+      "bytes": 20387
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-web/src/main/java/org/springframework/web/bind/annotation/RestController.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/RestController-7.0.9.java",
+      "sha256": "667c617afe5813a137d5252825c98d5cef0e94931ffb798d1542033d1257922a",
+      "bytes": 2151
+    },
+    {
+      "url": "https://api.github.com/repos/JetBrains/kotlin/contents/libraries/tools/kotlin-allopen?ref=v2.2.21",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/kotlin-allopen-gradle-directory.json",
+      "sha256": "6e27edacecdf6774c7c0c28fa0d53a45b4b2bbab774a3fa8367816e383680974",
+      "bytes": 1758
+    },
+    {
+      "url": "https://api.github.com/repos/JetBrains/kotlin/git/trees/f62c7da6819490986ff355a404f0170c849f524d?recursive=1",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/kotlin-allopen-gradle-source-tree.json",
+      "sha256": "e7353d0d1a1aea332658617928cde0934ebe3ed8621c990768b30c905a9ae0e0",
+      "bytes": 5659
+    },
+    {
+      "url": "https://raw.githubusercontent.com/JetBrains/kotlin/v2.2.21/libraries/tools/kotlin-allopen/src/common/kotlin/org/jetbrains/kotlin/allopen/gradle/AllOpenExtension.kt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/gradle-AllOpenExtension.kt",
+      "sha256": "34e0b46cb5f4b7369af970afa4458e61ca7156f085b7efdeaa9259591b45635e",
+      "bytes": 1133
+    },
+    {
+      "url": "https://raw.githubusercontent.com/JetBrains/kotlin/v2.2.21/libraries/tools/kotlin-allopen/src/common/kotlin/org/jetbrains/kotlin/allopen/gradle/AllOpenSubplugin.kt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/gradle-AllOpenSubplugin.kt",
+      "sha256": "8d39c98c51b4fd3d1b4bcd161291e28b2d694d39164f0f3215308c647d15c508",
+      "bytes": 2638
+    },
+    {
+      "url": "https://raw.githubusercontent.com/JetBrains/kotlin/v2.2.21/libraries/tools/kotlin-allopen/src/common/kotlin/org/jetbrains/kotlin/allopen/gradle/KotlinSpringSubplugin.kt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/gradle-KotlinSpringSubplugin.kt",
+      "sha256": "be0032577ed4cd3c440f37eecc427589a4ab10957ff9f38ceac2a78f8cea616e",
+      "bytes": 1001
+    },
+    {
+      "url": "https://raw.githubusercontent.com/JetBrains/kotlin/v2.2.21/libraries/tools/kotlin-allopen/src/common/kotlin/org/jetbrains/kotlin/allopen/gradle/model/builder/AllOpenModelBuilder.kt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/gradle-AllOpenModelBuilder.kt",
+      "sha256": "01f60b15e95b69aa99718d553ec06dbd76947eebdd81e898c248eaa548fa38f2",
+      "bytes": 1184
+    },
+    {
+      "url": "https://raw.githubusercontent.com/JetBrains/kotlin/v2.2.21/libraries/tools/kotlin-allopen/src/common/kotlin/org/jetbrains/kotlin/allopen/gradle/model/impl/AllOpenImpl.kt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/gradle-AllOpenImpl.kt",
+      "sha256": "2fc8c40e1ac76477087e19e4a8fbead1e4e15a3bf7fca1f952e06dd72a3ee852",
+      "bytes": 693
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.2/spring-context/src/main/java/org/springframework/stereotype/Service.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/Service-7.0.2.java",
+      "sha256": "8ccfc6c178d5c2b18a5841ccbb37d77680322600123e6b162b7df531b649b78e",
+      "bytes": 1890
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.2/spring-context/src/main/java/org/springframework/stereotype/Repository.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/Repository-7.0.2.java",
+      "sha256": "f0c3feb350f2942655445a4454dafa19ae2f40217bee6fcbcc3986cb96bc0fed",
+      "bytes": 2675
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-context/src/main/java/org/springframework/stereotype/Service.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/Service-7.0.9.java",
+      "sha256": "8ccfc6c178d5c2b18a5841ccbb37d77680322600123e6b162b7df531b649b78e",
+      "bytes": 1890
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-context/src/main/java/org/springframework/stereotype/Repository.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/Repository-7.0.9.java",
+      "sha256": "f0c3feb350f2942655445a4454dafa19ae2f40217bee6fcbcc3986cb96bc0fed",
+      "bytes": 2675
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-boot/v4.0.1/core/spring-boot/src/main/java/org/springframework/boot/SpringBootConfiguration.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/SpringBootConfiguration-4.0.1.java",
+      "sha256": "222117d66c5a498ef143fc2ea7c253ad8b16cca915fbddf94e56ecec66093205",
+      "bytes": 3206
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-boot/v4.0.1/core/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/SpringBootApplication.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/SpringBootApplication-4.0.1.java",
+      "sha256": "c97a82e92735ffb9272a642a650b0b0fc7c682778922f50fd7783976e2b22c5f",
+      "bytes": 6990
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-boot/v4.0.8/core/spring-boot/src/main/java/org/springframework/boot/SpringBootConfiguration.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/SpringBootConfiguration-4.0.8.java",
+      "sha256": "222117d66c5a498ef143fc2ea7c253ad8b16cca915fbddf94e56ecec66093205",
+      "bytes": 3206
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-boot/v4.0.8/core/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/SpringBootApplication.java",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/SpringBootApplication-4.0.8.java",
+      "sha256": "c97a82e92735ffb9272a642a650b0b0fc7c682778922f50fd7783976e2b22c5f",
+      "bytes": 6990
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/junit/junit-bom/6.0.1/junit-bom-6.0.1.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/primary/junit-bom-6.0.1.pom",
+      "sha256": "e315c5ccbb087216dce04ae70c32bf1762be2a0b8a43ef81e3ba78317a4cd5c8",
+      "bytes": 5125
+    }
+  ],
+  "truncatedTreeUsedOnlyAsLocator": true,
+  "terminalObservations": [
+    {
+      "schema": 1,
+      "label": "final-complete-typecheck",
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "controllerPid": 1542127,
+      "childPid": 1542128,
+      "startedAt": 1791916231.8131976,
+      "completedAt": 1791916248.9450827,
+      "seconds": 17.131885051727295,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/final-complete-typecheck.log",
+      "logSha256": "c1fee42b4fa7e6e1a30e8e81426f7690f45767a53800385021e8cd468ec6e8d9",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "full-build",
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "controllerPid": 1389012,
+      "childPid": 1389013,
+      "startedAt": 1791915379.1151392,
+      "completedAt": 1791915403.5835066,
+      "seconds": 24.468367338180542,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/full-build.log",
+      "logSha256": "7a4bcc851b34ed791d454e71d09bea37056b2a72dda663a0e7199112a1bcdf58",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "checked-docs",
+      "argv": [
+        "node",
+        "scripts/generate-compatibility-docs.mjs",
+        "--check"
+      ],
+      "controllerPid": 1413380,
+      "childPid": 1413405,
+      "startedAt": 1791915487.0724123,
+      "completedAt": 1791915487.4462686,
+      "seconds": 0.3738570213317871,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/checked-docs.log",
+      "logSha256": "f5b4ee5fbf5002f7a11a12674e3a33a9f5d11be0f17dcc6251aebedc8b6335b6",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "full-node22",
+      "argv": [
+        "npm",
+        "test"
+      ],
+      "controllerPid": 1412822,
+      "childPid": 1412833,
+      "startedAt": 1791915485.8735247,
+      "completedAt": 1791915710.1244717,
+      "seconds": 224.2509469985962,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/full-node22.log",
+      "logSha256": "d663cd197fffacea89db1cc66fdedcd66349eb8e67be3be380f8b79437befe1a",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "tooling-node22",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-concurrency=4",
+        "scripts/tests/graph-json-artifact.test.mjs",
+        "scripts/tests/native-release.test.mjs",
+        "scripts/tests/production-cache-git.test.mjs",
+        "scripts/tests/production-cache-observer.test.mjs",
+        "scripts/tests/production-graph-digest.test.mjs",
+        "scripts/tests/production-head-graphs.test.mjs",
+        "scripts/tests/production-history-audit.test.mjs",
+        "scripts/tests/production-history-blobs.test.mjs",
+        "scripts/tests/production-history-columns.test.mjs",
+        "scripts/tests/production-history-entrypoint-columns.test.mjs",
+        "scripts/tests/production-history-entrypoint-qualification.test.mjs",
+        "scripts/tests/production-history-entrypoint-report.test.mjs",
+        "scripts/tests/production-history-entrypoint.test.mjs",
+        "scripts/tests/production-history-inputs.test.mjs",
+        "scripts/tests/production-history-observer.test.mjs",
+        "scripts/tests/production-history-performance-qualification.test.mjs",
+        "scripts/tests/production-history-performance.test.mjs",
+        "scripts/tests/production-history-qualification.test.mjs",
+        "scripts/tests/production-history-recovery.test.mjs",
+        "scripts/tests/production-history-resume.test.mjs",
+        "scripts/tests/production-history-runtime-inputs.test.mjs",
+        "scripts/tests/production-history-storage.test.mjs",
+        "scripts/tests/production-history-tree.test.mjs",
+        "scripts/tests/production-source-contracts.test.mjs"
+      ],
+      "controllerPid": 1522840,
+      "childPid": 1522841,
+      "startedAt": 1791915785.2525811,
+      "completedAt": 1791915807.1954715,
+      "seconds": 21.942890644073486,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/tooling-node22.log",
+      "logSha256": "daf07f1d34eba13a2fb5b6c5dee2bceb1c69d7a156c66d2b196bb72199997ab0",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "revised-wide-jvm",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-concurrency=4",
+        "tests/jvm-syntax.test.ts",
+        "tests/jvm-imports.test.ts",
+        "tests/jvm-references.test.ts",
+        "tests/jvm-build-selection.test.ts",
+        "tests/gradle-compiler-inputs.test.ts",
+        "tests/spring-boot-gradle.test.ts",
+        "tests/spring-boot-maven.test.ts",
+        "tests/spring-mvc.test.ts",
+        "tests/spring-webflux.test.ts",
+        "tests/kotlin-spring-compiler.test.ts"
+      ],
+      "controllerPid": 1359457,
+      "childPid": 1359458,
+      "startedAt": 1791914821.1207268,
+      "completedAt": 1791914844.5787942,
+      "seconds": 23.458067655563354,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/revised-wide-jvm.log",
+      "logSha256": "c53c083074bc439813ef481737f39d56f1d7a7d0c8736d2a24902b1c40025c02",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "focused-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-concurrency=4",
+        "tests/jvm-syntax.test.ts",
+        "tests/jvm-imports.test.ts",
+        "tests/jvm-references.test.ts",
+        "tests/jvm-build-selection.test.ts",
+        "tests/gradle-compiler-inputs.test.ts",
+        "tests/spring-boot-gradle.test.ts",
+        "tests/spring-boot-maven.test.ts",
+        "tests/spring-mvc.test.ts",
+        "tests/spring-webflux.test.ts",
+        "tests/kotlin-spring-compiler.test.ts"
+      ],
+      "controllerPid": 1374961,
+      "childPid": 1374962,
+      "startedAt": 1791915097.0350156,
+      "completedAt": 1791915120.5274348,
+      "seconds": 23.492419481277466,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/focused-node24.log",
+      "logSha256": "cc13b9717541333d5868505bb6ff54e1b034994bd481d3cb6fe2d607edd2e539",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "final-compiler-cases",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "tests/kotlin-spring-compiler.test.ts"
+      ],
+      "controllerPid": 1386555,
+      "childPid": 1386556,
+      "startedAt": 1791915309.9665246,
+      "completedAt": 1791915315.2801583,
+      "seconds": 5.313633918762207,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/final-compiler-cases.log",
+      "logSha256": "688f412c070920b5510a047340ed09ba747a9aeb9cc8d3eba286b939b2216b22",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "verified-original-guides",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        ".codiluce/validation-kotlin-spring-source/qualify-source-originals.mjs"
+      ],
+      "controllerPid": 1374751,
+      "childPid": 1374752,
+      "startedAt": 1791915094.7030668,
+      "completedAt": 1791915109.886725,
+      "seconds": 15.183658599853516,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/verified-original-guides.log",
+      "logSha256": "0ade4ff5bb5d82474c4ee422cc8098596059f91f11c24990cf0588246e55894b",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "compiled-original-guides",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        ".codiluce/validation-kotlin-spring-source/qualify-compiled-originals.mjs"
+      ],
+      "controllerPid": 1462457,
+      "childPid": 1462542,
+      "startedAt": 1791915584.343992,
+      "completedAt": 1791915601.8265817,
+      "seconds": 17.482589960098267,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/compiled-original-guides.log",
+      "logSha256": "0ade4ff5bb5d82474c4ee422cc8098596059f91f11c24990cf0588246e55894b",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "whole-original-parity",
+      "argv": [
+        "node",
+        ".codiluce/validation-kotlin-spring-source/compare-originals.mjs"
+      ],
+      "controllerPid": 1522761,
+      "childPid": 1522762,
+      "startedAt": 1791915784.022965,
+      "completedAt": 1791915784.9914937,
+      "seconds": 0.9685289859771729,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/whole-original-parity.log",
+      "logSha256": "dfffda2682f5d9d55769c07d52297416942f8807f0bf90b06c8d16a94800b604",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "portable-node22",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "tests/fixtures/kotlin-spring-compiler-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        ".codiluce/validation-kotlin-spring-source/portable-node22.json"
+      ],
+      "controllerPid": 1461862,
+      "childPid": 1461916,
+      "startedAt": 1791915583.1822517,
+      "completedAt": 1791915591.5614653,
+      "seconds": 8.37921404838562,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/portable-node22.log",
+      "logSha256": "ea055efd7a4eb507a96b9c8800d5dd3db0206336b037c77e98084493bede5588",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "portable-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "tests/fixtures/kotlin-spring-compiler-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        ".codiluce/validation-kotlin-spring-source/portable-node24.json"
+      ],
+      "controllerPid": 1461864,
+      "childPid": 1461908,
+      "startedAt": 1791915583.1663787,
+      "completedAt": 1791915591.1147056,
+      "seconds": 7.948327541351318,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/portable-node24.log",
+      "logSha256": "5125f2f14be4e8650efc479d322664b0134b96a6e064f0d9223eaf885bf95957",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "portable-gradle-node22",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "tests/fixtures/spring-boot-gradle-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        ".codiluce/validation-kotlin-spring-source/portable-gradle-node22.json"
+      ],
+      "controllerPid": 1532330,
+      "childPid": 1532331,
+      "startedAt": 1791915996.6897883,
+      "completedAt": 1791916000.1767218,
+      "seconds": 3.486933469772339,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/portable-gradle-node22.log",
+      "logSha256": "20560598b4874b93675d57bc879b6857c4119de712a3f2d4bef36ea4402e9a52",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "portable-gradle-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "tests/fixtures/spring-boot-gradle-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        ".codiluce/validation-kotlin-spring-source/portable-gradle-node24.json"
+      ],
+      "controllerPid": 1532455,
+      "childPid": 1532458,
+      "startedAt": 1791915997.8618495,
+      "completedAt": 1791916000.9826992,
+      "seconds": 3.120850086212158,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/portable-gradle-node24.log",
+      "logSha256": "f35e6c846cafd937feedc4ac9273ee8206ced28dc8cd62cdde8a4a83dc7632c2",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "portable-maven-node22",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "tests/fixtures/spring-boot-maven-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        ".codiluce/validation-kotlin-spring-source/portable-maven-node22.json"
+      ],
+      "controllerPid": 1532752,
+      "childPid": 1532756,
+      "startedAt": 1791915999.0139937,
+      "completedAt": 1791916003.9752662,
+      "seconds": 4.961273193359375,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/portable-maven-node22.log",
+      "logSha256": "fcb3284f606d0b86f7ae931efc8fb64b6fb88827346e931bb7168610287329a7",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "portable-maven-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "tests/fixtures/spring-boot-maven-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        ".codiluce/validation-kotlin-spring-source/portable-maven-node24.json"
+      ],
+      "controllerPid": 1533192,
+      "childPid": 1533197,
+      "startedAt": 1791916000.1781402,
+      "completedAt": 1791916004.5430274,
+      "seconds": 4.364887714385986,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/portable-maven-node24.log",
+      "logSha256": "5804631047b8237455d6fed7318aa380d076704cf579ced41a66fbf0f7593606",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "corrected-portable-compiler-node22",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "tests/fixtures/gradle-compiler-inputs-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        ".codiluce/validation-kotlin-spring-source/corrected-portable-compiler-node22.json"
+      ],
+      "controllerPid": 1538398,
+      "childPid": 1538401,
+      "startedAt": 1791916122.6353319,
+      "completedAt": 1791916128.0859516,
+      "seconds": 5.450619697570801,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/corrected-portable-compiler-node22.log",
+      "logSha256": "fc00e7487cd384fc1d64331464be104b29f5c3aa6830f52e7f5befbf5174f1ed",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "corrected-portable-compiler-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "tests/fixtures/gradle-compiler-inputs-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        ".codiluce/validation-kotlin-spring-source/corrected-portable-compiler-node24.json"
+      ],
+      "controllerPid": 1538399,
+      "childPid": 1538400,
+      "startedAt": 1791916122.634186,
+      "completedAt": 1791916127.6024272,
+      "seconds": 4.968241453170776,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source/corrected-portable-compiler-node24.log",
+      "logSha256": "b61eba96c3651b9899f933d4618cbfb3992d48e0242cbabbbafd74115187861e",
+      "targetExecution": false
+    }
+  ],
+  "retainedFailures": {
+    "schema": 1,
+    "retainedFailures": [
+      {
+        "receipt": "first-kotlin-focused-terminal.json",
+        "actualExit": 1,
+        "pass": 4,
+        "fail": 6,
+        "cause": "New selector incorrectly required function entity kind for original Kotlin methods; assertions could not inspect retained method entities"
+      },
+      {
+        "receipt": "corrected-kotlin-focused-terminal.json",
+        "actualExit": 1,
+        "pass": 6,
+        "fail": 4,
+        "cause": "Compact authored class bodies were recovered by the pinned grammar; constructor-property metadata was valid but property-body fixture also recovered. Full raw graphs and native facts retained."
+      },
+      {
+        "receipt": "parsed-kotlin-focused-terminal.json",
+        "actualExit": 1,
+        "pass": 6,
+        "fail": 4,
+        "cause": "Source-binding assertion also selected the build.gradle.kts metadata file, which correctly stays outside conventional Kotlin source roots"
+      },
+      {
+        "receipt": "first-wide-jvm-terminal.json",
+        "actualExit": 1,
+        "pass": 124,
+        "fail": 7,
+        "cause": "Explicit old project/WebFlux producer assertions and previous unknown-plugin/annotation-default boundary expectations; updated only the reviewed expectations, retaining unknown versions/flags and all previous checks"
+      },
+      {
+        "receipt": "first-original-guides-terminal.json",
+        "actualExit": 1,
+        "cause": "Validator expected zero endpoints for unselected Kotlin guides even though they have only one literal Gradle family; recorded original inputs now qualify without ambiguous ownership"
+      },
+      {
+        "receipt": "revised-original-guides-terminal.json",
+        "actualExit": 1,
+        "cause": "All old declarations remain, but two exact original WebFlux Kotlin lambda entities become visible after binding is enabled; revised validation requires every old identity and separately checks each new original native lambda range/source evidence"
+      },
+      {
+        "receipts": [
+          "portable-compiler-node22-terminal.json",
+          "portable-compiler-node24-terminal.json"
+        ],
+        "actualExit": 1,
+        "pass": 12,
+        "fail": 2,
+        "cause": "The existing transpiled portable fixture used double-quoted old producer/annotation-mode expectations; the source fixture expectations were already updated and passing. Corrected the corresponding portable expectations only."
+      }
+    ],
+    "nativeParserGuardsRelaxed": false,
+    "originalUpstreamInputsModified": false,
+    "targetExecution": false
+  },
+  "parserGuardsRelaxed": false,
+  "nativeWorkerChanged": false,
+  "deadlinesOrBudgetsChanged": false,
+  "targetExecution": false,
+  "foreignFilesUnchanged": true,
+  "fullNormalInstalledPackageQualified": false,
+  "fullNativeMatrixQualified": false,
+  "productionHistoryForChangedRuntimeQualified": false,
+  "productionRelativePerformanceQualified": false,
+  "broaderSourceAccuracyQualified": false,
+  "fullGoalComplete": false,
+  "scope": "Literal Kotlin 2.2.21 JVM/Spring Gradle selections and ordered arguments; published all-open source/meta/supertype predicates, explicit/private/local/final/exact dispatch, property-access and unknown annotation placement boundaries. Boot 4.0.1/Framework 7.0.2 and retained 4.0.8 defaults infer only reviewed declared coordinates. Original facts/declarations remain unchanged; two newly bound original lambdas retain exact independent native ranges. Compiler, plugins, generated/binary declarations and actual runtime routing remain unexecuted/unverified.",
+  "evidenceArchive": {
+    "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-spring-source-evidence/kotlin-spring-source-compiled-and-original-evidence.tar.gz",
+    "sha256": "ad64553ca2b6c554865f0c0f847f345b56234b2a47a30c5c0e145b2a9cc48080",
+    "bytes": 17704642,
+    "regularFiles": 1598,
+    "allBytesAndModesReopened": true,
+    "manifestSha256": "8393f870cf61fb419e21cb3a8deccb2af9db432cb4b41331c017bb78b9943ae0",
+    "seconds": 4.739765405654907
+  }
+}

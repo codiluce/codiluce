@@ -102,8 +102,6 @@ export function readGradleCompilerBlock(tokens: GradleToken[], at: number, kotli
             for (const argument of arguments_) {
                 if (!/^-Xjsr305=(?:strict|warn|ignore)$/.test(argument.value) && argument.value !== '-java-parameters' && argument.value !== '-Xannotation-default-target=param-property')
                     result.gaps.push('Unreviewed Kotlin compiler argument can change source/binding inputs: ' + argument.value);
-                if (argument.value === '-Xannotation-default-target=param-property')
-                    result.gaps.push('Kotlin annotation default-target transformation requires a reviewed declaration annotation profile');
             }
         }
     }

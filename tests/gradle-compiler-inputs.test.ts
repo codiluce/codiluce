@@ -109,7 +109,7 @@ test('Groovy and Kotlin standard compiler blocks retain Java/Kotlin import ident
         }
         const inputs = model.compilerInputs!;
         assert.equal(inputs.javaToolchains[0]?.languageVersion, 17);
-        assert.ok(inputs.javaToolchains[0]?.proof.some(fact => fact.file === file && fact.line === 3 && fact.analyzerVersion === '6' && fact.explanation?.includes('not resolved/executed')));
+        assert.ok(inputs.javaToolchains[0]?.proof.some(fact => fact.file === file && fact.line === 3 && fact.analyzerVersion === '7' && fact.explanation?.includes('not resolved/executed')));
         assert.ok(inputs.kotlinArgumentUpdates[0]?.arguments.every(arg => arg.proof.some(fact => fact.file === file && fact.line === 4)));
         assert.ok(inputs.testPlatforms[0]?.proof.some(fact => fact.file === file && fact.line === 5));
         assert.ok(graph.relations.filter(edge => edge.type === 'imports').every(edge => edge.evidence.some(fact => fact.line === 3)));
@@ -117,7 +117,7 @@ test('Groovy and Kotlin standard compiler blocks retain Java/Kotlin import ident
 });
 
 test('Complete unknown plugin declarations constrain bindings while retaining independent literal inputs', async () => {
-    const build = 'plugins { id("org.springframework.boot") version "4.0.8"; id("io.spring.dependency-management") version "1.1.7"; kotlin("plugin.spring") version "2.2.21"; kotlin("jvm") version "2.2.21" }\n' + toolchain + '\n' + options + '\ntasks.withType<Test> { useJUnitPlatform() }';
+    const build = 'plugins { id("org.springframework.boot") version "4.0.8"; id("io.spring.dependency-management") version "1.1.7"; kotlin("plugin.spring") version "2.2.22"; kotlin("jvm") version "2.2.21" }\n' + toolchain + '\n' + options + '\ntasks.withType<Test> { useJUnitPlatform() }';
     const graph = await index(await repository({ 'build.gradle.kts': build, ...java, ...kotlin }));
     const project = projects(graph)[0]!;
     assert.ok(project.gaps.some(gap => gap.includes('org.jetbrains.kotlin.plugin.spring')));
@@ -140,9 +140,9 @@ test('Toolchain/test settings alone never activate JVM source roots', async () =
     assert.deepEqual(statuses(graph, 'src/main/java/client/Use.java'), ['unsupported']);
 });
 
-test('Annotation-default and unreviewed Kotlin compiler transformations remain binding gaps', async () => {
+test('Annotation defaults under unreviewed compilers and unknown transformations remain binding gaps', async () => {
     for (const argument of ['-Xannotation-default-target=param-property', '-Xplugin=compiler.jar', '-Xcontext-parameters', '-Xno-param-assertions']) {
-        const graph = await index(await repository({ 'build.gradle.kts': 'plugins { kotlin("jvm") version "2.2.21" }\nkotlin { compilerOptions { freeCompilerArgs.add("' + argument + '") } }', ...kotlin }));
+        const graph = await index(await repository({ 'build.gradle.kts': 'plugins { kotlin("jvm") version "' + (argument === '-Xannotation-default-target=param-property' ? '2.2.22' : '2.2.21') + '" }\nkotlin { compilerOptions { freeCompilerArgs.add("' + argument + '") } }', ...kotlin }));
         const project = projects(graph)[0]!;
         assert.ok(project.gaps.length, argument);
         assert.equal(project.compilerInputs?.kotlinArgumentUpdates[0]?.arguments[0]?.value, argument);
@@ -216,7 +216,7 @@ test('Compiler input edits invalidate JVM bindings and preserve full cold/warm/f
         assert.ok(coldCache.events.some(event => event.analyzer === 'jvm-imports' && !event.hit));
         assert.ok(warmCache.events.some(event => event.analyzer === 'jvm-imports' && event.hit));
         assert.equal(whole(cold), whole(warm)); assert.equal(whole(cold), whole(await index(root)));
-        assert.deepEqual(statuses(warm, 'src/main/kotlin/client/Use.kt'), [statement.includes('annotation-default-target') ? 'unsupported' : 'resolved']);
+        assert.deepEqual(statuses(warm, 'src/main/kotlin/client/Use.kt'), ['resolved']);
         const revision = await index(root, new AnalysisCache(state), 'b'.repeat(40));
         assert.equal(whole(revision), whole(await index(root, undefined, 'b'.repeat(40))));
     }

@@ -103,7 +103,7 @@
       "id": "java",
       "label": "Java",
       "parser": "Tree-sitter Java",
-      "imports": "Indexed Maven/Gradle/configured roots, recorded build-family selection, source sets, project references and imports; observed literal Gradle compiler inputs; pinned Boot 4.0.8/management 1.1.7 Gradle defaults for reviewed web starters; explicit external Boot 4.0.8 Maven parent with reviewed compiler/default BOM source contract",
+      "imports": "Indexed Maven/Gradle/configured roots, recorded build-family selection, source sets, project references and imports; observed literal Gradle compiler inputs; pinned Boot 4.0.1/4.0.8 and management 1.1.7 Gradle defaults for reviewed web starters; explicit external Boot 4.0.8 Maven parent with reviewed compiler/default BOM source contract",
       "binding": "Partial scoped source types, exact signatures and selected direct calls",
       "frameworks": "Spring MVC, WebFlux",
       "gaps": "Executable build models, unresolved plugin/BOM/compiler transformations, binary classpaths, virtual/generic/inherited dispatch and compiler interop",
@@ -115,17 +115,18 @@
         "src/analysis/resolution/jvm-gradle-compiler.ts",
         "src/analysis/resolution/jvm-spring-boot.ts",
         "src/analysis/resolution/jvm-spring-boot-maven.ts",
-        "src/core/config.ts"
+        "src/core/config.ts",
+        "src/analysis/resolution/jvm-kotlin-compiler.ts"
       ]
     },
     {
       "id": "kotlin",
       "label": "Kotlin",
       "parser": "Tree-sitter Kotlin",
-      "imports": "Indexed Maven/Gradle/configured roots, recorded build-family selection, source sets, project references and imports; observed literal Gradle compiler inputs",
-      "binding": "Partial scoped source types, exact signatures and selected direct calls",
+      "imports": "Indexed Maven/Gradle/configured roots, recorded build-family selection, source sets, project references and imports; observed literal Gradle compiler inputs; pinned Kotlin 2.2.21 Gradle JVM/Spring compiler and ordered argument source contracts; Boot 4.0.1/4.0.8 default source selections",
+      "binding": "Partial scoped source types, exact signatures and selected direct calls; compiler-open classes/members retain virtual dispatch while private/final/exact allocations stay direct",
       "frameworks": "Spring MVC, WebFlux",
-      "gaps": "Executable build models, unresolved plugin/BOM/compiler transformations, binary classpaths, virtual/generic/inherited dispatch and compiler interop",
+      "gaps": "Unknown Kotlin compiler/plugin versions, annotated property/constructor target placement, custom compiler transforms, executable models, binary classpaths, generic/inherited dispatch and compiler interop remain gaps",
       "sources": [
         "src/analysis/languages/jvm.ts",
         "src/analysis/languages/jvm-symbols.ts",
@@ -134,7 +135,8 @@
         "src/analysis/resolution/jvm-gradle-compiler.ts",
         "src/analysis/resolution/jvm-spring-boot.ts",
         "src/analysis/resolution/jvm-spring-boot-maven.ts",
-        "src/core/config.ts"
+        "src/core/config.ts",
+        "src/analysis/resolution/jvm-kotlin-compiler.ts"
       ]
     },
     {
@@ -396,7 +398,7 @@
     {
       "id": "nestjs",
       "label": "Nest",
-      "versions": "9–10 (Express 4 path profile); 11 (Express 5); proven Fastify adapter retains its own constraints",
+      "versions": "9\u201310 (Express 4 path profile); 11 (Express 5); proven Fastify adapter retains its own constraints",
       "scope": "Bootstrap-reachable controllers/modules, router modules, URI/default/neutral versions and dependency references",
       "gaps": "Custom decorators/dynamic modules, host/header/media/custom versions and unknown bootstrap policy remain gaps",
       "tests": [
@@ -590,14 +592,15 @@
       "id": "spring",
       "label": "Spring MVC / WebFlux",
       "versions": "Framework 6.2.x / 7.0.x; optional Boot 3.5.x / 4.0.x compatible family",
-      "scope": "Original annotations or bounded Java/Kotlin router builders, exact handlers and native path/method contracts; pinned Java Gradle Boot 4.0.8 and dependency-management 1.1.7 select the reviewed default BOM/starter source contract; explicit external Boot Maven 4.0.8 parent selects reviewed Java 17/UTF-8/parameter defaults and the same three starter source chains",
-      "gaps": "Other Boot versions/starter/BOM selections, default or custom local external-parent lookup, managed-property overrides, custom lifecycle plugins/Maven configuration and Kotlin compiler transformations remain gaps; executable models, broad reactive typing and unknown policies are unreviewed; external binary resolution is unverified",
+      "scope": "Original annotations or bounded Java/Kotlin router builders, exact handlers and native path/method contracts; pinned Java Gradle Boot 4.0.8 and dependency-management 1.1.7 select the reviewed default BOM/starter source contract; explicit external Boot Maven 4.0.8 parent selects reviewed Java 17/UTF-8/parameter defaults and the same three starter source chains; pinned Kotlin 2.2.21 Spring all-open/param-property Gradle source contracts and Boot 4.0.1/Framework 7.0.2 enable the unchanged Kotlin guide routes with original handlers and explicit virtual/predicate/injection conditions",
+      "gaps": "Other Kotlin compiler/plugin versions, custom transforms and unknown constructor/property annotation placement, other Boot/BOM/version models, default/custom local external-parent lookup, managed overrides and custom lifecycle/Maven inputs remain gaps; executable models, broad reactive typing and unknown policies are unreviewed; external binary resolution is unverified",
       "tests": [
         "tests/spring-mvc.test.ts",
         "tests/spring-webflux.test.ts",
         "tests/jvm-build-selection.test.ts",
         "tests/spring-boot-gradle.test.ts",
-        "tests/spring-boot-maven.test.ts"
+        "tests/spring-boot-maven.test.ts",
+        "tests/kotlin-spring-compiler.test.ts"
       ],
       "sources": [
         {
@@ -621,6 +624,14 @@
             "BOOT_MAVEN_PARENT",
             "Explicit disabled local lookup",
             "bootMavenPropertyGap"
+          ]
+        },
+        {
+          "file": "src/analysis/resolution/jvm-kotlin-compiler.ts",
+          "contains": [
+            "KOTLIN_COMPILER_VERSION = '2.2.21'",
+            "FirAllOpenStatusTransformer",
+            "kotlinAnnotationPlacementGap"
           ]
         }
       ]

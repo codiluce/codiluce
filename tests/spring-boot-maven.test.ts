@@ -38,7 +38,7 @@ test('Pinned explicit external Boot Maven parent retains original Java handler/l
     assert.equal(model.bootMavenParent?.compilerParameters, true); assert.equal(model.bootMavenParent?.sourceEncoding, 'UTF-8');
     const selected = model.dependencies.find(dep => dep.coordinate === 'org.springframework.boot:spring-boot-starter-webmvc:4.0.8')!;
     assert.equal(selected.declaredCoordinate, 'org.springframework.boot:spring-boot-starter-webmvc');
-    assert.ok(selected.proof.some(fact => fact.file === 'pom.xml' && fact.line === 3 && fact.analyzerVersion === '6' && fact.explanation?.includes('never resolve or execute')));
+    assert.ok(selected.proof.some(fact => fact.file === 'pom.xml' && fact.line === 3 && fact.analyzerVersion === '7' && fact.explanation?.includes('never resolve or execute')));
     assert.equal(routes(graph).length, 1); const route = routes(graph)[0]!; assert.equal(route.metadata.constraintsUnresolved, false, JSON.stringify(graph.diagnostics));
     const handler = graph.entities.find(entity => entity.path?.endsWith('Api.java') && entity.name === 'read')!, leaf = graph.entities.find(entity => entity.path?.endsWith('Service.java') && entity.name === 'read')!;
     assert.ok(graph.relations.some(edge => edge.type === 'handles' && edge.from === route.id && edge.to === handler.id));
