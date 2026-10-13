@@ -38,7 +38,11 @@ export interface SpringMvcConfig {
   /** Explicit original configuration bean factories, Class.method. */
   routers?: string[];
 }
-export interface JvmConfig { sourceSet?: 'main' | 'test'; profiles?: string[]; dependencies?: string[]; spring?: SpringMvcConfig }
+export interface JvmConfig {
+  /** Select one indexed build family within this application's ownership boundary. */
+  buildSystem?: 'maven' | 'gradle';
+  sourceSet?: 'main' | 'test'; profiles?: string[]; dependencies?: string[]; spring?: SpringMvcConfig;
+}
 /** Recorded MSBuild compilation inputs. Values never come from the host SDK/environment. */
 export interface AspNetConfig {version?:string;pathBase?:string}
 export interface DotnetConfig {aspnet?:AspNetConfig; project?: string; targetFramework?: string; configuration?: string; platform?: string; properties?: Record<string,string> }
@@ -296,7 +300,7 @@ export async function resolveConfig(root: string, raw: RawConfig): Promise<Atlas
     }
     if (app.jvm !== undefined) {
       const value = app.jvm;
-      if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key => !['sourceSet','profiles','dependencies','spring'].includes(key)) || value.sourceSet !== undefined && !['main','test'].includes(value.sourceSet)
+      if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key => !['buildSystem','sourceSet','profiles','dependencies','spring'].includes(key)) || value.buildSystem !== undefined && !['maven','gradle'].includes(value.buildSystem) || value.sourceSet !== undefined && !['main','test'].includes(value.sourceSet)
         || value.profiles !== undefined && (!Array.isArray(value.profiles) || value.profiles.length > 128 || new Set(value.profiles).size !== value.profiles.length || value.profiles.some(item => typeof item !== 'string' || !/^[\w.-]{1,128}$/.test(item)))
         || value.dependencies !== undefined && (!Array.isArray(value.dependencies) || value.dependencies.length > 128 || new Set(value.dependencies).size !== value.dependencies.length || value.dependencies.some(item => typeof item !== 'string' || !item || item.length > 2048 || /[\\\0$*?{}\[\]]/.test(item) || path.isAbsolute(item) || /^[A-Za-z]:/.test(item)))) throw new Error('Invalid JVM compilation configuration');
       for (const dependency of value.dependencies ?? []) repoPath(root,path.posix.join(app.path,dependency));

@@ -1,0 +1,5017 @@
+{
+  "schema": 1,
+  "phase": "P8 recorded JVM build-family selection: source and ordinary compiled qualification",
+  "passed": true,
+  "measuredAt": "2026-10-13T07:40:43.914801+00:00",
+  "parentCommit": "50e3d55",
+  "parentRuntimeSha256": "29fc30a5f25dedd7f6aaf489f67dcdf308802c548f59f2ddb6782bdbc47a98ed",
+  "runtimeSha256": "1a59c904de099f94806f8fe12f07cdf19f0d483ca04d7a6e94a2a1c3f8a9e47e",
+  "runtimeInputs": 1927,
+  "changedRuntimeInputs": [
+    "src/analysis/resolution/jvm-projects.ts",
+    "src/core/config.ts"
+  ],
+  "compiledModules": 225,
+  "changedCompiledModules": [
+    "dist/src/analysis/resolution/jvm-projects.js",
+    "dist/src/core/config.js"
+  ],
+  "currentCompiledInventory": [
+    {
+      "file": "dist/src/ai/command.js",
+      "sha256": "01e89ed32c2094db118eb4bfc5f3bf86a4a232ad854aba7414390e03b809d98b",
+      "bytes": 6627,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/ai/domains.js",
+      "sha256": "321b4c10d528dc01436589c80138c03fd083c208e2948665e2504a9c30718e4c",
+      "bytes": 7584,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/ai/openai.js",
+      "sha256": "2de9f61f56ef42622f961be62e171da1dd937acc67df13ccc3aca89280328091",
+      "bytes": 4667,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/ai/pricing.js",
+      "sha256": "5f4fbed677f9d0b5f833474e56cd48310fb61bc522c4fd5a2b5a7d8b98e54a55",
+      "bytes": 1301,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/ai/runner.js",
+      "sha256": "1246ac056a33947d7227b599f7c112737e753b268beb771d3e2ca04eca9ba16d",
+      "bytes": 9147,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/ai/ste.js",
+      "sha256": "30e1e7a2e8ecfb25896fda0bf5d9ba56886b2114e9e8e628c2195b9fdef0c1dd",
+      "bytes": 7165,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/ai/store.js",
+      "sha256": "069aeb1ceb9a0626abfd272f420c9cdc9131d331fad2a64b99abb7339b77e375",
+      "bytes": 7414,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/ai/tasks.js",
+      "sha256": "d33a0572c934fecdbab250df96c12fca65b5b3e6b54606e27f9807d6facbc1dd",
+      "bytes": 34798,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/capabilities.js",
+      "sha256": "efbbec0c845247c9f95c692b65a80e286ffeeaa27a7a46376a0a6ba4eb18628e",
+      "bytes": 4002,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/embedded/framework-parser.js",
+      "sha256": "92bad28c5797b9edf10e30103fdbbf643d910eda78f9093245e562c9e8599028",
+      "bytes": 4572,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/embedded/framework-worker.js",
+      "sha256": "e5adbfab3e1bd2e2803805057c98cd787bd5b27400d5f71bc5a33e1b36c5f35f",
+      "bytes": 1511,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/embedded/index.js",
+      "sha256": "77a397bca785e3824907e6bd3af6d923029783b460f82163f7250d20d5d2cab4",
+      "bytes": 17960,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/embedded/native-framework-worker.mjs",
+      "sha256": "55ad6c2d7d187e0590c3bc8400270b9da435521fc19d3519875c46baf8db5c01",
+      "bytes": 1435,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/embedded/source.js",
+      "sha256": "7601b34919ff07bc7db00bee99c21f147568578e0f07cafbd482b2ebdfa2459a",
+      "bytes": 14426,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/facts.js",
+      "sha256": "054089344809c56a6f6d37b67a9e1365791ffe5997bff6cf5021b435edc30e48",
+      "bytes": 941,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/aspnet-minimal.js",
+      "sha256": "e248048837de47509e11ffce216da0502ce6937af457ca38f2408a5ba91e5a5d",
+      "bytes": 65374,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/aspnet-mvc.js",
+      "sha256": "7c1fa9a845145f41fd44d16a7b4948caf9e39bc0d813858f2869be583e07c8d8",
+      "bytes": 26822,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/aspnet-profile.js",
+      "sha256": "5ab9172fc5ef7461916ec9d228609f59919e11ef768761f42eba258ebbba8e67",
+      "bytes": 3695,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/astro-config.js",
+      "sha256": "56bba475ea98f9096f9a2554c9d125d603c8f1f5a6b10e81605c2df5c9638942",
+      "bytes": 14856,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/astro-path.js",
+      "sha256": "8d26daeb514d8e792cd3f31ce3042696cc01e7ff890ac5127a43cce9c0a84b58",
+      "bytes": 2650,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/astro-routes.js",
+      "sha256": "8691c445e8873ea40931c5c39accff8d1acd865e18cf148fcdd625d08f92c9fc",
+      "bytes": 21751,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/astro.js",
+      "sha256": "6b115fe0146c8b3c0d8d35eab9f673d069a92bf30d468814d4655755fddaa79c",
+      "bytes": 25212,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/browser-invocations.js",
+      "sha256": "7ac137a8cbfe4f1e403be138bdb082321e8210a5591b0d5c60d2d63247c89c8e",
+      "bytes": 2570,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/django.js",
+      "sha256": "4fbd4ebfbace7cc792e6c2f9fdfaaeca51c646f47940b3493c8f1f939e2485c7",
+      "bytes": 47974,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/express.js",
+      "sha256": "f6418bbf945c19f24b442ff683f06d1dd7afe0b3dc008c06f5f2f88dc1a35033",
+      "bytes": 32061,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/fastapi.js",
+      "sha256": "3410ae9be4c3a447e6aed4be193f0632762dd8f06783276a31785a384f759621",
+      "bytes": 34060,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/flask.js",
+      "sha256": "e85e9fdc0862c348a51328c13b4b8717f19516867c2f165fb8e589b5ec21dc2e",
+      "bytes": 45296,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/go-profile.js",
+      "sha256": "f903e587b9af1a091c44ddc3cbc52038b98f3156f3e24c35493892819d2d8ba7",
+      "bytes": 3165,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/go-routers.js",
+      "sha256": "29f595353b38dd91994d6013534b476f80b2f36df7b7649c4f058b687ed6027b",
+      "bytes": 83728,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/index.js",
+      "sha256": "3f7175e869242db6729f89bdcd73c7d41dead0ca2ee8712a703a1797d3fc8ca0",
+      "bytes": 345,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/nest.js",
+      "sha256": "af5e75c2ecdb176f42a0576bfcdfca93fe167688e5e34905b8701e75de057a7b",
+      "bytes": 42300,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/nuxt-config.js",
+      "sha256": "1cbbeb9a2aeebbe503bce3ab498c9111273146b0cf79f32df0eeaf91ac147be2",
+      "bytes": 21130,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/nuxt-conventions.js",
+      "sha256": "a8f4c53425983d82498ac9a0ae618ae34c3803acf0e5bc7a6e8a787b27f544dd",
+      "bytes": 17766,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/nuxt-path.js",
+      "sha256": "7fa9013219c9d3eeedb01c2696a2e40b9fcc3f6e2ae438f09fb48ce48452f7cb",
+      "bytes": 4301,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/nuxt.js",
+      "sha256": "c4bb7b01b9c78050c60c20cf2bdf65475dabb62db98cc5e6b73efc2269e1e9c9",
+      "bytes": 25567,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/rails-controllers.js",
+      "sha256": "05b14c20552959770eee75dc6c363d2486bba10c13c251acb01870e27a196b5b",
+      "bytes": 15513,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/rails-inflections.js",
+      "sha256": "0afcdf472ca54d317777d918130a132eccf64052fd8a06edb1237e633f2e759e",
+      "bytes": 4806,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/rails.js",
+      "sha256": "0698d6810fc2b28ae71a1900b12778226d4258ce9e4be77e7bb9d200d99e628d",
+      "bytes": 42833,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/rust-derive-namespace.js",
+      "sha256": "31c29f36a556684943b94c7f82d665725735a20f49772ec54aab7cd6b3173123",
+      "bytes": 7100,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/rust-profile.js",
+      "sha256": "ac2be34abbea49c8690085f8b6f832f45ee0d7c67e8dd387a9b6270cb910cad7",
+      "bytes": 31787,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/rust-routers.js",
+      "sha256": "94c03fe356b462f0f49398d27b7101cb2b8a2cc675ad8406aed12c46570f942c",
+      "bytes": 124057,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/rust-source-projection.js",
+      "sha256": "18d5f385a02def23fa4e5a0e6b9ed14bcefd7542dbc4cb41383cd79b46aa7b98",
+      "bytes": 4283,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/spring-mvc.js",
+      "sha256": "0cfca408b1043e4689f971c6525f0dcbe0684f37682323a6aba8167ea05c4e3b",
+      "bytes": 23159,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/spring-profile.js",
+      "sha256": "45e1eae9916dd97da4b8b01e5009def3b0d9b5a3186ee5ccfdb011c5ca6bdd88",
+      "bytes": 10274,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/spring-webflux.js",
+      "sha256": "0d482f067fea251f1b4c90dd69b544348060a988338fd3fbf2f17f62b1c35d4e",
+      "bytes": 43796,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/svelte.js",
+      "sha256": "77ac062c84bc0d5192c3eb97f10861e65a03204b0a4fa68ecad1bbf43cfecb61",
+      "bytes": 32812,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/sveltekit-config.js",
+      "sha256": "06a38cb4efdab71f7cf72a6d77b96ea5648118ca916a6eb1762fb0b47eb42459",
+      "bytes": 14695,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/sveltekit-invocations.js",
+      "sha256": "728125d46930b6ff95baa0f7e75d37138e5c2b0404b7923b88296f1717d85657",
+      "bytes": 2645,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/sveltekit-path.js",
+      "sha256": "9115c54500ff73415527a5ec203386abe5e50c9ae64db4e0ac329e371e682aec",
+      "bytes": 4587,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/sveltekit.js",
+      "sha256": "a26e9bf31c90606e1158e57863be13272fc927b136429385ec5bef3f49e1bc7b",
+      "bytes": 31915,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/typescript-binding.js",
+      "sha256": "efa19af5a701b0b445fde7b439b94b4499868994d1b0cf7227a14eca3933083f",
+      "bytes": 9021,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/typescript-pack.js",
+      "sha256": "f09e841592c49f849e0621e8bfa53ab57050cdbb7b3ba08355d066cbf35a688c",
+      "bytes": 2499,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/typescript-static.js",
+      "sha256": "55e802af148be460a6980f739fb31c7fdc2fc0559d5da974278ed3b590d93c58",
+      "bytes": 13116,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/vue-router.js",
+      "sha256": "a100cfa571d1a1ddf0745d4d27a60512758d93dcb1dd06acf3552fbefed62c94",
+      "bytes": 18749,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/vue-static.js",
+      "sha256": "4894e8197f8efe5789b73c5833b4ca118f3b5b4fc436e82fc4d0b00e0531ecb5",
+      "bytes": 95,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/vue-template.js",
+      "sha256": "d0ed8c89026a306f74bc3c280e5aa76cb05a9d0021fcc9a614f887c4d6e6d6bc",
+      "bytes": 6838,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/vue.js",
+      "sha256": "5f7bbfe710322a39ad9cbb612654fada6f3b619419ba9bf8d019617a1a6a83a2",
+      "bytes": 30459,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/warp-cors.js",
+      "sha256": "75e0af8fd4b734ca5839e7795a181631d659f82e879932ff8373f072e12e5ba2",
+      "bytes": 4500,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/warp-state.js",
+      "sha256": "80d087ec95cdac4234f0fff4d7835a4672ffaa6b5ac3cffe9501d392edad6baa",
+      "bytes": 4618,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/warp-syntax.js",
+      "sha256": "58413aa6a49228abff9be9e2f5ffa0e2450d75817c4bdc0a7c660b9b3905eb40",
+      "bytes": 3472,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/indexed-sources.js",
+      "sha256": "27c6c869567a3ec21cd8522c75a47795713b8ceb2c4ab5d6174ae900e8eed5b2",
+      "bytes": 6545,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/csharp-symbols.js",
+      "sha256": "f8e50b3b79913c88449d06623d3f38f1c8c0cccb92668b2b1fdad1b73fdcb5c1",
+      "bytes": 56574,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/csharp-types.js",
+      "sha256": "0953868e3558b762a2d5562f379938a98a936214aa203a5cf144207140c4b65a",
+      "bytes": 6582,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/csharp.js",
+      "sha256": "0aa7132c8b8ad0c5ef1abec33979810f5ded55a0abb7a4eaf8b77a68876ed8d6",
+      "bytes": 6317,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/go-api.js",
+      "sha256": "3f5c7b1bffa7b60f373479a795baf00c1e8ea4da10cbc5b862fc9949b87efe9e",
+      "bytes": 2128,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/go-build.js",
+      "sha256": "82eb45d07281ab46a5e731f743dcaae50991f65212b09836f4ef83bcb4aaa719",
+      "bytes": 8473,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/go-symbols.js",
+      "sha256": "808821e2401fd85269aee49e753dc2a74f886a90a7a9b258fef3929c0768e2ed",
+      "bytes": 34469,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/go.js",
+      "sha256": "2d605901cf4ee41025c68400e752d631ed44e3e2e15b73d4c72c681a6ae68704",
+      "bytes": 7376,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/jvm-symbols.js",
+      "sha256": "2044f9e0cccb027eaea5843009aa8da4a2733a7fcb152f43e5db47aa24cda212",
+      "bytes": 46517,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/jvm.js",
+      "sha256": "3877b3df47efd4a46ea7d771a398f9a214094f415e4c39f5b4fab6e667dfdfb6",
+      "bytes": 5921,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/liquid.js",
+      "sha256": "2bd456d9f35b159d957bdbe56f1c98291e7a603104bf534b5d889c9dc6277760",
+      "bytes": 5658,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/php-imports.js",
+      "sha256": "d26b236a3c2c072e500c3de56ba57c38ee8c00e2c0caaaa3b0a8f85c4bc942ad",
+      "bytes": 4513,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/php-symbols.js",
+      "sha256": "172b8017e26dcaf501402b72b5441aa6e737f414f3b89242570c36b094e15785",
+      "bytes": 49259,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/php.js",
+      "sha256": "7d6e4571b93aad9ba528190a186d95d18273d2b220390b66150328cf3d40669b",
+      "bytes": 9646,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/python-arguments.js",
+      "sha256": "513678fa6e1d230186597f27f4407d83098de1286236e06a73a3d4988e8b3cf7",
+      "bytes": 1200,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/python-bindings.js",
+      "sha256": "054c945fa420fcd4e7fcd941b739b6a54cc0c189c474911e47acf25ef77aee39",
+      "bytes": 3427,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/python-symbols.js",
+      "sha256": "5a1ae6a798053e3db0465396af8c511bed3b9d90096f4bfdcd6bfe033849a368",
+      "bytes": 20525,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/python.js",
+      "sha256": "d692e026d24b438259f4f35318449244465f79cc81465a99679dc01f24f64e24",
+      "bytes": 13684,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/ruby-profile.js",
+      "sha256": "08b7c16aa004e1ed79691703ad5fcaca1d213f5ec13ee8cfef1152e69a114f49",
+      "bytes": 8302,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/ruby-symbols.js",
+      "sha256": "ac7cec29fc7289eec2eaa0c7c78fbce82c1d55c3acb6a75bb57f988566828c1e",
+      "bytes": 45091,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/ruby-version.js",
+      "sha256": "f52f6850c247a93aeecae89808cf1dda7a3929607801a9fc125e48c4adbc3048",
+      "bytes": 5355,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/ruby.js",
+      "sha256": "a2208b1708f89bda3ef6ec02ea613dd392fd73f5d1b5958d192b13c1100e67b7",
+      "bytes": 5963,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/rust-cfg.js",
+      "sha256": "6fe2986d0a2619fc01a12d6b710770c25ad4087fc366322cc9b7570f1a72b942",
+      "bytes": 11751,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/rust-symbols.js",
+      "sha256": "0d485651db42f5fb2dca054f779ae2dca2716bb23e7c7970198e81765c09fe29",
+      "bytes": 43891,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/rust.js",
+      "sha256": "7bbc0b6ed849844b45b456de906e455b093ee259d07be446111c242c3816890b",
+      "bytes": 8138,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/typescript-runtime.js",
+      "sha256": "8c0ac70f6807b2d4e14f31a30f50ac371167922abad606994bf1036355352653",
+      "bytes": 8748,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/typescript-services.js",
+      "sha256": "7268e8dd28d406b36a7e7c8b687c2d03d46c430742d4e92cb293543dc28ddf89",
+      "bytes": 14918,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/php/binding-node.js",
+      "sha256": "8e36886c8d8d9146bcf88a1f7a9045f58114f4b7dd92f50d24caafc5e5b5980b",
+      "bytes": 2591,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/php/client.js",
+      "sha256": "4435e91b40daac63dbe999846103d1b826cfa40ab3f65413799c9b439e80ede2",
+      "bytes": 1418,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/php/laravel-files.js",
+      "sha256": "bd25139b20016ee1d5af9e7fc5defc67dac3d902425a0a882ca7d334eda8914d",
+      "bytes": 3455,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/php/native-worker.mjs",
+      "sha256": "9d4dd40f7a7af3bb5366c7b7851c085fe780dce01cfedc1dd52664caa062eb86",
+      "bytes": 1828,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/php/residency.js",
+      "sha256": "6f64af94e5703c7339583a7014764d807791b31e38a67373f14f70bdd6c0d26c",
+      "bytes": 10451,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/php/sources.js",
+      "sha256": "75f14e7bed1faab5e479cf8013cc1203488159f986d3509b502d2542cd3f8e1a",
+      "bytes": 6719,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/php/structure.js",
+      "sha256": "1109576c08ad29576ed48737f978b6bb8b16eacf380da4bded4f8d7f9d522e5a",
+      "bytes": 23656,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/php/version.js",
+      "sha256": "6f56bc1977cf5f5ce910952d83f5fea4de901f5f2bc3c8870636ce41fa34115d",
+      "bytes": 439,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/project-model.js",
+      "sha256": "49640778271d947bdd987dd7ecbca93fbf74d37b82143b038fd13e0c490b23b9",
+      "bytes": 11397,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/registry.js",
+      "sha256": "b8bfb3c46529e3dfba1419117d0b6a4f45d9042643ce877b7549cc65426ee511",
+      "bytes": 1800,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/csharp.js",
+      "sha256": "4682b180ff2b14c7f6f208baa470eb20d4dc9663aa2153e9702d4b6c8de953af",
+      "bytes": 10843,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/dotnet-data.js",
+      "sha256": "02c5aa8dd41e405e418c3c7b6b400d3ff7a3e7834b7997787a75d8cb94df108b",
+      "bytes": 5718,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/dotnet-projects.js",
+      "sha256": "5add50944ab0f4c65803afbfb00a259d1e8d8f9dfa371d36c027b26fd36c47f4",
+      "bytes": 28264,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/go-manifest.js",
+      "sha256": "be757f49bfdcdef4fd60878f521d8abf0e7f5c497e1bb8de55047e575afc7cd3",
+      "bytes": 8455,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/go.js",
+      "sha256": "c5b5489389412355a8f762a34f91edcdeee0ca61bae1ce6881cbd40eb7cf9e97",
+      "bytes": 21499,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/jvm-manifest.js",
+      "sha256": "54e50e4801709fba334a5aeb5ebff7a26f3f6fd66d826ceaeb845b7345818442",
+      "bytes": 13957,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/jvm-projects.js",
+      "sha256": "cb6cf59cc1b6411e290da39ddc478bde3201ca3bbc6ccaa1ca87a559bcbc2c9b",
+      "bytes": 30545,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/jvm.js",
+      "sha256": "b6463f25e38b8bf9eedc7e9864e6f3b5ba904aeae558c2323166fd1ee684cec0",
+      "bytes": 12991,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/php.js",
+      "sha256": "1644363d28b420729c9cd22646f6e2fe419a56b215146efb1517bc0bdacec1a8",
+      "bytes": 39370,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/python.js",
+      "sha256": "72e33fe2eb390ae01b315d14787da949443ca04934466aa3712970ccb2562fa1",
+      "bytes": 21585,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/ruby-autoload.js",
+      "sha256": "c54c551774917e44a857a782f7ad35dcbcae804f321b6a16a47cfc4708062a1d",
+      "bytes": 38673,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/ruby.js",
+      "sha256": "ae12a456098ba09f28d1bf2a7b6d7f76275f03741d850bd049439079b9ad858e",
+      "bytes": 25990,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/rust-derive-namespace.js",
+      "sha256": "a16dd243d56831352639339502ec856417d14f59ccabb0866f41b0308f871c6f",
+      "bytes": 11072,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/rust-lock.js",
+      "sha256": "05696065fe899c7994acdbf45aa53d00d0b22e1fd964787d43a0e4a618793003",
+      "bytes": 5159,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/rust-projects.js",
+      "sha256": "f4a9a0a3c82ecf30dcdad485ccc87917ca18432a4801cd89ba00ceec1a74bd65",
+      "bytes": 39844,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/rust-runtime-namespace.js",
+      "sha256": "d1d9bd8fa88b7dccafb37b76292cde30a4dbb43aaf06edfbb5a778a5ab7b0c90",
+      "bytes": 13431,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/rust.js",
+      "sha256": "61f2a76ca341eda2a17dc98442d0754510e2117913539cd9cfe5a94bdaa2e5fb",
+      "bytes": 31254,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/typescript.js",
+      "sha256": "0f3c1979b57aeb08b64344796a5e41f9a42b06e457c4d4a1eea169fb3c1b9721",
+      "bytes": 9300,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/aspnet-patterns.js",
+      "sha256": "9a2c360c8e988b48f7bb9421220112943114427df9dc029b4408da56cd8e500c",
+      "bytes": 20533,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/boundaries.js",
+      "sha256": "1d7914dab20052b58d44d87628656caaa6bd0f5947f0bdf4b98c4b0ea26dab2d",
+      "bytes": 3377,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/contracts.js",
+      "sha256": "752f54415e6bdb90103d49409ffa727344a095106e111fa38dc23b567c973ab1",
+      "bytes": 16549,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/go-patterns.js",
+      "sha256": "20e83337bb9efdcf6f64da587af8fad8c80dfd1cccd3578ec76f14e42a553f8d",
+      "bytes": 19416,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/http-method.js",
+      "sha256": "52e2ba4e203b25d6537ba68259c9a32d880f4a641335c298af9b372104cf0547",
+      "bytes": 529,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/pattern.js",
+      "sha256": "a247107f512905f740d4bf1fde321f21851f16a238f61952907e1256f9161cb3",
+      "bytes": 3672,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/rails-patterns.js",
+      "sha256": "d73c3093d79571cf9093efdf243cd5c0d2ad3551401407ea7cdb1f560568f521",
+      "bytes": 7990,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/rocket-patterns.js",
+      "sha256": "ad35667783912cc804e28c1dca36e9188b0a5245b8e6e0a8e26ad41ef87afaaa",
+      "bytes": 7534,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/rust-patterns.js",
+      "sha256": "c3de703c9fcb24d55db634726fb8d6aa34526ae9ecbf7060e944b0b0a0085562",
+      "bytes": 13993,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/spring-patterns.js",
+      "sha256": "c62f985f0bad46a39d8826c83adc2c7d0f523515e04c388363ea7c6052dee7ff",
+      "bytes": 8938,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/warp-patterns.js",
+      "sha256": "dd968c6fb9074560daa5eaf582abfad481999082818696906b8a98efa9ade429",
+      "bytes": 13490,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/webflux-order.js",
+      "sha256": "5c4eeb87f750500b8e1f01c554bf3ed228e6b603a2dcb6f3f82a3061cd31eac6",
+      "bytes": 1095,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/rust-evidence.js",
+      "sha256": "68f52d73b20d672f4a87666d9acbb609b7638311adc3208ce03410be1587b517",
+      "bytes": 8134,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/source-map.js",
+      "sha256": "8dc16f5413971a87b8ae7f9bac07e98b367eafa8da7392548e22269ff40b4214",
+      "bytes": 1869,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/analyzer.js",
+      "sha256": "aab1807b44811c6fe0a599e1d456ba3321bc23d49177c97a904f9e5d273ae587",
+      "bytes": 21942,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/cfamily-source.js",
+      "sha256": "ac281a9f76c405d8be538aee23281fc04d1d3166e6b3fd6a496120ce774b9c18",
+      "bytes": 4924,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/cfamily-structure.js",
+      "sha256": "628bd3cbc8cfa9c890f3c4751a11f0d036a1ab241bb712148dad5c8bc2fdf43c",
+      "bytes": 15991,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/client.js",
+      "sha256": "f7ac85be26ef43c8d6acd827177cbf6e78d08c531ae3037065d5ce43413162de",
+      "bytes": 12454,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/csharp-semantic.js",
+      "sha256": "dce3d40932edc733616366cef9c8d1258dfe72fc149c6e1cf98c796a93deb585",
+      "bytes": 30222,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/csharp-syntax.js",
+      "sha256": "5dc8852ea74410a5104004cdaedbab74d083b3e4a3bc9aa265649874d78e63e0",
+      "bytes": 7347,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/embedded-host.js",
+      "sha256": "0e0ef41160d186a20bc09fc52bbbcf6006026f7cc63ec14f853f9bd395b2b176",
+      "bytes": 4814,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/erb-script.js",
+      "sha256": "1496688dedc4bf83c829d6a2ea30ae93a0b89abcbc4ab7142b7a60016645f94f",
+      "bytes": 9908,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/erb-structure.js",
+      "sha256": "69b3db836609ccb89c427a0b0472bae6c55e04d859a92f603ad9186a186fdedc",
+      "bytes": 11430,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/extract.js",
+      "sha256": "8a913b282c7e1318fc1b39f9e9ea5a418c676d282850d617fb6538a7a0d3285c",
+      "bytes": 14768,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/fsharp-structure.js",
+      "sha256": "1a90333411dbd2f71ab9cd6e39d2751183a82894608c8448b42e7f78eef882eb",
+      "bytes": 22344,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/go-imports.js",
+      "sha256": "0f104409b7256b21917c4b64b6212cca8363e7ca240ad19607e36d956d201847",
+      "bytes": 4062,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/go-syntax.js",
+      "sha256": "1ddfd8d452890de1932b9022e82896cd1555202fb9c808d16214dcff3b89d22a",
+      "bytes": 19979,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/grammars.js",
+      "sha256": "92e8dd8e7e739bf3ffb08626e0d87b66fbcc11cfb8bafd0a99ea2136af615b5d",
+      "bytes": 2623,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/groovy-structure.js",
+      "sha256": "c7f47a8ac05e24c6fb68b8afedd3fb2dd90451f9111b87a7de86389b9b11ba94",
+      "bytes": 13675,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/jvm-semantic.js",
+      "sha256": "a2c38fe87a5f9d6d401da18734bc23fd4d934b0ebad0990e24e930a05b1c0fb9",
+      "bytes": 31413,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/jvm-syntax.js",
+      "sha256": "e07ec1708460733193738510d44a5cd2c4527f71c7f82633fb58921f2e304617",
+      "bytes": 4637,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/liquid-structure.js",
+      "sha256": "e2126fa7089155b6f3c1bf3ecc772b37907c4d8cf2a9f82d1cdbc7e378ddb81b",
+      "bytes": 17808,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/native-budget.js",
+      "sha256": "1052897b64da0ceb45e8bbc799d2ea2f66aaaf2328b4054c7d15a08788835de4",
+      "bytes": 4014,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/native-script-worker.mjs",
+      "sha256": "a439aae8c073913d088e58aac2e9365b7d94e79e23e5bde29f1bb2c0e55d9ca3",
+      "bytes": 12941,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/native-worker.mjs",
+      "sha256": "96f33c4bacab113f0e24f760972ef2c6b2574e3c9426a6f1475f4aad552310ce",
+      "bytes": 370641,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/objc-cpp.js",
+      "sha256": "a444baee148356f17649aa1d6aa34f518cc2f3a67cf8ec113447cacba651097a",
+      "bytes": 13638,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/objc-macros.js",
+      "sha256": "2ddd753b57a06f631494cf751c91ed6e63aa81ad17790882094a9236975d4a73",
+      "bytes": 7391,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/objc-regions.js",
+      "sha256": "20bd8013dde8d4f6f6883404eb31788e0ee4881c5777512e5fe08101bed5d305",
+      "bytes": 6602,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/objc-structure.js",
+      "sha256": "f635ebbf7885cecc840e1e5b1b42f6f8a4435ac3cf126d30aab1c1bd47ca520b",
+      "bytes": 15159,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/python-imports.js",
+      "sha256": "c735163946a6c8b9a88004976a66dd9e9bbb0f7172599ced72480f13764d994b",
+      "bytes": 17531,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/razor-structure.js",
+      "sha256": "78ba225518bf5ccda38aadf4d9e82901aa439fe35ca7100e71152e773b22333b",
+      "bytes": 16946,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/ruby-syntax.js",
+      "sha256": "5f1b84b45f81772f7f404558448013360d7b366141ff744bbdefc4860ed71c93",
+      "bytes": 17564,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/rust-semantic.js",
+      "sha256": "5123ea6d157fab2fcf50b2c6f872f253c35ee4db8083c09081920b228c27f476",
+      "bytes": 23770,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/rust-syntax.js",
+      "sha256": "3faa2f39fb4a465242cd496731a6bcb2ac713e896b6fb7f6e7e46297ee6aaea6",
+      "bytes": 11940,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/scala-structure.js",
+      "sha256": "95f4c01a4d3a976bcb7bdb039a4d9b999ae0fa6aea2dba8f3af7fc88286fb9db",
+      "bytes": 17822,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/script-worker.js",
+      "sha256": "c63c2b132ab1fec49460b7a58c8169fac60348abb0ef8fa9c2a797a4aec6b852",
+      "bytes": 1072,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/swift-structure.js",
+      "sha256": "28eb68d26dca216480bc136f91eeb28efa481bb7e29dd03ea904ef3ad3e8f259",
+      "bytes": 16626,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/template-facts.js",
+      "sha256": "56cceb990a1b9c37d4e1b415dd3d35ea36d8765ecd50365cdd4b25cd21136c6e",
+      "bytes": 2476,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/template-scripts.js",
+      "sha256": "b7c6881482ed01e6ba0263f62e4d39616310c41ceb5508e4a88ce51a9793c35f",
+      "bytes": 2473,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/vbnet-source.js",
+      "sha256": "8b6ec03d2feb667d0cbab19e14ce5f0be597dc03fe614367c52365adf994b060",
+      "bytes": 3420,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/vbnet-structure.js",
+      "sha256": "7ce248b32aa4e5199d4fd9dd8f9414d6a9c443a7e8b5d66d3d644e19739696e9",
+      "bytes": 15898,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/worker.js",
+      "sha256": "442c1fcdfe2b1b974d5c6bc5a3299981af224c55f222d956873975427a9969e8",
+      "bytes": 11211,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/filesystem.js",
+      "sha256": "8423e15fcaf073cae307552a1e4190b558a6ec6ecd7336d2251fe2cf1d6c166a",
+      "bytes": 8886,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/git-metrics.js",
+      "sha256": "0310f3adfee27fe07d0178ae76b304068371fdaf547d47e0e4d36603b02a0f0f",
+      "bytes": 6524,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/laravel-console.js",
+      "sha256": "7b9ec4e221676b2ddbb203001b8aabeb1f51126e41b123cc6ef5da9fcf37e720",
+      "bytes": 18247,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/laravel-fortify.js",
+      "sha256": "278810bbf529dae3cfb36a07229c68828b46f00a337300546d82c8f8abf0b752",
+      "bytes": 14905,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/laravel-schema.js",
+      "sha256": "6cdb9f26edae9a02258219323f55c870987fdd0c0f828bea23642db3cea14d22",
+      "bytes": 37379,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/laravel.js",
+      "sha256": "63ca9d6159feb3ad35412b7fff6a9a4999d78054b4b954359771168546d9acab",
+      "bytes": 30955,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/php-ast.js",
+      "sha256": "f17e4624b52eb79a6f942afcbe39c923d2cc1850239a233bd7ce84f9dc2640c6",
+      "bytes": 3543,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/php-references.js",
+      "sha256": "7a65608b252ceae3841ef958e5605527741d7134ee76a5f2aa6cfe9972f18888",
+      "bytes": 33368,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/references.js",
+      "sha256": "ef90d5d77ee64bfbf205db883ab7b7027fef18467e88ebd5ed675d24d56287e3",
+      "bytes": 2951,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/ts-http.js",
+      "sha256": "65c3ed5c8abad7a29dcbd2f6449403c65928c0dd514e68fa2f776cfa8b7d9c49",
+      "bytes": 34218,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/ts-program.js",
+      "sha256": "d3324131642b8815ef0241de180351cb1910927f1ef182e1dc3121ae58102f24",
+      "bytes": 9332,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/ts-references.js",
+      "sha256": "7a705017cd0eaa4813fb892501d646efe8d5f26451e6e63c3cd0f0a0f7365647",
+      "bytes": 24521,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/ts-url.js",
+      "sha256": "410e5e2e47bbe6d8c76aaffde60dda0ffe682e3f8518e1dfc0e3a0d2be99f510",
+      "bytes": 27746,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/typescript.js",
+      "sha256": "a1697026d9d112531b1e86b6cc30069a98518d0f524f428ac0726f585f906de6",
+      "bytes": 35949,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/api/projection-routes.js",
+      "sha256": "19bc5b149d058e5d01a45c378bcf88a87c010b5189593c0795a00d282d3e5af4",
+      "bytes": 12179,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/api/server.js",
+      "sha256": "4fe1bdd8e5098e838ef2cda66cdb7ea597ccc5ccdf4a27c4676b1e7f0ae1b360",
+      "bytes": 8712,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/api/static.js",
+      "sha256": "0b05640f1ab88732738b6a95beb1c01f4eb0c6a64c316a8c6f62cfc514f8ee28",
+      "bytes": 2089,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/cli.js",
+      "sha256": "7d748d2633c9fcf2f27f0d70dffca41a5159c704d87fe06c5db001c2a6818398",
+      "bytes": 15932,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/core/analyzer.js",
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+      "bytes": 11,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/core/config.js",
+      "sha256": "4050a0fcafd0cb274304a3a9ae0744a0d22c376281c78332c8d56abae285d958",
+      "bytes": 31595,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/core/graph.js",
+      "sha256": "7e20c3cc186f72e7d91786e5b007148e2115e66ee41c31e627fa57bbfcce0645",
+      "bytes": 5571,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/core/languages.js",
+      "sha256": "fa91d9265b4360247b577070c970802f7e53edc4ea77a7e5889f6702aaa37947",
+      "bytes": 4046,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/core/manifests.js",
+      "sha256": "1850bd58faa30c64e1c91ff4e6fa9786af8b65c2ac9b9a076988c08e6592b1ea",
+      "bytes": 14363,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/core/workspaces.js",
+      "sha256": "52a8c64fbf7e8bbfc506b7aff714a1e097a10375ad3410f4ac927a0c5649ca9e",
+      "bytes": 1414,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/authors.js",
+      "sha256": "7fbbb0db251ab2b65097d776956c4333a21a3e220aa9cebcbedc44d8d15fbb98",
+      "bytes": 16235,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/diff.js",
+      "sha256": "61ff9e38bde6d365487dc414f9f44c4dee120c2563bc42ed139d37e2c545bceb",
+      "bytes": 9669,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/fingerprint.js",
+      "sha256": "a0ee63d59385bf080f2d99b342c9f01213396b529fd63cf56d137357e8e8316c",
+      "bytes": 2976,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/git.js",
+      "sha256": "7d16c4c6c706ea00c77678b8e2ed59f85ba2c5dea5bffe7faefbe651c74220f1",
+      "bytes": 12011,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/indexer.js",
+      "sha256": "0c064a2af2f6fa0e9a4463ec8a62462eef16f29746a9b1e1c86e869314318454",
+      "bytes": 14620,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/lineage.js",
+      "sha256": "41da10f9756b3a87d149d40adb19204bbb5bd05fae64c34a5d974452664b5628",
+      "bytes": 7651,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/pull-requests.js",
+      "sha256": "3a2bd4a26c11e7198d9301c7ca190d2d929e6ba76bfe6522782999f948b8ea9d",
+      "bytes": 3387,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/service.js",
+      "sha256": "d42da690f81e85b659522118c5ecfa20b1005bbd0e9c32906f588b348792b8de",
+      "bytes": 8528,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/snapshot.js",
+      "sha256": "9f0ec6792c73d8f42ec2240f898c0b0c4060ad3a53318c90cb70a74397e43828",
+      "bytes": 8952,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/store.js",
+      "sha256": "d709443ee4b27437da1ef6ce25731437ea9da10d7c0c3180bfa2bd76b8532977",
+      "bytes": 23447,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/textdiff.js",
+      "sha256": "089a62b590bea8e05eecc9503ad18cef537d801ba6c11f353e3ca5a1a81e4943",
+      "bytes": 5049,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/worker-channel.js",
+      "sha256": "01b2dc97fe488f15b9445a156687eadd7a37397472f8423ed996ce4bbd851f63",
+      "bytes": 1450,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/worker.js",
+      "sha256": "85a2edf0fc0de4cb213332d10ff22cb4d7462d4a9316d6b4ed1337958d10ea03",
+      "bytes": 1395,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/launcher.js",
+      "sha256": "b6ec7126ccd2ce1d2972a1a249903f3b937346cc0ef03b7aab39bf37bcdbf3df",
+      "bytes": 10040,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/pipeline/api-matcher.js",
+      "sha256": "c23126079d1dd8d3e9381156aebb59f78c80c2e684c1b3089326aefe48cedb46",
+      "bytes": 22088,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/pipeline/cache.js",
+      "sha256": "cbc4366ae802af697335fc0716e9cbd9646daece175a22dc85e548e590591096",
+      "bytes": 17081,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/pipeline/index.js",
+      "sha256": "56cde60b4dead7d2af5ad753d39a2e65041451cc43141e413cbd854980bc0efc",
+      "bytes": 7232,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/pipeline/inertia-linker.js",
+      "sha256": "1db6bcafe66a2adce0439050ad5009bf324f6be89f4e93285ccd86002d27262b",
+      "bytes": 3517,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/pipeline/php-analysis.js",
+      "sha256": "767b6eae19fb8edbbb13b5cb3570595fdd4d4b2c923728cbb06ab7e818f7a861",
+      "bytes": 3899,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/authorship.js",
+      "sha256": "4215f550db56eb542619f34c7a9fa361e3b81f980dce6441a93958b7aee835c3",
+      "bytes": 13137,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/catalog.js",
+      "sha256": "e078ec29fa7e827a20069b4ca911557b2ed42a5bd54c37011b9fba31cefe4944",
+      "bytes": 16373,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/conditions.js",
+      "sha256": "a35291427e4680d5b2824410c77f59f3d86848e5b00112b5ed6cdcd94478b615",
+      "bytes": 11104,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/dto.js",
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+      "bytes": 11,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/evolution.js",
+      "sha256": "48ae7d592110268a0e1a470414eb066c5b8f3857fbaaba13945e8f0b4b31f0bb",
+      "bytes": 8384,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/families.js",
+      "sha256": "7c1ab1092c8e378e87351a8e8e22026b533a16941e9b641be5bbf13c7022b10f",
+      "bytes": 14850,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/hierarchy.js",
+      "sha256": "3338c3714ba39ede7a6b7b358745da4128e87b041446b1c765746ba2c1a67f62",
+      "bytes": 13488,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/impact.js",
+      "sha256": "279f8cbd4499a9e455fe32cfbe442a9f02837c4cf3aed9308d72720f6945141c",
+      "bytes": 3618,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/layout.js",
+      "sha256": "f29352c46c0945e7d5312bc7ac162cc978336ffd08215edaf4ad4f9c428fc1ca",
+      "bytes": 17130,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/regions.js",
+      "sha256": "4ac8c73694686586799153fb5eb71da083eb51fe005ab4ef46ab6bd892fa17f3",
+      "bytes": 7393,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/request-flows.js",
+      "sha256": "3c3646da1c81e9d1970ffd9013ab94af8bd734d147b08ff2bbfdd0662e030121",
+      "bytes": 37393,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/service.js",
+      "sha256": "4dedb14243dc64919512c40082ec158f6b183b84ec42cc24d24b96f6d0983fd9",
+      "bytes": 106750,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/source.js",
+      "sha256": "72772b1f7ab90d6a9fde036c4adf58dce371156efaf00e405ca6c8339e2405e4",
+      "bytes": 9056,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/steps.js",
+      "sha256": "2ca619694417cba6cadf5d3830239b1b318ddec10a7b67742ed4ffe591d4e131",
+      "bytes": 6472,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/storage/sqlite.js",
+      "sha256": "e6c115b6e03f7b66a5827cc7d232fedf90bde1e13aad169ed50835f8ef90cbba",
+      "bytes": 13090,
+      "mode": 436
+    }
+  ],
+  "priorCompiledInventory": [
+    {
+      "file": "dist/src/ai/command.js",
+      "sha256": "01e89ed32c2094db118eb4bfc5f3bf86a4a232ad854aba7414390e03b809d98b",
+      "bytes": 6627,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/ai/domains.js",
+      "sha256": "321b4c10d528dc01436589c80138c03fd083c208e2948665e2504a9c30718e4c",
+      "bytes": 7584,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/ai/openai.js",
+      "sha256": "2de9f61f56ef42622f961be62e171da1dd937acc67df13ccc3aca89280328091",
+      "bytes": 4667,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/ai/pricing.js",
+      "sha256": "5f4fbed677f9d0b5f833474e56cd48310fb61bc522c4fd5a2b5a7d8b98e54a55",
+      "bytes": 1301,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/ai/runner.js",
+      "sha256": "1246ac056a33947d7227b599f7c112737e753b268beb771d3e2ca04eca9ba16d",
+      "bytes": 9147,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/ai/ste.js",
+      "sha256": "30e1e7a2e8ecfb25896fda0bf5d9ba56886b2114e9e8e628c2195b9fdef0c1dd",
+      "bytes": 7165,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/ai/store.js",
+      "sha256": "069aeb1ceb9a0626abfd272f420c9cdc9131d331fad2a64b99abb7339b77e375",
+      "bytes": 7414,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/ai/tasks.js",
+      "sha256": "d33a0572c934fecdbab250df96c12fca65b5b3e6b54606e27f9807d6facbc1dd",
+      "bytes": 34798,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/capabilities.js",
+      "sha256": "efbbec0c845247c9f95c692b65a80e286ffeeaa27a7a46376a0a6ba4eb18628e",
+      "bytes": 4002,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/embedded/framework-parser.js",
+      "sha256": "92bad28c5797b9edf10e30103fdbbf643d910eda78f9093245e562c9e8599028",
+      "bytes": 4572,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/embedded/framework-worker.js",
+      "sha256": "e5adbfab3e1bd2e2803805057c98cd787bd5b27400d5f71bc5a33e1b36c5f35f",
+      "bytes": 1511,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/embedded/index.js",
+      "sha256": "77a397bca785e3824907e6bd3af6d923029783b460f82163f7250d20d5d2cab4",
+      "bytes": 17960,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/embedded/native-framework-worker.mjs",
+      "sha256": "55ad6c2d7d187e0590c3bc8400270b9da435521fc19d3519875c46baf8db5c01",
+      "bytes": 1435,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/embedded/source.js",
+      "sha256": "7601b34919ff07bc7db00bee99c21f147568578e0f07cafbd482b2ebdfa2459a",
+      "bytes": 14426,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/facts.js",
+      "sha256": "054089344809c56a6f6d37b67a9e1365791ffe5997bff6cf5021b435edc30e48",
+      "bytes": 941,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/aspnet-minimal.js",
+      "sha256": "e248048837de47509e11ffce216da0502ce6937af457ca38f2408a5ba91e5a5d",
+      "bytes": 65374,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/aspnet-mvc.js",
+      "sha256": "7c1fa9a845145f41fd44d16a7b4948caf9e39bc0d813858f2869be583e07c8d8",
+      "bytes": 26822,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/aspnet-profile.js",
+      "sha256": "5ab9172fc5ef7461916ec9d228609f59919e11ef768761f42eba258ebbba8e67",
+      "bytes": 3695,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/astro-config.js",
+      "sha256": "56bba475ea98f9096f9a2554c9d125d603c8f1f5a6b10e81605c2df5c9638942",
+      "bytes": 14856,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/astro-path.js",
+      "sha256": "8d26daeb514d8e792cd3f31ce3042696cc01e7ff890ac5127a43cce9c0a84b58",
+      "bytes": 2650,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/astro-routes.js",
+      "sha256": "8691c445e8873ea40931c5c39accff8d1acd865e18cf148fcdd625d08f92c9fc",
+      "bytes": 21751,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/astro.js",
+      "sha256": "6b115fe0146c8b3c0d8d35eab9f673d069a92bf30d468814d4655755fddaa79c",
+      "bytes": 25212,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/browser-invocations.js",
+      "sha256": "7ac137a8cbfe4f1e403be138bdb082321e8210a5591b0d5c60d2d63247c89c8e",
+      "bytes": 2570,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/django.js",
+      "sha256": "4fbd4ebfbace7cc792e6c2f9fdfaaeca51c646f47940b3493c8f1f939e2485c7",
+      "bytes": 47974,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/express.js",
+      "sha256": "f6418bbf945c19f24b442ff683f06d1dd7afe0b3dc008c06f5f2f88dc1a35033",
+      "bytes": 32061,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/fastapi.js",
+      "sha256": "3410ae9be4c3a447e6aed4be193f0632762dd8f06783276a31785a384f759621",
+      "bytes": 34060,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/flask.js",
+      "sha256": "e85e9fdc0862c348a51328c13b4b8717f19516867c2f165fb8e589b5ec21dc2e",
+      "bytes": 45296,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/go-profile.js",
+      "sha256": "f903e587b9af1a091c44ddc3cbc52038b98f3156f3e24c35493892819d2d8ba7",
+      "bytes": 3165,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/go-routers.js",
+      "sha256": "29f595353b38dd91994d6013534b476f80b2f36df7b7649c4f058b687ed6027b",
+      "bytes": 83728,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/index.js",
+      "sha256": "3f7175e869242db6729f89bdcd73c7d41dead0ca2ee8712a703a1797d3fc8ca0",
+      "bytes": 345,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/nest.js",
+      "sha256": "af5e75c2ecdb176f42a0576bfcdfca93fe167688e5e34905b8701e75de057a7b",
+      "bytes": 42300,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/nuxt-config.js",
+      "sha256": "1cbbeb9a2aeebbe503bce3ab498c9111273146b0cf79f32df0eeaf91ac147be2",
+      "bytes": 21130,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/nuxt-conventions.js",
+      "sha256": "a8f4c53425983d82498ac9a0ae618ae34c3803acf0e5bc7a6e8a787b27f544dd",
+      "bytes": 17766,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/nuxt-path.js",
+      "sha256": "7fa9013219c9d3eeedb01c2696a2e40b9fcc3f6e2ae438f09fb48ce48452f7cb",
+      "bytes": 4301,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/nuxt.js",
+      "sha256": "c4bb7b01b9c78050c60c20cf2bdf65475dabb62db98cc5e6b73efc2269e1e9c9",
+      "bytes": 25567,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/rails-controllers.js",
+      "sha256": "05b14c20552959770eee75dc6c363d2486bba10c13c251acb01870e27a196b5b",
+      "bytes": 15513,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/rails-inflections.js",
+      "sha256": "0afcdf472ca54d317777d918130a132eccf64052fd8a06edb1237e633f2e759e",
+      "bytes": 4806,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/rails.js",
+      "sha256": "0698d6810fc2b28ae71a1900b12778226d4258ce9e4be77e7bb9d200d99e628d",
+      "bytes": 42833,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/rust-derive-namespace.js",
+      "sha256": "31c29f36a556684943b94c7f82d665725735a20f49772ec54aab7cd6b3173123",
+      "bytes": 7100,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/rust-profile.js",
+      "sha256": "ac2be34abbea49c8690085f8b6f832f45ee0d7c67e8dd387a9b6270cb910cad7",
+      "bytes": 31787,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/rust-routers.js",
+      "sha256": "94c03fe356b462f0f49398d27b7101cb2b8a2cc675ad8406aed12c46570f942c",
+      "bytes": 124057,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/rust-source-projection.js",
+      "sha256": "18d5f385a02def23fa4e5a0e6b9ed14bcefd7542dbc4cb41383cd79b46aa7b98",
+      "bytes": 4283,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/spring-mvc.js",
+      "sha256": "0cfca408b1043e4689f971c6525f0dcbe0684f37682323a6aba8167ea05c4e3b",
+      "bytes": 23159,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/spring-profile.js",
+      "sha256": "45e1eae9916dd97da4b8b01e5009def3b0d9b5a3186ee5ccfdb011c5ca6bdd88",
+      "bytes": 10274,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/spring-webflux.js",
+      "sha256": "0d482f067fea251f1b4c90dd69b544348060a988338fd3fbf2f17f62b1c35d4e",
+      "bytes": 43796,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/svelte.js",
+      "sha256": "77ac062c84bc0d5192c3eb97f10861e65a03204b0a4fa68ecad1bbf43cfecb61",
+      "bytes": 32812,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/sveltekit-config.js",
+      "sha256": "06a38cb4efdab71f7cf72a6d77b96ea5648118ca916a6eb1762fb0b47eb42459",
+      "bytes": 14695,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/sveltekit-invocations.js",
+      "sha256": "728125d46930b6ff95baa0f7e75d37138e5c2b0404b7923b88296f1717d85657",
+      "bytes": 2645,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/sveltekit-path.js",
+      "sha256": "9115c54500ff73415527a5ec203386abe5e50c9ae64db4e0ac329e371e682aec",
+      "bytes": 4587,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/sveltekit.js",
+      "sha256": "a26e9bf31c90606e1158e57863be13272fc927b136429385ec5bef3f49e1bc7b",
+      "bytes": 31915,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/typescript-binding.js",
+      "sha256": "efa19af5a701b0b445fde7b439b94b4499868994d1b0cf7227a14eca3933083f",
+      "bytes": 9021,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/typescript-pack.js",
+      "sha256": "f09e841592c49f849e0621e8bfa53ab57050cdbb7b3ba08355d066cbf35a688c",
+      "bytes": 2499,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/typescript-static.js",
+      "sha256": "55e802af148be460a6980f739fb31c7fdc2fc0559d5da974278ed3b590d93c58",
+      "bytes": 13116,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/vue-router.js",
+      "sha256": "a100cfa571d1a1ddf0745d4d27a60512758d93dcb1dd06acf3552fbefed62c94",
+      "bytes": 18749,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/vue-static.js",
+      "sha256": "4894e8197f8efe5789b73c5833b4ca118f3b5b4fc436e82fc4d0b00e0531ecb5",
+      "bytes": 95,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/vue-template.js",
+      "sha256": "d0ed8c89026a306f74bc3c280e5aa76cb05a9d0021fcc9a614f887c4d6e6d6bc",
+      "bytes": 6838,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/vue.js",
+      "sha256": "5f7bbfe710322a39ad9cbb612654fada6f3b619419ba9bf8d019617a1a6a83a2",
+      "bytes": 30459,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/warp-cors.js",
+      "sha256": "75e0af8fd4b734ca5839e7795a181631d659f82e879932ff8373f072e12e5ba2",
+      "bytes": 4500,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/warp-state.js",
+      "sha256": "80d087ec95cdac4234f0fff4d7835a4672ffaa6b5ac3cffe9501d392edad6baa",
+      "bytes": 4618,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/frameworks/warp-syntax.js",
+      "sha256": "58413aa6a49228abff9be9e2f5ffa0e2450d75817c4bdc0a7c660b9b3905eb40",
+      "bytes": 3472,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/indexed-sources.js",
+      "sha256": "27c6c869567a3ec21cd8522c75a47795713b8ceb2c4ab5d6174ae900e8eed5b2",
+      "bytes": 6545,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/csharp-symbols.js",
+      "sha256": "f8e50b3b79913c88449d06623d3f38f1c8c0cccb92668b2b1fdad1b73fdcb5c1",
+      "bytes": 56574,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/csharp-types.js",
+      "sha256": "0953868e3558b762a2d5562f379938a98a936214aa203a5cf144207140c4b65a",
+      "bytes": 6582,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/csharp.js",
+      "sha256": "0aa7132c8b8ad0c5ef1abec33979810f5ded55a0abb7a4eaf8b77a68876ed8d6",
+      "bytes": 6317,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/go-api.js",
+      "sha256": "3f5c7b1bffa7b60f373479a795baf00c1e8ea4da10cbc5b862fc9949b87efe9e",
+      "bytes": 2128,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/go-build.js",
+      "sha256": "82eb45d07281ab46a5e731f743dcaae50991f65212b09836f4ef83bcb4aaa719",
+      "bytes": 8473,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/go-symbols.js",
+      "sha256": "808821e2401fd85269aee49e753dc2a74f886a90a7a9b258fef3929c0768e2ed",
+      "bytes": 34469,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/go.js",
+      "sha256": "2d605901cf4ee41025c68400e752d631ed44e3e2e15b73d4c72c681a6ae68704",
+      "bytes": 7376,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/jvm-symbols.js",
+      "sha256": "2044f9e0cccb027eaea5843009aa8da4a2733a7fcb152f43e5db47aa24cda212",
+      "bytes": 46517,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/jvm.js",
+      "sha256": "3877b3df47efd4a46ea7d771a398f9a214094f415e4c39f5b4fab6e667dfdfb6",
+      "bytes": 5921,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/liquid.js",
+      "sha256": "2bd456d9f35b159d957bdbe56f1c98291e7a603104bf534b5d889c9dc6277760",
+      "bytes": 5658,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/php-imports.js",
+      "sha256": "d26b236a3c2c072e500c3de56ba57c38ee8c00e2c0caaaa3b0a8f85c4bc942ad",
+      "bytes": 4513,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/php-symbols.js",
+      "sha256": "172b8017e26dcaf501402b72b5441aa6e737f414f3b89242570c36b094e15785",
+      "bytes": 49259,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/php.js",
+      "sha256": "7d6e4571b93aad9ba528190a186d95d18273d2b220390b66150328cf3d40669b",
+      "bytes": 9646,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/python-arguments.js",
+      "sha256": "513678fa6e1d230186597f27f4407d83098de1286236e06a73a3d4988e8b3cf7",
+      "bytes": 1200,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/python-bindings.js",
+      "sha256": "054c945fa420fcd4e7fcd941b739b6a54cc0c189c474911e47acf25ef77aee39",
+      "bytes": 3427,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/python-symbols.js",
+      "sha256": "5a1ae6a798053e3db0465396af8c511bed3b9d90096f4bfdcd6bfe033849a368",
+      "bytes": 20525,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/python.js",
+      "sha256": "d692e026d24b438259f4f35318449244465f79cc81465a99679dc01f24f64e24",
+      "bytes": 13684,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/ruby-profile.js",
+      "sha256": "08b7c16aa004e1ed79691703ad5fcaca1d213f5ec13ee8cfef1152e69a114f49",
+      "bytes": 8302,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/ruby-symbols.js",
+      "sha256": "ac7cec29fc7289eec2eaa0c7c78fbce82c1d55c3acb6a75bb57f988566828c1e",
+      "bytes": 45091,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/ruby-version.js",
+      "sha256": "f52f6850c247a93aeecae89808cf1dda7a3929607801a9fc125e48c4adbc3048",
+      "bytes": 5355,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/ruby.js",
+      "sha256": "a2208b1708f89bda3ef6ec02ea613dd392fd73f5d1b5958d192b13c1100e67b7",
+      "bytes": 5963,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/rust-cfg.js",
+      "sha256": "6fe2986d0a2619fc01a12d6b710770c25ad4087fc366322cc9b7570f1a72b942",
+      "bytes": 11751,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/rust-symbols.js",
+      "sha256": "0d485651db42f5fb2dca054f779ae2dca2716bb23e7c7970198e81765c09fe29",
+      "bytes": 43891,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/rust.js",
+      "sha256": "7bbc0b6ed849844b45b456de906e455b093ee259d07be446111c242c3816890b",
+      "bytes": 8138,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/typescript-runtime.js",
+      "sha256": "8c0ac70f6807b2d4e14f31a30f50ac371167922abad606994bf1036355352653",
+      "bytes": 8748,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/languages/typescript-services.js",
+      "sha256": "7268e8dd28d406b36a7e7c8b687c2d03d46c430742d4e92cb293543dc28ddf89",
+      "bytes": 14918,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/php/binding-node.js",
+      "sha256": "8e36886c8d8d9146bcf88a1f7a9045f58114f4b7dd92f50d24caafc5e5b5980b",
+      "bytes": 2591,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/php/client.js",
+      "sha256": "4435e91b40daac63dbe999846103d1b826cfa40ab3f65413799c9b439e80ede2",
+      "bytes": 1418,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/php/laravel-files.js",
+      "sha256": "bd25139b20016ee1d5af9e7fc5defc67dac3d902425a0a882ca7d334eda8914d",
+      "bytes": 3455,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/php/native-worker.mjs",
+      "sha256": "9d4dd40f7a7af3bb5366c7b7851c085fe780dce01cfedc1dd52664caa062eb86",
+      "bytes": 1828,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/php/residency.js",
+      "sha256": "6f64af94e5703c7339583a7014764d807791b31e38a67373f14f70bdd6c0d26c",
+      "bytes": 10451,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/php/sources.js",
+      "sha256": "75f14e7bed1faab5e479cf8013cc1203488159f986d3509b502d2542cd3f8e1a",
+      "bytes": 6719,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/php/structure.js",
+      "sha256": "1109576c08ad29576ed48737f978b6bb8b16eacf380da4bded4f8d7f9d522e5a",
+      "bytes": 23656,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/php/version.js",
+      "sha256": "6f56bc1977cf5f5ce910952d83f5fea4de901f5f2bc3c8870636ce41fa34115d",
+      "bytes": 439,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/project-model.js",
+      "sha256": "49640778271d947bdd987dd7ecbca93fbf74d37b82143b038fd13e0c490b23b9",
+      "bytes": 11397,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/registry.js",
+      "sha256": "b8bfb3c46529e3dfba1419117d0b6a4f45d9042643ce877b7549cc65426ee511",
+      "bytes": 1800,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/csharp.js",
+      "sha256": "4682b180ff2b14c7f6f208baa470eb20d4dc9663aa2153e9702d4b6c8de953af",
+      "bytes": 10843,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/dotnet-data.js",
+      "sha256": "02c5aa8dd41e405e418c3c7b6b400d3ff7a3e7834b7997787a75d8cb94df108b",
+      "bytes": 5718,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/dotnet-projects.js",
+      "sha256": "5add50944ab0f4c65803afbfb00a259d1e8d8f9dfa371d36c027b26fd36c47f4",
+      "bytes": 28264,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/go-manifest.js",
+      "sha256": "be757f49bfdcdef4fd60878f521d8abf0e7f5c497e1bb8de55047e575afc7cd3",
+      "bytes": 8455,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/go.js",
+      "sha256": "c5b5489389412355a8f762a34f91edcdeee0ca61bae1ce6881cbd40eb7cf9e97",
+      "bytes": 21499,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/jvm-manifest.js",
+      "sha256": "54e50e4801709fba334a5aeb5ebff7a26f3f6fd66d826ceaeb845b7345818442",
+      "bytes": 13957,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/jvm-projects.js",
+      "sha256": "de90187d712efe03adbb5333f4a766c74ab83c95e5c7c0eebe6835bb23a8fffc",
+      "bytes": 29105,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/jvm.js",
+      "sha256": "b6463f25e38b8bf9eedc7e9864e6f3b5ba904aeae558c2323166fd1ee684cec0",
+      "bytes": 12991,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/php.js",
+      "sha256": "1644363d28b420729c9cd22646f6e2fe419a56b215146efb1517bc0bdacec1a8",
+      "bytes": 39370,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/python.js",
+      "sha256": "72e33fe2eb390ae01b315d14787da949443ca04934466aa3712970ccb2562fa1",
+      "bytes": 21585,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/ruby-autoload.js",
+      "sha256": "c54c551774917e44a857a782f7ad35dcbcae804f321b6a16a47cfc4708062a1d",
+      "bytes": 38673,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/ruby.js",
+      "sha256": "ae12a456098ba09f28d1bf2a7b6d7f76275f03741d850bd049439079b9ad858e",
+      "bytes": 25990,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/rust-derive-namespace.js",
+      "sha256": "a16dd243d56831352639339502ec856417d14f59ccabb0866f41b0308f871c6f",
+      "bytes": 11072,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/rust-lock.js",
+      "sha256": "05696065fe899c7994acdbf45aa53d00d0b22e1fd964787d43a0e4a618793003",
+      "bytes": 5159,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/rust-projects.js",
+      "sha256": "f4a9a0a3c82ecf30dcdad485ccc87917ca18432a4801cd89ba00ceec1a74bd65",
+      "bytes": 39844,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/rust-runtime-namespace.js",
+      "sha256": "d1d9bd8fa88b7dccafb37b76292cde30a4dbb43aaf06edfbb5a778a5ab7b0c90",
+      "bytes": 13431,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/rust.js",
+      "sha256": "61f2a76ca341eda2a17dc98442d0754510e2117913539cd9cfe5a94bdaa2e5fb",
+      "bytes": 31254,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/resolution/typescript.js",
+      "sha256": "0f3c1979b57aeb08b64344796a5e41f9a42b06e457c4d4a1eea169fb3c1b9721",
+      "bytes": 9300,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/aspnet-patterns.js",
+      "sha256": "9a2c360c8e988b48f7bb9421220112943114427df9dc029b4408da56cd8e500c",
+      "bytes": 20533,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/boundaries.js",
+      "sha256": "1d7914dab20052b58d44d87628656caaa6bd0f5947f0bdf4b98c4b0ea26dab2d",
+      "bytes": 3377,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/contracts.js",
+      "sha256": "752f54415e6bdb90103d49409ffa727344a095106e111fa38dc23b567c973ab1",
+      "bytes": 16549,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/go-patterns.js",
+      "sha256": "20e83337bb9efdcf6f64da587af8fad8c80dfd1cccd3578ec76f14e42a553f8d",
+      "bytes": 19416,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/http-method.js",
+      "sha256": "52e2ba4e203b25d6537ba68259c9a32d880f4a641335c298af9b372104cf0547",
+      "bytes": 529,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/pattern.js",
+      "sha256": "a247107f512905f740d4bf1fde321f21851f16a238f61952907e1256f9161cb3",
+      "bytes": 3672,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/rails-patterns.js",
+      "sha256": "d73c3093d79571cf9093efdf243cd5c0d2ad3551401407ea7cdb1f560568f521",
+      "bytes": 7990,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/rocket-patterns.js",
+      "sha256": "ad35667783912cc804e28c1dca36e9188b0a5245b8e6e0a8e26ad41ef87afaaa",
+      "bytes": 7534,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/rust-patterns.js",
+      "sha256": "c3de703c9fcb24d55db634726fb8d6aa34526ae9ecbf7060e944b0b0a0085562",
+      "bytes": 13993,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/spring-patterns.js",
+      "sha256": "c62f985f0bad46a39d8826c83adc2c7d0f523515e04c388363ea7c6052dee7ff",
+      "bytes": 8938,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/warp-patterns.js",
+      "sha256": "dd968c6fb9074560daa5eaf582abfad481999082818696906b8a98efa9ade429",
+      "bytes": 13490,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/routes/webflux-order.js",
+      "sha256": "5c4eeb87f750500b8e1f01c554bf3ed228e6b603a2dcb6f3f82a3061cd31eac6",
+      "bytes": 1095,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/rust-evidence.js",
+      "sha256": "68f52d73b20d672f4a87666d9acbb609b7638311adc3208ce03410be1587b517",
+      "bytes": 8134,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/source-map.js",
+      "sha256": "8dc16f5413971a87b8ae7f9bac07e98b367eafa8da7392548e22269ff40b4214",
+      "bytes": 1869,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/analyzer.js",
+      "sha256": "aab1807b44811c6fe0a599e1d456ba3321bc23d49177c97a904f9e5d273ae587",
+      "bytes": 21942,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/cfamily-source.js",
+      "sha256": "ac281a9f76c405d8be538aee23281fc04d1d3166e6b3fd6a496120ce774b9c18",
+      "bytes": 4924,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/cfamily-structure.js",
+      "sha256": "628bd3cbc8cfa9c890f3c4751a11f0d036a1ab241bb712148dad5c8bc2fdf43c",
+      "bytes": 15991,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/client.js",
+      "sha256": "f7ac85be26ef43c8d6acd827177cbf6e78d08c531ae3037065d5ce43413162de",
+      "bytes": 12454,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/csharp-semantic.js",
+      "sha256": "dce3d40932edc733616366cef9c8d1258dfe72fc149c6e1cf98c796a93deb585",
+      "bytes": 30222,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/csharp-syntax.js",
+      "sha256": "5dc8852ea74410a5104004cdaedbab74d083b3e4a3bc9aa265649874d78e63e0",
+      "bytes": 7347,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/embedded-host.js",
+      "sha256": "0e0ef41160d186a20bc09fc52bbbcf6006026f7cc63ec14f853f9bd395b2b176",
+      "bytes": 4814,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/erb-script.js",
+      "sha256": "1496688dedc4bf83c829d6a2ea30ae93a0b89abcbc4ab7142b7a60016645f94f",
+      "bytes": 9908,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/erb-structure.js",
+      "sha256": "69b3db836609ccb89c427a0b0472bae6c55e04d859a92f603ad9186a186fdedc",
+      "bytes": 11430,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/extract.js",
+      "sha256": "8a913b282c7e1318fc1b39f9e9ea5a418c676d282850d617fb6538a7a0d3285c",
+      "bytes": 14768,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/fsharp-structure.js",
+      "sha256": "1a90333411dbd2f71ab9cd6e39d2751183a82894608c8448b42e7f78eef882eb",
+      "bytes": 22344,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/go-imports.js",
+      "sha256": "0f104409b7256b21917c4b64b6212cca8363e7ca240ad19607e36d956d201847",
+      "bytes": 4062,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/go-syntax.js",
+      "sha256": "1ddfd8d452890de1932b9022e82896cd1555202fb9c808d16214dcff3b89d22a",
+      "bytes": 19979,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/grammars.js",
+      "sha256": "92e8dd8e7e739bf3ffb08626e0d87b66fbcc11cfb8bafd0a99ea2136af615b5d",
+      "bytes": 2623,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/groovy-structure.js",
+      "sha256": "c7f47a8ac05e24c6fb68b8afedd3fb2dd90451f9111b87a7de86389b9b11ba94",
+      "bytes": 13675,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/jvm-semantic.js",
+      "sha256": "a2c38fe87a5f9d6d401da18734bc23fd4d934b0ebad0990e24e930a05b1c0fb9",
+      "bytes": 31413,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/jvm-syntax.js",
+      "sha256": "e07ec1708460733193738510d44a5cd2c4527f71c7f82633fb58921f2e304617",
+      "bytes": 4637,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/liquid-structure.js",
+      "sha256": "e2126fa7089155b6f3c1bf3ecc772b37907c4d8cf2a9f82d1cdbc7e378ddb81b",
+      "bytes": 17808,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/native-budget.js",
+      "sha256": "1052897b64da0ceb45e8bbc799d2ea2f66aaaf2328b4054c7d15a08788835de4",
+      "bytes": 4014,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/native-script-worker.mjs",
+      "sha256": "a439aae8c073913d088e58aac2e9365b7d94e79e23e5bde29f1bb2c0e55d9ca3",
+      "bytes": 12941,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/native-worker.mjs",
+      "sha256": "96f33c4bacab113f0e24f760972ef2c6b2574e3c9426a6f1475f4aad552310ce",
+      "bytes": 370641,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/objc-cpp.js",
+      "sha256": "a444baee148356f17649aa1d6aa34f518cc2f3a67cf8ec113447cacba651097a",
+      "bytes": 13638,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/objc-macros.js",
+      "sha256": "2ddd753b57a06f631494cf751c91ed6e63aa81ad17790882094a9236975d4a73",
+      "bytes": 7391,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/objc-regions.js",
+      "sha256": "20bd8013dde8d4f6f6883404eb31788e0ee4881c5777512e5fe08101bed5d305",
+      "bytes": 6602,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/objc-structure.js",
+      "sha256": "f635ebbf7885cecc840e1e5b1b42f6f8a4435ac3cf126d30aab1c1bd47ca520b",
+      "bytes": 15159,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/python-imports.js",
+      "sha256": "c735163946a6c8b9a88004976a66dd9e9bbb0f7172599ced72480f13764d994b",
+      "bytes": 17531,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/razor-structure.js",
+      "sha256": "78ba225518bf5ccda38aadf4d9e82901aa439fe35ca7100e71152e773b22333b",
+      "bytes": 16946,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/ruby-syntax.js",
+      "sha256": "5f1b84b45f81772f7f404558448013360d7b366141ff744bbdefc4860ed71c93",
+      "bytes": 17564,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/rust-semantic.js",
+      "sha256": "5123ea6d157fab2fcf50b2c6f872f253c35ee4db8083c09081920b228c27f476",
+      "bytes": 23770,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/rust-syntax.js",
+      "sha256": "3faa2f39fb4a465242cd496731a6bcb2ac713e896b6fb7f6e7e46297ee6aaea6",
+      "bytes": 11940,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/scala-structure.js",
+      "sha256": "95f4c01a4d3a976bcb7bdb039a4d9b999ae0fa6aea2dba8f3af7fc88286fb9db",
+      "bytes": 17822,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/script-worker.js",
+      "sha256": "c63c2b132ab1fec49460b7a58c8169fac60348abb0ef8fa9c2a797a4aec6b852",
+      "bytes": 1072,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/swift-structure.js",
+      "sha256": "28eb68d26dca216480bc136f91eeb28efa481bb7e29dd03ea904ef3ad3e8f259",
+      "bytes": 16626,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/template-facts.js",
+      "sha256": "56cceb990a1b9c37d4e1b415dd3d35ea36d8765ecd50365cdd4b25cd21136c6e",
+      "bytes": 2476,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/template-scripts.js",
+      "sha256": "b7c6881482ed01e6ba0263f62e4d39616310c41ceb5508e4a88ce51a9793c35f",
+      "bytes": 2473,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/vbnet-source.js",
+      "sha256": "8b6ec03d2feb667d0cbab19e14ce5f0be597dc03fe614367c52365adf994b060",
+      "bytes": 3420,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/vbnet-structure.js",
+      "sha256": "7ce248b32aa4e5199d4fd9dd8f9414d6a9c443a7e8b5d66d3d644e19739696e9",
+      "bytes": 15898,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/worker.js",
+      "sha256": "442c1fcdfe2b1b974d5c6bc5a3299981af224c55f222d956873975427a9969e8",
+      "bytes": 11211,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/filesystem.js",
+      "sha256": "8423e15fcaf073cae307552a1e4190b558a6ec6ecd7336d2251fe2cf1d6c166a",
+      "bytes": 8886,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/git-metrics.js",
+      "sha256": "0310f3adfee27fe07d0178ae76b304068371fdaf547d47e0e4d36603b02a0f0f",
+      "bytes": 6524,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/laravel-console.js",
+      "sha256": "7b9ec4e221676b2ddbb203001b8aabeb1f51126e41b123cc6ef5da9fcf37e720",
+      "bytes": 18247,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/laravel-fortify.js",
+      "sha256": "278810bbf529dae3cfb36a07229c68828b46f00a337300546d82c8f8abf0b752",
+      "bytes": 14905,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/laravel-schema.js",
+      "sha256": "6cdb9f26edae9a02258219323f55c870987fdd0c0f828bea23642db3cea14d22",
+      "bytes": 37379,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/laravel.js",
+      "sha256": "63ca9d6159feb3ad35412b7fff6a9a4999d78054b4b954359771168546d9acab",
+      "bytes": 30955,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/php-ast.js",
+      "sha256": "f17e4624b52eb79a6f942afcbe39c923d2cc1850239a233bd7ce84f9dc2640c6",
+      "bytes": 3543,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/php-references.js",
+      "sha256": "7a65608b252ceae3841ef958e5605527741d7134ee76a5f2aa6cfe9972f18888",
+      "bytes": 33368,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/references.js",
+      "sha256": "ef90d5d77ee64bfbf205db883ab7b7027fef18467e88ebd5ed675d24d56287e3",
+      "bytes": 2951,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/ts-http.js",
+      "sha256": "65c3ed5c8abad7a29dcbd2f6449403c65928c0dd514e68fa2f776cfa8b7d9c49",
+      "bytes": 34218,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/ts-program.js",
+      "sha256": "d3324131642b8815ef0241de180351cb1910927f1ef182e1dc3121ae58102f24",
+      "bytes": 9332,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/ts-references.js",
+      "sha256": "7a705017cd0eaa4813fb892501d646efe8d5f26451e6e63c3cd0f0a0f7365647",
+      "bytes": 24521,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/ts-url.js",
+      "sha256": "410e5e2e47bbe6d8c76aaffde60dda0ffe682e3f8518e1dfc0e3a0d2be99f510",
+      "bytes": 27746,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/analyzers/typescript.js",
+      "sha256": "a1697026d9d112531b1e86b6cc30069a98518d0f524f428ac0726f585f906de6",
+      "bytes": 35949,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/api/projection-routes.js",
+      "sha256": "19bc5b149d058e5d01a45c378bcf88a87c010b5189593c0795a00d282d3e5af4",
+      "bytes": 12179,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/api/server.js",
+      "sha256": "4fe1bdd8e5098e838ef2cda66cdb7ea597ccc5ccdf4a27c4676b1e7f0ae1b360",
+      "bytes": 8712,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/api/static.js",
+      "sha256": "0b05640f1ab88732738b6a95beb1c01f4eb0c6a64c316a8c6f62cfc514f8ee28",
+      "bytes": 2089,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/cli.js",
+      "sha256": "7d748d2633c9fcf2f27f0d70dffca41a5159c704d87fe06c5db001c2a6818398",
+      "bytes": 15932,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/core/analyzer.js",
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+      "bytes": 11,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/core/config.js",
+      "sha256": "793580676746d734475d194652636f2e2764c397afbe3ce671c24dad893d4fa2",
+      "bytes": 31493,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/core/graph.js",
+      "sha256": "7e20c3cc186f72e7d91786e5b007148e2115e66ee41c31e627fa57bbfcce0645",
+      "bytes": 5571,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/core/languages.js",
+      "sha256": "fa91d9265b4360247b577070c970802f7e53edc4ea77a7e5889f6702aaa37947",
+      "bytes": 4046,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/core/manifests.js",
+      "sha256": "1850bd58faa30c64e1c91ff4e6fa9786af8b65c2ac9b9a076988c08e6592b1ea",
+      "bytes": 14363,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/core/workspaces.js",
+      "sha256": "52a8c64fbf7e8bbfc506b7aff714a1e097a10375ad3410f4ac927a0c5649ca9e",
+      "bytes": 1414,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/authors.js",
+      "sha256": "7fbbb0db251ab2b65097d776956c4333a21a3e220aa9cebcbedc44d8d15fbb98",
+      "bytes": 16235,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/diff.js",
+      "sha256": "61ff9e38bde6d365487dc414f9f44c4dee120c2563bc42ed139d37e2c545bceb",
+      "bytes": 9669,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/fingerprint.js",
+      "sha256": "a0ee63d59385bf080f2d99b342c9f01213396b529fd63cf56d137357e8e8316c",
+      "bytes": 2976,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/git.js",
+      "sha256": "7d16c4c6c706ea00c77678b8e2ed59f85ba2c5dea5bffe7faefbe651c74220f1",
+      "bytes": 12011,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/indexer.js",
+      "sha256": "0c064a2af2f6fa0e9a4463ec8a62462eef16f29746a9b1e1c86e869314318454",
+      "bytes": 14620,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/lineage.js",
+      "sha256": "41da10f9756b3a87d149d40adb19204bbb5bd05fae64c34a5d974452664b5628",
+      "bytes": 7651,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/pull-requests.js",
+      "sha256": "3a2bd4a26c11e7198d9301c7ca190d2d929e6ba76bfe6522782999f948b8ea9d",
+      "bytes": 3387,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/service.js",
+      "sha256": "d42da690f81e85b659522118c5ecfa20b1005bbd0e9c32906f588b348792b8de",
+      "bytes": 8528,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/snapshot.js",
+      "sha256": "9f0ec6792c73d8f42ec2240f898c0b0c4060ad3a53318c90cb70a74397e43828",
+      "bytes": 8952,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/store.js",
+      "sha256": "d709443ee4b27437da1ef6ce25731437ea9da10d7c0c3180bfa2bd76b8532977",
+      "bytes": 23447,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/textdiff.js",
+      "sha256": "089a62b590bea8e05eecc9503ad18cef537d801ba6c11f353e3ca5a1a81e4943",
+      "bytes": 5049,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/worker-channel.js",
+      "sha256": "01b2dc97fe488f15b9445a156687eadd7a37397472f8423ed996ce4bbd851f63",
+      "bytes": 1450,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/history/worker.js",
+      "sha256": "85a2edf0fc0de4cb213332d10ff22cb4d7462d4a9316d6b4ed1337958d10ea03",
+      "bytes": 1395,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/launcher.js",
+      "sha256": "b6ec7126ccd2ce1d2972a1a249903f3b937346cc0ef03b7aab39bf37bcdbf3df",
+      "bytes": 10040,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/pipeline/api-matcher.js",
+      "sha256": "c23126079d1dd8d3e9381156aebb59f78c80c2e684c1b3089326aefe48cedb46",
+      "bytes": 22088,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/pipeline/cache.js",
+      "sha256": "cbc4366ae802af697335fc0716e9cbd9646daece175a22dc85e548e590591096",
+      "bytes": 17081,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/pipeline/index.js",
+      "sha256": "56cde60b4dead7d2af5ad753d39a2e65041451cc43141e413cbd854980bc0efc",
+      "bytes": 7232,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/pipeline/inertia-linker.js",
+      "sha256": "1db6bcafe66a2adce0439050ad5009bf324f6be89f4e93285ccd86002d27262b",
+      "bytes": 3517,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/pipeline/php-analysis.js",
+      "sha256": "767b6eae19fb8edbbb13b5cb3570595fdd4d4b2c923728cbb06ab7e818f7a861",
+      "bytes": 3899,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/authorship.js",
+      "sha256": "4215f550db56eb542619f34c7a9fa361e3b81f980dce6441a93958b7aee835c3",
+      "bytes": 13137,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/catalog.js",
+      "sha256": "e078ec29fa7e827a20069b4ca911557b2ed42a5bd54c37011b9fba31cefe4944",
+      "bytes": 16373,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/conditions.js",
+      "sha256": "a35291427e4680d5b2824410c77f59f3d86848e5b00112b5ed6cdcd94478b615",
+      "bytes": 11104,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/dto.js",
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+      "bytes": 11,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/evolution.js",
+      "sha256": "48ae7d592110268a0e1a470414eb066c5b8f3857fbaaba13945e8f0b4b31f0bb",
+      "bytes": 8384,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/families.js",
+      "sha256": "7c1ab1092c8e378e87351a8e8e22026b533a16941e9b641be5bbf13c7022b10f",
+      "bytes": 14850,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/hierarchy.js",
+      "sha256": "3338c3714ba39ede7a6b7b358745da4128e87b041446b1c765746ba2c1a67f62",
+      "bytes": 13488,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/impact.js",
+      "sha256": "279f8cbd4499a9e455fe32cfbe442a9f02837c4cf3aed9308d72720f6945141c",
+      "bytes": 3618,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/layout.js",
+      "sha256": "f29352c46c0945e7d5312bc7ac162cc978336ffd08215edaf4ad4f9c428fc1ca",
+      "bytes": 17130,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/regions.js",
+      "sha256": "4ac8c73694686586799153fb5eb71da083eb51fe005ab4ef46ab6bd892fa17f3",
+      "bytes": 7393,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/request-flows.js",
+      "sha256": "3c3646da1c81e9d1970ffd9013ab94af8bd734d147b08ff2bbfdd0662e030121",
+      "bytes": 37393,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/service.js",
+      "sha256": "4dedb14243dc64919512c40082ec158f6b183b84ec42cc24d24b96f6d0983fd9",
+      "bytes": 106750,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/source.js",
+      "sha256": "72772b1f7ab90d6a9fde036c4adf58dce371156efaf00e405ca6c8339e2405e4",
+      "bytes": 9056,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/projection/steps.js",
+      "sha256": "2ca619694417cba6cadf5d3830239b1b318ddec10a7b67742ed4ffe591d4e131",
+      "bytes": 6472,
+      "mode": 436
+    },
+    {
+      "file": "dist/src/storage/sqlite.js",
+      "sha256": "e6c115b6e03f7b66a5827cc7d232fedf90bde1e13aad169ed50835f8ef90cbba",
+      "bytes": 13090,
+      "mode": 436
+    }
+  ],
+  "vendorFiles": 14303,
+  "vendorSymlinks": 17,
+  "vendorBytesAndModesAudited": true,
+  "sourceReleaseInputs": 955,
+  "sourceReleaseManifestSha256": "592abefe39972fbcc86c1886b52f17432fd2d0fe6659b05f5a8ce335e0c9a53a",
+  "conformanceSourceSha256": "46f889a68712c6ed455f69571a3426b9529ec6a7d24af3ec47530ce0f2f1e9f4",
+  "ordinaryCurrentHelperSha256": "7614db60e4c03b391a8303a6862582c4629077136754adcf31569eb5f095b04d",
+  "ordinaryPriorHelperSha256": "0838661fe1ac9a53ce75c8bf690b1aa002582905e4c3eebec9524944965a0668",
+  "baseline": {
+    "executedRuntimeSha256": "29fc30a5f25dedd7f6aaf489f67dcdf308802c548f59f2ddb6782bdbc47a98ed",
+    "launchHarnessSnapshotRuntimeSha256": "1a59c904de099f94806f8fe12f07cdf19f0d483ca04d7a6e94a2a1c3f8a9e47e",
+    "actualExitCode": 1,
+    "tests": 11,
+    "passed": 0,
+    "failed": 11,
+    "reason": "Previous qualified compiled API rejects the new buildSystem field; failed baseline logs retained"
+  },
+  "gates": [
+    {
+      "schema": 1,
+      "name": "targeted",
+      "command": [
+        "node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "tests/jvm-build-selection.test.ts"
+      ],
+      "cwd": "/dev/shm/codiluce-jvm-build-selection/engine",
+      "startedAt": 1791876291.4828246,
+      "wrapperPid": 709490,
+      "actualPid": 709509,
+      "runtimeSha256": "1a59c904de099f94806f8fe12f07cdf19f0d483ca04d7a6e94a2a1c3f8a9e47e",
+      "releaseInputManifestSha256": "fdc5e3f112a3c8875ac84b18da439d84d4b62e136ee7cfbe0489b26fc175effc",
+      "log": "/dev/shm/codiluce-jvm-build-selection/targeted.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": true,
+      "actualExitCode": 0,
+      "completedAt": 1791876297.145128,
+      "seconds": 5.662303686141968,
+      "actualPidGone": true,
+      "logSha256": "e230de9c43eee8e4e61fb89195631a3d476279a53b3ec5b47f9992f84468b36a",
+      "tests": 10,
+      "pass": 10,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 5479.959305
+    },
+    {
+      "schema": 1,
+      "name": "targeted-complete",
+      "command": [
+        "node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "tests/jvm-build-selection.test.ts"
+      ],
+      "cwd": "/dev/shm/codiluce-jvm-build-selection/engine",
+      "startedAt": 1791876566.5093017,
+      "wrapperPid": 720996,
+      "actualPid": 720999,
+      "runtimeSha256": "1a59c904de099f94806f8fe12f07cdf19f0d483ca04d7a6e94a2a1c3f8a9e47e",
+      "releaseInputManifestSha256": "592abefe39972fbcc86c1886b52f17432fd2d0fe6659b05f5a8ce335e0c9a53a",
+      "log": "/dev/shm/codiluce-jvm-build-selection/targeted-complete.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": true,
+      "actualExitCode": 0,
+      "completedAt": 1791876574.5930917,
+      "seconds": 8.08379054069519,
+      "actualPidGone": true,
+      "logSha256": "b4e86ddf08692a395498742db4439b7c6ad46483a84b88e14c8c94257a60e1c8",
+      "tests": 11,
+      "pass": 11,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 7867.588526
+    },
+    {
+      "schema": 1,
+      "name": "jvm-regressions",
+      "command": [
+        "node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-concurrency=4",
+        "tests/jvm-imports.test.ts",
+        "tests/jvm-syntax.test.ts",
+        "tests/jvm-references.test.ts",
+        "tests/spring-mvc.test.ts",
+        "tests/spring-webflux.test.ts",
+        "tests/jvm-dotnet-qualification.test.ts"
+      ],
+      "cwd": "/dev/shm/codiluce-jvm-build-selection/engine",
+      "startedAt": 1791876366.703288,
+      "wrapperPid": 711863,
+      "actualPid": 711864,
+      "runtimeSha256": "1a59c904de099f94806f8fe12f07cdf19f0d483ca04d7a6e94a2a1c3f8a9e47e",
+      "releaseInputManifestSha256": "fdc5e3f112a3c8875ac84b18da439d84d4b62e136ee7cfbe0489b26fc175effc",
+      "log": "/dev/shm/codiluce-jvm-build-selection/jvm-regressions.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": true,
+      "actualExitCode": 0,
+      "completedAt": 1791876388.8068066,
+      "seconds": 22.10351872444153,
+      "actualPidGone": true,
+      "logSha256": "822cc3c538272a7970ee1db4b7caf5c0299ce51d7c4b99c4e97a21eb87da8c21",
+      "tests": 90,
+      "pass": 90,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 21910.589846
+    },
+    {
+      "schema": 1,
+      "name": "engine-typecheck",
+      "command": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "--incremental",
+        "false"
+      ],
+      "cwd": "/dev/shm/codiluce-jvm-build-selection/engine",
+      "startedAt": 1791876566.505838,
+      "wrapperPid": 720997,
+      "actualPid": 720998,
+      "runtimeSha256": "1a59c904de099f94806f8fe12f07cdf19f0d483ca04d7a6e94a2a1c3f8a9e47e",
+      "releaseInputManifestSha256": "592abefe39972fbcc86c1886b52f17432fd2d0fe6659b05f5a8ce335e0c9a53a",
+      "log": "/dev/shm/codiluce-jvm-build-selection/engine-typecheck.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": true,
+      "actualExitCode": 0,
+      "completedAt": 1791876579.488074,
+      "seconds": 12.982236385345459,
+      "actualPidGone": true,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "schema": 1,
+      "name": "web-typecheck",
+      "command": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "--incremental",
+        "false",
+        "-p",
+        "web"
+      ],
+      "cwd": "/dev/shm/codiluce-jvm-build-selection/engine",
+      "startedAt": 1791876566.512506,
+      "wrapperPid": 720995,
+      "actualPid": 721011,
+      "runtimeSha256": "1a59c904de099f94806f8fe12f07cdf19f0d483ca04d7a6e94a2a1c3f8a9e47e",
+      "releaseInputManifestSha256": "592abefe39972fbcc86c1886b52f17432fd2d0fe6659b05f5a8ce335e0c9a53a",
+      "log": "/dev/shm/codiluce-jvm-build-selection/web-typecheck.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": true,
+      "actualExitCode": 0,
+      "completedAt": 1791876580.1702037,
+      "seconds": 13.657697916030884,
+      "actualPidGone": true,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "schema": 1,
+      "name": "full-tests",
+      "command": [
+        "npm",
+        "test"
+      ],
+      "cwd": "/dev/shm/codiluce-jvm-build-selection/engine",
+      "startedAt": 1791876627.0057054,
+      "wrapperPid": 723245,
+      "actualPid": 723264,
+      "runtimeSha256": "1a59c904de099f94806f8fe12f07cdf19f0d483ca04d7a6e94a2a1c3f8a9e47e",
+      "releaseInputManifestSha256": "592abefe39972fbcc86c1886b52f17432fd2d0fe6659b05f5a8ce335e0c9a53a",
+      "log": "/dev/shm/codiluce-jvm-build-selection/full-tests.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": true,
+      "actualExitCode": 0,
+      "completedAt": 1791876800.1498635,
+      "seconds": 173.14415836334229,
+      "actualPidGone": true,
+      "logSha256": "81979cac99f45add83e6f67c44a2500c0ffb7655585c554472828c91373c61d2",
+      "tests": 1748,
+      "pass": 1748,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 172828.286137
+    },
+    {
+      "schema": 1,
+      "name": "full-build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "cwd": "/dev/shm/codiluce-jvm-build-selection/engine",
+      "startedAt": 1791876627.0084627,
+      "wrapperPid": 723246,
+      "actualPid": 723266,
+      "runtimeSha256": "1a59c904de099f94806f8fe12f07cdf19f0d483ca04d7a6e94a2a1c3f8a9e47e",
+      "releaseInputManifestSha256": "592abefe39972fbcc86c1886b52f17432fd2d0fe6659b05f5a8ce335e0c9a53a",
+      "log": "/dev/shm/codiluce-jvm-build-selection/full-build.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": true,
+      "actualExitCode": 0,
+      "completedAt": 1791876668.40134,
+      "seconds": 41.39287757873535,
+      "actualPidGone": true,
+      "logSha256": "d5db2651f2305aaec903e8800d0d8431c5347247164a7a7c0a1b87c7614b54af"
+    },
+    {
+      "schema": 1,
+      "name": "docs-check",
+      "command": [
+        "node",
+        "scripts/generate-compatibility-docs.mjs",
+        "--check"
+      ],
+      "cwd": "/dev/shm/codiluce-jvm-build-selection/engine",
+      "startedAt": 1791876627.005705,
+      "wrapperPid": 723247,
+      "actualPid": 723265,
+      "runtimeSha256": "1a59c904de099f94806f8fe12f07cdf19f0d483ca04d7a6e94a2a1c3f8a9e47e",
+      "releaseInputManifestSha256": "592abefe39972fbcc86c1886b52f17432fd2d0fe6659b05f5a8ce335e0c9a53a",
+      "log": "/dev/shm/codiluce-jvm-build-selection/docs-check.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": true,
+      "actualExitCode": 0,
+      "completedAt": 1791876627.3598313,
+      "seconds": 0.3541264533996582,
+      "actualPidGone": true,
+      "logSha256": "ab661aa6a75616c189b08e84e5408ab782342fe4a0761ba1cc83deec6de33c99"
+    },
+    {
+      "schema": 1,
+      "name": "ordinary-current",
+      "command": [
+        "node",
+        "--experimental-sqlite",
+        "--test",
+        "/dev/shm/codiluce-jvm-build-selection/ordinary-current.test.mjs"
+      ],
+      "cwd": "/dev/shm/codiluce-jvm-build-selection/engine",
+      "startedAt": 1791876845.5299678,
+      "wrapperPid": 786020,
+      "actualPid": 786048,
+      "runtimeSha256": "1a59c904de099f94806f8fe12f07cdf19f0d483ca04d7a6e94a2a1c3f8a9e47e",
+      "releaseInputManifestSha256": "592abefe39972fbcc86c1886b52f17432fd2d0fe6659b05f5a8ce335e0c9a53a",
+      "log": "/dev/shm/codiluce-jvm-build-selection/ordinary-current.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": true,
+      "actualExitCode": 0,
+      "completedAt": 1791876852.3464448,
+      "seconds": 6.816477298736572,
+      "actualPidGone": true,
+      "logSha256": "5991b37b894ae495c318e411c57b89980c097515c523303715f394e69a95741e",
+      "tests": 11,
+      "pass": 11,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 6609.679329
+    },
+    {
+      "schema": 1,
+      "name": "ordinary-prior",
+      "command": [
+        "node",
+        "--experimental-sqlite",
+        "--test",
+        "/dev/shm/codiluce-jvm-build-selection/ordinary-prior.test.mjs"
+      ],
+      "cwd": "/dev/shm/codiluce-jvm-build-selection/engine",
+      "startedAt": 1791876845.5424473,
+      "wrapperPid": 786021,
+      "actualPid": 786072,
+      "runtimeSha256": "1a59c904de099f94806f8fe12f07cdf19f0d483ca04d7a6e94a2a1c3f8a9e47e",
+      "releaseInputManifestSha256": "592abefe39972fbcc86c1886b52f17432fd2d0fe6659b05f5a8ce335e0c9a53a",
+      "log": "/dev/shm/codiluce-jvm-build-selection/ordinary-prior.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": false,
+      "actualExitCode": 1,
+      "completedAt": 1791876846.615528,
+      "seconds": 1.0730807781219482,
+      "actualPidGone": true,
+      "logSha256": "e3906a0d5dec057fae60493de8bbfbf29cb466cdc0b9722debfd32fdedd2da4f",
+      "tests": 11,
+      "pass": 0,
+      "fail": 11,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 853.140335
+    },
+    {
+      "schema": 1,
+      "name": "original-guides",
+      "command": [
+        "node",
+        "--experimental-sqlite",
+        "/dev/shm/codiluce-jvm-build-selection/qualify-originals.mjs"
+      ],
+      "cwd": "/dev/shm/codiluce-jvm-build-selection/engine",
+      "startedAt": 1791876844.1415792,
+      "wrapperPid": 785838,
+      "actualPid": 785839,
+      "runtimeSha256": "1a59c904de099f94806f8fe12f07cdf19f0d483ca04d7a6e94a2a1c3f8a9e47e",
+      "releaseInputManifestSha256": "592abefe39972fbcc86c1886b52f17432fd2d0fe6659b05f5a8ce335e0c9a53a",
+      "log": "/dev/shm/codiluce-jvm-build-selection/original-guides.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": true,
+      "actualExitCode": 0,
+      "completedAt": 1791876853.2000904,
+      "seconds": 9.05851149559021,
+      "actualPidGone": true,
+      "logSha256": "6b74e7a9a0e78c5d19960038848ed7a6facd1095282096ae5182e8d1c5418e5a"
+    }
+  ],
+  "originalSourceQualification": {
+    "schema": 1,
+    "passed": true,
+    "measuredAt": "2026-10-13T07:34:13.026Z",
+    "node": "v22.12.0",
+    "platform": "linux",
+    "sourceSnapshots": 4,
+    "recordedContexts": 12,
+    "retainedWholeGraphs": 60,
+    "targetExecution": false,
+    "productionHistoryObservation": false,
+    "normalInstalledPackageQualified": false,
+    "boundary": "Original pinned source integration and explicit build-family selection; no broad source recall, effective compiler model, binary classpath or runtime routing qualification",
+    "results": [
+      {
+        "sample": "mvc-java",
+        "commit": "3f4cef01152596c19bc4d37939409358812b1421",
+        "prefix": "complete",
+        "buildSystem": null,
+        "inputs": {
+          "repository": {
+            "name": "jvm-original-build-choice"
+          },
+          "applications": [
+            {
+              "name": "sample",
+              "path": "complete",
+              "jvm": {
+                "spring": {
+                  "version": "7.0.0",
+                  "stack": "mvc",
+                  "componentScan": [
+                    "com.example.restservice"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "originalFiles": 9,
+        "trackedBlobDigest": "fe913cb8b352aaccb5105df708e7128dda2e3a03632bd8ee812da5fb488e18cd",
+        "originalIdentitiesPreserved": 16,
+        "entities": 37,
+        "relations": 36,
+        "diagnostics": 35,
+        "imports": {
+          "excluded": 5,
+          "unsupported": 6
+        },
+        "endpoints": 0,
+        "projects": [
+          {
+            "id": "project:f5acbfe38a2fa9f4c4e67ebd",
+            "root": "complete",
+            "kind": "maven",
+            "manifest": "complete/pom.xml",
+            "sourceSet": "main",
+            "roots": [
+              {
+                "path": "complete/src/main/java",
+                "language": "java",
+                "set": "main",
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 1,
+                    "explanation": "Maven source directory selection"
+                  }
+                ]
+              },
+              {
+                "path": "complete/src/test/java",
+                "language": "java",
+                "set": "test",
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 1,
+                    "explanation": "Maven source directory selection"
+                  }
+                ]
+              }
+            ],
+            "dependencies": [
+              {
+                "scope": "compile",
+                "exported": true,
+                "optional": false,
+                "exclusions": [],
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 20,
+                    "explanation": "Literal Maven dependency selection"
+                  }
+                ],
+                "reason": "Dynamic/unreviewed Maven dependency or artifact variant"
+              },
+              {
+                "scope": "test",
+                "exported": false,
+                "optional": false,
+                "exclusions": [],
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 25,
+                    "explanation": "Literal Maven dependency selection"
+                  }
+                ],
+                "reason": "Dynamic/unreviewed Maven dependency or artifact variant"
+              }
+            ],
+            "modules": [],
+            "reactor": "complete",
+            "properties": {
+              "java.version": "17",
+              "project.groupId": "com.example",
+              "pom.groupId": "com.example",
+              "project.artifactId": "rest-service-complete",
+              "pom.artifactId": "rest-service-complete",
+              "project.version": "0.0.1-SNAPSHOT",
+              "pom.version": "0.0.1-SNAPSHOT",
+              "project.basedir": ".",
+              "basedir": "."
+            },
+            "managed": {},
+            "gaps": [
+              "External/unavailable Maven parent may change the effective model",
+              "Unreviewed Maven plugin can change source/classpath inputs: spring-boot-maven-plugin",
+              "Competing JVM build manifests/project ownership",
+              "Competing Maven and Gradle build ownership requires an explicit project selection"
+            ],
+            "proof": [
+              {
+                "source": "syntax",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "file": "complete/pom.xml",
+                "line": 1,
+                "explanation": "Indexed maven JVM project; target builds/plugins never execute"
+              }
+            ],
+            "coordinate": "com.example:rest-service-complete:0.0.1-SNAPSHOT"
+          }
+        ],
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "normalization": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 100760,
+            "sha256": "b577a3aa09b7469cc6ca84fc6dd6d31b9b53402e8fe02c5b63c2daf61a52e309",
+            "normalizedWholeSha256": "0a20be40dad26cc42ab3c1a64bb2503b8eb20be231960dcfaee12f4ec704f131"
+          },
+          {
+            "label": "cold",
+            "bytes": 100760,
+            "sha256": "a319003d401074fdd6fa112bd55edffac14415ee998ef045821c5e7ef9beb441",
+            "normalizedWholeSha256": "0a20be40dad26cc42ab3c1a64bb2503b8eb20be231960dcfaee12f4ec704f131"
+          },
+          {
+            "label": "warm",
+            "bytes": 100760,
+            "sha256": "eb3e5a3902447688c147e4906ef72b847f2865c4b4d18627078d78b5560aad49",
+            "normalizedWholeSha256": "0a20be40dad26cc42ab3c1a64bb2503b8eb20be231960dcfaee12f4ec704f131"
+          },
+          {
+            "label": "revision",
+            "bytes": 100019,
+            "sha256": "7d423b33b8ba1ef9e47d0c291f65467a9a5769dfb60f0c0b1a9325efc0d7d795",
+            "normalizedWholeSha256": "ed87cfd2b12f720756db298e4e6b49ee2d0d089d963bb596c276c0d090597c8b"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 100019,
+            "sha256": "d7cb2f1ae35e58c0e606c55362189a71e54c76939712b76f757a675ddb4ca87d",
+            "normalizedWholeSha256": "ed87cfd2b12f720756db298e4e6b49ee2d0d089d963bb596c276c0d090597c8b"
+          }
+        ],
+        "targetExecution": false
+      },
+      {
+        "sample": "mvc-java",
+        "commit": "3f4cef01152596c19bc4d37939409358812b1421",
+        "prefix": "complete",
+        "buildSystem": "maven",
+        "inputs": {
+          "repository": {
+            "name": "jvm-original-build-choice"
+          },
+          "applications": [
+            {
+              "name": "sample",
+              "path": "complete",
+              "jvm": {
+                "buildSystem": "maven",
+                "spring": {
+                  "version": "7.0.0",
+                  "stack": "mvc",
+                  "componentScan": [
+                    "com.example.restservice"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "originalFiles": 9,
+        "trackedBlobDigest": "fe913cb8b352aaccb5105df708e7128dda2e3a03632bd8ee812da5fb488e18cd",
+        "originalIdentitiesPreserved": 16,
+        "entities": 37,
+        "relations": 36,
+        "diagnostics": 25,
+        "imports": {
+          "excluded": 5,
+          "unsupported": 6
+        },
+        "endpoints": 0,
+        "projects": [
+          {
+            "id": "project:f5acbfe38a2fa9f4c4e67ebd",
+            "root": "complete",
+            "kind": "maven",
+            "manifest": "complete/pom.xml",
+            "sourceSet": "main",
+            "roots": [
+              {
+                "path": "complete/src/main/java",
+                "language": "java",
+                "set": "main",
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 1,
+                    "explanation": "Maven source directory selection"
+                  }
+                ]
+              },
+              {
+                "path": "complete/src/test/java",
+                "language": "java",
+                "set": "test",
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 1,
+                    "explanation": "Maven source directory selection"
+                  }
+                ]
+              }
+            ],
+            "dependencies": [
+              {
+                "scope": "compile",
+                "exported": true,
+                "optional": false,
+                "exclusions": [],
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 20,
+                    "explanation": "Literal Maven dependency selection"
+                  }
+                ],
+                "reason": "Dynamic/unreviewed Maven dependency or artifact variant"
+              },
+              {
+                "scope": "test",
+                "exported": false,
+                "optional": false,
+                "exclusions": [],
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 25,
+                    "explanation": "Literal Maven dependency selection"
+                  }
+                ],
+                "reason": "Dynamic/unreviewed Maven dependency or artifact variant"
+              }
+            ],
+            "modules": [],
+            "reactor": "complete",
+            "properties": {
+              "java.version": "17",
+              "project.groupId": "com.example",
+              "pom.groupId": "com.example",
+              "project.artifactId": "rest-service-complete",
+              "pom.artifactId": "rest-service-complete",
+              "project.version": "0.0.1-SNAPSHOT",
+              "pom.version": "0.0.1-SNAPSHOT",
+              "project.basedir": ".",
+              "basedir": "."
+            },
+            "managed": {},
+            "gaps": [
+              "External/unavailable Maven parent may change the effective model",
+              "Unreviewed Maven plugin can change source/classpath inputs: spring-boot-maven-plugin"
+            ],
+            "proof": [
+              {
+                "source": "syntax",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "file": "complete/pom.xml",
+                "line": 1,
+                "explanation": "Indexed maven JVM project; target builds/plugins never execute"
+              },
+              {
+                "source": "framework",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "explanation": "Recorded jvm.buildSystem=maven for application sample at complete; competing build families are not selected"
+              }
+            ],
+            "coordinate": "com.example:rest-service-complete:0.0.1-SNAPSHOT"
+          }
+        ],
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "normalization": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 94077,
+            "sha256": "d09f9485319d6ac5766ee2182ca21206e3a32866a0b8c7aa943a8d2f81eb43be",
+            "normalizedWholeSha256": "c4bce4e0bfed37a23f62437b292019237af47a4e63e54e9ccf31896b2f31f85f"
+          },
+          {
+            "label": "cold",
+            "bytes": 94077,
+            "sha256": "c86431bfd34011bff672166ebbc29cb63e33e111f3a73ab05433377b0edeee63",
+            "normalizedWholeSha256": "c4bce4e0bfed37a23f62437b292019237af47a4e63e54e9ccf31896b2f31f85f"
+          },
+          {
+            "label": "warm",
+            "bytes": 94077,
+            "sha256": "3ef5e6cc767a3188847622d67a0c68ae0091790eeed31df097c3afee171a82f3",
+            "normalizedWholeSha256": "c4bce4e0bfed37a23f62437b292019237af47a4e63e54e9ccf31896b2f31f85f"
+          },
+          {
+            "label": "revision",
+            "bytes": 93336,
+            "sha256": "c4aee248a1b3d5bc1102549bc9733b3c9e1b302aaf61052e2b04befc625e6dfa",
+            "normalizedWholeSha256": "76a67c792a310aeb31981bf4a25cb61ae0ce09f6ceb011b86d680f5343bace4e"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 93336,
+            "sha256": "a1fbd00b33fdcc489dd621ac5afef71c32eb7c27478115127156552eebd8d1ee",
+            "normalizedWholeSha256": "76a67c792a310aeb31981bf4a25cb61ae0ce09f6ceb011b86d680f5343bace4e"
+          }
+        ],
+        "targetExecution": false
+      },
+      {
+        "sample": "mvc-java",
+        "commit": "3f4cef01152596c19bc4d37939409358812b1421",
+        "prefix": "complete",
+        "buildSystem": "gradle",
+        "inputs": {
+          "repository": {
+            "name": "jvm-original-build-choice"
+          },
+          "applications": [
+            {
+              "name": "sample",
+              "path": "complete",
+              "jvm": {
+                "buildSystem": "gradle",
+                "spring": {
+                  "version": "7.0.0",
+                  "stack": "mvc",
+                  "componentScan": [
+                    "com.example.restservice"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "originalFiles": 9,
+        "trackedBlobDigest": "fe913cb8b352aaccb5105df708e7128dda2e3a03632bd8ee812da5fb488e18cd",
+        "originalIdentitiesPreserved": 16,
+        "entities": 37,
+        "relations": 36,
+        "diagnostics": 19,
+        "imports": {
+          "excluded": 5,
+          "unsupported": 6
+        },
+        "endpoints": 0,
+        "projects": [
+          {
+            "id": "project:f5acbfe38a2fa9f4c4e67ebd",
+            "root": "complete",
+            "kind": "gradle",
+            "manifest": "complete/build.gradle",
+            "sourceSet": "main",
+            "roots": [
+              {
+                "path": "complete/src/main/java",
+                "language": "java",
+                "set": "main",
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/build.gradle",
+                    "line": 2,
+                    "explanation": "Literal standard Gradle JVM plugin/source-set contract"
+                  }
+                ]
+              },
+              {
+                "path": "complete/src/test/java",
+                "language": "java",
+                "set": "test",
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/build.gradle",
+                    "line": 2,
+                    "explanation": "Literal standard Gradle JVM plugin/source-set contract"
+                  }
+                ]
+              }
+            ],
+            "dependencies": [],
+            "modules": [],
+            "reactor": "complete",
+            "properties": {},
+            "managed": {},
+            "gaps": [
+              "Unreviewed Gradle plugin selection can change source/classpath inputs"
+            ],
+            "proof": [
+              {
+                "source": "syntax",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "file": "complete/build.gradle",
+                "line": 1,
+                "explanation": "Indexed gradle JVM project; target builds/plugins never execute"
+              },
+              {
+                "source": "framework",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "explanation": "Recorded jvm.buildSystem=gradle for application sample at complete; competing build families are not selected"
+              },
+              {
+                "source": "syntax",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "file": "complete/settings.gradle",
+                "line": 1,
+                "explanation": "Literal indexed Gradle settings select this project"
+              }
+            ]
+          }
+        ],
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "normalization": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 87687,
+            "sha256": "035c59d4412def8cd817faf315b6980b6a6c020ffa37f986c0a8fa8ace59e1d7",
+            "normalizedWholeSha256": "3e3e49926a0e2ee23c22c077d34b8aaf37a8ab2be65ed0ab67cbdc1f6d051dd3"
+          },
+          {
+            "label": "cold",
+            "bytes": 87687,
+            "sha256": "4efed6094e9a2a302883339ee1a22d3ce0c988730264a98ac007a33a869a6c83",
+            "normalizedWholeSha256": "3e3e49926a0e2ee23c22c077d34b8aaf37a8ab2be65ed0ab67cbdc1f6d051dd3"
+          },
+          {
+            "label": "warm",
+            "bytes": 87687,
+            "sha256": "5ac3b6fe1f66d1d86fe820bcbc5551837479e79d7119fb6e26463256ec6de38d",
+            "normalizedWholeSha256": "3e3e49926a0e2ee23c22c077d34b8aaf37a8ab2be65ed0ab67cbdc1f6d051dd3"
+          },
+          {
+            "label": "revision",
+            "bytes": 86946,
+            "sha256": "e161210e336f83630789b3191a2dd31f092db3109ae894f9579dd3266fade83a",
+            "normalizedWholeSha256": "11a5c94fd7fc4844a0346a563a3d5d8f2a436e558777e15b7201818f72dbd466"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 86946,
+            "sha256": "c899519181ebdf7e491f40a4866056f2038e87e2bda1c71e8d1cc922451c9fe5",
+            "normalizedWholeSha256": "11a5c94fd7fc4844a0346a563a3d5d8f2a436e558777e15b7201818f72dbd466"
+          }
+        ],
+        "targetExecution": false
+      },
+      {
+        "sample": "mvc-kotlin",
+        "commit": "3f4cef01152596c19bc4d37939409358812b1421",
+        "prefix": "complete-kotlin",
+        "buildSystem": null,
+        "inputs": {
+          "repository": {
+            "name": "jvm-original-build-choice"
+          },
+          "applications": [
+            {
+              "name": "sample",
+              "path": "complete-kotlin",
+              "jvm": {
+                "spring": {
+                  "version": "7.0.0",
+                  "stack": "mvc",
+                  "componentScan": [
+                    "com.example.restservice"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "originalFiles": 8,
+        "trackedBlobDigest": "512e87de4f4839ba00c7e3005f1c5d98c69715496ac2806951f9a9d3d94f9366",
+        "originalIdentitiesPreserved": 17,
+        "entities": 34,
+        "relations": 33,
+        "diagnostics": 21,
+        "imports": {
+          "unsupported": 11
+        },
+        "endpoints": 0,
+        "projects": [
+          {
+            "id": "project:8b0ed70f455c584fcd0d1d53",
+            "root": "complete-kotlin",
+            "kind": "gradle",
+            "manifest": "complete-kotlin/build.gradle.kts",
+            "sourceSet": "main",
+            "roots": [],
+            "dependencies": [],
+            "modules": [],
+            "reactor": "complete-kotlin",
+            "properties": {},
+            "managed": {},
+            "gaps": [
+              "Gradle project build is denied/opaque/unavailable"
+            ],
+            "proof": [
+              {
+                "source": "syntax",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "file": "complete-kotlin/build.gradle.kts",
+                "line": 1,
+                "explanation": "Indexed gradle JVM project; target builds/plugins never execute"
+              },
+              {
+                "source": "syntax",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "file": "complete-kotlin/settings.gradle.kts",
+                "line": 1,
+                "explanation": "Literal indexed Gradle settings select this project"
+              }
+            ]
+          }
+        ],
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "normalization": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 74715,
+            "sha256": "45e1c6147f3e78743d5798f8457ddbaab131a03d2b8dd7a7a8605c5109244120",
+            "normalizedWholeSha256": "f938629e94120ce6388cd3256a7e64fae5042a0bb461135792853934ef7f5426"
+          },
+          {
+            "label": "cold",
+            "bytes": 74715,
+            "sha256": "be9de14ca565451a4b7e08d5f44ebf1e00de564b22683ff4198e9703d871869f",
+            "normalizedWholeSha256": "f938629e94120ce6388cd3256a7e64fae5042a0bb461135792853934ef7f5426"
+          },
+          {
+            "label": "warm",
+            "bytes": 74715,
+            "sha256": "0790c861250a7aea06c34ed8722c8d4e32477a88db4f499995af65e1fc12f891",
+            "normalizedWholeSha256": "f938629e94120ce6388cd3256a7e64fae5042a0bb461135792853934ef7f5426"
+          },
+          {
+            "label": "revision",
+            "bytes": 73974,
+            "sha256": "58a42a36157af50a2a35a97a94f6bbbbfcaa247b09d99609a4c07b1cff4183a8",
+            "normalizedWholeSha256": "94d825f73937d291b82ceedbf5a8b501431116c50bd33d80721027de56e511c7"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 73974,
+            "sha256": "e5bdda098118e4a98c39986b3ddf3f7246b3d2675cda2bc42def774d4f4e3f36",
+            "normalizedWholeSha256": "94d825f73937d291b82ceedbf5a8b501431116c50bd33d80721027de56e511c7"
+          }
+        ],
+        "targetExecution": false
+      },
+      {
+        "sample": "mvc-kotlin",
+        "commit": "3f4cef01152596c19bc4d37939409358812b1421",
+        "prefix": "complete-kotlin",
+        "buildSystem": "maven",
+        "inputs": {
+          "repository": {
+            "name": "jvm-original-build-choice"
+          },
+          "applications": [
+            {
+              "name": "sample",
+              "path": "complete-kotlin",
+              "jvm": {
+                "buildSystem": "maven",
+                "spring": {
+                  "version": "7.0.0",
+                  "stack": "mvc",
+                  "componentScan": [
+                    "com.example.restservice"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "originalFiles": 8,
+        "trackedBlobDigest": "512e87de4f4839ba00c7e3005f1c5d98c69715496ac2806951f9a9d3d94f9366",
+        "originalIdentitiesPreserved": 17,
+        "entities": 34,
+        "relations": 33,
+        "diagnostics": 21,
+        "imports": {
+          "unsupported": 11
+        },
+        "endpoints": 0,
+        "projects": [
+          {
+            "id": "project:8b0ed70f455c584fcd0d1d53",
+            "root": "complete-kotlin",
+            "kind": "maven",
+            "sourceSet": "main",
+            "roots": [],
+            "dependencies": [],
+            "modules": [],
+            "reactor": "complete-kotlin",
+            "properties": {},
+            "managed": {},
+            "gaps": [
+              "Recorded maven build selection has no observed project descriptor at complete-kotlin"
+            ],
+            "proof": [
+              {
+                "source": "framework",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "explanation": "Indexed maven JVM project; target builds/plugins never execute"
+              },
+              {
+                "source": "framework",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "explanation": "Recorded jvm.buildSystem=maven for application sample at complete-kotlin; competing build families are not selected"
+              }
+            ]
+          }
+        ],
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "normalization": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 75021,
+            "sha256": "cc58c48fc6be3133e3b1f3d9dd0318ecd6c3ff8ba9c1b02b74fe9fa7f56d1e03",
+            "normalizedWholeSha256": "c173bc51f02d07e64cc22f7355d0b05da43e3627df8a8e85c0a89f019bd013f2"
+          },
+          {
+            "label": "cold",
+            "bytes": 75021,
+            "sha256": "605150ec5caf83bb64951acf3cda89b5236cfc6e0ef003efbb8ecf6544b94373",
+            "normalizedWholeSha256": "c173bc51f02d07e64cc22f7355d0b05da43e3627df8a8e85c0a89f019bd013f2"
+          },
+          {
+            "label": "warm",
+            "bytes": 75021,
+            "sha256": "acfe2dfc1768a614f5189a7451a915d7c1a1115ab277477ef49e7dabf82e1684",
+            "normalizedWholeSha256": "c173bc51f02d07e64cc22f7355d0b05da43e3627df8a8e85c0a89f019bd013f2"
+          },
+          {
+            "label": "revision",
+            "bytes": 74280,
+            "sha256": "faacb9a10c08dfd4344534bee492f513376a12b53d9fb76498d14f05055fbed7",
+            "normalizedWholeSha256": "50ec8113f58e9e0fce4c149eeb562bc2f8be1cf0dad022806febe90a01f6eb3b"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 74280,
+            "sha256": "72062a4ba271f7172ac29a6416b5fae97bb865b63abe0091b3bb8adb0c9d6011",
+            "normalizedWholeSha256": "50ec8113f58e9e0fce4c149eeb562bc2f8be1cf0dad022806febe90a01f6eb3b"
+          }
+        ],
+        "targetExecution": false
+      },
+      {
+        "sample": "mvc-kotlin",
+        "commit": "3f4cef01152596c19bc4d37939409358812b1421",
+        "prefix": "complete-kotlin",
+        "buildSystem": "gradle",
+        "inputs": {
+          "repository": {
+            "name": "jvm-original-build-choice"
+          },
+          "applications": [
+            {
+              "name": "sample",
+              "path": "complete-kotlin",
+              "jvm": {
+                "buildSystem": "gradle",
+                "spring": {
+                  "version": "7.0.0",
+                  "stack": "mvc",
+                  "componentScan": [
+                    "com.example.restservice"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "originalFiles": 8,
+        "trackedBlobDigest": "512e87de4f4839ba00c7e3005f1c5d98c69715496ac2806951f9a9d3d94f9366",
+        "originalIdentitiesPreserved": 17,
+        "entities": 34,
+        "relations": 33,
+        "diagnostics": 21,
+        "imports": {
+          "unsupported": 11
+        },
+        "endpoints": 0,
+        "projects": [
+          {
+            "id": "project:8b0ed70f455c584fcd0d1d53",
+            "root": "complete-kotlin",
+            "kind": "gradle",
+            "manifest": "complete-kotlin/build.gradle.kts",
+            "sourceSet": "main",
+            "roots": [],
+            "dependencies": [],
+            "modules": [],
+            "reactor": "complete-kotlin",
+            "properties": {},
+            "managed": {},
+            "gaps": [
+              "Gradle project build is denied/opaque/unavailable"
+            ],
+            "proof": [
+              {
+                "source": "syntax",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "file": "complete-kotlin/build.gradle.kts",
+                "line": 1,
+                "explanation": "Indexed gradle JVM project; target builds/plugins never execute"
+              },
+              {
+                "source": "framework",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "explanation": "Recorded jvm.buildSystem=gradle for application sample at complete-kotlin; competing build families are not selected"
+              },
+              {
+                "source": "syntax",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "file": "complete-kotlin/settings.gradle.kts",
+                "line": 1,
+                "explanation": "Literal indexed Gradle settings select this project"
+              }
+            ]
+          }
+        ],
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "normalization": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 75054,
+            "sha256": "ca16c279cc0eb3a6040966479528cbb0c10e1af5ee0bc2b6f8a710f13229641f",
+            "normalizedWholeSha256": "1cc59b947290030b081c182ad833184fa88346cacb82727aa129e02956c25d67"
+          },
+          {
+            "label": "cold",
+            "bytes": 75054,
+            "sha256": "160d25858da17b18cf543722d5034b1bd235c56f552ea6e0c2c2ad782fe2ff2c",
+            "normalizedWholeSha256": "1cc59b947290030b081c182ad833184fa88346cacb82727aa129e02956c25d67"
+          },
+          {
+            "label": "warm",
+            "bytes": 75054,
+            "sha256": "63a8e81f36f6ba34778faf49022363843437865d063b75bb7c33f4ec01aecc77",
+            "normalizedWholeSha256": "1cc59b947290030b081c182ad833184fa88346cacb82727aa129e02956c25d67"
+          },
+          {
+            "label": "revision",
+            "bytes": 74313,
+            "sha256": "9fdf30a4e6c0fb92821f0bd7d45d24c785c677464feb129e5558d6564681c4eb",
+            "normalizedWholeSha256": "312e1a89a0231485ff1ebbaa35a647da8d7e0fb376194630d68a95b492810559"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 74313,
+            "sha256": "ea736d2e3c75ac6056cde4180cda782061e3be1442d221df09079af1618da08e",
+            "normalizedWholeSha256": "312e1a89a0231485ff1ebbaa35a647da8d7e0fb376194630d68a95b492810559"
+          }
+        ],
+        "targetExecution": false
+      },
+      {
+        "sample": "webflux-java",
+        "commit": "a6f4ff0c651545a14ff5d1f731fde9a8d136e4d5",
+        "prefix": "complete",
+        "buildSystem": null,
+        "inputs": {
+          "repository": {
+            "name": "jvm-original-build-choice"
+          },
+          "applications": [
+            {
+              "name": "sample",
+              "path": "complete",
+              "jvm": {
+                "spring": {
+                  "version": "7.0.0",
+                  "stack": "webflux",
+                  "componentScan": [
+                    "com.example.reactivewebservice"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "originalFiles": 11,
+        "trackedBlobDigest": "0ead0f43d9c72c084822a3b6f1a6af1215b53e79cb445a2112c27166cd6ffa6d",
+        "originalIdentitiesPreserved": 21,
+        "entities": 42,
+        "relations": 41,
+        "diagnostics": 55,
+        "imports": {
+          "unsupported": 21,
+          "excluded": 7
+        },
+        "endpoints": 0,
+        "projects": [
+          {
+            "id": "project:f5acbfe38a2fa9f4c4e67ebd",
+            "root": "complete",
+            "kind": "maven",
+            "manifest": "complete/pom.xml",
+            "sourceSet": "main",
+            "roots": [
+              {
+                "path": "complete/src/main/java",
+                "language": "java",
+                "set": "main",
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 1,
+                    "explanation": "Maven source directory selection"
+                  }
+                ]
+              },
+              {
+                "path": "complete/src/test/java",
+                "language": "java",
+                "set": "test",
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 1,
+                    "explanation": "Maven source directory selection"
+                  }
+                ]
+              }
+            ],
+            "dependencies": [
+              {
+                "scope": "compile",
+                "exported": true,
+                "optional": false,
+                "exclusions": [],
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 19,
+                    "explanation": "Literal Maven dependency selection"
+                  }
+                ],
+                "reason": "Dynamic/unreviewed Maven dependency or artifact variant"
+              },
+              {
+                "scope": "compile",
+                "exported": true,
+                "optional": false,
+                "exclusions": [],
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 23,
+                    "explanation": "Literal Maven dependency selection"
+                  }
+                ],
+                "reason": "Dynamic/unreviewed Maven dependency or artifact variant"
+              },
+              {
+                "scope": "test",
+                "exported": false,
+                "optional": false,
+                "exclusions": [],
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 28,
+                    "explanation": "Literal Maven dependency selection"
+                  }
+                ],
+                "reason": "Dynamic/unreviewed Maven dependency or artifact variant"
+              },
+              {
+                "scope": "test",
+                "exported": false,
+                "optional": false,
+                "exclusions": [],
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 33,
+                    "explanation": "Literal Maven dependency selection"
+                  }
+                ],
+                "reason": "Dynamic/unreviewed Maven dependency or artifact variant"
+              },
+              {
+                "scope": "test",
+                "exported": false,
+                "optional": false,
+                "exclusions": [],
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 38,
+                    "explanation": "Literal Maven dependency selection"
+                  }
+                ],
+                "reason": "Dynamic/unreviewed Maven dependency or artifact variant"
+              }
+            ],
+            "modules": [],
+            "reactor": "complete",
+            "properties": {
+              "java.version": "17",
+              "project.groupId": "com.example",
+              "pom.groupId": "com.example",
+              "project.artifactId": "reactive-rest-service-complete",
+              "pom.artifactId": "reactive-rest-service-complete",
+              "project.version": "0.0.1-SNAPSHOT",
+              "pom.version": "0.0.1-SNAPSHOT",
+              "project.basedir": ".",
+              "basedir": "."
+            },
+            "managed": {},
+            "gaps": [
+              "External/unavailable Maven parent may change the effective model",
+              "Unreviewed Maven plugin can change source/classpath inputs: spring-boot-maven-plugin",
+              "Competing JVM build manifests/project ownership",
+              "Competing Maven and Gradle build ownership requires an explicit project selection"
+            ],
+            "proof": [
+              {
+                "source": "syntax",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "file": "complete/pom.xml",
+                "line": 1,
+                "explanation": "Indexed maven JVM project; target builds/plugins never execute"
+              }
+            ],
+            "coordinate": "com.example:reactive-rest-service-complete:0.0.1-SNAPSHOT"
+          }
+        ],
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "normalization": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 145298,
+            "sha256": "c615dda2178e7f3771c055f48e23b40668e1a4b61d181e03eb35a4f8637d5abf",
+            "normalizedWholeSha256": "fae17ffea7df75a9445aac4c6f2637cb1b16e98b0f5c5058cc76c83757c46870"
+          },
+          {
+            "label": "cold",
+            "bytes": 145298,
+            "sha256": "34a11f1ea7213ddd48f5c567ace958056e5384b2c64f4e8772353c2ab3503b47",
+            "normalizedWholeSha256": "fae17ffea7df75a9445aac4c6f2637cb1b16e98b0f5c5058cc76c83757c46870"
+          },
+          {
+            "label": "warm",
+            "bytes": 145298,
+            "sha256": "8873aae719d869ca600c590e821de183e58b88e29f69d55be7049696a6ffb7c9",
+            "normalizedWholeSha256": "fae17ffea7df75a9445aac4c6f2637cb1b16e98b0f5c5058cc76c83757c46870"
+          },
+          {
+            "label": "revision",
+            "bytes": 144557,
+            "sha256": "33e735061a7caed3b0fe287846d47f7311beb24e537eb38a5b2d8091da0d68b7",
+            "normalizedWholeSha256": "ac5b1b8889a7402a76abaa8348645c54ea469391087148af5a0755094d112bea"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 144557,
+            "sha256": "839b53d0603006305f3b52ef63542f8d118020a810592a3e30ec653017892608",
+            "normalizedWholeSha256": "ac5b1b8889a7402a76abaa8348645c54ea469391087148af5a0755094d112bea"
+          }
+        ],
+        "targetExecution": false
+      },
+      {
+        "sample": "webflux-java",
+        "commit": "a6f4ff0c651545a14ff5d1f731fde9a8d136e4d5",
+        "prefix": "complete",
+        "buildSystem": "maven",
+        "inputs": {
+          "repository": {
+            "name": "jvm-original-build-choice"
+          },
+          "applications": [
+            {
+              "name": "sample",
+              "path": "complete",
+              "jvm": {
+                "buildSystem": "maven",
+                "spring": {
+                  "version": "7.0.0",
+                  "stack": "webflux",
+                  "componentScan": [
+                    "com.example.reactivewebservice"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "originalFiles": 11,
+        "trackedBlobDigest": "0ead0f43d9c72c084822a3b6f1a6af1215b53e79cb445a2112c27166cd6ffa6d",
+        "originalIdentitiesPreserved": 21,
+        "entities": 42,
+        "relations": 41,
+        "diagnostics": 43,
+        "imports": {
+          "unsupported": 21,
+          "excluded": 7
+        },
+        "endpoints": 0,
+        "projects": [
+          {
+            "id": "project:f5acbfe38a2fa9f4c4e67ebd",
+            "root": "complete",
+            "kind": "maven",
+            "manifest": "complete/pom.xml",
+            "sourceSet": "main",
+            "roots": [
+              {
+                "path": "complete/src/main/java",
+                "language": "java",
+                "set": "main",
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 1,
+                    "explanation": "Maven source directory selection"
+                  }
+                ]
+              },
+              {
+                "path": "complete/src/test/java",
+                "language": "java",
+                "set": "test",
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 1,
+                    "explanation": "Maven source directory selection"
+                  }
+                ]
+              }
+            ],
+            "dependencies": [
+              {
+                "scope": "compile",
+                "exported": true,
+                "optional": false,
+                "exclusions": [],
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 19,
+                    "explanation": "Literal Maven dependency selection"
+                  }
+                ],
+                "reason": "Dynamic/unreviewed Maven dependency or artifact variant"
+              },
+              {
+                "scope": "compile",
+                "exported": true,
+                "optional": false,
+                "exclusions": [],
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 23,
+                    "explanation": "Literal Maven dependency selection"
+                  }
+                ],
+                "reason": "Dynamic/unreviewed Maven dependency or artifact variant"
+              },
+              {
+                "scope": "test",
+                "exported": false,
+                "optional": false,
+                "exclusions": [],
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 28,
+                    "explanation": "Literal Maven dependency selection"
+                  }
+                ],
+                "reason": "Dynamic/unreviewed Maven dependency or artifact variant"
+              },
+              {
+                "scope": "test",
+                "exported": false,
+                "optional": false,
+                "exclusions": [],
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 33,
+                    "explanation": "Literal Maven dependency selection"
+                  }
+                ],
+                "reason": "Dynamic/unreviewed Maven dependency or artifact variant"
+              },
+              {
+                "scope": "test",
+                "exported": false,
+                "optional": false,
+                "exclusions": [],
+                "proof": [
+                  {
+                    "source": "syntax",
+                    "analyzer": "jvm-projects",
+                    "analyzerVersion": "3",
+                    "confidence": 1,
+                    "file": "complete/pom.xml",
+                    "line": 38,
+                    "explanation": "Literal Maven dependency selection"
+                  }
+                ],
+                "reason": "Dynamic/unreviewed Maven dependency or artifact variant"
+              }
+            ],
+            "modules": [],
+            "reactor": "complete",
+            "properties": {
+              "java.version": "17",
+              "project.groupId": "com.example",
+              "pom.groupId": "com.example",
+              "project.artifactId": "reactive-rest-service-complete",
+              "pom.artifactId": "reactive-rest-service-complete",
+              "project.version": "0.0.1-SNAPSHOT",
+              "pom.version": "0.0.1-SNAPSHOT",
+              "project.basedir": ".",
+              "basedir": "."
+            },
+            "managed": {},
+            "gaps": [
+              "External/unavailable Maven parent may change the effective model",
+              "Unreviewed Maven plugin can change source/classpath inputs: spring-boot-maven-plugin"
+            ],
+            "proof": [
+              {
+                "source": "syntax",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "file": "complete/pom.xml",
+                "line": 1,
+                "explanation": "Indexed maven JVM project; target builds/plugins never execute"
+              },
+              {
+                "source": "framework",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "explanation": "Recorded jvm.buildSystem=maven for application sample at complete; competing build families are not selected"
+              }
+            ],
+            "coordinate": "com.example:reactive-rest-service-complete:0.0.1-SNAPSHOT"
+          }
+        ],
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "normalization": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 133257,
+            "sha256": "5bcc5583897b9b46a1a2c24e0bafa819ec5d337eab31f2712f3110fa2782044b",
+            "normalizedWholeSha256": "d77502e8109b792ee48f370d62be83de78ec45a0377046ddf6d69650edf1262a"
+          },
+          {
+            "label": "cold",
+            "bytes": 133257,
+            "sha256": "c45479561426f15519ea0e45d345b34ab095f956da3867ba465dce8757c2ff5b",
+            "normalizedWholeSha256": "d77502e8109b792ee48f370d62be83de78ec45a0377046ddf6d69650edf1262a"
+          },
+          {
+            "label": "warm",
+            "bytes": 133257,
+            "sha256": "bf48de7ebc255c09517153e7e408532f2a545da579e8a96cb23aba9c509cacdc",
+            "normalizedWholeSha256": "d77502e8109b792ee48f370d62be83de78ec45a0377046ddf6d69650edf1262a"
+          },
+          {
+            "label": "revision",
+            "bytes": 132516,
+            "sha256": "53a216df89e10b4772f2d8b200b4822abd6f3ac5a0ebb548fc996a6db4cc9a18",
+            "normalizedWholeSha256": "e8fdf40f910d89bb5d3d04b3f7961e9e97d86b7ea049843072ca9595a58d41f5"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 132516,
+            "sha256": "d55999845191437cf05a72ddb45410a9e126a1040e5e6989f90696208affe47a",
+            "normalizedWholeSha256": "e8fdf40f910d89bb5d3d04b3f7961e9e97d86b7ea049843072ca9595a58d41f5"
+          }
+        ],
+        "targetExecution": false
+      },
+      {
+        "sample": "webflux-java",
+        "commit": "a6f4ff0c651545a14ff5d1f731fde9a8d136e4d5",
+        "prefix": "complete",
+        "buildSystem": "gradle",
+        "inputs": {
+          "repository": {
+            "name": "jvm-original-build-choice"
+          },
+          "applications": [
+            {
+              "name": "sample",
+              "path": "complete",
+              "jvm": {
+                "buildSystem": "gradle",
+                "spring": {
+                  "version": "7.0.0",
+                  "stack": "webflux",
+                  "componentScan": [
+                    "com.example.reactivewebservice"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "originalFiles": 11,
+        "trackedBlobDigest": "0ead0f43d9c72c084822a3b6f1a6af1215b53e79cb445a2112c27166cd6ffa6d",
+        "originalIdentitiesPreserved": 21,
+        "entities": 42,
+        "relations": 41,
+        "diagnostics": 43,
+        "imports": {
+          "unsupported": 28
+        },
+        "endpoints": 0,
+        "projects": [
+          {
+            "id": "project:f5acbfe38a2fa9f4c4e67ebd",
+            "root": "complete",
+            "kind": "gradle",
+            "manifest": "complete/build.gradle",
+            "sourceSet": "main",
+            "roots": [],
+            "dependencies": [],
+            "modules": [],
+            "reactor": "complete",
+            "properties": {},
+            "managed": {},
+            "gaps": [
+              "Unreviewed Gradle plugin selection can change source/classpath inputs",
+              "No literal reviewed Java/Kotlin JVM plugin selects conventional source roots"
+            ],
+            "proof": [
+              {
+                "source": "syntax",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "file": "complete/build.gradle",
+                "line": 1,
+                "explanation": "Indexed gradle JVM project; target builds/plugins never execute"
+              },
+              {
+                "source": "framework",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "explanation": "Recorded jvm.buildSystem=gradle for application sample at complete; competing build families are not selected"
+              },
+              {
+                "source": "syntax",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "file": "complete/settings.gradle",
+                "line": 1,
+                "explanation": "Literal indexed Gradle settings select this project"
+              }
+            ]
+          }
+        ],
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "normalization": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 114125,
+            "sha256": "e5adf680d44afeb7277ba7d8981bebbff8b2be876a0b2d6c1259a5e10ac55f2a",
+            "normalizedWholeSha256": "752ac84db3008054b1176587262fd164698bb5fbfa02f8a75860508f694c6a6f"
+          },
+          {
+            "label": "cold",
+            "bytes": 114125,
+            "sha256": "da649b628ef42f01a7ef64233fbe2afc8aff8b0ae69b478331edde1e973a3a67",
+            "normalizedWholeSha256": "752ac84db3008054b1176587262fd164698bb5fbfa02f8a75860508f694c6a6f"
+          },
+          {
+            "label": "warm",
+            "bytes": 114125,
+            "sha256": "fb41962789ad9bc39424107f78866659b96249eeda4fce31cb0e5f48abe8cbe0",
+            "normalizedWholeSha256": "752ac84db3008054b1176587262fd164698bb5fbfa02f8a75860508f694c6a6f"
+          },
+          {
+            "label": "revision",
+            "bytes": 113384,
+            "sha256": "7c30cfaf34e4530c6c90414a2d667442be006a2628e2202042a49e0bd2ccb5cf",
+            "normalizedWholeSha256": "ee836aecf61a2776a694270ee5697e288ad356485515d0cc18434313c35bba2b"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 113384,
+            "sha256": "29507207259f49810038b800f972ef4af164dbf57fd323b886a21de95d69f165",
+            "normalizedWholeSha256": "ee836aecf61a2776a694270ee5697e288ad356485515d0cc18434313c35bba2b"
+          }
+        ],
+        "targetExecution": false
+      },
+      {
+        "sample": "webflux-kotlin",
+        "commit": "a6f4ff0c651545a14ff5d1f731fde9a8d136e4d5",
+        "prefix": "complete-kotlin",
+        "buildSystem": null,
+        "inputs": {
+          "repository": {
+            "name": "jvm-original-build-choice"
+          },
+          "applications": [
+            {
+              "name": "sample",
+              "path": "complete-kotlin",
+              "jvm": {
+                "spring": {
+                  "version": "7.0.0",
+                  "stack": "webflux",
+                  "componentScan": [
+                    "com.example.reactivewebservice"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "originalFiles": 9,
+        "trackedBlobDigest": "11d2ce0cb7c86c75a9432dba807fdf3a7d75e099ebc814fa2ca65874efe76066",
+        "originalIdentitiesPreserved": 23,
+        "entities": 38,
+        "relations": 37,
+        "diagnostics": 36,
+        "imports": {
+          "unsupported": 25
+        },
+        "endpoints": 0,
+        "projects": [
+          {
+            "id": "project:8b0ed70f455c584fcd0d1d53",
+            "root": "complete-kotlin",
+            "kind": "gradle",
+            "manifest": "complete-kotlin/build.gradle.kts",
+            "sourceSet": "main",
+            "roots": [],
+            "dependencies": [],
+            "modules": [],
+            "reactor": "complete-kotlin",
+            "properties": {},
+            "managed": {},
+            "gaps": [
+              "Gradle project build is denied/opaque/unavailable"
+            ],
+            "proof": [
+              {
+                "source": "syntax",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "file": "complete-kotlin/build.gradle.kts",
+                "line": 1,
+                "explanation": "Indexed gradle JVM project; target builds/plugins never execute"
+              },
+              {
+                "source": "syntax",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "file": "complete-kotlin/settings.gradle.kts",
+                "line": 1,
+                "explanation": "Literal indexed Gradle settings select this project"
+              }
+            ]
+          }
+        ],
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "normalization": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 100183,
+            "sha256": "640fea25ef73091fec0ad6dee27361a8f79a9395b3b4bf5cd31782e5e6a2062c",
+            "normalizedWholeSha256": "09a8a5fe9be496712465dccc3e1780096c6c5ffaca41f17f8d8804bb02cb3062"
+          },
+          {
+            "label": "cold",
+            "bytes": 100183,
+            "sha256": "438d70ddfad4af18ceedf50bf6c74918d326c0eca11fa8a3526b7982656e3f44",
+            "normalizedWholeSha256": "09a8a5fe9be496712465dccc3e1780096c6c5ffaca41f17f8d8804bb02cb3062"
+          },
+          {
+            "label": "warm",
+            "bytes": 100183,
+            "sha256": "4bad389fe62052245530ce4bb2b783cc9829268cb5313293430ee35581f8f05b",
+            "normalizedWholeSha256": "09a8a5fe9be496712465dccc3e1780096c6c5ffaca41f17f8d8804bb02cb3062"
+          },
+          {
+            "label": "revision",
+            "bytes": 99442,
+            "sha256": "d87f5e84f39f1252a08b34f677a106c42abd0c513eb60bc65168308e6e132969",
+            "normalizedWholeSha256": "58190f8594a509fd908ba6913cb9bb1e8dfedabee088c381f92fa85be6fff317"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 99442,
+            "sha256": "bfbac084d949eeb986584e7ab1d06407be495880051b49b00101baebad18b152",
+            "normalizedWholeSha256": "58190f8594a509fd908ba6913cb9bb1e8dfedabee088c381f92fa85be6fff317"
+          }
+        ],
+        "targetExecution": false
+      },
+      {
+        "sample": "webflux-kotlin",
+        "commit": "a6f4ff0c651545a14ff5d1f731fde9a8d136e4d5",
+        "prefix": "complete-kotlin",
+        "buildSystem": "maven",
+        "inputs": {
+          "repository": {
+            "name": "jvm-original-build-choice"
+          },
+          "applications": [
+            {
+              "name": "sample",
+              "path": "complete-kotlin",
+              "jvm": {
+                "buildSystem": "maven",
+                "spring": {
+                  "version": "7.0.0",
+                  "stack": "webflux",
+                  "componentScan": [
+                    "com.example.reactivewebservice"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "originalFiles": 9,
+        "trackedBlobDigest": "11d2ce0cb7c86c75a9432dba807fdf3a7d75e099ebc814fa2ca65874efe76066",
+        "originalIdentitiesPreserved": 23,
+        "entities": 38,
+        "relations": 37,
+        "diagnostics": 36,
+        "imports": {
+          "unsupported": 25
+        },
+        "endpoints": 0,
+        "projects": [
+          {
+            "id": "project:8b0ed70f455c584fcd0d1d53",
+            "root": "complete-kotlin",
+            "kind": "maven",
+            "sourceSet": "main",
+            "roots": [],
+            "dependencies": [],
+            "modules": [],
+            "reactor": "complete-kotlin",
+            "properties": {},
+            "managed": {},
+            "gaps": [
+              "Recorded maven build selection has no observed project descriptor at complete-kotlin"
+            ],
+            "proof": [
+              {
+                "source": "framework",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "explanation": "Indexed maven JVM project; target builds/plugins never execute"
+              },
+              {
+                "source": "framework",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "explanation": "Recorded jvm.buildSystem=maven for application sample at complete-kotlin; competing build families are not selected"
+              }
+            ]
+          }
+        ],
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "normalization": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 100609,
+            "sha256": "5ebacd8cd0d4082363b2adf1e69361f2d6f794e4fa941f5163e30bb2e08957b3",
+            "normalizedWholeSha256": "bf66a19d5bd8069828c32b4eedb6983bcd616a2c97c2d020ca39b4d39f42ad88"
+          },
+          {
+            "label": "cold",
+            "bytes": 100609,
+            "sha256": "92b180a1d64b93b031fb430baa8d75c141851f085fc43b0a343dc3a42a2f9154",
+            "normalizedWholeSha256": "bf66a19d5bd8069828c32b4eedb6983bcd616a2c97c2d020ca39b4d39f42ad88"
+          },
+          {
+            "label": "warm",
+            "bytes": 100609,
+            "sha256": "ed46aa7fecca29871514e0be4a5783ee559f754dc7ca0649024c2a9d46bb1fd7",
+            "normalizedWholeSha256": "bf66a19d5bd8069828c32b4eedb6983bcd616a2c97c2d020ca39b4d39f42ad88"
+          },
+          {
+            "label": "revision",
+            "bytes": 99868,
+            "sha256": "c74b6430be4266ef0e73d11a754e71ecbdd107a7073f58a94d7f5d9fc75a6b6c",
+            "normalizedWholeSha256": "fb4e693e8d173a147a083395150e533d7acb555ea22a40eefe27277f4541aca7"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 99868,
+            "sha256": "5600f306a457854ed592b8a9b6e9219e68d738f7e49093d77a35cb3481b0b953",
+            "normalizedWholeSha256": "fb4e693e8d173a147a083395150e533d7acb555ea22a40eefe27277f4541aca7"
+          }
+        ],
+        "targetExecution": false
+      },
+      {
+        "sample": "webflux-kotlin",
+        "commit": "a6f4ff0c651545a14ff5d1f731fde9a8d136e4d5",
+        "prefix": "complete-kotlin",
+        "buildSystem": "gradle",
+        "inputs": {
+          "repository": {
+            "name": "jvm-original-build-choice"
+          },
+          "applications": [
+            {
+              "name": "sample",
+              "path": "complete-kotlin",
+              "jvm": {
+                "buildSystem": "gradle",
+                "spring": {
+                  "version": "7.0.0",
+                  "stack": "webflux",
+                  "componentScan": [
+                    "com.example.reactivewebservice"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "originalFiles": 9,
+        "trackedBlobDigest": "11d2ce0cb7c86c75a9432dba807fdf3a7d75e099ebc814fa2ca65874efe76066",
+        "originalIdentitiesPreserved": 23,
+        "entities": 38,
+        "relations": 37,
+        "diagnostics": 36,
+        "imports": {
+          "unsupported": 25
+        },
+        "endpoints": 0,
+        "projects": [
+          {
+            "id": "project:8b0ed70f455c584fcd0d1d53",
+            "root": "complete-kotlin",
+            "kind": "gradle",
+            "manifest": "complete-kotlin/build.gradle.kts",
+            "sourceSet": "main",
+            "roots": [],
+            "dependencies": [],
+            "modules": [],
+            "reactor": "complete-kotlin",
+            "properties": {},
+            "managed": {},
+            "gaps": [
+              "Gradle project build is denied/opaque/unavailable"
+            ],
+            "proof": [
+              {
+                "source": "syntax",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "file": "complete-kotlin/build.gradle.kts",
+                "line": 1,
+                "explanation": "Indexed gradle JVM project; target builds/plugins never execute"
+              },
+              {
+                "source": "framework",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "explanation": "Recorded jvm.buildSystem=gradle for application sample at complete-kotlin; competing build families are not selected"
+              },
+              {
+                "source": "syntax",
+                "analyzer": "jvm-projects",
+                "analyzerVersion": "3",
+                "confidence": 1,
+                "file": "complete-kotlin/settings.gradle.kts",
+                "line": 1,
+                "explanation": "Literal indexed Gradle settings select this project"
+              }
+            ]
+          }
+        ],
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "normalization": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 100522,
+            "sha256": "a7b8b6a6ff815980e571f129c17409ee83c6045881c47fdbcd38df5ac11f93f8",
+            "normalizedWholeSha256": "9531d08f1f17d06312d71e725274f069c247bf4abea9fb4c3391262d97622ccc"
+          },
+          {
+            "label": "cold",
+            "bytes": 100522,
+            "sha256": "e48356cca825fbff5729f60336d34554c5106042c232eb04c31533675f84b248",
+            "normalizedWholeSha256": "9531d08f1f17d06312d71e725274f069c247bf4abea9fb4c3391262d97622ccc"
+          },
+          {
+            "label": "warm",
+            "bytes": 100522,
+            "sha256": "7e86d24e195639a4cb1e1f2056f29ab77e0dfc2f1873b91dd963bd6d0b43e486",
+            "normalizedWholeSha256": "9531d08f1f17d06312d71e725274f069c247bf4abea9fb4c3391262d97622ccc"
+          },
+          {
+            "label": "revision",
+            "bytes": 99781,
+            "sha256": "d7e70918b957076f9c2ee1854f7d2d3d1feba7760d04a12da7571f941ec875cb",
+            "normalizedWholeSha256": "347aaf63dba512bf5407e835f913782099ac41a8cbcbbe18ce0c91a34ddb6290"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 99781,
+            "sha256": "177aa34b2509812676b5d378b1b21fd503915efff40280592d952c7effc950a1",
+            "normalizedWholeSha256": "347aaf63dba512bf5407e835f913782099ac41a8cbcbbe18ce0c91a34ddb6290"
+          }
+        ],
+        "targetExecution": false
+      }
+    ]
+  },
+  "targetExecution": false,
+  "productionHistoryObservation": false,
+  "normalInstalledPackageForNewRuntimeQualified": false,
+  "actualWindowsMacOSQualified": false,
+  "goalComplete": false,
+  "foreignFilesUnchanged": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  },
+  "remaining": [
+    "Installed normal package qualification for this new runtime",
+    "Broader original JVM/.NET effective build and source accuracy",
+    "Full new-runtime production histories and complete counterbalanced time/RSS",
+    "Actual native Windows/macOS release execution"
+  ],
+  "archive": {
+    "schema": 1,
+    "passed": true,
+    "verifiedAt": "2026-10-13T07:42:01.973108+00:00",
+    "seconds": 7.439146280288696,
+    "archive": "/dev/shm/codiluce-jvm-build-selection/jvm-build-selection-runtime-source-and-evidence.tar.gz",
+    "bytes": 56247336,
+    "sha256": "2fae3e5d65d354cfdc3d9889a59095ea981b574d80a8216a286c422772b6b4d0",
+    "regularFiles": 3540,
+    "manifestSha256": "58c7d1242185aa4742bcc56bf7b05cc63284160707e25988ea861c577de99377",
+    "runtimeSha256": "1a59c904de099f94806f8fe12f07cdf19f0d483ca04d7a6e94a2a1c3f8a9e47e",
+    "fullFileBytesAndModesReopened": true,
+    "ramBacked": true,
+    "completeOriginalGraphsRetained": 60,
+    "originalFilesRetained": 37,
+    "priorFailureArtifactsRetained": true,
+    "priorRuntimeReconstructibleFromUnchangedCurrentFilesAndRetainedDifferences": true,
+    "snapshotBoundary": "Report/source receipts inside the archive precede this self-referential archive receipt and HTTP/final audit append",
+    "normalInstalledPackageQualified": false,
+    "productionHistoryObservation": false,
+    "goalComplete": false
+  },
+  "finalAudit": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": "2026-10-13T07:43:32.788765+00:00",
+    "reportUrl": "http://127.0.0.1:35463/jvm-build-selection.html",
+    "reportBytesEqual": true,
+    "links": [
+      {
+        "href": "jvm-build-selection.json",
+        "bytes": 167632,
+        "sha256": "cc6ea48b24cb169b3780298d4f025caf5774f1d16e37a83053835f8f037c7c83"
+      },
+      {
+        "href": "jvm-build-selection-runtime-source-and-evidence.tar.gz",
+        "bytes": 56247336,
+        "sha256": "2fae3e5d65d354cfdc3d9889a59095ea981b574d80a8216a286c422772b6b4d0"
+      },
+      {
+        "href": "jvm-build-selection-archive.json",
+        "bytes": 1040,
+        "sha256": "9dd3bbff7400e53a7d11d6c2ea38aa4823a645b17707183d32c8aa5cf9b6ab6a"
+      },
+      {
+        "href": "language-framework-compatibility.html#implementation",
+        "bytes": 406923,
+        "sha256": "d650af01028b7ef9e13c7b4ab19e4f73b1d996958f89977f661b9d0c24738a5b"
+      },
+      {
+        "href": "analysis-capabilities.html",
+        "bytes": 93691,
+        "sha256": "7c01072e041209cbeb2f2ce392abc41c19c054d39c5902ec18674bacdf2ba59d"
+      }
+    ],
+    "archiveDownloadFullyRead": true,
+    "traversalAndNonReportRequestsReturn404": true,
+    "visualInspectionClaimed": false,
+    "runtimeSha256": "1a59c904de099f94806f8fe12f07cdf19f0d483ca04d7a6e94a2a1c3f8a9e47e",
+    "runtimeFiles": 1927,
+    "vendorFiles": 14303,
+    "compiledModules": 225,
+    "actualGatePidsGone": true,
+    "foreignFilesUnchanged": true,
+    "normalInstalledPackageQualified": false,
+    "productionHistoryObservation": false,
+    "goalComplete": false
+  }
+}

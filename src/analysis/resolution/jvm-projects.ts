@@ -4,7 +4,7 @@ import { applicationAt } from '../../core/config.js';
 import { evidence, type Evidence } from '../../core/graph.js';
 import { IndexedSources } from '../indexed-sources.js';
 import { readPomXml, xmlChild, xmlChildren, xmlValue, jvmPath, gradleTokens, readGradleSettings, readGradleBuild, type XmlNode } from './jvm-manifest.js';
-export const JVM_PROJECT_VERSION = '2';
+export const JVM_PROJECT_VERSION = '3';
 export interface JvmDependency {
     path?: string;
     coordinate?: string;
@@ -49,20 +49,27 @@ export class JvmProjects {
     constructor(readonly context: AnalysisContext) {
         this.sources = context.sources ?? new IndexedSources(context);
         const observed = [...new Set([...context.files.keys(), ...context.fileInventory ?? []])].sort();
-        for (const file of observed.filter(file => path.posix.basename(file) === 'pom.xml'))
+        for (const file of observed.filter(file => path.posix.basename(file) === 'pom.xml' && this.accepts(path.posix.dirname(file), 'maven')))
             this.maven(file);
-        const settings = observed.filter(file => /^settings\.gradle(?:\.kts)?$/.test(path.posix.basename(file)));
+        const settings = observed.filter(file => /^settings\.gradle(?:\.kts)?$/.test(path.posix.basename(file)) && this.accepts(path.posix.dirname(file), 'gradle'));
         for (const file of settings)
             this.gradle(file, observed);
-        for (const file of observed.filter(file => /^build\.gradle(?:\.kts)?$/.test(path.posix.basename(file))))
+        for (const file of observed.filter(file => /^build\.gradle(?:\.kts)?$/.test(path.posix.basename(file)) && this.accepts(path.posix.dirname(file), 'gradle')))
             if (!this.at(path.posix.dirname(file)))
                 this.gradle(file, observed);
         for (const app of context.config.applications)
-            if ((app.sourceRoots?.java || app.sourceRoots?.kotlin) && !this.at(app.path))
-                this.projects.push(this.create(app.path, 'configured'));
+            if (!this.at(app.path)) {
+                if (app.jvm?.buildSystem) {
+                    const project = this.create(app.path, app.jvm.buildSystem);
+                    project.gaps.push(`Recorded ${app.jvm.buildSystem} build selection has no observed project descriptor at ${app.path}`);
+                    this.projects.push(project);
+                }
+                else if (app.sourceRoots?.java || app.sourceRoots?.kotlin)
+                    this.projects.push(this.create(app.path, 'configured'));
+            }
         for (const project of this.projects) {
             this.configured(project);
-            if (project.kind === 'maven' && observed.some(file => path.posix.dirname(file) === project.root && /^(?:build|settings)\.gradle(?:\.kts)?$/.test(path.posix.basename(file))))
+            if (project.kind === 'maven' && this.accepts(project.root, 'gradle') && observed.some(file => path.posix.dirname(file) === project.root && /^(?:build|settings)\.gradle(?:\.kts)?$/.test(path.posix.basename(file))))
                 project.gaps.push('Competing Maven and Gradle build ownership requires an explicit project selection');
         }
         // A reactor is an explicit aggregation, never a shared directory/GAV guess.
@@ -82,8 +89,10 @@ export class JvmProjects {
                 project.proof.push(...root.proof.filter(fact => !project.proof.some(existing => existing.file === fact.file && existing.explanation === fact.explanation)));
                 for (const member of project.modules) {
                     const child = this.at(member);
-                    if (child)
+                    if (child?.kind === 'maven')
                         visit(child, seen);
+                    else if (child)
+                        project.gaps.push(`Declared Maven module conflicts with selected ${child.kind} project: ${member}`);
                     else
                         project.gaps.push(`Declared Maven module is unavailable: ${member}`);
                 }
@@ -103,9 +112,16 @@ export class JvmProjects {
     }
     private fact(file: string | undefined, start: number | undefined, explanation: string): Evidence[] { const text = file && this.sources.readFile(file), line = text !== undefined && start !== undefined ? text.slice(0, start).split(/\r\n|\r|\n/).length : undefined; return [{ ...evidence(file ? 'syntax' : 'framework', 'jvm-projects', file, line, explanation), analyzerVersion: JVM_PROJECT_VERSION }]; }
     private at(root: string) { return this.projects.find(project => project.root === root); }
+    private accepts(root: string, kind: 'maven' | 'gradle') {
+        const selected = applicationAt(this.context.config.applications, root)?.jvm?.buildSystem;
+        return selected === undefined || selected === kind;
+    }
     private create(root: string, kind: JvmProject['kind'], manifest?: string): JvmProject {
         const app = applicationAt(this.context.config.applications, root);
-        return { id: this.context.graph.id('project', 'jvm', root), root, kind, manifest, sourceSet: app?.jvm?.sourceSet ?? 'main', roots: [], dependencies: [], modules: [], reactor: root, properties: {}, managed: new Map(), gaps: [], proof: this.fact(manifest, 0, `Indexed ${kind} JVM project; target builds/plugins never execute`) };
+        const proof = this.fact(manifest, 0, `Indexed ${kind} JVM project; target builds/plugins never execute`);
+        if (app?.jvm?.buildSystem)
+            proof.push(...this.fact(undefined, undefined, `Recorded jvm.buildSystem=${app.jvm.buildSystem} for application ${app.name} at ${app.path}; competing build families are not selected`));
+        return { id: this.context.graph.id('project', 'jvm', root), root, kind, manifest, sourceSet: app?.jvm?.sourceSet ?? 'main', roots: [], dependencies: [], modules: [], reactor: root, properties: {}, managed: new Map(), gaps: [], proof };
     }
     private root(project: JvmProject, value: string, language: 'java' | 'kotlin', set: 'main' | 'test', proof: Evidence[]) {
         const selected = jvmPath(project.root, value);
@@ -172,7 +188,7 @@ export class JvmProjects {
         const parentNode = xmlChild(document, 'parent');
         if (parentNode) {
             const relative = xmlChild(parentNode, 'relativePath'), value = relative ? relative.text.trim() : '../pom.xml', target = value ? jvmPath(root, value.endsWith('.xml') ? value : value + '/pom.xml') : undefined;
-            if (target && this.context.files.has(target) && !this.active.has(target))
+            if (target && this.context.files.has(target) && !this.active.has(target) && this.accepts(path.posix.dirname(target), 'maven'))
                 parent = this.maven(target);
             else if (target && this.active.has(target))
                 project.gaps.push('Cyclic Maven parent initialization');
@@ -356,6 +372,10 @@ export class JvmProjects {
         }
         const selected: JvmProject[] = [];
         for (const [name, root] of members) {
+            if (!this.accepts(root, 'gradle')) {
+                gaps.push(`Declared Gradle member conflicts with recorded Maven build selection: ${root}`);
+                continue;
+            }
             const old = this.at(root);
             if (old) {
                 old.gaps.push('Competing JVM build manifests/project ownership');

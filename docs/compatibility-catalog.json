@@ -103,26 +103,30 @@
       "id": "java",
       "label": "Java",
       "parser": "Tree-sitter Java",
-      "imports": "Indexed Maven/Gradle/configured roots, source sets, project references and imports",
+      "imports": "Indexed Maven/Gradle/configured roots, recorded build-family selection, source sets, project references and imports",
       "binding": "Partial scoped source types, exact signatures and selected direct calls",
       "frameworks": "Spring MVC, WebFlux",
       "gaps": "Executable build models, binary classpaths, virtual/generic/inherited dispatch and compiler interop",
       "sources": [
         "src/analysis/languages/jvm.ts",
-        "src/analysis/languages/jvm-symbols.ts"
+        "src/analysis/languages/jvm-symbols.ts",
+        "src/analysis/resolution/jvm-projects.ts",
+        "src/core/config.ts"
       ]
     },
     {
       "id": "kotlin",
       "label": "Kotlin",
       "parser": "Tree-sitter Kotlin",
-      "imports": "Indexed Maven/Gradle/configured roots, source sets, project references and imports",
+      "imports": "Indexed Maven/Gradle/configured roots, recorded build-family selection, source sets, project references and imports",
       "binding": "Partial scoped source types, exact signatures and selected direct calls",
       "frameworks": "Spring MVC, WebFlux",
       "gaps": "Executable build models, binary classpaths, virtual/generic/inherited dispatch and compiler interop",
       "sources": [
         "src/analysis/languages/jvm.ts",
-        "src/analysis/languages/jvm-symbols.ts"
+        "src/analysis/languages/jvm-symbols.ts",
+        "src/analysis/resolution/jvm-projects.ts",
+        "src/core/config.ts"
       ]
     },
     {
@@ -582,7 +586,8 @@
       "gaps": "Boot starter alone does not prove BOM version; executable build models, broad reactive typing and unknown policies remain gaps",
       "tests": [
         "tests/spring-mvc.test.ts",
-        "tests/spring-webflux.test.ts"
+        "tests/spring-webflux.test.ts",
+        "tests/jvm-build-selection.test.ts"
       ],
       "sources": [
         {

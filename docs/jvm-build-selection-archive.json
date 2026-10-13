@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "passed": true,
+  "verifiedAt": "2026-10-13T07:42:01.973108+00:00",
+  "seconds": 7.439146280288696,
+  "archive": "/dev/shm/codiluce-jvm-build-selection/jvm-build-selection-runtime-source-and-evidence.tar.gz",
+  "bytes": 56247336,
+  "sha256": "2fae3e5d65d354cfdc3d9889a59095ea981b574d80a8216a286c422772b6b4d0",
+  "regularFiles": 3540,
+  "manifestSha256": "58c7d1242185aa4742bcc56bf7b05cc63284160707e25988ea861c577de99377",
+  "runtimeSha256": "1a59c904de099f94806f8fe12f07cdf19f0d483ca04d7a6e94a2a1c3f8a9e47e",
+  "fullFileBytesAndModesReopened": true,
+  "ramBacked": true,
+  "completeOriginalGraphsRetained": 60,
+  "originalFilesRetained": 37,
+  "priorFailureArtifactsRetained": true,
+  "priorRuntimeReconstructibleFromUnchangedCurrentFilesAndRetainedDifferences": true,
+  "snapshotBoundary": "Report/source receipts inside the archive precede this self-referential archive receipt and HTTP/final audit append",
+  "normalInstalledPackageQualified": false,
+  "productionHistoryObservation": false,
+  "goalComplete": false
+}
