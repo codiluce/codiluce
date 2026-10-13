@@ -4,7 +4,7 @@ import { applicationAt } from '../../core/config.js';
 import { evidence, type Evidence } from '../../core/graph.js';
 import { IndexedSources } from '../indexed-sources.js';
 import { readPomXml, xmlChild, xmlChildren, xmlValue, jvmPath, gradleTokens, readGradleSettings, readGradleBuild, type XmlNode } from './jvm-manifest.js';
-export const JVM_PROJECT_VERSION = '3';
+export const JVM_PROJECT_VERSION = '4';
 export interface JvmDependency {
     path?: string;
     coordinate?: string;
@@ -28,6 +28,11 @@ export interface JvmProject {
         proof: Evidence[];
     }[];
     dependencies: JvmDependency[];
+    compilerInputs?: {
+        javaToolchains: { languageVersion: number; proof: Evidence[] }[];
+        kotlinArgumentUpdates: { operation: 'add' | 'addAll' | 'set'; arguments: { value: string; proof: Evidence[] }[]; proof: Evidence[] }[];
+        testPlatforms: { selector: string; platform: 'junit-platform'; proof: Evidence[] }[];
+    };
     modules: string[];
     reactor: string;
     coordinate?: string;
@@ -401,13 +406,20 @@ export class JvmProjects {
             }
             const model = readGradleBuild(tokens, manifest?.endsWith('.kts'));
             project.gaps.push(...model.gaps);
+            const inputs = model.compiler;
+            if (inputs.javaToolchains.length || inputs.kotlinArgumentUpdates.length || inputs.testPlatforms.length)
+                project.compilerInputs = {
+                    javaToolchains: inputs.javaToolchains.map(item => ({ languageVersion: item.languageVersion, proof: this.fact(manifest, item.start, 'Observed literal Gradle Java toolchain input; host installation and target build were not resolved/executed') })),
+                    kotlinArgumentUpdates: inputs.kotlinArgumentUpdates.map(item => ({ operation: item.operation, arguments: item.arguments.map(argument => ({ value: argument.value, proof: this.fact(manifest, argument.start, 'Observed literal Kotlin compiler argument; unresolved transformation effects remain project gaps') })), proof: this.fact(manifest, item.start, 'Observed ordered Gradle Kotlin compiler argument update; not an executed/effective compiler configuration') })),
+                    testPlatforms: inputs.testPlatforms.map(item => ({ selector: item.selector, platform: item.platform, proof: this.fact(manifest, item.start, 'Observed literal JUnit Platform task selection; target test tasks were not executed') })),
+                };
             if (!model.plugins.length)
                 project.gaps.push('No literal reviewed Java/Kotlin JVM plugin selects conventional source roots');
             const languages: ('java' | 'kotlin')[] = model.plugins.some(plugin => plugin.id === 'org.jetbrains.kotlin.jvm') ? ['java', 'kotlin'] : ['java'];
             if (model.plugins.length)
                 for (const language of languages)
                     for (const set of ['main', 'test'] as const)
-                        this.root(project, `src/${set}/${language}`, language, set, this.fact(manifest, model.plugins[0]!.start, 'Literal standard Gradle JVM plugin/source-set contract'));
+                        this.root(project, `src/${set}/${language}`, language, set, this.fact(manifest, model.plugins[0]!.start, model.gaps.length ? 'Observed literal standard Gradle JVM plugin/source-set contract; unresolved project gaps prevent confirmed activation' : 'Literal standard Gradle JVM plugin/source-set contract'));
             for (const item of model.dependencies) {
                 const target = item.project && members.get(item.project);
                 if (['api', 'compileOnlyApi'].includes(item.scope) && !model.plugins.some(plugin => plugin.id === 'java-library'))

@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { emptyGradleCompilerInputs, readGradleCompilerBlock, type GradleCompilerInputs } from './jvm-gradle-compiler.js';
 /** Bounded XML data reader. Never expands DTDs, external entities or schemas. */
 export interface XmlNode {
     name: string;
@@ -94,6 +95,7 @@ export interface GradleToken {
     value: string;
     literal?: boolean;
     quote?: string;
+    escapedIdentifier?: boolean;
     start: number;
     end: number;
     depth: number;
@@ -125,6 +127,14 @@ export function gradleTokens(text: string): GradleToken[] | undefined {
             continue;
         }
         const start = i, quote = text[i];
+        if (quote === '\x60') {
+            const end = text.indexOf('\x60', i + 1), value = text.slice(i + 1, end);
+            if (end < 0 || !/^[A-Za-z_][\w-]*$/.test(value))
+                return;
+            tokens.push({ value, escapedIdentifier: true, start, end: end + 1, depth: stack.length });
+            i = end + 1;
+            continue;
+        }
         if (quote === '"' || quote === "'") {
             i++;
             const end = text.indexOf(quote, i);
@@ -134,7 +144,7 @@ export function gradleTokens(text: string): GradleToken[] | undefined {
             i = end + 1;
             continue;
         }
-        const match = /^[A-Za-z_][\w-]*|^\d+(?:\.\d+)*|^[{}()[\].,:;=]/.exec(text.slice(i));
+        const match = /^[A-Za-z_][\w-]*|^\d+(?:\.\d+)*|^[{}()[\].,:;=<>]/.exec(text.slice(i));
         if (!match)
             return;
         const value = match[0], depth = stack.length;
@@ -185,6 +195,10 @@ export interface GradleSettingsModel {
  * workspace, even when a recognizable include appears elsewhere. */
 export function readGradleSettings(tokens: GradleToken[], kotlinDsl = false): GradleSettingsModel {
     const model: GradleSettingsModel = { includes: [], directories: [], gaps: [] };
+    if (tokens.some(token => token.escapedIdentifier)) {
+        model.gaps.push('Escaped Gradle settings identifiers require a reviewed DSL model');
+        return model;
+    }
     if (kotlinDsl && tokens.some(token => token.literal && token.quote !== '"')) {
         model.gaps.push('Kotlin Gradle string forms require double-quoted literals');
         return model;
@@ -225,6 +239,7 @@ export function readGradleSettings(tokens: GradleToken[], kotlinDsl = false): Gr
     return model;
 }
 export interface GradleBuildModel {
+    compiler: GradleCompilerInputs;
     plugins: {
         id: string;
         version?: string;
@@ -241,7 +256,15 @@ export interface GradleBuildModel {
 /** Parse only complete reviewed DSL statements. Recognizable words in arbitrary
  * expressions never select plugins, roots or dependencies. */
 export function readGradleBuild(tokens: GradleToken[], kotlinDsl = false): GradleBuildModel {
-    const model: GradleBuildModel = { plugins: [], dependencies: [], gaps: [] };
+    const model: GradleBuildModel = { plugins: [], dependencies: [], compiler: emptyGradleCompilerInputs(), gaps: [] };
+    if (!kotlinDsl && tokens.some(token => token.escapedIdentifier)) {
+        model.gaps.push('Escaped Gradle identifiers require Kotlin DSL');
+        return model;
+    }
+    if (tokens.some(token => token.escapedIdentifier && token.value !== 'java-library')) {
+        model.gaps.push('Escaped Gradle identifiers require a reviewed DSL model');
+        return model;
+    }
     if (kotlinDsl && tokens.some(token => token.literal && token.quote !== '"')) {
         model.gaps.push('Kotlin Gradle string forms require double-quoted literals');
         return model;
@@ -254,6 +277,15 @@ export function readGradleBuild(tokens: GradleToken[], kotlinDsl = false): Gradl
             continue;
         }
         const token = tokens[i]!;
+        const compiler = readGradleCompilerBlock(tokens, i, kotlinDsl);
+        if (compiler) {
+            model.compiler.javaToolchains.push(...compiler.javaToolchains);
+            model.compiler.kotlinArgumentUpdates.push(...compiler.kotlinArgumentUpdates);
+            model.compiler.testPlatforms.push(...compiler.testPlatforms);
+            model.gaps.push(...compiler.gaps);
+            i = compiler.end;
+            continue;
+        }
         if (!token.literal && ['group', 'version'].includes(token.value) && tokens[i + 1]?.value === '=' && tokens[i + 2]?.literal) {
             i += 3;
             continue;
@@ -264,6 +296,7 @@ export function readGradleBuild(tokens: GradleToken[], kotlinDsl = false): Gradl
         }
         const section = token.value;
         i += 2;
+        let failed = false;
         while (i < tokens.length && tokens[i]?.value !== '}') {
             if (tokens[i]?.value === ';') {
                 i++;
@@ -272,7 +305,7 @@ export function readGradleBuild(tokens: GradleToken[], kotlinDsl = false): Gradl
             const item = tokens[i]!;
             if (section === 'plugins') {
                 let id: string | undefined, end = i + 1;
-                if (kotlinDsl && !item.literal && item.value === 'java')
+                if (kotlinDsl && !item.literal && (item.value === 'java' || item.value === 'java-library' && item.escapedIdentifier))
                     id = item.value;
                 else if (!item.literal && (item.value === 'id' || kotlinDsl && item.value === 'kotlin') && (!kotlinDsl || tokens[i + 1]?.value === '(')) {
                     const args = tokenArguments(tokens, i + 1);
@@ -281,15 +314,12 @@ export function readGradleBuild(tokens: GradleToken[], kotlinDsl = false): Gradl
                         end = args.end;
                     }
                 }
-                if (!id || !['java', 'java-library', 'org.jetbrains.kotlin.jvm'].includes(id)) {
-                    model.gaps.push('Unreviewed Gradle plugin selection can change source/classpath inputs');
-                    break;
-                }
                 let version: string | undefined;
                 if (!tokens[end]?.literal && tokens[end]?.value === 'version') {
                     const args = tokenArguments(tokens, end + 1);
                     if (args?.values.length !== 1) {
                         model.gaps.push('Dynamic Gradle plugin version');
+                        failed = true;
                         break;
                     }
                     version = args.values[0]!.value;
@@ -297,14 +327,23 @@ export function readGradleBuild(tokens: GradleToken[], kotlinDsl = false): Gradl
                 }
                 if (tokens[end]?.value === 'apply') {
                     model.gaps.push('Gradle apply flags require a selected plugin application model');
+                    failed = true;
                     break;
                 }
-                model.plugins.push({ id, version, start: item.start });
+                if (!id) {
+                    model.gaps.push('Unreviewed Gradle plugin selection can change source/classpath inputs');
+                    failed = true;
+                    break;
+                }
+                if (['java', 'java-library', 'org.jetbrains.kotlin.jvm'].includes(id))
+                    model.plugins.push({ id, version, start: item.start });
+                else model.gaps.push('Unreviewed Gradle plugin selection can change source/classpath inputs: ' + id);
                 i = end;
             }
             else if (section === 'repositories') {
                 if (!['mavenCentral', 'google', 'mavenLocal'].includes(item.value) || tokens[i + 1]?.value !== '(' || tokens[i + 2]?.value !== ')') {
                     model.gaps.push('Custom Gradle repository DSL requires a recorded dependency model');
+                    failed = true;
                     break;
                 }
                 i += 3;
@@ -312,6 +351,7 @@ export function readGradleBuild(tokens: GradleToken[], kotlinDsl = false): Gradl
             else {
                 if (!scopes.has(item.value) || item.literal) {
                     model.gaps.push('Unreviewed Gradle dependency configuration');
+                    failed = true;
                     break;
                 }
                 const outer = tokens[i + 1]?.value === '(', expressionAt = i + (outer ? 2 : 1), expression = tokens[expressionAt];
@@ -327,19 +367,21 @@ export function readGradleBuild(tokens: GradleToken[], kotlinDsl = false): Gradl
                 }
                 if (kotlinDsl && !outer || (!project && !coordinate) || outer && tokens[end]?.value !== ')') {
                     model.gaps.push('Gradle catalog/provider/map dependency requires a recorded selection');
+                    failed = true;
                     break;
                 }
                 if (outer)
                     end++;
                 if (tokens[end]?.value === '{' || tokens[end]?.value === '.') {
                     model.gaps.push('Gradle dependency customization requires a recorded selection');
+                    failed = true;
                     break;
                 }
                 model.dependencies.push({ scope: item.value, project, coordinate, start: item.start });
                 i = end;
             }
         }
-        if (model.gaps.length)
+        if (failed)
             break;
         if (tokens[i]?.value !== '}') {
             model.gaps.push('Incomplete Gradle DSL block');

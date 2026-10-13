@@ -103,14 +103,16 @@
       "id": "java",
       "label": "Java",
       "parser": "Tree-sitter Java",
-      "imports": "Indexed Maven/Gradle/configured roots, recorded build-family selection, source sets, project references and imports",
+      "imports": "Indexed Maven/Gradle/configured roots, recorded build-family selection, source sets, project references and imports; observed literal Gradle compiler inputs",
       "binding": "Partial scoped source types, exact signatures and selected direct calls",
       "frameworks": "Spring MVC, WebFlux",
-      "gaps": "Executable build models, binary classpaths, virtual/generic/inherited dispatch and compiler interop",
+      "gaps": "Executable build models, unresolved plugin/BOM/compiler transformations, binary classpaths, virtual/generic/inherited dispatch and compiler interop",
       "sources": [
         "src/analysis/languages/jvm.ts",
         "src/analysis/languages/jvm-symbols.ts",
         "src/analysis/resolution/jvm-projects.ts",
+        "src/analysis/resolution/jvm-manifest.ts",
+        "src/analysis/resolution/jvm-gradle-compiler.ts",
         "src/core/config.ts"
       ]
     },
@@ -118,14 +120,16 @@
       "id": "kotlin",
       "label": "Kotlin",
       "parser": "Tree-sitter Kotlin",
-      "imports": "Indexed Maven/Gradle/configured roots, recorded build-family selection, source sets, project references and imports",
+      "imports": "Indexed Maven/Gradle/configured roots, recorded build-family selection, source sets, project references and imports; observed literal Gradle compiler inputs",
       "binding": "Partial scoped source types, exact signatures and selected direct calls",
       "frameworks": "Spring MVC, WebFlux",
-      "gaps": "Executable build models, binary classpaths, virtual/generic/inherited dispatch and compiler interop",
+      "gaps": "Executable build models, unresolved plugin/BOM/compiler transformations, binary classpaths, virtual/generic/inherited dispatch and compiler interop",
       "sources": [
         "src/analysis/languages/jvm.ts",
         "src/analysis/languages/jvm-symbols.ts",
         "src/analysis/resolution/jvm-projects.ts",
+        "src/analysis/resolution/jvm-manifest.ts",
+        "src/analysis/resolution/jvm-gradle-compiler.ts",
         "src/core/config.ts"
       ]
     },
