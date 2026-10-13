@@ -440,7 +440,8 @@ details[open].section > summary::before { transform: rotate(90deg); }
 [data-theme="neon"] .inspector-title h3 { font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
 
 @media (max-width: 900px) {
-  .workspace { grid-template-columns: 1fr; }
+  .workspace, .workspace.with-code { grid-template-columns: 1fr; }
+  .panel.code-panel { z-index: 9; }
   .panel { position: absolute; top: 0; bottom: 0; right: 0; width: min(92vw, 380px) !important; z-index: 8; box-shadow: var(--shadow); }
   .panel.left { left: 0; right: auto; }
   .brand small, .run-info { display: none; }
@@ -923,11 +924,17 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .search-result[aria-selected="true"] .search-actions, .search-result:hover .search-actions, .search-actions:focus-within { display: flex; }
 .search-action { padding: 2px 8px; border: 1px solid var(--panel-border); border-radius: 999px; background: var(--chip); color: var(--text); font: inherit; font-size: 11px; white-space: nowrap; cursor: pointer; }
 .search-action:hover, .search-action:focus-visible { border-color: var(--accent); outline: none; }
-.code-view .tool-title h2 { display: flex; align-items: center; gap: 8px; }
-.code-view .tool-title h2 .type-badge { font-size: 11px; font-weight: 500; }
-.code-path { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.code-layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(150px, 230px) minmax(0, 1fr); }
-.code-outline { min-height: 0; overflow: auto; padding: 8px 6px 24px; border-right: 1px solid var(--panel-border); display: flex; flex-direction: column; gap: 1px; }
+.workspace.with-code { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+.code-view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.code-actions { display: flex; align-items: center; gap: 6px; }
+.code-title { display: grid; gap: 2px; padding: 8px 12px; border-bottom: 1px solid var(--panel-border); min-width: 0; }
+.code-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.code-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.code-name .type-badge { flex: none; font-size: 11px; }
+.code-path { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.code-outline-toggle { display: flex; align-items: center; gap: 6px; width: 100%; padding: 5px 12px; border: 0; border-bottom: 1px solid var(--panel-border); background: none; color: var(--muted); font: inherit; font-size: 12px; text-align: left; cursor: pointer; }
+.code-outline-toggle:hover { color: var(--text); }
+.code-outline { flex: none; max-height: min(30vh, 240px); overflow: auto; padding: 4px 6px 6px; border-bottom: 1px solid var(--panel-border); display: flex; flex-direction: column; gap: 1px; }
 .code-outline .absent { padding: 4px 8px; margin: 0; }
 .code-outline-item { display: flex; align-items: center; gap: 6px; width: 100%; min-width: 0; padding: 3px 8px; border: 0; border-radius: var(--radius-item, 6px); background: none; color: var(--text); font: inherit; font-size: 12px; text-align: left; cursor: pointer; }
 .code-outline-item:hover { background: var(--chip); }
@@ -938,10 +945,9 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .code-outline-item .type-dot { flex: none; }
 .code-outline-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .code-outline-line { flex: none; color: var(--subtle); font-size: 11px; font-variant-numeric: tabular-nums; }
-.code-main { min-height: 0; min-width: 0; display: flex; flex-direction: column; background: var(--code-bg); }
+.code-main { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; background: var(--code-bg); }
 .code-notes { padding: 0 12px; flex: none; }
 .code-body { padding-bottom: 24px; }
-.tool-open .code-body { padding-bottom: 240px; }
 .code-area { list-style: none; margin: 0; padding: 0; }
 .code-area li { border-radius: var(--radius-item, 6px); }
 .code-area li.selected { background: var(--chip-active); }
@@ -949,7 +955,7 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .code-area button:hover .mono { color: var(--link); }
 .code-area .mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .code-area-icon { color: var(--subtle); font-size: 10px; }
-@media (max-width: 700px) { .map-holder.small { width: 46%; height: 30%; } .search-actions { grid-column: 2; grid-row: auto; } .code-layout { grid-template-columns: minmax(0, 1fr); } .code-outline { display: none; } }
+@media (max-width: 700px) { .map-holder.small { width: 46%; height: 30%; } .search-actions { grid-column: 2; grid-row: auto; } }
 
 /* Building shapes: the selection's archetype, and the legend in the help. */
 .archetype-chip { display: flex; align-items: center; gap: 10px; margin: 8px 0 4px; }

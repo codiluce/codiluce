@@ -1,11 +1,9 @@
 'use client';
-// The code of the selection in the middle of the screen: a file whole, a
-// symbol in its file with its lines marked, beside the file's outline; an
-// area lists what it holds, to go down into it. It follows the selection
-// while it is in front (the map, search, the inspector, a call mark or the
-// outline), and the overview map keeps the selection and what it is
-// connected to lit.
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+// The code of the selection in a panel beside the inspector: a file whole, a
+// symbol in its file with its lines marked, under the file's outline; an area
+// lists what it holds, to go down into it. It follows the selection while it
+// is open (the map, search, the inspector, a call mark or the outline).
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { NodeSummary } from '@engine/projection/dto';
 import { typeLabel } from '../lib/format';
 import { highlightLines } from '../lib/highlight';
@@ -24,24 +22,26 @@ export function CodeView() {
   const node = code.node;
   const area = !!node && (isContainer(node) || !node.path);
   return (
-    <section className="tool-view code-view" role="region" aria-label={node ? `Code of ${node.name}` : 'Code'}>
-      <header className="tool-head">
-        <div className="tool-title">
-          {node ? <h2><TypeBadge type={node.type} role={node.role} kind={node.kind} /> {node.name}</h2> : <h2>Code</h2>}
-          <span className="absent mono code-path">
-            {code.data ? `${code.data.file.path} · ${code.data.totalLines} lines${code.data.snapshot?.kind === 'commit' ? ` ${where(code.data.snapshot)}` : ''}`
-              : node?.path ?? (node ? `${typeLabel(node.type, node.role)}: choose a file inside to read it` : 'Select a file or a symbol to read its code')}
-          </span>
-        </div>
-        <div className="tool-actions">
+    <section className="code-view" role="region" aria-label={node ? `Code of ${node.name}` : 'Code'}>
+      <div className="panel-header">
+        <h2>Code</h2>
+        <span className="code-actions">
           {code.status === 'loading' && <span className="absent">reading…</span>}
           {code.data && <CopyButton text={() => code.data!.file.path} label="Copy path" title="Copy the path of the file" />}
-          {node && <button className="button small primary" onClick={() => { store.setCenter('map'); store.navigator?.flyTo(node, { mode: isContainer(node) ? 'enter' : 'focus' }); }} title="Back to the map, on this">Show on map</button>}
           <button className="icon-button small" onClick={() => store.closeCode()} aria-label="Close the code">✕</button>
+        </span>
+      </div>
+      {node && (
+        <div className="code-title">
+          <div className="code-name"><TypeBadge type={node.type} role={node.role} kind={node.kind} /><strong>{node.name}</strong></div>
+          <span className="absent mono code-path" title={code.data?.file.path ?? node.path}>
+            {code.data ? `${code.data.file.path} · ${code.data.totalLines} lines${code.data.snapshot?.kind === 'commit' ? ` ${where(code.data.snapshot)}` : ''}`
+              : node.path ?? `${typeLabel(node.type, node.role)}: choose a file inside to read it`}
+          </span>
         </div>
-      </header>
-      {code.status === 'error' && <p className="note error" style={{ margin: '10px 16px' }}>{code.error}</p>}
-      {!node && <div className="tool-body"><p className="absent">Select a file or a symbol — on the map, in search, in the inspector — and its code shows here. Select a folder to list what it holds.</p></div>}
+      )}
+      {code.status === 'error' && <p className="note error" style={{ margin: '10px 12px' }}>{code.error}</p>}
+      {!node && <div className="panel-body"><p className="absent">Select a file or a symbol — on the map, in search, in the inspector — and its code shows here. Select a folder to list what it holds.</p></div>}
       {area && <AreaList id={code.forId!} selected={selected} />}
       {!area && node && <CodeBody />}
     </section>
@@ -56,7 +56,7 @@ function AreaList({ id, selected }: { id: string; selected?: string }) {
   const items = (list?.ids ?? []).flatMap(child => { const node = store.scene.nodes.get(child); return node ? [node] : []; })
     .sort((a, b) => Number(isContainer(b)) - Number(isContainer(a)) || a.name.localeCompare(b.name));
   return (
-    <div className="tool-body">
+    <div className="panel-body">
       {!list?.complete && !items.length && <div className="rf-loading"><span className="rf-spark" />Listing…</div>}
       {list?.complete && !items.length && <p className="absent">Nothing indexed inside.</p>}
       {items.length > 0 && (
@@ -121,7 +121,7 @@ function CodeBody() {
     return () => observer.disconnect();
   }, [store, data?.end, data?.totalLines]);
   return (
-    <div className="code-layout">
+    <>
       <Outline />
       <div className="code-main">
         {data && (data.changedSinceIndex || data.notices.length > 0) && (
@@ -152,34 +152,45 @@ function CodeBody() {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }
 
-/** The symbols of the file shown, in source order; the one selected (or holding the marked lines) is current. */
+const OUTLINE_KEY = 'codiluce:code-outline';
+/** The symbols of the file shown, in source order, above its code (folded away on request, remembered); the one selected is current. */
 function Outline() {
   const store = useStore();
   const code = useAtlas(state => state.code)!;
   const theme = themeById(useAtlas(state => state.themeId));
+  const [open, setOpen] = useState(() => { try { return localStorage.getItem(OUTLINE_KEY) !== 'closed'; } catch { return true; } });
   const outline = code.outline?.fileId === code.data?.file.id ? code.outline : undefined;
   const file = code.data?.file;
-  if (!file) return <nav className="code-outline" aria-label="Outline" />;
+  if (!file) return null;
   const current = code.forId;
   const dot = (node: NodeSummary) => { const base = theme.entity[node.type] ?? theme.fallbackEntity; return `hsl(${base.h} ${base.s}% ${base.l}%)`; };
+  const toggle = () => { setOpen(!open); try { localStorage.setItem(OUTLINE_KEY, open ? 'closed' : 'open'); } catch { /* optional */ } };
+  const select = (id: string) => void store.select(id, { fly: true });
   return (
-    <nav className="code-outline" aria-label={`Outline of ${file.path}`}>
-      <button className={`code-outline-item file${current === file.id ? ' current' : ''}`} onClick={() => void store.select(file.id, { fly: true })} title={`${file.path}: the whole file`}>
-        <span className="mono">{file.path.split('/').at(-1)}</span>
+    <>
+      <button className="code-outline-toggle" onClick={toggle} aria-expanded={open} aria-controls="code-outline">
+        <span aria-hidden>{open ? '▾' : '▸'}</span> Outline{outline?.status === 'ready' ? ` · ${outline.items.length} symbol${outline.items.length === 1 ? '' : 's'}` : ''}
       </button>
-      {outline?.status === 'loading' && <p className="absent">…</p>}
-      {outline?.items.map(item => (
-        <button key={item.id} className={`code-outline-item level-${item.level}${current === item.id ? ' current' : ''}`} onClick={() => void store.select(item.id, { fly: true })} title={`${typeLabel(item.type, item.role)} ${item.name}${item.sourceRange ? ` · lines ${item.sourceRange.startLine}–${item.sourceRange.endLine}` : ''}`}>
-          <span className="type-dot" style={{ background: dot(item) }} aria-hidden />
-          <span className="mono code-outline-name">{item.name}</span>
-          {item.sourceRange && <span className="code-outline-line">{item.sourceRange.startLine}</span>}
-        </button>
-      ))}
-      {outline?.status === 'ready' && outline.items.length === 0 && <p className="absent">No symbols indexed in this file.</p>}
-    </nav>
+      {open && (
+        <nav id="code-outline" className="code-outline" aria-label={`Outline of ${file.path}`}>
+          <button className={`code-outline-item file${current === file.id ? ' current' : ''}`} onClick={() => select(file.id)} title={`${file.path}: the whole file`}>
+            <span className="mono">{file.path.split('/').at(-1)}</span>
+          </button>
+          {outline?.status === 'loading' && <p className="absent">…</p>}
+          {outline?.items.map(item => (
+            <button key={item.id} className={`code-outline-item level-${item.level}${current === item.id ? ' current' : ''}`} onClick={() => select(item.id)} title={`${typeLabel(item.type, item.role)} ${item.name}${item.sourceRange ? ` · lines ${item.sourceRange.startLine}–${item.sourceRange.endLine}` : ''}`}>
+              <span className="type-dot" style={{ background: dot(item) }} aria-hidden />
+              <span className="mono code-outline-name">{item.name}</span>
+              {item.sourceRange && <span className="code-outline-line">{item.sourceRange.startLine}</span>}
+            </button>
+          ))}
+          {outline?.status === 'ready' && outline.items.length === 0 && <p className="absent">No symbols indexed in this file.</p>}
+        </nav>
+      )}
+    </>
   );
 }

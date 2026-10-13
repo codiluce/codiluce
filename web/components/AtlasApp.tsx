@@ -5,6 +5,7 @@ import { shortSha, relativeTime } from '../lib/format';
 import { AtlasStore } from '../lib/store';
 import { MAIN_THEMES, THEMES, themeById, UI_PROPERTIES } from '../lib/themes';
 import { Breadcrumbs } from './Breadcrumbs';
+import { CodeView } from './CodeView';
 import { AtlasContext, useAtlas, useStore } from './context';
 import { EclipseMark } from './EclipseMark';
 import { FeaturesPanel } from './FeaturesPanel';
@@ -44,6 +45,17 @@ function usePanelWidth(key: string, initial: number): [number, (width: number) =
   useEffect(() => { try { const saved = Number(localStorage.getItem(key)); if (saved >= 240 && saved <= 720) setWidth(saved); } catch { /* optional */ } }, [key]);
   return [width, (next: number) => { const clamped = Math.max(240, Math.min(720, next)); setWidth(clamped); try { localStorage.setItem(key, String(clamped)); } catch { /* optional */ } }];
 }
+const CODE_SHARE_KEY = 'codiluce:code-share';
+/** The code panel's width: 30% of the window at first, then the share it was resized to (18–60%), following the window as it resizes. */
+function useCodeWidth(): [number, (width: number) => void] {
+  const [share, setShare] = useState(() => { try { const saved = Number(localStorage.getItem(CODE_SHARE_KEY)); if (saved >= 0.18 && saved <= 0.6) return saved; } catch { /* optional */ } return 0.3; });
+  const [viewport, setViewport] = useState(() => window.innerWidth);
+  useEffect(() => { const onResize = () => setViewport(window.innerWidth); window.addEventListener('resize', onResize); return () => window.removeEventListener('resize', onResize); }, []);
+  return [Math.max(280, Math.round(share * viewport)), (next: number) => {
+    const value = Math.max(0.18, Math.min(0.6, next / window.innerWidth));
+    setShare(value); try { localStorage.setItem(CODE_SHARE_KEY, value.toFixed(4)); } catch { /* optional */ }
+  }];
+}
 function ResizeHandle({ side, width, onResize, label }: { side: 'left' | 'right'; width: number; onResize: (width: number) => void; label: string }) {
   const start = useRef<{ x: number; width: number } | null>(null);
   return (
@@ -66,6 +78,7 @@ function Shell() {
   const theme = themeById(themeId);
   const [inspectorWidth, setInspectorWidth] = usePanelWidth('codiluce:inspector-width', 380);
   const [flowWidth, setFlowWidth] = usePanelWidth('codiluce:flow-width', 300);
+  const [codeWidth, setCodeWidth] = useCodeWidth();
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [leftOpen, setLeftOpen] = useState(false);
   // The left panel holds the features (once described), every flow (pages, requests, console) and the people who changed the code.
@@ -83,7 +96,7 @@ function Shell() {
   const showLeft = (tab: 'features' | 'flows' | 'people') => { if (leftOpen && leftTab === tab) setLeftOpen(false); else { setLeftOpen(true); setLeftTab(tab); } };
   const tabs = [...(features > 0 ? ['features' as const] : []), 'flows' as const, 'people' as const];
   const impactOpen = useAtlas(state => state.impact.open && state.center === 'impact');
-  const codeOpen = useAtlas(state => !!state.code && state.center === 'code');
+  const codeOpen = useAtlas(state => !!state.code);
   const moreThemes = useAtlas(state => state.moreThemes);
   // The theme menu: Dusk and Dawn, the theme in use, and every other once "More themes" is on in Settings.
   const themes = THEMES.filter(item => moreThemes || MAIN_THEMES.includes(item.id) || item.id === theme.id);
@@ -142,7 +155,7 @@ function Shell() {
           <button className="button rf-top" onClick={() => showLeft('flows')} aria-pressed={leftOpen && leftTab === 'flows'} aria-controls="left-panel" title="Every flow of the code in one list: pages, requests, console commands and scheduled tasks">Flows</button>
           <button className="button" onClick={() => showLeft('people')} aria-pressed={leftOpen && leftTab === 'people'} aria-controls="left-panel" title="Who changed which code, from the Git history: select a person to light the files they changed">People</button>
           <button className="button" onClick={() => impactOpen ? store.setCenter('map') : store.openImpactTool()} aria-pressed={impactOpen} title="What depends on the selection, or on your uncommitted changes, hop by hop">Impact</button>
-          <button className="button" onClick={() => codeOpen ? store.setCenter('map') : store.openCode()} aria-pressed={codeOpen} title="The code of the selection: a file, or a symbol in its file, with the file's outline">Code</button>
+          <button className="button" onClick={() => codeOpen ? store.closeCode() : store.openCode()} aria-pressed={codeOpen} title="The code of the selection beside the inspector: a file, or a symbol in its file, with the file's outline">Code</button>
           <button className="button" onClick={() => void store.toggleCoverage()} aria-pressed={coverage} title="Color every file by whether flows touch it: entry points, in flows, supporting, not reached">Coverage</button>
           <label className="sr-only" htmlFor="theme-select">Theme</label>
           <select id="theme-select" className="select" value={themeId} onChange={event => store.setTheme(event.target.value)}>
@@ -153,7 +166,7 @@ function Shell() {
         </div>
       </header>
       <Breadcrumbs />
-      <main className="workspace">
+      <main className={`workspace${codeOpen ? ' with-code' : ''}`}>
         {leftOpen ? (
           <aside id="left-panel" className="panel left" style={{ width: Math.max(flowWidth, 340) }} aria-label={TAB_TEXT[leftTab]}>
             {tabs.length > 1 && (
@@ -168,6 +181,12 @@ function Shell() {
           </aside>
         ) : <div />}
         <Workbench split={split} />
+        {codeOpen && (
+          <aside className="panel code-panel" style={{ width: codeWidth }} aria-label="Code">
+            <ResizeHandle side="right" width={codeWidth} onResize={setCodeWidth} label="Resize the code panel" />
+            <CodeView />
+          </aside>
+        )}
         {inspectorOpen ? (
           <aside className="panel" style={{ width: inspectorWidth }} aria-label="Inspector">
             <ResizeHandle side="right" width={inspectorWidth} onResize={setInspectorWidth} label="Resize inspector" />
@@ -215,7 +234,7 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
       <div className="card" role="dialog" aria-modal="true" aria-labelledby="help-title" onClick={event => event.stopPropagation()} style={{ textAlign: 'left', maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}>
         <h2 id="help-title" style={{ marginTop: 0, fontSize: 15 }}>Keyboard and pointer</h2>
         <dl className="facts">{rows.map(([key, text]) => [<dt key={`k${key}`}><kbd>{key}</kbd></dt>, <dd key={`d${key}`}>{text}</dd>])}</dl>
-        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout and never change with selection, search or filters. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing. Dragging the timeline or pressing play shows each commit at once as a time-lapse; the full view of a commit loads when you let go or pause. When comparing, the split map shows one view on each place that changed around an overview of the whole repository, where numbered frames show what each view shows. Flows, steps, a blast radius (<strong>Impact</strong>, also of your uncommitted changes), the files a highlight lights and the code of the selection (<strong>Code</strong>, which follows what you select) open in the middle of the screen as tabs beside <strong>Map</strong>; the map then stays in a corner as an overview of what they light, and a click on it brings it back. Search results offer the same: a flow on the map or in lanes, what happens from it, its impact (<kbd>Tab</kbd> reaches them). <strong>Features</strong> (once the code is described) lists what the product does: selecting a feature lights its files on the map, with the flows that start in it; a folder's inspector shows which data families its files belong to. <strong>People</strong> lists who changed the code, from the Git history (authors and co-authors, agents and bots told apart), in a window of time ending at the commit shown: selecting a person lights the files they changed, and every inspector says who changed its selection and when.</p>
+        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout and never change with selection, search or filters. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing. Dragging the timeline or pressing play shows each commit at once as a time-lapse; the full view of a commit loads when you let go or pause. When comparing, the split map shows one view on each place that changed around an overview of the whole repository, where numbered frames show what each view shows. Flows, steps, a blast radius (<strong>Impact</strong>, also of your uncommitted changes), and the files a highlight lights open in the middle of the screen as tabs beside <strong>Map</strong>; the map then stays in a corner as an overview of what they light, and a click on it brings it back. Search results offer the same: a flow on the map or in lanes, what happens from it, its impact (<kbd>Tab</kbd> reaches them). <strong>Code</strong> opens the code of the selection in a panel beside the inspector (drag its edge to resize it) and follows what you select; selecting a file, folder or symbol keeps what it is connected to lit and lets the rest of the map recede. <strong>Features</strong> (once the code is described) lists what the product does: selecting a feature lights its files on the map, with the flows that start in it; a folder's inspector shows which data families its files belong to. <strong>People</strong> lists who changed the code, from the Git history (authors and co-authors, agents and bots told apart), in a window of time ending at the commit shown: selecting a person lights the files they changed, and every inspector says who changed its selection and when.</p>
         <h2 style={{ fontSize: 15 }}>Building shapes</h2>
         <p className="note">Each kind of block has a shape, the same in every language and framework. It comes from the index where it can (a controller class, endpoints declared in a file, a page route) and from folder and name conventions otherwise; the inspector says which. Small blocks show it as a mark on their roof. Settings turns shapes off.</p>
         <ArchetypeLegend />

@@ -96,7 +96,7 @@ export interface ImpactState {
   data?: ImpactResult; items: ImpactItem[]; error?: string;
 }
 /** What the middle of the screen shows: the map, or a tool with the map as a small overview in a corner. */
-export type CenterView = 'map' | 'flow' | 'impact' | 'files' | 'code';
+export type CenterView = 'map' | 'flow' | 'impact' | 'files';
 /**
  * A flow open in the middle: one subject (a request, command, task, page or
  * any code that runs) as a diagram (`lanes`: in lanes, left to right;
@@ -107,11 +107,11 @@ export interface FlowViewState { id: string; title: string; subtitle?: string; l
 export interface FileSubject { kind: 'feature' | 'family' | 'coverage' | 'person'; key: string }
 export interface FilesState extends FileSubject { status: Status; stamp: string; data?: FileListResult; error?: string }
 /**
- * The Code tool in the middle: the source of the selection (a file whole, a
- * symbol in its file with its lines marked), read in windows that grow as
- * you scroll; an area (a folder, an application, a district) lists what it
- * holds instead. It follows the selection while it is in front. `stamp` is
- * the view and entity `data` was read for.
+ * The Code panel beside the inspector: the source of the selection (a file
+ * whole, a symbol in its file with its lines marked), read in windows that
+ * grow as you scroll; an area (a folder, an application, a district) lists
+ * what it holds instead. It follows the selection while it is open. `stamp`
+ * is the view and entity `data` was read for.
  */
 export interface CodeState {
   forId?: string; node?: NodeSummary;
@@ -364,7 +364,7 @@ export class AtlasStore {
       else if (deepLink) await this.select(deepLink, { fly: true });
       const impactDepth = Number(param('impact')), impactOf = param('impactOf') ?? (this.state.selection ? deepLink : undefined);
       if (impactOf && Number.isInteger(impactDepth) && impactDepth >= 1 && impactDepth <= 10) void this.showImpact(impactOf, impactDepth);
-      if (param('code') && this.state.center === 'map') this.openCode();
+      if (param('code')) this.openCode();
     } catch (error) {
       this.set({ status: 'error', error: error instanceof Error ? error.message : String(error) });
     }
@@ -918,9 +918,8 @@ export class AtlasStore {
   /** Bring the map, or an open tool, to the middle (the map then shows as an overview in a corner). */
   setCenter(view: CenterView): void {
     const state = this.state;
-    if (view !== 'map' && !(view === 'flow' ? state.flowView : view === 'impact' ? state.impact.open : view === 'code' ? state.code : state.files)) return;
+    if (view !== 'map' && !(view === 'flow' ? state.flowView : view === 'impact' ? state.impact.open : state.files)) return;
     if (state.center !== view) this.set({ center: view });
-    if (view === 'code') this.followCode();
   }
   /** A tool closed: the map comes back to the middle if the tool was there. */
   private leaveCenter(view: CenterView): Partial<AtlasState> { return this.state.center === view ? { center: 'map' } : {}; }
@@ -1383,21 +1382,20 @@ export class AtlasStore {
     void this.loadFiles();
   }
   // The code of the selection ---------------------------------------------------
-  /** Open the Code tool in the middle (or bring it to the front): it shows the selection's code. */
+  /** Open the Code panel beside the inspector: it shows the selection's code. */
   openCode(): void {
-    if (!this.state.code) this.set({ code: { status: 'idle' } });
-    this.setCenter('code');
-    this.writeHash();
+    if (!this.state.code) { this.set({ code: { status: 'idle' } }); this.writeHash(); }
+    this.followCode();
   }
   closeCode(): void {
     for (const key of ['code', 'code-more', 'code-outline']) this.aborts.get(key)?.abort();
-    this.set({ ...this.leaveCenter('code'), code: undefined });
+    this.set({ code: undefined });
     this.writeHash();
   }
   /** Read the selection's code if the tool shows something else (another entity, or another view of history). */
   private followCode(): void {
     const { code, selection } = this.state;
-    if (!code || !selection || this.state.center !== 'code') return;
+    if (!code || !selection) return;
     if (code.stamp === `${this.viewStamp()}|${selection.id}` && code.status !== 'error') return;
     const node = selection.node ?? this.scene.nodes.get(selection.id);
     if (node) void this.loadCode(selection.id, node);
