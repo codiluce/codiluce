@@ -7,6 +7,7 @@ import type { RubyAutoloadModel, RubyAutoloadCatalog } from '../resolution/ruby-
 
 interface Definition { fact: RubyDefinitionFact; file: string; id: string; proof: Evidence[] }
 interface Level { name: string; definitions: Definition[]; methods: RubyFrameworkMethod[]; abstract: boolean }
+interface CallbackEntry { callback: RailsCallback; active: boolean; definite: boolean }
 export interface RailsCallback { kind: 'before' | 'after' | 'around'; method: string; target?: string; conditions: string[]; proof: Evidence[]; file: string; site: RubyCallFact }
 export interface RailsAction { target?: string; controller?: string; proof: Evidence[]; conditions: string[]; reason?: string; callbacks: RailsCallback[] }
 const text = (value: RubyExpression | undefined) => value?.kind === 'symbol' ? value.name : value?.kind === 'literal' && typeof value.value === 'string' ? value.value : undefined;
@@ -62,6 +63,12 @@ export class RailsControllers {
     }
     const method = selected.get(action), abstract = chain.findIndex(level => level.abstract), owner = chain.findIndex(level => level.methods.some(item => item.id === method?.id));
     if (!method || method.visibility !== 'public' || method.reason || abstract >= 0 && owner >= abstract && owner !== 0) return fail(method?.reason ?? 'No original public Rails action method; abstract/internal methods, implicit templates and generated actions remain unsupported');
+    // A symbol callback is replaced and skipped on the initialized chain,
+    // before its action predicates are evaluated. In particular, a filtered
+    // skip changes conditions but leaves the callback's identity in the chain.
+    // Source contract: ActiveSupport CallbackChain and skip_callback, plus
+    // AbstractController _normalize_callback_options, Rails 7.1–8.1.
+    const callbackChain: CallbackEntry[] = [];
     for (const level of [...chain].reverse()) {
       for (const definition of level.definitions) {
         const facts = this.symbols.resolver.facts(definition.file); if (!facts) continue;
@@ -70,19 +77,56 @@ export class RailsControllers {
           if (native === 'ActionController::Metal') return fail('Metal callbacks require an indexed callback module summary');
           const opts = options(call), only = names(opts.get('only')), except = names(opts.get('except')), conditional = this.symbols.resolver.ancestors(definition.file, call.scope).some(scope => scope.conditional);
           if ([...opts.keys()].some(key => !key || !['only', 'except', 'if', 'unless', 'raise'].includes(key))) { conditions.push('Unreviewed callback option requires initialization proof'); continue; }
-          if (opts.has('only') && !only || opts.has('except') && !except) { conditions.push('Dynamic callback action filter'); continue; }
-          if (only && !only.includes(action) || except?.includes(action)) continue;
-          const args = call.expression.args.filter(arg => arg.kind !== 'hash'), filters = args.flatMap(arg => names(arg) ?? []), kind = /(?:^|_)(before|after|around)_action$/.exec(call.expression.method)![1] as RailsCallback['kind'];
-          if (call.blockScope || !filters.length || args.some(arg => !names(arg))) { conditions.push('Block/dynamic callback requires an original callback summary'); continue; }
+          const dynamicAction = opts.has('only') && !only || opts.has('except') && !except;
+          if (dynamicAction) conditions.push('Dynamic callback action filter');
+          const args = call.expression.args.filter(arg => arg.kind !== 'hash'), kind = /(?:^|_)(before|after|around)_action$/.exec(call.expression.method)![1] as RailsCallback['kind'];
+          if (!call.expression.method.startsWith('skip_') && args.some(arg => arg.kind === 'literal' && typeof arg.value === 'string')) {
+            if (!conditional) return fail('Rails string callback registration fails during class initialization');
+            conditions.push('Conditional Rails string callback registration may fail during class initialization'); continue;
+          }
+          if (call.blockScope || !args.length || args.some(arg => arg.kind !== 'symbol')) { conditions.push('Block/object/dynamic callback requires an original callback summary'); continue; }
+          const filters = args.map(arg => (arg as Extract<RubyExpression, { kind: 'symbol' }>).name);
           for (const filter of filters) {
-            if (call.expression.method.startsWith('skip_')) { const index = callbacks.findIndex(item => item.kind === kind && item.method === filter), raise = opts.get('raise'); if (conditional || opts.has('if') || opts.has('unless')) { if (index >= 0) callbacks[index]!.conditions.push('Conditional callback skip requires predicate/initialization proof'); conditions.push('Conditional callback skip remains an invocation candidate'); } else if (index >= 0) callbacks.splice(index, 1); else if (!(raise?.kind === 'literal' && raise.value === false)) return fail('Skipping an unproven inherited callback may fail during class initialization'); continue; }
-            const target = selected.get(filter), item: RailsCallback = { kind, method: filter, target: target?.reason ? undefined : target?.id, conditions: [...conditional ? ['Conditional callback declaration requires initialization proof'] : [], ...opts.has('if') || opts.has('unless') ? ['Callback predicate requires invocation proof'] : [], 'Callback order is registration order; before/around can halt or replace execution and after callbacks unwind'], proof: [...this.proof(definition.file, call, `Original Rails ${call.expression.method} callback ${filter}`), ...target?.proof ?? []], file: definition.file, site: call };
-            const duplicate = callbacks.findIndex(old => old.kind === kind && old.method === filter); if (duplicate >= 0 && !conditional) callbacks.splice(duplicate, 1);
-            if (call.expression.method.startsWith('prepend_')) callbacks.unshift(item); else callbacks.push(item);
+            const matches = callbackChain.filter(item => item.callback.kind === kind && item.callback.method === filter);
+            if (call.expression.method.startsWith('skip_')) {
+              const raise = opts.get('raise'), optional = raise?.kind === 'literal' && (raise.value === false || raise.value === null), dynamicRaise = raise && !['literal', 'symbol', 'array', 'hash'].includes(raise.kind);
+              if (!matches.length) {
+                if (!optional && !conditional && !dynamicRaise) return fail('Skipping an unproven inherited callback may fail during class initialization');
+                if (!optional) conditions.push('Conditional callback skip may fail during class initialization');
+                continue;
+              }
+              if (!optional && !matches.some(item => item.definite)) conditions.push('Skipping a conditionally registered callback may fail during class initialization');
+              const guarded = conditional || opts.has('if') || opts.has('unless') || dynamicAction;
+              if (guarded) {
+                for (const entry of matches) if (entry.active) entry.callback.conditions.push('Conditional callback skip requires predicate/initialization proof');
+                conditions.push('Conditional callback skip remains an invocation candidate');
+              } else if (opts.has('only') || opts.has('except')) {
+                // Native skip_callback inverts each supplied if/unless group
+                // separately: old_if AND skip_unless AND NOT skip_if.
+                const blocksAction = !!only?.includes(action) || !!except && !except.includes(action);
+                for (const entry of matches) {
+                  if (blocksAction) entry.active = false;
+                  entry.callback.proof.push(...this.proof(definition.file, call, `Original Rails filtered ${call.expression.method} preserves callback identity ${filter}`));
+                }
+              } else {
+                for (let i = callbackChain.length - 1; i >= 0; i--) if (matches.includes(callbackChain[i]!)) callbackChain.splice(i, 1);
+              }
+              continue;
+            }
+            const active = dynamicAction || (!only || only.includes(action)) && !except?.includes(action), target = selected.get(filter);
+            const item: RailsCallback = { kind, method: filter, target: target?.reason ? undefined : target?.id, conditions: [...conditional ? ['Conditional callback declaration requires initialization proof'] : [], ...dynamicAction ? ['Dynamic callback action filter requires invocation proof'] : [], ...opts.has('if') || opts.has('unless') ? ['Callback predicate requires invocation proof'] : [], 'Callback order is registration order; before/around can halt or replace execution and after callbacks unwind'], proof: [...this.proof(definition.file, call, `Original Rails ${call.expression.method} callback ${filter}`), ...target?.proof ?? []], file: definition.file, site: call };
+            if (conditional) {
+              for (const old of matches) old.callback.conditions.push('Conditional callback replacement requires initialization proof');
+            } else {
+              for (let i = callbackChain.length - 1; i >= 0; i--) if (matches.includes(callbackChain[i]!)) callbackChain.splice(i, 1);
+            }
+            const entry: CallbackEntry = { callback: item, active: !!active, definite: !conditional };
+            if (call.expression.method.startsWith('prepend_')) callbackChain.unshift(entry); else callbackChain.push(entry);
           }
         }
       }
     }
+    callbacks.push(...callbackChain.filter(entry => entry.active).map(entry => entry.callback));
     return { target: method.id, controller: chain[0]!.definitions[0]!.id, proof: [...proof, ...method.proof], conditions: [...new Set(conditions)], callbacks };
   }
 }

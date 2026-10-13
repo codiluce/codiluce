@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "reviewedOn": "2026-10-12",
+  "reviewedOn": "2026-10-13",
   "languages": [
     {
       "id": "typescript",
@@ -384,7 +384,7 @@
     {
       "id": "nestjs",
       "label": "Nest",
-      "versions": "9\u201310 (Express 4 path profile); 11 (Express 5); proven Fastify adapter retains its own constraints",
+      "versions": "9–10 (Express 4 path profile); 11 (Express 5); proven Fastify adapter retains its own constraints",
       "scope": "Bootstrap-reachable controllers/modules, router modules, URI/default/neutral versions and dependency references",
       "gaps": "Custom decorators/dynamic modules, host/header/media/custom versions and unknown bootstrap policy remain gaps",
       "tests": [
@@ -549,11 +549,12 @@
       "id": "rails",
       "label": "Rails / Zeitwerk",
       "versions": "Rails >=7.1 <7.3 or >=8.0 <8.2; Zeitwerk >=2.6 <2.8",
-      "scope": "Recorded roots/load order/inflections, route DSL/resources/concerns/draw, controller actions and callbacks",
-      "gaps": "Runtime engine internals, executable loaders/reload, dynamic DSL and deep ActiveRecord effects remain gaps",
+      "scope": "Recorded roots/load order/inflections, route DSL/resources/concerns/draw, controller actions and initialized symbol callback chains with replacement, filtered skips and guarded invocation references",
+      "gaps": "Runtime engine internals, executable loaders/reload, dynamic DSL, block/object callbacks, callback predicate/effect execution and deep ActiveRecord effects remain gaps",
       "tests": [
         "tests/rails.test.ts",
-        "tests/ruby-autoload.test.ts"
+        "tests/ruby-autoload.test.ts",
+        "tests/rails-callback-chain.test.ts"
       ],
       "sources": [
         {
@@ -561,6 +562,14 @@
           "contains": [
             "[['7.1', '7.3'], ['8.0', '8.2']]",
             "[['2.6', '2.8']]"
+          ]
+        },
+        {
+          "file": "src/analysis/frameworks/rails-controllers.ts",
+          "contains": [
+            "const callbackChain: CallbackEntry[]",
+            "Original Rails filtered",
+            "Rails string callback registration fails during class initialization"
           ]
         }
       ]

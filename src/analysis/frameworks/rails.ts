@@ -9,7 +9,7 @@ import { RailsControllers } from './rails-controllers.js';
 import { compileRailsPath, normalizeRailsPath, type RailsConstraint } from '../routes/rails-patterns.js';
 import type { RoutingContract } from '../routes/contracts.js';
 
-export const RAILS_VERSION = '2';
+export const RAILS_VERSION = '3';
 interface Site extends RubySite { file: string }
 interface Resource { name: string; controller: string; collection: string; member: string; nested: string; new: string; singleton: boolean; param: string; nestedParam: string }
 interface Frame { file: string; scope: string; path: string; module: string; controller?: string; actionDefault?: string; resource?: Resource; level: 'root' | 'resource' | 'member' | 'collection' | 'new'; shallow: boolean; shallowPath: string; format?: boolean | string; constraints: Record<string, RailsConstraint>; host?: string; conditions: string[]; proof: Evidence[]; bindings: Map<string, RubyExpression>; stack: string[]; pathNames: Record<string, string>; only?: string[]; except?: string[]; depth?: number }

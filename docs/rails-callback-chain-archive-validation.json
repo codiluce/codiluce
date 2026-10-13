@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": 1791865239.2168527,
+  "seconds": 17.32724142074585,
+  "archive": "/dev/shm/codiluce-rails-callback-chain/rails-callback-chain-source-build-and-evidence.tar.gz",
+  "sha256": "de25914842bfef4126063669fc6a537a31f27ead46ef91b2da6b6c12f39f1b23",
+  "bytes": 44611612,
+  "verifiedRegularMembers": 3000,
+  "manifestSha256": "1a343648c4433e3bc56f86468be3df9900355d22b9978b3069620ddb5e5cba24",
+  "runtimeSha256": "29fc30a5f25dedd7f6aaf489f67dcdf308802c548f59f2ddb6782bdbc47a98ed",
+  "previousRuntimeReconstructableFromChangedFilesAndCurrentUnchangedFiles": true,
+  "normalInstalledPackageForNewRuntimeQualified": false,
+  "newFull195OriginalRevisionHistoryQualified": false,
+  "newRelativeHistoryTimeAndProcessTreeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullGoalFinished": false,
+  "storage": "Owned RAM-backed tmpfs; requires durable external copy",
+  "originalAndFailedObservationsRetained": true,
+  "reportSnapshotsPrecedeSelfReferentialArchiveAndHttpReceiptAppend": true
+}

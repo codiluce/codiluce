@@ -1,0 +1,810 @@
+{
+  "schema": 1,
+  "passed": true,
+  "phase": "P7 callback-chain source accuracy: initialize symbolic Rails callbacks before action selection",
+  "completedAt": "2026-10-13T04:18:31.058829+00:00",
+  "sourceCommit": "320dff2",
+  "runtimeSha256": "29fc30a5f25dedd7f6aaf489f67dcdf308802c548f59f2ddb6782bdbc47a98ed",
+  "runtimeInputsVerified": 1927,
+  "railsProducerVersion": "3",
+  "cacheInvalidation": "Rails version participates in the Ruby repository cache key, graph producer metadata and run analyzer versions. Exact source edits are callbacks and Rails producer version only.",
+  "changedRuntimeInputs": [
+    "src/analysis/frameworks/rails-controllers.ts",
+    "src/analysis/frameworks/rails.ts"
+  ],
+  "sourceBuildPreparation": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": "2026-10-13T04:04:33.938241+00:00",
+    "sourceCommit": "320dff2",
+    "parentRuntimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+    "runtimeSha256": "29fc30a5f25dedd7f6aaf489f67dcdf308802c548f59f2ddb6782bdbc47a98ed",
+    "runtimeInputs": 1927,
+    "changedRuntimeInputs": [
+      "src/analysis/frameworks/rails-controllers.ts",
+      "src/analysis/frameworks/rails.ts"
+    ],
+    "releaseInputs": 664,
+    "releaseInputManifestSha256": "22d35b146b2c56a60e3c1511f36fb7974a809b99d0e3763f394105e4b06394c3",
+    "engine": "/dev/shm/codiluce-rails-callback-chain/engine",
+    "vendorFiles": 14303,
+    "vendorSymlinks": 17,
+    "vendorModesPreservedByCopy2": true,
+    "userWebIconUsed": false,
+    "priorRuntimeUnchanged": true,
+    "normalPackageGatePending": true,
+    "foreignFilesUnchanged": {
+      "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+      "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+      "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+      "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+      "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+    }
+  },
+  "gates": {
+    "targeted-final": {
+      "schema": 1,
+      "name": "targeted-final",
+      "command": [
+        "node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-concurrency=2",
+        "tests/rails-callback-chain.test.ts",
+        "tests/rails.test.ts",
+        "tests/ruby-symbols.test.ts",
+        "tests/ruby-autoload.test.ts"
+      ],
+      "cwd": "/dev/shm/codiluce-rails-callback-chain/engine",
+      "startedAt": 1791864348.7441866,
+      "wrapperPid": 359473,
+      "actualPid": 359488,
+      "runtimeSha256": "29fc30a5f25dedd7f6aaf489f67dcdf308802c548f59f2ddb6782bdbc47a98ed",
+      "releaseInputManifestSha256": "22d35b146b2c56a60e3c1511f36fb7974a809b99d0e3763f394105e4b06394c3",
+      "log": "/dev/shm/codiluce-rails-callback-chain/targeted-final.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": true,
+      "actualExitCode": 0,
+      "completedAt": 1791864369.682487,
+      "seconds": 20.938300609588623,
+      "actualPidGone": true,
+      "logSha256": "b854223023f555971f1b803f1a3318e596c2f9c1a33387c2f0f4f60fb83554ab",
+      "tests": 105,
+      "pass": 105,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 20789.243393,
+      "unifiedExecSession": 15611
+    },
+    "typecheck-engine-final": {
+      "schema": 1,
+      "name": "typecheck-engine-final",
+      "command": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "--incremental",
+        "false"
+      ],
+      "cwd": "/dev/shm/codiluce-rails-callback-chain/engine",
+      "startedAt": 1791864348.7383616,
+      "wrapperPid": 359474,
+      "actualPid": 359476,
+      "runtimeSha256": "29fc30a5f25dedd7f6aaf489f67dcdf308802c548f59f2ddb6782bdbc47a98ed",
+      "releaseInputManifestSha256": "22d35b146b2c56a60e3c1511f36fb7974a809b99d0e3763f394105e4b06394c3",
+      "log": "/dev/shm/codiluce-rails-callback-chain/typecheck-engine-final.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": true,
+      "actualExitCode": 0,
+      "completedAt": 1791864364.0337605,
+      "seconds": 15.295398950576782,
+      "actualPidGone": true,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unifiedExecSession": 32747
+    },
+    "typecheck-web-final": {
+      "schema": 1,
+      "name": "typecheck-web-final",
+      "command": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "--incremental",
+        "false",
+        "-p",
+        "web"
+      ],
+      "cwd": "/dev/shm/codiluce-rails-callback-chain/engine",
+      "startedAt": 1791864348.7516766,
+      "wrapperPid": 359475,
+      "actualPid": 359501,
+      "runtimeSha256": "29fc30a5f25dedd7f6aaf489f67dcdf308802c548f59f2ddb6782bdbc47a98ed",
+      "releaseInputManifestSha256": "22d35b146b2c56a60e3c1511f36fb7974a809b99d0e3763f394105e4b06394c3",
+      "log": "/dev/shm/codiluce-rails-callback-chain/typecheck-web-final.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": true,
+      "actualExitCode": 0,
+      "completedAt": 1791864364.7447236,
+      "seconds": 15.99304723739624,
+      "actualPidGone": true,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "unifiedExecSession": 7363
+    },
+    "full-tests-final": {
+      "schema": 1,
+      "name": "full-tests-final",
+      "command": [
+        "npm",
+        "test"
+      ],
+      "cwd": "/dev/shm/codiluce-rails-callback-chain/engine",
+      "startedAt": 1791864416.307407,
+      "wrapperPid": 365472,
+      "actualPid": 365486,
+      "runtimeSha256": "29fc30a5f25dedd7f6aaf489f67dcdf308802c548f59f2ddb6782bdbc47a98ed",
+      "releaseInputManifestSha256": "22d35b146b2c56a60e3c1511f36fb7974a809b99d0e3763f394105e4b06394c3",
+      "log": "/dev/shm/codiluce-rails-callback-chain/full-tests-final.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": true,
+      "actualExitCode": 0,
+      "completedAt": 1791864583.8726172,
+      "seconds": 167.5652105808258,
+      "actualPidGone": true,
+      "logSha256": "ddeb59eff401ad6fe5f02acaa5be70efc248f7e670e0ed7f917a4dee6f95aae7",
+      "tests": 1737,
+      "pass": 1737,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 167296.45706,
+      "unifiedExecSession": 42448
+    },
+    "build-cli-final": {
+      "schema": 1,
+      "name": "build-cli-final",
+      "command": [
+        "npm",
+        "run",
+        "build:cli"
+      ],
+      "cwd": "/dev/shm/codiluce-rails-callback-chain/engine",
+      "startedAt": 1791864416.3014553,
+      "wrapperPid": 365473,
+      "actualPid": 365474,
+      "runtimeSha256": "29fc30a5f25dedd7f6aaf489f67dcdf308802c548f59f2ddb6782bdbc47a98ed",
+      "releaseInputManifestSha256": "22d35b146b2c56a60e3c1511f36fb7974a809b99d0e3763f394105e4b06394c3",
+      "log": "/dev/shm/codiluce-rails-callback-chain/build-cli-final.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": true,
+      "actualExitCode": 0,
+      "completedAt": 1791864432.486647,
+      "seconds": 16.18519163131714,
+      "actualPidGone": true,
+      "logSha256": "f19730c5fdc93cbb8fd7c4dcaeb04c090528725ce0e73a8ee42fd87eaf81959b",
+      "unifiedExecSession": 51265
+    },
+    "compiled-conformance-final": {
+      "schema": 1,
+      "name": "compiled-conformance-final",
+      "command": [
+        "node",
+        "--experimental-sqlite",
+        "--test",
+        "--test-concurrency=1",
+        "/dev/shm/codiluce-rails-callback-chain/ordinary-compiled-conformance.test.mjs"
+      ],
+      "cwd": "/dev/shm/codiluce-rails-callback-chain/engine",
+      "startedAt": 1791864542.4827292,
+      "wrapperPid": 411805,
+      "actualPid": 411903,
+      "runtimeSha256": "29fc30a5f25dedd7f6aaf489f67dcdf308802c548f59f2ddb6782bdbc47a98ed",
+      "releaseInputManifestSha256": "22d35b146b2c56a60e3c1511f36fb7974a809b99d0e3763f394105e4b06394c3",
+      "log": "/dev/shm/codiluce-rails-callback-chain/compiled-conformance-final.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": true,
+      "actualExitCode": 0,
+      "completedAt": 1791864547.2665546,
+      "seconds": 4.783825635910034,
+      "actualPidGone": true,
+      "logSha256": "2d4708c75ddfca818eea0238e1a5fa8802268b59e23dd1d7b087eb9dea93faba",
+      "tests": 10,
+      "pass": 10,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 4584.156536,
+      "unifiedExecSession": 81096
+    },
+    "complete-graphs-final": {
+      "schema": 1,
+      "name": "complete-graphs-final",
+      "command": [
+        "node",
+        "--experimental-sqlite",
+        "/dev/shm/codiluce-rails-callback-chain/qualify-complete-graphs.mjs"
+      ],
+      "cwd": "/dev/shm/codiluce-rails-callback-chain/engine",
+      "startedAt": 1791864696.6882517,
+      "wrapperPid": 428908,
+      "actualPid": 428911,
+      "runtimeSha256": "29fc30a5f25dedd7f6aaf489f67dcdf308802c548f59f2ddb6782bdbc47a98ed",
+      "releaseInputManifestSha256": "22d35b146b2c56a60e3c1511f36fb7974a809b99d0e3763f394105e4b06394c3",
+      "log": "/dev/shm/codiluce-rails-callback-chain/complete-graphs-final.log",
+      "targetExecution": false,
+      "productionHistoryObservation": false,
+      "passed": true,
+      "actualExitCode": 0,
+      "completedAt": 1791864699.5055928,
+      "seconds": 2.8173413276672363,
+      "actualPidGone": true,
+      "logSha256": "1544e7a7999247f5a595b701a08bbd2f20b8a0948ab190df1dff3482263fb9b3",
+      "unifiedExecSession": 8892
+    }
+  },
+  "nativeContractReview": {
+    "schema": 1,
+    "passed": true,
+    "sourceFiles": {
+      "schema": 1,
+      "passed": true,
+      "observedAt": "2026-10-13T03:57:55.032207+00:00",
+      "sourceExecution": false,
+      "files": [
+        {
+          "version": "7.1.0",
+          "file": "activesupport/lib/active_support/callbacks.rb",
+          "url": "https://raw.githubusercontent.com/rails/rails/v7.1.0/activesupport/lib/active_support/callbacks.rb",
+          "bytes": 32411,
+          "sha256": "6503b9bdedff7f29cd28d5a494ca3c6cb606e2de364cb9d6f098c7d04e442c6f"
+        },
+        {
+          "version": "7.1.0",
+          "file": "actionpack/lib/abstract_controller/callbacks.rb",
+          "url": "https://raw.githubusercontent.com/rails/rails/v7.1.0/actionpack/lib/abstract_controller/callbacks.rb",
+          "bytes": 9361,
+          "sha256": "9239ebd6244e862c43dc0e59a4d1dbfa27e8118e9cb1b21b110a55393af8a5ea"
+        },
+        {
+          "version": "7.2.0",
+          "file": "activesupport/lib/active_support/callbacks.rb",
+          "url": "https://raw.githubusercontent.com/rails/rails/v7.2.0/activesupport/lib/active_support/callbacks.rb",
+          "bytes": 30858,
+          "sha256": "71097f7e5184923f993d9a35f383b10553f53f6c9c9a2928282f11180c1c76e4"
+        },
+        {
+          "version": "7.2.0",
+          "file": "actionpack/lib/abstract_controller/callbacks.rb",
+          "url": "https://raw.githubusercontent.com/rails/rails/v7.2.0/actionpack/lib/abstract_controller/callbacks.rb",
+          "bytes": 9169,
+          "sha256": "80736d41e14e8155891cb2b4b8d22f507fac52633406640f51a30e8945e17f6a"
+        },
+        {
+          "version": "8.0.0",
+          "file": "activesupport/lib/active_support/callbacks.rb",
+          "url": "https://raw.githubusercontent.com/rails/rails/v8.0.0/activesupport/lib/active_support/callbacks.rb",
+          "bytes": 30868,
+          "sha256": "29e077965dcb3dbe1db02cad7eb11fb41d62f4aaeae9fe80589b5c0a1d1c5eb4"
+        },
+        {
+          "version": "8.0.0",
+          "file": "actionpack/lib/abstract_controller/callbacks.rb",
+          "url": "https://raw.githubusercontent.com/rails/rails/v8.0.0/actionpack/lib/abstract_controller/callbacks.rb",
+          "bytes": 9169,
+          "sha256": "80736d41e14e8155891cb2b4b8d22f507fac52633406640f51a30e8945e17f6a"
+        },
+        {
+          "version": "8.1.1",
+          "file": "activesupport/lib/active_support/callbacks.rb",
+          "url": "https://raw.githubusercontent.com/rails/rails/v8.1.1/activesupport/lib/active_support/callbacks.rb",
+          "bytes": 31714,
+          "sha256": "38f01e0ad0d5a841bef268b75ff0c943219be73e07eb3db51edd3e8a57b064e5"
+        },
+        {
+          "version": "8.1.1",
+          "file": "actionpack/lib/abstract_controller/callbacks.rb",
+          "url": "https://raw.githubusercontent.com/rails/rails/v8.1.1/actionpack/lib/abstract_controller/callbacks.rb",
+          "bytes": 9346,
+          "sha256": "618d391e797c8eda595353c72d192078399c50155f3117953d0583833ccc41ad"
+        },
+        {
+          "file": "MIT-LICENSE",
+          "url": "https://raw.githubusercontent.com/rails/rails/v8.1.1/MIT-LICENSE",
+          "bytes": 1063,
+          "sha256": "717ba1949502290f8e47688ae2e323acd06c8ca47aec9f7596b15f678c1af4a2"
+        }
+      ]
+    },
+    "contractLocations": [
+      {
+        "version": "7.1.0",
+        "originalSourceSites": [
+          {
+            "file": "activesupport/lib/active_support/callbacks.rb",
+            "method": "duplicates?",
+            "startLine": 323
+          },
+          {
+            "file": "activesupport/lib/active_support/callbacks.rb",
+            "method": "remove_duplicates",
+            "startLine": 697
+          },
+          {
+            "file": "activesupport/lib/active_support/callbacks.rb",
+            "method": "skip_callback",
+            "startLine": 825
+          },
+          {
+            "file": "activesupport/lib/active_support/callbacks.rb",
+            "method": "merge_conditional_options",
+            "startLine": 307
+          },
+          {
+            "file": "actionpack/lib/abstract_controller/callbacks.rb",
+            "method": "_normalize_callback_option",
+            "startLine": 99
+          },
+          {
+            "file": "actionpack/lib/abstract_controller/callbacks.rb",
+            "method": "_insert_callbacks",
+            "startLine": 119
+          }
+        ]
+      },
+      {
+        "version": "7.2.0",
+        "originalSourceSites": [
+          {
+            "file": "activesupport/lib/active_support/callbacks.rb",
+            "method": "duplicates?",
+            "startLine": 273
+          },
+          {
+            "file": "activesupport/lib/active_support/callbacks.rb",
+            "method": "remove_duplicates",
+            "startLine": 658
+          },
+          {
+            "file": "activesupport/lib/active_support/callbacks.rb",
+            "method": "skip_callback",
+            "startLine": 786
+          },
+          {
+            "file": "activesupport/lib/active_support/callbacks.rb",
+            "method": "merge_conditional_options",
+            "startLine": 257
+          },
+          {
+            "file": "actionpack/lib/abstract_controller/callbacks.rb",
+            "method": "_normalize_callback_option",
+            "startLine": 98
+          },
+          {
+            "file": "actionpack/lib/abstract_controller/callbacks.rb",
+            "method": "_insert_callbacks",
+            "startLine": 120
+          }
+        ]
+      },
+      {
+        "version": "8.0.0",
+        "originalSourceSites": [
+          {
+            "file": "activesupport/lib/active_support/callbacks.rb",
+            "method": "duplicates?",
+            "startLine": 272
+          },
+          {
+            "file": "activesupport/lib/active_support/callbacks.rb",
+            "method": "remove_duplicates",
+            "startLine": 657
+          },
+          {
+            "file": "activesupport/lib/active_support/callbacks.rb",
+            "method": "skip_callback",
+            "startLine": 785
+          },
+          {
+            "file": "activesupport/lib/active_support/callbacks.rb",
+            "method": "merge_conditional_options",
+            "startLine": 256
+          },
+          {
+            "file": "actionpack/lib/abstract_controller/callbacks.rb",
+            "method": "_normalize_callback_option",
+            "startLine": 98
+          },
+          {
+            "file": "actionpack/lib/abstract_controller/callbacks.rb",
+            "method": "_insert_callbacks",
+            "startLine": 120
+          }
+        ]
+      },
+      {
+        "version": "8.1.1",
+        "originalSourceSites": [
+          {
+            "file": "activesupport/lib/active_support/callbacks.rb",
+            "method": "duplicates?",
+            "startLine": 273
+          },
+          {
+            "file": "activesupport/lib/active_support/callbacks.rb",
+            "method": "remove_duplicates",
+            "startLine": 659
+          },
+          {
+            "file": "activesupport/lib/active_support/callbacks.rb",
+            "method": "skip_callback",
+            "startLine": 788
+          },
+          {
+            "file": "activesupport/lib/active_support/callbacks.rb",
+            "method": "merge_conditional_options",
+            "startLine": 257
+          },
+          {
+            "file": "actionpack/lib/abstract_controller/callbacks.rb",
+            "method": "_normalize_callback_option",
+            "startLine": 100
+          },
+          {
+            "file": "actionpack/lib/abstract_controller/callbacks.rb",
+            "method": "_insert_callbacks",
+            "startLine": 122
+          }
+        ]
+      }
+    ],
+    "targetSourceExecuted": false,
+    "reviewedScope": "Symbol duplicate removal on initialized chains; action options normalize into invocation predicates; mandatory skips look up chain identity before predicates; filtered skips merge conditions and preserve chain identity; string callback registration is refused. Native runtime execution, arbitrary blocks/objects, predicate/effect outcomes and broad consumer accuracy remain unqualified."
+  },
+  "completeOriginalGraphs": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": "2026-10-13T04:11:39.373Z",
+    "ordinaryCompiledSourceLoader": false,
+    "priorRuntimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+    "currentRuntimeSha256": "29fc30a5f25dedd7f6aaf489f67dcdf308802c548f59f2ddb6782bdbc47a98ed",
+    "originalSourceFiles": 50,
+    "authoredApplications": 10,
+    "manualActionDenominator": 20,
+    "originalEntityIdentitiesAndRangesPreserved": true,
+    "actualWarmRubyCacheHit": true,
+    "completeCurrentColdWarmAndFreshGraphsEqual": true,
+    "completeCurrentRevisionAndFreshRevisionGraphsEqual": true,
+    "volatileFields": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "producerOrMetadataOrDiagnosticNormalizations": [],
+    "rawGraphs": [
+      {
+        "mode": "fresh",
+        "bytes": 902485,
+        "sha256": "d9769bd2ee8098bc7b08e9501919ba01acbdf72d2e58fea30d2480421920466d",
+        "entities": 192,
+        "relations": 257,
+        "diagnostics": 7,
+        "originalActions": 16,
+        "unboundInitializationFailures": 4,
+        "originalCallbackReferences": 10
+      },
+      {
+        "mode": "cold",
+        "bytes": 902485,
+        "sha256": "d9769bd2ee8098bc7b08e9501919ba01acbdf72d2e58fea30d2480421920466d",
+        "entities": 192,
+        "relations": 257,
+        "diagnostics": 7,
+        "originalActions": 16,
+        "unboundInitializationFailures": 4,
+        "originalCallbackReferences": 10
+      },
+      {
+        "mode": "warm",
+        "bytes": 902485,
+        "sha256": "d9769bd2ee8098bc7b08e9501919ba01acbdf72d2e58fea30d2480421920466d",
+        "entities": 192,
+        "relations": 257,
+        "diagnostics": 7,
+        "originalActions": 16,
+        "unboundInitializationFailures": 4,
+        "originalCallbackReferences": 10
+      },
+      {
+        "mode": "revision",
+        "bytes": 901906,
+        "sha256": "eeac76f4d7d5f7567718a125e3ce6b4e86d888868be0dc18a0092f24dbfbecb5",
+        "entities": 192,
+        "relations": 257,
+        "diagnostics": 4,
+        "originalActions": 16,
+        "unboundInitializationFailures": 4,
+        "originalCallbackReferences": 10
+      },
+      {
+        "mode": "fresh-revision",
+        "bytes": 901906,
+        "sha256": "eeac76f4d7d5f7567718a125e3ce6b4e86d888868be0dc18a0092f24dbfbecb5",
+        "entities": 192,
+        "relations": 257,
+        "diagnostics": 4,
+        "originalActions": 16,
+        "unboundInitializationFailures": 4,
+        "originalCallbackReferences": 10
+      }
+    ],
+    "oldAndNewGraphsNotClaimedEqual": "Rails producer version changes 2\u21923; callback references, original registration proof and initialization gaps intentionally change. Both complete old graphs are retained. Full entity identity/range ledgers are equal.",
+    "targetExecution": false,
+    "normalInstalledPackageForNewRuntimeQualified": false,
+    "fullProductionHistoryOrPerformanceOrNativeOsQualified": false,
+    "fullGoalFinished": false
+  },
+  "compiledConformance": {
+    "schema": 1,
+    "passed": true,
+    "sourceInput": "/dev/shm/codiluce-rails-callback-chain/engine/tests/rails-callback-chain.test.ts",
+    "sourceInputSha256": "42cee16c12e3152c9a3c301e474173a98f4cbafdd9946d5cfacc72519049e8ba",
+    "originalTestCases": 10,
+    "artifact": "/dev/shm/codiluce-rails-callback-chain/ordinary-compiled-conformance.test.mjs",
+    "artifactSha256": "345b781c99aaa3cba575d9b339b6698219d1afc1341febb23f4eadfd69e01618",
+    "scope": "The same original Ruby input/graph assertions, compiled from Codiluce-owned test TypeScript; only module URLs point to the ordinary compiled CLI. TypeScript is used only during preparation, not imported or loaded in the launched conformance process. No Ruby/dependency/configuration execution.",
+    "sourceLoaderInConformance": false,
+    "targetExecution": false
+  },
+  "initialObservations": {
+    "baseline-conformance-first": {
+      "schema": 1,
+      "passed": false,
+      "command": "TMPDIR=ownedRAM node --experimental-sqlite --import tsx --test --test-concurrency=1 tests/rails-callback-chain.test.ts",
+      "actualExitCode": 1,
+      "unifiedExecSession": 80440,
+      "sourceCommit": "320dff2",
+      "tests": 8,
+      "passedTests": 1,
+      "failedTests": 7,
+      "cancelled": 0,
+      "skipped": 0,
+      "milliseconds": 2363.339613,
+      "log": "/dev/shm/codiluce-rails-callback-chain/baseline-conformance-first.log",
+      "logSha256": "ed3e29ef054dc39ec4683370980d18005487a9d905a51f9449b7ddfab9b1dd27",
+      "testInput": "/dev/shm/codiluce-rails-callback-chain/baseline-conformance-first-input.test.ts",
+      "testInputSha256": "7121b2d654bdee3b5763e9ede032732ebcb63463e42be90735e725a0c05831e3",
+      "sourceContractReview": "Original native Rails 7.1.0/7.2.0/8.0.0/8.1.1 sources read only; source-contract regressions, not production corpus/performance failures",
+      "targetExecution": false,
+      "failedAnalyzerAssertions": 6,
+      "failedTestHelperCases": 1,
+      "testHelperFailure": "Conditional-replacement case shadowed its index helper; corrected baseline observation follows separately"
+    },
+    "baseline-corrected-conformance-first": {
+      "schema": 1,
+      "passed": false,
+      "actualExitCode": 1,
+      "unifiedExecSession": 46586,
+      "command": "Own corrected 10-case conformance against immutable previous source runtime using the development TS loader",
+      "runtimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+      "tests": 10,
+      "passedTests": 0,
+      "failedTests": 10,
+      "cancelled": 0,
+      "skipped": 0,
+      "milliseconds": 3106.113449,
+      "log": "/dev/shm/codiluce-rails-callback-chain/baseline-corrected-conformance-first.log",
+      "logSha256": "14a13ac162e82120f93aa6971f8e34fa9299c963b6246ca299fa1e13afddf45e",
+      "testInput": "/dev/shm/codiluce-rails-callback-chain/baseline-corrected-conformance.test.ts",
+      "testInputSha256": "edb7c38e2855b040512faca7b7b9225550f88a9bcdb2c1bf5fdac83ddc1433cf",
+      "targetExecution": false,
+      "productionObservation": false
+    },
+    "targeted-first": {
+      "schema": 1,
+      "passed": false,
+      "actualExitCode": 1,
+      "unifiedExecSession": 4466,
+      "log": "/dev/shm/codiluce-rails-callback-chain/targeted-first.log",
+      "logSha256": "8b280ee04d4c69f49e289c59bd876f070394f4b85e491f3004f1f3fa1a88cec3",
+      "tests": 104,
+      "passedTests": 103,
+      "failedTests": 1,
+      "reason": "New conditional-replacement test had a local index result shadowing the index helper. Renamed to listing; production analyzer behavior is not the cause of this failure."
+    },
+    "typecheck-engine-first": {
+      "schema": 1,
+      "passed": false,
+      "actualExitCode": 2,
+      "unifiedExecSession": 74837,
+      "log": "/dev/shm/codiluce-rails-callback-chain/typecheck-engine-first.log",
+      "logSha256": "842f0580143e2db07407758648207298dbafcf7419a3ad2fbbdf562b54164be9",
+      "tests": null,
+      "passedTests": null,
+      "failedTests": null,
+      "reason": "New conditional-replacement test had a local index result shadowing the index helper. Renamed to listing; production analyzer behavior is not the cause of this failure."
+    }
+  },
+  "ownedReproducibleOutputRelocation": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791864953.0284762,
+    "reason": "Root filesystem reached zero available bytes during phase finalization; only an owned previously qualified reproducible CLI/grammar build was relocated",
+    "original": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/engine/dist",
+    "destination": "/dev/shm/codiluce-rails-callback-chain/relocated-bootstrap-engine/dist",
+    "originalPathPreservedBySymlink": true,
+    "verifiedRegularFiles": 284,
+    "verifiedBytes": 61368232,
+    "everyByteAndModeComparedToExistingVerifiedArchiveAndBothCopies": true,
+    "unchangedDurableArchive": {
+      "schema": 1,
+      "passed": true,
+      "completedAt": 1791851458.8429415,
+      "seconds": 17.509151697158813,
+      "archive": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/parser-bootstrap-retirement-runtime-release-and-evidence.tar.gz",
+      "sha256": "150b2752552c8bde3a5067893a23639bf4f593ca8cb5185feec4de3d87862ef2",
+      "bytes": 60434557,
+      "verifiedRegularMembers": 3260,
+      "manifestSha256": "9828431f4282458bd9d4d3361fa680a8fbcb97ddddf914ca4a59fe97e6a33760",
+      "runtimeSha256": "dcd55f1b6c30bcec6718d90b9a779409f1677c8dda1d9f39635c653769ebb8d1",
+      "normalPrepackAndResumedInstalledGatePassed": true,
+      "originalFirstInstalledObservationCompleted": false,
+      "full195RevisionHistoryQualified": false,
+      "relativeHistoryTimeRssQualified": false,
+      "nativeWindowsMacOSQualified": false,
+      "fullGoalFinished": false
+    },
+    "allPreviousRuntimeInputsUnchanged": true,
+    "liveEngineConsumersAtMove": [],
+    "foreignFilesUnchanged": {
+      "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+      "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+      "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+      "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+      "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+    },
+    "originalSourcesGraphsDatabasesLogsArchivesOrFailedArtifactsDeleted": false,
+    "ramCopyNonDurable": true,
+    "fullProductionHistoryReserveUnchanged": true
+  },
+  "documentationCheck": {
+    "command": "node scripts/generate-compatibility-docs.mjs --check",
+    "actualExitCode": 0,
+    "unifiedExecChunk": "fd3a76",
+    "languages": 24,
+    "frameworkFamilies": 24,
+    "grammars": 20,
+    "sourceFiles": 72,
+    "fingerprint": "38dfcdd743727a9aff27ccf4f9ca597e0ea96293841eed0a21cc4c0bcacbe0b0"
+  },
+  "targetSourceDependenciesConfigsBuildsHooksOrToolchainsExecuted": false,
+  "ordinaryCompiledConformanceUsedTypeScriptLoader": false,
+  "normalInstalledPackageForNewRuntimeQualified": false,
+  "newFull195OriginalRevisionHistoryQualified": false,
+  "newRelativeHistoryTimeAndProcessTreeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullGoalFinished": false,
+  "remainingScope": "Current-runtime production-only installed release qualification, complete original 195-revision histories and relative time/process-tree RSS, broader P7/P8/P9 original consumer/semantic/native accuracy, and actual Windows/macOS release jobs.",
+  "storage": "Current source/build/evidence use owned RAM-backed tmpfs and need a durable copy. The previously verified bootstrap archive remains unchanged on durable storage. The original production-history storage reserve is unchanged; no production observation was retried.",
+  "foreignFilesUnchanged": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  },
+  "sourceBuildAndEvidenceArchive": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791865239.2168527,
+    "seconds": 17.32724142074585,
+    "archive": "/dev/shm/codiluce-rails-callback-chain/rails-callback-chain-source-build-and-evidence.tar.gz",
+    "sha256": "de25914842bfef4126063669fc6a537a31f27ead46ef91b2da6b6c12f39f1b23",
+    "bytes": 44611612,
+    "verifiedRegularMembers": 3000,
+    "manifestSha256": "1a343648c4433e3bc56f86468be3df9900355d22b9978b3069620ddb5e5cba24",
+    "runtimeSha256": "29fc30a5f25dedd7f6aaf489f67dcdf308802c548f59f2ddb6782bdbc47a98ed",
+    "previousRuntimeReconstructableFromChangedFilesAndCurrentUnchangedFiles": true,
+    "normalInstalledPackageForNewRuntimeQualified": false,
+    "newFull195OriginalRevisionHistoryQualified": false,
+    "newRelativeHistoryTimeAndProcessTreeRssQualified": false,
+    "nativeWindowsMacOSQualified": false,
+    "fullGoalFinished": false,
+    "storage": "Owned RAM-backed tmpfs; requires durable external copy",
+    "originalAndFailedObservationsRetained": true,
+    "reportSnapshotsPrecedeSelfReferentialArchiveAndHttpReceiptAppend": true,
+    "unifiedExecSession": 46943,
+    "actualExitCode": 0
+  },
+  "compiledModuleComparison": {
+    "schema": 1,
+    "passed": true,
+    "currentRuntimeSha256": "29fc30a5f25dedd7f6aaf489f67dcdf308802c548f59f2ddb6782bdbc47a98ed",
+    "priorRuntimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+    "compiledModules": 225,
+    "changedCompiledModules": [
+      "analysis/frameworks/rails-controllers.js",
+      "analysis/frameworks/rails.js"
+    ],
+    "allOtherCompiledModulesByteEqualToPreviouslyQualifiedBuild": true
+  },
+  "reportSnapshotsPrecedeSelfReferentialArchiveAndHttpReceiptAppend": true,
+  "httpReportAndFinalInputRecheck": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791873527.0308335,
+    "url": "http://127.0.0.1:34491/rails-callback-chain.html",
+    "serverActualPid": 622751,
+    "serverUnifiedExecSession": 6150,
+    "htmlSha256": "fe52074a6410ef1a067e1a58cf5346e494fed617e8eb61d31c4b9d5368411bad",
+    "localPhaseLinks": [
+      {
+        "href": "rails-callback-chain.html",
+        "status": 200,
+        "fragmentVerified": false
+      },
+      {
+        "href": "rails-callback-chain-validation.json",
+        "status": 200,
+        "fragmentVerified": false
+      },
+      {
+        "href": "rails-callback-chain-source-build-and-evidence.tar.gz",
+        "status": 200,
+        "fragmentVerified": false
+      },
+      {
+        "href": "rails-callback-chain-archive-validation.json",
+        "status": 200,
+        "fragmentVerified": false
+      },
+      {
+        "href": "language-framework-compatibility.html#rails-callback-chain",
+        "status": 200,
+        "fragmentVerified": true
+      },
+      {
+        "href": "analysis-capabilities.html#frameworks",
+        "status": 200,
+        "fragmentVerified": true
+      }
+    ],
+    "completeArchiveDownloads": [
+      {
+        "url": "http://127.0.0.1:34491/rails-callback-chain-source-build-and-evidence.tar.gz",
+        "bytes": 44611612,
+        "sha256": "de25914842bfef4126063669fc6a537a31f27ead46ef91b2da6b6c12f39f1b23"
+      }
+    ],
+    "externalPrimarySourceLinks": [
+      "https://github.com/rails/rails/blob/v7.1.0/activesupport/lib/active_support/callbacks.rb",
+      "https://github.com/rails/rails/blob/v7.2.0/activesupport/lib/active_support/callbacks.rb",
+      "https://github.com/rails/rails/blob/v8.0.0/activesupport/lib/active_support/callbacks.rb",
+      "https://github.com/rails/rails/blob/v8.1.1/activesupport/lib/active_support/callbacks.rb",
+      "https://github.com/rails/rails/blob/v8.1.1/actionpack/lib/abstract_controller/callbacks.rb"
+    ],
+    "externalLinksScope": "Exact tagged source bytes and license were downloaded and hashed in native-source-inventory.json; this final HTTP audit covers local phase links and the full archive download.",
+    "runtimeInputsVerifiedInCurrentWorktreeAndFrozenEngine": 1927,
+    "priorImmutableRuntimeInputsReverified": 1927,
+    "frozenReleaseInputsReverified": 664,
+    "allCompiledModulesReverified": 225,
+    "allActualGateProcessesGone": true,
+    "traversalAndNonReportPathsRefused": true,
+    "browserVisualInspectionPerformed": false,
+    "foreignFilesUnchanged": {
+      "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+      "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+      "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+      "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+      "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+    },
+    "scope": "Every local phase link matches current bytes immediately before this self-referential receipt append. The exact report HTML, roadmap/capability fragments and complete archive byte count/hash agree. All original runtime/release/compiled inputs and actual passed gate/log/terminal identities were rechecked. Report snapshots in the archive predate archive/HTTP append.",
+    "fullGoalFinished": false
+  }
+}
