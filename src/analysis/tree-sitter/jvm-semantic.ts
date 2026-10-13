@@ -17,6 +17,7 @@ export function extractJvmSemantic(root: Node, language: string, declarations: D
   const site = (node: Node) => ({start:node.startIndex,end:node.endIndex,range:source.range(node.startIndex,node.endIndex)});
   const unknown = (node: Node): JvmExpression => ({...site(node),kind:'unknown',text:node.text.slice(0,300)});
   const bySite = new Map(declarations.map(declaration=>[`${declaration.start}:${declaration.end}`,declaration]));
+  const scopesByKey = new Map<string,JvmScopeFact>();
   const lambdaKeys = new Map<number,string>();
   let expressionNodes=0, lambdaOrdinal=0, scopeOrdinal=0, nodes=0;
   const lambdaKey=(node:Node) => {let key=lambdaKeys.get(node.id);if(!key){key=`jvm-lambda:${lambdaOrdinal++}`;lambdaKeys.set(node.id,key);}return key;};
@@ -111,7 +112,7 @@ export function extractJvmSemantic(root: Node, language: string, declarations: D
     for(const part of node.namedChildren)scan(part);return result;
   };
   const scope = (node:Node, kind:JvmScopeFact['kind'], parent?:JvmScopeFact, owner?:string, conditional?:string):JvmScopeFact => {
-    const value:JvmScopeFact={...site(node),key:`jvm-scope:${scopeOrdinal++}`,kind,...parent?{parent:parent.key}:{},...owner?{owner}:{},...conditional?{conditional}:{},...kind==='lambda'?{deferred:true}:{},gaps:[]};facts.scopes.push(value);return value;
+    const value:JvmScopeFact={...site(node),key:`jvm-scope:${scopeOrdinal++}`,kind,...parent?{parent:parent.key}:{},...owner?{owner}:{},...conditional?{conditional}:{},...kind==='lambda'?{deferred:true}:{},gaps:[]};facts.scopes.push(value);scopesByKey.set(value.key,value);return value;
   };
   const parameters=(node:Node, container:Node|undefined):JvmParameterFact[] => {
     if(!container)return [];
@@ -154,7 +155,7 @@ export function extractJvmSemantic(root: Node, language: string, declarations: D
     if(['package_declaration','package_header','import','import_declaration','line_comment','block_comment','comment'].includes(node.type))return;
     const declaration=bySite.get(`${node.startIndex}:${node.endIndex}`);
     if(declaration){
-      const def=definition(node,declaration,where), bodyKey=def.bodyScope??def.typeScope, bodyScope=bodyKey?facts.scopes.find(item=>item.key===bodyKey):undefined;
+      const def=definition(node,declaration,where), bodyKey=def.bodyScope??def.typeScope, bodyScope=bodyKey?scopesByKey.get(bodyKey):undefined;
       const body=bodyScope?node.namedChildren.find(part=>part.startIndex===bodyScope.start&&part.endIndex===bodyScope.end):undefined;
       if(def.kind==='property'&&!['file','type','opaque'].includes(where.kind))facts.bindings.push({...site(node),scope:where.key,declaration:def.key,kind:'local',name:def.name,...def.returnType?{type:def.returnType}:{},...def.value?{value:def.value}:{},immutable:node.children.some(part=>part.type==='val')});
       if(bodyScope){

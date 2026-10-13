@@ -1,0 +1,257 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": 1791898307.3343103,
+  "phase": "JVM semantic scope lookup source and ordinary compiled qualification",
+  "baselineCommit": "e7e90e7cb0a7a3c6a529c4dda7c2775c61e2c438",
+  "sourceFiles": [
+    {
+      "file": "src/analysis/tree-sitter/jvm-semantic.ts",
+      "sha256": "14c5896dacb2bdb459404ba95e0f58f3a6300b7381e8d713eaaa6f3562633d90"
+    },
+    {
+      "file": "src/analysis/tree-sitter/native-worker.mjs",
+      "sha256": "c5c02d730697e5fb520f8fffb0d420b9e3a4df4d5a0c0d8b586406f3287733f4"
+    }
+  ],
+  "compiledFiles": [
+    {
+      "file": "dist/src/analysis/tree-sitter/jvm-semantic.js",
+      "sha256": "d48e1cfeb8bdc40cb0a33b0b81730a20117e7dd8ac4ca9d929f220a9907258bc"
+    },
+    {
+      "file": "dist/src/analysis/tree-sitter/native-worker.mjs",
+      "sha256": "c5c02d730697e5fb520f8fffb0d420b9e3a4df4d5a0c0d8b586406f3287733f4"
+    }
+  ],
+  "sourceNode22FocusedCases": 106,
+  "sourceNode24FocusedCases": 106,
+  "sourceNode24AllCases": 1981,
+  "ordinaryCompiledNode24ImportCases": 30,
+  "ordinaryCompiledNode24BuildSelectionCases": 11,
+  "ordinaryCompiledNode24GradleCases": 14,
+  "completeSemanticFactComparisons": {
+    "node22-complete-fact-parity": {
+      "samples": 23,
+      "originalGuideSources": 20,
+      "receiptSha256": "0d042f870b71d392527905f79e27b39730a3e27befa408e464adb5e0217b192e",
+      "normalization": []
+    },
+    "node22-compiled-complete-fact-parity": {
+      "samples": 23,
+      "originalGuideSources": 20,
+      "receiptSha256": "2897156658ef9f90f660aba06e35e01a8a710e9412441770984c75fcf82ef4c5",
+      "normalization": []
+    },
+    "node24-complete-fact-parity": {
+      "samples": 23,
+      "originalGuideSources": 20,
+      "receiptSha256": "a8c468f2af6ec1c2f2ddb06adafef66a00286d2a00d5d8daff39dae1ae319199",
+      "normalization": []
+    },
+    "node24-compiled-complete-fact-parity": {
+      "samples": 23,
+      "originalGuideSources": 20,
+      "receiptSha256": "f91116e5cd6597badf43d0e6c31d8cae04359cae162a68bdd4e5ef518ef3a5ff",
+      "normalization": []
+    }
+  },
+  "originalGuideInputs": [
+    {
+      "file": "mvc-java/complete/src/main/java/com/example/restservice/Greeting.java",
+      "sha256": "ab53924d8e8a58c41a302bc1515922dc3b71cd1e4b67986ef5fcdc3a36bdbf81"
+    },
+    {
+      "file": "mvc-java/complete/src/main/java/com/example/restservice/GreetingController.java",
+      "sha256": "ac8984576f74c759e814ac281257e21388427573c451ffe5b7f7824138e0348a"
+    },
+    {
+      "file": "mvc-java/complete/src/main/java/com/example/restservice/RestServiceApplication.java",
+      "sha256": "e6360019b0faf92d77e4f27307c92b11e4414500f33c32e23138345c179890e8"
+    },
+    {
+      "file": "mvc-java/complete/src/test/java/com/example/restservice/GreetingControllerTests.java",
+      "sha256": "e94a96a1c986019f457efd20f6e9870c868a221b9e4049b9be7a827259185061"
+    },
+    {
+      "file": "mvc-kotlin/complete-kotlin/src/main/kotlin/com/example/restservice/Greeting.kt",
+      "sha256": "fddecd2f25048751660b249e57249ead70458eb70dd6380715290c27b4c716b6"
+    },
+    {
+      "file": "mvc-kotlin/complete-kotlin/src/main/kotlin/com/example/restservice/GreetingController.kt",
+      "sha256": "f695c72a879e56881a772ce4a7189470408a84536504275db0e61aa5a748db53"
+    },
+    {
+      "file": "mvc-kotlin/complete-kotlin/src/main/kotlin/com/example/restservice/RestServiceApplication.kt",
+      "sha256": "a82f130d30f6599cbb3a8eba1ad888f1bcba5c5648a05ef02de592508f5d26b2"
+    },
+    {
+      "file": "mvc-kotlin/complete-kotlin/src/test/kotlin/com/example/restservice/GreetingControllerTests.kt",
+      "sha256": "dfc45bce7b88ea5315256ac184ebc76cab3f9baddc3052ab35a685ceb2debc04"
+    },
+    {
+      "file": "webflux-java/complete/src/main/java/com/example/reactivewebservice/Greeting.java",
+      "sha256": "fb5d1e8ce5040d35cb0efba8ad53e615d097fb2ff29c56e97840bec93b752cf3"
+    },
+    {
+      "file": "webflux-java/complete/src/main/java/com/example/reactivewebservice/GreetingClient.java",
+      "sha256": "10a8e6621115dd5a80abe9bc4d456203f5bb327f321c7efeee7c0c7e434fcff3"
+    },
+    {
+      "file": "webflux-java/complete/src/main/java/com/example/reactivewebservice/GreetingHandler.java",
+      "sha256": "0f8e8fda755436d94cb0f31e84c94cf0168268d65d053224aa75ef1d4e8590f8"
+    },
+    {
+      "file": "webflux-java/complete/src/main/java/com/example/reactivewebservice/GreetingRouter.java",
+      "sha256": "d87e323e4ab6b65ff6e5df6916469fef79f65381760889abe88b88e66ae30004"
+    },
+    {
+      "file": "webflux-java/complete/src/main/java/com/example/reactivewebservice/ReactiveWebServiceApplication.java",
+      "sha256": "e6c7d8e8c6f18bf4690fe2e96e743b9309e7c7ef64f63b9e3237bc8c241b418a"
+    },
+    {
+      "file": "webflux-java/complete/src/test/java/com/example/reactivewebservice/GreetingRouterTest.java",
+      "sha256": "9990e38240620c0706b1adbcd02686054e99a63fc2b2f729f353f14cc874e17a"
+    },
+    {
+      "file": "webflux-kotlin/complete-kotlin/src/main/kotlin/com/example/reactivewebservice/Greeting.kt",
+      "sha256": "125be775f7b6284971cc975d79cb0470be0857fa069dd607544d1b3eda834b5a"
+    },
+    {
+      "file": "webflux-kotlin/complete-kotlin/src/main/kotlin/com/example/reactivewebservice/GreetingClient.kt",
+      "sha256": "e10fe4af230d5a671906cc36d6d2c22e76c9ab8cc89ceaff25dd8ee40562d83d"
+    },
+    {
+      "file": "webflux-kotlin/complete-kotlin/src/main/kotlin/com/example/reactivewebservice/GreetingHandler.kt",
+      "sha256": "72e14aeb7e650e8f14b8389c8182bc0a4e295f93fa7ca31ecf5a1644fa42dab1"
+    },
+    {
+      "file": "webflux-kotlin/complete-kotlin/src/main/kotlin/com/example/reactivewebservice/GreetingRouter.kt",
+      "sha256": "96f3f6a1e7119fb3b6045e144f42df50cb42f0de07371be64ffdf3d43e669961"
+    },
+    {
+      "file": "webflux-kotlin/complete-kotlin/src/main/kotlin/com/example/reactivewebservice/ReactiveWebServiceApplication.kt",
+      "sha256": "b7374400a23c612fe20c6ffaa3aa9539c23eea740b7ceef5658fc6dc27f2952e"
+    },
+    {
+      "file": "webflux-kotlin/complete-kotlin/src/test/kotlin/com/example/reactivewebservice/GreetingRouterTest.kt",
+      "sha256": "5af525908665f55e16aac5f59ffb233393161d34c609fafae0374dc863d19d60"
+    }
+  ],
+  "finalChecks": {
+    "startedAt": 1791898181.6014817,
+    "controllerPid": 474789,
+    "node": "v24.21.0",
+    "targetExecution": false,
+    "checks": [
+      {
+        "name": "node24-compiled-gradle",
+        "command": [
+          "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+          "--experimental-sqlite",
+          "tests/fixtures/gradle-compiler-inputs-qualification.mjs",
+          "file:///var/www/html/codiluce/dist/src/",
+          "/var/www/html/codiluce/.codiluce/validation-jvm-scope-lookup/node24-compiled-gradle.json"
+        ],
+        "pid": 474791,
+        "exitCode": 0,
+        "seconds": 5.377884149551392,
+        "pidGone": true,
+        "logSha256": "e26b576598fc8f97c322f7044362262f4714a5ff6181883ed041548cae1e2ae7"
+      },
+      {
+        "name": "node24-final-cli-ui-build",
+        "command": [
+          "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+          "/home/ojoven/.nvm/versions/node/v24.21.0/lib/node_modules/npm/bin/npm-cli.js",
+          "run",
+          "build"
+        ],
+        "pid": 475394,
+        "exitCode": 0,
+        "seconds": 22.602131843566895,
+        "pidGone": true,
+        "logSha256": "fff4ec1866245d247d27e5cb67f0bcd08c3b080905a3fcb690d50d5394f00784"
+      }
+    ],
+    "completedAt": 1791898209.58189,
+    "passed": true
+  },
+  "logs": [
+    {
+      "file": "node22-targeted.log",
+      "sha256": "8068749317ba800fc4588cceb571e48c03dd0f49097ee0af23a7aab7ace831a3"
+    },
+    {
+      "file": "node24-targeted.log",
+      "sha256": "33def34ae2fdde178e640cece5a37329dd067dad9a01a452974f4c97d6bf97d7"
+    },
+    {
+      "file": "node24-full-tests.log",
+      "sha256": "31541f81dc66e32f83b2eef2af1e13d8445465b13907a7024f664f6cbcca2a83"
+    },
+    {
+      "file": "node24-compiled-jvm-imports.log",
+      "sha256": "182c64479d1487120742d3566ace841fb5cd68ffca94b9ed62b5c97097f9024d"
+    },
+    {
+      "file": "typecheck.log",
+      "sha256": "c1fee42b4fa7e6e1a30e8e81426f7690f45767a53800385021e8cd468ec6e8d9"
+    },
+    {
+      "file": "capability-docs.log",
+      "sha256": "75c383b049d17b5b1532c148f83c9cfc6bfda676bb60b0b035afe5d4a09c379d"
+    },
+    {
+      "file": "node24-compiled-jvm-selection.log",
+      "sha256": "bb53f570e85be8ef09f5d4eb0684403203dec018c4ac86ee71aa741a2d79b2ef"
+    }
+  ],
+  "unchangedHeavyFixture": {
+    "methods": 21000,
+    "sourceSha256": "35b91bde4b12d59a262a84c7357f3c06542c9409c06b1941c0045f655a92712c",
+    "scopeCount": 21002,
+    "definitions": 20000,
+    "rawFactsSha256": "43a0b7e46fd42781823acd4a87604777abc260d509aa7a5e710309cffdd25606",
+    "compiledNode24Milliseconds": 2910.145977
+  },
+  "parserDeadlineMs": 10000,
+  "declarationBudget": 20000,
+  "guardsChanged": false,
+  "producerVersionsChanged": false,
+  "priorNode24Observation": {
+    "terminalExitCode": 1,
+    "tests": 1981,
+    "passes": 1977,
+    "failures": 4,
+    "path": "/var/www/html/codiluce/.codiluce/validation-node24-native-release",
+    "threeNonGitFixturesInheritedGitFromTemporaryParent": true,
+    "javaFixtureExceededUnchangedDeadline": true,
+    "retained": true
+  },
+  "earlierMistypedFocusedCommand": {
+    "actualExecutedCases": 81,
+    "log": "node24-first-targeted-81.log",
+    "corrected106CaseCommandCompleted": true,
+    "retained": true
+  },
+  "firstBuildTerminalToolOutputTruncated": true,
+  "firstBuildLogRetained": true,
+  "finalBuildActualExitCode": 0,
+  "foreignFilesUnchanged": true,
+  "targetExecution": false,
+  "fullNormalInstalledPackageForChangedCodeQualified": false,
+  "productionHistoryForChangedCodeQualified": false,
+  "productionRelativePerformanceQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullNativeMatrixQualified": false,
+  "scope": "An extraction-local Map replaces repeated scope-array search. Full arrays, order, identities, offsets, ranges and budget outcomes remain identical. The existing 21,000-method fixture is unchanged. Direct extraction timing is scoped; it does not qualify production relative time/RSS. Full clean-source Node 24 native/installed qualification is the next observation.",
+  "evidenceArchive": {
+    "file": "/var/www/html/codiluce/.codiluce/validation-jvm-scope-lookup-evidence/jvm-scope-lookup-source-and-compiled-evidence.tar.gz",
+    "sha256": "d8cda9e223d0e9981971187d35cf393f3bf22626b25c91e1e9593950f3334318",
+    "bytes": 3647314,
+    "members": 106,
+    "allMembersReopenedWithExactBytesAndModes": true,
+    "manifestSha256": "942c119741b384b00ea9822c233153b43e42be1616bcf514d2b4335a1cc83ef8"
+  }
+}

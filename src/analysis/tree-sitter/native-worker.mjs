@@ -876,6 +876,7 @@ function extractJvmSemantic(root, language, declarations, source) {
   const site = (node) => ({ start: node.startIndex, end: node.endIndex, range: source.range(node.startIndex, node.endIndex) });
   const unknown = (node) => ({ ...site(node), kind: "unknown", text: node.text.slice(0, 300) });
   const bySite = new Map(declarations.map((declaration) => [`${declaration.start}:${declaration.end}`, declaration]));
+  const scopesByKey = /* @__PURE__ */ new Map();
   const lambdaKeys = /* @__PURE__ */ new Map();
   let expressionNodes = 0, lambdaOrdinal = 0, scopeOrdinal = 0, nodes = 0;
   const lambdaKey = (node) => {
@@ -1014,6 +1015,7 @@ function extractJvmSemantic(root, language, declarations, source) {
   const scope = (node, kind, parent, owner2, conditional) => {
     const value = { ...site(node), key: `jvm-scope:${scopeOrdinal++}`, kind, ...parent ? { parent: parent.key } : {}, ...owner2 ? { owner: owner2 } : {}, ...conditional ? { conditional } : {}, ...kind === "lambda" ? { deferred: true } : {}, gaps: [] };
     facts.scopes.push(value);
+    scopesByKey.set(value.key, value);
     return value;
   };
   const parameters2 = (node, container) => {
@@ -1085,7 +1087,7 @@ function extractJvmSemantic(root, language, declarations, source) {
     if (["package_declaration", "package_header", "import", "import_declaration", "line_comment", "block_comment", "comment"].includes(node.type)) return;
     const declaration = bySite.get(`${node.startIndex}:${node.endIndex}`);
     if (declaration) {
-      const def = definition(node, declaration, where), bodyKey = def.bodyScope ?? def.typeScope, bodyScope = bodyKey ? facts.scopes.find((item) => item.key === bodyKey) : void 0;
+      const def = definition(node, declaration, where), bodyKey = def.bodyScope ?? def.typeScope, bodyScope = bodyKey ? scopesByKey.get(bodyKey) : void 0;
       const body3 = bodyScope ? node.namedChildren.find((part) => part.startIndex === bodyScope.start && part.endIndex === bodyScope.end) : void 0;
       if (def.kind === "property" && !["file", "type", "opaque"].includes(where.kind)) facts.bindings.push({ ...site(node), scope: where.key, declaration: def.key, kind: "local", name: def.name, ...def.returnType ? { type: def.returnType } : {}, ...def.value ? { value: def.value } : {}, immutable: node.children.some((part) => part.type === "val") });
       if (bodyScope) {
