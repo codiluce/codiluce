@@ -133,6 +133,21 @@ test('a deadline reaps its worker before dispatching the next queued original', 
   assert.ok(observed.children.every(c => c.exitCode !== null || c.signalCode !== null));
 });
 
+test('source-free bootstrap also waits for a generation retired by a deadline', async () => {
+  class BootstrapParser extends StructureParser {prewarm() {this.start();}}
+  const observed = observe(), parser = new BootstrapParser(500, worker);
+  try {
+    await parse(parser, 'warm');
+    await assert.rejects(parse(parser, 'slow', {delay: 10000}), /exceeded 500 ms/);
+    assert.throws(() => parser.prewarm(), /retiring/);
+    assert.equal(observed.children.length, 1);
+    await parser.closeAndWait();
+    parser.prewarm();
+    assert.equal((await parse(parser, 'after-retirement')).language, 'after-retirement');
+    assert.deepEqual(observed.overlap, [0, 0]);
+  } finally {await parser.closeAndWait(); observed.restore();}
+});
+
 for (const kind of ['error', 'exit'] as const) test(`a ${kind} retires an unusable generation without losing the next queued original`, async () => {
   const observed = observe(), parser = new StructureParser(2000, worker);
   try {

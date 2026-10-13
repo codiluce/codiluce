@@ -89,6 +89,25 @@ test('repeated compiler prewarming shares one source-free bootstrap and one erro
  }finally{await compiler.closeAndWait();observer.mock.restore();syncBuiltinESMExports();}
 });
 
+test('compiler prewarming cannot start a replacement while its previous address space retires',async()=>{
+ const original=childProcess.fork,children:childProcess.ChildProcess[]=[],overlap:number[]=[];
+ const observer=mock.method(childProcess,'fork',((...args:unknown[])=>{
+  overlap.push(children.filter(child=>child.exitCode===null&&child.signalCode===null).length);
+  const child=Reflect.apply(original,childProcess,args);children.push(child);return child;
+ })as typeof childProcess.fork);syncBuiltinESMExports();
+ const compiler=new TemplateScriptParser();
+ try{
+  compiler.prewarm();
+  const retirement=compiler.closeAndWait();
+  assert.throws(()=>compiler.prewarm(),/retiring/);
+  await retirement;
+  assert.equal(children.length,1);
+  assert.ok(children[0]!.exitCode!==null||children[0]!.signalCode!==null);
+  compiler.prewarm();
+  assert.equal(children.length,2);assert.deepEqual(overlap,[0,0]);
+ }finally{await compiler.closeAndWait();observer.mock.restore();syncBuiltinESMExports();for(const child of children)if(child.exitCode===null&&child.signalCode===null)child.kill('SIGKILL');}
+});
+
 test('literal-script compiler parsing cannot evaluate target imports or target top-level source',async()=>{
  const root=await repository({}),marker=path.join(root,'executed'),source=`<script type="module">import {writeFileSync} from 'node:fs'; writeFileSync(${JSON.stringify(marker)},'executed');export function client(){}</script>`;
  await writeFile(path.join(root,'source.html.erb'),source);const graph=await indexRepository(root);assert.ok(graph.entities.some(entity=>entity.name==='client'));assert.ok(!(await readdir(root)).includes('executed'));

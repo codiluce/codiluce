@@ -96,6 +96,9 @@ export class StructureParser {
   }
   /** Only launches the process; no source job or optional compiler import. */
   protected start():ChildProcess {
+    // Source-free prewarming uses this entry point too. It cannot bypass the
+    // retirement barrier that guards queued source requests.
+    if(this.closing||this.retiring.size)throw Error('Parser worker is retiring');
     if(this.child&&(this.child.exitCode!==null||this.child.signalCode!==null))this.retire();
     if (!this.child) this.child = fork(this.worker, [], {
       execArgv: this.execArguments ?? ['--max-old-space-size=256'],

@@ -1,0 +1,118 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-13T00:12:41.628960+00:00",
+  "phase": "Source-free parser bootstrap retirement barrier source/compiled qualification",
+  "parentCommit": "7bbf08c4877af44d23d08d1c3027a51d3ac90ce3",
+  "runtimeSha256": "dcd55f1b6c30bcec6718d90b9a779409f1677c8dda1d9f39635c653769ebb8d1",
+  "runtimeInputsVerified": 1924,
+  "changedRuntimeFiles": [
+    "src/analysis/tree-sitter/client.ts"
+  ],
+  "beforeFixBootstrapRetirementTest": {
+    "passed": 0,
+    "failed": 1,
+    "cause": "Template compiler prewarm bypasses request retirement barrier and starts a replacement during closeAndWait"
+  },
+  "afterFixTargetedTests": {
+    "passed": 26,
+    "failed": 0,
+    "skipped": 0
+  },
+  "newRetirementCases": 2,
+  "finalEngineWebTests": {
+    "passed": 1703,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 184238.79084
+  },
+  "ordinaryCompiledNodeTests": 19,
+  "bothTypechecksPassed": true,
+  "deterministicDocumentationPassed": true,
+  "compiledCliBuildPassed": true,
+  "bootstrapDuringExplicitRetirementRejected": true,
+  "bootstrapDuringDeadlineRetirementRejected": true,
+  "freshPrewarmAfterActualExitAllowed": true,
+  "observedWorkerAddressSpaceOverlap": false,
+  "sourceJobsOrCompilerImportsIntroducedDuringBootstrap": false,
+  "syntheticTestTemporaryStorage": {
+    "schema": 1,
+    "directory": "/dev/shm/codiluce-bootstrap-retirement-tests",
+    "availableBytes": 16542302208,
+    "scope": "Own transient synthetic test repositories only; production storage guard and retained evidence unchanged",
+    "startedAt": 1791850049.7218678
+  },
+  "normalInstalledPackageGateForThisNewRuntimeQualified": false,
+  "parentRuntimeInstalledPackageQualified": true,
+  "parentRuntimeReleaseReceipt": "docs/parser-completed-responses-release-validation.json",
+  "newRuntimeOriginalProductionHistoryQualified": false,
+  "newRuntimeRelativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "broaderCompilerConsumerWasmRssBudgetQualified": false,
+  "originalHistoryDiskReserveRelaxed": false,
+  "oldFailedObservationsRetried": false,
+  "fullGoalFinished": false,
+  "availableWorkspaceBytes": 836288512,
+  "additionalStorageStillRequired": true,
+  "roadmapCurrentPhasePointersCorrected": [
+    "P7",
+    "P8"
+  ],
+  "historicalSourceVerificationNotesPreserved": true,
+  "logs": [
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/bootstrap-before-fix.log",
+      "sha256": "7a5138347e42c4bf75d96b53fdf22b391926448f648e0dd92beba6beed3f0288"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/bootstrap-targeted-first.log",
+      "sha256": "857f1b398b3534b9cbd7b0359ada6fd0f5b0d716529ab4d6b6bf00c06a20b6ef"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/bootstrap-targeted-complete.log",
+      "sha256": "62cc8dd24cfc86deee3fa4a22f2961be3efc763706262b24ba28cfde16543ac5"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/bootstrap-typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/bootstrap-compiled-cli-build.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/bootstrap-docs-check.log",
+      "sha256": "4d552c878f86492e9450c46adcda71409aef89f25e60ab74c100b75830d01ef7"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/bootstrap-full-engine-web-first.log",
+      "sha256": "59322cf6537c4c860adce60937947980a8fa2f04f887820d88439793c02536e5"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/bootstrap-web-typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/bootstrap-compiled-conformance-first.log",
+      "sha256": "05edeffdc799a7582d71109b4e9295abbbbf95c6c6cd3b6587d75c69e6d4c758"
+    }
+  ],
+  "compiledDrivers": [
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/compiled-bootstrap-queue.test.mjs",
+      "sha256": "a4e94e521d2aa0528bb3f4ac27ede2ec88848fc7ac0f078a07037e7bfee79b44"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/compiled-template-bootstrap.test.mjs",
+      "sha256": "846d8da412b58320d322ee21646ba2823ec2b444da363c701624e6a73cb26c02"
+    }
+  ],
+  "compiledClientSha256": "9d1e099e1a36ef4e57f58741d42b4483748220a76ca54dacb2c965e5a11aeaa9",
+  "foreignFilesUnchanged": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  }
+}
