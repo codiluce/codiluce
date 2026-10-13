@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "passed": true,
+  "seconds": 38.548280000686646,
+  "archive": "/dev/shm/codiluce-script-generations-final/literal-script-generations-source-build-and-evidence.tar.gz",
+  "sha256": "a70719e9c8570e3613e19bd0a459dcb099df4c8307ca7cd92306f2468ba57f6e",
+  "bytes": 118816827,
+  "verifiedRegularMembers": 8393,
+  "manifestSha256": "f5741bc3ea0c5194c472366ae723faf8054e2f91b12975346df4b4f3a1a34c0d",
+  "runtimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+  "initialRuntimeSha256": "558ae7b837fd88504990169b1c15cf2cf955e85e6faf90d6be7bb278fcfe77a7",
+  "storage": "Owned RAM-backed tmpfs; durable retention requires additional capacity",
+  "normalInstalledPackageForNewRuntimeQualified": false,
+  "newFull195OriginalRevisionHistoryQualified": false,
+  "newRelativeHistoryTimeAndProcessTreeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullGoalFinished": false,
+  "initialNullableBudgetObservationRetained": true,
+  "originalOrFailedArtifactsDeleted": false
+}

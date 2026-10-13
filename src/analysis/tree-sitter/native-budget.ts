@@ -18,7 +18,8 @@ export function reservedGrammars(language: string, options: Options = {}): strin
 /** Sequential indexed native jobs reuse a bounded grammar generation. Retire
  * its entire WASM address space before crossing either reservation limit.
  * This bounds lifetimes, not RSS: one allowed source can exceed the byte
- * threshold, and grammar sizes/tree allocation vary. No input is discarded. */
+ * threshold, and grammar sizes/tree allocation vary. An exhausted/oversized
+ * generation exits before its complete facts are returned. No input is discarded. */
 export class IndexedStructureParser extends StructureParser {
   private readonly grammars = new Set<string>();
   private bytes = 0;
@@ -51,7 +52,9 @@ export class IndexedStructureParser extends StructureParser {
       this.bytes += bytes;
       this.peakGrammars = Math.max(this.peakGrammars, this.grammars.size); this.peakBytes = Math.max(this.peakBytes, this.bytes);
       if (bytes > this.limits.maxSourceBytes) this.oversizedJobs++;
-      return await super.parse(language, content, options);
+      const facts=await super.parse(language, content, options);
+      if(this.bytes>=this.limits.maxSourceBytes){await this.closeAndWait();this.rotations++;}
+      return facts;
     } catch (error) { await this.closeAndWait(); throw error; }
     finally { this.busy = false; }
   }

@@ -21,6 +21,46 @@ function observe() {
   return {children, overlap, restore() {spy.mock.restore(); syncBuiltinESMExports();}};
 }
 
+test('bounded worker generations retain every queued original and exit before a generation result resolves',async()=>{
+  const observed=observe(),parser=new StructureParser(2000,worker,undefined,true,{maxJobs:2,maxSourceBytes:10000});
+  try{
+    const results=await Promise.all(Array.from({length:6},(_,i)=>parse(parser,`bounded-original-${i}`,{delay:20})));
+    assert.deepEqual(results.map(result=>result.language),Array.from({length:6},(_,i)=>`bounded-original-${i}`));
+    for(let i=0;i<6;i++)assert.equal(results[i]!.original,'{"delay":20}');
+    assert.equal(new Set(results.map(result=>result.pid)).size,3);
+    for(let i=0;i<6;i+=2)assert.equal(results[i]!.pid,results[i+1]!.pid);
+    assert.deepEqual(observed.overlap,[0,0,0]);
+    assert.ok(observed.children.every(child=>child.exitCode!==null||child.signalCode!==null));
+    assert.equal(parser.workerGenerationStats().jobs,0);assert.equal(parser.workerGenerationStats().sourceBytes,0);assert.equal(parser.workerGenerationStats().peakJobs,2);
+  }finally{await parser.closeAndWait();observed.restore();}
+});
+
+test('UTF-8 worker input boundaries preserve oversized originals alone and reap exact byte limits before returning facts',async()=>{
+  const observed=observe(),input=JSON.stringify({original:'é😀'}),bytes=Buffer.byteLength(input),parser=new StructureParser(2000,worker,undefined,true,{maxJobs:100,maxSourceBytes:2*bytes});
+  try{
+    const first=await parser.parse('first',input)as Reply;assert.equal(first.original,input);
+    const second=await parser.parse('second',input)as Reply;assert.equal(second.original,input);assert.equal(second.pid,first.pid);
+    assert.ok(observed.children[0]!.exitCode!==null||observed.children[0]!.signalCode!==null);
+    const large=JSON.stringify({original:'é😀'.repeat(1000)}),big=await parser.parse('large',large)as Reply;assert.equal(big.original,large);assert.notEqual(big.pid,first.pid);
+    assert.ok(observed.children[1]!.exitCode!==null||observed.children[1]!.signalCode!==null);
+    assert.equal(parser.workerGenerationStats().sourceBytes,0);assert.equal(parser.workerGenerationStats().peakSourceBytes,Buffer.byteLength(large));
+    assert.equal((await parse(parser,'recovered')).language,'recovered');assert.deepEqual(observed.overlap,[0,0,0]);
+  }finally{await parser.closeAndWait();observed.restore();}
+});
+
+test('bounded parser generations reject invalid limits, cancel queued identities on close and preserve healthy recovery',async()=>{
+  for(const limits of [null,false,0,{}])assert.throws(()=>Reflect.construct(StructureParser,[2000,worker,undefined,true,limits]),/positive safe integers/);
+  for(const limits of [{maxJobs:0,maxSourceBytes:1},{maxJobs:1,maxSourceBytes:0},{maxJobs:1.5,maxSourceBytes:1},{maxJobs:1,maxSourceBytes:Infinity}])assert.throws(()=>new StructureParser(2000,worker,undefined,true,limits),/positive safe integers/);
+  const observed=observe(),parser=new StructureParser(2000,worker,undefined,true,{maxJobs:1,maxSourceBytes:10000});
+  try{
+    const queued=Promise.allSettled([parse(parser,'cancelled-one'),parse(parser,'cancelled-two')]);await parser.closeAndWait();
+    assert.ok((await queued).every(result=>result.status==='rejected'&&/closed before dispatch/.test(String(result.reason))));assert.equal(observed.children.length,0);
+    assert.equal((await parse(parser,'healthy')).language,'healthy');assert.ok(observed.children[0]!.exitCode!==null||observed.children[0]!.signalCode!==null);
+    await assert.rejects(parse(parser,'reported',{error:true}),/Owned source error/);
+    assert.equal((await parse(parser,'after-error')).language,'after-error');assert.deepEqual(observed.overlap,[0,0,0]);
+  }finally{await parser.closeAndWait();observed.restore();}
+});
+
 test('six queued source jobs each retain the full active deadline beyond one batch deadline', async () => {
   const parser = new StructureParser(1100, worker);
   try {

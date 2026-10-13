@@ -1,0 +1,1221 @@
+{
+  "schema": 1,
+  "passed": true,
+  "phase": "Bounded literal-script compiler generations and completed native input retirement: source/compiled/build qualification",
+  "completedAt": "2026-10-13T03:22:42.425532+00:00",
+  "parentCommit": "7bcf93a",
+  "parentRuntimeSha256": "4b10b9ac084b00040d96a912c2e859b8968d50dd76c5c57298f8a5e628e6d6ba",
+  "runtimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+  "runtimeInputsVerified": 1927,
+  "changedRuntimeInputs": [
+    "src/analysis/tree-sitter/client.ts",
+    "src/analysis/tree-sitter/native-budget.ts",
+    "src/analysis/tree-sitter/template-scripts.ts"
+  ],
+  "literalCompilerGenerationLimits": {
+    "maxJobs": 64,
+    "maxSourceBytes": 16777216
+  },
+  "oversizedAllowedOriginalsRetainedAlone": true,
+  "actualExitBeforeExhaustedGenerationFactsReturn": true,
+  "sourceFreePrewarmConsumesNoJobs": true,
+  "queuedPayloadAdmissionOrPhysicalRssCapClaimed": false,
+  "originalInputLimitsOrActiveDeadlinesRelaxed": false,
+  "compiledWorkerConformance": {
+    "schema": 1,
+    "passed": true,
+    "sourceLoader": false,
+    "targetExecution": false,
+    "defaultCompilerJobsVerified": 65,
+    "sourceFreePrewarmCalls": 100,
+    "malformedBudgetOverridesRejected": true,
+    "completeCombinedWorkerFactSha256": [
+      "f761567ab084f139d9f4f9414b6f82c83e62ad9c06978c6429dd54639368bbd3",
+      "cb145589ba82ba864ce397d2ab1ea6380fc722444440446c178f648ead0504bd",
+      "e3099ded415ffc2167d0421ad30143af183f292fcb5282a058d6773289fa5d85"
+    ],
+    "compilerStats": {
+      "limits": {
+        "maxJobs": 64,
+        "maxSourceBytes": 16777216
+      },
+      "jobs": 1,
+      "sourceBytes": 105,
+      "peakJobs": 64,
+      "peakSourceBytes": 6720,
+      "generations": 2
+    },
+    "oversizedCompilerStats": {
+      "limits": {
+        "maxJobs": 64,
+        "maxSourceBytes": 1
+      },
+      "jobs": 0,
+      "sourceBytes": 0,
+      "peakJobs": 1,
+      "peakSourceBytes": 105,
+      "generations": 1
+    },
+    "oversizedNativeStats": {
+      "limits": {
+        "maxGrammars": 6,
+        "maxSourceBytes": 1
+      },
+      "grammars": 0,
+      "sourceBytes": 0,
+      "peakGrammars": 3,
+      "peakSourceBytes": 105,
+      "rotations": 1,
+      "oversizedJobs": 1,
+      "retirementPending": false
+    },
+    "actualChildren": [
+      {
+        "pid": 232633,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "sourceLoader": false
+      },
+      {
+        "pid": 232805,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "sourceLoader": false
+      },
+      {
+        "pid": 232873,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "sourceLoader": false
+      },
+      {
+        "pid": 233018,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "sourceLoader": false
+      }
+    ],
+    "dispatchedJobs": [
+      {
+        "pid": 232633,
+        "id": 1,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 2,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 3,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 4,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 5,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 6,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 7,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 8,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 9,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 10,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 11,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 12,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 13,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 14,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 15,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 16,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 17,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 18,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 19,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 20,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 21,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 22,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 23,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 24,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 25,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 26,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 27,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 28,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 29,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 30,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 31,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 32,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 33,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 34,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 35,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 36,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 37,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 38,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 39,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 40,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 41,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 42,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 43,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 44,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 45,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 46,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 47,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 48,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 49,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 50,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 51,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 52,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 53,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 54,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 55,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 56,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 57,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 58,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 59,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 60,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 61,
+        "language": "erb"
+      },
+      {
+        "pid": 232633,
+        "id": 62,
+        "language": "razor"
+      },
+      {
+        "pid": 232633,
+        "id": 63,
+        "language": "liquid"
+      },
+      {
+        "pid": 232633,
+        "id": 64,
+        "language": "erb"
+      },
+      {
+        "pid": 232805,
+        "id": 65,
+        "language": "razor"
+      },
+      {
+        "pid": 232873,
+        "id": 1,
+        "language": "erb"
+      },
+      {
+        "pid": 233018,
+        "id": 1,
+        "language": "erb"
+      }
+    ],
+    "scope": "Real compiled worker generation exit and complete original facts. Queue payload ownership, AST/native allocations and physical RSS are separate."
+  },
+  "fullBuildWorkerConformance": {
+    "schema": 1,
+    "passed": true,
+    "sourceLoader": false,
+    "targetExecution": false,
+    "defaultCompilerJobsVerified": 65,
+    "sourceFreePrewarmCalls": 100,
+    "malformedBudgetOverridesRejected": true,
+    "completeCombinedWorkerFactSha256": [
+      "f761567ab084f139d9f4f9414b6f82c83e62ad9c06978c6429dd54639368bbd3",
+      "cb145589ba82ba864ce397d2ab1ea6380fc722444440446c178f648ead0504bd",
+      "e3099ded415ffc2167d0421ad30143af183f292fcb5282a058d6773289fa5d85"
+    ],
+    "compilerStats": {
+      "limits": {
+        "maxJobs": 64,
+        "maxSourceBytes": 16777216
+      },
+      "jobs": 1,
+      "sourceBytes": 105,
+      "peakJobs": 64,
+      "peakSourceBytes": 6720,
+      "generations": 2
+    },
+    "oversizedCompilerStats": {
+      "limits": {
+        "maxJobs": 64,
+        "maxSourceBytes": 1
+      },
+      "jobs": 0,
+      "sourceBytes": 0,
+      "peakJobs": 1,
+      "peakSourceBytes": 105,
+      "generations": 1
+    },
+    "oversizedNativeStats": {
+      "limits": {
+        "maxGrammars": 6,
+        "maxSourceBytes": 1
+      },
+      "grammars": 0,
+      "sourceBytes": 0,
+      "peakGrammars": 3,
+      "peakSourceBytes": 105,
+      "rotations": 1,
+      "oversizedJobs": 1,
+      "retirementPending": false
+    },
+    "actualChildren": [
+      {
+        "pid": 267079,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "sourceLoader": false
+      },
+      {
+        "pid": 267310,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "sourceLoader": false
+      },
+      {
+        "pid": 267509,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "sourceLoader": false
+      },
+      {
+        "pid": 267721,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "sourceLoader": false
+      }
+    ],
+    "dispatchedJobs": [
+      {
+        "pid": 267079,
+        "id": 1,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 2,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 3,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 4,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 5,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 6,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 7,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 8,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 9,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 10,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 11,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 12,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 13,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 14,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 15,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 16,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 17,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 18,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 19,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 20,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 21,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 22,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 23,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 24,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 25,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 26,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 27,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 28,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 29,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 30,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 31,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 32,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 33,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 34,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 35,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 36,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 37,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 38,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 39,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 40,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 41,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 42,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 43,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 44,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 45,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 46,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 47,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 48,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 49,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 50,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 51,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 52,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 53,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 54,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 55,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 56,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 57,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 58,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 59,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 60,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 61,
+        "language": "erb"
+      },
+      {
+        "pid": 267079,
+        "id": 62,
+        "language": "razor"
+      },
+      {
+        "pid": 267079,
+        "id": 63,
+        "language": "liquid"
+      },
+      {
+        "pid": 267079,
+        "id": 64,
+        "language": "erb"
+      },
+      {
+        "pid": 267310,
+        "id": 65,
+        "language": "razor"
+      },
+      {
+        "pid": 267509,
+        "id": 1,
+        "language": "erb"
+      },
+      {
+        "pid": 267721,
+        "id": 1,
+        "language": "erb"
+      }
+    ],
+    "scope": "Real compiled worker generation exit and complete original facts. Queue payload ownership, AST/native allocations and physical RSS are separate."
+  },
+  "sourceAndFullBuildCompiledModulesEqual": 225,
+  "completeOrdinaryCompiledPriorGraphParity": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": "2026-10-13T03:18:44.214Z",
+    "priorRuntime": "4b10b9ac084b00040d96a912c2e859b8968d50dd76c5c57298f8a5e628e6d6ba",
+    "priorRuntimeInputsVerified": 1927,
+    "currentRuntimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+    "sourceLoader": false,
+    "compilerGenerations": [
+      {
+        "limits": {
+          "maxJobs": 64,
+          "maxSourceBytes": 16777216
+        },
+        "jobs": 0,
+        "sourceBytes": 0,
+        "peakJobs": 64,
+        "peakSourceBytes": 8012,
+        "generations": 2
+      },
+      {
+        "limits": {
+          "maxJobs": 64,
+          "maxSourceBytes": 16777216
+        },
+        "jobs": 0,
+        "sourceBytes": 0,
+        "peakJobs": 0,
+        "peakSourceBytes": 0,
+        "generations": 0
+      },
+      {
+        "limits": {
+          "maxJobs": 64,
+          "maxSourceBytes": 16777216
+        },
+        "jobs": 0,
+        "sourceBytes": 0,
+        "peakJobs": 64,
+        "peakSourceBytes": 8012,
+        "generations": 2
+      }
+    ],
+    "allowedOversizedNativeOriginalBytes": 17825835,
+    "literalTemplateOriginalsVerified": 66,
+    "scope": "Complete ordinary compiled cold/warm/revision graphs for every original input, 20 grammar profiles, 66 literal-script ERB/Razor/Liquid originals, default 64-job compiler rotation and an allowed 17 MiB Python original over the native generation budget. All semantic/provenance/metadata fields retained; only run UUID/time replaced.",
+    "retainedFixture": "/dev/shm/codiluce-script-generations-final/codiluce-owned-script-generation-parity-DtHlQ0",
+    "originalFiles": 167,
+    "normalizations": [],
+    "volatileFields": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "cacheWarmReplayObserved": true,
+    "graphs": [
+      {
+        "mode": "cold",
+        "bytes": 1198810,
+        "sha256": "9ce07979d597caa7089f86737d34b8039c15e5506c0d25223be0017004ef6906",
+        "entities": 732,
+        "relations": 954,
+        "diagnostics": 26
+      },
+      {
+        "mode": "warm",
+        "bytes": 1198810,
+        "sha256": "9ce07979d597caa7089f86737d34b8039c15e5506c0d25223be0017004ef6906",
+        "entities": 732,
+        "relations": 954,
+        "diagnostics": 26
+      },
+      {
+        "mode": "revision",
+        "bytes": 1198231,
+        "sha256": "2e38c293fa3fef8390da5ddc7b384a6f945d766e0f3a78b6f2fbac8db1f2e2e4",
+        "entities": 732,
+        "relations": 954,
+        "diagnostics": 23
+      }
+    ],
+    "targetExecution": false
+  },
+  "fullTests": {
+    "tests": 1727,
+    "passed": 1727,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 182024.790644,
+    "actualExitCode": 0,
+    "unifiedExecSession": 73739,
+    "logSha256": "a19309fbe4dc475fb898d132d086a07bca3c2191e9138fc687cda37f868a7305"
+  },
+  "targetedTests": {
+    "tests": 41,
+    "passed": 41,
+    "failed": 0,
+    "skipped": 0,
+    "durationMs": 37143.229015,
+    "actualExitCode": 0,
+    "unifiedExecSession": 37241,
+    "logSha256": "e343299fed513c4bd4abec8e938e6716e897f4e504600d04992d691a7e192a50"
+  },
+  "engineTypecheck": {
+    "actualExitCode": 0,
+    "unifiedExecSession": 62713,
+    "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "webTypecheck": {
+    "actualExitCode": 0,
+    "unifiedExecSession": 53927,
+    "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ordinaryCompiledProbe": {
+    "actualExitCode": 0,
+    "unifiedExecSession": 64055,
+    "logSha256": "75ae34ccda8f60f5f677a78deae60ea63e85b6fb9af4c8c694cc60ae3971ed08"
+  },
+  "fullBuildProbe": {
+    "actualExitCode": 0,
+    "unifiedExecSession": 44358,
+    "logSha256": "1be19d363adda58636612901864188bd006815741e1ca31c382a7bb0294c4252"
+  },
+  "completeGraphComparison": {
+    "actualExitCode": 0,
+    "unifiedExecSession": 96485,
+    "logSha256": "2eb85e8021cb8033fe3b5ce65abc1d2e5c24e996750d6f754c38f9f23df2bb3d"
+  },
+  "fullBuild": {
+    "schema": 1,
+    "startedAt": 1791861498.281662,
+    "actualNpmPid": 232346,
+    "wrapperPid": 232223,
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/dev/shm/codiluce-script-generations-final/engine",
+    "runtimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+    "runtimeInputsVerified": 1927,
+    "targetExecution": false,
+    "userForeignWebIconUsed": false,
+    "normalInstalledPackageGateRun": false,
+    "log": "/dev/shm/codiluce-script-generations-final/full-build-first.log",
+    "completedAt": 1791861539.8306882,
+    "actualExitCode": 0,
+    "passed": true,
+    "interruptSignals": [],
+    "actualNpmGone": true,
+    "logSha256": "e3da4ffda259b9b312cebee2c0b58224bb3c40303c386a04df74a312140944ef"
+  },
+  "capabilityDocsCheck": {
+    "actualExitCode": 0,
+    "unifiedExecChunk": "59d141",
+    "languages": 24,
+    "frameworkFamilies": 24,
+    "grammars": 20,
+    "sourceFiles": 71,
+    "fingerprint": "b2ba2478a1cd32bbeeb7829ef05c3caeff028c81445a6e33f87cfed16156fe75"
+  },
+  "initialNullableBudgetBugObservation": {
+    "schema": 1,
+    "passed": false,
+    "initialRuntimeSha256": "558ae7b837fd88504990169b1c15cf2cf955e85e6faf90d6be7bb278fcfe77a7",
+    "explicitNullAcceptedWithWorkerLimits": null,
+    "childSpawned": false,
+    "targetExecution": false,
+    "scope": "Initial ordinary compiled negative constructor observation: explicit null accidentally disabled required literal-script generation budgets. Initial valid-profile test/build/graph passes remain retained; final qualification must use the corrected runtime."
+  },
+  "initialValidProfilePassesRetained": {
+    "runtimeSha256": "558ae7b837fd88504990169b1c15cf2cf955e85e6faf90d6be7bb278fcfe77a7",
+    "fullTests": 1727,
+    "targetedTests": 41,
+    "fullBuild": {
+      "schema": 1,
+      "startedAt": 1791861146.5415173,
+      "actualNpmPid": 201380,
+      "wrapperPid": 201379,
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "cwd": "/dev/shm/codiluce-script-generations/engine",
+      "runtimeSha256": "558ae7b837fd88504990169b1c15cf2cf955e85e6faf90d6be7bb278fcfe77a7",
+      "runtimeInputsVerified": 1927,
+      "targetExecution": false,
+      "userForeignWebIconUsed": false,
+      "normalInstalledPackageGateRun": false,
+      "log": "/dev/shm/codiluce-script-generations/full-build-first.log",
+      "completedAt": 1791861173.834135,
+      "actualExitCode": 0,
+      "passed": true,
+      "interruptSignals": [],
+      "actualNpmGone": true,
+      "logSha256": "1657d031895633648fda65d4811951fd71604f8a70e4bed4cc8a22633b96eeec"
+    },
+    "completeGraphs": {
+      "schema": 1,
+      "passed": true,
+      "completedAt": "2026-10-13T03:09:47.811Z",
+      "priorRuntime": "4b10b9ac084b00040d96a912c2e859b8968d50dd76c5c57298f8a5e628e6d6ba",
+      "priorRuntimeInputsVerified": 1927,
+      "currentRuntimeSha256": "558ae7b837fd88504990169b1c15cf2cf955e85e6faf90d6be7bb278fcfe77a7",
+      "sourceLoader": false,
+      "compilerGenerations": [
+        {
+          "limits": {
+            "maxJobs": 64,
+            "maxSourceBytes": 16777216
+          },
+          "jobs": 0,
+          "sourceBytes": 0,
+          "peakJobs": 64,
+          "peakSourceBytes": 8012,
+          "generations": 2
+        },
+        {
+          "limits": {
+            "maxJobs": 64,
+            "maxSourceBytes": 16777216
+          },
+          "jobs": 0,
+          "sourceBytes": 0,
+          "peakJobs": 0,
+          "peakSourceBytes": 0,
+          "generations": 0
+        },
+        {
+          "limits": {
+            "maxJobs": 64,
+            "maxSourceBytes": 16777216
+          },
+          "jobs": 0,
+          "sourceBytes": 0,
+          "peakJobs": 64,
+          "peakSourceBytes": 8012,
+          "generations": 2
+        }
+      ],
+      "allowedOversizedNativeOriginalBytes": 17825835,
+      "literalTemplateOriginalsVerified": 66,
+      "scope": "Complete ordinary compiled cold/warm/revision graphs for every original input, 20 grammar profiles, 66 literal-script ERB/Razor/Liquid originals, default 64-job compiler rotation and an allowed 17 MiB Python original over the native generation budget. All semantic/provenance/metadata fields retained; only run UUID/time replaced.",
+      "retainedFixture": "/dev/shm/codiluce-script-generations/codiluce-owned-script-generation-parity-7rnAQU",
+      "originalFiles": 167,
+      "normalizations": [],
+      "volatileFields": [
+        "run.id",
+        "run.analyzedAt"
+      ],
+      "cacheWarmReplayObserved": true,
+      "graphs": [
+        {
+          "mode": "cold",
+          "bytes": 1198810,
+          "sha256": "9ce07979d597caa7089f86737d34b8039c15e5506c0d25223be0017004ef6906",
+          "entities": 732,
+          "relations": 954,
+          "diagnostics": 26
+        },
+        {
+          "mode": "warm",
+          "bytes": 1198810,
+          "sha256": "9ce07979d597caa7089f86737d34b8039c15e5506c0d25223be0017004ef6906",
+          "entities": 732,
+          "relations": 954,
+          "diagnostics": 26
+        },
+        {
+          "mode": "revision",
+          "bytes": 1198231,
+          "sha256": "2e38c293fa3fef8390da5ddc7b384a6f945d766e0f3a78b6f2fbac8db1f2e2e4",
+          "entities": 732,
+          "relations": 954,
+          "diagnostics": 23
+        }
+      ],
+      "targetExecution": false
+    },
+    "scope": "Initial default/valid profiles passed. The separately observed malformed override did not satisfy required lifetime admission; final runtime rejects null, falsy, empty and nonpositive budgets and has independent current qualification."
+  },
+  "initialPreparationAndVerifierUpdateRetained": {
+    "initialPreparationReceipt": "initial-engine-preparation.json",
+    "initialReleaseManifest": "initial-release-inputs.json",
+    "finalPreparationReceipt": "engine-preparation.json",
+    "finalReleaseManifest": "release-inputs.json",
+    "scope": "The ordinary Node fixture gained the reviewed malformed-override assertions before final build/probe qualification; both exact release manifests and the original observed preparation output are retained."
+  },
+  "normalInstalledPackageForNewRuntimeQualified": false,
+  "newFull195OriginalRevisionHistoryQualified": false,
+  "newRelativeHistoryTimeAndProcessTreeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "targetExecution": false,
+  "targetToolchainsOrConfigsExecuted": false,
+  "originalHistoryReserveRelaxed": false,
+  "productionHistoryObservationRetried": false,
+  "foreignFilesUnchanged": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  },
+  "fullGoalFinished": false,
+  "remainingScope": "Normal production-only installed qualification for this runtime; current complete original 195-revision histories and relative time/process-tree RSS; broader semantic/native/compiler ownership and original-source accuracy; actual Windows/macOS release jobs.",
+  "storage": "Owned RAM-backed tmpfs for frozen engines, builds and evidence. Durable archive retention still requires additional capacity; original and failed observations are preserved.",
+  "sourceCompiledBuildAndEvidenceArchive": {
+    "schema": 1,
+    "passed": true,
+    "seconds": 38.548280000686646,
+    "archive": "/dev/shm/codiluce-script-generations-final/literal-script-generations-source-build-and-evidence.tar.gz",
+    "sha256": "a70719e9c8570e3613e19bd0a459dcb099df4c8307ca7cd92306f2468ba57f6e",
+    "bytes": 118816827,
+    "verifiedRegularMembers": 8393,
+    "manifestSha256": "f5741bc3ea0c5194c472366ae723faf8054e2f91b12975346df4b4f3a1a34c0d",
+    "runtimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+    "initialRuntimeSha256": "558ae7b837fd88504990169b1c15cf2cf955e85e6faf90d6be7bb278fcfe77a7",
+    "storage": "Owned RAM-backed tmpfs; durable retention requires additional capacity",
+    "normalInstalledPackageForNewRuntimeQualified": false,
+    "newFull195OriginalRevisionHistoryQualified": false,
+    "newRelativeHistoryTimeAndProcessTreeRssQualified": false,
+    "nativeWindowsMacOSQualified": false,
+    "fullGoalFinished": false,
+    "initialNullableBudgetObservationRetained": true,
+    "originalOrFailedArtifactsDeleted": false
+  },
+  "reportHttpValidation": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791862052.444449,
+    "url": "http://127.0.0.1:43459/literal-script-generations.html",
+    "actualServerPid": 280454,
+    "serverUnifiedExecSession": 25562,
+    "htmlSha256": "66f1057560a2d2ec7a22c59882f979a33f8c5aaf75c9884a96182100abca8e09",
+    "htmlBytes": 2790,
+    "allPhaseLinksChecked": 5,
+    "links": [
+      {
+        "href": "literal-script-generations.html",
+        "status": 200,
+        "bytes": 2790
+      },
+      {
+        "href": "literal-script-generation-validation.json",
+        "status": 200,
+        "bytes": 29146
+      },
+      {
+        "href": "literal-script-generations-source-build-and-evidence.tar.gz",
+        "status": 200,
+        "bytes": 118816827
+      },
+      {
+        "href": "literal-script-generation-archive-validation.json",
+        "status": 200,
+        "bytes": 1019
+      },
+      {
+        "href": "language-framework-compatibility.html#literal-script-generations",
+        "status": 200,
+        "bytes": 399380
+      }
+    ],
+    "completeArchiveHttpDownload": {
+      "status": 200,
+      "bytes": 118816827,
+      "sha256": "a70719e9c8570e3613e19bd0a459dcb099df4c8307ca7cd92306f2468ba57f6e"
+    },
+    "scope": "Exact HTTP page bytes, every phase link/fragment and complete archive download. Browser visual inspection was not performed. Qualification JSON is appended afterward to avoid recursive self-hashing."
+  }
+}

@@ -6,7 +6,7 @@ import {mkdir,mkdtemp,readFile,readdir,rm,writeFile} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {StructureParser} from '../src/analysis/tree-sitter/client.js';
-import {TemplateScriptParser,literalScriptTemplate} from '../src/analysis/tree-sitter/template-scripts.js';
+import {TemplateScriptParser,literalScriptTemplate,TEMPLATE_SCRIPT_GENERATION_LIMITS} from '../src/analysis/tree-sitter/template-scripts.js';
 import type {StructureFacts} from '../src/analysis/facts.js';
 import {indexRepository} from '../src/pipeline/index.js';
 import {AnalysisCache} from '../src/pipeline/cache.js';
@@ -19,6 +19,34 @@ async function repository(files:Record<string,string>){const root=await mkdtemp(
 type Options=Parameters<StructureParser['parse']>[2];
 
 test('plain JavaScript worker matches its typed service, approved helpers and lazy compiler bootstrap',verifyScriptWorkerBundle);
+
+test('bounded literal-script generations preserve every complete ERB/Razor/Liquid fact and original coordinate before actual exit',async()=>{
+ const source='<!-- é😀 -->\r\n<script>function original(){return 1;}throw new Error("Target never executes");</script>',native=new StructureParser(),combined=new StructureParser(),staged:StructureFacts[]=[],expected:StructureFacts[]=[];
+ const profiles:Array<[string,Options]>=[['erb',{erbHost:'html'}],['razor',{razorKind:'component'}],['liquid',{liquidHost:'html',liquidEngine:'shopify',liquidBodyTags:true}]];
+ try{for(const[language,options]of profiles){staged.push(await native.parse(language,source,{...options,nativeOnly:true}));expected.push(await combined.parse(language,source,options));}}finally{await native.closeAndWait();await combined.closeAndWait();}
+ const fork=childProcess.fork,children:childProcess.ChildProcess[]=[];
+ const observer=mock.method(childProcess,'fork',(...args:Parameters<typeof childProcess.fork>)=>{assert.ok(children.every(child=>child.exitCode!==null||child.signalCode!==null),'No overlapping compiler generations');const child=fork(...args);children.push(child);return child;});syncBuiltinESMExports();
+ const compiler=new TemplateScriptParser(10000,{maxJobs:2,maxSourceBytes:10000000});
+ try{
+  for(const[index,facts]of staged.entries()){assert.equal(canonicalJson(await compiler.finish(source,facts)),canonicalJson(expected[index]));if(index===1)assert.ok(children[0]!.exitCode!==null||children[0]!.signalCode!==null,'The exhausted compiler exits before finish resolves');}
+  assert.equal(children.length,2);assert.equal(compiler.workerGenerationStats().peakJobs,2);assert.equal(compiler.workerGenerationStats().jobs,1);
+ }finally{await compiler.closeAndWait();observer.mock.restore();syncBuiltinESMExports();}
+ assert.ok(children.every(child=>child.exitCode!==null||child.signalCode!==null));
+});
+
+test('one oversized literal-script original retains full facts while immediately retiring its compiler; unsupported hosts consume no jobs',async()=>{
+ const source='<!-- é😀 -->\r\n<script>function original(){return 1;}</script>',native=new StructureParser(),combined=new StructureParser();let facts:StructureFacts,expected:StructureFacts,plain:StructureFacts;
+ try{facts=await native.parse('erb',source,{erbHost:'html',nativeOnly:true});expected=await combined.parse('erb',source,{erbHost:'html'});plain=await native.parse('erb','<p>no script</p>',{erbHost:'html',nativeOnly:true});}finally{await native.closeAndWait();await combined.closeAndWait();}
+ const fork=childProcess.fork,children:childProcess.ChildProcess[]=[];
+ const observer=mock.method(childProcess,'fork',(...args:Parameters<typeof childProcess.fork>)=>{assert.ok(children.every(child=>child.exitCode!==null||child.signalCode!==null));const child=fork(...args);children.push(child);return child;});syncBuiltinESMExports();
+ const compiler=new TemplateScriptParser(10000,{maxJobs:64,maxSourceBytes:1});
+ try{
+  await compiler.finish('<p>no script</p>',plain!);assert.equal(children.length,0);assert.equal(compiler.workerGenerationStats().jobs,0);
+  assert.equal(canonicalJson(await compiler.finish(source,facts!)),canonicalJson(expected!));assert.equal(compiler.workerGenerationStats().sourceBytes,0);assert.equal(compiler.workerGenerationStats().jobs,0);assert.equal(compiler.workerGenerationStats().peakSourceBytes,Buffer.byteLength(source));assert.ok(children[0]!.exitCode!==null||children[0]!.signalCode!==null);
+ }finally{await compiler.closeAndWait();observer.mock.restore();syncBuiltinESMExports();}
+ assert.deepEqual(TEMPLATE_SCRIPT_GENERATION_LIMITS,{maxJobs:64,maxSourceBytes:16*1024*1024});
+ for(const limits of [null,false,0,{}])assert.throws(()=>Reflect.construct(TemplateScriptParser,[10000,limits]),/positive safe integers/);
+});
 
 test('native-only facts and the separate compiler preserve complete ERB/Razor/Liquid facts, limits and original coordinates',async()=>{
  const cases:Array<{language:string;content:string;options:Options}>=[];

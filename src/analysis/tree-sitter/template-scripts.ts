@@ -1,7 +1,7 @@
 import type {ChildProcess} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import type {StructureFacts} from '../facts.js';
-import {StructureParser} from './client.js';
+import {StructureParser,type ParserGenerationLimits} from './client.js';
 import {finishErb,finishRazor,finishLiquid} from './template-facts.js';
 
 export function finishTemplateFacts(facts:StructureFacts):StructureFacts {
@@ -15,15 +15,18 @@ export function literalScriptTemplate(facts:StructureFacts):'erb'|'razor'|'liqui
   }
   return undefined;
 }
+export const TEMPLATE_SCRIPT_GENERATION_LIMITS:Readonly<ParserGenerationLimits>=Object.freeze({maxJobs:64,maxSourceBytes:16*1024*1024});
 /** Compiler parsing keeps the original worker deadline and heap budget. The
  * indexing pipeline runs this service only after its native grammar worker
  * has exited, so the active compiler heap and native WASM assets do not overlap.
- * Its source-free bootstrap may start during native extraction. */
+ * Its source-free bootstrap may start during native extraction. Each generation
+ * processes bounded jobs/original UTF-8 input volume; complete output is kept
+ * while an exhausted or individually oversized generation exits. */
 export class TemplateScriptParser extends StructureParser {
   private readonly bootstrapped=new WeakSet<ChildProcess>();
   // The checked bundle needs no source TypeScript loader in either checkout or
   // installed package. Loading the optional compiler remains inside a job.
-  constructor(timeoutMs=10_000){super(timeoutMs,fileURLToPath(new URL('./native-script-worker.mjs',import.meta.url)),['--max-old-space-size=256']);}
+  constructor(timeoutMs=10_000,limits:ParserGenerationLimits=TEMPLATE_SCRIPT_GENERATION_LIMITS){super(timeoutMs,fileURLToPath(new URL('./native-script-worker.mjs',import.meta.url)),['--max-old-space-size=256'],true,limits);}
   /** Bootstrap imports contain no TypeScript compiler or target source. */
   prewarm():void {
     const child=this.start();

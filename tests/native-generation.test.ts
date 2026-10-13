@@ -75,12 +75,14 @@ test('all twenty native profiles preserve typed facts while grammar generations 
   } finally { await bounded.closeAndWait(); observation.restore(); }
 });
 
-test('byte generations admit one oversized original, then retire before reuse; failed jobs also retire', async () => {
+test('byte generations return complete oversized originals only after actual exit; failed jobs also retire', async () => {
   const observation = observeWorkers(), parser = new IndexedStructureParser(10_000, {maxGrammars: 6, maxSourceBytes: 80});
   try {
     const source = '# é😀\r\n' + '# original\n'.repeat(40) + 'def retained(): pass\n';
     assert.ok((await parser.parse('python', source, {nativeOnly: true})).declarations.some(item => item.name === 'retained'));
-    assert.equal(parser.generationStats().oversizedJobs, 1); assert.ok(parser.generationStats().sourceBytes > 80);
+    assert.equal(parser.generationStats().oversizedJobs, 1); assert.ok(parser.generationStats().peakSourceBytes > 80);
+    assert.equal(parser.generationStats().sourceBytes,0);assert.equal(parser.generationStats().grammars,0);
+    assert.ok(observation.children[0]!.exitCode!==null||observation.children[0]!.signalCode!==null,'The oversized native address space exits before parse resolves');
     await parser.parse('python', 'def next(): pass\n', {nativeOnly: true}); assert.equal(parser.generationStats().rotations, 1);
     for (let i = 0; i < 6; i++) await parser.parse('python', `def value${i}(): pass\n`, {nativeOnly: true});
     assert.ok(parser.generationStats().rotations >= 2);
