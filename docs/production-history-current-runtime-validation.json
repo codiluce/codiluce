@@ -1,0 +1,350 @@
+{
+  "schema": 1,
+  "passed": true,
+  "qualifiedAt": "2026-10-13T12:24:12.960Z",
+  "runtimeSha256": "fc6a9b55919d564f375c93e101ee7b12c47d34ee3dd5ced6610d38b597675f15",
+  "runtimeInputs": 1928,
+  "revisions": 195,
+  "completeIndependentColumnLedgers": 84,
+  "cachedFirstParentSnapshots": 193,
+  "offFirstParentSnapshots": 2,
+  "publicViewNodes": 1484294,
+  "currentCaptureTerminal": {
+    "startedAt": 1791890766.5519679,
+    "wrapperPid": 60751,
+    "actualObserverPid": 60752,
+    "command": [
+      "node",
+      "--experimental-sqlite",
+      "--import",
+      "tsx",
+      "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/engine/scripts/observe-production-history.mjs",
+      "--engine",
+      "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/engine",
+      "--engine-identity",
+      "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/engine-identity.json",
+      "--corpus",
+      "/var/www/html/codiluce/docs/production-history-corpus.json",
+      "--profiles",
+      "/var/www/html/codiluce/docs/production-head-profiles.json",
+      "--git-metadata",
+      "/var/www/html/codiluce/.codiluce/validation-rust-evidence-fast/git-metadata-final/git-metadata.json",
+      "--output",
+      "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/current-corpus",
+      "--resume",
+      "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/current-corpus/receipt.json",
+      "--resume-engine",
+      "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/engine",
+      "--source",
+      "flask=/var/www/html/codiluce/examples/flask",
+      "--source",
+      "memos=/var/www/html/codiluce/examples/memos",
+      "--source",
+      "bookstack=/var/www/html/codiluce/examples/bookstack",
+      "--source",
+      "firefly-iii=/var/www/html/codiluce/examples/firefly-iii",
+      "--source",
+      "axum=/var/www/html/codiluce/examples/axum",
+      "--source",
+      "full-stack-fastapi=/var/www/html/codiluce/examples/full-stack-fastapi"
+    ],
+    "cwd": "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/engine",
+    "runtimeSha256": "fc6a9b55919d564f375c93e101ee7b12c47d34ee3dd5ced6610d38b597675f15",
+    "runtimeInputs": 1928,
+    "requestedRepositories": 6,
+    "requestedRevisions": 195,
+    "expectedWorkers": 2,
+    "recoveredClosedWorkers": 4,
+    "interruptedWorkerRecapturedInFull": true,
+    "reserveBytes": 1073741824,
+    "log": "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/current-corpus-first.log",
+    "targetExecution": false,
+    "relativePerformanceObservation": false,
+    "completed": true,
+    "completedAt": 1791893946.2004807,
+    "seconds": 3179.648512840271,
+    "actualExitCode": 0,
+    "passed": true,
+    "interruptSignals": [],
+    "actualObserverGone": true,
+    "logSha256": "359ca1e671a418697e19d4aed659a9f369eafda44d93de914e9b78506a9c6d5c"
+  },
+  "sourceRecovery": {
+    "completedRepositories": [
+      "flask",
+      "memos",
+      "bookstack",
+      "firefly-iii"
+    ],
+    "incompleteRepositoryRecapturedInFull": "axum",
+    "unstartedRepositoryCapturedInFull": "full-stack-fastapi"
+  },
+  "recordedOriginalWorkerPids": [
+    1172416,
+    1178097,
+    1243964,
+    1400056,
+    99987,
+    152536
+  ],
+  "archive": {
+    "schema": 1,
+    "passed": true,
+    "pid": 190055,
+    "verifiedAt": "2026-10-13T12:40:23.725521+00:00",
+    "seconds": 82.32742834091187,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/qualified-current-runtime-original-history-and-recovery-evidence.tar.gz",
+    "bytes": 406099252,
+    "sha256": "1bed927a1647489ee835d8508f971c72487e227f80277e5ed2fb6bd7891da4bd",
+    "manifestSha256": "ed1de8048f875edf07f5a499b498cc21cbc03e89e464c85c674477e2b3e6931b",
+    "regularFiles": 2611,
+    "fullFileBytesAndModesReopened": true,
+    "runtimeSha256": "fc6a9b55919d564f375c93e101ee7b12c47d34ee3dd5ced6610d38b597675f15",
+    "runtimeInputs": 1928,
+    "revisions": 195,
+    "completeIndependentColumnLedgers": 84,
+    "qualificationSha256": "9e684fc9caf68734918b9ca5c4d5bdf88bebccf81ab329b9fdc4bcd270af392d",
+    "activeFreshEntrypointOutputsIncluded": false,
+    "immutablePredecessorRecoveryEvidenceRetained": true,
+    "targetGitObjectProvidersIncluded": false,
+    "full195RevisionOriginalWorkerStorageResumeViewsQualified": true,
+    "freshEntrypointQualified": false,
+    "relativePerformanceQualified": false,
+    "nativeWindowsMacOSQualified": false,
+    "targetExecution": false,
+    "foreignFilesUnchanged": true,
+    "scope": "Complete qualified 195-revision original worker/store/readback/layout/resume/public-view capture, immutable predecessor recovery evidence and frozen 1928-input source runtime/tooling. Active fresh entrypoint outputs and target Git object providers are excluded."
+  },
+  "oldCurrentDifferenceCapture": {
+    "pid": 61998,
+    "startedAt": 1791890808.4480145,
+    "completedAt": 1791894264.0201879,
+    "capturePassed": true,
+    "originalAuditControllerPid": 61256,
+    "auditorSha256": "873db9f749685f230dd60e09f3143d0c60764d15e0092dde452a746ec0682eff",
+    "normalization": [],
+    "crossRuntimeGraphParityQualified": false,
+    "full195RevisionGateQualified": false,
+    "relativePerformanceObservation": false,
+    "targetExecution": false,
+    "repositories": [
+      {
+        "id": "flask",
+        "status": "captured",
+        "pid": 102059,
+        "command": [
+          "python3",
+          "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/capture-closed-runtime-differences.py",
+          "--repository",
+          "flask"
+        ],
+        "startedAt": 1791892259.844132,
+        "exitCode": 0,
+        "pidGone": true,
+        "log": "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/flask-cross-runtime-differences.log",
+        "logSha256": "d1c576a38ae40621951eae76244ea58ec4a9119d43b7b3f2cf01d1c8a587f28e",
+        "completedAt": 1791892261.5095127,
+        "revisions": 35,
+        "receipt": "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/cross-runtime-differences/flask/receipt.json",
+        "receiptSha256": "56ecd40f636a9e33cd079a927af09d5e2a98c1fbaf2f9c8682861329e476a175",
+        "allEntityRelationDiagnosticJsonByteIdentical": true,
+        "actualRunDifferencePointers": [
+          "/analyzedAt",
+          "/analyzerVersions/rails",
+          "/id"
+        ]
+      },
+      {
+        "id": "memos",
+        "status": "captured",
+        "pid": 114940,
+        "command": [
+          "python3",
+          "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/capture-closed-runtime-differences.py",
+          "--repository",
+          "memos"
+        ],
+        "startedAt": 1791892663.8936732,
+        "exitCode": 0,
+        "pidGone": true,
+        "log": "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/memos-cross-runtime-differences.log",
+        "logSha256": "17edaefeb25f230de6b342a157cd56a3faaea358ce6f587b9760eeaa097cd028",
+        "completedAt": 1791892685.3140345,
+        "revisions": 32,
+        "receipt": "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/cross-runtime-differences/memos/receipt.json",
+        "receiptSha256": "041de3c84259d752c95e8b0ebf2847013a626e66a3817ebeea034e5359278cb7",
+        "allEntityRelationDiagnosticJsonByteIdentical": true,
+        "actualRunDifferencePointers": [
+          "/analyzedAt",
+          "/analyzerVersions/rails",
+          "/id"
+        ]
+      },
+      {
+        "id": "bookstack",
+        "status": "captured",
+        "pid": 130911,
+        "command": [
+          "python3",
+          "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/capture-closed-runtime-differences.py",
+          "--repository",
+          "bookstack"
+        ],
+        "startedAt": 1791893127.7539682,
+        "exitCode": 0,
+        "pidGone": true,
+        "log": "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/bookstack-cross-runtime-differences.log",
+        "logSha256": "38c73af8c97f03ca9a3c420562dc13889cf63394f592d70f456fdd5c314dc599",
+        "completedAt": 1791893148.5244133,
+        "revisions": 32,
+        "receipt": "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/cross-runtime-differences/bookstack/receipt.json",
+        "receiptSha256": "66266f007b9a9ec23bf20b0ef515854d2038f2a9b6a601a7689501489e6a5627",
+        "allEntityRelationDiagnosticJsonByteIdentical": true,
+        "actualRunDifferencePointers": [
+          "/analyzedAt",
+          "/analyzerVersions/rails",
+          "/id"
+        ]
+      },
+      {
+        "id": "firefly-iii",
+        "status": "captured",
+        "pid": 148556,
+        "command": [
+          "python3",
+          "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/capture-closed-runtime-differences.py",
+          "--repository",
+          "firefly-iii"
+        ],
+        "startedAt": 1791893677.0611386,
+        "exitCode": 0,
+        "pidGone": true,
+        "log": "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/firefly-iii-cross-runtime-differences.log",
+        "logSha256": "2ce0ccbcbf944e41076c26e6d6a2b4cb499d49dc1b753d25541728e9baf408ea",
+        "completedAt": 1791893702.2858999,
+        "revisions": 32,
+        "receipt": "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/cross-runtime-differences/firefly-iii/receipt.json",
+        "receiptSha256": "523c26c600957ab194244c0663a79c613cd886569ade5ebef64143101106c579",
+        "allEntityRelationDiagnosticJsonByteIdentical": true,
+        "actualRunDifferencePointers": [
+          "/analyzedAt",
+          "/analyzerVersions/rails",
+          "/id"
+        ]
+      },
+      {
+        "id": "axum",
+        "status": "captured",
+        "pid": 163333,
+        "command": [
+          "python3",
+          "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/capture-closed-runtime-differences.py",
+          "--repository",
+          "axum"
+        ],
+        "startedAt": 1791894222.8281522,
+        "exitCode": 0,
+        "pidGone": true,
+        "log": "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/axum-cross-runtime-differences.log",
+        "logSha256": "be20b9e4bedffffc5d41656b1df5e9372b111d77b3888a3bb0a3e681ccb62369",
+        "completedAt": 1791894263.0459423,
+        "revisions": 32,
+        "receipt": "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/cross-runtime-differences/axum/receipt.json",
+        "receiptSha256": "476564aa68c0f86a879fee7a82201740d9dca676be011991122b1a880163ea08",
+        "allEntityRelationDiagnosticJsonByteIdentical": true,
+        "actualRunDifferencePointers": [
+          "/analyzedAt",
+          "/analyzerVersions/rails",
+          "/id"
+        ]
+      },
+      {
+        "id": "full-stack-fastapi",
+        "status": "captured",
+        "pid": 165075,
+        "command": [
+          "python3",
+          "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/capture-closed-runtime-differences.py",
+          "--repository",
+          "full-stack-fastapi"
+        ],
+        "startedAt": 1791894263.0492914,
+        "exitCode": 0,
+        "pidGone": true,
+        "log": "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/full-stack-fastapi-cross-runtime-differences.log",
+        "logSha256": "70764153c04e14addd6ad1261abf922bba320c5cefac885c6cbd69f16a2958c3",
+        "completedAt": 1791894264.0195494,
+        "revisions": 32,
+        "receipt": "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/cross-runtime-differences/full-stack-fastapi/receipt.json",
+        "receiptSha256": "c315e7d41dfad78e2ad82396b6da4f93aba59e7cba3e4997fad899c41e1695fd",
+        "allEntityRelationDiagnosticJsonByteIdentical": true,
+        "actualRunDifferencePointers": [
+          "/analyzedAt",
+          "/analyzerVersions/rails",
+          "/id"
+        ]
+      }
+    ],
+    "revisions": 195,
+    "allEntityRelationDiagnosticJsonByteIdentical": true
+  },
+  "freshEntrypointQualified": false,
+  "relativePerformanceQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "sourceAccuracyQualified": false,
+  "targetExecution": false,
+  "qualificationSha256": "9e684fc9caf68734918b9ca5c4d5bdf88bebccf81ab329b9fdc4bcd270af392d",
+  "reportSha256": "f06545b31fa0f5d51baf76febbc73dc3176fd73f14b394d908d46168a6c01ac3",
+  "fullGoalComplete": false,
+  "reportUrl": "http://127.0.0.1:39413/production-history-current-runtime.html",
+  "archiveUrl": "http://127.0.0.1:39413/qualified-current-runtime-original-history-and-recovery-evidence.tar.gz",
+  "archivePreparationFailures": {
+    "initialArchiveActualExitCode": 1,
+    "secondPreparationActualExitCode": 1,
+    "preservationCommandActualExitCode": 1,
+    "initialArchiveToolSession": 60533,
+    "secondPreparationToolSession": 79235,
+    "preservationCommandToolSession": 93734,
+    "initialCause": "Changing stdout log included in immutable archive inputs",
+    "secondaryCause": "Correction started before preservation command finished; original manifest still present",
+    "originalQualificationUnchanged": true,
+    "sourceCaptureRetried": false,
+    "originalFailedScriptRecoveredByteExactly": true,
+    "firstStdoutFileOverwrittenBySecondPreparation": true,
+    "firstFailureToolTranscriptRetainedInConversation": true,
+    "changedInitialInputs": [
+      {
+        "file": "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/archive-qualified-capture.py",
+        "expectedSha256": "3900285f4b5cef3739fad64e38d682510879f47cce17a71166771ba257594130",
+        "actualSha256": "70171c5f6d76a0564b6f1b67ca02254dfb9c3eb8a358aa26c71ff42af06d8949"
+      },
+      {
+        "file": "/var/www/html/codiluce/.codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/qualified-original-history-archive.log",
+        "expectedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "actualSha256": "325ddc2d8c67cadb6499ed57e7ed7fb5dd2502c1f6a807d96d549beb1a92c59a"
+      }
+    ],
+    "retainedFiles": [
+      {
+        "file": ".codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/archive-initial-failure/qualified-current-runtime-original-history-and-recovery-evidence.tar.gz",
+        "bytes": 291173584,
+        "sha256": "f21e86279cbd313231766de614d7d17489ad4722b7f1c4e80384e9878e9f7766"
+      },
+      {
+        "file": ".codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/archive-initial-failure/archive-qualified-capture-initial-recovered.py",
+        "bytes": 8086,
+        "sha256": "3900285f4b5cef3739fad64e38d682510879f47cce17a71166771ba257594130"
+      },
+      {
+        "file": ".codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/archive-initial-failure/second-preparation-attempt.log",
+        "bytes": 252,
+        "sha256": "325ddc2d8c67cadb6499ed57e7ed7fb5dd2502c1f6a807d96d549beb1a92c59a"
+      },
+      {
+        "file": ".codiluce/validation-current-runtime-history/interruption-recovery/recovered-run/archive-initial-failure/qualified-original-history-archive-manifest.json",
+        "bytes": 1058258,
+        "sha256": "1608a1c15697d87ae005f6f5d9906a99f72c36ba59d19ad284d4c4362a02e9eb"
+      }
+    ]
+  }
+}
