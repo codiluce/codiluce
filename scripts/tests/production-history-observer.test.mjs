@@ -7,6 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {promisify} from 'node:util';
 import {fileURLToPath} from 'node:url';
+import {DatabaseSync} from 'node:sqlite';
 import {readRevision} from '../production-history-inputs.mjs';
 import {prepareProductionGit} from '../production-cache-git.mjs';
 
@@ -26,6 +27,21 @@ test('actual shipped history worker and acknowledgment/store/readback verify two
   const terminal=await execute(process.execPath,args,{cwd:project,maxBuffer:1024*1024});assert.match(terminal.stdout,/"passed":true/);const receipt=JSON.parse(await readFile(path.join(output,'receipt.json')));assert.equal(receipt.passed,true);const row=receipt.repositories[0];assert.equal(row.status,'verified');assert.equal(row.worker.exitCode,0);assert.equal(row.readOnlyReopenVerified,true);assert.equal(row.storage.snapshots,2);assert.equal(row.revisions.length,2);assert.ok(row.worker.treePeakKiB>0&&row.worker.samples>0);
   for(const revision of row.revisions){assert.equal(revision.status,'verified');assert.equal(revision.original.literalSymlinks,1);assert.deepEqual(revision.readback,revision.logical);assert.ok(revision.graphInputs.hashedOriginalSources>0);assert.ok(revision.parentCumulativeVmHwmKiB>0);}
   assert.notEqual(row.revisions[0].logical.sha256,row.revisions[1].logical.sha256);assert.equal(receipt.fullHistoryRelativePerformanceQualified,false);
+  // An owned interrupted control fixture has one genuinely closed unit and
+  // one nonterminal worker. Recovery must copy/reverify the former and run
+  // every selected revision of the latter through an actual new worker.
+  const prior=path.join(root,'interrupted');await cp(output,prior,{recursive:true});
+  const pending={...corpus.repositories[0],id:'owned-pending'},continuedCorpus={...corpus,repositories:[...corpus.repositories,pending]},continuedProfiles={...profiles,repositories:[...profiles.repositories,{...profile,id:pending.id}]},continuedMetadata={...gitMetadata,repositories:{...gitMetadata.repositories,[pending.id]:metadata}};
+  const interrupted={...receipt,passed:false,completedAt:null,corpusSha256:sha(JSON.stringify(continuedCorpus)),profilesSha256:sha(JSON.stringify(continuedProfiles)),repositories:[row,{id:pending.id,head:second,expectedRevisions:2,status:'starting',error:null,worker:{pid:row.worker.pid},revisions:[]}]};
+  await writeFile(path.join(prior,'receipt.json'),JSON.stringify(interrupted));
+  for(const [name,value]of Object.entries({'continued-corpus':continuedCorpus,'continued-profiles':continuedProfiles,'continued-metadata':continuedMetadata}))await writeFile(path.join(root,name+'.json'),JSON.stringify(value));
+  const recoveredOutput=path.join(root,'recovered'),resumeArgs=[...args];for(const [flag,name]of [['--corpus','continued-corpus'],['--profiles','continued-profiles'],['--git-metadata','continued-metadata']])resumeArgs[resumeArgs.indexOf(flag)+1]=path.join(root,name+'.json');resumeArgs[resumeArgs.indexOf('--output')+1]=recoveredOutput;resumeArgs.push('--source','owned-pending='+source,'--resume',path.join(prior,'receipt.json'),'--resume-engine',project);
+  const originalDbHash=sha(await readFile(path.join(prior,row.database))),continued=await execute(process.execPath,resumeArgs,{cwd:project,maxBuffer:1024*1024});assert.match(continued.stdout,/"passed":true/);
+  const recovered=JSON.parse(await readFile(path.join(recoveredOutput,'receipt.json')));assert.equal(recovered.passed,true);assert.deepEqual(recovered.repositories[0],row);assert.deepEqual(recovered.recovery.completedRepositories,['owned-history']);assert.deepEqual(recovered.recovery.incompleteRepositoriesRecapturedInFull,['owned-pending']);assert.equal(recovered.repositories[1].revisions.length,2);assert.equal(recovered.repositories[1].worker.exitCode,0);assert.notEqual(recovered.repositories[1].worker.pid,row.worker.pid);assert.equal(sha(await readFile(path.join(prior,row.database))),originalDbHash);assert.equal(sha(await readFile(path.join(recoveredOutput,row.database))),originalDbHash);
+  const originalDb=path.join(prior,row.database),originalDbBytes=await readFile(originalDb),changedDb=new DatabaseSync(originalDb);
+  try{const entity=changedDb.prepare('SELECT vid,data FROM entity_versions LIMIT 1').get(),payload=JSON.parse(entity.data);payload.metadata.hiddenRecoveredField='changed without changing counts';changedDb.prepare('UPDATE entity_versions SET data=? WHERE vid=?').run(JSON.stringify(payload),entity.vid);changedDb.prepare('PRAGMA wal_checkpoint(TRUNCATE)').get();}finally{changedDb.close();}
+  const changedArgs=[...resumeArgs];changedArgs[changedArgs.indexOf('--output')+1]=path.join(root,'corrupt-recovery');await assert.rejects(execute(process.execPath,changedArgs,{cwd:project,maxBuffer:1024*1024}),error=>error.code===1&&/Recovered original full graph differs/.test(error.stderr));await writeFile(originalDb,originalDbBytes);
+  const liveInput={...interrupted,repositories:[{...row,worker:{...row.worker,pid:process.pid}},interrupted.repositories[1]]};await writeFile(path.join(prior,'receipt.json'),JSON.stringify(liveInput));const liveArgs=[...resumeArgs];liveArgs[liveArgs.indexOf('--output')+1]=path.join(root,'live-recovery');await assert.rejects(execute(process.execPath,liveArgs,{cwd:project,maxBuffer:1024*1024}),error=>error.code===1&&/Previous history worker is still live/.test(error.stderr));await writeFile(path.join(prior,'receipt.json'),JSON.stringify(interrupted));
   // A deliberately corrupted owned worker result must leave reviewable
   // actual tree/graph evidence before the worker's cleanup can remove it.
   const fakeEngine=path.join(root,'owned-corrupt-engine');await mkdir(fakeEngine);await cp(path.join(project,'src'),path.join(fakeEngine,'src'),{recursive:true});await writeFile(path.join(fakeEngine,'package.json'),'{"type":"module"}');await symlink(path.join(project,'node_modules'),path.join(fakeEngine,'node_modules'), 'dir');

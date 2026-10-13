@@ -5,6 +5,7 @@ import {lstat,readFile,realpath,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {verifyProductionHistoryRunInputs} from './audit-production-history.mjs';
+import {verifyHistoryRecovery,verifyHistoryRecoveryJoin} from './production-history-recovery.mjs';
 
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const tableNames=['snapshots','entity_versions','relation_versions','diagnostic_versions','snapshot_entities','snapshot_relations','snapshot_diagnostics'];
@@ -114,6 +115,12 @@ export async function qualifyHistoryArtifacts({manifest:manifestFile,output,engi
  assert.deepEqual(corpus.repositories.map(r=>r.id).sort(),['axum','bookstack','firefly-iii','flask','full-stack-fastapi','memos']);
  for(const r of corpus.repositories){assert.equal(r.revisions.length,32);assert.equal(r.extraRevisions.length,r.id==='flask'?3:0);}
  const inputs=await verifyProductionHistoryRunInputs({receipt:original,corpusBytes,profilesBytes,engine}),units=[],databases=[];
+ if(original.recovery){
+  const captured=await load(path.join(originalDirectory,'input-recovery-receipt.json'));assert.equal(hash(captured.bytes),original.recovery.previousReceiptSha256);
+  const previous=await load(original.recovery.previousReceipt);assert.deepEqual(previous.bytes,captured.bytes);verifyHistoryRecoveryJoin({previous:previous.value,current:original,corpus});await verifyHistoryRecovery(original.recovery);
+  for(const row of [...original.recovery.originalInputs,...original.recovery.copiedInputs]){await regular(row.file);assert.equal(await fileHash(row.file),row.sha256);artifactFiles.set(row.file,row.sha256);}
+  const helper=fileURLToPath(new URL('production-history-recovery.mjs',import.meta.url));artifactFiles.set(helper,await fileHash(helper));
+ }
  for(const item of manifest.repositories){
   const [audit,resume,views,columns,auditInputs,resumeOriginal]=await Promise.all([load(item.audit),load(item.resume),load(item.views),load(item.columns),load(item.audit+'.inputs.json'),load(path.join(path.dirname(item.resume),'input-receipt.json'))]);
   const snapshot=auditInputs.value;
