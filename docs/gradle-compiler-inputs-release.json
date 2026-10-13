@@ -1,0 +1,1528 @@
+{
+  "schema": 1,
+  "phase": "P8 literal Gradle compiler-input installed release qualification",
+  "passed": true,
+  "measuredAt": "2026-10-13T09:06:13.871417+00:00",
+  "sourceCommit": "d0e3395",
+  "sourceAndBuildRuntimeSha256": "fc6a9b55919d564f375c93e101ee7b12c47d34ee3dd5ced6610d38b597675f15",
+  "runtimeInputs": 1928,
+  "runtimeUnchangedSinceSourceQualification": true,
+  "installedReleaseProfileSha256": "cba04d68d36cf09e8264dbb22759f95d49f82b385c006b4ec77c835d59c48116",
+  "installedRegularFiles": 1960,
+  "normalPrepack": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791881890.2889502,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-gradle-compiler-release/gradle-compiler-inputs-normal-prepack-release.tgz",
+    "sha256": "b7fa0a232f7db7835fb12ce560022beaf21fe1a58c0212a3d6db82d9caa126ac",
+    "bytes": 7228625,
+    "regularMembers": 373,
+    "compiledModulesMatchSource": 226,
+    "normalPrepackPassed": true,
+    "installedGatePendingAtRetention": true,
+    "runtimeSha256": "fc6a9b55919d564f375c93e101ee7b12c47d34ee3dd5ced6610d38b597675f15"
+  },
+  "normalPackageGate": {
+    "schema": 1,
+    "startedAt": 1791881806.9788404,
+    "wrapperPid": 1072177,
+    "actualNpmPid": 1072219,
+    "actualDriverPid": 1072273,
+    "cwd": "/var/www/html/codiluce/.codiluce/validation-gradle-compiler-release/engine",
+    "command": [
+      "npm",
+      "run",
+      "test:package"
+    ],
+    "runtimeSha256": "fc6a9b55919d564f375c93e101ee7b12c47d34ee3dd5ced6610d38b597675f15",
+    "runtimeInputsVerified": 1928,
+    "driverSha256": "68bb8ae522f19352d0396bc3c22a7a29702b013866e8e5beb9770c08e477c48e",
+    "jvmBuildFixtureSha256": "7d62816e8282c0fd15aef82099e3712efcd1d3c3e18a90427636349078d00161",
+    "gradleCompilerFixtureSha256": "7419b579da94d05d56727494aa2fc6655c5ab482eb1a0e910ee0c7a668748586",
+    "releaseInputManifestSha256": "5fea336d16aa0d2a9b9b82340084dd05a1cd4ba4f8599e797a3b889c57525893",
+    "temporaryConsumerDirectory": "/var/www/html/codiluce/.codiluce/validation-gradle-compiler-release/normal-package-temporary",
+    "npmCacheDirectory": "/var/www/html/codiluce/.codiluce/validation-gradle-compiler-release/owned-npm-cache",
+    "log": "/var/www/html/codiluce/.codiluce/validation-gradle-compiler-release/normal-installed-package-first.log",
+    "targetExecution": false,
+    "productionHistoryObservation": false,
+    "originalHistoryReserveRelaxed": false,
+    "storage": "Owned disk-backed build/installation/evidence; package conformance does not certify physical RSS or production performance",
+    "gateComplete": true,
+    "completedAt": 1791882319.4711916,
+    "seconds": 512.4923515319824,
+    "actualExitCode": 0,
+    "passed": true,
+    "interruptSignals": [],
+    "actualNpmGone": true,
+    "actualDriverGone": true,
+    "logSha256": "50e7ac0bd8dbaad8c918d3c55f2e179e59a16f87173a2a72a9d11a01e83f4b82"
+  },
+  "releaseInputs": 669,
+  "releaseInputManifestSha256": "5fea336d16aa0d2a9b9b82340084dd05a1cd4ba4f8599e797a3b889c57525893",
+  "sourceQualification": {
+    "passed": true,
+    "sourceTests": 1762,
+    "focusedJvmSpringChecks": 93,
+    "focusedCases": 14,
+    "fullTestsRerunForHarnessOnlyChange": false,
+    "bothTypechecksPassed": true,
+    "fullCliUiBuildPassed": true,
+    "receiptSha256": "93f1fe392a6b2976018b735337b0888ce71b5c68c50e0993077dd6750c972ebc"
+  },
+  "installedGradleCompilerVerifier": {
+    "schema": 1,
+    "passed": true,
+    "sourceRoot": "file:///var/www/html/codiluce/.codiluce/validation-gradle-compiler-release/normal-package-temporary/codiluce-package-IHNug4/consumer/node_modules/codiluce/dist/src/",
+    "caseCount": 14,
+    "completedCases": [
+      "Literal Java toolchain assignments and Property.set preserve their original offsets",
+      "Ordered Kotlin compiler argument operations retain set, append and original argument locations",
+      "Native literal test task selectors accept only the reviewed DSL and Test type",
+      "Backticked Kotlin java-library selects its own standard roots and API dependency contract",
+      "Groovy and Kotlin standard compiler blocks retain Java/Kotlin import identities, ranges and manifest evidence",
+      "Complete unknown plugin declarations constrain bindings while retaining independent literal inputs",
+      "Toolchain/test settings alone never activate JVM source roots",
+      "Annotation-default and unreviewed Kotlin compiler transformations remain binding gaps",
+      "Dynamic, custom and malformed Java toolchain statements never produce literal input facts",
+      "Malformed compiler operations, expressions and list elements never fabricate an argument update",
+      "Foreign task types, opaque selectors/options and wrong DSL syntax remain diagnostic-only",
+      "Escaped identifiers and incompatible literal string forms cannot bypass Gradle DSL review",
+      "Opaque control flow and plugin application flags cannot be skipped to extract later compiler contracts",
+      "Compiler input edits invalidate JVM bindings and preserve full cold/warm/fresh/revision graph replay"
+    ],
+    "targetExecution": false,
+    "typescriptSourceLoader": false,
+    "normalization": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "scope": "Literal Java toolchains and ordered Kotlin compiler arguments; native DSL/test selectors and Kotlin java-library; original imports/ranges/proof, retained plugin/compiler gaps, no implicit root activation, malformed/opaque statements and complete input-edit/cache/revision graph equality."
+  },
+  "installedJvmVerifier": {
+    "schema": 1,
+    "passed": true,
+    "sourceRoot": "file:///var/www/html/codiluce/.codiluce/validation-gradle-compiler-release/normal-package-temporary/codiluce-package-IHNug4/consumer/node_modules/codiluce/dist/src/",
+    "caseCount": 11,
+    "completedCases": [
+      "JVM build selection validates only recorded Maven/Gradle choices",
+      "Recorded build family resolves dual-manifest imports with original identities and assumption evidence",
+      "Selecting Maven or Gradle selects that original source-root contract",
+      "Selected Gradle settings bind project dependencies without competing Maven sibling exports",
+      "Recorded build ownership respects nested application boundaries and constrains conflicting Gradle members",
+      "A missing or excluded selected build never falls back to the competing family or configured roots",
+      "Build selection retains opaque model and within-Gradle ambiguity gaps",
+      "Maven reactors do not relabel a module explicitly owned by Gradle",
+      "A Maven parent crossing a Gradle ownership boundary cannot initialize a competing project",
+      "Spring MVC and WebFlux consumers use the recorded build choice without bypassing compilation gaps",
+      "Changing the recorded build family invalidates warm bindings and preserves complete graph replay"
+    ],
+    "targetExecution": false,
+    "typescriptSourceLoader": false,
+    "normalization": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "scope": "Recorded Maven/Gradle ownership, original roots/identities/proof, project dependencies, nested ownership, missing/denied builds, opaque model gaps, reactor/parent boundaries, MVC/WebFlux handlers and complete selection/cache/revision graph equality."
+  },
+  "installedRailsVerifier": {
+    "schema": 1,
+    "passed": true,
+    "sourceRoot": "file:///var/www/html/codiluce/.codiluce/validation-gradle-compiler-release/normal-package-temporary/codiluce-package-IHNug4/consumer/node_modules/codiluce/dist/src/",
+    "completedCases": [
+      "Rails symbolic replacement removes the prior callback before selecting an action",
+      "Rails replacement of one callback kind preserves other kinds and final chain positions",
+      "Rails skip validates the initialized callback even when its action filter excludes the current action",
+      "Rails filtered skips preserve chain identity for later skips and replacement",
+      "Rails skips merge only and except predicate groups independently",
+      "Rails mandatory missing skips fail initialization before action or invocation predicates",
+      "Rails conditionally initialized callbacks retain possible skip failures as conditions",
+      "Rails conditional replacement leaves prior action callbacks as guarded candidates",
+      "Rails string callback registration cannot claim initialized original actions",
+      "Rails callback replacement and skip edits invalidate the complete cached graph"
+    ],
+    "caseCount": 10,
+    "targetExecution": false,
+    "typescriptSourceLoader": false,
+    "scope": "Original Rails symbol callback replacement, kind/position, initialized skip identity, merged action groups, mandatory/optional initialization checks, conditional candidates, string refusal and complete cache invalidation assertions under the supplied ordinary compiled source root."
+  },
+  "installedCompilerInputVerifier": {
+    "schema": 1,
+    "passed": true,
+    "sourceLoader": false,
+    "targetExecution": false,
+    "actualCompilerHostClosureObserved": {
+      "kind": "[object Set]",
+      "entries": 40,
+      "textBytes": 0
+    },
+    "realProjectService": true,
+    "astReuseObserved": true,
+    "lateRegisteredRootReadFilePreserved": {
+      "file": "/var/www/html/codiluce/.codiluce/validation-gradle-compiler-release/normal-package-temporary/codiluce-package-IHNug4/consumer/owned-installed-compiler-inputs/original0.ts",
+      "sha256": "b989e66dc9bda66fc51c041bfef4edc97d43a86170bfe3eaff31adf89c78ed3f"
+    },
+    "changedOriginalReadRejected": true,
+    "restoredOriginalReadPreserved": true,
+    "programSourceCount": 40,
+    "programSourceUtf16Bytes": 20008660,
+    "scope": "Actual live compiler input collection ownership. AST/checker allocations, source memos and physical RSS remain separate."
+  },
+  "installedScriptGenerationVerifier": {
+    "schema": 1,
+    "passed": true,
+    "sourceLoader": false,
+    "targetExecution": false,
+    "defaultCompilerJobsVerified": 65,
+    "sourceFreePrewarmCalls": 100,
+    "malformedBudgetOverridesRejected": true,
+    "completeCombinedWorkerFactSha256": [
+      "f761567ab084f139d9f4f9414b6f82c83e62ad9c06978c6429dd54639368bbd3",
+      "cb145589ba82ba864ce397d2ab1ea6380fc722444440446c178f648ead0504bd",
+      "e3099ded415ffc2167d0421ad30143af183f292fcb5282a058d6773289fa5d85"
+    ],
+    "compilerStats": {
+      "limits": {
+        "maxJobs": 64,
+        "maxSourceBytes": 16777216
+      },
+      "jobs": 1,
+      "sourceBytes": 105,
+      "peakJobs": 64,
+      "peakSourceBytes": 6720,
+      "generations": 2
+    },
+    "oversizedCompilerStats": {
+      "limits": {
+        "maxJobs": 64,
+        "maxSourceBytes": 1
+      },
+      "jobs": 0,
+      "sourceBytes": 0,
+      "peakJobs": 1,
+      "peakSourceBytes": 105,
+      "generations": 1
+    },
+    "oversizedNativeStats": {
+      "limits": {
+        "maxGrammars": 6,
+        "maxSourceBytes": 1
+      },
+      "grammars": 0,
+      "sourceBytes": 0,
+      "peakGrammars": 3,
+      "peakSourceBytes": 105,
+      "rotations": 1,
+      "oversizedJobs": 1,
+      "retirementPending": false
+    },
+    "actualChildren": [
+      {
+        "pid": 1075673,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "sourceLoader": false
+      },
+      {
+        "pid": 1075690,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "sourceLoader": false
+      },
+      {
+        "pid": 1075729,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "sourceLoader": false
+      },
+      {
+        "pid": 1075753,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "sourceLoader": false
+      }
+    ],
+    "dispatchedJobs": [
+      {
+        "pid": 1075673,
+        "id": 1,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 2,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 3,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 4,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 5,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 6,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 7,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 8,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 9,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 10,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 11,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 12,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 13,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 14,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 15,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 16,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 17,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 18,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 19,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 20,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 21,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 22,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 23,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 24,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 25,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 26,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 27,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 28,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 29,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 30,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 31,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 32,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 33,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 34,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 35,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 36,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 37,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 38,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 39,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 40,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 41,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 42,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 43,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 44,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 45,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 46,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 47,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 48,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 49,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 50,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 51,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 52,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 53,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 54,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 55,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 56,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 57,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 58,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 59,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 60,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 61,
+        "language": "erb"
+      },
+      {
+        "pid": 1075673,
+        "id": 62,
+        "language": "razor"
+      },
+      {
+        "pid": 1075673,
+        "id": 63,
+        "language": "liquid"
+      },
+      {
+        "pid": 1075673,
+        "id": 64,
+        "language": "erb"
+      },
+      {
+        "pid": 1075690,
+        "id": 65,
+        "language": "razor"
+      },
+      {
+        "pid": 1075729,
+        "id": 1,
+        "language": "erb"
+      },
+      {
+        "pid": 1075753,
+        "id": 1,
+        "language": "erb"
+      }
+    ],
+    "scope": "Real compiled worker generation exit and complete original facts. Queue payload ownership, AST/native allocations and physical RSS are separate."
+  },
+  "installedProductionVendorAudit": {
+    "schema": 1,
+    "passed": true,
+    "sourceAndBuildRuntimeSha256": "fc6a9b55919d564f375c93e101ee7b12c47d34ee3dd5ced6610d38b597675f15",
+    "installedProductionRegularFiles": 1587,
+    "installedProductionFilesEqualFrozenSourceVendorBytes": 1583,
+    "changedFiles": [
+      {
+        "file": "node_modules/smol-toml/dist/extract.js",
+        "frozenSourceSha256": "b964c8f39c737172295b31b9ee61b49e513ff12788e119ddfdbb68c448054c12",
+        "actualInstalledSha256": "3e6f1e5764a091acf2df6a3f257d0467c37a2b9dbfecab1573f17a6489349c90"
+      },
+      {
+        "file": "node_modules/smol-toml/dist/index.cjs",
+        "frozenSourceSha256": "09ce310a8bcc1bb5c7dc2813c88b4bfbbeb685e4c186a9631ff54da7e85c880f",
+        "actualInstalledSha256": "f9029370259e9a43a2f3e64fa1d39e72f3598188380ace83a0abb8261fa33555"
+      },
+      {
+        "file": "node_modules/smol-toml/package.json",
+        "frozenSourceSha256": "0e35bde6992fef675058596ea0e94c2d3ca65e5f9b73a326d94208be6210f192",
+        "actualInstalledSha256": "d7ad6488e35b31d46bac6412d2d35225db4d693f02a415d872714ceb7e3d7138"
+      }
+    ],
+    "additionalFiles": [
+      "node_modules/.package-lock.json"
+    ],
+    "frozenSourceVendorFilesNotInstalled": [
+      "node_modules/@astrojs/compiler-binding-linux-x64-musl/README.md",
+      "node_modules/@astrojs/compiler-binding-linux-x64-musl/astro.linux-x64-musl.node",
+      "node_modules/@astrojs/compiler-binding-linux-x64-musl/package.json",
+      "node_modules/@esbuild/linux-x64/README.md",
+      "node_modules/@esbuild/linux-x64/bin/esbuild",
+      "node_modules/@esbuild/linux-x64/package.json",
+      "node_modules/esbuild/LICENSE.md",
+      "node_modules/esbuild/README.md",
+      "node_modules/esbuild/bin/esbuild",
+      "node_modules/esbuild/install.js",
+      "node_modules/esbuild/lib/main.d.ts",
+      "node_modules/esbuild/lib/main.js",
+      "node_modules/esbuild/package.json",
+      "node_modules/tsx/LICENSE",
+      "node_modules/tsx/README.md",
+      "node_modules/tsx/dist/cjs/api/index.cjs",
+      "node_modules/tsx/dist/cjs/api/index.d.cts",
+      "node_modules/tsx/dist/cjs/api/index.d.mts",
+      "node_modules/tsx/dist/cjs/api/index.mjs",
+      "node_modules/tsx/dist/cjs/index.cjs",
+      "node_modules/tsx/dist/cli.mjs",
+      "node_modules/tsx/dist/client-XItNFmsq.cjs",
+      "node_modules/tsx/dist/esm/api/index.cjs",
+      "node_modules/tsx/dist/esm/api/index.d.cts",
+      "node_modules/tsx/dist/esm/api/index.d.mts",
+      "node_modules/tsx/dist/esm/api/index.mjs",
+      "node_modules/tsx/dist/esm/index.mjs",
+      "node_modules/tsx/dist/index-Bqjv9TxC.mjs",
+      "node_modules/tsx/dist/index-DE3OBZuV.mjs",
+      "node_modules/tsx/dist/lexer-CGfpMDSb.cjs",
+      "node_modules/tsx/dist/lexer-CanA6ArK.mjs",
+      "node_modules/tsx/dist/loader.mjs",
+      "node_modules/tsx/dist/package-Dj0mHsMt.mjs",
+      "node_modules/tsx/dist/patch-repl.cjs",
+      "node_modules/tsx/dist/preflight.cjs",
+      "node_modules/tsx/dist/register-B1c7OH6V.cjs",
+      "node_modules/tsx/dist/register-nyXW-TH3.mjs",
+      "node_modules/tsx/dist/repl.mjs",
+      "node_modules/tsx/dist/require-CBjy4Foe.mjs",
+      "node_modules/tsx/dist/require-CVaYn9z3.cjs",
+      "node_modules/tsx/dist/suppress-warnings.cjs",
+      "node_modules/tsx/dist/temporary-directory-Du7LpLp9.mjs",
+      "node_modules/tsx/package.json"
+    ],
+    "packageVersionDifferences": [
+      {
+        "name": "smol-toml",
+        "sourceVersion": "1.9.0",
+        "installedVersion": "1.9.1"
+      }
+    ],
+    "scope": "Complete byte comparison of the actual production installation against frozen source vendors, with every difference and optional platform omission retained. This audit does not assert dependency equality."
+  },
+  "completeInstalledOriginalGraphs": {
+    "schema": 1,
+    "passed": true,
+    "measuredAt": "2026-10-13T09:00:19.239Z",
+    "sourceRuntimeSha256": "fc6a9b55919d564f375c93e101ee7b12c47d34ee3dd5ced6610d38b597675f15",
+    "installedProfileSha256": "cba04d68d36cf09e8264dbb22759f95d49f82b385c006b4ec77c835d59c48116",
+    "contexts": 12,
+    "retainedInstalledWholeGraphs": 60,
+    "normalization": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "diagnosticEvidenceProducerRangeMetadataFieldsRemoved": false,
+    "targetExecution": false,
+    "productionHistoryObservation": false,
+    "boundary": "Full actual installed/source original JVM graph equivalence; remaining original effective build gaps and zero endpoints remain unchanged, without broad recall or runtime certification",
+    "results": [
+      {
+        "sample": "mvc-java",
+        "buildSystem": null,
+        "commit": "3f4cef01152596c19bc4d37939409358812b1421",
+        "originalFiles": 9,
+        "trackedBlobDigest": "fe913cb8b352aaccb5105df708e7128dda2e3a03632bd8ee812da5fb488e18cd",
+        "entities": 37,
+        "relations": 36,
+        "diagnostics": 35,
+        "endpoints": 0,
+        "fullSourceGraphEqual": true,
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 100760,
+            "sha256": "8a40e7aea40e8eb9cb82604618d155711476b43db6a9f2b682133d991f5bbb3b",
+            "normalizedWholeSha256": "ba6dfe04da86a9622625217b9654c62f5ff45dcbfd2ed8532c9cacc90f83b281"
+          },
+          {
+            "label": "cold",
+            "bytes": 100760,
+            "sha256": "4fae21a943c4848d86dd63eb099cc90e89faa4b4dbfcf5df5aa62043d5c4d45c",
+            "normalizedWholeSha256": "ba6dfe04da86a9622625217b9654c62f5ff45dcbfd2ed8532c9cacc90f83b281"
+          },
+          {
+            "label": "warm",
+            "bytes": 100760,
+            "sha256": "90a3bb51913e3c1b3a343f68f1b808274d32ffc46e9663bb03e2cfafad856585",
+            "normalizedWholeSha256": "ba6dfe04da86a9622625217b9654c62f5ff45dcbfd2ed8532c9cacc90f83b281"
+          },
+          {
+            "label": "revision",
+            "bytes": 100019,
+            "sha256": "2b415866489dc6c81ed0d8a428cb52774ead509d13f40aa1371e129209998552",
+            "normalizedWholeSha256": "4f89f4e533b1f01f628f5621f779611392e8809273f232cb93cc04f724dded72"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 100019,
+            "sha256": "98f7d14b2e6f1fcd545d994a75adbb68e0763ef07892f2c8b1aeb8a5991d8675",
+            "normalizedWholeSha256": "4f89f4e533b1f01f628f5621f779611392e8809273f232cb93cc04f724dded72"
+          }
+        ]
+      },
+      {
+        "sample": "mvc-java",
+        "buildSystem": "maven",
+        "commit": "3f4cef01152596c19bc4d37939409358812b1421",
+        "originalFiles": 9,
+        "trackedBlobDigest": "fe913cb8b352aaccb5105df708e7128dda2e3a03632bd8ee812da5fb488e18cd",
+        "entities": 37,
+        "relations": 36,
+        "diagnostics": 25,
+        "endpoints": 0,
+        "fullSourceGraphEqual": true,
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 94077,
+            "sha256": "29267e29c4fe407beae09d5acf36632372951db31421916f34cbd3a3867c0307",
+            "normalizedWholeSha256": "eaa551a60d15560caa7737ea6cbe4ce6e5a76514453b20d013827b73d5b9fcf6"
+          },
+          {
+            "label": "cold",
+            "bytes": 94077,
+            "sha256": "4bc9582acf38535d76ab0c4b3012cd73445c686e93b812728a8b23d33e969259",
+            "normalizedWholeSha256": "eaa551a60d15560caa7737ea6cbe4ce6e5a76514453b20d013827b73d5b9fcf6"
+          },
+          {
+            "label": "warm",
+            "bytes": 94077,
+            "sha256": "62f30da84385e6f367e15dee2c18728347792b91922a2dc20663410f44705895",
+            "normalizedWholeSha256": "eaa551a60d15560caa7737ea6cbe4ce6e5a76514453b20d013827b73d5b9fcf6"
+          },
+          {
+            "label": "revision",
+            "bytes": 93336,
+            "sha256": "ac2d59ed710add7beadb7616167c004d3e7f836dbe6f237dafe721024d968696",
+            "normalizedWholeSha256": "196065e86032281f812d9812bfc26ee27e577b104545647bbf0ecf50b085ec95"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 93336,
+            "sha256": "1c10cd69f09c992f496d055c8734afb0700e3dd7d0f62d4851f393fbf72ce73e",
+            "normalizedWholeSha256": "196065e86032281f812d9812bfc26ee27e577b104545647bbf0ecf50b085ec95"
+          }
+        ]
+      },
+      {
+        "sample": "mvc-java",
+        "buildSystem": "gradle",
+        "commit": "3f4cef01152596c19bc4d37939409358812b1421",
+        "originalFiles": 9,
+        "trackedBlobDigest": "fe913cb8b352aaccb5105df708e7128dda2e3a03632bd8ee812da5fb488e18cd",
+        "entities": 37,
+        "relations": 36,
+        "diagnostics": 25,
+        "endpoints": 0,
+        "fullSourceGraphEqual": true,
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 98339,
+            "sha256": "32158d8eb962fe928a6b8515ad8cc194d1b054faf0a1a261ee35a7274378cdcc",
+            "normalizedWholeSha256": "f35336493a4f83cfc9a53dce926fdc1db79fa2c85ed1c4f7f6fe610027dd8329"
+          },
+          {
+            "label": "cold",
+            "bytes": 98339,
+            "sha256": "f0d9f1fe6842c0e900b47faae06cf2966346762154993c17666db4c6a45cbf46",
+            "normalizedWholeSha256": "f35336493a4f83cfc9a53dce926fdc1db79fa2c85ed1c4f7f6fe610027dd8329"
+          },
+          {
+            "label": "warm",
+            "bytes": 98339,
+            "sha256": "200b42b6eb1e029cfb45f84f65947a41af83858b6e64a8970d18ff7f1bb4e28a",
+            "normalizedWholeSha256": "f35336493a4f83cfc9a53dce926fdc1db79fa2c85ed1c4f7f6fe610027dd8329"
+          },
+          {
+            "label": "revision",
+            "bytes": 97598,
+            "sha256": "f7d18bdde3340beefa8e89043f378c38fc99e27a4310629721a8c57c81f096e9",
+            "normalizedWholeSha256": "55f99e08754b16cda16f13c0d70aef2b39220fd1ec43e5353bf886245044e0e6"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 97598,
+            "sha256": "32c777a15666c70b57ea49bb4be1e7adfcf9ec9a0f4285c977ba0bbd5958a269",
+            "normalizedWholeSha256": "55f99e08754b16cda16f13c0d70aef2b39220fd1ec43e5353bf886245044e0e6"
+          }
+        ]
+      },
+      {
+        "sample": "mvc-kotlin",
+        "buildSystem": null,
+        "commit": "3f4cef01152596c19bc4d37939409358812b1421",
+        "originalFiles": 8,
+        "trackedBlobDigest": "512e87de4f4839ba00c7e3005f1c5d98c69715496ac2806951f9a9d3d94f9366",
+        "entities": 34,
+        "relations": 33,
+        "diagnostics": 43,
+        "endpoints": 0,
+        "fullSourceGraphEqual": true,
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 120359,
+            "sha256": "535809f35d71e5bdb00dfead33bbe16e0e75effc16739653f40fe9608c98760a",
+            "normalizedWholeSha256": "8bacf10443378cbb512c12d95adc152c27cb0547712e3c5ea49298bda20b59dd"
+          },
+          {
+            "label": "cold",
+            "bytes": 120359,
+            "sha256": "fb2333ae3aaa655051b7704b4268b4a2a75ab6d1c0fe3f8a0536f8b0fc957e3b",
+            "normalizedWholeSha256": "8bacf10443378cbb512c12d95adc152c27cb0547712e3c5ea49298bda20b59dd"
+          },
+          {
+            "label": "warm",
+            "bytes": 120359,
+            "sha256": "b563aea1aa68fed9629d0aac1f21a23e767d1e1dbaf3585cf6886b168e079e8b",
+            "normalizedWholeSha256": "8bacf10443378cbb512c12d95adc152c27cb0547712e3c5ea49298bda20b59dd"
+          },
+          {
+            "label": "revision",
+            "bytes": 119618,
+            "sha256": "a3d43ca1442363ec7ccb681e423117cf0bb193cf2e4f0164fbd9a748ca64dcd2",
+            "normalizedWholeSha256": "21f6c675ecf84063396c7ab2e7375a244488887cc981555fb829dd97f3a2e4bd"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 119618,
+            "sha256": "b66573f1a42d2b8ac00dca6842fd263b769e05d162401232d2a3779906f4df3e",
+            "normalizedWholeSha256": "21f6c675ecf84063396c7ab2e7375a244488887cc981555fb829dd97f3a2e4bd"
+          }
+        ]
+      },
+      {
+        "sample": "mvc-kotlin",
+        "buildSystem": "maven",
+        "commit": "3f4cef01152596c19bc4d37939409358812b1421",
+        "originalFiles": 8,
+        "trackedBlobDigest": "512e87de4f4839ba00c7e3005f1c5d98c69715496ac2806951f9a9d3d94f9366",
+        "entities": 34,
+        "relations": 33,
+        "diagnostics": 21,
+        "endpoints": 0,
+        "fullSourceGraphEqual": true,
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 75021,
+            "sha256": "2ead8b7116d4ffbfdcbd16c3d3daa1ae9dbb15eddf75feef26cd6c51600c9e28",
+            "normalizedWholeSha256": "74e5ed85c48f4c2fb95fe89f8ad789cce4b72958622d633d6e424d7a6113ac36"
+          },
+          {
+            "label": "cold",
+            "bytes": 75021,
+            "sha256": "ff245f002a49492885191144d92aca9b6e67f276f93c9b6da636d3218096aef5",
+            "normalizedWholeSha256": "74e5ed85c48f4c2fb95fe89f8ad789cce4b72958622d633d6e424d7a6113ac36"
+          },
+          {
+            "label": "warm",
+            "bytes": 75021,
+            "sha256": "60545099eee64ed7ec5adeea943f1049c0199290ce0ead457b6ed1dad46b70f7",
+            "normalizedWholeSha256": "74e5ed85c48f4c2fb95fe89f8ad789cce4b72958622d633d6e424d7a6113ac36"
+          },
+          {
+            "label": "revision",
+            "bytes": 74280,
+            "sha256": "a937ad29085cf19e2de0c206c171b68a0f0f2849dd69bdf9d149bea9f87936a8",
+            "normalizedWholeSha256": "e1ebc5df9637cd1f60ae08ac601d5f6c0b17596277020e4de2116a67e172c186"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 74280,
+            "sha256": "972873e39948d513158206204a2f283741f7737f92ea09d649fe5301071906dc",
+            "normalizedWholeSha256": "e1ebc5df9637cd1f60ae08ac601d5f6c0b17596277020e4de2116a67e172c186"
+          }
+        ]
+      },
+      {
+        "sample": "mvc-kotlin",
+        "buildSystem": "gradle",
+        "commit": "3f4cef01152596c19bc4d37939409358812b1421",
+        "originalFiles": 8,
+        "trackedBlobDigest": "512e87de4f4839ba00c7e3005f1c5d98c69715496ac2806951f9a9d3d94f9366",
+        "entities": 34,
+        "relations": 33,
+        "diagnostics": 43,
+        "endpoints": 0,
+        "fullSourceGraphEqual": true,
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 120698,
+            "sha256": "fcf58b119ec81b5a0769c2d10f2585d8912a09bed7be4c937c8d15d3afd3474e",
+            "normalizedWholeSha256": "03984ceb68dcb0bbb5e7fe4c2551a54183c95fa775fb83930783b3a050a38938"
+          },
+          {
+            "label": "cold",
+            "bytes": 120698,
+            "sha256": "10d6def955fc6e2d4f7f35c2397dbcd80274bd9d882d731281a49a65c2c48997",
+            "normalizedWholeSha256": "03984ceb68dcb0bbb5e7fe4c2551a54183c95fa775fb83930783b3a050a38938"
+          },
+          {
+            "label": "warm",
+            "bytes": 120698,
+            "sha256": "e16162f07dfd2d56b3c26d37ee4579f15d64cc8eef0311df2c71acd7082b57ec",
+            "normalizedWholeSha256": "03984ceb68dcb0bbb5e7fe4c2551a54183c95fa775fb83930783b3a050a38938"
+          },
+          {
+            "label": "revision",
+            "bytes": 119957,
+            "sha256": "da3b8216f7e255feb909c31d86366fad30319b2a59faa4f2bb977ada5d4b9d22",
+            "normalizedWholeSha256": "03ed0219a20abdc14e7413d45d7b57d1d99d5c82661a5066c1dbe5bc9bfa36d6"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 119957,
+            "sha256": "3806183f67002b088665833030768dc0aba5d4dfd7d55640e29d087f876fd598",
+            "normalizedWholeSha256": "03ed0219a20abdc14e7413d45d7b57d1d99d5c82661a5066c1dbe5bc9bfa36d6"
+          }
+        ]
+      },
+      {
+        "sample": "webflux-java",
+        "buildSystem": null,
+        "commit": "a6f4ff0c651545a14ff5d1f731fde9a8d136e4d5",
+        "originalFiles": 11,
+        "trackedBlobDigest": "0ead0f43d9c72c084822a3b6f1a6af1215b53e79cb445a2112c27166cd6ffa6d",
+        "entities": 42,
+        "relations": 41,
+        "diagnostics": 55,
+        "endpoints": 0,
+        "fullSourceGraphEqual": true,
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 145298,
+            "sha256": "bfe0332953277ea21345194a49ab65ab9052568c8abc8e47166cfa18c334d5b3",
+            "normalizedWholeSha256": "3470292489561559aec1f6fd576f98c1a260c502258468fc2f6a28a72e95848c"
+          },
+          {
+            "label": "cold",
+            "bytes": 145298,
+            "sha256": "6932215af3c427be2ef978a731c767166c963eefa1e592e2edadbaba6425f34c",
+            "normalizedWholeSha256": "3470292489561559aec1f6fd576f98c1a260c502258468fc2f6a28a72e95848c"
+          },
+          {
+            "label": "warm",
+            "bytes": 145298,
+            "sha256": "9e89f700cb3635f3119542d0f5af0d028bb71903094045cf54c5ef2737614661",
+            "normalizedWholeSha256": "3470292489561559aec1f6fd576f98c1a260c502258468fc2f6a28a72e95848c"
+          },
+          {
+            "label": "revision",
+            "bytes": 144557,
+            "sha256": "9144afebc68a7844c8182382c2db772acb5b4c906be4d67173805d2804a69dae",
+            "normalizedWholeSha256": "aed34ce1e8e0b2f257abf1833d1f3bce9d738bee8675d6b889b08077939b7fb7"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 144557,
+            "sha256": "af1c750cda8c32760b05788e325f4dcf3c0228e58de24dd2be3d9f56a09b0ad2",
+            "normalizedWholeSha256": "aed34ce1e8e0b2f257abf1833d1f3bce9d738bee8675d6b889b08077939b7fb7"
+          }
+        ]
+      },
+      {
+        "sample": "webflux-java",
+        "buildSystem": "maven",
+        "commit": "a6f4ff0c651545a14ff5d1f731fde9a8d136e4d5",
+        "originalFiles": 11,
+        "trackedBlobDigest": "0ead0f43d9c72c084822a3b6f1a6af1215b53e79cb445a2112c27166cd6ffa6d",
+        "entities": 42,
+        "relations": 41,
+        "diagnostics": 43,
+        "endpoints": 0,
+        "fullSourceGraphEqual": true,
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 133257,
+            "sha256": "0ddf8a89170cf2d8e3a301031d08b56557645be1610e74383bfee4adb75bbac8",
+            "normalizedWholeSha256": "a79c9aaacd255405fd168dde76e228fdc272503005f7359d7c7e446f8f23151c"
+          },
+          {
+            "label": "cold",
+            "bytes": 133257,
+            "sha256": "ae8ffc6884c4a2912bf273262053c7db2bbb0d0bd42b97f457687b0188af37a7",
+            "normalizedWholeSha256": "a79c9aaacd255405fd168dde76e228fdc272503005f7359d7c7e446f8f23151c"
+          },
+          {
+            "label": "warm",
+            "bytes": 133257,
+            "sha256": "390c951024b5747c37cfeaba9ee5297639b5244c8e278b5e2f588efbd6695319",
+            "normalizedWholeSha256": "a79c9aaacd255405fd168dde76e228fdc272503005f7359d7c7e446f8f23151c"
+          },
+          {
+            "label": "revision",
+            "bytes": 132516,
+            "sha256": "9d34fe9c66595bc12fa5dc2035c3194259be621a50df003f838829ddf318af36",
+            "normalizedWholeSha256": "e413b096494e31009122224cc26d0a52b03ef6cbe45e8008d8ce5653b4dd6925"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 132516,
+            "sha256": "e38ba5cb1050e104e2773d126d49726d19be203a979bc20ae6f2da42d0b68275",
+            "normalizedWholeSha256": "e413b096494e31009122224cc26d0a52b03ef6cbe45e8008d8ce5653b4dd6925"
+          }
+        ]
+      },
+      {
+        "sample": "webflux-java",
+        "buildSystem": "gradle",
+        "commit": "a6f4ff0c651545a14ff5d1f731fde9a8d136e4d5",
+        "originalFiles": 11,
+        "trackedBlobDigest": "0ead0f43d9c72c084822a3b6f1a6af1215b53e79cb445a2112c27166cd6ffa6d",
+        "entities": 42,
+        "relations": 41,
+        "diagnostics": 43,
+        "endpoints": 0,
+        "fullSourceGraphEqual": true,
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 138824,
+            "sha256": "9eab80fdc998b84d62a62dfbc82d1b6b18d6c3a99afa1890cb6635ca987750b6",
+            "normalizedWholeSha256": "9b5e27736000b8c816dd312af019a64f5857968f1188745976335d877ffd5ab2"
+          },
+          {
+            "label": "cold",
+            "bytes": 138824,
+            "sha256": "fb105a2846175ef9372b05bd438e33798d2d62c794f0c954e38f7519e3695c5f",
+            "normalizedWholeSha256": "9b5e27736000b8c816dd312af019a64f5857968f1188745976335d877ffd5ab2"
+          },
+          {
+            "label": "warm",
+            "bytes": 138824,
+            "sha256": "dd43db5536b0149fcc90915c3e9cc83bee1256daa7c154a5f74cf5cd292ac357",
+            "normalizedWholeSha256": "9b5e27736000b8c816dd312af019a64f5857968f1188745976335d877ffd5ab2"
+          },
+          {
+            "label": "revision",
+            "bytes": 138083,
+            "sha256": "1f3e68ffd2b64372d46d197801a300386e40a9dacef2af24ef5a8a5755d6c15c",
+            "normalizedWholeSha256": "e8b383362cddd9f0da84df2fc5fba2b68e03be76eb94df8e72e233c538360647"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 138083,
+            "sha256": "4ba5f30c45feddd27c659c39e9b0317313bdf215085292fca4c85d04fbb944be",
+            "normalizedWholeSha256": "e8b383362cddd9f0da84df2fc5fba2b68e03be76eb94df8e72e233c538360647"
+          }
+        ]
+      },
+      {
+        "sample": "webflux-kotlin",
+        "buildSystem": null,
+        "commit": "a6f4ff0c651545a14ff5d1f731fde9a8d136e4d5",
+        "originalFiles": 9,
+        "trackedBlobDigest": "11d2ce0cb7c86c75a9432dba807fdf3a7d75e099ebc814fa2ca65874efe76066",
+        "entities": 38,
+        "relations": 37,
+        "diagnostics": 60,
+        "endpoints": 0,
+        "fullSourceGraphEqual": true,
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 163371,
+            "sha256": "513aa1bcb22b0596eeff57a938a672210d4836244142daa9de10a9781c1606b1",
+            "normalizedWholeSha256": "1cf6ced614a37ee5b8bfee3cb4a119da4f793dce9ae870d7cab46340f0a4c09a"
+          },
+          {
+            "label": "cold",
+            "bytes": 163371,
+            "sha256": "fcc612caa4d72d9577ad67e64cc1030139dad00c1ce2723b025bc5432cd88b42",
+            "normalizedWholeSha256": "1cf6ced614a37ee5b8bfee3cb4a119da4f793dce9ae870d7cab46340f0a4c09a"
+          },
+          {
+            "label": "warm",
+            "bytes": 163371,
+            "sha256": "97b2ead9d192c7fdaf09527dfdb5ddb7152f2eb3e42b7d86f8434449037c518c",
+            "normalizedWholeSha256": "1cf6ced614a37ee5b8bfee3cb4a119da4f793dce9ae870d7cab46340f0a4c09a"
+          },
+          {
+            "label": "revision",
+            "bytes": 162630,
+            "sha256": "22322a822afd0260396114b486c71b45a372e32564781e96c92df7e0cf5b5616",
+            "normalizedWholeSha256": "0dfc590d96ad8c1948ee376daeac096dae51c7ab403111291acb00fd855f0db5"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 162630,
+            "sha256": "1edcf5c9ee65ea162e7093cf2385899f7d6f6a4955e746d118b4c6eb68a4c2dc",
+            "normalizedWholeSha256": "0dfc590d96ad8c1948ee376daeac096dae51c7ab403111291acb00fd855f0db5"
+          }
+        ]
+      },
+      {
+        "sample": "webflux-kotlin",
+        "buildSystem": "maven",
+        "commit": "a6f4ff0c651545a14ff5d1f731fde9a8d136e4d5",
+        "originalFiles": 9,
+        "trackedBlobDigest": "11d2ce0cb7c86c75a9432dba807fdf3a7d75e099ebc814fa2ca65874efe76066",
+        "entities": 38,
+        "relations": 37,
+        "diagnostics": 36,
+        "endpoints": 0,
+        "fullSourceGraphEqual": true,
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 100609,
+            "sha256": "c6d3b13a1e6257eba88723062672cf785e2c6871d178e647f18390988892cf85",
+            "normalizedWholeSha256": "e70cc7e9bc09ecc3a73573a0573ed9ae49d7fde5ec9a4dffdffa8ab5c4a7dba4"
+          },
+          {
+            "label": "cold",
+            "bytes": 100609,
+            "sha256": "b1239e003736756c36d1323a4019df9565b3e7aa95a0f8f6cd0e9727d6e191e4",
+            "normalizedWholeSha256": "e70cc7e9bc09ecc3a73573a0573ed9ae49d7fde5ec9a4dffdffa8ab5c4a7dba4"
+          },
+          {
+            "label": "warm",
+            "bytes": 100609,
+            "sha256": "4acadd1650bf17d550df4b6f4d15b690cb988650a29683987cea65f992a4b003",
+            "normalizedWholeSha256": "e70cc7e9bc09ecc3a73573a0573ed9ae49d7fde5ec9a4dffdffa8ab5c4a7dba4"
+          },
+          {
+            "label": "revision",
+            "bytes": 99868,
+            "sha256": "736b07b3c35b23538b4bf2a2f2619ab4b095166f2fcde7623e06f055a98d7500",
+            "normalizedWholeSha256": "73e881e6ee1e58d0c2ef816707a871962ed30504b38fa39b267605b272e7ba84"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 99868,
+            "sha256": "e2975142c839c677cbdc9d45d654d134c643b8379a68180a23587240f290e8f3",
+            "normalizedWholeSha256": "73e881e6ee1e58d0c2ef816707a871962ed30504b38fa39b267605b272e7ba84"
+          }
+        ]
+      },
+      {
+        "sample": "webflux-kotlin",
+        "buildSystem": "gradle",
+        "commit": "a6f4ff0c651545a14ff5d1f731fde9a8d136e4d5",
+        "originalFiles": 9,
+        "trackedBlobDigest": "11d2ce0cb7c86c75a9432dba807fdf3a7d75e099ebc814fa2ca65874efe76066",
+        "entities": 38,
+        "relations": 37,
+        "diagnostics": 60,
+        "endpoints": 0,
+        "fullSourceGraphEqual": true,
+        "cacheEqual": true,
+        "revisionEqual": true,
+        "actualWarmJvmCacheHit": true,
+        "graphs": [
+          {
+            "label": "fresh",
+            "bytes": 163710,
+            "sha256": "9114733ca3315f03afedea3f92ff75791e887fe8b323afb61d144d9333b64f39",
+            "normalizedWholeSha256": "66bcddc92c87ae3a6d39265fd6725efa9b00e39f6c85217013345308036cd192"
+          },
+          {
+            "label": "cold",
+            "bytes": 163710,
+            "sha256": "60bd4b59d4c38a2e8529519917cfd6510b16053d0544c804694e801b1b472ca7",
+            "normalizedWholeSha256": "66bcddc92c87ae3a6d39265fd6725efa9b00e39f6c85217013345308036cd192"
+          },
+          {
+            "label": "warm",
+            "bytes": 163710,
+            "sha256": "97f8b2a0bd64c6b8f4ee05c92b44674b609822793636d647b559073e9cad02cb",
+            "normalizedWholeSha256": "66bcddc92c87ae3a6d39265fd6725efa9b00e39f6c85217013345308036cd192"
+          },
+          {
+            "label": "revision",
+            "bytes": 162969,
+            "sha256": "da978791b738fa5ceea86f557299c4d759a433539286870ed515ba225dca48e8",
+            "normalizedWholeSha256": "1f7b1dcabe064d84e124b7445ae9d31ac1b469102cb5d0a90acb85420d8fdc2b"
+          },
+          {
+            "label": "freshRevision",
+            "bytes": 162969,
+            "sha256": "6a1b87d75f40e11e9c805d40d110d398ef23bc162a087662062bfa7826011126",
+            "normalizedWholeSha256": "1f7b1dcabe064d84e124b7445ae9d31ac1b469102cb5d0a90acb85420d8fdc2b"
+          }
+        ]
+      }
+    ]
+  },
+  "completeInstalledMixedGraphParity": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": "2026-10-13T09:01:03.950Z",
+    "priorRuntime": "fc6a9b55919d564f375c93e101ee7b12c47d34ee3dd5ced6610d38b597675f15",
+    "priorRuntimeInputsVerified": 1928,
+    "currentRuntimeSha256": "fc6a9b55919d564f375c93e101ee7b12c47d34ee3dd5ced6610d38b597675f15",
+    "sourceLoader": false,
+    "installedReleaseProfileSha256": "cba04d68d36cf09e8264dbb22759f95d49f82b385c006b4ec77c835d59c48116",
+    "acceptedPressureOriginalScriptsVerified": 32,
+    "expandedPressureInputUtf16Bytes": 38522496,
+    "compilerGenerations": [
+      {
+        "limits": {
+          "maxJobs": 64,
+          "maxSourceBytes": 16777216
+        },
+        "jobs": 0,
+        "sourceBytes": 0,
+        "peakJobs": 64,
+        "peakSourceBytes": 8012,
+        "generations": 2
+      },
+      {
+        "limits": {
+          "maxJobs": 64,
+          "maxSourceBytes": 16777216
+        },
+        "jobs": 0,
+        "sourceBytes": 0,
+        "peakJobs": 0,
+        "peakSourceBytes": 0,
+        "generations": 0
+      },
+      {
+        "limits": {
+          "maxJobs": 64,
+          "maxSourceBytes": 16777216
+        },
+        "jobs": 0,
+        "sourceBytes": 0,
+        "peakJobs": 64,
+        "peakSourceBytes": 8012,
+        "generations": 2
+      }
+    ],
+    "allowedOversizedNativeOriginalBytes": 17825835,
+    "literalTemplateOriginalsVerified": 66,
+    "scope": "Complete ordinary compiled cold/warm/revision graphs under the exact actual production dependency profile: frozen source vendors versus installed package; 20 grammar profiles, Cargo TOML and OpenAPI YAML, 66 literal-script templates, default 64-job compiler rotation, an allowed 17 MiB Python original and 32 accepted Astro scripts over the virtual text memo allowance. All semantic/provenance/metadata fields retained; only run UUID/time replaced.",
+    "retainedFixture": "/var/www/html/codiluce/.codiluce/validation-gradle-compiler-release/parity-temporary/codiluce-owned-script-generation-parity-TcN57C",
+    "originalFiles": 171,
+    "normalizations": [],
+    "volatileFields": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "cacheWarmReplayObserved": true,
+    "graphs": [
+      {
+        "mode": "cold",
+        "bytes": 1304442,
+        "sha256": "e4acfa9eacaa2db397017eee2f3a830b27a72f486ca7cd362fd69564b3503932",
+        "entities": 803,
+        "relations": 1057,
+        "diagnostics": 24
+      },
+      {
+        "mode": "warm",
+        "bytes": 1304442,
+        "sha256": "e4acfa9eacaa2db397017eee2f3a830b27a72f486ca7cd362fd69564b3503932",
+        "entities": 803,
+        "relations": 1057,
+        "diagnostics": 24
+      },
+      {
+        "mode": "revision",
+        "bytes": 1304214,
+        "sha256": "3582be91398ae10a9a3a0af5dfd2da97fa7b89b0491892ea0ff730dc162f2f38",
+        "entities": 803,
+        "relations": 1057,
+        "diagnostics": 23
+      }
+    ],
+    "targetExecution": false
+  },
+  "targetExecution": false,
+  "newFull195OriginalRevisionHistoryQualified": false,
+  "newRelativeHistoryTimeAndProcessTreeRssQualified": false,
+  "actualWindowsMacOSQualified": false,
+  "fullGoalComplete": false,
+  "foreignFilesUnchanged": {
+    "site/README.md": "7cd2595213f3238d1e1d3a4fdae13126974c51472f4b47179e791658de341151",
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "site/app/layout.tsx": "dccb3c78fbba55c11019930203bddd8e955152d66025d45a79281ebac85a7057",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0",
+    "site/public/social-preview.png": "a93ae9deaed990e050d95ec2b260bac2e5508b7ecd0ff9c1c3614a95085ae29c",
+    "site/scripts/social-preview.mjs": "1d9861e06e06de27a76e50dceb3ac90c45e9d6426360b1ede247454bdd9478ff"
+  },
+  "remaining": [
+    "Broader original JVM/.NET effective build, import and framework accuracy",
+    "Full new-runtime production histories and complete counterbalanced time/process-tree RSS",
+    "Actual Windows/macOS execution"
+  ],
+  "failedInitialVerifierLaunchesPreserved": [
+    {
+      "name": "installed-original-graphs",
+      "actualExitCode": 1,
+      "logSha256": "f9ee40a1ef41ceeb093bf9845f787c3a9e90173de7dc6daab3ff76b43ba7f418",
+      "helperExecuted": false,
+      "cause": "Command used a path relative to the wrong working directory; corrected absolute command is retained separately"
+    },
+    {
+      "name": "installed-mixed-graphs",
+      "actualExitCode": 1,
+      "logSha256": "ad2c9be8158364f875ba4338d1ff1bb19e311ae6de403b5d1d70cfe9b3bfc121",
+      "helperExecuted": false,
+      "cause": "Command used a path relative to the wrong working directory; corrected absolute command is retained separately"
+    }
+  ],
+  "storage": {
+    "diskBackedReleaseEvidence": true,
+    "sourceArchiveDurableMirror": {
+      "passed": true,
+      "originalArchive": "/dev/shm/codiluce-gradle-compiler-inputs/gradle-compiler-inputs-runtime-source-and-evidence.tar.gz",
+      "durableMirror": "/var/www/html/codiluce/.codiluce/validation-gradle-compiler-release/gradle-compiler-inputs-runtime-source-and-evidence.tar.gz",
+      "bytes": 56435093,
+      "sha256": "5fdbd976552c74ee5519b44df076fdfcb79c925fdb07ad7cba921855cbdd000b",
+      "originalUnchanged": true,
+      "sourceReceipt": {
+        "schema": 1,
+        "passed": true,
+        "verifiedAt": "2026-10-13T08:49:34.047233+00:00",
+        "seconds": 7.845996379852295,
+        "archive": "/dev/shm/codiluce-gradle-compiler-inputs/gradle-compiler-inputs-runtime-source-and-evidence.tar.gz",
+        "bytes": 56435093,
+        "sha256": "5fdbd976552c74ee5519b44df076fdfcb79c925fdb07ad7cba921855cbdd000b",
+        "regularFiles": 3540,
+        "manifestSha256": "cd9060c348eb17a40bc88da0149de76dd4a72066e5836c39440580aab12c2d17",
+        "runtimeSha256": "fc6a9b55919d564f375c93e101ee7b12c47d34ee3dd5ced6610d38b597675f15",
+        "fullFileBytesAndModesReopened": true,
+        "ramBacked": true,
+        "completeOriginalGraphsRetained": 60,
+        "originalFilesRetained": 37,
+        "priorFailureArtifactsRetained": true,
+        "priorRuntimeReconstructibleFromUnchangedCurrentFilesAndRetainedDifferences": true,
+        "initialFailureInputsAndLogsRetained": true,
+        "snapshotBoundary": "Report/source receipts inside the archive precede this self-referential archive receipt and HTTP/final audit append",
+        "normalInstalledPackageQualified": false,
+        "productionHistoryObservation": false,
+        "goalComplete": false
+      }
+    },
+    "priorRamSourceEvidenceUnchanged": true
+  },
+  "archive": {
+    "schema": 1,
+    "passed": true,
+    "verifiedAt": "2026-10-13T09:06:50.306188+00:00",
+    "seconds": 33.749220848083496,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-gradle-compiler-release/gradle-compiler-inputs-runtime-release-and-evidence.tar.gz",
+    "bytes": 82427206,
+    "sha256": "42d022e4ec13f7af8e9cd2cff26ac58d25408927d4ba9321c439ac9e86c052c5",
+    "regularFiles": 5842,
+    "manifestSha256": "11ad16b50204f873a1a490846fd73d5f68dcbf02b5747d9eb1b409fb66e901a3",
+    "sourceAndBuildRuntimeSha256": "fc6a9b55919d564f375c93e101ee7b12c47d34ee3dd5ced6610d38b597675f15",
+    "installedReleaseProfileSha256": "cba04d68d36cf09e8264dbb22759f95d49f82b385c006b4ec77c835d59c48116",
+    "fullFileBytesAndModesReopened": true,
+    "normalPackageGatePassed": true,
+    "completeInstalledSourceGraphParityPassed": true,
+    "originalFilesRetained": 208,
+    "sourceAndInstalledOriginalGuideGraphsRetained": 120,
+    "completeMixedGraphsRetained": 6,
+    "ramBacked": false,
+    "rawMixedProfileIdentityVerifiedBeforeExecution": true,
+    "failedInitialVerifierLaunchesPreserved": true,
+    "priorOriginalAndFailedArtifactsDeleted": false,
+    "sourceArchiveSeparatelyRetained": {
+      "passed": true,
+      "originalArchive": "/dev/shm/codiluce-gradle-compiler-inputs/gradle-compiler-inputs-runtime-source-and-evidence.tar.gz",
+      "durableMirror": "/var/www/html/codiluce/.codiluce/validation-gradle-compiler-release/gradle-compiler-inputs-runtime-source-and-evidence.tar.gz",
+      "bytes": 56435093,
+      "sha256": "5fdbd976552c74ee5519b44df076fdfcb79c925fdb07ad7cba921855cbdd000b",
+      "originalUnchanged": true,
+      "sourceReceipt": {
+        "schema": 1,
+        "passed": true,
+        "verifiedAt": "2026-10-13T08:49:34.047233+00:00",
+        "seconds": 7.845996379852295,
+        "archive": "/dev/shm/codiluce-gradle-compiler-inputs/gradle-compiler-inputs-runtime-source-and-evidence.tar.gz",
+        "bytes": 56435093,
+        "sha256": "5fdbd976552c74ee5519b44df076fdfcb79c925fdb07ad7cba921855cbdd000b",
+        "regularFiles": 3540,
+        "manifestSha256": "cd9060c348eb17a40bc88da0149de76dd4a72066e5836c39440580aab12c2d17",
+        "runtimeSha256": "fc6a9b55919d564f375c93e101ee7b12c47d34ee3dd5ced6610d38b597675f15",
+        "fullFileBytesAndModesReopened": true,
+        "ramBacked": true,
+        "completeOriginalGraphsRetained": 60,
+        "originalFilesRetained": 37,
+        "priorFailureArtifactsRetained": true,
+        "priorRuntimeReconstructibleFromUnchangedCurrentFilesAndRetainedDifferences": true,
+        "initialFailureInputsAndLogsRetained": true,
+        "snapshotBoundary": "Report/source receipts inside the archive precede this self-referential archive receipt and HTTP/final audit append",
+        "normalInstalledPackageQualified": false,
+        "productionHistoryObservation": false,
+        "goalComplete": false
+      }
+    },
+    "snapshotBoundary": "Report and source receipts precede the self-referential archive and HTTP/final audit append",
+    "newFull195OriginalRevisionHistoryQualified": false,
+    "newRelativeHistoryTimeAndProcessTreeRssQualified": false,
+    "actualWindowsMacOSQualified": false,
+    "fullGoalComplete": false
+  },
+  "finalAudit": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": "2026-10-13T09:07:28.705926+00:00",
+    "reportUrl": "http://127.0.0.1:35057/gradle-compiler-inputs-release.html",
+    "reportBytesEqual": true,
+    "localLinks": [
+      {
+        "href": "gradle-compiler-inputs-release.json",
+        "bytes": 52194,
+        "sha256": "d526b77191474cbf9700590642e5715712ec5bd359e1e262857d23d54311d1e6"
+      },
+      {
+        "href": "gradle-compiler-inputs-runtime-release-and-evidence.tar.gz",
+        "bytes": 82427206,
+        "sha256": "42d022e4ec13f7af8e9cd2cff26ac58d25408927d4ba9321c439ac9e86c052c5"
+      },
+      {
+        "href": "gradle-compiler-inputs-release-archive.json",
+        "bytes": 3093,
+        "sha256": "894b7588598f74020fd0fe0658eea6735908d00df3ffb61e7502fc83fd75f6f5"
+      },
+      {
+        "href": "gradle-compiler-inputs-normal-prepack-release.tgz",
+        "bytes": 7228625,
+        "sha256": "b7fa0a232f7db7835fb12ce560022beaf21fe1a58c0212a3d6db82d9caa126ac"
+      },
+      {
+        "href": "gradle-compiler-inputs.html",
+        "bytes": 299957,
+        "sha256": "8e1e9d78c6de3a6226e86b50caea3794663f147b3a816376e247052910ca9f38"
+      },
+      {
+        "href": "gradle-compiler-inputs-runtime-source-and-evidence.tar.gz",
+        "bytes": 56435093,
+        "sha256": "5fdbd976552c74ee5519b44df076fdfcb79c925fdb07ad7cba921855cbdd000b"
+      },
+      {
+        "href": "language-framework-compatibility.html#implementation",
+        "bytes": 410442,
+        "sha256": "1fc4a1982114835ed8cb09ec0ae2f90b5302e46ec33e8c81382e20aa7c4f0d7a"
+      },
+      {
+        "href": "analysis-capabilities.html",
+        "bytes": 94507,
+        "sha256": "e9840b721ef2379473b7e372d7845437880cab1af74682513e61f4f79600b65e"
+      }
+    ],
+    "allThreeArchivesFullyDownloaded": true,
+    "traversalAndNonReportRequestsReturn404": true,
+    "visualInspectionClaimed": false,
+    "runtimeSha256": "fc6a9b55919d564f375c93e101ee7b12c47d34ee3dd5ced6610d38b597675f15",
+    "installedProfileSha256": "cba04d68d36cf09e8264dbb22759f95d49f82b385c006b4ec77c835d59c48116",
+    "runtimeFiles": 1928,
+    "releaseInputs": 669,
+    "vendorFiles": 14303,
+    "actualInstalledRegularFiles": 1960,
+    "originalGraphInputFilesVerified": 208,
+    "additionalOriginalCompilerHostInputFilesRetained": 40,
+    "actualGatePidsGone": true,
+    "normalConsumerCleanupCompleted": true,
+    "foreignFilesUnchanged": true,
+    "fullProductionHistoryAndCounterbalancedPerformanceQualified": false,
+    "actualWindowsMacOSQualified": false,
+    "fullGoalComplete": false
+  }
+}

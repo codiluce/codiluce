@@ -428,6 +428,11 @@ const compiler=new TemplateScriptParser();try{compiler.prewarm();const retiremen
   console.log('Checking installed JVM build ownership, original handlers and complete selection/cache/revision graph replay…');
   const jvmBuildSelectionConformance=await run(process.execPath,['--experimental-sqlite',jvmBuildSelectionCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'jvm-build-selection-validation.json')],consumer);
   console.log(jvmBuildSelectionConformance.stdout.trim());
+  const gradleCompilerInputsCheck=path.join(consumer,'check-gradle-compiler-inputs.mjs');
+  await cp(path.join(root,'tests/fixtures/gradle-compiler-inputs-qualification.mjs'),gradleCompilerInputsCheck);
+  console.log('Checking installed literal Gradle compiler inputs, original proof and retained plugin/transformation gaps…');
+  const gradleCompilerInputsConformance=await run(process.execPath,['--experimental-sqlite',gradleCompilerInputsCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'gradle-compiler-inputs-validation.json')],consumer);
+  console.log(gradleCompilerInputsConformance.stdout.trim());
   const bin = path.join(installed, 'bin/codiluce.js');
   for (const grammar of grammarManifest.grammars) assert.equal(createHash('sha256').update(await readFile(path.join(installed, 'dist/grammars', grammar.file))).digest('hex'), grammar.sha256);
   const dependencies = JSON.parse((await npm(['ls', '--omit=dev', '--all', '--json'], consumer)).stdout).dependencies[manifest.name].dependencies;
