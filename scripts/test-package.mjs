@@ -413,6 +413,11 @@ const fork=cp.fork,children=[],jobs=[];cp.fork=(...args)=>{assert.ok(children.ev
 const compiler=new TemplateScriptParser();try{compiler.prewarm();const retirement=compiler.closeAndWait();assert.throws(()=>compiler.prewarm(),/retiring/);await retirement;assert.equal(children.length,1);assert.ok(children[0].exitCode!==null||children[0].signalCode!==null);compiler.prewarm();assert.equal(children.length,2);assert.deepEqual(jobs,[],'Prewarm must not dispatch source or import the optional compiler');}finally{await compiler.closeAndWait();cp.fork=fork;syncBuiltinESMExports();}assert.ok(children.every(child=>child.exitCode!==null||child.signalCode!==null));
 `);
   await run(process.execPath,[parserBootstrapCheck],consumer);
+  const scriptGenerationCheck=path.join(consumer,'check-literal-script-generations.mjs');
+  await cp(path.join(root,'tests/fixtures/literal-script-generation-isolation.mjs'),scriptGenerationCheck);
+  console.log('Checking installed literal-script/native generation bounds, complete original facts and actual worker exit…');
+  const scriptGenerations=await run(process.execPath,['--experimental-sqlite',scriptGenerationCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'literal-script-generation-validation.json')],consumer);
+  console.log(scriptGenerations.stdout.trim());
   const bin = path.join(installed, 'bin/codiluce.js');
   for (const grammar of grammarManifest.grammars) assert.equal(createHash('sha256').update(await readFile(path.join(installed, 'dist/grammars', grammar.file))).digest('hex'), grammar.sha256);
   const dependencies = JSON.parse((await npm(['ls', '--omit=dev', '--all', '--json'], consumer)).stdout).dependencies[manifest.name].dependencies;

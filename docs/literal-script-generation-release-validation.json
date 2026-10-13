@@ -1,0 +1,1332 @@
+{
+  "schema": 1,
+  "passed": true,
+  "phase": "Installed literal-script compiler/native generation lifetime release qualification",
+  "completedAt": "2026-10-13T03:44:29.231253+00:00",
+  "sourceCommit": "e0c2610",
+  "sourceAndBuildRuntimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+  "sourceAndBuildRuntimeInputsVerified": 1927,
+  "installedReleaseProfileSha256": "d6dd2f093ddcd61a6f35c12ca5d943cbfc00bc2d3fe968907d79429324351844",
+  "installedReleaseProfileRegularFiles": 1959,
+  "firstNormalPrepackAndProductionOnlyInstalledPackageGatePassed": true,
+  "normalPackageCommand": [
+    "npm",
+    "run",
+    "test:package"
+  ],
+  "normalPackageTerminal": {
+    "schema": 1,
+    "startedAt": 1791862461.942422,
+    "wrapperPid": 290433,
+    "actualNpmPid": 290435,
+    "actualDriverPid": 290474,
+    "cwd": "/dev/shm/codiluce-literal-script-release/engine",
+    "command": [
+      "npm",
+      "run",
+      "test:package"
+    ],
+    "runtimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+    "runtimeInputsVerified": 1927,
+    "driverSha256": "e63898014859c286150addfecd5e19d98e22d503752ca89757745bb0b89727ec",
+    "inputOwnershipFixtureSha256": "2a7eb738932c150e828ba0c76001f58b5ee044f949f628ded259daa01201b184",
+    "scriptGenerationFixtureSha256": "83af9ad8279ce6bb498f105f00fd9c656e593850cd7468af710260f3a5c3fc98",
+    "releaseInputManifestSha256": "546c78f421b33ed578cdbf434e1bb07d217efe24c8e6e4670be127984c3dedba",
+    "log": "/dev/shm/codiluce-literal-script-release/normal-installed-package-first.log",
+    "temporaryConsumerDirectory": "/dev/shm/codiluce-literal-script-release/normal-package-temporary",
+    "npmCacheDirectory": "/dev/shm/codiluce-literal-script-release/owned-npm-cache",
+    "storage": "Owned RAM-backed tmpfs for build, consumer, npm cache and evidence; no durability or physical RSS qualification",
+    "originalHistoryReserveRelaxed": false,
+    "productionHistoryObservationRetried": false,
+    "targetExecution": false,
+    "gateComplete": true,
+    "completedAt": 1791862903.153505,
+    "actualExitCode": 0,
+    "passed": true,
+    "interruptSignals": [],
+    "actualNpmGone": true,
+    "actualDriverGone": true,
+    "logSha256": "068229f07b86bed09cdff5abd2594166e83021a25b44cc19c087e57221fe292d"
+  },
+  "normalPrepackRetention": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791862539.6296332,
+    "archive": "/dev/shm/codiluce-literal-script-release/literal-script-generations-normal-prepack-release.tgz",
+    "source": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/codiluce-0.1.1.tgz",
+    "sha256": "88a8b24fec9c7fcda261749519c3e395e91752cc226240b645103a12e7553e01",
+    "bytes": 7225178,
+    "verifiedRegularMembers": 372,
+    "compiledPackageModulesMatchSourceConformance": 225,
+    "normalPrepackPassed": true,
+    "installedGatePendingAtRetention": true,
+    "runtimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72"
+  },
+  "installedWorkerGenerationConformance": {
+    "schema": 1,
+    "passed": true,
+    "sourceLoader": false,
+    "targetExecution": false,
+    "defaultCompilerJobsVerified": 65,
+    "sourceFreePrewarmCalls": 100,
+    "malformedBudgetOverridesRejected": true,
+    "completeCombinedWorkerFactSha256": [
+      "f761567ab084f139d9f4f9414b6f82c83e62ad9c06978c6429dd54639368bbd3",
+      "cb145589ba82ba864ce397d2ab1ea6380fc722444440446c178f648ead0504bd",
+      "e3099ded415ffc2167d0421ad30143af183f292fcb5282a058d6773289fa5d85"
+    ],
+    "compilerStats": {
+      "limits": {
+        "maxJobs": 64,
+        "maxSourceBytes": 16777216
+      },
+      "jobs": 1,
+      "sourceBytes": 105,
+      "peakJobs": 64,
+      "peakSourceBytes": 6720,
+      "generations": 2
+    },
+    "oversizedCompilerStats": {
+      "limits": {
+        "maxJobs": 64,
+        "maxSourceBytes": 1
+      },
+      "jobs": 0,
+      "sourceBytes": 0,
+      "peakJobs": 1,
+      "peakSourceBytes": 105,
+      "generations": 1
+    },
+    "oversizedNativeStats": {
+      "limits": {
+        "maxGrammars": 6,
+        "maxSourceBytes": 1
+      },
+      "grammars": 0,
+      "sourceBytes": 0,
+      "peakGrammars": 3,
+      "peakSourceBytes": 105,
+      "rotations": 1,
+      "oversizedJobs": 1,
+      "retirementPending": false
+    },
+    "actualChildren": [
+      {
+        "pid": 292458,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "sourceLoader": false
+      },
+      {
+        "pid": 292475,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "sourceLoader": false
+      },
+      {
+        "pid": 292512,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "sourceLoader": false
+      },
+      {
+        "pid": 292529,
+        "exitCode": null,
+        "signalCode": "SIGTERM",
+        "sourceLoader": false
+      }
+    ],
+    "dispatchedJobs": [
+      {
+        "pid": 292458,
+        "id": 1,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 2,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 3,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 4,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 5,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 6,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 7,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 8,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 9,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 10,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 11,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 12,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 13,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 14,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 15,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 16,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 17,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 18,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 19,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 20,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 21,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 22,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 23,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 24,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 25,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 26,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 27,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 28,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 29,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 30,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 31,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 32,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 33,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 34,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 35,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 36,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 37,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 38,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 39,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 40,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 41,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 42,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 43,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 44,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 45,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 46,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 47,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 48,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 49,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 50,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 51,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 52,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 53,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 54,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 55,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 56,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 57,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 58,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 59,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 60,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 61,
+        "language": "erb"
+      },
+      {
+        "pid": 292458,
+        "id": 62,
+        "language": "razor"
+      },
+      {
+        "pid": 292458,
+        "id": 63,
+        "language": "liquid"
+      },
+      {
+        "pid": 292458,
+        "id": 64,
+        "language": "erb"
+      },
+      {
+        "pid": 292475,
+        "id": 65,
+        "language": "razor"
+      },
+      {
+        "pid": 292512,
+        "id": 1,
+        "language": "erb"
+      },
+      {
+        "pid": 292529,
+        "id": 1,
+        "language": "erb"
+      }
+    ],
+    "scope": "Real compiled worker generation exit and complete original facts. Queue payload ownership, AST/native allocations and physical RSS are separate."
+  },
+  "installedTypeScriptInputOwnershipConformance": {
+    "schema": 1,
+    "passed": true,
+    "sourceLoader": false,
+    "targetExecution": false,
+    "actualCompilerHostClosureObserved": {
+      "kind": "[object Set]",
+      "entries": 40,
+      "textBytes": 0
+    },
+    "realProjectService": true,
+    "astReuseObserved": true,
+    "lateRegisteredRootReadFilePreserved": {
+      "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original0.ts",
+      "sha256": "b989e66dc9bda66fc51c041bfef4edc97d43a86170bfe3eaff31adf89c78ed3f"
+    },
+    "changedOriginalReadRejected": true,
+    "restoredOriginalReadPreserved": true,
+    "programSourceCount": 40,
+    "programSourceUtf16Bytes": 20008660,
+    "sources": [
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original0.ts",
+        "sha256": "b989e66dc9bda66fc51c041bfef4edc97d43a86170bfe3eaff31adf89c78ed3f",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original1.ts",
+        "sha256": "8d9d98860b034b104cacbcb2e5f18e23d6b8112f564f5312a81de7cfdcebe7bf",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original10.ts",
+        "sha256": "c8bd824e46b044b3b6897c98de628927ddaa24af897a4185915621300c039ef4",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original11.ts",
+        "sha256": "22129cf8a791fd81aceeccb83c29d56f1310b1ada24da8009fdbe69660c0f74b",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original12.ts",
+        "sha256": "adb02199ae00dd8b2db9dbb0ef88ac517ecf082a0401c1ae8419fdf211c78c13",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original13.ts",
+        "sha256": "c807e1c0fba53412f943c395e825caad453447b043c541001d9a1231b4eb6354",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original14.ts",
+        "sha256": "6a2a79d303d5560f48bb8f9e9dcf0afdc0c0a0899a5e764779a0268e5c1e4350",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original15.ts",
+        "sha256": "6b9d045ebb0e3f6f42c093582e24928879653e50bee09257fa667a61bac56c05",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original16.ts",
+        "sha256": "5d84c2f293ef5bda9898aabea9abf9405e0c06d7e608383bbaa4db92d36d08e1",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original17.ts",
+        "sha256": "464cf4fc7f4d7231c05082c0ab82ab17e05328e1e83124351dc63de34598d369",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original18.ts",
+        "sha256": "b8a279872aa42fb54528efb449c35dd02b6e40d63bbb2141ddb6b223508d232a",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original19.ts",
+        "sha256": "cc4f1841b4282a511c23cf8ef01a189d71075d3ff229f25bf167552081e2aa17",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original2.ts",
+        "sha256": "59be7b8182e4dcea3df9cce74015633f3b5b5d1d6224eee8021e383f61cec8bf",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original20.ts",
+        "sha256": "05fe001cfe2a7b691ed6bb10c3d7d16206170d84bfbcdb00301ef0ff0bd02edf",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original21.ts",
+        "sha256": "7e16f8b6eb2144ea8c90eba6baf1e4d3615b6923f0d5858377ebc3172b0a7637",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original22.ts",
+        "sha256": "9009681d5643e50b9a5252ffa21ef4853dd38b6400129c94172d36b7f0f5fad7",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original23.ts",
+        "sha256": "382d1882ae0090a0f3ceb2d11d1735c933fe81b743da2b1a564ba68050c4e70a",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original24.ts",
+        "sha256": "4ff25f015eecf072c02126f859370072749d48ffa9f9b8006c9a6061d76ed065",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original25.ts",
+        "sha256": "c6811e0e14dcaaf5a530d71fb8913f34c0234775267b811215626fbacbcb5013",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original26.ts",
+        "sha256": "10ddfe06831bf0c2c4b1956534e3ce225a9c5b7dc9dcf34cc76bedf3e07cc068",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original27.ts",
+        "sha256": "21d3e90b0283d0498bf6355d7fc5289eb59f1f12672cfeac56e4a8556eeac1d1",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original28.ts",
+        "sha256": "1bf91e7709488a0ed1bb10334a7ebed2024382d2ac65b2404f9ab7f85bd1d887",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original29.ts",
+        "sha256": "025321584ad439ab838fb6d4a87832af3202b01e58a014172d160b5634b8f9b5",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original3.ts",
+        "sha256": "cce94640257495cce3e352a60cdb1cf4dcf0f4a13d02fa011e5b7d3d7a92b96c",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original30.ts",
+        "sha256": "52106b1a82660b98f8350a3c23bebc57056b562f73a94ab798f86a15c1421067",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original31.ts",
+        "sha256": "66f732be383dce49300fb47f8b1ab406690fe28eb9f16bb981fe18f87e7831d4",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original32.ts",
+        "sha256": "112333aae101d2f79c63593079cf9deae96055c5363747378d241682bf43cd35",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original33.ts",
+        "sha256": "daf2e058f6894034273beea3825cdbd15da547e4879e0cc7d8610f6e7bf6eb51",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original34.ts",
+        "sha256": "cf53749665b957acbb24d67906a96a2d9ea829d1afc22297558ba659623e0390",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original35.ts",
+        "sha256": "e220979e7edc577947d78359b0b168f90050a7a58def5b046b46ce5f34c37f9f",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original36.ts",
+        "sha256": "e211c3fcab46db35064e8f12f73f7664a47946bcccca9ae672285958a4a48aa3",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original37.ts",
+        "sha256": "35aedc4e75b6a49c2b6f192e6f0583475a6b9cea33ab8b8d14b26d0eb2866592",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original38.ts",
+        "sha256": "c53f9b14a940185b776bf32da92775f17bfe29aa536edf190cddb088fb95af48",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original39.ts",
+        "sha256": "f62281b29d35584059deeb2439e82ffab2aa4f43ae7792b1b3917a46117ee672",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original4.ts",
+        "sha256": "235d975020dc2b90f07d058501c85ce84a851b9f4e6c5b36dbd9f54a79269ea9",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original5.ts",
+        "sha256": "3262937b5e6cc71e4038a28b45442a071a82ab98942504b688d123bcbc39a8bc",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original6.ts",
+        "sha256": "8bcc734ed4c1994daf16597dc4512eb912a374523dceb5ce103d97f6f1ef581a",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original7.ts",
+        "sha256": "4f9ccb99881fb42b26c0131df52d550fcc6b1a5ed3798efbaa62c41a8b2190c0",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original8.ts",
+        "sha256": "58b4e475dc919fbf047cc151b06745a94bf818f02ff2829a4e16a89039081d52",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer/owned-installed-compiler-inputs/original9.ts",
+        "sha256": "3c175912c46ca64c3fa5f69a0ff0d3077ca22501604b2a9ce1bc332bd17f5b3f",
+        "utf16Bytes": 500212
+      }
+    ],
+    "scope": "Actual live compiler input collection ownership. AST/checker allocations, source memos and physical RSS remain separate."
+  },
+  "installedVendorProfileComparison": {
+    "schema": 1,
+    "passed": true,
+    "sourceAndBuildRuntimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+    "installedProductionRegularFiles": 1587,
+    "installedProductionFilesEqualFrozenSourceVendorBytes": 1583,
+    "changedFiles": [
+      {
+        "file": "node_modules/smol-toml/dist/extract.js",
+        "frozenSourceSha256": "b964c8f39c737172295b31b9ee61b49e513ff12788e119ddfdbb68c448054c12",
+        "actualInstalledSha256": "3e6f1e5764a091acf2df6a3f257d0467c37a2b9dbfecab1573f17a6489349c90"
+      },
+      {
+        "file": "node_modules/smol-toml/dist/index.cjs",
+        "frozenSourceSha256": "09ce310a8bcc1bb5c7dc2813c88b4bfbbeb685e4c186a9631ff54da7e85c880f",
+        "actualInstalledSha256": "f9029370259e9a43a2f3e64fa1d39e72f3598188380ace83a0abb8261fa33555"
+      },
+      {
+        "file": "node_modules/smol-toml/package.json",
+        "frozenSourceSha256": "0e35bde6992fef675058596ea0e94c2d3ca65e5f9b73a326d94208be6210f192",
+        "actualInstalledSha256": "d7ad6488e35b31d46bac6412d2d35225db4d693f02a415d872714ceb7e3d7138"
+      }
+    ],
+    "additionalFiles": [
+      "node_modules/.package-lock.json"
+    ],
+    "frozenSourceVendorFilesNotInstalled": [
+      "node_modules/@astrojs/compiler-binding-linux-x64-musl/README.md",
+      "node_modules/@astrojs/compiler-binding-linux-x64-musl/astro.linux-x64-musl.node",
+      "node_modules/@astrojs/compiler-binding-linux-x64-musl/package.json",
+      "node_modules/@esbuild/linux-x64/README.md",
+      "node_modules/@esbuild/linux-x64/bin/esbuild",
+      "node_modules/@esbuild/linux-x64/package.json",
+      "node_modules/esbuild/LICENSE.md",
+      "node_modules/esbuild/README.md",
+      "node_modules/esbuild/bin/esbuild",
+      "node_modules/esbuild/install.js",
+      "node_modules/esbuild/lib/main.d.ts",
+      "node_modules/esbuild/lib/main.js",
+      "node_modules/esbuild/package.json",
+      "node_modules/tsx/LICENSE",
+      "node_modules/tsx/README.md",
+      "node_modules/tsx/dist/cjs/api/index.cjs",
+      "node_modules/tsx/dist/cjs/api/index.d.cts",
+      "node_modules/tsx/dist/cjs/api/index.d.mts",
+      "node_modules/tsx/dist/cjs/api/index.mjs",
+      "node_modules/tsx/dist/cjs/index.cjs",
+      "node_modules/tsx/dist/cli.mjs",
+      "node_modules/tsx/dist/client-XItNFmsq.cjs",
+      "node_modules/tsx/dist/esm/api/index.cjs",
+      "node_modules/tsx/dist/esm/api/index.d.cts",
+      "node_modules/tsx/dist/esm/api/index.d.mts",
+      "node_modules/tsx/dist/esm/api/index.mjs",
+      "node_modules/tsx/dist/esm/index.mjs",
+      "node_modules/tsx/dist/index-Bqjv9TxC.mjs",
+      "node_modules/tsx/dist/index-DE3OBZuV.mjs",
+      "node_modules/tsx/dist/lexer-CGfpMDSb.cjs",
+      "node_modules/tsx/dist/lexer-CanA6ArK.mjs",
+      "node_modules/tsx/dist/loader.mjs",
+      "node_modules/tsx/dist/package-Dj0mHsMt.mjs",
+      "node_modules/tsx/dist/patch-repl.cjs",
+      "node_modules/tsx/dist/preflight.cjs",
+      "node_modules/tsx/dist/register-B1c7OH6V.cjs",
+      "node_modules/tsx/dist/register-nyXW-TH3.mjs",
+      "node_modules/tsx/dist/repl.mjs",
+      "node_modules/tsx/dist/require-CBjy4Foe.mjs",
+      "node_modules/tsx/dist/require-CVaYn9z3.cjs",
+      "node_modules/tsx/dist/suppress-warnings.cjs",
+      "node_modules/tsx/dist/temporary-directory-Du7LpLp9.mjs",
+      "node_modules/tsx/package.json"
+    ],
+    "packageVersionDifferences": [
+      {
+        "name": "smol-toml",
+        "sourceVersion": "1.9.0",
+        "installedVersion": "1.9.1"
+      }
+    ],
+    "scope": "Complete byte comparison of the actual production installation against frozen source vendors, with every difference and optional platform omission retained. This audit does not assert dependency equality."
+  },
+  "installedSnapshot": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791862539.9768226,
+    "sourceConsumer": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-package-FtufUs/consumer",
+    "runtimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+    "actualDriverPidAtRetention": 290474,
+    "driverLiveAtRetention": true,
+    "installedInputOwnershipSha256": "459f80442696125ba6ccdae67627707f4c1974e7826118ea3140ae0bd70365e1",
+    "installedScriptGenerationSha256": "937b24f90a925c8f68905db6f1478b2baf1ffa26ea07d2a34c39f5a020ae45ca",
+    "originalSourceFilesVerified": 40,
+    "productionVendorRegularFiles": 1587,
+    "productionVendorSymlinksRecorded": 6,
+    "packages": [
+      {
+        "name": "@astrojs/compiler-binding",
+        "version": "0.5.1",
+        "file": "@astrojs/compiler-binding/package.json"
+      },
+      {
+        "name": "@astrojs/compiler-binding-linux-x64-gnu",
+        "version": "0.5.1",
+        "file": "@astrojs/compiler-binding-linux-x64-gnu/package.json"
+      },
+      {
+        "name": "@astrojs/compiler-rs",
+        "version": "0.5.1",
+        "file": "@astrojs/compiler-rs/package.json"
+      },
+      {
+        "name": "@jridgewell/gen-mapping",
+        "version": "0.3.13",
+        "file": "@jridgewell/gen-mapping/package.json"
+      },
+      {
+        "name": "@jridgewell/remapping",
+        "version": "2.3.5",
+        "file": "@jridgewell/remapping/package.json"
+      },
+      {
+        "name": "@jridgewell/resolve-uri",
+        "version": "3.1.2",
+        "file": "@jridgewell/resolve-uri/package.json"
+      },
+      {
+        "name": "@jridgewell/sourcemap-codec",
+        "version": "1.6.0",
+        "file": "@jridgewell/sourcemap-codec/package.json"
+      },
+      {
+        "name": "@jridgewell/trace-mapping",
+        "version": "0.3.31",
+        "file": "@jridgewell/trace-mapping/package.json"
+      },
+      {
+        "name": "@sveltejs/acorn-typescript",
+        "version": "1.0.13",
+        "file": "@sveltejs/acorn-typescript/package.json"
+      },
+      {
+        "name": "@types/estree",
+        "version": "1.0.9",
+        "file": "@types/estree/package.json"
+      },
+      {
+        "name": "acorn",
+        "version": "8.19.0",
+        "file": "acorn/package.json"
+      },
+      {
+        "name": "aria-query",
+        "version": "5.3.1",
+        "file": "aria-query/package.json"
+      },
+      {
+        "name": "axobject-query",
+        "version": "4.1.0",
+        "file": "axobject-query/package.json"
+      },
+      {
+        "name": "clsx",
+        "version": "2.1.1",
+        "file": "clsx/package.json"
+      },
+      {
+        "name": "devalue",
+        "version": "5.9.4",
+        "file": "devalue/package.json"
+      },
+      {
+        "name": "esm-env",
+        "version": "1.2.2",
+        "file": "esm-env/package.json"
+      },
+      {
+        "name": "esrap",
+        "version": "2.4.0",
+        "file": "esrap/package.json"
+      },
+      {
+        "name": "is-reference",
+        "version": "3.0.3",
+        "file": "is-reference/package.json"
+      },
+      {
+        "name": "locate-character",
+        "version": "3.0.0",
+        "file": "locate-character/package.json"
+      },
+      {
+        "name": "magic-string",
+        "version": "0.30.21",
+        "file": "magic-string/package.json"
+      },
+      {
+        "name": "php-parser",
+        "version": "3.7.0",
+        "file": "php-parser/package.json"
+      },
+      {
+        "name": "semver",
+        "version": "7.8.5",
+        "file": "semver/package.json"
+      },
+      {
+        "name": "smol-toml",
+        "version": "1.9.1",
+        "file": "smol-toml/package.json"
+      },
+      {
+        "name": "svelte",
+        "version": "5.57.2",
+        "file": "svelte/package.json"
+      },
+      {
+        "name": "typescript",
+        "version": "5.9.3",
+        "file": "typescript/package.json"
+      },
+      {
+        "name": "web-tree-sitter",
+        "version": "0.27.0",
+        "file": "web-tree-sitter/package.json"
+      },
+      {
+        "name": "yaml",
+        "version": "2.9.1",
+        "file": "yaml/package.json"
+      },
+      {
+        "name": "zimmerframe",
+        "version": "1.1.5",
+        "file": "zimmerframe/package.json"
+      }
+    ],
+    "scope": "Actual installed production dependencies and all 40 original inputs; package modules are retained separately in the first normal prepack tarball. Development dependencies and target execution are absent."
+  },
+  "completeOrdinaryCompiledInstalledGraphParity": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": "2026-10-13T03:38:30.856Z",
+    "priorRuntime": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+    "priorRuntimeInputsVerified": 1927,
+    "currentRuntimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+    "sourceLoader": false,
+    "installedReleaseProfileSha256": "d6dd2f093ddcd61a6f35c12ca5d943cbfc00bc2d3fe968907d79429324351844",
+    "acceptedPressureOriginalScriptsVerified": 32,
+    "expandedPressureInputUtf16Bytes": 38522496,
+    "compilerGenerations": [
+      {
+        "limits": {
+          "maxJobs": 64,
+          "maxSourceBytes": 16777216
+        },
+        "jobs": 0,
+        "sourceBytes": 0,
+        "peakJobs": 64,
+        "peakSourceBytes": 8012,
+        "generations": 2
+      },
+      {
+        "limits": {
+          "maxJobs": 64,
+          "maxSourceBytes": 16777216
+        },
+        "jobs": 0,
+        "sourceBytes": 0,
+        "peakJobs": 0,
+        "peakSourceBytes": 0,
+        "generations": 0
+      },
+      {
+        "limits": {
+          "maxJobs": 64,
+          "maxSourceBytes": 16777216
+        },
+        "jobs": 0,
+        "sourceBytes": 0,
+        "peakJobs": 64,
+        "peakSourceBytes": 8012,
+        "generations": 2
+      }
+    ],
+    "allowedOversizedNativeOriginalBytes": 17825835,
+    "literalTemplateOriginalsVerified": 66,
+    "scope": "Complete ordinary compiled cold/warm/revision graphs under the exact actual production dependency profile: frozen source vendors versus installed package; 20 grammar profiles, Cargo TOML and OpenAPI YAML, 66 literal-script templates, default 64-job compiler rotation, an allowed 17 MiB Python original and 32 accepted Astro scripts over the virtual text memo allowance. All semantic/provenance/metadata fields retained; only run UUID/time replaced.",
+    "retainedFixture": "/dev/shm/codiluce-literal-script-release/normal-package-temporary/codiluce-owned-script-generation-parity-SQxCp3",
+    "originalFiles": 171,
+    "normalizations": [],
+    "volatileFields": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "cacheWarmReplayObserved": true,
+    "graphs": [
+      {
+        "mode": "cold",
+        "bytes": 1304793,
+        "sha256": "258067b0f183333f425fc170d5a3178e38f8b141b3a806403b60ad82407a11e1",
+        "entities": 803,
+        "relations": 1057,
+        "diagnostics": 26
+      },
+      {
+        "mode": "warm",
+        "bytes": 1304793,
+        "sha256": "258067b0f183333f425fc170d5a3178e38f8b141b3a806403b60ad82407a11e1",
+        "entities": 803,
+        "relations": 1057,
+        "diagnostics": 26
+      },
+      {
+        "mode": "revision",
+        "bytes": 1304214,
+        "sha256": "bc078ea42f3e66f766867bcfbbbd06b0256972f4259d1f12f8933e1571a386c9",
+        "entities": 803,
+        "relations": 1057,
+        "diagnostics": 23
+      }
+    ],
+    "targetExecution": false
+  },
+  "sourceQualificationReference": {
+    "receipt": "literal-script-generation-validation.json",
+    "receiptSha256": "9e2b666c36fc1d4492468d29c6ce3b0fa5b94e1de80cb255a2a5fa32d980e0f1",
+    "sourceCommit": "e0c2610",
+    "fullTests": 1727,
+    "targetedTests": 41,
+    "fullSuiteRepeatedForReleaseOnlyHarnessChange": false,
+    "scope": "Previous committed source/compiled/build qualification for unchanged 1,927 source/build runtime inputs. Current release phase adds the repeatable installed gate, all package module comparisons and the complete actual dependency-profile graph comparison; prior tests are not relabeled as newly executed."
+  },
+  "sourceArchive": {
+    "schema": 1,
+    "passed": true,
+    "seconds": 38.548280000686646,
+    "archive": "/dev/shm/codiluce-script-generations-final/literal-script-generations-source-build-and-evidence.tar.gz",
+    "sha256": "a70719e9c8570e3613e19bd0a459dcb099df4c8307ca7cd92306f2468ba57f6e",
+    "bytes": 118816827,
+    "verifiedRegularMembers": 8393,
+    "manifestSha256": "f5741bc3ea0c5194c472366ae723faf8054e2f91b12975346df4b4f3a1a34c0d",
+    "runtimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+    "initialRuntimeSha256": "558ae7b837fd88504990169b1c15cf2cf955e85e6faf90d6be7bb278fcfe77a7",
+    "storage": "Owned RAM-backed tmpfs; durable retention requires additional capacity",
+    "normalInstalledPackageForNewRuntimeQualified": false,
+    "newFull195OriginalRevisionHistoryQualified": false,
+    "newRelativeHistoryTimeAndProcessTreeRssQualified": false,
+    "nativeWindowsMacOSQualified": false,
+    "fullGoalFinished": false,
+    "initialNullableBudgetObservationRetained": true,
+    "originalOrFailedArtifactsDeleted": false
+  },
+  "executionEvidence": [
+    {
+      "command": "node --check scripts/test-package.mjs",
+      "actualExitCode": 0,
+      "unifiedExecChunk": "50ed7e"
+    },
+    {
+      "command": "node --experimental-sqlite installed-graph-parity/compare-installed-profile.mjs",
+      "actualExitCode": 0,
+      "unifiedExecSession": 98541
+    },
+    {
+      "command": "python3 run-normal-package.py",
+      "actualExitCode": 0,
+      "unifiedExecSession": 90576
+    },
+    {
+      "command": "node scripts/generate-compatibility-docs.mjs --check",
+      "actualExitCode": 0,
+      "unifiedExecChunk": "09b780",
+      "languages": 24,
+      "frameworkFamilies": 24,
+      "grammars": 20,
+      "sourceFiles": 71,
+      "fingerprint": "b2ba2478a1cd32bbeeb7829ef05c3caeff028c81445a6e33f87cfed16156fe75"
+    },
+    {
+      "command": "python3 final-phase-check.py (corrected fixture filename)",
+      "actualExitCode": 0,
+      "unifiedExecSession": 70426
+    },
+    {
+      "command": "git diff --check",
+      "actualExitCode": 0,
+      "unifiedExecChunk": "4cca20"
+    }
+  ],
+  "targetExecution": false,
+  "targetInstallsBuildsConfigsHooksToolchainsExecuted": false,
+  "typescriptSourceLoaderInInstalledGate": false,
+  "installedDevelopmentDependencies": false,
+  "workerLifetimeCapsSeparateFromQueueFactsAstNativeAndPhysicalRss": true,
+  "originalInputLimitsOrActiveDeadlinesRelaxed": false,
+  "originalProductionHistoryReserveRelaxed": false,
+  "productionHistoryObservationRetried": false,
+  "newFull195OriginalRevisionHistoryQualified": false,
+  "newRelativeHistoryTimeAndProcessTreeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullGoalFinished": false,
+  "remainingScope": "Current complete original 195-revision histories and relative time/process-tree RSS; broader compiler, semantic, native and original-source accuracy; actual Windows/macOS release jobs.",
+  "storage": "Owned RAM-backed tmpfs; report links allow archive download while the machine remains live. Durable retention still requires additional capacity. No original or failed validation artifacts were deleted.",
+  "foreignFilesUnchanged": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  },
+  "completeRuntimeReleaseAndEvidenceArchive": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791863098.035473,
+    "seconds": 27.91016674041748,
+    "archive": "/dev/shm/codiluce-literal-script-release/literal-script-generations-runtime-release-and-evidence.tar.gz",
+    "sha256": "6776b304a1fccf3d69371bbd0aa2d011ddf392aa78de8b7559e85d53be55b63c",
+    "bytes": 84800918,
+    "verifiedRegularMembers": 6187,
+    "manifestSha256": "ac5d086be9c841eff45dcdfae39343c8dc6c10be8bcef2dde078d31ded961223",
+    "sourceAndBuildRuntimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+    "installedReleaseProfileSha256": "d6dd2f093ddcd61a6f35c12ca5d943cbfc00bc2d3fe968907d79429324351844",
+    "firstNormalPrepackAndProductionOnlyInstalledGatePassed": true,
+    "completeInstalledGraphParityPassed": true,
+    "newFull195OriginalRevisionHistoryQualified": false,
+    "newRelativeHistoryTimeAndProcessTreeRssQualified": false,
+    "nativeWindowsMacOSQualified": false,
+    "fullGoalFinished": false,
+    "storage": "Owned RAM-backed tmpfs; durable retention requires additional capacity",
+    "sourceBuildArchiveSeparatelyRetained": {
+      "schema": 1,
+      "passed": true,
+      "seconds": 38.548280000686646,
+      "archive": "/dev/shm/codiluce-script-generations-final/literal-script-generations-source-build-and-evidence.tar.gz",
+      "sha256": "a70719e9c8570e3613e19bd0a459dcb099df4c8307ca7cd92306f2468ba57f6e",
+      "bytes": 118816827,
+      "verifiedRegularMembers": 8393,
+      "manifestSha256": "f5741bc3ea0c5194c472366ae723faf8054e2f91b12975346df4b4f3a1a34c0d",
+      "runtimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+      "initialRuntimeSha256": "558ae7b837fd88504990169b1c15cf2cf955e85e6faf90d6be7bb278fcfe77a7",
+      "storage": "Owned RAM-backed tmpfs; durable retention requires additional capacity",
+      "normalInstalledPackageForNewRuntimeQualified": false,
+      "newFull195OriginalRevisionHistoryQualified": false,
+      "newRelativeHistoryTimeAndProcessTreeRssQualified": false,
+      "nativeWindowsMacOSQualified": false,
+      "fullGoalFinished": false,
+      "initialNullableBudgetObservationRetained": true,
+      "originalOrFailedArtifactsDeleted": false
+    },
+    "originalOrFailedArtifactsDeleted": false,
+    "reportSnapshotsPrecedeSelfReferentialArchiveAndHttpReceiptAppend": true
+  },
+  "reportSnapshotsPrecedeSelfReferentialArchiveAndHttpReceiptAppend": true,
+  "finalPhaseInputAndArchiveRecheck": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": "2026-10-13T03:50:50.008851+00:00",
+    "runtimeSha256": "dffbfe8bef112b0735600d44d50da4a7069b763193f47af0788bfbbbb42c4f72",
+    "runtimeInputsVerifiedInCurrentAndBothImmutableEngines": 1927,
+    "frozenReleaseInputsVerified": 663,
+    "normalPrepackMembersReverified": 372,
+    "compiledModulesReverifiedAcrossPackageCurrentAndBothSourceBuilds": 225,
+    "actualInstalledReleaseRegularFilesReverified": 1959,
+    "normalGateActualExitCode": 0,
+    "normalGateActualNpmAndDriverGone": true,
+    "temporaryConsumerCleaned": true,
+    "foreignFilesUnchanged": {
+      "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+      "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+      "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+      "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+      "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+    },
+    "httpReport": {
+      "passed": true,
+      "url": "http://127.0.0.1:39055/literal-script-generations-release.html",
+      "serverActualPid": 331943,
+      "serverUnifiedExecSession": 23631,
+      "htmlSha256": "38a8a579173fe73b4aca6092c83134f01976f7b1008b426087563e944f91a9d8",
+      "links": [
+        {
+          "href": "literal-script-generations-release.html",
+          "status": 200,
+          "fragmentVerified": false
+        },
+        {
+          "href": "literal-script-generation-release-validation.json",
+          "status": 200,
+          "fragmentVerified": false
+        },
+        {
+          "href": "literal-script-generations-normal-prepack-release.tgz",
+          "status": 200,
+          "fragmentVerified": false
+        },
+        {
+          "href": "literal-script-generations-runtime-release-and-evidence.tar.gz",
+          "status": 200,
+          "fragmentVerified": false
+        },
+        {
+          "href": "literal-script-generation-release-archive-validation.json",
+          "status": 200,
+          "fragmentVerified": false
+        },
+        {
+          "href": "literal-script-generations.html",
+          "status": 200,
+          "fragmentVerified": false
+        },
+        {
+          "href": "literal-script-generations-source-build-and-evidence.tar.gz",
+          "status": 200,
+          "fragmentVerified": false
+        },
+        {
+          "href": "language-framework-compatibility.html#literal-script-generations-release",
+          "status": 200,
+          "fragmentVerified": true
+        }
+      ],
+      "completeArchiveDownloads": [
+        {
+          "url": "http://127.0.0.1:39055/literal-script-generations-normal-prepack-release.tgz",
+          "bytes": 7225178,
+          "sha256": "88a8b24fec9c7fcda261749519c3e395e91752cc226240b645103a12e7553e01"
+        },
+        {
+          "url": "http://127.0.0.1:39055/literal-script-generations-runtime-release-and-evidence.tar.gz",
+          "bytes": 84800918,
+          "sha256": "6776b304a1fccf3d69371bbd0aa2d011ddf392aa78de8b7559e85d53be55b63c"
+        },
+        {
+          "url": "http://127.0.0.1:39055/literal-script-generations-source-build-and-evidence.tar.gz",
+          "bytes": 118816827,
+          "sha256": "a70719e9c8570e3613e19bd0a459dcb099df4c8307ca7cd92306f2468ba57f6e"
+        }
+      ],
+      "traversalAndNonReportPathsRefused": true,
+      "browserVisualInspectionPerformed": false,
+      "scope": "Exact report HTML and each phase link were read over HTTP against current local bytes; the roadmap fragment exists and all three complete archive downloads agree by byte count and SHA256. Receipt links were verified immediately before this self-referential HTTP receipt append."
+    },
+    "fullGoalFinished": false,
+    "actualExitCode": 0,
+    "unifiedExecSession": 70426
+  },
+  "httpReport": {
+    "passed": true,
+    "url": "http://127.0.0.1:39055/literal-script-generations-release.html",
+    "serverActualPid": 331943,
+    "serverUnifiedExecSession": 23631,
+    "htmlSha256": "38a8a579173fe73b4aca6092c83134f01976f7b1008b426087563e944f91a9d8",
+    "links": [
+      {
+        "href": "literal-script-generations-release.html",
+        "status": 200,
+        "fragmentVerified": false
+      },
+      {
+        "href": "literal-script-generation-release-validation.json",
+        "status": 200,
+        "fragmentVerified": false
+      },
+      {
+        "href": "literal-script-generations-normal-prepack-release.tgz",
+        "status": 200,
+        "fragmentVerified": false
+      },
+      {
+        "href": "literal-script-generations-runtime-release-and-evidence.tar.gz",
+        "status": 200,
+        "fragmentVerified": false
+      },
+      {
+        "href": "literal-script-generation-release-archive-validation.json",
+        "status": 200,
+        "fragmentVerified": false
+      },
+      {
+        "href": "literal-script-generations.html",
+        "status": 200,
+        "fragmentVerified": false
+      },
+      {
+        "href": "literal-script-generations-source-build-and-evidence.tar.gz",
+        "status": 200,
+        "fragmentVerified": false
+      },
+      {
+        "href": "language-framework-compatibility.html#literal-script-generations-release",
+        "status": 200,
+        "fragmentVerified": true
+      }
+    ],
+    "completeArchiveDownloads": [
+      {
+        "url": "http://127.0.0.1:39055/literal-script-generations-normal-prepack-release.tgz",
+        "bytes": 7225178,
+        "sha256": "88a8b24fec9c7fcda261749519c3e395e91752cc226240b645103a12e7553e01"
+      },
+      {
+        "url": "http://127.0.0.1:39055/literal-script-generations-runtime-release-and-evidence.tar.gz",
+        "bytes": 84800918,
+        "sha256": "6776b304a1fccf3d69371bbd0aa2d011ddf392aa78de8b7559e85d53be55b63c"
+      },
+      {
+        "url": "http://127.0.0.1:39055/literal-script-generations-source-build-and-evidence.tar.gz",
+        "bytes": 118816827,
+        "sha256": "a70719e9c8570e3613e19bd0a459dcb099df4c8307ca7cd92306f2468ba57f6e"
+      }
+    ],
+    "traversalAndNonReportPathsRefused": true,
+    "browserVisualInspectionPerformed": false,
+    "scope": "Exact report HTML and each phase link were read over HTTP against current local bytes; the roadmap fragment exists and all three complete archive downloads agree by byte count and SHA256. Receipt links were verified immediately before this self-referential HTTP receipt append."
+  },
+  "initialFinalAuditObservation": {
+    "schema": 1,
+    "passed": false,
+    "actualExitCode": 1,
+    "unifiedExecChunk": "16d088",
+    "command": "python3 final-phase-check.py",
+    "reason": "Final read-only audit referenced a nonexistent compiler-input-ownership-isolation.mjs filename. The actual committed and installed fixture is tests/fixtures/typescript-input-ownership.mjs.",
+    "productionPackageGateFailure": false,
+    "originalHelperRetained": "/dev/shm/codiluce-literal-script-release/final-phase-check-initial.py",
+    "originalHelperSha256": "dac129983c954c40965b702d36a9a7dbd7b351745b80ad299713151d806558db",
+    "correctedHelper": "/dev/shm/codiluce-literal-script-release/final-phase-check.py",
+    "correctedHelperSha256": "c1f45ea9a0498abcdcc7f591c3f2b4966a87f3f6e2d4bc82165f98fc3ae79b8c",
+    "correctionChangesProductionRuntime": false,
+    "normalPackageOrProductionHistoryObservationRetried": false
+  },
+  "postArchiveFinalAuditEvidenceScope": "The full runtime archive retains the current qualification reports as snapshots before archive/HTTP receipts and this final read-only audit. The committed release receipt separately retains the initial audit filename failure and corrected terminal pass. The original failed audit helper and actual HTTP server/check helpers remain in the owned RAM release directory; no normal package or production history observation was retried."
+}
