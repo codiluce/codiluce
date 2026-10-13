@@ -1,0 +1,303 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-13T00:00:48.609565+00:00",
+  "phase": "Worker-completed response timing local Linux release qualification",
+  "scope": "Full local source/compiled/production-only installed package and retained archive integrity pass. One received original BookStack graph/readback agrees; complete original-history observation is disk-stopped and unqualified.",
+  "implementationCommit": "75bd46c",
+  "runtimeSha256": "91f414f2359345c2fd67cec88abec56bcad255875e9d20014f038a5d7716e6b9",
+  "runtimeFilesVerified": 1924,
+  "engineWebTests": 1701,
+  "finalFailedTests": 0,
+  "skippedTests": 0,
+  "transportTests": 17,
+  "compiledOrdinaryNodeTests": 17,
+  "bothTypechecksPassed": true,
+  "deterministicDocumentationPassed": true,
+  "normalPrepackAndProductionOnlyInstalledPackagePassed": true,
+  "installedPackageTerminal": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791849504.917255,
+    "actualUnifiedExecSession": 9014,
+    "actualExitCode": 0,
+    "actualDriverPid": 3729059,
+    "actualNpmPid": 3729022,
+    "processesGone": true,
+    "log": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/response-installed-package-first.log",
+    "logSha256": "2ee1e3bfc219dc5de768dc65c9a3872b6b86989e5cd964368fa4fc7c9e944dbf",
+    "driverSha256": "57e67bbb499652ab5d3be252eb5c129a52d77f2c690b1f75aa619e32b1b32112",
+    "normalPrepack": true,
+    "productionOnlyInstalledDependencies": true,
+    "installedBusyParentMalformedFramesQueueCacheAndLifetimeChecksPassed": true,
+    "completeCliApiSourceFrameworkHistoryAssetIsolationSignalsNpmExecPassed": true,
+    "temporaryConsumerUsedOwnedTmpfs": true,
+    "targetExecution": false
+  },
+  "normalPrepackArchive": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791849072.4537134,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/parser-completed-responses-normal-prepack-release.tgz",
+    "source": "/dev/shm/codiluce-package-completed-responses/codiluce-package-c1RN6z/codiluce-0.1.1.tgz",
+    "sha256": "0a1a705a65ebe401044842b2708b63a664e8df41bddf86c58a2e13f6e7e7299a",
+    "bytes": 7222658,
+    "verifiedRegularMembers": 369,
+    "normalPrepackPassed": true,
+    "installedGatePendingAtRetention": true
+  },
+  "runtimeReleaseAndEvidenceArchive": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791849531.930146,
+    "seconds": 26.15837073326111,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/parser-completed-responses-runtime-release-and-evidence.tar.gz",
+    "sha256": "3ee48f65a03f2fb2cd307427a9252de37cbf27e1aadc209dde41310f07c49807",
+    "bytes": 88731267,
+    "verifiedRegularMembers": 5803,
+    "manifestSha256": "54c59834d143339127eefb5b8bdfe7946362627d035651074bf0261261cc8aa8",
+    "runtimeSha256": "91f414f2359345c2fd67cec88abec56bcad255875e9d20014f038a5d7716e6b9",
+    "normalPrepackAndInstalledPackagePassed": true,
+    "originalBookStackCanonicalGraphsVerified": 1,
+    "diskStoppedOriginalBookStackSnapshotsRetained": 1,
+    "fullSelectedBookStackRevisionGateQualified": false,
+    "independentRawColumnAuditPassed": true,
+    "full195RevisionEntrypointQualified": false,
+    "relativeHistoryTimeRssQualified": false,
+    "nativeWindowsMacOSQualified": false,
+    "fullGoalFinished": false
+  },
+  "originalGraphComparison": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791849129.3862827,
+    "scope": "One actually received original BookStack graph and durable readback agree; the two-revision observation stopped on unchanged disk reserve and remains incomplete",
+    "originalCommit": "c511f7d9356a73cb96e6ecd605736946dcfb6cbd",
+    "originalSnapshot": {
+      "seq": 2,
+      "id": "f62b0b80-5b37-402f-a225-7dd2cbbb4112"
+    },
+    "newSnapshot": {
+      "seq": 1,
+      "id": "fddd73c1-a85a-49f6-95d4-0522f8cb5b9f"
+    },
+    "canonicalGraphSha256": "4a3d0acfb7e8fc771b8aa9599d82b14fee6c913c78521fa217cbbae09981b6dd",
+    "canonicalGraphBytes": 74321860,
+    "counts": {
+      "entities": 11872,
+      "relations": 35864,
+      "diagnostics": 148
+    },
+    "originalTree": {
+      "commit": "c511f7d9356a73cb96e6ecd605736946dcfb6cbd",
+      "recordDigest": "a3afa6005b84e324b2d62701c23124eab280bb78bb664eadf9944a9260c3dd50",
+      "entries": 2533,
+      "bytes": 15990280,
+      "literalSymlinks": 0,
+      "symlinkTargetsFollowed": false
+    },
+    "graphInputs": {
+      "commit": "c511f7d9356a73cb96e6ecd605736946dcfb6cbd",
+      "fileEntities": 2478,
+      "hashedOriginalSources": 2427,
+      "originalSymlinksExcludedFromFileEntities": true
+    },
+    "normalization": [],
+    "volatileFields": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "addedDiagnostics": [],
+    "removedDiagnostics": [],
+    "changedDiagnostics": [],
+    "phpDeadlineDiagnostics": 0,
+    "originalDatabaseSha256": "6fc674d6f94a2a547f4603a73a3eab0c9e157fa6ce7351df00204b8cf39d45e9",
+    "newDatabaseSha256": "19ee0da1c8c0ee6466a06f9e181244aac5101e07b66ee31dbe5d3c3c7c41f171",
+    "fullTwoRevisionObservationPassed": false,
+    "newRuntimeFull195RevisionHistoryQualified": false,
+    "relativeHistoryTimeRssQualified": false,
+    "nativeWindowsMacOSQualified": false,
+    "unchangedObservationRetried": false,
+    "diskReserveRelaxed": false,
+    "stoppedReason": "Fresh history exceeded disk reserve"
+  },
+  "independentRawSevenTableIntegrityPassed": true,
+  "sourceJobDeadlineMs": 10000,
+  "sourceJobBudgetIncludes": [
+    "worker startup",
+    "input delivery",
+    "native parsing",
+    "extraction",
+    "response serialization"
+  ],
+  "lateWorkerCompletionsAccepted": false,
+  "completedPayloadParentIdleDeliveryAllowanceMs": 10000,
+  "sourceJobOrDeliveryMetadataStoredInGraphs": false,
+  "sourceConformance": {
+    "file": "docs/parser-completed-responses-conformance-validation.json",
+    "sha256": "e1ed79ae2665b743fc5d5cc597ca485c1ce6f009ab0afc898b3266ad8dae92c4"
+  },
+  "sourceReferences": [
+    {
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.12.0/src/node_process_methods.cc",
+      "review": "hrtime BigInt reads uv_hrtime without the process uptime offset"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.12.0/deps/uv/src/unix/linux.c",
+      "review": "Precise hrtime uses the host CLOCK_MONOTONIC"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.12.0/deps/uv/src/unix/darwin.c",
+      "review": "hrtime uses mach_continuous_time and the host timebase"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.12.0/deps/uv/src/win/util.c",
+      "review": "hrtime uses QueryPerformanceCounter and the shared frequency"
+    },
+    {
+      "url": "https://nodejs.org/download/release/v22.12.0/docs/api/perf_hooks.html#performanceeventlooputilizationutilization1-utilization2",
+      "review": "Parent event-loop idle milliseconds distinguish idle delivery wait from synchronous analysis; source review is not native OS execution"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/nodejs/node/v22.12.0/lib/internal/child_process.js",
+      "review": "Queued message emission uses channel pending-message state; terminate rather than manually disconnect inside the callback"
+    }
+  ],
+  "storage": {
+    "availableBytesAtReceipt": 843726848,
+    "originalHistoryReserveBytes": 1073741824,
+    "originalHistoryReserveRelaxed": false,
+    "regenerableCacheReclamation": {
+      "schema": 1,
+      "passed": true,
+      "completedAt": 1791848806.963773,
+      "beforeAvailableBytes": 938401792,
+      "afterAvailableBytes": 1195044864,
+      "nextBuildCaches": [
+        {
+          "directory": "/var/www/html/codiluce/.codiluce/layout-refresh-candidate/web/.next",
+          "scope": "Regenerable completed own Next build cache/output; compiled web/out, release archives and evidence remain untouched",
+          "regularFiles": 209,
+          "bytes": 47494793
+        },
+        {
+          "directory": "/var/www/html/codiluce/.codiluce/validation-parser-active-deadlines/engine/web/.next",
+          "scope": "Regenerable completed own Next build cache/output; compiled web/out, release archives and evidence remain untouched",
+          "regularFiles": 201,
+          "bytes": 47479127
+        },
+        {
+          "directory": "/var/www/html/codiluce/.codiluce/validation-typescript-source-cache/engine/web/.next",
+          "scope": "Regenerable completed own Next build cache/output; compiled web/out, release archives and evidence remain untouched",
+          "regularFiles": 201,
+          "bytes": 47479063
+        },
+        {
+          "directory": "/var/www/html/codiluce/.codiluce/validation-typescript-component-lifetimes/engine/web/.next",
+          "scope": "Regenerable completed own Next build cache/output; compiled web/out, release archives and evidence remain untouched",
+          "regularFiles": 201,
+          "bytes": 47478764
+        }
+      ],
+      "verifiedOwnTranspilationCacheFilesRemoved": 2553,
+      "verifiedOwnTranspilationCacheBytes": 58959927,
+      "sourceRuntimeAndQualifiedArchivesRemoved": false,
+      "originalOrFailedDatabaseOrGraphRemoved": false,
+      "diskReserveRelaxed": false
+    },
+    "packageTemporaryStorage": {
+      "schema": 1,
+      "scope": "Only regenerable temporary package consumer and tarball use owned tmpfs; release engine and retained archives remain in project; production history disk gate unchanged",
+      "directory": "/dev/shm/codiluce-package-completed-responses",
+      "availableBytes": 16543625216,
+      "startedAt": 1791848927.3366876,
+      "originalHistoryDiskReserveRelaxed": false,
+      "targetExecution": false
+    },
+    "originalOrFailedEvidenceDeleted": false,
+    "additionalCapacityRequested": true
+  },
+  "oldFailedObservationsRetried": false,
+  "fullSelectedBookStackRevisionGateQualified": false,
+  "newRuntimeFull195RevisionHistoryQualified": false,
+  "newRuntimeRelativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "broaderCompilerConsumerWasmRssBudgetQualified": false,
+  "fullGoalFinished": false,
+  "foreignFilesUnchanged": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  },
+  "artifacts": [
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/original-bookstack-two/receipt.json",
+      "sha256": "21609fb204a6c4cce5f8eaed9b90fbc0c3d88ae4d4f67053990e0da3b516d718"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/original-bookstack-two/bookstack/child-receipt.json",
+      "sha256": "fea99e15855af3cb338de56295f7e3ce509478ff78990b0eb101d11726d34bea"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/disk-stopped-original-graph-comparison.json",
+      "sha256": "7b5887b1bc8aca5cf1e256dbe1ba0d5df8f31f7bc9734dd176096b205d76cde4"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/disk-stopped-regression-node-columns.json",
+      "sha256": "47b5acea2bef5274ebad899c107cc8b94c3a3ada00fd2223769d8917a618366d"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/disk-stopped-regression-independent-columns.json",
+      "sha256": "4a2ce9b7676f6f2c9823b4786c303836e5ece97553371f0ca77d87f21125b9bd"
+    },
+    {
+      "file": "/var/www/html/codiluce/.codiluce/validation-parser-completed-responses/regenerable-cache-reclamation.json",
+      "sha256": "b26e046ac8775742dcc3b88d3dae92b253aae7453f34371d56e29092c54b719f"
+    }
+  ],
+  "reportSha256": "887863d547927f37dce6d88d623cb44f14c748f02f4c82cd5962f16ae8595618",
+  "browserReview": {
+    "url": "http://127.0.0.1:37862/parser-completed-responses-release.html",
+    "desktop": {
+      "viewport": 1920,
+      "documentWidth": 1905,
+      "scrollWidth": 1905
+    },
+    "mobile": {
+      "viewport": 390,
+      "documentWidth": 375,
+      "scrollWidth": 375
+    },
+    "warningsAndErrors": 0,
+    "viewportRestored": true,
+    "localReportAndArtifactLinksHttp200": [
+      {
+        "url": "http://127.0.0.1:37862/parser-completed-responses-release.html",
+        "status": 200,
+        "bytes": "5322"
+      },
+      {
+        "url": "http://127.0.0.1:37862/parser-completed-responses-release-validation.json",
+        "status": 200,
+        "bytes": "12071"
+      },
+      {
+        "url": "http://127.0.0.1:37862/parser-completed-responses-normal-prepack-release.tgz",
+        "status": 200,
+        "bytes": "7222658"
+      },
+      {
+        "url": "http://127.0.0.1:37862/parser-completed-responses-runtime-release-and-evidence.tar.gz",
+        "status": 200,
+        "bytes": "88731267"
+      },
+      {
+        "url": "http://127.0.0.1:37845/language-framework-compatibility.html",
+        "status": 200,
+        "bytes": "384353"
+      }
+    ]
+  }
+}
