@@ -38,6 +38,7 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p web",
     "build:cli": "node scripts/build-cli.mjs",
     "build:script-worker": "node scripts/build-script-worker.mjs",
+    "build:framework-worker": "node scripts/build-framework-worker.mjs",
     "grammars:sync": "node scripts/sync-grammars.mjs",
     "build": "npm run build:cli && npm run build:web",
     "prepack": "npm run build",

@@ -333,6 +333,11 @@ try {
   console.log('Installing with production dependencies and install scripts disabled…');
   await npm(['install', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund', '--package-lock=false', tarball], consumer);
   const installed = path.join(consumer, 'node_modules', ...manifest.name.split('/'));
+  for(const file of ['dist/src/analysis/embedded/framework-parser.js','dist/src/analysis/embedded/native-framework-worker.mjs'])assert.ok(files.includes(file),`tarball is missing ${file}`);
+  const frameworkIsolation=path.join(consumer,'check-framework-parser-isolation.mjs'),frameworkParentLoader=path.join(consumer,'framework-parent-loader.mjs');
+  await cp(path.join(root,'tests/fixtures/framework-parser-isolation.mjs'),frameworkIsolation);await cp(path.join(root,'tests/fixtures/framework-parent-loader.mjs'),frameworkParentLoader);
+  console.log('Checking installed optional framework parser isolation, generation retirement and original-source indexing…');
+  await run(process.execPath,['--experimental-sqlite','--loader',pathToFileURL(frameworkParentLoader).href,frameworkIsolation,pathToFileURL(path.join(installed,'dist/src/')).href],consumer);
   assert.ok(files.includes('dist/src/analysis/rust-evidence.js'));({rustOutcomeEvidence:decodeRustEvidence}=await import(pathToFileURL(path.join(installed,'dist/src/analysis/rust-evidence.js')).href));
   const residencyCheck=path.join(consumer,'check-php-residency.mjs');
   await writeFile(residencyCheck,`import assert from 'node:assert/strict';\nimport {existsSync} from 'node:fs';\nimport {PhpResidency,PhpInputAdmission} from './node_modules/${manifest.name}/dist/src/analysis/php/residency.js';\nconst store=new PhpResidency({maxResidentBytes:1,maxResidentUnits:1,maxSpoolBytes:4096,maxSpoolUnits:4});\ntry{store.put('original',{content:'é😀\\r\\n',ast:{kind:'program'}},8);assert.deepEqual(store.get('original'),{content:'é😀\\r\\n',ast:{kind:'program'}});assert.ok(store.stats().reloads>0);const directory=store.directory();store.clear();assert.ok(!existsSync(directory));const gate=new PhpInputAdmission({maxJobs:1,maxSourceBytes:1});const release=await gate.acquire(2);assert.equal(gate.stats().oversized,1);release();gate.close();}finally{store.clear();}\n`);

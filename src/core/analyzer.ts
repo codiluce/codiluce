@@ -7,6 +7,7 @@ import type { TypeScriptServices } from '../analysis/languages/typescript-servic
 import type { StructureFacts } from '../analysis/facts.js';
 import type { PythonResolver } from '../analysis/resolution/python.js';
 import type { EmbeddedSources } from '../analysis/embedded/index.js';
+import type {TemplateFrameworkParser} from '../analysis/embedded/framework-parser.js';
 import type { EmbeddedRegion } from '../analysis/embedded/source.js';
 import type { GoResolver } from '../analysis/resolution/go.js';
 import type { GoSymbols } from '../analysis/languages/go-symbols.js';
@@ -38,6 +39,7 @@ export interface AnalysisContext {
   /** Persistent cache of analyzer work (working-tree indexing with a state directory). */
   cache?: AnalysisCache;
   sources?: IndexedSources;
+  templateFrameworks?:TemplateFrameworkParser;
   /** Optional dependency recorder for an atomic analyzer cache unit. */
   sourceReads?: Set<string>;
   projects?: ProjectCatalog;

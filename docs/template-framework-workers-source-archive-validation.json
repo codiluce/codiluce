@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": 1791854931.3819199,
+  "seconds": 16.543594360351562,
+  "archive": "/var/www/html/codiluce/.codiluce/validation-template-framework-workers/template-framework-workers-source-compiled-portable-loader-and-evidence.tar.gz",
+  "sha256": "b4673ef964d25698ca014b5cc07902e9eb3591bd127aa9951ac6d437f1e69ee3",
+  "bytes": 34726625,
+  "verifiedRegularMembers": 2357,
+  "manifestSha256": "130f68509d3e339d520e0e47e955411b237a19e7f1549455e9f85d7019cd8238",
+  "runtimeSha256": "e2fea4dbc2537b3c7248167d26e8502fc663a31b02a4df689d827170e5997c81",
+  "normalInstalledPackageForNewRuntimeQualified": false,
+  "fullGoalFinished": false
+}

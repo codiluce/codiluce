@@ -5,7 +5,7 @@ import { deserialize } from 'node:v8';
 import type { StructureFacts } from '../facts.js';
 
 const WORKER = fileURLToPath(new URL('./native-worker.mjs', import.meta.url));
-export class StructureParser {
+export class StructureParser<Facts = StructureFacts> {
   private child?: ChildProcess;
   private readonly retiring=new Set<ChildProcess>();
   private sequence = 0;
@@ -13,11 +13,11 @@ export class StructureParser {
   private generation = 0;
   private closing = 0;
   constructor(private readonly timeoutMs = 10_000, private readonly worker = WORKER, private readonly execArguments?:string[], private readonly resetOnReportedError=true) {}
-  async parse(language: string, content: string, options: {objectiveCpp?:boolean;erbHost?:'html'|'javascript'|'css'|'unknown';razorKind?:'component'|'view';liquidHost?:'html'|'javascript'|'css'|'unknown';liquidEngine?:'shopify'|'unknown';liquidBodyTags?:boolean;nativeOnly?:boolean} = {}): Promise<StructureFacts> {
+  async parse(language: string, content: string, options: {objectiveCpp?:boolean;erbHost?:'html'|'javascript'|'css'|'unknown';razorKind?:'component'|'view';liquidHost?:'html'|'javascript'|'css'|'unknown';liquidEngine?:'shopify'|'unknown';liquidBodyTags?:boolean;nativeOnly?:boolean} = {}): Promise<Facts> {
     return this.request(language,{language,content,...options});
   }
   /** Shared cancellable transport for source-only parser services. */
-  protected request(language:string,payload:Record<string,unknown>):Promise<StructureFacts> {
+  protected request(language:string,payload:Record<string,unknown>):Promise<Facts> {
     if (this.closing) return Promise.reject(Error('Parser worker is retiring'));
     const generation = this.generation;
     const result = this.pending.then(async () => {
@@ -32,7 +32,7 @@ export class StructureParser {
     this.pending = result.then(() => {}, () => {});
     return result;
   }
-  private dispatch(language:string,payload:Record<string,unknown>):Promise<StructureFacts> {
+  private dispatch(language:string,payload:Record<string,unknown>):Promise<Facts> {
     const child = this.start(), id = ++this.sequence;
     const started = process.hrtime.bigint(), deadline = started + BigInt(Math.ceil(this.timeoutMs * 1_000_000));
     return new Promise((resolve, reject) => {
@@ -73,7 +73,7 @@ export class StructureParser {
         if (result.type !== 'result' || completedBytes === undefined || !Buffer.isBuffer(result.payload) || result.payload.byteLength !== completedBytes) {
           failure(Error('Invalid parser response')); return;
         }
-        let decoded: {facts?: StructureFacts; error?: string};
+        let decoded: {facts?: Facts; error?: string};
         try { decoded = deserialize(result.payload); if (!decoded || typeof decoded !== 'object') throw Error('Invalid parser response'); }
         catch { failure(Error('Invalid parser response')); return; }
         settled = true;

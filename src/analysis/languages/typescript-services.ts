@@ -152,7 +152,7 @@ export function createTypeScriptServices(context: AnalysisContext): TypeScriptSe
  * the services can rebuild them lazily from indexed inputs and graph ranges. */
 export const typescriptServicesRelease: Analyzer = {
   name: 'typescript-services-release', version: ANALYZER_VERSION,
-  async analyze(context): Promise<void> { context.typescript?.releasePrograms(); },
+  async analyze(context): Promise<void> { try{context.typescript?.releasePrograms();}finally{await context.templateFrameworks?.closeAndWait();} },
 };
 
 /** A weak dependency component is the smallest safe cache unit when graph

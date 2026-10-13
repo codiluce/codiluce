@@ -14,6 +14,7 @@ import { TypeScriptStatic, profile } from './typescript-static.js';
 import { browserInvocations } from './browser-invocations.js';
 import { svelteKit } from './sveltekit.js';
 import { kitInvocations } from './sveltekit-invocations.js';
+import {TemplateFrameworkParser} from '../embedded/framework-parser.js';
 
 type Bound = { node: ts.Expression; frame: TypeScriptPackFile };
 type Js = { type: string; start: number; end: number; [key: string]: unknown };
@@ -37,8 +38,8 @@ export const sveltePack: TypeScriptFrameworkPack = {
     const reader = new TypeScriptStatic(scope, 'svelte', ['svelte', '@sveltejs/kit', '@sveltejs/kit/vite']);
     const files = scope.inputs?.filter(file => file.language === 'svelte') ?? [];
     if (files.length) {
-      const { parse } = await import('svelte/compiler');
-      for (const file of files) new SvelteComponent(scope, reader, file, parse).run();
+      const parser=scope.context.templateFrameworks??=new TemplateFrameworkParser();
+      for (const file of files) await new SvelteComponent(scope, reader, file, parser).run();
     }
     svelteKit(scope, reader);
   },
@@ -52,10 +53,10 @@ class SvelteComponent {
   private readonly occurrences = new Map<string, number>();
   private source!: SourceText; private text = ''; private component!: Entity;
   private major: 4 | 5 = 5; private steps = 0;
-  constructor(private readonly scope: TypeScriptPackScope, private readonly reader: TypeScriptStatic, private readonly file: ScannedFile, private readonly parse: typeof import('svelte/compiler').parse) { this.frames = scope.files.filter(frame => frame.file.path === file.path); }
+  constructor(private readonly scope: TypeScriptPackScope, private readonly reader: TypeScriptStatic, private readonly file: ScannedFile, private readonly parser:TemplateFrameworkParser) { this.frames = scope.files.filter(frame => frame.file.path === file.path); }
   private fact(start: number, end: number, reason: string): Evidence { const range = this.source.range(start, end); return { ...evidence('framework', 'svelte', this.file.path, range.startLine, reason), endLine: range.endLine }; }
   private gap(start: number, reason: string, code = 'svelte-template-gap'): void { this.scope.context.graph.diagnose({ analyzer: 'svelte', severity: 'warning', code, file: this.file.path, line: this.source.position(start).line, entityId: this.file.id, reason }); }
-  run(): void {
+  async run(): Promise<void> {
     const { context } = this.scope, file = context.graph.entities.get(this.file.id)!, facts = context.embedded?.facts.get(this.file.path), analysis = fileAnalysis(file.metadata.analysis);
     if (typeof file.metadata.component !== 'string' || !facts) return;
     this.component = context.graph.entities.get(file.metadata.component)!;
@@ -65,7 +66,7 @@ class SvelteComponent {
     this.major = profile(version, 4) ? 4 : 5;
     if (facts.issues.some(issue => issue.fatal) || analysis?.features.structure.status === 'failed' || facts.regions.some(region => !region.supported)) { if (analysis) analysis.features.framework = { status: 'failed', reason: 'Malformed/unavailable script input prevents Svelte qualification' }; return; }
     let root: AST.Root;
-    try { root = this.parse(this.text, { modern: true, filename: this.file.path }); }
+    try { root = await this.parser.svelte(this.text,this.file.path); }
     catch (error) {
       const failure = error as { message?: string; position?: number[]; start?: { character?: number } };
       this.gap(failure.position?.[0] ?? failure.start?.character ?? 0, failure.message ?? String(error), 'svelte-parse-error');

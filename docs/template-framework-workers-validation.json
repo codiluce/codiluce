@@ -1,0 +1,402 @@
+{
+  "schema": 1,
+  "passed": true,
+  "phase": "Svelte/Astro optional parser ownership and generation lifetime source/compiled qualification",
+  "completedAt": "2026-10-13T01:28:34.364727+00:00",
+  "parentCommit": "0e44416",
+  "parentRuntimeSha256": "6df4377933624de1e83e6d44fe0fc46fdd387b19527488fd9ced5b08b7ecb220",
+  "runtimeSha256": "e2fea4dbc2537b3c7248167d26e8502fc663a31b02a4df689d827170e5997c81",
+  "runtimeInputsVerified": 1927,
+  "originalInputGenerationLimits": {
+    "maxJobs": 64,
+    "maxCumulativeUtf8Bytes": 16777216,
+    "individuallyAllowedOversizedOriginalParsesAloneAndRetires": true,
+    "activeParseSerializationDeadlineMs": 10000,
+    "workerV8OldSpaceMiB": 256,
+    "physicalRssCap": false
+  },
+  "mainOptionalParserResolutionForbiddenDuringActualIndex": true,
+  "completeEnumerableParserDataPreserved": true,
+  "parserPrototypeMethodsUsed": false,
+  "exactReportedNativeErrorMessageDisplayPositionsPreserved": true,
+  "oldWorkerExitRequiredBeforeReplacement": true,
+  "successFailureDeadlineAndExplicitCloseReaped": true,
+  "genericTransportJavaScriptUnchanged": true,
+  "fullEngineWebTests": 1719,
+  "fullTestDurationMs": 163662.593904,
+  "newLifecycleIsolationBundleCases": 10,
+  "ordinaryCompiledNodeCases": 10,
+  "existingFrameworkIntegrationCases": 70,
+  "failedTests": 0,
+  "skippedTests": 0,
+  "bothTypechecksPassed": true,
+  "deterministicDocumentationPassed": true,
+  "completePriorGraphs": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": "2026-10-13T01:18:59.653Z",
+    "priorRuntime": "6df4377933624de1e83e6d44fe0fc46fdd387b19527488fd9ced5b08b7ecb220",
+    "priorRuntimeInputsVerified": 1924,
+    "scope": "Complete cold/warm/revision original graphs including malformed components, unsupported browser input, UTF-16 coordinates, native AST special values and more than 64 Svelte components",
+    "retainedFixture": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-framework-worker-parity-GL3v01",
+    "originalFiles": 81,
+    "normalizations": [],
+    "volatileFields": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "cacheWarmReplayObserved": true,
+    "graphs": [
+      {
+        "mode": "cold",
+        "bytes": 591328,
+        "sha256": "c9ed282eee1c818caa4b9d8edf28729dffb3d96c11b4fa69325262c0eb3034be",
+        "entities": 380,
+        "relations": 602,
+        "diagnostics": 10
+      },
+      {
+        "mode": "warm",
+        "bytes": 591328,
+        "sha256": "c9ed282eee1c818caa4b9d8edf28729dffb3d96c11b4fa69325262c0eb3034be",
+        "entities": 380,
+        "relations": 602,
+        "diagnostics": 10
+      },
+      {
+        "mode": "revision",
+        "bytes": 590749,
+        "sha256": "c4677d17597bab66b9cccb039c524ae9bdac076b9c2a3f43208591d7d7454457",
+        "entities": 380,
+        "relations": 602,
+        "diagnostics": 7
+      }
+    ],
+    "targetExecution": false
+  },
+  "actualTerminals": [
+    {
+      "session": 86928,
+      "exitCode": 0,
+      "scope": "initial engine typecheck"
+    },
+    {
+      "session": 26460,
+      "exitCode": 0,
+      "scope": "70 framework integration tests"
+    },
+    {
+      "session": 53761,
+      "exitCode": 0,
+      "scope": "two added source isolation/bundle checks"
+    },
+    {
+      "session": 20367,
+      "exitCode": 0,
+      "scope": "complete graph parity"
+    },
+    {
+      "session": 80271,
+      "exitCode": 0,
+      "scope": "web typecheck"
+    },
+    {
+      "session": 5728,
+      "exitCode": 0,
+      "scope": "final engine typecheck"
+    },
+    {
+      "session": 62999,
+      "exitCode": 0,
+      "scope": "compiled build"
+    },
+    {
+      "session": 88746,
+      "exitCode": 0,
+      "scope": "ten ordinary compiled Node checks"
+    },
+    {
+      "session": 71563,
+      "exitCode": 0,
+      "scope": "full engine/web tests"
+    },
+    {
+      "session": 31017,
+      "exitCode": 0,
+      "scope": "complete vendor byte/mode audit before package observation"
+    }
+  ],
+  "prePackageVendorCopyFilterCorrectionRetained": true,
+  "normalInstalledPackageForNewRuntimeQualified": false,
+  "newRuntimeFull195RevisionHistoryQualified": false,
+  "newRuntimeRelativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "broaderCompilerConsumerNativePhysicalRssBudgetQualified": false,
+  "oldFailedProductionObservationsRetried": false,
+  "originalHistoryReserveRelaxed": false,
+  "targetExecution": false,
+  "fullGoalFinished": false,
+  "artifacts": [
+    {
+      "file": ".codiluce/validation-template-framework-workers/archive-source-compiled-portable-loader.py",
+      "sha256": "91469faf2cbf6a48c433dea73646ef9853def4cd7114f951b4473d8922681b73",
+      "bytes": 4713
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/archive-source-compiled.py",
+      "sha256": "a1e1381d21ec82381253a1fbf5032bb77e511e9cef6d7a1d7b02d522ec5850c7",
+      "bytes": 4591
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/audit-and-complete-vendors.py",
+      "sha256": "85175ea1bef6132a1daeb28c7640be6821cba5df6927c8472513cfa677a1920c",
+      "bytes": 2097
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/candidate-cold-graph.json",
+      "sha256": "498bfca2c3cb1bf64a0e4d85a0f3d189a7df97f98ec1d6baf15b33b44def49c9",
+      "bytes": 591329
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/candidate-revision-graph.json",
+      "sha256": "a36016e9f688ccfc61594d3d482fa0647c6549dbeffdad516680b1d5a092cf08",
+      "bytes": 590750
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/candidate-warm-graph.json",
+      "sha256": "498bfca2c3cb1bf64a0e4d85a0f3d189a7df97f98ec1d6baf15b33b44def49c9",
+      "bytes": 591329
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/compare-prior-graphs.mjs",
+      "sha256": "fd9e11392508da2574359e4f3b3683f184124094963de2e81c63e6c8d7f63417",
+      "bytes": 4754
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/compiled-build-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/compiled-conformance-first.log",
+      "sha256": "14e6e2e996226a3c3948a1636d18485a900ae51af087222c2a084aafda0740fa",
+      "bytes": 3489
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/compiled-conformance-inputs.json",
+      "sha256": "62330c95375c6060db58cc9f2386b0cff1c761afe966e70911567851b979b557",
+      "bytes": 903
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/compiled-framework-conformance.test.mjs",
+      "sha256": "30054a6d1b6155c92fc0c41d7f81a05f95dca2fb5cf9933fdb62415c75918d1c",
+      "bytes": 11356
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/compiled-preparation-first.log",
+      "sha256": "a26fe7fad002b151ff5b2b6e8e654b734d3f0bb6ad06dc27e3d655b7fd8ba31f",
+      "bytes": 767
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/complete-prior-graph-comparison.json",
+      "sha256": "d12809b3b8b61ee6defc330f22093ebd93e6abf67ee89008f0217e7a2bc48ddb",
+      "bytes": 1350
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/complete-prior-graphs-first.log",
+      "sha256": "6d6606c9e4ba18c87a7d23aa35573079a047f9e123e22836c87ee818c1e07467",
+      "bytes": 1107
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/docs-final-check.log",
+      "sha256": "94118ecfb6f185f3846096d40980640742af521ccaeaf099493a14414f72375e",
+      "bytes": 165
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/docs-regeneration.log",
+      "sha256": "fb737d022796258d788ef1aec66520291e394fa8276ddbd0102f5af6b9a104d0",
+      "bytes": 166
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/engine-identity.json",
+      "sha256": "9aba58b6a6a447a2cdf9fc6f89ab792dcb508de0da6d382ed0e1622a9a191d06",
+      "bytes": 324043
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/engine-preparation-first.log",
+      "sha256": "2183df05dc5f51f85903a43296ec4ec55913b2e6c6fd68d406ea04b55a43bc5b",
+      "bytes": 1436
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/engine-preparation.json",
+      "sha256": "220470b5226e74774a7b7a675d60512b86db7ff2eb54876c5e3b642e8f65947e",
+      "bytes": 1542
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/finalize-source-conformance.py",
+      "sha256": "f0449dd2ff4a62e525c4b0b3dad2a60c7da280513039c13501e48953607646df",
+      "bytes": 5082
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/full-engine-web-first.log",
+      "sha256": "4f4cc2a2f24ed86bdea34d2edb363fe44b47b4a7dd0cd3f3917722abaccc2ba8",
+      "bytes": 425711
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/full-vendor-copy-audit-first.log",
+      "sha256": "06300713b262a47419a42e9e54945e546cfe128b7dd6711ba13b3c7a5b819a2d",
+      "bytes": 91
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/full-vendor-copy-audit.json",
+      "sha256": "22312b50c3bd27fc765de91a52b80894f69badd3cd9c78bea571b074c8297c0b",
+      "bytes": 3710342
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/integration-first.log",
+      "sha256": "0fcd0f5652d1ec98ea7fe03510ca54731fd7ee55e9551560cca50b5a54d94da9",
+      "bytes": 18465
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/isolation-portable-compiled.log",
+      "sha256": "e2d27d21ea9c86bd633d8e8bbc6b3254261e27208b2946cb4d6934f7e972df15",
+      "bytes": 756
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/isolation-portable-loader.log",
+      "sha256": "4574ab662850ec47a7f6d3e9a9fbdd1269ba1c1362edd7185eb04b01b6747cf6",
+      "bytes": 830
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/isolation-source-first.log",
+      "sha256": "68422228d9dc5d2cec59b3a2c1b19ef26b66ec173f1d70418da277e1595094ab",
+      "bytes": 1098
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/lifetimes-first.log",
+      "sha256": "b8f1a2c512e68969e823fe7fbdf348ec370fd79a2fc1ce668d6ed9158e383289",
+      "bytes": 2464
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/observe-serialization.mjs",
+      "sha256": "fbc5fe26356804a2f8cfcd090a9e7bc91fb2a9ae0843a7c073cb9dedd765c87d",
+      "bytes": 2920
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/original-source-inventory.json",
+      "sha256": "71cb5a71ef9e9b2777c8c47a6428e5339b5623b1150d3e24803ea3edde6fc416",
+      "bytes": 12729
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/parser-data-serialization-observation.json",
+      "sha256": "7d93f843e7cd518ca7c1220c1ab0b0a349df930d4246341dc32d094588840cb8",
+      "bytes": 23496
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/prepare-compiled-conformance.mjs",
+      "sha256": "56f5de0df4c939fc58f112de5fe4d1a90b168beb5dbc4822a132b948f4baa716",
+      "bytes": 2285
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/prepare-package-engine.py",
+      "sha256": "b52ca937b62d70205bb91b0b6204c5ee3206eef121c139a569013bfd89e09064",
+      "bytes": 4502
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/prior-cold-graph.json",
+      "sha256": "498bfca2c3cb1bf64a0e4d85a0f3d189a7df97f98ec1d6baf15b33b44def49c9",
+      "bytes": 591329
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/prior-revision-graph.json",
+      "sha256": "a36016e9f688ccfc61594d3d482fa0647c6549dbeffdad516680b1d5a092cf08",
+      "bytes": 590750
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/prior-warm-graph.json",
+      "sha256": "498bfca2c3cb1bf64a0e4d85a0f3d189a7df97f98ec1d6baf15b33b44def49c9",
+      "bytes": 591329
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/serialization-first.log",
+      "sha256": "f9edb461cdf7e2775c4ee8e95354ea1d77e93da81bb6d6ecfb12cca05ba5c772",
+      "bytes": 14711
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/source-archive-first.log",
+      "sha256": "b36bd4090afb803a5500c96354925274787655aa39d44074fb3db4301c1492dd",
+      "bytes": 625
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/source-compiled-archive-validation.json",
+      "sha256": "b75f12288ef64faa5d0a29e1e1ab8005256d6ec166d68ff0cdb0b1e3775e2023",
+      "bytes": 651
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/source-compiled-evidence-manifest.json",
+      "sha256": "482c5b4315885ad0710a5acd2fb1def98e8821cebaca40ac35e5906acf522a52",
+      "bytes": 446910
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/typecheck-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/typecheck-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "file": ".codiluce/validation-template-framework-workers/web-typecheck-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ],
+  "foreignFilesUnchanged": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  },
+  "postFullSuitePortableLoaderArgumentCorrection": {
+    "runtimeChanged": false,
+    "assertionsChanged": false,
+    "sourceIsolationCasePassed": true,
+    "ordinaryCompiledIsolationPassed": {
+      "passed": true,
+      "parentPid": 4097471,
+      "workers": [
+        {
+          "pid": 4097492,
+          "exitCode": null,
+          "signal": "SIGTERM"
+        },
+        {
+          "pid": 4097527,
+          "exitCode": null,
+          "signal": "SIGTERM"
+        },
+        {
+          "pid": 4097574,
+          "exitCode": null,
+          "signal": "SIGTERM"
+        }
+      ],
+      "mainOptionalParserResolutionForbidden": true,
+      "mainAstroNativeLibraries": [],
+      "targetExecution": false,
+      "entities": 11,
+      "relations": 14,
+      "diagnostics": 3
+    },
+    "sourceSession": 91447,
+    "compiledSession": 14927,
+    "actualExitCodes": [
+      0,
+      0
+    ],
+    "nativeWindowsExecutionClaimed": false
+  }
+}

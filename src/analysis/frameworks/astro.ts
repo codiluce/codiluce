@@ -14,6 +14,7 @@ import { valueDeclaration } from './typescript-binding.js';
 import { nodeSite, type TypeScriptFrameworkPack, type TypeScriptPackFile, type TypeScriptPackScope } from './typescript-pack.js';
 import { astroRoutes, astroInvocations } from './astro-routes.js';
 import type { AstroConfig } from './astro-config.js';
+import {TemplateFrameworkParser} from '../embedded/framework-parser.js';
 
 type Js = { type: string; start: number; end: number; [key: string]: unknown };
 type Bound = { node: ts.Expression; frame: TypeScriptPackFile };
@@ -29,8 +30,8 @@ export const astroPack: TypeScriptFrameworkPack = {
     const reader = new TypeScriptStatic(scope, 'astro', ['astro/config', 'astro:middleware']);
     const files = scope.inputs?.filter(file => file.language === 'astro') ?? [];
     if (files.length) {
-      const { parse } = await import('@astrojs/compiler-rs');
-      for (const file of files) new AstroComponent(scope, reader, file, parse).run();
+      const parser=scope.context.templateFrameworks??=new TemplateFrameworkParser();
+      for (const file of files) await new AstroComponent(scope, reader, file, parser).run();
     }
     astroRoutes(scope, reader);
   },
@@ -43,10 +44,10 @@ class AstroComponent {
   private readonly occurrences = new Map<string, number>();
   private text = ''; private source!: SourceText; private component!: Entity; private steps = 0;
   private config?: AstroConfig;
-  constructor(private readonly scope: TypeScriptPackScope, private readonly reader: TypeScriptStatic, private readonly file: ScannedFile, private readonly parse: typeof import('@astrojs/compiler-rs').parse) {}
+  constructor(private readonly scope: TypeScriptPackScope, private readonly reader: TypeScriptStatic, private readonly file: ScannedFile, private readonly parser:TemplateFrameworkParser) {}
   private fact(start: number, end: number, reason: string): Evidence { const range = this.source.range(start, end); return { ...evidence('framework', 'astro', this.file.path, range.startLine, reason), endLine: range.endLine }; }
   private gap(start: number, reason: string, code = 'astro-template-gap'): void { this.scope.context.graph.diagnose({ analyzer: 'astro', severity: 'warning', code, file: this.file.path, line: this.source.position(start).line, entityId: this.file.id, reason }); }
-  run(): void {
+  async run(): Promise<void> {
     const { context } = this.scope, file = context.graph.entities.get(this.file.id)!, facts = context.embedded?.facts.get(this.file.path), analysis = fileAnalysis(file.metadata.analysis);
     if (typeof file.metadata.component !== 'string' || !facts) return;
     this.text = context.sources?.readFile(this.file.absolutePath) ?? ''; this.source = new SourceText(this.text); this.component = context.graph.entities.get(file.metadata.component)!;
@@ -61,7 +62,7 @@ class AstroComponent {
       // otherwise valid server/frontmatter and template source.
       let parseText = this.text;
       for (const region of facts.regions) if (region.role === 'client' && !region.supported) parseText = parseText.slice(0, region.start) + parseText.slice(region.start, region.end).replace(/[^\r\n\u2028\u2029]/g, ' ') + parseText.slice(region.end);
-      const parsed = this.parse(parseText);
+      const parsed = await this.parser.astro(parseText);
       for (const diagnostic of parsed.diagnostics) this.gap(diagnostic.labels?.[0]?.start ?? 0, diagnostic.text, 'astro-parse-error');
       if (parsed.diagnostics.some(item => item.severity === 'error')) { if (analysis) analysis.features.framework = { status: 'failed', reason: 'Official Astro parser rejected the original component' }; return; }
       root = js(parsed.ast);
