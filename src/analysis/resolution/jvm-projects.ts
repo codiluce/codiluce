@@ -4,8 +4,9 @@ import { applicationAt } from '../../core/config.js';
 import { evidence, type Evidence } from '../../core/graph.js';
 import { IndexedSources } from '../indexed-sources.js';
 import { readPomXml, xmlChild, xmlChildren, xmlValue, jvmPath, gradleTokens, readGradleSettings, readGradleBuild, type XmlNode } from './jvm-manifest.js';
-import { bootGradleBom, bootManagedCoordinate, bootStarterFrameworkModule, bootStarterVersionMismatch } from './jvm-spring-boot.js';
-export const JVM_PROJECT_VERSION = '5';
+import { bootGradleBom, bootManagedCoordinate, bootDefaultManagedCoordinates, bootStarterFrameworkModule, bootStarterVersionMismatch, BOOT_BOM_COORDINATE, BOOT_FRAMEWORK_VERSION } from './jvm-spring-boot.js';
+import { reviewedBootMavenParent, reviewedBootMavenPlugin, bootMavenDefaults, bootMavenPropertyGap, BOOT_MAVEN_PARENT } from './jvm-spring-boot-maven.js';
+export const JVM_PROJECT_VERSION = '6';
 export interface JvmDependency {
     path?: string;
     coordinate?: string;
@@ -39,6 +40,7 @@ export interface JvmProject {
         testPlatforms: { selector: string; platform: 'junit-platform'; proof: Evidence[] }[];
     };
     bootBom?: { coordinate: string; frameworkVersion: string; externalResolutionVerified: false; proof: Evidence[] };
+    bootMavenParent?: { coordinate: string; proof: Evidence[]; compilerParameters: true; sourceEncoding: 'UTF-8' };
     modules: string[];
     reactor: string;
     coordinate?: string;
@@ -213,9 +215,19 @@ export class JvmProjects {
             if (parent) {
                 project.gaps.push(...parent.gaps.filter(gap => !gap.startsWith('Non-JAR Maven packaging')));
                 project.proof.push(...parent.proof);
+                if (parent.bootMavenParent) project.bootMavenParent = parent.bootMavenParent;
+            }
+            else if (reviewedBootMavenParent(parentNode)) {
+                const proof = this.fact(file, parentNode.start, 'Explicit external Boot 4.0.8 parent selects its reviewed published source/compiler/default BOM contract; Maven/plugins/binaries never resolve or execute');
+                project.bootMavenParent = { coordinate: BOOT_MAVEN_PARENT, proof, compilerParameters: true, sourceEncoding: 'UTF-8' };
             }
             else
                 project.gaps.push('External/unavailable Maven parent may change the effective model');
+        }
+        if (project.bootMavenParent) {
+            Object.assign(project.properties, bootMavenDefaults);
+            project.bootBom = { coordinate: BOOT_BOM_COORDINATE, frameworkVersion: BOOT_FRAMEWORK_VERSION, externalResolutionVerified: false, proof: project.bootMavenParent.proof };
+            for (const [key, coordinate] of bootDefaultManagedCoordinates()) project.managed.set(key, { coordinate, managedBy: BOOT_BOM_COORDINATE, scope: 'compile', exported: true, optional: false, exclusions: [], proof: project.bootMavenParent.proof });
         }
         const app = applicationAt(this.context.config.applications, root), configuredProfiles = app?.jvm?.profiles, profiles = xmlChildren(xmlChild(document, 'profiles'), 'profile'), selected: XmlNode[] = [document];
         if (profiles.length && configuredProfiles === undefined)
@@ -235,6 +247,8 @@ export class JvmProjects {
                         project.gaps.push('Competing Maven property values');
                     project.properties[prop.name] = prop.text.trim();
                 }
+                else if (project.bootMavenParent)
+                    project.gaps.push('Nested Maven property values require a selected effective Boot model');
         const interpolate = (value: string | undefined, depth = 0): string | undefined => {
             if (value === undefined || depth > 16)
                 return;
@@ -252,7 +266,13 @@ export class JvmProjects {
             });
             return missing || result.includes('${') ? undefined : result;
         };
-        const group = interpolate(xmlValue(document, 'groupId') ?? parent?.coordinate?.split(':')[0]), artifact = interpolate(xmlValue(document, 'artifactId')), version = interpolate(xmlValue(document, 'version') ?? parent?.coordinate?.split(':')[2]);
+        if (project.bootMavenParent) for (const { node: model } of models) for (const prop of xmlChild(model,'properties')?.children ?? []) {
+            const gap = bootMavenPropertyGap(prop.name, interpolate(prop.text.trim()) ?? '');
+            if (gap) project.gaps.push(gap);
+        }
+        const parentCoordinate = parent?.coordinate ?? project.bootMavenParent?.coordinate;
+        if (parentCoordinate) Object.assign(project.properties, { 'project.parent.groupId': parentCoordinate.split(':')[0]!, 'project.parent.artifactId': parentCoordinate.split(':')[1]!, 'project.parent.version': parentCoordinate.split(':')[2]! });
+        const group = interpolate(xmlValue(document, 'groupId') ?? parentCoordinate?.split(':')[0]), artifact = interpolate(xmlValue(document, 'artifactId')), version = interpolate(xmlValue(document, 'version') ?? parentCoordinate?.split(':')[2]);
         if (group && artifact && version && ![group, artifact, version].some(value => value.includes(':')))
             project.coordinate = `${group}:${artifact}:${version}`;
         else
@@ -260,8 +280,9 @@ export class JvmProjects {
         Object.assign(project.properties, { 'project.groupId': group ?? '', 'pom.groupId': group ?? '', 'project.artifactId': artifact ?? '', 'pom.artifactId': artifact ?? '', 'project.version': version ?? '', 'pom.version': version ?? '', 'project.basedir': '.', 'basedir': '.' });
         const dependencies = (model: XmlNode, sourceFile: string, managed: boolean) => {
             for (const node of xmlChildren(xmlChild(model, 'dependencies'), 'dependency')) {
-                const group = interpolate(xmlValue(node, 'groupId')), artifact = interpolate(xmlValue(node, 'artifactId')), key = group && artifact && `${group}:${artifact}`, inherited = key && project.managed.get(key), version = interpolate(xmlValue(node, 'version')) ?? (inherited && inherited.coordinate?.split(':')[2]), scope = xmlValue(node, 'scope') ?? (inherited && inherited.scope) ?? 'compile';
+                const group = interpolate(xmlValue(node, 'groupId')), artifact = interpolate(xmlValue(node, 'artifactId')), key = group && artifact && `${group}:${artifact}`, inherited = key ? project.managed.get(key) : undefined, version = xmlChild(node, 'version') ? interpolate(xmlValue(node, 'version')) : inherited?.coordinate?.split(':')[2], scope = xmlValue(node, 'scope') ?? inherited?.scope ?? 'compile';
                 const dep: JvmDependency = { coordinate: key && version ? `${key}:${version}` : undefined, scope, exported: scope === 'compile', optional: xmlValue(node, 'optional') === 'true', exclusions: xmlChildren(xmlChild(node, 'exclusions'), 'exclusion').map(item => `${xmlValue(item, 'groupId')}:${xmlValue(item, 'artifactId')}`), proof: this.fact(sourceFile, node.start, 'Literal Maven dependency selection') };
+                if (inherited?.managedBy && !xmlChild(node,'version') && key) { dep.declaredCoordinate = key; dep.managedBy = inherited.managedBy; }
                 if (inherited)
                     dep.proof.push(...inherited.proof);
                 if (!key || !version || xmlValue(node, 'type') && xmlValue(node, 'type') !== 'jar' || xmlValue(node, 'classifier') || xmlValue(node, 'systemPath') || !['compile', 'provided', 'runtime', 'test'].includes(scope))
@@ -273,6 +294,8 @@ export class JvmProjects {
                 }
                 if (managed && (xmlValue(node, 'optional') || xmlChild(node, 'exclusions')))
                     project.gaps.push('Managed Maven optional/exclusion overrides require an effective dependency summary');
+                if (managed && project.bootMavenParent && group === 'org.springframework' && version !== BOOT_FRAMEWORK_VERSION)
+                    project.gaps.push('Managed Spring Framework override differs from the reviewed Boot Maven parent/BOM source contract');
                 if (managed && key)
                     project.managed.set(key, dep);
                 else if (!managed) {
@@ -288,6 +311,15 @@ export class JvmProjects {
         }
         for (const { node: model, file: sourceFile } of models)
             dependencies(model, sourceFile, false);
+        if (project.bootMavenParent) {
+            for (const dep of [...project.dependencies]) if (dep.coordinate) {
+                if (bootStarterVersionMismatch(dep.coordinate)) project.gaps.push('Reviewed Boot starter version differs from the selected Maven parent/BOM contract');
+                const module = bootStarterFrameworkModule(dep.coordinate);
+                if (module && dep.exclusions.length) project.gaps.push('Boot Maven starter exclusions require a reviewed transitive source profile');
+                if (module) project.dependencies.push({ coordinate: module, derivedFrom: dep.coordinate, managedBy: BOOT_BOM_COORDINATE, scope: dep.scope, exported: dep.exported, optional: dep.optional, exclusions: [...dep.exclusions],
+                    proof: [...dep.proof, ...this.fact(file, parentNode?.start, 'Reviewed published Boot starter/module POM chain selects this Spring Framework source profile; external binary/transitive resolution remains unverified')] });
+            }
+        }
         for (const model of selected)
             for (const member of xmlChildren(xmlChild(model, 'modules'), 'module')) {
                 const value = interpolate(member.text.trim()), target = value && jvmPath(root, value.endsWith('.xml') ? path.posix.dirname(value) : value);
@@ -332,8 +364,13 @@ export class JvmProjects {
                     if (xmlChild(plugin, 'executions'))
                         project.gaps.push('Kotlin Maven execution-specific roots require a selected compilation summary');
                 }
+                else if (project.bootMavenParent && reviewedBootMavenPlugin(plugin, interpolate(xmlValue(plugin, 'version')))) {
+                    project.proof.push(...this.fact(sourceFile, plugin.start, 'Reviewed Boot Maven plugin declaration uses inherited packaging defaults; target goals never execute'));
+                }
                 else if (group !== 'org.apache.maven.plugins' || name && !['maven-compiler-plugin', 'maven-surefire-plugin', 'maven-jar-plugin', 'maven-war-plugin', 'maven-resources-plugin', 'maven-clean-plugin', 'maven-install-plugin', 'maven-deploy-plugin'].includes(name))
                     project.gaps.push(`Unreviewed Maven plugin can change source/classpath inputs: ${name}`);
+                else if (project.bootMavenParent && plugin.children.some(child => !['groupId', 'artifactId'].includes(child.name)))
+                    project.gaps.push('Custom Maven lifecycle plugin declarations require a reviewed Boot compiler/resource profile');
             }
         }
         if (xmlChild(document, 'packaging') && xmlValue(document, 'packaging') !== 'jar')
@@ -349,6 +386,8 @@ export class JvmProjects {
         }
         if (this.context.fileInventory?.has(path.posix.join(root, '.mvn/extensions.xml')))
             project.gaps.push('Maven core extensions are not evaluated');
+        if (project.bootMavenParent && [...this.context.fileInventory ?? []].some(item => /\/.mvn\/(?:maven\.config|jvm\.config|extensions\.xml)$/.test('/' + item) && inside(root, path.posix.dirname(path.posix.dirname(item)))))
+            project.gaps.push('Indexed Maven command/JVM configuration or core extensions can change the reviewed Boot parent/compiler defaults');
         project.gaps = [...new Set(project.gaps)];
         this.active.delete(file);
         return project;

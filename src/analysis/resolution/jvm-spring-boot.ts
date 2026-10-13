@@ -43,6 +43,10 @@ export function bootManagedCoordinate(coordinate: string): string | undefined {
     return starters.has(coordinate) ? `${coordinate}:${BOOT_GRADLE_VERSION}` : undefined;
 }
 
+export function bootDefaultManagedCoordinates(): Map<string, string> {
+    return new Map([...starters.keys()].map(key => [key, `${key}:${BOOT_GRADLE_VERSION}`]));
+}
+
 export function bootStarterFrameworkModule(coordinate: string): string | undefined {
     const parts = coordinate.split(':');
     if (parts.length !== 3 || parts[2] !== BOOT_GRADLE_VERSION) return;

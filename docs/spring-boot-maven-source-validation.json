@@ -1,0 +1,656 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-13T16:39:58.017391+00:00",
+  "phase": "Explicit external Boot Maven 4.0.8 parent/default BOM Java source compatibility",
+  "baselineCommit": "29dd76a6f618abbb7da0a0838018f393c6e0bcf3",
+  "sourceFiles": [
+    {
+      "file": "src/analysis/resolution/jvm-spring-boot-maven.ts",
+      "sha256": "8b246d0c6748a03c98ce07b721b03e723f3d7c14e5761564d15991e875e1dd1e"
+    },
+    {
+      "file": "src/analysis/resolution/jvm-projects.ts",
+      "sha256": "f5908fa8d42aa753564a58c4454fc356839cc5b40fbec46141ba63bf6efb0a15"
+    },
+    {
+      "file": "src/analysis/resolution/jvm-spring-boot.ts",
+      "sha256": "e65c54eacbca3a0b6bea0e6644519c4754f30420af8d747b6d56cf9336acdf4d"
+    },
+    {
+      "file": "src/analysis/resolution/jvm-manifest.ts",
+      "sha256": "2e42eacd3def00a5f387341ed71f9918c98724e188c90b981d3419127d354de9"
+    },
+    {
+      "file": "tests/spring-boot-maven.test.ts",
+      "sha256": "dd880d3927ac1a24b054c6b13867e9de2b474f1471445b0ae4370b82bb5f1c4e"
+    },
+    {
+      "file": "tests/fixtures/spring-boot-maven-qualification.mjs",
+      "sha256": "660b04aea0fa25249b6d3975f10b71c545567c1ec2ad52b8fb519a24d8474244"
+    },
+    {
+      "file": "tests/spring-boot-gradle.test.ts",
+      "sha256": "e54f435debe22e510b08263bb50503c0341ebc370bf7b95f3981b08e3b912225"
+    },
+    {
+      "file": "tests/fixtures/spring-boot-gradle-qualification.mjs",
+      "sha256": "03f50ea7421dcb593d8311ceb19e44524289b20cf18eb6b01d1dad6d6387d0dd"
+    },
+    {
+      "file": "tests/gradle-compiler-inputs.test.ts",
+      "sha256": "a0864aae182230561ad965199163013917ec28c36a0994dbb8b2e48e19749690"
+    },
+    {
+      "file": "tests/fixtures/gradle-compiler-inputs-qualification.mjs",
+      "sha256": "5d7af415312f8e7fdbbe43fef9dfd85247baae76086a74e52578544a431c4426"
+    },
+    {
+      "file": "scripts/test-package.mjs",
+      "sha256": "416be4aca8d0f3c69c0f3bdd036678f6c6b4f75eef8aec85423ea44c012064d3"
+    },
+    {
+      "file": "docs/compatibility-catalog.json",
+      "sha256": "627bc463dce4659b1d2f68bacf54fff62b068ffece4734141a0414e57cee1ebd"
+    },
+    {
+      "file": "docs/analysis-capabilities.html",
+      "sha256": "ab2f5ed214d821db56e520dbdccba41b0c7d204a06d9ab7aa73eaae4611b529f"
+    },
+    {
+      "file": "docs/framework-pack-author-guide.html",
+      "sha256": "b8285cc6cceec5e9c53381d5d8f4eae494bb3d9a8ecf6ce32b00290750771d15"
+    },
+    {
+      "file": "package.json",
+      "sha256": "4c6db1b0e1700f5374331b467d40b85c2e6f61b0da9c2a31c7c8e6590b693623"
+    },
+    {
+      "file": "package-lock.json",
+      "sha256": "691f16cfb44abf881dd9bf107524556cc3911f82fdbe05aebc9c273fb0270f28"
+    },
+    {
+      "file": "tsconfig.json",
+      "sha256": "7618aa85118138951ebb601a4c0e1dcf62185c9c6da1b71441afcc937e7f21b6"
+    },
+    {
+      "file": "tsconfig.build.json",
+      "sha256": "da8ddd95e95d53a8427312534c92128beac2c79d01d4a2a9c150aed08d84c38d"
+    }
+  ],
+  "fullNode22Cases": 1999,
+  "engineAndWebNode22Cases": 1780,
+  "toolingNode22Cases": 219,
+  "node22SuiteObservedInTwoCommands": true,
+  "suiteCoverageReconciliation": {
+    "schema": 1,
+    "passed": true,
+    "priorRecordedCombinedCases": 1990,
+    "actualEngineWebCases": 1780,
+    "actualSeparateToolingCases": 219,
+    "totalCurrentCases": 1999,
+    "previousTestNamesAllPresent": true,
+    "newMavenCases": {
+      "Pinned explicit external Boot Maven parent retains original Java handler/leaf, managed spelling and compiler evidence": 1,
+      "Boot Maven WebFlux starter retains original functional handlers while WebClient alone supplies no server module": 1,
+      "Boot parent coordinate inheritance and literal Java property interpolation preserve standard Maven values": 1,
+      "A local Maven parent can inherit the pinned Boot contract without losing source/root ownership": 1,
+      "Absent, conflicting, custom or unreviewed Maven parent selection never falls through to a Boot guess": 1,
+      "Published BOM/compiler/resource overrides, custom Boot plugins and Maven command files stay explicit boundaries": 1,
+      "Managed transitive conflicts, exclusions and unlisted versionless coordinates cannot invent a complete Boot classpath": 1,
+      "Explicit unresolved Maven dependency versions cannot fall back to reviewed managed defaults": 1,
+      "Maven parent/BOM source changes invalidate caches and retain complete same-mode cold/warm/revision graphs": 1
+    },
+    "priorLogSha256": "b47a61193806e1371f6ed08d50bf43ce94806fccf9445f84a6eaa77a7277048a",
+    "currentObservedCommands": [
+      "full-node22-terminal.json",
+      "corrected-script-unit-node22-terminal.json"
+    ],
+    "sameTestsOrGuardsModifiedForCounts": false,
+    "targetExecution": false
+  },
+  "focusedNode24Cases": 115,
+  "ordinaryCompiledMavenCasesPerRuntime": 9,
+  "ordinaryCompiledGradleCasesPerRuntime": 6,
+  "ordinaryCompiledCompilerCasesPerRuntime": 14,
+  "ordinaryCompiledRuntimeVersions": [
+    "v22.12.0",
+    "v24.21.0"
+  ],
+  "sourceAndCompiledOriginalWholeGraphs": 120,
+  "sourceCompiledWholeGraphComparisons": 60,
+  "originalSnapshots": 4,
+  "recordedBuildContexts": 12,
+  "originalInputFiles": 37,
+  "originalInputsOutsideGit": true,
+  "jvmProjectProducerBefore": "5",
+  "jvmProjectProducerAfter": "6",
+  "publishedBomPropertyNamesReviewed": 189,
+  "sourceCacheAndSameRevisionGraphEquality": true,
+  "originalDeclarationIdentitiesAndRangesPreserved": true,
+  "normalization": [
+    "run.id",
+    "run.analyzedAt"
+  ],
+  "producerFieldsNormalized": false,
+  "actualOriginalMavenGuideChanges": {
+    "mvc-java": {
+      "endpoint": "GET|HEAD /greeting",
+      "sourceLine": 15,
+      "constraintsUnresolved": false,
+      "retainedConditions": []
+    },
+    "webflux-java": {
+      "endpoint": "GET /hello",
+      "sourceLine": 19,
+      "constraintsUnresolved": true,
+      "retainedConditions": [
+        "Conditional/injected/custom WebFlux bean factory requires a reviewed registration profile",
+        "Virtual/interface receiver dispatch is not an exact original handler call",
+        "Unobserved/custom WebFlux predicate accept requires a reviewed restriction summary"
+      ]
+    }
+  },
+  "otherRecordedBuildContexts": "Selected Java Gradle outputs remain present; unselected ownership and Kotlin 4.0.1/compiler transformations remain gaps with zero endpoints",
+  "primarySourceDescriptors": [
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-starter-parent/4.0.8/spring-boot-starter-parent-4.0.8.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/primary/spring-boot-starter-parent-4.0.8.pom",
+      "sha256": "46977ea43e2b1755bddffe8fb9c95464717e82e1371e5c4128fbeb767bc6f26b",
+      "bytes": 13689
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-dependencies/4.0.8/spring-boot-dependencies-4.0.8.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/primary/spring-boot-dependencies-4.0.8.pom",
+      "sha256": "64ee29cc143cb36e5ec83dc3ca5a99c9313693b2e7cfc9a0d0cb3a77ab4a837d",
+      "bytes": 137661
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-maven-plugin/4.0.8/spring-boot-maven-plugin-4.0.8.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/primary/spring-boot-maven-plugin-4.0.8.pom",
+      "sha256": "ccf426e3ebc70971ba89b6678d5fc2bc538f973af808021a12ff5abaed81f698",
+      "bytes": 4006
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-dependencies/4.0.8/spring-boot-dependencies-4.0.8.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/primary-spring-chain/4.0.8-spring-boot-dependencies.pom",
+      "sha256": "64ee29cc143cb36e5ec83dc3ca5a99c9313693b2e7cfc9a0d0cb3a77ab4a837d",
+      "bytes": 137661
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-starter-webmvc/4.0.8/spring-boot-starter-webmvc-4.0.8.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/primary-spring-chain/4.0.8-spring-boot-starter-webmvc.pom",
+      "sha256": "b74b2ef993262aeb5ad2d9a168da1bbfc7a3fefee7a7016786f81ad35a305e97",
+      "bytes": 2889
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-webmvc/4.0.8/spring-boot-webmvc-4.0.8.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/primary-spring-chain/4.0.8-spring-boot-webmvc.pom",
+      "sha256": "0608d4998e825e94ae727c37c6d6c43dbe3ec2f9205f0560a012d23ffc43e651",
+      "bytes": 2618
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-starter-webflux/4.0.8/spring-boot-starter-webflux-4.0.8.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/primary-spring-chain/4.0.8-spring-boot-starter-webflux.pom",
+      "sha256": "10272bb55a03c0cf6e3e8b1aa2b0e7dc5c74adafaebcb3a47241ede57eea8857",
+      "bytes": 2896
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-webflux/4.0.8/spring-boot-webflux-4.0.8.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/primary-spring-chain/4.0.8-spring-boot-webflux.pom",
+      "sha256": "11491cfa0e633f848eacbf81e9e9b10452cdcc954f2c6be0e307371f52784a6e",
+      "bytes": 2626
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-starter-webclient/4.0.8/spring-boot-starter-webclient-4.0.8.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/primary-spring-chain/4.0.8-spring-boot-starter-webclient.pom",
+      "sha256": "54e513c0b4a39c0b718f36315fff6c56db0a7fcad16fb0afa7a62e47f608a326",
+      "bytes": 2924
+    }
+  ],
+  "parserDeadlineChanged": false,
+  "guardsRelaxed": false,
+  "targetExecution": false,
+  "terminalObservations": [
+    {
+      "schema": 1,
+      "label": "corrected-typecheck",
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "controllerPid": 1046317,
+      "childPid": 1046318,
+      "startedAt": 1791909011.3196647,
+      "completedAt": 1791909029.018148,
+      "seconds": 17.69848346710205,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/corrected-typecheck.log",
+      "logSha256": "c1fee42b4fa7e6e1a30e8e81426f7690f45767a53800385021e8cd468ec6e8d9",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "full-build",
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "controllerPid": 1048740,
+      "childPid": 1048741,
+      "startedAt": 1791909069.8095794,
+      "completedAt": 1791909094.7264109,
+      "seconds": 24.916831493377686,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/full-build.log",
+      "logSha256": "5c4e95070baad32c5bbba16686a14f979fd4c6c407e8b2b3a2037b37d203e791",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "final-checked-docs",
+      "argv": [
+        "node",
+        "scripts/generate-compatibility-docs.mjs",
+        "--check"
+      ],
+      "controllerPid": 1053218,
+      "childPid": 1053219,
+      "startedAt": 1791909146.0827377,
+      "completedAt": 1791909146.2305868,
+      "seconds": 0.14784908294677734,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/final-checked-docs.log",
+      "logSha256": "687b27670d4e98d4b174e145118fcc1b53df215adf40b89ff0c1b7a5d142f60e",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "full-node22",
+      "argv": [
+        "npm",
+        "test"
+      ],
+      "controllerPid": 1053239,
+      "childPid": 1053240,
+      "startedAt": 1791909146.4024494,
+      "completedAt": 1791909334.2549558,
+      "seconds": 187.85250663757324,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/full-node22.log",
+      "logSha256": "51609141ae81a271d780f487aa3e65593c06dc19b7e2c4aa8b4cadbf2e37f0ff",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "corrected-script-unit-node22",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-concurrency=4",
+        "scripts/tests/graph-json-artifact.test.mjs",
+        "scripts/tests/native-release.test.mjs",
+        "scripts/tests/production-cache-git.test.mjs",
+        "scripts/tests/production-cache-observer.test.mjs",
+        "scripts/tests/production-graph-digest.test.mjs",
+        "scripts/tests/production-head-graphs.test.mjs",
+        "scripts/tests/production-history-audit.test.mjs",
+        "scripts/tests/production-history-blobs.test.mjs",
+        "scripts/tests/production-history-columns.test.mjs",
+        "scripts/tests/production-history-entrypoint-columns.test.mjs",
+        "scripts/tests/production-history-entrypoint-qualification.test.mjs",
+        "scripts/tests/production-history-entrypoint-report.test.mjs",
+        "scripts/tests/production-history-entrypoint.test.mjs",
+        "scripts/tests/production-history-inputs.test.mjs",
+        "scripts/tests/production-history-observer.test.mjs",
+        "scripts/tests/production-history-performance-qualification.test.mjs",
+        "scripts/tests/production-history-performance.test.mjs",
+        "scripts/tests/production-history-qualification.test.mjs",
+        "scripts/tests/production-history-recovery.test.mjs",
+        "scripts/tests/production-history-resume.test.mjs",
+        "scripts/tests/production-history-runtime-inputs.test.mjs",
+        "scripts/tests/production-history-storage.test.mjs",
+        "scripts/tests/production-history-tree.test.mjs",
+        "scripts/tests/production-source-contracts.test.mjs"
+      ],
+      "controllerPid": 1128237,
+      "childPid": 1128239,
+      "startedAt": 1791909520.4898164,
+      "completedAt": 1791909543.783295,
+      "seconds": 23.2934787273407,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/corrected-script-unit-node22.log",
+      "logSha256": "cebd793f2c5f969d5ac9dc1881c5f0b877beadc43c87d608268298ba9191defe",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "source-originals",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        ".codiluce/validation-spring-boot-maven-source/qualify-source-originals.mjs"
+      ],
+      "controllerPid": 1046371,
+      "childPid": 1046372,
+      "startedAt": 1791909012.489156,
+      "completedAt": 1791909023.49763,
+      "seconds": 11.008473873138428,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/source-originals.log",
+      "logSha256": "78fbeb370b1df2dad565e458ad47cb33d08a5d3c627688660bb138647edd6e25",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "compiled-originals",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        ".codiluce/validation-spring-boot-maven-source/qualify-compiled-originals.mjs"
+      ],
+      "controllerPid": 1050009,
+      "childPid": 1050010,
+      "startedAt": 1791909107.3551893,
+      "completedAt": 1791909117.653489,
+      "seconds": 10.298301219940186,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/compiled-originals.log",
+      "logSha256": "78fbeb370b1df2dad565e458ad47cb33d08a5d3c627688660bb138647edd6e25",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "corrected-full-original-parity",
+      "argv": [
+        "node",
+        ".codiluce/validation-spring-boot-maven-source/compare-originals.mjs"
+      ],
+      "controllerPid": 1080593,
+      "childPid": 1080602,
+      "startedAt": 1791909238.1611056,
+      "completedAt": 1791909238.8679733,
+      "seconds": 0.7068676948547363,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/corrected-full-original-parity.log",
+      "logSha256": "dfffda2682f5d9d55769c07d52297416942f8807f0bf90b06c8d16a94800b604",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "portable-maven-node22",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "tests/fixtures/spring-boot-maven-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        ".codiluce/validation-spring-boot-maven-source/portable-maven-node22.json"
+      ],
+      "controllerPid": 1050110,
+      "childPid": 1050111,
+      "startedAt": 1791909108.5225315,
+      "completedAt": 1791909113.6975055,
+      "seconds": 5.174973964691162,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/portable-maven-node22.log",
+      "logSha256": "5079189c21e72fcaa402f4fd5026a92b84b9a54b40a1434836159d8e313c28a8",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "portable-maven-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "tests/fixtures/spring-boot-maven-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        ".codiluce/validation-spring-boot-maven-source/portable-maven-node24.json"
+      ],
+      "controllerPid": 1050346,
+      "childPid": 1050369,
+      "startedAt": 1791909109.6791093,
+      "completedAt": 1791909114.3777802,
+      "seconds": 4.698671102523804,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/portable-maven-node24.log",
+      "logSha256": "887bf0bf4265ff862ff6c4ec3cee4afa8d40f6ba307aa95c2bc91f2be330f46d",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "corrected-focused-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "tests/spring-boot-maven.test.ts",
+        "tests/spring-boot-gradle.test.ts",
+        "tests/gradle-compiler-inputs.test.ts",
+        "tests/jvm-build-selection.test.ts",
+        "tests/jvm-imports.test.ts",
+        "tests/jvm-references.test.ts",
+        "tests/spring-mvc.test.ts",
+        "tests/spring-webflux.test.ts"
+      ],
+      "controllerPid": 1117313,
+      "childPid": 1117325,
+      "startedAt": 1791909397.4280348,
+      "completedAt": 1791909412.128775,
+      "seconds": 14.700740337371826,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/corrected-focused-node24.log",
+      "logSha256": "2c676733611d656a56c0518a7fdcf69006359c7e7cfe88bcbd3e5f8ec27c7178",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "portable-gradle-node22",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "tests/fixtures/spring-boot-gradle-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        ".codiluce/validation-spring-boot-maven-source/portable-gradle-node22.json"
+      ],
+      "controllerPid": 1123892,
+      "childPid": 1123919,
+      "startedAt": 1791909447.8588483,
+      "completedAt": 1791909451.9408553,
+      "seconds": 4.082007169723511,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/portable-gradle-node22.log",
+      "logSha256": "0ad5985c78be6222099bdc2b02f36266197029ae8057a88614fac91e909e48aa",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "portable-gradle-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "tests/fixtures/spring-boot-gradle-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        ".codiluce/validation-spring-boot-maven-source/portable-gradle-node24.json"
+      ],
+      "controllerPid": 1124742,
+      "childPid": 1124769,
+      "startedAt": 1791909449.0198603,
+      "completedAt": 1791909452.486809,
+      "seconds": 3.466948986053467,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/portable-gradle-node24.log",
+      "logSha256": "6526b7cc572ef6b618bd998575796ace707766f801a0e484c3405ab6876466e8",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "portable-compiler-node22",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "tests/fixtures/gradle-compiler-inputs-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        ".codiluce/validation-spring-boot-maven-source/portable-compiler-node22.json"
+      ],
+      "controllerPid": 1125090,
+      "childPid": 1125107,
+      "startedAt": 1791909450.1882036,
+      "completedAt": 1791909456.0117383,
+      "seconds": 5.823534965515137,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/portable-compiler-node22.log",
+      "logSha256": "7de04973e75cc2495ea2abba921370afdc3254dde54bb2f5fb774f0690ddf78c",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "portable-compiler-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "tests/fixtures/gradle-compiler-inputs-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        ".codiluce/validation-spring-boot-maven-source/portable-compiler-node24.json"
+      ],
+      "controllerPid": 1125475,
+      "childPid": 1125499,
+      "startedAt": 1791909451.3499248,
+      "completedAt": 1791909456.3774998,
+      "seconds": 5.027575254440308,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source/portable-compiler-node24.log",
+      "logSha256": "cc244fd96c2d248a33a1a80a7983ebe7233a5bcb5d0781923ebee00a44a42ce5",
+      "targetExecution": false
+    }
+  ],
+  "retainedPreparationFailures": {
+    "schema": 1,
+    "preservedFailures": [
+      {
+        "kind": "portable fixture creation",
+        "actualExit": 1,
+        "rawToolTranscript": "functions.exec eaef68 predecessor tool result preserved in conversation; first command did not redirect raw output",
+        "cause": "Overbroad generated-JavaScript assertion matched the legal import alias `as registerTest`",
+        "correction": "Check for static source imports and TypeScript import syntax only; creation log then exits 0"
+      },
+      {
+        "kind": "final-typecheck",
+        "receipt": "final-typecheck-terminal.json",
+        "actualExit": 2,
+        "log": "final-typecheck.log",
+        "cause": "Managed dependency short-circuit included the empty string in the TypeScript union",
+        "correction": "Use an explicit optional managed dependency; corrected-typecheck exits 0"
+      },
+      {
+        "kind": "checked-docs",
+        "actualExit": 1,
+        "log": "checked-docs.log",
+        "receipt": "checked-docs-terminal.json",
+        "cause": "Generated documentation fingerprint preceded the final managed-dependency source/type correction",
+        "correction": "Regenerate after final source changes; final-checked-docs exits 0"
+      },
+      {
+        "kind": "full-original-parity",
+        "actualExit": 1,
+        "log": "full-original-parity.log",
+        "receipt": "full-original-parity-terminal.json",
+        "cause": "Validation helper import traversed one extra parent directory; failed before any comparison or indexing",
+        "correction": "Correct helper path; corrected-full-original-parity exits 0 with all 60 complete comparisons"
+      },
+      {
+        "kind": "script-unit-node22",
+        "actualExit": 1,
+        "receipt": "script-unit-node22-terminal.json",
+        "log": "script-unit-node22.log",
+        "pass": 179,
+        "fail": 10,
+        "tests": 189,
+        "cause": "Separate tooling test command omitted the required experimental SQLite flag and TypeScript loader; ten files failed to load before registering all cases",
+        "correction": "Use the same SQLite/tsx flags as the engine suite; complete registered cases must pass without changed tests or budgets"
+      },
+      {
+        "kind": "suite reconciliation and initial source evidence closure",
+        "actualExits": [
+          1,
+          1
+        ],
+        "receipt": "initial-close-preparation/failure-receipt.json",
+        "allInitialCopiesRetained": true,
+        "archiveCreated": false
+      }
+    ],
+    "focusedRuns": [
+      {
+        "log": "first-focused.log",
+        "pass": 68,
+        "fail": 0,
+        "actualExit": null,
+        "actualExitScope": "Truncated tool result did not expose the process exit; completed log and absent process only",
+        "logSha256": "44f63424551679f3481e7b1d2b9b98ca3cc586bfcb3e0e4962915a64392e4942"
+      },
+      {
+        "log": "corrected-focused.log",
+        "pass": 69,
+        "fail": 0,
+        "actualExit": 0,
+        "logSha256": "ad485766b7230a309acccbdfac8fec457e5b6bd460f0cfe9c1c56a0dd0ab4128"
+      },
+      {
+        "log": "final-focused-node24.log",
+        "pass": 115,
+        "fail": 0,
+        "actualExit": 0,
+        "receipt": "final-focused-node24-terminal.json",
+        "logSha256": "f68bd670b622ed1321d71192215748be8e4dbc0d049e5edb41192ea948b54918"
+      }
+    ],
+    "targetExecution": false,
+    "productionRetries": false,
+    "budgetOrDeadlineChanges": false
+  },
+  "typechecksPassed": true,
+  "cliUiBuildPassed": true,
+  "capabilityDocsCheckPassed": true,
+  "fullNormalInstalledPackageQualified": false,
+  "productionHistoryForChangedRuntimeQualified": false,
+  "productionRelativePerformanceQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullNativeMatrixQualified": false,
+  "broaderSourceAccuracyQualified": false,
+  "fullGoalComplete": false,
+  "foreignFilesUnchanged": true,
+  "scope": "Only the literal Boot 4.0.8 published parent with explicitly disabled local lookup (relativePath empty), reviewed Java/UTF-8/parameter defaults and three starter source chains. Local indexed parents can inherit the reviewed contract with original ownership. Managed property changes, unknown versions, explicit unresolved dependency versions, nested properties, exclusions and custom plugin/Maven config inputs stay gaps. External binary/transitive resolution is unverified. Kotlin transformations, other parent/BOM/version selections and broader accuracy remain separate phases.",
+  "evidenceArchive": {
+    "file": "/var/www/html/codiluce/.codiluce/validation-spring-boot-maven-source-evidence/spring-boot-maven-source-compiled-and-original-evidence.tar.gz",
+    "sha256": "b51d130409cbe39eec81681fce6a31becc912460d313c518a160c7f0b961bc6e",
+    "bytes": 26489856,
+    "regularFiles": 2312,
+    "allBytesAndModesReopened": true,
+    "manifestSha256": "e548393595320acbcb14df58b6427ceac61f7d66933da07c2c6ac023d7306b4c",
+    "seconds": 6.913753986358643
+  }
+}

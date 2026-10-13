@@ -103,7 +103,7 @@
       "id": "java",
       "label": "Java",
       "parser": "Tree-sitter Java",
-      "imports": "Indexed Maven/Gradle/configured roots, recorded build-family selection, source sets, project references and imports; observed literal Gradle compiler inputs; pinned Boot 4.0.8/management 1.1.7 Gradle defaults for reviewed web starters",
+      "imports": "Indexed Maven/Gradle/configured roots, recorded build-family selection, source sets, project references and imports; observed literal Gradle compiler inputs; pinned Boot 4.0.8/management 1.1.7 Gradle defaults for reviewed web starters; explicit external Boot 4.0.8 Maven parent with reviewed compiler/default BOM source contract",
       "binding": "Partial scoped source types, exact signatures and selected direct calls",
       "frameworks": "Spring MVC, WebFlux",
       "gaps": "Executable build models, unresolved plugin/BOM/compiler transformations, binary classpaths, virtual/generic/inherited dispatch and compiler interop",
@@ -114,6 +114,7 @@
         "src/analysis/resolution/jvm-manifest.ts",
         "src/analysis/resolution/jvm-gradle-compiler.ts",
         "src/analysis/resolution/jvm-spring-boot.ts",
+        "src/analysis/resolution/jvm-spring-boot-maven.ts",
         "src/core/config.ts"
       ]
     },
@@ -132,6 +133,7 @@
         "src/analysis/resolution/jvm-manifest.ts",
         "src/analysis/resolution/jvm-gradle-compiler.ts",
         "src/analysis/resolution/jvm-spring-boot.ts",
+        "src/analysis/resolution/jvm-spring-boot-maven.ts",
         "src/core/config.ts"
       ]
     },
@@ -588,13 +590,14 @@
       "id": "spring",
       "label": "Spring MVC / WebFlux",
       "versions": "Framework 6.2.x / 7.0.x; optional Boot 3.5.x / 4.0.x compatible family",
-      "scope": "Original annotations or bounded Java/Kotlin router builders, exact handlers and native path/method contracts; pinned Java Gradle Boot 4.0.8 and dependency-management 1.1.7 select the reviewed default BOM/starter source contract",
-      "gaps": "Other Boot starter/parent/BOM selections, Kotlin compiler transformations, executable build models, broad reactive typing and unknown policies remain gaps; external binary resolution is unverified",
+      "scope": "Original annotations or bounded Java/Kotlin router builders, exact handlers and native path/method contracts; pinned Java Gradle Boot 4.0.8 and dependency-management 1.1.7 select the reviewed default BOM/starter source contract; explicit external Boot Maven 4.0.8 parent selects reviewed Java 17/UTF-8/parameter defaults and the same three starter source chains",
+      "gaps": "Other Boot versions/starter/BOM selections, default or custom local external-parent lookup, managed-property overrides, custom lifecycle plugins/Maven configuration and Kotlin compiler transformations remain gaps; executable models, broad reactive typing and unknown policies are unreviewed; external binary resolution is unverified",
       "tests": [
         "tests/spring-mvc.test.ts",
         "tests/spring-webflux.test.ts",
         "tests/jvm-build-selection.test.ts",
-        "tests/spring-boot-gradle.test.ts"
+        "tests/spring-boot-gradle.test.ts",
+        "tests/spring-boot-maven.test.ts"
       ],
       "sources": [
         {
@@ -610,6 +613,14 @@
             "BOOT_GRADLE_VERSION = '4.0.8'",
             "BOOT_FRAMEWORK_VERSION = '7.0.9'",
             "BOOT_MANAGEMENT_PLUGIN_VERSION = '1.1.7'"
+          ]
+        },
+        {
+          "file": "src/analysis/resolution/jvm-spring-boot-maven.ts",
+          "contains": [
+            "BOOT_MAVEN_PARENT",
+            "Explicit disabled local lookup",
+            "bootMavenPropertyGap"
           ]
         }
       ]
