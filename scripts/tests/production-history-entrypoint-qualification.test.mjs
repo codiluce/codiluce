@@ -2,8 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {createHash} from 'node:crypto';
 import {verifyEntrypointQualification} from '../qualify-production-history-entrypoint.mjs';
+import {compareHistoryRuntimeInputs} from '../production-history-runtime-inputs.mjs';
 
 const hash=text=>createHash('sha256').update(text).digest('hex');
+const engine=files=>({files,sha256:hash(JSON.stringify(files))});
 function fixture(){
  const commits=['a'.repeat(40),'b'.repeat(40),'c'.repeat(40)],head=commits[1],corpus={repositories:[{id:'owned',head,revisions:commits.slice(0,2).map(commit=>({commit})),extraRevisions:[{commit:commits[2]}]}]},prior={id:'owned',status:'verified',head,readOnlyReopenVerified:true,worker:{pid:10,exitCode:0,signal:null},revisions:[]};
  const revisions=commits.map((commit,index)=>{
@@ -13,7 +15,7 @@ function fixture(){
  });
  const tables=Object.fromEntries(['snapshots','entity_versions','relation_versions','diagnostic_versions','snapshot_entities','snapshot_relations','snapshot_diagnostics'].map(name=>[name,{rows:name==='snapshots'?3:1,sha256:hash(name),columns:['owned'],bytes:20,largestTextBytes:10}])),views={passed:true,freshServicePasses:2,persistedBaseRegistryUnchanged:true,offFirstParentSnapshots:1,snapshots:revisions.map((r,index)=>({id:r.snapshot.id,commit:r.commit,entities:1,projectedNodes:2,holes:0,cachedFirstParent:index<2,rectangleSha256:hash(r.commit)}))};
  const child={id:'owned',pid:30,passed:true,completedAt:'terminal',readOnlyReopenVerified:true,revisions,snapshotColumnLedger:{tables},views,workers:[{pid:21,job:{commits:commits.slice(2)},results:commits.slice(2),acknowledgements:commits.slice(2),exitCode:0,signal:null},{pid:20,job:{commits:commits.slice(0,2)},results:commits.slice(0,2),acknowledgements:commits.slice(0,2),exitCode:0,signal:null}],stages:['fresh','resume'].map((name,index)=>({name,indexed:{ref:head,head,indexed:index===0?3:0,failed:0,skipped:index===0?0:3,snapshots:3},events:[{type:'plan',targets:3,head,pending:index===0?3:0,jobs:index===0?2:1},{type:'layout',snapshots:2,rebuilt:index===0},...(index===0?revisions.map(r=>({type:'indexed',commit:{sha:r.commit},snapshot:r.snapshot})):[])]}))};
- const baseline={passed:true,completedAt:'terminal',engineIdentity:{sha256:'old-engine'},corpusSha256:'owned',profilesSha256:'owned',repositories:[prior]},receipt={schema:1,startedAt:'started',passed:true,completedAt:'terminal',phase:'fresh-production-indexHistory-entrypoint-workers-and-resume',engineIdentity:{sha256:'new-engine'},baselineEngineSha256:'old-engine',observer:{},corpusSha256:'owned',profilesSha256:'owned',baselineReceiptSha256:'owned',repositories:[{id:'owned',passed:true,completedAt:'terminal',process:{pid:30,exitCode:0,signal:null,treePeakKiB:100},child,originalDatabaseUnchanged:true,originalDatabaseSha256:'original-db',databaseSha256:'fresh-db'}]};
+ const baseline={passed:true,completedAt:'terminal',engineIdentity:engine([{file:'src/history/worker.ts',sha256:hash('old-worker')}]),corpusSha256:'owned',profilesSha256:'owned',repositories:[prior]},receipt={schema:1,startedAt:'started',passed:true,completedAt:'terminal',phase:'fresh-production-indexHistory-entrypoint-workers-and-resume',engineIdentity:engine([{file:'src/history/worker.ts',sha256:hash('new-worker')}]),baselineEngineSha256:baseline.engineIdentity.sha256,observer:{},corpusSha256:'owned',profilesSha256:'owned',baselineReceiptSha256:'owned',repositories:[{id:'owned',passed:true,completedAt:'terminal',process:{pid:30,exitCode:0,signal:null,treePeakKiB:100},child,originalDatabaseUnchanged:true,originalDatabaseSha256:'original-db',databaseSha256:'fresh-db'}]};
  const audit={id:'owned',passed:true,completedAt:'terminal',database:{sha256:'fresh-db',sha256After:'fresh-db',completeColumnLedgersMatch:true,tables},revisions:3,actualSnapshotIdentities:revisions.map(r=>({id:r.snapshot.id,seq:r.snapshot.seq,commit:r.commit}))},input={},columns=[{id:'owned',audit,input,child,job:{record:prior}}],value={corpus,receipt,baseline,columns};recapture(value);return value;
 }
 function recapture(value){const {receipt,columns}=value;columns[0].input={receiptUtf8:JSON.stringify(receipt),receiptSha256:hash(JSON.stringify(receipt))};columns[0].audit.inputReceiptSha256=columns[0].input.receiptSha256;}
@@ -47,4 +49,26 @@ const cases=[
 for(const [name,mutate] of cases)test('fresh history qualification rejects '+name,()=>{const value=fixture();mutate(value);recapture(value);assert.throws(()=>verifyEntrypointQualification(value));});
 test('fresh history qualification refuses an independent audit captured from another equal-count terminal row',()=>{
  const value=fixture();value.columns[0].input.receiptUtf8=value.columns[0].input.receiptUtf8.replace('fresh-db','substituted-db');value.columns[0].input.receiptSha256=hash(value.columns[0].input.receiptUtf8);value.columns[0].audit.inputReceiptSha256=value.columns[0].input.receiptSha256;assert.throws(()=>verifyEntrypointQualification(value),/terminal row differs/);
+});
+test('qualification accepts additive runtime modules with the exact observed comparison and all original graph guards',()=>{
+ const value=fixture();
+ value.receipt.engineIdentity=engine([...value.receipt.engineIdentity.files,{file:'src/analysis/new-adapter.ts',sha256:hash('new-adapter')}]);
+ value.receipt.runtimeInputComparison=compareHistoryRuntimeInputs(value.receipt.engineIdentity,value.baseline.engineIdentity);
+ recapture(value);
+ const result=verifyEntrypointQualification(value);assert.deepEqual(result.runtimeInputComparison,value.receipt.runtimeInputComparison);assert.deepEqual(result.runtimeInputComparison.added,['src/analysis/new-adapter.ts']);assert.equal(result.revisions,3);
+ // A valid runtime extension cannot hide changed original graph payloads.
+ value.receipt.repositories[0].child.revisions[0].baselineComparison.sha256=hash('changed-graph');recapture(value);assert.throws(()=>verifyEntrypointQualification(value));
+});
+test('qualification refuses omitted baseline modules, unrecorded additions and falsified runtime comparisons',()=>{
+ for(const change of [
+  v=>v.receipt.engineIdentity=engine([{file:'src/replaced.ts',sha256:hash('replacement')}]),
+  v=>v.receipt.engineIdentity=engine([...v.receipt.engineIdentity.files,{file:'src/added.ts',sha256:hash('added')}]),
+  v=>{v.receipt.runtimeInputComparison=compareHistoryRuntimeInputs(v.receipt.engineIdentity,v.baseline.engineIdentity);v.receipt.runtimeInputComparison.changed=[];},
+  v=>v.receipt.engineIdentity.files[0].sha256=hash('undeclared-change'),
+ ]){const value=fixture();change(value);recapture(value);assert.throws(()=>verifyEntrypointQualification(value));}
+});
+test('qualification joins the runtime comparison to the independently captured frozen inputs',()=>{
+ const value=fixture();value.receipt.runtimeInputComparison=compareHistoryRuntimeInputs(value.receipt.engineIdentity,value.baseline.engineIdentity);recapture(value);
+ const captured=JSON.parse(value.columns[0].input.receiptUtf8);captured.runtimeInputComparison.changed=[];value.columns[0].input.receiptUtf8=JSON.stringify(captured);value.columns[0].input.receiptSha256=hash(value.columns[0].input.receiptUtf8);value.columns[0].audit.inputReceiptSha256=value.columns[0].input.receiptSha256;
+ assert.throws(()=>verifyEntrypointQualification(value),/Captured frozen input differs/);
 });
