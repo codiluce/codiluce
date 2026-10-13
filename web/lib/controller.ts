@@ -299,35 +299,41 @@ export class MapController implements MapNavigator {
     const selection = state.selection;
     const selectedAncestors = selection?.locate?.spatialAncestors.map(node => node.id) ?? [];
     const edges: EdgeOverlay[] = [];
-    let emphasis: Set<string> | undefined;
-    if (selection?.node && !isContainer(selection.node) && state.relations.forId === selection.id && state.relations.items.length) {
-      emphasis = new Set([selection.id]);
+    // The selection lights itself with its content and what it is connected to (with the areas holding it); the rest recedes.
+    let emphasis: Set<string> | undefined, within: Set<string> | undefined;
+    if (selection?.node && !isContainer(selection.node) && state.relations.forId === selection.id && (state.relations.status === 'ready' || state.relations.items.length)) {
+      emphasis = new Set([selection.id]); within = new Set([selection.id]);
       for (const item of state.relations.items) {
         if (state.relations.type && item.type !== state.relations.type) continue;
-        emphasis.add(item.other.id);
+        emphasis.add(item.other.id); within.add(item.other.id);
+        for (const id of item.otherAncestors) emphasis.add(id);
         const incoming = item.direction === 'incoming';
         edges.push({ key: item.id, type: item.type, count: 1, from: incoming ? item.other.id : selection.id, fromAncestors: incoming ? item.otherAncestors : selectedAncestors, to: incoming ? selection.id : item.other.id, toAncestors: incoming ? selectedAncestors : item.otherAncestors, emphasized: state.evidence?.relationId === item.id, ...(item.change ? { change: item.change } : {}) });
       }
-    } else if (selection?.node && isContainer(selection.node) && state.aggregate.forId === selection.id && state.aggregate.data?.groups.length) {
-      emphasis = new Set([selection.id]);
-      const drill = state.aggregate.drill;
+    } else if (selection?.node && isContainer(selection.node) && state.aggregate.forId === selection.id && state.aggregate.data) {
+      emphasis = new Set([selection.id]); within = new Set([selection.id]);
+      const drill = state.aggregate.drill, reached = state.aggregate.data.reached ?? {};
+      for (const [type, ids] of Object.entries(reached)) if (!state.relations.type || type === state.relations.type) for (const id of ids) emphasis.add(id);
       for (const group of state.aggregate.data.groups) {
         if (state.relations.type && group.type !== state.relations.type) continue;
         emphasis.add(group.anchor.id);
+        for (const id of group.anchorAncestors) emphasis.add(id);
+        // Too many connected entities of this type were listed: the anchor's whole content stays lit.
+        if (!reached[group.type]) within.add(group.anchor.id);
         const outgoing = group.direction === 'outgoing';
         edges.push({ key: `${group.direction}:${group.type}:${group.anchor.id}`, type: group.type, count: group.count, from: outgoing ? selection.id : group.anchor.id, fromAncestors: outgoing ? selectedAncestors : group.anchorAncestors, to: outgoing ? group.anchor.id : selection.id, toAncestors: outgoing ? group.anchorAncestors : selectedAncestors, emphasized: drill?.group === group });
       }
     }
     const unresolvedCount = selection && !isContainer(selection.node ?? { type: 'file', kind: 'entity' }) && selection.node?.type !== 'file' ? state.diagnostics.data?.codes.find(code => code.code === 'unresolved-http-call')?.count ?? 0 : 0;
     return {
-      selectedId: selection?.id, hoveredId: state.hover?.id, emphasis, edges,
+      selectedId: selection?.id, hoveredId: state.hover?.id, emphasis, within, edges,
       showDiagnostics: state.showDiagnostics, source: this.sourceFace(state), time, reducedMotion: this.motionReduced,
       ...(state.meta?.comparison ? { comparison: { dimUnchanged: state.timeline.dimUnchanged } } : {}),
       ...(unresolvedCount && selection ? { unresolved: { nodeId: selection.id, count: unresolvedCount } } : {}),
       ...this.analysisOverlays(state, time),
       motion: this.motion,
       // A time-lapse frame compares with the previous commit; overlays loaded for the settled view wait until it is back.
-      ...(this.store.previewScene ? { edges: [], emphasis: undefined, lit: undefined, flow: undefined, callouts: undefined, pins: undefined, coverage: undefined, families: undefined, feature: undefined, people: undefined, person: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
+      ...(this.store.previewScene ? { edges: [], emphasis: undefined, within: undefined, lit: undefined, flow: undefined, callouts: undefined, pins: undefined, coverage: undefined, families: undefined, feature: undefined, people: undefined, person: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
     };
   }
   /**
@@ -353,6 +359,7 @@ export class MapController implements MapNavigator {
       const emphasis = new Set<string>();
       for (const node of lanes.nodes) { for (const id of node.ancestors) emphasis.add(id); if (node.node) emphasis.add(node.node.id); }
       result.emphasis = emphasis;
+      result.within = undefined;
       result.edges = [];
     }
     if (steps) {
@@ -369,6 +376,7 @@ export class MapController implements MapNavigator {
         edges.push({ key: link.id, type: to.effect ? 'effect' : link.hops.at(-1)?.type ?? 'calls', count: 1, from: from.node.id, fromAncestors: from.ancestors, to: target, toAncestors: to.node ? to.ancestors : to.ancestors.slice(0, -1), emphasized: !!focus && (link.from === focus || link.to === focus) });
       }
       result.emphasis = emphasis;
+      result.within = undefined;
       result.edges = edges;
     }
     const shown = this.shownFlow(state);
@@ -438,7 +446,7 @@ export class MapController implements MapNavigator {
   private mapFlowOverlay(shown: { flow: MapFlow; playback: PlaybackState }): Partial<RenderState> {
     const { flow, playback } = shown;
     if (this.litCache?.flow !== flow) this.litCache = { flow, lit: flowLit(flow) };
-    const result: Partial<RenderState> = { lit: this.litCache.lit, edges: [], emphasis: undefined };
+    const result: Partial<RenderState> = { lit: this.litCache.lit, edges: [], emphasis: undefined, within: undefined };
     const branch = flow.branches[playback.index];
     if (!branch) return result;
     const { position, front } = branchPosition(branch, playback);

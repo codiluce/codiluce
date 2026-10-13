@@ -79,6 +79,8 @@ const SEVERITY_ORDER: Record<string, number> = { error: 0, warning: 1, info: 2 }
 const STATUS_ORDER: Record<string, number> = { added: 0, removed: 1, moved: 2, modified: 3, unchanged: 4 };
 const TYPE_ORDER: Record<string, number> = { application: 0, directory: 1, file: 2, route: 3, api_endpoint: 3 };
 const VIEW_CACHE = 8, DATA_CACHE = 10;
+/** Connected entities (with their areas) listed per relation type by an aggregate; beyond, the map lights only the anchors. */
+export const AGGREGATE_REACHED_MAX = 4000;
 const METHOD_ORDER: Record<string, number> = { GET: 0, HEAD: 1, POST: 2, PUT: 3, PATCH: 4, DELETE: 5, OPTIONS: 6 };
 export interface ProjectionOptions {
   stateDirectory?: string;
@@ -648,10 +650,23 @@ export class ProjectionService {
       group.count++; groups.set(key, group);
     }
     const sorted = [...groups.values()].sort((a, b) => b.count - a.count || (a.direction < b.direction ? -1 : a.direction > b.direction ? 1 : 0) || (a.type < b.type ? -1 : a.type > b.type ? 1 : 0) || (a.anchor < b.anchor ? -1 : 1));
+    // Each outside endpoint with the areas between it and its anchor, per type, so the map lights exactly what is connected.
+    const reached = new Map<string, Set<string> | null>();
+    for (const item of crossing) {
+      let ids = reached.get(item.type);
+      if (ids === null) continue;
+      if (!ids) reached.set(item.type, ids = new Set());
+      for (let node = current.index.node(item.outside); node; node = node.spatialParentId ? current.index.node(node.spatialParentId) : undefined) {
+        ids.add(node.id);
+        if (node.id === item.anchor) break;
+      }
+      if (ids.size > AGGREGATE_REACHED_MAX) reached.set(item.type, null);
+    }
     return {
       internal: [...internal].map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count || (a.type < b.type ? -1 : 1)),
       groups: sorted.slice(0, 200).map(group => { const anchor = current.index.node(group.anchor)!; return { ...group, anchor: this.summary(current, anchor), anchorAncestors: current.index.spatialAncestors(anchor).map(node => node.id) }; }),
       totalCrossing: crossing.length, truncated: sorted.length > 200,
+      reached: Object.fromEntries([...reached].flatMap(([type, ids]) => ids ? [[type, [...ids].sort()]] : [])),
     };
   }
   aggregateEdges(id: string, options: { anchor: string; type?: string; direction?: string; limit?: number; offset?: number; view?: ViewKey }): Page<RelationItem & { inside: NodeSummary }> {

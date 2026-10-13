@@ -4,6 +4,7 @@
 // the map stays as a small overview in a corner, showing what the tool lights;
 // tabs switch between them, and a click on the overview brings the map back.
 import { useState } from 'react';
+import { CodeView } from './CodeView';
 import { useAtlas, useStore } from './context';
 import { FilesView, filesTitle } from './FilesView';
 import { FlowBar } from './FlowBar';
@@ -25,6 +26,7 @@ export function Workbench({ split }: { split: boolean }) {
         {center === 'flow' && <FlowView />}
         {center === 'impact' && <ImpactView />}
         {center === 'files' && <FilesView />}
+        {center === 'code' && <CodeView />}
         <div className={`map-holder${small ? ' small' : ''}${small && !overview ? ' hidden' : ''}`} aria-hidden={small || undefined}>
           {split && !small ? <SplitMap /> : <MapView />}
           {!small && <FlowBar />}
@@ -46,7 +48,8 @@ function CenterTabs() {
   const impact = useAtlas(state => state.impact.open ? state.impact : undefined);
   const known = useAtlas(() => impact?.forId ? store.scene.nodes.get(impact.forId)?.name : undefined);
   const files = useAtlas(state => state.files);
-  if (!flow && !impact && !files) return null;
+  const code = useAtlas(state => state.code ? state.code.node?.name ?? '' : undefined);
+  if (!flow && !impact && !files && code === undefined) return null;
   const tab = (view: typeof center, label: string, title: string, close?: { text: string; run: () => void }) => (
     <div className={`center-tab${center === view ? ' current' : ''}`} key={view}>
       <button role="tab" aria-selected={center === view} onClick={() => store.setCenter(view)} title={title}><span className="center-tab-label">{label}</span></button>
@@ -59,6 +62,7 @@ function CenterTabs() {
       {flow && tab('flow', `Flow · ${lanes && flow.lanes ? (lanes.kind === 'command' || lanes.kind === 'schedule' ? lanes.name : `${lanes.method} ${lanes.path}`) : flow.title}`, `${flow.layout === 'outline' ? 'Outline' : flow.lanes ? 'Lanes' : 'Diagram'} of ${flow.title}`, { text: 'Close the flow tab', run: () => store.closeFlowView() })}
       {impact && tab('impact', impact.forId ? `Impact · ${impactOriginName(impact.forId, impact.data, known)}` : 'Impact', 'What depends on it, hop by hop', { text: 'Close the impact tab', run: () => store.hideImpact() })}
       {files && tab('files', filesTitle(files, files.data), 'The files lit on the map, as a list', { text: 'Close the files tab', run: () => store.closeFiles() })}
+      {code !== undefined && tab('code', code ? `Code · ${code}` : 'Code', 'The code of the selection', { text: 'Close the code tab', run: () => store.closeCode() })}
     </div>
   );
 }

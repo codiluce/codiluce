@@ -23,6 +23,8 @@ export const CHILD_PAGE = 500;
 export const LANES_TYPES = new Set(['api_endpoint', 'command', 'scheduled_task']);
 /** Children beyond this many per container are not fetched; the inspector says so. */
 export const CHILD_CAP = 3000;
+/** Lines of code read at a time in the Code tool (the server's bound). */
+export const CODE_WINDOW = 400;
 type Status = 'idle' | 'loading' | 'ready' | 'error';
 export interface SelectionState {
   id: string; node?: NodeSummary; locate?: LocateResult;
@@ -94,7 +96,7 @@ export interface ImpactState {
   data?: ImpactResult; items: ImpactItem[]; error?: string;
 }
 /** What the middle of the screen shows: the map, or a tool with the map as a small overview in a corner. */
-export type CenterView = 'map' | 'flow' | 'impact' | 'files';
+export type CenterView = 'map' | 'flow' | 'impact' | 'files' | 'code';
 /**
  * A flow open in the middle: one subject (a request, command, task, page or
  * any code that runs) as a diagram (`lanes`: in lanes, left to right;
@@ -104,6 +106,21 @@ export interface FlowViewState { id: string; title: string; subtitle?: string; l
 /** What a list of files is of: a feature, a data family, a coverage category or a person (the highlight on the map). */
 export interface FileSubject { kind: 'feature' | 'family' | 'coverage' | 'person'; key: string }
 export interface FilesState extends FileSubject { status: Status; stamp: string; data?: FileListResult; error?: string }
+/**
+ * The Code tool in the middle: the source of the selection (a file whole, a
+ * symbol in its file with its lines marked), read in windows that grow as
+ * you scroll; an area (a folder, an application, a district) lists what it
+ * holds instead. It follows the selection while it is in front. `stamp` is
+ * the view and entity `data` was read for.
+ */
+export interface CodeState {
+  forId?: string; node?: NodeSummary;
+  status: Status; stamp?: string; data?: SourceResponse; error?: string;
+  /** Reading further up or down the file. */
+  more?: 'earlier' | 'later';
+  /** The symbols of the file shown (two levels: a class and its members), for the outline. */
+  outline?: { fileId: string; stamp: string; status: Status; items: (NodeSummary & { level: number })[] };
+}
 /** What the viewed comparison's changes reach (history). */
 export interface CommitImpactState { status: Status; viewStamp?: string; data?: ImpactResult; error?: string; show: boolean }
 /** "What happens from here": typed steps from an anchor entity. */
@@ -210,6 +227,7 @@ export interface AtlasState {
   center: CenterView;
   flowView?: FlowViewState;
   files?: FilesState;
+  code?: CodeState;
 }
 export interface MapNavigator {
   flyTo(node: NodeSummary, options?: { mode?: 'focus' | 'enter' }): void;
@@ -289,7 +307,10 @@ export class AtlasStore {
   /** Where the single map starts when it next appears (a place of the split map opened on its own). */
   private pendingFocus?: { node: NodeSummary; frame?: Rect };
 
+  /** The address the page opened with: read once, as another store (React's development double mount) may rewrite it first. */
+  private openingHash?: string;
   constructor(readonly api: AtlasApi, private readonly options: StoreOptions = {}) {
+    this.openingHash = options.location?.hash;
     let prefs: { themeId?: string; moreThemes?: boolean; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey } = {};
     try { prefs = JSON.parse(options.storage?.getItem('codiluce:prefs') ?? '{}'); } catch { /* defaults */ }
     this.state = {
@@ -333,13 +354,15 @@ export class AtlasStore {
       this.scene.reset(meta.root);
       this.set({ meta, status: 'ready', staleIndex: false });
       await this.loadChildren([meta.root.id]);
-      const hash = this.options.location?.hash ?? '';
+      const hash = this.openingHash ?? this.options.location?.hash ?? '';
+      this.openingHash = undefined;
       const param = (name: string) => { const value = new RegExp(`(?:^#|&)${name}=([^&]+)`).exec(hash)?.[1]; return value ? decodeURIComponent(value) : undefined; };
       const deepLink = param('id'), at = param('at'), vs = param('vs');
       if ((at || vs) && meta.history.available) await this.openTimeline({ at, vs, select: deepLink });
       else if (deepLink) await this.select(deepLink, { fly: true });
       const impactDepth = Number(param('impact')), impactOf = param('impactOf') ?? (this.state.selection ? deepLink : undefined);
       if (impactOf && Number.isInteger(impactDepth) && impactDepth >= 1 && impactDepth <= 10) void this.showImpact(impactOf, impactDepth);
+      if (param('code') && this.state.center === 'map') this.openCode();
     } catch (error) {
       this.set({ status: 'error', error: error instanceof Error ? error.message : String(error) });
     }
@@ -402,6 +425,7 @@ export class AtlasStore {
       if (signal.aborted) return;
       this.place(located, epoch);
       this.set(state => state.selection?.id === id ? { selection: { ...state.selection, node: located.node, locate: located } } : {});
+      this.followCode();
       if (options.fly !== false) this.navigator?.flyTo(located.node, { mode: options.mode ?? (isContainer(located.node) ? 'enter' : 'focus') });
       void this.loadChildren(located.spatialAncestors.map(node => node.id).filter(nodeId => !this.scene.childList(nodeId).complete));
       const isEntity = located.node.kind === 'entity';
@@ -438,6 +462,7 @@ export class AtlasStore {
     if (id) parts.push(`id=${encodeURIComponent(id)}`);
     const impact = this.state.impact;
     if (impact.open && impact.forId) { parts.push(`impact=${impact.depth}`); if (impact.forId !== id) parts.push(`impactOf=${encodeURIComponent(impact.forId)}`); }
+    if (this.state.code) parts.push('code=1');
     if (timeline.open) {
       const at = snapshotToken(timeline.data, timeline.target) ?? 'live', vs = timeline.compare ? snapshotToken(timeline.data, timeline.baseline ?? timeline.data?.workingTree?.id) : undefined;
       parts.push(`at=${at}`);
@@ -890,8 +915,9 @@ export class AtlasStore {
   /** Bring the map, or an open tool, to the middle (the map then shows as an overview in a corner). */
   setCenter(view: CenterView): void {
     const state = this.state;
-    if (view !== 'map' && !(view === 'flow' ? state.flowView : view === 'impact' ? state.impact.open : state.files)) return;
+    if (view !== 'map' && !(view === 'flow' ? state.flowView : view === 'impact' ? state.impact.open : view === 'code' ? state.code : state.files)) return;
     if (state.center !== view) this.set({ center: view });
+    if (view === 'code') this.followCode();
   }
   /** A tool closed: the map comes back to the middle if the tool was there. */
   private leaveCenter(view: CenterView): Partial<AtlasState> { return this.state.center === view ? { center: 'map' } : {}; }
@@ -1352,6 +1378,97 @@ export class AtlasStore {
     if (!files || files.kind !== kind || !key || files.key === key) return;
     this.set({ files: { kind, key, status: 'loading', stamp: this.filesStamp({ kind, key }) } });
     void this.loadFiles();
+  }
+  // The code of the selection ---------------------------------------------------
+  /** Open the Code tool in the middle (or bring it to the front): it shows the selection's code. */
+  openCode(): void {
+    if (!this.state.code) this.set({ code: { status: 'idle' } });
+    this.setCenter('code');
+    this.writeHash();
+  }
+  closeCode(): void {
+    for (const key of ['code', 'code-more', 'code-outline']) this.aborts.get(key)?.abort();
+    this.set({ ...this.leaveCenter('code'), code: undefined });
+    this.writeHash();
+  }
+  /** Read the selection's code if the tool shows something else (another entity, or another view of history). */
+  private followCode(): void {
+    const { code, selection } = this.state;
+    if (!code || !selection || this.state.center !== 'code') return;
+    if (code.stamp === `${this.viewStamp()}|${selection.id}` && code.status !== 'error') return;
+    const node = selection.node ?? this.scene.nodes.get(selection.id);
+    if (node) void this.loadCode(selection.id, node);
+  }
+  private async loadCode(id: string, node: NodeSummary): Promise<void> {
+    const stamp = `${this.viewStamp()}|${id}`;
+    this.aborts.get('code-more')?.abort();
+    // An area has no single source: the tool lists what it holds (its children, from the scene).
+    if (isContainer(node) || !node.path) {
+      this.aborts.get('code')?.abort();
+      this.set(state => state.code ? { code: { ...state.code, forId: id, node, stamp, status: 'ready', data: undefined, error: undefined, more: undefined } } : {});
+      void this.loadChildren([id]);
+      return;
+    }
+    const range = node.type !== 'file' ? node.sourceRange : undefined;
+    // Another symbol of the file already read: mark its lines without reading the file again.
+    const shown = this.state.code?.data;
+    if (shown && shown.file.path === node.path && this.state.code?.stamp?.startsWith(`${this.viewStamp()}|`) && !shown.changedSinceIndex && (range ? range.startLine >= shown.start && range.endLine <= shown.end : shown.start === 1)) {
+      this.aborts.get('code')?.abort();
+      const { focus: _focus, ...rest } = shown;
+      const data: SourceResponse = range ? { ...rest, focus: { startLine: range.startLine, endLine: range.endLine, kind: 'symbol', label: `${node.type} ${node.name}` } } : rest;
+      this.set(state => state.code ? { code: { ...state.code, forId: id, node, stamp, status: 'ready', data, error: undefined, more: undefined } } : {});
+      return;
+    }
+    const signal = this.abortable('code');
+    // The window starts at the top of the file unless the symbol starts far down; reading on loads the rest.
+    const start = !range || range.startLine <= CODE_WINDOW - 100 ? 1 : range.startLine - 40;
+    // The same file stays on screen while the next symbol in it loads.
+    this.set(state => state.code ? { code: { ...state.code, forId: id, node, stamp, status: 'loading', error: undefined, more: undefined, ...(state.code.data?.file.path === node.path ? {} : { data: undefined }) } } : {});
+    try {
+      const data = await this.api.source({ entity: id, start, end: start + CODE_WINDOW - 1 }, signal);
+      if (signal.aborted) return;
+      this.set(state => state.code?.stamp === stamp ? { code: { ...state.code, status: 'ready', data } } : {});
+      void this.loadOutline(data.file.id);
+    } catch (error) { if (!isAbort(error)) this.set(state => state.code?.stamp === stamp ? { code: { ...state.code, status: 'error', error: error instanceof Error ? error.message : String(error) } } : {}); }
+  }
+  /** Read the lines just above or below those shown, keeping what is shown. */
+  async codeMore(direction: 'earlier' | 'later'): Promise<void> {
+    const code = this.state.code, data = code?.data;
+    if (!code?.forId || !data || code.more || code.status !== 'ready') return;
+    const start = direction === 'earlier' ? Math.max(1, data.start - CODE_WINDOW) : data.end + 1;
+    const end = direction === 'earlier' ? data.start - 1 : Math.min(data.totalLines, data.end + CODE_WINDOW);
+    if (end < start) return;
+    const stamp = code.stamp, signal = this.abortable('code-more');
+    this.set(state => state.code ? { code: { ...state.code, more: direction } } : {});
+    try {
+      const next = await this.api.source({ entity: code.forId, start, end }, signal);
+      if (signal.aborted) return;
+      this.set(state => {
+        const shown = state.code, current = shown?.data;
+        if (!shown || shown.stamp !== stamp || !current) return {};
+        // The file changed on disk meanwhile: start again from what was read last.
+        const merged = next.currentHash !== current.currentHash ? next
+          : direction === 'earlier' ? { ...current, start: next.start, lines: [...next.lines.slice(0, current.start - next.start), ...current.lines], truncated: current.truncated || next.truncated }
+          : { ...current, end: next.end, lines: [...current.lines, ...next.lines], truncated: current.truncated || next.truncated };
+        return { code: { ...shown, data: merged, more: undefined } };
+      });
+    } catch (error) { if (!isAbort(error)) this.set(state => state.code && state.code.stamp === stamp ? { code: { ...state.code, more: undefined, error: error instanceof Error ? error.message : String(error) } } : {}); }
+  }
+  /** The symbols of a file for the outline: its children, and theirs (a class's members), bounded. */
+  private async loadOutline(fileId: string): Promise<void> {
+    const stamp = this.viewStamp(), outline = this.state.code?.outline;
+    if (outline?.fileId === fileId && outline.stamp === stamp && outline.status !== 'error') return;
+    const signal = this.abortable('code-outline');
+    this.set(state => state.code ? { code: { ...state.code, outline: { fileId, stamp, status: 'loading', items: [] } } } : {});
+    try {
+      const top = (await this.api.children(fileId, 0, 200, signal)).items;
+      const nested = await Promise.all(top.map((item, index) => item.childCount > 0 && item.kind === 'entity' && index < 24 ? this.api.children(item.id, 0, 200, signal).then(page => page.items) : Promise.resolve([])));
+      if (signal.aborted) return;
+      const byLine = (a: NodeSummary, b: NodeSummary) => (a.sourceRange?.startLine ?? 0) - (b.sourceRange?.startLine ?? 0) || (a.name < b.name ? -1 : 1);
+      const items = top.map((item, index) => ({ item, members: nested[index]! })).sort((a, b) => byLine(a.item, b.item))
+        .flatMap(({ item, members }) => [{ ...item, level: 0 }, ...[...members].sort(byLine).map(member => ({ ...member, level: 1 }))]);
+      this.set(state => state.code?.outline?.fileId === fileId ? { code: { ...state.code, outline: { fileId, stamp, status: 'ready', items } } } : {});
+    } catch (error) { if (!isAbort(error)) this.set(state => state.code?.outline?.fileId === fileId ? { code: { ...state.code, outline: { ...state.code.outline, status: 'error' } } } : {}); }
   }
   /** Expand or collapse groups of the Flows list (`open` undefined: toggle). */
   setFlowGroupsOpen(keys: string[], open: boolean): void {

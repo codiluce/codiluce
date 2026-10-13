@@ -112,6 +112,46 @@ test('containers show aggregated boundary edges that drill down to individual re
   assert.equal(drill.items.length, toBackend.count);
   assert.ok(drill.items.every(item => item.type === 'requests' && item.inside.path?.startsWith('frontend/')));
 });
+test('the code tool follows the selection: a symbol in its file, the file whole, an area as a list', async () => {
+  const { atlas, api } = await ready();
+  const until = async (check: () => boolean) => { for (let i = 0; i < 400 && !check(); i++) await new Promise(resolve => setTimeout(resolve, 5)); assert.ok(check()); };
+  const [login] = projection.search('AuthController::login', {}).items;
+  await atlas.select(login!.id, { fly: false });
+  atlas.openCode();
+  assert.equal(atlas.getState().center, 'code');
+  await until(() => atlas.getState().code?.status === 'ready' && atlas.getState().code?.outline?.status === 'ready');
+  let code = atlas.getState().code!;
+  assert.equal(code.data!.file.path, 'backend/app/Http/Controllers/AuthController.php');
+  assert.equal(code.data!.start, 1, 'a short file is read from its top');
+  assert.equal(code.data!.end, code.data!.totalLines);
+  assert.deepEqual([code.data!.focus?.kind, code.data!.focus?.startLine], ['symbol', login!.sourceRange!.startLine]);
+  assert.deepEqual(code.outline!.items.map(item => [item.name, item.level]), [['AuthController', 0], ['login', 1], ['user', 1]]);
+  // Another symbol of the same file, then the file itself: marked without reading the file again.
+  const reads = () => api.calls.filter(call => call.startsWith('source:')).length;
+  const before = reads();
+  assert.ok(before > 0);
+  await atlas.select(code.outline!.items.find(item => item.name === 'user')!.id, { fly: false });
+  code = atlas.getState().code!;
+  assert.equal(code.data!.focus?.label, 'method user');
+  await atlas.select(code.data!.file.id, { fly: false });
+  assert.equal(atlas.getState().code!.data!.focus, undefined);
+  assert.equal(reads(), before);
+  // An area lists what it holds instead.
+  await atlas.select(id('Controllers', 'directory'), { fly: false });
+  code = atlas.getState().code!;
+  assert.equal(code.node?.type, 'directory');
+  assert.equal(code.data, undefined);
+  await until(() => atlas.scene.childList(id('Controllers', 'directory')).complete);
+  // With the map in front, the tool waits; it reads the selection again when it comes back.
+  atlas.setCenter('map');
+  await atlas.select(login!.id, { fly: false });
+  assert.equal(atlas.getState().code!.forId, id('Controllers', 'directory'));
+  atlas.setCenter('code');
+  await until(() => atlas.getState().code?.forId === login!.id && atlas.getState().code?.status === 'ready');
+  atlas.closeCode();
+  assert.equal(atlas.getState().center, 'map');
+  assert.equal(atlas.getState().code, undefined);
+});
 test('data families: loaded for the inspector without coloring the map, lit one at a time, one file coloring at a time', async () => {
   const { atlas } = await ready();
   await atlas.ensureFamilies();

@@ -27,8 +27,8 @@ test('Python shows source, declarations and partial import/reference support', a
   await expect(coverage).not.toContainText('Calls and flows are not measured for this file');
   await coverage.getByText('Limits and findings').click();
   await expect(coverage).toContainText('Lexical declarations, imported members');
-  await inspector(page).getByRole('button', { name: 'Open source' }).click();
-  const source = page.getByRole('region', { name: 'Source' });
+  await inspector(page).getByRole('button', { name: 'Code', exact: true }).click();
+  const source = page.getByRole('region', { name: 'Code of StructurePython' });
   await expect(source).toContainText('class StructurePython');
   await expect(source).toContainText('é😀');
 });
@@ -140,9 +140,11 @@ test('effects and call sites explain what a symbol does and what could not be re
   // Source markers jump to what a line calls.
   await select(page, 'handleSave', 'handleSave');
   await expect(inspector(page).locator('.relation-phrase', { hasText: 'calls' }).first()).toBeVisible();
-  await inspector(page).getByRole('button', { name: 'Open source' }).click();
-  const source = page.getByRole('region', { name: 'Source' });
+  await inspector(page).getByRole('button', { name: 'Code', exact: true }).click();
+  const source = page.getByRole('region', { name: 'Code of handleSave' });
   await expect(source.locator('.call-mark').first()).toBeVisible();
   await source.locator('tr[data-line="9"] .call-mark').click();
   await expect(inspector(page).getByRole('heading', { name: /^(getInstance|signIn)$/ })).toBeVisible();
+  // The code follows the selection: the target's own lines are marked now.
+  await expect(page.getByRole('region', { name: /^Code of (getInstance|signIn)$/ }).locator('tr.focus').first()).toBeVisible();
 });

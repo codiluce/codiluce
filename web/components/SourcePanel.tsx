@@ -8,30 +8,30 @@ import { useAtlas, useStore } from './context';
 const WINDOW = 400;
 type Target = { id: string; name: string; type: string };
 /**
- * Lines of the shown file where the selected symbol calls, renders or
- * references an indexed entity (from its outgoing relationships' site lines).
+ * Lines of the shown file where the selection calls, renders, references,
+ * reads or writes an indexed entity (from its outgoing relationships' site lines).
  */
-function useCallMarks(path: string | undefined): Map<number, Target[]> {
+export function useCallMarks(path: string | undefined): Map<number, Target[]> {
   const selection = useAtlas(state => state.selection);
   const relations = useAtlas(state => state.relations);
   return useMemo(() => {
     const marks = new Map<number, Target[]>();
     if (!path || !selection || selection.node?.path !== path || relations.forId !== selection.id) return marks;
     for (const item of relations.items) {
-      if (item.direction !== 'outgoing' || !['calls', 'renders', 'references'].includes(item.type)) continue;
+      if (item.direction !== 'outgoing') continue;
       const lines = Array.isArray(item.metadata?.lines) ? item.metadata.lines as number[] : [];
       for (const line of lines) marks.set(line, [...marks.get(line) ?? [], { id: item.other.id, name: item.other.name, type: item.type }]);
     }
     return marks;
   }, [path, selection, relations]);
 }
-function CallMark({ targets }: { targets: Target[] }) {
+export function CallMark({ targets }: { targets: Target[] }) {
   const store = useStore();
   const first = targets[0]!;
   const label = targets.map(target => `${target.type} ${target.name}`).join(', ');
   return <button className="call-mark" title={`${label} — go to ${first.name}`} aria-label={`Go to ${first.name} (${label})`} onClick={() => void store.select(first.id, { fly: true })}>◆</button>;
 }
-function where(snapshot: SnapshotRef | undefined): string { return !snapshot ? '' : snapshot.kind === 'commit' ? `@ ${shortSha(snapshot.commitSha)}` : '@ working tree'; }
+export function where(snapshot: SnapshotRef | undefined): string { return !snapshot ? '' : snapshot.kind === 'commit' ? `@ ${shortSha(snapshot.commitSha)}` : '@ working tree'; }
 export function SourcePanel() {
   const store = useStore();
   const source = useAtlas(state => state.source);

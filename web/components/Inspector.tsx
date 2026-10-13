@@ -95,7 +95,7 @@ function Selection() {
         {node.path && <span className="qualified mono">{node.path}{node.sourceRange ? `:${node.sourceRange.startLine}–${node.sourceRange.endLine}` : ''}</span>}
       </div>
       <div className="inspector-actions">
-        {sourceable && <button className="button primary small" onClick={() => void store.openSource({ entity: node.id }, `${typeLabel(node.type, node.role)} ${node.name}`)}>Open source</button>}
+        {sourceable && <button className="button primary small" onClick={() => store.openCode()} title="Read its code in the middle of the screen">Code</button>}
         <button className="button small" onClick={() => { store.setCenter('map'); store.navigator?.flyTo(node, { mode: container ? 'enter' : 'focus' }); }}>Zoom to</button>
         <AnalysisButtons node={node} />
       </div>

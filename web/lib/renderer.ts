@@ -41,6 +41,8 @@ export interface RenderState {
   selectedId?: string; hoveredId?: string;
   /** When set, nodes outside it (and outside their ancestors) are dimmed. */
   emphasis?: Set<string>;
+  /** With `emphasis`: nodes whose whole content stays lit too (the selection, what it is connected to). */
+  within?: Set<string>;
   /** A flow is shown: what it touches (with the areas holding it) is drawn as usual, everything else dims. */
   lit?: Set<string>;
   edges: EdgeOverlay[];
@@ -82,6 +84,8 @@ const MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
 export const RISE_MS = 520, FLASH_MS = 900;
 /** Rounded corners and gradients are skipped below this on-screen size, where they would not show. */
 const SOFT_PX = 16;
+/** How far what a focus does not reach recedes, as a share of the theme's dimming. */
+const FOCUS_DIM = 0.35;
 
 export class MapRenderer {
   private palettes: PaletteCache;
@@ -108,12 +112,17 @@ export class MapRenderer {
     const peopleOf = state.people ? this.familyResolver(scene, state.people) : undefined;
     const focusLit = state.feature?.focus ? this.familyLit(scene, state.feature, this.familyResolver(scene, state.feature))
       : state.person?.focus ? this.familyLit(scene, state.person, this.familyResolver(scene, state.person)) : familyLit;
-    for (const item of items) {
+    // Items come parents first: one inside a subtree kept whole is lit through its parent.
+    const inside = state.within && emphasis ? new Uint8Array(items.length) : undefined;
+    // What the selection, a feature or a person does not reach recedes far, so what it does reach reads at a glance.
+    const recede = theme.dimAlpha * FOCUS_DIM;
+    for (const [index, item] of items.entries()) {
+      if (inside) inside[index] = state.within!.has(item.node.id) || (item.parent >= 0 && inside[item.parent] === 1) ? 1 : 0;
       // A playing flow decides what stays lit; then the feature or family in focus (chosen on purpose, it wins over the selection); then what the selection reaches.
-      const dimmed = flowSet ? !flowSet.has(item.node.id) : focusLit ? !focusLit(item.node) : !!emphasis && !emphasis.has(item.node.id);
+      const dimmed = flowSet ? !flowSet.has(item.node.id) : focusLit ? !focusLit(item.node) : !!emphasis && !emphasis.has(item.node.id) && !inside?.[index];
       // In a comparison, blocks a change reaches stay lit instead of fading with the unchanged ones.
       const reached = impactLit?.has(item.node.id) && item.node.change?.status !== 'removed';
-      const alpha = item.alpha * (dimmed ? (flowSet ? theme.flow.dimAlpha : theme.dimAlpha) : 1) * (state.comparison && !reached ? this.changeAlpha(item, state.comparison) : 1) * (state.impact?.dimOthers && !reached ? theme.dimAlpha : 1);
+      const alpha = item.alpha * (dimmed ? (flowSet ? theme.flow.dimAlpha : recede) : 1) * (state.comparison && !reached ? this.changeAlpha(item, state.comparison) : 1) * (state.impact?.dimOthers && !reached ? theme.dimAlpha : 1);
       if (alpha <= 0.01) continue;
       if (theme.style?.shadow && item.parent >= 0 && item.size > SOFT_PX) this.shadow(ctx, viewport, camera, item, alpha);
       const category = coverageOf?.(item.node);
@@ -128,7 +137,8 @@ export class MapRenderer {
       if (state.comparison) this.changeOverlay(ctx, viewport, camera, item, alpha, state);
       if (state.impact) this.impactOverlay(ctx, viewport, camera, item, alpha, state.impact);
       if (state.showDiagnostics && !item.open && item.node.diagnostics > 0 && item.size > 10) this.diagnosticMarker(ctx, viewport, camera, item, alpha);
-      this.collectLabel(labels, viewport, camera, item, state, alpha, dimmed ?? false);
+      // Receded areas keep their names (in a quieter color) to stay oriented; receded blocks lose theirs.
+      this.collectLabel(labels, viewport, camera, item, state, dimmed && !flowSet && item.tier === 'district' ? alpha / recede : alpha, dimmed ?? false);
     }
     const selected = state.selectedId ? items[set.index.get(state.selectedId) ?? -1] : undefined;
     if (selected) this.outline(ctx, viewport, camera, selected, theme.selection, 2.5, true);
@@ -496,7 +506,7 @@ export class MapRenderer {
       const top = worldToScreen(camera, viewport, node.rect.x, node.rect.y, item.zTop);
       const size = node.type === 'application' ? 15 : node.type === 'repository' ? 13 : 11;
       const text = `${state.comparison ? changeGlyph(node) : ''}${node.type === 'repository' ? node.name : node.kind === 'group' ? `${node.name}` : node.type === 'directory' ? `${node.name}/` : node.name}`;
-      labels.push({ x: top.x, y: top.y - 4, align: 'above', priority: 1e9 - node.depth * 1e6 + item.size, lines: [{ text, font: `${node.type === 'application' ? 700 : 600} ${size}px ${this.font}`, color: theme.text.district }] });
+      labels.push({ x: top.x, y: top.y - 4, align: 'above', priority: 1e9 - node.depth * 1e6 + item.size - (dimmed ? 5e5 : 0), lines: [{ text, font: `${node.type === 'application' ? 700 : 600} ${size}px ${this.font}`, color: dimmed ? theme.text.secondary : theme.text.district }] });
       return;
     }
     const { x, y, w, h } = node.rect;

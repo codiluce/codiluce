@@ -70,7 +70,15 @@ export interface RelationItem {
 }
 export type RelationsPage = Page<RelationItem> & { typeCounts: { type: string; direction: string; count: number }[] };
 export interface AggregateGroup { anchor: NodeSummary; anchorAncestors: string[]; type: string; direction: string; count: number }
-export interface AggregateResult { internal: { type: string; count: number }[]; groups: AggregateGroup[]; totalCrossing: number; truncated: boolean }
+export interface AggregateResult {
+  internal: { type: string; count: number }[]; groups: AggregateGroup[]; totalCrossing: number; truncated: boolean;
+  /**
+   * By relation type, the outside entities connected to the container and the
+   * areas holding them down from their group's anchor: what the map keeps lit.
+   * Absent for a type when more than AGGREGATE_REACHED_MAX would be listed.
+   */
+  reached: Record<string, string[]>;
+}
 export type AggregateEdgesPage = Page<RelationItem & { inside: NodeSummary }>;
 export type DiagnosticItem = Omit<Diagnostic, 'resolution' | 'severity'> & { severity: string; nodeId: string; nodeName: string; change?: 'added' };
 export type DiagnosticsPage = Page<DiagnosticItem> & { codes: { code: string; severity: string; count: number }[] };

@@ -180,6 +180,14 @@ test('relations expose direction, type counts and endpoint ancestry; aggregates 
   const edges = projection.aggregateEdges(entityId('frontend', 'application'), { anchor: crossing[0]!.anchor.id, type: 'requests', direction: 'outgoing' });
   assert.equal(edges.total, crossing[0]!.count);
   assert.ok(edges.items.every(item => item.inside.path?.startsWith('frontend/')));
+  // What the map lights: each endpoint reached, with the areas from it up to its anchor, and nothing inside the frontend.
+  const reached = new Set(frontend.reached.requests);
+  for (const item of edges.items) {
+    assert.ok(reached.has(item.other.id), `${item.other.name} is lit`);
+    const chain = projection.locate(item.other.id).spatialAncestors.map(node => node.id);
+    assert.ok(chain.slice(chain.indexOf(crossing[0]!.anchor.id)).every(id => reached.has(id)), 'areas between the endpoint and its anchor are lit');
+  }
+  assert.ok(![...reached].some(id => projection.locate(id).node.path?.startsWith('frontend/')), 'only the outside side is listed');
 });
 test('diagnostics are attached to entities and visible from containing areas', () => {
   const projection = new ProjectionService(store);
