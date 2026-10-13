@@ -1,0 +1,324 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-13T15:53:49.565839+00:00",
+  "phase": "First normal production-only installed Java Gradle Boot default BOM release",
+  "sourceRevision": "06843ab2fd8a47398e6f1be5da0d7db7b3c45c9d",
+  "sourceRuntimeSha256": "f98108b3df4f1e824eadba7c4eb5c5cff51a056d1c218c35c35f9ffaeda84941",
+  "sourceRuntimeInputs": 1930,
+  "controllerTerminal": {
+    "pid": 928674,
+    "actualRunnerPid": 928702,
+    "startedAt": 1791905629.565055,
+    "command": [
+      "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+      "/home/ojoven/.nvm/versions/node/v22.12.0/lib/node_modules/npm/bin/npm-cli.js",
+      "run",
+      "test:package"
+    ],
+    "cwd": "/var/www/html/codiluce/.codiluce/validation-spring-boot-gradle-release/engine",
+    "node": "v22.12.0",
+    "revision": "06843ab2fd8a47398e6f1be5da0d7db7b3c45c9d",
+    "sourceRuntimeSha256": "f98108b3df4f1e824eadba7c4eb5c5cff51a056d1c218c35c35f9ffaeda84941",
+    "temporaryDirectory": "/tmp/codiluce-boot-gradle-release-2_45poy4",
+    "temporaryDirectoryOutsideGit": true,
+    "before": {
+      "revision": "06843ab2fd8a47398e6f1be5da0d7db7b3c45c9d",
+      "gitVersion": "git version 2.34.1",
+      "trackedFiles": 1306,
+      "sourceDigest": "e02ffa0209d1cdc99f5e26ac533e8063334a1eb337409348effcef5b3867113b",
+      "dirty": false
+    },
+    "targetExecution": false,
+    "freshOwnNpmCiClaim": false,
+    "completedAt": 1791906145.5079706,
+    "seconds": 515.9429156780243,
+    "actualExitCode": 0,
+    "interruptSignals": [],
+    "actualRunnerPidGone": true,
+    "after": {
+      "revision": "06843ab2fd8a47398e6f1be5da0d7db7b3c45c9d",
+      "gitVersion": "git version 2.34.1",
+      "trackedFiles": 1306,
+      "sourceDigest": "e02ffa0209d1cdc99f5e26ac533e8063334a1eb337409348effcef5b3867113b",
+      "dirty": false
+    },
+    "sourceUnchanged": true,
+    "passed": true,
+    "runnerQualifiedThisRecordedHost": false,
+    "logSha256": "0209f13eae014f2d7c6d2f8a99d40de9de32a7dba7e66bcf98525122bea0f8d8",
+    "fullNativeMatrixQualified": false
+  },
+  "firstNormalPackage": {
+    "schema": 1,
+    "startedAt": 1791905630.2970464,
+    "pid": 928792,
+    "actualRunnerPid": 928702,
+    "sourceRevision": "06843ab2fd8a47398e6f1be5da0d7db7b3c45c9d",
+    "sourceRuntimeSha256": "f98108b3df4f1e824eadba7c4eb5c5cff51a056d1c218c35c35f9ffaeda84941",
+    "passed": true,
+    "targetExecution": false,
+    "passiveReadOnlyCollection": true,
+    "normalPackageHarnessChanged": false,
+    "capturedValidations": [
+      {
+        "file": "typescript-input-ownership-validation.json",
+        "sha256": "2ba1789f6b84d9dbf147718ec7c3a31efb4da925b2fb75875f2e234844a88f4d"
+      },
+      {
+        "file": "literal-script-generation-validation.json",
+        "sha256": "ce9aea37e304d293637b93ed609309017d76db2179b57c349ad054fa1cbc92f3"
+      },
+      {
+        "file": "rails-callback-chain-validation.json",
+        "sha256": "3c90c253197ae3cdca9dd2ba7e369daafed4ad1243bbd3d3c9ab63e5450d0c97"
+      },
+      {
+        "file": "jvm-build-selection-validation.json",
+        "sha256": "2e2454f2d01a3d51a3b36a8f3b1a60c19f22e995b7c0ee152184a5354637f690"
+      },
+      {
+        "file": "gradle-compiler-inputs-validation.json",
+        "sha256": "0b3742646bb80aa4a2ce34549007751dbee6f84775f99cf259bbe47eec762620"
+      },
+      {
+        "file": "spring-boot-gradle-validation.json",
+        "sha256": "b09f137f05dcee0fdb851a3abf134da21556bfcd4b67ee83fa76ae4563d6e2b1"
+      }
+    ],
+    "originalTemporaryPackageRoot": "/tmp/codiluce-boot-gradle-release-2_45poy4/codiluce-package-bILBGO",
+    "snapshotCapturedAt": 1791905680.5032523,
+    "snapshotFiles": 1962,
+    "snapshotLinks": 6,
+    "tarball": {
+      "file": "codiluce-0.1.1.tgz",
+      "sha256": "6e49039098eb368592eeb47a990bf514d7c17256d69ebafe861abe92c947212e",
+      "bytes": 7249734,
+      "members": 375
+    },
+    "completeCopiedBytesAndModesEqual": true,
+    "allTarballMembersEqualInstalledBytes": true,
+    "packageRunnerActualExitCode": 0,
+    "packageRunnerSourceUnchanged": true,
+    "normalHarnessTemporaryDirectoryRemoved": true,
+    "completedAt": 1791906145.5345302
+  },
+  "evidenceArchive": {
+    "schema": 1,
+    "passed": true,
+    "pid": 976194,
+    "completedAt": "2026-10-13T15:50:00.613417+00:00",
+    "seconds": 42.714235067367554,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-spring-boot-gradle-release-evidence/spring-boot-gradle-first-normal-installed-release-evidence.tar.gz",
+    "sha256": "50fa09047ebad3f51ba2414de0a266f587dc46e16483f2b78c300c578f1e3beb",
+    "bytes": 263593302,
+    "manifestSha256": "097d04c70fc04542569994851fe9091214e925ea17a2c030d64db4b7f253f281",
+    "regularFiles": 18792,
+    "literalSymlinks": 23,
+    "allBytesModesAndLiteralLinksReopened": true,
+    "sourceRevision": "06843ab2fd8a47398e6f1be5da0d7db7b3c45c9d",
+    "sourceRuntimeSha256": "f98108b3df4f1e824eadba7c4eb5c5cff51a056d1c218c35c35f9ffaeda84941",
+    "sourceRuntimeInputs": 1930,
+    "tarball": {
+      "file": "codiluce-0.1.1.tgz",
+      "sha256": "6e49039098eb368592eeb47a990bf514d7c17256d69ebafe861abe92c947212e",
+      "bytes": 7249734,
+      "members": 375
+    },
+    "actualInstalledRegularFiles": 1962,
+    "actualInstalledLiteralSymlinks": 6,
+    "originalSourceSnapshots": 4,
+    "recordedBuildContexts": 12,
+    "sourceInstalledOriginalWholeGraphsCompared": 60,
+    "retainedSourceInstalledOriginalWholeGraphs": 120,
+    "mixedProfileOriginalInputs": 171,
+    "mixedSourceInstalledWholeGraphs": 6,
+    "normalInstalledPackageQualified": true,
+    "fullNativeMatrixQualified": false,
+    "productionRelativePerformanceQualified": false,
+    "productionHistoryForChangedRuntimeQualified": false,
+    "targetExecution": false,
+    "foreignFilesUnchanged": true
+  },
+  "sourceInstalledOriginalGraphParity": {
+    "schema": 1,
+    "passed": true,
+    "sourceRuntimeSha256": "f98108b3df4f1e824eadba7c4eb5c5cff51a056d1c218c35c35f9ffaeda84941",
+    "wholeGraphsCompared": 60,
+    "normalization": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "sourceReceiptSha256": "52d97d3f8c72474aa8be5b933405ef67719cf218e65ab60e3a180f690817bdc4",
+    "installedReceiptSha256": "87f52156e4678a0b69423afbc3607c5cddc0188d909a6c6266d757579bbc3e23",
+    "targetExecution": false,
+    "workingTreeComparisonProfile": "Exact identical original bytes in owned temporary paths outside Git; previous source-phase working-tree commit/dirty fields are preserved separately and not normalized away."
+  },
+  "completeMixedProfile": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": "2026-10-13T15:46:52.108Z",
+    "priorRuntime": "f98108b3df4f1e824eadba7c4eb5c5cff51a056d1c218c35c35f9ffaeda84941",
+    "priorRuntimeInputsVerified": 1930,
+    "currentRuntimeSha256": "f98108b3df4f1e824eadba7c4eb5c5cff51a056d1c218c35c35f9ffaeda84941",
+    "sourceLoader": false,
+    "installedReleaseProfileSha256": "d371ac8eb8ef5ac2a9f419434144f15bac096eae456d1b779e48cd32f67125b7",
+    "acceptedPressureOriginalScriptsVerified": 32,
+    "expandedPressureInputUtf16Bytes": 38522496,
+    "compilerGenerations": [
+      {
+        "limits": {
+          "maxJobs": 64,
+          "maxSourceBytes": 16777216
+        },
+        "jobs": 0,
+        "sourceBytes": 0,
+        "peakJobs": 64,
+        "peakSourceBytes": 8012,
+        "generations": 2
+      },
+      {
+        "limits": {
+          "maxJobs": 64,
+          "maxSourceBytes": 16777216
+        },
+        "jobs": 0,
+        "sourceBytes": 0,
+        "peakJobs": 0,
+        "peakSourceBytes": 0,
+        "generations": 0
+      },
+      {
+        "limits": {
+          "maxJobs": 64,
+          "maxSourceBytes": 16777216
+        },
+        "jobs": 0,
+        "sourceBytes": 0,
+        "peakJobs": 64,
+        "peakSourceBytes": 8012,
+        "generations": 2
+      }
+    ],
+    "allowedOversizedNativeOriginalBytes": 17825835,
+    "literalTemplateOriginalsVerified": 66,
+    "scope": "Complete ordinary compiled cold/warm/revision graphs under the exact actual production dependency profile: frozen source vendors versus installed package; 20 grammar profiles, Cargo TOML and OpenAPI YAML, 66 literal-script templates, default 64-job compiler rotation, an allowed 17 MiB Python original and 32 accepted Astro scripts over the virtual text memo allowance. All semantic/provenance/metadata fields retained; only run UUID/time replaced.",
+    "retainedFixture": "/tmp/codiluce-boot-gradle-release-2_45poy4/codiluce-owned-script-generation-parity-smGfeh",
+    "originalFiles": 171,
+    "normalizations": [],
+    "volatileFields": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "cacheWarmReplayObserved": true,
+    "graphs": [
+      {
+        "mode": "cold",
+        "bytes": 1304793,
+        "sha256": "60d415f5f7cb8e27f55eee5d63157e6bf8cd48fd370becf57132ae64cedbfc31",
+        "entities": 803,
+        "relations": 1057,
+        "diagnostics": 26
+      },
+      {
+        "mode": "warm",
+        "bytes": 1304793,
+        "sha256": "60d415f5f7cb8e27f55eee5d63157e6bf8cd48fd370becf57132ae64cedbfc31",
+        "entities": 803,
+        "relations": 1057,
+        "diagnostics": 26
+      },
+      {
+        "mode": "revision",
+        "bytes": 1304214,
+        "sha256": "3582be91398ae10a9a3a0af5dfd2da97fa7b89b0491892ea0ff730dc162f2f38",
+        "entities": 803,
+        "relations": 1057,
+        "diagnostics": 23
+      }
+    ],
+    "targetExecution": false
+  },
+  "sourceInstalledProfileDifferences": {
+    "schema": 1,
+    "sourceRuntimeSha256": "f98108b3df4f1e824eadba7c4eb5c5cff51a056d1c218c35c35f9ffaeda84941",
+    "sourceRuntimeInputs": 1930,
+    "actualInstalledRegularFiles": 1962,
+    "actualInstalledProfileLedgerSha256": "d371ac8eb8ef5ac2a9f419434144f15bac096eae456d1b779e48cd32f67125b7",
+    "sharedVendorChanged": [
+      {
+        "file": "node_modules/smol-toml/dist/extract.js",
+        "sourceSha256": "b964c8f39c737172295b31b9ee61b49e513ff12788e119ddfdbb68c448054c12",
+        "installedSha256": "3e6f1e5764a091acf2df6a3f257d0467c37a2b9dbfecab1573f17a6489349c90"
+      },
+      {
+        "file": "node_modules/smol-toml/dist/index.cjs",
+        "sourceSha256": "09ce310a8bcc1bb5c7dc2813c88b4bfbbeb685e4c186a9631ff54da7e85c880f",
+        "installedSha256": "f9029370259e9a43a2f3e64fa1d39e72f3598188380ace83a0abb8261fa33555"
+      },
+      {
+        "file": "node_modules/smol-toml/package.json",
+        "sourceSha256": "0e35bde6992fef675058596ea0e94c2d3ca65e5f9b73a326d94208be6210f192",
+        "installedSha256": "d7ad6488e35b31d46bac6412d2d35225db4d693f02a415d872714ceb7e3d7138"
+      }
+    ],
+    "sourceProfileVendorAbsentFromInstalled": [
+      "node_modules/@astrojs/compiler-binding-linux-x64-musl/README.md",
+      "node_modules/@astrojs/compiler-binding-linux-x64-musl/astro.linux-x64-musl.node",
+      "node_modules/@astrojs/compiler-binding-linux-x64-musl/package.json",
+      "node_modules/@esbuild/linux-x64/README.md",
+      "node_modules/@esbuild/linux-x64/bin/esbuild",
+      "node_modules/@esbuild/linux-x64/package.json",
+      "node_modules/esbuild/LICENSE.md",
+      "node_modules/esbuild/README.md",
+      "node_modules/esbuild/bin/esbuild",
+      "node_modules/esbuild/install.js",
+      "node_modules/esbuild/lib/main.d.ts",
+      "node_modules/esbuild/lib/main.js",
+      "node_modules/esbuild/package.json",
+      "node_modules/tsx/LICENSE",
+      "node_modules/tsx/README.md",
+      "node_modules/tsx/dist/cjs/api/index.cjs",
+      "node_modules/tsx/dist/cjs/api/index.d.cts",
+      "node_modules/tsx/dist/cjs/api/index.d.mts",
+      "node_modules/tsx/dist/cjs/api/index.mjs",
+      "node_modules/tsx/dist/cjs/index.cjs",
+      "node_modules/tsx/dist/cli.mjs",
+      "node_modules/tsx/dist/client-XItNFmsq.cjs",
+      "node_modules/tsx/dist/esm/api/index.cjs",
+      "node_modules/tsx/dist/esm/api/index.d.cts",
+      "node_modules/tsx/dist/esm/api/index.d.mts",
+      "node_modules/tsx/dist/esm/api/index.mjs",
+      "node_modules/tsx/dist/esm/index.mjs",
+      "node_modules/tsx/dist/index-Bqjv9TxC.mjs",
+      "node_modules/tsx/dist/index-DE3OBZuV.mjs",
+      "node_modules/tsx/dist/lexer-CGfpMDSb.cjs",
+      "node_modules/tsx/dist/lexer-CanA6ArK.mjs",
+      "node_modules/tsx/dist/loader.mjs",
+      "node_modules/tsx/dist/package-Dj0mHsMt.mjs",
+      "node_modules/tsx/dist/patch-repl.cjs",
+      "node_modules/tsx/dist/preflight.cjs",
+      "node_modules/tsx/dist/register-B1c7OH6V.cjs",
+      "node_modules/tsx/dist/register-nyXW-TH3.mjs",
+      "node_modules/tsx/dist/repl.mjs",
+      "node_modules/tsx/dist/require-CBjy4Foe.mjs",
+      "node_modules/tsx/dist/require-CVaYn9z3.cjs",
+      "node_modules/tsx/dist/suppress-warnings.cjs",
+      "node_modules/tsx/dist/temporary-directory-Du7LpLp9.mjs",
+      "node_modules/tsx/package.json"
+    ],
+    "installedProfileVendorAdditions": [
+      "node_modules/.package-lock.json"
+    ],
+    "profilesTreatedAsDistinct": true,
+    "targetExecution": false
+  },
+  "actualOriginalGuideScope": "Selected Java Gradle yields original GET|HEAD /greeting without build constraints and conditional GET /hello with original injected/virtual/predicate conditions. Kotlin compiler transformations and Maven parent/BOM models remain gaps.",
+  "fullNormalInstalledPackageQualified": true,
+  "nativeWindowsMacOSQualified": false,
+  "fullNativeMatrixQualified": false,
+  "productionHistoryForChangedRuntimeQualified": false,
+  "productionRelativePerformanceQualified": false,
+  "broaderOriginalAccuracyQualified": false,
+  "targetExecution": false
+}
