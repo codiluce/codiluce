@@ -1,0 +1,3015 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-13T20:42:18.372962+00:00",
+  "phase": "First normal production-only installed Kotlin WebFlux explicit-invocation release",
+  "sourceRevision": "2c2b4f4c7796dcd097ed0460163cb5f9fed43c92",
+  "sourceRuntimeSha256": "f80f5ea0359fde170d60e67193f3d99d32cee03c35a3e2e2b9bd9d4a69891823",
+  "sourceRuntimeInputs": 1932,
+  "controllerTerminal": {
+    "pid": 181342,
+    "actualRunnerPid": 181392,
+    "startedAt": 1791923002.1965823,
+    "command": [
+      "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+      "/home/ojoven/.nvm/versions/node/v22.12.0/lib/node_modules/npm/bin/npm-cli.js",
+      "run",
+      "test:package"
+    ],
+    "cwd": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-release/engine",
+    "node": "v22.12.0",
+    "revision": "2c2b4f4c7796dcd097ed0460163cb5f9fed43c92",
+    "sourceRuntimeSha256": "f80f5ea0359fde170d60e67193f3d99d32cee03c35a3e2e2b9bd9d4a69891823",
+    "temporaryDirectory": "/tmp/codiluce-kotlin-webflux-invoke-release-be2t5waj",
+    "temporaryDirectoryOutsideGit": true,
+    "before": {
+      "revision": "2c2b4f4c7796dcd097ed0460163cb5f9fed43c92",
+      "gitVersion": "git version 2.34.1",
+      "trackedFiles": 1323,
+      "sourceDigest": "b679080aa02da78cebb9e51df7b7b5f4434d17cd93ca4ae9a118fadeab1c0f2f",
+      "dirty": false
+    },
+    "targetExecution": false,
+    "freshOwnNpmCiClaim": false,
+    "completedAt": 1791923891.7269456,
+    "seconds": 889.5303635597229,
+    "actualExitCode": 0,
+    "interruptSignals": [],
+    "actualRunnerPidGone": true,
+    "after": {
+      "revision": "2c2b4f4c7796dcd097ed0460163cb5f9fed43c92",
+      "gitVersion": "git version 2.34.1",
+      "trackedFiles": 1323,
+      "sourceDigest": "b679080aa02da78cebb9e51df7b7b5f4434d17cd93ca4ae9a118fadeab1c0f2f",
+      "dirty": false
+    },
+    "sourceUnchanged": true,
+    "passed": true,
+    "runnerQualifiedThisRecordedHost": false,
+    "logSha256": "4d164165a0532a9cdc483e812ef436f36c0230157f1fe2b523cc6ffdfde28814",
+    "fullNativeMatrixQualified": false
+  },
+  "firstNormalPackage": {
+    "schema": 1,
+    "startedAt": 1791923005.4781258,
+    "pid": 181611,
+    "actualRunnerPid": 181392,
+    "sourceRevision": "2c2b4f4c7796dcd097ed0460163cb5f9fed43c92",
+    "sourceRuntimeSha256": "f80f5ea0359fde170d60e67193f3d99d32cee03c35a3e2e2b9bd9d4a69891823",
+    "passed": true,
+    "targetExecution": false,
+    "passiveReadOnlyCollection": true,
+    "normalPackageHarnessChanged": false,
+    "capturedValidations": [
+      {
+        "file": "typescript-input-ownership-validation.json",
+        "sha256": "819cd9bf48dd4c818f0c2f371e61aa68a88596e845e618aadfb521c76331cb63"
+      },
+      {
+        "file": "literal-script-generation-validation.json",
+        "sha256": "182a0a0aae3fd81ce22ddb1056aff64ce2c5f6adcb49329b9272480ae31e86b0"
+      },
+      {
+        "file": "rails-callback-chain-validation.json",
+        "sha256": "b0e7fff8917b6ed45ef4ca52cd80b1bd8ffb1a84dc9ce118e0fe69c1310359d3"
+      },
+      {
+        "file": "jvm-build-selection-validation.json",
+        "sha256": "21778c27988b36a5aa83e9d21f25a018a6005a30ce5de426310af6f33131f77d"
+      },
+      {
+        "file": "gradle-compiler-inputs-validation.json",
+        "sha256": "6e3efd9922b2b7f5a552cc6d9a2a616ffb8f510b69c4b8ed99dc5349d7d9e945"
+      },
+      {
+        "file": "spring-boot-gradle-validation.json",
+        "sha256": "d3650ea9ea96c309b3683fd96bb28aaafb9bdb32543969a3290fef2461a66b56"
+      },
+      {
+        "file": "spring-boot-maven-validation.json",
+        "sha256": "b5f26d2b1869b71e05f732bba867fb308b9f8206ecd2f85f82e5a05f78e0fb08"
+      },
+      {
+        "file": "kotlin-spring-compiler-validation.json",
+        "sha256": "ff5ed9e34c7afb50aad3a3e25cb820af0e1dc648997b057aa3b26b9a9c726825"
+      },
+      {
+        "file": "kotlin-webflux-invoke-validation.json",
+        "sha256": "aae6af9623337743ad4d65e4dfb7dffec2e73e6bacea33000dfa8a3f3b39a508"
+      }
+    ],
+    "originalTemporaryPackageRoot": "/tmp/codiluce-kotlin-webflux-invoke-release-be2t5waj/codiluce-package-GLWYwH",
+    "snapshotCapturedAt": 1791923078.5610106,
+    "snapshotFiles": 1964,
+    "snapshotLinks": 6,
+    "tarball": {
+      "file": "codiluce-0.1.1.tgz",
+      "sha256": "dcf782d65ac40a09094f48cc9efb2497aaee55175dfb30f4fa786153edc60859",
+      "bytes": 7259351,
+      "members": 377
+    },
+    "completeCopiedBytesAndModesEqual": true,
+    "allTarballMembersEqualInstalledBytes": true,
+    "packageRunnerActualExitCode": 0,
+    "packageRunnerSourceUnchanged": true,
+    "normalHarnessTemporaryDirectoryRemoved": true,
+    "completedAt": 1791923891.824748
+  },
+  "evidenceArchive": {
+    "schema": 1,
+    "passed": true,
+    "pid": 232629,
+    "completedAt": "2026-10-13T20:42:06.495301+00:00",
+    "seconds": 63.49256682395935,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-release-evidence/kotlin-webflux-invoke-first-normal-installed-release-evidence.tar.gz",
+    "sha256": "05f1c99b7e601919b1efb6298eb5b5e4726414e48459d17d61c9f4d62dd7de14",
+    "bytes": 266537810,
+    "manifestSha256": "87e47d2038f7da22e3a08137b4bc862d727ca076685ca9a61cab595ec03c4ece",
+    "regularFiles": 18830,
+    "literalSymlinks": 23,
+    "allBytesModesAndLiteralLinksReopened": true,
+    "sourceRevision": "2c2b4f4c7796dcd097ed0460163cb5f9fed43c92",
+    "sourceRuntimeSha256": "f80f5ea0359fde170d60e67193f3d99d32cee03c35a3e2e2b9bd9d4a69891823",
+    "sourceRuntimeInputs": 1932,
+    "tarball": {
+      "file": "codiluce-0.1.1.tgz",
+      "sha256": "dcf782d65ac40a09094f48cc9efb2497aaee55175dfb30f4fa786153edc60859",
+      "bytes": 7259351,
+      "members": 377
+    },
+    "actualInstalledRegularFiles": 1964,
+    "actualInstalledLiteralSymlinks": 6,
+    "originalSourceSnapshots": 4,
+    "recordedBuildContexts": 12,
+    "sourceInstalledOriginalWholeGraphsCompared": 60,
+    "retainedSourceInstalledOriginalWholeGraphs": 120,
+    "mixedProfileOriginalInputs": 171,
+    "mixedSourceInstalledWholeGraphs": 6,
+    "normalInstalledPackageQualified": true,
+    "fullNativeMatrixQualified": false,
+    "productionRelativePerformanceQualified": false,
+    "productionHistoryForChangedRuntimeQualified": false,
+    "targetExecution": false,
+    "foreignFilesUnchanged": true
+  },
+  "sourceInstalledOriginalGraphParity": {
+    "schema": 1,
+    "passed": true,
+    "wholeGraphsCompared": 60,
+    "retainedGraphs": 120,
+    "normalization": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "producerFieldsNormalized": false,
+    "commitOrDirtyFieldsNormalized": false,
+    "originalDeclarationIdentitiesAndRangesPreserved": true,
+    "targetExecution": false,
+    "comparisons": [
+      {
+        "context": "mvc-java-unselected",
+        "label": "fresh",
+        "completeGraphEqual": true,
+        "wholeSha256": "54f3b7b6c7dcf5400b545430b2a3343679b8db8453edb65a175f93ba77a72bac"
+      },
+      {
+        "context": "mvc-java-unselected",
+        "label": "cold",
+        "completeGraphEqual": true,
+        "wholeSha256": "54f3b7b6c7dcf5400b545430b2a3343679b8db8453edb65a175f93ba77a72bac"
+      },
+      {
+        "context": "mvc-java-unselected",
+        "label": "warm",
+        "completeGraphEqual": true,
+        "wholeSha256": "54f3b7b6c7dcf5400b545430b2a3343679b8db8453edb65a175f93ba77a72bac"
+      },
+      {
+        "context": "mvc-java-unselected",
+        "label": "revision",
+        "completeGraphEqual": true,
+        "wholeSha256": "3603b042b601eabd3c3d8c2a0765216c697bfed96e5fd06722a4908b34cd603a"
+      },
+      {
+        "context": "mvc-java-unselected",
+        "label": "freshRevision",
+        "completeGraphEqual": true,
+        "wholeSha256": "3603b042b601eabd3c3d8c2a0765216c697bfed96e5fd06722a4908b34cd603a"
+      },
+      {
+        "context": "mvc-java-maven",
+        "label": "fresh",
+        "completeGraphEqual": true,
+        "wholeSha256": "5bd9740c91007e6be8514dc9050f8cb1dd8dc2e74a37550adafba8838de61f91"
+      },
+      {
+        "context": "mvc-java-maven",
+        "label": "cold",
+        "completeGraphEqual": true,
+        "wholeSha256": "5bd9740c91007e6be8514dc9050f8cb1dd8dc2e74a37550adafba8838de61f91"
+      },
+      {
+        "context": "mvc-java-maven",
+        "label": "warm",
+        "completeGraphEqual": true,
+        "wholeSha256": "5bd9740c91007e6be8514dc9050f8cb1dd8dc2e74a37550adafba8838de61f91"
+      },
+      {
+        "context": "mvc-java-maven",
+        "label": "revision",
+        "completeGraphEqual": true,
+        "wholeSha256": "d6c424cfcd561512778420f90c9917a2d34ccc9cccc33cefbacc42b75fb97ddc"
+      },
+      {
+        "context": "mvc-java-maven",
+        "label": "freshRevision",
+        "completeGraphEqual": true,
+        "wholeSha256": "d6c424cfcd561512778420f90c9917a2d34ccc9cccc33cefbacc42b75fb97ddc"
+      },
+      {
+        "context": "mvc-java-gradle",
+        "label": "fresh",
+        "completeGraphEqual": true,
+        "wholeSha256": "c7934f674791a9cf4c4424c979c5f7942a1b77f546cfff6af514a0f99ee2b65a"
+      },
+      {
+        "context": "mvc-java-gradle",
+        "label": "cold",
+        "completeGraphEqual": true,
+        "wholeSha256": "c7934f674791a9cf4c4424c979c5f7942a1b77f546cfff6af514a0f99ee2b65a"
+      },
+      {
+        "context": "mvc-java-gradle",
+        "label": "warm",
+        "completeGraphEqual": true,
+        "wholeSha256": "c7934f674791a9cf4c4424c979c5f7942a1b77f546cfff6af514a0f99ee2b65a"
+      },
+      {
+        "context": "mvc-java-gradle",
+        "label": "revision",
+        "completeGraphEqual": true,
+        "wholeSha256": "0ea97781f0e35d5bfc7b9f20f625e76051a62e609c556b097e9289688aa9d84c"
+      },
+      {
+        "context": "mvc-java-gradle",
+        "label": "freshRevision",
+        "completeGraphEqual": true,
+        "wholeSha256": "0ea97781f0e35d5bfc7b9f20f625e76051a62e609c556b097e9289688aa9d84c"
+      },
+      {
+        "context": "mvc-kotlin-unselected",
+        "label": "fresh",
+        "completeGraphEqual": true,
+        "wholeSha256": "162ebd160ecaccaff4c54391e3983f3354e1314987229473ff24441f102392cb"
+      },
+      {
+        "context": "mvc-kotlin-unselected",
+        "label": "cold",
+        "completeGraphEqual": true,
+        "wholeSha256": "162ebd160ecaccaff4c54391e3983f3354e1314987229473ff24441f102392cb"
+      },
+      {
+        "context": "mvc-kotlin-unselected",
+        "label": "warm",
+        "completeGraphEqual": true,
+        "wholeSha256": "162ebd160ecaccaff4c54391e3983f3354e1314987229473ff24441f102392cb"
+      },
+      {
+        "context": "mvc-kotlin-unselected",
+        "label": "revision",
+        "completeGraphEqual": true,
+        "wholeSha256": "66d36b3cbea44cd15cd754a2ff964d814961a2272e55bfd7b367b4f218e96265"
+      },
+      {
+        "context": "mvc-kotlin-unselected",
+        "label": "freshRevision",
+        "completeGraphEqual": true,
+        "wholeSha256": "66d36b3cbea44cd15cd754a2ff964d814961a2272e55bfd7b367b4f218e96265"
+      },
+      {
+        "context": "mvc-kotlin-maven",
+        "label": "fresh",
+        "completeGraphEqual": true,
+        "wholeSha256": "92a0e2a50e807e1c42d62d1c2f606c57ad773afef3535e2f9143b371d2ada0d6"
+      },
+      {
+        "context": "mvc-kotlin-maven",
+        "label": "cold",
+        "completeGraphEqual": true,
+        "wholeSha256": "92a0e2a50e807e1c42d62d1c2f606c57ad773afef3535e2f9143b371d2ada0d6"
+      },
+      {
+        "context": "mvc-kotlin-maven",
+        "label": "warm",
+        "completeGraphEqual": true,
+        "wholeSha256": "92a0e2a50e807e1c42d62d1c2f606c57ad773afef3535e2f9143b371d2ada0d6"
+      },
+      {
+        "context": "mvc-kotlin-maven",
+        "label": "revision",
+        "completeGraphEqual": true,
+        "wholeSha256": "b8fe5563f5cb01abd588d938b9e775bfe764cfc50fe3084e2a051296cb2ea890"
+      },
+      {
+        "context": "mvc-kotlin-maven",
+        "label": "freshRevision",
+        "completeGraphEqual": true,
+        "wholeSha256": "b8fe5563f5cb01abd588d938b9e775bfe764cfc50fe3084e2a051296cb2ea890"
+      },
+      {
+        "context": "mvc-kotlin-gradle",
+        "label": "fresh",
+        "completeGraphEqual": true,
+        "wholeSha256": "1417f80d2c5f5c8e5965518d9c71c9ff20ec23db1414e15fed6afc68b7b0d231"
+      },
+      {
+        "context": "mvc-kotlin-gradle",
+        "label": "cold",
+        "completeGraphEqual": true,
+        "wholeSha256": "1417f80d2c5f5c8e5965518d9c71c9ff20ec23db1414e15fed6afc68b7b0d231"
+      },
+      {
+        "context": "mvc-kotlin-gradle",
+        "label": "warm",
+        "completeGraphEqual": true,
+        "wholeSha256": "1417f80d2c5f5c8e5965518d9c71c9ff20ec23db1414e15fed6afc68b7b0d231"
+      },
+      {
+        "context": "mvc-kotlin-gradle",
+        "label": "revision",
+        "completeGraphEqual": true,
+        "wholeSha256": "cf3c959fb529d3b537916f7457f68e9c2757f6e70573480b828b3c5f8c047c7e"
+      },
+      {
+        "context": "mvc-kotlin-gradle",
+        "label": "freshRevision",
+        "completeGraphEqual": true,
+        "wholeSha256": "cf3c959fb529d3b537916f7457f68e9c2757f6e70573480b828b3c5f8c047c7e"
+      },
+      {
+        "context": "webflux-java-unselected",
+        "label": "fresh",
+        "completeGraphEqual": true,
+        "wholeSha256": "0d88d855ab17a6555dfa316bbbaf8a238a5765a067ff1e8b6534fd6dfb9c1934"
+      },
+      {
+        "context": "webflux-java-unselected",
+        "label": "cold",
+        "completeGraphEqual": true,
+        "wholeSha256": "0d88d855ab17a6555dfa316bbbaf8a238a5765a067ff1e8b6534fd6dfb9c1934"
+      },
+      {
+        "context": "webflux-java-unselected",
+        "label": "warm",
+        "completeGraphEqual": true,
+        "wholeSha256": "0d88d855ab17a6555dfa316bbbaf8a238a5765a067ff1e8b6534fd6dfb9c1934"
+      },
+      {
+        "context": "webflux-java-unselected",
+        "label": "revision",
+        "completeGraphEqual": true,
+        "wholeSha256": "bc263bd180e1ccd32e9d8223914b451f5e5268406f89fafb742aaf432785d2d6"
+      },
+      {
+        "context": "webflux-java-unselected",
+        "label": "freshRevision",
+        "completeGraphEqual": true,
+        "wholeSha256": "bc263bd180e1ccd32e9d8223914b451f5e5268406f89fafb742aaf432785d2d6"
+      },
+      {
+        "context": "webflux-java-maven",
+        "label": "fresh",
+        "completeGraphEqual": true,
+        "wholeSha256": "fa9de8d08430949780f1227e2efab549f49656955149170e86ab01c68b8957d0"
+      },
+      {
+        "context": "webflux-java-maven",
+        "label": "cold",
+        "completeGraphEqual": true,
+        "wholeSha256": "fa9de8d08430949780f1227e2efab549f49656955149170e86ab01c68b8957d0"
+      },
+      {
+        "context": "webflux-java-maven",
+        "label": "warm",
+        "completeGraphEqual": true,
+        "wholeSha256": "fa9de8d08430949780f1227e2efab549f49656955149170e86ab01c68b8957d0"
+      },
+      {
+        "context": "webflux-java-maven",
+        "label": "revision",
+        "completeGraphEqual": true,
+        "wholeSha256": "437bdea77493c4a564bbe6610b8d106c7f8532c086d74b7f701abeb7740f9916"
+      },
+      {
+        "context": "webflux-java-maven",
+        "label": "freshRevision",
+        "completeGraphEqual": true,
+        "wholeSha256": "437bdea77493c4a564bbe6610b8d106c7f8532c086d74b7f701abeb7740f9916"
+      },
+      {
+        "context": "webflux-java-gradle",
+        "label": "fresh",
+        "completeGraphEqual": true,
+        "wholeSha256": "d9d5fd1905fb6449aad6fc5b500ce144c34035aea0f3d0676ca6eb7424e54cad"
+      },
+      {
+        "context": "webflux-java-gradle",
+        "label": "cold",
+        "completeGraphEqual": true,
+        "wholeSha256": "d9d5fd1905fb6449aad6fc5b500ce144c34035aea0f3d0676ca6eb7424e54cad"
+      },
+      {
+        "context": "webflux-java-gradle",
+        "label": "warm",
+        "completeGraphEqual": true,
+        "wholeSha256": "d9d5fd1905fb6449aad6fc5b500ce144c34035aea0f3d0676ca6eb7424e54cad"
+      },
+      {
+        "context": "webflux-java-gradle",
+        "label": "revision",
+        "completeGraphEqual": true,
+        "wholeSha256": "6066b5be36a6231007c403286604f00afd12180dd7e6ce342496e14d02fdf366"
+      },
+      {
+        "context": "webflux-java-gradle",
+        "label": "freshRevision",
+        "completeGraphEqual": true,
+        "wholeSha256": "6066b5be36a6231007c403286604f00afd12180dd7e6ce342496e14d02fdf366"
+      },
+      {
+        "context": "webflux-kotlin-unselected",
+        "label": "fresh",
+        "completeGraphEqual": true,
+        "wholeSha256": "c730cf7c82cbf2879d22697b4d5733f87d0a7ca9c173101e34dceafe08e48c0b"
+      },
+      {
+        "context": "webflux-kotlin-unselected",
+        "label": "cold",
+        "completeGraphEqual": true,
+        "wholeSha256": "c730cf7c82cbf2879d22697b4d5733f87d0a7ca9c173101e34dceafe08e48c0b"
+      },
+      {
+        "context": "webflux-kotlin-unselected",
+        "label": "warm",
+        "completeGraphEqual": true,
+        "wholeSha256": "c730cf7c82cbf2879d22697b4d5733f87d0a7ca9c173101e34dceafe08e48c0b"
+      },
+      {
+        "context": "webflux-kotlin-unselected",
+        "label": "revision",
+        "completeGraphEqual": true,
+        "wholeSha256": "a605fa1fac357be9bb0a5a50bb74ed439578676ebfc4f35898aae300f590740d"
+      },
+      {
+        "context": "webflux-kotlin-unselected",
+        "label": "freshRevision",
+        "completeGraphEqual": true,
+        "wholeSha256": "a605fa1fac357be9bb0a5a50bb74ed439578676ebfc4f35898aae300f590740d"
+      },
+      {
+        "context": "webflux-kotlin-maven",
+        "label": "fresh",
+        "completeGraphEqual": true,
+        "wholeSha256": "204ca2dc78ba9db985f6fd9301cce380924002bb0d01d8cb4afc5fedd22a03e9"
+      },
+      {
+        "context": "webflux-kotlin-maven",
+        "label": "cold",
+        "completeGraphEqual": true,
+        "wholeSha256": "204ca2dc78ba9db985f6fd9301cce380924002bb0d01d8cb4afc5fedd22a03e9"
+      },
+      {
+        "context": "webflux-kotlin-maven",
+        "label": "warm",
+        "completeGraphEqual": true,
+        "wholeSha256": "204ca2dc78ba9db985f6fd9301cce380924002bb0d01d8cb4afc5fedd22a03e9"
+      },
+      {
+        "context": "webflux-kotlin-maven",
+        "label": "revision",
+        "completeGraphEqual": true,
+        "wholeSha256": "86a8eb1f53e0d28de5d305fa215920f7863bfaa71bc0291eb42a339aad2b94ea"
+      },
+      {
+        "context": "webflux-kotlin-maven",
+        "label": "freshRevision",
+        "completeGraphEqual": true,
+        "wholeSha256": "86a8eb1f53e0d28de5d305fa215920f7863bfaa71bc0291eb42a339aad2b94ea"
+      },
+      {
+        "context": "webflux-kotlin-gradle",
+        "label": "fresh",
+        "completeGraphEqual": true,
+        "wholeSha256": "c086e89f2dac749a750e33af01500b6a627d233e9a6fcf45662d3e4a1624449c"
+      },
+      {
+        "context": "webflux-kotlin-gradle",
+        "label": "cold",
+        "completeGraphEqual": true,
+        "wholeSha256": "c086e89f2dac749a750e33af01500b6a627d233e9a6fcf45662d3e4a1624449c"
+      },
+      {
+        "context": "webflux-kotlin-gradle",
+        "label": "warm",
+        "completeGraphEqual": true,
+        "wholeSha256": "c086e89f2dac749a750e33af01500b6a627d233e9a6fcf45662d3e4a1624449c"
+      },
+      {
+        "context": "webflux-kotlin-gradle",
+        "label": "revision",
+        "completeGraphEqual": true,
+        "wholeSha256": "76a809e1ba0b7bd2097f32b2e16ca80460a6da18889c3c283ab9f1f44e4138b1"
+      },
+      {
+        "context": "webflux-kotlin-gradle",
+        "label": "freshRevision",
+        "completeGraphEqual": true,
+        "wholeSha256": "76a809e1ba0b7bd2097f32b2e16ca80460a6da18889c3c283ab9f1f44e4138b1"
+      }
+    ]
+  },
+  "completeMixedProfile": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": "2026-10-13T20:40:51.798Z",
+    "priorRuntime": "f80f5ea0359fde170d60e67193f3d99d32cee03c35a3e2e2b9bd9d4a69891823",
+    "priorRuntimeInputsVerified": 1932,
+    "currentRuntimeSha256": "f80f5ea0359fde170d60e67193f3d99d32cee03c35a3e2e2b9bd9d4a69891823",
+    "sourceLoader": false,
+    "installedReleaseProfileSha256": "cda83b6298ea7623e926bde499deeb8a3a92d8788a37580ab446a03df9bb8662",
+    "acceptedPressureOriginalScriptsVerified": 32,
+    "expandedPressureInputUtf16Bytes": 38522496,
+    "compilerGenerations": [
+      {
+        "limits": {
+          "maxJobs": 64,
+          "maxSourceBytes": 16777216
+        },
+        "jobs": 0,
+        "sourceBytes": 0,
+        "peakJobs": 64,
+        "peakSourceBytes": 8012,
+        "generations": 2
+      },
+      {
+        "limits": {
+          "maxJobs": 64,
+          "maxSourceBytes": 16777216
+        },
+        "jobs": 0,
+        "sourceBytes": 0,
+        "peakJobs": 0,
+        "peakSourceBytes": 0,
+        "generations": 0
+      },
+      {
+        "limits": {
+          "maxJobs": 64,
+          "maxSourceBytes": 16777216
+        },
+        "jobs": 0,
+        "sourceBytes": 0,
+        "peakJobs": 64,
+        "peakSourceBytes": 8012,
+        "generations": 2
+      }
+    ],
+    "allowedOversizedNativeOriginalBytes": 17825835,
+    "literalTemplateOriginalsVerified": 66,
+    "scope": "Complete ordinary compiled cold/warm/revision graphs under the exact actual production dependency profile: frozen source vendors versus installed package; 20 grammar profiles, Cargo TOML and OpenAPI YAML, 66 literal-script templates, default 64-job compiler rotation, an allowed 17 MiB Python original and 32 accepted Astro scripts over the virtual text memo allowance. All semantic/provenance/metadata fields retained; only run UUID/time replaced.",
+    "retainedFixture": "/tmp/codiluce-kotlin-webflux-invoke-release-be2t5waj/codiluce-owned-script-generation-parity-2UoADC",
+    "originalFiles": 171,
+    "normalizations": [],
+    "volatileFields": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "cacheWarmReplayObserved": true,
+    "graphs": [
+      {
+        "mode": "cold",
+        "bytes": 1304793,
+        "sha256": "04923fa598d34cc0cede1ac96dfe6b75c3712ac9e238985e964a5da71e4b3a62",
+        "entities": 803,
+        "relations": 1057,
+        "diagnostics": 26
+      },
+      {
+        "mode": "warm",
+        "bytes": 1304793,
+        "sha256": "04923fa598d34cc0cede1ac96dfe6b75c3712ac9e238985e964a5da71e4b3a62",
+        "entities": 803,
+        "relations": 1057,
+        "diagnostics": 26
+      },
+      {
+        "mode": "revision",
+        "bytes": 1304214,
+        "sha256": "415e623987349c6a27f138a0050fb14ef1ffd931e29a4e716967755a9a996f0c",
+        "entities": 803,
+        "relations": 1057,
+        "diagnostics": 23
+      }
+    ],
+    "targetExecution": false
+  },
+  "sourceInstalledProfileDifferences": {
+    "schema": 1,
+    "sourceRuntimeSha256": "f80f5ea0359fde170d60e67193f3d99d32cee03c35a3e2e2b9bd9d4a69891823",
+    "sourceRuntimeInputs": 1932,
+    "actualInstalledRegularFiles": 1964,
+    "actualInstalledProfileLedgerSha256": "cda83b6298ea7623e926bde499deeb8a3a92d8788a37580ab446a03df9bb8662",
+    "sharedVendorChanged": [
+      {
+        "file": "node_modules/smol-toml/dist/extract.js",
+        "sourceSha256": "b964c8f39c737172295b31b9ee61b49e513ff12788e119ddfdbb68c448054c12",
+        "installedSha256": "3e6f1e5764a091acf2df6a3f257d0467c37a2b9dbfecab1573f17a6489349c90"
+      },
+      {
+        "file": "node_modules/smol-toml/dist/index.cjs",
+        "sourceSha256": "09ce310a8bcc1bb5c7dc2813c88b4bfbbeb685e4c186a9631ff54da7e85c880f",
+        "installedSha256": "f9029370259e9a43a2f3e64fa1d39e72f3598188380ace83a0abb8261fa33555"
+      },
+      {
+        "file": "node_modules/smol-toml/package.json",
+        "sourceSha256": "0e35bde6992fef675058596ea0e94c2d3ca65e5f9b73a326d94208be6210f192",
+        "installedSha256": "d7ad6488e35b31d46bac6412d2d35225db4d693f02a415d872714ceb7e3d7138"
+      }
+    ],
+    "sourceProfileVendorAbsentFromInstalled": [
+      "node_modules/@astrojs/compiler-binding-linux-x64-musl/README.md",
+      "node_modules/@astrojs/compiler-binding-linux-x64-musl/astro.linux-x64-musl.node",
+      "node_modules/@astrojs/compiler-binding-linux-x64-musl/package.json",
+      "node_modules/@esbuild/linux-x64/README.md",
+      "node_modules/@esbuild/linux-x64/bin/esbuild",
+      "node_modules/@esbuild/linux-x64/package.json",
+      "node_modules/esbuild/LICENSE.md",
+      "node_modules/esbuild/README.md",
+      "node_modules/esbuild/bin/esbuild",
+      "node_modules/esbuild/install.js",
+      "node_modules/esbuild/lib/main.d.ts",
+      "node_modules/esbuild/lib/main.js",
+      "node_modules/esbuild/package.json",
+      "node_modules/tsx/LICENSE",
+      "node_modules/tsx/README.md",
+      "node_modules/tsx/dist/cjs/api/index.cjs",
+      "node_modules/tsx/dist/cjs/api/index.d.cts",
+      "node_modules/tsx/dist/cjs/api/index.d.mts",
+      "node_modules/tsx/dist/cjs/api/index.mjs",
+      "node_modules/tsx/dist/cjs/index.cjs",
+      "node_modules/tsx/dist/cli.mjs",
+      "node_modules/tsx/dist/client-XItNFmsq.cjs",
+      "node_modules/tsx/dist/esm/api/index.cjs",
+      "node_modules/tsx/dist/esm/api/index.d.cts",
+      "node_modules/tsx/dist/esm/api/index.d.mts",
+      "node_modules/tsx/dist/esm/api/index.mjs",
+      "node_modules/tsx/dist/esm/index.mjs",
+      "node_modules/tsx/dist/index-Bqjv9TxC.mjs",
+      "node_modules/tsx/dist/index-DE3OBZuV.mjs",
+      "node_modules/tsx/dist/lexer-CGfpMDSb.cjs",
+      "node_modules/tsx/dist/lexer-CanA6ArK.mjs",
+      "node_modules/tsx/dist/loader.mjs",
+      "node_modules/tsx/dist/package-Dj0mHsMt.mjs",
+      "node_modules/tsx/dist/patch-repl.cjs",
+      "node_modules/tsx/dist/preflight.cjs",
+      "node_modules/tsx/dist/register-B1c7OH6V.cjs",
+      "node_modules/tsx/dist/register-nyXW-TH3.mjs",
+      "node_modules/tsx/dist/repl.mjs",
+      "node_modules/tsx/dist/require-CBjy4Foe.mjs",
+      "node_modules/tsx/dist/require-CVaYn9z3.cjs",
+      "node_modules/tsx/dist/suppress-warnings.cjs",
+      "node_modules/tsx/dist/temporary-directory-Du7LpLp9.mjs",
+      "node_modules/tsx/package.json"
+    ],
+    "installedProfileVendorAdditions": [
+      "node_modules/.package-lock.json"
+    ],
+    "profilesTreatedAsDistinct": true,
+    "targetExecution": false
+  },
+  "packagedDistSourceParity": {
+    "schema": 1,
+    "passed": true,
+    "distMembers": 292,
+    "allPackagedDistMembersEqualActualCleanSourceBuild": true,
+    "webfluxProducer": "3",
+    "targetExecution": false,
+    "members": [
+      {
+        "file": "dist/src/analysis/tree-sitter/analyzer.js",
+        "bytes": 21942,
+        "sha256": "aab1807b44811c6fe0a599e1d456ba3321bc23d49177c97a904f9e5d273ae587",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/core/analyzer.js",
+        "bytes": 11,
+        "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/pipeline/api-matcher.js",
+        "bytes": 22088,
+        "sha256": "c23126079d1dd8d3e9381156aebb59f78c80c2e684c1b3089326aefe48cedb46",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/projection/archetypes.js",
+        "bytes": 11756,
+        "sha256": "5edaa32a3386d4174b5823d4b6a659f19dcff8448b4032379b7292c896fcc4c1",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/aspnet-minimal.js",
+        "bytes": 65374,
+        "sha256": "e248048837de47509e11ffce216da0502ce6937af457ca38f2408a5ba91e5a5d",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/aspnet-mvc.js",
+        "bytes": 26822,
+        "sha256": "7c1fa9a845145f41fd44d16a7b4948caf9e39bc0d813858f2869be583e07c8d8",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/routes/aspnet-patterns.js",
+        "bytes": 20533,
+        "sha256": "9a2c360c8e988b48f7bb9421220112943114427df9dc029b4408da56cd8e500c",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/aspnet-profile.js",
+        "bytes": 3695,
+        "sha256": "5ab9172fc5ef7461916ec9d228609f59919e11ef768761f42eba258ebbba8e67",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/astro-config.js",
+        "bytes": 14856,
+        "sha256": "56bba475ea98f9096f9a2554c9d125d603c8f1f5a6b10e81605c2df5c9638942",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/astro-path.js",
+        "bytes": 2650,
+        "sha256": "8d26daeb514d8e792cd3f31ce3042696cc01e7ff890ac5127a43cce9c0a84b58",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/astro-routes.js",
+        "bytes": 21751,
+        "sha256": "8691c445e8873ea40931c5c39accff8d1acd865e18cf148fcdd625d08f92c9fc",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/astro.js",
+        "bytes": 25212,
+        "sha256": "6b115fe0146c8b3c0d8d35eab9f673d069a92bf30d468814d4655755fddaa79c",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/history/authors.js",
+        "bytes": 16235,
+        "sha256": "7fbbb0db251ab2b65097d776956c4333a21a3e220aa9cebcbedc44d8d15fbb98",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/projection/authorship.js",
+        "bytes": 13137,
+        "sha256": "4215f550db56eb542619f34c7a9fa361e3b81f980dce6441a93958b7aee835c3",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/php/binding-node.js",
+        "bytes": 2591,
+        "sha256": "8e36886c8d8d9146bcf88a1f7a9045f58114f4b7dd92f50d24caafc5e5b5980b",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/routes/boundaries.js",
+        "bytes": 3377,
+        "sha256": "1d7914dab20052b58d44d87628656caaa6bd0f5947f0bdf4b98c4b0ea26dab2d",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/browser-invocations.js",
+        "bytes": 2570,
+        "sha256": "7ac137a8cbfe4f1e403be138bdb082321e8210a5591b0d5c60d2d63247c89c8e",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/pipeline/cache.js",
+        "bytes": 17081,
+        "sha256": "cbc4366ae802af697335fc0716e9cbd9646daece175a22dc85e548e590591096",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/capabilities.js",
+        "bytes": 4002,
+        "sha256": "efbbec0c845247c9f95c692b65a80e286ffeeaa27a7a46376a0a6ba4eb18628e",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/projection/catalog.js",
+        "bytes": 16401,
+        "sha256": "98a0dea028f9ef0c5bbcc209731f33521a62f7f3454f431d2595faf99ebcd821",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/cfamily-source.js",
+        "bytes": 4924,
+        "sha256": "ac281a9f76c405d8be538aee23281fc04d1d3166e6b3fd6a496120ce774b9c18",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/cfamily-structure.js",
+        "bytes": 15991,
+        "sha256": "628bd3cbc8cfa9c890f3c4751a11f0d036a1ab241bb712148dad5c8bc2fdf43c",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/cli.js",
+        "bytes": 15932,
+        "sha256": "7d748d2633c9fcf2f27f0d70dffca41a5159c704d87fe06c5db001c2a6818398",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/php/client.js",
+        "bytes": 1418,
+        "sha256": "4435e91b40daac63dbe999846103d1b826cfa40ab3f65413799c9b439e80ede2",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/client.js",
+        "bytes": 12454,
+        "sha256": "f7ac85be26ef43c8d6acd827177cbf6e78d08c531ae3037065d5ce43413162de",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/ai/command.js",
+        "bytes": 6627,
+        "sha256": "01e89ed32c2094db118eb4bfc5f3bf86a4a232ad854aba7414390e03b809d98b",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/projection/conditions.js",
+        "bytes": 11104,
+        "sha256": "a35291427e4680d5b2824410c77f59f3d86848e5b00112b5ed6cdcd94478b615",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/core/config.js",
+        "bytes": 31595,
+        "sha256": "4050a0fcafd0cb274304a3a9ae0744a0d22c376281c78332c8d56abae285d958",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/routes/contracts.js",
+        "bytes": 16549,
+        "sha256": "752f54415e6bdb90103d49409ffa727344a095106e111fa38dc23b567c973ab1",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/csharp-semantic.js",
+        "bytes": 30222,
+        "sha256": "dce3d40932edc733616366cef9c8d1258dfe72fc149c6e1cf98c796a93deb585",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/csharp-symbols.js",
+        "bytes": 56574,
+        "sha256": "f8e50b3b79913c88449d06623d3f38f1c8c0cccb92668b2b1fdad1b73fdcb5c1",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/csharp-syntax.js",
+        "bytes": 7347,
+        "sha256": "5dc8852ea74410a5104004cdaedbab74d083b3e4a3bc9aa265649874d78e63e0",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/csharp-types.js",
+        "bytes": 6582,
+        "sha256": "0953868e3558b762a2d5562f379938a98a936214aa203a5cf144207140c4b65a",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/csharp.js",
+        "bytes": 6317,
+        "sha256": "0aa7132c8b8ad0c5ef1abec33979810f5ded55a0abb7a4eaf8b77a68876ed8d6",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/csharp.js",
+        "bytes": 10843,
+        "sha256": "4682b180ff2b14c7f6f208baa470eb20d4dc9663aa2153e9702d4b6c8de953af",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/history/diff.js",
+        "bytes": 9669,
+        "sha256": "61ff9e38bde6d365487dc414f9f44c4dee120c2563bc42ed139d37e2c545bceb",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/django.js",
+        "bytes": 47974,
+        "sha256": "4fbd4ebfbace7cc792e6c2f9fdfaaeca51c646f47940b3493c8f1f939e2485c7",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/ai/domains.js",
+        "bytes": 7584,
+        "sha256": "321b4c10d528dc01436589c80138c03fd083c208e2948665e2504a9c30718e4c",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/dotnet-data.js",
+        "bytes": 5718,
+        "sha256": "02c5aa8dd41e405e418c3c7b6b400d3ff7a3e7834b7997787a75d8cb94df108b",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/dotnet-projects.js",
+        "bytes": 28264,
+        "sha256": "5add50944ab0f4c65803afbfb00a259d1e8d8f9dfa371d36c027b26fd36c47f4",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/projection/dto.js",
+        "bytes": 11,
+        "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/embedded-host.js",
+        "bytes": 4814,
+        "sha256": "0e0ef41160d186a20bc09fc52bbbcf6006026f7cc63ec14f853f9bd395b2b176",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/erb-script.js",
+        "bytes": 9908,
+        "sha256": "1496688dedc4bf83c829d6a2ea30ae93a0b89abcbc4ab7142b7a60016645f94f",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/erb-structure.js",
+        "bytes": 11430,
+        "sha256": "69b3db836609ccb89c427a0b0472bae6c55e04d859a92f603ad9186a186fdedc",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/projection/evolution.js",
+        "bytes": 8792,
+        "sha256": "e4c2cb91a2a14df740fa35ddff2ef39aeb2bb979a1b4b422d612af8f20d416e1",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/express.js",
+        "bytes": 32061,
+        "sha256": "f6418bbf945c19f24b442ff683f06d1dd7afe0b3dc008c06f5f2f88dc1a35033",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/extract.js",
+        "bytes": 14768,
+        "sha256": "8a913b282c7e1318fc1b39f9e9ea5a418c676d282850d617fb6538a7a0d3285c",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/facts.js",
+        "bytes": 941,
+        "sha256": "054089344809c56a6f6d37b67a9e1365791ffe5997bff6cf5021b435edc30e48",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/projection/families.js",
+        "bytes": 14850,
+        "sha256": "7c1ab1092c8e378e87351a8e8e22026b533a16941e9b641be5bbf13c7022b10f",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/fastapi.js",
+        "bytes": 34060,
+        "sha256": "3410ae9be4c3a447e6aed4be193f0632762dd8f06783276a31785a384f759621",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analyzers/filesystem.js",
+        "bytes": 8886,
+        "sha256": "8423e15fcaf073cae307552a1e4190b558a6ec6ecd7336d2251fe2cf1d6c166a",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/history/fingerprint.js",
+        "bytes": 2976,
+        "sha256": "a0ee63d59385bf080f2d99b342c9f01213396b529fd63cf56d137357e8e8316c",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/flask.js",
+        "bytes": 45296,
+        "sha256": "e85e9fdc0862c348a51328c13b4b8717f19516867c2f165fb8e589b5ec21dc2e",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/embedded/framework-parser.js",
+        "bytes": 4572,
+        "sha256": "92bad28c5797b9edf10e30103fdbbf643d910eda78f9093245e562c9e8599028",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/embedded/framework-worker.js",
+        "bytes": 1511,
+        "sha256": "e5adbfab3e1bd2e2803805057c98cd787bd5b27400d5f71bc5a33e1b36c5f35f",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/fsharp-structure.js",
+        "bytes": 22344,
+        "sha256": "1a90333411dbd2f71ab9cd6e39d2751183a82894608c8448b42e7f78eef882eb",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analyzers/git-metrics.js",
+        "bytes": 6524,
+        "sha256": "0310f3adfee27fe07d0178ae76b304068371fdaf547d47e0e4d36603b02a0f0f",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/history/git.js",
+        "bytes": 12011,
+        "sha256": "7d16c4c6c706ea00c77678b8e2ed59f85ba2c5dea5bffe7faefbe651c74220f1",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/go-api.js",
+        "bytes": 2128,
+        "sha256": "3f5c7b1bffa7b60f373479a795baf00c1e8ea4da10cbc5b862fc9949b87efe9e",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/go-build.js",
+        "bytes": 8473,
+        "sha256": "82eb45d07281ab46a5e731f743dcaae50991f65212b09836f4ef83bcb4aaa719",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/go-imports.js",
+        "bytes": 4062,
+        "sha256": "0f104409b7256b21917c4b64b6212cca8363e7ca240ad19607e36d956d201847",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/go-manifest.js",
+        "bytes": 8455,
+        "sha256": "be757f49bfdcdef4fd60878f521d8abf0e7f5c497e1bb8de55047e575afc7cd3",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/routes/go-patterns.js",
+        "bytes": 19416,
+        "sha256": "20e83337bb9efdcf6f64da587af8fad8c80dfd1cccd3578ec76f14e42a553f8d",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/go-profile.js",
+        "bytes": 3165,
+        "sha256": "f903e587b9af1a091c44ddc3cbc52038b98f3156f3e24c35493892819d2d8ba7",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/go-routers.js",
+        "bytes": 83728,
+        "sha256": "29f595353b38dd91994d6013534b476f80b2f36df7b7649c4f058b687ed6027b",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/go-symbols.js",
+        "bytes": 34469,
+        "sha256": "808821e2401fd85269aee49e753dc2a74f886a90a7a9b258fef3929c0768e2ed",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/go-syntax.js",
+        "bytes": 19979,
+        "sha256": "1ddfd8d452890de1932b9022e82896cd1555202fb9c808d16214dcff3b89d22a",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/go.js",
+        "bytes": 7376,
+        "sha256": "2d605901cf4ee41025c68400e752d631ed44e3e2e15b73d4c72c681a6ae68704",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/go.js",
+        "bytes": 21499,
+        "sha256": "c5b5489389412355a8f762a34f91edcdeee0ca61bae1ce6881cbd40eb7cf9e97",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/grammars.js",
+        "bytes": 2623,
+        "sha256": "92e8dd8e7e739bf3ffb08626e0d87b66fbcc11cfb8bafd0a99ea2136af615b5d",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/core/graph.js",
+        "bytes": 5571,
+        "sha256": "7e20c3cc186f72e7d91786e5b007148e2115e66ee41c31e627fa57bbfcce0645",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/groovy-structure.js",
+        "bytes": 13675,
+        "sha256": "c7f47a8ac05e24c6fb68b8afedd3fb2dd90451f9111b87a7de86389b9b11ba94",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/projection/hierarchy.js",
+        "bytes": 13488,
+        "sha256": "3338c3714ba39ede7a6b7b358745da4128e87b041446b1c765746ba2c1a67f62",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/routes/http-method.js",
+        "bytes": 529,
+        "sha256": "52e2ba4e203b25d6537ba68259c9a32d880f4a641335c298af9b372104cf0547",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/projection/impact.js",
+        "bytes": 3618,
+        "sha256": "279f8cbd4499a9e455fe32cfbe442a9f02837c4cf3aed9308d72720f6945141c",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/embedded/index.js",
+        "bytes": 17960,
+        "sha256": "77a397bca785e3824907e6bd3af6d923029783b460f82163f7250d20d5d2cab4",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/index.js",
+        "bytes": 345,
+        "sha256": "3f7175e869242db6729f89bdcd73c7d41dead0ca2ee8712a703a1797d3fc8ca0",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/pipeline/index.js",
+        "bytes": 7232,
+        "sha256": "56cde60b4dead7d2af5ad753d39a2e65041451cc43141e413cbd854980bc0efc",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/indexed-sources.js",
+        "bytes": 6545,
+        "sha256": "27c6c869567a3ec21cd8522c75a47795713b8ceb2c4ab5d6174ae900e8eed5b2",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/history/indexer.js",
+        "bytes": 14620,
+        "sha256": "0c064a2af2f6fa0e9a4463ec8a62462eef16f29746a9b1e1c86e869314318454",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/pipeline/inertia-linker.js",
+        "bytes": 3517,
+        "sha256": "1db6bcafe66a2adce0439050ad5009bf324f6be89f4e93285ccd86002d27262b",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/jvm-gradle-compiler.js",
+        "bytes": 7688,
+        "sha256": "353c24333904903ca2059982a7f1ab9debb918f1394d5cc67f55e6fb1c1caa3d",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/jvm-kotlin-compiler.js",
+        "bytes": 4211,
+        "sha256": "331b6b8e96300a8134407805ba630c387cfe4725126377676c3bc074a27811df",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/jvm-manifest.js",
+        "bytes": 16437,
+        "sha256": "ef1b3507d0979182ba9f8520f2490bf4b5b170d30de270549ccf788b87da0ff3",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/jvm-projects.js",
+        "bytes": 40704,
+        "sha256": "94eaae03228c1ce2494fa742f9ecdc3e3657f2ebfef1c08b1145359cb5d63d13",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/jvm-semantic.js",
+        "bytes": 31468,
+        "sha256": "d48e1cfeb8bdc40cb0a33b0b81730a20117e7dd8ac4ca9d929f220a9907258bc",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/jvm-spring-boot-maven.js",
+        "bytes": 7296,
+        "sha256": "3bac4a6104837b532e502266775fdf945a18a843382531a9e43f7e2fa8d7da3a",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/jvm-spring-boot.js",
+        "bytes": 4719,
+        "sha256": "6ca5ba004c086fbc81d0c6657765108ffe6153b620433874842199a9702ab51b",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/jvm-symbols.js",
+        "bytes": 52712,
+        "sha256": "3b4d8d613007aa4faa1498919fb0a2b516a2ed9d6093f9dd7b0fe852eba448d1",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/jvm-syntax.js",
+        "bytes": 4637,
+        "sha256": "e07ec1708460733193738510d44a5cd2c4527f71c7f82633fb58921f2e304617",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/jvm.js",
+        "bytes": 5921,
+        "sha256": "3877b3df47efd4a46ea7d771a398f9a214094f415e4c39f5b4fab6e667dfdfb6",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/jvm.js",
+        "bytes": 13395,
+        "sha256": "9ebf658fe556990eb23b94145487b9e3464c3aeb6ba79436d0e59fe67d8c0180",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/core/languages.js",
+        "bytes": 4046,
+        "sha256": "fa91d9265b4360247b577070c970802f7e53edc4ea77a7e5889f6702aaa37947",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analyzers/laravel-console.js",
+        "bytes": 18247,
+        "sha256": "7b9ec4e221676b2ddbb203001b8aabeb1f51126e41b123cc6ef5da9fcf37e720",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/php/laravel-files.js",
+        "bytes": 3455,
+        "sha256": "bd25139b20016ee1d5af9e7fc5defc67dac3d902425a0a882ca7d334eda8914d",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analyzers/laravel-fortify.js",
+        "bytes": 14905,
+        "sha256": "278810bbf529dae3cfb36a07229c68828b46f00a337300546d82c8f8abf0b752",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analyzers/laravel-schema.js",
+        "bytes": 37379,
+        "sha256": "6cdb9f26edae9a02258219323f55c870987fdd0c0f828bea23642db3cea14d22",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analyzers/laravel.js",
+        "bytes": 30955,
+        "sha256": "63ca9d6159feb3ad35412b7fff6a9a4999d78054b4b954359771168546d9acab",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/launcher.js",
+        "bytes": 10040,
+        "sha256": "b6ec7126ccd2ce1d2972a1a249903f3b937346cc0ef03b7aab39bf37bcdbf3df",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/projection/layout.js",
+        "bytes": 17130,
+        "sha256": "f29352c46c0945e7d5312bc7ac162cc978336ffd08215edaf4ad4f9c428fc1ca",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/history/lineage.js",
+        "bytes": 7651,
+        "sha256": "41da10f9756b3a87d149d40adb19204bbb5bd05fae64c34a5d974452664b5628",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/liquid-structure.js",
+        "bytes": 17808,
+        "sha256": "e2126fa7089155b6f3c1bf3ecc772b37907c4d8cf2a9f82d1cdbc7e378ddb81b",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/liquid.js",
+        "bytes": 5658,
+        "sha256": "2bd456d9f35b159d957bdbe56f1c98291e7a603104bf534b5d889c9dc6277760",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/core/manifests.js",
+        "bytes": 14363,
+        "sha256": "1850bd58faa30c64e1c91ff4e6fa9786af8b65c2ac9b9a076988c08e6592b1ea",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/native-budget.js",
+        "bytes": 4014,
+        "sha256": "1052897b64da0ceb45e8bbc799d2ea2f66aaaf2328b4054c7d15a08788835de4",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/nest.js",
+        "bytes": 42300,
+        "sha256": "af5e75c2ecdb176f42a0576bfcdfca93fe167688e5e34905b8701e75de057a7b",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/nuxt-config.js",
+        "bytes": 21130,
+        "sha256": "1cbbeb9a2aeebbe503bce3ab498c9111273146b0cf79f32df0eeaf91ac147be2",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/nuxt-conventions.js",
+        "bytes": 17766,
+        "sha256": "a8f4c53425983d82498ac9a0ae618ae34c3803acf0e5bc7a6e8a787b27f544dd",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/nuxt-path.js",
+        "bytes": 4301,
+        "sha256": "7fa9013219c9d3eeedb01c2696a2e40b9fcc3f6e2ae438f09fb48ce48452f7cb",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/nuxt.js",
+        "bytes": 25567,
+        "sha256": "c4bb7b01b9c78050c60c20cf2bdf65475dabb62db98cc5e6b73efc2269e1e9c9",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/objc-cpp.js",
+        "bytes": 13638,
+        "sha256": "a444baee148356f17649aa1d6aa34f518cc2f3a67cf8ec113447cacba651097a",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/objc-macros.js",
+        "bytes": 7391,
+        "sha256": "2ddd753b57a06f631494cf751c91ed6e63aa81ad17790882094a9236975d4a73",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/objc-regions.js",
+        "bytes": 6602,
+        "sha256": "20bd8013dde8d4f6f6883404eb31788e0ee4881c5777512e5fe08101bed5d305",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/objc-structure.js",
+        "bytes": 15159,
+        "sha256": "f635ebbf7885cecc840e1e5b1b42f6f8a4435ac3cf126d30aab1c1bd47ca520b",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/ai/openai.js",
+        "bytes": 4667,
+        "sha256": "2de9f61f56ef42622f961be62e171da1dd937acc67df13ccc3aca89280328091",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/routes/pattern.js",
+        "bytes": 3672,
+        "sha256": "a247107f512905f740d4bf1fde321f21851f16a238f61952907e1256f9161cb3",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/pipeline/php-analysis.js",
+        "bytes": 3899,
+        "sha256": "767b6eae19fb8edbbb13b5cb3570595fdd4d4b2c923728cbb06ab7e818f7a861",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analyzers/php-ast.js",
+        "bytes": 3543,
+        "sha256": "f17e4624b52eb79a6f942afcbe39c923d2cc1850239a233bd7ce84f9dc2640c6",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/php-imports.js",
+        "bytes": 4513,
+        "sha256": "d26b236a3c2c072e500c3de56ba57c38ee8c00e2c0caaaa3b0a8f85c4bc942ad",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analyzers/php-references.js",
+        "bytes": 33368,
+        "sha256": "7a65608b252ceae3841ef958e5605527741d7134ee76a5f2aa6cfe9972f18888",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/php-symbols.js",
+        "bytes": 49259,
+        "sha256": "172b8017e26dcaf501402b72b5441aa6e737f414f3b89242570c36b094e15785",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/php.js",
+        "bytes": 9646,
+        "sha256": "7d6e4571b93aad9ba528190a186d95d18273d2b220390b66150328cf3d40669b",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/php.js",
+        "bytes": 39370,
+        "sha256": "1644363d28b420729c9cd22646f6e2fe419a56b215146efb1517bc0bdacec1a8",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/ai/pricing.js",
+        "bytes": 1301,
+        "sha256": "5f4fbed677f9d0b5f833474e56cd48310fb61bc522c4fd5a2b5a7d8b98e54a55",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/project-model.js",
+        "bytes": 11397,
+        "sha256": "49640778271d947bdd987dd7ecbca93fbf74d37b82143b038fd13e0c490b23b9",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/api/projection-routes.js",
+        "bytes": 12179,
+        "sha256": "19bc5b149d058e5d01a45c378bcf88a87c010b5189593c0795a00d282d3e5af4",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/history/pull-requests.js",
+        "bytes": 3387,
+        "sha256": "3a2bd4a26c11e7198d9301c7ca190d2d929e6ba76bfe6522782999f948b8ea9d",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/python-arguments.js",
+        "bytes": 1200,
+        "sha256": "513678fa6e1d230186597f27f4407d83098de1286236e06a73a3d4988e8b3cf7",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/python-bindings.js",
+        "bytes": 3427,
+        "sha256": "054c945fa420fcd4e7fcd941b739b6a54cc0c189c474911e47acf25ef77aee39",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/python-imports.js",
+        "bytes": 17531,
+        "sha256": "c735163946a6c8b9a88004976a66dd9e9bbb0f7172599ced72480f13764d994b",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/python-symbols.js",
+        "bytes": 20525,
+        "sha256": "5a1ae6a798053e3db0465396af8c511bed3b9d90096f4bfdcd6bfe033849a368",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/python.js",
+        "bytes": 13684,
+        "sha256": "d692e026d24b438259f4f35318449244465f79cc81465a99679dc01f24f64e24",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/python.js",
+        "bytes": 21585,
+        "sha256": "72e33fe2eb390ae01b315d14787da949443ca04934466aa3712970ccb2562fa1",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/rails-controllers.js",
+        "bytes": 15513,
+        "sha256": "05b14c20552959770eee75dc6c363d2486bba10c13c251acb01870e27a196b5b",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/rails-inflections.js",
+        "bytes": 4806,
+        "sha256": "0afcdf472ca54d317777d918130a132eccf64052fd8a06edb1237e633f2e759e",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/routes/rails-patterns.js",
+        "bytes": 7990,
+        "sha256": "d73c3093d79571cf9093efdf243cd5c0d2ad3551401407ea7cdb1f560568f521",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/rails.js",
+        "bytes": 42833,
+        "sha256": "0698d6810fc2b28ae71a1900b12778226d4258ce9e4be77e7bb9d200d99e628d",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/razor-structure.js",
+        "bytes": 16946,
+        "sha256": "78ba225518bf5ccda38aadf4d9e82901aa439fe35ca7100e71152e773b22333b",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analyzers/references.js",
+        "bytes": 2951,
+        "sha256": "ef90d5d77ee64bfbf205db883ab7b7027fef18467e88ebd5ed675d24d56287e3",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/projection/regions.js",
+        "bytes": 7393,
+        "sha256": "4ac8c73694686586799153fb5eb71da083eb51fe005ab4ef46ab6bd892fa17f3",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/registry.js",
+        "bytes": 1800,
+        "sha256": "b8bfb3c46529e3dfba1419117d0b6a4f45d9042643ce877b7549cc65426ee511",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/projection/request-flows.js",
+        "bytes": 37393,
+        "sha256": "3c3646da1c81e9d1970ffd9013ab94af8bd734d147b08ff2bbfdd0662e030121",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/php/residency.js",
+        "bytes": 10451,
+        "sha256": "6f64af94e5703c7339583a7014764d807791b31e38a67373f14f70bdd6c0d26c",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/routes/rocket-patterns.js",
+        "bytes": 7534,
+        "sha256": "ad35667783912cc804e28c1dca36e9188b0a5245b8e6e0a8e26ad41ef87afaaa",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/ruby-autoload.js",
+        "bytes": 38673,
+        "sha256": "c54c551774917e44a857a782f7ad35dcbcae804f321b6a16a47cfc4708062a1d",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/ruby-profile.js",
+        "bytes": 8302,
+        "sha256": "08b7c16aa004e1ed79691703ad5fcaca1d213f5ec13ee8cfef1152e69a114f49",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/ruby-symbols.js",
+        "bytes": 45091,
+        "sha256": "ac7cec29fc7289eec2eaa0c7c78fbce82c1d55c3acb6a75bb57f988566828c1e",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/ruby-syntax.js",
+        "bytes": 17564,
+        "sha256": "5f1b84b45f81772f7f404558448013360d7b366141ff744bbdefc4860ed71c93",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/ruby-version.js",
+        "bytes": 5355,
+        "sha256": "f52f6850c247a93aeecae89808cf1dda7a3929607801a9fc125e48c4adbc3048",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/ruby.js",
+        "bytes": 5963,
+        "sha256": "a2208b1708f89bda3ef6ec02ea613dd392fd73f5d1b5958d192b13c1100e67b7",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/ruby.js",
+        "bytes": 25990,
+        "sha256": "ae12a456098ba09f28d1bf2a7b6d7f76275f03741d850bd049439079b9ad858e",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/ai/runner.js",
+        "bytes": 9147,
+        "sha256": "1246ac056a33947d7227b599f7c112737e753b268beb771d3e2ca04eca9ba16d",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/rust-cfg.js",
+        "bytes": 11751,
+        "sha256": "6fe2986d0a2619fc01a12d6b710770c25ad4087fc366322cc9b7570f1a72b942",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/rust-derive-namespace.js",
+        "bytes": 7100,
+        "sha256": "31c29f36a556684943b94c7f82d665725735a20f49772ec54aab7cd6b3173123",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/rust-derive-namespace.js",
+        "bytes": 11072,
+        "sha256": "a16dd243d56831352639339502ec856417d14f59ccabb0866f41b0308f871c6f",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/rust-evidence.js",
+        "bytes": 8134,
+        "sha256": "68f52d73b20d672f4a87666d9acbb609b7638311adc3208ce03410be1587b517",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/rust-lock.js",
+        "bytes": 5159,
+        "sha256": "05696065fe899c7994acdbf45aa53d00d0b22e1fd964787d43a0e4a618793003",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/routes/rust-patterns.js",
+        "bytes": 13993,
+        "sha256": "c3de703c9fcb24d55db634726fb8d6aa34526ae9ecbf7060e944b0b0a0085562",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/rust-profile.js",
+        "bytes": 31787,
+        "sha256": "ac2be34abbea49c8690085f8b6f832f45ee0d7c67e8dd387a9b6270cb910cad7",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/rust-projects.js",
+        "bytes": 39844,
+        "sha256": "f4a9a0a3c82ecf30dcdad485ccc87917ca18432a4801cd89ba00ceec1a74bd65",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/rust-routers.js",
+        "bytes": 124057,
+        "sha256": "94c03fe356b462f0f49398d27b7101cb2b8a2cc675ad8406aed12c46570f942c",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/rust-runtime-namespace.js",
+        "bytes": 13431,
+        "sha256": "d1d9bd8fa88b7dccafb37b76292cde30a4dbb43aaf06edfbb5a778a5ab7b0c90",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/rust-semantic.js",
+        "bytes": 23770,
+        "sha256": "5123ea6d157fab2fcf50b2c6f872f253c35ee4db8083c09081920b228c27f476",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/rust-source-projection.js",
+        "bytes": 4283,
+        "sha256": "18d5f385a02def23fa4e5a0e6b9ed14bcefd7542dbc4cb41383cd79b46aa7b98",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/rust-symbols.js",
+        "bytes": 43891,
+        "sha256": "0d485651db42f5fb2dca054f779ae2dca2716bb23e7c7970198e81765c09fe29",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/rust-syntax.js",
+        "bytes": 11940,
+        "sha256": "3faa2f39fb4a465242cd496731a6bcb2ac713e896b6fb7f6e7e46297ee6aaea6",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/rust.js",
+        "bytes": 8138,
+        "sha256": "7bbc0b6ed849844b45b456de906e455b093ee259d07be446111c242c3816890b",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/rust.js",
+        "bytes": 31254,
+        "sha256": "61f2a76ca341eda2a17dc98442d0754510e2117913539cd9cfe5a94bdaa2e5fb",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/scala-structure.js",
+        "bytes": 17822,
+        "sha256": "95f4c01a4d3a976bcb7bdb039a4d9b999ae0fa6aea2dba8f3af7fc88286fb9db",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/script-worker.js",
+        "bytes": 1072,
+        "sha256": "c63c2b132ab1fec49460b7a58c8169fac60348abb0ef8fa9c2a797a4aec6b852",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/api/server.js",
+        "bytes": 8712,
+        "sha256": "4fe1bdd8e5098e838ef2cda66cdb7ea597ccc5ccdf4a27c4676b1e7f0ae1b360",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/history/service.js",
+        "bytes": 8528,
+        "sha256": "d42da690f81e85b659522118c5ecfa20b1005bbd0e9c32906f588b348792b8de",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/projection/service.js",
+        "bytes": 108004,
+        "sha256": "765012f09f573f886ed14a1b979a2af30df3c08ad6c998babd29ba0de92f9687",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/history/snapshot.js",
+        "bytes": 8952,
+        "sha256": "9f0ec6792c73d8f42ec2240f898c0b0c4060ad3a53318c90cb70a74397e43828",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/source-map.js",
+        "bytes": 1869,
+        "sha256": "8dc16f5413971a87b8ae7f9bac07e98b367eafa8da7392548e22269ff40b4214",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/embedded/source.js",
+        "bytes": 14426,
+        "sha256": "7601b34919ff07bc7db00bee99c21f147568578e0f07cafbd482b2ebdfa2459a",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/projection/source.js",
+        "bytes": 9056,
+        "sha256": "72772b1f7ab90d6a9fde036c4adf58dce371156efaf00e405ca6c8339e2405e4",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/php/sources.js",
+        "bytes": 6719,
+        "sha256": "75f14e7bed1faab5e479cf8013cc1203488159f986d3509b502d2542cd3f8e1a",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/spring-mvc.js",
+        "bytes": 23159,
+        "sha256": "0cfca408b1043e4689f971c6525f0dcbe0684f37682323a6aba8167ea05c4e3b",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/routes/spring-patterns.js",
+        "bytes": 8938,
+        "sha256": "c62f985f0bad46a39d8826c83adc2c7d0f523515e04c388363ea7c6052dee7ff",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/spring-profile.js",
+        "bytes": 10343,
+        "sha256": "bec4ad2729bdeb4ee4217d7800fac2246e0b5303195f8b18ce1aa733daf4855e",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/spring-webflux.js",
+        "bytes": 47551,
+        "sha256": "9e8ceda3af6d7839aeab55224acdace55c9fa01e7281c63e2eadbb2feae5e439",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/storage/sqlite.js",
+        "bytes": 13090,
+        "sha256": "e6c115b6e03f7b66a5827cc7d232fedf90bde1e13aad169ed50835f8ef90cbba",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/api/static.js",
+        "bytes": 2089,
+        "sha256": "0b05640f1ab88732738b6a95beb1c01f4eb0c6a64c316a8c6f62cfc514f8ee28",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/ai/ste.js",
+        "bytes": 7165,
+        "sha256": "30e1e7a2e8ecfb25896fda0bf5d9ba56886b2114e9e8e628c2195b9fdef0c1dd",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/projection/steps.js",
+        "bytes": 6472,
+        "sha256": "2ca619694417cba6cadf5d3830239b1b318ddec10a7b67742ed4ffe591d4e131",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/ai/store.js",
+        "bytes": 7414,
+        "sha256": "069aeb1ceb9a0626abfd272f420c9cdc9131d331fad2a64b99abb7339b77e375",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/history/store.js",
+        "bytes": 23447,
+        "sha256": "d709443ee4b27437da1ef6ce25731437ea9da10d7c0c3180bfa2bd76b8532977",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/php/structure.js",
+        "bytes": 23656,
+        "sha256": "1109576c08ad29576ed48737f978b6bb8b16eacf380da4bded4f8d7f9d522e5a",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/svelte.js",
+        "bytes": 32812,
+        "sha256": "77ac062c84bc0d5192c3eb97f10861e65a03204b0a4fa68ecad1bbf43cfecb61",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/sveltekit-config.js",
+        "bytes": 14695,
+        "sha256": "06a38cb4efdab71f7cf72a6d77b96ea5648118ca916a6eb1762fb0b47eb42459",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/sveltekit-invocations.js",
+        "bytes": 2645,
+        "sha256": "728125d46930b6ff95baa0f7e75d37138e5c2b0404b7923b88296f1717d85657",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/sveltekit-path.js",
+        "bytes": 4587,
+        "sha256": "9115c54500ff73415527a5ec203386abe5e50c9ae64db4e0ac329e371e682aec",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/sveltekit.js",
+        "bytes": 31915,
+        "sha256": "a26e9bf31c90606e1158e57863be13272fc927b136429385ec5bef3f49e1bc7b",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/swift-structure.js",
+        "bytes": 16626,
+        "sha256": "28eb68d26dca216480bc136f91eeb28efa481bb7e29dd03ea904ef3ad3e8f259",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/ai/tasks.js",
+        "bytes": 34798,
+        "sha256": "d33a0572c934fecdbab250df96c12fca65b5b3e6b54606e27f9807d6facbc1dd",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/template-facts.js",
+        "bytes": 2476,
+        "sha256": "56cceb990a1b9c37d4e1b415dd3d35ea36d8765ecd50365cdd4b25cd21136c6e",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/template-scripts.js",
+        "bytes": 2473,
+        "sha256": "b7c6881482ed01e6ba0263f62e4d39616310c41ceb5508e4a88ce51a9793c35f",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/history/textdiff.js",
+        "bytes": 5049,
+        "sha256": "089a62b590bea8e05eecc9503ad18cef537d801ba6c11f353e3ca5a1a81e4943",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analyzers/ts-http.js",
+        "bytes": 34218,
+        "sha256": "65c3ed5c8abad7a29dcbd2f6449403c65928c0dd514e68fa2f776cfa8b7d9c49",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analyzers/ts-program.js",
+        "bytes": 9332,
+        "sha256": "d3324131642b8815ef0241de180351cb1910927f1ef182e1dc3121ae58102f24",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analyzers/ts-references.js",
+        "bytes": 24521,
+        "sha256": "7a705017cd0eaa4813fb892501d646efe8d5f26451e6e63c3cd0f0a0f7365647",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analyzers/ts-url.js",
+        "bytes": 27746,
+        "sha256": "410e5e2e47bbe6d8c76aaffde60dda0ffe682e3f8518e1dfc0e3a0d2be99f510",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/typescript-binding.js",
+        "bytes": 9021,
+        "sha256": "efa19af5a701b0b445fde7b439b94b4499868994d1b0cf7227a14eca3933083f",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/typescript-pack.js",
+        "bytes": 2499,
+        "sha256": "f09e841592c49f849e0621e8bfa53ab57050cdbb7b3ba08355d066cbf35a688c",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/typescript-runtime.js",
+        "bytes": 8748,
+        "sha256": "8c0ac70f6807b2d4e14f31a30f50ac371167922abad606994bf1036355352653",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/languages/typescript-services.js",
+        "bytes": 14918,
+        "sha256": "7268e8dd28d406b36a7e7c8b687c2d03d46c430742d4e92cb293543dc28ddf89",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/typescript-static.js",
+        "bytes": 13116,
+        "sha256": "55e802af148be460a6980f739fb31c7fdc2fc0559d5da974278ed3b590d93c58",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/resolution/typescript.js",
+        "bytes": 9300,
+        "sha256": "0f3c1979b57aeb08b64344796a5e41f9a42b06e457c4d4a1eea169fb3c1b9721",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analyzers/typescript.js",
+        "bytes": 35949,
+        "sha256": "a1697026d9d112531b1e86b6cc30069a98518d0f524f428ac0726f585f906de6",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/vbnet-source.js",
+        "bytes": 3420,
+        "sha256": "8b6ec03d2feb667d0cbab19e14ce5f0be597dc03fe614367c52365adf994b060",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/vbnet-structure.js",
+        "bytes": 15898,
+        "sha256": "7ce248b32aa4e5199d4fd9dd8f9414d6a9c443a7e8b5d66d3d644e19739696e9",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/php/version.js",
+        "bytes": 439,
+        "sha256": "6f56bc1977cf5f5ce910952d83f5fea4de901f5f2bc3c8870636ce41fa34115d",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/vue-router.js",
+        "bytes": 18749,
+        "sha256": "a100cfa571d1a1ddf0745d4d27a60512758d93dcb1dd06acf3552fbefed62c94",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/vue-static.js",
+        "bytes": 95,
+        "sha256": "4894e8197f8efe5789b73c5833b4ca118f3b5b4fc436e82fc4d0b00e0531ecb5",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/vue-template.js",
+        "bytes": 6838,
+        "sha256": "d0ed8c89026a306f74bc3c280e5aa76cb05a9d0021fcc9a614f887c4d6e6d6bc",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/vue.js",
+        "bytes": 30459,
+        "sha256": "5f7bbfe710322a39ad9cbb612654fada6f3b619419ba9bf8d019617a1a6a83a2",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/warp-cors.js",
+        "bytes": 4500,
+        "sha256": "75e0af8fd4b734ca5839e7795a181631d659f82e879932ff8373f072e12e5ba2",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/routes/warp-patterns.js",
+        "bytes": 13490,
+        "sha256": "dd968c6fb9074560daa5eaf582abfad481999082818696906b8a98efa9ade429",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/warp-state.js",
+        "bytes": 4618,
+        "sha256": "80d087ec95cdac4234f0fff4d7835a4672ffaa6b5ac3cffe9501d392edad6baa",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/frameworks/warp-syntax.js",
+        "bytes": 3472,
+        "sha256": "58413aa6a49228abff9be9e2f5ffa0e2450d75817c4bdc0a7c660b9b3905eb40",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/routes/webflux-order.js",
+        "bytes": 1095,
+        "sha256": "5c4eeb87f750500b8e1f01c554bf3ed228e6b603a2dcb6f3f82a3061cd31eac6",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/history/worker-channel.js",
+        "bytes": 1450,
+        "sha256": "01b2dc97fe488f15b9445a156687eadd7a37397472f8423ed996ce4bbd851f63",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/worker.js",
+        "bytes": 11211,
+        "sha256": "442c1fcdfe2b1b974d5c6bc5a3299981af224c55f222d956873975427a9969e8",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/history/worker.js",
+        "bytes": 1395,
+        "sha256": "85a2edf0fc0de4cb213332d10ff22cb4d7462d4a9316d6b4ed1337958d10ea03",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/core/workspaces.js",
+        "bytes": 1414,
+        "sha256": "52a8c64fbf7e8bbfc506b7aff714a1e097a10375ad3410f4ac927a0c5649ca9e",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/manifest.json",
+        "bytes": 14938,
+        "sha256": "892e890cc3ace36b3efdfa0794d9f2fbdb97daf649e0a35902eedfa0c7ba79f8",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/README.md",
+        "bytes": 20174,
+        "sha256": "3d53d6be1cee3f334052d88c15dbe0869d9531a03297b7b82ef0cff5de0b1479",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/embedded/native-framework-worker.mjs",
+        "bytes": 1435,
+        "sha256": "55ad6c2d7d187e0590c3bc8400270b9da435521fc19d3519875c46baf8db5c01",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/native-script-worker.mjs",
+        "bytes": 12941,
+        "sha256": "a439aae8c073913d088e58aac2e9365b7d94e79e23e5bde29f1bb2c0e55d9ca3",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/php/native-worker.mjs",
+        "bytes": 1828,
+        "sha256": "9d4dd40f7a7af3bb5366c7b7851c085fe780dce01cfedc1dd52664caa062eb86",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/src/analysis/tree-sitter/native-worker.mjs",
+        "bytes": 370704,
+        "sha256": "c5c02d730697e5fb520f8fffb0d420b9e3a4df4d5a0c0d8b586406f3287733f4",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/c/declarations.scm",
+        "bytes": 193,
+        "sha256": "2a8bdcf4b1a7fcbb1a1e1f4acfd7f370005172fd84080918e2728d07ec872c24",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/cpp/declarations.scm",
+        "bytes": 319,
+        "sha256": "1717ef9c228c1eae8da13b0b600ba0090e69a2f055bac6afa35836ea11a8e917",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/csharp/declarations.scm",
+        "bytes": 857,
+        "sha256": "d22bf376175066c0b9cb28c15367b2f09c124cb89e5217679b8093f73ad3aa09",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/erb/declarations.scm",
+        "bytes": 91,
+        "sha256": "d7c2292d4d6644b9b7bfb7448b7eb10cced61fb532399383ff0b9f001b402ede",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/fsharp-signature/declarations.scm",
+        "bytes": 240,
+        "sha256": "48e366e8354a17ffc03c8bf7d23a0e7557640ec969a705c20800a5fa4e141270",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/fsharp/declarations.scm",
+        "bytes": 221,
+        "sha256": "cff01956e92f1b32b28130a6240f70856673d90c82e4d9f5cf2ba005fcf3063f",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/go/declarations.scm",
+        "bytes": 328,
+        "sha256": "2cd56e8d439197c11d9f8ce7ce3cedafb3c8fc193ded3ff838da5cacf85e892a",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/groovy/declarations.scm",
+        "bytes": 428,
+        "sha256": "9b78aedd68c286c415075860fc745bd21ec43b38569be20179115ebdeffedcff",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/html/declarations.scm",
+        "bytes": 43,
+        "sha256": "fec4e2a7d6c1bec8da174cfc387c41f35c30b0d4850f98694161f458c5544970",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/java/declarations.scm",
+        "bytes": 837,
+        "sha256": "f4c494a3e5e6282b3ebe7260654d2ddd2d56c2cea2cfd25d2758c1a9aed22ed0",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/kotlin/declarations.scm",
+        "bytes": 348,
+        "sha256": "aaa8627607d1ea6d524bcd7f14af9c672d85fb3bd9fa6ab0af26045514af6b3e",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/liquid/declarations.scm",
+        "bytes": 644,
+        "sha256": "e02f3cb4c4df674c47690f2d6a5ce24c9712a1795aee4517188956d700f75bd2",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/objective-c/declarations.scm",
+        "bytes": 489,
+        "sha256": "88295cda0053a546c201aa1cffec4d817f7487b16c15b2f01c15d8bbe5a5a419",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/python/declarations.scm",
+        "bytes": 132,
+        "sha256": "d47ff65c5500706171ad4b42b6d531f3cdec2c4043493f8f6e3a1cdc111eac9a",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/razor/declarations.scm",
+        "bytes": 2364,
+        "sha256": "114f6d0de8e96f41d83ee4ae497c6c1012222ad3090cee362491285803308c59",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/ruby/declarations.scm",
+        "bytes": 188,
+        "sha256": "49205a7de968a306800a33cbf1981d29fe0e9d7b2adfacad65746621972b91d1",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/rust/declarations.scm",
+        "bytes": 811,
+        "sha256": "ac6569529b12123d318e2b2b5d641723d0566c790c60562b5b0f9ef406b79363",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/scala/declarations.scm",
+        "bytes": 331,
+        "sha256": "755e0b943cebcc6ffa48a1682056135d217dbdabec1f249a65fb287747a3c5f9",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/swift/declarations.scm",
+        "bytes": 372,
+        "sha256": "a12a98babae3ef251e98e3ad050b8f43a2235b3ea1e036ec64f3bad6afac159e",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/queries/vbnet/declarations.scm",
+        "bytes": 280,
+        "sha256": "59f4a850bab5d1a25d2e32ba1cb92f1a3cc6de062059e4a22abbdcaa6bd9663f",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/c.txt",
+        "bytes": 1080,
+        "sha256": "2e0110e07abef7c2548b26ec9d6969775617ca539a0dc8dbeeb14d6452c711d1",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/cpp.txt",
+        "bytes": 1080,
+        "sha256": "2e0110e07abef7c2548b26ec9d6969775617ca539a0dc8dbeeb14d6452c711d1",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/csharp.txt",
+        "bytes": 1133,
+        "sha256": "778fb7d63b8c1844da315648c02f325c4713a6f4a5d19644fd413421422776d3",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/erb.txt",
+        "bytes": 1080,
+        "sha256": "c5cfb43042b6b72045f4ba997834d0a7786d2793d91680868b5815b39f14fc78",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/fsharp.txt",
+        "bytes": 1074,
+        "sha256": "f9352b63e87252b282b252bf27530027c8ca69829e0023f8b8b682a736f271fd",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/go.txt",
+        "bytes": 1080,
+        "sha256": "2e0110e07abef7c2548b26ec9d6969775617ca539a0dc8dbeeb14d6452c711d1",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/groovy.txt",
+        "bytes": 1072,
+        "sha256": "7846ff7803888ebb32f936a8a858eb9d5d73560401d92a2f358d562642205263",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/html.txt",
+        "bytes": 1080,
+        "sha256": "2e0110e07abef7c2548b26ec9d6969775617ca539a0dc8dbeeb14d6452c711d1",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/java.txt",
+        "bytes": 1069,
+        "sha256": "52ed137b039cd9c46409bc22e89938af911c95b157feae2d040b51e6084369a7",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/kotlin.txt",
+        "bytes": 1101,
+        "sha256": "0eea8dc45e89deeb03c7799bbbc7b4688f365fb274562f4540ecfebdea82e727",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/liquid.txt",
+        "bytes": 1069,
+        "sha256": "3b3e4e4252d5d7d1c18e1257005f23242bf0580ad619204fd093c99b8c56748d",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/objc.txt",
+        "bytes": 1101,
+        "sha256": "099c44248f8cf353123211318680e93465587c005a4b3730ce8cb5334de043d6",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/python.txt",
+        "bytes": 1080,
+        "sha256": "d724405ce238a22c0d35769c5a36b386ad5958192efe8bbb304fb2896254575f",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/razor.txt",
+        "bytes": 2325,
+        "sha256": "bd795f41c8b14df19445501d66cdee7431e284230f809612a927f2e0c10ce856",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/ruby.txt",
+        "bytes": 1075,
+        "sha256": "ee006f02a3d856df282e409be2a86e24a65bb573a98b9c28343771141351bb6b",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/rust.txt",
+        "bytes": 1080,
+        "sha256": "31d5b6f4243d5c7c6e1c4ebbbb9f6407bd1457a08bcc4f706521710341acba36",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/scala.txt",
+        "bytes": 1091,
+        "sha256": "1f95ed26e1f4074074c9c7083e61c0a9e4c3b9f435745044995f3beb4ed28575",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/swift.txt",
+        "bytes": 1068,
+        "sha256": "3533cec129bb4bba015c0d61d86dd7c3b7e82110e4d2ff7837a01eff5bad5ccc",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/vbnet.txt",
+        "bytes": 1609,
+        "sha256": "3ac09699480c28ded5499646a076da1f6daaebe81bac75f198b95eac213ed020",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/licenses/vscode-tree-sitter-wasm.txt",
+        "bytes": 1141,
+        "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/tree-sitter-c.wasm",
+        "bytes": 625918,
+        "sha256": "c852c2a85ebf2beb636aa3b0ef7f7e70458684d74f6741b20dcb296885bed9f9",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/tree-sitter-cpp.wasm",
+        "bytes": 3434931,
+        "sha256": "174eb0deb75b2ec7881bcacda9f995648d8e683956e5c2267e69ab6dc503fcbf",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/tree-sitter-csharp.wasm",
+        "bytes": 5103332,
+        "sha256": "d12d85996c25957b4c1b71e26db2d7cc8a294997b60642e9c2a3b031b2c66dd3",
+        "tarMode": 493,
+        "installedMode": 509
+      },
+      {
+        "file": "dist/grammars/tree-sitter-embedded_template.wasm",
+        "bytes": 5531,
+        "sha256": "d15bbf3cb90901d0372b5599761c7a1ada344a0f11573c173ace7042636a6174",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/tree-sitter-fsharp_signature.wasm",
+        "bytes": 2695892,
+        "sha256": "23de7d67ae268119f524ad361806773ae8df5c0d54af02b738e60897f9c4cdb5",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/tree-sitter-fsharp.wasm",
+        "bytes": 11430318,
+        "sha256": "ff1a927387fec25e184d120d9e18ec7cd5271b30f6380f02d494d3548a99f7b7",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/tree-sitter-go.wasm",
+        "bytes": 217182,
+        "sha256": "9504573f352b20be7f2f1911754d710622aedc15afff16d5ed8fb5645681aee7",
+        "tarMode": 493,
+        "installedMode": 509
+      },
+      {
+        "file": "dist/grammars/tree-sitter-groovy.wasm",
+        "bytes": 972000,
+        "sha256": "1f701a1065a0bcb599f63065ccd9df501c2cae65a201dd297cce7f58b88b69b4",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/tree-sitter-html.wasm",
+        "bytes": 18385,
+        "sha256": "c48fcd82c7ea8bf943180088ba7f28c48b2bb5287874179168bf9d31e394cf85",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/tree-sitter-java.wasm",
+        "bytes": 414641,
+        "sha256": "4fdeac4ca6ca089f06c6f7e562abcac1733cd465728cc7031ebb73c2019122c4",
+        "tarMode": 493,
+        "installedMode": 509
+      },
+      {
+        "file": "dist/grammars/tree-sitter-kotlin.wasm",
+        "bytes": 3441042,
+        "sha256": "7009d69453bc8735e438b2818a633efb21c88f99782769abba60dffedfab73f7",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/tree-sitter-liquid.wasm",
+        "bytes": 136087,
+        "sha256": "b5c08a0d17c21457141647595ffee1c028dd31179557e6472bd6e20b08ae37a8",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/tree-sitter-objc.wasm",
+        "bytes": 5317155,
+        "sha256": "155bf61fc94941fa9d07c86cd46895f14dfb2549fb7f646faeb83765af05c970",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/tree-sitter-python.wasm",
+        "bytes": 457883,
+        "sha256": "16108b50df4ee9a30168794252ab55e7c93bfc5765d7fa0aa3e335752c515f47",
+        "tarMode": 493,
+        "installedMode": 509
+      },
+      {
+        "file": "dist/grammars/tree-sitter-razor.wasm",
+        "bytes": 10723839,
+        "sha256": "3d9a20a7e4b1b6599e0a23ea758ec6bd9207c03a0a88944b4ddaac24ad96152a",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/tree-sitter-ruby.wasm",
+        "bytes": 2106352,
+        "sha256": "09a96427d7c72f0613ed470cd9812223fc4a91d6a9c025c0235cc6bd59ff96f4",
+        "tarMode": 493,
+        "installedMode": 509
+      },
+      {
+        "file": "dist/grammars/tree-sitter-rust.wasm",
+        "bytes": 1113644,
+        "sha256": "0dac14947cb04d94466e3df659f80a4e264c216a60b3eda175eae4cf12ed7a8d",
+        "tarMode": 493,
+        "installedMode": 509
+      },
+      {
+        "file": "dist/grammars/tree-sitter-scala.wasm",
+        "bytes": 3973559,
+        "sha256": "37d7fe5a91ca98941dc05493b0c05a0df0f36df5035890fa00b02497c68aaac3",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/tree-sitter-swift.wasm",
+        "bytes": 3825025,
+        "sha256": "0258a7ef17303a8079ffe0748b3583d59656b5c3e8653fca7b6451b3e6689eb2",
+        "tarMode": 420,
+        "installedMode": 436
+      },
+      {
+        "file": "dist/grammars/tree-sitter-vb_dotnet.wasm",
+        "bytes": 1496364,
+        "sha256": "35e8f433a604a3503b07631aa53ab4594f064cb6089eac6807c5d000826857b4",
+        "tarMode": 420,
+        "installedMode": 436
+      }
+    ]
+  },
+  "portableInstalledQualifications": [
+    {
+      "file": "typescript-input-ownership-validation.json",
+      "passed": true,
+      "qualificationCount": 40,
+      "sha256": "819cd9bf48dd4c818f0c2f371e61aa68a88596e845e618aadfb521c76331cb63"
+    },
+    {
+      "file": "literal-script-generation-validation.json",
+      "passed": true,
+      "qualificationCount": 65,
+      "sha256": "182a0a0aae3fd81ce22ddb1056aff64ce2c5f6adcb49329b9272480ae31e86b0"
+    },
+    {
+      "file": "rails-callback-chain-validation.json",
+      "passed": true,
+      "qualificationCount": 10,
+      "sha256": "b0e7fff8917b6ed45ef4ca52cd80b1bd8ffb1a84dc9ce118e0fe69c1310359d3"
+    },
+    {
+      "file": "jvm-build-selection-validation.json",
+      "passed": true,
+      "qualificationCount": 11,
+      "sha256": "21778c27988b36a5aa83e9d21f25a018a6005a30ce5de426310af6f33131f77d"
+    },
+    {
+      "file": "gradle-compiler-inputs-validation.json",
+      "passed": true,
+      "qualificationCount": 14,
+      "sha256": "6e3efd9922b2b7f5a552cc6d9a2a616ffb8f510b69c4b8ed99dc5349d7d9e945"
+    },
+    {
+      "file": "spring-boot-gradle-validation.json",
+      "passed": true,
+      "qualificationCount": 6,
+      "sha256": "d3650ea9ea96c309b3683fd96bb28aaafb9bdb32543969a3290fef2461a66b56"
+    },
+    {
+      "file": "spring-boot-maven-validation.json",
+      "passed": true,
+      "qualificationCount": 9,
+      "sha256": "b5f26d2b1869b71e05f732bba867fb308b9f8206ecd2f85f82e5a05f78e0fb08"
+    },
+    {
+      "file": "kotlin-spring-compiler-validation.json",
+      "passed": true,
+      "qualificationCount": 11,
+      "sha256": "ff5ed9e34c7afb50aad3a3e25cb820af0e1dc648997b057aa3b26b9a9c726825"
+    },
+    {
+      "file": "kotlin-webflux-invoke-validation.json",
+      "passed": true,
+      "qualificationCount": 7,
+      "sha256": "aae6af9623337743ad4d65e4dfb7dffec2e73e6bacea33000dfa8a3f3b39a508"
+    }
+  ],
+  "actualOriginalGuideResults": [
+    {
+      "sample": "mvc-java",
+      "buildSystem": null,
+      "originalIdentitiesPreserved": 16,
+      "newOriginalLambdasValidated": 0,
+      "routes": []
+    },
+    {
+      "sample": "mvc-java",
+      "buildSystem": "maven",
+      "originalIdentitiesPreserved": 16,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET|HEAD /greeting",
+          "sourceRange": {
+            "startLine": 15,
+            "startColumn": 3,
+            "endLine": 18,
+            "endColumn": 4
+          },
+          "constraintsUnresolved": false,
+          "conditions": [],
+          "handler": "symbol:f59bc847cf4ea83e6b323171"
+        }
+      ]
+    },
+    {
+      "sample": "mvc-java",
+      "buildSystem": "gradle",
+      "originalIdentitiesPreserved": 16,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET|HEAD /greeting",
+          "sourceRange": {
+            "startLine": 15,
+            "startColumn": 3,
+            "endLine": 18,
+            "endColumn": 4
+          },
+          "constraintsUnresolved": false,
+          "conditions": [],
+          "handler": "symbol:f59bc847cf4ea83e6b323171"
+        }
+      ]
+    },
+    {
+      "sample": "mvc-kotlin",
+      "buildSystem": null,
+      "originalIdentitiesPreserved": 17,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET|HEAD /greeting",
+          "sourceRange": {
+            "startLine": 16,
+            "startColumn": 3,
+            "endLine": 18,
+            "endColumn": 63
+          },
+          "constraintsUnresolved": false,
+          "conditions": [],
+          "handler": "symbol:113219942b05e2b00e830d7d"
+        }
+      ]
+    },
+    {
+      "sample": "mvc-kotlin",
+      "buildSystem": "maven",
+      "originalIdentitiesPreserved": 17,
+      "newOriginalLambdasValidated": 0,
+      "routes": []
+    },
+    {
+      "sample": "mvc-kotlin",
+      "buildSystem": "gradle",
+      "originalIdentitiesPreserved": 17,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET|HEAD /greeting",
+          "sourceRange": {
+            "startLine": 16,
+            "startColumn": 3,
+            "endLine": 18,
+            "endColumn": 63
+          },
+          "constraintsUnresolved": false,
+          "conditions": [],
+          "handler": "symbol:113219942b05e2b00e830d7d"
+        }
+      ]
+    },
+    {
+      "sample": "webflux-java",
+      "buildSystem": null,
+      "originalIdentitiesPreserved": 21,
+      "newOriginalLambdasValidated": 0,
+      "routes": []
+    },
+    {
+      "sample": "webflux-java",
+      "buildSystem": "maven",
+      "originalIdentitiesPreserved": 21,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET /hello",
+          "sourceRange": {
+            "startLine": 19,
+            "startColumn": 12,
+            "endLine": 20,
+            "endColumn": 74
+          },
+          "constraintsUnresolved": true,
+          "conditions": [
+            "Conditional/injected/custom WebFlux bean factory requires a reviewed registration profile",
+            "Virtual/interface receiver dispatch is not an exact original handler call",
+            "Unobserved/custom WebFlux predicate accept requires a reviewed restriction summary"
+          ],
+          "handler": null
+        }
+      ]
+    },
+    {
+      "sample": "webflux-java",
+      "buildSystem": "gradle",
+      "originalIdentitiesPreserved": 21,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET /hello",
+          "sourceRange": {
+            "startLine": 19,
+            "startColumn": 12,
+            "endLine": 20,
+            "endColumn": 74
+          },
+          "constraintsUnresolved": true,
+          "conditions": [
+            "Conditional/injected/custom WebFlux bean factory requires a reviewed registration profile",
+            "Virtual/interface receiver dispatch is not an exact original handler call",
+            "Unobserved/custom WebFlux predicate accept requires a reviewed restriction summary"
+          ],
+          "handler": null
+        }
+      ]
+    },
+    {
+      "sample": "webflux-kotlin",
+      "buildSystem": null,
+      "originalIdentitiesPreserved": 23,
+      "newOriginalLambdasValidated": 2,
+      "routes": [
+        {
+          "name": "GET /hello",
+          "sourceRange": {
+            "startLine": 15,
+            "startColumn": 5,
+            "endLine": 15,
+            "endColumn": 90
+          },
+          "constraintsUnresolved": true,
+          "conditions": [
+            "Conditional/injected/custom WebFlux bean factory requires a reviewed registration profile",
+            "Virtual/interface receiver dispatch is not an exact original handler call",
+            "Unobserved/custom WebFlux predicate accept requires a reviewed restriction summary"
+          ],
+          "handler": null
+        }
+      ]
+    },
+    {
+      "sample": "webflux-kotlin",
+      "buildSystem": "maven",
+      "originalIdentitiesPreserved": 23,
+      "newOriginalLambdasValidated": 0,
+      "routes": []
+    },
+    {
+      "sample": "webflux-kotlin",
+      "buildSystem": "gradle",
+      "originalIdentitiesPreserved": 23,
+      "newOriginalLambdasValidated": 2,
+      "routes": [
+        {
+          "name": "GET /hello",
+          "sourceRange": {
+            "startLine": 15,
+            "startColumn": 5,
+            "endLine": 15,
+            "endColumn": 90
+          },
+          "constraintsUnresolved": true,
+          "conditions": [
+            "Conditional/injected/custom WebFlux bean factory requires a reviewed registration profile",
+            "Virtual/interface receiver dispatch is not an exact original handler call",
+            "Unobserved/custom WebFlux predicate accept requires a reviewed restriction summary"
+          ],
+          "handler": null
+        }
+      ]
+    }
+  ],
+  "actualOriginalGuideScope": "Published Kotlin WebFlux RequestPredicate/String invoke exposes original GET /hello at exact line 15 columns 5\u201390 through the selected/sole Gradle build family. Its injected factory, virtual receiver and accept-media conditions remain, with no invented exact handler. Literal Kotlin JVM/Spring 2.2.21 and Boot Gradle 4.0.1/Framework 7.0.2 retain original MVC GET|HEAD /greeting. Selected Java MVC and conditional WebFlux mappings remain exact. Missing Kotlin Maven descriptors and competing Java build families retain gaps. No target compiler, plugin, runtime, generated/binary declaration or external classpath executes or is verified.",
+  "fullNormalInstalledPackageQualified": true,
+  "nativeWindowsMacOSQualified": false,
+  "fullNativeMatrixQualified": false,
+  "productionHistoryForChangedRuntimeQualified": false,
+  "productionRelativePerformanceQualified": false,
+  "broaderOriginalAccuracyQualified": false,
+  "fullGoalComplete": false,
+  "targetExecution": false
+}
