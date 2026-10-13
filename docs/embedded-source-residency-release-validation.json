@@ -1,0 +1,476 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-13T01:00:53.017374+00:00",
+  "phase": "Lazy bounded embedded compiler source ownership local Linux release qualification",
+  "implementationCommit": "9d150b1",
+  "runtimeSha256": "6df4377933624de1e83e6d44fe0fc46fdd387b19527488fd9ced5b08b7ecb220",
+  "runtimeInputsVerified": 1924,
+  "scope": "All source/compiled checks, exact prior original compiler inputs/full fixture graphs, normal prepack and complete production-only installed checks pass. Failed initial prepack with lost copied vendor file modes and its concrete correction are retained.",
+  "engineWebTests": 1709,
+  "targetedChecks": 25,
+  "ordinaryCompiledNodeChecks": 6,
+  "failedFinalChecks": 0,
+  "skippedChecks": 0,
+  "bothTypechecksPassed": true,
+  "deterministicDocumentationPassed": true,
+  "normalPrepackAndProductionOnlyInstalledGatePassed": true,
+  "installedVirtualMemoAdmissionRevalidationBindingsAndCleanupPassed": true,
+  "installedCliApiSourceFrameworkHistoryAssetIsolationSignalsNpmExecPassed": true,
+  "installedTerminal": {
+    "schema": 1,
+    "startedAt": 1791852561.1014836,
+    "wrapperPid": 3966028,
+    "actualNpmPid": 3966081,
+    "cwd": "/dev/shm/codiluce-embedded-source-release/engine",
+    "command": [
+      "npm",
+      "run",
+      "test:package"
+    ],
+    "runtimeSha256": "6df4377933624de1e83e6d44fe0fc46fdd387b19527488fd9ced5b08b7ecb220",
+    "runtimeInputsVerified": 1924,
+    "driverSha256": "72af6516e287f3a48082f8a33e1282b3ee7fab43e895d72b5dc5e1f07b487c50",
+    "log": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/normal-installed-package-corrected-modes.log",
+    "temporaryConsumerDirectory": "/dev/shm/codiluce-embedded-source-package",
+    "ownedBuildAndConsumerUseTmpfs": true,
+    "retainedSourceCompiledArchive": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/embedded-source-residency-source-compiled-and-evidence.tar.gz",
+    "originalHistoryReserveRelaxed": false,
+    "productionHistoryObservationRetried": false,
+    "targetExecution": false,
+    "gateComplete": true,
+    "completedAt": 1791852991.907337,
+    "actualExitCode": 0,
+    "passed": true,
+    "interruptSignals": [],
+    "actualNpmGone": true,
+    "logSha256": "2ee1e3bfc219dc5de768dc65c9a3872b6b86989e5cd964368fa4fc7c9e944dbf"
+  },
+  "failedInitialPrepackTerminal": {
+    "schema": 1,
+    "startedAt": 1791852375.1303823,
+    "wrapperPid": 3961845,
+    "actualNpmPid": 3961868,
+    "cwd": "/dev/shm/codiluce-embedded-source-release/engine",
+    "command": [
+      "npm",
+      "run",
+      "test:package"
+    ],
+    "runtimeSha256": "6df4377933624de1e83e6d44fe0fc46fdd387b19527488fd9ced5b08b7ecb220",
+    "runtimeInputsVerified": 1924,
+    "driverSha256": "72af6516e287f3a48082f8a33e1282b3ee7fab43e895d72b5dc5e1f07b487c50",
+    "log": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/normal-installed-package-first.log",
+    "temporaryConsumerDirectory": "/dev/shm/codiluce-embedded-source-package",
+    "ownedBuildAndConsumerUseTmpfs": true,
+    "retainedSourceCompiledArchive": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/embedded-source-residency-source-compiled-and-evidence.tar.gz",
+    "originalHistoryReserveRelaxed": false,
+    "productionHistoryObservationRetried": false,
+    "targetExecution": false,
+    "gateComplete": true,
+    "completedAt": 1791852376.1610038,
+    "actualExitCode": 1,
+    "passed": false,
+    "interruptSignals": [],
+    "actualNpmGone": true,
+    "logSha256": "7f31892d5703ba2bad6f46311487378f32dd9cdc4e8a9017c3116fb942dddc36"
+  },
+  "vendorModeCorrection": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791852560.8205886,
+    "failedRunRetained": true,
+    "cause": "shutil.copyfile preserves bytes but drops native executable mode",
+    "verifiedRegularVendorFiles": 14303,
+    "restoredVendorFileModes": [
+      {
+        "file": "node_modules/npm-check-updates/build/cli.js",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "99c6670a94797fee9a5754f2f2f0e210abfffc46ca4f6b130d464676d2374429"
+      },
+      {
+        "file": "node_modules/@esbuild/linux-x64/bin/esbuild",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "e1698a3d5c6c0798fee4fd3b5cc816651f460c63d390a7a26ea4beb0b1884100"
+      },
+      {
+        "file": "node_modules/node-gyp-build/build-test.js",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "34c19ff8b6675d6d27c63a7df44d77a442805eeea8756d1c89e0264f4a3028f6"
+      },
+      {
+        "file": "node_modules/node-gyp-build/optional.js",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "e0b3a3a04166e6ecf1020cb31c0c4a54432c16d6d88714bd4de2214cf67dec81"
+      },
+      {
+        "file": "node_modules/node-gyp-build/bin.js",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "dc022adc093b9b79e1a0ef4b6bc3e6a52e3d627102113dad4afacbbe81f13a26"
+      },
+      {
+        "file": "node_modules/nanoid/bin/nanoid.cjs",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "e4eb9be1a3e3feb3f8979ef08c3bf3ef8430f4f22df9c4e427353a1577accbe8"
+      },
+      {
+        "file": "node_modules/typescript/bin/tsc",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "8d5fa5bd883fec0979fc2004f1fe1d99aef40570155d550eadc0b03b55513bf0"
+      },
+      {
+        "file": "node_modules/typescript/bin/tsserver",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "a088f0c3419bcb2f7b860ad42e4c9f25ead067eda70af6a10d0a7d453954aada"
+      },
+      {
+        "file": "node_modules/axobject-query/LICENSE",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "c8df456c7ccba74b959087dff494d4ac2a12dfb0400c08b46b2494a08a000567"
+      },
+      {
+        "file": "node_modules/web-tree-sitter/web-tree-sitter.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "c03bccdc3b448a32848f5ae327e209c982bbb0840d43eec8bc2d5759544a1ed3"
+      },
+      {
+        "file": "node_modules/web-tree-sitter/debug/web-tree-sitter.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "91a157f507fabb836588e6537a1af1bae45d3d4b9278d06d003678460b011d8e"
+      },
+      {
+        "file": "node_modules/next/dist/bin/next",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "e4c6cfdeac3c9e4e260d2a622d6af9565c49d8017c3d55e8dade07ed58fbe9de"
+      },
+      {
+        "file": "node_modules/@playwright/test/cli.js",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "79e23e6a249176295b8490567daa7717448a75866d6ea6f6b296ff3d23305c69"
+      },
+      {
+        "file": "node_modules/node-addon-api/tools/conversion.js",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "9f375b0f9d9ec93c2ded07470478b3f523a2661c6ca707c28b0e9dae15009002"
+      },
+      {
+        "file": "node_modules/semver/bin/semver.js",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "bd6c871026985937dc945011fc54b74b47f5998154216d7b8d40d5ed782e4402"
+      },
+      {
+        "file": "node_modules/acorn/bin/acorn",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "4c3eb6f1d8932790dbff043839f8ee7686bc614a59ef577e96fed618a4a4b1b8"
+      },
+      {
+        "file": "node_modules/playwright-core/cli.js",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "f1c4075aef116c766092250d7f37b3249a7cee6465d953207fc38c8f6145becd"
+      },
+      {
+        "file": "node_modules/playwright-core/lib/webp_codec.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "164cd9583a3e4d081f767d3b41ff0a730443dc7535fcc5caff83561463384b79"
+      },
+      {
+        "file": "node_modules/playwright-core/lib/xdg-open",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "7d759d54f0d4ce1beeb34ee62c587985b5042374e8de237b0dcb8cd47aa698cf"
+      },
+      {
+        "file": "node_modules/playwright-core/bin/reinstall_msedge_stable_mac.sh",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "3af1e893527ff2257aa2dbc3b259a053b92f45c3eadb13e38eba46e87902655d"
+      },
+      {
+        "file": "node_modules/playwright-core/bin/reinstall_msedge_beta_mac.sh",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "0036d738bc90d686100d81f328ba0003bf07863f5500b792c8da391d149750fa"
+      },
+      {
+        "file": "node_modules/playwright-core/bin/reinstall_chrome_beta_linux.sh",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "dc8c22b9dde76583cece2857575b88094299615f3136a3c598149710c45dee3a"
+      },
+      {
+        "file": "node_modules/playwright-core/bin/reinstall_msedge_dev_mac.sh",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "6f899e3b311f742c24ca37ff9e32298e8290514ffc14bf588cc51556a29da4c0"
+      },
+      {
+        "file": "node_modules/playwright-core/bin/reinstall_msedge_stable_linux.sh",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "ec0a31a5f09c565e108473a1850895a4458ab00c713ac1de3aa2001912e4668f"
+      },
+      {
+        "file": "node_modules/playwright-core/bin/reinstall_msedge_beta_linux.sh",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "10b26f35dbc2000b94edf1172d803a29c5873a4eb8d523afbc687997b642767e"
+      },
+      {
+        "file": "node_modules/playwright-core/bin/reinstall_chrome_beta_mac.sh",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "a92eaeb4ebcf5633a4e9c981481e14c80764fc81b6fcbc0565398e50ff319433"
+      },
+      {
+        "file": "node_modules/playwright-core/bin/reinstall_chrome_stable_mac.sh",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "bb43a96c192a6cc81524ade0264686fff7809c019a89f7db0a9849635879c3be"
+      },
+      {
+        "file": "node_modules/playwright-core/bin/reinstall_chrome_stable_linux.sh",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "dc72ab3567a4ce43bd8353d4ecf41f1d9c03e870169367cd3ed9043aabf67dd1"
+      },
+      {
+        "file": "node_modules/playwright-core/bin/reinstall_msedge_dev_linux.sh",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "00e4947e7a4f8339c6db09c87976d808583c07f9179e4aa7694d88614b82fe95"
+      },
+      {
+        "file": "node_modules/esbuild/bin/esbuild",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "e1698a3d5c6c0798fee4fd3b5cc816651f460c63d390a7a26ea4beb0b1884100"
+      },
+      {
+        "file": "node_modules/baseline-browser-mapping/dist/cli.cjs",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "b4bf0e7179a8b3f1dcc9066f38caaa17998907415bf429050a701618ba1d3064"
+      },
+      {
+        "file": "node_modules/yaml/bin.mjs",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "faebbf70669988b5be13130907adf7b788145960448eab08e92e66189e72f448"
+      },
+      {
+        "file": "node_modules/playwright/cli.js",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "5e79302a6aad7d835d92d5ae6b4244c91cf61b28e94d7917279090e6c231f7a1"
+      },
+      {
+        "file": "node_modules/@vscode/tree-sitter-wasm/wasm/tree-sitter-python.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "16108b50df4ee9a30168794252ab55e7c93bfc5765d7fa0aa3e335752c515f47"
+      },
+      {
+        "file": "node_modules/@vscode/tree-sitter-wasm/wasm/tree-sitter-c-sharp.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "d12d85996c25957b4c1b71e26db2d7cc8a294997b60642e9c2a3b031b2c66dd3"
+      },
+      {
+        "file": "node_modules/@vscode/tree-sitter-wasm/wasm/tree-sitter-ini.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "1e8cdf3027209100fa54a43d0faed69721ae1116428164c8ad6dcc496a9aa6af"
+      },
+      {
+        "file": "node_modules/@vscode/tree-sitter-wasm/wasm/tree-sitter-tsx.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "79e5da75ea62855a0cd67177685f0164eac87d5f630b3cbe1e0a099751ad30f8"
+      },
+      {
+        "file": "node_modules/@vscode/tree-sitter-wasm/wasm/tree-sitter-powershell.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "55526edd3545fb7e78ff88c39dd617d8b3c03a1d1a88209fffe5c64c7c7c8500"
+      },
+      {
+        "file": "node_modules/@vscode/tree-sitter-wasm/wasm/tree-sitter-php.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "d4df6a6ff08c87c3ec4f9cbb785fe09998a0cb570e03f57d7b19b3acfb146aa7"
+      },
+      {
+        "file": "node_modules/@vscode/tree-sitter-wasm/wasm/tree-sitter-cpp.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "77a65bd42f43c2dcd69af40c12a6c32d6ed81d360c025e9feb28911f8339fd69"
+      },
+      {
+        "file": "node_modules/@vscode/tree-sitter-wasm/wasm/tree-sitter-bash.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "a14e9ed880b2c3f16cd00c796c38d237a3e9b028bdec5b4315c76976e67b01ca"
+      },
+      {
+        "file": "node_modules/@vscode/tree-sitter-wasm/wasm/tree-sitter-typescript.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "778025db5a8be0e70f8ccc3671e486dfeddd048c25d9e8a70c26de2e1bf6f97d"
+      },
+      {
+        "file": "node_modules/@vscode/tree-sitter-wasm/wasm/tree-sitter-ruby.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "09a96427d7c72f0613ed470cd9812223fc4a91d6a9c025c0235cc6bd59ff96f4"
+      },
+      {
+        "file": "node_modules/@vscode/tree-sitter-wasm/wasm/tree-sitter-java.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "4fdeac4ca6ca089f06c6f7e562abcac1733cd465728cc7031ebb73c2019122c4"
+      },
+      {
+        "file": "node_modules/@vscode/tree-sitter-wasm/wasm/tree-sitter-css.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "8a23977fe271357cce6f254ef88c9bebf3854602d8046605aef6a45c02135c59"
+      },
+      {
+        "file": "node_modules/@vscode/tree-sitter-wasm/wasm/tree-sitter-go.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "9504573f352b20be7f2f1911754d710622aedc15afff16d5ed8fb5645681aee7"
+      },
+      {
+        "file": "node_modules/@vscode/tree-sitter-wasm/wasm/tree-sitter-regex.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "e63c28e3a023614e14f2086b0d818e190239ebe5b2fcce7e64a9940091d83a79"
+      },
+      {
+        "file": "node_modules/@vscode/tree-sitter-wasm/wasm/tree-sitter-javascript.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "5fb488d0cabb4775a594bab85682de5ad6ce83c0d6ac997a9f82dd084d571240"
+      },
+      {
+        "file": "node_modules/@vscode/tree-sitter-wasm/wasm/tree-sitter.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "3a31af706ffdf4a7116b064cdd4988df6791823298615009fc5b6bccbd42909b"
+      },
+      {
+        "file": "node_modules/@vscode/tree-sitter-wasm/wasm/tree-sitter-rust.wasm",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "0dac14947cb04d94466e3df659f80a4e264c216a60b3eda175eae4cf12ed7a8d"
+      },
+      {
+        "file": "node_modules/tsx/dist/cli.mjs",
+        "beforeMode": "0o664",
+        "restoredMode": "0o775",
+        "sha256": "8690135061bc49d187143493b82d26a09b7fb71d6dd817d2242cc9dc52506de9"
+      }
+    ],
+    "securityMountOptionsUnchanged": true,
+    "runtimeBytesUnchanged": true,
+    "originalHistoryReserveRelaxed": false
+  },
+  "normalPrepackArchive": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791852704.8098748,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/embedded-source-residency-normal-prepack-release.tgz",
+    "source": "/dev/shm/codiluce-embedded-source-package/codiluce-package-LwCVDL/codiluce-0.1.1.tgz",
+    "sha256": "9eb2e3126cf89c8d76768063636e4b0e467d8f8533966d3e152a16a2472bda37",
+    "bytes": 7223979,
+    "verifiedRegularMembers": 369,
+    "compiledPackageModulesMatchSourceConformance": 222,
+    "normalPrepackPassed": true,
+    "installedGatePendingAtRetention": true,
+    "runtimeSha256": "6df4377933624de1e83e6d44fe0fc46fdd387b19527488fd9ced5b08b7ecb220"
+  },
+  "runtimeReleaseAndEvidenceArchive": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791853156.1801307,
+    "seconds": 18.083413124084473,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/embedded-source-residency-runtime-release-and-evidence.tar.gz",
+    "sha256": "3af52d5b5da474e4d3429bea76caac380cd5042913bcb561dee326c1fb4fc88c",
+    "bytes": 60542634,
+    "verifiedRegularMembers": 3280,
+    "manifestSha256": "51476de3ac44eb06e5275fe86c77328ee0b226381b676d3113b1204c576827fc",
+    "runtimeSha256": "6df4377933624de1e83e6d44fe0fc46fdd387b19527488fd9ced5b08b7ecb220",
+    "normalPrepackAndProductionOnlyInstalledGatePassed": true,
+    "firstPrepackBuildObservationPassed": false,
+    "copiedVendorModeErrorCorrected": true,
+    "full195RevisionHistoryQualified": false,
+    "relativeHistoryTimeRssQualified": false,
+    "nativeWindowsMacOSQualified": false,
+    "fullGoalFinished": false
+  },
+  "sourceCompiledArchive": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791852185.786214,
+    "seconds": 16.43155789375305,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/embedded-source-residency-source-compiled-and-evidence.tar.gz",
+    "sha256": "86ea556fb1643887c4323e7d719a3cfc3cd8e58adf21e41e6d9d36f265ef97ca",
+    "bytes": 33457104,
+    "verifiedRegularMembers": 2256,
+    "manifestSha256": "f40c5c6c96d8b9029c7e2e8441226181e2fbe5e80d995646b30651c28490067c",
+    "runtimeSha256": "6df4377933624de1e83e6d44fe0fc46fdd387b19527488fd9ced5b08b7ecb220",
+    "normalInstalledPackageForNewRuntimeQualified": false,
+    "fullGoalFinished": false
+  },
+  "sourceConformanceReceipt": {
+    "file": "docs/embedded-source-residency-conformance-validation.json",
+    "sha256": "1dafab8dedf6726e8e274552d3d5fafafeb7e17a88ec601e223943016d2650f7"
+  },
+  "virtualSourceMemoLimits": {
+    "maxBytes": 33554432,
+    "maxEntries": 4096,
+    "accounting": "UTF-16 text/key payload; descriptors/recipes, live programs/AST/checkers, compiler/native allocations and physical RSS are separate"
+  },
+  "storage": {
+    "availableWorkspaceBytes": 287924224,
+    "originalHistoryReserveBytes": 1073741824,
+    "originalHistoryReserveRelaxed": false,
+    "additionalCapacityRequested": true,
+    "ownedBuildAndConsumerUsedTmpfs": true,
+    "securityMountOptionsChanged": false,
+    "originalOrFailedEvidenceDeleted": false
+  },
+  "newRuntimeFull195RevisionHistoryQualified": false,
+  "newRuntimeRelativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "broaderCompilerConsumerWasmRssBudgetQualified": false,
+  "oldFailedProductionObservationsRetried": false,
+  "fullGoalFinished": false,
+  "foreignFilesUnchanged": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  },
+  "reportSha256": "abf7d9025ee7b0b0bf95e8b8f95e727a4897b4e7e61c98e2f89ec3f373b93770"
+}
