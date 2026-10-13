@@ -418,6 +418,11 @@ const compiler=new TemplateScriptParser();try{compiler.prewarm();const retiremen
   console.log('Checking installed literal-script/native generation bounds, complete original facts and actual worker exit…');
   const scriptGenerations=await run(process.execPath,['--experimental-sqlite',scriptGenerationCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'literal-script-generation-validation.json')],consumer);
   console.log(scriptGenerations.stdout.trim());
+  const railsCallbackCheck=path.join(consumer,'check-rails-callback-chain.mjs');
+  await cp(path.join(root,'tests/fixtures/rails-callback-chain-qualification.mjs'),railsCallbackCheck);
+  console.log('Checking installed Rails callback replacement, initialized skip identity and original action references…');
+  const railsCallbackConformance=await run(process.execPath,['--experimental-sqlite',railsCallbackCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'rails-callback-chain-validation.json')],consumer);
+  console.log(railsCallbackConformance.stdout.trim());
   const bin = path.join(installed, 'bin/codiluce.js');
   for (const grammar of grammarManifest.grammars) assert.equal(createHash('sha256').update(await readFile(path.join(installed, 'dist/grammars', grammar.file))).digest('hex'), grammar.sha256);
   const dependencies = JSON.parse((await npm(['ls', '--omit=dev', '--all', '--json'], consumer)).stdout).dependencies[manifest.name].dependencies;
