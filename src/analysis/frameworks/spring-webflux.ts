@@ -6,7 +6,7 @@ import { compileSpringPath, combineSpringPath } from '../routes/spring-patterns.
 import type { RoutingContract } from '../routes/contracts.js';
 import { springWebFluxProfile } from './spring-profile.js';
 
-export const WEBFLUX_VERSION = '2';
+export const WEBFLUX_VERSION = '3';
 const SERVER='org.springframework.web.reactive.function.server.', REQUEST=SERVER+'RequestPredicates.', ROUTERS=SERVER+'RouterFunctions.';
 const CONFIG='org.springframework.context.annotation.', METHODS=new Set(['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS']);
 interface Origin { file:string; scope:string; expression:JvmExpression; proof?:Evidence[] }
@@ -57,7 +57,7 @@ export class SpringWebFlux {
   private trace(origin:Origin,state:State,accept:string[]):(Origin&{storage:'local'|'property'})|undefined{
     const value=this.symbols.initialized(origin.file,origin.scope,origin.expression,state.selectedScopes);
     if(!value)return;
-    if(value.type){const type=value.type.kind==='generic-type'?value.type.name:value.type,name=this.identity({...value,expression:type},state,true);if(!name||!accept.includes(name))return;
+    if(value.type){const type=value.type.kind==='generic-type'?value.type.name:value.type,bound=this.symbols.bound(value.file,value.scope,type,true,state.selectedScopes),name=bound.kind==='external'||bound.kind==='primitive'?bound.name:undefined;if(!name||!accept.includes(name))return;
       if(value.type.kind==='generic-type'&&(value.type.arguments.length!==1||this.identity({...value,expression:value.type.arguments[0]!},state,true)!==SERVER+'ServerResponse'))return;
     }
     return value;
@@ -65,9 +65,11 @@ export class SpringWebFlux {
   private predicate(origin:Origin,state:State):Predicate[]{
     const {expression}=origin;if(++this.operations>100_000||state.depth>48)return[opaque('WebFlux interpretation budget exceeded')];
     state={...state,depth:state.depth+1};
-    const trace=this.trace(origin,state,[SERVER+'RequestPredicate']);
+    const trace=this.trace(origin,state,[SERVER+'RequestPredicate','String']);
     if(trace){const key=`predicate:${trace.file}:${trace.expression.start}`;if(state.seen.has(key))return[opaque('Cyclic WebFlux predicate initializer')];return this.predicate(trace,{...state,seen:new Set([...state.seen,key])});}
-    if(state.dsl&&expression.kind==='literal'&&typeof expression.value==='string')return[{...any(),paths:[expression.value],proof:this.proof(origin,'Original Kotlin DSL path predicate')}];
+    if(state.dsl&&['literal','name','member'].includes(expression.kind)){
+      const path=this.string(origin);if(path!==undefined)return[{...any(),paths:[path],proof:this.proof(origin,'Original Kotlin DSL path predicate')}];
+    }
     if(expression.kind==='binary'&&state.dsl&&['and','or'].includes(expression.operator)){
       const a=this.predicate({...origin,expression:expression.left},state),b=this.predicate({...origin,expression:expression.right},state);
       return expression.operator==='and'?this.combine(a,b):a.length+b.length<=128?[...a,...b]:[opaque('WebFlux predicate alternatives exceed the budget')];
@@ -92,6 +94,31 @@ export class SpringWebFlux {
     }
     if(name==='queryParam'&&args.length===2){const key=this.string(args[0]!),value=this.string(args[1]!);if(key!==undefined&&value!==undefined)return[{...any(),queries:[{name:key,value}],proof}];}
     return[{...opaque(`Unobserved/custom WebFlux predicate ${name??'identity'} requires a reviewed restriction summary`),proof}];
+  }
+  private dslInvocationReceiver(origin:Origin,state:State):boolean{
+    const {expression}=origin;
+    if(++this.operations>100_000||state.depth>48)return false;
+    state={...state,depth:state.depth+1};
+    if(this.string(origin)!==undefined)return true;
+    const trace=this.trace(origin,state,[SERVER+'RequestPredicate','String']);
+    if(trace){
+      const key=`invoke:${trace.file}:${trace.expression.start}`;
+      return !state.seen.has(key)&&this.dslInvocationReceiver(trace,{...state,seen:new Set([...state.seen,key])});
+    }
+    if(expression.kind==='binary'&&['and','or'].includes(expression.operator)&&!this.masked(origin,expression.operator))return this.dslInvocationReceiver({...origin,expression:expression.left},state)&&this.dslInvocationReceiver({...origin,expression:expression.right},state);
+    if(expression.kind!=='call'||expression.typeArguments||expression.args.some(argument=>argument.name||argument.spread))return false;
+    const callee=expression.callee,args=expression.args.map(argument=>({...origin,expression:argument.value}));
+    if(callee.kind==='member'&&callee.safe)return false;
+    if(callee.kind==='member'&&!callee.safe&&['and','or'].includes(callee.name)&&args.length===1&&!this.masked(origin,callee.name))return this.dslInvocationReceiver({...origin,expression:callee.object},state)&&this.dslInvocationReceiver(args[0]!,state);
+    const external=this.identity({...origin,expression:callee},state),name=external?.startsWith(REQUEST)?external.slice(REQUEST.length):callee.kind==='name'&&!this.masked(origin,callee.name)?callee.name:undefined;
+    // These published overloads return RequestPredicate. Their unobserved
+    // restrictions remain predicate gaps; unrelated/custom values cannot
+    // acquire the DSL's extension invoke registration or handler typing.
+    if(name==='all')return !!external&&args.length===0;
+    if(name==='path'||name&&METHODS.has(name))return args.length===1&&this.string(args[0]!)!==undefined;
+    if(name==='method'||name==='headers'||name==='pathExtension')return args.length===1;
+    if(name==='accept'||name==='contentType')return args.length>=1&&args.length<=16;
+    return name==='queryParam'&&args.length===2;
   }
   private owned(definition:JvmDefinition,scope:string):boolean{
     const seen=new Set<string>();let current=definition.unit.scopes.get(scope);
@@ -166,7 +193,7 @@ export class SpringWebFlux {
       // subsequently added. It is not registered merely by being constructed.
       if(definition.unit.facts.bindings.some(binding=>binding.value&&binding.value.start<=call.expression.start&&binding.value.end>=call.expression.end))continue;
       const callee=call.expression.kind==='call'?call.expression.callee:undefined;
-      const registration=callee&&(callee.kind==='name'&&!this.masked(call,callee.name)||callee.kind==='member'&&callee.name==='nest'||['literal','binary','call'].includes(callee.kind));
+      const registration=callee&&(callee.kind==='name'&&!this.masked(call,callee.name)||callee.kind==='member'&&['nest','invoke'].includes(callee.name)||['literal','binary','call'].includes(callee.kind));
       if(!registration){result.gaps.push('Standalone/custom builder mutation in a Kotlin DSL block requires a reviewed activation/order summary');continue;}
       const value=this.router(call,next);result.routes.push(...value.routes);result.gaps.push(...value.gaps);
     }
@@ -190,7 +217,9 @@ export class SpringWebFlux {
       if(trace.storage==='property'&&router.kind==='builder')router.gaps.push('A shared mutable builder field can be changed by other bean/lifecycle calls; construction order is unavailable');
       return router;
     }
-    if(expression.kind!=='call'||expression.typeArguments||expression.args.some(argument=>argument.name||argument.spread))return this.unknown(origin,'Opaque/custom WebFlux router value');
+    if(expression.kind!=='call'||expression.typeArguments)return this.unknown(origin,'Opaque/custom WebFlux router value');
+    const explicitInvoke=state.dsl&&expression.callee.kind==='member'&&expression.callee.name==='invoke'&&!expression.callee.safe&&!this.masked(origin,'invoke');
+    if(expression.args.some(argument=>argument.spread||argument.name&&!(explicitInvoke&&argument.name==='f')))return this.unknown(origin,'Opaque/custom WebFlux router arguments');
     const callee=expression.callee,args=expression.args.map(argument=>({...origin,expression:argument.value})),external=this.identity({...origin,expression:callee},state);
     if(external===SERVER+'router'||external===SERVER+'coRouter')return args.length===1?this.dsl(args[0]!,external.endsWith('coRouter')?'coRouter':'router',state):this.unknown(origin,'Invalid Kotlin router DSL argument shape');
     if(external===ROUTERS+'route'){
@@ -199,6 +228,11 @@ export class SpringWebFlux {
       return this.unknown(origin,'Invalid WebFlux route factory arguments');
     }
     if(external===ROUTERS+'nest'&&args.length===2)return this.nesting(origin,this.predicate(args[0]!,state),this.router(args[1]!,state));
+    if(state.dsl&&callee.kind==='member'&&callee.name==='invoke'){
+      const receiver={...origin,expression:callee.object};
+      if(!explicitInvoke||args.length!==1||!this.dslInvocationReceiver(receiver,state))return this.unknown(origin,'Explicit WebFlux DSL invoke requires an unshadowed original predicate/path receiver and one handler');
+      return{kind:'router',routes:this.route({...origin,proof:this.proof(origin,'Original Kotlin WebFlux explicit predicate/path invocation')},this.predicate(receiver,state),args[0]!,state),gaps:[]};
+    }
     if(state.dsl&&args.length===1&&args[0]!.expression.kind==='lambda'&&['literal','binary','call'].includes(callee.kind))return{kind:'router',routes:this.route(origin,this.predicate({...origin,expression:callee},state),args[0]!,state),gaps:[]};
     let name:string|undefined,receiver:Router|undefined;
     if(callee.kind==='member'){

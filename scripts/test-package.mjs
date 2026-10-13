@@ -448,6 +448,11 @@ const compiler=new TemplateScriptParser();try{compiler.prewarm();const retiremen
   console.log('Checking installed Kotlin/Spring compiler source contracts, original handlers and preserved modality/annotation boundaries…');
   const kotlinSpringConformance=await run(process.execPath,['--experimental-sqlite',kotlinSpringCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'kotlin-spring-compiler-validation.json')],consumer);
   console.log(kotlinSpringConformance.stdout.trim());
+  const kotlinInvokeCheck=path.join(consumer,'check-kotlin-webflux-invoke.mjs');
+  await cp(path.join(root,'tests/fixtures/kotlin-webflux-invoke-qualification.mjs'),kotlinInvokeCheck);
+  console.log('Checking installed Kotlin WebFlux explicit predicate/path invocation and original reactive/coroutine handlers…');
+  const kotlinInvokeConformance=await run(process.execPath,['--experimental-sqlite',kotlinInvokeCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'kotlin-webflux-invoke-validation.json')],consumer);
+  console.log(kotlinInvokeConformance.stdout.trim());
   const bin = path.join(installed, 'bin/codiluce.js');
   for (const grammar of grammarManifest.grammars) assert.equal(createHash('sha256').update(await readFile(path.join(installed, 'dist/grammars', grammar.file))).digest('hex'), grammar.sha256);
   const dependencies = JSON.parse((await npm(['ls', '--omit=dev', '--all', '--json'], consumer)).stdout).dependencies[manifest.name].dependencies;

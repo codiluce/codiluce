@@ -398,7 +398,7 @@
     {
       "id": "nestjs",
       "label": "Nest",
-      "versions": "9\u201310 (Express 4 path profile); 11 (Express 5); proven Fastify adapter retains its own constraints",
+      "versions": "9–10 (Express 4 path profile); 11 (Express 5); proven Fastify adapter retains its own constraints",
       "scope": "Bootstrap-reachable controllers/modules, router modules, URI/default/neutral versions and dependency references",
       "gaps": "Custom decorators/dynamic modules, host/header/media/custom versions and unknown bootstrap policy remain gaps",
       "tests": [
@@ -592,15 +592,16 @@
       "id": "spring",
       "label": "Spring MVC / WebFlux",
       "versions": "Framework 6.2.x / 7.0.x; optional Boot 3.5.x / 4.0.x compatible family",
-      "scope": "Original annotations or bounded Java/Kotlin router builders, exact handlers and native path/method contracts; pinned Java Gradle Boot 4.0.8 and dependency-management 1.1.7 select the reviewed default BOM/starter source contract; explicit external Boot Maven 4.0.8 parent selects reviewed Java 17/UTF-8/parameter defaults and the same three starter source chains; pinned Kotlin 2.2.21 Spring all-open/param-property Gradle source contracts and Boot 4.0.1/Framework 7.0.2 enable the unchanged Kotlin guide routes with original handlers and explicit virtual/predicate/injection conditions",
-      "gaps": "Other Kotlin compiler/plugin versions, custom transforms and unknown constructor/property annotation placement, other Boot/BOM/version models, default/custom local external-parent lookup, managed overrides and custom lifecycle/Maven inputs remain gaps; executable models, broad reactive typing and unknown policies are unreviewed; external binary resolution is unverified",
+      "scope": "Original annotations or bounded Java/Kotlin router builders, exact handlers and native path/method contracts; pinned Java Gradle Boot 4.0.8 and dependency-management 1.1.7 select the reviewed default BOM/starter source contract; explicit external Boot Maven 4.0.8 parent selects reviewed Java 17/UTF-8/parameter defaults and the same three starter source chains; pinned Kotlin 2.2.21 Spring all-open/param-property Gradle source contracts and Boot 4.0.1/Framework 7.0.2 enable the unchanged Kotlin MVC guide mapping; reviewed explicit RequestPredicate/String invoke and named f arguments retain original reactive/coroutine handlers, unchanged aliases and exact ranges; the original Kotlin WebFlux /hello mapping keeps its virtual/predicate/injection conditions",
+      "gaps": "Other Kotlin compiler/plugin versions, custom transforms and unknown constructor/property annotation placement, other Boot/BOM/version models, default/custom local external-parent lookup, managed overrides and custom lifecycle/Maven inputs remain gaps; custom/shadowed invoke receivers/extensions, safe calls, changed predicates, executable models, broad reactive typing and unknown policies are unreviewed; external binary resolution is unverified",
       "tests": [
         "tests/spring-mvc.test.ts",
         "tests/spring-webflux.test.ts",
         "tests/jvm-build-selection.test.ts",
         "tests/spring-boot-gradle.test.ts",
         "tests/spring-boot-maven.test.ts",
-        "tests/kotlin-spring-compiler.test.ts"
+        "tests/kotlin-spring-compiler.test.ts",
+        "tests/kotlin-webflux-invoke.test.ts"
       ],
       "sources": [
         {
@@ -632,6 +633,14 @@
             "KOTLIN_COMPILER_VERSION = '2.2.21'",
             "FirAllOpenStatusTransformer",
             "kotlinAnnotationPlacementGap"
+          ]
+        },
+        {
+          "file": "src/analysis/frameworks/spring-webflux.ts",
+          "contains": [
+            "WEBFLUX_VERSION = '3'",
+            "dslInvocationReceiver",
+            "Original Kotlin WebFlux explicit predicate/path invocation"
           ]
         }
       ]

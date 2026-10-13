@@ -26,7 +26,7 @@ test('Java WebFlux builders bind original method references/lambdas and direct h
  assert.equal(routes.length,2,JSON.stringify(graph.diagnostics));assert.ok(routes.every(route=>!route.metadata.constraintsUnresolved),JSON.stringify(routes.map(route=>route.metadata.routing)));
  assert.equal(requested(graph)[0],'show');const handler=graph.entities.find(entity=>entity.id===routes[0]?.metadata.handler)!;assert.ok(graph.relations.some(edge=>edge.type==='calls'&&edge.from===handler.id&&graph.entities.find(entity=>entity.id===edge.to)?.name==='leaf'));
  const inline=graph.entities.find(entity=>entity.id===routes[1]?.metadata.handler)!;assert.equal(inline.metadata.declarationKind,'lambda');assert.ok(inline.sourceRange);assert.ok(graph.relations.some(edge=>edge.type==='handles'&&edge.from===routes[1]?.id&&edge.to===inline.id));
- const factory=graph.entities.find(entity=>entity.id===routes[0]?.metadata.factory)!;assert.equal(graph.relations.some(edge=>edge.type==='calls'&&edge.from===factory.id&&edge.to===handler.id),false);assert.equal(graph.run.analyzerVersions['spring-webflux'],'2');
+ const factory=graph.entities.find(entity=>entity.id===routes[0]?.metadata.factory)!;assert.equal(graph.relations.some(edge=>edge.type==='calls'&&edge.from===factory.id&&edge.to===handler.id),false);assert.equal(graph.run.analyzerVersions['spring-webflux'],'3');
 });
 
 test('WebFlux first matching route defeats MVC path specificity; GET does not borrow HEAD or OPTIONS',async()=>{

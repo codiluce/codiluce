@@ -1,0 +1,778 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-13T20:16:32.446310+00:00",
+  "phase": "Published Kotlin WebFlux explicit predicate/path invocation source contracts",
+  "baselineCommit": "b185017124c3f630fc2f51b0dc59ad517979dcba",
+  "webfluxProducerBefore": "2",
+  "webfluxProducerAfter": "3",
+  "fullNode22Cases": 2017,
+  "engineAndWebNode22Cases": 1798,
+  "toolingNode22Cases": 219,
+  "node22SuiteObservedInTwoCommands": true,
+  "everyPreviousTestRetained": true,
+  "addedTests": 7,
+  "focusedNode22Cases": 44,
+  "focusedNode24Cases": 44,
+  "ordinaryCompiledCasesPerRuntime": 7,
+  "ordinaryCompiledRuntimeVersions": [
+    "v22.12.0",
+    "v24.21.0"
+  ],
+  "sourceAndCompiledOriginalWholeGraphs": 120,
+  "sourceCompiledWholeGraphComparisons": 60,
+  "originalSnapshots": 4,
+  "recordedBuildContexts": 12,
+  "originalInputFiles": 37,
+  "originalInputsOutsideGit": true,
+  "originalNamedIdentitiesAndRangesPreserved": true,
+  "newOriginalLambdaRangesIndependentlyVerified": true,
+  "actualOriginalGuideResults": [
+    {
+      "sample": "mvc-java",
+      "buildSystem": null,
+      "originalIdentitiesPreserved": 16,
+      "newOriginalLambdasValidated": 0,
+      "routes": []
+    },
+    {
+      "sample": "mvc-java",
+      "buildSystem": "maven",
+      "originalIdentitiesPreserved": 16,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET|HEAD /greeting",
+          "sourceRange": {
+            "startLine": 15,
+            "startColumn": 3,
+            "endLine": 18,
+            "endColumn": 4
+          },
+          "constraintsUnresolved": false,
+          "conditions": [],
+          "handler": "symbol:f59bc847cf4ea83e6b323171"
+        }
+      ]
+    },
+    {
+      "sample": "mvc-java",
+      "buildSystem": "gradle",
+      "originalIdentitiesPreserved": 16,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET|HEAD /greeting",
+          "sourceRange": {
+            "startLine": 15,
+            "startColumn": 3,
+            "endLine": 18,
+            "endColumn": 4
+          },
+          "constraintsUnresolved": false,
+          "conditions": [],
+          "handler": "symbol:f59bc847cf4ea83e6b323171"
+        }
+      ]
+    },
+    {
+      "sample": "mvc-kotlin",
+      "buildSystem": null,
+      "originalIdentitiesPreserved": 17,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET|HEAD /greeting",
+          "sourceRange": {
+            "startLine": 16,
+            "startColumn": 3,
+            "endLine": 18,
+            "endColumn": 63
+          },
+          "constraintsUnresolved": false,
+          "conditions": [],
+          "handler": "symbol:113219942b05e2b00e830d7d"
+        }
+      ]
+    },
+    {
+      "sample": "mvc-kotlin",
+      "buildSystem": "maven",
+      "originalIdentitiesPreserved": 17,
+      "newOriginalLambdasValidated": 0,
+      "routes": []
+    },
+    {
+      "sample": "mvc-kotlin",
+      "buildSystem": "gradle",
+      "originalIdentitiesPreserved": 17,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET|HEAD /greeting",
+          "sourceRange": {
+            "startLine": 16,
+            "startColumn": 3,
+            "endLine": 18,
+            "endColumn": 63
+          },
+          "constraintsUnresolved": false,
+          "conditions": [],
+          "handler": "symbol:113219942b05e2b00e830d7d"
+        }
+      ]
+    },
+    {
+      "sample": "webflux-java",
+      "buildSystem": null,
+      "originalIdentitiesPreserved": 21,
+      "newOriginalLambdasValidated": 0,
+      "routes": []
+    },
+    {
+      "sample": "webflux-java",
+      "buildSystem": "maven",
+      "originalIdentitiesPreserved": 21,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET /hello",
+          "sourceRange": {
+            "startLine": 19,
+            "startColumn": 12,
+            "endLine": 20,
+            "endColumn": 74
+          },
+          "constraintsUnresolved": true,
+          "conditions": [
+            "Conditional/injected/custom WebFlux bean factory requires a reviewed registration profile",
+            "Virtual/interface receiver dispatch is not an exact original handler call",
+            "Unobserved/custom WebFlux predicate accept requires a reviewed restriction summary"
+          ],
+          "handler": null
+        }
+      ]
+    },
+    {
+      "sample": "webflux-java",
+      "buildSystem": "gradle",
+      "originalIdentitiesPreserved": 21,
+      "newOriginalLambdasValidated": 0,
+      "routes": [
+        {
+          "name": "GET /hello",
+          "sourceRange": {
+            "startLine": 19,
+            "startColumn": 12,
+            "endLine": 20,
+            "endColumn": 74
+          },
+          "constraintsUnresolved": true,
+          "conditions": [
+            "Conditional/injected/custom WebFlux bean factory requires a reviewed registration profile",
+            "Virtual/interface receiver dispatch is not an exact original handler call",
+            "Unobserved/custom WebFlux predicate accept requires a reviewed restriction summary"
+          ],
+          "handler": null
+        }
+      ]
+    },
+    {
+      "sample": "webflux-kotlin",
+      "buildSystem": null,
+      "originalIdentitiesPreserved": 23,
+      "newOriginalLambdasValidated": 2,
+      "routes": [
+        {
+          "name": "GET /hello",
+          "sourceRange": {
+            "startLine": 15,
+            "startColumn": 5,
+            "endLine": 15,
+            "endColumn": 90
+          },
+          "constraintsUnresolved": true,
+          "conditions": [
+            "Conditional/injected/custom WebFlux bean factory requires a reviewed registration profile",
+            "Virtual/interface receiver dispatch is not an exact original handler call",
+            "Unobserved/custom WebFlux predicate accept requires a reviewed restriction summary"
+          ],
+          "handler": null
+        }
+      ]
+    },
+    {
+      "sample": "webflux-kotlin",
+      "buildSystem": "maven",
+      "originalIdentitiesPreserved": 23,
+      "newOriginalLambdasValidated": 0,
+      "routes": []
+    },
+    {
+      "sample": "webflux-kotlin",
+      "buildSystem": "gradle",
+      "originalIdentitiesPreserved": 23,
+      "newOriginalLambdasValidated": 2,
+      "routes": [
+        {
+          "name": "GET /hello",
+          "sourceRange": {
+            "startLine": 15,
+            "startColumn": 5,
+            "endLine": 15,
+            "endColumn": 90
+          },
+          "constraintsUnresolved": true,
+          "conditions": [
+            "Conditional/injected/custom WebFlux bean factory requires a reviewed registration profile",
+            "Virtual/interface receiver dispatch is not an exact original handler call",
+            "Unobserved/custom WebFlux predicate accept requires a reviewed restriction summary"
+          ],
+          "handler": null
+        }
+      ]
+    }
+  ],
+  "normalization": [
+    "run.id",
+    "run.analyzedAt"
+  ],
+  "producerFieldsNormalized": false,
+  "sourceFiles": [
+    {
+      "file": "src/analysis/frameworks/spring-webflux.ts",
+      "sha256": "512e81e9f2de4393800309829f16b5cfcfb4aee706e6d853dfd6b1186d5418a6"
+    },
+    {
+      "file": "tests/spring-webflux.test.ts",
+      "sha256": "82f14f0a71a129a845f827818615d2b52a01d9ff5ff7a6757d1638ba61f1a035"
+    },
+    {
+      "file": "tests/kotlin-webflux-invoke.test.ts",
+      "sha256": "d094783363a35204f55ae8e2a9cf6d4634fb8fac6640d24b4a9b8ff6e1995f23"
+    },
+    {
+      "file": "tests/fixtures/kotlin-webflux-invoke-qualification.mjs",
+      "sha256": "76ff05ab2efc3536d3beff8bd69848fc4d6636b3e2e597b584e8739f5ce8243c"
+    },
+    {
+      "file": "scripts/test-package.mjs",
+      "sha256": "c2f4f823538ec7f10ddc6a3d8720c4c00a6e4ea8c1e9fe9e93f9feedae9666f2"
+    },
+    {
+      "file": "docs/compatibility-catalog.json",
+      "sha256": "a3204d1d92f50fb243f9a5227fb0bd81aa4ec7d47685a42fc076b122cbb99be0"
+    },
+    {
+      "file": "docs/analysis-capabilities.html",
+      "sha256": "9c2a5853bcb7ab1ef0e33c91e79ba9ab05d8dfb8e107e29fa9d4f76e3c98be73"
+    },
+    {
+      "file": "docs/framework-pack-author-guide.html",
+      "sha256": "e314777737cb47fa58be1890c214285826d913fc3e1bec556f778f7eb4be6439"
+    },
+    {
+      "file": "package.json",
+      "sha256": "4c6db1b0e1700f5374331b467d40b85c2e6f61b0da9c2a31c7c8e6590b693623"
+    },
+    {
+      "file": "package-lock.json",
+      "sha256": "691f16cfb44abf881dd9bf107524556cc3911f82fdbe05aebc9c273fb0270f28"
+    },
+    {
+      "file": "tsconfig.json",
+      "sha256": "7618aa85118138951ebb601a4c0e1dcf62185c9c6da1b71441afcc937e7f21b6"
+    },
+    {
+      "file": "tsconfig.build.json",
+      "sha256": "da8ddd95e95d53a8427312534c92128beac2c79d01d4a2a9c150aed08d84c38d"
+    }
+  ],
+  "primaryInputs": [
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.19/spring-webflux/src/main/kotlin/org/springframework/web/reactive/function/server/RouterFunctionDsl.kt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/primary/6.2.19-RouterFunctionDsl.kt",
+      "sha256": "18413d564412a007eeead7edec91102c92515cd3215d98f33ec61681fedb7f49",
+      "bytes": 31494
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.19/spring-webflux/src/main/kotlin/org/springframework/web/reactive/function/server/CoRouterFunctionDsl.kt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/primary/6.2.19-CoRouterFunctionDsl.kt",
+      "sha256": "ae24eecc0f8b698f778199bbf7d4be5c132470f1965f84d304160b185aedfebf",
+      "bytes": 29615
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.2/spring-webflux/src/main/kotlin/org/springframework/web/reactive/function/server/RouterFunctionDsl.kt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/primary/7.0.2-RouterFunctionDsl.kt",
+      "sha256": "0194cafa334df775cb74e7e4c6cc89fa3ee157436cd3b1b3ac4304e81f3477df",
+      "bytes": 33436
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.2/spring-webflux/src/main/kotlin/org/springframework/web/reactive/function/server/CoRouterFunctionDsl.kt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/primary/7.0.2-CoRouterFunctionDsl.kt",
+      "sha256": "6adaca1f824858aa7bbbafed5bbb1692dd151efeb374dbc5526ce90a8a62bb72",
+      "bytes": 31431
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-webflux/src/main/kotlin/org/springframework/web/reactive/function/server/RouterFunctionDsl.kt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/primary/7.0.9-RouterFunctionDsl.kt",
+      "sha256": "0194cafa334df775cb74e7e4c6cc89fa3ee157436cd3b1b3ac4304e81f3477df",
+      "bytes": 33436
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-webflux/src/main/kotlin/org/springframework/web/reactive/function/server/CoRouterFunctionDsl.kt",
+      "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/primary/7.0.9-CoRouterFunctionDsl.kt",
+      "sha256": "6adaca1f824858aa7bbbafed5bbb1692dd151efeb374dbc5526ce90a8a62bb72",
+      "bytes": 31431
+    }
+  ],
+  "terminalObservations": [
+    {
+      "schema": 1,
+      "label": "final-full-node22",
+      "argv": [
+        "npm",
+        "test"
+      ],
+      "controllerPid": 105940,
+      "childPid": 105941,
+      "startedAt": 1791922403.0992362,
+      "completedAt": 1791922570.5765107,
+      "seconds": 167.47727465629578,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/final-full-node22.log",
+      "logSha256": "f8fa3a6a2aa4adf80fe5a1e62919a215f39463f51f20d9747a363684e7a06633",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "tooling-node22",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-concurrency=4",
+        "scripts/tests/graph-json-artifact.test.mjs",
+        "scripts/tests/native-release.test.mjs",
+        "scripts/tests/production-cache-git.test.mjs",
+        "scripts/tests/production-cache-observer.test.mjs",
+        "scripts/tests/production-graph-digest.test.mjs",
+        "scripts/tests/production-head-graphs.test.mjs",
+        "scripts/tests/production-history-audit.test.mjs",
+        "scripts/tests/production-history-blobs.test.mjs",
+        "scripts/tests/production-history-columns.test.mjs",
+        "scripts/tests/production-history-entrypoint-columns.test.mjs",
+        "scripts/tests/production-history-entrypoint-qualification.test.mjs",
+        "scripts/tests/production-history-entrypoint-report.test.mjs",
+        "scripts/tests/production-history-entrypoint.test.mjs",
+        "scripts/tests/production-history-inputs.test.mjs",
+        "scripts/tests/production-history-observer.test.mjs",
+        "scripts/tests/production-history-performance-qualification.test.mjs",
+        "scripts/tests/production-history-performance.test.mjs",
+        "scripts/tests/production-history-qualification.test.mjs",
+        "scripts/tests/production-history-recovery.test.mjs",
+        "scripts/tests/production-history-resume.test.mjs",
+        "scripts/tests/production-history-runtime-inputs.test.mjs",
+        "scripts/tests/production-history-storage.test.mjs",
+        "scripts/tests/production-history-tree.test.mjs",
+        "scripts/tests/production-source-contracts.test.mjs"
+      ],
+      "controllerPid": 71906,
+      "childPid": 71922,
+      "startedAt": 1791922310.2221758,
+      "completedAt": 1791922337.0496914,
+      "seconds": 26.827515840530396,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/tooling-node22.log",
+      "logSha256": "4b716772a6dd9e7813e7c2902cbc0032d122419a7ac4a4998cc64e304ea305b5",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "typed-path-focused-node22",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-concurrency=4",
+        "tests/kotlin-webflux-invoke.test.ts",
+        "tests/spring-webflux.test.ts",
+        "tests/kotlin-spring-compiler.test.ts"
+      ],
+      "controllerPid": 61945,
+      "childPid": 61989,
+      "startedAt": 1791922291.178345,
+      "completedAt": 1791922305.1196969,
+      "seconds": 13.941352367401123,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/typed-path-focused-node22.log",
+      "logSha256": "d1c687caa4d3fb90ffe4728b7781ae8ec21b7db23ea1565fd9722d34679304a4",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "typed-path-focused-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-concurrency=4",
+        "tests/kotlin-webflux-invoke.test.ts",
+        "tests/spring-webflux.test.ts",
+        "tests/kotlin-spring-compiler.test.ts"
+      ],
+      "controllerPid": 61942,
+      "childPid": 61962,
+      "startedAt": 1791922291.1707487,
+      "completedAt": 1791922304.4051814,
+      "seconds": 13.234432935714722,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/typed-path-focused-node24.log",
+      "logSha256": "ee8945f398d390a88baf11daedec891b2478fe030d8ee0f995ff0e6ea6cfce96",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "typed-path-typecheck",
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "controllerPid": 61944,
+      "childPid": 61950,
+      "startedAt": 1791922291.1645575,
+      "completedAt": 1791922316.3176732,
+      "seconds": 25.15311598777771,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/typed-path-typecheck.log",
+      "logSha256": "c1fee42b4fa7e6e1a30e8e81426f7690f45767a53800385021e8cd468ec6e8d9",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "typed-path-build",
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "controllerPid": 61943,
+      "childPid": 61952,
+      "startedAt": 1791922291.1684499,
+      "completedAt": 1791922319.3972812,
+      "seconds": 28.22883176803589,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/typed-path-build.log",
+      "logSha256": "45773febb8f4a74aa4bf27cdaf5a45c3e7493f42fc339e1ab560d104617b44be",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "final-deterministic-docs",
+      "argv": [
+        "node",
+        "scripts/generate-compatibility-docs.mjs",
+        "--check"
+      ],
+      "controllerPid": 99661,
+      "childPid": 99669,
+      "startedAt": 1791922364.212458,
+      "completedAt": 1791922364.3923404,
+      "seconds": 0.17988276481628418,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/final-deterministic-docs.log",
+      "logSha256": "5eaa2e382b26ac80dd2742128413f77019630735f8ee513f4f07fbf044375286",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "final-original-source-guides",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        ".codiluce/validation-kotlin-webflux-invoke-source/qualify-final-source-originals.mjs"
+      ],
+      "controllerPid": 88082,
+      "childPid": 88105,
+      "startedAt": 1791922339.645342,
+      "completedAt": 1791922351.7037404,
+      "seconds": 12.058398246765137,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/final-original-source-guides.log",
+      "logSha256": "0ade4ff5bb5d82474c4ee422cc8098596059f91f11c24990cf0588246e55894b",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "final-original-compiled-guides",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        ".codiluce/validation-kotlin-webflux-invoke-source/qualify-final-compiled-originals.mjs"
+      ],
+      "controllerPid": 95472,
+      "childPid": 95484,
+      "startedAt": 1791922355.6468117,
+      "completedAt": 1791922367.3192463,
+      "seconds": 11.67243480682373,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/final-original-compiled-guides.log",
+      "logSha256": "0ade4ff5bb5d82474c4ee422cc8098596059f91f11c24990cf0588246e55894b",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "original-source-compiled-parity",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        ".codiluce/validation-kotlin-webflux-invoke-source/compare-final-originals.mjs"
+      ],
+      "controllerPid": 105638,
+      "childPid": 105639,
+      "startedAt": 1791922389.771254,
+      "completedAt": 1791922390.3693905,
+      "seconds": 0.5981369018554688,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/original-source-compiled-parity.log",
+      "logSha256": "dfffda2682f5d9d55769c07d52297416942f8807f0bf90b06c8d16a94800b604",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "portable-node22",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "tests/fixtures/kotlin-webflux-invoke-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/portable-node22.json"
+      ],
+      "controllerPid": 95473,
+      "childPid": 95522,
+      "startedAt": 1791922355.6536226,
+      "completedAt": 1791922360.921927,
+      "seconds": 5.2683045864105225,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/portable-node22.log",
+      "logSha256": "1a5da3880669bcb334c59060d21fde1f3ec3233a421248011e48f1a3e1de3cc2",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "portable-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "tests/fixtures/kotlin-webflux-invoke-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/portable-node24.json"
+      ],
+      "controllerPid": 95474,
+      "childPid": 95483,
+      "startedAt": 1791922355.6464944,
+      "completedAt": 1791922360.4295723,
+      "seconds": 4.783078193664551,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/portable-node24.log",
+      "logSha256": "267a003d4015c6b87e01e823541bdd2f603c7b3900acce65e42a9fa69191d095",
+      "targetExecution": false
+    }
+  ],
+  "retainedFailures": {
+    "retainedFailures": [
+      {
+        "reason": "Baseline explicit invocation implementation missing: six new positive regressions fail; custom receiver boundary passes",
+        "terminal": {
+          "schema": 1,
+          "label": "original-invoke-regression",
+          "argv": [
+            "node",
+            "--experimental-sqlite",
+            "--import",
+            "tsx",
+            "--test",
+            "--test-concurrency=4",
+            "tests/kotlin-webflux-invoke.test.ts"
+          ],
+          "controllerPid": 18870,
+          "childPid": 18871,
+          "startedAt": 1791922063.2553446,
+          "completedAt": 1791922066.4085846,
+          "seconds": 3.153240442276001,
+          "actualExit": 1,
+          "interrupted": false,
+          "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/original-invoke-regression.log",
+          "logSha256": "94ec6ccad830cbbd8e092b21bf06ec01648b30df666bcbf002b1dbc6138fd078",
+          "targetExecution": false
+        }
+      },
+      {
+        "reason": "Mistyped own documentation generator filename; corrected command retained",
+        "terminal": {
+          "schema": 1,
+          "label": "generated-docs",
+          "argv": [
+            "node",
+            "scripts/compatibility-docs.mjs"
+          ],
+          "controllerPid": 24123,
+          "childPid": 24124,
+          "startedAt": 1791922169.1434412,
+          "completedAt": 1791922169.1618328,
+          "seconds": 0.018391847610473633,
+          "actualExit": 1,
+          "interrupted": false,
+          "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/generated-docs.log",
+          "logSha256": "6e6f536fcd9174c21e5f9cd72a55d82fead49d0b03cc53fa1d794535e515dc8d",
+          "targetExecution": false
+        }
+      },
+      {
+        "reason": "Typed local String initializer was rejected by the functional trace type filter",
+        "terminal": {
+          "schema": 1,
+          "label": "final-focused-node22",
+          "argv": [
+            "node",
+            "--experimental-sqlite",
+            "--import",
+            "tsx",
+            "--test",
+            "--test-concurrency=4",
+            "tests/kotlin-webflux-invoke.test.ts",
+            "tests/spring-webflux.test.ts",
+            "tests/kotlin-spring-compiler.test.ts"
+          ],
+          "controllerPid": 23907,
+          "childPid": 23908,
+          "startedAt": 1791922167.9797692,
+          "completedAt": 1791922175.9068294,
+          "seconds": 7.92706036567688,
+          "actualExit": 1,
+          "interrupted": false,
+          "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/final-focused-node22.log",
+          "logSha256": "a56d0c8c7910e4f23f3e5d9c15258170b268ec3a0d8d7f68365cd99cbea6afce",
+          "targetExecution": false
+        }
+      },
+      {
+        "reason": "Same typed local String boundary on Node 24",
+        "terminal": {
+          "schema": 1,
+          "label": "final-focused-node24",
+          "argv": [
+            "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+            "--experimental-sqlite",
+            "--import",
+            "tsx",
+            "--test",
+            "--test-concurrency=4",
+            "tests/kotlin-webflux-invoke.test.ts",
+            "tests/spring-webflux.test.ts",
+            "tests/kotlin-spring-compiler.test.ts"
+          ],
+          "controllerPid": 40181,
+          "childPid": 40213,
+          "startedAt": 1791922233.933262,
+          "completedAt": 1791922245.3004541,
+          "seconds": 11.367192268371582,
+          "actualExit": 1,
+          "interrupted": false,
+          "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/final-focused-node24.log",
+          "logSha256": "ba02c295b3d23a0f9cfc1b1c46245dc9c350423760375ad72ca3fe2558ea00dd",
+          "targetExecution": false
+        }
+      },
+      {
+        "reason": "First full suite observes the same typed local String boundary before its runtime correction",
+        "terminal": {
+          "schema": 1,
+          "label": "full-node22",
+          "argv": [
+            "npm",
+            "test"
+          ],
+          "controllerPid": 26648,
+          "childPid": 26652,
+          "startedAt": 1791922194.2011395,
+          "completedAt": 1791922382.1503956,
+          "seconds": 187.9492564201355,
+          "actualExit": 1,
+          "interrupted": false,
+          "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/full-node22.log",
+          "logSha256": "02160b8119ae36c5cceca541b2e65103df58500f14fc13f76366f0f26803aaa3",
+          "targetExecution": false
+        }
+      },
+      {
+        "reason": "Generated capability source inventory stale after trace type source edit; regenerated and deterministic check passed",
+        "terminal": {
+          "schema": 1,
+          "label": "final-checked-docs",
+          "argv": [
+            "node",
+            "scripts/generate-compatibility-docs.mjs",
+            "--check"
+          ],
+          "controllerPid": 95475,
+          "childPid": 95550,
+          "startedAt": 1791922355.6638823,
+          "completedAt": 1791922355.8595269,
+          "seconds": 0.19564509391784668,
+          "actualExit": 1,
+          "interrupted": false,
+          "log": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source/final-checked-docs.log",
+          "logSha256": "337062df2eabec868738d377ae7624f9b177d12b682d7566485290270fab1e6f",
+          "targetExecution": false
+        }
+      }
+    ],
+    "nativeParserGuardsRelaxed": false,
+    "originalUpstreamInputsModified": false,
+    "normalPackageGateRetried": false,
+    "targetExecution": false
+  },
+  "nativeWorkerChanged": false,
+  "parserGuardsRelaxed": false,
+  "deadlinesOrBudgetsChanged": false,
+  "targetExecution": false,
+  "foreignFilesUnchanged": true,
+  "fullNormalInstalledPackageQualified": false,
+  "fullNativeMatrixQualified": false,
+  "productionHistoryForChangedRuntimeQualified": false,
+  "productionRelativePerformanceQualified": false,
+  "broaderSourceAccuracyQualified": false,
+  "fullGoalComplete": false,
+  "scope": "Pinned Spring 6.2.19/7.0.2/7.0.9 RouterFunctionDsl/CoRouterFunctionDsl source contracts: explicit RequestPredicate/String invoke with original reactive/coroutine handlers and published named f argument, immutable typed predicate/path aliases, exact original ranges and query/method/path/order facts. Custom/shadowed receivers/extensions, safe calls, changed aliases and invalid arguments retain boundaries. Original Kotlin WebFlux GET /hello at line 15 retains injected factory, virtual receiver and accept-media conditions without a fabricated direct handler; target compiler/plugin/runtime/generated/binary behavior remains unexecuted/unverified.",
+  "evidenceArchive": {
+    "file": "/var/www/html/codiluce/.codiluce/validation-kotlin-webflux-invoke-source-evidence/kotlin-webflux-invoke-source-compiled-and-original-evidence.tar.gz",
+    "sha256": "0896adb5102292f0514a5baaafe711109a415b74768298b59568ddcc98678472",
+    "bytes": 15791633,
+    "regularFiles": 1510,
+    "allBytesAndModesReopened": true,
+    "manifestSha256": "fa8b3884a126b4a70d32db548a73e1093c51d113687c139250157980f3dbb0c4",
+    "seconds": 5.210073709487915
+  }
+}
