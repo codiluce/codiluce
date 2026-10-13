@@ -1,0 +1,2546 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-13T01:48:23.046360+00:00",
+  "phase": "Svelte/Astro optional parser ownership and generation lifetime local Linux release qualification",
+  "implementationCommit": "d596f04",
+  "runtimeSha256": "e2fea4dbc2537b3c7248167d26e8502fc663a31b02a4df689d827170e5997c81",
+  "runtimeInputsVerified": 1927,
+  "scope": "Source/compiled lifecycle and complete prior graph equality, normal prepack and complete production-only installed assertions; the first normal package observation passed. Vendor copy-filter and loader argument corrections happened before that package observation.",
+  "engineWebTests": 1719,
+  "newLifecycleIsolationBundleCases": 10,
+  "ordinaryCompiledNodeCases": 10,
+  "existingFrameworkIntegrationCases": 70,
+  "bothTypechecksPassed": true,
+  "deterministicDocumentationPassed": true,
+  "normalPrepackAndProductionOnlyInstalledGatePassed": true,
+  "installedOptionalParserMainProcessIsolationActualGenerationExitAndOriginalIndexingPassed": true,
+  "installedCliApiCompleteSourceFrameworkHistoryAssetIsolationSignalsNpmExecPassed": true,
+  "installedTerminal": {
+    "schema": 1,
+    "startedAt": 1791854975.6652298,
+    "wrapperPid": 4099521,
+    "actualNpmPid": 4099522,
+    "cwd": "/dev/shm/codiluce-template-framework-workers/engine",
+    "command": [
+      "npm",
+      "run",
+      "test:package"
+    ],
+    "runtimeSha256": "e2fea4dbc2537b3c7248167d26e8502fc663a31b02a4df689d827170e5997c81",
+    "runtimeInputsVerified": 1927,
+    "driverSha256": "52412ca96b47aa4baca1e349e840b1298e518e2decd0afcc7eedb326a5d6cd87",
+    "log": "/var/www/html/codiluce/.codiluce/validation-template-framework-workers/normal-installed-package-first.log",
+    "temporaryConsumerDirectory": "/dev/shm/codiluce-template-framework-worker-package",
+    "ownedBuildAndConsumerUseTmpfs": true,
+    "retainedSourceCompiledArchive": "/var/www/html/codiluce/.codiluce/validation-template-framework-workers/template-framework-workers-source-compiled-portable-loader-and-evidence.tar.gz",
+    "originalHistoryReserveRelaxed": false,
+    "productionHistoryObservationRetried": false,
+    "targetExecution": false,
+    "gateComplete": true,
+    "completedAt": 1791855407.9359386,
+    "actualExitCode": 0,
+    "passed": true,
+    "interruptSignals": [],
+    "actualNpmGone": true,
+    "logSha256": "fae2dc9596f9e9dc71903267133df19b79781aac7eb36a6e630b32298fde43d1"
+  },
+  "normalPrepackArchive": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791855079.569015,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-template-framework-workers/template-framework-workers-normal-prepack-release.tgz",
+    "source": "/dev/shm/codiluce-template-framework-worker-package/codiluce-package-RoZOQo/codiluce-0.1.1.tgz",
+    "sha256": "ccd4e5a3d5e9a4861242af33bc868ecad733109c797f0ff8f2ae61da11eed292",
+    "bytes": 7224343,
+    "verifiedRegularMembers": 372,
+    "compiledPackageModulesMatchSourceConformance": 225,
+    "normalPrepackPassed": true,
+    "installedGatePendingAtRetention": true,
+    "runtimeSha256": "e2fea4dbc2537b3c7248167d26e8502fc663a31b02a4df689d827170e5997c81"
+  },
+  "runtimeReleaseAndEvidenceArchive": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791855879.0852513,
+    "seconds": 18.10014843940735,
+    "archive": "/dev/shm/codiluce-template-framework-workers/template-framework-workers-runtime-release-and-evidence-complete.tar.gz",
+    "sha256": "df241c1c3f24bf181ac87fd666b7756ff1f8b1b68282312c780118cb0658e1b5",
+    "bytes": 61960732,
+    "verifiedRegularMembers": 3300,
+    "manifestSha256": "4ce13b23fdf499733da776d6d7c954b2e76063507814340057fc0bba4e5a39de",
+    "runtimeSha256": "e2fea4dbc2537b3c7248167d26e8502fc663a31b02a4df689d827170e5997c81",
+    "normalPrepackAndProductionOnlyInstalledGatePassed": true,
+    "firstNormalInstalledPackageObservationPassed": true,
+    "vendorCopyFilterCorrectedBeforePackageObservation": true,
+    "full195RevisionHistoryQualified": false,
+    "relativeHistoryTimeRssQualified": false,
+    "nativeWindowsMacOSQualified": false,
+    "fullGoalFinished": false,
+    "completeArchiveStorage": "owned tmpfs; durable archive copy still requires additional capacity",
+    "initialIncompleteProjectArchiveRetained": true,
+    "initialArchiveFailureAudit": {
+      "schema": 1,
+      "originalUnifiedSession": 35432,
+      "originalExitCode": 120,
+      "originalLogBytes": 0,
+      "archive": "/var/www/html/codiluce/.codiluce/validation-template-framework-workers/template-framework-workers-runtime-release-and-evidence.tar.gz",
+      "bytes": 59867136,
+      "sha256": "88bbb66d4fd874668105b82ebe0b3ac2c682a1a24a5a8b27c8e74f4a1610eea1",
+      "expectedMembers": 3293,
+      "rootAvailableBytes": 0,
+      "checkedMembers": 3289,
+      "passed": false,
+      "error": "EOFError('Compressed file ended before the end-of-stream marker was reached')"
+    }
+  },
+  "sourceCompiledArchive": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791854931.3819199,
+    "seconds": 16.543594360351562,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-template-framework-workers/template-framework-workers-source-compiled-portable-loader-and-evidence.tar.gz",
+    "sha256": "b4673ef964d25698ca014b5cc07902e9eb3591bd127aa9951ac6d437f1e69ee3",
+    "bytes": 34726625,
+    "verifiedRegularMembers": 2357,
+    "manifestSha256": "130f68509d3e339d520e0e47e955411b237a19e7f1549455e9f85d7019cd8238",
+    "runtimeSha256": "e2fea4dbc2537b3c7248167d26e8502fc663a31b02a4df689d827170e5997c81",
+    "normalInstalledPackageForNewRuntimeQualified": false,
+    "fullGoalFinished": false
+  },
+  "firstSourceArchiveBeforePortableLoaderCorrectionRetained": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791854732.6148863,
+    "seconds": 16.53633952140808,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-template-framework-workers/template-framework-workers-source-compiled-and-evidence.tar.gz",
+    "sha256": "e1e16590e6d7e28414b167265e4fecb896f6138f036d988e61dba19fec7886f0",
+    "bytes": 34605463,
+    "verifiedRegularMembers": 2352,
+    "manifestSha256": "482c5b4315885ad0710a5acd2fb1def98e8821cebaca40ac35e5906acf522a52",
+    "runtimeSha256": "e2fea4dbc2537b3c7248167d26e8502fc663a31b02a4df689d827170e5997c81",
+    "normalInstalledPackageForNewRuntimeQualified": false,
+    "fullGoalFinished": false
+  },
+  "sourceConformanceReceipt": {
+    "file": "docs/template-framework-workers-validation.json",
+    "sha256": "663ec21af3ea858d2817255ca8fb7a075252ead5419dd30ea33186fafca43418"
+  },
+  "preObservationVendorCopyAudit": {
+    "file": "/var/www/html/codiluce/.codiluce/validation-template-framework-workers/full-vendor-copy-audit.json",
+    "sha256": "22312b50c3bd27fc765de91a52b80894f69badd3cd9c78bea571b074c8297c0b",
+    "regularFiles": 14303,
+    "symlinks": 17,
+    "restoredVendorFiles": 8527,
+    "packageObservationHadStarted": false
+  },
+  "workerLimits": {
+    "maxJobs": 64,
+    "maxCumulativeUtf8Bytes": 16777216,
+    "individuallyAllowedOversizedOriginalParsesAloneAndRetires": true,
+    "activeParseSerializationDeadlineMs": 10000,
+    "workerV8OldSpaceMiB": 256,
+    "physicalRssCap": false
+  },
+  "completePriorGraphParity": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": "2026-10-13T01:18:59.653Z",
+    "priorRuntime": "6df4377933624de1e83e6d44fe0fc46fdd387b19527488fd9ced5b08b7ecb220",
+    "priorRuntimeInputsVerified": 1924,
+    "scope": "Complete cold/warm/revision original graphs including malformed components, unsupported browser input, UTF-16 coordinates, native AST special values and more than 64 Svelte components",
+    "retainedFixture": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-framework-worker-parity-GL3v01",
+    "originalFiles": 81,
+    "normalizations": [],
+    "volatileFields": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "cacheWarmReplayObserved": true,
+    "graphs": [
+      {
+        "mode": "cold",
+        "bytes": 591328,
+        "sha256": "c9ed282eee1c818caa4b9d8edf28729dffb3d96c11b4fa69325262c0eb3034be",
+        "entities": 380,
+        "relations": 602,
+        "diagnostics": 10
+      },
+      {
+        "mode": "warm",
+        "bytes": 591328,
+        "sha256": "c9ed282eee1c818caa4b9d8edf28729dffb3d96c11b4fa69325262c0eb3034be",
+        "entities": 380,
+        "relations": 602,
+        "diagnostics": 10
+      },
+      {
+        "mode": "revision",
+        "bytes": 590749,
+        "sha256": "c4677d17597bab66b9cccb039c524ae9bdac076b9c2a3f43208591d7d7454457",
+        "entities": 380,
+        "relations": 602,
+        "diagnostics": 7
+      }
+    ],
+    "targetExecution": false
+  },
+  "storage": {
+    "availableWorkspaceBytes": 7569408,
+    "originalHistoryReserveBytes": 1073741824,
+    "originalHistoryReserveRelaxed": false,
+    "ownedBuildAndConsumerUsedTmpfs": true,
+    "securityMountOptionsChanged": false,
+    "originalOrFailedEvidenceDeleted": false
+  },
+  "newRuntimeFull195RevisionHistoryQualified": false,
+  "newRuntimeRelativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "broaderCompilerConsumerNativePhysicalRssBudgetQualified": false,
+  "oldFailedProductionObservationsRetried": false,
+  "targetExecution": false,
+  "fullGoalFinished": false,
+  "foreignFilesUnchanged": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  },
+  "archiveRecovery": {
+    "initialIncompleteProjectArchive": {
+      "schema": 1,
+      "originalUnifiedSession": 35432,
+      "originalExitCode": 120,
+      "originalLogBytes": 0,
+      "archive": "/var/www/html/codiluce/.codiluce/validation-template-framework-workers/template-framework-workers-runtime-release-and-evidence.tar.gz",
+      "bytes": 59867136,
+      "sha256": "88bbb66d4fd874668105b82ebe0b3ac2c682a1a24a5a8b27c8e74f4a1610eea1",
+      "expectedMembers": 3293,
+      "rootAvailableBytes": 0,
+      "checkedMembers": 3289,
+      "passed": false,
+      "error": "EOFError('Compressed file ended before the end-of-stream marker was reached')"
+    },
+    "ownedCompiledRelocations": [
+      {
+        "schema": 1,
+        "passed": true,
+        "scope": "Only verified own regenerable compiled output; exact source and compiled archive preserved",
+        "source": "/var/www/html/codiluce/.codiluce/validation-template-framework-workers/compiled",
+        "target": "/dev/shm/codiluce-template-framework-workers/source-conformance-compiled",
+        "files": [
+          {
+            "file": "src/launcher.js",
+            "sha256": "b6ec7126ccd2ce1d2972a1a249903f3b937346cc0ef03b7aab39bf37bcdbf3df",
+            "bytes": 10040
+          },
+          {
+            "file": "src/cli.js",
+            "sha256": "7d748d2633c9fcf2f27f0d70dffca41a5159c704d87fe06c5db001c2a6818398",
+            "bytes": 15932
+          },
+          {
+            "file": "src/storage/sqlite.js",
+            "sha256": "e6c115b6e03f7b66a5827cc7d232fedf90bde1e13aad169ed50835f8ef90cbba",
+            "bytes": 13090
+          },
+          {
+            "file": "src/history/fingerprint.js",
+            "sha256": "a0ee63d59385bf080f2d99b342c9f01213396b529fd63cf56d137357e8e8316c",
+            "bytes": 2976
+          },
+          {
+            "file": "src/history/git.js",
+            "sha256": "7d16c4c6c706ea00c77678b8e2ed59f85ba2c5dea5bffe7faefbe651c74220f1",
+            "bytes": 12011
+          },
+          {
+            "file": "src/history/authors.js",
+            "sha256": "7fbbb0db251ab2b65097d776956c4333a21a3e220aa9cebcbedc44d8d15fbb98",
+            "bytes": 16235
+          },
+          {
+            "file": "src/history/pull-requests.js",
+            "sha256": "3a2bd4a26c11e7198d9301c7ca190d2d929e6ba76bfe6522782999f948b8ea9d",
+            "bytes": 3387
+          },
+          {
+            "file": "src/history/store.js",
+            "sha256": "d709443ee4b27437da1ef6ce25731437ea9da10d7c0c3180bfa2bd76b8532977",
+            "bytes": 23447
+          },
+          {
+            "file": "src/history/snapshot.js",
+            "sha256": "9f0ec6792c73d8f42ec2240f898c0b0c4060ad3a53318c90cb70a74397e43828",
+            "bytes": 8952
+          },
+          {
+            "file": "src/history/indexer.js",
+            "sha256": "0c064a2af2f6fa0e9a4463ec8a62462eef16f29746a9b1e1c86e869314318454",
+            "bytes": 14620
+          },
+          {
+            "file": "src/history/service.js",
+            "sha256": "d42da690f81e85b659522118c5ecfa20b1005bbd0e9c32906f588b348792b8de",
+            "bytes": 8528
+          },
+          {
+            "file": "src/history/worker.js",
+            "sha256": "85a2edf0fc0de4cb213332d10ff22cb4d7462d4a9316d6b4ed1337958d10ea03",
+            "bytes": 1395
+          },
+          {
+            "file": "src/history/lineage.js",
+            "sha256": "41da10f9756b3a87d149d40adb19204bbb5bd05fae64c34a5d974452664b5628",
+            "bytes": 7651
+          },
+          {
+            "file": "src/history/worker-channel.js",
+            "sha256": "01b2dc97fe488f15b9445a156687eadd7a37397472f8423ed996ce4bbd851f63",
+            "bytes": 1450
+          },
+          {
+            "file": "src/history/textdiff.js",
+            "sha256": "089a62b590bea8e05eecc9503ad18cef537d801ba6c11f353e3ca5a1a81e4943",
+            "bytes": 5049
+          },
+          {
+            "file": "src/history/diff.js",
+            "sha256": "61ff9e38bde6d365487dc414f9f44c4dee120c2563bc42ed139d37e2c545bceb",
+            "bytes": 9669
+          },
+          {
+            "file": "src/api/static.js",
+            "sha256": "0b05640f1ab88732738b6a95beb1c01f4eb0c6a64c316a8c6f62cfc514f8ee28",
+            "bytes": 2089
+          },
+          {
+            "file": "src/api/server.js",
+            "sha256": "4fe1bdd8e5098e838ef2cda66cdb7ea597ccc5ccdf4a27c4676b1e7f0ae1b360",
+            "bytes": 8712
+          },
+          {
+            "file": "src/api/projection-routes.js",
+            "sha256": "19bc5b149d058e5d01a45c378bcf88a87c010b5189593c0795a00d282d3e5af4",
+            "bytes": 12179
+          },
+          {
+            "file": "src/pipeline/index.js",
+            "sha256": "56cde60b4dead7d2af5ad753d39a2e65041451cc43141e413cbd854980bc0efc",
+            "bytes": 7232
+          },
+          {
+            "file": "src/pipeline/php-analysis.js",
+            "sha256": "767b6eae19fb8edbbb13b5cb3570595fdd4d4b2c923728cbb06ab7e818f7a861",
+            "bytes": 3899
+          },
+          {
+            "file": "src/pipeline/cache.js",
+            "sha256": "cbc4366ae802af697335fc0716e9cbd9646daece175a22dc85e548e590591096",
+            "bytes": 17081
+          },
+          {
+            "file": "src/pipeline/inertia-linker.js",
+            "sha256": "1db6bcafe66a2adce0439050ad5009bf324f6be89f4e93285ccd86002d27262b",
+            "bytes": 3517
+          },
+          {
+            "file": "src/pipeline/api-matcher.js",
+            "sha256": "c23126079d1dd8d3e9381156aebb59f78c80c2e684c1b3089326aefe48cedb46",
+            "bytes": 22088
+          },
+          {
+            "file": "src/core/analyzer.js",
+            "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+            "bytes": 11
+          },
+          {
+            "file": "src/core/workspaces.js",
+            "sha256": "52a8c64fbf7e8bbfc506b7aff714a1e097a10375ad3410f4ac927a0c5649ca9e",
+            "bytes": 1414
+          },
+          {
+            "file": "src/core/config.js",
+            "sha256": "793580676746d734475d194652636f2e2764c397afbe3ce671c24dad893d4fa2",
+            "bytes": 31493
+          },
+          {
+            "file": "src/core/graph.js",
+            "sha256": "7e20c3cc186f72e7d91786e5b007148e2115e66ee41c31e627fa57bbfcce0645",
+            "bytes": 5571
+          },
+          {
+            "file": "src/core/languages.js",
+            "sha256": "fa91d9265b4360247b577070c970802f7e53edc4ea77a7e5889f6702aaa37947",
+            "bytes": 4046
+          },
+          {
+            "file": "src/core/manifests.js",
+            "sha256": "1850bd58faa30c64e1c91ff4e6fa9786af8b65c2ac9b9a076988c08e6592b1ea",
+            "bytes": 14363
+          },
+          {
+            "file": "src/analysis/rust-evidence.js",
+            "sha256": "68f52d73b20d672f4a87666d9acbb609b7638311adc3208ce03410be1587b517",
+            "bytes": 8134
+          },
+          {
+            "file": "src/analysis/project-model.js",
+            "sha256": "49640778271d947bdd987dd7ecbca93fbf74d37b82143b038fd13e0c490b23b9",
+            "bytes": 11397
+          },
+          {
+            "file": "src/analysis/indexed-sources.js",
+            "sha256": "27c6c869567a3ec21cd8522c75a47795713b8ceb2c4ab5d6174ae900e8eed5b2",
+            "bytes": 6545
+          },
+          {
+            "file": "src/analysis/source-map.js",
+            "sha256": "8dc16f5413971a87b8ae7f9bac07e98b367eafa8da7392548e22269ff40b4214",
+            "bytes": 1869
+          },
+          {
+            "file": "src/analysis/registry.js",
+            "sha256": "b8bfb3c46529e3dfba1419117d0b6a4f45d9042643ce877b7549cc65426ee511",
+            "bytes": 1800
+          },
+          {
+            "file": "src/analysis/capabilities.js",
+            "sha256": "efbbec0c845247c9f95c692b65a80e286ffeeaa27a7a46376a0a6ba4eb18628e",
+            "bytes": 4002
+          },
+          {
+            "file": "src/analysis/facts.js",
+            "sha256": "054089344809c56a6f6d37b67a9e1365791ffe5997bff6cf5021b435edc30e48",
+            "bytes": 941
+          },
+          {
+            "file": "src/analysis/tree-sitter/objc-regions.js",
+            "sha256": "20bd8013dde8d4f6f6883404eb31788e0ee4881c5777512e5fe08101bed5d305",
+            "bytes": 6602
+          },
+          {
+            "file": "src/analysis/tree-sitter/scala-structure.js",
+            "sha256": "95f4c01a4d3a976bcb7bdb039a4d9b999ae0fa6aea2dba8f3af7fc88286fb9db",
+            "bytes": 17822
+          },
+          {
+            "file": "src/analysis/tree-sitter/jvm-semantic.js",
+            "sha256": "a2c38fe87a5f9d6d401da18734bc23fd4d934b0ebad0990e24e930a05b1c0fb9",
+            "bytes": 31413
+          },
+          {
+            "file": "src/analysis/tree-sitter/go-syntax.js",
+            "sha256": "1ddfd8d452890de1932b9022e82896cd1555202fb9c808d16214dcff3b89d22a",
+            "bytes": 19979
+          },
+          {
+            "file": "src/analysis/tree-sitter/objc-macros.js",
+            "sha256": "2ddd753b57a06f631494cf751c91ed6e63aa81ad17790882094a9236975d4a73",
+            "bytes": 7391
+          },
+          {
+            "file": "src/analysis/tree-sitter/csharp-syntax.js",
+            "sha256": "5dc8852ea74410a5104004cdaedbab74d083b3e4a3bc9aa265649874d78e63e0",
+            "bytes": 7347
+          },
+          {
+            "file": "src/analysis/tree-sitter/objc-structure.js",
+            "sha256": "f635ebbf7885cecc840e1e5b1b42f6f8a4435ac3cf126d30aab1c1bd47ca520b",
+            "bytes": 15159
+          },
+          {
+            "file": "src/analysis/tree-sitter/analyzer.js",
+            "sha256": "aab1807b44811c6fe0a599e1d456ba3321bc23d49177c97a904f9e5d273ae587",
+            "bytes": 21942
+          },
+          {
+            "file": "src/analysis/tree-sitter/vbnet-structure.js",
+            "sha256": "7ce248b32aa4e5199d4fd9dd8f9414d6a9c443a7e8b5d66d3d644e19739696e9",
+            "bytes": 15898
+          },
+          {
+            "file": "src/analysis/tree-sitter/rust-syntax.js",
+            "sha256": "3faa2f39fb4a465242cd496731a6bcb2ac713e896b6fb7f6e7e46297ee6aaea6",
+            "bytes": 11940
+          },
+          {
+            "file": "src/analysis/tree-sitter/erb-script.js",
+            "sha256": "1496688dedc4bf83c829d6a2ea30ae93a0b89abcbc4ab7142b7a60016645f94f",
+            "bytes": 9908
+          },
+          {
+            "file": "src/analysis/tree-sitter/go-imports.js",
+            "sha256": "0f104409b7256b21917c4b64b6212cca8363e7ca240ad19607e36d956d201847",
+            "bytes": 4062
+          },
+          {
+            "file": "src/analysis/tree-sitter/extract.js",
+            "sha256": "8a913b282c7e1318fc1b39f9e9ea5a418c676d282850d617fb6538a7a0d3285c",
+            "bytes": 14768
+          },
+          {
+            "file": "src/analysis/tree-sitter/worker.js",
+            "sha256": "442c1fcdfe2b1b974d5c6bc5a3299981af224c55f222d956873975427a9969e8",
+            "bytes": 11211
+          },
+          {
+            "file": "src/analysis/tree-sitter/objc-cpp.js",
+            "sha256": "a444baee148356f17649aa1d6aa34f518cc2f3a67cf8ec113447cacba651097a",
+            "bytes": 13638
+          },
+          {
+            "file": "src/analysis/tree-sitter/cfamily-structure.js",
+            "sha256": "628bd3cbc8cfa9c890f3c4751a11f0d036a1ab241bb712148dad5c8bc2fdf43c",
+            "bytes": 15991
+          },
+          {
+            "file": "src/analysis/tree-sitter/erb-structure.js",
+            "sha256": "69b3db836609ccb89c427a0b0472bae6c55e04d859a92f603ad9186a186fdedc",
+            "bytes": 11430
+          },
+          {
+            "file": "src/analysis/tree-sitter/native-script-worker.mjs",
+            "sha256": "a439aae8c073913d088e58aac2e9365b7d94e79e23e5bde29f1bb2c0e55d9ca3",
+            "bytes": 12941
+          },
+          {
+            "file": "src/analysis/tree-sitter/native-worker.mjs",
+            "sha256": "96f33c4bacab113f0e24f760972ef2c6b2574e3c9426a6f1475f4aad552310ce",
+            "bytes": 370641
+          },
+          {
+            "file": "src/analysis/tree-sitter/template-facts.js",
+            "sha256": "56cceb990a1b9c37d4e1b415dd3d35ea36d8765ecd50365cdd4b25cd21136c6e",
+            "bytes": 2476
+          },
+          {
+            "file": "src/analysis/tree-sitter/csharp-semantic.js",
+            "sha256": "dce3d40932edc733616366cef9c8d1258dfe72fc149c6e1cf98c796a93deb585",
+            "bytes": 30222
+          },
+          {
+            "file": "src/analysis/tree-sitter/script-worker.js",
+            "sha256": "c63c2b132ab1fec49460b7a58c8169fac60348abb0ef8fa9c2a797a4aec6b852",
+            "bytes": 1072
+          },
+          {
+            "file": "src/analysis/tree-sitter/native-budget.js",
+            "sha256": "651195a4b23c552799e3d2407ea211fa72f80c1358b4531045a11e18b9f0315c",
+            "bytes": 3747
+          },
+          {
+            "file": "src/analysis/tree-sitter/template-scripts.js",
+            "sha256": "9c76f437a0e43d3c2290daf3fac202d0e77e7bc1f77e7bfb9c9474833839d864",
+            "bytes": 2139
+          },
+          {
+            "file": "src/analysis/tree-sitter/jvm-syntax.js",
+            "sha256": "e07ec1708460733193738510d44a5cd2c4527f71c7f82633fb58921f2e304617",
+            "bytes": 4637
+          },
+          {
+            "file": "src/analysis/tree-sitter/grammars.js",
+            "sha256": "92e8dd8e7e739bf3ffb08626e0d87b66fbcc11cfb8bafd0a99ea2136af615b5d",
+            "bytes": 2623
+          },
+          {
+            "file": "src/analysis/tree-sitter/liquid-structure.js",
+            "sha256": "e2126fa7089155b6f3c1bf3ecc772b37907c4d8cf2a9f82d1cdbc7e378ddb81b",
+            "bytes": 17808
+          },
+          {
+            "file": "src/analysis/tree-sitter/fsharp-structure.js",
+            "sha256": "1a90333411dbd2f71ab9cd6e39d2751183a82894608c8448b42e7f78eef882eb",
+            "bytes": 22344
+          },
+          {
+            "file": "src/analysis/tree-sitter/client.js",
+            "sha256": "9d1e099e1a36ef4e57f58741d42b4483748220a76ca54dacb2c965e5a11aeaa9",
+            "bytes": 9820
+          },
+          {
+            "file": "src/analysis/tree-sitter/vbnet-source.js",
+            "sha256": "8b6ec03d2feb667d0cbab19e14ce5f0be597dc03fe614367c52365adf994b060",
+            "bytes": 3420
+          },
+          {
+            "file": "src/analysis/tree-sitter/ruby-syntax.js",
+            "sha256": "5f1b84b45f81772f7f404558448013360d7b366141ff744bbdefc4860ed71c93",
+            "bytes": 17564
+          },
+          {
+            "file": "src/analysis/tree-sitter/cfamily-source.js",
+            "sha256": "ac281a9f76c405d8be538aee23281fc04d1d3166e6b3fd6a496120ce774b9c18",
+            "bytes": 4924
+          },
+          {
+            "file": "src/analysis/tree-sitter/razor-structure.js",
+            "sha256": "78ba225518bf5ccda38aadf4d9e82901aa439fe35ca7100e71152e773b22333b",
+            "bytes": 16946
+          },
+          {
+            "file": "src/analysis/tree-sitter/embedded-host.js",
+            "sha256": "0e0ef41160d186a20bc09fc52bbbcf6006026f7cc63ec14f853f9bd395b2b176",
+            "bytes": 4814
+          },
+          {
+            "file": "src/analysis/tree-sitter/swift-structure.js",
+            "sha256": "28eb68d26dca216480bc136f91eeb28efa481bb7e29dd03ea904ef3ad3e8f259",
+            "bytes": 16626
+          },
+          {
+            "file": "src/analysis/tree-sitter/rust-semantic.js",
+            "sha256": "5123ea6d157fab2fcf50b2c6f872f253c35ee4db8083c09081920b228c27f476",
+            "bytes": 23770
+          },
+          {
+            "file": "src/analysis/tree-sitter/groovy-structure.js",
+            "sha256": "c7f47a8ac05e24c6fb68b8afedd3fb2dd90451f9111b87a7de86389b9b11ba94",
+            "bytes": 13675
+          },
+          {
+            "file": "src/analysis/tree-sitter/python-imports.js",
+            "sha256": "c735163946a6c8b9a88004976a66dd9e9bbb0f7172599ced72480f13764d994b",
+            "bytes": 17531
+          },
+          {
+            "file": "src/analysis/php/binding-node.js",
+            "sha256": "8e36886c8d8d9146bcf88a1f7a9045f58114f4b7dd92f50d24caafc5e5b5980b",
+            "bytes": 2591
+          },
+          {
+            "file": "src/analysis/php/structure.js",
+            "sha256": "1109576c08ad29576ed48737f978b6bb8b16eacf380da4bded4f8d7f9d522e5a",
+            "bytes": 23656
+          },
+          {
+            "file": "src/analysis/php/residency.js",
+            "sha256": "6f64af94e5703c7339583a7014764d807791b31e38a67373f14f70bdd6c0d26c",
+            "bytes": 10451
+          },
+          {
+            "file": "src/analysis/php/sources.js",
+            "sha256": "75f14e7bed1faab5e479cf8013cc1203488159f986d3509b502d2542cd3f8e1a",
+            "bytes": 6719
+          },
+          {
+            "file": "src/analysis/php/laravel-files.js",
+            "sha256": "bd25139b20016ee1d5af9e7fc5defc67dac3d902425a0a882ca7d334eda8914d",
+            "bytes": 3455
+          },
+          {
+            "file": "src/analysis/php/version.js",
+            "sha256": "6f56bc1977cf5f5ce910952d83f5fea4de901f5f2bc3c8870636ce41fa34115d",
+            "bytes": 439
+          },
+          {
+            "file": "src/analysis/php/native-worker.mjs",
+            "sha256": "9d4dd40f7a7af3bb5366c7b7851c085fe780dce01cfedc1dd52664caa062eb86",
+            "bytes": 1828
+          },
+          {
+            "file": "src/analysis/php/client.js",
+            "sha256": "4435e91b40daac63dbe999846103d1b826cfa40ab3f65413799c9b439e80ede2",
+            "bytes": 1418
+          },
+          {
+            "file": "src/analysis/embedded/framework-parser.js",
+            "sha256": "92bad28c5797b9edf10e30103fdbbf643d910eda78f9093245e562c9e8599028",
+            "bytes": 4572
+          },
+          {
+            "file": "src/analysis/embedded/index.js",
+            "sha256": "77a397bca785e3824907e6bd3af6d923029783b460f82163f7250d20d5d2cab4",
+            "bytes": 17960
+          },
+          {
+            "file": "src/analysis/embedded/native-framework-worker.mjs",
+            "sha256": "55ad6c2d7d187e0590c3bc8400270b9da435521fc19d3519875c46baf8db5c01",
+            "bytes": 1435
+          },
+          {
+            "file": "src/analysis/embedded/framework-worker.js",
+            "sha256": "e5adbfab3e1bd2e2803805057c98cd787bd5b27400d5f71bc5a33e1b36c5f35f",
+            "bytes": 1511
+          },
+          {
+            "file": "src/analysis/embedded/source.js",
+            "sha256": "7601b34919ff07bc7db00bee99c21f147568578e0f07cafbd482b2ebdfa2459a",
+            "bytes": 14426
+          },
+          {
+            "file": "src/analysis/resolution/ruby.js",
+            "sha256": "ae12a456098ba09f28d1bf2a7b6d7f76275f03741d850bd049439079b9ad858e",
+            "bytes": 25990
+          },
+          {
+            "file": "src/analysis/resolution/jvm-manifest.js",
+            "sha256": "54e50e4801709fba334a5aeb5ebff7a26f3f6fd66d826ceaeb845b7345818442",
+            "bytes": 13957
+          },
+          {
+            "file": "src/analysis/resolution/jvm-projects.js",
+            "sha256": "de90187d712efe03adbb5333f4a766c74ab83c95e5c7c0eebe6835bb23a8fffc",
+            "bytes": 29105
+          },
+          {
+            "file": "src/analysis/resolution/python.js",
+            "sha256": "72e33fe2eb390ae01b315d14787da949443ca04934466aa3712970ccb2562fa1",
+            "bytes": 21585
+          },
+          {
+            "file": "src/analysis/resolution/rust-projects.js",
+            "sha256": "f4a9a0a3c82ecf30dcdad485ccc87917ca18432a4801cd89ba00ceec1a74bd65",
+            "bytes": 39844
+          },
+          {
+            "file": "src/analysis/resolution/jvm.js",
+            "sha256": "b6463f25e38b8bf9eedc7e9864e6f3b5ba904aeae558c2323166fd1ee684cec0",
+            "bytes": 12991
+          },
+          {
+            "file": "src/analysis/resolution/go-manifest.js",
+            "sha256": "be757f49bfdcdef4fd60878f521d8abf0e7f5c497e1bb8de55047e575afc7cd3",
+            "bytes": 8455
+          },
+          {
+            "file": "src/analysis/resolution/ruby-autoload.js",
+            "sha256": "c54c551774917e44a857a782f7ad35dcbcae804f321b6a16a47cfc4708062a1d",
+            "bytes": 38673
+          },
+          {
+            "file": "src/analysis/resolution/dotnet-projects.js",
+            "sha256": "5add50944ab0f4c65803afbfb00a259d1e8d8f9dfa371d36c027b26fd36c47f4",
+            "bytes": 28264
+          },
+          {
+            "file": "src/analysis/resolution/csharp.js",
+            "sha256": "4682b180ff2b14c7f6f208baa470eb20d4dc9663aa2153e9702d4b6c8de953af",
+            "bytes": 10843
+          },
+          {
+            "file": "src/analysis/resolution/rust-lock.js",
+            "sha256": "05696065fe899c7994acdbf45aa53d00d0b22e1fd964787d43a0e4a618793003",
+            "bytes": 5159
+          },
+          {
+            "file": "src/analysis/resolution/php.js",
+            "sha256": "1644363d28b420729c9cd22646f6e2fe419a56b215146efb1517bc0bdacec1a8",
+            "bytes": 39370
+          },
+          {
+            "file": "src/analysis/resolution/typescript.js",
+            "sha256": "0f3c1979b57aeb08b64344796a5e41f9a42b06e457c4d4a1eea169fb3c1b9721",
+            "bytes": 9300
+          },
+          {
+            "file": "src/analysis/resolution/dotnet-data.js",
+            "sha256": "02c5aa8dd41e405e418c3c7b6b400d3ff7a3e7834b7997787a75d8cb94df108b",
+            "bytes": 5718
+          },
+          {
+            "file": "src/analysis/resolution/go.js",
+            "sha256": "c5b5489389412355a8f762a34f91edcdeee0ca61bae1ce6881cbd40eb7cf9e97",
+            "bytes": 21499
+          },
+          {
+            "file": "src/analysis/resolution/rust-derive-namespace.js",
+            "sha256": "a16dd243d56831352639339502ec856417d14f59ccabb0866f41b0308f871c6f",
+            "bytes": 11072
+          },
+          {
+            "file": "src/analysis/resolution/rust.js",
+            "sha256": "61f2a76ca341eda2a17dc98442d0754510e2117913539cd9cfe5a94bdaa2e5fb",
+            "bytes": 31254
+          },
+          {
+            "file": "src/analysis/resolution/rust-runtime-namespace.js",
+            "sha256": "d1d9bd8fa88b7dccafb37b76292cde30a4dbb43aaf06edfbb5a778a5ab7b0c90",
+            "bytes": 13431
+          },
+          {
+            "file": "src/analysis/languages/ruby.js",
+            "sha256": "a2208b1708f89bda3ef6ec02ea613dd392fd73f5d1b5958d192b13c1100e67b7",
+            "bytes": 5963
+          },
+          {
+            "file": "src/analysis/languages/ruby-symbols.js",
+            "sha256": "ac7cec29fc7289eec2eaa0c7c78fbce82c1d55c3acb6a75bb57f988566828c1e",
+            "bytes": 45091
+          },
+          {
+            "file": "src/analysis/languages/rust-cfg.js",
+            "sha256": "6fe2986d0a2619fc01a12d6b710770c25ad4087fc366322cc9b7570f1a72b942",
+            "bytes": 11751
+          },
+          {
+            "file": "src/analysis/languages/go-symbols.js",
+            "sha256": "808821e2401fd85269aee49e753dc2a74f886a90a7a9b258fef3929c0768e2ed",
+            "bytes": 34469
+          },
+          {
+            "file": "src/analysis/languages/python.js",
+            "sha256": "d692e026d24b438259f4f35318449244465f79cc81465a99679dc01f24f64e24",
+            "bytes": 13684
+          },
+          {
+            "file": "src/analysis/languages/python-arguments.js",
+            "sha256": "513678fa6e1d230186597f27f4407d83098de1286236e06a73a3d4988e8b3cf7",
+            "bytes": 1200
+          },
+          {
+            "file": "src/analysis/languages/php-imports.js",
+            "sha256": "d26b236a3c2c072e500c3de56ba57c38ee8c00e2c0caaaa3b0a8f85c4bc942ad",
+            "bytes": 4513
+          },
+          {
+            "file": "src/analysis/languages/jvm.js",
+            "sha256": "3877b3df47efd4a46ea7d771a398f9a214094f415e4c39f5b4fab6e667dfdfb6",
+            "bytes": 5921
+          },
+          {
+            "file": "src/analysis/languages/php-symbols.js",
+            "sha256": "172b8017e26dcaf501402b72b5441aa6e737f414f3b89242570c36b094e15785",
+            "bytes": 49259
+          },
+          {
+            "file": "src/analysis/languages/ruby-version.js",
+            "sha256": "f52f6850c247a93aeecae89808cf1dda7a3929607801a9fc125e48c4adbc3048",
+            "bytes": 5355
+          },
+          {
+            "file": "src/analysis/languages/csharp-symbols.js",
+            "sha256": "f8e50b3b79913c88449d06623d3f38f1c8c0cccb92668b2b1fdad1b73fdcb5c1",
+            "bytes": 56574
+          },
+          {
+            "file": "src/analysis/languages/csharp-types.js",
+            "sha256": "0953868e3558b762a2d5562f379938a98a936214aa203a5cf144207140c4b65a",
+            "bytes": 6582
+          },
+          {
+            "file": "src/analysis/languages/jvm-symbols.js",
+            "sha256": "2044f9e0cccb027eaea5843009aa8da4a2733a7fcb152f43e5db47aa24cda212",
+            "bytes": 46517
+          },
+          {
+            "file": "src/analysis/languages/liquid.js",
+            "sha256": "2bd456d9f35b159d957bdbe56f1c98291e7a603104bf534b5d889c9dc6277760",
+            "bytes": 5658
+          },
+          {
+            "file": "src/analysis/languages/typescript-runtime.js",
+            "sha256": "8c0ac70f6807b2d4e14f31a30f50ac371167922abad606994bf1036355352653",
+            "bytes": 8748
+          },
+          {
+            "file": "src/analysis/languages/csharp.js",
+            "sha256": "0aa7132c8b8ad0c5ef1abec33979810f5ded55a0abb7a4eaf8b77a68876ed8d6",
+            "bytes": 6317
+          },
+          {
+            "file": "src/analysis/languages/php.js",
+            "sha256": "7d6e4571b93aad9ba528190a186d95d18273d2b220390b66150328cf3d40669b",
+            "bytes": 9646
+          },
+          {
+            "file": "src/analysis/languages/python-symbols.js",
+            "sha256": "5a1ae6a798053e3db0465396af8c511bed3b9d90096f4bfdcd6bfe033849a368",
+            "bytes": 20525
+          },
+          {
+            "file": "src/analysis/languages/go.js",
+            "sha256": "2d605901cf4ee41025c68400e752d631ed44e3e2e15b73d4c72c681a6ae68704",
+            "bytes": 7376
+          },
+          {
+            "file": "src/analysis/languages/python-bindings.js",
+            "sha256": "054c945fa420fcd4e7fcd941b739b6a54cc0c189c474911e47acf25ef77aee39",
+            "bytes": 3427
+          },
+          {
+            "file": "src/analysis/languages/ruby-profile.js",
+            "sha256": "08b7c16aa004e1ed79691703ad5fcaca1d213f5ec13ee8cfef1152e69a114f49",
+            "bytes": 8302
+          },
+          {
+            "file": "src/analysis/languages/go-api.js",
+            "sha256": "3f5c7b1bffa7b60f373479a795baf00c1e8ea4da10cbc5b862fc9949b87efe9e",
+            "bytes": 2128
+          },
+          {
+            "file": "src/analysis/languages/typescript-services.js",
+            "sha256": "be4f6ee5daf24054e425d327818762fa267537793ada42975edbc26e2c2a8b85",
+            "bytes": 14759
+          },
+          {
+            "file": "src/analysis/languages/rust.js",
+            "sha256": "7bbc0b6ed849844b45b456de906e455b093ee259d07be446111c242c3816890b",
+            "bytes": 8138
+          },
+          {
+            "file": "src/analysis/languages/go-build.js",
+            "sha256": "82eb45d07281ab46a5e731f743dcaae50991f65212b09836f4ef83bcb4aaa719",
+            "bytes": 8473
+          },
+          {
+            "file": "src/analysis/languages/rust-symbols.js",
+            "sha256": "0d485651db42f5fb2dca054f779ae2dca2716bb23e7c7970198e81765c09fe29",
+            "bytes": 43891
+          },
+          {
+            "file": "src/analysis/routes/pattern.js",
+            "sha256": "a247107f512905f740d4bf1fde321f21851f16a238f61952907e1256f9161cb3",
+            "bytes": 3672
+          },
+          {
+            "file": "src/analysis/routes/spring-patterns.js",
+            "sha256": "c62f985f0bad46a39d8826c83adc2c7d0f523515e04c388363ea7c6052dee7ff",
+            "bytes": 8938
+          },
+          {
+            "file": "src/analysis/routes/aspnet-patterns.js",
+            "sha256": "9a2c360c8e988b48f7bb9421220112943114427df9dc029b4408da56cd8e500c",
+            "bytes": 20533
+          },
+          {
+            "file": "src/analysis/routes/rust-patterns.js",
+            "sha256": "c3de703c9fcb24d55db634726fb8d6aa34526ae9ecbf7060e944b0b0a0085562",
+            "bytes": 13993
+          },
+          {
+            "file": "src/analysis/routes/warp-patterns.js",
+            "sha256": "dd968c6fb9074560daa5eaf582abfad481999082818696906b8a98efa9ade429",
+            "bytes": 13490
+          },
+          {
+            "file": "src/analysis/routes/webflux-order.js",
+            "sha256": "5c4eeb87f750500b8e1f01c554bf3ed228e6b603a2dcb6f3f82a3061cd31eac6",
+            "bytes": 1095
+          },
+          {
+            "file": "src/analysis/routes/http-method.js",
+            "sha256": "52e2ba4e203b25d6537ba68259c9a32d880f4a641335c298af9b372104cf0547",
+            "bytes": 529
+          },
+          {
+            "file": "src/analysis/routes/rails-patterns.js",
+            "sha256": "d73c3093d79571cf9093efdf243cd5c0d2ad3551401407ea7cdb1f560568f521",
+            "bytes": 7990
+          },
+          {
+            "file": "src/analysis/routes/boundaries.js",
+            "sha256": "1d7914dab20052b58d44d87628656caaa6bd0f5947f0bdf4b98c4b0ea26dab2d",
+            "bytes": 3377
+          },
+          {
+            "file": "src/analysis/routes/go-patterns.js",
+            "sha256": "20e83337bb9efdcf6f64da587af8fad8c80dfd1cccd3578ec76f14e42a553f8d",
+            "bytes": 19416
+          },
+          {
+            "file": "src/analysis/routes/rocket-patterns.js",
+            "sha256": "ad35667783912cc804e28c1dca36e9188b0a5245b8e6e0a8e26ad41ef87afaaa",
+            "bytes": 7534
+          },
+          {
+            "file": "src/analysis/routes/contracts.js",
+            "sha256": "752f54415e6bdb90103d49409ffa727344a095106e111fa38dc23b567c973ab1",
+            "bytes": 16549
+          },
+          {
+            "file": "src/analysis/frameworks/sveltekit.js",
+            "sha256": "a26e9bf31c90606e1158e57863be13272fc927b136429385ec5bef3f49e1bc7b",
+            "bytes": 31915
+          },
+          {
+            "file": "src/analysis/frameworks/sveltekit-config.js",
+            "sha256": "06a38cb4efdab71f7cf72a6d77b96ea5648118ca916a6eb1762fb0b47eb42459",
+            "bytes": 14695
+          },
+          {
+            "file": "src/analysis/frameworks/rails-controllers.js",
+            "sha256": "1d1e8f09999a71fce2f91f689047479fcf9e6adc1ff1cd12353a051428f64b2b",
+            "bytes": 12115
+          },
+          {
+            "file": "src/analysis/frameworks/astro-routes.js",
+            "sha256": "8691c445e8873ea40931c5c39accff8d1acd865e18cf148fcdd625d08f92c9fc",
+            "bytes": 21751
+          },
+          {
+            "file": "src/analysis/frameworks/nest.js",
+            "sha256": "af5e75c2ecdb176f42a0576bfcdfca93fe167688e5e34905b8701e75de057a7b",
+            "bytes": 42300
+          },
+          {
+            "file": "src/analysis/frameworks/rails-inflections.js",
+            "sha256": "0afcdf472ca54d317777d918130a132eccf64052fd8a06edb1237e633f2e759e",
+            "bytes": 4806
+          },
+          {
+            "file": "src/analysis/frameworks/rails.js",
+            "sha256": "4455c3402b3697875c966c536dcaa094715a36792d986f3947974a9fb49ef3bb",
+            "bytes": 42833
+          },
+          {
+            "file": "src/analysis/frameworks/flask.js",
+            "sha256": "e85e9fdc0862c348a51328c13b4b8717f19516867c2f165fb8e589b5ec21dc2e",
+            "bytes": 45296
+          },
+          {
+            "file": "src/analysis/frameworks/spring-mvc.js",
+            "sha256": "0cfca408b1043e4689f971c6525f0dcbe0684f37682323a6aba8167ea05c4e3b",
+            "bytes": 23159
+          },
+          {
+            "file": "src/analysis/frameworks/spring-webflux.js",
+            "sha256": "0d482f067fea251f1b4c90dd69b544348060a988338fd3fbf2f17f62b1c35d4e",
+            "bytes": 43796
+          },
+          {
+            "file": "src/analysis/frameworks/aspnet-profile.js",
+            "sha256": "5ab9172fc5ef7461916ec9d228609f59919e11ef768761f42eba258ebbba8e67",
+            "bytes": 3695
+          },
+          {
+            "file": "src/analysis/frameworks/astro-config.js",
+            "sha256": "56bba475ea98f9096f9a2554c9d125d603c8f1f5a6b10e81605c2df5c9638942",
+            "bytes": 14856
+          },
+          {
+            "file": "src/analysis/frameworks/fastapi.js",
+            "sha256": "3410ae9be4c3a447e6aed4be193f0632762dd8f06783276a31785a384f759621",
+            "bytes": 34060
+          },
+          {
+            "file": "src/analysis/frameworks/django.js",
+            "sha256": "4fbd4ebfbace7cc792e6c2f9fdfaaeca51c646f47940b3493c8f1f939e2485c7",
+            "bytes": 47974
+          },
+          {
+            "file": "src/analysis/frameworks/index.js",
+            "sha256": "3f7175e869242db6729f89bdcd73c7d41dead0ca2ee8712a703a1797d3fc8ca0",
+            "bytes": 345
+          },
+          {
+            "file": "src/analysis/frameworks/typescript-pack.js",
+            "sha256": "f09e841592c49f849e0621e8bfa53ab57050cdbb7b3ba08355d066cbf35a688c",
+            "bytes": 2499
+          },
+          {
+            "file": "src/analysis/frameworks/aspnet-minimal.js",
+            "sha256": "e248048837de47509e11ffce216da0502ce6937af457ca38f2408a5ba91e5a5d",
+            "bytes": 65374
+          },
+          {
+            "file": "src/analysis/frameworks/sveltekit-invocations.js",
+            "sha256": "728125d46930b6ff95baa0f7e75d37138e5c2b0404b7923b88296f1717d85657",
+            "bytes": 2645
+          },
+          {
+            "file": "src/analysis/frameworks/vue-template.js",
+            "sha256": "d0ed8c89026a306f74bc3c280e5aa76cb05a9d0021fcc9a614f887c4d6e6d6bc",
+            "bytes": 6838
+          },
+          {
+            "file": "src/analysis/frameworks/browser-invocations.js",
+            "sha256": "7ac137a8cbfe4f1e403be138bdb082321e8210a5591b0d5c60d2d63247c89c8e",
+            "bytes": 2570
+          },
+          {
+            "file": "src/analysis/frameworks/nuxt-conventions.js",
+            "sha256": "a8f4c53425983d82498ac9a0ae618ae34c3803acf0e5bc7a6e8a787b27f544dd",
+            "bytes": 17766
+          },
+          {
+            "file": "src/analysis/frameworks/svelte.js",
+            "sha256": "77ac062c84bc0d5192c3eb97f10861e65a03204b0a4fa68ecad1bbf43cfecb61",
+            "bytes": 32812
+          },
+          {
+            "file": "src/analysis/frameworks/warp-syntax.js",
+            "sha256": "58413aa6a49228abff9be9e2f5ffa0e2450d75817c4bdc0a7c660b9b3905eb40",
+            "bytes": 3472
+          },
+          {
+            "file": "src/analysis/frameworks/express.js",
+            "sha256": "f6418bbf945c19f24b442ff683f06d1dd7afe0b3dc008c06f5f2f88dc1a35033",
+            "bytes": 32061
+          },
+          {
+            "file": "src/analysis/frameworks/nuxt-config.js",
+            "sha256": "1cbbeb9a2aeebbe503bce3ab498c9111273146b0cf79f32df0eeaf91ac147be2",
+            "bytes": 21130
+          },
+          {
+            "file": "src/analysis/frameworks/go-routers.js",
+            "sha256": "29f595353b38dd91994d6013534b476f80b2f36df7b7649c4f058b687ed6027b",
+            "bytes": 83728
+          },
+          {
+            "file": "src/analysis/frameworks/nuxt.js",
+            "sha256": "c4bb7b01b9c78050c60c20cf2bdf65475dabb62db98cc5e6b73efc2269e1e9c9",
+            "bytes": 25567
+          },
+          {
+            "file": "src/analysis/frameworks/vue-router.js",
+            "sha256": "a100cfa571d1a1ddf0745d4d27a60512758d93dcb1dd06acf3552fbefed62c94",
+            "bytes": 18749
+          },
+          {
+            "file": "src/analysis/frameworks/vue.js",
+            "sha256": "5f7bbfe710322a39ad9cbb612654fada6f3b619419ba9bf8d019617a1a6a83a2",
+            "bytes": 30459
+          },
+          {
+            "file": "src/analysis/frameworks/sveltekit-path.js",
+            "sha256": "9115c54500ff73415527a5ec203386abe5e50c9ae64db4e0ac329e371e682aec",
+            "bytes": 4587
+          },
+          {
+            "file": "src/analysis/frameworks/go-profile.js",
+            "sha256": "f903e587b9af1a091c44ddc3cbc52038b98f3156f3e24c35493892819d2d8ba7",
+            "bytes": 3165
+          },
+          {
+            "file": "src/analysis/frameworks/rust-source-projection.js",
+            "sha256": "18d5f385a02def23fa4e5a0e6b9ed14bcefd7542dbc4cb41383cd79b46aa7b98",
+            "bytes": 4283
+          },
+          {
+            "file": "src/analysis/frameworks/vue-static.js",
+            "sha256": "4894e8197f8efe5789b73c5833b4ca118f3b5b4fc436e82fc4d0b00e0531ecb5",
+            "bytes": 95
+          },
+          {
+            "file": "src/analysis/frameworks/spring-profile.js",
+            "sha256": "45e1eae9916dd97da4b8b01e5009def3b0d9b5a3186ee5ccfdb011c5ca6bdd88",
+            "bytes": 10274
+          },
+          {
+            "file": "src/analysis/frameworks/warp-cors.js",
+            "sha256": "75e0af8fd4b734ca5839e7795a181631d659f82e879932ff8373f072e12e5ba2",
+            "bytes": 4500
+          },
+          {
+            "file": "src/analysis/frameworks/rust-profile.js",
+            "sha256": "ac2be34abbea49c8690085f8b6f832f45ee0d7c67e8dd387a9b6270cb910cad7",
+            "bytes": 31787
+          },
+          {
+            "file": "src/analysis/frameworks/typescript-binding.js",
+            "sha256": "efa19af5a701b0b445fde7b439b94b4499868994d1b0cf7227a14eca3933083f",
+            "bytes": 9021
+          },
+          {
+            "file": "src/analysis/frameworks/astro.js",
+            "sha256": "6b115fe0146c8b3c0d8d35eab9f673d069a92bf30d468814d4655755fddaa79c",
+            "bytes": 25212
+          },
+          {
+            "file": "src/analysis/frameworks/rust-derive-namespace.js",
+            "sha256": "31c29f36a556684943b94c7f82d665725735a20f49772ec54aab7cd6b3173123",
+            "bytes": 7100
+          },
+          {
+            "file": "src/analysis/frameworks/aspnet-mvc.js",
+            "sha256": "7c1fa9a845145f41fd44d16a7b4948caf9e39bc0d813858f2869be583e07c8d8",
+            "bytes": 26822
+          },
+          {
+            "file": "src/analysis/frameworks/astro-path.js",
+            "sha256": "8d26daeb514d8e792cd3f31ce3042696cc01e7ff890ac5127a43cce9c0a84b58",
+            "bytes": 2650
+          },
+          {
+            "file": "src/analysis/frameworks/rust-routers.js",
+            "sha256": "94c03fe356b462f0f49398d27b7101cb2b8a2cc675ad8406aed12c46570f942c",
+            "bytes": 124057
+          },
+          {
+            "file": "src/analysis/frameworks/nuxt-path.js",
+            "sha256": "7fa9013219c9d3eeedb01c2696a2e40b9fcc3f6e2ae438f09fb48ce48452f7cb",
+            "bytes": 4301
+          },
+          {
+            "file": "src/analysis/frameworks/warp-state.js",
+            "sha256": "80d087ec95cdac4234f0fff4d7835a4672ffaa6b5ac3cffe9501d392edad6baa",
+            "bytes": 4618
+          },
+          {
+            "file": "src/analysis/frameworks/typescript-static.js",
+            "sha256": "55e802af148be460a6980f739fb31c7fdc2fc0559d5da974278ed3b590d93c58",
+            "bytes": 13116
+          },
+          {
+            "file": "src/analyzers/laravel-fortify.js",
+            "sha256": "278810bbf529dae3cfb36a07229c68828b46f00a337300546d82c8f8abf0b752",
+            "bytes": 14905
+          },
+          {
+            "file": "src/analyzers/laravel-schema.js",
+            "sha256": "6cdb9f26edae9a02258219323f55c870987fdd0c0f828bea23642db3cea14d22",
+            "bytes": 37379
+          },
+          {
+            "file": "src/analyzers/ts-http.js",
+            "sha256": "65c3ed5c8abad7a29dcbd2f6449403c65928c0dd514e68fa2f776cfa8b7d9c49",
+            "bytes": 34218
+          },
+          {
+            "file": "src/analyzers/filesystem.js",
+            "sha256": "8423e15fcaf073cae307552a1e4190b558a6ec6ecd7336d2251fe2cf1d6c166a",
+            "bytes": 8886
+          },
+          {
+            "file": "src/analyzers/laravel-console.js",
+            "sha256": "7b9ec4e221676b2ddbb203001b8aabeb1f51126e41b123cc6ef5da9fcf37e720",
+            "bytes": 18247
+          },
+          {
+            "file": "src/analyzers/php-ast.js",
+            "sha256": "f17e4624b52eb79a6f942afcbe39c923d2cc1850239a233bd7ce84f9dc2640c6",
+            "bytes": 3543
+          },
+          {
+            "file": "src/analyzers/php-references.js",
+            "sha256": "7a65608b252ceae3841ef958e5605527741d7134ee76a5f2aa6cfe9972f18888",
+            "bytes": 33368
+          },
+          {
+            "file": "src/analyzers/ts-references.js",
+            "sha256": "7a705017cd0eaa4813fb892501d646efe8d5f26451e6e63c3cd0f0a0f7365647",
+            "bytes": 24521
+          },
+          {
+            "file": "src/analyzers/references.js",
+            "sha256": "ef90d5d77ee64bfbf205db883ab7b7027fef18467e88ebd5ed675d24d56287e3",
+            "bytes": 2951
+          },
+          {
+            "file": "src/analyzers/typescript.js",
+            "sha256": "a1697026d9d112531b1e86b6cc30069a98518d0f524f428ac0726f585f906de6",
+            "bytes": 35949
+          },
+          {
+            "file": "src/analyzers/ts-program.js",
+            "sha256": "0c25ab8fe787c6af4756eda1919f4eb36c41f22a2c33c39d9a37c984c96c1555",
+            "bytes": 8981
+          },
+          {
+            "file": "src/analyzers/ts-url.js",
+            "sha256": "410e5e2e47bbe6d8c76aaffde60dda0ffe682e3f8518e1dfc0e3a0d2be99f510",
+            "bytes": 27746
+          },
+          {
+            "file": "src/analyzers/laravel.js",
+            "sha256": "63ca9d6159feb3ad35412b7fff6a9a4999d78054b4b954359771168546d9acab",
+            "bytes": 30955
+          },
+          {
+            "file": "src/analyzers/git-metrics.js",
+            "sha256": "0310f3adfee27fe07d0178ae76b304068371fdaf547d47e0e4d36603b02a0f0f",
+            "bytes": 6524
+          },
+          {
+            "file": "src/projection/families.js",
+            "sha256": "7c1ab1092c8e378e87351a8e8e22026b533a16941e9b641be5bbf13c7022b10f",
+            "bytes": 14850
+          },
+          {
+            "file": "src/projection/steps.js",
+            "sha256": "2ca619694417cba6cadf5d3830239b1b318ddec10a7b67742ed4ffe591d4e131",
+            "bytes": 6472
+          },
+          {
+            "file": "src/projection/impact.js",
+            "sha256": "279f8cbd4499a9e455fe32cfbe442a9f02837c4cf3aed9308d72720f6945141c",
+            "bytes": 3618
+          },
+          {
+            "file": "src/projection/request-flows.js",
+            "sha256": "3c3646da1c81e9d1970ffd9013ab94af8bd734d147b08ff2bbfdd0662e030121",
+            "bytes": 37393
+          },
+          {
+            "file": "src/projection/layout.js",
+            "sha256": "f29352c46c0945e7d5312bc7ac162cc978336ffd08215edaf4ad4f9c428fc1ca",
+            "bytes": 17130
+          },
+          {
+            "file": "src/projection/hierarchy.js",
+            "sha256": "3338c3714ba39ede7a6b7b358745da4128e87b041446b1c765746ba2c1a67f62",
+            "bytes": 13488
+          },
+          {
+            "file": "src/projection/dto.js",
+            "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+            "bytes": 11
+          },
+          {
+            "file": "src/projection/evolution.js",
+            "sha256": "48ae7d592110268a0e1a470414eb066c5b8f3857fbaaba13945e8f0b4b31f0bb",
+            "bytes": 8384
+          },
+          {
+            "file": "src/projection/catalog.js",
+            "sha256": "e078ec29fa7e827a20069b4ca911557b2ed42a5bd54c37011b9fba31cefe4944",
+            "bytes": 16373
+          },
+          {
+            "file": "src/projection/service.js",
+            "sha256": "4dedb14243dc64919512c40082ec158f6b183b84ec42cc24d24b96f6d0983fd9",
+            "bytes": 106750
+          },
+          {
+            "file": "src/projection/authorship.js",
+            "sha256": "4215f550db56eb542619f34c7a9fa361e3b81f980dce6441a93958b7aee835c3",
+            "bytes": 13137
+          },
+          {
+            "file": "src/projection/conditions.js",
+            "sha256": "a35291427e4680d5b2824410c77f59f3d86848e5b00112b5ed6cdcd94478b615",
+            "bytes": 11104
+          },
+          {
+            "file": "src/projection/regions.js",
+            "sha256": "4ac8c73694686586799153fb5eb71da083eb51fe005ab4ef46ab6bd892fa17f3",
+            "bytes": 7393
+          },
+          {
+            "file": "src/projection/source.js",
+            "sha256": "72772b1f7ab90d6a9fde036c4adf58dce371156efaf00e405ca6c8339e2405e4",
+            "bytes": 9056
+          },
+          {
+            "file": "src/ai/domains.js",
+            "sha256": "321b4c10d528dc01436589c80138c03fd083c208e2948665e2504a9c30718e4c",
+            "bytes": 7584
+          },
+          {
+            "file": "src/ai/tasks.js",
+            "sha256": "d33a0572c934fecdbab250df96c12fca65b5b3e6b54606e27f9807d6facbc1dd",
+            "bytes": 34798
+          },
+          {
+            "file": "src/ai/ste.js",
+            "sha256": "30e1e7a2e8ecfb25896fda0bf5d9ba56886b2114e9e8e628c2195b9fdef0c1dd",
+            "bytes": 7165
+          },
+          {
+            "file": "src/ai/store.js",
+            "sha256": "069aeb1ceb9a0626abfd272f420c9cdc9131d331fad2a64b99abb7339b77e375",
+            "bytes": 7414
+          },
+          {
+            "file": "src/ai/pricing.js",
+            "sha256": "5f4fbed677f9d0b5f833474e56cd48310fb61bc522c4fd5a2b5a7d8b98e54a55",
+            "bytes": 1301
+          },
+          {
+            "file": "src/ai/command.js",
+            "sha256": "01e89ed32c2094db118eb4bfc5f3bf86a4a232ad854aba7414390e03b809d98b",
+            "bytes": 6627
+          },
+          {
+            "file": "src/ai/runner.js",
+            "sha256": "1246ac056a33947d7227b599f7c112737e753b268beb771d3e2ca04eca9ba16d",
+            "bytes": 9147
+          },
+          {
+            "file": "src/ai/openai.js",
+            "sha256": "2de9f61f56ef42622f961be62e171da1dd937acc67df13ccc3aca89280328091",
+            "bytes": 4667
+          }
+        ],
+        "links": [
+          {
+            "file": "grammars",
+            "target": "/var/www/html/codiluce/grammars/"
+          }
+        ],
+        "sourceArchiveSha256": "b4673ef964d25698ca014b5cc07902e9eb3591bd127aa9951ac6d437f1e69ee3",
+        "beforeAvailableBytes": 0,
+        "afterAvailableBytes": 4349952,
+        "originalOrFailedEvidenceDeleted": false,
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "passed": true,
+        "scope": "Only verified own regenerable compiled output; exact source and compiled archive preserved",
+        "source": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/compiled",
+        "target": "/dev/shm/codiluce-embedded-source-release/source-conformance-compiled",
+        "files": [
+          {
+            "file": "src/launcher.js",
+            "sha256": "b6ec7126ccd2ce1d2972a1a249903f3b937346cc0ef03b7aab39bf37bcdbf3df",
+            "bytes": 10040
+          },
+          {
+            "file": "src/cli.js",
+            "sha256": "7d748d2633c9fcf2f27f0d70dffca41a5159c704d87fe06c5db001c2a6818398",
+            "bytes": 15932
+          },
+          {
+            "file": "src/storage/sqlite.js",
+            "sha256": "e6c115b6e03f7b66a5827cc7d232fedf90bde1e13aad169ed50835f8ef90cbba",
+            "bytes": 13090
+          },
+          {
+            "file": "src/history/fingerprint.js",
+            "sha256": "a0ee63d59385bf080f2d99b342c9f01213396b529fd63cf56d137357e8e8316c",
+            "bytes": 2976
+          },
+          {
+            "file": "src/history/git.js",
+            "sha256": "7d16c4c6c706ea00c77678b8e2ed59f85ba2c5dea5bffe7faefbe651c74220f1",
+            "bytes": 12011
+          },
+          {
+            "file": "src/history/authors.js",
+            "sha256": "7fbbb0db251ab2b65097d776956c4333a21a3e220aa9cebcbedc44d8d15fbb98",
+            "bytes": 16235
+          },
+          {
+            "file": "src/history/pull-requests.js",
+            "sha256": "3a2bd4a26c11e7198d9301c7ca190d2d929e6ba76bfe6522782999f948b8ea9d",
+            "bytes": 3387
+          },
+          {
+            "file": "src/history/store.js",
+            "sha256": "d709443ee4b27437da1ef6ce25731437ea9da10d7c0c3180bfa2bd76b8532977",
+            "bytes": 23447
+          },
+          {
+            "file": "src/history/snapshot.js",
+            "sha256": "9f0ec6792c73d8f42ec2240f898c0b0c4060ad3a53318c90cb70a74397e43828",
+            "bytes": 8952
+          },
+          {
+            "file": "src/history/indexer.js",
+            "sha256": "0c064a2af2f6fa0e9a4463ec8a62462eef16f29746a9b1e1c86e869314318454",
+            "bytes": 14620
+          },
+          {
+            "file": "src/history/service.js",
+            "sha256": "d42da690f81e85b659522118c5ecfa20b1005bbd0e9c32906f588b348792b8de",
+            "bytes": 8528
+          },
+          {
+            "file": "src/history/worker.js",
+            "sha256": "85a2edf0fc0de4cb213332d10ff22cb4d7462d4a9316d6b4ed1337958d10ea03",
+            "bytes": 1395
+          },
+          {
+            "file": "src/history/lineage.js",
+            "sha256": "41da10f9756b3a87d149d40adb19204bbb5bd05fae64c34a5d974452664b5628",
+            "bytes": 7651
+          },
+          {
+            "file": "src/history/worker-channel.js",
+            "sha256": "01b2dc97fe488f15b9445a156687eadd7a37397472f8423ed996ce4bbd851f63",
+            "bytes": 1450
+          },
+          {
+            "file": "src/history/textdiff.js",
+            "sha256": "089a62b590bea8e05eecc9503ad18cef537d801ba6c11f353e3ca5a1a81e4943",
+            "bytes": 5049
+          },
+          {
+            "file": "src/history/diff.js",
+            "sha256": "61ff9e38bde6d365487dc414f9f44c4dee120c2563bc42ed139d37e2c545bceb",
+            "bytes": 9669
+          },
+          {
+            "file": "src/api/static.js",
+            "sha256": "0b05640f1ab88732738b6a95beb1c01f4eb0c6a64c316a8c6f62cfc514f8ee28",
+            "bytes": 2089
+          },
+          {
+            "file": "src/api/server.js",
+            "sha256": "4fe1bdd8e5098e838ef2cda66cdb7ea597ccc5ccdf4a27c4676b1e7f0ae1b360",
+            "bytes": 8712
+          },
+          {
+            "file": "src/api/projection-routes.js",
+            "sha256": "19bc5b149d058e5d01a45c378bcf88a87c010b5189593c0795a00d282d3e5af4",
+            "bytes": 12179
+          },
+          {
+            "file": "src/pipeline/index.js",
+            "sha256": "3c24ece519b683a23984e7c27b74a71c1aa6d7769973e69b35f8067edcf39f2f",
+            "bytes": 7094
+          },
+          {
+            "file": "src/pipeline/php-analysis.js",
+            "sha256": "767b6eae19fb8edbbb13b5cb3570595fdd4d4b2c923728cbb06ab7e818f7a861",
+            "bytes": 3899
+          },
+          {
+            "file": "src/pipeline/cache.js",
+            "sha256": "cbc4366ae802af697335fc0716e9cbd9646daece175a22dc85e548e590591096",
+            "bytes": 17081
+          },
+          {
+            "file": "src/pipeline/inertia-linker.js",
+            "sha256": "1db6bcafe66a2adce0439050ad5009bf324f6be89f4e93285ccd86002d27262b",
+            "bytes": 3517
+          },
+          {
+            "file": "src/pipeline/api-matcher.js",
+            "sha256": "c23126079d1dd8d3e9381156aebb59f78c80c2e684c1b3089326aefe48cedb46",
+            "bytes": 22088
+          },
+          {
+            "file": "src/core/analyzer.js",
+            "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+            "bytes": 11
+          },
+          {
+            "file": "src/core/workspaces.js",
+            "sha256": "52a8c64fbf7e8bbfc506b7aff714a1e097a10375ad3410f4ac927a0c5649ca9e",
+            "bytes": 1414
+          },
+          {
+            "file": "src/core/config.js",
+            "sha256": "793580676746d734475d194652636f2e2764c397afbe3ce671c24dad893d4fa2",
+            "bytes": 31493
+          },
+          {
+            "file": "src/core/graph.js",
+            "sha256": "7e20c3cc186f72e7d91786e5b007148e2115e66ee41c31e627fa57bbfcce0645",
+            "bytes": 5571
+          },
+          {
+            "file": "src/core/languages.js",
+            "sha256": "fa91d9265b4360247b577070c970802f7e53edc4ea77a7e5889f6702aaa37947",
+            "bytes": 4046
+          },
+          {
+            "file": "src/core/manifests.js",
+            "sha256": "1850bd58faa30c64e1c91ff4e6fa9786af8b65c2ac9b9a076988c08e6592b1ea",
+            "bytes": 14363
+          },
+          {
+            "file": "src/analysis/rust-evidence.js",
+            "sha256": "68f52d73b20d672f4a87666d9acbb609b7638311adc3208ce03410be1587b517",
+            "bytes": 8134
+          },
+          {
+            "file": "src/analysis/project-model.js",
+            "sha256": "49640778271d947bdd987dd7ecbca93fbf74d37b82143b038fd13e0c490b23b9",
+            "bytes": 11397
+          },
+          {
+            "file": "src/analysis/indexed-sources.js",
+            "sha256": "27c6c869567a3ec21cd8522c75a47795713b8ceb2c4ab5d6174ae900e8eed5b2",
+            "bytes": 6545
+          },
+          {
+            "file": "src/analysis/source-map.js",
+            "sha256": "8dc16f5413971a87b8ae7f9bac07e98b367eafa8da7392548e22269ff40b4214",
+            "bytes": 1869
+          },
+          {
+            "file": "src/analysis/registry.js",
+            "sha256": "b8bfb3c46529e3dfba1419117d0b6a4f45d9042643ce877b7549cc65426ee511",
+            "bytes": 1800
+          },
+          {
+            "file": "src/analysis/capabilities.js",
+            "sha256": "efbbec0c845247c9f95c692b65a80e286ffeeaa27a7a46376a0a6ba4eb18628e",
+            "bytes": 4002
+          },
+          {
+            "file": "src/analysis/facts.js",
+            "sha256": "054089344809c56a6f6d37b67a9e1365791ffe5997bff6cf5021b435edc30e48",
+            "bytes": 941
+          },
+          {
+            "file": "src/analysis/tree-sitter/objc-regions.js",
+            "sha256": "20bd8013dde8d4f6f6883404eb31788e0ee4881c5777512e5fe08101bed5d305",
+            "bytes": 6602
+          },
+          {
+            "file": "src/analysis/tree-sitter/scala-structure.js",
+            "sha256": "95f4c01a4d3a976bcb7bdb039a4d9b999ae0fa6aea2dba8f3af7fc88286fb9db",
+            "bytes": 17822
+          },
+          {
+            "file": "src/analysis/tree-sitter/jvm-semantic.js",
+            "sha256": "a2c38fe87a5f9d6d401da18734bc23fd4d934b0ebad0990e24e930a05b1c0fb9",
+            "bytes": 31413
+          },
+          {
+            "file": "src/analysis/tree-sitter/go-syntax.js",
+            "sha256": "1ddfd8d452890de1932b9022e82896cd1555202fb9c808d16214dcff3b89d22a",
+            "bytes": 19979
+          },
+          {
+            "file": "src/analysis/tree-sitter/objc-macros.js",
+            "sha256": "2ddd753b57a06f631494cf751c91ed6e63aa81ad17790882094a9236975d4a73",
+            "bytes": 7391
+          },
+          {
+            "file": "src/analysis/tree-sitter/csharp-syntax.js",
+            "sha256": "5dc8852ea74410a5104004cdaedbab74d083b3e4a3bc9aa265649874d78e63e0",
+            "bytes": 7347
+          },
+          {
+            "file": "src/analysis/tree-sitter/objc-structure.js",
+            "sha256": "f635ebbf7885cecc840e1e5b1b42f6f8a4435ac3cf126d30aab1c1bd47ca520b",
+            "bytes": 15159
+          },
+          {
+            "file": "src/analysis/tree-sitter/analyzer.js",
+            "sha256": "aab1807b44811c6fe0a599e1d456ba3321bc23d49177c97a904f9e5d273ae587",
+            "bytes": 21942
+          },
+          {
+            "file": "src/analysis/tree-sitter/vbnet-structure.js",
+            "sha256": "7ce248b32aa4e5199d4fd9dd8f9414d6a9c443a7e8b5d66d3d644e19739696e9",
+            "bytes": 15898
+          },
+          {
+            "file": "src/analysis/tree-sitter/rust-syntax.js",
+            "sha256": "3faa2f39fb4a465242cd496731a6bcb2ac713e896b6fb7f6e7e46297ee6aaea6",
+            "bytes": 11940
+          },
+          {
+            "file": "src/analysis/tree-sitter/erb-script.js",
+            "sha256": "1496688dedc4bf83c829d6a2ea30ae93a0b89abcbc4ab7142b7a60016645f94f",
+            "bytes": 9908
+          },
+          {
+            "file": "src/analysis/tree-sitter/go-imports.js",
+            "sha256": "0f104409b7256b21917c4b64b6212cca8363e7ca240ad19607e36d956d201847",
+            "bytes": 4062
+          },
+          {
+            "file": "src/analysis/tree-sitter/extract.js",
+            "sha256": "8a913b282c7e1318fc1b39f9e9ea5a418c676d282850d617fb6538a7a0d3285c",
+            "bytes": 14768
+          },
+          {
+            "file": "src/analysis/tree-sitter/worker.js",
+            "sha256": "442c1fcdfe2b1b974d5c6bc5a3299981af224c55f222d956873975427a9969e8",
+            "bytes": 11211
+          },
+          {
+            "file": "src/analysis/tree-sitter/objc-cpp.js",
+            "sha256": "a444baee148356f17649aa1d6aa34f518cc2f3a67cf8ec113447cacba651097a",
+            "bytes": 13638
+          },
+          {
+            "file": "src/analysis/tree-sitter/cfamily-structure.js",
+            "sha256": "628bd3cbc8cfa9c890f3c4751a11f0d036a1ab241bb712148dad5c8bc2fdf43c",
+            "bytes": 15991
+          },
+          {
+            "file": "src/analysis/tree-sitter/erb-structure.js",
+            "sha256": "69b3db836609ccb89c427a0b0472bae6c55e04d859a92f603ad9186a186fdedc",
+            "bytes": 11430
+          },
+          {
+            "file": "src/analysis/tree-sitter/native-script-worker.mjs",
+            "sha256": "a439aae8c073913d088e58aac2e9365b7d94e79e23e5bde29f1bb2c0e55d9ca3",
+            "bytes": 12941
+          },
+          {
+            "file": "src/analysis/tree-sitter/native-worker.mjs",
+            "sha256": "96f33c4bacab113f0e24f760972ef2c6b2574e3c9426a6f1475f4aad552310ce",
+            "bytes": 370641
+          },
+          {
+            "file": "src/analysis/tree-sitter/template-facts.js",
+            "sha256": "56cceb990a1b9c37d4e1b415dd3d35ea36d8765ecd50365cdd4b25cd21136c6e",
+            "bytes": 2476
+          },
+          {
+            "file": "src/analysis/tree-sitter/csharp-semantic.js",
+            "sha256": "dce3d40932edc733616366cef9c8d1258dfe72fc149c6e1cf98c796a93deb585",
+            "bytes": 30222
+          },
+          {
+            "file": "src/analysis/tree-sitter/script-worker.js",
+            "sha256": "c63c2b132ab1fec49460b7a58c8169fac60348abb0ef8fa9c2a797a4aec6b852",
+            "bytes": 1072
+          },
+          {
+            "file": "src/analysis/tree-sitter/native-budget.js",
+            "sha256": "651195a4b23c552799e3d2407ea211fa72f80c1358b4531045a11e18b9f0315c",
+            "bytes": 3747
+          },
+          {
+            "file": "src/analysis/tree-sitter/template-scripts.js",
+            "sha256": "9c76f437a0e43d3c2290daf3fac202d0e77e7bc1f77e7bfb9c9474833839d864",
+            "bytes": 2139
+          },
+          {
+            "file": "src/analysis/tree-sitter/jvm-syntax.js",
+            "sha256": "e07ec1708460733193738510d44a5cd2c4527f71c7f82633fb58921f2e304617",
+            "bytes": 4637
+          },
+          {
+            "file": "src/analysis/tree-sitter/grammars.js",
+            "sha256": "92e8dd8e7e739bf3ffb08626e0d87b66fbcc11cfb8bafd0a99ea2136af615b5d",
+            "bytes": 2623
+          },
+          {
+            "file": "src/analysis/tree-sitter/liquid-structure.js",
+            "sha256": "e2126fa7089155b6f3c1bf3ecc772b37907c4d8cf2a9f82d1cdbc7e378ddb81b",
+            "bytes": 17808
+          },
+          {
+            "file": "src/analysis/tree-sitter/fsharp-structure.js",
+            "sha256": "1a90333411dbd2f71ab9cd6e39d2751183a82894608c8448b42e7f78eef882eb",
+            "bytes": 22344
+          },
+          {
+            "file": "src/analysis/tree-sitter/client.js",
+            "sha256": "9d1e099e1a36ef4e57f58741d42b4483748220a76ca54dacb2c965e5a11aeaa9",
+            "bytes": 9820
+          },
+          {
+            "file": "src/analysis/tree-sitter/vbnet-source.js",
+            "sha256": "8b6ec03d2feb667d0cbab19e14ce5f0be597dc03fe614367c52365adf994b060",
+            "bytes": 3420
+          },
+          {
+            "file": "src/analysis/tree-sitter/ruby-syntax.js",
+            "sha256": "5f1b84b45f81772f7f404558448013360d7b366141ff744bbdefc4860ed71c93",
+            "bytes": 17564
+          },
+          {
+            "file": "src/analysis/tree-sitter/cfamily-source.js",
+            "sha256": "ac281a9f76c405d8be538aee23281fc04d1d3166e6b3fd6a496120ce774b9c18",
+            "bytes": 4924
+          },
+          {
+            "file": "src/analysis/tree-sitter/razor-structure.js",
+            "sha256": "78ba225518bf5ccda38aadf4d9e82901aa439fe35ca7100e71152e773b22333b",
+            "bytes": 16946
+          },
+          {
+            "file": "src/analysis/tree-sitter/embedded-host.js",
+            "sha256": "0e0ef41160d186a20bc09fc52bbbcf6006026f7cc63ec14f853f9bd395b2b176",
+            "bytes": 4814
+          },
+          {
+            "file": "src/analysis/tree-sitter/swift-structure.js",
+            "sha256": "28eb68d26dca216480bc136f91eeb28efa481bb7e29dd03ea904ef3ad3e8f259",
+            "bytes": 16626
+          },
+          {
+            "file": "src/analysis/tree-sitter/rust-semantic.js",
+            "sha256": "5123ea6d157fab2fcf50b2c6f872f253c35ee4db8083c09081920b228c27f476",
+            "bytes": 23770
+          },
+          {
+            "file": "src/analysis/tree-sitter/groovy-structure.js",
+            "sha256": "c7f47a8ac05e24c6fb68b8afedd3fb2dd90451f9111b87a7de86389b9b11ba94",
+            "bytes": 13675
+          },
+          {
+            "file": "src/analysis/tree-sitter/python-imports.js",
+            "sha256": "c735163946a6c8b9a88004976a66dd9e9bbb0f7172599ced72480f13764d994b",
+            "bytes": 17531
+          },
+          {
+            "file": "src/analysis/php/binding-node.js",
+            "sha256": "8e36886c8d8d9146bcf88a1f7a9045f58114f4b7dd92f50d24caafc5e5b5980b",
+            "bytes": 2591
+          },
+          {
+            "file": "src/analysis/php/structure.js",
+            "sha256": "1109576c08ad29576ed48737f978b6bb8b16eacf380da4bded4f8d7f9d522e5a",
+            "bytes": 23656
+          },
+          {
+            "file": "src/analysis/php/residency.js",
+            "sha256": "6f64af94e5703c7339583a7014764d807791b31e38a67373f14f70bdd6c0d26c",
+            "bytes": 10451
+          },
+          {
+            "file": "src/analysis/php/sources.js",
+            "sha256": "75f14e7bed1faab5e479cf8013cc1203488159f986d3509b502d2542cd3f8e1a",
+            "bytes": 6719
+          },
+          {
+            "file": "src/analysis/php/laravel-files.js",
+            "sha256": "bd25139b20016ee1d5af9e7fc5defc67dac3d902425a0a882ca7d334eda8914d",
+            "bytes": 3455
+          },
+          {
+            "file": "src/analysis/php/version.js",
+            "sha256": "6f56bc1977cf5f5ce910952d83f5fea4de901f5f2bc3c8870636ce41fa34115d",
+            "bytes": 439
+          },
+          {
+            "file": "src/analysis/php/native-worker.mjs",
+            "sha256": "9d4dd40f7a7af3bb5366c7b7851c085fe780dce01cfedc1dd52664caa062eb86",
+            "bytes": 1828
+          },
+          {
+            "file": "src/analysis/php/client.js",
+            "sha256": "4435e91b40daac63dbe999846103d1b826cfa40ab3f65413799c9b439e80ede2",
+            "bytes": 1418
+          },
+          {
+            "file": "src/analysis/embedded/index.js",
+            "sha256": "77a397bca785e3824907e6bd3af6d923029783b460f82163f7250d20d5d2cab4",
+            "bytes": 17960
+          },
+          {
+            "file": "src/analysis/embedded/source.js",
+            "sha256": "7601b34919ff07bc7db00bee99c21f147568578e0f07cafbd482b2ebdfa2459a",
+            "bytes": 14426
+          },
+          {
+            "file": "src/analysis/resolution/ruby.js",
+            "sha256": "ae12a456098ba09f28d1bf2a7b6d7f76275f03741d850bd049439079b9ad858e",
+            "bytes": 25990
+          },
+          {
+            "file": "src/analysis/resolution/jvm-manifest.js",
+            "sha256": "54e50e4801709fba334a5aeb5ebff7a26f3f6fd66d826ceaeb845b7345818442",
+            "bytes": 13957
+          },
+          {
+            "file": "src/analysis/resolution/jvm-projects.js",
+            "sha256": "de90187d712efe03adbb5333f4a766c74ab83c95e5c7c0eebe6835bb23a8fffc",
+            "bytes": 29105
+          },
+          {
+            "file": "src/analysis/resolution/python.js",
+            "sha256": "72e33fe2eb390ae01b315d14787da949443ca04934466aa3712970ccb2562fa1",
+            "bytes": 21585
+          },
+          {
+            "file": "src/analysis/resolution/rust-projects.js",
+            "sha256": "f4a9a0a3c82ecf30dcdad485ccc87917ca18432a4801cd89ba00ceec1a74bd65",
+            "bytes": 39844
+          },
+          {
+            "file": "src/analysis/resolution/jvm.js",
+            "sha256": "b6463f25e38b8bf9eedc7e9864e6f3b5ba904aeae558c2323166fd1ee684cec0",
+            "bytes": 12991
+          },
+          {
+            "file": "src/analysis/resolution/go-manifest.js",
+            "sha256": "be757f49bfdcdef4fd60878f521d8abf0e7f5c497e1bb8de55047e575afc7cd3",
+            "bytes": 8455
+          },
+          {
+            "file": "src/analysis/resolution/ruby-autoload.js",
+            "sha256": "c54c551774917e44a857a782f7ad35dcbcae804f321b6a16a47cfc4708062a1d",
+            "bytes": 38673
+          },
+          {
+            "file": "src/analysis/resolution/dotnet-projects.js",
+            "sha256": "5add50944ab0f4c65803afbfb00a259d1e8d8f9dfa371d36c027b26fd36c47f4",
+            "bytes": 28264
+          },
+          {
+            "file": "src/analysis/resolution/csharp.js",
+            "sha256": "4682b180ff2b14c7f6f208baa470eb20d4dc9663aa2153e9702d4b6c8de953af",
+            "bytes": 10843
+          },
+          {
+            "file": "src/analysis/resolution/rust-lock.js",
+            "sha256": "05696065fe899c7994acdbf45aa53d00d0b22e1fd964787d43a0e4a618793003",
+            "bytes": 5159
+          },
+          {
+            "file": "src/analysis/resolution/php.js",
+            "sha256": "1644363d28b420729c9cd22646f6e2fe419a56b215146efb1517bc0bdacec1a8",
+            "bytes": 39370
+          },
+          {
+            "file": "src/analysis/resolution/typescript.js",
+            "sha256": "0f3c1979b57aeb08b64344796a5e41f9a42b06e457c4d4a1eea169fb3c1b9721",
+            "bytes": 9300
+          },
+          {
+            "file": "src/analysis/resolution/dotnet-data.js",
+            "sha256": "02c5aa8dd41e405e418c3c7b6b400d3ff7a3e7834b7997787a75d8cb94df108b",
+            "bytes": 5718
+          },
+          {
+            "file": "src/analysis/resolution/go.js",
+            "sha256": "c5b5489389412355a8f762a34f91edcdeee0ca61bae1ce6881cbd40eb7cf9e97",
+            "bytes": 21499
+          },
+          {
+            "file": "src/analysis/resolution/rust-derive-namespace.js",
+            "sha256": "a16dd243d56831352639339502ec856417d14f59ccabb0866f41b0308f871c6f",
+            "bytes": 11072
+          },
+          {
+            "file": "src/analysis/resolution/rust.js",
+            "sha256": "61f2a76ca341eda2a17dc98442d0754510e2117913539cd9cfe5a94bdaa2e5fb",
+            "bytes": 31254
+          },
+          {
+            "file": "src/analysis/resolution/rust-runtime-namespace.js",
+            "sha256": "d1d9bd8fa88b7dccafb37b76292cde30a4dbb43aaf06edfbb5a778a5ab7b0c90",
+            "bytes": 13431
+          },
+          {
+            "file": "src/analysis/languages/ruby.js",
+            "sha256": "a2208b1708f89bda3ef6ec02ea613dd392fd73f5d1b5958d192b13c1100e67b7",
+            "bytes": 5963
+          },
+          {
+            "file": "src/analysis/languages/ruby-symbols.js",
+            "sha256": "ac7cec29fc7289eec2eaa0c7c78fbce82c1d55c3acb6a75bb57f988566828c1e",
+            "bytes": 45091
+          },
+          {
+            "file": "src/analysis/languages/rust-cfg.js",
+            "sha256": "6fe2986d0a2619fc01a12d6b710770c25ad4087fc366322cc9b7570f1a72b942",
+            "bytes": 11751
+          },
+          {
+            "file": "src/analysis/languages/go-symbols.js",
+            "sha256": "808821e2401fd85269aee49e753dc2a74f886a90a7a9b258fef3929c0768e2ed",
+            "bytes": 34469
+          },
+          {
+            "file": "src/analysis/languages/python.js",
+            "sha256": "d692e026d24b438259f4f35318449244465f79cc81465a99679dc01f24f64e24",
+            "bytes": 13684
+          },
+          {
+            "file": "src/analysis/languages/python-arguments.js",
+            "sha256": "513678fa6e1d230186597f27f4407d83098de1286236e06a73a3d4988e8b3cf7",
+            "bytes": 1200
+          },
+          {
+            "file": "src/analysis/languages/php-imports.js",
+            "sha256": "d26b236a3c2c072e500c3de56ba57c38ee8c00e2c0caaaa3b0a8f85c4bc942ad",
+            "bytes": 4513
+          },
+          {
+            "file": "src/analysis/languages/jvm.js",
+            "sha256": "3877b3df47efd4a46ea7d771a398f9a214094f415e4c39f5b4fab6e667dfdfb6",
+            "bytes": 5921
+          },
+          {
+            "file": "src/analysis/languages/php-symbols.js",
+            "sha256": "172b8017e26dcaf501402b72b5441aa6e737f414f3b89242570c36b094e15785",
+            "bytes": 49259
+          },
+          {
+            "file": "src/analysis/languages/ruby-version.js",
+            "sha256": "f52f6850c247a93aeecae89808cf1dda7a3929607801a9fc125e48c4adbc3048",
+            "bytes": 5355
+          },
+          {
+            "file": "src/analysis/languages/csharp-symbols.js",
+            "sha256": "f8e50b3b79913c88449d06623d3f38f1c8c0cccb92668b2b1fdad1b73fdcb5c1",
+            "bytes": 56574
+          },
+          {
+            "file": "src/analysis/languages/csharp-types.js",
+            "sha256": "0953868e3558b762a2d5562f379938a98a936214aa203a5cf144207140c4b65a",
+            "bytes": 6582
+          },
+          {
+            "file": "src/analysis/languages/jvm-symbols.js",
+            "sha256": "2044f9e0cccb027eaea5843009aa8da4a2733a7fcb152f43e5db47aa24cda212",
+            "bytes": 46517
+          },
+          {
+            "file": "src/analysis/languages/liquid.js",
+            "sha256": "2bd456d9f35b159d957bdbe56f1c98291e7a603104bf534b5d889c9dc6277760",
+            "bytes": 5658
+          },
+          {
+            "file": "src/analysis/languages/typescript-runtime.js",
+            "sha256": "8c0ac70f6807b2d4e14f31a30f50ac371167922abad606994bf1036355352653",
+            "bytes": 8748
+          },
+          {
+            "file": "src/analysis/languages/csharp.js",
+            "sha256": "0aa7132c8b8ad0c5ef1abec33979810f5ded55a0abb7a4eaf8b77a68876ed8d6",
+            "bytes": 6317
+          },
+          {
+            "file": "src/analysis/languages/php.js",
+            "sha256": "7d6e4571b93aad9ba528190a186d95d18273d2b220390b66150328cf3d40669b",
+            "bytes": 9646
+          },
+          {
+            "file": "src/analysis/languages/python-symbols.js",
+            "sha256": "5a1ae6a798053e3db0465396af8c511bed3b9d90096f4bfdcd6bfe033849a368",
+            "bytes": 20525
+          },
+          {
+            "file": "src/analysis/languages/go.js",
+            "sha256": "2d605901cf4ee41025c68400e752d631ed44e3e2e15b73d4c72c681a6ae68704",
+            "bytes": 7376
+          },
+          {
+            "file": "src/analysis/languages/python-bindings.js",
+            "sha256": "054c945fa420fcd4e7fcd941b739b6a54cc0c189c474911e47acf25ef77aee39",
+            "bytes": 3427
+          },
+          {
+            "file": "src/analysis/languages/ruby-profile.js",
+            "sha256": "08b7c16aa004e1ed79691703ad5fcaca1d213f5ec13ee8cfef1152e69a114f49",
+            "bytes": 8302
+          },
+          {
+            "file": "src/analysis/languages/go-api.js",
+            "sha256": "3f5c7b1bffa7b60f373479a795baf00c1e8ea4da10cbc5b862fc9949b87efe9e",
+            "bytes": 2128
+          },
+          {
+            "file": "src/analysis/languages/typescript-services.js",
+            "sha256": "b17f1d923a5ee89127d0e030c594460092d295fd5ce46c5af74549164bc354a1",
+            "bytes": 14661
+          },
+          {
+            "file": "src/analysis/languages/rust.js",
+            "sha256": "7bbc0b6ed849844b45b456de906e455b093ee259d07be446111c242c3816890b",
+            "bytes": 8138
+          },
+          {
+            "file": "src/analysis/languages/go-build.js",
+            "sha256": "82eb45d07281ab46a5e731f743dcaae50991f65212b09836f4ef83bcb4aaa719",
+            "bytes": 8473
+          },
+          {
+            "file": "src/analysis/languages/rust-symbols.js",
+            "sha256": "0d485651db42f5fb2dca054f779ae2dca2716bb23e7c7970198e81765c09fe29",
+            "bytes": 43891
+          },
+          {
+            "file": "src/analysis/routes/pattern.js",
+            "sha256": "a247107f512905f740d4bf1fde321f21851f16a238f61952907e1256f9161cb3",
+            "bytes": 3672
+          },
+          {
+            "file": "src/analysis/routes/spring-patterns.js",
+            "sha256": "c62f985f0bad46a39d8826c83adc2c7d0f523515e04c388363ea7c6052dee7ff",
+            "bytes": 8938
+          },
+          {
+            "file": "src/analysis/routes/aspnet-patterns.js",
+            "sha256": "9a2c360c8e988b48f7bb9421220112943114427df9dc029b4408da56cd8e500c",
+            "bytes": 20533
+          },
+          {
+            "file": "src/analysis/routes/rust-patterns.js",
+            "sha256": "c3de703c9fcb24d55db634726fb8d6aa34526ae9ecbf7060e944b0b0a0085562",
+            "bytes": 13993
+          },
+          {
+            "file": "src/analysis/routes/warp-patterns.js",
+            "sha256": "dd968c6fb9074560daa5eaf582abfad481999082818696906b8a98efa9ade429",
+            "bytes": 13490
+          },
+          {
+            "file": "src/analysis/routes/webflux-order.js",
+            "sha256": "5c4eeb87f750500b8e1f01c554bf3ed228e6b603a2dcb6f3f82a3061cd31eac6",
+            "bytes": 1095
+          },
+          {
+            "file": "src/analysis/routes/http-method.js",
+            "sha256": "52e2ba4e203b25d6537ba68259c9a32d880f4a641335c298af9b372104cf0547",
+            "bytes": 529
+          },
+          {
+            "file": "src/analysis/routes/rails-patterns.js",
+            "sha256": "d73c3093d79571cf9093efdf243cd5c0d2ad3551401407ea7cdb1f560568f521",
+            "bytes": 7990
+          },
+          {
+            "file": "src/analysis/routes/boundaries.js",
+            "sha256": "1d7914dab20052b58d44d87628656caaa6bd0f5947f0bdf4b98c4b0ea26dab2d",
+            "bytes": 3377
+          },
+          {
+            "file": "src/analysis/routes/go-patterns.js",
+            "sha256": "20e83337bb9efdcf6f64da587af8fad8c80dfd1cccd3578ec76f14e42a553f8d",
+            "bytes": 19416
+          },
+          {
+            "file": "src/analysis/routes/rocket-patterns.js",
+            "sha256": "ad35667783912cc804e28c1dca36e9188b0a5245b8e6e0a8e26ad41ef87afaaa",
+            "bytes": 7534
+          },
+          {
+            "file": "src/analysis/routes/contracts.js",
+            "sha256": "752f54415e6bdb90103d49409ffa727344a095106e111fa38dc23b567c973ab1",
+            "bytes": 16549
+          },
+          {
+            "file": "src/analysis/frameworks/sveltekit.js",
+            "sha256": "a26e9bf31c90606e1158e57863be13272fc927b136429385ec5bef3f49e1bc7b",
+            "bytes": 31915
+          },
+          {
+            "file": "src/analysis/frameworks/sveltekit-config.js",
+            "sha256": "06a38cb4efdab71f7cf72a6d77b96ea5648118ca916a6eb1762fb0b47eb42459",
+            "bytes": 14695
+          },
+          {
+            "file": "src/analysis/frameworks/rails-controllers.js",
+            "sha256": "1d1e8f09999a71fce2f91f689047479fcf9e6adc1ff1cd12353a051428f64b2b",
+            "bytes": 12115
+          },
+          {
+            "file": "src/analysis/frameworks/astro-routes.js",
+            "sha256": "8691c445e8873ea40931c5c39accff8d1acd865e18cf148fcdd625d08f92c9fc",
+            "bytes": 21751
+          },
+          {
+            "file": "src/analysis/frameworks/nest.js",
+            "sha256": "af5e75c2ecdb176f42a0576bfcdfca93fe167688e5e34905b8701e75de057a7b",
+            "bytes": 42300
+          },
+          {
+            "file": "src/analysis/frameworks/rails-inflections.js",
+            "sha256": "0afcdf472ca54d317777d918130a132eccf64052fd8a06edb1237e633f2e759e",
+            "bytes": 4806
+          },
+          {
+            "file": "src/analysis/frameworks/rails.js",
+            "sha256": "4455c3402b3697875c966c536dcaa094715a36792d986f3947974a9fb49ef3bb",
+            "bytes": 42833
+          },
+          {
+            "file": "src/analysis/frameworks/flask.js",
+            "sha256": "e85e9fdc0862c348a51328c13b4b8717f19516867c2f165fb8e589b5ec21dc2e",
+            "bytes": 45296
+          },
+          {
+            "file": "src/analysis/frameworks/spring-mvc.js",
+            "sha256": "0cfca408b1043e4689f971c6525f0dcbe0684f37682323a6aba8167ea05c4e3b",
+            "bytes": 23159
+          },
+          {
+            "file": "src/analysis/frameworks/spring-webflux.js",
+            "sha256": "0d482f067fea251f1b4c90dd69b544348060a988338fd3fbf2f17f62b1c35d4e",
+            "bytes": 43796
+          },
+          {
+            "file": "src/analysis/frameworks/aspnet-profile.js",
+            "sha256": "5ab9172fc5ef7461916ec9d228609f59919e11ef768761f42eba258ebbba8e67",
+            "bytes": 3695
+          },
+          {
+            "file": "src/analysis/frameworks/astro-config.js",
+            "sha256": "56bba475ea98f9096f9a2554c9d125d603c8f1f5a6b10e81605c2df5c9638942",
+            "bytes": 14856
+          },
+          {
+            "file": "src/analysis/frameworks/fastapi.js",
+            "sha256": "3410ae9be4c3a447e6aed4be193f0632762dd8f06783276a31785a384f759621",
+            "bytes": 34060
+          },
+          {
+            "file": "src/analysis/frameworks/django.js",
+            "sha256": "4fbd4ebfbace7cc792e6c2f9fdfaaeca51c646f47940b3493c8f1f939e2485c7",
+            "bytes": 47974
+          },
+          {
+            "file": "src/analysis/frameworks/index.js",
+            "sha256": "3f7175e869242db6729f89bdcd73c7d41dead0ca2ee8712a703a1797d3fc8ca0",
+            "bytes": 345
+          },
+          {
+            "file": "src/analysis/frameworks/typescript-pack.js",
+            "sha256": "f09e841592c49f849e0621e8bfa53ab57050cdbb7b3ba08355d066cbf35a688c",
+            "bytes": 2499
+          },
+          {
+            "file": "src/analysis/frameworks/aspnet-minimal.js",
+            "sha256": "e248048837de47509e11ffce216da0502ce6937af457ca38f2408a5ba91e5a5d",
+            "bytes": 65374
+          },
+          {
+            "file": "src/analysis/frameworks/sveltekit-invocations.js",
+            "sha256": "728125d46930b6ff95baa0f7e75d37138e5c2b0404b7923b88296f1717d85657",
+            "bytes": 2645
+          },
+          {
+            "file": "src/analysis/frameworks/vue-template.js",
+            "sha256": "d0ed8c89026a306f74bc3c280e5aa76cb05a9d0021fcc9a614f887c4d6e6d6bc",
+            "bytes": 6838
+          },
+          {
+            "file": "src/analysis/frameworks/browser-invocations.js",
+            "sha256": "7ac137a8cbfe4f1e403be138bdb082321e8210a5591b0d5c60d2d63247c89c8e",
+            "bytes": 2570
+          },
+          {
+            "file": "src/analysis/frameworks/nuxt-conventions.js",
+            "sha256": "a8f4c53425983d82498ac9a0ae618ae34c3803acf0e5bc7a6e8a787b27f544dd",
+            "bytes": 17766
+          },
+          {
+            "file": "src/analysis/frameworks/svelte.js",
+            "sha256": "7317dcfbffd1b2c6775d330efa7423ee895055ead52ef9bebb35abdfcaeddd7a",
+            "bytes": 32702
+          },
+          {
+            "file": "src/analysis/frameworks/warp-syntax.js",
+            "sha256": "58413aa6a49228abff9be9e2f5ffa0e2450d75817c4bdc0a7c660b9b3905eb40",
+            "bytes": 3472
+          },
+          {
+            "file": "src/analysis/frameworks/express.js",
+            "sha256": "f6418bbf945c19f24b442ff683f06d1dd7afe0b3dc008c06f5f2f88dc1a35033",
+            "bytes": 32061
+          },
+          {
+            "file": "src/analysis/frameworks/nuxt-config.js",
+            "sha256": "1cbbeb9a2aeebbe503bce3ab498c9111273146b0cf79f32df0eeaf91ac147be2",
+            "bytes": 21130
+          },
+          {
+            "file": "src/analysis/frameworks/go-routers.js",
+            "sha256": "29f595353b38dd91994d6013534b476f80b2f36df7b7649c4f058b687ed6027b",
+            "bytes": 83728
+          },
+          {
+            "file": "src/analysis/frameworks/nuxt.js",
+            "sha256": "c4bb7b01b9c78050c60c20cf2bdf65475dabb62db98cc5e6b73efc2269e1e9c9",
+            "bytes": 25567
+          },
+          {
+            "file": "src/analysis/frameworks/vue-router.js",
+            "sha256": "a100cfa571d1a1ddf0745d4d27a60512758d93dcb1dd06acf3552fbefed62c94",
+            "bytes": 18749
+          },
+          {
+            "file": "src/analysis/frameworks/vue.js",
+            "sha256": "5f7bbfe710322a39ad9cbb612654fada6f3b619419ba9bf8d019617a1a6a83a2",
+            "bytes": 30459
+          },
+          {
+            "file": "src/analysis/frameworks/sveltekit-path.js",
+            "sha256": "9115c54500ff73415527a5ec203386abe5e50c9ae64db4e0ac329e371e682aec",
+            "bytes": 4587
+          },
+          {
+            "file": "src/analysis/frameworks/go-profile.js",
+            "sha256": "f903e587b9af1a091c44ddc3cbc52038b98f3156f3e24c35493892819d2d8ba7",
+            "bytes": 3165
+          },
+          {
+            "file": "src/analysis/frameworks/rust-source-projection.js",
+            "sha256": "18d5f385a02def23fa4e5a0e6b9ed14bcefd7542dbc4cb41383cd79b46aa7b98",
+            "bytes": 4283
+          },
+          {
+            "file": "src/analysis/frameworks/vue-static.js",
+            "sha256": "4894e8197f8efe5789b73c5833b4ca118f3b5b4fc436e82fc4d0b00e0531ecb5",
+            "bytes": 95
+          },
+          {
+            "file": "src/analysis/frameworks/spring-profile.js",
+            "sha256": "45e1eae9916dd97da4b8b01e5009def3b0d9b5a3186ee5ccfdb011c5ca6bdd88",
+            "bytes": 10274
+          },
+          {
+            "file": "src/analysis/frameworks/warp-cors.js",
+            "sha256": "75e0af8fd4b734ca5839e7795a181631d659f82e879932ff8373f072e12e5ba2",
+            "bytes": 4500
+          },
+          {
+            "file": "src/analysis/frameworks/rust-profile.js",
+            "sha256": "ac2be34abbea49c8690085f8b6f832f45ee0d7c67e8dd387a9b6270cb910cad7",
+            "bytes": 31787
+          },
+          {
+            "file": "src/analysis/frameworks/typescript-binding.js",
+            "sha256": "efa19af5a701b0b445fde7b439b94b4499868994d1b0cf7227a14eca3933083f",
+            "bytes": 9021
+          },
+          {
+            "file": "src/analysis/frameworks/astro.js",
+            "sha256": "f3e31eefa79bf05b2fabe74f96b28e6c04e78a21be43fb73eb4656266c89ea93",
+            "bytes": 25080
+          },
+          {
+            "file": "src/analysis/frameworks/rust-derive-namespace.js",
+            "sha256": "31c29f36a556684943b94c7f82d665725735a20f49772ec54aab7cd6b3173123",
+            "bytes": 7100
+          },
+          {
+            "file": "src/analysis/frameworks/aspnet-mvc.js",
+            "sha256": "7c1fa9a845145f41fd44d16a7b4948caf9e39bc0d813858f2869be583e07c8d8",
+            "bytes": 26822
+          },
+          {
+            "file": "src/analysis/frameworks/astro-path.js",
+            "sha256": "8d26daeb514d8e792cd3f31ce3042696cc01e7ff890ac5127a43cce9c0a84b58",
+            "bytes": 2650
+          },
+          {
+            "file": "src/analysis/frameworks/rust-routers.js",
+            "sha256": "94c03fe356b462f0f49398d27b7101cb2b8a2cc675ad8406aed12c46570f942c",
+            "bytes": 124057
+          },
+          {
+            "file": "src/analysis/frameworks/nuxt-path.js",
+            "sha256": "7fa9013219c9d3eeedb01c2696a2e40b9fcc3f6e2ae438f09fb48ce48452f7cb",
+            "bytes": 4301
+          },
+          {
+            "file": "src/analysis/frameworks/warp-state.js",
+            "sha256": "80d087ec95cdac4234f0fff4d7835a4672ffaa6b5ac3cffe9501d392edad6baa",
+            "bytes": 4618
+          },
+          {
+            "file": "src/analysis/frameworks/typescript-static.js",
+            "sha256": "55e802af148be460a6980f739fb31c7fdc2fc0559d5da974278ed3b590d93c58",
+            "bytes": 13116
+          },
+          {
+            "file": "src/analyzers/laravel-fortify.js",
+            "sha256": "278810bbf529dae3cfb36a07229c68828b46f00a337300546d82c8f8abf0b752",
+            "bytes": 14905
+          },
+          {
+            "file": "src/analyzers/laravel-schema.js",
+            "sha256": "6cdb9f26edae9a02258219323f55c870987fdd0c0f828bea23642db3cea14d22",
+            "bytes": 37379
+          },
+          {
+            "file": "src/analyzers/ts-http.js",
+            "sha256": "65c3ed5c8abad7a29dcbd2f6449403c65928c0dd514e68fa2f776cfa8b7d9c49",
+            "bytes": 34218
+          },
+          {
+            "file": "src/analyzers/filesystem.js",
+            "sha256": "8423e15fcaf073cae307552a1e4190b558a6ec6ecd7336d2251fe2cf1d6c166a",
+            "bytes": 8886
+          },
+          {
+            "file": "src/analyzers/laravel-console.js",
+            "sha256": "7b9ec4e221676b2ddbb203001b8aabeb1f51126e41b123cc6ef5da9fcf37e720",
+            "bytes": 18247
+          },
+          {
+            "file": "src/analyzers/php-ast.js",
+            "sha256": "f17e4624b52eb79a6f942afcbe39c923d2cc1850239a233bd7ce84f9dc2640c6",
+            "bytes": 3543
+          },
+          {
+            "file": "src/analyzers/php-references.js",
+            "sha256": "7a65608b252ceae3841ef958e5605527741d7134ee76a5f2aa6cfe9972f18888",
+            "bytes": 33368
+          },
+          {
+            "file": "src/analyzers/ts-references.js",
+            "sha256": "7a705017cd0eaa4813fb892501d646efe8d5f26451e6e63c3cd0f0a0f7365647",
+            "bytes": 24521
+          },
+          {
+            "file": "src/analyzers/references.js",
+            "sha256": "ef90d5d77ee64bfbf205db883ab7b7027fef18467e88ebd5ed675d24d56287e3",
+            "bytes": 2951
+          },
+          {
+            "file": "src/analyzers/typescript.js",
+            "sha256": "a1697026d9d112531b1e86b6cc30069a98518d0f524f428ac0726f585f906de6",
+            "bytes": 35949
+          },
+          {
+            "file": "src/analyzers/ts-program.js",
+            "sha256": "0c25ab8fe787c6af4756eda1919f4eb36c41f22a2c33c39d9a37c984c96c1555",
+            "bytes": 8981
+          },
+          {
+            "file": "src/analyzers/ts-url.js",
+            "sha256": "410e5e2e47bbe6d8c76aaffde60dda0ffe682e3f8518e1dfc0e3a0d2be99f510",
+            "bytes": 27746
+          },
+          {
+            "file": "src/analyzers/laravel.js",
+            "sha256": "63ca9d6159feb3ad35412b7fff6a9a4999d78054b4b954359771168546d9acab",
+            "bytes": 30955
+          },
+          {
+            "file": "src/analyzers/git-metrics.js",
+            "sha256": "0310f3adfee27fe07d0178ae76b304068371fdaf547d47e0e4d36603b02a0f0f",
+            "bytes": 6524
+          },
+          {
+            "file": "src/projection/families.js",
+            "sha256": "7c1ab1092c8e378e87351a8e8e22026b533a16941e9b641be5bbf13c7022b10f",
+            "bytes": 14850
+          },
+          {
+            "file": "src/projection/steps.js",
+            "sha256": "2ca619694417cba6cadf5d3830239b1b318ddec10a7b67742ed4ffe591d4e131",
+            "bytes": 6472
+          },
+          {
+            "file": "src/projection/impact.js",
+            "sha256": "279f8cbd4499a9e455fe32cfbe442a9f02837c4cf3aed9308d72720f6945141c",
+            "bytes": 3618
+          },
+          {
+            "file": "src/projection/request-flows.js",
+            "sha256": "3c3646da1c81e9d1970ffd9013ab94af8bd734d147b08ff2bbfdd0662e030121",
+            "bytes": 37393
+          },
+          {
+            "file": "src/projection/layout.js",
+            "sha256": "f29352c46c0945e7d5312bc7ac162cc978336ffd08215edaf4ad4f9c428fc1ca",
+            "bytes": 17130
+          },
+          {
+            "file": "src/projection/hierarchy.js",
+            "sha256": "3338c3714ba39ede7a6b7b358745da4128e87b041446b1c765746ba2c1a67f62",
+            "bytes": 13488
+          },
+          {
+            "file": "src/projection/dto.js",
+            "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+            "bytes": 11
+          },
+          {
+            "file": "src/projection/evolution.js",
+            "sha256": "48ae7d592110268a0e1a470414eb066c5b8f3857fbaaba13945e8f0b4b31f0bb",
+            "bytes": 8384
+          },
+          {
+            "file": "src/projection/catalog.js",
+            "sha256": "e078ec29fa7e827a20069b4ca911557b2ed42a5bd54c37011b9fba31cefe4944",
+            "bytes": 16373
+          },
+          {
+            "file": "src/projection/service.js",
+            "sha256": "4dedb14243dc64919512c40082ec158f6b183b84ec42cc24d24b96f6d0983fd9",
+            "bytes": 106750
+          },
+          {
+            "file": "src/projection/authorship.js",
+            "sha256": "4215f550db56eb542619f34c7a9fa361e3b81f980dce6441a93958b7aee835c3",
+            "bytes": 13137
+          },
+          {
+            "file": "src/projection/conditions.js",
+            "sha256": "a35291427e4680d5b2824410c77f59f3d86848e5b00112b5ed6cdcd94478b615",
+            "bytes": 11104
+          },
+          {
+            "file": "src/projection/regions.js",
+            "sha256": "4ac8c73694686586799153fb5eb71da083eb51fe005ab4ef46ab6bd892fa17f3",
+            "bytes": 7393
+          },
+          {
+            "file": "src/projection/source.js",
+            "sha256": "72772b1f7ab90d6a9fde036c4adf58dce371156efaf00e405ca6c8339e2405e4",
+            "bytes": 9056
+          },
+          {
+            "file": "src/ai/domains.js",
+            "sha256": "321b4c10d528dc01436589c80138c03fd083c208e2948665e2504a9c30718e4c",
+            "bytes": 7584
+          },
+          {
+            "file": "src/ai/tasks.js",
+            "sha256": "d33a0572c934fecdbab250df96c12fca65b5b3e6b54606e27f9807d6facbc1dd",
+            "bytes": 34798
+          },
+          {
+            "file": "src/ai/ste.js",
+            "sha256": "30e1e7a2e8ecfb25896fda0bf5d9ba56886b2114e9e8e628c2195b9fdef0c1dd",
+            "bytes": 7165
+          },
+          {
+            "file": "src/ai/store.js",
+            "sha256": "069aeb1ceb9a0626abfd272f420c9cdc9131d331fad2a64b99abb7339b77e375",
+            "bytes": 7414
+          },
+          {
+            "file": "src/ai/pricing.js",
+            "sha256": "5f4fbed677f9d0b5f833474e56cd48310fb61bc522c4fd5a2b5a7d8b98e54a55",
+            "bytes": 1301
+          },
+          {
+            "file": "src/ai/command.js",
+            "sha256": "01e89ed32c2094db118eb4bfc5f3bf86a4a232ad854aba7414390e03b809d98b",
+            "bytes": 6627
+          },
+          {
+            "file": "src/ai/runner.js",
+            "sha256": "1246ac056a33947d7227b599f7c112737e753b268beb771d3e2ca04eca9ba16d",
+            "bytes": 9147
+          },
+          {
+            "file": "src/ai/openai.js",
+            "sha256": "2de9f61f56ef42622f961be62e171da1dd937acc67df13ccc3aca89280328091",
+            "bytes": 4667
+          }
+        ],
+        "links": [
+          {
+            "file": "grammars",
+            "target": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/engine/dist/grammars/"
+          }
+        ],
+        "sourceArchiveSha256": "86ea556fb1643887c4323e7d719a3cfc3cd8e58adf21e41e6d9d36f265ef97ca",
+        "beforeAvailableBytes": 4124672,
+        "afterAvailableBytes": 8458240,
+        "originalOrFailedEvidenceDeleted": false,
+        "targetExecution": false
+      }
+    ],
+    "completeArchiveStorage": "Owned RAM-backed tmpfs; a durable copy requires more filesystem space",
+    "durableCompleteRuntimeArchiveRetained": false,
+    "normalPackageObservationRepeated": false,
+    "completeArchiveSession": 37456,
+    "completeArchiveActualExitCode": 0
+  },
+  "reportSha256": "20f445108bf5e87b04670bae81dd2c7639d7d9b132922e4b707f66b9a8a3a75f",
+  "httpReportValidation": {
+    "schema": 1,
+    "passed": true,
+    "url": "http://127.0.0.1:44159/template-framework-workers-release.html",
+    "htmlSha256": "20f445108bf5e87b04670bae81dd2c7639d7d9b132922e4b707f66b9a8a3a75f",
+    "links": [
+      {
+        "href": "template-framework-workers-release-validation.json",
+        "status": 200,
+        "bytes": 101144
+      },
+      {
+        "href": "template-framework-workers-normal-prepack-release.tgz",
+        "status": 200,
+        "bytes": 7224343
+      },
+      {
+        "href": "template-framework-workers-runtime-release-and-evidence-complete.tar.gz",
+        "status": 200,
+        "bytes": 61960732
+      },
+      {
+        "href": "template-framework-workers-source-compiled-portable-loader-and-evidence.tar.gz",
+        "status": 200,
+        "bytes": 34726625
+      },
+      {
+        "href": "language-framework-compatibility.html#template-framework-workers",
+        "status": 200,
+        "bytes": 393671
+      }
+    ],
+    "scope": "Loopback HTTP, exact report bytes and all linked artifacts only",
+    "browserVisualInspectionPerformed": false,
+    "completeRuntimeArchiveStorage": "owned RAM-backed tmpfs",
+    "fullGoalFinished": false
+  }
+}
