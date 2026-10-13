@@ -453,6 +453,12 @@ const compiler=new TemplateScriptParser();try{compiler.prewarm();const retiremen
   console.log('Checking installed Kotlin WebFlux explicit predicate/path invocation and original reactive/coroutine handlers…');
   const kotlinInvokeConformance=await run(process.execPath,['--experimental-sqlite',kotlinInvokeCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'kotlin-webflux-invoke-validation.json')],consumer);
   console.log(kotlinInvokeConformance.stdout.trim());
+  const boot35Check=path.join(consumer,'check-spring-boot35.mjs');
+  await cp(path.join(root,'tests/fixtures/spring-boot35-qualification.mjs'),boot35Check);
+  await cp(path.join(root,'tests/fixtures/spring-boot35-published-contract.json'),path.join(consumer,'spring-boot35-published-contract.json'));
+  console.log('Checking installed Boot 3.5.16 Maven/Gradle source contracts, distinct starter chains and original handlers…');
+  const boot35Conformance=await run(process.execPath,['--experimental-sqlite',boot35Check,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'spring-boot35-validation.json')],consumer);
+  console.log(boot35Conformance.stdout.trim());
   const bin = path.join(installed, 'bin/codiluce.js');
   for (const grammar of grammarManifest.grammars) assert.equal(createHash('sha256').update(await readFile(path.join(installed, 'dist/grammars', grammar.file))).digest('hex'), grammar.sha256);
   const dependencies = JSON.parse((await npm(['ls', '--omit=dev', '--all', '--json'], consumer)).stdout).dependencies[manifest.name].dependencies;

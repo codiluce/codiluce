@@ -48,7 +48,7 @@ test('Pinned Boot/Kotlin source contracts retain original MVC handler, leaf and 
     assert.ok(model.dependencies.some(dep => dep.coordinate === 'com.fasterxml.jackson.module:jackson-module-kotlin:2.20.1' && dep.declaredCoordinate === 'com.fasterxml.jackson.module:jackson-module-kotlin'));
     assert.equal(endpoints(graph).length, 1); assert.equal(endpoints(graph)[0]!.metadata.constraintsUnresolved, false);
     assert.equal(source(graph, 'read').sourceRange?.startLine, 6); assert.ok(calls(graph, 'read', 'leaf'));
-    assert.ok(model.kotlinCompiler?.proof.some(fact => fact.analyzerVersion === '7' && fact.line === 1 && fact.explanation?.includes('never executes')));
+    assert.ok(model.kotlinCompiler?.proof.some(fact => fact.analyzerVersion === '8' && fact.line === 1 && fact.explanation?.includes('never executes')));
 });
 
 test('Spring all-open prevents implicit-final calls while exact allocations and explicit final/private members stay direct', async () => {

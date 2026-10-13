@@ -59,7 +59,7 @@ test('Pinned Boot/Kotlin source contracts retain original MVC handler, leaf and 
     assert.equal(endpoints(graph)[0].metadata.constraintsUnresolved, false);
     assert.equal(source(graph, 'read').sourceRange?.startLine, 6);
     assert.ok(calls(graph, 'read', 'leaf'));
-    assert.ok(model.kotlinCompiler?.proof.some(fact => fact.analyzerVersion === '7' && fact.line === 1 && fact.explanation?.includes('never executes')));
+    assert.ok(model.kotlinCompiler?.proof.some(fact => fact.analyzerVersion === '8' && fact.line === 1 && fact.explanation?.includes('never executes')));
 });
 test('Spring all-open prevents implicit-final calls while exact allocations and explicit final/private members stay direct', async () => {
     const code = `package demo

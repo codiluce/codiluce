@@ -49,7 +49,7 @@ test('Pinned Boot Gradle defaults bind original Java MVC imports, handler, leaf 
         const starter = model.dependencies.find(dep => dep.coordinate === 'org.springframework.boot:spring-boot-starter-webmvc:4.0.8')!;
         assert.equal(starter.declaredCoordinate, 'org.springframework.boot:spring-boot-starter-webmvc');
         assert.equal(model.dependencies.find(dep => dep.coordinate === 'org.springframework:spring-webmvc:7.0.9')?.derivedFrom, starter.coordinate);
-        assert.ok(starter.proof.some(fact => fact.line === 2 && fact.analyzerVersion === '7' && fact.explanation?.includes('never resolve or execute')));
+        assert.ok(starter.proof.some(fact => fact.line === 2 && fact.analyzerVersion === '8' && fact.explanation?.includes('never resolve or execute')));
         assert.equal(routes(graph).length, 1); const route = routes(graph)[0]!; assert.equal(route.metadata.constraintsUnresolved, false, JSON.stringify(graph.diagnostics));
         const handler = graph.entities.find(entity => entity.name === 'read' && entity.path?.endsWith('Api.java'))!;
         const leaf = graph.entities.find(entity => entity.name === 'read' && entity.path?.endsWith('Service.java'))!;

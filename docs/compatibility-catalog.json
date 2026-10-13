@@ -103,7 +103,7 @@
       "id": "java",
       "label": "Java",
       "parser": "Tree-sitter Java",
-      "imports": "Indexed Maven/Gradle/configured roots, recorded build-family selection, source sets, project references and imports; observed literal Gradle compiler inputs; pinned Boot 4.0.1/4.0.8 and management 1.1.7 Gradle defaults for reviewed web starters; explicit external Boot 4.0.8 Maven parent with reviewed compiler/default BOM source contract",
+      "imports": "Indexed Maven/Gradle/configured roots, recorded build-family selection, source sets, project references and imports; observed literal Gradle compiler inputs; pinned Boot 3.5.16/4.0.1/4.0.8 and management 1.1.7 Gradle defaults for reviewed web starters; explicit external Boot 3.5.16/4.0.8 Maven parent with reviewed compiler/default BOM source contract",
       "binding": "Partial scoped source types, exact signatures and selected direct calls",
       "frameworks": "Spring MVC, WebFlux",
       "gaps": "Executable build models, unresolved plugin/BOM/compiler transformations, binary classpaths, virtual/generic/inherited dispatch and compiler interop",
@@ -116,14 +116,15 @@
         "src/analysis/resolution/jvm-spring-boot.ts",
         "src/analysis/resolution/jvm-spring-boot-maven.ts",
         "src/core/config.ts",
-        "src/analysis/resolution/jvm-kotlin-compiler.ts"
+        "src/analysis/resolution/jvm-kotlin-compiler.ts",
+        "src/analysis/resolution/jvm-spring-boot35.ts"
       ]
     },
     {
       "id": "kotlin",
       "label": "Kotlin",
       "parser": "Tree-sitter Kotlin",
-      "imports": "Indexed Maven/Gradle/configured roots, recorded build-family selection, source sets, project references and imports; observed literal Gradle compiler inputs; pinned Kotlin 2.2.21 Gradle JVM/Spring compiler and ordered argument source contracts; Boot 4.0.1/4.0.8 default source selections",
+      "imports": "Indexed Maven/Gradle/configured roots, recorded build-family selection, source sets, project references and imports; observed literal Gradle compiler inputs; pinned Kotlin 2.2.21 Gradle JVM/Spring compiler and ordered argument source contracts; Boot 3.5.16/4.0.1/4.0.8 default source selections",
       "binding": "Partial scoped source types, exact signatures and selected direct calls; compiler-open classes/members retain virtual dispatch while private/final/exact allocations stay direct",
       "frameworks": "Spring MVC, WebFlux",
       "gaps": "Unknown Kotlin compiler/plugin versions, annotated property/constructor target placement, custom compiler transforms, executable models, binary classpaths, generic/inherited dispatch and compiler interop remain gaps",
@@ -136,7 +137,8 @@
         "src/analysis/resolution/jvm-spring-boot.ts",
         "src/analysis/resolution/jvm-spring-boot-maven.ts",
         "src/core/config.ts",
-        "src/analysis/resolution/jvm-kotlin-compiler.ts"
+        "src/analysis/resolution/jvm-kotlin-compiler.ts",
+        "src/analysis/resolution/jvm-spring-boot35.ts"
       ]
     },
     {
@@ -592,7 +594,7 @@
       "id": "spring",
       "label": "Spring MVC / WebFlux",
       "versions": "Framework 6.2.x / 7.0.x; optional Boot 3.5.x / 4.0.x compatible family",
-      "scope": "Original annotations or bounded Java/Kotlin router builders, exact handlers and native path/method contracts; pinned Java Gradle Boot 4.0.8 and dependency-management 1.1.7 select the reviewed default BOM/starter source contract; explicit external Boot Maven 4.0.8 parent selects reviewed Java 17/UTF-8/parameter defaults and the same three starter source chains; pinned Kotlin 2.2.21 Spring all-open/param-property Gradle source contracts and Boot 4.0.1/Framework 7.0.2 enable the unchanged Kotlin MVC guide mapping; reviewed explicit RequestPredicate/String invoke and named f arguments retain original reactive/coroutine handlers, unchanged aliases and exact ranges; the original Kotlin WebFlux /hello mapping keeps its virtual/predicate/injection conditions",
+      "scope": "Original annotations or bounded Java/Kotlin router builders, exact handlers and native path/method contracts; pinned Java Gradle Boot 4.0.8 and dependency-management 1.1.7 select the reviewed default BOM/starter source contract; explicit external Boot Maven 4.0.8 parent selects reviewed Java 17/UTF-8/parameter defaults and the same three starter source chains; pinned Kotlin 2.2.21 Spring all-open/param-property Gradle source contracts and Boot 4.0.1/Framework 7.0.2 enable the unchanged Kotlin MVC guide mapping; reviewed explicit RequestPredicate/String invoke and named f arguments retain original reactive/coroutine handlers, unchanged aliases and exact ranges; the original Kotlin WebFlux /hello mapping keeps its virtual/predicate/injection conditions; Boot 3.5.16 Gradle and explicit external/local Maven parent source contracts select Framework 6.2.19 using the distinct web/webflux starters and common test starter, Java 17/UTF-8/parameter defaults, all 191 published BOM property override boundaries and reviewed selected Kotlin JVM alignment",
       "gaps": "Other Kotlin compiler/plugin versions, custom transforms and unknown constructor/property annotation placement, other Boot/BOM/version models, default/custom local external-parent lookup, managed overrides and custom lifecycle/Maven inputs remain gaps; custom/shadowed invoke receivers/extensions, safe calls, changed predicates, executable models, broad reactive typing and unknown policies are unreviewed; external binary resolution is unverified",
       "tests": [
         "tests/spring-mvc.test.ts",
@@ -601,7 +603,8 @@
         "tests/spring-boot-gradle.test.ts",
         "tests/spring-boot-maven.test.ts",
         "tests/kotlin-spring-compiler.test.ts",
-        "tests/kotlin-webflux-invoke.test.ts"
+        "tests/kotlin-webflux-invoke.test.ts",
+        "tests/spring-boot35.test.ts"
       ],
       "sources": [
         {
@@ -641,6 +644,14 @@
             "WEBFLUX_VERSION = '3'",
             "dslInvocationReceiver",
             "Original Kotlin WebFlux explicit predicate/path invocation"
+          ]
+        },
+        {
+          "file": "src/analysis/resolution/jvm-spring-boot35.ts",
+          "contains": [
+            "BOOT35_VERSION = '3.5.16'",
+            "BOOT35_FRAMEWORK_VERSION = '6.2.19'",
+            "BOOT35_KOTLIN_VERSION = '1.9.25'"
           ]
         }
       ]

@@ -1,7 +1,8 @@
 import { xmlChild, xmlValue, type XmlNode } from './jvm-manifest.js';
 import { BOOT_GRADLE_VERSION } from './jvm-spring-boot.js';
+import { BOOT35_VERSION, BOOT35_BOM_PROPERTIES } from './jvm-spring-boot35.js';
 
-/** Published Boot 4.0.8 parent/BOM data only. No Maven resolver, plugin or
+/** Published Boot 3.5.16/4.0.8 parent/BOM data only. No Maven resolver, plugin or
  * target compiler executes. Explicit disabled local lookup prevents this
  * source contract from hiding a denied or conflicting local parent.
  * https://docs.spring.io/spring-boot/4.0/maven-plugin/using.html
@@ -23,18 +24,19 @@ export function reviewedBootMavenParent(node: XmlNode | undefined): boolean {
     if (!node || node.children.some(child => !['groupId','artifactId','version','relativePath'].includes(child.name))) return false;
     const relative = xmlChild(node, 'relativePath');
     return !!relative && relative.children.length === 0 && relative.text.trim() === ''
-        && ['groupId','artifactId','version'].map(name => xmlValue(node,name)).join(':') === BOOT_MAVEN_PARENT;
+        && xmlValue(node,'groupId') === 'org.springframework.boot' && xmlValue(node,'artifactId') === 'spring-boot-starter-parent'
+        && [BOOT_GRADLE_VERSION, BOOT35_VERSION].includes(xmlValue(node, 'version') ?? '');
 }
 
-export function bootMavenPropertyGap(name: string, value: string): string | undefined {
-    if (bomProperties.has(name)) return `Maven property ${name} overrides the reviewed Boot BOM; a selected dependency model is required`;
+export function bootMavenPropertyGap(name: string, value: string, version = BOOT_GRADLE_VERSION): string | undefined {
+    if (version === BOOT35_VERSION ? BOOT35_BOM_PROPERTIES.includes(name) : bomProperties.has(name)) return `Maven property ${name} overrides the reviewed Boot BOM; a selected dependency model is required`;
     if (name === 'java.version') return /^[1-9]\d*$/.test(value) && Number(value) >= 17 && Number(value) <= 2147483647 ? undefined : 'Boot Maven Java version requires a literal supported source/compiler input';
     if (Object.hasOwn(bootMavenDefaults,name)) return value === bootMavenDefaults[name as keyof typeof bootMavenDefaults] ? undefined : `Maven property ${name} changes the reviewed Boot compiler/resource defaults`;
     if (/^(?:maven\.compiler\.|spring-boot\.|kotlin\.|resource\.)/.test(name)) return `Maven property ${name} requires a reviewed Boot compiler/resource profile`;
 }
 
-export function reviewedBootMavenPlugin(node: XmlNode, version: string | undefined): boolean {
+export function reviewedBootMavenPlugin(node: XmlNode, version: string | undefined, parentVersion = BOOT_GRADLE_VERSION): boolean {
     return xmlValue(node,'groupId') === 'org.springframework.boot' && xmlValue(node,'artifactId') === 'spring-boot-maven-plugin'
-        && (xmlChild(node,'version') ? version === BOOT_GRADLE_VERSION : true)
+        && (xmlChild(node,'version') ? version === parentVersion : true)
         && node.children.every(child => ['groupId','artifactId','version'].includes(child.name));
 }

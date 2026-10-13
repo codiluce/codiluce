@@ -136,7 +136,7 @@ test("Groovy and Kotlin standard compiler blocks retain Java/Kotlin import ident
     }
     const inputs = model.compilerInputs;
     assert.equal(inputs.javaToolchains[0]?.languageVersion, 17);
-    assert.ok(inputs.javaToolchains[0]?.proof.some((fact) => fact.file === file && fact.line === 3 && fact.analyzerVersion === "7" && fact.explanation?.includes("not resolved/executed")));
+    assert.ok(inputs.javaToolchains[0]?.proof.some((fact) => fact.file === file && fact.line === 3 && fact.analyzerVersion === "8" && fact.explanation?.includes("not resolved/executed")));
     assert.ok(inputs.kotlinArgumentUpdates[0]?.arguments.every((arg) => arg.proof.some((fact) => fact.file === file && fact.line === 4)));
     assert.ok(inputs.testPlatforms[0]?.proof.some((fact) => fact.file === file && fact.line === 5));
     assert.ok(graph.relations.filter((edge) => edge.type === "imports").every((edge) => edge.evidence.some((fact) => fact.line === 3)));
