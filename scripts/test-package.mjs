@@ -433,6 +433,11 @@ const compiler=new TemplateScriptParser();try{compiler.prewarm();const retiremen
   console.log('Checking installed literal Gradle compiler inputs, original proof and retained plugin/transformation gaps…');
   const gradleCompilerInputsConformance=await run(process.execPath,['--experimental-sqlite',gradleCompilerInputsCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'gradle-compiler-inputs-validation.json')],consumer);
   console.log(gradleCompilerInputsConformance.stdout.trim());
+  const bootGradleCheck=path.join(consumer,'check-spring-boot-gradle.mjs');
+  await cp(path.join(root,'tests/fixtures/spring-boot-gradle-qualification.mjs'),bootGradleCheck);
+  console.log('Checking installed original Java Boot Gradle/default BOM imports, handlers and retained boundaries…');
+  const bootGradleConformance=await run(process.execPath,['--experimental-sqlite',bootGradleCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'spring-boot-gradle-validation.json')],consumer);
+  console.log(bootGradleConformance.stdout.trim());
   const bin = path.join(installed, 'bin/codiluce.js');
   for (const grammar of grammarManifest.grammars) assert.equal(createHash('sha256').update(await readFile(path.join(installed, 'dist/grammars', grammar.file))).digest('hex'), grammar.sha256);
   const dependencies = JSON.parse((await npm(['ls', '--omit=dev', '--all', '--json'], consumer)).stdout).dependencies[manifest.name].dependencies;

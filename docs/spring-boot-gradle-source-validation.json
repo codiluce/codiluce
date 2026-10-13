@@ -1,0 +1,191 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-13T15:24:57.687134+00:00",
+  "phase": "Reviewed Java Gradle Boot 4.0.8/default BOM source compatibility",
+  "baselineCommit": "2bbfdd7e9b50300cbe031a988980557f8c0533d5",
+  "sourceFiles": [
+    {
+      "file": "src/analysis/resolution/jvm-spring-boot.ts",
+      "sha256": "4ff74d1f0a16b508844716e28acd2efbbb61941a2fb069e4bfb361754eb3798e"
+    },
+    {
+      "file": "src/analysis/resolution/jvm-manifest.ts",
+      "sha256": "2e42eacd3def00a5f387341ed71f9918c98724e188c90b981d3419127d354de9"
+    },
+    {
+      "file": "src/analysis/resolution/jvm-projects.ts",
+      "sha256": "17cea86206ba96a82220da89fbfed1f34a960bda5bad8cbc7132272695861228"
+    },
+    {
+      "file": "tests/spring-boot-gradle.test.ts",
+      "sha256": "dacaa9a6eb541052a92e97431b02be5d93bc949fd0a9b8b2c8a8df514afb03a2"
+    },
+    {
+      "file": "tests/fixtures/spring-boot-gradle-qualification.mjs",
+      "sha256": "a626b7587d7ea6418add6741bd0edc56d26dbb991836e5b4e68bc43f71c7ceed"
+    },
+    {
+      "file": "tests/gradle-compiler-inputs.test.ts",
+      "sha256": "b2a4b6ad2016fb5f7b95398941203db5b4cf86d267c18b07069f10282ba02302"
+    },
+    {
+      "file": "tests/fixtures/gradle-compiler-inputs-qualification.mjs",
+      "sha256": "07dc6a5ff3fe677ef7f98e5b7f1fcf6d9ac1cd7e7e44b20c1f218604d9f2f10d"
+    },
+    {
+      "file": "scripts/test-package.mjs",
+      "sha256": "3827aa5d73ccf79675e06deee413fcbfe2c7e2130d3b4ab8254fa2c08349986b"
+    },
+    {
+      "file": "docs/compatibility-catalog.json",
+      "sha256": "cb9b7285f299bd6b97743f9c30168c44e404d84dc9744936d1d993538cbe93e3"
+    },
+    {
+      "file": "docs/analysis-capabilities.html",
+      "sha256": "8b202950be0240db3377bbdcb565bf23e0cc3489a436f42656aafe752db13a29"
+    },
+    {
+      "file": "docs/framework-pack-author-guide.html",
+      "sha256": "a85b7cece12bb8b4f1f31afb41cf9fa61b9c3f89288df48f119df7f24ed881b5"
+    },
+    {
+      "file": "package.json",
+      "sha256": "4c6db1b0e1700f5374331b467d40b85c2e6f61b0da9c2a31c7c8e6590b693623"
+    },
+    {
+      "file": "package-lock.json",
+      "sha256": "691f16cfb44abf881dd9bf107524556cc3911f82fdbe05aebc9c273fb0270f28"
+    },
+    {
+      "file": "tsconfig.json",
+      "sha256": "7618aa85118138951ebb601a4c0e1dcf62185c9c6da1b71441afcc937e7f21b6"
+    },
+    {
+      "file": "tsconfig.build.json",
+      "sha256": "da8ddd95e95d53a8427312534c92128beac2c79d01d4a2a9c150aed08d84c38d"
+    }
+  ],
+  "fullNode22Cases": 1990,
+  "focusedNode22Cases": 112,
+  "focusedNode24Cases": 112,
+  "ordinaryCompiledCasesPerRuntime": 6,
+  "ordinaryCompiledRuntimeVersions": [
+    "v22.12.0",
+    "v24.21.0"
+  ],
+  "sourceAndCompiledOriginalWholeGraphs": 120,
+  "sourceCompiledWholeGraphComparisons": 60,
+  "originalSnapshots": 4,
+  "recordedBuildContexts": 12,
+  "originalInputFiles": 37,
+  "jvmProjectProducerBefore": "4",
+  "jvmProjectProducerAfter": "5",
+  "sourceCacheAndSameRevisionGraphEquality": true,
+  "originalDeclarationIdentitiesAndRangesPreserved": true,
+  "normalization": [
+    "run.id",
+    "run.analyzedAt"
+  ],
+  "actualOriginalGuideChanges": {
+    "javaGradleMvc": {
+      "endpoint": "GET|HEAD /greeting",
+      "sourceLine": 15,
+      "constraintsUnresolved": false
+    },
+    "javaGradleWebflux": {
+      "endpoint": "GET /hello",
+      "sourceLine": 19,
+      "constraintsUnresolved": true,
+      "retainedConditions": [
+        "Conditional/injected/custom WebFlux bean factory requires a reviewed registration profile",
+        "Virtual/interface receiver dispatch is not an exact original handler call",
+        "Unobserved/custom WebFlux predicate accept requires a reviewed restriction summary"
+      ]
+    },
+    "otherRecordedBuildContexts": "Maven/unselected ownership and Kotlin compiler transformations remain gaps, with zero endpoints"
+  },
+  "primarySourceDescriptorsAndPluginSources": [
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-dependencies/4.0.8/spring-boot-dependencies-4.0.8.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-spring-boot-gradle-source/primary/4.0.8-spring-boot-dependencies.pom",
+      "sha256": "64ee29cc143cb36e5ec83dc3ca5a99c9313693b2e7cfc9a0d0cb3a77ab4a837d",
+      "bytes": 137661
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-starter-webmvc/4.0.8/spring-boot-starter-webmvc-4.0.8.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-spring-boot-gradle-source/primary/4.0.8-spring-boot-starter-webmvc.pom",
+      "sha256": "b74b2ef993262aeb5ad2d9a168da1bbfc7a3fefee7a7016786f81ad35a305e97",
+      "bytes": 2889
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-webmvc/4.0.8/spring-boot-webmvc-4.0.8.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-spring-boot-gradle-source/primary/4.0.8-spring-boot-webmvc.pom",
+      "sha256": "0608d4998e825e94ae727c37c6d6c43dbe3ec2f9205f0560a012d23ffc43e651",
+      "bytes": 2618
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-starter-webflux/4.0.8/spring-boot-starter-webflux-4.0.8.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-spring-boot-gradle-source/primary/4.0.8-spring-boot-starter-webflux.pom",
+      "sha256": "10272bb55a03c0cf6e3e8b1aa2b0e7dc5c74adafaebcb3a47241ede57eea8857",
+      "bytes": 2896
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-webflux/4.0.8/spring-boot-webflux-4.0.8.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-spring-boot-gradle-source/primary/4.0.8-spring-boot-webflux.pom",
+      "sha256": "11491cfa0e633f848eacbf81e9e9b10452cdcc954f2c6be0e307371f52784a6e",
+      "bytes": 2626
+    },
+    {
+      "url": "https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-starter-webclient/4.0.8/spring-boot-starter-webclient-4.0.8.pom",
+      "file": "/var/www/html/codiluce/.codiluce/validation-spring-boot-gradle-source/primary/4.0.8-spring-boot-starter-webclient.pom",
+      "sha256": "54e513c0b4a39c0b718f36315fff6c56db0a7fcad16fb0afa7a62e47f608a326",
+      "bytes": 2924
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-boot/v4.0.8/build-plugin/spring-boot-gradle-plugin/src/main/java/org/springframework/boot/gradle/plugin/JavaPluginAction.java",
+      "file": ".codiluce/validation-spring-boot-gradle-source/primary/JavaPluginAction.java",
+      "sha256": "95969b019ea80a065d6806171f6fac086e8b2c10d1830e1b97cf934590df19db",
+      "bytes": 17050
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-boot/v4.0.8/build-plugin/spring-boot-gradle-plugin/src/main/java/org/springframework/boot/gradle/plugin/DependencyManagementPluginAction.java",
+      "file": ".codiluce/validation-spring-boot-gradle-source/primary/DependencyManagementPluginAction.java",
+      "sha256": "ea0deb1b0f87d1c4ef14e2c84aa79e988466f532627c9c3bf2dbcf720a201598",
+      "bytes": 1652
+    }
+  ],
+  "parserDeadlineChanged": false,
+  "guardsRelaxed": false,
+  "targetExecution": false,
+  "failedPreparationEvidence": {
+    "firstFocusedExitCode": 1,
+    "firstFocusedPasses": 19,
+    "firstFocusedFailures": 1,
+    "cause": "Test compared recorded-revision graphs with working-tree graphs; actual commit/dirty/no-Git diagnostic fields intentionally differ. Corrected same-mode whole graph comparison passes without extra normalization.",
+    "diagnosticExitCode": 1,
+    "firstRelativeRootProbeExitCode": 1,
+    "relativeRootProbeFailedBeforeIndexing": true,
+    "firstCapabilityDocsCheckExitCode": 1,
+    "capabilityDocsRegeneratedAfterProfileReview": true
+  },
+  "typechecksPassed": true,
+  "cliUiBuildPassed": true,
+  "capabilityDocsCheckPassed": true,
+  "fullNormalInstalledPackageQualified": false,
+  "productionHistoryForChangedRuntimeQualified": false,
+  "productionRelativePerformanceQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullNativeMatrixQualified": false,
+  "broaderSourceAccuracyQualified": false,
+  "scope": "Complete literal Java JVM plugin plus pinned Boot 4.0.8 and management 1.1.7 source defaults resolve three reviewed web starter spellings and retain original coordinates/proof. Published starter/module POM chains select Framework 7.0.9. Binary/transitive resolution remains unverified. WebClient alone never selects a reactive server module. Indexed Gradle properties, opaque statements, duplicate/mismatched/unreviewed plugins and coordinates retain gaps. Kotlin/all-open/default-target and Maven parent/BOM handling remain separate open phases.",
+  "evidenceArchive": {
+    "file": "/var/www/html/codiluce/.codiluce/validation-spring-boot-gradle-source-evidence/spring-boot-gradle-source-compiled-and-original-evidence.tar.gz",
+    "sha256": "842bb1546c78eca3649f4023429ca8e79a5b6f2de60e6a9c3fd7612b7fcd7361",
+    "bytes": 13401148,
+    "regularFiles": 1015,
+    "allBytesAndModesReopened": true,
+    "manifestSha256": "e7ad427a13cd2052c7fc30468fb9cdb9df346213e0d62f5a455f75941ae44875",
+    "seconds": 3.417720079421997
+  }
+}

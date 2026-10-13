@@ -136,7 +136,7 @@ test("Groovy and Kotlin standard compiler blocks retain Java/Kotlin import ident
     }
     const inputs = model.compilerInputs;
     assert.equal(inputs.javaToolchains[0]?.languageVersion, 17);
-    assert.ok(inputs.javaToolchains[0]?.proof.some((fact) => fact.file === file && fact.line === 3 && fact.analyzerVersion === "4" && fact.explanation?.includes("not resolved/executed")));
+    assert.ok(inputs.javaToolchains[0]?.proof.some((fact) => fact.file === file && fact.line === 3 && fact.analyzerVersion === "5" && fact.explanation?.includes("not resolved/executed")));
     assert.ok(inputs.kotlinArgumentUpdates[0]?.arguments.every((arg) => arg.proof.some((fact) => fact.file === file && fact.line === 4)));
     assert.ok(inputs.testPlatforms[0]?.proof.some((fact) => fact.file === file && fact.line === 5));
     assert.ok(graph.relations.filter((edge) => edge.type === "imports").every((edge) => edge.evidence.some((fact) => fact.line === 3)));
@@ -146,7 +146,8 @@ test("Complete unknown plugin declarations constrain bindings while retaining in
   const build = 'plugins { id("org.springframework.boot") version "4.0.8"; id("io.spring.dependency-management") version "1.1.7"; kotlin("plugin.spring") version "2.2.21"; kotlin("jvm") version "2.2.21" }\n' + toolchain + "\n" + options + "\ntasks.withType<Test> { useJUnitPlatform() }";
   const graph = await index(await repository({ "build.gradle.kts": build, ...java, ...kotlin }));
   const project = projects(graph)[0];
-  for (const id of ["org.springframework.boot", "io.spring.dependency-management", "org.jetbrains.kotlin.plugin.spring"]) assert.ok(project.gaps.some((gap) => gap.includes(id)));
+  assert.ok(project.gaps.some((gap) => gap.includes("org.jetbrains.kotlin.plugin.spring")));
+  assert.equal(project.bootBom?.frameworkVersion, "7.0.9");
   assert.equal(project.compilerInputs?.javaToolchains[0]?.languageVersion, 17);
   assert.equal(project.compilerInputs?.testPlatforms.length, 1);
   assert.equal(project.compilerInputs?.kotlinArgumentUpdates.length, 1);
