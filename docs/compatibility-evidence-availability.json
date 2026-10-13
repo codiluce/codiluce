@@ -138,5 +138,20 @@
   "targetExecution": false,
   "newFull195HistoryQualified": false,
   "nativeWindowsMacOSQualified": false,
-  "fullGoalComplete": false
+  "fullGoalComplete": false,
+  "bootstrapRuntimeLookupRestoration": {
+    "sourceBootstrapRuntimeSha256": "dcd55f1b6c30bcec6718d90b9a779409f1677c8dda1d9f39635c653769ebb8d1",
+    "sourceBootstrapRuntimeInputsUnchanged": 1924,
+    "packageAndVendorRegularFilesRestored": 14307,
+    "vendorSymlinksRestored": 17,
+    "allRestoredSiblingBytesAndModesVerified": true,
+    "existingDistAliasUnchanged": true,
+    "archived284CompiledFilesUnchanged": true,
+    "actualCliExitCode": 0,
+    "actualCliPidGone": true,
+    "helpLogSha256": "e3f7e60ace8bdec8c3e6fd0afe57fcdfcaf200aacd1b1f12236f13b313f1f6df",
+    "originalMissingYamlLaunchPreserved": true,
+    "fullReindexedOrInstalledGateClaim": false,
+    "receiptSha256": "62818b9b18819711695f5bc01674d728d6446d6ba79e803b43b0862b3432a2f0"
+  }
 }
