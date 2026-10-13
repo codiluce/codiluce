@@ -1,0 +1,175 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-13T00:31:30.267873+00:00",
+  "phase": "Source-free compiler bootstrap retirement local Linux release qualification",
+  "implementationCommit": "e9d29b5",
+  "runtimeSha256": "dcd55f1b6c30bcec6718d90b9a779409f1677c8dda1d9f39635c653769ebb8d1",
+  "runtimeInputsVerified": 1924,
+  "scope": "All source/compiled checks, normal prepack and complete installed assertions pass. Installed gate resumed after user interruption on the retained verified production-only installation; original incomplete observation preserved.",
+  "engineWebTests": 1703,
+  "targetedParserLifetimeQueueChecks": 26,
+  "ordinaryCompiledNodeChecks": 19,
+  "failedFinalChecks": 0,
+  "skippedChecks": 0,
+  "bothTypechecksPassed": true,
+  "deterministicDocumentationPassed": true,
+  "compiledCliBuildPassed": true,
+  "normalPrepackAndResumedProductionOnlyInstalledGatePassed": true,
+  "installedGate": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791851440.8863723,
+    "scope": "Normal prepack, production-only installed prefix checks and all original remaining assertions resumed on the same verified installation. Original interrupted observation is retained, not claimed as a completed process.",
+    "runtimeSha256": "dcd55f1b6c30bcec6718d90b9a779409f1677c8dda1d9f39635c653769ebb8d1",
+    "normalPrepack": true,
+    "productionOnlyInstalledDependencies": true,
+    "installedBootstrapQueueCacheAndLifetimeChecksPassed": true,
+    "completeCliApiSourceFrameworkHistoryAssetIsolationSignalsNpmExecPassed": true,
+    "interruptedFirstLeg": {
+      "schema": 1,
+      "passed": false,
+      "observedAt": 1791851251.6195204,
+      "originalSession": 97413,
+      "originalDriverPid": 3840988,
+      "originalNpmPid": 3840967,
+      "processesGone": true,
+      "exitCodeUnavailable": true,
+      "interruptedBeforeComplete": true,
+      "log": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/bootstrap-installed-package-first.log",
+      "logSha256": "db5d72a2ac01c4783e874796dad9ce539908513d3500b4c98a5708bd54bb2017",
+      "bootstrapCliApiAndHistoryPassedBeforeNextStageMarker": true,
+      "assetIsolationComplete": false,
+      "fullInstalledGatePassed": false,
+      "restarted": false
+    },
+    "installedContinuation": {
+      "schema": 1,
+      "startedAt": 1791851265.2772782,
+      "wrapperPid": 3876997,
+      "actualDriverPid": 3876999,
+      "driverSha256": "8cdefda51ca11db3fab50b50d94d0dbc943792450fec98ec07eb80aac09c6b06",
+      "log": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/bootstrap-installed-continuation.log",
+      "priorStagesNotRerun": true,
+      "productionHistoryNotRetried": true,
+      "completedAt": 1791851408.7638872,
+      "passed": true,
+      "actualExitCode": 0,
+      "interruptSignals": [],
+      "actualDriverGone": true,
+      "logSha256": "1ce038116459ca33049a6f518225330e9954a8b6c8a4c6c7161ddba82311767b",
+      "allUnmodifiedRemainingAssertionsPassed": true,
+      "targetExecution": false
+    },
+    "continuationPreparation": {
+      "schema": 1,
+      "passed": true,
+      "createdAt": 1791851252.0163715,
+      "originalDriverSha256": "1cad7ebe1668d169dcae722de11f074f0f80a5d17cb44a41468006cf0abe1599",
+      "continuationDriver": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/continue-installed-package.mjs",
+      "continuationSha256": "8cdefda51ca11db3fab50b50d94d0dbc943792450fec98ec07eb80aac09c6b06",
+      "normalPrepackSha256": "ec35668dc57e600a38f281babe6971e2faa1af726fc705a8072c9fbae038de78",
+      "verifiedRegularPackageFiles": 369,
+      "restoredPackageFiles": [
+        {
+          "file": "package/dist/grammars/queries/html/declarations.scm",
+          "beforeSha256": null,
+          "afterSha256": "fec4e2a7d6c1bec8da174cfc387c41f35c30b0d4850f98694161f458c5544970"
+        }
+      ],
+      "scope": "Continue all original asset isolation, scoped launcher, SIGTERM and npm-exec assertions on the retained production-only installation after authoritative process termination. Original passed bootstrap/CLI/API/history stages are not rerun. No changed assertions or production observation retry.",
+      "remainingSourceSha256": "dbce5053f5c73f59cbddcbc1d43585344db47b53516904acd579e13be436181c",
+      "retainedConsumer": "/dev/shm/codiluce-package-bootstrap-retirement/codiluce-package-llh5uv/consumer",
+      "originalPartialObservationRetained": true,
+      "targetExecution": false
+    },
+    "installedRegularPackageFilesReverified": 369,
+    "postGateScopedManifestRestored": [
+      "package/package.json"
+    ],
+    "installedCheckDrivers": [
+      {
+        "file": "check-parser-bootstrap-retirement.mjs",
+        "sha256": "326a9ea09c6b878b3707dfe1ff43bd6729605ac12a1bcbe31dbc04b35801966e"
+      },
+      {
+        "file": "check-parser-active-deadlines.mjs",
+        "sha256": "9575183cbd3bc9320a3e7d0f4b2f9c5afa0b8d58505e1aaa793e8e2bd966a399"
+      },
+      {
+        "file": "owned-parser-queue-worker.mjs",
+        "sha256": "35f3a834882bcf1aff07242c6a6db5a2d8726b63b9fb30fa160fdcf7f843258d"
+      },
+      {
+        "file": "check-typescript-source-cache.mjs",
+        "sha256": "bd984e42dd2b2d607f51b150e6e19c755a930d29f84c7e2a749b8c404228d96c"
+      },
+      {
+        "file": "check-typescript-component-lifetimes.mjs",
+        "sha256": "ff95b16078eda704c15b175986673a39854356b4f4c09387ee31bd85a6014618"
+      },
+      {
+        "file": "check-php-residency.mjs",
+        "sha256": "0c607c777a3d5a29aaeb5d835a95e09f1adc9741c8651340361ae6305dccdf18"
+      }
+    ],
+    "oldFailedProductionObservationsRetried": false,
+    "targetExecution": false
+  },
+  "normalPrepackArchive": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791850776.6785815,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/parser-bootstrap-retirement-normal-prepack-release.tgz",
+    "source": "/dev/shm/codiluce-package-bootstrap-retirement/codiluce-package-llh5uv/codiluce-0.1.1.tgz",
+    "sha256": "ec35668dc57e600a38f281babe6971e2faa1af726fc705a8072c9fbae038de78",
+    "bytes": 7222763,
+    "verifiedRegularMembers": 369,
+    "normalPrepackPassed": true,
+    "installedGatePendingAtRetention": true
+  },
+  "runtimeReleaseAndEvidenceArchive": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": 1791851458.8429415,
+    "seconds": 17.509151697158813,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-parser-bootstrap-retirement/parser-bootstrap-retirement-runtime-release-and-evidence.tar.gz",
+    "sha256": "150b2752552c8bde3a5067893a23639bf4f593ca8cb5185feec4de3d87862ef2",
+    "bytes": 60434557,
+    "verifiedRegularMembers": 3260,
+    "manifestSha256": "9828431f4282458bd9d4d3361fa680a8fbcb97ddddf914ca4a59fe97e6a33760",
+    "runtimeSha256": "dcd55f1b6c30bcec6718d90b9a779409f1677c8dda1d9f39635c653769ebb8d1",
+    "normalPrepackAndResumedInstalledGatePassed": true,
+    "originalFirstInstalledObservationCompleted": false,
+    "full195RevisionHistoryQualified": false,
+    "relativeHistoryTimeRssQualified": false,
+    "nativeWindowsMacOSQualified": false,
+    "fullGoalFinished": false
+  },
+  "sourceConformanceReceipt": {
+    "file": "docs/parser-bootstrap-retirement-conformance-validation.json",
+    "sha256": "18b1359df58eeee9e65cb39ac9ac46292396578d8549c482db87e764c6340519"
+  },
+  "storage": {
+    "availableWorkspaceBytes": 521682944,
+    "originalHistoryReserveBytes": 1073741824,
+    "originalHistoryReserveRelaxed": false,
+    "additionalCapacityRequested": true,
+    "temporaryConsumerUsedOwnedTmpfs": true,
+    "originalOrFailedEvidenceDeleted": false
+  },
+  "newRuntimeFull195RevisionHistoryQualified": false,
+  "newRuntimeRelativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "broaderCompilerConsumerWasmRssBudgetQualified": false,
+  "oldFailedProductionObservationsRetried": false,
+  "fullGoalFinished": false,
+  "foreignFilesUnchanged": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  },
+  "reportSha256": "3b0bdfb482b898ba7cd05a92ed049db91ec9b00577da237e46bd04b45fa7ee3b"
+}

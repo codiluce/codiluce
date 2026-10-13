@@ -382,6 +382,15 @@ assert.ok(children.every(child=>child.exitCode!==null||child.signalCode!==null))
 const php=new PhpParser();try{const originals=Array.from({length:6},(_,i)=>'<?php\\r\\n// café 😀 '+i+'\\r\\nclass Original'+i+' { public function original() { return 1; } }\\r\\n');const units=await Promise.all(originals.map(source=>php.parseUnit(source)));assert.equal(units.length,6);assert.ok(units.every(unit=>unit.phpAst.kind==='program'&&!unit.truncated&&!unit.issues.length));assert.ok(units.every((unit,i)=>unit.declarations.some(declaration=>declaration.name==='Original'+i)));}finally{await php.closeAndWait();}
 `);
   await run(process.execPath,[parserQueueCheck],consumer);
+  const parserBootstrapCheck=path.join(consumer,'check-parser-bootstrap-retirement.mjs');
+  await writeFile(parserBootstrapCheck,`import assert from 'node:assert/strict';
+import cp from 'node:child_process';
+import {syncBuiltinESMExports} from 'node:module';
+import {TemplateScriptParser} from './node_modules/${manifest.name}/dist/src/analysis/tree-sitter/template-scripts.js';
+const fork=cp.fork,children=[],jobs=[];cp.fork=(...args)=>{assert.ok(children.every(child=>child.exitCode!==null||child.signalCode!==null),'Bootstrap must wait for the old address space');const child=fork(...args);children.push(child);const send=child.send.bind(child);child.send=(message,...rest)=>{jobs.push(message);return send(message,...rest);};return child;};syncBuiltinESMExports();
+const compiler=new TemplateScriptParser();try{compiler.prewarm();const retirement=compiler.closeAndWait();assert.throws(()=>compiler.prewarm(),/retiring/);await retirement;assert.equal(children.length,1);assert.ok(children[0].exitCode!==null||children[0].signalCode!==null);compiler.prewarm();assert.equal(children.length,2);assert.deepEqual(jobs,[],'Prewarm must not dispatch source or import the optional compiler');}finally{await compiler.closeAndWait();cp.fork=fork;syncBuiltinESMExports();}assert.ok(children.every(child=>child.exitCode!==null||child.signalCode!==null));
+`);
+  await run(process.execPath,[parserBootstrapCheck],consumer);
   const bin = path.join(installed, 'bin/codiluce.js');
   for (const grammar of grammarManifest.grammars) assert.equal(createHash('sha256').update(await readFile(path.join(installed, 'dist/grammars', grammar.file))).digest('hex'), grammar.sha256);
   const dependencies = JSON.parse((await npm(['ls', '--omit=dev', '--all', '--json'], consumer)).stdout).dependencies[manifest.name].dependencies;
