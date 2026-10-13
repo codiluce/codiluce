@@ -459,6 +459,11 @@ const compiler=new TemplateScriptParser();try{compiler.prewarm();const retiremen
   console.log('Checking installed Boot 3.5.16 Maven/Gradle source contracts, distinct starter chains and original handlers…');
   const boot35Conformance=await run(process.execPath,['--experimental-sqlite',boot35Check,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'spring-boot35-validation.json')],consumer);
   console.log(boot35Conformance.stdout.trim());
+  const jsdocCacheCheck=path.join(consumer,'check-typescript-jsdoc-cache.mjs');
+  await cp(path.join(root,'tests/fixtures/typescript-jsdoc-cache-qualification.mjs'),jsdocCacheCheck);
+  console.log('Checking installed parsed JSDoc cache ownership, original compiler types and complete framework graph replay…');
+  const jsdocCacheConformance=await run(process.execPath,['--experimental-sqlite',jsdocCacheCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'typescript-jsdoc-cache-validation.json')],consumer);
+  console.log(jsdocCacheConformance.stdout.trim());
   const bin = path.join(installed, 'bin/codiluce.js');
   for (const grammar of grammarManifest.grammars) assert.equal(createHash('sha256').update(await readFile(path.join(installed, 'dist/grammars', grammar.file))).digest('hex'), grammar.sha256);
   const dependencies = JSON.parse((await npm(['ls', '--omit=dev', '--all', '--json'], consumer)).stdout).dependencies[manifest.name].dependencies;

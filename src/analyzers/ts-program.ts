@@ -18,7 +18,7 @@ export const TYPESCRIPT_LIBRARY_CACHE_LIMITS:Readonly<TypeScriptCacheLimits>=Obj
 interface CachedSource {source:ts.SourceFile;parseKey:string;bytes:number;nodes:number}
 
 /** Process-owned parse reuse, bounded separately from live compiler programs.
- * UTF-16 source/key payload and compiler child-visitor nodes are admission
+ * UTF-16 source/key payload and syntax/attached JSDoc nodes are admission
  * measures, not JS object size, checker memory or an RSS cap. An oversized
  * original remains a valid program input; only its cached ownership is denied. */
 export class TypeScriptSourceCache {
@@ -44,7 +44,25 @@ export class TypeScriptSourceCache {
     // Stop admission counting once this cache cannot retain the tree. No
     // parent links, checker symbols or compiler token caches are traversed.
     let nodes=0;const pending:ts.Node[]=[source];
-    while(pending.length){const node=pending.pop()!;if(++nodes>this.limits.maxNodes){this.bypasses++;return;}const overflow=ts.forEachChild(node,child=>{if(nodes+pending.length>=this.limits.maxNodes)return true;pending.push(child);return undefined;});if(overflow){this.bypasses++;return;}}
+    while(pending.length){
+      const node=pending.pop()!;if(++nodes>this.limits.maxNodes){this.bypasses++;return;}
+      const enqueue=(child:ts.Node):true|undefined=>{if(nodes+pending.length>=this.limits.maxNodes)return true;pending.push(child);return undefined;};
+      if(ts.forEachChild(node,enqueue)){this.bypasses++;return;}
+      // The pinned compiler stores every parsed comment in this attachment.
+      // forEachChild omits the attachment; getJSDocCommentsAndTags filters
+      // earlier comments and therefore cannot account for owned syntax.
+      // Read only the reviewed parser edge, without traversing or changing
+      // parent/checker/symbol/token caches. Unknown attachment layouts bypass
+      // reuse while the original remains available to its live program.
+      // https://github.com/microsoft/TypeScript/blob/v5.9.3/src/compiler/types.ts
+      const documents=(node as ts.Node&{readonly jsDoc?:unknown}).jsDoc;
+      if(documents!==undefined){
+        if(!Array.isArray(documents)){this.bypasses++;return;}
+        for(const document of documents){
+          if(!document||typeof document!=='object'||!ts.isJSDoc(document)||enqueue(document)){this.bypasses++;return;}
+        }
+      }
+    }
     while(this.entries.size>=this.limits.maxEntries||this.bytes+bytes>this.limits.maxBytes||this.nodes+nodes>this.limits.maxNodes){this.forget(this.entries.keys().next().value!);this.evictions++;}
     this.entries.set(cacheKey,{source,parseKey,bytes,nodes});this.bytes+=bytes;this.nodes+=nodes;
     this.peakBytes=Math.max(this.peakBytes,this.bytes);this.peakNodes=Math.max(this.peakNodes,this.nodes);this.peakEntries=Math.max(this.peakEntries,this.entries.size);

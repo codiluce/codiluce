@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "reviewedOn": "2026-10-13",
+  "reviewedOn": "2026-10-14",
   "languages": [
     {
       "id": "typescript",
@@ -9,10 +9,11 @@
       "imports": "Indexed Node projects, workspace packages, aliases and shared compiler configs",
       "binding": "Partial lexical, source-type, callable and HTTP-wrapper binding",
       "frameworks": "Next.js, Express, Nest; component scripts",
-      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior",
+      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior; parsed syntax/JSDoc cache ownership is bounded separately from unqualified checker/program/token and RSS budgets",
       "sources": [
         "src/analyzers/typescript.ts",
-        "src/analysis/resolution/typescript.ts"
+        "src/analysis/resolution/typescript.ts",
+        "src/analyzers/ts-program.ts"
       ]
     },
     {
@@ -22,10 +23,11 @@
       "imports": "Indexed Node projects, workspace packages, aliases and shared compiler configs",
       "binding": "Partial lexical, source-type, callable and HTTP-wrapper binding",
       "frameworks": "Next.js, Express, Nest; component scripts",
-      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior",
+      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior; parsed syntax/JSDoc cache ownership is bounded separately from unqualified checker/program/token and RSS budgets",
       "sources": [
         "src/analyzers/typescript.ts",
-        "src/analysis/resolution/typescript.ts"
+        "src/analysis/resolution/typescript.ts",
+        "src/analyzers/ts-program.ts"
       ]
     },
     {
@@ -385,7 +387,8 @@
       "scope": "Proven app/router instances, nested mounts, static helpers and original handlers",
       "gaps": "Unknown version keeps common syntax; regex/dynamic paths, unmounted routers and custom behavior remain constrained",
       "tests": [
-        "tests/express.test.ts"
+        "tests/express.test.ts",
+        "tests/typescript-jsdoc-cache.test.ts"
       ],
       "sources": [
         {

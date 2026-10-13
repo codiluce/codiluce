@@ -1,0 +1,755 @@
+{
+  "schema": 1,
+  "passed": true,
+  "completedAt": "2026-10-13T22:31:08.490923+00:00",
+  "localPhaseDate": "2026-10-14",
+  "phase": "Parsed JSDoc source/library syntax-cache admission",
+  "baselineCommit": "0336fd64433e7841bf5024c52ffe45d1ad4694f7",
+  "fullNode22Cases": 2036,
+  "engineAndWebNode22Cases": 1817,
+  "toolingNode22Cases": 219,
+  "everyPreviousTestRetained": true,
+  "addedTests": 7,
+  "focusedCasesPerRuntime": 23,
+  "ordinaryCompiledCasesPerRuntime": 7,
+  "runtimeVersions": [
+    "v22.12.0",
+    "v24.21.0"
+  ],
+  "defaultPressureProfilesPerRuntime": 2,
+  "defaultPressure": [
+    {
+      "passed": true,
+      "node": "v22.12.0",
+      "typescript": "5.9.3",
+      "rows": [
+        {
+          "profile": "source",
+          "properties": 210000,
+          "ownedNodes": 1050028,
+          "originalBytes": 6189047,
+          "originalSha256": "99e5acdc931818469ee0ed9985745640e1dc04dedb754e66a60e72bc01dcde1f",
+          "file": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/pressure-originals/node22-source.js",
+          "limits": {
+            "maxBytes": 33554432,
+            "maxNodes": 1000000,
+            "maxEntries": 4096
+          },
+          "prior": {
+            "limits": {
+              "maxBytes": 33554432,
+              "maxNodes": 1000000,
+              "maxEntries": 4096
+            },
+            "bytes": 12378158,
+            "nodes": 12,
+            "entries": 1,
+            "peakBytes": 12378158,
+            "peakNodes": 12,
+            "peakEntries": 1,
+            "hits": 1,
+            "misses": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "bypasses": 0
+          },
+          "current": {
+            "limits": {
+              "maxBytes": 33554432,
+              "maxNodes": 1000000,
+              "maxEntries": 4096
+            },
+            "bytes": 0,
+            "nodes": 0,
+            "entries": 0,
+            "peakBytes": 0,
+            "peakNodes": 0,
+            "peakEntries": 0,
+            "hits": 0,
+            "misses": 1,
+            "evictions": 0,
+            "invalidations": 0,
+            "bypasses": 1
+          },
+          "originalAstAndTextPreserved": true
+        },
+        {
+          "profile": "library",
+          "properties": 100000,
+          "ownedNodes": 500028,
+          "originalBytes": 2889047,
+          "originalSha256": "21efec8d9652a690489609fcb85bfb41d44e45020e10df4402b03fd35067283f",
+          "file": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/pressure-originals/node22-library.js",
+          "limits": {
+            "maxBytes": 16777216,
+            "maxNodes": 500000,
+            "maxEntries": 128
+          },
+          "prior": {
+            "limits": {
+              "maxBytes": 16777216,
+              "maxNodes": 500000,
+              "maxEntries": 128
+            },
+            "bytes": 5778160,
+            "nodes": 12,
+            "entries": 1,
+            "peakBytes": 5778160,
+            "peakNodes": 12,
+            "peakEntries": 1,
+            "hits": 1,
+            "misses": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "bypasses": 0
+          },
+          "current": {
+            "limits": {
+              "maxBytes": 16777216,
+              "maxNodes": 500000,
+              "maxEntries": 128
+            },
+            "bytes": 0,
+            "nodes": 0,
+            "entries": 0,
+            "peakBytes": 0,
+            "peakNodes": 0,
+            "peakEntries": 0,
+            "hits": 0,
+            "misses": 1,
+            "evictions": 0,
+            "invalidations": 0,
+            "bypasses": 1
+          },
+          "originalAstAndTextPreserved": true
+        }
+      ],
+      "targetExecution": false,
+      "defaultLimitsChanged": false,
+      "fullCheckerOwnershipBudgetQualified": false,
+      "processRssCapQualified": false
+    },
+    {
+      "passed": true,
+      "node": "v24.21.0",
+      "typescript": "5.9.3",
+      "rows": [
+        {
+          "profile": "source",
+          "properties": 210000,
+          "ownedNodes": 1050028,
+          "originalBytes": 6189047,
+          "originalSha256": "99e5acdc931818469ee0ed9985745640e1dc04dedb754e66a60e72bc01dcde1f",
+          "file": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/pressure-originals/node24-source.js",
+          "limits": {
+            "maxBytes": 33554432,
+            "maxNodes": 1000000,
+            "maxEntries": 4096
+          },
+          "prior": {
+            "limits": {
+              "maxBytes": 33554432,
+              "maxNodes": 1000000,
+              "maxEntries": 4096
+            },
+            "bytes": 12378158,
+            "nodes": 12,
+            "entries": 1,
+            "peakBytes": 12378158,
+            "peakNodes": 12,
+            "peakEntries": 1,
+            "hits": 1,
+            "misses": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "bypasses": 0
+          },
+          "current": {
+            "limits": {
+              "maxBytes": 33554432,
+              "maxNodes": 1000000,
+              "maxEntries": 4096
+            },
+            "bytes": 0,
+            "nodes": 0,
+            "entries": 0,
+            "peakBytes": 0,
+            "peakNodes": 0,
+            "peakEntries": 0,
+            "hits": 0,
+            "misses": 1,
+            "evictions": 0,
+            "invalidations": 0,
+            "bypasses": 1
+          },
+          "originalAstAndTextPreserved": true
+        },
+        {
+          "profile": "library",
+          "properties": 100000,
+          "ownedNodes": 500028,
+          "originalBytes": 2889047,
+          "originalSha256": "21efec8d9652a690489609fcb85bfb41d44e45020e10df4402b03fd35067283f",
+          "file": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/pressure-originals/node24-library.js",
+          "limits": {
+            "maxBytes": 16777216,
+            "maxNodes": 500000,
+            "maxEntries": 128
+          },
+          "prior": {
+            "limits": {
+              "maxBytes": 16777216,
+              "maxNodes": 500000,
+              "maxEntries": 128
+            },
+            "bytes": 5778160,
+            "nodes": 12,
+            "entries": 1,
+            "peakBytes": 5778160,
+            "peakNodes": 12,
+            "peakEntries": 1,
+            "hits": 1,
+            "misses": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "bypasses": 0
+          },
+          "current": {
+            "limits": {
+              "maxBytes": 16777216,
+              "maxNodes": 500000,
+              "maxEntries": 128
+            },
+            "bytes": 0,
+            "nodes": 0,
+            "entries": 0,
+            "peakBytes": 0,
+            "peakNodes": 0,
+            "peakEntries": 0,
+            "hits": 0,
+            "misses": 1,
+            "evictions": 0,
+            "invalidations": 0,
+            "bypasses": 1
+          },
+          "originalAstAndTextPreserved": true
+        }
+      ],
+      "targetExecution": false,
+      "defaultLimitsChanged": false,
+      "fullCheckerOwnershipBudgetQualified": false,
+      "processRssCapQualified": false
+    }
+  ],
+  "sourceRuntimeSha256": "b433255301cdac75fb192bb3df4c68b2196384b233cd24e94097c240b51e18bf",
+  "sourceRuntimeInputs": 1933,
+  "fullPriorCurrentMixedGraphComparisons": 3,
+  "retainedMixedGraphs": 6,
+  "unchangedMixedOriginalInputs": 171,
+  "mixedGraphParity": {
+    "schema": 1,
+    "passed": true,
+    "actualCandidateRuntimeSha256": "b433255301cdac75fb192bb3df4c68b2196384b233cd24e94097c240b51e18bf",
+    "actualCandidateRuntimeInputs": 1933,
+    "candidateSourceProfileLedger": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/candidate-runtime-identity.json",
+    "rawProbeReceipt": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/whole-mixed-graph-parity/complete-prior-graph-comparison.json",
+    "rawProbeReceiptSha256": "f4cf4b59acec4293e5ff1a6ec8ba6dac723fa7a6814faed3d318f57e1fd2149b",
+    "rawProbeRuntimeLabelWasDescriptiveNotDigest": true,
+    "rawGraphFilesUnmodified": true,
+    "wholeGraphsCompared": 3,
+    "retainedWholeGraphs": 6,
+    "originalFiles": 171,
+    "normalizedFields": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "producerOrGitFieldsNormalized": false,
+    "targetExecution": false,
+    "raw": {
+      "schema": 1,
+      "passed": true,
+      "completedAt": "2026-10-13T22:20:26.273Z",
+      "priorRuntime": "4af72a3e1d70bfaed1f41588d1ce06992235ee80b7bd3d29e3302cf2c91229c8",
+      "priorRuntimeInputsVerified": 1933,
+      "currentRuntimeSha256": "source-changed-cache-admission",
+      "sourceLoader": false,
+      "candidateCompilationRoot": "/var/www/html/codiluce/dist/src",
+      "acceptedPressureOriginalScriptsVerified": 32,
+      "expandedPressureInputUtf16Bytes": 38522496,
+      "compilerGenerations": [
+        {
+          "limits": {
+            "maxJobs": 64,
+            "maxSourceBytes": 16777216
+          },
+          "jobs": 0,
+          "sourceBytes": 0,
+          "peakJobs": 64,
+          "peakSourceBytes": 8012,
+          "generations": 2
+        },
+        {
+          "limits": {
+            "maxJobs": 64,
+            "maxSourceBytes": 16777216
+          },
+          "jobs": 0,
+          "sourceBytes": 0,
+          "peakJobs": 0,
+          "peakSourceBytes": 0,
+          "generations": 0
+        },
+        {
+          "limits": {
+            "maxJobs": 64,
+            "maxSourceBytes": 16777216
+          },
+          "jobs": 0,
+          "sourceBytes": 0,
+          "peakJobs": 64,
+          "peakSourceBytes": 8012,
+          "generations": 2
+        }
+      ],
+      "allowedOversizedNativeOriginalBytes": 17825835,
+      "literalTemplateOriginalsVerified": 66,
+      "scope": "Complete ordinary compiled cold/warm/revision graphs under the exact actual production dependency profile: frozen qualified prior runtime versus current ordinary compiled source; 20 grammar profiles, Cargo TOML and OpenAPI YAML, 66 literal-script templates, default 64-job compiler rotation, an allowed 17 MiB Python original and 32 accepted Astro scripts over the virtual text memo allowance. All semantic/provenance/metadata fields retained; only run UUID/time replaced.",
+      "retainedFixture": "/tmp/codiluce-owned-script-generation-parity-4UtNLD",
+      "originalFiles": 171,
+      "normalizations": [],
+      "volatileFields": [
+        "run.id",
+        "run.analyzedAt"
+      ],
+      "cacheWarmReplayObserved": true,
+      "graphs": [
+        {
+          "mode": "cold",
+          "bytes": 1304793,
+          "sha256": "04923fa598d34cc0cede1ac96dfe6b75c3712ac9e238985e964a5da71e4b3a62",
+          "entities": 803,
+          "relations": 1057,
+          "diagnostics": 26
+        },
+        {
+          "mode": "warm",
+          "bytes": 1304793,
+          "sha256": "04923fa598d34cc0cede1ac96dfe6b75c3712ac9e238985e964a5da71e4b3a62",
+          "entities": 803,
+          "relations": 1057,
+          "diagnostics": 26
+        },
+        {
+          "mode": "revision",
+          "bytes": 1304214,
+          "sha256": "415e623987349c6a27f138a0050fb14ef1ffd931e29a4e716967755a9a996f0c",
+          "entities": 803,
+          "relations": 1057,
+          "diagnostics": 23
+        }
+      ],
+      "targetExecution": false
+    }
+  },
+  "normalization": [
+    "run.id",
+    "run.analyzedAt"
+  ],
+  "producerOrGitFieldsNormalized": false,
+  "baselineAuthoredCasesPassed": 0,
+  "baselineAuthoredCasesFailed": 7,
+  "sourceCacheLimitsUnchanged": true,
+  "libraryCacheLimitsUnchanged": true,
+  "producerVersionsUnchanged": true,
+  "parserGuardsAndDeadlinesUnchanged": true,
+  "targetExecution": false,
+  "foreignFilesUnchanged": true,
+  "primaryInputs": [
+    {
+      "file": "types.ts",
+      "url": "https://raw.githubusercontent.com/microsoft/TypeScript/v5.9.3/src/compiler/types.ts",
+      "bytes": 486748,
+      "sha256": "d5b7a803867e9c7878607bf2baddd46bb62df6b3aa2ca72fe473bf8683f0903b"
+    },
+    {
+      "file": "parser.ts",
+      "url": "https://raw.githubusercontent.com/microsoft/TypeScript/v5.9.3/src/compiler/parser.ts",
+      "bytes": 539588,
+      "sha256": "dcddb577aa14f455193ca98c7c069217a0c523466fc777b985a7aefbd8dafc8e"
+    },
+    {
+      "file": "utilities.ts",
+      "url": "https://raw.githubusercontent.com/microsoft/TypeScript/v5.9.3/src/compiler/utilities.ts",
+      "bytes": 510858,
+      "sha256": "6ac5fa1e9ce5083a6a7279bbcdbaa13ac7b2279e016b8b82d58410dc27af72a2"
+    }
+  ],
+  "sourceFiles": [
+    {
+      "file": "src/analyzers/ts-program.ts",
+      "sha256": "cf168c0b172dfb67c068c9be0c5d7e801d6975cf7868842136afda5b710adb40"
+    },
+    {
+      "file": "tests/typescript-jsdoc-cache.test.ts",
+      "sha256": "90a346a768a7f8ac1d05ae034426f976165113252728583659003b072d791f55"
+    },
+    {
+      "file": "tests/fixtures/typescript-jsdoc-cache-qualification.mjs",
+      "sha256": "3be8da6adf654e60a5bf6cb071408dc042d62ac244ae9391a44b8aec9786b979"
+    },
+    {
+      "file": "scripts/test-package.mjs",
+      "sha256": "e4808d6e32207d9ec07356341dc6868e04f3bac51b3eb964849c9675c51d09de"
+    },
+    {
+      "file": "docs/compatibility-catalog.json",
+      "sha256": "efb09d7817336cd85c50eca2c8e68c6c37019a07c271f539acb101d838c8584c"
+    },
+    {
+      "file": "docs/analysis-capabilities.html",
+      "sha256": "06da7c86b65bbd9d7d4d90883d106dea8c193d39acb1413a2309abb77c989365"
+    },
+    {
+      "file": "docs/framework-pack-author-guide.html",
+      "sha256": "26f467dd3c0f0d387ebae5b746b4cd4dbb4dcff2af32b508b975ee9a77efc600"
+    },
+    {
+      "file": "package.json",
+      "sha256": "4c6db1b0e1700f5374331b467d40b85c2e6f61b0da9c2a31c7c8e6590b693623"
+    },
+    {
+      "file": "package-lock.json",
+      "sha256": "691f16cfb44abf881dd9bf107524556cc3911f82fdbe05aebc9c273fb0270f28"
+    },
+    {
+      "file": "tsconfig.json",
+      "sha256": "7618aa85118138951ebb601a4c0e1dcf62185c9c6da1b71441afcc937e7f21b6"
+    },
+    {
+      "file": "tsconfig.build.json",
+      "sha256": "da8ddd95e95d53a8427312534c92128beac2c79d01d4a2a9c150aed08d84c38d"
+    }
+  ],
+  "terminalObservations": [
+    {
+      "schema": 1,
+      "label": "final-full-scalar-reporting-node22",
+      "argv": [
+        "npm",
+        "test"
+      ],
+      "controllerPid": 566013,
+      "childPid": 566014,
+      "startedAt": 1791930408.7952368,
+      "completedAt": 1791930586.6300743,
+      "seconds": 177.83483743667603,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/final-full-scalar-reporting-node22.log",
+      "logSha256": "ffa1c838c943b42270751be17e6092641268900e092d08456630eebb1520fb1e",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "final-tooling-node22",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "scripts/tests/graph-json-artifact.test.mjs",
+        "scripts/tests/native-release.test.mjs",
+        "scripts/tests/production-cache-git.test.mjs",
+        "scripts/tests/production-cache-observer.test.mjs",
+        "scripts/tests/production-graph-digest.test.mjs",
+        "scripts/tests/production-head-graphs.test.mjs",
+        "scripts/tests/production-history-audit.test.mjs",
+        "scripts/tests/production-history-blobs.test.mjs",
+        "scripts/tests/production-history-columns.test.mjs",
+        "scripts/tests/production-history-entrypoint-columns.test.mjs",
+        "scripts/tests/production-history-entrypoint-qualification.test.mjs",
+        "scripts/tests/production-history-entrypoint-report.test.mjs",
+        "scripts/tests/production-history-entrypoint.test.mjs",
+        "scripts/tests/production-history-inputs.test.mjs",
+        "scripts/tests/production-history-observer.test.mjs",
+        "scripts/tests/production-history-performance-qualification.test.mjs",
+        "scripts/tests/production-history-performance.test.mjs",
+        "scripts/tests/production-history-qualification.test.mjs",
+        "scripts/tests/production-history-recovery.test.mjs",
+        "scripts/tests/production-history-resume.test.mjs",
+        "scripts/tests/production-history-runtime-inputs.test.mjs",
+        "scripts/tests/production-history-storage.test.mjs",
+        "scripts/tests/production-history-tree.test.mjs",
+        "scripts/tests/production-source-contracts.test.mjs"
+      ],
+      "controllerPid": 473355,
+      "childPid": 473359,
+      "startedAt": 1791929275.7337072,
+      "completedAt": 1791929303.743122,
+      "seconds": 28.00941514968872,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/final-tooling-node22.log",
+      "logSha256": "eb3e7b5e2c92df2f8d004ea02127a8bb0c6828c3c9caca3583e2512ddabd1132",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "bounded-reporting-focused-node22",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "tests/typescript-jsdoc-cache.test.ts",
+        "tests/typescript-source-cache.test.ts",
+        "tests/typescript-component-lifetimes.test.ts",
+        "tests/typescript-input-ownership.test.ts"
+      ],
+      "controllerPid": 548435,
+      "childPid": 548437,
+      "startedAt": 1791929701.354876,
+      "completedAt": 1791929704.6416645,
+      "seconds": 3.2867884635925293,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/bounded-reporting-focused-node22.log",
+      "logSha256": "44e05c20761c5061349be9b0cdeb24041fc456a8597f1af76a605345f9aa0e36",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "bounded-reporting-focused-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "tests/typescript-jsdoc-cache.test.ts",
+        "tests/typescript-source-cache.test.ts",
+        "tests/typescript-component-lifetimes.test.ts",
+        "tests/typescript-input-ownership.test.ts"
+      ],
+      "controllerPid": 563176,
+      "childPid": 563177,
+      "startedAt": 1791930294.0326965,
+      "completedAt": 1791930296.4540396,
+      "seconds": 2.4213433265686035,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/bounded-reporting-focused-node24.log",
+      "logSha256": "4c50a7c91f94b92648994e9f19e29644137c32dbda998fe1b58207b112b4785d",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "final-typecheck",
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "controllerPid": 469926,
+      "childPid": 469928,
+      "startedAt": 1791929144.9818723,
+      "completedAt": 1791929164.4937942,
+      "seconds": 19.511922121047974,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/final-typecheck.log",
+      "logSha256": "c1fee42b4fa7e6e1a30e8e81426f7690f45767a53800385021e8cd468ec6e8d9",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "final-build",
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "controllerPid": 473356,
+      "childPid": 473360,
+      "startedAt": 1791929275.7355301,
+      "completedAt": 1791929314.0998275,
+      "seconds": 38.36429762840271,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/final-build.log",
+      "logSha256": "2fefcfb410c5649d30e26eca7095c167ca65291099c6396fb73c8c778aa2eedb",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "final-checked-docs",
+      "argv": [
+        "node",
+        "scripts/generate-compatibility-docs.mjs",
+        "--check"
+      ],
+      "controllerPid": 543985,
+      "childPid": 543988,
+      "startedAt": 1791929511.624244,
+      "completedAt": 1791929511.7603972,
+      "seconds": 0.1361532211303711,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/final-checked-docs.log",
+      "logSha256": "6774facc23a8d4f0ec96bd19cd472716e3cb52c7adb764f1bafb24b36aece985",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "bounded-reporting-portable-node22",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        "tests/fixtures/typescript-jsdoc-cache-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        ".codiluce/validation-typescript-jsdoc-source/bounded-reporting-portable-node22.json"
+      ],
+      "controllerPid": 548434,
+      "childPid": 548438,
+      "startedAt": 1791929701.3548768,
+      "completedAt": 1791929703.956439,
+      "seconds": 2.6015625,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/bounded-reporting-portable-node22.log",
+      "logSha256": "f21862fa9b5d9320b8c5f08ef70e74c57f61df224dcd6979bf2be1f8fe40c340",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "bounded-reporting-portable-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "tests/fixtures/typescript-jsdoc-cache-qualification.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        ".codiluce/validation-typescript-jsdoc-source/bounded-reporting-portable-node24.json"
+      ],
+      "controllerPid": 551524,
+      "childPid": 551540,
+      "startedAt": 1791929825.4228103,
+      "completedAt": 1791929827.1477864,
+      "seconds": 1.7249765396118164,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/bounded-reporting-portable-node24.log",
+      "logSha256": "9b260c4ff48e7ded34ab8f3557d9cd8e4aa76373aba17f37f1bccdbfc3b98814",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "default-pressure-node22",
+      "argv": [
+        "node",
+        ".codiluce/validation-typescript-jsdoc-source/default-pressure.mjs",
+        "node22"
+      ],
+      "controllerPid": 551525,
+      "childPid": 551541,
+      "startedAt": 1791929825.4228725,
+      "completedAt": 1791929832.6521902,
+      "seconds": 7.229317903518677,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/default-pressure-node22.log",
+      "logSha256": "41278cddd482317eccfeb4ee0d790be7ec3422c4fe612a2d036fcc4f1235801d",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "default-pressure-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        ".codiluce/validation-typescript-jsdoc-source/default-pressure.mjs",
+        "node24"
+      ],
+      "controllerPid": 551523,
+      "childPid": 551539,
+      "startedAt": 1791929825.422268,
+      "completedAt": 1791929832.481157,
+      "seconds": 7.058889389038086,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/default-pressure-node24.log",
+      "logSha256": "41278cddd482317eccfeb4ee0d790be7ec3422c4fe612a2d036fcc4f1235801d",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "whole-prior-current-mixed-graphs",
+      "argv": [
+        "node",
+        "--experimental-sqlite",
+        ".codiluce/validation-typescript-jsdoc-source/whole-mixed-graph-parity/compare-prior-current.mjs"
+      ],
+      "controllerPid": 555075,
+      "childPid": 555076,
+      "startedAt": 1791929979.283844,
+      "completedAt": 1791930026.4156997,
+      "seconds": 47.131855964660645,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source/whole-prior-current-mixed-graphs.log",
+      "logSha256": "321109c5b76d7425e102527f7eddbc67803ef946df0760a503bca2f2e60eb6aa",
+      "targetExecution": false
+    }
+  ],
+  "retainedObservations": {
+    "observations": [
+      {
+        "label": "initial-jsdoc-query-characterization",
+        "actualExit": 0,
+        "reason": "Public semantic getJSDocCommentsAndTags walk observed 23 nodes because it filters the earlier attached typedef; all exact parser attachments contain 5028 nodes versus 12 ordinary syntax nodes. Both observations and unchanged original source are retained."
+      },
+      {
+        "label": "portable-fixture-authoring",
+        "actualExit": null,
+        "toolScriptError": "SyntaxError: Unexpected token const",
+        "reason": "Own JavaScript tool-call quotation failed before filesystem/tool execution; corrected portable generator uses ordinary string concatenation."
+      },
+      {
+        "label": "retained-prephase-compiled-regression",
+        "actualExit": -6,
+        "reason": "First six authored cases fail the previous runtime as expected. The seventh compares a circular compiler SourceFile to undefined; the test assertion reporter exhausted its unchanged default heap while rendering that object. Aborted raw log/terminal and exact test inputs are retained. The assertion now compares a boolean, preserving its condition without dumping compiler objects. No production gate, budget or source behavior was retried or relaxed."
+      },
+      {
+        "label": "bounded-baseline-reporting",
+        "actualExit": 1,
+        "passed": 0,
+        "failed": 7,
+        "reason": "All seven authored cases expose prior cache ownership errors; scalar reporting preserves the completed baseline failure receipt without formatting compiler trees."
+      },
+      {
+        "label": "mixed-probe-runtime-label",
+        "actualExit": 0,
+        "reason": "The reused raw controller carries a descriptive currentRuntimeSha256 label rather than a digest. Its untouched graphs are separately qualified against the exact 1933-file current source ledger in whole-prior-current-qualified.json; no runtime/provenance/producer/graph fields were rewritten and no graph work was rerun."
+      }
+    ],
+    "targetExecution": false,
+    "productionGateRetried": false
+  },
+  "wholeCompilerCheckerOwnershipBudgetQualified": false,
+  "tokenCacheOrProcessRssCapQualified": false,
+  "fullNormalInstalledPackageQualified": false,
+  "productionHistoryForChangedRuntimeQualified": false,
+  "productionRelativePerformanceQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullGoalComplete": false,
+  "scope": "Locked compiler-owned syntax trees include all directly attached parsed JSDoc comment blocks, independently of semantic filtering and parent links. Existing source/library byte, node and entry limits now cover this additional parser edge. Over-budget and unknown-layout cache entries bypass reuse; complete original inputs, JSDoc types, aliases, handlers and whole graphs remain unchanged. No parent/symbol/checker/token fields are traversed or deleted; no total compiler/program/RSS bound is claimed.",
+  "evidenceArchive": {
+    "file": "/var/www/html/codiluce/.codiluce/validation-typescript-jsdoc-source-evidence/typescript-jsdoc-source-compiled-and-original-evidence.tar.gz",
+    "sha256": "c1b3da042417f3a44516b28782a29d5e4ae871d68bf1e48dec906dc5a1b28475",
+    "bytes": 25941867,
+    "regularFiles": 1559,
+    "allBytesAndModesReopened": true,
+    "manifestSha256": "423c5189316b6ec855ec2e0493e98ae92ba0ceaffb4af30dcfc867f362e7e921",
+    "seconds": 4.307955980300903
+  }
+}
