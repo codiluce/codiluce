@@ -1,0 +1,142 @@
+{
+  "schema": 1,
+  "verifiedAt": "2026-10-13T11:57:50.068726+00:00",
+  "scope": "Current post-reboot file availability and byte-exact restoration; dated historical qualification receipts are unchanged",
+  "restorationPassed": true,
+  "releaseMembersRestored": 5842,
+  "originalGuideSourceFilesRestored": 37,
+  "guideManifestFilesRestored": 4,
+  "originalGuideGitBlobAndSha256IdentitiesVerified": true,
+  "bootstrapCompiledFilesRestored": 284,
+  "bootstrapDistAliasRestoredWithoutChangingAlias": true,
+  "restoreRoot": "/var/www/html/codiluce/.codiluce/validation-post-reboot-evidence/restored-gradle-release",
+  "releaseArchiveSha256": "42d022e4ec13f7af8e9cd2cff26ac58d25408927d4ba9321c439ac9e86c052c5",
+  "sourceArchiveExactMirrorSha256": "5fdbd976552c74ee5519b44df076fdfcb79c925fdb07ad7cba921855cbdd000b",
+  "sourceArchiveUrl": "http://127.0.0.1:35057/gradle-compiler-inputs-runtime-source-and-evidence.tar.gz",
+  "releaseArchiveUrl": "http://127.0.0.1:35057/gradle-compiler-inputs-runtime-release-and-evidence.tar.gz",
+  "historicalArchiveAvailability": [
+    {
+      "receipt": "docs/compiler-input-ownership-release-archive-validation.json",
+      "archive": "/dev/shm/codiluce-compiler-input-release/compiler-input-ownership-runtime-release-and-evidence.tar.gz",
+      "sha256": "c6eed5bb703ab4749499ecb665af16b14878cad7828ecd61ded195e1152635b2",
+      "exists": false,
+      "verifiedExactMirror": null,
+      "exactOwnedArchiveCopies": [],
+      "status": "documented-path-missing-no-exact-owned-archive-copy-found"
+    },
+    {
+      "receipt": "docs/compiler-input-ownership-source-archive-validation.json",
+      "archive": "/dev/shm/codiluce-compiler-input-ownership/compiler-input-ownership-source-compiled-and-evidence.tar.gz",
+      "sha256": "1533209ea5209a4459e3c2e42e77e57bd3dbe7cd29ecdee488e6adbc62bf6807",
+      "exists": false,
+      "verifiedExactMirror": null,
+      "exactOwnedArchiveCopies": [],
+      "status": "documented-path-missing-no-exact-owned-archive-copy-found"
+    },
+    {
+      "receipt": "docs/embedded-source-residency-source-compiled-archive-validation.json",
+      "archive": "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/embedded-source-residency-source-compiled-and-evidence.tar.gz",
+      "sha256": "86ea556fb1643887c4323e7d719a3cfc3cd8e58adf21e41e6d9d36f265ef97ca",
+      "exists": true,
+      "verifiedExactMirror": null,
+      "exactOwnedArchiveCopies": [
+        "/var/www/html/codiluce/.codiluce/validation-embedded-source-residency/embedded-source-residency-source-compiled-and-evidence.tar.gz"
+      ],
+      "status": "documented-path-present"
+    },
+    {
+      "receipt": "docs/gradle-compiler-inputs-archive.json",
+      "archive": "/dev/shm/codiluce-gradle-compiler-inputs/gradle-compiler-inputs-runtime-source-and-evidence.tar.gz",
+      "sha256": "5fdbd976552c74ee5519b44df076fdfcb79c925fdb07ad7cba921855cbdd000b",
+      "exists": false,
+      "verifiedExactMirror": "/var/www/html/codiluce/.codiluce/validation-gradle-compiler-release/gradle-compiler-inputs-runtime-source-and-evidence.tar.gz",
+      "exactOwnedArchiveCopies": [
+        "/var/www/html/codiluce/.codiluce/validation-gradle-compiler-release/gradle-compiler-inputs-runtime-source-and-evidence.tar.gz"
+      ],
+      "status": "verified-exact-mirror-available"
+    },
+    {
+      "receipt": "docs/gradle-compiler-inputs-release-archive.json",
+      "archive": "/var/www/html/codiluce/.codiluce/validation-gradle-compiler-release/gradle-compiler-inputs-runtime-release-and-evidence.tar.gz",
+      "sha256": "42d022e4ec13f7af8e9cd2cff26ac58d25408927d4ba9321c439ac9e86c052c5",
+      "exists": true,
+      "verifiedExactMirror": null,
+      "exactOwnedArchiveCopies": [
+        "/var/www/html/codiluce/.codiluce/validation-gradle-compiler-release/gradle-compiler-inputs-runtime-release-and-evidence.tar.gz"
+      ],
+      "status": "documented-path-present"
+    },
+    {
+      "receipt": "docs/jvm-build-selection-archive.json",
+      "archive": "/dev/shm/codiluce-jvm-build-selection/jvm-build-selection-runtime-source-and-evidence.tar.gz",
+      "sha256": "2fae3e5d65d354cfdc3d9889a59095ea981b574d80a8216a286c422772b6b4d0",
+      "exists": false,
+      "verifiedExactMirror": null,
+      "exactOwnedArchiveCopies": [],
+      "status": "documented-path-missing-no-exact-owned-archive-copy-found"
+    },
+    {
+      "receipt": "docs/jvm-build-selection-release-archive.json",
+      "archive": "/dev/shm/codiluce-jvm-build-release/jvm-build-selection-runtime-release-and-evidence.tar.gz",
+      "sha256": "ab3ec7548f4fe0a8b18841cc7ce5b28656292300ccdf243fd71a9c55dc048806",
+      "exists": false,
+      "verifiedExactMirror": null,
+      "exactOwnedArchiveCopies": [],
+      "status": "documented-path-missing-no-exact-owned-archive-copy-found"
+    },
+    {
+      "receipt": "docs/literal-script-generation-archive-validation.json",
+      "archive": "/dev/shm/codiluce-script-generations-final/literal-script-generations-source-build-and-evidence.tar.gz",
+      "sha256": "a70719e9c8570e3613e19bd0a459dcb099df4c8307ca7cd92306f2468ba57f6e",
+      "exists": false,
+      "verifiedExactMirror": null,
+      "exactOwnedArchiveCopies": [],
+      "status": "documented-path-missing-no-exact-owned-archive-copy-found"
+    },
+    {
+      "receipt": "docs/literal-script-generation-release-archive-validation.json",
+      "archive": "/dev/shm/codiluce-literal-script-release/literal-script-generations-runtime-release-and-evidence.tar.gz",
+      "sha256": "6776b304a1fccf3d69371bbd0aa2d011ddf392aa78de8b7559e85d53be55b63c",
+      "exists": false,
+      "verifiedExactMirror": null,
+      "exactOwnedArchiveCopies": [],
+      "status": "documented-path-missing-no-exact-owned-archive-copy-found"
+    },
+    {
+      "receipt": "docs/rails-callback-chain-archive-validation.json",
+      "archive": "/dev/shm/codiluce-rails-callback-chain/rails-callback-chain-source-build-and-evidence.tar.gz",
+      "sha256": "de25914842bfef4126063669fc6a537a31f27ead46ef91b2da6b6c12f39f1b23",
+      "exists": false,
+      "verifiedExactMirror": null,
+      "exactOwnedArchiveCopies": [],
+      "status": "documented-path-missing-no-exact-owned-archive-copy-found"
+    },
+    {
+      "receipt": "docs/rails-callback-chain-release-archive-validation.json",
+      "archive": "/dev/shm/codiluce-rails-callback-release/rails-callback-chain-runtime-release-and-evidence.tar.gz",
+      "sha256": "933b685e4c3acfb4ffde61ff9bcd180a7dabba88c438964a705d6a8a4ee378ea",
+      "exists": false,
+      "verifiedExactMirror": null,
+      "exactOwnedArchiveCopies": [],
+      "status": "documented-path-missing-no-exact-owned-archive-copy-found"
+    },
+    {
+      "receipt": "docs/template-framework-workers-source-archive-validation.json",
+      "archive": "/var/www/html/codiluce/.codiluce/validation-template-framework-workers/template-framework-workers-source-compiled-portable-loader-and-evidence.tar.gz",
+      "sha256": "b4673ef964d25698ca014b5cc07902e9eb3591bd127aa9951ac6d437f1e69ee3",
+      "exists": true,
+      "verifiedExactMirror": null,
+      "exactOwnedArchiveCopies": [
+        "/var/www/html/codiluce/.codiluce/validation-template-framework-workers/template-framework-workers-source-compiled-portable-loader-and-evidence.tar.gz"
+      ],
+      "status": "documented-path-present"
+    }
+  ],
+  "historicalArchivesWithNoExactOwnedCopy": 8,
+  "initialSchemaFailurePreserved": true,
+  "priorQualificationReceiptsRewritten": false,
+  "targetExecution": false,
+  "newFull195HistoryQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullGoalComplete": false
+}
