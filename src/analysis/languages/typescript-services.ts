@@ -120,11 +120,13 @@ export function createTypeScriptServices(context: AnalysisContext): TypeScriptSe
       project, files, inputs,
       program() {
         if (!program) {
-          const texts = new Map<string, string>();
-          for (const file of files) { const text = context.embedded?.readFile(file.absolutePath) ?? sources.readFile(file.absolutePath); if (text !== undefined) texts.set(file.absolutePath, text); }
-          for (const facade of facades) { const text = context.embedded!.readFile(facade); if (text !== undefined) texts.set(facade, text); }
-          program = createApplicationProgram(texts, resolver.options.get(project.id)!, path.join(context.root, project.root), {
-            rootNames: [...texts.keys()], moduleHost: sources.moduleHost, readSource: fileName => context.embedded?.readFile(fileName) ?? sources.readFile(fileName),
+          // Preserve validated root admission without retaining every original
+          // or expanded virtual text alongside the live compiler's own ASTs.
+          const roots = new Set<string>();
+          for (const file of files) { const text = context.embedded?.readFile(file.absolutePath) ?? sources.readFile(file.absolutePath); if (text !== undefined) roots.add(file.absolutePath); }
+          for (const facade of facades) { const text = context.embedded!.readFile(facade); if (text !== undefined) roots.add(facade); }
+          program = createApplicationProgram(roots, resolver.options.get(project.id)!, path.join(context.root, project.root), {
+            rootNames: [...roots], moduleHost: sources.moduleHost, readSource: fileName => context.embedded?.readFile(fileName) ?? sources.readFile(fileName),
             resolveModuleNameLiterals: (literals, containingFile, _redirect, _options, source) => literals.map(literal => resolver.resolve(literal.text, containingFile, ts.getModeForUsageLocation(source, literal, resolver.options.get(resolver.owner(containingFile).id)!), !!context.embedded?.input(containingFile)?.facade || literal.pos >= 0 && !sourceMapped(context, containingFile, literal.pos, literal.end))),
           });
         }

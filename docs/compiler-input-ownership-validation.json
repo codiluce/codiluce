@@ -1,0 +1,927 @@
+{
+  "schema": 1,
+  "passed": true,
+  "phase": "Registered TypeScript compiler input ownership source and ordinary compiled qualification",
+  "completedAt": "2026-10-13T02:24:26.383915+00:00",
+  "parentCommit": "8b679c6",
+  "parentRuntimeSha256": "e2fea4dbc2537b3c7248167d26e8502fc663a31b02a4df689d827170e5997c81",
+  "runtimeSha256": "4b10b9ac084b00040d96a912c2e859b8968d50dd76c5c57298f8a5e628e6d6ba",
+  "runtimeInputsVerified": 1927,
+  "changedRuntimeFiles": [
+    "src/analysis/languages/typescript-services.ts",
+    "src/analyzers/ts-program.ts"
+  ],
+  "validatedRootIdentitySetReplacesEagerServiceTextMap": true,
+  "explicitTextMapCallerContractPreserved": true,
+  "originalRootAdmissionAndOrderingPreserved": true,
+  "indexedAndEmbeddedTextReloadBeforeAstReuse": true,
+  "actualPriorServiceInputOwner": {
+    "schema": 1,
+    "passed": true,
+    "actualCompilerHostClosureObserved": {
+      "kind": "[object Map]",
+      "entries": 40,
+      "textBytes": 20008660,
+      "keyBytes": 5740
+    },
+    "sourceLoader": false,
+    "targetExecution": false,
+    "astReuseObserved": true,
+    "realProjectService": true,
+    "indexedProviderMemo": {
+      "bytes": 20009680,
+      "entries": 40,
+      "maxBytes": 33554432,
+      "maxEntries": 4096,
+      "hits": 40,
+      "misses": 82,
+      "evictions": 0,
+      "bypasses": 0
+    },
+    "lateRegisteredRootReadFilePreserved": {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original0.ts",
+      "sha256": "b989e66dc9bda66fc51c041bfef4edc97d43a86170bfe3eaff31adf89c78ed3f"
+    },
+    "programSourceCount": 40,
+    "programSourceUtf16Bytes": 20008660,
+    "sources": [
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original0.ts",
+        "sha256": "b989e66dc9bda66fc51c041bfef4edc97d43a86170bfe3eaff31adf89c78ed3f",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original1.ts",
+        "sha256": "8d9d98860b034b104cacbcb2e5f18e23d6b8112f564f5312a81de7cfdcebe7bf",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original10.ts",
+        "sha256": "c8bd824e46b044b3b6897c98de628927ddaa24af897a4185915621300c039ef4",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original11.ts",
+        "sha256": "22129cf8a791fd81aceeccb83c29d56f1310b1ada24da8009fdbe69660c0f74b",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original12.ts",
+        "sha256": "adb02199ae00dd8b2db9dbb0ef88ac517ecf082a0401c1ae8419fdf211c78c13",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original13.ts",
+        "sha256": "c807e1c0fba53412f943c395e825caad453447b043c541001d9a1231b4eb6354",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original14.ts",
+        "sha256": "6a2a79d303d5560f48bb8f9e9dcf0afdc0c0a0899a5e764779a0268e5c1e4350",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original15.ts",
+        "sha256": "6b9d045ebb0e3f6f42c093582e24928879653e50bee09257fa667a61bac56c05",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original16.ts",
+        "sha256": "5d84c2f293ef5bda9898aabea9abf9405e0c06d7e608383bbaa4db92d36d08e1",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original17.ts",
+        "sha256": "464cf4fc7f4d7231c05082c0ab82ab17e05328e1e83124351dc63de34598d369",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original18.ts",
+        "sha256": "b8a279872aa42fb54528efb449c35dd02b6e40d63bbb2141ddb6b223508d232a",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original19.ts",
+        "sha256": "cc4f1841b4282a511c23cf8ef01a189d71075d3ff229f25bf167552081e2aa17",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original2.ts",
+        "sha256": "59be7b8182e4dcea3df9cce74015633f3b5b5d1d6224eee8021e383f61cec8bf",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original20.ts",
+        "sha256": "05fe001cfe2a7b691ed6bb10c3d7d16206170d84bfbcdb00301ef0ff0bd02edf",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original21.ts",
+        "sha256": "7e16f8b6eb2144ea8c90eba6baf1e4d3615b6923f0d5858377ebc3172b0a7637",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original22.ts",
+        "sha256": "9009681d5643e50b9a5252ffa21ef4853dd38b6400129c94172d36b7f0f5fad7",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original23.ts",
+        "sha256": "382d1882ae0090a0f3ceb2d11d1735c933fe81b743da2b1a564ba68050c4e70a",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original24.ts",
+        "sha256": "4ff25f015eecf072c02126f859370072749d48ffa9f9b8006c9a6061d76ed065",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original25.ts",
+        "sha256": "c6811e0e14dcaaf5a530d71fb8913f34c0234775267b811215626fbacbcb5013",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original26.ts",
+        "sha256": "10ddfe06831bf0c2c4b1956534e3ce225a9c5b7dc9dcf34cc76bedf3e07cc068",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original27.ts",
+        "sha256": "21d3e90b0283d0498bf6355d7fc5289eb59f1f12672cfeac56e4a8556eeac1d1",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original28.ts",
+        "sha256": "1bf91e7709488a0ed1bb10334a7ebed2024382d2ac65b2404f9ab7f85bd1d887",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original29.ts",
+        "sha256": "025321584ad439ab838fb6d4a87832af3202b01e58a014172d160b5634b8f9b5",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original3.ts",
+        "sha256": "cce94640257495cce3e352a60cdb1cf4dcf0f4a13d02fa011e5b7d3d7a92b96c",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original30.ts",
+        "sha256": "52106b1a82660b98f8350a3c23bebc57056b562f73a94ab798f86a15c1421067",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original31.ts",
+        "sha256": "66f732be383dce49300fb47f8b1ab406690fe28eb9f16bb981fe18f87e7831d4",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original32.ts",
+        "sha256": "112333aae101d2f79c63593079cf9deae96055c5363747378d241682bf43cd35",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original33.ts",
+        "sha256": "daf2e058f6894034273beea3825cdbd15da547e4879e0cc7d8610f6e7bf6eb51",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original34.ts",
+        "sha256": "cf53749665b957acbb24d67906a96a2d9ea829d1afc22297558ba659623e0390",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original35.ts",
+        "sha256": "e220979e7edc577947d78359b0b168f90050a7a58def5b046b46ce5f34c37f9f",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original36.ts",
+        "sha256": "e211c3fcab46db35064e8f12f73f7664a47946bcccca9ae672285958a4a48aa3",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original37.ts",
+        "sha256": "35aedc4e75b6a49c2b6f192e6f0583475a6b9cea33ab8b8d14b26d0eb2866592",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original38.ts",
+        "sha256": "c53f9b14a940185b776bf32da92775f17bfe29aa536edf190cddb088fb95af48",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original39.ts",
+        "sha256": "f62281b29d35584059deeb2439e82ffab2aa4f43ae7792b1b3917a46117ee672",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original4.ts",
+        "sha256": "235d975020dc2b90f07d058501c85ce84a851b9f4e6c5b36dbd9f54a79269ea9",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original5.ts",
+        "sha256": "3262937b5e6cc71e4038a28b45442a071a82ab98942504b688d123bcbc39a8bc",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original6.ts",
+        "sha256": "8bcc734ed4c1994daf16597dc4512eb912a374523dceb5ce103d97f6f1ef581a",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original7.ts",
+        "sha256": "4f9ccb99881fb42b26c0131df52d550fcc6b1a5ed3798efbaa62c41a8b2190c0",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original8.ts",
+        "sha256": "58b4e475dc919fbf047cc151b06745a94bf818f02ff2829a4e16a89039081d52",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original9.ts",
+        "sha256": "3c175912c46ca64c3fa5f69a0ff0d3077ca22501604b2a9ce1bc332bd17f5b3f",
+        "utf16Bytes": 500212
+      }
+    ],
+    "scope": "Actual live compiler input collection ownership; AST/checker/object allocation and physical RSS remain separate"
+  },
+  "actualCurrentServiceInputOwner": {
+    "schema": 1,
+    "passed": true,
+    "actualCompilerHostClosureObserved": {
+      "kind": "[object Set]",
+      "entries": 40,
+      "textBytes": 0,
+      "keyBytes": 5740
+    },
+    "sourceLoader": false,
+    "targetExecution": false,
+    "astReuseObserved": true,
+    "realProjectService": true,
+    "indexedProviderMemo": {
+      "bytes": 20009680,
+      "entries": 40,
+      "maxBytes": 33554432,
+      "maxEntries": 4096,
+      "hits": 120,
+      "misses": 82,
+      "evictions": 0,
+      "bypasses": 0
+    },
+    "lateRegisteredRootReadFilePreserved": {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original0.ts",
+      "sha256": "b989e66dc9bda66fc51c041bfef4edc97d43a86170bfe3eaff31adf89c78ed3f"
+    },
+    "programSourceCount": 40,
+    "programSourceUtf16Bytes": 20008660,
+    "sources": [
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original0.ts",
+        "sha256": "b989e66dc9bda66fc51c041bfef4edc97d43a86170bfe3eaff31adf89c78ed3f",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original1.ts",
+        "sha256": "8d9d98860b034b104cacbcb2e5f18e23d6b8112f564f5312a81de7cfdcebe7bf",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original10.ts",
+        "sha256": "c8bd824e46b044b3b6897c98de628927ddaa24af897a4185915621300c039ef4",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original11.ts",
+        "sha256": "22129cf8a791fd81aceeccb83c29d56f1310b1ada24da8009fdbe69660c0f74b",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original12.ts",
+        "sha256": "adb02199ae00dd8b2db9dbb0ef88ac517ecf082a0401c1ae8419fdf211c78c13",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original13.ts",
+        "sha256": "c807e1c0fba53412f943c395e825caad453447b043c541001d9a1231b4eb6354",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original14.ts",
+        "sha256": "6a2a79d303d5560f48bb8f9e9dcf0afdc0c0a0899a5e764779a0268e5c1e4350",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original15.ts",
+        "sha256": "6b9d045ebb0e3f6f42c093582e24928879653e50bee09257fa667a61bac56c05",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original16.ts",
+        "sha256": "5d84c2f293ef5bda9898aabea9abf9405e0c06d7e608383bbaa4db92d36d08e1",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original17.ts",
+        "sha256": "464cf4fc7f4d7231c05082c0ab82ab17e05328e1e83124351dc63de34598d369",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original18.ts",
+        "sha256": "b8a279872aa42fb54528efb449c35dd02b6e40d63bbb2141ddb6b223508d232a",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original19.ts",
+        "sha256": "cc4f1841b4282a511c23cf8ef01a189d71075d3ff229f25bf167552081e2aa17",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original2.ts",
+        "sha256": "59be7b8182e4dcea3df9cce74015633f3b5b5d1d6224eee8021e383f61cec8bf",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original20.ts",
+        "sha256": "05fe001cfe2a7b691ed6bb10c3d7d16206170d84bfbcdb00301ef0ff0bd02edf",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original21.ts",
+        "sha256": "7e16f8b6eb2144ea8c90eba6baf1e4d3615b6923f0d5858377ebc3172b0a7637",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original22.ts",
+        "sha256": "9009681d5643e50b9a5252ffa21ef4853dd38b6400129c94172d36b7f0f5fad7",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original23.ts",
+        "sha256": "382d1882ae0090a0f3ceb2d11d1735c933fe81b743da2b1a564ba68050c4e70a",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original24.ts",
+        "sha256": "4ff25f015eecf072c02126f859370072749d48ffa9f9b8006c9a6061d76ed065",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original25.ts",
+        "sha256": "c6811e0e14dcaaf5a530d71fb8913f34c0234775267b811215626fbacbcb5013",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original26.ts",
+        "sha256": "10ddfe06831bf0c2c4b1956534e3ce225a9c5b7dc9dcf34cc76bedf3e07cc068",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original27.ts",
+        "sha256": "21d3e90b0283d0498bf6355d7fc5289eb59f1f12672cfeac56e4a8556eeac1d1",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original28.ts",
+        "sha256": "1bf91e7709488a0ed1bb10334a7ebed2024382d2ac65b2404f9ab7f85bd1d887",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original29.ts",
+        "sha256": "025321584ad439ab838fb6d4a87832af3202b01e58a014172d160b5634b8f9b5",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original3.ts",
+        "sha256": "cce94640257495cce3e352a60cdb1cf4dcf0f4a13d02fa011e5b7d3d7a92b96c",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original30.ts",
+        "sha256": "52106b1a82660b98f8350a3c23bebc57056b562f73a94ab798f86a15c1421067",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original31.ts",
+        "sha256": "66f732be383dce49300fb47f8b1ab406690fe28eb9f16bb981fe18f87e7831d4",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original32.ts",
+        "sha256": "112333aae101d2f79c63593079cf9deae96055c5363747378d241682bf43cd35",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original33.ts",
+        "sha256": "daf2e058f6894034273beea3825cdbd15da547e4879e0cc7d8610f6e7bf6eb51",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original34.ts",
+        "sha256": "cf53749665b957acbb24d67906a96a2d9ea829d1afc22297558ba659623e0390",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original35.ts",
+        "sha256": "e220979e7edc577947d78359b0b168f90050a7a58def5b046b46ce5f34c37f9f",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original36.ts",
+        "sha256": "e211c3fcab46db35064e8f12f73f7664a47946bcccca9ae672285958a4a48aa3",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original37.ts",
+        "sha256": "35aedc4e75b6a49c2b6f192e6f0583475a6b9cea33ab8b8d14b26d0eb2866592",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original38.ts",
+        "sha256": "c53f9b14a940185b776bf32da92775f17bfe29aa536edf190cddb088fb95af48",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original39.ts",
+        "sha256": "f62281b29d35584059deeb2439e82ffab2aa4f43ae7792b1b3917a46117ee672",
+        "utf16Bytes": 500218
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original4.ts",
+        "sha256": "235d975020dc2b90f07d058501c85ce84a851b9f4e6c5b36dbd9f54a79269ea9",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original5.ts",
+        "sha256": "3262937b5e6cc71e4038a28b45442a071a82ab98942504b688d123bcbc39a8bc",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original6.ts",
+        "sha256": "8bcc734ed4c1994daf16597dc4512eb912a374523dceb5ce103d97f6f1ef581a",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original7.ts",
+        "sha256": "4f9ccb99881fb42b26c0131df52d550fcc6b1a5ed3798efbaa62c41a8b2190c0",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original8.ts",
+        "sha256": "58b4e475dc919fbf047cc151b06745a94bf818f02ff2829a4e16a89039081d52",
+        "utf16Bytes": 500212
+      },
+      {
+        "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/original9.ts",
+        "sha256": "3c175912c46ca64c3fa5f69a0ff0d3077ca22501604b2a9ce1bc332bd17f5b3f",
+        "utf16Bytes": 500212
+      }
+    ],
+    "scope": "Actual live compiler input collection ownership; AST/checker/object allocation and physical RSS remain separate"
+  },
+  "scope": "Live host input collection owns identities without text values. Compiler AST text, checker/object allocation, bounded indexed/embedded memos, global source/library AST caches and physical RSS are separate. Ownership byte counts do not prove physical-memory savings.",
+  "fullEngineWebTests": 1722,
+  "fullTestDurationMs": 161120.445099,
+  "existingTargetedCases": 19,
+  "newTargetedCases": 3,
+  "ordinaryCompiledNodeCases": 3,
+  "bothTypechecksPassed": true,
+  "deterministicDocumentationPassed": true,
+  "failedTests": 0,
+  "skippedTests": 0,
+  "completePriorColdWarmRevisionGraphs": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": "2026-10-13T02:10:29.662Z",
+    "priorRuntime": "e2fea4dbc2537b3c7248167d26e8502fc663a31b02a4df689d827170e5997c81",
+    "priorRuntimeInputsVerified": 1927,
+    "scope": "Complete cold/warm/revision original graphs including malformed components, unsupported browser input, UTF-16 coordinates, native AST special values and more than 64 Svelte components",
+    "retainedFixture": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-framework-worker-parity-hNWbwJ",
+    "originalFiles": 81,
+    "normalizations": [],
+    "volatileFields": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "cacheWarmReplayObserved": true,
+    "graphs": [
+      {
+        "mode": "cold",
+        "bytes": 591328,
+        "sha256": "c9ed282eee1c818caa4b9d8edf28729dffb3d96c11b4fa69325262c0eb3034be",
+        "entities": 380,
+        "relations": 602,
+        "diagnostics": 10
+      },
+      {
+        "mode": "warm",
+        "bytes": 591328,
+        "sha256": "c9ed282eee1c818caa4b9d8edf28729dffb3d96c11b4fa69325262c0eb3034be",
+        "entities": 380,
+        "relations": 602,
+        "diagnostics": 10
+      },
+      {
+        "mode": "revision",
+        "bytes": 590749,
+        "sha256": "c4677d17597bab66b9cccb039c524ae9bdac076b9c2a3f43208591d7d7454457",
+        "entities": 380,
+        "relations": 602,
+        "diagnostics": 7
+      }
+    ],
+    "targetExecution": false
+  },
+  "completePressurePriorColdWarmRevisionGraphs": {
+    "schema": 1,
+    "passed": true,
+    "completedAt": "2026-10-13T02:16:32.002Z",
+    "priorRuntime": "e2fea4dbc2537b3c7248167d26e8502fc663a31b02a4df689d827170e5997c81",
+    "priorRuntimeInputsVerified": 1927,
+    "scope": "Complete cold/warm/revision original graphs including malformed components, unsupported browser input, UTF-16 coordinates, native AST special values and more than 64 Svelte components",
+    "retainedFixture": "/dev/shm/codiluce-bootstrap-retirement-tests/codiluce-owned-framework-worker-parity-u1h3er",
+    "originalFiles": 82,
+    "normalizations": [],
+    "volatileFields": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "cacheWarmReplayObserved": true,
+    "graphs": [
+      {
+        "mode": "cold",
+        "bytes": 688512,
+        "sha256": "adf2918ff2c356b23397248e843b0d46065acb616f429cb700d3516522e9161f",
+        "entities": 446,
+        "relations": 700,
+        "diagnostics": 10
+      },
+      {
+        "mode": "warm",
+        "bytes": 688512,
+        "sha256": "adf2918ff2c356b23397248e843b0d46065acb616f429cb700d3516522e9161f",
+        "entities": 446,
+        "relations": 700,
+        "diagnostics": 10
+      },
+      {
+        "mode": "revision",
+        "bytes": 687933,
+        "sha256": "c2f6734a2efe5d1d6248c21328d27ca77fa1658ab387e19c1c93aa63bb79a6e5",
+        "entities": 446,
+        "relations": 700,
+        "diagnostics": 7
+      }
+    ],
+    "targetExecution": false
+  },
+  "actualTerminals": [
+    {
+      "session": 10767,
+      "exitCode": 0,
+      "scope": "19 existing targeted cases"
+    },
+    {
+      "session": 77832,
+      "exitCode": 0,
+      "scope": "ordinary compiled build"
+    },
+    {
+      "session": 52254,
+      "exitCode": 0,
+      "scope": "complete graph parity"
+    },
+    {
+      "session": 67362,
+      "exitCode": 0,
+      "scope": "engine typecheck"
+    },
+    {
+      "session": 14701,
+      "exitCode": 0,
+      "scope": "web typecheck"
+    },
+    {
+      "session": 71508,
+      "exitCode": 0,
+      "scope": "1722 engine/web tests"
+    },
+    {
+      "session": 46749,
+      "exitCode": 0,
+      "scope": "32-script over-memo-budget pressure graph parity"
+    }
+  ],
+  "initialUncommentedFixtureOwnershipObservationRetained": true,
+  "initialFixtureDoesNotQualifyValidSource": true,
+  "normalInstalledPackageForNewRuntimeQualified": false,
+  "sourceEvidenceStorage": "owned RAM-backed tmpfs; durable capacity unavailable",
+  "newRuntimeFull195RevisionHistoryQualified": false,
+  "newRuntimeRelativeHistoryTimeRssQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "broaderCompilerSemanticNativePhysicalRssBudgetQualified": false,
+  "oldFailedProductionObservationsRetried": false,
+  "originalHistoryReserveRelaxed": false,
+  "targetExecution": false,
+  "fullGoalFinished": false,
+  "foreignFilesUnchanged": {
+    "site/app/globals.css": "5cd20bc963317a559097febb77ab4b6ad072119c45b24addb1a3f5d431dbefa3",
+    "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0"
+  },
+  "artifacts": [
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/package.json",
+      "sha256": "ca78bc5ae54f010c2194680317c5e61fe054c08fc79f3c1b806bed0e91637c8d",
+      "bytes": 52
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/authored-inputs/tsconfig.json",
+      "sha256": "0f6f1333a70ac4c8c3d8e01d167b9e561f152f6edf9a1649a5b56a189634823d",
+      "bytes": 99
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/candidate-cold-graph.json",
+      "sha256": "498bfca2c3cb1bf64a0e4d85a0f3d189a7df97f98ec1d6baf15b33b44def49c9",
+      "bytes": 591329
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/candidate-revision-graph.json",
+      "sha256": "a36016e9f688ccfc61594d3d482fa0647c6549dbeffdad516680b1d5a092cf08",
+      "bytes": 590750
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/candidate-warm-graph.json",
+      "sha256": "498bfca2c3cb1bf64a0e4d85a0f3d189a7df97f98ec1d6baf15b33b44def49c9",
+      "bytes": 591329
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/compare-prior-graphs.mjs",
+      "sha256": "dff914189e1b9202cddfd41271c250957d106c7639cfe45771d51cc5c4bc69d9",
+      "bytes": 4918
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/compiled-build-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/compiled-conformance-first.log",
+      "sha256": "9c6c3ef0cf1c940710451031d10f2bd63a0095927787de8c4ea355f5596d3b2e",
+      "bytes": 1073
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/compiled-input-ownership.test.mjs",
+      "sha256": "c48f6a70aeec389e61714c1a073fc5719a51b35a56ba81004b666e4ac6c1a90b",
+      "bytes": 4756
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/complete-prior-graph-comparison.json",
+      "sha256": "73d3e60b34371a3faa948fa27b0a76cc120617cb759c516a8b6f0acf5b23fbc9",
+      "bytes": 1350
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/complete-prior-graphs-first.log",
+      "sha256": "fcbbfc2333e2e17bbfbbd50ba0206c284768d1045e1127e815c9cef804ec3f0f",
+      "bytes": 1107
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/current-real-service-input-owner.json",
+      "sha256": "8eefb98b290a4f0832e4bac3980f298d036ca47a46499a8cded2a3b1248561ab",
+      "bytes": 9240
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/current-real-service-input-owner.log",
+      "sha256": "0244e32553d2e8e3e555af5d4a26d50a3219e83f8f6f45fb9f542a1f54eb4328",
+      "bytes": 548
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/current-real-service-late-read-owner.json",
+      "sha256": "88c60b596e05df1e0baf7963e0fe6a5d4d411f753409dd3505023de2133435cc",
+      "bytes": 9456
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/current-real-service-late-read-owner.log",
+      "sha256": "c345885dc964aa2b7c88151b00b312d6961f1b1c0004a2ce7f1d53d52b0a288e",
+      "bytes": 745
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/current-valid-live-input-owner.json",
+      "sha256": "91836214ae2913cb966d644e7b8553a639c6ef9984a4414e7a264115cb5205b6",
+      "bytes": 9013
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/current-valid-live-input-owner.log",
+      "sha256": "e794b40dc47836c279daa4707b2a3e92e0d9a6666b10b42acb406c10debf628f",
+      "bytes": 380
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/docs-first-check.log",
+      "sha256": "94118ecfb6f185f3846096d40980640742af521ccaeaf099493a14414f72375e",
+      "bytes": 165
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/engine-identity.json",
+      "sha256": "b82b0e407e97d16e43b94df4fccd05c8d07f26e25530b72ab7d9fca169b7555b",
+      "bytes": 324043
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/engine-typecheck-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/finalize-source.py",
+      "sha256": "6a163384579df0ad7649b5dc4ed7b756360d36482078a91159efdd1d846db569",
+      "bytes": 5475
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/full-engine-web-first.log",
+      "sha256": "76e1eb1f79c2ea090f72ae3d3726aa310703d24cc37179f80fe18b0248e93a7b",
+      "bytes": 426665
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/initial-fixture-correction.json",
+      "sha256": "ed2358aaa0c722033f548c01f40d782242d75c407fcdea6bf1683de6a79fc694",
+      "bytes": 374
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/initial-uncommented-input-owner.mjs",
+      "sha256": "3befd8909c51c53480183bdc5140a23a7abd461cc27179a8178feeb002a93022",
+      "bytes": 4089
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/inspect-input-owner.mjs",
+      "sha256": "f63683ea962e1808160f8b2d881c2783a3eb8754ccbb3c5d0a57ba49e443d223",
+      "bytes": 6066
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/new-targeted-first.log",
+      "sha256": "16813bddb0be7ddedb50890c251acfa1411af6ff1f932f8228844be89fb359d4",
+      "bytes": 1073
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/original-source-inventory.json",
+      "sha256": "a8d8285cef3195e2862069ca3c3c18ba4b036f5ce7a2ea839c2b6db03fa2a124",
+      "bytes": 12729
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/pressure-parity/candidate-cold-graph.json",
+      "sha256": "d8f07511ecd0d5e38ca4e7337290f6532ef55ccf9202be8d0df1c3cea26b8eb2",
+      "bytes": 688513
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/pressure-parity/candidate-revision-graph.json",
+      "sha256": "464c4f81e34c178e2aebbad3aa43930d41adb1da33a3b9acc2690e57af994be5",
+      "bytes": 687934
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/pressure-parity/candidate-warm-graph.json",
+      "sha256": "d8f07511ecd0d5e38ca4e7337290f6532ef55ccf9202be8d0df1c3cea26b8eb2",
+      "bytes": 688513
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/pressure-parity/compare-prior-graphs.mjs",
+      "sha256": "00ecddf642d7949d70ddff9380a88fdc2c732bc2622eaa7f22cc1d5bb2a390a0",
+      "bytes": 5104
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/pressure-parity/complete-prior-graph-comparison.json",
+      "sha256": "961f228babfde1560fe8ca2849618278c887138635a907d4c0cb6a7d3b7c4daa",
+      "bytes": 1350
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/pressure-parity/original-source-inventory.json",
+      "sha256": "c0b7cc89b0ded7567bd1629494becf650f29d80d4c64164a1271622e04d6bdd7",
+      "bytes": 12880
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/pressure-parity/prior-cold-graph.json",
+      "sha256": "d8f07511ecd0d5e38ca4e7337290f6532ef55ccf9202be8d0df1c3cea26b8eb2",
+      "bytes": 688513
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/pressure-parity/prior-revision-graph.json",
+      "sha256": "464c4f81e34c178e2aebbad3aa43930d41adb1da33a3b9acc2690e57af994be5",
+      "bytes": 687934
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/pressure-parity/prior-warm-graph.json",
+      "sha256": "d8f07511ecd0d5e38ca4e7337290f6532ef55ccf9202be8d0df1c3cea26b8eb2",
+      "bytes": 688513
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/pressure-prior-graphs-first.log",
+      "sha256": "543df1a7fe29b416e86269e29768a0f5796d39544cffd8082fc4125f3caf8a0e",
+      "bytes": 1107
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/prior-cold-graph.json",
+      "sha256": "498bfca2c3cb1bf64a0e4d85a0f3d189a7df97f98ec1d6baf15b33b44def49c9",
+      "bytes": 591329
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/prior-live-input-owner.json",
+      "sha256": "6075a35d2fbcdff908bdfe8ee1d99aec48264c553c89a7f482b0f81af12bb087",
+      "bytes": 9020
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/prior-live-input-owner.log",
+      "sha256": "974b923c999c993e2dd319415f7bf5b796238f460538a5e1a8e630a9769c53d4",
+      "bytes": 387
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/prior-real-service-input-owner.json",
+      "sha256": "33301deeb53ed4438bf04f77e5ce5049474d38942d909570646118f93cb0364f",
+      "bytes": 9246
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/prior-real-service-input-owner.log",
+      "sha256": "d100759d4f3a39cec3202d0dc5ab2dd4601c0fd08f0b0f40f398fe0dbae062df",
+      "bytes": 554
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/prior-real-service-late-read-owner.json",
+      "sha256": "41f045c35801f2e827af9896ce66befffe91afac8f2f3849122946ccaaf5b2a7",
+      "bytes": 9462
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/prior-real-service-late-read-owner.log",
+      "sha256": "1c45683ad030c0d7483119c7cf54aa0cf3fa14a6e0d15f5a7fc8111aeeb70b57",
+      "bytes": 751
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/prior-revision-graph.json",
+      "sha256": "a36016e9f688ccfc61594d3d482fa0647c6549dbeffdad516680b1d5a092cf08",
+      "bytes": 590750
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/prior-valid-live-input-owner.json",
+      "sha256": "2dd53f22b397ef80f6b91ade2834fda5e23214c66e75e910307025570694a491",
+      "bytes": 9020
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/prior-valid-live-input-owner.log",
+      "sha256": "1f217b1adc322e57c2b3202afbec35ac6265613176336e46bcaec524ca3cec28",
+      "bytes": 387
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/prior-warm-graph.json",
+      "sha256": "498bfca2c3cb1bf64a0e4d85a0f3d189a7df97f98ec1d6baf15b33b44def49c9",
+      "bytes": 591329
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/targeted-first.log",
+      "sha256": "0368708c561b9d181d418a1b7b1c0bff4fef550fad2faa4b4c76f0c03fd28d8c",
+      "bytes": 5839
+    },
+    {
+      "file": "/dev/shm/codiluce-compiler-input-ownership/web-typecheck-first.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ],
+  "sourceCompiledArchive": {
+    "schema": 1,
+    "passed": true,
+    "seconds": 16.609093189239502,
+    "archive": "/dev/shm/codiluce-compiler-input-ownership/compiler-input-ownership-source-compiled-and-evidence.tar.gz",
+    "sha256": "1533209ea5209a4459e3c2e42e77e57bd3dbe7cd29ecdee488e6adbc62bf6807",
+    "bytes": 34282238,
+    "verifiedRegularMembers": 2476,
+    "manifestSha256": "0b136badbc4aeab9fba28c150554b8feb5c04d22f6afbc8fcfbb6c428c0b131c",
+    "runtimeSha256": "4b10b9ac084b00040d96a912c2e859b8968d50dd76c5c57298f8a5e628e6d6ba",
+    "storage": "owned tmpfs; durable copy unavailable",
+    "normalInstalledPackageForNewRuntimeQualified": false,
+    "fullGoalFinished": false
+  },
+  "reportHttpValidation": {
+    "passed": true,
+    "url": "http://127.0.0.1:40125/compiler-input-ownership.html",
+    "htmlSha256": "ccaad61c79ddbd3d3bd77a82e23ea133ebb95c5d11b9156cd92bb52bcfd60a8a",
+    "links": [
+      {
+        "href": "compiler-input-ownership.html",
+        "status": 200
+      },
+      {
+        "href": "compiler-input-ownership-validation.json",
+        "status": 200
+      },
+      {
+        "href": "compiler-input-ownership-source-compiled-and-evidence.tar.gz",
+        "status": 200
+      },
+      {
+        "href": "language-framework-compatibility.html#compiler-input-ownership",
+        "status": 200
+      }
+    ],
+    "browserVisualInspectionPerformed": false,
+    "archiveStorage": "owned tmpfs"
+  }
+}

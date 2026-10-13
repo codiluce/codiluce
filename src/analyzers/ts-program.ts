@@ -73,7 +73,10 @@ export interface ProgramInputs {
   sourceCache?:TypeScriptSourceCache;
   libraryCache?:TypeScriptSourceCache;
 }
-export function createApplicationProgram(files: Map<string, string>, options: ts.CompilerOptions, currentDirectory: string, inputs: ProgramInputs = {}): ts.Program {
+/** A registered source set keeps compiler-host ownership to file identities.
+ * Its text provider remains the indexed read boundary; AST/cache/checker text
+ * ownership is separate. Explicit text maps remain supported for callers. */
+export function createApplicationProgram(files: ReadonlyMap<string, string> | ReadonlySet<string>, options: ts.CompilerOptions, currentDirectory: string, inputs: ProgramInputs = {}): ts.Program {
   const compilerOptions = programOptions(options);
   const libDirectory = path.dirname(ts.getDefaultLibFilePath(compilerOptions));
   const isLib = (fileName: string) => path.dirname(fileName) === libDirectory && fileName.endsWith('.d.ts');
@@ -83,7 +86,7 @@ export function createApplicationProgram(files: Map<string, string>, options: ts
     getSourceFile(fileName, languageVersionOrOptions) {
       const parseKey = JSON.stringify(languageVersionOrOptions);
       const key = JSON.stringify([currentDirectory, parseKey, compilerOptions.moduleDetection, compilerOptions.module, compilerOptions.jsx]);
-      const text = files.get(fileName) ?? inputs.readSource?.(fileName);
+      const text = ('get' in files ? files.get(fileName) : undefined) ?? inputs.readSource?.(fileName);
       if (text !== undefined) {
         const cacheKey = `${currentDirectory}\0${fileName}`;
         const cache=inputs.sourceCache??FILE_CACHE,cached=cache.get(cacheKey,text,key);
@@ -112,7 +115,7 @@ export function createApplicationProgram(files: Map<string, string>, options: ts
     useCaseSensitiveFileNames: () => true,
     getNewLine: () => '\n',
     fileExists: fileName => files.has(fileName) || !!inputs.moduleHost?.fileExists(fileName) || (isLib(fileName) && ts.sys.fileExists(fileName)),
-    readFile: fileName => files.get(fileName) ?? inputs.moduleHost?.readFile(fileName) ?? (isLib(fileName) ? ts.sys.readFile(fileName) : undefined),
+    readFile: fileName => ('get' in files ? files.get(fileName) : files.has(fileName) ? inputs.readSource?.(fileName) : undefined) ?? inputs.moduleHost?.readFile(fileName) ?? (isLib(fileName) ? ts.sys.readFile(fileName) : undefined),
     directoryExists: directory => directories.has(directory) || !!inputs.moduleHost?.directoryExists?.(directory),
     getDirectories: () => [],
     realpath: fileName => fileName,

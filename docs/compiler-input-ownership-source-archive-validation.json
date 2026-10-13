@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "passed": true,
+  "seconds": 16.609093189239502,
+  "archive": "/dev/shm/codiluce-compiler-input-ownership/compiler-input-ownership-source-compiled-and-evidence.tar.gz",
+  "sha256": "1533209ea5209a4459e3c2e42e77e57bd3dbe7cd29ecdee488e6adbc62bf6807",
+  "bytes": 34282238,
+  "verifiedRegularMembers": 2476,
+  "manifestSha256": "0b136badbc4aeab9fba28c150554b8feb5c04d22f6afbc8fcfbb6c428c0b131c",
+  "runtimeSha256": "4b10b9ac084b00040d96a912c2e859b8968d50dd76c5c57298f8a5e628e6d6ba",
+  "storage": "owned tmpfs; durable copy unavailable",
+  "normalInstalledPackageForNewRuntimeQualified": false,
+  "fullGoalFinished": false
+}
