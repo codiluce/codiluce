@@ -71,3 +71,18 @@ test('artifact command refuses a smaller authored corpus before runtime/process 
   const manifestFile=path.join(root,'manifest.json'),output=path.join(root,'forbidden.json');await writeFile(manifestFile,JSON.stringify(manifest));await assert.rejects(qualifyHistoryPerformanceArtifacts({manifest:manifestFile,output}),error=>error.code==='ERR_ASSERTION'&&/owned/.test(error.message));await assert.rejects(readFile(output),error=>error.code==='ENOENT');
  }finally{await rm(root,{recursive:true,force:true});}
 });
+
+
+test('installed performance joins bind every raw request to its qualified package ledger',()=>{
+ const value=fixture(),roles=['history/indexer','history/worker','history/store','history/git','projection/service','storage/sqlite'];
+ const make=prefix=>{const files=roles.map(role=>({file:prefix+'/'+role+(prefix==='src'?'.ts':'.js'),sha256:hash(role)}));return {node:process.version,platform:process.platform,architecture:process.arch,files,sha256:hash(JSON.stringify(files))};};
+ const source=make('src'),installed=make('codiluce/dist/src');installed.executionLayout={schema:1,kind:'installed-package',packageDirectory:'codiluce'};installed.sourceQualification={root:'/owned-qualified-source',identity:structuredClone(source)};
+ value.baseline.engineIdentity=source;value.baseline.corpusSha256=hash('owned corpus');value.baseline.profilesSha256=hash('owned profiles');
+ value.qualification.baselineEngineSha256=source.sha256;value.qualification.engineSha256=installed.sha256;
+ value.receipt.engineIdentities={baseline:structuredClone(installed),current:structuredClone(installed)};
+ value.baselineExecutionReceipt={passed:true,completedAt:date(0),full195RevisionEntrypointQualified:true,engineIdentity:structuredClone(installed),baselineEngineSha256:source.sha256,corpusSha256:value.baseline.corpusSha256,profilesSha256:value.baseline.profilesSha256};
+ value.baselineExecutionQualification={passed:true,completedAt:date(0),full195RevisionEntrypointQualified:true,engineSha256:installed.sha256,baselineEngineSha256:source.sha256,revisions:195,workers:12,independentCompleteColumnLedgers:42};
+ for(const unit of value.units)unit.request.engineIdentity=structuredClone(installed);
+ assert.equal(verifyHistoryPerformanceEvidence(value).passed,true);
+ value.units[0].request.engineIdentity.files[0].sha256=hash('substituted package');assert.throws(()=>verifyHistoryPerformanceEvidence(value),/different execution ledger/);
+});

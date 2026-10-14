@@ -5,8 +5,8 @@ import {sampleProcessTreeRssKiB} from './process-memory.mjs';
 
 // The parent observes synchronous index work. Verification starts only after
 // the parent has taken its last sample and stopped the timer.
-export async function measureProductionWorker({worker,request,log,cwd,env=process.env,pollMilliseconds=25}){
- const child=spawn(process.execPath,['--experimental-sqlite','--import','tsx',worker,request],{cwd,env,stdio:['ignore','pipe','pipe','ipc']});
+export async function measureProductionWorker({worker,request,log,cwd,env=process.env,pollMilliseconds=25,execArgv=['--experimental-sqlite','--import','tsx']}){
+ const child=spawn(process.execPath,[...execArgv,worker,request],{cwd,env,stdio:['ignore','pipe','pipe','ipc']});
  const output=createWriteStream(log,{flags:'wx'}),sample={treePeakKiB:0,childPeakKiB:0,processes:0,samples:0,incompleteSamples:0};
  let timer,result,began=false,ended=false,failure;
  const poll=()=>{const value=sampleProcessTreeRssKiB(child.pid);sample.samples++;if(value.incomplete)sample.incompleteSamples++;if(value.available){sample.treePeakKiB=Math.max(sample.treePeakKiB,value.rssKiB);sample.childPeakKiB=Math.max(sample.childPeakKiB,value.childRssKiB);sample.processes=Math.max(sample.processes,value.processes);}};
