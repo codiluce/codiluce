@@ -17,7 +17,7 @@ const DAYS: Record<string, number | undefined> = { all: undefined, '365d': 365, 
 export const AUTHORSHIP_WINDOWS: AuthorshipWindowKey[] = ['all', '365d', '90d', '30d', 'range'];
 export function isAuthorshipWindow(value: unknown): value is AuthorshipWindowKey { return typeof value === 'string' && (AUTHORSHIP_WINDOWS as string[]).includes(value); }
 /** Entry points shown outside files (districts): they take the people of the file defining them. */
-const ENTRY_TYPES = new Set([...INTERFACE_TYPES, ...CONSOLE_TYPES]);
+export const ENTRY_TYPES = new Set([...INTERFACE_TYPES, ...CONSOLE_TYPES]);
 const RECENT = 15, PERSON_COMMITS = 60, FOLDERS = 40;
 const DAY_MS = 86_400_000;
 
@@ -104,7 +104,7 @@ export function computeAuthorship(history: AuthorHistory, folded: FoldedHistory,
 function compare(a: string, b: string): number { return a < b ? -1 : a > b ? 1 : 0; }
 
 /** The file defining an entry point (by its path), if it is in the view. */
-function definingFile(index: ProjectionIndex, node: ProjectionNode): string | undefined {
+export function definingFile(index: ProjectionIndex, node: ProjectionNode): string | undefined {
   if (!node.path) return undefined;
   const id = index.fileByPath.get(node.path);
   return id && index.node(id)?.change?.status !== 'removed' ? id : undefined;
@@ -161,7 +161,7 @@ export function personAuthorship(computed: AuthorshipComputation, index: Project
 }
 
 /** Which files a selection stands for: itself (a file), the file holding or defining it, or every file inside an area. */
-function coveredFiles(index: ProjectionIndex, node: ProjectionNode): { scope: EntityAuthorship['scope']; files: ProjectionNode[]; file?: ProjectionNode } {
+export function coveredFiles(index: ProjectionIndex, node: ProjectionNode): { scope: EntityAuthorship['scope']; files: ProjectionNode[]; file?: ProjectionNode } {
   const present = (id: string | undefined) => { const found = id ? index.node(id) : undefined; return found && found.change?.status !== 'removed' ? found : undefined; };
   if (node.kind === 'entity' && node.type === 'file') return { scope: 'file', files: node.change?.status === 'removed' ? [] : [node], file: node };
   if (node.kind === 'entity' && ['repository', 'application', 'directory'].includes(node.type)) return { scope: 'area', files: presentFiles(index).filter(file => index.contains(node, file)) };

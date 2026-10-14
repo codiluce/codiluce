@@ -58,8 +58,9 @@ export class ServiceApi implements AtlasApi {
       return this.projection.awaitEvolution(timeline.entries.flatMap(entry => entry.snapshot ? [entry.snapshot.id] : []));
     });
   }
-  impact(id: string | { comparison: true } | { working: true }, options: ImpactOptions, signal?: AbortSignal) {
+  impact(id: string | { comparison: true } | { working: true } | { pull: string; window: AuthorshipWindowKey }, options: ImpactOptions, signal?: AbortSignal) {
     if (typeof id !== 'string' && 'working' in id) return this.run('impact', 'working', signal, () => this.projection.workingImpact(options));
+    if (typeof id !== 'string' && 'pull' in id) return this.run('impact', `pull:${id.pull}`, signal, () => this.projection.pullImpact(id.pull, this.view, { ...options, window: id.window }));
     return this.run('impact', typeof id === 'string' ? id : 'comparison', signal, () => typeof id === 'string' ? this.projection.impact(id, { ...options, view: this.view }) : this.projection.commitImpact(this.view, options));
   }
   steps(id: string, signal?: AbortSignal) { return this.run('steps', id, signal, () => this.projection.steps(id, { view: this.view, maxFileBytes: this.options.maxFileBytes ?? 1024 * 1024 })); }
@@ -77,6 +78,9 @@ export class ServiceApi implements AtlasApi {
   authorship(window: AuthorshipWindowKey, signal?: AbortSignal) { return this.run('authorship', window, signal, () => this.projection.authorship(this.view, { window })); }
   personAuthorship(key: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.run('personAuthorship', `${key}|${window}`, signal, () => this.projection.personAuthorship(key, this.view, { window })); }
   entityAuthorship(id: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.run('entityAuthorship', `${id}|${window}`, signal, () => this.projection.entityAuthorship(id, this.view, { window })); }
+  pulls(window: AuthorshipWindowKey, options: { query?: string; refresh?: boolean }, signal?: AbortSignal) { return this.run('pulls', `${window}|${options.query ?? ''}`, signal, () => this.projection.pulls(this.view, { window, ...options })); }
+  pull(id: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.run('pull', `${id}|${window}`, signal, () => this.projection.pull(id, this.view, { window })); }
+  entityPulls(id: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.run('entityPulls', `${id}|${window}`, signal, () => this.projection.entityPulls(id, this.view, { window })); }
   clear() {}
 }
 export class RecordingNavigator implements MapNavigator {

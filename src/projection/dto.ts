@@ -3,12 +3,12 @@
 import type { AnalysisRun, Diagnostic, Entity, SourceRange } from '../core/graph.js';
 import type { ChangeFacet, ChangeStatus, DiffSummary } from '../history/diff.js';
 import type { LineageReason } from '../history/lineage.js';
-import type { PullRequestRef } from '../history/pull-requests.js';
+import type { PullFileStatus, PullRequestRef } from '../history/pull-requests.js';
 import type { SnapshotStats } from '../history/store.js';
 import type { DiffLine, Hunk } from '../history/textdiff.js';
 import type { Rect } from './layout.js';
 
-export type { ChangeFacet, ChangeStatus, DiffLine, DiffSummary, Hunk, LineageReason, PullRequestRef, SnapshotStats };
+export type { ChangeFacet, ChangeStatus, DiffLine, DiffSummary, Hunk, LineageReason, PullFileStatus, PullRequestRef, SnapshotStats };
 /** Which snapshot (and baseline) a request reads; absent = the live working-tree index. */
 export interface ViewKey { snapshot?: string; compareTo?: string }
 export interface MapVisibilityState {
@@ -181,11 +181,13 @@ export type ImpactItem = NodeSummary & { distance: number; breadcrumb: string; c
  * the index has no file for (deleted, or not analyzed).
  */
 export interface WorkingOrigin { kind: 'working'; method: 'comparison' | 'files'; files: number; missing: number; head?: string; byStatus?: Record<string, number>; reason?: string }
+/** A pull request (or branch) as an origin: the entities of the files it changes that are on this map (`missing`: changed files that are not). */
+export interface PullOrigin { kind: 'pull'; id: string; title: string; number?: number; state: PullState; files: number; missing: number; reason?: string }
 export type ImpactGroupBy = 'app' | 'feature' | 'folder';
 /** Affected entities in one application, feature or folder (with the type and hop filters applied). */
 export interface ImpactGroup { key: string; name: string; count: number; distance: number }
 export interface ImpactResult {
-  origin: { kind: 'entity'; node: NodeSummary } | { kind: 'comparison'; byStatus: Record<string, number> } | WorkingOrigin;
+  origin: { kind: 'entity'; node: NodeSummary } | { kind: 'comparison'; byStatus: Record<string, number> } | WorkingOrigin | PullOrigin;
   depth: number; types: string[];
   /** Entities the walk starts from (the origin and everything inside it, or a comparison's changed entities). */
   seeds: number; seedsTruncated: boolean;
@@ -487,6 +489,98 @@ export interface EntityAuthorship {
   people: EntityPerson[];
   /** The latest commits that changed it, newest first. */
   recent: AuthorshipCommit[];
+}
+
+// Pull requests (history/pull-requests.ts, history/pull-sources.ts, projection/pulls.ts) ------
+export type PullState = 'open' | 'merged' | 'closed';
+/**
+ * Where a pull request is known from: `github`, the provider's record;
+ * `merge-message` / `squash-message`, a number read from the commit message
+ * (unverified); `merge`, a merge commit naming no pull request; `branch`, a
+ * branch not merged yet (no pull request known).
+ */
+export type PullSource = 'github' | 'merge-message' | 'squash-message' | 'merge' | 'branch';
+/** Someone in a pull request: a person of the Git history (`key`, `order`) when known, or a provider login. */
+export interface PullPerson { key?: string; name: string; kind: PersonKind; order?: number; login?: string; commits: number }
+export interface PullSummary {
+  /** `pr-<number>`, `merge-<sha>` or `branch:<name>`. */
+  id: string; number?: number; title: string; state: PullState; source: PullSource;
+  draft?: boolean; url?: string;
+  author?: PullPerson;
+  /** Branch merged into, and branch merged from. */
+  baseRef?: string; headRef?: string;
+  /** Merged: the commit that brought it into the branch. Open: its head commit. */
+  commit?: string;
+  createdAt?: string; updatedAt?: string; mergedAt?: string; closedAt?: string;
+  /** Files changed and lines added and deleted; absent while unknown (a provider pull request whose commits are not here, not read yet). */
+  files?: number; added?: number; deleted?: number;
+  /** Of the files changed, those on this map. */
+  inView?: number;
+  /** Its commits (merges left out). */
+  commits: number;
+  /** The history snapshot of the merged commit, when indexed: History shows it compared with the commit before. */
+  snapshot?: string;
+}
+export interface PullProviderStatus {
+  name: 'github';
+  /** `off`: not asked for (serve --pr-metadata github); `unsupported`: the origin is not on GitHub. */
+  status: 'off' | 'ok' | 'error' | 'unsupported';
+  repository?: string; fetchedAt?: string; error?: string;
+  /** A token is set (GITHUB_TOKEN or GH_TOKEN). */
+  token: boolean;
+}
+export interface PullsResult {
+  available: boolean; reason?: string;
+  /** The window of the merged ones (the people window). */
+  window?: AuthorshipWindow;
+  truncated: boolean;
+  /** The branch the open work is measured against. */
+  base?: { ref: string; sha: string };
+  provider: PullProviderStatus;
+  /** Open pull requests and branches not merged, most recently updated first. */
+  open: PullSummary[];
+  /** Merged into the branch in the window, newest first (`mergedTotal` of them; the list stops at a limit). */
+  merged: PullSummary[]; mergedTotal: number;
+  /** Closed without merging (provider only), most recently closed first. */
+  closed: PullSummary[];
+  /** Branches looked at are limited to the most recent; some were left out. */
+  branchesTruncated: boolean;
+  /** The branch listing failed. */
+  branchError?: string;
+}
+export interface PullFile { path: string; added: number; deleted: number; status?: PullFileStatus; from?: string }
+export interface PullDetail {
+  pull: PullSummary; window?: AuthorshipWindow;
+  /** Files of this view it changes. */
+  files: Record<string, { added: number; deleted: number; status?: PullFileStatus }>;
+  /** Routes, endpoints, commands and scheduled tasks defined in those files. */
+  entries: string[];
+  /** Per area: how many of its files it changes. */
+  areas: Record<string, number>;
+  /** Folders (or applications) directly holding them, most files first. */
+  folders: { id: string; path: string; files: number; lines: number }[];
+  /** Changed files not on this map (added by open work, gone since, or not indexed), at most a few hundred of `outsideTotal`. */
+  outside: PullFile[]; outsideTotal: number;
+  /** Its commits, newest first (at most a hundred). */
+  commits: AuthorshipCommit[];
+  /** Every commit of it (12-character SHA prefixes), to mark them on the timeline. */
+  shas: string[];
+  /** Who took part, most commits first. */
+  people: PullPerson[];
+  /** Its files are not known: the provider was not asked, or could not answer. */
+  unknownReason?: string;
+}
+/** A pull request touching a selection: what it changes there. */
+export interface EntityPull extends PullSummary { here: { files: number; added: number; deleted: number } }
+export interface EntityPulls {
+  id: string; available: boolean; reason?: string;
+  window?: AuthorshipWindow;
+  scope: 'file' | 'symbol' | 'area';
+  files: number;
+  /** Open pull requests and branches changing it. */
+  open: EntityPull[];
+  /** The latest merged ones changing it in the window (`mergedTotal` in all). */
+  merged: EntityPull[]; mergedTotal: number;
 }
 
 // Annotations (language models) ----------------------------------------------------

@@ -10,7 +10,7 @@ import { FLASH_MS, MapRenderer, RISE_MS, type CalloutOverlay, type CoverageOverl
 import { flowAreas, flowDepths, flowLit, type MapFlow } from './map-flow';
 import { nodeHeight, type Scene, type VisibleSet } from './scene';
 import { isContainer, type AtlasState, type AtlasStore, type MapNavigator, type ViewState } from './store';
-import { familyHues, featureHues, personHue, personHues, themeById } from './themes';
+import { familyHues, featureHues, personHue, personHues, pullHue, themeById } from './themes';
 
 /** A flow labels at most this many stops (the first ones), and shows at most this many pins. */
 const CALLOUT_MAX = 18, PIN_MAX = 40;
@@ -360,7 +360,7 @@ export class MapController implements MapNavigator {
       ...this.analysisOverlays(state, time),
       motion: this.motion,
       // A time-lapse frame compares with the previous commit; overlays loaded for the settled view wait until it is back.
-      ...(this.store.previewScene ? { edges: [], emphasis: undefined, within: undefined, lit: undefined, flow: undefined, callouts: undefined, pins: undefined, coverage: undefined, families: undefined, feature: undefined, people: undefined, person: undefined, explanation: undefined, pointer: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
+      ...(this.store.previewScene ? { edges: [], emphasis: undefined, within: undefined, lit: undefined, flow: undefined, callouts: undefined, pins: undefined, coverage: undefined, families: undefined, feature: undefined, people: undefined, person: undefined, pull: undefined, explanation: undefined, pointer: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
     };
   }
   /**
@@ -457,10 +457,20 @@ export class MapController implements MapNavigator {
       }
       result.person = this.personCache.overlay;
     }
+    // One pull request in focus lights the files it changes.
+    const pull = state.pulls.focus && state.pulls.pull?.id === state.pulls.focus && state.pulls.pull.stamp === peopleStamp ? state.pulls.pull.data : undefined;
+    if (pull) {
+      if (this.pullCache?.data !== pull) {
+        const key = pull.pull.id;
+        this.pullCache = { data: pull, overlay: { of: new Map([...Object.keys(pull.files), ...pull.entries].map(id => [id, key])), areas: new Map(Object.entries(pull.areas).map(([id, count]) => [id, { [key]: count }])), names: new Map([[key, pull.pull.number !== undefined ? `#${pull.pull.number}` : pull.pull.title]]), hues: new Map([[key, pullHue(pull.pull.state)]]), focus: key, none: 'Not changed' } };
+      }
+      result.pull = this.pullCache.overlay;
+    }
     return result;
   }
   private explainCache?: { detail: object; overlay: FamilyOverlay };
   private explainHoverCache?: { link: object; overlay: FamilyOverlay };
+  private pullCache?: { data: object; overlay: FamilyOverlay };
   private peopleCache?: { data: object; overlay: FamilyOverlay };
   private personCache?: { data: object; overlay: FamilyOverlay };
   private coverageCache?: { data: object; overlay: CoverageOverlay };

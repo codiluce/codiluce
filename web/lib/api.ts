@@ -4,7 +4,7 @@
 import type { MapVisibilityAction, MapVisibilityState } from '@engine/projection/dto';
 import type { Entity, Relation } from '@engine/core/graph';
 import type { EvolutionResponse } from '@engine/projection/dto';
-import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, PersonAuthorship } from '@engine/projection/dto';
+import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, EntityPulls, PersonAuthorship, PullDetail, PullsResult } from '@engine/projection/dto';
 import type { AggregateEdgesPage, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageExport, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FamiliesResult, FeaturesResult, FileListResult, FlowList, ImpactGroupBy, ImpactResult, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
 
 export class ApiError extends Error { constructor(readonly status: number, message: string, readonly body?: unknown) { super(message); } }
@@ -43,8 +43,8 @@ export interface AtlasApi {
   sourceDiff(entity: string, options: { ignoreWhitespace?: boolean }, signal?: AbortSignal): Promise<SourceDiffResponse>;
   requestIndex(sha: string): Promise<{ queued: boolean; position: number }>;
   /** Blast radius of an entity; `comparison` asks for what the viewed comparison's changes reach. */
-  /** What depends on an entity, on the viewed comparison's changes, or on the uncommitted changes of the live index. */
-  impact(id: string | { comparison: true } | { working: true }, options: ImpactOptions, signal?: AbortSignal): Promise<ImpactResult>;
+  /** What depends on an entity, on the viewed comparison's changes, on the uncommitted changes of the live index, or on the code a pull request changes (in a window). */
+  impact(id: string | { comparison: true } | { working: true } | { pull: string; window: AuthorshipWindowKey }, options: ImpactOptions, signal?: AbortSignal): Promise<ImpactResult>;
   steps(id: string, signal?: AbortSignal): Promise<StepsResult>;
   /** Request flows of the view (`entity`: only those that draw it). */
   requestFlows(entity?: string, signal?: AbortSignal): Promise<RequestFlowList>;
@@ -74,10 +74,16 @@ export interface AtlasApi {
   personAuthorship(key: string, window: AuthorshipWindowKey, signal?: AbortSignal): Promise<PersonAuthorship>;
   /** Who changed an entity (a file, a symbol's file, the files of an area) in the window, and its latest commits. */
   entityAuthorship(id: string, window: AuthorshipWindowKey, signal?: AbortSignal): Promise<EntityAuthorship>;
+  /** Pull requests: open now, merged in the window up to the commit shown (`query` filters them), closed; `refresh` asks the provider again. */
+  pulls(window: AuthorshipWindowKey, options: { query?: string; refresh?: boolean }, signal?: AbortSignal): Promise<PullsResult>;
+  /** One pull request on the map: its files, areas, folders, the files not on the map, commits and people. */
+  pull(id: string, window: AuthorshipWindowKey, signal?: AbortSignal): Promise<PullDetail>;
+  /** The open pull requests changing an entity, and the latest merged in the window. */
+  entityPulls(id: string, window: AuthorshipWindowKey, signal?: AbortSignal): Promise<EntityPulls>;
   clear(): void;
 }
 export interface ImpactOptions { depth?: number; type?: string; distance?: number; offset?: number; limit?: number; group?: ImpactGroupBy; groupKey?: string }
-export interface FileQuery { feature?: string; family?: string; coverage?: string; person?: string; window?: string }
+export interface FileQuery { feature?: string; family?: string; coverage?: string; person?: string; pull?: string; window?: string }
 const MAX_CACHE = 800;
 
 export class HttpAtlasApi implements AtlasApi {
@@ -150,10 +156,11 @@ export class HttpAtlasApi implements AtlasApi {
   entityHistory(id: string, signal?: AbortSignal) { return this.get<EntityHistoryResponse>(`/api/history/entity/${encodeURIComponent(id)}`, signal, false); }
   evolution(signal?: AbortSignal) { return this.get<EvolutionResponse>('/api/history/evolution', signal, false); }
   sourceDiff(entity: string, options: { ignoreWhitespace?: boolean }, signal?: AbortSignal) { return this.get<SourceDiffResponse>(`/api/source/diff${this.q({ entity, whitespace: options.ignoreWhitespace ? 'ignore' : undefined })}`, signal); }
-  impact(id: string | { comparison: true } | { working: true }, options: ImpactOptions, signal?: AbortSignal) {
+  impact(id: string | { comparison: true } | { working: true } | { pull: string; window: AuthorshipWindowKey }, options: ImpactOptions, signal?: AbortSignal) {
     const params = { depth: options.depth, type: options.type, distance: options.distance, offset: options.offset ?? 0, limit: options.limit ?? 100, group: options.group, groupKey: options.groupKey };
     // Uncommitted changes are read from Git on each request: never cached.
     if (typeof id !== 'string' && 'working' in id) return this.get<ImpactResult>(`/api/projection/impact-working${this.q(params)}`, signal, false);
+    if (typeof id !== 'string' && 'pull' in id) return this.get<ImpactResult>(`/api/projection/impact-pull${this.q({ ...params, pull: id.pull, window: id.window })}`, signal, false);
     return this.get<ImpactResult>(typeof id === 'string' ? `/api/projection/impact/${encodeURIComponent(id)}${this.q(params)}` : `/api/history/impact${this.q(params)}`, signal);
   }
   steps(id: string, signal?: AbortSignal) { return this.get<StepsResult>(`/api/projection/steps/${encodeURIComponent(id)}${this.q()}`, signal); }
@@ -171,6 +178,10 @@ export class HttpAtlasApi implements AtlasApi {
   authorship(window: AuthorshipWindowKey, signal?: AbortSignal) { return this.get<AuthorshipResult>(`/api/authorship${this.q({ window })}`, signal); }
   personAuthorship(key: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.get<PersonAuthorship>(`/api/authorship/person/${encodeURIComponent(key)}${this.q({ window })}`, signal); }
   entityAuthorship(id: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.get<EntityAuthorship>(`/api/authorship/entity/${encodeURIComponent(id)}${this.q({ window })}`, signal); }
+  // Open work changes without a new analysis run: pull requests are never cached.
+  pulls(window: AuthorshipWindowKey, options: { query?: string; refresh?: boolean }, signal?: AbortSignal) { return this.get<PullsResult>(`/api/pulls${this.q({ window, q: options.query || undefined, refresh: options.refresh ? 1 : undefined })}`, signal, false); }
+  pull(id: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.get<PullDetail>(`/api/pulls/item/${encodeURIComponent(id)}${this.q({ window })}`, signal, false); }
+  entityPulls(id: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.get<EntityPulls>(`/api/pulls/entity/${encodeURIComponent(id)}${this.q({ window })}`, signal, false); }
   async requestIndex(sha: string) {
     const response = await this.fetcher(`${this.base}/api/history/index`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Codiluce-Request': 'index' }, body: JSON.stringify({ sha }) });
     const body = await response.json().catch(() => ({})) as { error?: string; queued?: boolean; position?: number };

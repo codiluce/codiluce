@@ -13,6 +13,7 @@ import { ExplanationsPanel } from './ExplanationsPanel';
 import { FeaturesPanel } from './FeaturesPanel';
 import { FlowsPanel } from './FlowsPanel';
 import { PeoplePanel } from './PeoplePanel';
+import { PullsPanel } from './PullsPanel';
 import { Inspector } from './Inspector';
 import { HiddenPathsButton, MapVisibilityUI } from './MapVisibility';
 import { SearchBox } from './SearchBox';
@@ -88,20 +89,22 @@ function Shell() {
   const explanations = useAtlas(state => state.explain.list.data?.items.length ?? 0);
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [leftOpen, setLeftOpen] = useState(false);
-  // The left panel holds the features (once described), every flow (pages, requests, console) and the people who changed the code.
-  const [leftTab, setLeftTab] = useState<'features' | 'flows' | 'people'>('flows');
+  // The left panel holds the features (once described), every flow (pages, requests, console), the people who changed the code and the pull requests.
+  const [leftTab, setLeftTab] = useState<LeftTab>('flows');
   const reveal = useAtlas(state => state.catalog.reveal);
   useEffect(() => { if (reveal) { setLeftOpen(true); setLeftTab('flows'); } }, [reveal]);
   const featureReveal = useAtlas(state => state.features.reveal);
   useEffect(() => { if (featureReveal) { setLeftOpen(true); setLeftTab('features'); } }, [featureReveal]);
   const peopleReveal = useAtlas(state => state.people.reveal);
   useEffect(() => { if (peopleReveal) { setLeftOpen(true); setLeftTab('people'); } }, [peopleReveal]);
+  const pullsReveal = useAtlas(state => state.pulls.reveal);
+  useEffect(() => { if (pullsReveal) { setLeftOpen(true); setLeftTab('pulls'); } }, [pullsReveal]);
   const coverage = useAtlas(state => state.coverage.show);
   const features = useAtlas(state => state.annotations.data?.domains.length ?? 0);
   // Comparing in History: one view per place that changed, around an overview (unless the single map is chosen).
   const split = useAtlas(state => state.timeline.open && state.timeline.compare && state.timeline.split && (!!state.meta?.comparison || state.timeline.preview !== undefined));
-  const showLeft = (tab: 'features' | 'flows' | 'people') => { if (leftOpen && leftTab === tab) setLeftOpen(false); else { setLeftOpen(true); setLeftTab(tab); } };
-  const tabs = [...(features > 0 ? ['features' as const] : []), 'flows' as const, 'people' as const];
+  const showLeft = (tab: LeftTab) => { if (leftOpen && leftTab === tab) setLeftOpen(false); else { setLeftOpen(true); setLeftTab(tab); } };
+  const tabs = [...(features > 0 ? ['features' as const] : []), 'flows' as const, 'people' as const, 'pulls' as const];
   const impactOpen = useAtlas(state => state.impact.open && state.center === 'impact');
   const codeOpen = useAtlas(state => !!state.code);
   const moreThemes = useAtlas(state => state.moreThemes);
@@ -161,6 +164,7 @@ function Shell() {
           {features > 0 && <button className="button" onClick={() => showLeft('features')} aria-pressed={leftOpen && leftTab === 'features'} aria-controls="left-panel" title={`The ${features} features of the product, as the model described them: select one to light its files and see its flows`}>Features</button>}
           <button className="button rf-top" onClick={() => showLeft('flows')} aria-pressed={leftOpen && leftTab === 'flows'} aria-controls="left-panel" title="Every flow of the code in one list: pages, requests, console commands and scheduled tasks">Flows</button>
           <button className="button" onClick={() => showLeft('people')} aria-pressed={leftOpen && leftTab === 'people'} aria-controls="left-panel" title="Who changed which code, from the Git history: select a person to light the files they changed">People</button>
+          <button className="button" onClick={() => showLeft('pulls')} aria-pressed={leftOpen && leftTab === 'pulls'} aria-controls="left-panel" title="Pull requests, open and merged: select one to light the files it changes">PRs</button>
           <button className="button" onClick={() => impactOpen ? store.setCenter('map') : store.openImpactTool()} aria-pressed={impactOpen} title="What depends on the selection, or on your uncommitted changes, hop by hop">Impact</button>
           <button className="button explain-top" onClick={() => store.toggleExplanations()} aria-pressed={explainOpen} aria-controls="explain-panel" title={`Explanations: ask about the code, or read what your agent explained (${explanations} saved); their links light the code on the map`}>Explain{unseen > 0 && <span className="badge" aria-label={`${unseen} new`}>{unseen}</span>}</button>
           <button className="button" onClick={() => codeOpen ? store.closeCode() : store.openCode()} aria-pressed={codeOpen} title="The code of the selection beside the inspector: a file, or a symbol in its file, with the file's outline">Code</button>
@@ -185,6 +189,7 @@ function Shell() {
             )}
             {leftTab === 'features' && features > 0 ? <FeaturesPanel onClose={() => setLeftOpen(false)} />
               : leftTab === 'people' ? <PeoplePanel onClose={() => setLeftOpen(false)} />
+              : leftTab === 'pulls' ? <PullsPanel onClose={() => setLeftOpen(false)} />
               : <FlowsPanel onClose={() => setLeftOpen(false)} />}
             <ResizeHandle side="left" width={flowWidth} onResize={setFlowWidth} label="Resize the left panel" />
           </aside>
@@ -216,7 +221,8 @@ function Shell() {
     </div>
   );
 }
-const TAB_TEXT = { features: 'Features', flows: 'Flows', people: 'People' } as const;
+type LeftTab = 'features' | 'flows' | 'people' | 'pulls';
+const TAB_TEXT: Record<LeftTab, string> = { features: 'Features', flows: 'Flows', people: 'People', pulls: 'PRs' };
 function SettingsDialog({ onClose }: { onClose: () => void }) {
   const store = useStore();
   const moreThemes = useAtlas(state => state.moreThemes);
@@ -256,7 +262,8 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
       <div className="card" role="dialog" aria-modal="true" aria-labelledby="help-title" onClick={event => event.stopPropagation()} style={{ textAlign: 'left', maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}>
         <h2 id="help-title" style={{ marginTop: 0, fontSize: 15 }}>Keyboard and pointer</h2>
         <dl className="facts">{rows.map(([key, text]) => [<dt key={`k${key}`}><kbd>{key}</kbd></dt>, <dd key={`d${key}`}>{text}</dd>])}</dl>
-        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout. Hiding or restoring paths repacks the map to reclaim space; selection and search keep positions stable. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing. Dragging the timeline or pressing play shows each commit at once as a time-lapse; the full view of a commit loads when you let go or pause. When comparing, the split map shows one view on each place that changed around an overview of the whole repository, where numbered frames show what each view shows. Flows, steps, a blast radius (<strong>Impact</strong>, also of your uncommitted changes), and the files a highlight lights open in the middle of the screen as tabs beside <strong>Map</strong>; the map then stays in a corner as an overview of what they light, and a click on it brings it back. Search results offer the same: a flow on the map or in lanes, what happens from it, its impact (<kbd>Tab</kbd> reaches them). <strong>Code</strong> opens the code of the selection in a panel beside the inspector (drag its edge to resize it) and follows what you select; selecting a file, folder or symbol keeps what it is connected to lit and lets the rest of the map recede. <strong>Features</strong> (once the code is described) lists what the product does: selecting a feature lights its files on the map, with the flows that start in it; a folder's inspector shows which data families its files belong to. <strong>People</strong> lists who changed the code, from the Git history (authors and co-authors, agents and bots told apart), in a window of time ending at the commit shown: selecting a person lights the files they changed, and every inspector says who changed its selection and when.</p>
+        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout. Hiding or restoring paths repacks the map to reclaim space; selection and search keep positions stable. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing. Dragging the timeline or pressing play shows each commit at once as a time-lapse; the full view of a commit loads when you let go or pause. When comparing, the split map shows one view on each place that changed around an overview of the whole repository, where numbered frames show what each view shows. Flows, steps, a blast radius (<strong>Impact</strong>, also of your uncommitted changes), and the files a highlight lights open in the middle of the screen as tabs beside <strong>Map</strong>; the map then stays in a corner as an overview of what they light, and a click on it brings it back. Search results offer the same: a flow on the map or in lanes, what happens from it, its impact (<kbd>Tab</kbd> reaches them). <strong>Code</strong> opens the code of the selection in a panel beside the inspector (drag its edge to resize it) and follows what you select; selecting a file, folder or symbol keeps what it is connected to lit and lets the rest of the map recede. <strong>Features</strong> (once the code is described) lists what the product does: selecting a feature lights its files on the map, with the flows that start in it; a folder's inspector shows which data families its files belong to. <strong>People</strong> lists who changed the code, from the Git history (authors and co-authors, agents and bots told apart), in a window of time ending at the commit shown: selecting a person lights the files they changed, and every inspector says who changed its selection and when. <strong>PRs</strong> lists pull requests: open work (branches not merged yet, and with <code>--pr-metadata github</code> the open pull requests on GitHub) and what was merged into the branch in the same window. Selecting one lights the files it changes, with its commits, people and blast radius; every inspector lists the open pull requests changing its selection.</p>
+
         <h2 style={{ fontSize: 15 }}>Building shapes</h2>
         <p className="note">Each kind of block has a shape, the same in every language and framework. It comes from the index where it can (a controller class, endpoints declared in a file, a page route) and from folder and name conventions otherwise; the inspector says which. Small blocks show it as a mark on their roof. Settings turns shapes off.</p>
         <ArchetypeLegend />

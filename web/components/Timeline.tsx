@@ -5,7 +5,7 @@ import { compactNumber, shortSha } from '../lib/format';
 import { entryOf, predecessor, timelineIndex, type AtlasStore } from '../lib/store';
 import { useAtlas, useStore } from './context';
 import { CommitImpactChip } from './Analysis';
-import { familyCss, personHue, themeById } from '../lib/themes';
+import { familyCss, personHue, pullHue, themeById } from '../lib/themes';
 import type { ExplanationSummary } from '@engine/explanations/model';
 import { ExplainActions, ExplanationChips } from './ExplainActions';
 
@@ -162,11 +162,17 @@ export function Timeline() {
   );
 }
 function PullRequestChip({ entry }: { entry: TimelineEntry }) {
+  const store = useStore();
   const pr = entry.pullRequest!;
   const verified = pr.source === 'github';
   const text = `#${pr.number}${pr.title ? ` ${pr.title}` : ''}`;
-  const title = verified ? `Pull request from the GitHub API${pr.author ? ` by ${pr.author}` : ''}` : 'Inferred from the commit message (unverified: Git does not record pull requests)';
-  return pr.url ? <a className={`chip pr${verified ? '' : ' unverified'}`} href={pr.url} target="_blank" rel="noreferrer" title={title}>PR {text}</a> : <span className={`chip pr${verified ? '' : ' unverified'}`} title={title}>PR {text}{verified ? '' : '?'}</span>;
+  const title = `${verified ? `Pull request from the GitHub API${pr.author ? ` by ${pr.author}` : ''}` : 'Inferred from the commit message (unverified: Git does not record pull requests)'}. Select to light the files it changed.`;
+  return (
+    <>
+      <button className={`chip pr${verified ? '' : ' unverified'}`} onClick={() => void store.revealPulls(`pr-${pr.number}`)} title={title}>PR {text}{verified ? '' : '?'}</button>
+      {pr.url && <a className="chip pr" href={pr.url} target="_blank" rel="noreferrer" title="Open it on GitHub">↗</a>}
+    </>
+  );
 }
 
 /** The commit track: ticks per first-parent commit, a size sparkline, target/baseline handles and the compared range. */
@@ -230,6 +236,9 @@ function Track({ data }: { data: TimelineResponse }) {
   const person = useAtlas(state => state.people.focus && state.people.person?.key === state.people.focus ? state.people.person.data : undefined);
   const dark = themeById(useAtlas(state => state.themeId)).dark;
   const theirs = useMemo(() => person ? new Set(person.shas) : undefined, [person]);
+  // The pull request lit on the map: the commit that merged it is marked.
+  const pull = useAtlas(state => state.pulls.focus && state.pulls.pull?.id === state.pulls.focus ? state.pulls.pull.data?.pull : undefined);
+  const landed = pull?.state === 'merged' ? pull.commit : undefined;
   /** Dragging shows the time-lapse frame at once when it is loaded (otherwise the commit after a short pause); releasing settles there. */
   const choose = (index: number | undefined, release: boolean) => {
     if (index === undefined) return;
@@ -258,7 +267,7 @@ function Track({ data }: { data: TimelineResponse }) {
   return (
     <div className="timeline-track">
       <svg
-        ref={svg} width="100%" height={height} role="slider" tabIndex={0} style={person ? { '--person': familyCss(personHue(person.person.order), dark) } as React.CSSProperties : undefined}
+        ref={svg} width="100%" height={height} role="slider" tabIndex={0} style={{ ...(person ? { '--person': familyCss(personHue(person.person.order), dark) } : {}), ...(landed ? { '--pull': familyCss(pullHue('merged'), dark) } : {}) } as React.CSSProperties}
         aria-label="Commit timeline. Left and right arrows step through indexed commits; Shift with arrows moves the comparison baseline; Space plays the history."
         aria-valuemin={0} aria-valuemax={count - 1} aria-valuenow={targetIndex} aria-valuetext={label(data, timeline.target)}
         onKeyDown={onKeyDown}
@@ -274,7 +283,7 @@ function Track({ data }: { data: TimelineResponse }) {
         {data.entries.map((entry, index) => {
           const cx = x(index);
           return (
-            <g key={entry.sha} className={`tick${entry.snapshot ? ' indexed' : ''}${entry.snapshot?.stale ? ' stale' : ''}${index === hover ? ' hover' : ''}${entry.note ? ` i-${entry.note.intent}` : ''}${theirs?.has(entry.sha.slice(0, 12)) ? ' person' : ''}`}>
+            <g key={entry.sha} className={`tick${entry.snapshot ? ' indexed' : ''}${entry.snapshot?.stale ? ' stale' : ''}${index === hover ? ' hover' : ''}${entry.note ? ` i-${entry.note.intent}` : ''}${theirs?.has(entry.sha.slice(0, 12)) ? ' person' : ''}${entry.sha === landed ? ' pull' : ''}`}>
               <line x1={cx} x2={cx} y1={entry.snapshot ? base - 12 : base - 5} y2={base} />
               {entry.merge && <rect className="merge" x={cx - 2.5} y={base - 19} width={5} height={5} transform={`rotate(45 ${cx} ${base - 16.5})`} />}
               {entry.pullRequest?.source === 'github' && <circle className="pr" cx={cx} cy={base - 16} r={2.5} />}
@@ -312,6 +321,7 @@ function Track({ data }: { data: TimelineResponse }) {
         </div>
       )}
       {person && theirs && <div className="timeline-person" style={{ '--person': familyCss(personHue(person.person.order), dark) } as React.CSSProperties}><span className="domain-dot" style={{ background: 'var(--person)' }} />Marked: commits by <strong>{person.person.name}</strong> on this line ({data.entries.filter(entry => theirs.has(entry.sha.slice(0, 12))).length} of their {person.shas.length} in the window)</div>}
+      {pull && landed && data.entries.some(entry => entry.sha === landed) && <div className="timeline-person" style={{ '--person': familyCss(pullHue('merged'), dark) } as React.CSSProperties}><span className="domain-dot" style={{ background: 'var(--person)' }} />Marked: where {pull.number !== undefined ? `#${pull.number}` : pull.title} was merged ({shortSha(landed)})</div>}
       {pickedEntry && (
         <div className="timeline-popover" role="dialog" aria-label="Commit not indexed" style={{ left: Math.min(Math.max(0, x(picked!) - 150), Math.max(0, width - 320)) }}>
           <div><span className="mono">{shortSha(pickedEntry.sha)}</span> · {pickedEntry.subject}</div>

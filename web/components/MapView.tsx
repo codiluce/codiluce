@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from 'react';
 import { MapController } from '../lib/controller';
 import { typeLabel } from '../lib/format';
 import { LEVELS } from '../lib/lod';
-import { coverageCss, familyCss, familyHues, featureHues, personHue, themeById } from '../lib/themes';
+import { coverageCss, familyCss, familyHues, featureHues, personHue, pullHue, themeById } from '../lib/themes';
 import { KindTag, PersonDot, windowText } from './PeoplePanel';
+import { pullName, SourceTag } from './PullsPanel';
 import { COVERAGE_HINT, COVERAGE_ORDER, COVERAGE_TEXT, NOT_MEASURED } from '../lib/coverage';
 import { impactColors } from '../lib/renderer';
 import { NO_FAMILY } from '../lib/store';
@@ -34,6 +35,7 @@ export function MapView() {
       <FeatureLegend />
       <PeopleLegend />
       <PersonLegend />
+      <PullLegend />
       <HoverCard />
       <VisibleList />
       {stale && <div className="banner" role="status">A newer analysis run is available. <button className="button small primary" onClick={() => void store.reload()}>Reload map</button></div>}
@@ -321,6 +323,26 @@ function PersonLegend() {
     </div>
   );
 }
+/** Shown while a pull request is lit: which, how much of it is on the map, and a way back to every file. A flow on the map takes over. */
+function PullLegend() {
+  const store = useStore();
+  const pull = useAtlas(state => state.tour || !state.pulls.focus || state.pulls.pull?.id !== state.pulls.focus ? undefined : state.pulls.pull);
+  const dark = themeById(useAtlas(state => state.themeId)).dark;
+  const summary = pull?.data?.pull;
+  if (!pull || !summary) return null;
+  const lit = Object.keys(pull.data!.files).length;
+  return (
+    <div className="feature-legend" role="status">
+      <span className="domain-dot" style={{ background: familyCss(pullHue(summary.state), dark) }} />
+      <button className="feature-legend-name" onClick={() => void store.revealPulls()} title="Show it in the Pull requests panel"><strong>{pullName(summary)}</strong></button>
+      <SourceTag pull={summary} />
+      <span className="absent">{lit} file{lit === 1 ? '' : 's'} it {summary.state === 'merged' ? 'changed' : 'changes'} lit{pull.data!.outsideTotal ? ` · ${pull.data!.outsideTotal} not on the map` : ''}</span>
+      <button className="button tiny" onClick={() => void store.openFiles({ kind: 'pull', key: summary.id })} title="The files lit, as a list">List</button>
+      <button className="button tiny" onClick={() => void store.showPullImpact(summary.id)} title="What depends on the code it changes">Impact</button>
+      <button className="icon-button small" onClick={() => void store.focusPull(undefined)} aria-label="Show every file again" title="Show every file again">✕</button>
+    </div>
+  );
+}
 /** Shown while a blast radius is on the map. */
 function ImpactLegend() {
   const theme = themeById(useAtlas(state => state.themeId));
@@ -359,6 +381,7 @@ export function HoverCard() {
       <ImpactHover id={hover.id} />
       <FamilyHover id={hover.id} />
       <PeopleHover id={hover.id} />
+      <PullHover id={hover.id} />
     </div>
   );
 }
@@ -387,6 +410,12 @@ function PeopleHover({ id }: { id: string }) {
     {main && <div className="hover-change">changed most by {main}</div>}
     {own && <div className="hover-change">{lit!.person.name}: {own.commits} commit{own.commits === 1 ? '' : 's'} · {own.lines} lines</div>}
   </>;
+}
+function PullHover({ id }: { id: string }) {
+  const lit = useAtlas(state => state.pulls.focus && state.pulls.pull?.id === state.pulls.focus ? state.pulls.pull.data : undefined);
+  const own = lit?.files[id];
+  if (!own) return null;
+  return <div className="hover-change">{lit!.pull.number !== undefined ? `#${lit!.pull.number}` : lit!.pull.title}: {own.status ? `${own.status} · ` : ''}+{own.added} −{own.deleted}</div>;
 }
 /** Screen-reader/keyboard access to the most prominent visible map items. */
 function VisibleList() {

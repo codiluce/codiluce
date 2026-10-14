@@ -1,7 +1,7 @@
 'use client';
 // The files a highlight lights on the map, as a list in the middle of the
 // screen: a feature's code files, a data family's files, a coverage category,
-// the files a person changed. Grouped by folder, filterable, and copied as
+// the files a person or a pull request changed. Grouped by folder, filterable, and copied as
 // paths; the overview map keeps the same files lit.
 import { useMemo, useState } from 'react';
 import type { CoverageCategory, FileListResult } from '@engine/projection/dto';
@@ -10,7 +10,7 @@ import type { FilesState } from '../lib/store';
 import { useAtlas, useStore } from './context';
 import { windowText } from './PeoplePanel';
 
-const KIND_TEXT: Record<FilesState['kind'], string> = { feature: 'Feature', family: 'Data family', coverage: 'Coverage', person: 'Changed by' };
+const KIND_TEXT: Record<FilesState['kind'], string> = { feature: 'Feature', family: 'Data family', coverage: 'Coverage', person: 'Changed by', pull: 'Changed by pull request' };
 /** The name of a list of files: what it is of. */
 export function filesTitle(files: Pick<FilesState, 'kind' | 'key'>, data?: FileListResult): string {
   const name = files.kind === 'coverage' ? COVERAGE_TEXT[files.key as CoverageCategory] ?? files.key : data?.title ?? '…';
