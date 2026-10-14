@@ -9,7 +9,7 @@
       "imports": "Indexed Node projects, workspace packages, aliases and shared compiler configs",
       "binding": "Partial lexical, source-type, callable and HTTP-wrapper binding",
       "frameworks": "Next.js, Express, Nest; component scripts",
-      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior. The default indexer isolates the compiler preparation/semantic pass with 1024 MiB old space, 16 MiB semi-space and 64 MiB IPC frames; heap exhaustion rejects the pass without partial graph replay. Native allocations, total RSS, direct in-process compiler consumers, production performance and native OS qualification remain separate gates.",
+      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior. The default indexer isolates the compiler preparation/semantic pass with 1024 MiB old space, 16 MiB semi-space and 64 MiB IPC frames; heap exhaustion rejects the pass without partial graph replay. Native allocations, total RSS, direct in-process compiler consumers, production performance and native OS qualification remain separate gates. Completed native-language context roots and indexed text memos retire before this worker; completed graph facts remain available to later consumers. This lifetime boundary does not cap native extraction, parent graph/project ownership or IPC encoding allocations.",
       "sources": [
         "src/analyzers/typescript.ts",
         "src/analysis/resolution/typescript.ts",
@@ -17,7 +17,8 @@
         "src/analyzers/typescript-isolated.ts",
         "src/analyzers/ts-worker.ts",
         "src/analyzers/ts-worker-protocol.ts",
-        "src/analyzers/native-ts-worker.mjs"
+        "src/analyzers/native-ts-worker.mjs",
+        "src/pipeline/language-retirement.ts"
       ]
     },
     {
@@ -27,7 +28,7 @@
       "imports": "Indexed Node projects, workspace packages, aliases and shared compiler configs",
       "binding": "Partial lexical, source-type, callable and HTTP-wrapper binding",
       "frameworks": "Next.js, Express, Nest; component scripts",
-      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior. The default indexer isolates the compiler preparation/semantic pass with 1024 MiB old space, 16 MiB semi-space and 64 MiB IPC frames; heap exhaustion rejects the pass without partial graph replay. Native allocations, total RSS, direct in-process compiler consumers, production performance and native OS qualification remain separate gates.",
+      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior. The default indexer isolates the compiler preparation/semantic pass with 1024 MiB old space, 16 MiB semi-space and 64 MiB IPC frames; heap exhaustion rejects the pass without partial graph replay. Native allocations, total RSS, direct in-process compiler consumers, production performance and native OS qualification remain separate gates. Completed native-language context roots and indexed text memos retire before this worker; completed graph facts remain available to later consumers. This lifetime boundary does not cap native extraction, parent graph/project ownership or IPC encoding allocations.",
       "sources": [
         "src/analyzers/typescript.ts",
         "src/analysis/resolution/typescript.ts",
@@ -35,7 +36,8 @@
         "src/analyzers/typescript-isolated.ts",
         "src/analyzers/ts-worker.ts",
         "src/analyzers/ts-worker-protocol.ts",
-        "src/analyzers/native-ts-worker.mjs"
+        "src/analyzers/native-ts-worker.mjs",
+        "src/pipeline/language-retirement.ts"
       ]
     },
     {

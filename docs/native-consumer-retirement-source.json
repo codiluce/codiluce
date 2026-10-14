@@ -1,0 +1,2041 @@
+{
+  "schema": 1,
+  "passed": true,
+  "qualifiedAt": 1791972459.8701677,
+  "baselineCommit": "8a735fcb0eef6d1a717bd933c8fc8a5036b1e87b",
+  "sourceRuntimeSha256": "4fbcc99286c1f15d8a93b2c62d1c6b7b1933a3bf55f55671524b402fb6b420c7",
+  "sourceRuntimeInputs": 1938,
+  "baselineRuntimeSha256": "70d1c03e198896af53fee766ec703013bff3db1a28da865771ede75ddb8483a1",
+  "baselineRuntimeInputs": 1937,
+  "compilerProducerVersionsChanged": false,
+  "fullCases": 2046,
+  "engineUiCases": 1822,
+  "retainedPriorEngineUiCaseMultiset": 1820,
+  "toolingCases": 224,
+  "focusedNode24Cases": 56,
+  "compilerLifetimeObservations": [
+    {
+      "label": "source-native-node22",
+      "schema": 1,
+      "passed": true,
+      "caseCount": 2,
+      "cases": [
+        "complete-cold-warm-revision-native-consumer-retirement",
+        "failed-native-phase-retirement"
+      ],
+      "observations": [
+        {
+          "mode": "cold",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 0,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 0,
+            "entries": 0,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        },
+        {
+          "mode": "warm",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 0,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 5,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 0,
+            "entries": 0,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 5,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        },
+        {
+          "mode": "revision",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 0,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 0,
+            "entries": 0,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        },
+        {
+          "mode": "failed-native-phase",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 0,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 0,
+            "entries": 0,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        }
+      ],
+      "expectedPriorRetention": false,
+      "rootsPerObservation": 13,
+      "originalFiles": 14,
+      "graph": {
+        "entities": 38,
+        "relations": 49,
+        "diagnostics": 4,
+        "coldWarmSha256": "79f03e74484271dbce6d9efa56ea2fc5628fe82a95bfe4483354730a72b7997f"
+      },
+      "node": "v22.12.0",
+      "sourceLoader": true,
+      "targetExecution": false,
+      "scope": "Context ownership and forced-GC reachability after completed native consumers and on failure; later PHP and TypeScript facts, complete warm parity and revision records. This is not a global parent heap/RSS budget."
+    },
+    {
+      "label": "source-native-node24",
+      "schema": 1,
+      "passed": true,
+      "caseCount": 2,
+      "cases": [
+        "complete-cold-warm-revision-native-consumer-retirement",
+        "failed-native-phase-retirement"
+      ],
+      "observations": [
+        {
+          "mode": "cold",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 0,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 0,
+            "entries": 0,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        },
+        {
+          "mode": "warm",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 0,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 5,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 0,
+            "entries": 0,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 5,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        },
+        {
+          "mode": "revision",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 0,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 0,
+            "entries": 0,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        },
+        {
+          "mode": "failed-native-phase",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 0,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 0,
+            "entries": 0,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        }
+      ],
+      "expectedPriorRetention": false,
+      "rootsPerObservation": 13,
+      "originalFiles": 14,
+      "graph": {
+        "entities": 38,
+        "relations": 49,
+        "diagnostics": 4,
+        "coldWarmSha256": "79f03e74484271dbce6d9efa56ea2fc5628fe82a95bfe4483354730a72b7997f"
+      },
+      "node": "v24.21.0",
+      "sourceLoader": true,
+      "targetExecution": false,
+      "scope": "Context ownership and forced-GC reachability after completed native consumers and on failure; later PHP and TypeScript facts, complete warm parity and revision records. This is not a global parent heap/RSS budget."
+    },
+    {
+      "label": "compiled-native-node22",
+      "schema": 1,
+      "passed": true,
+      "caseCount": 2,
+      "cases": [
+        "complete-cold-warm-revision-native-consumer-retirement",
+        "failed-native-phase-retirement"
+      ],
+      "observations": [
+        {
+          "mode": "cold",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 0,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 0,
+            "entries": 0,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        },
+        {
+          "mode": "warm",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 0,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 5,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 0,
+            "entries": 0,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 5,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        },
+        {
+          "mode": "revision",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 0,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 0,
+            "entries": 0,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        },
+        {
+          "mode": "failed-native-phase",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 0,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 0,
+            "entries": 0,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        }
+      ],
+      "expectedPriorRetention": false,
+      "rootsPerObservation": 13,
+      "originalFiles": 14,
+      "graph": {
+        "entities": 38,
+        "relations": 49,
+        "diagnostics": 4,
+        "coldWarmSha256": "79f03e74484271dbce6d9efa56ea2fc5628fe82a95bfe4483354730a72b7997f"
+      },
+      "node": "v22.12.0",
+      "sourceLoader": false,
+      "targetExecution": false,
+      "scope": "Context ownership and forced-GC reachability after completed native consumers and on failure; later PHP and TypeScript facts, complete warm parity and revision records. This is not a global parent heap/RSS budget."
+    },
+    {
+      "label": "compiled-native-node24",
+      "schema": 1,
+      "passed": true,
+      "caseCount": 2,
+      "cases": [
+        "complete-cold-warm-revision-native-consumer-retirement",
+        "failed-native-phase-retirement"
+      ],
+      "observations": [
+        {
+          "mode": "cold",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 0,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 0,
+            "entries": 0,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        },
+        {
+          "mode": "warm",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 0,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 5,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 0,
+            "entries": 0,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 5,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        },
+        {
+          "mode": "revision",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 0,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 0,
+            "entries": 0,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        },
+        {
+          "mode": "failed-native-phase",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 0,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 0,
+            "entries": 0,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        }
+      ],
+      "expectedPriorRetention": false,
+      "rootsPerObservation": 13,
+      "originalFiles": 14,
+      "graph": {
+        "entities": 38,
+        "relations": 49,
+        "diagnostics": 4,
+        "coldWarmSha256": "79f03e74484271dbce6d9efa56ea2fc5628fe82a95bfe4483354730a72b7997f"
+      },
+      "node": "v24.21.0",
+      "sourceLoader": false,
+      "targetExecution": false,
+      "scope": "Context ownership and forced-GC reachability after completed native consumers and on failure; later PHP and TypeScript facts, complete warm parity and revision records. This is not a global parent heap/RSS budget."
+    },
+    {
+      "label": "prior-source-retention-control",
+      "schema": 1,
+      "passed": true,
+      "caseCount": 2,
+      "cases": [
+        "complete-cold-warm-revision-native-consumer-retirement",
+        "failed-native-phase-retirement"
+      ],
+      "observations": [
+        {
+          "mode": "cold",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 13,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        },
+        {
+          "mode": "warm",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 13,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 5,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 5,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        },
+        {
+          "mode": "revision",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 13,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        },
+        {
+          "mode": "failed-native-phase",
+          "rootsObserved": 13,
+          "liveAtNextPhase": 13,
+          "sourceMemoBefore": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "sourceMemoAfter": {
+            "bytes": 1128,
+            "entries": 6,
+            "maxBytes": 33554432,
+            "maxEntries": 4096,
+            "hits": 6,
+            "misses": 13,
+            "evictions": 0,
+            "bypasses": 0
+          },
+          "completedGraphUnchanged": true
+        }
+      ],
+      "expectedPriorRetention": true,
+      "rootsPerObservation": 13,
+      "originalFiles": 14,
+      "graph": {
+        "entities": 38,
+        "relations": 49,
+        "diagnostics": 4,
+        "coldWarmSha256": "79f03e74484271dbce6d9efa56ea2fc5628fe82a95bfe4483354730a72b7997f"
+      },
+      "node": "v22.12.0",
+      "sourceLoader": true,
+      "targetExecution": false,
+      "scope": "Context ownership and forced-GC reachability after completed native consumers and on failure; later PHP and TypeScript facts, complete warm parity and revision records. This is not a global parent heap/RSS budget."
+    }
+  ],
+  "mixedGraphs": [
+    {
+      "mode": "cold",
+      "bytes": 1304793,
+      "sha256": "04923fa598d34cc0cede1ac96dfe6b75c3712ac9e238985e964a5da71e4b3a62",
+      "entities": 803,
+      "relations": 1057,
+      "diagnostics": 26
+    },
+    {
+      "mode": "warm",
+      "bytes": 1304793,
+      "sha256": "04923fa598d34cc0cede1ac96dfe6b75c3712ac9e238985e964a5da71e4b3a62",
+      "entities": 803,
+      "relations": 1057,
+      "diagnostics": 26
+    },
+    {
+      "mode": "revision",
+      "bytes": 1304214,
+      "sha256": "415e623987349c6a27f138a0050fb14ef1ffd931e29a4e716967755a9a996f0c",
+      "entities": 803,
+      "relations": 1057,
+      "diagnostics": 23
+    }
+  ],
+  "mixedOriginals": 171,
+  "completeMixedComparisons": 3,
+  "productionHeads": [
+    {
+      "label": "memos-qualified-source-node22",
+      "graph": {
+        "sha256": "2216515902695f1dd9fcba77c409efd8aec2dcac5de4da1b166d0285e968287b",
+        "bytes": 67344062,
+        "peakChunkBytes": 65536,
+        "limits": {
+          "maxBytes": 1073741824,
+          "chunkBytes": 65536,
+          "maxDepth": 4096
+        },
+        "serialization": "lossless-plain-json-chunks",
+        "entities": 11356,
+        "relations": 44453,
+        "diagnostics": 75
+      },
+      "comparison": {
+        "format": "complete-logical-production-json-v1",
+        "sha256": "2c3590515fa06ae7a87a4446869295aafcc351dffbec5d34e444b69cd04606a7",
+        "bytes": 67344061,
+        "counts": {
+          "entities": 11356,
+          "relations": 44453,
+          "diagnostics": 75
+        },
+        "storage": {
+          "files": 0,
+          "proofs": 0,
+          "references": 0,
+          "entries": 0
+        },
+        "peakChunkBytes": 65536,
+        "normalization": [],
+        "volatileFields": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "producerNormalization": false
+      },
+      "original": {
+        "tree": "/var/www/html/codiluce/.codiluce/validation-typescript-production-heads/originals/memos/tree",
+        "receiptSha256": "0d2395af292e9a81cafe64bdde7f82fdbbf1af56176e97a4de11404b437f2635",
+        "regularFiles": 1322,
+        "originalBytes": 12208526,
+        "regularFileDigest": "e3e25f1816755f93f8f4106d947750a97960a006327013be3f1f43b802bb0268",
+        "skipped": []
+      },
+      "contracts": {
+        "schema": 1,
+        "manifestSha256": "75eec750d869174c6f386b42e46d29de15e80bcf39fae4574e014a3dbbcea720",
+        "corpusSha256": "dc21e2dbfa059f3c210dc3736457bb1944d7387de2521e434cd454bd04d3d6c6",
+        "originalSourcesVerified": true,
+        "graphContractsVerified": true,
+        "analysisQualified": false,
+        "contracts": [
+          {
+            "id": "memos-server",
+            "repository": "memos",
+            "commit": "b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e",
+            "path": "server/server.go",
+            "status": "graph-and-source-verified",
+            "fileSha256": "6bb3a6b268400a5d482b7e9f4a10c407847b9e635a1780629050b4f3b8cf53de",
+            "spanSha256": "c19595fee63872d9105fde05d2b034b4065df80a33e62d458aa22b19414b68a0",
+            "range": {
+              "startLine": 39,
+              "startColumn": 6,
+              "endLine": 47,
+              "endColumn": 2
+            },
+            "originalBytesVerified": true,
+            "entityId": "symbol:627b4c0619f8ff639bc03eb2",
+            "parentId": "file:c1085b058c4acbc5ddaf1d1c",
+            "graphOriginalVerified": true
+          },
+          {
+            "id": "memos-close-long-lived-connections",
+            "repository": "memos",
+            "commit": "b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e",
+            "path": "server/server.go",
+            "status": "graph-and-source-verified",
+            "fileSha256": "6bb3a6b268400a5d482b7e9f4a10c407847b9e635a1780629050b4f3b8cf53de",
+            "spanSha256": "8ab9e1a38a5e9c5409a4fbad1e857d215212a3ea1b6ec6039c0fc98bed523050",
+            "range": {
+              "startLine": 162,
+              "startColumn": 1,
+              "endLine": 165,
+              "endColumn": 2
+            },
+            "originalBytesVerified": true,
+            "entityId": "symbol:87f7637e4206f3a17356e50b",
+            "parentId": "symbol:627b4c0619f8ff639bc03eb2",
+            "graphOriginalVerified": true
+          }
+        ],
+        "completedAt": "2026-10-14T09:03:45.209Z"
+      },
+      "workers": [
+        {
+          "pid": 1989674,
+          "module": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/qualified-code/src/analyzers/native-ts-worker.mjs",
+          "execArgv": [
+            "--max-old-space-size=1024",
+            "--max-semi-space-size=16",
+            "--import",
+            "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/qualified-code/node_modules/tsx/dist/loader.mjs"
+          ],
+          "requests": [
+            {
+              "bytes": 41974270,
+              "sha256": "5c8bdd587a08a1793243e60053b07b968045b1999f910794db2f9c1e6bda667b"
+            }
+          ],
+          "responses": [
+            {
+              "bytes": 7339577,
+              "sha256": "24e764827a9ff6f0ff4c0c96cec0c8f345f1ad02944b6f283726bf875d7ccf45"
+            }
+          ],
+          "code": 0,
+          "signal": null
+        }
+      ]
+    },
+    {
+      "label": "memos-qualified-compiled-node22",
+      "graph": {
+        "sha256": "2589975d43c965f807aa4ca64725098296637d8e52db196d7a4f277361ca3f43",
+        "bytes": 67344062,
+        "peakChunkBytes": 65536,
+        "limits": {
+          "maxBytes": 1073741824,
+          "chunkBytes": 65536,
+          "maxDepth": 4096
+        },
+        "serialization": "lossless-plain-json-chunks",
+        "entities": 11356,
+        "relations": 44453,
+        "diagnostics": 75
+      },
+      "comparison": {
+        "format": "complete-logical-production-json-v1",
+        "sha256": "2c3590515fa06ae7a87a4446869295aafcc351dffbec5d34e444b69cd04606a7",
+        "bytes": 67344061,
+        "counts": {
+          "entities": 11356,
+          "relations": 44453,
+          "diagnostics": 75
+        },
+        "storage": {
+          "files": 0,
+          "proofs": 0,
+          "references": 0,
+          "entries": 0
+        },
+        "peakChunkBytes": 65536,
+        "normalization": [],
+        "volatileFields": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "producerNormalization": false
+      },
+      "original": {
+        "tree": "/var/www/html/codiluce/.codiluce/validation-typescript-production-heads/originals/memos/tree",
+        "receiptSha256": "0d2395af292e9a81cafe64bdde7f82fdbbf1af56176e97a4de11404b437f2635",
+        "regularFiles": 1322,
+        "originalBytes": 12208526,
+        "regularFileDigest": "e3e25f1816755f93f8f4106d947750a97960a006327013be3f1f43b802bb0268",
+        "skipped": []
+      },
+      "contracts": {
+        "schema": 1,
+        "manifestSha256": "75eec750d869174c6f386b42e46d29de15e80bcf39fae4574e014a3dbbcea720",
+        "corpusSha256": "dc21e2dbfa059f3c210dc3736457bb1944d7387de2521e434cd454bd04d3d6c6",
+        "originalSourcesVerified": true,
+        "graphContractsVerified": true,
+        "analysisQualified": false,
+        "contracts": [
+          {
+            "id": "memos-server",
+            "repository": "memos",
+            "commit": "b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e",
+            "path": "server/server.go",
+            "status": "graph-and-source-verified",
+            "fileSha256": "6bb3a6b268400a5d482b7e9f4a10c407847b9e635a1780629050b4f3b8cf53de",
+            "spanSha256": "c19595fee63872d9105fde05d2b034b4065df80a33e62d458aa22b19414b68a0",
+            "range": {
+              "startLine": 39,
+              "startColumn": 6,
+              "endLine": 47,
+              "endColumn": 2
+            },
+            "originalBytesVerified": true,
+            "entityId": "symbol:627b4c0619f8ff639bc03eb2",
+            "parentId": "file:c1085b058c4acbc5ddaf1d1c",
+            "graphOriginalVerified": true
+          },
+          {
+            "id": "memos-close-long-lived-connections",
+            "repository": "memos",
+            "commit": "b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e",
+            "path": "server/server.go",
+            "status": "graph-and-source-verified",
+            "fileSha256": "6bb3a6b268400a5d482b7e9f4a10c407847b9e635a1780629050b4f3b8cf53de",
+            "spanSha256": "8ab9e1a38a5e9c5409a4fbad1e857d215212a3ea1b6ec6039c0fc98bed523050",
+            "range": {
+              "startLine": 162,
+              "startColumn": 1,
+              "endLine": 165,
+              "endColumn": 2
+            },
+            "originalBytesVerified": true,
+            "entityId": "symbol:87f7637e4206f3a17356e50b",
+            "parentId": "symbol:627b4c0619f8ff639bc03eb2",
+            "graphOriginalVerified": true
+          }
+        ],
+        "completedAt": "2026-10-14T09:04:39.864Z"
+      },
+      "workers": [
+        {
+          "pid": 1999114,
+          "module": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/qualified-code/dist/src/analyzers/native-ts-worker.mjs",
+          "execArgv": [
+            "--max-old-space-size=1024",
+            "--max-semi-space-size=16"
+          ],
+          "requests": [
+            {
+              "bytes": 41974270,
+              "sha256": "5c8bdd587a08a1793243e60053b07b968045b1999f910794db2f9c1e6bda667b"
+            }
+          ],
+          "responses": [
+            {
+              "bytes": 7339577,
+              "sha256": "3de66cbd466f8e50eaeeded2d24f46c940615b8347db49830e76f2a72428fac6"
+            }
+          ],
+          "code": 0,
+          "signal": null
+        }
+      ]
+    },
+    {
+      "label": "full-stack-fastapi-qualified-source-node22",
+      "graph": {
+        "sha256": "6d6109e6da9557f3bc9082ba4488e5e82b05a94622452546a5a75f71e20ecd2c",
+        "bytes": 2616397,
+        "peakChunkBytes": 65536,
+        "limits": {
+          "maxBytes": 1073741824,
+          "chunkBytes": 65536,
+          "maxDepth": 4096
+        },
+        "serialization": "lossless-plain-json-chunks",
+        "entities": 787,
+        "relations": 2678,
+        "diagnostics": 9
+      },
+      "comparison": {
+        "format": "complete-logical-production-json-v1",
+        "sha256": "16fa5224e5346f41f8eaf32ada8f4fc0e3ae81e8a117a43e1a8cec5ec4d2dcf1",
+        "bytes": 2616396,
+        "counts": {
+          "entities": 787,
+          "relations": 2678,
+          "diagnostics": 9
+        },
+        "storage": {
+          "files": 0,
+          "proofs": 0,
+          "references": 0,
+          "entries": 0
+        },
+        "peakChunkBytes": 65536,
+        "normalization": [],
+        "volatileFields": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "producerNormalization": false
+      },
+      "original": {
+        "tree": "/var/www/html/codiluce/.codiluce/validation-typescript-production-heads/originals/full-stack-fastapi/tree",
+        "receiptSha256": "23098159efd41d7c5f28c0c6db06a91dee22d17a8fca81df797ead8a3c24ff9b",
+        "regularFiles": 248,
+        "originalBytes": 1885645,
+        "regularFileDigest": "8378e5febf3bce16bd68f80a291c71f198cbfffad408c8ac3994fac323d9606b",
+        "skipped": [
+          {
+            "path": ".agents/skills/fastapi",
+            "mode": "120000",
+            "object": "c72ba0755dbaeefc9c7b47dcadae55c0e3925663",
+            "reason": "symlink-not-followed",
+            "sha256": "e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f"
+          },
+          {
+            "path": ".agents/skills/sqlmodel",
+            "mode": "120000",
+            "object": "8dfb559dff430e145f1c4cf6b549e99cbbbec457",
+            "reason": "symlink-not-followed",
+            "sha256": "2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e"
+          },
+          {
+            "path": ".claude/skills/fastapi",
+            "mode": "120000",
+            "object": "c72ba0755dbaeefc9c7b47dcadae55c0e3925663",
+            "reason": "symlink-not-followed",
+            "sha256": "e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f"
+          },
+          {
+            "path": ".claude/skills/sqlmodel",
+            "mode": "120000",
+            "object": "8dfb559dff430e145f1c4cf6b549e99cbbbec457",
+            "reason": "symlink-not-followed",
+            "sha256": "2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e"
+          }
+        ]
+      },
+      "contracts": {
+        "schema": 1,
+        "manifestSha256": "f4621d8f82e4cee12d55939c01526df3ec19c4a382fb2bdfdcbc08a20c57281f",
+        "corpusSha256": "dc21e2dbfa059f3c210dc3736457bb1944d7387de2521e434cd454bd04d3d6c6",
+        "originalSourcesVerified": true,
+        "graphContractsVerified": true,
+        "analysisQualified": false,
+        "contracts": [
+          {
+            "id": "full-stack-fastapi-read-item",
+            "repository": "full-stack-fastapi",
+            "commit": "f27b4721507824e57ebd0286ff1a84d82e83bf59",
+            "path": "backend/app/api/routes/items.py",
+            "status": "graph-and-source-verified",
+            "fileSha256": "7f0fa55d1f7b02188c4abd4f88aa6db92fe03de38258b765ed050ec72032b410",
+            "spanSha256": "870cfab8d486df87fae7301f6a511abc9ee27631ed8e4e0408b5b6b52c10c5d8",
+            "range": {
+              "startLine": 48,
+              "startColumn": 1,
+              "endLine": 58,
+              "endColumn": 16
+            },
+            "originalBytesVerified": true,
+            "entityId": "symbol:15ef7dda6b5ad6ba5ef4a1b0",
+            "parentId": "file:42ea33f80127154ee78c30a3",
+            "graphOriginalVerified": true
+          },
+          {
+            "id": "full-stack-fastapi-create-item",
+            "repository": "full-stack-fastapi",
+            "commit": "f27b4721507824e57ebd0286ff1a84d82e83bf59",
+            "path": "backend/app/api/routes/items.py",
+            "status": "graph-and-source-verified",
+            "fileSha256": "7f0fa55d1f7b02188c4abd4f88aa6db92fe03de38258b765ed050ec72032b410",
+            "spanSha256": "2651c63ecb96761600a856480ae2d8c3306b0ceb63dc2061530ff23d7ac53780",
+            "range": {
+              "startLine": 61,
+              "startColumn": 1,
+              "endLine": 72,
+              "endColumn": 16
+            },
+            "originalBytesVerified": true,
+            "entityId": "symbol:378d08414dd3f7e2028daeb8",
+            "parentId": "file:42ea33f80127154ee78c30a3",
+            "graphOriginalVerified": true
+          }
+        ],
+        "completedAt": "2026-10-14T09:04:59.863Z"
+      },
+      "workers": [
+        {
+          "pid": 2010654,
+          "module": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/qualified-code/src/analyzers/native-ts-worker.mjs",
+          "execArgv": [
+            "--max-old-space-size=1024",
+            "--max-semi-space-size=16",
+            "--import",
+            "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/qualified-code/node_modules/tsx/dist/loader.mjs"
+          ],
+          "requests": [
+            {
+              "bytes": 909266,
+              "sha256": "821f30d1c2024b9f617e769e95854ade3fc1c7de64d94814110a4b370836c20a"
+            }
+          ],
+          "responses": [
+            {
+              "bytes": 1018475,
+              "sha256": "d747a1958452d96f836df033ae4ce0d5cf59b0039dc01767212adad70997eac9"
+            }
+          ],
+          "code": 0,
+          "signal": null
+        }
+      ]
+    },
+    {
+      "label": "full-stack-fastapi-qualified-compiled-node22",
+      "graph": {
+        "sha256": "7e595c802d1442de8fc8da1b6f051ed5e65a3a7fd9aae2d6d932945c42206341",
+        "bytes": 2616397,
+        "peakChunkBytes": 65536,
+        "limits": {
+          "maxBytes": 1073741824,
+          "chunkBytes": 65536,
+          "maxDepth": 4096
+        },
+        "serialization": "lossless-plain-json-chunks",
+        "entities": 787,
+        "relations": 2678,
+        "diagnostics": 9
+      },
+      "comparison": {
+        "format": "complete-logical-production-json-v1",
+        "sha256": "16fa5224e5346f41f8eaf32ada8f4fc0e3ae81e8a117a43e1a8cec5ec4d2dcf1",
+        "bytes": 2616396,
+        "counts": {
+          "entities": 787,
+          "relations": 2678,
+          "diagnostics": 9
+        },
+        "storage": {
+          "files": 0,
+          "proofs": 0,
+          "references": 0,
+          "entries": 0
+        },
+        "peakChunkBytes": 65536,
+        "normalization": [],
+        "volatileFields": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "producerNormalization": false
+      },
+      "original": {
+        "tree": "/var/www/html/codiluce/.codiluce/validation-typescript-production-heads/originals/full-stack-fastapi/tree",
+        "receiptSha256": "23098159efd41d7c5f28c0c6db06a91dee22d17a8fca81df797ead8a3c24ff9b",
+        "regularFiles": 248,
+        "originalBytes": 1885645,
+        "regularFileDigest": "8378e5febf3bce16bd68f80a291c71f198cbfffad408c8ac3994fac323d9606b",
+        "skipped": [
+          {
+            "path": ".agents/skills/fastapi",
+            "mode": "120000",
+            "object": "c72ba0755dbaeefc9c7b47dcadae55c0e3925663",
+            "reason": "symlink-not-followed",
+            "sha256": "e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f"
+          },
+          {
+            "path": ".agents/skills/sqlmodel",
+            "mode": "120000",
+            "object": "8dfb559dff430e145f1c4cf6b549e99cbbbec457",
+            "reason": "symlink-not-followed",
+            "sha256": "2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e"
+          },
+          {
+            "path": ".claude/skills/fastapi",
+            "mode": "120000",
+            "object": "c72ba0755dbaeefc9c7b47dcadae55c0e3925663",
+            "reason": "symlink-not-followed",
+            "sha256": "e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f"
+          },
+          {
+            "path": ".claude/skills/sqlmodel",
+            "mode": "120000",
+            "object": "8dfb559dff430e145f1c4cf6b549e99cbbbec457",
+            "reason": "symlink-not-followed",
+            "sha256": "2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e"
+          }
+        ]
+      },
+      "contracts": {
+        "schema": 1,
+        "manifestSha256": "f4621d8f82e4cee12d55939c01526df3ec19c4a382fb2bdfdcbc08a20c57281f",
+        "corpusSha256": "dc21e2dbfa059f3c210dc3736457bb1944d7387de2521e434cd454bd04d3d6c6",
+        "originalSourcesVerified": true,
+        "graphContractsVerified": true,
+        "analysisQualified": false,
+        "contracts": [
+          {
+            "id": "full-stack-fastapi-read-item",
+            "repository": "full-stack-fastapi",
+            "commit": "f27b4721507824e57ebd0286ff1a84d82e83bf59",
+            "path": "backend/app/api/routes/items.py",
+            "status": "graph-and-source-verified",
+            "fileSha256": "7f0fa55d1f7b02188c4abd4f88aa6db92fe03de38258b765ed050ec72032b410",
+            "spanSha256": "870cfab8d486df87fae7301f6a511abc9ee27631ed8e4e0408b5b6b52c10c5d8",
+            "range": {
+              "startLine": 48,
+              "startColumn": 1,
+              "endLine": 58,
+              "endColumn": 16
+            },
+            "originalBytesVerified": true,
+            "entityId": "symbol:15ef7dda6b5ad6ba5ef4a1b0",
+            "parentId": "file:42ea33f80127154ee78c30a3",
+            "graphOriginalVerified": true
+          },
+          {
+            "id": "full-stack-fastapi-create-item",
+            "repository": "full-stack-fastapi",
+            "commit": "f27b4721507824e57ebd0286ff1a84d82e83bf59",
+            "path": "backend/app/api/routes/items.py",
+            "status": "graph-and-source-verified",
+            "fileSha256": "7f0fa55d1f7b02188c4abd4f88aa6db92fe03de38258b765ed050ec72032b410",
+            "spanSha256": "2651c63ecb96761600a856480ae2d8c3306b0ceb63dc2061530ff23d7ac53780",
+            "range": {
+              "startLine": 61,
+              "startColumn": 1,
+              "endLine": 72,
+              "endColumn": 16
+            },
+            "originalBytesVerified": true,
+            "entityId": "symbol:378d08414dd3f7e2028daeb8",
+            "parentId": "file:42ea33f80127154ee78c30a3",
+            "graphOriginalVerified": true
+          }
+        ],
+        "completedAt": "2026-10-14T09:05:07.381Z"
+      },
+      "workers": [
+        {
+          "pid": 2013339,
+          "module": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/qualified-code/dist/src/analyzers/native-ts-worker.mjs",
+          "execArgv": [
+            "--max-old-space-size=1024",
+            "--max-semi-space-size=16"
+          ],
+          "requests": [
+            {
+              "bytes": 909266,
+              "sha256": "821f30d1c2024b9f617e769e95854ade3fc1c7de64d94814110a4b370836c20a"
+            }
+          ],
+          "responses": [
+            {
+              "bytes": 1018475,
+              "sha256": "1f50a09cd81b01aad49f35bed5623b8b496e220f731a0b28d0eb243249558ebf"
+            }
+          ],
+          "code": 0,
+          "signal": null
+        }
+      ]
+    }
+  ],
+  "completeProductionHeadComparisons": 4,
+  "independentRawJsonHeadComparisons": 4,
+  "checks": [
+    {
+      "label": "build-cli-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "scripts/build-cli.mjs"
+      ],
+      "controllerPid": 1853382,
+      "childPid": 1853383,
+      "seconds": 11.178266763687134,
+      "actualExit": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "targetExecution": false
+    },
+    {
+      "label": "build-web-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "node_modules/next/dist/bin/next",
+        "build",
+        "web"
+      ],
+      "controllerPid": 1949331,
+      "childPid": 1949332,
+      "seconds": 8.493143081665039,
+      "actualExit": 0,
+      "logSha256": "b67b4cd1f4f3b2ace97f75e80d36e2f3027388d595fa8dd14e1b715e8848c5c5",
+      "targetExecution": false
+    },
+    {
+      "label": "compiled-native-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--expose-gc",
+        "--experimental-sqlite",
+        "tests/fixtures/native-consumer-retirement.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/compiled-native-node22.json"
+      ],
+      "controllerPid": 1855967,
+      "childPid": 1855971,
+      "seconds": 5.56370210647583,
+      "actualExit": 0,
+      "logSha256": "3d220ea9b2c6bc6bac4a607429780b11c8e39704111d96d5a3314ccc2f4213f7",
+      "targetExecution": false
+    },
+    {
+      "label": "compiled-native-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--expose-gc",
+        "--experimental-sqlite",
+        "tests/fixtures/native-consumer-retirement.mjs",
+        "file:///var/www/html/codiluce/dist/src/",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/compiled-native-node24.json"
+      ],
+      "controllerPid": 1855966,
+      "childPid": 1855970,
+      "seconds": 4.6255083084106445,
+      "actualExit": 0,
+      "logSha256": "3375591240fccc762d4bbdc7c9b7e65ae4bc6bd2cb4e87c004dcdfcaba766d2d",
+      "targetExecution": false
+    },
+    {
+      "label": "copy-ui-notices",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "scripts/copy-ui-licenses.mjs"
+      ],
+      "controllerPid": 1986941,
+      "childPid": 1986942,
+      "seconds": 0.03667330741882324,
+      "actualExit": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "targetExecution": false
+    },
+    {
+      "label": "documentation-check-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "scripts/generate-compatibility-docs.mjs",
+        "--check"
+      ],
+      "controllerPid": 1954680,
+      "childPid": 1954689,
+      "seconds": 0.17041373252868652,
+      "actualExit": 0,
+      "logSha256": "2e46bfb384bfad0c80775f7b9958c71fea5c44ad825a8a485b985cbd892877e9",
+      "targetExecution": false
+    },
+    {
+      "label": "documentation-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "scripts/generate-compatibility-docs.mjs"
+      ],
+      "controllerPid": 1853330,
+      "childPid": 1853331,
+      "seconds": 0.1273210048675537,
+      "actualExit": 0,
+      "logSha256": "507ff60a494767178efd56f2dec88b42562bce34f1adefefacb21100630bcd33",
+      "targetExecution": false
+    },
+    {
+      "label": "focused-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-concurrency=4",
+        "tests/native-consumer-retirement.test.ts",
+        "tests/csharp-references.test.ts",
+        "tests/framework-parser-lifetimes.test.ts",
+        "tests/typescript-preparation.test.ts",
+        "tests/typescript-worker.test.ts",
+        "tests/php-analysis-cache.test.ts"
+      ],
+      "controllerPid": 1867391,
+      "childPid": 1867394,
+      "seconds": 41.73726677894592,
+      "actualExit": 0,
+      "logSha256": "7ebc4bce70d4b3189911897d87a5c3958efd35597e020535d40ae7b7a3947c19",
+      "targetExecution": false
+    },
+    {
+      "label": "focused-source-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "tests/native-consumer-retirement.test.ts"
+      ],
+      "controllerPid": 1847973,
+      "childPid": 1847975,
+      "seconds": 6.153281927108765,
+      "actualExit": 0,
+      "logSha256": "04d722b148ab600edf9689afd02d61aa7c78eef4fdb1f4147acb3eec3f7b9692",
+      "targetExecution": false
+    },
+    {
+      "label": "full-engine-ui-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-concurrency=4",
+        "tests/annotations.test.ts",
+        "tests/archetypes.test.ts",
+        "tests/aspnet-minimal.test.ts",
+        "tests/aspnet-mvc.test.ts",
+        "tests/aspnet-patterns.test.ts",
+        "tests/astro.test.ts",
+        "tests/authorship.test.ts",
+        "tests/axum-source-projection.test.ts",
+        "tests/cache.test.ts",
+        "tests/cfamily-structure.test.ts",
+        "tests/compatibility-baseline.test.ts",
+        "tests/csharp-imports.test.ts",
+        "tests/csharp-references.test.ts",
+        "tests/django.test.ts",
+        "tests/embedded-source-residency.test.ts",
+        "tests/embedded.test.ts",
+        "tests/erb-structure.test.ts",
+        "tests/express.test.ts",
+        "tests/families.test.ts",
+        "tests/fastapi.test.ts",
+        "tests/flask.test.ts",
+        "tests/framework-parser-lifetimes.test.ts",
+        "tests/fsharp-structure.test.ts",
+        "tests/go-imports.test.ts",
+        "tests/go-qualification.test.ts",
+        "tests/go-router-packs.test.ts",
+        "tests/go-routers.test.ts",
+        "tests/go-symbols.test.ts",
+        "tests/gradle-compiler-inputs.test.ts",
+        "tests/graph.test.ts",
+        "tests/groovy-structure.test.ts",
+        "tests/history-worker-memory.test.ts",
+        "tests/history.test.ts",
+        "tests/impact-working.test.ts",
+        "tests/indexed-sources.test.ts",
+        "tests/jvm-build-selection.test.ts",
+        "tests/jvm-dotnet-qualification.test.ts",
+        "tests/jvm-imports.test.ts",
+        "tests/jvm-references.test.ts",
+        "tests/jvm-syntax.test.ts",
+        "tests/kotlin-spring-compiler.test.ts",
+        "tests/kotlin-webflux-invoke.test.ts",
+        "tests/languages.test.ts",
+        "tests/launcher.test.ts",
+        "tests/liquid-structure.test.ts",
+        "tests/mixed-release.test.ts",
+        "tests/native-consumer-retirement.test.ts",
+        "tests/native-generation.test.ts",
+        "tests/nest.test.ts",
+        "tests/nuxt.test.ts",
+        "tests/objc-cpp-structure.test.ts",
+        "tests/objc-structure.test.ts",
+        "tests/parser-lifetimes.test.ts",
+        "tests/parser-queue.test.ts",
+        "tests/php-analysis-cache.test.ts",
+        "tests/php-consumers.test.ts",
+        "tests/php-imports.test.ts",
+        "tests/php-provider.test.ts",
+        "tests/php-residency.test.ts",
+        "tests/php-structure.test.ts",
+        "tests/php-symbols.test.ts",
+        "tests/process-memory.test.ts",
+        "tests/projection-registry-refresh.test.ts",
+        "tests/projection.test.ts",
+        "tests/python-imports.test.ts",
+        "tests/python-symbols.test.ts",
+        "tests/rails-callback-chain.test.ts",
+        "tests/rails.test.ts",
+        "tests/razor-structure.test.ts",
+        "tests/regions.test.ts",
+        "tests/rocket-routers.test.ts",
+        "tests/route-pattern.test.ts",
+        "tests/ruby-autoload.test.ts",
+        "tests/ruby-imports.test.ts",
+        "tests/ruby-qualification.test.ts",
+        "tests/ruby-symbols.test.ts",
+        "tests/rust-derives.test.ts",
+        "tests/rust-evidence.test.ts",
+        "tests/rust-imports.test.ts",
+        "tests/rust-qualification.test.ts",
+        "tests/rust-routers.test.ts",
+        "tests/rust-symbols.test.ts",
+        "tests/scala-structure.test.ts",
+        "tests/schema.test.ts",
+        "tests/spring-boot-gradle.test.ts",
+        "tests/spring-boot-maven.test.ts",
+        "tests/spring-boot35.test.ts",
+        "tests/spring-mvc.test.ts",
+        "tests/spring-webflux.test.ts",
+        "tests/structure.test.ts",
+        "tests/svelte.test.ts",
+        "tests/swift-structure.test.ts",
+        "tests/typescript-component-lifetimes.test.ts",
+        "tests/typescript-input-ownership.test.ts",
+        "tests/typescript-jsdoc-cache.test.ts",
+        "tests/typescript-preparation.test.ts",
+        "tests/typescript-source-cache.test.ts",
+        "tests/typescript-worker.test.ts",
+        "tests/vbnet-structure.test.ts",
+        "tests/vue.test.ts",
+        "tests/warp-cors-recovery.test.ts",
+        "tests/warp-routers.test.ts",
+        "tests/warp-state.test.ts",
+        "tests/warp-wrappers.test.ts",
+        "tests/workspaces.test.ts",
+        "web/tests/analysis.test.ts",
+        "web/tests/geometry.test.ts",
+        "web/tests/history.test.ts",
+        "web/tests/navigation.test.ts",
+        "web/tests/playback.test.ts",
+        "web/tests/request-flows.test.ts"
+      ],
+      "controllerPid": 1855968,
+      "childPid": 1855969,
+      "seconds": 523.2460057735443,
+      "actualExit": 0,
+      "logSha256": "17f7ec031646f11d5699ead96c6342247a7d4f777415b916a594a96cce0d6401",
+      "targetExecution": false
+    },
+    {
+      "label": "full-stack-fastapi-qualified-compiled-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/production-heads/observer/qualify-typescript-production-head.mjs",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/production-heads/full-stack-fastapi-qualified-compiled-node22-job.json",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/production-heads/full-stack-fastapi-qualified-compiled-node22"
+      ],
+      "controllerPid": 2012500,
+      "childPid": 2012514,
+      "seconds": 7.535530090332031,
+      "actualExit": 0,
+      "logSha256": "5230be619e7e25b17eeadd5c29f0088f60ef07899adf3b22af790b8f8895d7b6",
+      "targetExecution": false
+    },
+    {
+      "label": "full-stack-fastapi-qualified-source-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "--import",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/qualified-code/node_modules/tsx/dist/loader.mjs",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/production-heads/observer/qualify-typescript-production-head.mjs",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/production-heads/full-stack-fastapi-qualified-source-node22-job.json",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/production-heads/full-stack-fastapi-qualified-source-node22"
+      ],
+      "controllerPid": 2009815,
+      "childPid": 2009822,
+      "seconds": 8.812309503555298,
+      "actualExit": 0,
+      "logSha256": "ec0b2f61ca351b4463094c77c2e50bdad8f5ce3deaa5bb00608f35fd0d61add5",
+      "targetExecution": false
+    },
+    {
+      "label": "memos-qualified-compiled-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/production-heads/observer/qualify-typescript-production-head.mjs",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/production-heads/memos-qualified-compiled-node22-job.json",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/production-heads/memos-qualified-compiled-node22"
+      ],
+      "controllerPid": 1997382,
+      "childPid": 1997383,
+      "seconds": 54.79678821563721,
+      "actualExit": 0,
+      "logSha256": "c0a7d8eb646c2bc7dfab1f2699a94b3d436051aea71f527c1970f208ecc120a0",
+      "targetExecution": false
+    },
+    {
+      "label": "memos-qualified-source-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "--import",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/qualified-code/node_modules/tsx/dist/loader.mjs",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/production-heads/observer/qualify-typescript-production-head.mjs",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/production-heads/memos-qualified-source-node22-job.json",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/production-heads/memos-qualified-source-node22"
+      ],
+      "controllerPid": 1986808,
+      "childPid": 1986809,
+      "seconds": 61.152968883514404,
+      "actualExit": 0,
+      "logSha256": "d71b7f8ef4b1c942d3c96022648ac6f321f9d80a28f2cfc4bcb7d36ae9aba6d6",
+      "targetExecution": false
+    },
+    {
+      "label": "mixed-complete-graphs-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        ".codiluce/validation-native-consumer-retirement-source/mixed-complete-graphs/compare-current-compiled.mjs"
+      ],
+      "controllerPid": 1867293,
+      "childPid": 1867317,
+      "seconds": 87.76161313056946,
+      "actualExit": 0,
+      "logSha256": "10a66740adfab1dc1f29daeb45d489d3b64b9497e7e89b1a497d5d1766a4ceaf",
+      "targetExecution": false
+    },
+    {
+      "label": "preserve-originals-and-baseline-v2",
+      "argv": [
+        "python3",
+        ".codiluce/validation-native-consumer-retirement-source/preserve-inputs-v2.py"
+      ],
+      "controllerPid": 2048679,
+      "childPid": 2048681,
+      "seconds": 0.7156016826629639,
+      "actualExit": 0,
+      "logSha256": "52685564818f3d50acfcb9ca03eb852a8d95fca371aaf0e64a4814a92a714c3d",
+      "targetExecution": false
+    },
+    {
+      "label": "preserve-qualified-code",
+      "argv": [
+        "python3",
+        ".codiluce/validation-native-consumer-retirement-source/preserve-qualified-code.py"
+      ],
+      "controllerPid": 1956191,
+      "childPid": 1956194,
+      "seconds": 1.0158522129058838,
+      "actualExit": 0,
+      "logSha256": "81dd79012782aa0ae5a0b6af149efaec8cdf23d57d06a97cc41b16c5c9bcd482",
+      "targetExecution": false
+    },
+    {
+      "label": "prior-source-retention-control",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--expose-gc",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "tests/fixtures/native-consumer-retirement.mjs",
+        "file:///var/www/html/codiluce/.codiluce/validation-typescript-preparation-release/engine/src/",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/prior-source-retention-control.json",
+        "--expect-prior-retention"
+      ],
+      "controllerPid": 1851941,
+      "childPid": 1851942,
+      "seconds": 5.613790273666382,
+      "actualExit": 0,
+      "logSha256": "ac2782047a82c94ee7c34175f0f882f0a158d9ba522f4ea2b58d42463d894bd4",
+      "targetExecution": false
+    },
+    {
+      "label": "source-native-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--expose-gc",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "tests/fixtures/native-consumer-retirement.mjs",
+        "file:///var/www/html/codiluce/src/",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/source-native-node22.json"
+      ],
+      "controllerPid": 1850955,
+      "childPid": 1850956,
+      "seconds": 5.874847412109375,
+      "actualExit": 0,
+      "logSha256": "5e9e51092735c58dc5e012725733050b6ab94f7123a4ff39b1dea7513ad89a52",
+      "targetExecution": false
+    },
+    {
+      "label": "source-native-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--expose-gc",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "tests/fixtures/native-consumer-retirement.mjs",
+        "file:///var/www/html/codiluce/src/",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/source-native-node24.json"
+      ],
+      "controllerPid": 1851002,
+      "childPid": 1851032,
+      "seconds": 4.884776592254639,
+      "actualExit": 0,
+      "logSha256": "211e704a0613a423073fe62d2ccd1a529dc2fed00f9866b2e3d95a56ccdb45d6",
+      "targetExecution": false
+    },
+    {
+      "label": "tooling-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-concurrency=4",
+        "scripts/tests/graph-json-artifact.test.mjs",
+        "scripts/tests/native-release.test.mjs",
+        "scripts/tests/production-cache-git.test.mjs",
+        "scripts/tests/production-cache-observer.test.mjs",
+        "scripts/tests/production-graph-digest.test.mjs",
+        "scripts/tests/production-head-graphs.test.mjs",
+        "scripts/tests/production-history-audit.test.mjs",
+        "scripts/tests/production-history-blobs.test.mjs",
+        "scripts/tests/production-history-columns.test.mjs",
+        "scripts/tests/production-history-entrypoint-columns.test.mjs",
+        "scripts/tests/production-history-entrypoint-qualification.test.mjs",
+        "scripts/tests/production-history-entrypoint-report.test.mjs",
+        "scripts/tests/production-history-entrypoint.test.mjs",
+        "scripts/tests/production-history-inputs.test.mjs",
+        "scripts/tests/production-history-observer.test.mjs",
+        "scripts/tests/production-history-performance-qualification.test.mjs",
+        "scripts/tests/production-history-performance.test.mjs",
+        "scripts/tests/production-history-qualification.test.mjs",
+        "scripts/tests/production-history-recovery.test.mjs",
+        "scripts/tests/production-history-resume.test.mjs",
+        "scripts/tests/production-history-runtime-inputs.test.mjs",
+        "scripts/tests/production-history-storage.test.mjs",
+        "scripts/tests/production-history-tree.test.mjs",
+        "scripts/tests/production-source-contracts.test.mjs",
+        "scripts/tests/typescript-production-head.test.mjs"
+      ],
+      "controllerPid": 1867389,
+      "childPid": 1867409,
+      "seconds": 36.09157848358154,
+      "actualExit": 0,
+      "logSha256": "c5f8e780c9922e8421301e84ddfe47f51f1c71d7be077356b0843888bc8c7473",
+      "targetExecution": false
+    },
+    {
+      "label": "typecheck-corrected-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "controllerPid": 1855923,
+      "childPid": 1855927,
+      "seconds": 16.47364592552185,
+      "actualExit": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "targetExecution": false
+    },
+    {
+      "label": "typecheck-web-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "web"
+      ],
+      "controllerPid": 1867390,
+      "childPid": 1867393,
+      "seconds": 7.113805055618286,
+      "actualExit": 0,
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "targetExecution": false
+    }
+  ],
+  "failedOwnChecks": [
+    {
+      "label": "memos-current-source-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "--import",
+        "/var/www/html/codiluce/node_modules/tsx/dist/loader.mjs",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/production-heads/observer/qualify-typescript-production-head.mjs",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/production-heads/memos-current-source-node22-job.json",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-source/production-heads/memos-current-source-node22"
+      ],
+      "controllerPid": 1954655,
+      "childPid": 1954656,
+      "seconds": 0.1685028076171875,
+      "actualExit": 1,
+      "logSha256": "921b5093fe101c70c15f629b3d0c7728f1b4e9951c8551bc318af620480886be",
+      "targetExecution": false
+    },
+    {
+      "label": "preserve-originals-and-baseline",
+      "argv": [
+        "python3",
+        ".codiluce/validation-native-consumer-retirement-source/preserve-inputs.py"
+      ],
+      "controllerPid": 2038253,
+      "childPid": 2038257,
+      "seconds": 0.43058156967163086,
+      "actualExit": 1,
+      "logSha256": "90c1b335025114e763e3c32ad3c6c7270c70992e8b7e31f1d0b73fa95a6a3375",
+      "targetExecution": false
+    },
+    {
+      "label": "typecheck-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "controllerPid": 1853328,
+      "childPid": 1853348,
+      "seconds": 11.836702823638916,
+      "actualExit": 2,
+      "logSha256": "6e3c978fabbaa4764274d58d3a4c43a3f8343b894b27bff5c7a8ffda53e56e48",
+      "targetExecution": false
+    }
+  ],
+  "sourceCopies": {
+    "regularFiles": 3288,
+    "bytes": 298435172,
+    "allBytesModesVerified": true
+  },
+  "baselineReconstruction": "All 1,937 original runtime files are reconstructible from exact shared code or two baseline delta files with original modes; no producer normalization",
+  "processIdsGone": [
+    1847973,
+    1847975,
+    1850955,
+    1850956,
+    1851002,
+    1851032,
+    1851941,
+    1851942,
+    1853328,
+    1853330,
+    1853331,
+    1853348,
+    1853382,
+    1853383,
+    1855923,
+    1855927,
+    1855966,
+    1855967,
+    1855968,
+    1855969,
+    1855970,
+    1855971,
+    1867293,
+    1867317,
+    1867389,
+    1867390,
+    1867391,
+    1867393,
+    1867394,
+    1867409,
+    1949331,
+    1949332,
+    1954655,
+    1954656,
+    1954680,
+    1954689,
+    1956191,
+    1956194,
+    1986808,
+    1986809,
+    1986941,
+    1986942,
+    1989674,
+    1997382,
+    1997383,
+    1999114,
+    2009815,
+    2009822,
+    2010654,
+    2012500,
+    2012514,
+    2013339,
+    2038253,
+    2038257,
+    2048679,
+    2048681
+  ],
+  "controllers": {
+    "preserve-inputs.py": "17847fde6d9b0a9c3223261a9749c02dc3ae612bbcf3c3af50d126d664324d2a",
+    "run-check.py": "48d0d98c7838152693ed23dad33d0568f28739969e41c2732fc874798e3a9590",
+    "preserve-inputs-v2.py": "a7f7090451bd4f8e66414205ed70bd66343d2c3ada4faea15117fa8f9c8e3b0e",
+    "prepare-heads.py": "21f20ae42982b1d73bffe67461c88e9cd2d2564791c3f22e851011ed2e087511",
+    "preserve-qualified-code.py": "fb7b363f3cb043d00c227bd42f54b3fcd69e5cd46e3431cc8fceb4f020328699",
+    "run-heads.py": "2d71b4473e757e6acf5d634fe9e202425e880616794309b99acbda9ca94531f7",
+    "qualify-source.py": "3b1d2b7c5a3c3efb2df6cbdcd7e2b35701fd05ab40cdf0fa77cec5c1a0011071",
+    "run-qualified-heads.py": "a8cd8a93f23cf967ae12cc4d4d4123fdad189ce457875c9754f182d681c69b86",
+    "mixed-complete-graphs/compare-current-compiled.mjs": "be73b0abb56fc1743787445f719964c54dc858ad89449c7b528d01cb82293851",
+    "production-heads/observer/process-memory.mjs": "16ca20fed24e5e46d4574c04cad567ee007087fd48bbef1c40cb698aa3763ed3",
+    "production-heads/observer/qualify-typescript-production-head.mjs": "b1a32ba273327bf2c051c0f67d95c77b3162ebbb8f8b4dd1dae61901ccae6452",
+    "production-heads/observer/production-history-performance-results.mjs": "6fc24272ca7a77ec75d7863de980d13c6345421b7006e4682efc998f8255e549",
+    "production-heads/observer/production-history-blobs.mjs": "da9e5451d850b1842a87933e58d56fe6386758c282cf7a1755e008314e88efe7",
+    "production-heads/observer/render-production-cache.mjs": "3c082e3ea220d5682259f732e5195fe3800cdb17bc768bdf45fe5facc3152c15",
+    "production-heads/observer/qualify-php-source.mjs": "b3303cd6dd1f6f994cf44b7de57a101a7b37aa75910a176b67cbc777f46187f0",
+    "production-heads/observer/qualify-native-generations.mjs": "a20c370c3221a76bb179071552d6549d8f1ec9016ef655da88b95e16a2ef57d8",
+    "production-heads/observer/qualify-production-history-entrypoint.mjs": "2eea48fa5b77c0bb38028e92ba08f2a13f9268ff8f97565a1afb5abd577d582c",
+    "production-heads/observer/qualify-erb-source.mjs": "52a8aa767908e1d870398f8fb7b534b071a2d01a2838ee400069def3cc77790f",
+    "production-heads/observer/qualify-razor-source.mjs": "7e8f2161bad5e6af22410e7e6f7afd9d1dc08076c15b13bec4884f218016bdc2",
+    "production-heads/observer/qualify-objc-cpp-source.mjs": "e3860a29614fa6ace7404ab8500bcd039983ade007622b5f9fcbcf724cc38cee",
+    "production-heads/observer/production-history-inputs.mjs": "dc513fb268388e07441b5c979668ba2d16ac1ddf53f56b2426a4ff6434d7b4c8",
+    "production-heads/observer/qualify-rust-proof.mjs": "9203dc97e48c3792c26158ebd6d9408a89fe9e8965e3becfd1a34d00efa7e5f5",
+    "production-heads/observer/qualify-php-import-source.mjs": "2bc92fd6bdc11079313f5b3c2b6382ec2e041944f1ee7fc7e0e28ee39b6c8087",
+    "production-heads/observer/production-head-graphs.mjs": "d90be0bc366b75984b5531dada9cf9d8e770a541eba468dbaf2f90aebe1179c1",
+    "production-heads/observer/observe-production-cache.mjs": "b62310b72bd57f21df42fe3e56289a689737ec1e6540e5ef6ec4036339ccfa06",
+    "production-heads/observer/qualify-rust-consumers.mjs": "888e8d4ba5ddc5fae21f51aee66c9bcc9ab921eccf1229690d7d5b40271b78b9",
+    "production-heads/observer/production-cache-results.mjs": "88be81d38642d0401eb79ff426853b262e3353668e60e93fca265bcfdc9e7e07",
+    "production-heads/observer/qualify-go-source.mjs": "b122174b9d11647d44e41eebf1f07d89038120ff7c3fdbc7b687252eab4581cd",
+    "production-heads/observer/production-cache-worker.mjs": "0dd4584e0cf815a13eca5b855d5d95f8dbfcbfa8e31405396de277664a30eebc",
+    "production-heads/observer/qualify-parser-lifetimes.mjs": "c53ba031d904703e9c4dbe1c5ab7bc223d3c5af66b06d41ce175dc8dbb262c92",
+    "production-heads/observer/graph-json-artifact.mjs": "d47899976c5d7b2ec73625d9b3f8d622d116ae8039cb0f4e01edb8afe190ad1e",
+    "production-heads/observer/production-history-tree-sync.mjs": "80b2f6dea5789558728b5e03e2170033b0bde4ec75b989bd7a6aea31d281af11",
+    "production-heads/observer/qualify-scala-source.mjs": "195f4ee5898be8010636edce5af6c896a6d4c9e2db822f7eac0a499885dd0a08",
+    "production-heads/observer/audit-production-history.mjs": "22be8425c286464dae5c7a0006e005f2f40d19d8e8650b8c1003df943612fc29",
+    "production-heads/observer/build-cli.mjs": "5a380f970a11e97b9317d15ad897ff6ce9071afb1b385c0c404bcbe99dbaa65b",
+    "production-heads/observer/qualify-production-source-contracts.mjs": "4f821d5181d70c6beeefa23048850495b99ff3e85597e4a132cb510a2590c23d",
+    "production-heads/observer/benchmark-compatibility.mjs": "8247b185ea9f31d6b5a8777e80106a139228deaf8b7d9848d345aabf97c125bd",
+    "production-heads/observer/qualify-jvm-dotnet-sources.mjs": "019cf968d5cbfb7fc66d8d06a5d785cd3d55be35c7a7754310bf798ca8d85673",
+    "production-heads/observer/production-history-performance-worker.mjs": "dfd8128544a424fa63dbd7ee07cc631ef6b0630a9734ad1e69d03009765ca6ad",
+    "production-heads/observer/prepare-production-cache-git.mjs": "704a337e06dbb19a8fc5861367743d83a70ac2d3a8c65a79387f02865ab4476c",
+    "production-heads/observer/qualify-rust-sources.mjs": "79b9704edb03fa82af1413209808abbade0beed38d2b638068bba3c43162793f",
+    "production-heads/observer/qualify-fsharp-source.mjs": "359b9fbe3b6666041100e9d9a98db55b624f2c67876e755d3d0fdf6c0021bcde",
+    "production-heads/observer/qualify-production-heads.mjs": "fdaf7f39342a27dbe74a656fc6e991f7fde38c210af4dc570246343c795d26ab",
+    "production-heads/observer/production-graph-digest.mjs": "9c59eb5dfa103713015eb886e1ce74a66b49a49d4e87a8de8215fbd577aaddc8",
+    "production-heads/observer/test-package.mjs": "05e7f3851c1e42c8c21b068a4c13c434b7ff8c97f629491395a7c4b1f8105546",
+    "production-heads/observer/production-history-runtime-inputs.mjs": "b6e555d8bd453d4a3f74c04388e96b8041342af9dfd42fd3be48265db0d90075",
+    "production-heads/observer/observe-production-history.mjs": "514ef9cde93c574d105cd4b0ad7406f94860cbbc5572a0877746b93de0eb5fde",
+    "production-heads/observer/qualify-rust-broader-consumers.mjs": "bf3f5a2bac12a9c271fc62ec0d477e45ad8714e54b097b1baa6de448f6213eb5",
+    "production-heads/observer/production-source-contracts.mjs": "02ac45d7f742bb808af2d91661f73c52503e231e0deb9a38bc21dfb8d036fbbf",
+    "production-heads/observer/qualify-rust-source.mjs": "83e557e3bd962f0a254b36c73f7eeb94789c99131b93a4889aafba069c2d5511",
+    "production-heads/observer/production-history-public-views.mjs": "3258281950ac8c9064de6787a8236715d41b20a8aaa0c24e04a319c2171a81c2",
+    "production-heads/observer/observe-production-history-performance.mjs": "5fb2a8e27fd39aede6f99a94d4305737b84b1df20e85d5d0246ba01ac6d308c7",
+    "production-heads/observer/render-production-cache-qualified.mjs": "b7aad80edbd5d03c24d5106715db7bb55d073b977b3879f20ce01e4f870e4ba4",
+    "production-heads/observer/benchmark-jvm-dotnet-compatibility.mjs": "79c3b57dcf98200fe8c0037cc4cff8617790e48bdf2ed229b116a03521ff296b",
+    "production-heads/observer/qualify-groovy-source.mjs": "d1af25c34efb76fb7f0bb76d3204a63b66982850c7229cb90843e1ed2b8818e7",
+    "production-heads/observer/production-history-recovery.mjs": "d6406b13627d553ebb9bab8e51745be1bd590dccc7ee3e2a82b76f3c4b88915f",
+    "production-heads/observer/production-history-storage.mjs": "a54011cca54f74f6550fed53467b631c453391d22fcfb3e716e13e25a37afe79",
+    "production-heads/observer/build-framework-worker.mjs": "44d92ca8100f091fe38843a02276ee6de2de17c5f57dd2e3471c1d65fcf9cc93",
+    "production-heads/observer/qualify-native-release.mjs": "cab716751c2fcd6b49cd1e897ad0c33c4b40c5e9aeb2bb492c2239514988745a",
+    "production-heads/observer/production-history-tree.mjs": "6c7580b14a3c761c2b519b48b48861cc5d4cd4695c7d8cabd88c5f84bfb801dd",
+    "production-heads/observer/qualify-swift-source.mjs": "8de43b528438a21633bc96cca127bc34bfe358d869bdccd98a834f9562427b2b",
+    "production-heads/observer/qualify-axum-sources.mjs": "606ac64a61aacc200c396a9957ea5a70db72364df6c9605c992f27c853e96b43",
+    "production-heads/observer/build-vbnet-grammar.mjs": "428712c77bb1d628fe354cd5c2a825794e78998f67169f41e00a564492519932",
+    "production-heads/observer/qualify-rust-namespaces.mjs": "a7d64b8022df1e9ea95a3c1671b6abb91111c06f0119df3db047fdd821b276a7",
+    "production-heads/observer/qualify-objc-source.mjs": "f008f30fa5df7cb8cc927475f9ce897147cf89c127f4cd472386dbfd6f344681",
+    "production-heads/observer/benchmark-rust-compatibility.mjs": "f33e0ece48f457e3d10f1c2eaaffa1f9b5d47dca65ec32486170199123c92599",
+    "production-heads/observer/qualify-ruby-source.mjs": "31236f58825b3275a6b746fd92d35ee127e7802f284f7e229660feaa69e37145",
+    "production-heads/observer/sync-grammars.mjs": "dfafa3f5b72c85263b2a5aa7621eb5a4f085096e01f3b2239a2320eca72a14f3",
+    "production-heads/observer/materialize-production-history.mjs": "d50d728ceeb3b8d7bd359e3d2c87c7951181e4c480b8639fa864d14f32fbdaf7",
+    "production-heads/observer/production-cache-git.mjs": "6fa78a2f93d7702d29a8f924c9d0e8dca570f04fc811ff2ff1223253ffcd9c6c",
+    "production-heads/observer/benchmark-go-compatibility.mjs": "3ebe277a9d31721e378ca564d4442c8189d3d3f3d888a37533179807c3889100",
+    "production-heads/observer/generate-compatibility-docs.mjs": "8488e5d039b962363843a697ed32cbfcb1f913003f992e368d26e18afbdcf7a2",
+    "production-heads/observer/qualify-production-history-performance.mjs": "d15b098df974cd9fbef2ce92866fac0fe6a25a047cae8381ead11a0ad506a281",
+    "production-heads/observer/production-history-storage-ledger.mjs": "766c976065126d1ef5ea2afc3a3d9c9ac9f57921dd10a28f792d2bccc9183199",
+    "production-heads/observer/observe-production-history-resume.mjs": "1282cf73f3d22a9d6a67a53be511e2edf88feaf4117dce2557c40549c1f1a3eb",
+    "production-heads/observer/native-release-runner.mjs": "4c41b22461ab5138d0c5ae60e750ddd13bd50f95b5d07c87057f795909735d74",
+    "production-heads/observer/build-groovy-grammar.mjs": "4745d67367070bc5137f973ad4d2c686c13419a7e5c7631d047600d436558984",
+    "production-heads/observer/build-native-worker.mjs": "2a247f310c5764f880c3c203ab112759e9f68b56149d587ae7a8ca79474de9e8",
+    "production-heads/observer/build-razor-grammar.mjs": "b558d8dd66a960ba59e7056e95e15ec5c2fb423bc587ec413ce0aa036c29dec9",
+    "production-heads/observer/qualify-vbnet-source.mjs": "92785b906d690784347f1ce50940c3f28022581468b2ef96c1b3ee3e15ef0733",
+    "production-heads/observer/benchmark-ruby-compatibility.mjs": "0e4dd53419460e6b70af72ead76e8c3eed1ebbc71ed564362b95a7504fc6fb7c",
+    "production-heads/observer/combine-compatibility-benchmarks.mjs": "db50ffd368ab0c00ae30e3360740f531494bc56ad7a276808909c382095f3d3e",
+    "production-heads/observer/qualify-production-history-inputs.mjs": "7d37cdd5a53c0f3a1eb8c0fa4a02d723ae479fb559c63f3ae8e1df9fa976d220",
+    "production-heads/observer/qualify-rust-router-sources.mjs": "31bbaa000e473c07576d3cf98f8261538c9a5bc34b03f592f600f08e1bc8415c",
+    "production-heads/observer/production-cache-measure.mjs": "d9a94850f4e77564534fc77a54f18af6f6ccf7d374988c64f8b77ec99b7c2566",
+    "production-heads/observer/copy-ui-licenses.mjs": "02378fad720800499eefa9169a81c4c599f73d28c61b7fe2b5cd457853dcdc69",
+    "production-heads/observer/qualify-jvm-source.mjs": "ac77977ec9e868c240c523f529c157dce5e785aaa546c54f3c8a1c53825d3b15",
+    "production-heads/observer/qualify-php-binding.mjs": "d07f3cac6f997317904736e394c572a59bd2c17b060a967449f99221b69bb687",
+    "production-heads/observer/qualify-liquid-source.mjs": "2680e7aaa6e006dd353725dbf1c3f08ba114b3001233923c5d9d2cf64f4f53be",
+    "production-heads/observer/build-script-worker.mjs": "41792374c67ada381e9500e27006e0f22e12915bfd7df48f6498c3e85f4dd3ed",
+    "production-heads/observer/qualify-cfamily-source.mjs": "eedfe75fe43a2f8d0cb2fafd29ec0797b9c27effc4563b8c3fb6d46264b41929",
+    "production-heads/observer/render-production-history-entrypoint.mjs": "96a5a9c2cc4331599a785839d48bdf246f3e721b800f895b720aa6e67482d7c7",
+    "production-heads/observer/benchmark-mixed-compatibility.mjs": "8b1c97c3a38730d9a548cae03a46a29e73eb3a0600b59dfd72b3ae128c2e65e7",
+    "production-heads/observer/build-liquid-grammar.mjs": "6e5fc57de1147e0c4d893dfe387b9b740aac56bc93ab72353719945db1da7e13",
+    "production-heads/observer/observe-production-history-entrypoint.mjs": "71cc7e9b011a63f40126ac3ba0417607a1d513375eff1cca185ff6b5be5b9a71",
+    "production-heads/observer/observe-production-history-views.mjs": "a1ee1cc4806c82e2c38242b0a3956f4de3d66e9fc3c1bc73fdd01499e6878ef5",
+    "production-heads/observer/qualify-csharp-source.mjs": "753624aaada7a19cbfe4071c8178dd4e9c9176558d90ff77247fa18a0c7be518",
+    "production-heads/observer/qualify-production-history.mjs": "312768171a8aa7afb22affd3557ab7655ad17b8996f8eca937c78d71389a3222",
+    "production-heads/observer/qualify-php-provider.mjs": "df90086892172d7a93a823c58ee8c81681452af35a29b3a340201dc47a1ef0d9"
+  },
+  "foreignFilesUnchanged": true,
+  "targetExecution": false,
+  "failedProductionRetry": false,
+  "sourceCompiledQualified": true,
+  "normalInstalledPackageQualified": false,
+  "fullProductionHistoryQualified": false,
+  "relativeTimeRssQualified": false,
+  "totalParentRssBounded": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullGoalComplete": false,
+  "remaining": [
+    "First full normal installed package qualification with fourteen portable receipts",
+    "Remaining graph/project/IPC encoding, direct in-process, native/WASM and total RSS budgets",
+    "Complete changed-runtime 195 production histories and controlled time/RSS",
+    "Broader P7/P8/P9 original accuracy and native Windows/macOS"
+  ],
+  "archive": {
+    "schema": 1,
+    "passed": true,
+    "archive": "native-consumer-retirement-source-evidence.tar.gz",
+    "archiveBytes": 83843161,
+    "archiveSha256": "02478acbd2260f2ae4c1a8263bdc604821b321908f5ea7637713a16df139c3e4",
+    "manifestSha256": "4ea4d38ba1c147bcc46e99c2bba072f0487a67072136e887d27c8e69d158453b",
+    "regularFiles": 5242,
+    "literalSymlinks": 0,
+    "uncompressedBytes": 560560314,
+    "allMembersReopenedAndVerified": true,
+    "allSourceBytesModesAndLinksBeforeAfterVerified": true,
+    "excludedActiveLogs": [
+      "archive-evidence.log"
+    ],
+    "pid": 2300137,
+    "seconds": 13.918885946273804,
+    "targetExecution": false
+  },
+  "archiveScope": "All closed source qualification evidence and controllers, original/failed checks, qualified source/compiled code and selected owned vendors, exact reconstructible previous runtime, original mixed and production inputs, raw current/prior graphs, reachability receipts and actual terminal exits. Publication follows closure and is verified separately.",
+  "change": "The default pipeline detaches completed Python, Go, Ruby, JVM, C#, Rust and Liquid syntax/service roots before embedded analysis; it clears the indexed text memo while preserving failures, dependency reads, graph facts and later PHP syntax. Failure cleanup repeats retirement. Individually composed analyzers retain caller-owned services. No semantic producer versions or limits change.",
+  "limitsUnchanged": {
+    "sourceMemoBytes": 33554432,
+    "sourceMemoEntries": 4096,
+    "compilerOldSpaceMiB": 1024,
+    "compilerSemiSpaceMiB": 16,
+    "compilerFrameBytes": 67108864,
+    "productionOriginalBytes": 8388608,
+    "optionalParserDeadlineMs": 10000
+  },
+  "retainedFailures": [
+    {
+      "label": "typecheck-node22",
+      "actualExit": 2,
+      "reason": "Two new test fixture objects used incomplete Go/PHP syntax facts; corrected to complete typed empty facts before the full suite."
+    },
+    {
+      "label": "memos-current-source-node22",
+      "actualExit": 1,
+      "reason": "The observer rejected an output directory within the selected workspace runtime root before target analysis. Fresh outputs use frozen qualified code in a separate subtree."
+    },
+    {
+      "label": "preserve-originals-and-baseline",
+      "actualExit": 1,
+      "reason": "Initial baseline reconstruction shared byte-identical files before comparing their modes. The corrected controller shares only byte-and-mode-identical members and preserves two exact delta files."
+    }
+  ],
+  "mixedControllerScopeCorrection": {
+    "schema": 1,
+    "passed": true,
+    "rawControllerAndReceiptRetained": true,
+    "candidateExecution": "Current ordinary compiled dist/src with the current source-checkout owned dependency profile",
+    "baselineExecution": "Preserved 70d1c03 source runtime with owned TypeScript loader",
+    "correction": "Copied controller retains an old installed comparison description and historical installed-profile hash; those labels do not describe the current candidate. compiledCandidate/sourceLoaderForBaseline fields and literal imports establish this source/compiled observation. No new installed-package gate is claimed.",
+    "graphNormalization": [
+      "run.id",
+      "run.analyzedAt"
+    ],
+    "targetExecution": false
+  }
+}

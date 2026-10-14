@@ -481,6 +481,12 @@ const compiler=new TemplateScriptParser();try{compiler.prewarm();const retiremen
   const parentPreparation=JSON.parse(await readFile(preparationParentReceipt,'utf8')),atomicPreparation=JSON.parse(await readFile(preparationAtomicReceipt,'utf8'));
   assert.ok(parentPreparation.passed&&atomicPreparation.passed&&!parentPreparation.typescriptSourceLoader&&!atomicPreparation.typescriptSourceLoader);
   await writeFile(path.join(consumer,'typescript-preparation-validation.json'),JSON.stringify({schema:1,passed:true,caseCount:5,parentPreparation,atomicPreparation,targetExecution:false,typescriptSourceLoader:false},null,2)+'\n');
+
+  const nativeRetirementCheck=path.join(consumer,'native-consumer-retirement.mjs');
+  await cp(path.join(root,'tests/fixtures/native-consumer-retirement.mjs'),nativeRetirementCheck);
+  const nativeRetirement=await run(process.execPath,['--expose-gc','--experimental-sqlite',nativeRetirementCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'native-consumer-retirement-validation.json')],consumer);
+  const nativeRetirementReceipt=JSON.parse(await readFile(path.join(consumer,'native-consumer-retirement-validation.json'),'utf8'));
+  assert.equal(nativeRetirementReceipt.passed,true);assert.equal(nativeRetirementReceipt.caseCount,2);assert.equal(nativeRetirementReceipt.sourceLoader,false);assert.ok(nativeRetirementReceipt.observations.every(row=>row.liveAtNextPhase===0));
   const bin = path.join(installed, 'bin/codiluce.js');
   for (const grammar of grammarManifest.grammars) assert.equal(createHash('sha256').update(await readFile(path.join(installed, 'dist/grammars', grammar.file))).digest('hex'), grammar.sha256);
   const dependencies = JSON.parse((await npm(['ls', '--omit=dev', '--all', '--json'], consumer)).stdout).dependencies[manifest.name].dependencies;
