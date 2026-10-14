@@ -105,8 +105,11 @@ export class StructureParser<Facts = StructureFacts> {
         if (result.type !== 'result' || completedBytes === undefined || !Buffer.isBuffer(result.payload) || result.payload.byteLength !== completedBytes) {
           failure(Error('Invalid parser response')); return;
         }
-        let decoded: {facts?: Facts; error?: string};
-        try { decoded = deserialize(result.payload); if (!decoded || typeof decoded !== 'object') throw Error('Invalid parser response'); }
+        let decoded: {facts?: Facts; error?: string; fatal?: boolean};
+        try {
+          decoded = deserialize(result.payload);
+          if (!decoded || typeof decoded !== 'object' || decoded.fatal !== undefined && (typeof decoded.fatal !== 'boolean' || decoded.fatal && (typeof decoded.error !== 'string' || !decoded.error))) throw Error('Invalid parser response');
+        }
         catch { failure(Error('Invalid parser response')); return; }
         settled = true;
         cleanup();
@@ -114,7 +117,7 @@ export class StructureParser<Facts = StructureFacts> {
           // A WASM trap can leave the runtime/loaded parsers unusable. Never
           // reuse that process after a caught error. Providers which create a
           // fresh engine per job can opt out for ordinary reported source errors.
-          if (this.child === child && (this.resetOnReportedError || !decoded.error)) this.retire();
+          if (this.child === child && (decoded.fatal || this.resetOnReportedError || !decoded.error)) this.retire();
           reject(new Error(decoded.error ?? 'Invalid parser result'));
         }
         else resolve(decoded.facts);

@@ -16,7 +16,7 @@ import {extractTemplateHost} from './embedded-host.js';
 import {createNativeWasmMemory,nativeWasmWorkerLimit} from './wasm-memory.js';
 
 const loaded = new Map<string, { parser: Parser; query: Query }>();
-function reply(id:number,response:{facts?:StructureFacts;error?:string}):void {
+function reply(id:number,response:{facts?:StructureFacts;error?:string;fatal?:boolean}):void {
   const payload=serialize(response);
   process.send?.({id,type:'completed',completedAtNs:process.hrtime.bigint().toString(),bytes:payload.byteLength});
   process.send?.({id,type:'result',payload});
@@ -75,7 +75,7 @@ async function handle(job: { id: number; language: string; content: string; obje
         if(job.objectiveCpp){
           recoverOriginalCppMethods(facts,job.content);
           try {const cpp=await load('cpp');cpp.parser.reset();const cppTree=cpp.parser.parse(input);if(!cppTree)throw new Error('C++ parser returned no tree');try{facts=composeObjcCpp(facts,cppTree.rootNode,cpp.query,job.content);}finally{cppTree.delete();}}
-          catch(error){facts.declarations=[...originalObjcDeclarations(facts.declarations),...facts.declarations.filter(f=>f.kind==='macro')];if(facts.issues.length>=100){facts.issues.pop();facts.truncated=true;}facts.issues.push({code:'objc-cpp-grammar-unavailable',reason:`Original Objective-C declarations retained; auxiliary C++ grammar unavailable: ${error instanceof Error?error.message:String(error)}`});if(facts.objc)facts.objc.complete=false;}
+          catch(error){if(error instanceof WebAssembly.RuntimeError)throw error;facts.declarations=[...originalObjcDeclarations(facts.declarations),...facts.declarations.filter(f=>f.kind==='macro')];if(facts.issues.length>=100){facts.issues.pop();facts.truncated=true;}facts.issues.push({code:'objc-cpp-grammar-unavailable',reason:`Original Objective-C declarations retained; auxiliary C++ grammar unavailable: ${error instanceof Error?error.message:String(error)}`});if(facts.objc)facts.objc.complete=false;}
         }
         facts=extractObjcMacroProfiles(facts,job.content);
       }
@@ -84,8 +84,9 @@ async function handle(job: { id: number; language: string; content: string; obje
     }
     finally { tree.delete(); }
   } catch (error) {
-    try {wasm.assertAvailable();} catch (memoryError) {error=memoryError;}
-    reply(job.id,{error:error instanceof Error?error.message:String(error)});
+    let fatal=error instanceof WebAssembly.RuntimeError;
+    try {wasm.assertAvailable();} catch (memoryError) {error=memoryError;fatal=true;}
+    reply(job.id,{error:error instanceof Error?error.message:String(error),...fatal?{fatal:true}:{}});
   }
 }
 let pending = Promise.resolve();

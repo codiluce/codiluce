@@ -15,6 +15,7 @@ import {selectErbHost} from './erb-structure.js';
 import ts from 'typescript';
 import {selectLiquidProfile} from './liquid-structure.js';
 import { PHP_STRUCTURE_VERSION } from '../php/version.js';
+import {NATIVE_PARSER_FAILURE_POLICY} from './wasm-memory.js';
 
 export const STRUCTURE_VERSION = `${ANALYZER_VERSION}:${GRAMMAR_CATALOG_VERSION}:59`;
 export const analysisRegistry = new AnalysisRegistry();
@@ -106,7 +107,7 @@ export const structureAnalyzer: Analyzer = {
               scriptJobs=scripted.then(()=>{},()=>scripts.closeAndWait());return scripted;
             } finally { releaseNative(); }
           };
-          const result=(context.cache ? context.cache.value('syntax-facts', file.path, { version: STRUCTURE_VERSION, file: fileKey(context, file.path), parser: analysis.parser,...liquidProfile?{liquidProfile}:{} }, compute) : compute()).then(facts=>({facts}),error=>({error}));
+          const result=(context.cache ? context.cache.value('syntax-facts', file.path, { version: STRUCTURE_VERSION, file: fileKey(context, file.path), parser: analysis.parser,nativeFailurePolicy:NATIVE_PARSER_FAILURE_POLICY,...liquidProfile?{liquidProfile}:{} }, compute) : compute()).then(facts=>({facts}),error=>({error}));
           const finishFile=async()=>{
             try{
             const outcome=await result;

@@ -5457,6 +5457,7 @@ async function handle(job) {
               cppTree.delete();
             }
           } catch (error) {
+            if (error instanceof WebAssembly.RuntimeError) throw error;
             facts.declarations = [...originalObjcDeclarations(facts.declarations), ...facts.declarations.filter((f) => f.kind === "macro")];
             if (facts.issues.length >= 100) {
               facts.issues.pop();
@@ -5474,12 +5475,14 @@ async function handle(job) {
       tree.delete();
     }
   } catch (error) {
+    let fatal = error instanceof WebAssembly.RuntimeError;
     try {
       wasm.assertAvailable();
     } catch (memoryError) {
       error = memoryError;
+      fatal = true;
     }
-    reply(job.id, { error: error instanceof Error ? error.message : String(error) });
+    reply(job.id, { error: error instanceof Error ? error.message : String(error), ...fatal ? { fatal: true } : {} });
   }
 }
 var pending = Promise.resolve();

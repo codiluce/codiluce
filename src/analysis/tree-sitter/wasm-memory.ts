@@ -3,6 +3,9 @@
  * original 32 MiB initial memory and impose an engine-enforced maximum.
  * This bounds this linear memory, not grammar bytes, JS facts or total RSS. */
 export const NATIVE_WASM_MEMORY_LIMITS = Object.freeze({initialBytes: 32 * 1024 * 1024, maxBytes: 256 * 1024 * 1024, pageBytes: 65536});
+// Invalidate facts admitted by the older auxiliary-trap fallback. Healthy
+// syntax identities and semantic producers remain unchanged.
+export const NATIVE_PARSER_FAILURE_POLICY = 'fatal-v1';
 
 export function nativeWasmMemoryLimit(bytes = NATIVE_WASM_MEMORY_LIMITS.maxBytes): number {
   if (!Number.isSafeInteger(bytes) || bytes < NATIVE_WASM_MEMORY_LIMITS.initialBytes || bytes > NATIVE_WASM_MEMORY_LIMITS.maxBytes || bytes % NATIVE_WASM_MEMORY_LIMITS.pageBytes) throw Error('Native WASM memory limit must be page aligned between 32 and 256 MiB');
