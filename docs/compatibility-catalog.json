@@ -9,7 +9,7 @@
       "imports": "Indexed Node projects, workspace packages, aliases and shared compiler configs",
       "binding": "Partial lexical, source-type, callable and HTTP-wrapper binding",
       "frameworks": "Next.js, Express, Nest; component scripts",
-      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior. The default indexer isolates the compiler pass with 1024 MiB old space, 16 MiB semi-space and 64 MiB IPC frames; heap exhaustion rejects the pass without partial graph replay. Native allocations, total RSS, direct in-process compiler consumers, production performance and native OS qualification remain separate gates.",
+      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior. The default indexer isolates the compiler preparation/semantic pass with 1024 MiB old space, 16 MiB semi-space and 64 MiB IPC frames; heap exhaustion rejects the pass without partial graph replay. Native allocations, total RSS, direct in-process compiler consumers, production performance and native OS qualification remain separate gates.",
       "sources": [
         "src/analyzers/typescript.ts",
         "src/analysis/resolution/typescript.ts",
@@ -27,7 +27,7 @@
       "imports": "Indexed Node projects, workspace packages, aliases and shared compiler configs",
       "binding": "Partial lexical, source-type, callable and HTTP-wrapper binding",
       "frameworks": "Next.js, Express, Nest; component scripts",
-      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior. The default indexer isolates the compiler pass with 1024 MiB old space, 16 MiB semi-space and 64 MiB IPC frames; heap exhaustion rejects the pass without partial graph replay. Native allocations, total RSS, direct in-process compiler consumers, production performance and native OS qualification remain separate gates.",
+      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior. The default indexer isolates the compiler preparation/semantic pass with 1024 MiB old space, 16 MiB semi-space and 64 MiB IPC frames; heap exhaustion rejects the pass without partial graph replay. Native allocations, total RSS, direct in-process compiler consumers, production performance and native OS qualification remain separate gates.",
       "sources": [
         "src/analyzers/typescript.ts",
         "src/analysis/resolution/typescript.ts",
@@ -354,7 +354,8 @@
       "gaps": "Wider runtime/plugin/generated conventions remain outside the source profile",
       "tests": [
         "tests/graph.test.ts",
-        "tests/typescript-worker.test.ts"
+        "tests/typescript-worker.test.ts",
+        "tests/typescript-preparation.test.ts"
       ],
       "sources": [
         {
@@ -398,7 +399,8 @@
       "tests": [
         "tests/express.test.ts",
         "tests/typescript-jsdoc-cache.test.ts",
-        "tests/typescript-worker.test.ts"
+        "tests/typescript-worker.test.ts",
+        "tests/typescript-preparation.test.ts"
       ],
       "sources": [
         {
@@ -492,7 +494,8 @@
       "gaps": "Generated routes/macros, preprocessors, dynamic components, guards/loaders and deferred callbacks remain gaps",
       "tests": [
         "tests/vue.test.ts",
-        "tests/typescript-worker.test.ts"
+        "tests/typescript-worker.test.ts",
+        "tests/typescript-preparation.test.ts"
       ],
       "sources": [
         {
@@ -518,7 +521,8 @@
       "gaps": "Dynamic config, hooks/matchers, custom extensions, deeper form/prop/navigation invocation and newer QUERY remain gaps",
       "tests": [
         "tests/svelte.test.ts",
-        "tests/typescript-worker.test.ts"
+        "tests/typescript-worker.test.ts",
+        "tests/typescript-preparation.test.ts"
       ],
       "sources": [
         {
@@ -546,7 +550,8 @@
       "gaps": "Dynamic integrations/config, custom pipelines, Markdown/MDX, actions and generated concrete URLs remain gaps",
       "tests": [
         "tests/astro.test.ts",
-        "tests/typescript-worker.test.ts"
+        "tests/typescript-worker.test.ts",
+        "tests/typescript-preparation.test.ts"
       ],
       "sources": [
         {
@@ -565,7 +570,8 @@
       "gaps": "Older/broader ranges, layers/modules/generated imports, dynamic runtime options and deeper composables remain gaps",
       "tests": [
         "tests/nuxt.test.ts",
-        "tests/typescript-worker.test.ts"
+        "tests/typescript-worker.test.ts",
+        "tests/typescript-preparation.test.ts"
       ],
       "sources": [
         {

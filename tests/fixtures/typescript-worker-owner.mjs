@@ -5,5 +5,5 @@ import {fileURLToPath} from 'node:url';
 const {runTypeScriptWorker}=await import(new URL('analyzers/typescript-isolated.js',new URL(process.argv[2])));
 const original=cp.fork;cp.fork=(...args)=>{const child=original(...args);process.send({workerPid:child.pid});return child;};syncBuiltinESMExports();
 process.once('message',()=>process.exit(31));
-const request={protocol:1,context:{config:{repository:{name:'owner-hang'}}}};
+const request={protocol:2,context:{config:{repository:{name:'owner-hang'}}}};
 void runTypeScriptWorker(request,{worker:fileURLToPath(new URL('./typescript-worker-control.mjs',import.meta.url))}).catch(()=>{});

@@ -25,7 +25,7 @@ import { pythonAnalyzer } from '../analysis/languages/python.js';
 import { FASTAPI_VERSION } from '../analysis/frameworks/fastapi.js';
 import { FLASK_VERSION } from '../analysis/frameworks/flask.js';
 import { DJANGO_VERSION } from '../analysis/frameworks/django.js';
-import { embeddedAnalyzer } from '../analysis/embedded/index.js';
+import { isolatedEmbeddedAnalyzer as embeddedAnalyzer } from '../analyzers/typescript-isolated.js';
 import { goAnalyzer } from '../analysis/languages/go.js';
 import {liquidAnalyzer} from '../analysis/languages/liquid.js';
 import { rubyAnalyzer } from '../analysis/languages/ruby.js';

@@ -46,6 +46,8 @@ export interface AnalysisContext {
   typescript?: TypeScriptServices;
   /** Original inputs owned by a successfully completed isolated TS pass. */
   typescriptFiles?: Set<string>;
+  /** Default pipeline defers compiler-backed embedded recipes to its worker. */
+  embeddedPreparationPending?: boolean;
   /** Serializable syntax facts and exact declaration sites for language services. */
   syntax?: Map<string, { facts: StructureFacts; declarations: Map<string, string> }>;
   python?: PythonResolver;

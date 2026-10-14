@@ -10,6 +10,7 @@ import { typescriptFrameworkPacks } from '../analysis/frameworks/index.js';
 import { applyGraphPatch } from '../pipeline/cache.js';
 import { TYPESCRIPT_WORKER_LIMITS, TYPESCRIPT_WORKER_PROTOCOL, type TypeScriptWorkerRequest, type TypeScriptWorkerResult } from './ts-worker-protocol.js';
 import { typescriptAnalyzer } from './typescript.js';
+import { embeddedAnalyzer, EMBEDDED_VERSION } from '../analysis/embedded/index.js';
 
 const WORKER = fileURLToPath(new URL('./native-ts-worker.mjs', import.meta.url));
 const activeWorkers = new Map<ReturnType<typeof fork>, Set<number>>();
@@ -116,17 +117,28 @@ export async function runTypeScriptWorker(request: TypeScriptWorkerRequest, opti
 }
 export function typeScriptWorkerRequest(context: AnalysisContext): TypeScriptWorkerRequest {
   const { root, config, repositoryId, applicationIds, files, http, revision, directoryInventory, scannedDirectories, fileInventory } = context;
-  return { protocol: TYPESCRIPT_WORKER_PROTOCOL, context: { root, config, repositoryId, applicationIds, files, http, revision, directoryInventory, scannedDirectories, fileInventory }, graph: { namespace: context.graph.namespace, entities: [...context.graph.entities.values()], relations: [...context.graph.relations.values()], diagnostics: [...context.graph.diagnostics.values()] }, embedded: context.embedded?.snapshot(), sourceFailures: [...context.sources?.failures ?? []], cache: context.cache ? { directory: context.cache.directory, limits: context.cache.limits } : undefined, packs: typescriptFrameworkPacks.map(pack => [pack.id, pack.version]) };
+  return { protocol: TYPESCRIPT_WORKER_PROTOCOL, context: { root, config, repositoryId, applicationIds, files, http, revision, directoryInventory, scannedDirectories, fileInventory }, graph: { namespace: context.graph.namespace, entities: [...context.graph.entities.values()], relations: [...context.graph.relations.values()], diagnostics: [...context.graph.diagnostics.values()] }, embedded: context.embedded?.snapshot(), prepareEmbedded: context.embeddedPreparationPending, sourceFailures: [...context.sources?.failures ?? []], cache: context.cache ? { directory: context.cache.directory, limits: context.cache.limits } : undefined, packs: typescriptFrameworkPacks.map(pack => [pack.id, pack.version]) };
 }
+/** Preserve the analyzer ordering and its ordinary disabled-file outcomes;
+ * component extraction and recipe binding run inside the semantic worker. */
+export const isolatedEmbeddedAnalyzer: Analyzer = {
+  name: 'embedded-source', version: EMBEDDED_VERSION,
+  async analyze(context) {
+    if ([...context.files.values()].some(file => file.analyzable && ['vue', 'svelte', 'astro'].includes(file.language ?? ''))) context.embeddedPreparationPending = true;
+    else await embeddedAnalyzer.analyze(context);
+  },
+};
 export const isolatedTypescriptAnalyzer: Analyzer = {
   name: 'typescript-nextjs', version: ANALYZER_VERSION,
   async analyze(context) {
-    // With no compiler roots the existing preparation only reads indexed
-    // configuration and records project metadata; it creates no program.
-    if (![...context.files.values()].some(file => file.analyzable && ['typescript', 'javascript', 'vue', 'svelte', 'astro'].includes(file.language ?? ''))) { await typescriptAnalyzer.analyze(context); return; }
+    // Empty/non-Node scans need no compiler construction. Indexed compiler
+    // configuration still requires isolation even when it selects no roots.
+    const compilerInputs = [...context.files.values()].some(file => file.analyzable && (['typescript', 'javascript', 'vue', 'svelte', 'astro'].includes(file.language ?? '') || /(?:^|\/)(?:ts|js)config[^/]*\.json$/.test(file.path)));
+    if (!compilerInputs && !context.embeddedPreparationPending) { await typescriptAnalyzer.analyze(context); return; }
     const result = await runTypeScriptWorker(typeScriptWorkerRequest(context));
     if (!applyGraphPatch(context, result.patch)) throw Error('TypeScript worker graph patch does not fit the indexed graph');
     context.typescriptFiles = new Set(result.typescriptFiles);
+    context.embeddedPreparationPending = false;
     for (const file of result.sourceReads) context.sourceReads?.add(file);
     for (const [file, reason] of result.sourceFailures) context.sources?.failures.set(file, reason);
     context.cache?.acceptEvents(result.cacheEvents);

@@ -1,0 +1,981 @@
+{
+  "schema": 1,
+  "passed": true,
+  "qualification": {
+    "schema": 1,
+    "passed": true,
+    "qualifiedAt": 1791963044.1362414,
+    "baseCommit": "181ce7b373321720b866a77e21d91df1a49b034c",
+    "phase": "Default embedded and TypeScript config preparation inside the compiler heap boundary",
+    "runtime": "70d1c03e198896af53fee766ec703013bff3db1a28da865771ede75ddb8483a1",
+    "runtimeInputs": 1937,
+    "protocol": 2,
+    "engineAndUICases": 1820,
+    "toolingCases": 219,
+    "totalCases": 2039,
+    "previousCaseMultisetRetained": 1818,
+    "newCases": [
+      "Default indexing prepares component recipes and rootless TypeScript configuration while compiler construction and optional parser loading are forbidden in the parent",
+      "Embedded extraction and recipe heap failure leave all parent identities, graph and semantic cache state unpublished"
+    ],
+    "focusedNode24Cases": 51,
+    "checks": [
+      {
+        "schema": 1,
+        "label": "full-node22",
+        "argv": [
+          "npm",
+          "test"
+        ],
+        "controllerPid": 1588182,
+        "childPid": 1588185,
+        "startedAt": 1791961951.5680325,
+        "completedAt": 1791962481.821456,
+        "seconds": 530.2534236907959,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/full-node22.log",
+        "logSha256": "743909cfc6ee25734ccc0df0bbf25202ed9122ccacf30c1c8b95f599197f510d",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "tooling-node22",
+        "argv": [
+          "node",
+          "--experimental-sqlite",
+          "--import",
+          "tsx",
+          "--test",
+          "scripts/tests/graph-json-artifact.test.mjs",
+          "scripts/tests/native-release.test.mjs",
+          "scripts/tests/production-cache-git.test.mjs",
+          "scripts/tests/production-cache-observer.test.mjs",
+          "scripts/tests/production-graph-digest.test.mjs",
+          "scripts/tests/production-head-graphs.test.mjs",
+          "scripts/tests/production-history-audit.test.mjs",
+          "scripts/tests/production-history-blobs.test.mjs",
+          "scripts/tests/production-history-columns.test.mjs",
+          "scripts/tests/production-history-entrypoint-columns.test.mjs",
+          "scripts/tests/production-history-entrypoint-qualification.test.mjs",
+          "scripts/tests/production-history-entrypoint-report.test.mjs",
+          "scripts/tests/production-history-entrypoint.test.mjs",
+          "scripts/tests/production-history-inputs.test.mjs",
+          "scripts/tests/production-history-observer.test.mjs",
+          "scripts/tests/production-history-performance-qualification.test.mjs",
+          "scripts/tests/production-history-performance.test.mjs",
+          "scripts/tests/production-history-qualification.test.mjs",
+          "scripts/tests/production-history-recovery.test.mjs",
+          "scripts/tests/production-history-resume.test.mjs",
+          "scripts/tests/production-history-runtime-inputs.test.mjs",
+          "scripts/tests/production-history-storage.test.mjs",
+          "scripts/tests/production-history-tree.test.mjs",
+          "scripts/tests/production-source-contracts.test.mjs"
+        ],
+        "controllerPid": 1676130,
+        "childPid": 1676131,
+        "startedAt": 1791962466.9795585,
+        "completedAt": 1791962488.8856792,
+        "seconds": 21.906121253967285,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/tooling-node22.log",
+        "logSha256": "6db2639e5f42d69538b9d5875d8f27f06a095b409b193de75b83d5387da484af",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "focused-node24",
+        "argv": [
+          "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+          "--experimental-sqlite",
+          "--import",
+          "tsx",
+          "--test",
+          "--test-concurrency=2",
+          "tests/typescript-preparation.test.ts",
+          "tests/embedded-source-residency.test.ts",
+          "tests/framework-parser-lifetimes.test.ts",
+          "tests/typescript-component-lifetimes.test.ts",
+          "tests/typescript-worker.test.ts",
+          "tests/workspaces.test.ts",
+          "tests/typescript-source-cache.test.ts",
+          "tests/typescript-jsdoc-cache.test.ts"
+        ],
+        "controllerPid": 1690211,
+        "childPid": 1690215,
+        "startedAt": 1791962854.2797873,
+        "completedAt": 1791962904.3091934,
+        "seconds": 50.02940630912781,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/focused-node24.log",
+        "logSha256": "2d37e163c2d80f6fa8af83e8cc659c7663e30b884a0aec42b057dec0645301dc",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "corrected-typechecks",
+        "argv": [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        "controllerPid": 1667943,
+        "childPid": 1667965,
+        "startedAt": 1791962381.6695504,
+        "completedAt": 1791962414.4323523,
+        "seconds": 32.76280212402344,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/corrected-typechecks.log",
+        "logSha256": "c1fee42b4fa7e6e1a30e8e81426f7690f45767a53800385021e8cd468ec6e8d9",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "cli-build",
+        "argv": [
+          "npm",
+          "run",
+          "build:cli"
+        ],
+        "controllerPid": 1588184,
+        "childPid": 1588187,
+        "startedAt": 1791961951.5714207,
+        "completedAt": 1791961970.1362827,
+        "seconds": 18.56486225128174,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/cli-build.log",
+        "logSha256": "35e452fc1cbfe25c74c045cb35ec2f66d675f53a21f0f3f10d9ca40ec382c7bf",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "ui-build",
+        "argv": [
+          "npm",
+          "run",
+          "build:web"
+        ],
+        "controllerPid": 1668119,
+        "childPid": 1668138,
+        "startedAt": 1791962383.1245544,
+        "completedAt": 1791962401.5138876,
+        "seconds": 18.389334440231323,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/ui-build.log",
+        "logSha256": "9c76a0388590832727ac3f8f43191699aa99fae7a7deb373024906f53b599804",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "checked-docs",
+        "argv": [
+          "node",
+          "scripts/generate-compatibility-docs.mjs",
+          "--check"
+        ],
+        "controllerPid": 1690212,
+        "childPid": 1690216,
+        "startedAt": 1791962854.2802045,
+        "completedAt": 1791962854.4427984,
+        "seconds": 0.16259384155273438,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/checked-docs.log",
+        "logSha256": "f113b1f1d0e7c84d0cd698dd637e185f3959e7f874cb5a8c2570b95ffcbb8cde",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "compiled-parent-node22",
+        "argv": [
+          "node",
+          "--experimental-sqlite",
+          "--loader",
+          "./tests/fixtures/typescript-preparation-parent-loader.mjs",
+          "tests/fixtures/typescript-preparation-parent-probe.mjs",
+          "file:///var/www/html/codiluce/dist/src/",
+          "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/compiled-parent-node22.json"
+        ],
+        "controllerPid": 1660618,
+        "childPid": 1660638,
+        "startedAt": 1791962312.8187165,
+        "completedAt": 1791962328.991828,
+        "seconds": 16.17311191558838,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/compiled-parent-node22.log",
+        "logSha256": "43298c7f3db4dd1d92ff3805b09afd625eeecd65e9b968982d7619453193ad35",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "compiled-parent-node24",
+        "argv": [
+          "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+          "--experimental-sqlite",
+          "--loader",
+          "./tests/fixtures/typescript-preparation-parent-loader.mjs",
+          "tests/fixtures/typescript-preparation-parent-probe.mjs",
+          "file:///var/www/html/codiluce/dist/src/",
+          "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/compiled-parent-node24.json"
+        ],
+        "controllerPid": 1668121,
+        "childPid": 1668139,
+        "startedAt": 1791962383.128822,
+        "completedAt": 1791962399.13402,
+        "seconds": 16.005198001861572,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/compiled-parent-node24.log",
+        "logSha256": "39b7f6ccad2d6fa295b04d0085b93929050057a3c36a0d661e5a9e1b96fa717b",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "compiled-atomic-node22",
+        "argv": [
+          "node",
+          "--experimental-sqlite",
+          "tests/fixtures/typescript-preparation-atomic.mjs",
+          "file:///var/www/html/codiluce/dist/src/",
+          "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/compiled-atomic-node22.json"
+        ],
+        "controllerPid": 1660738,
+        "childPid": 1660752,
+        "startedAt": 1791962313.9800284,
+        "completedAt": 1791962315.7259717,
+        "seconds": 1.745943546295166,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/compiled-atomic-node22.log",
+        "logSha256": "419c811baffd7805d09d72adaef8e1c403f40adbf6570f2831cb1678690767e1",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "compiled-atomic-node24",
+        "argv": [
+          "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+          "--experimental-sqlite",
+          "tests/fixtures/typescript-preparation-atomic.mjs",
+          "file:///var/www/html/codiluce/dist/src/",
+          "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/compiled-atomic-node24.json"
+        ],
+        "controllerPid": 1668120,
+        "childPid": 1668140,
+        "startedAt": 1791962383.1290889,
+        "completedAt": 1791962384.879231,
+        "seconds": 1.7501423358917236,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/compiled-atomic-node24.log",
+        "logSha256": "6a00fcd9da48b3265d43145d3fde461c2a5901a9830ab41b915ad14af0a14149",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "compiled-worker-node22",
+        "argv": [
+          "node",
+          "--experimental-sqlite",
+          "tests/fixtures/typescript-worker-qualification.mjs",
+          "file:///var/www/html/codiluce/dist/src/",
+          "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/compiled-worker-node22.json"
+        ],
+        "controllerPid": 1690209,
+        "childPid": 1690213,
+        "startedAt": 1791962854.2769134,
+        "completedAt": 1791962865.612295,
+        "seconds": 11.335381746292114,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/compiled-worker-node22.log",
+        "logSha256": "e3b21ae06441df028f3901edb6ff9e9c034f389640580f352aaa6296d36da82f",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "compiled-worker-node24",
+        "argv": [
+          "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+          "--experimental-sqlite",
+          "tests/fixtures/typescript-worker-qualification.mjs",
+          "file:///var/www/html/codiluce/dist/src/",
+          "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/compiled-worker-node24.json"
+        ],
+        "controllerPid": 1690210,
+        "childPid": 1690214,
+        "startedAt": 1791962854.278107,
+        "completedAt": 1791962863.3478465,
+        "seconds": 9.069739580154419,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/compiled-worker-node24.log",
+        "logSha256": "0f9b871efe6da0e8559627a56f3848499baac0ebe0c2581d0b236d3d8a9b345d",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "whole-prior-current-mixed",
+        "argv": [
+          "node",
+          "--experimental-sqlite",
+          ".codiluce/validation-typescript-preparation-source/whole-mixed-graph-parity/compare-prior-current.mjs"
+        ],
+        "controllerPid": 1676027,
+        "childPid": 1676030,
+        "startedAt": 1791962465.944679,
+        "completedAt": 1791962526.841056,
+        "seconds": 60.89637732505798,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/whole-prior-current-mixed.log",
+        "logSha256": "27f5a8e0aa3379916ef6c5a92d46cdf3ce35d541781568f0f23fe01eba6f886d",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "prior-parent-construction-control",
+        "argv": [
+          "node",
+          "--experimental-sqlite",
+          "--loader",
+          "./tests/fixtures/typescript-preparation-parent-loader.mjs",
+          "tests/fixtures/typescript-preparation-parent-probe.mjs",
+          "file:///var/www/html/codiluce/.codiluce/validation-typescript-heap-release/engine/dist/src/",
+          "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/prior-parent-construction-control.json",
+          "baseline"
+        ],
+        "controllerPid": 1577650,
+        "childPid": 1577651,
+        "startedAt": 1791961540.47035,
+        "completedAt": 1791961544.2005665,
+        "seconds": 3.7302167415618896,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/prior-parent-construction-control.log",
+        "logSha256": "2c72e3c5a53d9308c0331662bb8b39923dca7142994cf29d50e6f60877b98c99",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "preserve-qualified-code",
+        "argv": [
+          "python3",
+          ".codiluce/validation-typescript-preparation-source/preserve-qualified-code.py"
+        ],
+        "controllerPid": 1690404,
+        "childPid": 1690408,
+        "startedAt": 1791962855.4984055,
+        "completedAt": 1791962856.9877474,
+        "seconds": 1.489342212677002,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/preserve-qualified-code.log",
+        "logSha256": "985e66648af6129cb070198dbbdf92763fcfc408ab3ce94f25c4749eb4597b23",
+        "targetExecution": false
+      }
+    ],
+    "parentCompilerProhibition": [
+      {
+        "schema": 1,
+        "passed": true,
+        "mode": "candidate",
+        "profiles": [
+          {
+            "profile": "components",
+            "passed": true,
+            "entities": 19,
+            "relations": 27,
+            "diagnostics": 3,
+            "completeGraphComparisons": 2,
+            "parentCompilerForbidden": true
+          },
+          {
+            "profile": "config-only",
+            "passed": true,
+            "entities": 2,
+            "relations": 1,
+            "diagnostics": 3,
+            "completeGraphComparisons": 2,
+            "parentCompilerForbidden": true
+          },
+          {
+            "profile": "invalid-config-only",
+            "passed": true,
+            "entities": 2,
+            "relations": 1,
+            "diagnostics": 4,
+            "completeGraphComparisons": 2,
+            "parentCompilerForbidden": true
+          },
+          {
+            "profile": "typescript",
+            "passed": true,
+            "entities": 3,
+            "relations": 3,
+            "diagnostics": 3,
+            "completeGraphComparisons": 2,
+            "parentCompilerForbidden": true
+          }
+        ],
+        "typescriptSourceLoader": false,
+        "parentCompilerConstructionForbidden": true,
+        "parentOptionalParserForbidden": true,
+        "targetExecution": false,
+        "node": "v22.12.0",
+        "sourceRoot": "file:///var/www/html/codiluce/dist/src/"
+      },
+      {
+        "schema": 1,
+        "passed": true,
+        "mode": "candidate",
+        "profiles": [
+          {
+            "profile": "components",
+            "passed": true,
+            "entities": 19,
+            "relations": 27,
+            "diagnostics": 3,
+            "completeGraphComparisons": 2,
+            "parentCompilerForbidden": true
+          },
+          {
+            "profile": "config-only",
+            "passed": true,
+            "entities": 2,
+            "relations": 1,
+            "diagnostics": 3,
+            "completeGraphComparisons": 2,
+            "parentCompilerForbidden": true
+          },
+          {
+            "profile": "invalid-config-only",
+            "passed": true,
+            "entities": 2,
+            "relations": 1,
+            "diagnostics": 4,
+            "completeGraphComparisons": 2,
+            "parentCompilerForbidden": true
+          },
+          {
+            "profile": "typescript",
+            "passed": true,
+            "entities": 3,
+            "relations": 3,
+            "diagnostics": 3,
+            "completeGraphComparisons": 2,
+            "parentCompilerForbidden": true
+          }
+        ],
+        "typescriptSourceLoader": false,
+        "parentCompilerConstructionForbidden": true,
+        "parentOptionalParserForbidden": true,
+        "targetExecution": false,
+        "node": "v24.21.0",
+        "sourceRoot": "file:///var/www/html/codiluce/dist/src/"
+      }
+    ],
+    "preparationAtomicControls": [
+      {
+        "schema": 1,
+        "passed": true,
+        "node": "v22.12.0",
+        "typescriptSourceLoader": false,
+        "sourceRoot": "file:///var/www/html/codiluce/dist/src/",
+        "originalBytes": 800159,
+        "originalSha256": "9bd386af134a4477a5586b9fc2a9203035560e19076c679b066138f865ea3355",
+        "maxFileBytes": 1048576,
+        "oldSpaceMiB": 96,
+        "signal": "SIGABRT",
+        "workerPid": 1660817,
+        "parentGraphUnchanged": true,
+        "parentEmbeddedObjectsAbsent": true,
+        "failedSemanticComponentStored": false,
+        "cacheFiles": [
+          "embedded-source.Original_vue-e144a8d8.b2ebeb41b3471125957f88aaa20d0301.json.gz"
+        ],
+        "rawStderr": "\n<--- Last few GCs --->\n\n[1660817:0x791a000]      903 ms: Mark-Compact (reduce) 94.1 (97.5) -> 94.0 (97.7) MB, pooled: 0 MB, 13.63 / 0.00 ms  (+ 0.1 ms in 0 steps since start of marking, biggest step 0.0 ms, walltime since start of marking 18 ms) (average mu = 0.834, current mu =[1660817:0x791a000]      928 ms: Mark-Compact 95.0 (97.7) -> 94.1 (101.7) MB, pooled: 0 MB, 22.46 / 0.00 ms  (average mu = 0.688, current mu = 0.073) allocation failure; scavenge might not succeed\n\n\n<--- JS stacktrace --->\n\nFATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory\n----- Native stack trace -----\n\n 1: 0xe1bdfe node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/home/ojoven/.nvm/versions/node/v22.12.0/bin/node]\n 2: 0x123e800 v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/home/ojoven/.nvm/versions/node/v22.12.0/bin/node]\n 3: 0x123ead7 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/home/ojoven/.nvm/versions/node/v22.12.0/bin/node]\n 4: 0x146c615  [/home/ojoven/.nvm/versions/node/v22.12.0/bin/node]\n 5: 0x1485e89 v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) [/home/ojoven/.nvm/versions/node/v22.12.0/bin/node]\n 6: 0x145a558 v8::internal::HeapAllocator::AllocateRawWithLightRetrySlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/home/ojoven/.nvm/versions/node/v22.12.0/bin/node]\n 7: 0x145b485 v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/home/ojoven/.nvm/versions/node/v22.12.0/bin/node]\n 8: 0x143415e v8::internal::Factory::NewFillerObject(int, v8::internal::AllocationAlignment, v8::internal::AllocationType, v8::internal::AllocationOrigin) [/home/ojoven/.nvm/versions/node/v22.12.0/bin/node]\n 9: 0x189588c v8::internal::Runtime_AllocateInYoungGeneration(int, unsigned long*, v8::internal::Isolate*) [/home/ojoven/.nvm/versions/node/v22.12.0/bin/node]\n10: 0x1df0476  [/home/ojoven/.nvm/versions/node/v22.12.0/bin/node]\n",
+        "targetExecution": false,
+        "scope": "Authored lower-heap preparation failure; default budget and process-tree RSS qualification remain separate."
+      },
+      {
+        "schema": 1,
+        "passed": true,
+        "node": "v24.21.0",
+        "typescriptSourceLoader": false,
+        "sourceRoot": "file:///var/www/html/codiluce/dist/src/",
+        "originalBytes": 800159,
+        "originalSha256": "9bd386af134a4477a5586b9fc2a9203035560e19076c679b066138f865ea3355",
+        "maxFileBytes": 1048576,
+        "oldSpaceMiB": 96,
+        "signal": "SIGABRT",
+        "workerPid": 1668290,
+        "parentGraphUnchanged": true,
+        "parentEmbeddedObjectsAbsent": true,
+        "failedSemanticComponentStored": false,
+        "cacheFiles": [
+          "embedded-source.Original_vue-e144a8d8.b2ebeb41b3471125957f88aaa20d0301.json.gz"
+        ],
+        "rawStderr": "\n<--- Last few GCs --->\n\n[1668290:0x8ba6000]      915 ms: Scavenge 91.4 (110.0) -> 91.1 (123.2) MB, pooled: 0 MB, 11.93 / 0.00 ms  (average mu = 0.931, current mu = 0.870) allocation failure; \n[1668290:0x8ba6000]      965 ms: Mark-Compact (reduce) 106.3 (125.2) -> 102.6 (104.8) MB, pooled: 0 MB, 25.35 / 0.00 ms  (+ 2.3 ms in 212 steps since start of marking, biggest step 0.2 ms, walltime since start of marking 51 ms) (average mu = 0.891, curren\nFATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory\n----- Native stack trace -----\n\n 1: 0x931db0  [/home/ojoven/.nvm/versions/node/v24.21.0/bin/node]\n 2: 0x75968e node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/home/ojoven/.nvm/versions/node/v24.21.0/bin/node]\n 3: 0xc70d60  [/home/ojoven/.nvm/versions/node/v24.21.0/bin/node]\n 4: 0xc70e4f  [/home/ojoven/.nvm/versions/node/v24.21.0/bin/node]\n 5: 0xf14725  [/home/ojoven/.nvm/versions/node/v24.21.0/bin/node]\n 6: 0xf2608c  [/home/ojoven/.nvm/versions/node/v24.21.0/bin/node]\n 7: 0xefb543  [/home/ojoven/.nvm/versions/node/v24.21.0/bin/node]\n 8: 0xed1050  [/home/ojoven/.nvm/versions/node/v24.21.0/bin/node]\n 9: 0x13c8948  [/home/ojoven/.nvm/versions/node/v24.21.0/bin/node]\n10: 0x1add9b6  [/home/ojoven/.nvm/versions/node/v24.21.0/bin/node]\n",
+        "targetExecution": false,
+        "scope": "Authored lower-heap preparation failure; default budget and process-tree RSS qualification remain separate."
+      }
+    ],
+    "existingCompiledWorkerContracts": [
+      {
+        "schema": 1,
+        "passed": true,
+        "caseCount": 12,
+        "completedCases": [
+          "Default compiler worker applies fixed heap flags, ignores caller startup options, reaps its process and returns only original-input facts",
+          "Embedded recipe transfer preserves original UTF-16 regions, module/setup shadowing, facades and exact virtual bytes without materialized text ownership",
+          "Complete default cold/warm/revision graphs preserve cross-project original handlers, calls, HTTP effect aliases and independent compilation scopes",
+          "A changed indexed original produces explicit source failure and cannot become a reusable healthy TypeScript cache entry",
+          "An unsupported framework registry rejects the worker without parent graph, HTTP or cache mutation and has no unbounded fallback",
+          "Invalid and oversized request budgets reject before launching any worker",
+          "Wrong protocols, duplicate messages, late failed exits and oversized responses all reject after actual worker retirement",
+          "A successful response remains unpublished until the worker actually exits",
+          "Actual compiler heap exhaustion rejects a whole component while the parent graph, HTTP and failed component cache stay untouched",
+          "Fatal owner exit retires its reported parser child before the failure reaches the caller",
+          "Owning process exit and default shutdown signals terminate outstanding compiler work",
+          "Malformed graph patches with dangling output or duplicate identities cannot partially mutate the parent graph"
+        ],
+        "sourceRoot": "file:///var/www/html/codiluce/dist/src/",
+        "typescriptSourceLoader": false,
+        "platform": "linux",
+        "node": "v22.12.0",
+        "limits": {
+          "oldSpaceMiB": 1024,
+          "semiSpaceMiB": 16,
+          "maxMessageBytes": 67108864,
+          "maxStderrBytes": 65536
+        },
+        "observations": [
+          {
+            "kind": "default-worker",
+            "pid": 1690382,
+            "heapLimitBytes": 1124073472,
+            "heapUsedBytes": 79300520,
+            "maxRssKiB": 183468,
+            "actualExit": 0,
+            "flags": [
+              "--max-old-space-size=1024",
+              "--max-semi-space-size=16"
+            ],
+            "originalInputs": [
+              "main.ts"
+            ]
+          },
+          {
+            "kind": "whole-parity",
+            "comparisons": 3,
+            "entities": 33,
+            "relations": 43,
+            "diagnostics": 7,
+            "sourceFiles": 12,
+            "normalization": [
+              "run.id",
+              "run.analyzedAt"
+            ]
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "wrong-protocol",
+            "pid": 1691549,
+            "actualExit": null,
+            "signal": "SIGKILL"
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "duplicate-response",
+            "pid": 1691568,
+            "actualExit": null,
+            "signal": "SIGKILL"
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "result-then-nonzero",
+            "pid": 1691587,
+            "actualExit": 23,
+            "signal": null
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "unexpected-exit",
+            "pid": 1691632,
+            "actualExit": 17,
+            "signal": null
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "oversized-response",
+            "pid": 1691671,
+            "actualExit": null,
+            "signal": "SIGKILL"
+          },
+          {
+            "kind": "authored-lower-heap-compiler-control",
+            "oldSpaceMiB": 96,
+            "pid": 1691737,
+            "actualExit": null,
+            "signal": "SIGABRT",
+            "originalBytes": 800066,
+            "originalSha256": "b45016946d29a7ee3f6ef335d76057d47c703976c84a4606a452b7401433493f",
+            "parentGraphUnchanged": true,
+            "failedComponentStored": false
+          },
+          {
+            "kind": "fatal-owner-child-retirement",
+            "parent": 1691843,
+            "child": 1691860,
+            "actualExit": 19,
+            "addressSpacesRetired": true,
+            "platform": "linux"
+          },
+          {
+            "kind": "owner-shutdown",
+            "mode": "exit",
+            "ownerPid": 1691872,
+            "workerPid": 1691956,
+            "code": 31,
+            "signal": null,
+            "addressSpacesRetired": true
+          },
+          {
+            "kind": "owner-shutdown",
+            "mode": "SIGTERM",
+            "ownerPid": 1691970,
+            "workerPid": 1692008,
+            "code": null,
+            "signal": "SIGTERM",
+            "addressSpacesRetired": true
+          }
+        ],
+        "targetExecution": false,
+        "scope": "Default indexer TypeScript old-space and bounded IPC isolation, graph/cache/revision parity, parser retirement, owner shutdown and rejection atomicity. Lower-heap authored control is separate from default-budget and total RSS qualification."
+      },
+      {
+        "schema": 1,
+        "passed": true,
+        "caseCount": 12,
+        "completedCases": [
+          "Default compiler worker applies fixed heap flags, ignores caller startup options, reaps its process and returns only original-input facts",
+          "Embedded recipe transfer preserves original UTF-16 regions, module/setup shadowing, facades and exact virtual bytes without materialized text ownership",
+          "Complete default cold/warm/revision graphs preserve cross-project original handlers, calls, HTTP effect aliases and independent compilation scopes",
+          "A changed indexed original produces explicit source failure and cannot become a reusable healthy TypeScript cache entry",
+          "An unsupported framework registry rejects the worker without parent graph, HTTP or cache mutation and has no unbounded fallback",
+          "Invalid and oversized request budgets reject before launching any worker",
+          "Wrong protocols, duplicate messages, late failed exits and oversized responses all reject after actual worker retirement",
+          "A successful response remains unpublished until the worker actually exits",
+          "Actual compiler heap exhaustion rejects a whole component while the parent graph, HTTP and failed component cache stay untouched",
+          "Fatal owner exit retires its reported parser child before the failure reaches the caller",
+          "Owning process exit and default shutdown signals terminate outstanding compiler work",
+          "Malformed graph patches with dangling output or duplicate identities cannot partially mutate the parent graph"
+        ],
+        "sourceRoot": "file:///var/www/html/codiluce/dist/src/",
+        "typescriptSourceLoader": false,
+        "platform": "linux",
+        "node": "v24.21.0",
+        "limits": {
+          "oldSpaceMiB": 1024,
+          "semiSpaceMiB": 16,
+          "maxMessageBytes": 67108864,
+          "maxStderrBytes": 65536
+        },
+        "observations": [
+          {
+            "kind": "default-worker",
+            "pid": 1690362,
+            "heapLimitBytes": 1124073472,
+            "heapUsedBytes": 57210088,
+            "maxRssKiB": 186432,
+            "actualExit": 0,
+            "flags": [
+              "--max-old-space-size=1024",
+              "--max-semi-space-size=16"
+            ],
+            "originalInputs": [
+              "main.ts"
+            ]
+          },
+          {
+            "kind": "whole-parity",
+            "comparisons": 3,
+            "entities": 33,
+            "relations": 43,
+            "diagnostics": 7,
+            "sourceFiles": 12,
+            "normalization": [
+              "run.id",
+              "run.analyzedAt"
+            ]
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "wrong-protocol",
+            "pid": 1691166,
+            "actualExit": null,
+            "signal": "SIGKILL"
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "duplicate-response",
+            "pid": 1691185,
+            "actualExit": null,
+            "signal": "SIGKILL"
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "result-then-nonzero",
+            "pid": 1691204,
+            "actualExit": 23,
+            "signal": null
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "unexpected-exit",
+            "pid": 1691220,
+            "actualExit": 17,
+            "signal": null
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "oversized-response",
+            "pid": 1691252,
+            "actualExit": null,
+            "signal": "SIGKILL"
+          },
+          {
+            "kind": "authored-lower-heap-compiler-control",
+            "oldSpaceMiB": 96,
+            "pid": 1691314,
+            "actualExit": null,
+            "signal": "SIGABRT",
+            "originalBytes": 800066,
+            "originalSha256": "b45016946d29a7ee3f6ef335d76057d47c703976c84a4606a452b7401433493f",
+            "parentGraphUnchanged": true,
+            "failedComponentStored": false
+          },
+          {
+            "kind": "fatal-owner-child-retirement",
+            "parent": 1691424,
+            "child": 1691437,
+            "actualExit": 19,
+            "addressSpacesRetired": true,
+            "platform": "linux"
+          },
+          {
+            "kind": "owner-shutdown",
+            "mode": "exit",
+            "ownerPid": 1691449,
+            "workerPid": 1691502,
+            "code": 31,
+            "signal": null,
+            "addressSpacesRetired": true
+          },
+          {
+            "kind": "owner-shutdown",
+            "mode": "SIGTERM",
+            "ownerPid": 1691505,
+            "workerPid": 1691617,
+            "code": null,
+            "signal": "SIGTERM",
+            "addressSpacesRetired": true
+          }
+        ],
+        "targetExecution": false,
+        "scope": "Default indexer TypeScript old-space and bounded IPC isolation, graph/cache/revision parity, parser retirement, owner shutdown and rejection atomicity. Lower-heap authored control is separate from default-budget and total RSS qualification."
+      }
+    ],
+    "priorCompiledExpectedParentFailures": {
+      "schema": 1,
+      "passed": true,
+      "mode": "baseline",
+      "profiles": [
+        {
+          "profile": "components",
+          "expectedParentCompilerFailure": true,
+          "error": "Error: Compiler construction used in parent: createSourceFile"
+        },
+        {
+          "profile": "config-only",
+          "expectedParentCompilerFailure": true,
+          "error": "Error: Compiler construction used in parent: readConfigFile"
+        },
+        {
+          "profile": "invalid-config-only",
+          "expectedParentCompilerFailure": true,
+          "error": "Error: Compiler construction used in parent: readConfigFile"
+        },
+        {
+          "profile": "typescript",
+          "passed": true,
+          "entities": 3,
+          "relations": 3,
+          "diagnostics": 3,
+          "completeGraphComparisons": 2,
+          "parentCompilerForbidden": true
+        }
+      ],
+      "typescriptSourceLoader": false,
+      "parentCompilerConstructionForbidden": true,
+      "parentOptionalParserForbidden": true,
+      "targetExecution": false,
+      "node": "v22.12.0",
+      "sourceRoot": "file:///var/www/html/codiluce/.codiluce/validation-typescript-heap-release/engine/dist/src/"
+    },
+    "mixed": {
+      "schema": 1,
+      "passed": true,
+      "completedAt": "2026-10-14T07:22:06.808Z",
+      "priorRuntime": "ea9f45d5a868a740e7ca57edb0a15796ca7c444a18958345f8092ac1eadfe44c",
+      "priorRuntimeInputsVerified": 1937,
+      "currentRuntimeIdentity": "file:///var/www/html/codiluce/.codiluce/validation-typescript-preparation-source/candidate-runtime-identity.json",
+      "currentRuntimeSha256": "70d1c03e198896af53fee766ec703013bff3db1a28da865771ede75ddb8483a1",
+      "sourceLoader": false,
+      "candidateCompilationRoot": "/var/www/html/codiluce/dist/src",
+      "acceptedPressureOriginalScriptsVerified": 32,
+      "expandedPressureInputUtf16Bytes": 38522496,
+      "compilerGenerations": [
+        {
+          "limits": {
+            "maxJobs": 64,
+            "maxSourceBytes": 16777216
+          },
+          "jobs": 0,
+          "sourceBytes": 0,
+          "peakJobs": 64,
+          "peakSourceBytes": 8012,
+          "generations": 2
+        },
+        {
+          "limits": {
+            "maxJobs": 64,
+            "maxSourceBytes": 16777216
+          },
+          "jobs": 0,
+          "sourceBytes": 0,
+          "peakJobs": 0,
+          "peakSourceBytes": 0,
+          "generations": 0
+        },
+        {
+          "limits": {
+            "maxJobs": 64,
+            "maxSourceBytes": 16777216
+          },
+          "jobs": 0,
+          "sourceBytes": 0,
+          "peakJobs": 64,
+          "peakSourceBytes": 8012,
+          "generations": 2
+        }
+      ],
+      "allowedOversizedNativeOriginalBytes": 17825835,
+      "literalTemplateOriginalsVerified": 66,
+      "scope": "Complete ordinary compiled cold/warm/revision graphs under the exact actual production dependency profile: frozen qualified prior runtime versus current ordinary compiled source; 20 grammar profiles, Cargo TOML and OpenAPI YAML, 66 literal-script templates, default 64-job compiler rotation, an allowed 17 MiB Python original and 32 accepted Astro scripts over the virtual text memo allowance. All semantic/provenance/metadata fields retained; only run UUID/time replaced.",
+      "retainedFixture": "/tmp/codiluce-owned-script-generation-parity-gSNnud",
+      "originalFiles": 171,
+      "normalizations": [],
+      "volatileFields": [
+        "run.id",
+        "run.analyzedAt"
+      ],
+      "cacheWarmReplayObserved": true,
+      "graphs": [
+        {
+          "mode": "cold",
+          "bytes": 1304793,
+          "sha256": "04923fa598d34cc0cede1ac96dfe6b75c3712ac9e238985e964a5da71e4b3a62",
+          "entities": 803,
+          "relations": 1057,
+          "diagnostics": 26
+        },
+        {
+          "mode": "warm",
+          "bytes": 1304793,
+          "sha256": "04923fa598d34cc0cede1ac96dfe6b75c3712ac9e238985e964a5da71e4b3a62",
+          "entities": 803,
+          "relations": 1057,
+          "diagnostics": 26
+        },
+        {
+          "mode": "revision",
+          "bytes": 1304214,
+          "sha256": "415e623987349c6a27f138a0050fb14ef1ffd931e29a4e716967755a9a996f0c",
+          "entities": 803,
+          "relations": 1057,
+          "diagnostics": 23
+        }
+      ],
+      "targetExecution": false
+    },
+    "snapshot": {
+      "files": 3276,
+      "bytes": 298164001
+    },
+    "foreignPreserved": {
+      "site/README.md": "7cd2595213f3238d1e1d3a4fdae13126974c51472f4b47179e791658de341151",
+      "site/app/globals.css": "697bdb5cf3db2b8b36c4c6f25a499d0a210f5250454aa259b675e2c411ff3431",
+      "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+      "site/app/layout.tsx": "dccb3c78fbba55c11019930203bddd8e955152d66025d45a79281ebac85a7057",
+      "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+      "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+      "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0",
+      "site/public/social-preview.png": "a93ae9deaed990e050d95ec2b260bac2e5508b7ecd0ff9c1c3614a95085ae29c",
+      "site/scripts/social-preview.mjs": "1d9861e06e06de27a76e50dceb3ac90c45e9d6426360b1ede247454bdd9478ff"
+    },
+    "retainedFailures": {
+      "typecheck": "Two in-process test adapters lacked explicit AnalysisContext annotations. Initial source and exit-2 log retained; annotations compile to identical executable code, verified by esbuild."
+    },
+    "testAnnotationEmitParity": {
+      "passed": true,
+      "rows": [
+        {
+          "file": "embedded-source-residency.test.ts",
+          "erasedJavaScriptSha256": "24f6714cc191e31c96b0a91320abc0c892aaa9a1777141db85c812cad0aa5b7f",
+          "identical": true
+        },
+        {
+          "file": "framework-parser-lifetimes.test.ts",
+          "erasedJavaScriptSha256": "56b2e4efa0d9f4dd24ff85e53ce46d7698b50abe9172d67d4234648fdc9afbb8",
+          "identical": true
+        }
+      ],
+      "targetExecution": false
+    },
+    "defaultWorkerBudgetsUnchanged": true,
+    "healthyGraphProducerVersionsUnchanged": true,
+    "sourcePhaseOnly": true,
+    "normalInstalledChangedRuntimeQualified": false,
+    "productionHistoryForChangedRuntimeQualified": false,
+    "relativeProductionTimeRssQualified": false,
+    "nativeWindowsMacOSQualified": false,
+    "totalRssCapQualified": false,
+    "wholeGoalComplete": false,
+    "targetExecution": false
+  },
+  "archive": {
+    "schema": 1,
+    "passed": true,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source-evidence/typescript-compiler-preparation-source-evidence.tar.gz",
+    "archiveBytes": 52906846,
+    "archiveSha256": "41f64b4881da383a815f89002adb05abc7d3e932f41a8bf52633ad4f88135092",
+    "regularFiles": 3356,
+    "uncompressedBytes": 307704571,
+    "manifest": "/var/www/html/codiluce/.codiluce/validation-typescript-preparation-source-evidence/artifact-manifest.json",
+    "manifestSha256": "1e2a8ae7bd6c31a770eee4295b271103c95fb21692367e890153961175cf5471",
+    "allMembersReopened": true,
+    "controllerPid": 1699593,
+    "seconds": 7.320085048675537,
+    "completedAt": 1791963147.7971778,
+    "targetExecution": false
+  },
+  "wholeGoalComplete": false
+}

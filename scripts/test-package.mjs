@@ -470,6 +470,17 @@ const compiler=new TemplateScriptParser();try{compiler.prewarm();const retiremen
   console.log('Checking installed compiler heap isolation, complete graph replay, failure atomicity and owned process retirement…');
   const typescriptWorkerConformance=await run(process.execPath,['--experimental-sqlite',typescriptWorkerCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'typescript-worker-validation.json')],consumer);
   console.log(typescriptWorkerConformance.stdout.trim());
+  const preparationParent=path.join(consumer,'check-typescript-preparation-parent.mjs'),preparationLoader=path.join(consumer,'typescript-preparation-parent-loader.mjs'),preparationAtomic=path.join(consumer,'check-typescript-preparation-atomic.mjs');
+  await cp(path.join(root,'tests/fixtures/typescript-preparation-parent-probe.mjs'),preparationParent);
+  await cp(path.join(root,'tests/fixtures/typescript-preparation-parent-loader.mjs'),preparationLoader);
+  await cp(path.join(root,'tests/fixtures/typescript-preparation-atomic.mjs'),preparationAtomic);
+  console.log('Checking installed embedded/config preparation with parent compiler construction forbidden and atomic heap failure…');
+  const preparationParentReceipt=path.join(consumer,'typescript-preparation-parent-validation.json'),preparationAtomicReceipt=path.join(consumer,'typescript-preparation-atomic-validation.json');
+  await run(process.execPath,['--experimental-sqlite','--loader',pathToFileURL(preparationLoader).href,preparationParent,pathToFileURL(path.join(installed,'dist/src/')).href,preparationParentReceipt],consumer);
+  await run(process.execPath,['--experimental-sqlite',preparationAtomic,pathToFileURL(path.join(installed,'dist/src/')).href,preparationAtomicReceipt],consumer);
+  const parentPreparation=JSON.parse(await readFile(preparationParentReceipt,'utf8')),atomicPreparation=JSON.parse(await readFile(preparationAtomicReceipt,'utf8'));
+  assert.ok(parentPreparation.passed&&atomicPreparation.passed&&!parentPreparation.typescriptSourceLoader&&!atomicPreparation.typescriptSourceLoader);
+  await writeFile(path.join(consumer,'typescript-preparation-validation.json'),JSON.stringify({schema:1,passed:true,caseCount:5,parentPreparation,atomicPreparation,targetExecution:false,typescriptSourceLoader:false},null,2)+'\n');
   const bin = path.join(installed, 'bin/codiluce.js');
   for (const grammar of grammarManifest.grammars) assert.equal(createHash('sha256').update(await readFile(path.join(installed, 'dist/grammars', grammar.file))).digest('hex'), grammar.sha256);
   const dependencies = JSON.parse((await npm(['ls', '--omit=dev', '--all', '--json'], consumer)).stdout).dependencies[manifest.name].dependencies;
