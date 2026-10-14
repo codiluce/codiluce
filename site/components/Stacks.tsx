@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { VERSION } from '../lib/site';
-import { DETECTED, FRAMEWORKS, LANGUAGES, MORE_FRAMEWORKS, PUBLISHED, logoOf, type Stack } from '../lib/stacks';
+import { DETECTED, FRAMEWORKS, LANGUAGES, MORE_FRAMEWORKS, PUBLISHED, UNRELEASED, logoOf, type Stack } from '../lib/stacks';
 
 /** A dot that says whether the npm release analyzes a stack (filled) or only main does (ring). */
 export function StackStatus({ published }: { published: boolean }) {
@@ -58,7 +58,7 @@ export function Stacks() {
       <div className="stack-foot">
         <p className="stack-legend">
           <span><StackStatus published /> In the npm release, v{VERSION}</span>
-          <span><StackStatus published={false} /> On main: run it from source, ships in the next release</span>
+          {UNRELEASED.size > 0 && <span><StackStatus published={false} /> On main: run it from source, ships in the next release</span>}
         </p>
         <Link href="/docs/stacks/" className="text-link">What each stack supports →</Link>
       </div>

@@ -16,13 +16,6 @@ export interface Stack {
   note?: string;
 }
 
-/**
- * Stacks the published npm package (lib/site.ts VERSION) analyzes. The others are on main: they run from a
- * source checkout today and ship in the next release. Once a version with every pack is published, list
- * them all here.
- */
-export const PUBLISHED = new Set(['typescript', 'javascript', 'php', 'react', 'nextjs', 'laravel', 'inertia']);
-
 export const LANGUAGES: Stack[] = [
   { id: 'typescript', name: 'TypeScript' },
   { id: 'javascript', name: 'JavaScript' },
@@ -79,3 +72,10 @@ export const DETECTED = [
 ];
 
 export const logoOf = (stack: Stack) => `/stacks/${stack.logo ?? stack.id}.svg`;
+
+/**
+ * Stacks the published npm package (lib/site.ts VERSION) analyzes. Since 0.2.0 that is every stack listed here;
+ * a stack added on main before its release goes in `UNRELEASED` until the next version ships.
+ */
+export const UNRELEASED = new Set<string>([]);
+export const PUBLISHED = new Set([...LANGUAGES, ...FRAMEWORKS, ...MORE_FRAMEWORKS].map(stack => stack.id).filter(id => !UNRELEASED.has(id)));

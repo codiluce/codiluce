@@ -6,8 +6,24 @@ import { entryOf, predecessor, timelineIndex, type AtlasStore } from '../lib/sto
 import { useAtlas, useStore } from './context';
 import { CommitImpactChip } from './Analysis';
 import { familyCss, personHue, themeById } from '../lib/themes';
+import type { ExplanationSummary } from '@engine/explanations/model';
+import { ExplainActions, ExplanationChips } from './ExplainActions';
 
 const SCRUB_MS = 140;
+/** Explanations about commits and pull requests, by the commit they are about (a PR by its merge commit on the timeline). */
+function useCommitExplanations(entries: TimelineEntry[] | undefined): Map<string, ExplanationSummary[]> {
+  const list = useAtlas(state => state.explain.list.data);
+  return useMemo(() => {
+    const result = new Map<string, ExplanationSummary[]>();
+    if (!list || !entries) return result;
+    const byPr = new Map(entries.flatMap(entry => entry.pullRequest ? [[String(entry.pullRequest.number), entry.sha] as const] : []));
+    for (const item of list.items) {
+      const sha = item.subject.kind === 'commit' ? item.subject.target : item.subject.kind === 'pr' && item.subject.target ? byPr.get(item.subject.target) : undefined;
+      if (sha) result.set(sha, [...result.get(sha) ?? [], item]);
+    }
+    return result;
+  }, [list, entries]);
+}
 const SPEEDS = [0.5, 1, 2, 4];
 /** The snapshot on screen: the time-lapse frame while scrubbing or playing, otherwise the viewed one. */
 function shownSnapshot(store: AtlasStore, timeline: { preview?: number; target?: string }): string | undefined {
@@ -39,6 +55,7 @@ export function Timeline() {
   const timeline = useAtlas(state => state.timeline);
   const meta = useAtlas(state => state.meta);
   const data = timeline.data;
+  const explained = useCommitExplanations(data?.entries);
   const close = () => void store.closeTimeline();
   if (timeline.status === 'loading' && !data) return <section className="timeline" aria-label="History"><div className="timeline-empty"><div className="spinner small" />Loading history…</div></section>;
   if (timeline.status === 'error' && !data) return <section className="timeline" aria-label="History"><div className="timeline-empty"><span className="note error">{timeline.error}</span><button className="icon-button small" onClick={close} aria-label="Close history">✕</button></div></section>;
@@ -76,6 +93,10 @@ export function Timeline() {
               {target.pullRequest && <PullRequestChip entry={target} />}
               {target.merge && !target.pullRequest && <span className="chip" title="Merge commit. Git does not record whether it came from a pull request.">merge</span>}
               {target.snapshot?.stale && <span className="chip warning" title="This snapshot was analyzed with another configuration or analyzer version. Re-run history index to refresh it.">stale analysis</span>}
+              <ExplanationChips items={explained.get(target.sha) ?? []} label="Explanations of this commit" />
+              <ExplainActions compact suggestions={[target.pullRequest
+                ? { target: { kind: 'pr', ref: String(target.pullRequest.number), label: target.pullRequest.title ?? target.subject }, text: `Explain PR #${target.pullRequest.number}`, title: 'What the pull request changes, in reading order, why, and what it affects' }
+                : { target: { kind: 'commit', ref: target.sha, label: target.note?.title ?? target.subject }, text: 'Explain this commit', title: 'What changed, why, and what it affects' }]} />
             </>
           ) : (
             <>
@@ -204,6 +225,7 @@ function Track({ data }: { data: TimelineResponse }) {
     return { points, max };
   }, [data]);
   const marks = useMemo(() => axisMarks(data.entries), [data]);
+  const explained = useCommitExplanations(data.entries);
   // The person lit on the map: their commits are marked on the track.
   const person = useAtlas(state => state.people.focus && state.people.person?.key === state.people.focus ? state.people.person.data : undefined);
   const dark = themeById(useAtlas(state => state.themeId)).dark;
@@ -256,6 +278,7 @@ function Track({ data }: { data: TimelineResponse }) {
               <line x1={cx} x2={cx} y1={entry.snapshot ? base - 12 : base - 5} y2={base} />
               {entry.merge && <rect className="merge" x={cx - 2.5} y={base - 19} width={5} height={5} transform={`rotate(45 ${cx} ${base - 16.5})`} />}
               {entry.pullRequest?.source === 'github' && <circle className="pr" cx={cx} cy={base - 16} r={2.5} />}
+              {explained.has(entry.sha) && <path className="explained" d={`M ${cx} ${base - 27} l 3 3 l -3 3 l -3 -3 z`}><title>{`Explained: ${explained.get(entry.sha)!.map(item => item.title).join(', ')}`}</title></path>}
             </g>
           );
         })}
@@ -295,7 +318,7 @@ function Track({ data }: { data: TimelineResponse }) {
           <p className="note">This commit has no snapshot yet.</p>
           {data.indexing.enabled
             ? <button className="button small primary" onClick={() => { void store.indexCommit(pickedEntry.sha); setPicked(undefined); }}>Index this commit</button>
-            : <p className="note mono">npm run codiluce -- history index --commits {shortSha(pickedEntry.sha)} --repo … --state-dir …</p>}
+            : <p className="note mono">npx codiluce history index --commits {shortSha(pickedEntry.sha)}</p>}
           <button className="button small" onClick={() => setPicked(undefined)}>Close</button>
         </div>
       )}

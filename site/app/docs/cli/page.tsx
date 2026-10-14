@@ -1,18 +1,21 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { CodeBlock } from '../../../components/CodeBlock';
 import { DocsPager } from '../../../components/DocsNav';
 
-export const metadata: Metadata = { title: 'CLI & API', description: 'Every Codiluce command, its options, exit codes and the read-only HTTP API.' };
+export const metadata: Metadata = { title: 'CLI & API', description: 'Every Codiluce command, its options, exit codes, the MCP server for agents and the HTTP API.' };
 
 const COMMANDS = [
-  { cmd: 'start [PATH]', what: 'Detect, index, serve and open the map. PATH defaults to the current directory.' },
+  { cmd: 'start [PATH]', what: 'Detect, index, serve and open the map. PATH defaults to the current directory. The first start asks the setup questions.' },
+  { cmd: 'setup [PATH]', what: 'Ask the setup questions again: history depth, API keys, describing the code, connecting agents.' },
   { cmd: 'init', what: 'Detect applications and write the configuration. Keeps an existing configuration and graph.' },
   { cmd: 'index', what: 'Analyze the repository into the graph. Reuses the cache for applications that did not change.' },
-  { cmd: 'serve', what: 'Serve the read-only API and the map for an existing index.' },
+  { cmd: 'serve', what: 'Serve the API and the map for an existing index.' },
   { cmd: 'inspect …', what: 'Query the graph from the terminal, as JSON: summary, entities, entity, relations, relation, diagnostics.' },
   { cmd: 'history index', what: 'Index past commits of a branch into the history store.' },
   { cmd: 'history status', what: 'Show what history is indexed.' },
   { cmd: 'annotate', what: 'Describe the code with a language model, after a cost estimate.' },
+  { cmd: 'mcp', what: 'Serve the index to your agent over MCP (stdio), and save what it explains for the map.' },
 ];
 
 const OPTIONS = [
@@ -21,8 +24,10 @@ const OPTIONS = [
   { opt: '--port N', what: 'Server port. start tries 4300 and then the next free one; 0 asks the system.' },
   { opt: '--no-open', what: 'start: print the URL instead of opening a browser.' },
   { opt: '--no-cache', what: 'Analyze everything again instead of replaying unchanged applications.' },
-  { opt: '--history-indexing', what: 'Let the map index commits on demand. The only route that writes.' },
-  { opt: '--read-only', what: 'serve: refuse on-demand history indexing, even with --history-indexing.' },
+  { opt: '--yes', what: 'start: ask no questions (saved settings, or defaults that spend nothing).' },
+  { opt: '--history DEPTH', what: 'start: index this much history in the background this time: a number of commits, a Git date ("6 months ago"), all or none.' },
+  { opt: '--history-indexing', what: 'Let the map index commits on demand.' },
+  { opt: '--read-only', what: 'serve: refuse every write: on-demand history indexing (even with --history-indexing), and asking, renaming or deleting explanations.' },
   { opt: '--ui PATH | none', what: 'serve another build of the map, or only the API.' },
 ];
 
@@ -88,10 +93,22 @@ export default function CliDocs() {
         all of its evidence. The graph is plain SQLite, so you can also query <code>.codiluce/codiluce.db</code> directly.
       </p>
 
+      <h2 id="mcp" className="anchor">MCP server for agents</h2>
+      <p>
+        <code>codiluce mcp</code> serves the index to an agent over the Model Context Protocol, on stdio. Add it once, from the
+        repository:
+      </p>
+      <CodeBlock prompt code={['claude mcp add codiluce -- npx -y codiluce mcp', 'codex mcp add codiluce -- npx -y codiluce mcp'].join('\n')} />
+      <p>
+        Its tools search the index and read entities, relationships, flows, impact, history and source, and save explanations
+        for the map. See <Link href="/docs/explanations/">Explanations</Link>.
+      </p>
+
       <h2 id="api" className="anchor">HTTP API</h2>
       <p>
-        <code>serve</code> binds to loopback and is read-only: it opens the graph read-only and only accepts GET, except for
-        on-demand history indexing when you allow it. Open <code>/api</code> for the full directory. The main routes:
+        <code>serve</code> binds to loopback and opens the graph read-only. It only accepts GET, except for on-demand history
+        indexing when you allow it and for explanations (asking the chat, renaming, deleting), which <code>--read-only</code>
+        refuses. Open <code>/api</code> for the full directory. The main routes:
       </p>
       <CodeBlock
         code={[
@@ -106,6 +123,8 @@ export default function CliDocs() {
           'GET /api/history                         the timeline',
           'GET /api/history/changes?snapshot=&compareTo=',
           'GET /api/source?entity=ID                a bounded window of source',
+          'GET /api/explanations                    explanations, with what went stale',
+          'GET /api/explanations/entity/:id         the explanations that link an entity',
         ].join('\n')}
       />
       <p>

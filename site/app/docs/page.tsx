@@ -30,6 +30,23 @@ export default function GettingStarted() {
         This detects the applications in the repository, indexes them, starts a local server and opens the map. It tries
         port 4300 first and takes another one if that port is busy. Press <kbd>Ctrl</kbd> + <kbd>C</kbd> to stop.
       </p>
+
+      <h3 id="setup" className="anchor">The first start asks a few questions</h3>
+      <p>
+        After the first analysis, and before the map opens, Codiluce asks in the terminal. Enter keeps each default, and
+        {' '}<code>codiluce setup</code> asks again whenever you like:
+      </p>
+      <ul>
+        <li><strong>History:</strong> the last 50 commits, the last 6 months, everything or nothing, each with the time it takes. It is indexed in the background while you use the map.</li>
+        <li><strong>Language models (optional):</strong> an Anthropic or OpenAI key, typed hidden and checked with the provider, for asking questions in the map and describing the code. Keys stay in <code>~/.config/codiluce/credentials</code>, readable only by you.</li>
+        <li><strong>Describing the code:</strong> with an OpenAI key, the cost is estimated first and capped; nothing is spent without a yes.</li>
+        <li><strong>Your agent:</strong> Claude Code, Codex and Cursor are found and connected to Codiluce&apos;s MCP server, so they can <Link href="/docs/explanations/">explain the code</Link> on the map.</li>
+      </ul>
+      <p>
+        Without a terminal (CI, scripts) or with <code>--yes</code>, nothing is asked and nothing is spent.
+        {' '}<code>--history 200</code> (or <code>all</code>, <code>none</code>, <code>&quot;6 months ago&quot;</code>) sets the
+        depth for one start.
+      </p>
       <p>
         The npm package includes the compiled CLI and a prebuilt map, so the first run needs no build step. Omit
         the <code>.</code> to scan the current directory, or give the path of another local directory. Remote URLs are not
@@ -50,8 +67,10 @@ export default function GettingStarted() {
           'npx codiluce start . --state-dir ~/.codiluce/my-repo --no-open',
           '# choose a port (0 asks the system for a free one)',
           'npx codiluce start . --port 4400',
-          '# let the map index past commits when you ask for them',
-          'npx codiluce start . --history-indexing',
+          '# no questions; index the last 200 commits this time',
+          'npx codiluce start . --yes --history 200',
+          '# ask the setup questions again',
+          'npx codiluce setup',
         ].join('\n')}
       />
       <p>
@@ -62,8 +81,9 @@ export default function GettingStarted() {
       <h2 id="state" className="anchor">Where the analysis goes</h2>
       <p>
         Codiluce keeps its state in <code>&lt;repository&gt;/.codiluce/</code>: the configuration, the graph
-        (<code>codiluce.db</code>), an analysis cache and the layout of the map. <strong>Add <code>.codiluce/</code> to the
-        repository’s <code>.gitignore</code></strong>: the state holds file paths, symbols and routes of your code.
+        (<code>codiluce.db</code>), the history, an analysis cache, explanations and the layout of the map. It holds file
+        paths, symbols and routes of your code, so it hides itself from Git with its own <code>.gitignore</code>; your
+        repository&apos;s <code>.gitignore</code> is never changed.
       </p>
       <p>
         The next start reuses the configuration and the cache. An application whose files did not change is replayed from
@@ -80,7 +100,7 @@ export default function GettingStarted() {
         <li><strong>Zoom</strong> with the wheel, a pinch or <kbd>+</kbd> / <kbd>−</kbd>; drag or use the arrow keys to pan; <kbd>F</kbd> fits the view.</li>
         <li><strong>Search</strong> with <kbd>/</kbd>: files, symbols, routes, endpoints, controllers, tables. Choose a result and the map flies there.</li>
         <li><strong>Select</strong> anything to see its relationships drawn on the map and its facts in the inspector. <strong>Why?</strong> on a relationship opens its evidence.</li>
-        <li>Open <strong>Flows</strong>, <strong>History</strong> or <strong>Coverage</strong> from the header.</li>
+        <li>Open <strong>Flows</strong>, <strong>History</strong>, <strong>Explain</strong> or <strong>Coverage</strong> from the header.</li>
       </ul>
       <p>The next page explains the map in detail.</p>
 

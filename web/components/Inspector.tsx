@@ -1,5 +1,5 @@
 'use client';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import type { Entity, Evidence } from '@engine/core/graph';
 import { fileAnalysis } from '@engine/analysis/facts';
 import type { AggregateGroup, ChangeFacet, DiagnosticItem, NodeChange, NodeSummary, RelationItem } from '@engine/projection/dto';
@@ -13,6 +13,8 @@ import { ArchetypeChip } from './ArchetypeMark';
 import { AnalysisSupport } from './AnalysisSupport';
 import { CallSitesSection, CommitImpactChip, EffectsSection } from './Analysis';
 import { CommitList, KindTag, PersonDot, WindowPicker, windowText } from './PeoplePanel';
+import { ExplainActions, ExplanationChips, type Suggestion } from './ExplainActions';
+import { hrefForNode } from '@engine/explanations/links';
 
 export function Inspector({ onClose }: { onClose: () => void }) {
   const selection = useAtlas(state => state.selection);
@@ -53,6 +55,7 @@ function Overview() {
         <dt>Unresolved</dt><dd>{['error', 'warning', 'info'].filter(key => severities[key]).map(key => `${severities[key]} ${key}`).join(' · ') || 'none'}</dd>
       </dl>
       {meta.snapshot.kind === 'commit' && <CommitCard sha={meta.snapshot.commitSha} />}
+      <OverviewExplain />
       <RepositoryOverview />
       <RepositoryPeople />
       <p className="note">Search with <kbd>/</kbd>, or zoom into the map: applications open into directories, then files, then symbols. Selecting an entity shows its indexed relationships and the evidence behind each one.</p>
@@ -104,6 +107,7 @@ function Selection() {
         <AnalysisButtons node={node} />
       </div>
       {node.hidden && <p className="note">Hidden from map. Its code and connections remain available.</p>}
+      <SelectionExplain node={node} />
       <SummaryCard node={node} />
       <FamilyChip node={node} />
       <ArchetypeChip node={node} />
@@ -115,6 +119,7 @@ function Selection() {
       {node.change?.status === 'removed' && <p className="note">This entity existed in the baseline and was removed. It is shown as a ghost where it used to be; its facts below are from the baseline.</p>}
       {selection.change && <ChangeSection node={node} />}
       <FlowsSection node={node} />
+      <ExplainedIn />
       {node.kind === 'entity' && (node.type === 'directory' || node.type === 'application' || node.type === 'repository') && <DataBreakdown key={node.id} node={node} />}
       <PeopleSection key={`people:${node.id}`} />
       <Facts node={node} entity={entity} />
@@ -133,6 +138,73 @@ function Selection() {
           <pre className="mono" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0, maxHeight: 320, overflow: 'auto' }}>{JSON.stringify(entity.metadata, null, 2).slice(0, 20000)}</pre>
         </details>
       )}
+    </div>
+  );
+}
+/** The questions to ask about a selection: what it is (a flow, for entry points), what would break, why no flow reaches it. */
+export function suggestionsFor(node: NodeSummary, parent?: { type: string; name: string }, coverage?: string): Suggestion[] {
+  const href = hrefForNode(node, parent);
+  if (!href || node.kind !== 'entity') return [];
+  const label = node.type === 'directory' || node.type === 'application' ? `${node.name}/` : node.name;
+  const word = typeLabel(node.type, node.role).toLowerCase();
+  if (['route', 'api_endpoint', 'command', 'scheduled_task'].includes(node.type)) return [
+    { target: { kind: 'flow', ref: href, label: node.name }, text: 'Explain this flow', title: `Explain the flow that starts at ${node.name}, step by step` },
+    { target: { kind: 'impact', ref: href, label: node.name, type: node.type }, text: 'What would break if I changed it?', title: 'What depends on it, and which risks are real' },
+  ];
+  return [
+    { target: { kind: node.type === 'repository' ? 'overview' : 'entity', ref: href, label, type: node.type }, text: node.type === 'repository' ? 'Explain the codebase' : `Explain this ${word}`, title: `Explain ${label}: its role, what uses it, the flows it is part of` },
+    ...(isContainer(node) || node.type === 'database_table' ? [] : [{ target: { kind: 'impact' as const, ref: href, label, type: node.type }, text: 'What would break if I changed it?', title: 'What depends on it, and which risks are real' }]),
+    ...(coverage === 'unreached' ? [{ target: { kind: 'coverage' as const, ref: href, label, type: node.type }, text: 'Why does no flow reach it?', title: 'Dead code, used dynamically, or reached in a way the index cannot see?' }] : []),
+  ];
+}
+/** Ask about the selection, or add it to the question being written; explanations about it, first. */
+function SelectionExplain({ node }: { node: NodeSummary }) {
+  const store = useStore();
+  const selection = useAtlas(state => state.selection);
+  const parent = selection?.locate?.canonicalAncestors.at(-1);
+  const suggestions = suggestionsFor(node, parent, selection?.coverage?.data?.category);
+  const about = selection?.explained?.data?.items.filter(item => item.via === 'subject') ?? [];
+  if (!suggestions.length && !about.length) return null;
+  const href = hrefForNode(node, parent);
+  return (
+    <div className="selection-explain">
+      <ExplanationChips items={about} label="Explanations about it" />
+      <div className="explain-row">
+        <ExplainActions suggestions={suggestions} />
+        {href && <button className="button small" onClick={() => store.addContext({ href, label: node.type === 'directory' ? `${node.name}/` : node.name }, { reveal: true })} title="Attach it to the question in the Explanations column">+ Add to question</button>}
+      </div>
+    </div>
+  );
+}
+/** The explanations that link the selection (or code inside it, or the folder holding it): the reverse index. */
+function ExplainedIn() {
+  const store = useStore();
+  const explained = useAtlas(state => state.selection?.explained);
+  const items = explained?.data?.items.filter(item => item.via !== 'subject') ?? [];
+  if (!items.length) return null;
+  const via = { subject: 'about this', link: 'links this', area: 'links a folder holding it' } as const;
+  return (
+    <section className="section explained-in">
+      <h4>Explained in <span className="chip"><span className="count">{items.length}</span></span></h4>
+      <ul className="list">
+        {items.slice(0, 12).map(item => (
+          <li key={item.id}>
+            <button className="link-button" onClick={() => void store.openExplanations({ id: item.id })} title={item.excerpt}>✦ {item.title}</button>
+            <span className="absent"> · {via[item.via]} · {relativeTime(item.updatedAt)}</span>
+            {(item.stale.changed > 0 || item.stale.missing > 0) && <span className="chip warning" title="Code it links changed since it was written">changed since</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+function OverviewExplain() {
+  const list = useAtlas(state => state.explain.list.data);
+  const explanations = useMemo(() => list?.items.filter(item => item.subject.kind === 'overview') ?? [], [list]);
+  return (
+    <div className="selection-explain">
+      <ExplanationChips items={explanations} label="Explanations of the codebase" />
+      <ExplainActions suggestions={[{ target: { kind: 'overview' }, text: 'Explain the codebase', title: 'What it does, how its parts fit, its main flows, and where to start reading' }]} />
     </div>
   );
 }

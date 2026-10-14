@@ -1,4 +1,4 @@
-import { mkdir, realpath, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { stringify } from 'yaml';
@@ -9,13 +9,21 @@ import { createInspectionServer } from './api/server.js';
 import { HISTORY_DATABASE, indexHistory, type HistoryProgress } from './history/indexer.js';
 import { HistoryStore } from './history/store.js';
 import { annotateCommand } from './ai/command.js';
-import { launchLocal, toolDirectory } from './launcher.js';
+import { toolDirectory } from './launcher.js';
+import { runMcpServer } from './explanations/mcp.js';
+import { keyFiles } from './setup/settings.js';
+import { startCommand } from './setup/start.js';
+import { setupCommand } from './setup/command.js';
+import { CancelledError } from './setup/terminal.js';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
 const HELP = `Codiluce — Bring your code to light
 Code and architecture visualizer
 
-npx codiluce start [PATH] [--repo PATH] [--state-dir PATH] [--port N]
+npx codiluce start [PATH] [--repo PATH] [--state-dir PATH] [--port N] [--yes] [--history DEPTH]
                             [--no-open] [--build-ui] [--ui PATH] [--no-cache] [--history-indexing]
+npx codiluce setup [PATH] [--repo PATH] [--state-dir PATH]
 npx codiluce init [--repo PATH] [--state-dir PATH]
 npx codiluce index [--repo PATH] [--state-dir PATH] [--no-cache]
 npx codiluce inspect [summary|entities|entity|relations|relation|diagnostics] [options]
@@ -25,6 +33,7 @@ npx codiluce history index [--repo PATH] [--state-dir PATH] [--ref BRANCH] [--li
 npx codiluce history status [--repo PATH] [--state-dir PATH]
 npx codiluce annotate [--repo PATH] [--state-dir PATH] [--tasks files,flows,commits,folders,domains,overview,chapters]
                        [--estimate] [--pilot] [--max-cost 10] [--concurrency 6] [--force]
+npx codiluce mcp [--repo PATH] [--state-dir PATH]
 
 Options: --search TEXT --type TYPE --id ID --path PATH --parent ID
          --direction incoming|outgoing|both --severity info|warning|error
@@ -36,15 +45,22 @@ The installed executable also supports --version. Node.js >=22.12 is required.
 State defaults to <repo>/.codiluce. inspect outputs JSON; serve is a local
 API that also serves the bundled visualizer (web/out)
 unless --ui none. It only reads the graph (it keeps the map's layout slots in
-<state>/layout.json); --read-only refuses on-demand history indexing even with
---history-indexing. index persists diagnostics and exits 2
+<state>/layout.json, and the explanations asked in the map in
+<state>/explanations/); --read-only refuses every write: on-demand history
+indexing even with --history-indexing, and asking, renaming or deleting
+explanations. Questions in the map use ANTHROPIC_API_KEY or OPENAI_API_KEY
+(environment, or a .env in this workspace or the state directory). index persists diagnostics and exits 2
 for analyzer errors. index reuses the analysis of applications whose files
 did not change from <state>/cache (bounded; safe to delete; --no-cache
 re-analyzes everything).
 
 start prepares the visualizer (prebuilt in npm; built if missing in a checkout), analyzes the local
 repository and opens the map in your browser. PATH defaults to the current
-directory. Existing configuration and analysis caches are reused. Omit --port
+directory. On a repository's first start in a terminal it asks a few questions
+(how much history to index, API keys, describing the code, connecting your
+agent); codiluce setup asks them again. --yes asks nothing; --history DEPTH
+(a number of commits, a Git date such as "6 months ago", all or none) overrides
+the history depth for one start. History is indexed in the background. Existing configuration and analysis caches are reused. Omit --port
 to choose an available port starting at 4300; --port 0 asks the OS to choose.
 --no-open leaves browser opening to you; --build-ui rebuilds the UI in a source checkout.
 
@@ -62,11 +78,17 @@ ASD-STE100 Simplified Technical English. It always estimates the cost first,
 measured by one pilot request per small task, and does not run when the
 estimate exceeds --max-cost (US dollars, default 10). --estimate stops after
 the estimate (add --pilot to measure). Unchanged inputs are never sent again.
+
+mcp serves the index to an agent over the Model Context Protocol (stdio):
+search, entities, flows, impact, history and source, and saving explanations
+the map shows in its Explanations column (<state>/explanations/*.md). Add it
+to Claude Code with: claude mcp add codiluce -- npx -y codiluce mcp
+(run from the repository, or pass --repo). It writes only explanations.
 `;
 async function main(): Promise<void> {
   const string = { type: 'string' } as const;
   const boolean = { type: 'boolean' } as const;
-  const options = { tasks: string, 'max-cost': string, concurrency: string, estimate: boolean, pilot: boolean, force: boolean, repo: string, 'state-dir': string, port: string, ui: string, search: string, type: string, id: string, path: string, parent: string, direction: string, severity: string, code: string, limit: string, offset: string, ref: string, since: string, commits: string, jobs: string, 'pr-metadata': string, 'all-parents': boolean, 'history-indexing': boolean, 'no-cache': boolean, 'no-open': boolean, 'build-ui': boolean, 'read-only': boolean, help: boolean };
+  const options = { yes: boolean, history: string, 'json-progress': boolean, tasks: string, 'max-cost': string, concurrency: string, estimate: boolean, pilot: boolean, force: boolean, repo: string, 'state-dir': string, port: string, ui: string, search: string, type: string, id: string, path: string, parent: string, direction: string, severity: string, code: string, limit: string, offset: string, ref: string, since: string, commits: string, jobs: string, 'pr-metadata': string, 'all-parents': boolean, 'history-indexing': boolean, 'no-cache': boolean, 'no-open': boolean, 'build-ui': boolean, 'read-only': boolean, help: boolean };
   const { positionals, values } = parseArgs({ allowPositionals: true, options });
   const command = positionals[0];
   if (values.help || !command) { console.log(HELP); return; }
@@ -77,19 +99,31 @@ async function main(): Promise<void> {
     const stop = () => controller.abort();
     process.on('SIGINT', stop); process.on('SIGTERM', stop);
     try {
-      const session = await launchLocal({
+      const session = await startCommand({
         repo: positionals[1] ?? values.repo, stateDirectory: values['state-dir'],
         port: values.port !== undefined ? Number(values.port) : undefined,
         uiDirectory: values.ui, buildUi: !!values['build-ui'], open: !values['no-open'],
-        noCache: !!values['no-cache'], historyIndexing: !!values['history-indexing'] && !values['read-only'],
+        noCache: !!values['no-cache'], historyIndexing: !!values['history-indexing'] && !values['read-only'], readOnly: !!values['read-only'],
+        yes: !!values.yes, history: values.history as string | undefined,
         signal: controller.signal,
       });
       await session.closed;
-    } catch (error) { if (!controller.signal.aborted) throw error; }
+    } catch (error) {
+      if (error instanceof CancelledError) { console.error('\nSetup cancelled: nothing was saved. Run codiluce start again, or codiluce start --yes to skip the questions.'); process.exitCode = 130; return; }
+      if (!controller.signal.aborted) throw error;
+    }
     finally { process.off('SIGINT', stop); process.off('SIGTERM', stop); }
     return;
   }
-  const root = await realpath(String(values.repo ?? process.cwd()));
+  if (command === 'setup') {
+    if (positionals.length > 2) throw new Error('setup accepts one repository directory');
+    try { process.exitCode = await setupCommand({ repo: positionals[1] ?? values.repo, stateDirectory: values['state-dir'] }); }
+    catch (error) { if (error instanceof CancelledError) { console.error('\nSetup cancelled: nothing more was saved.'); process.exitCode = 130; return; } throw error; }
+    return;
+  }
+  // An MCP client starts the server in the folder it works in (Codex), or fills in its workspace (Cursor's ${workspaceFolder}; left as is by clients that do not): the repository is that folder's Git top level.
+  const repoValue = command === 'mcp' && typeof values.repo === 'string' && values.repo.includes('${') ? undefined : values.repo;
+  const root = await realpath(String(repoValue ?? (command === 'mcp' ? await gitTop(process.cwd()) : process.cwd())));
   const stateDirectory = path.resolve(String(values['state-dir'] ?? path.join(root, '.codiluce')));
   const database = path.join(stateDirectory, 'codiluce.db');
   if (command === 'init') {
@@ -117,10 +151,17 @@ async function main(): Promise<void> {
   if (command === 'annotate') {
     if (!await exists(database)) throw new Error('No graph cache; run init and index first');
     process.exitCode = await annotateCommand({
-      root, stateDirectory, keyDirectories: [await toolDirectory(), stateDirectory],
+      root, stateDirectory, keyFiles: keyFiles(stateDirectory, await toolDirectory()),
       tasks: values.tasks as string | undefined, estimateOnly: !!values.estimate, pilot: !!values.pilot,
       maxCost: values['max-cost'] !== undefined ? Number(values['max-cost']) : 10, concurrency: values.concurrency !== undefined ? Number(values.concurrency) : 6, force: !!values.force,
     });
+    return;
+  }
+  if (command === 'mcp') {
+    const manifest = JSON.parse(await readFile(path.join(await toolDirectory(), 'package.json'), 'utf8')) as { version?: string };
+    let maxFileBytes: number | undefined;
+    try { maxFileBytes = (await loadConfig(root, stateDirectory)).maxFileBytes; } catch { /* default limit */ }
+    await runMcpServer({ root, stateDirectory, version: manifest.version ?? '0.0.0', maxFileBytes });
     return;
   }
   if (command === 'history') {
@@ -140,9 +181,12 @@ async function main(): Promise<void> {
     const result = await indexHistory({
       root, stateDirectory, ref: values.ref as string | undefined, firstParent: !values['all-parents'], limit: positive('limit'), since: values.since as string | undefined,
       commits: values.commits ? String(values.commits).split(',').map(item => item.trim()).filter(Boolean) : undefined, jobs: positive('jobs'),
-      pullRequests: values['pr-metadata'] === 'github' ? 'github' : undefined, onProgress: reportHistory,
+      pullRequests: values['pr-metadata'] === 'github' ? 'github' : undefined,
+      // --json-progress: one JSON event per line on stdout, for `start`'s background indexing.
+      onProgress: values['json-progress'] ? event => console.log(JSON.stringify(progressEvent(event))) : reportHistory,
     });
-    console.log(JSON.stringify({ database: path.join(stateDirectory, HISTORY_DATABASE), ...result, seconds: Math.round((Date.now() - started) / 100) / 10 }, null, 2));
+    if (values['json-progress']) console.log(JSON.stringify({ type: 'result', ...result }));
+    else console.log(JSON.stringify({ database: path.join(stateDirectory, HISTORY_DATABASE), ...result, seconds: Math.round((Date.now() - started) / 100) / 10 }, null, 2));
     if (result.failed) process.exitCode = 2;
     return;
   }
@@ -157,7 +201,7 @@ async function main(): Promise<void> {
     const ui = values.ui === 'none' ? undefined : values.ui ? path.resolve(String(values.ui)) : path.join(await toolDirectory(), 'web/out');
     const uiDirectory = ui && await exists(path.join(ui, 'index.html')) ? ui : undefined;
     if (values.ui && values.ui !== 'none' && !uiDirectory) { store.close(); throw new Error(`No built UI at ${ui}; run npm run build:web`); }
-    const server = createInspectionServer(store, { root, stateDirectory, uiDirectory, maxFileBytes, historyIndexing: !!values['history-indexing'] && !values['read-only'] });
+    const server = createInspectionServer(store, { root, stateDirectory, uiDirectory, maxFileBytes, historyIndexing: !!values['history-indexing'] && !values['read-only'], readOnly: !!values['read-only'], keyFiles: keyFiles(stateDirectory, await toolDirectory()) });
     server.once('error', error => { store.close(); console.error(error.message); process.exitCode = 1; });
     server.listen(port, '127.0.0.1', () => {
       console.log(`Graph inspection API: http://127.0.0.1:${port}/api`);
@@ -186,6 +230,14 @@ async function main(): Promise<void> {
     if (result === undefined) throw new Error('No matching entity/relation');
     console.log(JSON.stringify(result, null, 2));
   } finally { store.close(); }
+}
+/** A history event without its large parts (snapshot statistics stay; the commit is its SHA and subject). */
+function progressEvent(event: HistoryProgress): Record<string, unknown> {
+  if (event.type === 'indexed' || event.type === 'failed') return { type: event.type, done: event.done, total: event.total, sha: event.commit.sha, subject: event.commit.subject, ...(event.type === 'failed' ? { error: event.error } : {}) };
+  return { ...event };
+}
+async function gitTop(directory: string): Promise<string> {
+  try { return (await promisify(execFile)('git', ['rev-parse', '--show-toplevel'], { cwd: directory })).stdout.trim() || directory; } catch { return directory; }
 }
 function reportHistory(event: HistoryProgress): void {
   const commit = (sha: string, date: string, subject: string) => `${sha.slice(0, 8)} ${date.slice(0, 10)} ${subject.length > 56 ? `${subject.slice(0, 55)}…` : subject}`;

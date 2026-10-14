@@ -3,8 +3,7 @@
 // cached input, output and the reasoning inside it) comes back with every
 // result, so runs can be priced exactly. Rate limits and server errors are
 // retried with backoff; an incomplete answer (token limit) is an error.
-import { existsSync } from 'node:fs';
-import path from 'node:path';
+import { findKey } from '../setup/settings.js';
 
 export type Effort = 'low' | 'medium' | 'high';
 export interface ModelUse { model: string; effort: Effort }
@@ -61,14 +60,5 @@ export class OpenAiResponses implements StructuredModel {
 function backoff(attempt: number): number { return Math.min(30_000, 1000 * 2 ** attempt) * (0.75 + Math.random() * 0.5); }
 function wait(ms: number): Promise<void> { return new Promise(resolve => setTimeout(resolve, ms)); }
 
-/** The OpenAI key: the environment, else a `.env` file of the tool workspace or the state directory. */
-export function openAiKey(directories: string[]): string | undefined {
-  if (process.env.OPENAI_API_KEY) return process.env.OPENAI_API_KEY;
-  for (const directory of directories) {
-    const file = path.join(directory, '.env');
-    if (!existsSync(file)) continue;
-    try { process.loadEnvFile(file); } catch { continue; }
-    if (process.env.OPENAI_API_KEY) return process.env.OPENAI_API_KEY;
-  }
-  return undefined;
-}
+/** The OpenAI key: the environment, else the first key file that sets it (src/setup/settings.ts `keyFiles`). */
+export function openAiKey(files: string[]): string | undefined { return findKey('OPENAI_API_KEY', files)?.value; }
