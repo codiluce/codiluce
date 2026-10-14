@@ -334,7 +334,7 @@ export class MapController implements MapNavigator {
       ...this.analysisOverlays(state, time),
       motion: this.motion,
       // A time-lapse frame compares with the previous commit; overlays loaded for the settled view wait until it is back.
-      ...(this.store.previewScene ? { edges: [], emphasis: undefined, within: undefined, lit: undefined, flow: undefined, callouts: undefined, pins: undefined, coverage: undefined, families: undefined, feature: undefined, people: undefined, person: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
+      ...(this.store.previewScene ? { edges: [], emphasis: undefined, within: undefined, lit: undefined, flow: undefined, callouts: undefined, pins: undefined, coverage: undefined, families: undefined, feature: undefined, people: undefined, person: undefined, explanation: undefined, pointer: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
     };
   }
   /**
@@ -384,6 +384,20 @@ export class MapController implements MapNavigator {
     if (shown) Object.assign(result, this.mapFlowOverlay(shown));
     // Too small for the labels of a flow's stops.
     if (this.small) { result.callouts = undefined; result.pins = undefined; }
+    // Explanations: the link under the pointer lights what it names; otherwise the open explanation lights everything it links.
+    const explain = state.explain;
+    if (explain.hover) {
+      const link = explain.hover;
+      if (this.explainHoverCache?.link !== link) this.explainHoverCache = { link, overlay: linkOverlay([link], link.label ?? link.name ?? link.href) };
+      result.explanation = this.explainHoverCache.overlay;
+      // While reading, the link is what matters: the selection's connections step aside.
+      result.edges = [];
+      if (link.id) result.pointer = { id: link.id, ancestors: link.ancestors ?? [] };
+    } else if (explain.open && explain.lens && explain.detail?.data && explain.detail.data.footprint.ids.length) {
+      const detail = explain.detail.data;
+      if (this.explainCache?.detail !== detail) this.explainCache = { detail, overlay: { of: new Map(detail.footprint.ids.map(id => [id, EXPLAINED])), areas: new Map(Object.entries(detail.footprint.areas).map(([id, count]) => [id, { [EXPLAINED]: count }])), names: new Map([[EXPLAINED, 'Linked']]), hues: new Map([[EXPLAINED, EXPLAINED_HUE]]), focus: EXPLAINED } };
+      result.explanation = this.explainCache.overlay;
+    }
     if (tool !== 'map' && tool !== 'files') return result;
     const coverage = state.coverage.show && state.coverage.data && state.coverage.viewStamp === stamp ? state.coverage.data : undefined;
     if (coverage) {
@@ -419,6 +433,8 @@ export class MapController implements MapNavigator {
     }
     return result;
   }
+  private explainCache?: { detail: object; overlay: FamilyOverlay };
+  private explainHoverCache?: { link: object; overlay: FamilyOverlay };
   private peopleCache?: { data: object; overlay: FamilyOverlay };
   private personCache?: { data: object; overlay: FamilyOverlay };
   private coverageCache?: { data: object; overlay: CoverageOverlay };
@@ -649,3 +665,16 @@ export class MapController implements MapNavigator {
   }
 }
 function union(a: Bounds, b: Bounds): Bounds { return { minX: Math.min(a.minX, b.minX), minY: Math.min(a.minY, b.minY), maxX: Math.max(a.maxX, b.maxX), maxY: Math.max(a.maxY, b.maxY) }; }
+/** The key explanation overlays light under, and the hue of their badges. */
+const EXPLAINED = 'explained';
+const EXPLAINED_HUE = 196;
+/** What explanation links light: their entities (a folder's files, a flow's stops) and the areas holding them. */
+function linkOverlay(links: { id?: string; members?: string[]; ancestors?: string[] }[], name: string): FamilyOverlay {
+  const of = new Map<string, string>(), areas = new Map<string, Record<string, number>>();
+  for (const link of links) {
+    for (const id of [...(link.id ? [link.id] : []), ...link.members ?? []]) of.set(id, EXPLAINED);
+    for (const id of link.ancestors ?? []) areas.set(id, { [EXPLAINED]: (areas.get(id)?.[EXPLAINED] ?? 0) + 1 });
+    if (link.id && link.members?.length) areas.set(link.id, { [EXPLAINED]: link.members.length });
+  }
+  return { of, areas, names: new Map([[EXPLAINED, name]]), hues: new Map([[EXPLAINED, EXPLAINED_HUE]]), focus: EXPLAINED };
+}

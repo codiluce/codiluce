@@ -68,6 +68,10 @@ export interface RenderState {
   people?: FamilyOverlay;
   /** One person in focus: the files they changed and the areas holding them stay lit. */
   person?: FamilyOverlay;
+  /** An explanation open (what it links), or the one link the pointer is on: lit, the rest recedes. Wins over a feature or person. */
+  explanation?: FamilyOverlay;
+  /** What a hovered explanation link names: outlined, or pointed at from the edge of the map when it is off screen. */
+  pointer?: { id: string; ancestors: string[] };
   frames?: FrameOverlay[];
   /** Archetype shapes and roof icons (default on). */
   shapes?: boolean;
@@ -115,7 +119,8 @@ export class MapRenderer {
     const familyOf = state.families ? this.familyResolver(scene, state.families) : undefined;
     const familyLit = state.families?.focus ? this.familyLit(scene, state.families, familyOf!) : undefined;
     const peopleOf = state.people ? this.familyResolver(scene, state.people) : undefined;
-    const focusLit = state.feature?.focus ? this.familyLit(scene, state.feature, this.familyResolver(scene, state.feature))
+    const focusLit = state.explanation?.focus ? this.familyLit(scene, state.explanation, this.familyResolver(scene, state.explanation))
+      : state.feature?.focus ? this.familyLit(scene, state.feature, this.familyResolver(scene, state.feature))
       : state.person?.focus ? this.familyLit(scene, state.person, this.familyResolver(scene, state.person)) : familyLit;
     const hot = this.flowHeat(state.flow);
     // Items come parents first: one inside a subtree kept whole is lit through its parent.
@@ -139,6 +144,7 @@ export class MapRenderer {
       else this.prism(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId, paletteOverride, state.shapes !== false);
       if (state.coverage && !item.open && !category && state.coverage.areas.has(item.node.id)) this.coverageBadge(ctx, viewport, camera, item, alpha, state.coverage.areas.get(item.node.id)!);
       if (state.families && !item.open && !family && state.families.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.families.areas.get(item.node.id)!, state.families);
+      else if (state.explanation && !state.coverage && !item.open && item.node.type !== 'file' && state.explanation.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.explanation.areas.get(item.node.id)!, state.explanation);
       else if (state.feature && !state.coverage && !item.open && state.feature.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.feature.areas.get(item.node.id)!, state.feature);
       else if (state.person && !state.coverage && !item.open && state.person.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.person.areas.get(item.node.id)!, state.person);
       else if (state.people && !item.open && !person && state.people.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.people.areas.get(item.node.id)!, state.people);
@@ -165,6 +171,31 @@ export class MapRenderer {
     if (state.pins?.length) this.pins(ctx, viewport, camera, set, state.pins);
     if (state.callouts?.length) this.callouts(ctx, viewport, camera, set, state.callouts);
     if (state.frames?.length) this.frames(ctx, viewport, camera, state.frames);
+    if (state.pointer) this.pointer(ctx, viewport, camera, scene, set, items, state.pointer);
+  }
+  /**
+   * What a hovered explanation link names: outlined where it is drawn (its
+   * nearest drawn area otherwise); off screen, an arrow at the edge of the map
+   * points to it, so the camera never has to move while reading.
+   */
+  private pointer(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, scene: Scene, set: VisibleSet, items: VisibleItem[], pointer: { id: string; ancestors: string[] }): void {
+    const theme = this.theme;
+    const drawn = items[set.index.get(pointer.id) ?? -1] ?? scene.representative(pointer.id, set) ?? [...pointer.ancestors].reverse().map(id => items[set.index.get(id) ?? -1]).find(Boolean);
+    if (drawn) this.outline(ctx, viewport, camera, drawn, theme.hover, 2.5, false, drawn.node.id === pointer.id ? undefined : [5, 4]);
+    const node = scene.nodes.get(pointer.id) ?? [...pointer.ancestors].reverse().map(id => scene.nodes.get(id)).find(Boolean);
+    if (!node) return;
+    const center = worldToScreen(camera, viewport, node.rect.x + node.rect.w / 2, node.rect.y + node.rect.h / 2, 0);
+    const margin = 18;
+    if (center.x >= margin && center.x <= viewport.width - margin && center.y >= margin && center.y <= viewport.height - margin) return;
+    // Where the line from the middle of the map to the target leaves the viewport.
+    const cx = viewport.width / 2, cy = viewport.height / 2, dx = center.x - cx, dy = center.y - cy;
+    const t = Math.min(dx ? (dx > 0 ? viewport.width - margin - cx : margin - cx) / dx : Infinity, dy ? (dy > 0 ? viewport.height - margin - cy : margin - cy) / dy : Infinity);
+    const x = cx + dx * t, y = cy + dy * t, angle = Math.atan2(dy, dx);
+    ctx.save();
+    ctx.translate(x, y); ctx.rotate(angle);
+    ctx.fillStyle = theme.hover; ctx.shadowColor = theme.hover; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(-8, -8); ctx.lineTo(-4, 0); ctx.lineTo(-8, 8); ctx.closePath(); ctx.fill();
+    ctx.restore();
   }
   /** The other views' frames, numbered at their corner; the active one on top and glowing, those of other pages dashed and unnumbered. */
   private frames(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, frames: FrameOverlay[]): void {

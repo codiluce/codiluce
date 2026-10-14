@@ -1,4 +1,4 @@
-import { mkdir, realpath, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { stringify } from 'yaml';
@@ -10,6 +10,7 @@ import { HISTORY_DATABASE, indexHistory, type HistoryProgress } from './history/
 import { HistoryStore } from './history/store.js';
 import { annotateCommand } from './ai/command.js';
 import { launchLocal, toolDirectory } from './launcher.js';
+import { runMcpServer } from './explanations/mcp.js';
 
 const HELP = `Codiluce — Bring your code to light
 Code and architecture visualizer
@@ -25,6 +26,7 @@ npx codiluce history index [--repo PATH] [--state-dir PATH] [--ref BRANCH] [--li
 npx codiluce history status [--repo PATH] [--state-dir PATH]
 npx codiluce annotate [--repo PATH] [--state-dir PATH] [--tasks files,flows,commits,folders,domains,overview,chapters]
                        [--estimate] [--pilot] [--max-cost 10] [--concurrency 6] [--force]
+npx codiluce mcp [--repo PATH] [--state-dir PATH]
 
 Options: --search TEXT --type TYPE --id ID --path PATH --parent ID
          --direction incoming|outgoing|both --severity info|warning|error
@@ -36,8 +38,11 @@ The installed executable also supports --version. Node.js >=22.12 is required.
 State defaults to <repo>/.codiluce. inspect outputs JSON; serve is a local
 API that also serves the bundled visualizer (web/out)
 unless --ui none. It only reads the graph (it keeps the map's layout slots in
-<state>/layout.json); --read-only refuses on-demand history indexing even with
---history-indexing. index persists diagnostics and exits 2
+<state>/layout.json, and the explanations asked in the map in
+<state>/explanations/); --read-only refuses every write: on-demand history
+indexing even with --history-indexing, and asking, renaming or deleting
+explanations. Questions in the map use ANTHROPIC_API_KEY or OPENAI_API_KEY
+(environment, or a .env in this workspace or the state directory). index persists diagnostics and exits 2
 for analyzer errors. index reuses the analysis of applications whose files
 did not change from <state>/cache (bounded; safe to delete; --no-cache
 re-analyzes everything).
@@ -62,6 +67,12 @@ ASD-STE100 Simplified Technical English. It always estimates the cost first,
 measured by one pilot request per small task, and does not run when the
 estimate exceeds --max-cost (US dollars, default 10). --estimate stops after
 the estimate (add --pilot to measure). Unchanged inputs are never sent again.
+
+mcp serves the index to an agent over the Model Context Protocol (stdio):
+search, entities, flows, impact, history and source, and saving explanations
+the map shows in its Explanations column (<state>/explanations/*.md). Add it
+to Claude Code with: claude mcp add codiluce -- npx -y codiluce mcp
+(run from the repository, or pass --repo). It writes only explanations.
 `;
 async function main(): Promise<void> {
   const string = { type: 'string' } as const;
@@ -123,6 +134,13 @@ async function main(): Promise<void> {
     });
     return;
   }
+  if (command === 'mcp') {
+    const manifest = JSON.parse(await readFile(path.join(await toolDirectory(), 'package.json'), 'utf8')) as { version?: string };
+    let maxFileBytes: number | undefined;
+    try { maxFileBytes = (await loadConfig(root, stateDirectory)).maxFileBytes; } catch { /* default limit */ }
+    await runMcpServer({ root, stateDirectory, version: manifest.version ?? '0.0.0', maxFileBytes });
+    return;
+  }
   if (command === 'history') {
     const action = positionals[1] ?? 'status';
     if (action === 'status') {
@@ -157,7 +175,7 @@ async function main(): Promise<void> {
     const ui = values.ui === 'none' ? undefined : values.ui ? path.resolve(String(values.ui)) : path.join(await toolDirectory(), 'web/out');
     const uiDirectory = ui && await exists(path.join(ui, 'index.html')) ? ui : undefined;
     if (values.ui && values.ui !== 'none' && !uiDirectory) { store.close(); throw new Error(`No built UI at ${ui}; run npm run build:web`); }
-    const server = createInspectionServer(store, { root, stateDirectory, uiDirectory, maxFileBytes, historyIndexing: !!values['history-indexing'] && !values['read-only'] });
+    const server = createInspectionServer(store, { root, stateDirectory, uiDirectory, maxFileBytes, historyIndexing: !!values['history-indexing'] && !values['read-only'], readOnly: !!values['read-only'], keyDirectories: [await toolDirectory(), stateDirectory] });
     server.once('error', error => { store.close(); console.error(error.message); process.exitCode = 1; });
     server.listen(port, '127.0.0.1', () => {
       console.log(`Graph inspection API: http://127.0.0.1:${port}/api`);

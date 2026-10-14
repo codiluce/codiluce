@@ -155,7 +155,7 @@ export async function launchLocal(options: LaunchOptions = {}): Promise<LocalSes
   log('[3/3] Starting the local server…');
   const store = new GraphStore(database, true);
   let server: Server;
-  try { server = createInspectionServer(store, { root, stateDirectory, uiDirectory, maxFileBytes: config.maxFileBytes, historyIndexing: options.historyIndexing }); }
+  try { server = createInspectionServer(store, { root, stateDirectory, uiDirectory, maxFileBytes: config.maxFileBytes, historyIndexing: options.historyIndexing, keyDirectories: [await toolDirectory(), stateDirectory] }); }
   catch (error) { store.close(); throw error; }
   let closing = false;
   const closed = new Promise<void>(resolve => server.once('close', () => { store.close(); resolve(); }));

@@ -74,6 +74,25 @@ interface View {
   families?: FamilyAssignment;
   /** Authorship by window (lazily). */
   authorship?: Map<string, AuthorshipComputation>;
+  /** What explanation links resolve against (lazily). */
+  links?: LinkContext;
+}
+/**
+ * What explanations (src/explanations) resolve their links against: a view's
+ * index, the entities of each path, source fingerprints and the flows with
+ * what each touches.
+ */
+export interface LinkContext {
+  runId: string; commitSha?: string; dirty?: boolean;
+  index: ProjectionIndex;
+  /** Files, folders and applications by repository-relative path (`''`: the repository). */
+  byPath: Map<string, string>;
+  /** What an entity's source was when indexed: the content hash, a declaration's body hash, or its shape. */
+  fingerprint(id: string): string | undefined;
+  /** The file holding an entity (itself for files). */
+  fileOf(id: string): string | undefined;
+  flows: { summary: FlowSummary; members: Set<string> }[];
+  features(): FeaturesResult;
 }
 const HTTP_FINDINGS = new Set(['unresolved-http-call', 'unresolved-http-url', 'unmatched-http-call', 'ambiguous-http-match', 'constrained-http-match', 'unverified-relative-api-boundary']);
 const IMPACT_TYPE_ORDER: Record<string, number> = { route: 0, api_endpoint: 1, component: 2, controller: 3, model: 4, class: 4, function: 5, method: 6, database_table: 7, file: 8 };
@@ -471,6 +490,30 @@ export class ProjectionService {
     const notes = annotations.map<{ intent: string; title: string; summary: string; areas: string[] }>('commit');
     const chapters = annotations.get<{ chapters: TimelineResponse['chapters'] }>('chapters', 'repository')?.value.chapters;
     return { ...timeline, entries: timeline.entries.map(entry => { const note = notes.get(entry.sha)?.value; return note ? { ...entry, note } : entry; }), ...(chapters?.length ? { chapters } : {}) };
+  }
+
+  /** What explanation links resolve against in a view (cached with the view). */
+  linkContext(view?: ViewKey): LinkContext {
+    const current = this.load(view);
+    if (current.links) return current.links;
+    const index = current.index;
+    const byPath = new Map<string, string>([['', index.rootId]]);
+    for (const node of index.nodes.values()) {
+      if (node.kind !== 'entity' || !node.path || node.change?.status === 'removed') continue;
+      if (node.type === 'file' || ((node.type === 'directory' || node.type === 'application') && !byPath.has(node.path))) byPath.set(node.path, node.id);
+    }
+    const prints = new Map<string, string>();
+    for (const row of current.targetData.entities as { id: string; content?: string; body?: string; shape?: string; type: string }[]) {
+      const value = SYMBOL_TYPES.has(row.type) ? row.body ?? row.content : row.content ?? row.shape;
+      if (value) prints.set(row.id, value);
+    }
+    const catalog = this.catalog(current);
+    const run = this.store.currentRun();
+    current.links = {
+      runId: current.target.info.id, ...(current.target.info.commitSha ? { commitSha: current.target.info.commitSha } : {}), ...(current.target.info.dirty !== undefined ? { dirty: current.target.info.dirty } : run?.dirty !== undefined ? { dirty: run.dirty } : {}),
+      index, byPath, fingerprint: id => prints.get(id), fileOf: fileResolver(index), flows: catalog.flows, features: () => this.features(view),
+    };
+    return current.links;
   }
 
   // Queries -------------------------------------------------------------------------

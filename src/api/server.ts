@@ -4,8 +4,14 @@ import { ProjectionService } from '../projection/service.js';
 import { HistoryAccess, HistoryService } from '../history/service.js';
 import { handleProjectionRoute, isProjectionPath, viewParams } from './projection-routes.js';
 import { serveStatic } from './static.js';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
 import { AnnotationAccess } from '../ai/store.js';
+import { ExplanationService } from '../explanations/service.js';
+import { ChatService } from '../explanations/chat.js';
+import { codeTools } from '../explanations/tools.js';
+import { handleExplanationRoute, isExplanationPath } from '../explanations/routes.js';
+import { SERVE_FILE } from '../explanations/mcp.js';
 
 export interface InspectionServerOptions {
   /** Repository root; required for source viewing and live Git history. */
@@ -20,6 +26,10 @@ export interface InspectionServerOptions {
    * child process. Off by default: the server is otherwise read-only.
    */
   historyIndexing?: boolean;
+  /** Refuse every write: on-demand history indexing and explanations (asking, renaming, deleting). */
+  readOnly?: boolean;
+  /** Where the chat looks for a `.env` with ANTHROPIC_API_KEY or OPENAI_API_KEY (never the target repository). */
+  keyDirectories?: string[];
 }
 /** Header that a cross-origin page cannot send without a CORS preflight, which this server never grants. */
 export const INDEX_REQUEST_HEADER = 'x-codiluce-request';
@@ -29,6 +39,12 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
   const projection = new ProjectionService(store, { stateDirectory: options.stateDirectory, root: options.root, history: access.get, annotations: notes.get });
   const history = new HistoryService({ root: options.root, stateDirectory: options.stateDirectory, store, history: access, indexing: options.historyIndexing });
   const projectionContext = { store, projection, history, root: options.root, maxFileBytes: options.maxFileBytes ?? 1024 * 1024 };
+  // Explanations live in the state directory: text from language models whose links name code (src/explanations).
+  const explanations = options.stateDirectory ? (() => {
+    const service = new ExplanationService({ stateDirectory: options.stateDirectory!, root: options.root, projection, history, readOnly: options.readOnly });
+    const tools = codeTools({ service, projection, history, root: options.root, maxFileBytes: projectionContext.maxFileBytes });
+    return { service, chat: new ChatService({ service, tools, keyDirectories: options.keyDirectories ?? [options.stateDirectory!] }), stateDirectory: options.stateDirectory! };
+  })() : undefined;
   const server = createServer((request, response) => {
     response.setHeader('Content-Type', 'application/json; charset=utf-8');
     response.setHeader('Cache-Control', 'no-store');
@@ -37,6 +53,11 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
     let pathname: string;
     try { pathname = new URL(request.url ?? '/', 'http://127.0.0.1').pathname; } catch { response.writeHead(400).end(JSON.stringify({ error: 'Bad request' })); return; }
     if (request.method === 'POST' && pathname === '/api/history/index') { handleIndexRequest(request, response, history).catch(fail); return; }
+    if (isExplanationPath(pathname)) {
+      if (!explanations) { response.writeHead(503).end(JSON.stringify({ error: 'Explanations need a state directory' })); return; }
+      handleExplanationRoute(explanations, request, response, new URL(request.url ?? '/', 'http://127.0.0.1')).catch(fail);
+      return;
+    }
     if (request.method !== 'GET') { response.writeHead(405, { Allow: 'GET' }).end(JSON.stringify({ error: 'Read-only API' })); return; }
     if (options.uiDirectory && pathname !== '/api' && !pathname.startsWith('/api/')) { serveStatic(options.uiDirectory, pathname, response).catch(fail); return; }
     if (isProjectionPath(pathname)) {
@@ -75,7 +96,17 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
       response.end(JSON.stringify(result, null, 2));
     } catch (error) { response.writeHead(error instanceof Error && /^Unknown snapshot/.test(error.message) ? 404 : 400).end(JSON.stringify({ error: error instanceof Error ? error.message : String(error) })); }
   });
-  server.on('close', () => { access.close(); notes.close(); });
+  // Where the map listens, so `codiluce mcp` can link an explanation it saves (removed when the server closes).
+  const serveFile = options.stateDirectory ? path.join(options.stateDirectory, SERVE_FILE) : undefined;
+  server.on('listening', () => {
+    const address = server.address();
+    if (!serveFile || !address || typeof address === 'string' || !existsSync(options.stateDirectory!)) return;
+    try { writeFileSync(serveFile, `${JSON.stringify({ url: `http://127.0.0.1:${address.port}/`, pid: process.pid, startedAt: new Date().toISOString() })}\n`); } catch { /* optional */ }
+  });
+  server.on('close', () => {
+    access.close(); notes.close();
+    if (serveFile) { try { if ((JSON.parse(readFileSync(serveFile, 'utf8')) as { pid?: number }).pid === process.pid) rmSync(serveFile); } catch { /* optional */ } }
+  });
   return server;
 }
 async function handleIndexRequest(request: import('node:http').IncomingMessage, response: import('node:http').ServerResponse, history: HistoryService): Promise<void> {

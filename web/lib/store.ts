@@ -17,6 +17,11 @@ import { initialPlayback, playback, type PlaybackAction, type PlaybackState } fr
 import { Scene } from './scene';
 import { Evolution } from './evolution';
 import { DEFAULT_THEME } from './themes';
+import type { AskEvent, ExplanationDetail, ExplanationList, ExplanationsSetup, ResolvedLink } from '@engine/explanations/model';
+import type { EntityExplanations } from '@engine/explanations/service';
+// A relative import: the store also runs under Node (web/tests), where the @engine alias is for types only.
+import { chatQuestion, type PromptTarget } from '../../src/explanations/prompts';
+import type { ExplanationsApi } from './explanations';
 
 export const CHILD_PAGE = 500;
 /** Entry points whose flow is drawn in lanes (requests, commands, scheduled tasks); other code that runs is drawn in layers. */
@@ -41,6 +46,8 @@ export interface SelectionState {
   annotation?: { status: Status; data?: EntityAnnotation; error?: string };
   /** Who changed it (the Git history), in the people window; `stamp` is the view and window of `data`. */
   authorship?: { status: Status; stamp?: string; data?: EntityAuthorship; error?: string };
+  /** The explanations about it, linking it, or linking an area holding it. */
+  explained?: { status: Status; data?: EntityExplanations; error?: string };
 }
 export interface RelationsState { status: Status; forId?: string; items: RelationItem[]; typeCounts: { type: string; direction: string; count: number }[]; total: number; hasMore: boolean; type?: string; direction: 'both' | 'outgoing' | 'incoming'; error?: string }
 export interface AggregateState { status: Status; forId?: string; data?: AggregateResult; error?: string; drill?: { group: AggregateGroup; status: Status; page?: AggregateEdgesPage; items: AggregateEdgesPage['items']; error?: string } }
@@ -191,6 +198,27 @@ export interface TourState {
   /** While playing, the camera frames each branch as it starts. */
   follow: boolean;
 }
+/** A link in the composer: the code a question is about. */
+export interface ContextChip { href: string; label: string }
+/**
+ * Explanations (text from language models whose links name code) in their
+ * column: the list, the one open (its footprint lit on the map while `lens`),
+ * the link the pointer is on, and the chat composing or streaming an answer.
+ */
+export interface ExplainState {
+  open: boolean;
+  list: { status: Status; data?: ExplanationList; error?: string };
+  setup?: ExplanationsSetup;
+  detail?: { id: string; status: Status; data?: ExplanationDetail; error?: string };
+  lens: boolean;
+  hover?: ResolvedLink;
+  draft: { text: string; context: ContextChip[]; model?: string };
+  asking?: { status: 'streaming' | 'error'; explanationId?: string; refresh?: boolean; question: string; context: ContextChip[]; text: string; tools: string[]; model?: string; note?: string; error?: string };
+  /** Explanations an agent saved while the column was closed. */
+  unseen: string[];
+  /** Incremented to ask the shell to show the column. */
+  reveal?: number;
+}
 export interface ViewState { level: Level; focus: { id: string; name: string; type: string }[]; zoom: number; visible: { id: string; name: string; type: string }[]; truncated: boolean }
 export interface AtlasState {
   status: 'loading' | 'ready' | 'error'; error?: string;
@@ -230,6 +258,7 @@ export interface AtlasState {
   flowView?: FlowViewState;
   files?: FilesState;
   code?: CodeState;
+  explain: ExplainState;
 }
 export interface MapNavigator {
   flyTo(node: NodeSummary, options?: { mode?: 'focus' | 'enter' }): void;
@@ -241,6 +270,8 @@ export interface MapNavigator {
 export interface StoreOptions {
   storage?: Pick<Storage, 'getItem' | 'setItem'> & Partial<Pick<Storage, 'removeItem'>>;
   location?: { hash: string; replace(hash: string): void };
+  /** Explanations and the chat (absent: the column stays empty). */
+  explanations?: ExplanationsApi;
 }
 const EMPTY_RELATIONS: RelationsState = { status: 'idle', items: [], typeCounts: [], total: 0, hasMore: false, direction: 'both' };
 const EMPTY_CHANGES: TimelineState['changes'] = { status: 'idle', items: [] };
@@ -287,6 +318,7 @@ export class AtlasStore {
   private readonly aborts = new Map<string, AbortController>();
   private readonly childLoads = new Set<string>();
   private pollTimer?: ReturnType<typeof setInterval>;
+  private explainTimer?: ReturnType<typeof setInterval>;
   private timelineTimer?: ReturnType<typeof setTimeout>;
   /** Incremented on every view change; async work started under an older epoch is discarded. */
   private epoch = 0;
@@ -313,7 +345,7 @@ export class AtlasStore {
   private openingHash?: string;
   constructor(readonly api: AtlasApi, private readonly options: StoreOptions = {}) {
     this.openingHash = options.location?.hash;
-    let prefs: { themeId?: string; moreThemes?: boolean; shapes?: boolean; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey } = {};
+    let prefs: { themeId?: string; moreThemes?: boolean; shapes?: boolean; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey; explainLens?: boolean; chatModel?: string } = {};
     try { prefs = JSON.parse(options.storage?.getItem('codiluce:prefs') ?? '{}'); } catch { /* defaults */ }
     this.state = {
       status: 'loading', view: { level: 'Applications', focus: [], zoom: 1, visible: [], truncated: false },
@@ -322,6 +354,7 @@ export class AtlasStore {
       staleIndex: false, sceneRevision: 0,
       impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '', open: {} }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, families: { show: false, status: 'idle' }, features: { status: 'idle', open: {} },
       people: { window: prefs.peopleWindow ?? 'all', show: false, status: 'idle', open: {} }, center: 'map',
+      explain: { open: false, list: { status: 'idle' }, lens: prefs.explainLens ?? true, draft: { text: '', context: [], ...(prefs.chatModel ? { model: prefs.chatModel } : {}) }, unseen: [] },
       timeline: { open: false, status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true, split: prefs.split ?? true, regionLevel: prefs.regionLevel ?? 'auto', regions: { status: 'idle' } },
     };
   }
@@ -340,9 +373,9 @@ export class AtlasStore {
   }
   private bumpScene(): void { this.set(state => ({ sceneRevision: state.sceneRevision + 1 })); }
   private savePrefs(): void {
-    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, moreThemes: this.state.moreThemes, shapes: this.state.shapes, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window })); } catch { /* preferences are optional */ }
+    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, moreThemes: this.state.moreThemes, shapes: this.state.shapes, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window, explainLens: this.state.explain.lens, ...(this.state.explain.draft.model ? { chatModel: this.state.explain.draft.model } : {}) })); } catch { /* preferences are optional */ }
   }
-  dispose(): void { this.disposed = true; for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
+  dispose(): void { this.disposed = true; for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.explainTimer) clearInterval(this.explainTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
 
   async init(): Promise<void> {
     this.set({ status: 'loading', error: undefined });
@@ -365,12 +398,18 @@ export class AtlasStore {
       const impactDepth = Number(param('impact')), impactOf = param('impactOf') ?? (this.state.selection ? deepLink : undefined);
       if (impactOf && Number.isInteger(impactDepth) && impactDepth >= 1 && impactDepth <= 10) void this.showImpact(impactOf, impactDepth);
       if (param('code')) this.openCode();
+      const explain = param('explain');
+      if (explain) void this.openExplanations(explain === 'list' ? {} : { id: explain });
+      else void this.loadExplanations();
     } catch (error) {
       this.set({ status: 'error', error: error instanceof Error ? error.message : String(error) });
     }
   }
   /** Detect a newer analysis run without disturbing the current map. */
   startPolling(intervalMs = 30_000): void {
+    if (this.explainTimer) clearInterval(this.explainTimer);
+    // An agent may save an explanation at any time: the list is checked more often than the index.
+    if (this.options.explanations) this.explainTimer = setInterval(() => void this.pollExplanations(), 6_000);
     if (this.pollTimer) clearInterval(this.pollTimer);
     this.pollTimer = setInterval(async () => {
       try { const meta = await this.api.meta(); if (this.state.meta && meta.run.id !== this.state.meta.run.id) this.set({ staleIndex: true }); } catch { /* server may be restarting */ }
@@ -442,6 +481,7 @@ export class AtlasStore {
         this.loadSelectionCoverage(id, signal),
         this.loadSelectionAnnotation(id, signal),
         this.loadSelectionAuthorship(id, signal),
+        this.loadSelectionExplanations(id, signal),
       ]);
     } catch (error) {
       if (isAbort(error)) return;
@@ -465,6 +505,8 @@ export class AtlasStore {
     const impact = this.state.impact;
     if (impact.open && impact.forId) { parts.push(`impact=${impact.depth}`); if (impact.forId !== id) parts.push(`impactOf=${encodeURIComponent(impact.forId)}`); }
     if (this.state.code) parts.push('code=1');
+    const explain = this.state.explain;
+    if (explain.open) parts.push(`explain=${encodeURIComponent(explain.detail?.id ?? 'list')}`);
     if (timeline.open) {
       const at = snapshotToken(timeline.data, timeline.target) ?? 'live', vs = timeline.compare ? snapshotToken(timeline.data, timeline.baseline ?? timeline.data?.workingTree?.id) : undefined;
       parts.push(`at=${at}`);
@@ -1472,6 +1514,171 @@ export class AtlasStore {
     } catch (error) { if (!isAbort(error)) this.set(state => state.code?.outline?.fileId === fileId ? { code: { ...state.code, outline: { ...state.code.outline, status: 'error' } } } : {}); }
   }
   /** Expand or collapse groups of the Flows list (`open` undefined: toggle). */
+  // Explanations ------------------------------------------------------------------
+  private setExplain(patch: Partial<ExplainState> | ((explain: ExplainState) => Partial<ExplainState>)): void {
+    this.set(state => ({ explain: { ...state.explain, ...(typeof patch === 'function' ? patch(state.explain) : patch) } }));
+  }
+  /** Show the column (and an explanation in it). */
+  async openExplanations(options: { id?: string } = {}): Promise<void> {
+    this.setExplain(explain => ({ open: true, unseen: [], reveal: (explain.reveal ?? 0) + 1 }));
+    this.writeHash();
+    await Promise.all([this.loadExplanations(), this.loadExplanationSetup(), options.id ? this.openExplanation(options.id) : Promise.resolve()]);
+  }
+  closeExplanations(): void { this.setExplain({ open: false, hover: undefined }); this.writeHash(); }
+  toggleExplanations(): void { if (this.state.explain.open) this.closeExplanations(); else void this.openExplanations(); }
+  async loadExplanations(): Promise<void> {
+    const api = this.options.explanations;
+    if (!api) return;
+    if (!this.state.explain.list.data) this.setExplain(explain => ({ list: { ...explain.list, status: 'loading' } }));
+    try {
+      const data = await api.list();
+      this.setExplain({ list: { status: 'ready', data } });
+      // The selection was made before the list arrived: what explains it can be read now.
+      const selection = this.state.selection;
+      if (selection && !selection.explained && data.items.length) void this.loadSelectionExplanations(selection.id, this.aborts.get('selection')?.signal ?? new AbortController().signal);
+    }
+    catch (error) { this.setExplain(explain => ({ list: { ...explain.list, status: 'error', error: error instanceof Error ? error.message : String(error) } })); }
+  }
+  async loadExplanationSetup(): Promise<void> {
+    const api = this.options.explanations;
+    if (!api) return;
+    try { const setup = await api.setup(); this.setExplain(explain => ({ setup, draft: { ...explain.draft, model: explain.draft.model && setup.models.some(model => model.id === explain.draft.model && model.available) ? explain.draft.model : setup.models.find(model => model.default)?.id } })); }
+    catch { /* the column says what it can */ }
+  }
+  /** New or changed explanations (an agent may have saved one): the list follows, and the open one is read again. */
+  private async pollExplanations(): Promise<void> {
+    const api = this.options.explanations;
+    if (!api || this.disposed || this.state.explain.asking?.status === 'streaming') return;
+    try {
+      const data = await api.list();
+      const previous = this.state.explain.list.data;
+      if (previous?.version === data.version) return;
+      const known = new Set(previous?.items.map(item => item.id) ?? []);
+      const arrived = previous ? data.items.filter(item => !known.has(item.id) && item.source === 'agent').map(item => item.id) : [];
+      this.setExplain(explain => ({ list: { status: 'ready', data }, ...(arrived.length && !explain.open ? { unseen: [...new Set([...explain.unseen, ...arrived])] } : {}) }));
+      const open = this.state.explain.detail;
+      const changed = open && data.items.find(item => item.id === open.id);
+      if (open && changed && changed.updatedAt !== open.data?.updatedAt) void this.openExplanation(open.id, { quiet: true });
+      // An agent saved one while the column shows the list: open it.
+      if (arrived.length === 1 && this.state.explain.open && !this.state.explain.detail) void this.openExplanation(arrived[0]!);
+      const selection = this.state.selection;
+      if (selection) void this.loadSelectionExplanations(selection.id, this.aborts.get('selection')?.signal ?? new AbortController().signal);
+    } catch { /* the server may be restarting */ }
+  }
+  async openExplanation(id: string, options: { quiet?: boolean } = {}): Promise<void> {
+    const api = this.options.explanations;
+    if (!api) return;
+    const signal = this.abortable('explanation');
+    if (!options.quiet) this.setExplain(explain => ({ open: true, hover: undefined, detail: { id, status: 'loading', ...(explain.detail?.id === id ? { data: explain.detail.data } : {}) } }));
+    this.writeHash();
+    try {
+      const data = await api.detail(id, signal);
+      this.setExplain(explain => explain.detail?.id === id || !explain.detail ? { detail: { id, status: 'ready', data } } : {});
+      this.writeHash();
+    } catch (error) {
+      if (isAbort(error)) return;
+      this.setExplain(explain => explain.detail?.id === id ? { detail: { id, status: 'error', error: error instanceof Error ? error.message : String(error) } } : {});
+    }
+  }
+  closeExplanation(): void { this.aborts.get('explanation')?.abort(); this.setExplain({ detail: undefined, hover: undefined }); this.writeHash(); }
+  /** A link the pointer is on (undefined: none): what it names lights on the map. */
+  hoverLink(link: ResolvedLink | undefined): void {
+    if (link?.href === this.state.explain.hover?.href && link?.id === this.state.explain.hover?.id) return;
+    this.setExplain({ hover: link && (link.id || link.members?.length) ? link : undefined });
+  }
+  setExplanationLens(lens: boolean): void { this.setExplain({ lens }); this.savePrefs(); }
+  /** Open what a link names: select it and read its code, its flow, its commit, its feature. */
+  async followLink(link: ResolvedLink): Promise<void> {
+    this.setExplain({ hover: undefined });
+    if (link.kind === 'commit' || link.kind === 'pr') {
+      if (link.snapshot) await this.showCommit(link.snapshot);
+      else await this.openTimeline({ ...(link.sha ? { at: link.sha.slice(0, 12) } : {}) });
+      return;
+    }
+    if (link.kind === 'feature' && link.feature) { await this.revealFeature(link.feature); return; }
+    if (!link.id) return;
+    if (link.kind === 'flow') {
+      await this.select(link.id, { fly: true });
+      if (link.detail === 'lanes') await this.openFlowView({ id: link.id, title: link.label ?? link.name ?? link.id, lanes: true }, 'diagram');
+      else await this.openSteps(link.id, 'diagram');
+      return;
+    }
+    this.setCenter('map');
+    await this.select(link.id, { fly: true });
+    const node = this.state.selection?.node;
+    if (node && !isContainer(node) && node.type !== 'database_table') this.openCode();
+  }
+  setDraft(patch: Partial<ExplainState['draft']>): void { this.setExplain(explain => ({ draft: { ...explain.draft, ...patch } })); if (patch.model) this.savePrefs(); }
+  addContext(chip: ContextChip, options: { reveal?: boolean } = {}): void {
+    this.setExplain(explain => ({ draft: { ...explain.draft, context: explain.draft.context.some(item => item.href === chip.href) ? explain.draft.context : [...explain.draft.context, chip] } }));
+    if (options.reveal) void this.openExplanations({ ...(this.state.explain.detail ? { id: this.state.explain.detail.id } : {}) });
+  }
+  removeContext(href: string): void { this.setExplain(explain => ({ draft: { ...explain.draft, context: explain.draft.context.filter(item => item.href !== href) } })); }
+  /** Start a new question about something (the inspector, a flow, a commit): the composer gets the question and the code it is about. */
+  async askAbout(target: PromptTarget, label?: string): Promise<void> {
+    const chip = target.ref ? { href: target.kind === 'commit' ? `commit:${target.ref}` : target.kind === 'pr' ? `pr:${target.ref}` : target.ref, label: label ?? target.label ?? target.ref } : undefined;
+    this.setExplain(explain => ({ detail: undefined, hover: undefined, draft: { ...explain.draft, text: chatQuestion(target, { plain: true }), context: chip ? [chip] : [] } }));
+    await this.openExplanations();
+  }
+  /** Ask the chat: the draft (with its context) as a new explanation, or as a follow-up to the one open. */
+  async ask(options: { refresh?: boolean } = {}): Promise<void> {
+    const api = this.options.explanations;
+    const explain = this.state.explain;
+    if (!api || explain.asking?.status === 'streaming') return;
+    const question = options.refresh ? '' : explain.draft.text.trim();
+    if (!question && !options.refresh) return;
+    const explanationId = explain.detail?.data?.id;
+    if (options.refresh && !explanationId) return;
+    const context = options.refresh ? [] : explain.draft.context;
+    const signal = this.abortable('ask');
+    this.setExplain({ asking: { status: 'streaming', ...(explanationId ? { explanationId } : {}), ...(options.refresh ? { refresh: true } : {}), question, context, text: '', tools: [], ...(explain.draft.model ? { model: explain.draft.model } : {}) }, ...(options.refresh ? {} : { draft: { ...explain.draft, text: '', context: [] } }) });
+    const update = (patch: Partial<NonNullable<ExplainState['asking']>> | ((asking: NonNullable<ExplainState['asking']>) => Partial<NonNullable<ExplainState['asking']>>)) => this.setExplain(state => state.asking ? { asking: { ...state.asking, ...(typeof patch === 'function' ? patch(state.asking) : patch) } } : {});
+    let saved: ExplanationDetail | undefined;
+    try {
+      await api.ask({ question, ...(explanationId ? { explanationId } : {}), ...(options.refresh ? { refresh: true } : {}), ...(explain.draft.model ? { model: explain.draft.model } : {}), context: context.map(item => item.href) }, (event: AskEvent) => {
+        if (event.type === 'start') update({ model: event.model });
+        else if (event.type === 'tool') update(asking => ({ tools: [...asking.tools, event.detail] }));
+        else if (event.type === 'text') update(asking => ({ text: asking.text + event.delta }));
+        else if (event.type === 'retry') update({ text: '', note: event.reason });
+        else if (event.type === 'error') update({ status: 'error', error: event.message });
+        else if (event.type === 'done') saved = event.explanation;
+      }, signal);
+      if (saved) {
+        const detail = saved;
+        this.setExplain({ asking: undefined, detail: { id: detail.id, status: 'ready', data: detail } });
+        this.writeHash();
+        void this.loadExplanations();
+        const selection = this.state.selection;
+        if (selection) void this.loadSelectionExplanations(selection.id, signal);
+      } else if (this.state.explain.asking?.status === 'streaming') update({ status: 'error', error: 'The answer stopped before it was saved' });
+    } catch (error) {
+      if (isAbort(error)) { this.setExplain({ asking: undefined }); return; }
+      update({ status: 'error', error: error instanceof Error ? error.message : String(error) });
+    }
+  }
+  stopAsking(): void { this.aborts.get('ask')?.abort(); this.setExplain(explain => ({ asking: undefined, draft: explain.asking && !explain.asking.refresh ? { ...explain.draft, text: explain.draft.text || explain.asking.question, context: explain.draft.context.length ? explain.draft.context : explain.asking.context } : explain.draft })); }
+  dismissAskError(): void { this.setExplain(explain => ({ asking: undefined, draft: explain.asking && !explain.asking.refresh && !explain.draft.text ? { ...explain.draft, text: explain.asking.question, context: explain.asking.context } : explain.draft })); }
+  async deleteExplanation(id: string): Promise<void> {
+    const api = this.options.explanations;
+    if (!api) return;
+    await api.remove(id);
+    if (this.state.explain.detail?.id === id) this.closeExplanation();
+    await this.loadExplanations();
+  }
+  async renameExplanation(id: string, title: string): Promise<void> {
+    const api = this.options.explanations;
+    if (!api || !title.trim()) return;
+    await api.rename(id, title.trim());
+    await Promise.all([this.loadExplanations(), this.state.explain.detail?.id === id ? this.openExplanation(id, { quiet: true }) : Promise.resolve()]);
+  }
+  private async loadSelectionExplanations(id: string, signal: AbortSignal): Promise<void> {
+    const api = this.options.explanations;
+    if (!api || !this.state.explain.list.data?.items.length) { this.set(state => state.selection?.id === id && state.selection.explained ? { selection: { ...state.selection, explained: undefined } } : {}); return; }
+    try {
+      const data = await api.forEntity(id, signal);
+      this.set(state => state.selection?.id === id ? { selection: { ...state.selection, explained: { status: 'ready', data } } } : {});
+    } catch (error) { if (!isAbort(error)) this.set(state => state.selection?.id === id ? { selection: { ...state.selection, explained: { status: 'error', error: error instanceof Error ? error.message : String(error) } } } : {}); }
+  }
   setFlowGroupsOpen(keys: string[], open: boolean): void {
     this.set(state => ({ catalog: { ...state.catalog, open: { ...state.catalog.open, ...Object.fromEntries(keys.map(key => [key, open])) } } }));
   }

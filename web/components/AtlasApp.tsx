@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { HttpAtlasApi } from '../lib/api';
+import { HttpExplanationsApi } from '../lib/explanations';
 import { shortSha, relativeTime } from '../lib/format';
 import { AtlasStore } from '../lib/store';
 import { MAIN_THEMES, THEMES, themeById, UI_PROPERTIES } from '../lib/themes';
@@ -8,6 +9,7 @@ import { Breadcrumbs } from './Breadcrumbs';
 import { CodeView } from './CodeView';
 import { AtlasContext, useAtlas, useStore } from './context';
 import { EclipseMark } from './EclipseMark';
+import { ExplanationsPanel } from './ExplanationsPanel';
 import { FeaturesPanel } from './FeaturesPanel';
 import { FlowsPanel } from './FlowsPanel';
 import { PeoplePanel } from './PeoplePanel';
@@ -20,7 +22,7 @@ import { ArchetypeLegend } from './ArchetypeMark';
 function createStore(): AtlasStore {
   const storage = (() => { try { return window.localStorage; } catch { return undefined; } })();
   return new AtlasStore(new HttpAtlasApi(''), {
-    storage,
+    storage, explanations: new HttpExplanationsApi(''),
     location: { get hash() { return window.location.hash; }, replace: hash => history.replaceState(null, '', hash === '#' ? window.location.pathname + window.location.search : hash) },
   });
 }
@@ -79,6 +81,10 @@ function Shell() {
   const [inspectorWidth, setInspectorWidth] = usePanelWidth('codiluce:inspector-width', 380);
   const [flowWidth, setFlowWidth] = usePanelWidth('codiluce:flow-width', 300);
   const [codeWidth, setCodeWidth] = useCodeWidth();
+  const [explainWidth, setExplainWidth] = usePanelWidth('codiluce:explain-width', 400);
+  const explainOpen = useAtlas(state => state.explain.open);
+  const unseen = useAtlas(state => state.explain.unseen.length);
+  const explanations = useAtlas(state => state.explain.list.data?.items.length ?? 0);
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [leftOpen, setLeftOpen] = useState(false);
   // The left panel holds the features (once described), every flow (pages, requests, console) and the people who changed the code.
@@ -155,6 +161,7 @@ function Shell() {
           <button className="button rf-top" onClick={() => showLeft('flows')} aria-pressed={leftOpen && leftTab === 'flows'} aria-controls="left-panel" title="Every flow of the code in one list: pages, requests, console commands and scheduled tasks">Flows</button>
           <button className="button" onClick={() => showLeft('people')} aria-pressed={leftOpen && leftTab === 'people'} aria-controls="left-panel" title="Who changed which code, from the Git history: select a person to light the files they changed">People</button>
           <button className="button" onClick={() => impactOpen ? store.setCenter('map') : store.openImpactTool()} aria-pressed={impactOpen} title="What depends on the selection, or on your uncommitted changes, hop by hop">Impact</button>
+          <button className="button explain-top" onClick={() => store.toggleExplanations()} aria-pressed={explainOpen} aria-controls="explain-panel" title={`Explanations: ask about the code, or read what your agent explained (${explanations} saved); their links light the code on the map`}>Explain{unseen > 0 && <span className="badge" aria-label={`${unseen} new`}>{unseen}</span>}</button>
           <button className="button" onClick={() => codeOpen ? store.closeCode() : store.openCode()} aria-pressed={codeOpen} title="The code of the selection beside the inspector: a file, or a symbol in its file, with the file's outline">Code</button>
           <button className="button" onClick={() => void store.toggleCoverage()} aria-pressed={coverage} title="Color every file by whether flows touch it: entry points, in flows, supporting, not reached">Coverage</button>
           <label className="sr-only" htmlFor="theme-select">Theme</label>
@@ -166,7 +173,7 @@ function Shell() {
         </div>
       </header>
       <Breadcrumbs />
-      <main className={`workspace${codeOpen ? ' with-code' : ''}`}>
+      <main className={`workspace${codeOpen ? ' with-code' : ''}${explainOpen ? ' with-explain' : ''}`}>
         {leftOpen ? (
           <aside id="left-panel" className="panel left" style={{ width: Math.max(flowWidth, 340) }} aria-label={TAB_TEXT[leftTab]}>
             {tabs.length > 1 && (
@@ -180,6 +187,12 @@ function Shell() {
             <ResizeHandle side="left" width={flowWidth} onResize={setFlowWidth} label="Resize the left panel" />
           </aside>
         ) : <div />}
+        {explainOpen && (
+          <aside id="explain-panel" className="panel left explain-panel" style={{ width: explainWidth }} aria-label="Explanations">
+            <ExplanationsPanel onClose={() => store.closeExplanations()} />
+            <ResizeHandle side="left" width={explainWidth} onResize={setExplainWidth} label="Resize the explanations" />
+          </aside>
+        )}
         <Workbench split={split} />
         {codeOpen && (
           <aside className="panel code-panel" style={{ width: codeWidth }} aria-label="Code">
