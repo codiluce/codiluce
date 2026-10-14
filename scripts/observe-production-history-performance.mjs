@@ -15,7 +15,7 @@ import {measureProductionWorker} from './production-cache-measure.mjs';
 import {qualifyHistoryPerformance} from './production-history-performance-results.mjs';
 import {readRevision,validateCorpus} from './production-history-inputs.mjs';
 import {historyRuntimeLayout} from './production-history-runtime-layout.mjs';
-import {performanceRuntimeSelection,performanceScriptNames,verifyPerformanceRuntimeFiles} from './production-history-performance-runtime.mjs';
+import {performanceEntrypointArtifact,performanceRuntimeSelection,performanceScriptNames,verifyPerformanceRuntimeFiles} from './production-history-performance-runtime.mjs';
 
 const project=fileURLToPath(new URL('../',import.meta.url)),execute=promisify(execFile),sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 async function fileHash(file){const digest=createHash('sha256');for await(const bytes of createReadStream(file))digest.update(bytes);return digest.digest('hex');}
@@ -40,7 +40,7 @@ export async function observeHistoryPerformance(options,sources){
  assert.equal(baseline.passed,true);assert.ok(baseline.completedAt);assert.equal(baseline.corpusSha256,sha(corpusInput.bytes));assert.equal(baseline.profilesSha256,sha(profilesInput.bytes));assert.ok(metadata.completedAt);
  assert.deepEqual(corpus.repositories.map(r=>r.id).sort(),['axum','bookstack','firefly-iii','flask','full-stack-fastapi','memos']);for(const r of corpus.repositories){assert.equal(r.revisions.length,32);assert.equal(r.extraRevisions.length,r.id==='flask'?3:0);}
  assert.deepEqual(Object.keys(sources).sort(),corpus.repositories.map(r=>r.id).sort());
- const freshFile=qualification.artifacts.find(r=>r.file.endsWith('/corpus/receipt.json'));assert.ok(freshFile);const fresh=await load(freshFile.file);assert.equal(sha(fresh.bytes),freshFile.sha256);assert.equal(fresh.value.full195RevisionEntrypointQualified,true);
+ const freshFile=performanceEntrypointArtifact(qualification,baselineInput.file);assert.ok(freshFile);const fresh=await load(freshFile.file);assert.equal(sha(fresh.bytes),freshFile.sha256);assert.equal(fresh.value.full195RevisionEntrypointQualified,true);
  assert.equal(qualification.engineSha256,fresh.value.engineIdentity.sha256);assert.equal(qualification.baselineEngineSha256,baseline.engineIdentity.sha256);
  const baselineExecution=options.baselineExecutionReceipt?await load(options.baselineExecutionReceipt):undefined,baselineExecutionQualified=options.baselineExecutionQualification?await load(options.baselineExecutionQualification):undefined;
  const identities=performanceRuntimeSelection({baseline,qualification,currentIdentity:fresh.value.engineIdentity,baselineExecutionReceipt:baselineExecution?.value,baselineExecutionQualification:baselineExecutionQualified?.value});

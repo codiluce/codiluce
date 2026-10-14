@@ -7,6 +7,16 @@ import {historyRuntimeLayout,historyRuntimeLedgers,historySourceIdentity} from '
 
 export const performanceScriptNames=['observe-production-history-performance.mjs','production-history-performance-worker.mjs','production-history-performance-runtime.mjs','production-history-runtime-layout.mjs','production-history-performance-results.mjs','audit-history-performance-columns.py','audit-history-columns.py','production-cache-measure.mjs','process-memory.mjs','production-cache-git.mjs','production-history-storage.mjs','production-history-storage-ledger.mjs','production-graph-digest.mjs','production-history-inputs.mjs'];
 
+/** Both source and installed receipts may have the same basename. Never use
+ * asynchronous artifact insertion order to select the current execution. */
+export function performanceEntrypointArtifact(qualification,baselineFile){
+ assert.ok(path.isAbsolute(baselineFile),'Baseline receipt path must be absolute');
+ assert.ok(Array.isArray(qualification.artifacts),'Missing qualification artifacts');
+ const candidates=qualification.artifacts.filter(row=>typeof row.file==='string'&&row.file.endsWith('/corpus/receipt.json')&&row.file!==baselineFile);
+ assert.equal(candidates.length,1,'Qualification must identify exactly one current entrypoint receipt');
+ const candidate=candidates[0];assert.ok(path.isAbsolute(candidate.file));assert.match(candidate.sha256,/^[a-f\d]{64}$/);return candidate;
+}
+
 /** The source correctness baseline remains the graph oracle. An installed
  * baseline must have its own completed full-history execution qualification. */
 export function performanceRuntimeSelection({baseline,qualification,currentIdentity,baselineExecutionReceipt,baselineExecutionQualification}){

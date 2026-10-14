@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {mkdir,mkdtemp,readlink,rm,symlink,unlink,writeFile} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {performanceRuntimeSelection,verifyPerformanceRuntimeFiles} from '../production-history-performance-runtime.mjs';
+import {performanceEntrypointArtifact,performanceRuntimeSelection,verifyPerformanceRuntimeFiles} from '../production-history-performance-runtime.mjs';
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const roles=['history/indexer','history/worker','history/store','history/git','projection/service','storage/sqlite'];
@@ -46,3 +46,14 @@ test('performance runtime verification refuses changed, aliased or duplicate lit
  for(const file of ['../escape','/absolute','codiluce/./alias','codiluce\\alias',value.files[0].file]){const changed=structuredClone(value);changed.links.push({file,target:'anything'});await assert.rejects(verifyPerformanceRuntimeFiles(changed,installedRoot));}
  await verifyPerformanceRuntimeFiles(value,installedRoot);
 }));
+
+
+test('performance entrypoint selection excludes the source baseline regardless of artifact completion order',()=>{
+ const baseline={file:'/owned/source/corpus/receipt.json',sha256:sha('baseline')},current={file:'/owned/installed/corpus/receipt.json',sha256:sha('installed')};
+ for(const artifacts of [[baseline,current],[current,baseline]])assert.equal(performanceEntrypointArtifact({artifacts},baseline.file),current);
+});
+test('performance entrypoint selection refuses missing, duplicate, ambiguous or malformed current artifacts',()=>{
+ const baseline={file:'/owned/source/corpus/receipt.json',sha256:sha('baseline')},current={file:'/owned/installed/corpus/receipt.json',sha256:sha('installed')};
+ for(const artifacts of [[baseline],[baseline,current,current],[baseline,current,{file:'/other/corpus/receipt.json',sha256:sha('other')}],[baseline,{...current,sha256:'invalid'}],[baseline,{...current,file:'relative/corpus/receipt.json'}]])assert.throws(()=>performanceEntrypointArtifact({artifacts},baseline.file));
+ assert.throws(()=>performanceEntrypointArtifact({artifacts:[current]},'relative-baseline'));
+});
