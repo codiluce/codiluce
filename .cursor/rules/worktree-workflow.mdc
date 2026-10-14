@@ -1,0 +1,10 @@
+---
+description: Keep routine updates on main and the multilingual framework session in its dedicated worktree
+alwaysApply: true
+---
+
+- Default to `/var/www/html/codiluce` on `main` for routine updates unless the user says otherwise.
+- Run **Plan multilingual framework support** exclusively in `/var/www/html/codiluce-multilingual` on `framework/multilingual-support`, including tests, generated validation artifacts, and commits.
+- If that session opens in the main checkout, change to its dedicated worktree before continuing. Never switch the main checkout to the framework branch.
+- Keep ongoing framework changes isolated; merge that branch only at the user's explicit request.
+- Verify the working directory and branch before writing or committing, and preserve concurrent work.
