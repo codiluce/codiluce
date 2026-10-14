@@ -505,6 +505,10 @@ const compiler=new TemplateScriptParser();try{compiler.prewarm();const retiremen
   await cp(path.join(root,'tests/fixtures/structure'),wasmOriginals,{recursive:true});
   await run(process.execPath,[wasmCheck,pathToFileURL(path.join(installed,'dist/src/')).href,wasmReceipt,pathToFileURL(wasmOriginals+path.sep).href],consumer);
   const wasmValidation=JSON.parse(await readFile(wasmReceipt,'utf8'));assert.ok(wasmValidation.passed&&!wasmValidation.sourceLoader);assert.equal(wasmValidation.caseCount,4);assert.equal(wasmValidation.profiles.length,20);assert.equal(wasmValidation.limits.maxBytes,256*1024*1024);
+  const frameCheck=path.join(consumer,'parser-frame-qualification.mjs'),frameReceipt=path.join(consumer,'parser-frame-validation.json'),frameFixtures=path.join(consumer,'parser-frame-fixtures');
+  await cp(path.join(root,'tests/fixtures/parser-frame-qualification.mjs'),frameCheck);await mkdir(frameFixtures);await cp(path.join(root,'tests/fixtures/parser-response-control.mjs'),path.join(frameFixtures,'parser-response-control.mjs'));
+  await run(process.execPath,[frameCheck,pathToFileURL(path.join(installed,'dist/src/')).href,frameReceipt,pathToFileURL(frameFixtures+path.sep).href],consumer);
+  const frameValidation=JSON.parse(await readFile(frameReceipt,'utf8'));assert.ok(frameValidation.passed&&!frameValidation.sourceLoader&&frameValidation.actualAddressSpacesRetired);assert.equal(frameValidation.caseCount,7);assert.equal(frameValidation.frameBytes,64*1024*1024);
   const fatalCheck=path.join(consumer,'parser-fatal-qualification.mjs'),fatalReceipt=path.join(consumer,'parser-fatal-validation.json'),fatalFixtures=path.join(consumer,'parser-fatal-fixtures');
   await cp(path.join(root,'tests/fixtures/parser-fatal-qualification.mjs'),fatalCheck);await mkdir(fatalFixtures);
   for(const file of ['parser-fatal.mjs','parser-auxiliary-trap.mjs'])await cp(path.join(root,'tests/fixtures',file),path.join(fatalFixtures,file));

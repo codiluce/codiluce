@@ -9,6 +9,7 @@ import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const output='src/analysis/tree-sitter/native-worker.mjs';
 const inputs=[
+  "src/analyzers/ts-worker-codec.ts",
   "src/analysis/languages/rust-cfg.ts",
   "src/analysis/source-map.ts",
   "src/analysis/tree-sitter/cfamily-source.ts",
@@ -19,6 +20,7 @@ const inputs=[
   "src/analysis/tree-sitter/erb-script.ts",
   "src/analysis/tree-sitter/erb-structure.ts",
   "src/analysis/tree-sitter/extract.ts",
+  "src/analysis/tree-sitter/frames.ts",
   "src/analysis/tree-sitter/fsharp-structure.ts",
   "src/analysis/tree-sitter/go-imports.ts",
   "src/analysis/tree-sitter/go-syntax.ts",
@@ -43,14 +45,14 @@ const inputs=[
   "src/analysis/tree-sitter/vbnet-structure.ts",
   "src/analysis/tree-sitter/wasm-memory.ts",
   "src/analysis/tree-sitter/worker.ts"
-];
+].sort();
 
 export async function nativeWorkerBundle(){
   const result=await build({absWorkingDir:root,entryPoints:['src/analysis/tree-sitter/worker.ts'],outfile:output,bundle:true,format:'esm',platform:'node',target:'node22.12',packages:'external',write:false,metafile:true,legalComments:'inline',banner:{js:'// Generated from Codiluce’s typed source-only parser. Do not edit.\n// Rebuild: npm run build:native-worker'}});
   assert.deepEqual(Object.keys(result.metafile.inputs).sort(),inputs,'Native worker must include only the approved source-only helpers');
   const imports=Object.values(result.metafile.outputs).flatMap(item=>item.imports);
   assert.deepEqual(imports.map(({path,kind,external})=>({path,kind,external})),[
-    ...['web-tree-sitter','node:v8','node:crypto','node:fs','node:url'].map(path=>({path,kind:'import-statement',external:true})),
+    ...['web-tree-sitter','node:util','node:crypto','node:fs','node:url'].map(path=>({path,kind:'import-statement',external:true})),
     ...Array.from({length:3},()=>({path:'typescript',kind:'dynamic-import',external:true})),
   ]);
   const text=result.outputFiles[0].text,source=ts.createSourceFile('owned-native-worker.mjs',text,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);

@@ -1,7 +1,7 @@
 // A cancellable parser process. A pathological grammar/query cannot block the
 // indexer, and all WASM resources disappear when this process is terminated.
 import { Parser, Language, Query } from 'web-tree-sitter';
-import { serialize } from 'node:v8';
+import {replyParserFrame,parserJob} from './frames.js';
 import type {StructureFacts} from '../facts.js';
 import { grammarCatalog, queryText, verifiedGrammar } from './grammars.js';
 import { extractStructure } from './extract.js';
@@ -16,11 +16,7 @@ import {extractTemplateHost} from './embedded-host.js';
 import {createNativeWasmMemory,nativeWasmWorkerLimit} from './wasm-memory.js';
 
 const loaded = new Map<string, { parser: Parser; query: Query }>();
-function reply(id:number,response:{facts?:StructureFacts;error?:string;fatal?:boolean}):void {
-  const payload=serialize(response);
-  process.send?.({id,type:'completed',completedAtNs:process.hrtime.bigint().toString(),bytes:payload.byteLength});
-  process.send?.({id,type:'result',payload});
-}
+
 const wasm = createNativeWasmMemory(nativeWasmWorkerLimit(process.argv.slice(2)));
 const initialized = Parser.init({wasmMemory: wasm.memory});
 async function load(language: string): Promise<{ parser: Parser; query: Query }> {
@@ -80,17 +76,19 @@ async function handle(job: { id: number; language: string; content: string; obje
         facts=extractObjcMacroProfiles(facts,job.content);
       }
       wasm.assertAvailable();
-      reply(job.id,{facts});
+      replyParserFrame(job.id,{facts});
     }
     finally { tree.delete(); }
   } catch (error) {
     let fatal=error instanceof WebAssembly.RuntimeError;
     try {wasm.assertAvailable();} catch (memoryError) {error=memoryError;fatal=true;}
-    reply(job.id,{error:error instanceof Error?error.message:String(error),...fatal?{fatal:true}:{}});
+    replyParserFrame(job.id,{error:error instanceof Error?error.message:String(error),...fatal?{fatal:true}:{}});
   }
 }
 let pending = Promise.resolve();
-process.on('message', (job: Parameters<typeof handle>[0]) => { pending = pending.then(() => handle(job)); });
+process.on('message', (message: Parameters<typeof parserJob>[0]) => {
+  pending=pending.then(async()=>{try{await handle(parserJob(message) as Parameters<typeof handle>[0]);}catch(error){replyParserFrame(message.id,{error:error instanceof Error?error.message:String(error),fatal:true});}});
+});
 process.once('disconnect', () => {
   for (const { parser, query } of loaded.values()) { query.delete(); parser.delete(); }
   process.exit(0);

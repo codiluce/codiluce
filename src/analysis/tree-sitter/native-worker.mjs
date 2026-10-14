@@ -3,7 +3,550 @@
 
 // src/analysis/tree-sitter/worker.ts
 import { Parser, Language, Query } from "web-tree-sitter";
-import { serialize } from "node:v8";
+
+// src/analyzers/ts-worker-codec.ts
+import { types } from "node:util";
+var MAGIC = Buffer.from([67, 68, 84, 1]);
+var TYPESCRIPT_CODEC_BLOCK_BYTES = 64 * 1024;
+var STRING_UNITS = 4096;
+var views = [Buffer, Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, BigInt64Array, BigUint64Array, DataView];
+var TYPESCRIPT_CODEC_STRUCTURE_LIMITS = Object.freeze({ objects: 4194304, strings: 1048576, properties: 16777216, arraySlots: 16777216, stringUnits: 64 * 1024 * 1024, binaryBytes: 64 * 1024 * 1024, depth: 4096, tasks: 16384, keysPerObject: 1048576 });
+var TypeScriptCodecLimitError = class extends RangeError {
+};
+var TypeScriptCodecStructureLimitError = class extends TypeScriptCodecLimitError {
+  constructor(resource, selectedLimit) {
+    super(`TypeScript compiler ${resource} exceeds ${selectedLimit} limit`);
+    this.resource = resource;
+    this.selectedLimit = selectedLimit;
+  }
+  resource;
+  selectedLimit;
+};
+var Budget = class {
+  constructor(policy, stats) {
+    this.stats = stats;
+    const selected = { ...TYPESCRIPT_CODEC_STRUCTURE_LIMITS, ...policy };
+    for (const key of Object.keys(selected)) {
+      if (!Object.hasOwn(TYPESCRIPT_CODEC_STRUCTURE_LIMITS, key) || !Number.isSafeInteger(selected[key]) || selected[key] < 1 || selected[key] > TYPESCRIPT_CODEC_STRUCTURE_LIMITS[key]) throw Error("Compiler structural limits must be positive safe integers at or below their fixed defaults");
+    }
+    this.limits = selected;
+    if (stats) Object.assign(stats, { allocatedBlockBytes: 0, concatenatedBytes: 0, peakBlockBytes: 0, peakStringTemporaryBytes: 0, encodedBytes: 0, ...this.used, peakDepth: 0, peakTasks: 0, peakKeys: 0 });
+  }
+  stats;
+  limits;
+  used = { objects: 0, strings: 0, properties: 0, arraySlots: 0, stringUnits: 0, binaryBytes: 0 };
+  add(pool, count = 1) {
+    if (!Number.isSafeInteger(count) || count < 0 || count > this.limits[pool] - this.used[pool]) throw new TypeScriptCodecStructureLimitError(pool, this.limits[pool]);
+    this.used[pool] += count;
+    if (this.stats) this.stats[pool] = this.used[pool];
+  }
+  peak(resource, count) {
+    if (count > this.limits[resource]) throw new TypeScriptCodecStructureLimitError(resource, this.limits[resource]);
+    const field = resource === "depth" ? "peakDepth" : resource === "tasks" ? "peakTasks" : "peakKeys";
+    if (this.stats) this.stats[field] = Math.max(this.stats[field], count);
+  }
+};
+function limit(value) {
+  if (!Number.isSafeInteger(value) || value < 1) throw Error("TypeScript codec limit requires a positive safe integer");
+}
+var Writer = class {
+  constructor(max, stats) {
+    this.max = max;
+    this.stats = stats;
+  }
+  max;
+  stats;
+  blocks = [];
+  bytes = 0;
+  block;
+  used = 0;
+  reserve(size2) {
+    if (!Number.isSafeInteger(size2) || size2 < 0 || size2 > this.max - this.bytes) throw new TypeScriptCodecLimitError(`TypeScript compiler payload exceeds ${this.max} bytes`);
+  }
+  room() {
+    if (!this.block || this.used === this.block.length) {
+      if (this.block) this.blocks.push(this.block);
+      this.block = Buffer.allocUnsafe(Math.min(TYPESCRIPT_CODEC_BLOCK_BYTES, this.max - this.bytes));
+      this.used = 0;
+      if (this.stats) {
+        this.stats.allocatedBlockBytes += this.block.length;
+        this.stats.peakBlockBytes = Math.max(this.stats.peakBlockBytes, this.block.length);
+      }
+    }
+    return this.block;
+  }
+  byte(value) {
+    this.reserve(1);
+    this.room()[this.used++] = value;
+    this.bytes++;
+  }
+  uint(value) {
+    if (!Number.isSafeInteger(value) || value < 0) throw Error("Invalid compiler transport integer");
+    do {
+      const digit = value % 128;
+      value = Math.floor(value / 128);
+      this.byte(digit + (value ? 128 : 0));
+    } while (value);
+  }
+  raw(value) {
+    this.reserve(value.byteLength);
+    for (let offset = 0; offset < value.byteLength; ) {
+      const block = this.room(), size2 = Math.min(block.length - this.used, value.byteLength - offset);
+      block.set(value.subarray(offset, offset + size2), this.used);
+      this.used += size2;
+      this.bytes += size2;
+      offset += size2;
+    }
+  }
+  double(value) {
+    const bytes = Buffer.allocUnsafe(8);
+    bytes.writeDoubleLE(value);
+    this.raw(bytes);
+  }
+  finish() {
+    if (this.block) this.blocks.push(this.block.subarray(0, this.used));
+    if (this.stats) {
+      this.stats.encodedBytes = this.bytes;
+      this.stats.concatenatedBytes = this.bytes;
+    }
+    return Buffer.concat(this.blocks, this.bytes);
+  }
+};
+function encodeTypeScriptPayload(value, maxBytes, stats, policy) {
+  limit(maxBytes);
+  const budget = new Budget(policy, stats);
+  const writer = new Writer(maxBytes, stats), objects = /* @__PURE__ */ new Map(), strings = /* @__PURE__ */ new Map();
+  const string = (text) => {
+    if (text.length > maxBytes) throw new TypeScriptCodecLimitError(`TypeScript compiler payload exceeds ${maxBytes} bytes`);
+    const known = strings.get(text);
+    if (known !== void 0) {
+      writer.byte(10 /* StringRef */);
+      writer.uint(known);
+      return;
+    }
+    let latin = true;
+    for (let i = 0; i < text.length; i++) if (text.charCodeAt(i) > 255) {
+      latin = false;
+      break;
+    }
+    writer.byte(latin ? 8 /* String8 */ : 9 /* String16 */);
+    writer.uint(text.length);
+    writer.reserve(text.length * (latin ? 1 : 2));
+    budget.add("strings");
+    budget.add("stringUnits", text.length);
+    strings.set(text, strings.size);
+    for (let offset = 0; offset < text.length; offset += STRING_UNITS) {
+      const bytes = Buffer.from(text.slice(offset, offset + STRING_UNITS), latin ? "latin1" : "utf16le");
+      if (stats) stats.peakStringTemporaryBytes = Math.max(stats.peakStringTemporaryBytes, bytes.length);
+      writer.raw(bytes);
+    }
+  };
+  writer.raw(MAGIC);
+  const stack = [];
+  const push = (...tasks) => {
+    budget.peak("tasks", stack.length + tasks.length);
+    stack.push(...tasks);
+  };
+  const properties = (value2, array, depth) => {
+    const keys = Object.keys(value2);
+    budget.peak("keysPerObject", keys.length);
+    budget.add("properties", keys.length);
+    return { kind: "properties", value: value2, keys, index: 0, array, depth };
+  };
+  push({ kind: "value", value, depth: 0 });
+  while (stack.length) {
+    const task = stack.pop();
+    if (task.kind === "properties") {
+      if (task.index === task.keys.length) {
+        writer.byte(0 /* End */);
+        continue;
+      }
+      const key = task.keys[task.index++];
+      if (task.array && /^(?:0|[1-9]\d*)$/.test(key) && Number(key) < 4294967295) {
+        writer.byte(14 /* Index */);
+        writer.uint(Number(key));
+      } else string(key);
+      push(task, { kind: "value", value: task.value[key], depth: task.depth + 1 });
+      continue;
+    }
+    if (task.kind === "map") {
+      const entry = task.iterator.next();
+      if (entry.done) {
+        writer.byte(0 /* End */);
+        continue;
+      }
+      budget.add("properties", 2);
+      push(task, { kind: "value", value: entry.value[1], depth: task.depth + 1 }, { kind: "value", value: entry.value[0], depth: task.depth + 1 });
+      continue;
+    }
+    if (task.kind === "set") {
+      const entry = task.iterator.next();
+      if (entry.done) {
+        writer.byte(0 /* End */);
+        continue;
+      }
+      budget.add("properties");
+      push(task, { kind: "value", value: entry.value, depth: task.depth + 1 });
+      continue;
+    }
+    budget.peak("depth", task.depth);
+    const item = task.value;
+    if (item === void 0) {
+      writer.byte(1 /* Undefined */);
+      continue;
+    }
+    if (item === null) {
+      writer.byte(2 /* Null */);
+      continue;
+    }
+    if (typeof item === "boolean") {
+      writer.byte(item ? 4 /* True */ : 3 /* False */);
+      continue;
+    }
+    if (typeof item === "string") {
+      string(item);
+      continue;
+    }
+    if (typeof item === "number") {
+      if (Number.isInteger(item) && !Object.is(item, -0) && item >= 0 && item <= 4294967295) {
+        writer.byte(5 /* Uint */);
+        writer.uint(item);
+      } else if (Number.isInteger(item) && item < 0 && item >= -2147483648) {
+        writer.byte(6 /* NegativeInt */);
+        writer.uint(-item);
+      } else {
+        writer.byte(7 /* Double */);
+        writer.double(item);
+      }
+      continue;
+    }
+    if (typeof item === "bigint") {
+      writer.byte(17 /* BigInt */);
+      writer.byte(item < 0n ? 1 : 0);
+      const bits = (writer.max - writer.bytes) * 8;
+      if ((item < 0n ? BigInt.asIntN(bits + 1, item) : BigInt.asUintN(bits, item)) !== item) throw new TypeScriptCodecLimitError(`TypeScript compiler payload exceeds ${maxBytes} bytes`);
+      let hex = (item < 0n ? -item : item).toString(16);
+      if (hex.length % 2) hex = "0" + hex;
+      budget.add("binaryBytes", hex.length / 2);
+      writer.uint(hex.length / 2);
+      writer.reserve(hex.length / 2);
+      for (let i = 0; i < hex.length; i += STRING_UNITS) writer.raw(Buffer.from(hex.slice(i, i + STRING_UNITS), "hex"));
+      continue;
+    }
+    if (typeof item !== "object" || types.isProxy(item) || types.isWeakMap(item) || types.isWeakSet(item) || types.isPromise(item) || types.isSharedArrayBuffer(item) || types.isModuleNamespaceObject(item) || item instanceof WeakRef || item instanceof FinalizationRegistry) throw Error("Unsupported compiler transport value");
+    const known = objects.get(item);
+    if (known !== void 0) {
+      writer.byte(11 /* Ref */);
+      writer.uint(known);
+      continue;
+    }
+    budget.add("objects");
+    objects.set(item, objects.size);
+    if (Array.isArray(item)) {
+      budget.add("arraySlots", item.length);
+      writer.byte(13 /* Array */);
+      writer.uint(item.length);
+      push(properties(item, true, task.depth));
+    } else if (types.isMap(item)) {
+      writer.byte(15 /* Map */);
+      push({ kind: "map", iterator: Map.prototype.entries.call(item), depth: task.depth });
+    } else if (types.isSet(item)) {
+      writer.byte(16 /* Set */);
+      push({ kind: "set", iterator: Set.prototype.values.call(item), depth: task.depth });
+    } else if (types.isDate(item)) {
+      writer.byte(18 /* Date */);
+      writer.double(Date.prototype.getTime.call(item));
+    } else if (types.isRegExp(item)) {
+      writer.byte(19 /* RegExp */);
+      string(Object.getOwnPropertyDescriptor(RegExp.prototype, "source").get.call(item));
+      let flags = "";
+      for (const [name3, flag] of [["hasIndices", "d"], ["global", "g"], ["ignoreCase", "i"], ["multiline", "m"], ["dotAll", "s"], ["unicode", "u"], ["unicodeSets", "v"], ["sticky", "y"]]) if (Object.getOwnPropertyDescriptor(RegExp.prototype, name3)?.get?.call(item)) flags += flag;
+      string(flags);
+    } else if (types.isArrayBuffer(item)) {
+      budget.add("binaryBytes", item.byteLength);
+      writer.byte(20 /* ArrayBuffer */);
+      writer.uint(item.byteLength);
+      writer.raw(new Uint8Array(item));
+    } else if (ArrayBuffer.isView(item)) {
+      const index = Buffer.isBuffer(item) ? 0 : types.isInt8Array(item) ? 1 : types.isUint8Array(item) ? 2 : types.isUint8ClampedArray(item) ? 3 : types.isInt16Array(item) ? 4 : types.isUint16Array(item) ? 5 : types.isInt32Array(item) ? 6 : types.isUint32Array(item) ? 7 : types.isFloat32Array(item) ? 8 : types.isFloat64Array(item) ? 9 : types.isBigInt64Array(item) ? 10 : types.isBigUint64Array(item) ? 11 : 12;
+      budget.add("binaryBytes", item.byteLength);
+      writer.byte(21 /* View */);
+      writer.byte(index);
+      writer.uint(item.byteLength);
+      writer.raw(new Uint8Array(item.buffer, item.byteOffset, item.byteLength));
+    } else if (types.isNumberObject(item)) {
+      writer.byte(22 /* BoxedNumber */);
+      writer.double(Number.prototype.valueOf.call(item));
+    } else if (types.isStringObject(item)) {
+      writer.byte(23 /* BoxedString */);
+      string(String.prototype.valueOf.call(item));
+    } else if (types.isBooleanObject(item)) {
+      writer.byte(24 /* BoxedBoolean */);
+      writer.byte(Boolean.prototype.valueOf.call(item) ? 1 : 0);
+    } else if (types.isBigIntObject(item)) {
+      writer.byte(25 /* BoxedBigInt */);
+      push({ kind: "value", value: BigInt.prototype.valueOf.call(item), depth: task.depth + 1 });
+    } else if (types.isNativeError(item)) {
+      writer.byte(26 /* Error */);
+      const error = item;
+      string(["EvalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError"].includes(error.name) ? error.name : "Error");
+      for (const field of [error.message, error.stack]) {
+        writer.byte(typeof field === "string" ? 1 : 0);
+        if (typeof field === "string") string(field);
+      }
+      const cause = Object.hasOwn(error, "cause");
+      writer.byte(cause ? 1 : 0);
+      if (cause) push({ kind: "value", value: error.cause, depth: task.depth + 1 });
+    } else {
+      if (types.isBoxedPrimitive(item) || types.isExternal(item)) throw Error("Unsupported compiler transport object");
+      writer.byte(12 /* Object */);
+      push(properties(item, false, task.depth));
+    }
+  }
+  if (stats) {
+    stats.objects = objects.size;
+    stats.strings = strings.size;
+  }
+  return writer.finish();
+}
+var Reader = class {
+  constructor(bytes) {
+    this.bytes = bytes;
+  }
+  bytes;
+  offset = 0;
+  raw(size2) {
+    if (!Number.isSafeInteger(size2) || size2 < 0 || size2 > this.bytes.length - this.offset) throw Error("Truncated compiler transport");
+    const start = this.offset;
+    this.offset += size2;
+    return this.bytes.subarray(start, this.offset);
+  }
+  byte() {
+    return this.raw(1)[0];
+  }
+  uint() {
+    let result = 0, scale = 1;
+    for (let i = 0; i < 8; i++) {
+      const byte = this.byte();
+      result += (byte & 127) * scale;
+      if (!Number.isSafeInteger(result)) break;
+      if (byte < 128) {
+        if (i && !byte) break;
+        return result;
+      }
+      scale *= 128;
+    }
+    throw Error("Invalid compiler transport integer");
+  }
+  double() {
+    return this.raw(8).readDoubleLE();
+  }
+};
+function decodeTypeScriptPayload(bytes, maxBytes, stats, policy) {
+  limit(maxBytes);
+  if (!Buffer.isBuffer(bytes) || bytes.length > maxBytes) throw new TypeScriptCodecLimitError(`TypeScript compiler payload exceeds ${maxBytes} bytes`);
+  const budget = new Budget(policy, stats);
+  const reader = new Reader(bytes);
+  if (!reader.raw(MAGIC.length).equals(MAGIC)) throw Error("Invalid compiler transport header");
+  const objects = [], strings = [], tasks = [];
+  const push = (...pending2) => {
+    budget.peak("tasks", tasks.length + pending2.length);
+    tasks.push(...pending2);
+  };
+  let root;
+  const string = (tag = reader.byte()) => {
+    if (tag === 10 /* StringRef */) {
+      const known = strings[reader.uint()];
+      if (known === void 0) throw Error("Invalid compiler string reference");
+      return known;
+    }
+    if (tag !== 8 /* String8 */ && tag !== 9 /* String16 */) throw Error("Invalid compiler property or string");
+    const size2 = reader.uint();
+    budget.add("strings");
+    budget.add("stringUnits", size2);
+    const text = reader.raw(size2 * (tag === 8 /* String8 */ ? 1 : 2)).toString(tag === 8 /* String8 */ ? "latin1" : "utf16le");
+    strings.push(text);
+    return text;
+  };
+  const frame = (current) => {
+    const tag = reader.byte();
+    if (tag === 0 /* End */) return;
+    push(() => frame(current));
+    if (current.kind === "object" || current.kind === "array") {
+      const key = tag === 14 /* Index */ && current.kind === "array" ? String(reader.uint()) : string(tag);
+      if (current.keys.has(key) || current.kind === "array" && (key === "length" || /^(?:0|[1-9]\d*)$/.test(key) && Number(key) < 4294967295 && Number(key) >= current.length)) throw Error("Invalid or duplicate compiler property");
+      budget.peak("keysPerObject", current.keys.size + 1);
+      budget.add("properties");
+      current.keys.add(key);
+      push(() => value((item) => {
+        Object.defineProperty(current.value, key, { value: item, writable: true, enumerable: true, configurable: true });
+      }, current.depth + 1));
+    } else if (current.kind === "set") {
+      budget.add("properties");
+      reader.offset--;
+      push(() => value((item) => {
+        current.value.add(item);
+      }, current.depth + 1));
+    } else if (current.kind === "map") {
+      const map = current.value;
+      budget.add("properties", 2);
+      reader.offset--;
+      push(() => value((key) => {
+        push(() => value((item) => {
+          if (map.has(key)) throw Error("Duplicate compiler map key");
+          map.set(key, item);
+        }, current.depth + 1));
+      }, current.depth + 1));
+    }
+  };
+  const value = (accept, depth) => {
+    budget.peak("depth", depth);
+    const tag = reader.byte();
+    let item, container;
+    if (tag === 1 /* Undefined */) item = void 0;
+    else if (tag === 2 /* Null */) item = null;
+    else if (tag === 3 /* False */ || tag === 4 /* True */) item = tag === 4 /* True */;
+    else if (tag === 5 /* Uint */ || tag === 6 /* NegativeInt */) {
+      const n = reader.uint();
+      if (n > (tag === 5 /* Uint */ ? 4294967295 : 2147483648) || tag === 6 /* NegativeInt */ && !n) throw Error("Invalid compiler number");
+      item = tag === 5 /* Uint */ ? n : -n;
+    } else if (tag === 7 /* Double */) item = reader.double();
+    else if (tag === 8 /* String8 */ || tag === 9 /* String16 */ || tag === 10 /* StringRef */) item = string(tag);
+    else if (tag === 11 /* Ref */) {
+      item = objects[reader.uint()];
+      if (item === void 0) throw Error("Invalid compiler object reference");
+    } else if (tag === 17 /* BigInt */) {
+      const sign = reader.byte();
+      if (sign > 1) throw Error("Invalid compiler integer sign");
+      const size2 = reader.uint();
+      budget.add("binaryBytes", size2);
+      const hex = reader.raw(size2).toString("hex");
+      item = (sign ? -1n : 1n) * BigInt("0x" + (hex || "00"));
+    } else {
+      budget.add("objects");
+      if (tag === 12 /* Object */) {
+        item = {};
+        container = { kind: "object", value: item, keys: /* @__PURE__ */ new Set(), depth };
+      } else if (tag === 13 /* Array */) {
+        const length = reader.uint();
+        if (length > 4294967295) throw Error("Invalid compiler array length");
+        budget.add("arraySlots", length);
+        item = new Array(length);
+        container = { kind: "array", value: item, length, keys: /* @__PURE__ */ new Set(), depth };
+      } else if (tag === 15 /* Map */) {
+        item = /* @__PURE__ */ new Map();
+        container = { kind: "map", value: item, depth };
+      } else if (tag === 16 /* Set */) {
+        item = /* @__PURE__ */ new Set();
+        container = { kind: "set", value: item, depth };
+      } else if (tag === 18 /* Date */) item = new Date(reader.double());
+      else if (tag === 19 /* RegExp */) item = new RegExp(string(), string());
+      else if (tag === 20 /* ArrayBuffer */) {
+        const size2 = reader.uint();
+        budget.add("binaryBytes", size2);
+        const data = reader.raw(size2);
+        item = Uint8Array.from(data).buffer;
+      } else if (tag === 21 /* View */) {
+        const index = reader.byte(), constructor = views[index];
+        if (!constructor) throw Error("Invalid compiler view");
+        const size2 = reader.uint();
+        budget.add("binaryBytes", size2);
+        const data = reader.raw(size2);
+        if (index === 0) item = Buffer.from(data);
+        else {
+          const copied = Uint8Array.from(data).buffer;
+          item = index === 12 ? new DataView(copied) : new constructor(copied);
+        }
+      } else if (tag === 22 /* BoxedNumber */) item = new Number(reader.double());
+      else if (tag === 23 /* BoxedString */) item = new String(string());
+      else if (tag === 24 /* BoxedBoolean */) {
+        const flag = reader.byte();
+        if (flag > 1) throw Error("Invalid compiler boolean");
+        item = new Boolean(flag);
+      } else if (tag === 25 /* BoxedBigInt */) {
+        const id = objects.length;
+        item = {};
+        push(() => value((primitive) => {
+          if (typeof primitive !== "bigint") throw Error("Invalid boxed compiler integer");
+          const boxed = Object(primitive);
+          objects[id] = boxed;
+          accept(boxed);
+        }, depth + 1));
+      } else if (tag === 26 /* Error */) {
+        const name3 = string(), constructors = { Error, EvalError, RangeError, ReferenceError, SyntaxError, TypeError, URIError };
+        if (!Object.hasOwn(constructors, name3)) throw Error("Invalid compiler error kind");
+        const flags = [], fields = [];
+        for (let i = 0; i < 2; i++) {
+          const flag = reader.byte();
+          if (flag > 1) throw Error("Invalid compiler error field");
+          flags.push(flag);
+          fields.push(flag ? string() : void 0);
+        }
+        const error = new constructors[name3](fields[0]);
+        if (!flags[0]) Reflect.deleteProperty(error, "message");
+        if (flags[1]) Object.defineProperty(error, "stack", { value: fields[1], writable: true, configurable: true });
+        else delete error.stack;
+        const cause = reader.byte();
+        if (cause > 1) throw Error("Invalid compiler error cause");
+        item = error;
+        if (cause) push(() => value((cause2) => {
+          Object.defineProperty(error, "cause", { value: cause2, writable: true, configurable: true });
+        }, depth + 1));
+      } else throw Error("Invalid compiler transport tag");
+      objects.push(item);
+    }
+    if (tag !== 25 /* BoxedBigInt */) accept(item);
+    if (container) push(() => frame(container));
+  };
+  push(() => value((item) => {
+    root = item;
+  }, 0));
+  while (tasks.length) tasks.pop()();
+  if (reader.offset !== bytes.length) throw Error("Trailing compiler transport bytes");
+  return root;
+}
+
+// src/analysis/tree-sitter/frames.ts
+var PARSER_FRAME_BYTES = 64 * 1024 * 1024;
+var PARSER_FRAME_ENCODING = "bounded-v1";
+var ParserFrameLimitError = class extends RangeError {
+};
+function size(value) {
+  if (!Number.isSafeInteger(value) || value < 1 || value > PARSER_FRAME_BYTES) throw Error("Parser frame limit must be a positive safe integer at or below 67108864 bytes");
+}
+function bounded(operation) {
+  try {
+    return operation();
+  } catch (error) {
+    if (error instanceof TypeScriptCodecLimitError) throw new ParserFrameLimitError(error.message.replace(/^TypeScript compiler/, "Parser facts"));
+    throw error;
+  }
+}
+function encodeParserFrame(value, maxBytes = PARSER_FRAME_BYTES, stats, limits) {
+  size(maxBytes);
+  return bounded(() => encodeTypeScriptPayload(value, maxBytes, stats, limits));
+}
+function decodeParserFrame(bytes, maxBytes = PARSER_FRAME_BYTES, stats, limits) {
+  size(maxBytes);
+  return bounded(() => decodeTypeScriptPayload(bytes, maxBytes, stats, limits));
+}
+function parserJob(message) {
+  if (message.encoding === void 0) return message;
+  if (message.encoding !== PARSER_FRAME_ENCODING || !Buffer.isBuffer(message.payload)) throw Error("Invalid parser request encoding");
+  const value = decodeParserFrame(message.payload);
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw Error("Invalid parser request");
+  return { ...value, id: message.id };
+}
+function replyParserFrame(id, response) {
+  let payload;
+  try {
+    payload = encodeParserFrame(response);
+  } catch (error) {
+    payload = encodeParserFrame({ error: error instanceof Error ? error.message : String(error), fatal: true });
+  }
+  process.send?.({ id, type: "completed", completedAtNs: process.hrtime.bigint().toString(), bytes: payload.byteLength, encoding: PARSER_FRAME_ENCODING });
+  process.send?.({ id, type: "result", payload, encoding: PARSER_FRAME_ENCODING });
+}
 
 // src/analysis/tree-sitter/grammars.ts
 import { createHash } from "node:crypto";
@@ -258,12 +801,12 @@ function goString(text) {
       bytes.push(simple[escape]);
       continue;
     }
-    const size = escape === "x" ? 2 : escape === "u" ? 4 : escape === "U" ? 8 : /[0-7]/.test(escape) ? 3 : 0;
-    if (!size) return void 0;
-    const octal = /[0-7]/.test(escape), start = octal ? i : i + 1, digits = text.slice(start, start + size);
-    if (start + size > text.length - 1 || digits.length !== size || !(octal ? /^[0-7]+$/ : /^[0-9a-fA-F]+$/).test(digits)) return void 0;
+    const size2 = escape === "x" ? 2 : escape === "u" ? 4 : escape === "U" ? 8 : /[0-7]/.test(escape) ? 3 : 0;
+    if (!size2) return void 0;
+    const octal = /[0-7]/.test(escape), start = octal ? i : i + 1, digits = text.slice(start, start + size2);
+    if (start + size2 > text.length - 1 || digits.length !== size2 || !(octal ? /^[0-7]+$/ : /^[0-9a-fA-F]+$/).test(digits)) return void 0;
     const value = parseInt(digits, octal ? 8 : 16);
-    i = start + size - 1;
+    i = start + size2 - 1;
     if (octal || escape === "x") {
       if (value > 255) return void 0;
       bytes.push(value);
@@ -316,14 +859,14 @@ function extractGoSemantic(root, declarations, source) {
   const site = (node) => ({ start: node.startIndex, range: source.range(node.startIndex, node.endIndex) });
   const field = (node, name3) => node.childForFieldName(name3) ?? void 0;
   const items = (node) => node?.namedChildren.filter((child3) => child3.type !== "comment") ?? [];
-  const limit = () => {
+  const limit2 = () => {
     if (++visited > 2e5) truncated = true;
     return !truncated;
   };
   const unknown = (node) => ({ ...site(node), kind: "unknown", text: node.text.slice(0, 200) });
   function expression2(node, depth = 0) {
     if (!node) return { kind: "unknown", text: "", start: 0, range: source.range(0, 0) };
-    if (depth > 64 || !limit()) return unknown(node);
+    if (depth > 64 || !limit2()) return unknown(node);
     const recurse = (child3) => expression2(child3, depth + 1), s = site(node);
     switch (node.type) {
       case "identifier":
@@ -435,7 +978,7 @@ function extractGoSemantic(root, declarations, source) {
     items(body3).forEach((child3) => walk(child3, inner));
   }
   function read(node, current, typeOnly = false, parentReference = false) {
-    if (!limit()) return;
+    if (!limit2()) return;
     if (node.type === "binary_expression" && node.children.some((child3) => ["&&", "||"].includes(child3.type))) {
       const left = field(node, "left"), right = field(node, "right");
       if (left) read(left, current, typeOnly);
@@ -493,7 +1036,7 @@ function extractGoSemantic(root, declarations, source) {
     for (const value of values) read(value, current);
   }
   function walk(node, current) {
-    if (!limit()) return;
+    if (!limit2()) return;
     switch (node.type) {
       case "package_clause":
       case "import_declaration":
@@ -527,8 +1070,8 @@ function extractGoSemantic(root, declarations, source) {
           if (value) read(value, inner);
           for (const child3 of node.namedChildren) {
             if (["type_case", "default_case"].includes(child3.type)) {
-              const branch = scope(child3, inner, "case"), names2 = items(field(node, "alias")), types4 = child3.childrenForFieldName("type");
-              for (const name3 of names2) if (name3.text !== "_") facts.bindings.push({ ...site(name3), end: child3.startIndex, name: name3.text, scope: branch, kind: "parameter", ...types4.length === 1 ? { type: expression2(types4[0]) } : {} });
+              const branch = scope(child3, inner, "case"), names2 = items(field(node, "alias")), types5 = child3.childrenForFieldName("type");
+              for (const name3 of names2) if (name3.text !== "_") facts.bindings.push({ ...site(name3), end: child3.startIndex, name: name3.text, scope: branch, kind: "parameter", ...types5.length === 1 ? { type: expression2(types5[0]) } : {} });
               for (const part of child3.namedChildren) {
                 if (part.type === "statement_list") walk(part, branch);
                 else read(part, branch, true);
@@ -869,7 +1412,7 @@ var callable = /* @__PURE__ */ new Set(["method", "function", "constructor"]);
 var typeKinds = /* @__PURE__ */ new Set(["class", "interface", "enum", "record", "annotation", "object", "typealias"]);
 var unescapeName = (text) => text.replace(/`([^`]+)`|\s+/g, (_match, escaped) => escaped ?? "");
 var child = (node, ...names2) => node.namedChildren.find((item) => names2.includes(item.type));
-var named = (node, field, ...types4) => node.childForFieldName(field) ?? child(node, ...types4);
+var named = (node, field, ...types5) => node.childForFieldName(field) ?? child(node, ...types5);
 var typeNodes = /* @__PURE__ */ new Set(["type_identifier", "scoped_type_identifier", "generic_type", "user_type", "nullable_type", "function_type", "array_type", "integral_type", "floating_point_type", "boolean_type", "void_type"]);
 function extractJvmSemantic(root, language, declarations, source) {
   const facts = { scopes: [], definitions: [], bindings: [], writes: [], references: [], calls: [], returns: [], complete: !root.hasError, gaps: [] };
@@ -1275,7 +1818,7 @@ function extractJvm(root, language, declarations, source) {
 }
 
 // src/analysis/tree-sitter/csharp-semantic.ts
-var types = /* @__PURE__ */ new Set(["class", "interface", "struct", "enum", "record", "type"]);
+var types2 = /* @__PURE__ */ new Set(["class", "interface", "struct", "enum", "record", "type"]);
 var name = (value) => value.replace(/\s+/g, "").replace(/@([\p{L}_][\p{L}\p{N}_]*)/gu, "$1");
 function extractCsharpSemantic(root, declarations, source) {
   const facts = { scopes: [], definitions: [], bindings: [], writes: [], references: [], calls: [], returns: [], complete: !root.hasError, gaps: [] };
@@ -1446,14 +1989,14 @@ function extractCsharpSemantic(root, declarations, source) {
     const key = fact?.key ?? lambdaKey(node), body3 = node.childForFieldName("body"), params = parameters2(node.childForFieldName("parameters") ?? void 0), mods = fact?.modifiers ?? node.children.filter((child3) => child3.type === "modifier" || ["static", "async"].includes(child3.type)).map((child3) => child3.text), parent = fact?.parent && declarations.find((item) => item.key === fact.parent && item.kind !== "namespace")?.key;
     const value = { ...site(node), key, name: fact?.name ?? "<lambda>", kind, scope: current.key, ...parent ? { parent } : {}, parameters: params, modifiers: mods, typeParameters: children(node).find((child3) => child3.type === "type_parameter_list")?.namedChildren.map((child3) => name(child3.childForFieldName("name")?.text ?? child3.text)) ?? [], attributes: attributes(node), gaps: [], hasBody: !!body3 };
     definitionNodes.set(value, node);
-    const returnNode = node.childForFieldName("returns") ?? (!types.has(kind) && kind !== "constructor" ? node.childForFieldName("type") : null);
+    const returnNode = node.childForFieldName("returns") ?? (!types2.has(kind) && kind !== "constructor" ? node.childForFieldName("type") : null);
     if (returnNode)
       value.returnType = name(returnNode.text);
     if (mods.some((modifier) => ["extern", "unsafe"].includes(modifier)))
       value.gaps.push("External/unsafe original member requires a reviewed binding profile");
     if (node.type === "property_declaration")
       value.gaps.push("Property accessor dispatch is not an ordinary direct method");
-    if (types.has(kind)) {
+    if (types2.has(kind)) {
       const bodyScope2 = body3 ? scope(body3, "type", current, key) : void 0;
       if (bodyScope2) {
         value.typeScope = bodyScope2.key;
@@ -1520,7 +2063,7 @@ function extractCsharpSemantic(root, declarations, source) {
     const fact = bySite.get(`${node.startIndex}:${Math.min(node.endIndex, source.text.length)}`);
     if (fact?.kind === "namespace")
       return;
-    if (fact && types.has(fact.kind)) {
+    if (fact && types2.has(fact.kind)) {
       const result = definition(node, current, fact, fact.kind);
       for (const base of children(node).find((child3) => child3.type === "base_list")?.namedChildren ?? [])
         refType(base, current);
@@ -1681,7 +2224,7 @@ function extractCsharpSemantic(root, declarations, source) {
     return [{ ...base, kind: "opaque", text: node.text.slice(0, 300) }];
   };
   for (const [definition2, node] of definitionNodes) {
-    if (!definition2.bodyScope || types.has(definition2.kind))
+    if (!definition2.bodyScope || types2.has(definition2.kind))
       continue;
     const current = facts.scopes.find((scope2) => scope2.key === definition2.bodyScope), body3 = node.childForFieldName("body");
     if (body3?.type === "block")
@@ -1697,7 +2240,7 @@ function extractCsharpSemantic(root, declarations, source) {
 }
 
 // src/analysis/tree-sitter/csharp-syntax.ts
-var types2 = /* @__PURE__ */ new Set(["class", "interface", "struct", "enum", "record", "type"]);
+var types3 = /* @__PURE__ */ new Set(["class", "interface", "struct", "enum", "record", "type"]);
 var name2 = (text) => text.replace(/\s+/g, "").replace(/@([\p{L}_][\p{L}\p{N}_]*)/gu, "$1");
 function extractCsharp(root, declarations, source) {
   const facts = { imports: [], declarations: [], namespaces: [], complete: !root.hasError, gaps: [] };
@@ -1767,7 +2310,7 @@ function extractCsharp(root, declarations, source) {
       facts.complete = false;
       continue;
     }
-    const parent = declaration.parent ? byKey.get(declaration.parent) : void 0, parentType = parent && types2.has(parent.kind), type = types2.has(declaration.kind), modifiers4 = declaration.modifiers ?? [];
+    const parent = declaration.parent ? byKey.get(declaration.parent) : void 0, parentType = parent && types3.has(parent.kind), type = types3.has(declaration.kind), modifiers4 = declaration.modifiers ?? [];
     const parameters2 = node.namedChildren.find((child3) => child3.type === "type_parameter_list")?.namedChildren.filter((child3) => child3.type === "type_parameter").length ?? 0;
     const namespace = namespaceAt(node), visibility = modifiers4.includes("protected") ? modifiers4.includes("private") ? "private protected" : modifiers4.includes("internal") ? "protected internal" : "protected" : declaration.visibility ?? (parentType ? ["interface", "enum"].includes(parent.kind) ? "public" : "private" : "internal");
     facts.declarations.push({ key: declaration.key, name: name2(declaration.name), qualifiedName: name2(declaration.qualifiedName), namespace, ...parentType ? { parent: parent.key } : {}, type, arity: parameters2, partial: modifiers4.includes("partial"), static: modifiers4.includes("static") || modifiers4.includes("const"), visibility, fileLocal: modifiers4.includes("file"), flavor: declaration.kind === "record" ? node.children.some((child3) => child3.type === "struct") ? "record-struct" : "record-class" : declaration.kind, typeParameters: node.namedChildren.find((child3) => child3.type === "type_parameter_list")?.namedChildren.map((child3) => name2(child3.childForFieldName("name")?.text ?? child3.text)) ?? [], constraints: node.namedChildren.filter((child3) => child3.type === "type_parameter_constraints_clause").map((child3) => name2(child3.text)), bases: node.namedChildren.find((child3) => child3.type === "base_list")?.namedChildren.map((child3) => name2(child3.text)) ?? [] });
@@ -2546,16 +3089,16 @@ function extractCfamilyStructure(root, query, language, content, seeds = []) {
       add(node, name3, selectedName.text, kind2, `${prefix2}${modifiers(node).join(" ")} ${type} ${selected.text}`, definition ? "definition" : functionLike || alias || selected.type !== "init_declarator" ? "declaration" : "definition", friend, selectedName.display);
     }
   }
-  const types4 = /* @__PURE__ */ new Map();
+  const types5 = /* @__PURE__ */ new Map();
   for (const declaration of declarations) if (["class", "struct", "union"].includes(declaration.kind)) {
-    const values = types4.get(declaration.qualifiedName) ?? [];
+    const values = types5.get(declaration.qualifiedName) ?? [];
     values.push(declaration);
-    types4.set(declaration.qualifiedName, values);
+    types5.set(declaration.qualifiedName, values);
   }
   for (const declaration of declarations) {
     const node = originalNodes.get(declaration.key);
     if (declaration.kind !== "function" || !node.childrenForFieldName("declarator").some((item) => declarator(item)?.text.includes("::"))) continue;
-    const prefix2 = declaration.qualifiedName.slice(0, declaration.qualifiedName.lastIndexOf("::")), owners2 = types4.get(prefix2) ?? [];
+    const prefix2 = declaration.qualifiedName.slice(0, declaration.qualifiedName.lastIndexOf("::")), owners2 = types5.get(prefix2) ?? [];
     if (owners2.length === 1 && JSON.stringify(owners2[0].sourceConditions ?? []) === JSON.stringify(declaration.sourceConditions ?? [])) {
       declaration.parent = owners2[0].key;
       declaration.kind = declaration.name === owners2[0].name ? "constructor" : declaration.name === `~${owners2[0].name}` ? "destructor" : "method";
@@ -3241,7 +3784,7 @@ var MAX_METADATA4 = 4096;
 var MAX_ISSUES5 = 100;
 var compact6 = (text) => text.replace(/\s+/g, " ").trim().slice(0, 1200);
 var modifiers2 = /* @__PURE__ */ new Set(["public", "private", "protected", "static", "final", "abstract", "synchronized", "native", "transient", "volatile", "strictfp", "sealed", "non-sealed"]);
-var types3 = /* @__PURE__ */ new Set(["class", "trait", "interface", "annotation", "enum", "record"]);
+var types4 = /* @__PURE__ */ new Set(["class", "trait", "interface", "annotation", "enum", "record"]);
 var reservedNames = /* @__PURE__ */ new Set(["boolean", "byte", "char", "double", "float", "int", "long", "short", "void", "class", "interface", "trait", "enum", "def", "package", "import", "return", "throw", "throws", "new", "this", "super", "true", "false", "null", ...modifiers2]);
 var transforms = /* @__PURE__ */ new Set(["Grab", "Grapes", "GrabConfig", "GrabResolver", "ASTTest", "ASTTransformation", "ASTTransformationClass", "Field", "Immutable", "ImmutableBase", "ImmutableOptions", "Canonical", "TupleConstructor", "MapConstructor", "NamedVariant", "InheritConstructors", "AutoClone", "AutoExternalize", "EqualsAndHashCode", "ToString", "Delegate", "Builder", "Lazy", "Singleton", "Memoized", "RecordType", "Sortable", "Category", "Mixin", "Newify", "BaseScript", "PackageScope", "PropertyOptions"]);
 function extractGroovyStructure(root, query, content) {
@@ -3339,7 +3882,7 @@ function extractGroovyStructure(root, query, content) {
     }
     const parents = ancestors(node);
     if (nameNode.hasError || nameNode.isMissing || invalidHeaders.has(node.id) || parents.some((p) => p.isError || unsafeBodies.has(p.id) || invalidHeaders.has(p.id)) || damage.some((n) => n.startIndex >= node.startIndex && n.startIndex < end && n.endIndex >= node.startIndex)) return;
-    if (unsafeBodies.size && !types3.has(kind) && kind !== "namespace") return;
+    if (unsafeBodies.size && !types4.has(kind) && kind !== "namespace") return;
     const parent = parentFor(node), mods = node.children.filter((n) => modifiers2.has(n.type)).map((n) => n.text), annotations2 = node.namedChildren.filter((n) => n.type === "annotation").map((n) => n.text), conditions = [];
     if (parents.some((n) => n.type === "closure")) conditions.push("Original named declaration inside a Groovy closure; receiver/delegate and runtime binding remain unverified");
     if (annotations2.length) conditions.push("Original annotation spelling only; annotation resolution and AST transformation remain unverified");
@@ -3373,8 +3916,8 @@ function extractGroovyStructure(root, query, content) {
         continue;
       }
       const parent = parentFor(node);
-      let kind = parent && types3.has(parent.kind) ? "method" : "function";
-      if (node.type === "constructor_declaration" && parent && types3.has(parent.kind) && parent.name === name3.text) kind = "constructor";
+      let kind = parent && types4.has(parent.kind) ? "method" : "function";
+      if (node.type === "constructor_declaration" && parent && types4.has(parent.kind) && parent.name === name3.text) kind = "constructor";
       add(node, name3, kind, void 0, true);
       continue;
     }
@@ -3407,7 +3950,7 @@ var MAX_ISSUES6 = 100;
 var compact7 = (text) => text.replace(/\s+/g, " ").trim().slice(0, 1200);
 var typeKinds5 = /* @__PURE__ */ new Set(["type", "class", "struct", "record", "union", "enum", "interface", "delegate", "type-alias", "type-extension", "exception"]);
 var bodies = /* @__PURE__ */ new Set(["anon_type_defn", "record_type_defn", "union_type_defn", "enum_type_defn", "interface_type_defn", "delegate_type_defn", "type_abbrev_defn", "type_declaration", "type_extension"]);
-var direct = (node, ...types4) => node.namedChildren.find((child3) => types4.includes(child3.type));
+var direct = (node, ...types5) => node.namedChildren.find((child3) => types5.includes(child3.type));
 var nameOf = (node) => {
   if (!node) return;
   if (["identifier", "op_identifier", "active_pattern"].includes(node.type)) return node;
@@ -3675,9 +4218,9 @@ function extractFsharpStructure(root, query, content, signatureFile = false) {
 var vbFold = (text) => text.replace(/[A-Z]/g, (c) => c.toLowerCase());
 var vbName = (text) => vbFold(text.startsWith("[") && text.endsWith("]") ? text.slice(1, -1) : text);
 function vbHeader(content, start, end) {
-  const tokens = [], limit = Math.min(end, content.length, start + 8192);
+  const tokens = [], limit2 = Math.min(end, content.length, start + 8192);
   let at = start, depth = 0;
-  while (at < limit) {
+  while (at < limit2) {
     const begin = at, c = content[at];
     if (c === "\r" || c === "\n") {
       const continuation = tokens.at(-1)?.text === "_";
@@ -3691,7 +4234,7 @@ function vbHeader(content, start, end) {
       continue;
     }
     if (c === "'" || vbFold(content.slice(at, at + 3)) === "rem" && (at === start || /\s/.test(content[at - 1])) && /\s/.test(content[at + 3] ?? "")) {
-      while (at < limit && !/[\r\n]/.test(content[at])) at++;
+      while (at < limit2 && !/[\r\n]/.test(content[at])) at++;
       if (!depth) return { end: begin, tokens, complete: true };
       continue;
     }
@@ -3701,7 +4244,7 @@ function vbHeader(content, start, end) {
       kind = "literal";
       at++;
       let closed = false;
-      while (at < limit) {
+      while (at < limit2) {
         if (content[at] === '"') {
           if (content[at + 1] === '"') {
             at += 2;
@@ -3718,18 +4261,18 @@ function vbHeader(content, start, end) {
     } else if (c === "[") {
       kind = "identifier";
       at++;
-      while (at < limit && content[at] !== "]" && !/[\r\n]/.test(content[at])) at++;
+      while (at < limit2 && content[at] !== "]" && !/[\r\n]/.test(content[at])) at++;
       if (content[at] !== "]") return { end: at, tokens, complete: false };
       at++;
     } else if (c === "#" && content.indexOf("#", at + 1) > at) {
       const close = content.indexOf("#", at + 1);
-      if (close >= limit || /[\r\n]/.test(content.slice(at, close))) return { end: at, tokens, complete: false };
+      if (close >= limit2 || /[\r\n]/.test(content.slice(at, close))) return { end: at, tokens, complete: false };
       kind = "literal";
       at = close + 1;
     } else if (/[A-Za-z_]/.test(c)) {
       kind = "word";
       at++;
-      while (at < limit && /[A-Za-z_0-9]/.test(content[at])) at++;
+      while (at < limit2 && /[A-Za-z_0-9]/.test(content[at])) at++;
       if (/[$%&@#!]/.test(content[at] ?? "")) at++;
     } else {
       if (c === "(") depth++;
@@ -3936,8 +4479,8 @@ var ParserOriginalSource = class extends SourceText {
   }
 };
 var METHOD_OWNERS = /* @__PURE__ */ new Set(["class", "struct", "interface", "trait", "record", "object", "enum"]);
-function child2(node, ...types4) {
-  return node.namedChildren.find((item) => types4.includes(item.type));
+function child2(node, ...types5) {
+  return node.namedChildren.find((item) => types5.includes(item.type));
 }
 function body2(node) {
   return node.childForFieldName("body") ?? node.namedChildren.find((item) => FIELD_BODIES.has(item.type));
@@ -5015,7 +5558,7 @@ function extractRazor(root, query, content, sourceKind = "component") {
     }
   }
   if (query.didExceedMatchLimit()) facts.truncated = true;
-  const owners2 = /* @__PURE__ */ new Map(), unsafe = /* @__PURE__ */ new Set(), types4 = /* @__PURE__ */ new Set(["class", "interface", "struct", "record", "enum", "type"]);
+  const owners2 = /* @__PURE__ */ new Map(), unsafe = /* @__PURE__ */ new Set(), types5 = /* @__PURE__ */ new Set(["class", "interface", "struct", "record", "enum", "type"]);
   for (const { node, name: name3, kind: capturedKind } of rows.sort((a, b) => a.node.startIndex - b.node.startIndex || b.node.endIndex - a.node.endIndex || a.name.startIndex - b.name.startIndex)) {
     let block, parent, blocked = false, insideFunction = false, directive = false, conditional = false, depth = 0;
     for (let p = node.parent; p; p = p.parent) {
@@ -5053,12 +5596,12 @@ function extractRazor(root, query, content, sourceKind = "component") {
     }
     const member = blockKind(block) !== "render", top = node.parent?.id === block.id, field = capturedKind === "field", statement = field ? node.parent : node;
     if (field) {
-      if (insideFunction || !member && !(parent && types4.has(parent.kind))) continue;
+      if (insideFunction || !member && !(parent && types5.has(parent.kind))) continue;
       if (!statement || !["field_declaration", "local_declaration_statement", "event_field_declaration"].includes(statement.type)) continue;
       if (!top && statement.parent?.id !== block.id && statement.parent?.type !== "declaration_list" && !statement.parent?.type.startsWith("preproc_")) continue;
     }
     const kind = field ? statement.type === "event_field_declaration" ? "event" : "field" : capturedKind === "method" && (!member || insideFunction) ? "function" : capturedKind;
-    if (types4.has(kind) && (!member || insideFunction) || ["property", "event", "indexer", "operator", "constructor", "destructor", "enum-case"].includes(kind) && (!member || insideFunction) || ["constructor", "destructor"].includes(kind) && (!parent || !types4.has(parent.kind))) {
+    if (types5.has(kind) && (!member || insideFunction) || ["property", "event", "indexer", "operator", "constructor", "destructor", "enum-case"].includes(kind) && (!member || insideFunction) || ["constructor", "destructor"].includes(kind) && (!parent || !types5.has(parent.kind))) {
       unsafe.add(node.id);
       syntax.csharpComplete = false;
       razorIssue(facts, "razor-owner-gap", "Type/member declaration requires an original source type/member context; no generated template class is inferred", source.range(node.startIndex, node.endIndex));
@@ -5077,8 +5620,8 @@ function extractRazor(root, query, content, sourceKind = "component") {
       razorIssue(facts, "razor-original-header-gap", "Original C# header/name/delimiters exceed the bounded native profile or intersect recovery; descendants are quarantined", source.range(start, Math.min(headerEnd, content.length)));
       continue;
     }
-    const signature2 = field && type ? content.slice(start, type.endIndex) + " " + name3.text : content.slice(start, headerEnd).trim(), regions = field && type ? [source.range(start, type.endIndex), source.range(name3.startIndex, rangeEnd)] : [source.range(start, rangeEnd)], form = node.childForFieldName("body") || node.childForFieldName("accessors") || node.childForFieldName("value") || field || types4.has(kind) || kind === "enum-case" ? "definition" : "declaration";
-    const fact = { key: `razor-csharp:${node.startIndex}:${node.endIndex}:${name3.startIndex}:${kind}`, name: name3.text, qualifiedName: [parent?.qualifiedName, ...kind === "function" && !parent ? [`render:${syntax.regions.filter((r) => r.kind === "render-block" && r.start < block.startIndex).length}`] : [], name3.text].filter(Boolean).join("::"), kind, entityType: types4.has(kind) ? "class" : kind === "function" ? "function" : "method", signature: signature2, start, end: rangeEnd, nameEnd: name3.endIndex, range: source.range(start, rangeEnd), declarationForm: form, sourceConditions: ["Original C# source declaration; generated class/render methods, namespaces/partial component binding, imports, routes and runtime execution remain unverified", ...conditional ? ["Original preprocessor branch; compiler symbols and activation are unverified"] : [], ...field ? ["Field signature consists only of original shared type/modifier bytes and the original declarator name; initializer execution remains unverified"] : [], ...syntax.regions.filter((r) => r.start <= start && r.end >= rangeEnd && r.kind === "control").map(() => "Original conditional/control source context; activation is unverified")], embeddedSource: { language: "csharp", executionContext, headerRange: source.range(start, headerEnd), regions }, ...parent ? { parent: parent.key } : {} };
+    const signature2 = field && type ? content.slice(start, type.endIndex) + " " + name3.text : content.slice(start, headerEnd).trim(), regions = field && type ? [source.range(start, type.endIndex), source.range(name3.startIndex, rangeEnd)] : [source.range(start, rangeEnd)], form = node.childForFieldName("body") || node.childForFieldName("accessors") || node.childForFieldName("value") || field || types5.has(kind) || kind === "enum-case" ? "definition" : "declaration";
+    const fact = { key: `razor-csharp:${node.startIndex}:${node.endIndex}:${name3.startIndex}:${kind}`, name: name3.text, qualifiedName: [parent?.qualifiedName, ...kind === "function" && !parent ? [`render:${syntax.regions.filter((r) => r.kind === "render-block" && r.start < block.startIndex).length}`] : [], name3.text].filter(Boolean).join("::"), kind, entityType: types5.has(kind) ? "class" : kind === "function" ? "function" : "method", signature: signature2, start, end: rangeEnd, nameEnd: name3.endIndex, range: source.range(start, rangeEnd), declarationForm: form, sourceConditions: ["Original C# source declaration; generated class/render methods, namespaces/partial component binding, imports, routes and runtime execution remain unverified", ...conditional ? ["Original preprocessor branch; compiler symbols and activation are unverified"] : [], ...field ? ["Field signature consists only of original shared type/modifier bytes and the original declarator name; initializer execution remains unverified"] : [], ...syntax.regions.filter((r) => r.start <= start && r.end >= rangeEnd && r.kind === "control").map(() => "Original conditional/control source context; activation is unverified")], embeddedSource: { language: "csharp", executionContext, headerRange: source.range(start, headerEnd), regions }, ...parent ? { parent: parent.key } : {} };
     facts.declarations.push(fact);
     if (!field) owners2.set(node.id, fact);
   }
@@ -5326,11 +5869,6 @@ function createNativeWasmMemory(bytes = NATIVE_WASM_MEMORY_LIMITS.maxBytes) {
 
 // src/analysis/tree-sitter/worker.ts
 var loaded = /* @__PURE__ */ new Map();
-function reply(id, response) {
-  const payload = serialize(response);
-  process.send?.({ id, type: "completed", completedAtNs: process.hrtime.bigint().toString(), bytes: payload.byteLength });
-  process.send?.({ id, type: "result", payload });
-}
 var wasm = createNativeWasmMemory(nativeWasmWorkerLimit(process.argv.slice(2)));
 var initialized = Parser.init({ wasmMemory: wasm.memory });
 async function load(language) {
@@ -5470,7 +6008,7 @@ async function handle(job) {
         facts = extractObjcMacroProfiles(facts, job.content);
       }
       wasm.assertAvailable();
-      reply(job.id, { facts });
+      replyParserFrame(job.id, { facts });
     } finally {
       tree.delete();
     }
@@ -5482,12 +6020,18 @@ async function handle(job) {
       error = memoryError;
       fatal = true;
     }
-    reply(job.id, { error: error instanceof Error ? error.message : String(error), ...fatal ? { fatal: true } : {} });
+    replyParserFrame(job.id, { error: error instanceof Error ? error.message : String(error), ...fatal ? { fatal: true } : {} });
   }
 }
 var pending = Promise.resolve();
-process.on("message", (job) => {
-  pending = pending.then(() => handle(job));
+process.on("message", (message) => {
+  pending = pending.then(async () => {
+    try {
+      await handle(parserJob(message));
+    } catch (error) {
+      replyParserFrame(message.id, { error: error instanceof Error ? error.message : String(error), fatal: true });
+    }
+  });
 });
 process.once("disconnect", () => {
   for (const { parser, query } of loaded.values()) {
