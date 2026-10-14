@@ -53,12 +53,35 @@ Add `.codiluce/` to your `.gitignore`: that is where the analysis lives.
 
 Want it always at hand? Run `npm install --global codiluce`, then `codiluce start .` in any repository.
 
+## Explain it with your agent
+
+Ask Claude Code, Codex or Cursor to explain the code, and read the answer on the map. Connect your agent to Codiluce
+once, from the repository:
+
+```bash
+claude mcp add codiluce -- npx -y codiluce mcp
+```
+
+Then ask it, for example, *"Use Codiluce to explain how checkout works, and publish it."* Its tools read the index
+(flows, blast radius, history, source), so it starts from what the code provably does. `publish_explanation` checks
+that every file, symbol and flow it names exists, then saves the answer in the map's **Explain** column: point at a
+link and that code lights up on the map; click it to open it. Each explanation is pinned to the commit it was written
+against and says when the code it links changes. With an Anthropic or OpenAI key, you can also ask in the column
+itself, with files and folders attached by `@`.
+
+Explanations ship in the next npm release (0.1.1 does not have `codiluce mcp` yet); from a source checkout, the
+column's *Connect your agent* panel gives the exact command.
+
+![An explanation of how BookStack saves a page, in the Explain column: its links name the controller, repository and revision code, which is lit on the map while the rest of the repository recedes.](site/public/shots/explanations.webp)
+
 ## What you can do
 
 - **Zoom from the whole repository to a single line.** Applications, folders, files and symbols nest inside each other,
   sized by their code.
 - **Follow a flow end to end.** From a page or a command, through the request, to the handler and the tables it reads
   and writes.
+- **Ask, and read the answer on the map.** Explanations from your agent, or from the chat in the map, link the code
+  they talk about: every link lights its code, and stale answers say what changed.
 - **Replay your Git history.** Every commit becomes a snapshot. Compare any two, or watch the architecture change as a
   time-lapse.
 - **See the blast radius.** Pick anything and see what depends on it, hop by hop.
@@ -70,7 +93,8 @@ Want it always at hand? Run `npm install --global codiluce`, then `codiluce star
 ## Private by design
 
 Codiluce runs on your machine. It reads your code but never runs it, never installs its dependencies and never writes
-to your checkout. Nothing leaves your computer unless you ask for AI descriptions or GitHub pull request data.
+to your checkout. Nothing leaves your computer unless you ask for AI descriptions, ask a question in the map's chat or
+ask for GitHub pull request data. Your agent reads the index through Codiluce's MCP server, on your machine.
 
 ## Languages and frameworks
 
@@ -335,8 +359,8 @@ dynamic configuration, middleware policies and generated URLs retain gaps. Bound
 
 ## Learn more
 
-- [Getting started](https://codiluce.com/docs/), [languages & frameworks](https://codiluce.com/docs/stacks/) and
-  [using the map](https://codiluce.com/docs/map/)
+- [Getting started](https://codiluce.com/docs/), [languages & frameworks](https://codiluce.com/docs/stacks/),
+  [using the map](https://codiluce.com/docs/map/) and [explanations](https://codiluce.com/docs/explanations/)
 - [History](https://codiluce.com/docs/history/), [CLI & API](https://codiluce.com/docs/cli/) and
   [configuration](https://codiluce.com/docs/configuration/)
 - [How it works](https://codiluce.com/docs/how-it-works/), the [technical reference](docs/reference.md) and the

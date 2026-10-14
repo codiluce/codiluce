@@ -17,6 +17,7 @@ export const DOCS_NAV = [
   { href: '/docs/', title: 'Getting started' },
   { href: '/docs/stacks/', title: 'Languages & frameworks' },
   { href: '/docs/map/', title: 'Using the map' },
+  { href: '/docs/explanations/', title: 'Explanations' },
   { href: '/docs/history/', title: 'History' },
   { href: '/docs/cli/', title: 'CLI & API' },
   { href: '/docs/configuration/', title: 'Configuration' },

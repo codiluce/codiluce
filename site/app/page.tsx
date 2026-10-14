@@ -122,6 +122,24 @@ export default function Home() {
 
           <div className="feature">
             <div className="feature-text">
+              <p className="eyebrow">Explanations</p>
+              <h2 className="section-title">Ask your agent. Read the answer on the map.</h2>
+              <p>
+                Connect Claude Code, Codex or Cursor to Codiluce, and ask it how something works. It reads the index instead of
+                guessing from file names, and saves its answer beside the map. Every file, symbol and flow the answer names is a
+                link: point at it and that code lights up; click it and it opens.
+              </p>
+              <ul className="ticks">
+                <li>Links are checked against the index before an answer is saved</li>
+                <li>Each answer is pinned to its commit, and says when the code it links changes</li>
+                <li>Ask in the map too, with your own Anthropic or OpenAI key</li>
+              </ul>
+            </div>
+            <Shot src="/shots/explanations.webp" alt="An explanation of how BookStack saves a page, beside the map: the code it links is lit while the rest of the repository recedes." />
+          </div>
+
+          <div className="feature reverse">
+            <div className="feature-text">
               <p className="eyebrow">Data</p>
               <h2 className="section-title">See the code by the data it touches.</h2>
               <p>
