@@ -11,7 +11,7 @@ import { applyGraphPatch } from '../pipeline/cache.js';
 import { TYPESCRIPT_WORKER_LIMITS, TYPESCRIPT_WORKER_PROTOCOL, type TypeScriptWorkerRequest, type TypeScriptWorkerResult } from './ts-worker-protocol.js';
 import { typescriptAnalyzer } from './typescript.js';
 import { embeddedAnalyzer, EMBEDDED_VERSION } from '../analysis/embedded/index.js';
-import { encodeTypeScriptPayload, decodeTypeScriptPayload, TypeScriptCodecLimitError } from './ts-worker-codec.js';
+import { encodeTypeScriptPayload, decodeTypeScriptPayload, TypeScriptCodecLimitError, TypeScriptCodecStructureLimitError, type TypeScriptCodecLimits } from './ts-worker-codec.js';
 
 const WORKER = fileURLToPath(new URL('./native-ts-worker.mjs', import.meta.url));
 const activeWorkers = new Map<ReturnType<typeof fork>, Set<number>>();
@@ -31,7 +31,7 @@ function ownerInt(): void { ownerSignal('SIGINT'); }
 function ownerTerm(): void { ownerSignal('SIGTERM'); }
 function watchOwner(): void { if (activeWorkers.size === 1) { process.on('exit', ownerExit); process.on('SIGINT', ownerInt); process.on('SIGTERM', ownerTerm); } }
 function unwatchOwner(child: ReturnType<typeof fork>): void { activeWorkers.delete(child); if (!activeWorkers.size) { process.off('exit', ownerExit); process.off('SIGINT', ownerInt); process.off('SIGTERM', ownerTerm); } }
-export interface TypeScriptWorkerOptions { worker?: string; oldSpaceMiB?: number; semiSpaceMiB?: number; maxMessageBytes?: number }
+export interface TypeScriptWorkerOptions { worker?: string; oldSpaceMiB?: number; semiSpaceMiB?: number; maxMessageBytes?: number; codecLimits?: Partial<TypeScriptCodecLimits> }
 export class TypeScriptWorkerError extends Error {
   constructor(message: string, readonly pid: number | undefined, readonly code: number | null, readonly signal: NodeJS.Signals | null, readonly stderr: string) { super(message); this.name = 'TypeScriptWorkerError'; }
 }
@@ -68,8 +68,8 @@ export async function runTypeScriptWorker(request: TypeScriptWorkerRequest, opti
   const worker = options.worker ?? WORKER, old = options.oldSpaceMiB ?? TYPESCRIPT_WORKER_LIMITS.oldSpaceMiB, young = options.semiSpaceMiB ?? TYPESCRIPT_WORKER_LIMITS.semiSpaceMiB, maxBytes = options.maxMessageBytes ?? TYPESCRIPT_WORKER_LIMITS.maxMessageBytes;
   for (const value of [old, young, maxBytes]) if (!Number.isSafeInteger(value) || value < 1) throw Error('TypeScript worker limits require positive safe integers');
   let payload: Buffer;
-  try { payload = worker === WORKER ? encodeTypeScriptPayload(request, maxBytes) : serialize(request); }
-  catch (error) { if (error instanceof TypeScriptCodecLimitError) throw Error(`TypeScript worker input exceeds ${maxBytes} bytes`); throw error; }
+  try { payload = worker === WORKER ? encodeTypeScriptPayload(request, maxBytes, undefined, options.codecLimits) : serialize(request); }
+  catch (error) { if (error instanceof TypeScriptCodecStructureLimitError) throw Error(`TypeScript worker input exceeds structural limit: ${error.message}`); if (error instanceof TypeScriptCodecLimitError) throw Error(`TypeScript worker input exceeds ${maxBytes} bytes`); throw error; }
   if (payload.length > maxBytes) throw Error(`TypeScript worker input exceeds ${maxBytes} bytes`);
   const execArgv = [`--max-old-space-size=${old}`, `--max-semi-space-size=${young}`];
   if (worker === WORKER && !existsSync(new URL('./ts-worker.js', import.meta.url))) execArgv.push('--import', createRequire(import.meta.url).resolve('tsx'));
@@ -78,6 +78,7 @@ export async function runTypeScriptWorker(request: TypeScriptWorkerRequest, opti
   // needed only for development; an installed package uses ordinary JS.
   const env = { ...process.env }; delete env.NODE_OPTIONS; delete env.NODE_PATH;
   const args = worker === WORKER && maxBytes < TYPESCRIPT_WORKER_LIMITS.maxMessageBytes ? [`--max-message-bytes=${maxBytes}`] : [];
+  if (worker === WORKER && options.codecLimits) args.push(`--codec-limits=${Buffer.from(JSON.stringify(options.codecLimits)).toString('base64url')}`);
   const child = fork(worker, args, { cwd: path.dirname(worker), execArgv, env, detached: process.platform !== 'win32', serialization: 'advanced', stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
   return new Promise((resolve, reject) => {
     let response: TypeScriptWorkerResult | undefined, failure: Error | undefined, stderr = '', stderrBytes = 0;
@@ -100,7 +101,7 @@ export async function runTypeScriptWorker(request: TypeScriptWorkerRequest, opti
       if (!Buffer.isBuffer(message)) { stop(Error(`TypeScript worker failed: ${typeof message === 'object' && message && 'error' in message ? String(message.error) : 'invalid response'}`)); return; }
       if (message.length > maxBytes) { stop(Error(`TypeScript worker output exceeds ${maxBytes} bytes`)); return; }
       try {
-        const result = (worker === WORKER ? decodeTypeScriptPayload(message, maxBytes) : deserialize(message)) as TypeScriptWorkerResult;
+        const result = (worker === WORKER ? decodeTypeScriptPayload(message, maxBytes, undefined, options.codecLimits) : deserialize(message)) as TypeScriptWorkerResult;
         const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(item => typeof item === 'string');
         if (!result || result.protocol !== TYPESCRIPT_WORKER_PROTOCOL || !result.patch || !strings(result.sourceReads) || !strings(result.typescriptFiles) || !Array.isArray(result.sourceFailures) || !result.sourceFailures.every(item => Array.isArray(item) && item.length === 2 && item.every(value => typeof value === 'string')) || !Array.isArray(result.cacheEvents) || !result.cacheEvents.every(event => typeof event.analyzer === 'string' && typeof event.unit === 'string' && typeof event.hit === 'boolean' && Number.isFinite(event.ms) && event.ms >= 0) || result.usage?.pid !== child.pid || !Number.isSafeInteger(result.usage.heapLimitBytes) || result.usage.heapLimitBytes > (old + 3 * young) * 1024 * 1024) throw Error('Invalid TypeScript worker result');
         response = result;

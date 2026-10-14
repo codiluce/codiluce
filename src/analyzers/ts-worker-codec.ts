@@ -7,8 +7,35 @@ export const TYPESCRIPT_CODEC_BLOCK_BYTES = 64 * 1024;
 const STRING_UNITS = 4096;
 enum Tag { End, Undefined, Null, False, True, Uint, NegativeInt, Double, String8, String16, StringRef, Ref, Object, Array, Index, Map, Set, BigInt, Date, RegExp, ArrayBuffer, View, BoxedNumber, BoxedString, BoxedBoolean, BoxedBigInt, Error }
 const views = [Buffer, Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, BigInt64Array, BigUint64Array, DataView] as const;
-export interface TypeScriptCodecStats { allocatedBlockBytes: number; concatenatedBytes: number; peakBlockBytes: number; peakStringTemporaryBytes: number; encodedBytes: number; objects: number; strings: number }
+export interface TypeScriptCodecLimits { objects: number; strings: number; properties: number; arraySlots: number; stringUnits: number; binaryBytes: number; depth: number; tasks: number; keysPerObject: number }
+export const TYPESCRIPT_CODEC_STRUCTURE_LIMITS: Readonly<TypeScriptCodecLimits> = Object.freeze({objects: 4_194_304, strings: 1_048_576, properties: 16_777_216, arraySlots: 16_777_216, stringUnits: 64 * 1024 * 1024, binaryBytes: 64 * 1024 * 1024, depth: 4096, tasks: 16_384, keysPerObject: 1_048_576});
+export interface TypeScriptCodecStats { allocatedBlockBytes: number; concatenatedBytes: number; peakBlockBytes: number; peakStringTemporaryBytes: number; encodedBytes: number; objects: number; strings: number; properties: number; arraySlots: number; stringUnits: number; binaryBytes: number; peakDepth: number; peakTasks: number; peakKeys: number }
 export class TypeScriptCodecLimitError extends RangeError {}
+export class TypeScriptCodecStructureLimitError extends TypeScriptCodecLimitError {
+  constructor(readonly resource: keyof TypeScriptCodecLimits, readonly selectedLimit: number) { super(`TypeScript compiler ${resource} exceeds ${selectedLimit} limit`); }
+}
+type Pool = 'objects' | 'strings' | 'properties' | 'arraySlots' | 'stringUnits' | 'binaryBytes';
+class Budget {
+  readonly limits: TypeScriptCodecLimits;
+  private readonly used = {objects: 0, strings: 0, properties: 0, arraySlots: 0, stringUnits: 0, binaryBytes: 0};
+  constructor(policy?: Partial<TypeScriptCodecLimits>, readonly stats?: TypeScriptCodecStats) {
+    const selected = {...TYPESCRIPT_CODEC_STRUCTURE_LIMITS, ...policy};
+    for (const key of Object.keys(selected) as Array<keyof TypeScriptCodecLimits>) {
+      if (!Object.hasOwn(TYPESCRIPT_CODEC_STRUCTURE_LIMITS, key) || !Number.isSafeInteger(selected[key]) || selected[key] < 1 || selected[key] > TYPESCRIPT_CODEC_STRUCTURE_LIMITS[key]) throw Error('Compiler structural limits must be positive safe integers at or below their fixed defaults');
+    }
+    this.limits = selected;
+    if (stats) Object.assign(stats, {allocatedBlockBytes: 0, concatenatedBytes: 0, peakBlockBytes: 0, peakStringTemporaryBytes: 0, encodedBytes: 0, ...this.used, peakDepth: 0, peakTasks: 0, peakKeys: 0});
+  }
+  add(pool: Pool, count = 1): void {
+    if (!Number.isSafeInteger(count) || count < 0 || count > this.limits[pool] - this.used[pool]) throw new TypeScriptCodecStructureLimitError(pool, this.limits[pool]);
+    this.used[pool] += count; if (this.stats) this.stats[pool] = this.used[pool];
+  }
+  peak(resource: 'depth' | 'tasks' | 'keysPerObject', count: number): void {
+    if (count > this.limits[resource]) throw new TypeScriptCodecStructureLimitError(resource, this.limits[resource]);
+    const field = resource === 'depth' ? 'peakDepth' : resource === 'tasks' ? 'peakTasks' : 'peakKeys';
+    if (this.stats) this.stats[field] = Math.max(this.stats[field], count);
+  }
+}
 function limit(value: number): void { if (!Number.isSafeInteger(value) || value < 1) throw Error('TypeScript codec limit requires a positive safe integer'); }
 class Writer {
   readonly blocks: Buffer[] = [];
@@ -44,15 +71,16 @@ class Writer {
     return Buffer.concat(this.blocks, this.bytes);
   }
 }
-type Task = {kind: 'value'; value: unknown} | {kind: 'properties'; value: object; keys: string[]; index: number; array: boolean} | {kind: 'map'; iterator: MapIterator<[unknown, unknown]>} | {kind: 'set'; iterator: SetIterator<unknown>} ;
+type Task = ({kind: 'value'; value: unknown} | {kind: 'properties'; value: object; keys: string[]; index: number; array: boolean} | {kind: 'map'; iterator: MapIterator<[unknown, unknown]>} | {kind: 'set'; iterator: SetIterator<unknown>}) & {depth: number};
 
 /** String/binary payload bytes are admitted before chunk allocation or writes.
  * Blocks total at most maxBytes; final concatenation adds at most maxBytes.
- * This bounds encoding buffers, not the caller's graph, traversal key arrays,
- * reference tables, decoded graph allocations, native memory or total RSS. */
-export function encodeTypeScriptPayload(value: unknown, maxBytes: number, stats?: TypeScriptCodecStats): Buffer {
+ * Structure pools and traversal depth/tasks also have fixed logical budgets.
+ * Object.keys takes its original own-key snapshot before key admission; that
+ * builtin allocation, the caller's graph, native memory and RSS remain separate. */
+export function encodeTypeScriptPayload(value: unknown, maxBytes: number, stats?: TypeScriptCodecStats, policy?: Partial<TypeScriptCodecLimits>): Buffer {
   limit(maxBytes);
-  if (stats) Object.assign(stats, {allocatedBlockBytes: 0, concatenatedBytes: 0, peakBlockBytes: 0, peakStringTemporaryBytes: 0, encodedBytes: 0, objects: 0, strings: 0});
+  const budget = new Budget(policy, stats);
   const writer = new Writer(maxBytes, stats), objects = new Map<object, number>(), strings = new Map<string, number>();
   const string = (text: string): void => {
     if (text.length > maxBytes) throw new TypeScriptCodecLimitError(`TypeScript compiler payload exceeds ${maxBytes} bytes`);
@@ -62,7 +90,7 @@ export function encodeTypeScriptPayload(value: unknown, maxBytes: number, stats?
     for (let i = 0; i < text.length; i++) if (text.charCodeAt(i) > 255) { latin = false; break; }
     writer.byte(latin ? Tag.String8 : Tag.String16); writer.uint(text.length);
     writer.reserve(text.length * (latin ? 1 : 2));
-    strings.set(text, strings.size);
+    budget.add('strings'); budget.add('stringUnits', text.length); strings.set(text, strings.size);
     for (let offset = 0; offset < text.length; offset += STRING_UNITS) {
       const bytes = Buffer.from(text.slice(offset, offset + STRING_UNITS), latin ? 'latin1' : 'utf16le');
       if (stats) stats.peakStringTemporaryBytes = Math.max(stats.peakStringTemporaryBytes, bytes.length);
@@ -70,7 +98,13 @@ export function encodeTypeScriptPayload(value: unknown, maxBytes: number, stats?
     }
   };
   writer.raw(MAGIC);
-  const stack: Task[] = [{kind: 'value', value}];
+  const stack: Task[] = [];
+  const push = (...tasks: Task[]): void => { budget.peak('tasks', stack.length + tasks.length); stack.push(...tasks); };
+  const properties = (value: object, array: boolean, depth: number): Task => {
+    const keys = Object.keys(value); budget.peak('keysPerObject', keys.length); budget.add('properties', keys.length);
+    return {kind: 'properties', value, keys, index: 0, array, depth};
+  };
+  push({kind: 'value', value, depth: 0});
   while (stack.length) {
     const task = stack.pop()!;
     if (task.kind === 'properties') {
@@ -79,19 +113,19 @@ export function encodeTypeScriptPayload(value: unknown, maxBytes: number, stats?
       if (task.array && /^(?:0|[1-9]\d*)$/.test(key) && Number(key) < 0xffffffff) { writer.byte(Tag.Index); writer.uint(Number(key)); }
       else string(key);
       // Snapshot enumerable own keys, then read each value once, as cloning does.
-      stack.push(task, {kind: 'value', value: (task.value as Record<string, unknown>)[key]}); continue;
+      push(task, {kind: 'value', value: (task.value as Record<string, unknown>)[key], depth: task.depth + 1}); continue;
     }
     if (task.kind === 'map') {
       const entry = task.iterator.next();
       if (entry.done) { writer.byte(Tag.End); continue; }
-      stack.push(task, {kind: 'value', value: entry.value[1]}, {kind: 'value', value: entry.value[0]}); continue;
+      budget.add('properties', 2); push(task, {kind: 'value', value: entry.value[1], depth: task.depth + 1}, {kind: 'value', value: entry.value[0], depth: task.depth + 1}); continue;
     }
     if (task.kind === 'set') {
       const entry = task.iterator.next();
       if (entry.done) { writer.byte(Tag.End); continue; }
-      stack.push(task, {kind: 'value', value: entry.value}); continue;
+      budget.add('properties'); push(task, {kind: 'value', value: entry.value, depth: task.depth + 1}); continue;
     }
-    const item = task.value;
+    budget.peak('depth', task.depth); const item = task.value;
     if (item === undefined) { writer.byte(Tag.Undefined); continue; }
     if (item === null) { writer.byte(Tag.Null); continue; }
     if (typeof item === 'boolean') { writer.byte(item ? Tag.True : Tag.False); continue; }
@@ -108,41 +142,41 @@ export function encodeTypeScriptPayload(value: unknown, maxBytes: number, stats?
       const bits = (writer.max - writer.bytes) * 8;
       if ((item < 0n ? BigInt.asIntN(bits + 1, item) : BigInt.asUintN(bits, item)) !== item) throw new TypeScriptCodecLimitError(`TypeScript compiler payload exceeds ${maxBytes} bytes`);
       let hex = (item < 0n ? -item : item).toString(16); if (hex.length % 2) hex = '0' + hex;
-      writer.uint(hex.length / 2); writer.reserve(hex.length / 2);
+      budget.add('binaryBytes', hex.length / 2); writer.uint(hex.length / 2); writer.reserve(hex.length / 2);
       for (let i = 0; i < hex.length; i += STRING_UNITS) writer.raw(Buffer.from(hex.slice(i, i + STRING_UNITS), 'hex'));
       continue;
     }
     if (typeof item !== 'object' || types.isProxy(item) || types.isWeakMap(item) || types.isWeakSet(item) || types.isPromise(item) || types.isSharedArrayBuffer(item) || types.isModuleNamespaceObject(item) || item instanceof WeakRef || item instanceof FinalizationRegistry) throw Error('Unsupported compiler transport value');
     const known = objects.get(item);
     if (known !== undefined) { writer.byte(Tag.Ref); writer.uint(known); continue; }
-    objects.set(item, objects.size);
-    if (Array.isArray(item)) { writer.byte(Tag.Array); writer.uint(item.length); stack.push({kind: 'properties', value: item, keys: Object.keys(item), index: 0, array: true}); }
-    else if (types.isMap(item)) { writer.byte(Tag.Map); stack.push({kind: 'map', iterator: Map.prototype.entries.call(item)}); }
-    else if (types.isSet(item)) { writer.byte(Tag.Set); stack.push({kind: 'set', iterator: Set.prototype.values.call(item)}); }
+    budget.add('objects'); objects.set(item, objects.size);
+    if (Array.isArray(item)) { budget.add('arraySlots', item.length); writer.byte(Tag.Array); writer.uint(item.length); push(properties(item, true, task.depth)); }
+    else if (types.isMap(item)) { writer.byte(Tag.Map); push({kind: 'map', iterator: Map.prototype.entries.call(item), depth: task.depth}); }
+    else if (types.isSet(item)) { writer.byte(Tag.Set); push({kind: 'set', iterator: Set.prototype.values.call(item), depth: task.depth}); }
     else if (types.isDate(item)) { writer.byte(Tag.Date); writer.double(Date.prototype.getTime.call(item)); }
     else if (types.isRegExp(item)) {
       writer.byte(Tag.RegExp); string(Object.getOwnPropertyDescriptor(RegExp.prototype, 'source')!.get!.call(item));
       let flags = ''; for (const [name, flag] of [['hasIndices','d'],['global','g'],['ignoreCase','i'],['multiline','m'],['dotAll','s'],['unicode','u'],['unicodeSets','v'],['sticky','y']]) if (Object.getOwnPropertyDescriptor(RegExp.prototype, name!)?.get?.call(item)) flags += flag;
       string(flags);
     }
-    else if (types.isArrayBuffer(item)) { writer.byte(Tag.ArrayBuffer); writer.uint(item.byteLength); writer.raw(new Uint8Array(item)); }
+    else if (types.isArrayBuffer(item)) { budget.add('binaryBytes', item.byteLength); writer.byte(Tag.ArrayBuffer); writer.uint(item.byteLength); writer.raw(new Uint8Array(item)); }
     else if (ArrayBuffer.isView(item)) {
       const index = Buffer.isBuffer(item) ? 0 : types.isInt8Array(item) ? 1 : types.isUint8Array(item) ? 2 : types.isUint8ClampedArray(item) ? 3 : types.isInt16Array(item) ? 4 : types.isUint16Array(item) ? 5 : types.isInt32Array(item) ? 6 : types.isUint32Array(item) ? 7 : types.isFloat32Array(item) ? 8 : types.isFloat64Array(item) ? 9 : types.isBigInt64Array(item) ? 10 : types.isBigUint64Array(item) ? 11 : 12;
-      writer.byte(Tag.View); writer.byte(index); writer.uint(item.byteLength); writer.raw(new Uint8Array(item.buffer, item.byteOffset, item.byteLength));
+      budget.add('binaryBytes', item.byteLength); writer.byte(Tag.View); writer.byte(index); writer.uint(item.byteLength); writer.raw(new Uint8Array(item.buffer, item.byteOffset, item.byteLength));
     }
     else if (types.isNumberObject(item)) { writer.byte(Tag.BoxedNumber); writer.double(Number.prototype.valueOf.call(item)); }
     else if (types.isStringObject(item)) { writer.byte(Tag.BoxedString); string(String.prototype.valueOf.call(item)); }
     else if (types.isBooleanObject(item)) { writer.byte(Tag.BoxedBoolean); writer.byte(Boolean.prototype.valueOf.call(item) ? 1 : 0); }
-    else if (types.isBigIntObject(item)) { writer.byte(Tag.BoxedBigInt); stack.push({kind: 'value', value: BigInt.prototype.valueOf.call(item)}); }
+    else if (types.isBigIntObject(item)) { writer.byte(Tag.BoxedBigInt); push({kind: 'value', value: BigInt.prototype.valueOf.call(item), depth: task.depth + 1}); }
     else if (types.isNativeError(item)) {
       writer.byte(Tag.Error); const error = item as Error & {cause?: unknown};
       string(['EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError'].includes(error.name) ? error.name : 'Error');
       for (const field of [error.message, error.stack]) { writer.byte(typeof field === 'string' ? 1 : 0); if (typeof field === 'string') string(field); }
-      const cause = Object.hasOwn(error, 'cause'); writer.byte(cause ? 1 : 0); if (cause) stack.push({kind: 'value', value: error.cause});
+      const cause = Object.hasOwn(error, 'cause'); writer.byte(cause ? 1 : 0); if (cause) push({kind: 'value', value: error.cause, depth: task.depth + 1});
     }
     else {
       if (types.isBoxedPrimitive(item) || types.isExternal(item)) throw Error('Unsupported compiler transport object');
-      writer.byte(Tag.Object); stack.push({kind: 'properties', value: item, keys: Object.keys(item), index: 0, array: false});
+      writer.byte(Tag.Object); push(properties(item, false, task.depth));
     }
   }
   if (stats) { stats.objects = objects.size; stats.strings = strings.size; }
@@ -161,35 +195,39 @@ class Reader {
   }
   double(): number { return this.raw(8).readDoubleLE(); }
 }
-type Frame = {kind: 'object' | 'array'; value: Record<string, unknown>; length?: number; keys: Set<string>} | {kind: 'map'; value: Map<unknown, unknown>} | {kind: 'set'; value: Set<unknown>};
+type Frame = ({kind: 'object' | 'array'; value: Record<string, unknown>; length?: number; keys: Set<string>} | {kind: 'map'; value: Map<unknown, unknown>} | {kind: 'set'; value: Set<unknown>}) & {depth: number};
 
 /** Decode only a complete bounded frame; the caller publishes nothing until
  * its existing protocol, graph and actual worker-exit checks also succeed. */
-export function decodeTypeScriptPayload(bytes: Buffer, maxBytes: number): unknown {
+export function decodeTypeScriptPayload(bytes: Buffer, maxBytes: number, stats?: TypeScriptCodecStats, policy?: Partial<TypeScriptCodecLimits>): unknown {
   limit(maxBytes); if (!Buffer.isBuffer(bytes) || bytes.length > maxBytes) throw new TypeScriptCodecLimitError(`TypeScript compiler payload exceeds ${maxBytes} bytes`);
+  const budget = new Budget(policy, stats);
   const reader = new Reader(bytes); if (!reader.raw(MAGIC.length).equals(MAGIC)) throw Error('Invalid compiler transport header');
   const objects: object[] = [], strings: string[] = [], tasks: Array<() => void> = [];
+  const push = (...pending: Array<() => void>): void => { budget.peak('tasks', tasks.length + pending.length); tasks.push(...pending); };
   let root: unknown;
   const string = (tag = reader.byte()): string => {
     if (tag === Tag.StringRef) { const known = strings[reader.uint()]; if (known === undefined) throw Error('Invalid compiler string reference'); return known; }
     if (tag !== Tag.String8 && tag !== Tag.String16) throw Error('Invalid compiler property or string');
-    const size = reader.uint(), text = reader.raw(size * (tag === Tag.String8 ? 1 : 2)).toString(tag === Tag.String8 ? 'latin1' : 'utf16le'); strings.push(text); return text;
+    const size = reader.uint(); budget.add('strings'); budget.add('stringUnits', size);
+    const text = reader.raw(size * (tag === Tag.String8 ? 1 : 2)).toString(tag === Tag.String8 ? 'latin1' : 'utf16le'); strings.push(text); return text;
   };
   const frame = (current: Frame): void => {
     const tag = reader.byte(); if (tag === Tag.End) return;
-    tasks.push(() => frame(current));
+    push(() => frame(current));
     if (current.kind === 'object' || current.kind === 'array') {
       const key = tag === Tag.Index && current.kind === 'array' ? String(reader.uint()) : string(tag);
       if (current.keys.has(key) || current.kind === 'array' && (key === 'length' || /^(?:0|[1-9]\d*)$/.test(key) && Number(key) < 0xffffffff && Number(key) >= current.length!)) throw Error('Invalid or duplicate compiler property');
-      current.keys.add(key); tasks.push(() => value(item => {Object.defineProperty(current.value, key, {value: item, writable: true, enumerable: true, configurable: true});}));
-    } else if (current.kind === 'set') { reader.offset--; tasks.push(() => value(item => {current.value.add(item);})); }
+      budget.peak('keysPerObject', current.keys.size + 1); budget.add('properties');
+      current.keys.add(key); push(() => value(item => {Object.defineProperty(current.value, key, {value: item, writable: true, enumerable: true, configurable: true});}, current.depth + 1));
+    } else if (current.kind === 'set') { budget.add('properties'); reader.offset--; push(() => value(item => {current.value.add(item);}, current.depth + 1)); }
     else if (current.kind === 'map') {
       const map = current.value;
-      reader.offset--; tasks.push(() => value(key => {tasks.push(() => value(item => {if (map.has(key)) throw Error('Duplicate compiler map key'); map.set(key, item);}));}));
+      budget.add('properties', 2); reader.offset--; push(() => value(key => {push(() => value(item => {if (map.has(key)) throw Error('Duplicate compiler map key'); map.set(key, item);}, current.depth + 1));}, current.depth + 1));
     }
   };
-  const value = (accept: (item: unknown) => void): void => {
-    const tag = reader.byte(); let item: unknown, container: Frame | undefined;
+  const value = (accept: (item: unknown) => void, depth: number): void => {
+    budget.peak('depth', depth); const tag = reader.byte(); let item: unknown, container: Frame | undefined;
     if (tag === Tag.Undefined) item = undefined;
     else if (tag === Tag.Null) item = null;
     else if (tag === Tag.False || tag === Tag.True) item = tag === Tag.True;
@@ -197,18 +235,19 @@ export function decodeTypeScriptPayload(bytes: Buffer, maxBytes: number): unknow
     else if (tag === Tag.Double) item = reader.double();
     else if (tag === Tag.String8 || tag === Tag.String16 || tag === Tag.StringRef) item = string(tag);
     else if (tag === Tag.Ref) { item = objects[reader.uint()]; if (item === undefined) throw Error('Invalid compiler object reference'); }
-    else if (tag === Tag.BigInt) { const sign = reader.byte(); if (sign > 1) throw Error('Invalid compiler integer sign'); const hex = reader.raw(reader.uint()).toString('hex'); item = (sign ? -1n : 1n) * BigInt('0x' + (hex || '00')); }
+    else if (tag === Tag.BigInt) { const sign = reader.byte(); if (sign > 1) throw Error('Invalid compiler integer sign'); const size = reader.uint(); budget.add('binaryBytes', size); const hex = reader.raw(size).toString('hex'); item = (sign ? -1n : 1n) * BigInt('0x' + (hex || '00')); }
     else {
-      if (tag === Tag.Object) { item = {}; container = {kind: 'object', value: item as Record<string, unknown>, keys: new Set()}; }
-      else if (tag === Tag.Array) { const length = reader.uint(); if (length > 0xffffffff) throw Error('Invalid compiler array length'); item = new Array(length); container = {kind: 'array', value: item as unknown as Record<string, unknown>, length, keys: new Set()}; }
-      else if (tag === Tag.Map) { item = new Map(); container = {kind: 'map', value: item as Map<unknown, unknown>}; }
-      else if (tag === Tag.Set) { item = new Set(); container = {kind: 'set', value: item as Set<unknown>}; }
+      budget.add('objects');
+      if (tag === Tag.Object) { item = {}; container = {kind: 'object', value: item as Record<string, unknown>, keys: new Set(), depth}; }
+      else if (tag === Tag.Array) { const length = reader.uint(); if (length > 0xffffffff) throw Error('Invalid compiler array length'); budget.add('arraySlots', length); item = new Array(length); container = {kind: 'array', value: item as unknown as Record<string, unknown>, length, keys: new Set(), depth}; }
+      else if (tag === Tag.Map) { item = new Map(); container = {kind: 'map', value: item as Map<unknown, unknown>, depth}; }
+      else if (tag === Tag.Set) { item = new Set(); container = {kind: 'set', value: item as Set<unknown>, depth}; }
       else if (tag === Tag.Date) item = new Date(reader.double());
       else if (tag === Tag.RegExp) item = new RegExp(string(), string());
-      else if (tag === Tag.ArrayBuffer) { const data = reader.raw(reader.uint()); item = Uint8Array.from(data).buffer; }
+      else if (tag === Tag.ArrayBuffer) { const size = reader.uint(); budget.add('binaryBytes', size); const data = reader.raw(size); item = Uint8Array.from(data).buffer; }
       else if (tag === Tag.View) {
         const index = reader.byte(), constructor = views[index]; if (!constructor) throw Error('Invalid compiler view');
-        const data = reader.raw(reader.uint());
+        const size = reader.uint(); budget.add('binaryBytes', size); const data = reader.raw(size);
         if (index === 0) item = Buffer.from(data);
         else { const copied = Uint8Array.from(data).buffer; item = index === 12 ? new DataView(copied) : new (constructor as Uint8ArrayConstructor)(copied); }
       }
@@ -217,7 +256,7 @@ export function decodeTypeScriptPayload(bytes: Buffer, maxBytes: number): unknow
       else if (tag === Tag.BoxedBoolean) { const flag = reader.byte(); if (flag > 1) throw Error('Invalid compiler boolean'); item = new Boolean(flag); }
       else if (tag === Tag.BoxedBigInt) {
         // No object can intervene in a boxed primitive's scalar body.
-        const id = objects.length; item = {}; tasks.push(() => value(primitive => {if (typeof primitive !== 'bigint') throw Error('Invalid boxed compiler integer'); const boxed = Object(primitive); objects[id] = boxed; accept(boxed);}));
+        const id = objects.length; item = {}; push(() => value(primitive => {if (typeof primitive !== 'bigint') throw Error('Invalid boxed compiler integer'); const boxed = Object(primitive); objects[id] = boxed; accept(boxed);}, depth + 1));
       }
       else if (tag === Tag.Error) {
         const name = string(), constructors: Record<string, ErrorConstructor> = {Error, EvalError, RangeError, ReferenceError, SyntaxError, TypeError, URIError};
@@ -228,14 +267,14 @@ export function decodeTypeScriptPayload(bytes: Buffer, maxBytes: number): unknow
         if (!flags[0]) Reflect.deleteProperty(error, 'message');
         if (flags[1]) Object.defineProperty(error, 'stack', {value: fields[1], writable: true, configurable: true}); else delete error.stack;
         const cause = reader.byte(); if (cause > 1) throw Error('Invalid compiler error cause');
-        item = error; if (cause) tasks.push(() => value(cause => {Object.defineProperty(error, 'cause', {value: cause, writable: true, configurable: true});}));
+        item = error; if (cause) push(() => value(cause => {Object.defineProperty(error, 'cause', {value: cause, writable: true, configurable: true});}, depth + 1));
       }
       else throw Error('Invalid compiler transport tag');
       objects.push(item as object);
     }
-    if (tag !== Tag.BoxedBigInt) accept(item); if (container) tasks.push(() => frame(container!));
+    if (tag !== Tag.BoxedBigInt) accept(item); if (container) push(() => frame(container!));
   };
-  tasks.push(() => value(item => {root = item;})); while (tasks.length) tasks.pop()!();
+  push(() => value(item => {root = item;}, 0)); while (tasks.length) tasks.pop()!();
   if (reader.offset !== bytes.length) throw Error('Trailing compiler transport bytes');
   return root;
 }

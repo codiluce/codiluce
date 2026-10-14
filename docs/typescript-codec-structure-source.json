@@ -1,0 +1,1706 @@
+{
+  "schema": 1,
+  "passed": true,
+  "qualifiedAt": 1791981147.6262705,
+  "sourceRuntimeSha256": "82dee91b026146926875cae54539c4bbc11238e7d464656b7dc6f54bb8714f6a",
+  "sourceRuntimeInputs": 1939,
+  "isolatedBaseRevision": "acae20c5e3c02862ab8abd2ef5026bf931d00306",
+  "qualifiedOwnOverlayFiles": [
+    {
+      "file": "src/analyzers/ts-worker-codec.ts",
+      "sha256": "ad59ec8653d7b713c68f6e7a89f0ec0e26246e941bfdba55ea11b6ac04d321d1"
+    },
+    {
+      "file": "src/analyzers/typescript-isolated.ts",
+      "sha256": "13b7304633bb23e364f689051cfb6a97a1933e04a6d13b503d2896ea3ae6fc03"
+    },
+    {
+      "file": "src/analyzers/native-ts-worker.mjs",
+      "sha256": "b9a8d0c16c0ff22cfb20fbbacdc611a2f132e3b0c0b828c98e1a338dbc57527e"
+    },
+    {
+      "file": "tests/typescript-codec-structure.test.ts",
+      "sha256": "ee82702807f621b28921f9784e0c628c9cdff8877cfa2c392173d3afd3614186"
+    },
+    {
+      "file": "tests/typescript-codec-structure-transfer.test.ts",
+      "sha256": "fed6bf0be4f52c3fb56779ba101654beb8d35f711ea361ff333e1c00b91eafeb"
+    },
+    {
+      "file": "tests/fixtures/typescript-codec-structure-qualification.mjs",
+      "sha256": "38a14d22e31177d5b9a6c1cd6f60577a5e56f585c4a22be8cee3205c7de3045a"
+    },
+    {
+      "file": "scripts/test-package.mjs",
+      "sha256": "b55cc92d123c2529badcda5ae91028f3d85357442e3bdfbf634aa04596dc7862"
+    },
+    {
+      "file": "docs/compatibility-catalog.json",
+      "sha256": "5fffa8523832189abb128a240eae06c74eb893bdcf54ea9373e327898a1204aa"
+    },
+    {
+      "file": "scripts/generate-compatibility-docs.mjs",
+      "sha256": "73dc9dbd61fc7b418f0efed7fe48d95d2c2aff0d9fa47a95ad2f40b629494d64"
+    },
+    {
+      "file": "docs/analysis-capabilities.html",
+      "sha256": "ee57ea54325de652a5b4f2e377119f30d5ece3a8ea96a7209780c1645cd7e4cc"
+    },
+    {
+      "file": "docs/framework-pack-author-guide.html",
+      "sha256": "06a41cd61ff7965b8ba3afb05ebb24ef7a3f7fdb1d77c5db72150fda63b2e941"
+    }
+  ],
+  "fullCurrentWorkspaceQualified": false,
+  "concurrentChangesExcluded": {
+    "docs/reference.md": "c377d8d0614e27520e756e41d8832bb759c049726fde25cedf2e2386196d21ee",
+    "src/projection/catalog.ts": "4479eacef60a2c27808c1e728461609a2066ea9579df41661230080a9c58aaf4",
+    "src/projection/dto.ts": "f52c282867801b48670288ad5bdf604a60777e673eb79730ceb369a587a0a47b",
+    "src/projection/request-flows.ts": "e2af65f65528262c7efffcda66e563ca1eac26b3f9c28305429dd57355690cfd",
+    "src/projection/service.ts": "b12a78f4a051f3ecfeb95f812a24583094e9c0afbd98aa7449872e0daa443a5f",
+    "src/projection/steps.ts": "4a0187bbbebd7721f208ed56f9f8162e7823b3687ceb39b823e429e9d71f8e94",
+    "tests/projection.test.ts": "79845fb9e20133a5218376a6fc39f210e8a58145b73cd0f07ea074061c823777",
+    "web/app/globals.css": "5275c1502467b427e2a5e58087abd334b05106288a04f47f5e1d42e047df1bbb",
+    "web/components/FlowView.tsx": "791ddd9f25199167be0f54310a1d5f3097f79dc7f3b995cce202748a10422c18",
+    "web/components/StepsPanel.tsx": "9414dc7c4a88eb96088c2e9181e84aabd0eab8cb0043696b0913eb9f48e8467a",
+    "web/e2e/request-flows.spec.ts": "83be896f98b0c1e324f81dc0beaadf51279b0ec64a1160d66d8c6736931c2e2e",
+    "web/lib/controller.ts": "07f9cd06018d74724874703df056b18f32b8033e4527f74e26b0eb7514380e2c",
+    "web/lib/map-flow.ts": "c0e090586fafab91528f68373915bd087527ae30250a15b9cd72051e239d6d2a",
+    "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+    "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0",
+    "src/projection/behavior.ts": "6c16de3fda52ca93d9aff349ddbe7dc56e2fb2b8474b8f802bc658f082d431d3",
+    "web/components/PageSteps.tsx": "5b10d1f1dd2828c1c8e7581ae3066393a91532c6db550d32d0e268f021e2ab8f",
+    "web/lib/page-steps.ts": "da68e0f283cdf9744357c62249179e90b504110fbfea379adcfc556e40940fab",
+    "web/tests/page-steps.test.ts": "bdbd1f24f1924653b40fef2ae94eea9e2a39973b4fb42f7dea3425e3d4cb1ef3"
+  },
+  "concurrentForeignFilesChanged": [
+    "src/projection/dto.ts",
+    "src/projection/service.ts",
+    "web/app/globals.css",
+    "web/lib/controller.ts"
+  ],
+  "foreignFilesWrittenByThisPhase": false,
+  "fullCases": 2068,
+  "engineUiCases": 1844,
+  "retainedPriorEngineUiCaseMultiset": 1835,
+  "toolingCases": 224,
+  "focusedNode22Cases": 23,
+  "codecUnitNode24Cases": 20,
+  "compilerProtocol": 3,
+  "wireFormatUnchanged": true,
+  "semanticProducerVersionsChanged": false,
+  "defaultFrameBytes": 67108864,
+  "encoderBlockBytes": 65536,
+  "structureLimits": {
+    "objects": 4194304,
+    "strings": 1048576,
+    "properties": 16777216,
+    "arraySlots": 16777216,
+    "stringUnits": 67108864,
+    "binaryBytes": 67108864,
+    "depth": 4096,
+    "tasks": 16384,
+    "keysPerObject": 1048576
+  },
+  "structureAdmissionScope": "Logical output/reference cardinality and extent before decoder construction, fixed depth/pending tasks and both real-worker directions; Object.keys builtin allocation before key admission and physical/native/RSS allocations remain separate.",
+  "portableProbes": [
+    {
+      "label": "source-structure-node22",
+      "schema": 1,
+      "passed": true,
+      "caseCount": 4,
+      "node": "v22.12.0",
+      "sourceLoader": true,
+      "limits": {
+        "objects": 4194304,
+        "strings": 1048576,
+        "properties": 16777216,
+        "arraySlots": 16777216,
+        "stringUnits": 67108864,
+        "binaryBytes": 67108864,
+        "depth": 4096,
+        "tasks": 16384,
+        "keysPerObject": 1048576
+      },
+      "observations": [
+        {
+          "case": "healthy-cold-warm-revision",
+          "entities": 8,
+          "relations": 12,
+          "graphSha256": "c6d593d2ea42070c4785e6d9007d517644f7ebc900d46e5af9be57fbe2ceeeec",
+          "actualWarmCacheHit": true,
+          "matchedHttpEffect": true
+        },
+        {
+          "case": "default-sparse-request-rejection",
+          "selectedArraySlots": 16777216,
+          "requestedArraySlots": 16777217,
+          "forkCount": 0,
+          "parentGraphUnchanged": true
+        },
+        {
+          "case": "tiny-default-decoder-rejection",
+          "frameBytes": 10,
+          "requestedArraySlots": 16777217,
+          "arrayConstructorCalls": 0
+        },
+        {
+          "case": "real-child-structure-rejection",
+          "pool": "objects",
+          "inputUnits": 60,
+          "outputUnits": 101,
+          "selectedOwnedLimit": 60,
+          "code": null,
+          "signal": "SIGKILL",
+          "pid": 2912806,
+          "parentGraphUnchanged": true
+        }
+      ],
+      "parentFullValueV8Serializations": 0,
+      "targetExecution": false,
+      "scope": "Fixed logical encoder/decoder structure pools, default sparse request rejection before fork, tiny hostile-frame array rejection before constructor allocation and real-child output rejection under a lower owned pool cap. Complete original graphs/effects and aliases retained. Object.keys pre-admission allocation and graph/project/native/WASM/total RSS remain separate."
+    },
+    {
+      "label": "source-structure-node24",
+      "schema": 1,
+      "passed": true,
+      "caseCount": 4,
+      "node": "v24.21.0",
+      "sourceLoader": true,
+      "limits": {
+        "objects": 4194304,
+        "strings": 1048576,
+        "properties": 16777216,
+        "arraySlots": 16777216,
+        "stringUnits": 67108864,
+        "binaryBytes": 67108864,
+        "depth": 4096,
+        "tasks": 16384,
+        "keysPerObject": 1048576
+      },
+      "observations": [
+        {
+          "case": "healthy-cold-warm-revision",
+          "entities": 8,
+          "relations": 12,
+          "graphSha256": "c6d593d2ea42070c4785e6d9007d517644f7ebc900d46e5af9be57fbe2ceeeec",
+          "actualWarmCacheHit": true,
+          "matchedHttpEffect": true
+        },
+        {
+          "case": "default-sparse-request-rejection",
+          "selectedArraySlots": 16777216,
+          "requestedArraySlots": 16777217,
+          "forkCount": 0,
+          "parentGraphUnchanged": true
+        },
+        {
+          "case": "tiny-default-decoder-rejection",
+          "frameBytes": 10,
+          "requestedArraySlots": 16777217,
+          "arrayConstructorCalls": 0
+        },
+        {
+          "case": "real-child-structure-rejection",
+          "pool": "objects",
+          "inputUnits": 60,
+          "outputUnits": 101,
+          "selectedOwnedLimit": 60,
+          "code": null,
+          "signal": "SIGKILL",
+          "pid": 2915877,
+          "parentGraphUnchanged": true
+        }
+      ],
+      "parentFullValueV8Serializations": 0,
+      "targetExecution": false,
+      "scope": "Fixed logical encoder/decoder structure pools, default sparse request rejection before fork, tiny hostile-frame array rejection before constructor allocation and real-child output rejection under a lower owned pool cap. Complete original graphs/effects and aliases retained. Object.keys pre-admission allocation and graph/project/native/WASM/total RSS remain separate."
+    },
+    {
+      "label": "compiled-structure-node22",
+      "schema": 1,
+      "passed": true,
+      "caseCount": 4,
+      "node": "v22.12.0",
+      "sourceLoader": false,
+      "limits": {
+        "objects": 4194304,
+        "strings": 1048576,
+        "properties": 16777216,
+        "arraySlots": 16777216,
+        "stringUnits": 67108864,
+        "binaryBytes": 67108864,
+        "depth": 4096,
+        "tasks": 16384,
+        "keysPerObject": 1048576
+      },
+      "observations": [
+        {
+          "case": "healthy-cold-warm-revision",
+          "entities": 8,
+          "relations": 12,
+          "graphSha256": "c6d593d2ea42070c4785e6d9007d517644f7ebc900d46e5af9be57fbe2ceeeec",
+          "actualWarmCacheHit": true,
+          "matchedHttpEffect": true
+        },
+        {
+          "case": "default-sparse-request-rejection",
+          "selectedArraySlots": 16777216,
+          "requestedArraySlots": 16777217,
+          "forkCount": 0,
+          "parentGraphUnchanged": true
+        },
+        {
+          "case": "tiny-default-decoder-rejection",
+          "frameBytes": 10,
+          "requestedArraySlots": 16777217,
+          "arrayConstructorCalls": 0
+        },
+        {
+          "case": "real-child-structure-rejection",
+          "pool": "objects",
+          "inputUnits": 60,
+          "outputUnits": 101,
+          "selectedOwnedLimit": 60,
+          "code": null,
+          "signal": "SIGKILL",
+          "pid": 2918642,
+          "parentGraphUnchanged": true
+        }
+      ],
+      "parentFullValueV8Serializations": 0,
+      "targetExecution": false,
+      "scope": "Fixed logical encoder/decoder structure pools, default sparse request rejection before fork, tiny hostile-frame array rejection before constructor allocation and real-child output rejection under a lower owned pool cap. Complete original graphs/effects and aliases retained. Object.keys pre-admission allocation and graph/project/native/WASM/total RSS remain separate."
+    },
+    {
+      "label": "compiled-structure-node24",
+      "schema": 1,
+      "passed": true,
+      "caseCount": 4,
+      "node": "v24.21.0",
+      "sourceLoader": false,
+      "limits": {
+        "objects": 4194304,
+        "strings": 1048576,
+        "properties": 16777216,
+        "arraySlots": 16777216,
+        "stringUnits": 67108864,
+        "binaryBytes": 67108864,
+        "depth": 4096,
+        "tasks": 16384,
+        "keysPerObject": 1048576
+      },
+      "observations": [
+        {
+          "case": "healthy-cold-warm-revision",
+          "entities": 8,
+          "relations": 12,
+          "graphSha256": "c6d593d2ea42070c4785e6d9007d517644f7ebc900d46e5af9be57fbe2ceeeec",
+          "actualWarmCacheHit": true,
+          "matchedHttpEffect": true
+        },
+        {
+          "case": "default-sparse-request-rejection",
+          "selectedArraySlots": 16777216,
+          "requestedArraySlots": 16777217,
+          "forkCount": 0,
+          "parentGraphUnchanged": true
+        },
+        {
+          "case": "tiny-default-decoder-rejection",
+          "frameBytes": 10,
+          "requestedArraySlots": 16777217,
+          "arrayConstructorCalls": 0
+        },
+        {
+          "case": "real-child-structure-rejection",
+          "pool": "objects",
+          "inputUnits": 60,
+          "outputUnits": 101,
+          "selectedOwnedLimit": 60,
+          "code": null,
+          "signal": "SIGKILL",
+          "pid": 2920907,
+          "parentGraphUnchanged": true
+        }
+      ],
+      "parentFullValueV8Serializations": 0,
+      "targetExecution": false,
+      "scope": "Fixed logical encoder/decoder structure pools, default sparse request rejection before fork, tiny hostile-frame array rejection before constructor allocation and real-child output rejection under a lower owned pool cap. Complete original graphs/effects and aliases retained. Object.keys pre-admission allocation and graph/project/native/WASM/total RSS remain separate."
+    }
+  ],
+  "retainedBoundedTransferProbes": [
+    {
+      "schema": 1,
+      "passed": true,
+      "caseCount": 3,
+      "expectedPriorV8": false,
+      "parentFullValueV8Serializations": 0,
+      "node": "v22.12.0",
+      "sourceLoader": false,
+      "observations": [
+        {
+          "case": "healthy-cold-warm-revision",
+          "entities": 8,
+          "relations": 12,
+          "graphSha256": "c6d593d2ea42070c4785e6d9007d517644f7ebc900d46e5af9be57fbe2ceeeec",
+          "actualWarmCacheHit": true,
+          "matchedHttpEffect": true
+        },
+        {
+          "case": "default-64MiB-input-rejection",
+          "forkCount": 0,
+          "parentGraphUnchanged": true,
+          "stats": {
+            "allocatedBlockBytes": 65536,
+            "concatenatedBytes": 0,
+            "peakBlockBytes": 65536,
+            "peakStringTemporaryBytes": 92,
+            "encodedBytes": 0,
+            "objects": 19,
+            "strings": 101,
+            "properties": 114,
+            "arraySlots": 59,
+            "stringUnits": 1456,
+            "binaryBytes": 0,
+            "peakDepth": 6,
+            "peakTasks": 7,
+            "peakKeys": 55
+          },
+          "originalStringUnits": 67108865
+        },
+        {
+          "case": "real-child-output-encoding-rejection",
+          "inputBytes": 3387,
+          "selectedOwnedBytes": 3395,
+          "code": null,
+          "signal": "SIGKILL",
+          "pid": 2922451,
+          "parentGraphUnchanged": true
+        }
+      ],
+      "targetExecution": false,
+      "scope": "Actual default compiler transport with parent full-value V8 serialization forbidden, full original cold/warm/revision graph and HTTP effect equality, default 64MiB input rejection before fork and real-child output encoding rejection under a smaller owned probe budget. Buffer ownership is separate from graph/reference/traversal/decoded allocations and total RSS."
+    },
+    {
+      "schema": 1,
+      "passed": true,
+      "caseCount": 3,
+      "expectedPriorV8": false,
+      "parentFullValueV8Serializations": 0,
+      "node": "v24.21.0",
+      "sourceLoader": false,
+      "observations": [
+        {
+          "case": "healthy-cold-warm-revision",
+          "entities": 8,
+          "relations": 12,
+          "graphSha256": "c6d593d2ea42070c4785e6d9007d517644f7ebc900d46e5af9be57fbe2ceeeec",
+          "actualWarmCacheHit": true,
+          "matchedHttpEffect": true
+        },
+        {
+          "case": "default-64MiB-input-rejection",
+          "forkCount": 0,
+          "parentGraphUnchanged": true,
+          "stats": {
+            "allocatedBlockBytes": 65536,
+            "concatenatedBytes": 0,
+            "peakBlockBytes": 65536,
+            "peakStringTemporaryBytes": 92,
+            "encodedBytes": 0,
+            "objects": 19,
+            "strings": 101,
+            "properties": 114,
+            "arraySlots": 59,
+            "stringUnits": 1456,
+            "binaryBytes": 0,
+            "peakDepth": 6,
+            "peakTasks": 7,
+            "peakKeys": 55
+          },
+          "originalStringUnits": 67108865
+        },
+        {
+          "case": "real-child-output-encoding-rejection",
+          "inputBytes": 3387,
+          "selectedOwnedBytes": 3395,
+          "code": null,
+          "signal": "SIGKILL",
+          "pid": 2927784,
+          "parentGraphUnchanged": true
+        }
+      ],
+      "targetExecution": false,
+      "scope": "Actual default compiler transport with parent full-value V8 serialization forbidden, full original cold/warm/revision graph and HTTP effect equality, default 64MiB input rejection before fork and real-child output encoding rejection under a smaller owned probe budget. Buffer ownership is separate from graph/reference/traversal/decoded allocations and total RSS."
+    }
+  ],
+  "retainedWorkerProbes": [
+    {
+      "schema": 1,
+      "passed": true,
+      "caseCount": 12,
+      "completedCases": [
+        "Default compiler worker applies fixed heap flags, ignores caller startup options, reaps its process and returns only original-input facts",
+        "Embedded recipe transfer preserves original UTF-16 regions, module/setup shadowing, facades and exact virtual bytes without materialized text ownership",
+        "Complete default cold/warm/revision graphs preserve cross-project original handlers, calls, HTTP effect aliases and independent compilation scopes",
+        "A changed indexed original produces explicit source failure and cannot become a reusable healthy TypeScript cache entry",
+        "An unsupported framework registry rejects the worker without parent graph, HTTP or cache mutation and has no unbounded fallback",
+        "Invalid and oversized request budgets reject before launching any worker",
+        "Wrong protocols, duplicate messages, late failed exits and oversized responses all reject after actual worker retirement",
+        "A successful response remains unpublished until the worker actually exits",
+        "Actual compiler heap exhaustion rejects a whole component while the parent graph, HTTP and failed component cache stay untouched",
+        "Fatal owner exit retires its reported parser child before the failure reaches the caller",
+        "Owning process exit and default shutdown signals terminate outstanding compiler work",
+        "Malformed graph patches with dangling output or duplicate identities cannot partially mutate the parent graph"
+      ],
+      "sourceRoot": "file:///var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine/dist/src/",
+      "typescriptSourceLoader": false,
+      "platform": "linux",
+      "node": "v22.12.0",
+      "limits": {
+        "oldSpaceMiB": 1024,
+        "semiSpaceMiB": 16,
+        "maxMessageBytes": 67108864,
+        "maxStderrBytes": 65536
+      },
+      "observations": [
+        {
+          "kind": "default-worker",
+          "pid": 2922994,
+          "heapLimitBytes": 1124073472,
+          "heapUsedBytes": 80146200,
+          "maxRssKiB": 184752,
+          "actualExit": 0,
+          "flags": [
+            "--max-old-space-size=1024",
+            "--max-semi-space-size=16"
+          ],
+          "originalInputs": [
+            "main.ts"
+          ]
+        },
+        {
+          "kind": "whole-parity",
+          "comparisons": 3,
+          "entities": 33,
+          "relations": 43,
+          "diagnostics": 7,
+          "sourceFiles": 12,
+          "normalization": [
+            "run.id",
+            "run.analyzedAt"
+          ]
+        },
+        {
+          "kind": "transport-rejection",
+          "mode": "wrong-protocol",
+          "pid": 2925728,
+          "actualExit": null,
+          "signal": "SIGKILL"
+        },
+        {
+          "kind": "transport-rejection",
+          "mode": "duplicate-response",
+          "pid": 2925760,
+          "actualExit": null,
+          "signal": "SIGKILL"
+        },
+        {
+          "kind": "transport-rejection",
+          "mode": "result-then-nonzero",
+          "pid": 2925826,
+          "actualExit": 23,
+          "signal": null
+        },
+        {
+          "kind": "transport-rejection",
+          "mode": "unexpected-exit",
+          "pid": 2925846,
+          "actualExit": 17,
+          "signal": null
+        },
+        {
+          "kind": "transport-rejection",
+          "mode": "oversized-response",
+          "pid": 2925895,
+          "actualExit": null,
+          "signal": "SIGKILL"
+        },
+        {
+          "kind": "authored-lower-heap-compiler-control",
+          "oldSpaceMiB": 96,
+          "pid": 2925987,
+          "actualExit": null,
+          "signal": "SIGABRT",
+          "originalBytes": 800066,
+          "originalSha256": "b45016946d29a7ee3f6ef335d76057d47c703976c84a4606a452b7401433493f",
+          "parentGraphUnchanged": true,
+          "failedComponentStored": false
+        },
+        {
+          "kind": "fatal-owner-child-retirement",
+          "parent": 2926359,
+          "child": 2926381,
+          "actualExit": 19,
+          "addressSpacesRetired": true,
+          "platform": "linux"
+        },
+        {
+          "kind": "owner-shutdown",
+          "mode": "exit",
+          "ownerPid": 2926394,
+          "workerPid": 2926657,
+          "code": 31,
+          "signal": null,
+          "addressSpacesRetired": true
+        },
+        {
+          "kind": "owner-shutdown",
+          "mode": "SIGTERM",
+          "ownerPid": 2926673,
+          "workerPid": 2926849,
+          "code": null,
+          "signal": "SIGTERM",
+          "addressSpacesRetired": true
+        }
+      ],
+      "targetExecution": false,
+      "scope": "Default indexer TypeScript old-space and bounded IPC isolation, graph/cache/revision parity, parser retirement, owner shutdown and rejection atomicity. Lower-heap authored control is separate from default-budget and total RSS qualification."
+    },
+    {
+      "schema": 1,
+      "passed": true,
+      "caseCount": 12,
+      "completedCases": [
+        "Default compiler worker applies fixed heap flags, ignores caller startup options, reaps its process and returns only original-input facts",
+        "Embedded recipe transfer preserves original UTF-16 regions, module/setup shadowing, facades and exact virtual bytes without materialized text ownership",
+        "Complete default cold/warm/revision graphs preserve cross-project original handlers, calls, HTTP effect aliases and independent compilation scopes",
+        "A changed indexed original produces explicit source failure and cannot become a reusable healthy TypeScript cache entry",
+        "An unsupported framework registry rejects the worker without parent graph, HTTP or cache mutation and has no unbounded fallback",
+        "Invalid and oversized request budgets reject before launching any worker",
+        "Wrong protocols, duplicate messages, late failed exits and oversized responses all reject after actual worker retirement",
+        "A successful response remains unpublished until the worker actually exits",
+        "Actual compiler heap exhaustion rejects a whole component while the parent graph, HTTP and failed component cache stay untouched",
+        "Fatal owner exit retires its reported parser child before the failure reaches the caller",
+        "Owning process exit and default shutdown signals terminate outstanding compiler work",
+        "Malformed graph patches with dangling output or duplicate identities cannot partially mutate the parent graph"
+      ],
+      "sourceRoot": "file:///var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine/dist/src/",
+      "typescriptSourceLoader": false,
+      "platform": "linux",
+      "node": "v24.21.0",
+      "limits": {
+        "oldSpaceMiB": 1024,
+        "semiSpaceMiB": 16,
+        "maxMessageBytes": 67108864,
+        "maxStderrBytes": 65536
+      },
+      "observations": [
+        {
+          "kind": "default-worker",
+          "pid": 2928173,
+          "heapLimitBytes": 1124073472,
+          "heapUsedBytes": 57351848,
+          "maxRssKiB": 185216,
+          "actualExit": 0,
+          "flags": [
+            "--max-old-space-size=1024",
+            "--max-semi-space-size=16"
+          ],
+          "originalInputs": [
+            "main.ts"
+          ]
+        },
+        {
+          "kind": "whole-parity",
+          "comparisons": 3,
+          "entities": 33,
+          "relations": 43,
+          "diagnostics": 7,
+          "sourceFiles": 12,
+          "normalization": [
+            "run.id",
+            "run.analyzedAt"
+          ]
+        },
+        {
+          "kind": "transport-rejection",
+          "mode": "wrong-protocol",
+          "pid": 2930202,
+          "actualExit": null,
+          "signal": "SIGKILL"
+        },
+        {
+          "kind": "transport-rejection",
+          "mode": "duplicate-response",
+          "pid": 2930235,
+          "actualExit": null,
+          "signal": "SIGKILL"
+        },
+        {
+          "kind": "transport-rejection",
+          "mode": "result-then-nonzero",
+          "pid": 2930256,
+          "actualExit": 23,
+          "signal": null
+        },
+        {
+          "kind": "transport-rejection",
+          "mode": "unexpected-exit",
+          "pid": 2930287,
+          "actualExit": 17,
+          "signal": null
+        },
+        {
+          "kind": "transport-rejection",
+          "mode": "oversized-response",
+          "pid": 2930323,
+          "actualExit": null,
+          "signal": "SIGKILL"
+        },
+        {
+          "kind": "authored-lower-heap-compiler-control",
+          "oldSpaceMiB": 96,
+          "pid": 2930441,
+          "actualExit": null,
+          "signal": "SIGABRT",
+          "originalBytes": 800066,
+          "originalSha256": "b45016946d29a7ee3f6ef335d76057d47c703976c84a4606a452b7401433493f",
+          "parentGraphUnchanged": true,
+          "failedComponentStored": false
+        },
+        {
+          "kind": "fatal-owner-child-retirement",
+          "parent": 2930951,
+          "child": 2930978,
+          "actualExit": 19,
+          "addressSpacesRetired": true,
+          "platform": "linux"
+        },
+        {
+          "kind": "owner-shutdown",
+          "mode": "exit",
+          "ownerPid": 2930998,
+          "workerPid": 2931234,
+          "code": 31,
+          "signal": null,
+          "addressSpacesRetired": true
+        },
+        {
+          "kind": "owner-shutdown",
+          "mode": "SIGTERM",
+          "ownerPid": 2931243,
+          "workerPid": 2931470,
+          "code": null,
+          "signal": "SIGTERM",
+          "addressSpacesRetired": true
+        }
+      ],
+      "targetExecution": false,
+      "scope": "Default indexer TypeScript old-space and bounded IPC isolation, graph/cache/revision parity, parser retirement, owner shutdown and rejection atomicity. Lower-heap authored control is separate from default-budget and total RSS qualification."
+    }
+  ],
+  "wireAndDecodedQualification": {
+    "passed": true,
+    "node": "v22.12.0",
+    "rows": [
+      {
+        "id": "memos",
+        "rawGraphSha256": "51a0ff76c1f0324fe4f32a7c248d35441ad9b2966128350bb85c24c61c09231a",
+        "encodedSha256": "9d10be62b8d109930c3b8a1fe075750df8fdff930f2c74639c37cb58669ee0b3",
+        "encodedBytes": 18678291,
+        "oldAndNewBytesEqual": true,
+        "fullDecodedGraphEqual": true,
+        "encoder": {
+          "allocatedBlockBytes": 18743296,
+          "concatenatedBytes": 18678291,
+          "peakBlockBytes": 65536,
+          "peakStringTemporaryBytes": 422,
+          "encodedBytes": 18678291,
+          "objects": 556720,
+          "strings": 105138,
+          "properties": 2981702,
+          "arraySlots": 339377,
+          "stringUnits": 3756126,
+          "binaryBytes": 0,
+          "peakDepth": 9,
+          "peakTasks": 10,
+          "peakKeys": 44453
+        },
+        "decoder": {
+          "allocatedBlockBytes": 0,
+          "concatenatedBytes": 0,
+          "peakBlockBytes": 0,
+          "peakStringTemporaryBytes": 0,
+          "encodedBytes": 0,
+          "objects": 556720,
+          "strings": 105138,
+          "properties": 2981702,
+          "arraySlots": 339377,
+          "stringUnits": 3756126,
+          "binaryBytes": 0,
+          "peakDepth": 9,
+          "peakTasks": 10,
+          "peakKeys": 44453
+        }
+      },
+      {
+        "id": "full-stack-fastapi",
+        "rawGraphSha256": "1a5296729985203c89ca61ce9a5b8beff0dbfa0813e7a14abd359740bf12f4db",
+        "encodedSha256": "4ff340a4b14f6bec8610dd3f77c4a91b36c26902111fe50f12a468be191a5f8e",
+        "encodedBytes": 812110,
+        "oldAndNewBytesEqual": true,
+        "fullDecodedGraphEqual": true,
+        "encoder": {
+          "allocatedBlockBytes": 851968,
+          "concatenatedBytes": 812110,
+          "peakBlockBytes": 65536,
+          "peakStringTemporaryBytes": 2988,
+          "encodedBytes": 812110,
+          "objects": 27120,
+          "strings": 7637,
+          "properties": 115505,
+          "arraySlots": 15070,
+          "stringUnits": 244380,
+          "binaryBytes": 0,
+          "peakDepth": 11,
+          "peakTasks": 12,
+          "peakKeys": 2678
+        },
+        "decoder": {
+          "allocatedBlockBytes": 0,
+          "concatenatedBytes": 0,
+          "peakBlockBytes": 0,
+          "peakStringTemporaryBytes": 0,
+          "encodedBytes": 0,
+          "objects": 27120,
+          "strings": 7637,
+          "properties": 115505,
+          "arraySlots": 15070,
+          "stringUnits": 244380,
+          "binaryBytes": 0,
+          "peakDepth": 11,
+          "peakTasks": 12,
+          "peakKeys": 2678
+        }
+      }
+    ],
+    "priorArrayConstructorRequestIntercepted": 16777217,
+    "currentArrayConstructorCalls": 0,
+    "hostileFrameBytes": 10,
+    "wireFormatUnchanged": true,
+    "targetExecution": false,
+    "scope": "Complete exact prior/current encoded bytes and full decoded preserved graphs; intercepted prior sparse allocation versus rejection before the current constructor. No performance/RSS claim."
+  },
+  "priorProductionCensus": {
+    "passed": true,
+    "priorRevision": "bd343a0",
+    "priorWorkerProtocol": 3,
+    "node": "v22.12.0",
+    "rows": [
+      {
+        "id": "memos",
+        "originalGraphSha256": "51a0ff76c1f0324fe4f32a7c248d35441ad9b2966128350bb85c24c61c09231a",
+        "rawGraphBytes": 67344062,
+        "encodedBytes": 18678291,
+        "encoder": {
+          "allocatedBlockBytes": 18743296,
+          "concatenatedBytes": 18678291,
+          "peakBlockBytes": 65536,
+          "peakStringTemporaryBytes": 422,
+          "encodedBytes": 18678291,
+          "objects": 556720,
+          "strings": 105138
+        },
+        "census": {
+          "objects": 556720,
+          "properties": 2981702,
+          "arrayExtent": 339377,
+          "maxArrayExtent": 44453,
+          "maxOwnKeys": 44453,
+          "maxDepth": 9,
+          "uniqueStrings": 149586,
+          "uniqueStringUnits": 3967275
+        },
+        "fullRoundtripEqual": true
+      },
+      {
+        "id": "full-stack-fastapi",
+        "originalGraphSha256": "1a5296729985203c89ca61ce9a5b8beff0dbfa0813e7a14abd359740bf12f4db",
+        "rawGraphBytes": 2616397,
+        "encodedBytes": 812110,
+        "encoder": {
+          "allocatedBlockBytes": 851968,
+          "concatenatedBytes": 812110,
+          "peakBlockBytes": 65536,
+          "peakStringTemporaryBytes": 2988,
+          "encodedBytes": 812110,
+          "objects": 27120,
+          "strings": 7637
+        },
+        "census": {
+          "objects": 27120,
+          "properties": 115505,
+          "arrayExtent": 15070,
+          "maxArrayExtent": 2678,
+          "maxOwnKeys": 2678,
+          "maxDepth": 11,
+          "uniqueStrings": 10310,
+          "uniqueStringUnits": 253976
+        },
+        "fullRoundtripEqual": true
+      }
+    ],
+    "targetExecution": false,
+    "scope": "Read-only complete preserved production graphs and prior ordinary compiled codec; logical structure and encoding census, not a relative performance/RSS benchmark."
+  },
+  "mixedGraphs": [
+    {
+      "mode": "cold",
+      "bytes": 1304793,
+      "sha256": "04923fa598d34cc0cede1ac96dfe6b75c3712ac9e238985e964a5da71e4b3a62",
+      "entities": 803,
+      "relations": 1057,
+      "diagnostics": 26
+    },
+    {
+      "mode": "warm",
+      "bytes": 1304793,
+      "sha256": "04923fa598d34cc0cede1ac96dfe6b75c3712ac9e238985e964a5da71e4b3a62",
+      "entities": 803,
+      "relations": 1057,
+      "diagnostics": 26
+    },
+    {
+      "mode": "revision",
+      "bytes": 1304214,
+      "sha256": "415e623987349c6a27f138a0050fb14ef1ffd931e29a4e716967755a9a996f0c",
+      "entities": 803,
+      "relations": 1057,
+      "diagnostics": 23
+    }
+  ],
+  "mixedOriginals": 171,
+  "wholeMixedComparisons": 3,
+  "productionHeads": [
+    {
+      "id": "memos",
+      "graph": {
+        "sha256": "79d64956c6002ef44ea56ffbd452fdbb17cd4fc32e38ffaaff51b201b07f7081",
+        "bytes": 67344062,
+        "peakChunkBytes": 65536,
+        "limits": {
+          "maxBytes": 1073741824,
+          "chunkBytes": 65536,
+          "maxDepth": 4096
+        },
+        "serialization": "lossless-plain-json-chunks",
+        "entities": 11356,
+        "relations": 44453,
+        "diagnostics": 75
+      },
+      "completeComparison": {
+        "format": "complete-logical-production-json-v1",
+        "sha256": "2c3590515fa06ae7a87a4446869295aafcc351dffbec5d34e444b69cd04606a7",
+        "bytes": 67344061,
+        "counts": {
+          "entities": 11356,
+          "relations": 44453,
+          "diagnostics": 75
+        },
+        "storage": {
+          "files": 0,
+          "proofs": 0,
+          "references": 0,
+          "entries": 0
+        },
+        "peakChunkBytes": 65536,
+        "normalization": [],
+        "volatileFields": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "producerNormalization": false
+      },
+      "original": {
+        "tree": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/qualified-original-heads/memos/tree",
+        "receiptSha256": "0d2395af292e9a81cafe64bdde7f82fdbbf1af56176e97a4de11404b437f2635",
+        "regularFiles": 1322,
+        "originalBytes": 12208526,
+        "regularFileDigest": "e3e25f1816755f93f8f4106d947750a97960a006327013be3f1f43b802bb0268",
+        "skipped": []
+      },
+      "contracts": {
+        "schema": 1,
+        "manifestSha256": "75eec750d869174c6f386b42e46d29de15e80bcf39fae4574e014a3dbbcea720",
+        "corpusSha256": "dc21e2dbfa059f3c210dc3736457bb1944d7387de2521e434cd454bd04d3d6c6",
+        "originalSourcesVerified": true,
+        "graphContractsVerified": true,
+        "analysisQualified": false,
+        "contracts": [
+          {
+            "id": "memos-server",
+            "repository": "memos",
+            "commit": "b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e",
+            "path": "server/server.go",
+            "status": "graph-and-source-verified",
+            "fileSha256": "6bb3a6b268400a5d482b7e9f4a10c407847b9e635a1780629050b4f3b8cf53de",
+            "spanSha256": "c19595fee63872d9105fde05d2b034b4065df80a33e62d458aa22b19414b68a0",
+            "range": {
+              "startLine": 39,
+              "startColumn": 6,
+              "endLine": 47,
+              "endColumn": 2
+            },
+            "originalBytesVerified": true,
+            "entityId": "symbol:627b4c0619f8ff639bc03eb2",
+            "parentId": "file:c1085b058c4acbc5ddaf1d1c",
+            "graphOriginalVerified": true
+          },
+          {
+            "id": "memos-close-long-lived-connections",
+            "repository": "memos",
+            "commit": "b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e",
+            "path": "server/server.go",
+            "status": "graph-and-source-verified",
+            "fileSha256": "6bb3a6b268400a5d482b7e9f4a10c407847b9e635a1780629050b4f3b8cf53de",
+            "spanSha256": "8ab9e1a38a5e9c5409a4fbad1e857d215212a3ea1b6ec6039c0fc98bed523050",
+            "range": {
+              "startLine": 162,
+              "startColumn": 1,
+              "endLine": 165,
+              "endColumn": 2
+            },
+            "originalBytesVerified": true,
+            "entityId": "symbol:87f7637e4206f3a17356e50b",
+            "parentId": "symbol:627b4c0619f8ff639bc03eb2",
+            "graphOriginalVerified": true
+          }
+        ],
+        "completedAt": "2026-10-14T12:24:58.383Z"
+      },
+      "workers": [
+        {
+          "pid": 2944145,
+          "module": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine/dist/src/analyzers/native-ts-worker.mjs",
+          "execArgv": [
+            "--max-old-space-size=1024",
+            "--max-semi-space-size=16"
+          ],
+          "requests": [
+            {
+              "bytes": 14624511,
+              "sha256": "f860fb52ced4cfd55d67926b9baccc472b74cc38d1947b1226eb23dcdf529e9e"
+            }
+          ],
+          "responses": [
+            {
+              "bytes": 2505957,
+              "sha256": "632e28e86fc6229101818691f4b961999c927fd7a01784b64f5aa3bf20709c1b"
+            }
+          ],
+          "code": 0,
+          "signal": null
+        }
+      ]
+    },
+    {
+      "id": "full-stack-fastapi",
+      "graph": {
+        "sha256": "ec2ef328bdf669fe312c74902adcf8a11b82d41193ef60ee7ee4191b83700ca5",
+        "bytes": 2616397,
+        "peakChunkBytes": 65536,
+        "limits": {
+          "maxBytes": 1073741824,
+          "chunkBytes": 65536,
+          "maxDepth": 4096
+        },
+        "serialization": "lossless-plain-json-chunks",
+        "entities": 787,
+        "relations": 2678,
+        "diagnostics": 9
+      },
+      "completeComparison": {
+        "format": "complete-logical-production-json-v1",
+        "sha256": "16fa5224e5346f41f8eaf32ada8f4fc0e3ae81e8a117a43e1a8cec5ec4d2dcf1",
+        "bytes": 2616396,
+        "counts": {
+          "entities": 787,
+          "relations": 2678,
+          "diagnostics": 9
+        },
+        "storage": {
+          "files": 0,
+          "proofs": 0,
+          "references": 0,
+          "entries": 0
+        },
+        "peakChunkBytes": 65536,
+        "normalization": [],
+        "volatileFields": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "producerNormalization": false
+      },
+      "original": {
+        "tree": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/qualified-original-heads/full-stack-fastapi/tree",
+        "receiptSha256": "23098159efd41d7c5f28c0c6db06a91dee22d17a8fca81df797ead8a3c24ff9b",
+        "regularFiles": 248,
+        "originalBytes": 1885645,
+        "regularFileDigest": "8378e5febf3bce16bd68f80a291c71f198cbfffad408c8ac3994fac323d9606b",
+        "skipped": [
+          {
+            "path": ".agents/skills/fastapi",
+            "mode": "120000",
+            "object": "c72ba0755dbaeefc9c7b47dcadae55c0e3925663",
+            "reason": "symlink-not-followed",
+            "sha256": "e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f"
+          },
+          {
+            "path": ".agents/skills/sqlmodel",
+            "mode": "120000",
+            "object": "8dfb559dff430e145f1c4cf6b549e99cbbbec457",
+            "reason": "symlink-not-followed",
+            "sha256": "2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e"
+          },
+          {
+            "path": ".claude/skills/fastapi",
+            "mode": "120000",
+            "object": "c72ba0755dbaeefc9c7b47dcadae55c0e3925663",
+            "reason": "symlink-not-followed",
+            "sha256": "e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f"
+          },
+          {
+            "path": ".claude/skills/sqlmodel",
+            "mode": "120000",
+            "object": "8dfb559dff430e145f1c4cf6b549e99cbbbec457",
+            "reason": "symlink-not-followed",
+            "sha256": "2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e"
+          }
+        ]
+      },
+      "contracts": {
+        "schema": 1,
+        "manifestSha256": "f4621d8f82e4cee12d55939c01526df3ec19c4a382fb2bdfdcbc08a20c57281f",
+        "corpusSha256": "dc21e2dbfa059f3c210dc3736457bb1944d7387de2521e434cd454bd04d3d6c6",
+        "originalSourcesVerified": true,
+        "graphContractsVerified": true,
+        "analysisQualified": false,
+        "contracts": [
+          {
+            "id": "full-stack-fastapi-read-item",
+            "repository": "full-stack-fastapi",
+            "commit": "f27b4721507824e57ebd0286ff1a84d82e83bf59",
+            "path": "backend/app/api/routes/items.py",
+            "status": "graph-and-source-verified",
+            "fileSha256": "7f0fa55d1f7b02188c4abd4f88aa6db92fe03de38258b765ed050ec72032b410",
+            "spanSha256": "870cfab8d486df87fae7301f6a511abc9ee27631ed8e4e0408b5b6b52c10c5d8",
+            "range": {
+              "startLine": 48,
+              "startColumn": 1,
+              "endLine": 58,
+              "endColumn": 16
+            },
+            "originalBytesVerified": true,
+            "entityId": "symbol:15ef7dda6b5ad6ba5ef4a1b0",
+            "parentId": "file:42ea33f80127154ee78c30a3",
+            "graphOriginalVerified": true
+          },
+          {
+            "id": "full-stack-fastapi-create-item",
+            "repository": "full-stack-fastapi",
+            "commit": "f27b4721507824e57ebd0286ff1a84d82e83bf59",
+            "path": "backend/app/api/routes/items.py",
+            "status": "graph-and-source-verified",
+            "fileSha256": "7f0fa55d1f7b02188c4abd4f88aa6db92fe03de38258b765ed050ec72032b410",
+            "spanSha256": "2651c63ecb96761600a856480ae2d8c3306b0ceb63dc2061530ff23d7ac53780",
+            "range": {
+              "startLine": 61,
+              "startColumn": 1,
+              "endLine": 72,
+              "endColumn": 16
+            },
+            "originalBytesVerified": true,
+            "entityId": "symbol:378d08414dd3f7e2028daeb8",
+            "parentId": "file:42ea33f80127154ee78c30a3",
+            "graphOriginalVerified": true
+          }
+        ],
+        "completedAt": "2026-10-14T12:25:18.251Z"
+      },
+      "workers": [
+        {
+          "pid": 2949415,
+          "module": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine/dist/src/analyzers/native-ts-worker.mjs",
+          "execArgv": [
+            "--max-old-space-size=1024",
+            "--max-semi-space-size=16"
+          ],
+          "requests": [
+            {
+              "bytes": 378063,
+              "sha256": "b819911983aca0294c477869ac788eff7f676cb4ebb287307107309454594be3"
+            }
+          ],
+          "responses": [
+            {
+              "bytes": 362172,
+              "sha256": "3b1a8c08492db8ba7be13625d0e7c933bc28af76bb4396c2ffa4b124f0b143ea"
+            }
+          ],
+          "code": 0,
+          "signal": null
+        }
+      ]
+    }
+  ],
+  "productionHeadComparisons": 2,
+  "independentPythonHeadComparisons": 2,
+  "checks": [
+    {
+      "label": "cli-build",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "/home/ojoven/.nvm/versions/node/v22.12.0/lib/node_modules/npm/bin/npm-cli.js",
+        "run",
+        "build:cli"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2858085,
+      "childPid": 2858103,
+      "actualExit": 0,
+      "seconds": 17.997981548309326,
+      "logSha256": "35e452fc1cbfe25c74c045cb35ec2f66d675f53a21f0f3f10d9ca40ec382c7bf",
+      "targetExecution": false
+    },
+    {
+      "label": "codec-units-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "tests/typescript-worker-codec.test.ts",
+        "tests/typescript-codec-structure.test.ts"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2942097,
+      "childPid": 2942100,
+      "actualExit": 0,
+      "seconds": 1.5168101787567139,
+      "logSha256": "9fc254bbbce15959f679d8d7a43c7343abb2daa35d5127f69228cce52cf26ed0",
+      "targetExecution": false
+    },
+    {
+      "label": "compiled-bounded-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "tests/fixtures/typescript-bounded-codec-qualification.mjs",
+        "file:///var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine/dist/src/",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/compiled-bounded-node22.json"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2921219,
+      "childPid": 2921224,
+      "actualExit": 0,
+      "seconds": 5.8519110679626465,
+      "logSha256": "2fb2d7700c5a6da15b6d84ca0c974452536d2307eb5b42b86bf5f0b31caceead",
+      "targetExecution": false
+    },
+    {
+      "label": "compiled-bounded-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "tests/fixtures/typescript-bounded-codec-qualification.mjs",
+        "file:///var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine/dist/src/",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/compiled-bounded-node24.json"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2926905,
+      "childPid": 2926908,
+      "actualExit": 0,
+      "seconds": 4.519047975540161,
+      "logSha256": "cfda4bccd0efdc5f00a25fa678ff59b8635ffd4569bcd2353880900ca876cf0a",
+      "targetExecution": false
+    },
+    {
+      "label": "compiled-structure-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "tests/fixtures/typescript-codec-structure-qualification.mjs",
+        "file:///var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine/dist/src/",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/compiled-structure-node22.json"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2916328,
+      "childPid": 2916346,
+      "actualExit": 0,
+      "seconds": 7.065256834030151,
+      "logSha256": "4c7b32e7eb5a8a0e53ecff2d518134f731ee81b83a4a69952ed45c44d753d346",
+      "targetExecution": false
+    },
+    {
+      "label": "compiled-structure-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "tests/fixtures/typescript-codec-structure-qualification.mjs",
+        "file:///var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine/dist/src/",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/compiled-structure-node24.json"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2919214,
+      "childPid": 2919221,
+      "actualExit": 0,
+      "seconds": 5.908901691436768,
+      "logSha256": "7b998ab505d07613dbb61fcb43ae8a4a722d083bddf01c96821d5718f78e778f",
+      "targetExecution": false
+    },
+    {
+      "label": "compiled-worker-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "tests/fixtures/typescript-worker-qualification.mjs",
+        "file:///var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine/dist/src/",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/compiled-worker-node22.json"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2922700,
+      "childPid": 2922701,
+      "actualExit": 0,
+      "seconds": 12.929417610168457,
+      "logSha256": "ec33025bfb3c3b5f5bdbeaca6481ff0fc19f035bb3dd7e3c9bbec61adaab06cd",
+      "targetExecution": false
+    },
+    {
+      "label": "compiled-worker-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "tests/fixtures/typescript-worker-qualification.mjs",
+        "file:///var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine/dist/src/",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/compiled-worker-node24.json"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2928007,
+      "childPid": 2928020,
+      "actualExit": 0,
+      "seconds": 10.908163785934448,
+      "logSha256": "e2ff567ac63e04575b4ee432deb7cf323904a5929475c9b33d7d9d0bd921a4a2",
+      "targetExecution": false
+    },
+    {
+      "label": "docs-check",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "scripts/generate-compatibility-docs.mjs",
+        "--check"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2942243,
+      "childPid": 2942248,
+      "actualExit": 0,
+      "seconds": 0.19472622871398926,
+      "logSha256": "4c4c7e9bf022f7cdc42437fff6e996669eeabd2c059faefea57da142dea8f43c",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "existing-production-census",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--max-old-space-size=1024",
+        ".codiluce/validation-typescript-codec-structure-source/measure-existing.mjs"
+      ],
+      "controllerPid": 2835237,
+      "childPid": 2835252,
+      "startedAt": 1791979425.8803391,
+      "completedAt": 1791979430.763177,
+      "seconds": 4.882837772369385,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/existing-production-census.log",
+      "logSha256": "644754f060a66839afdd8c4a5be98a4c1bf8f082fee49ef740b7072ab0ca3479",
+      "targetExecution": false
+    },
+    {
+      "label": "focused-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-concurrency=2",
+        "tests/typescript-codec-structure.test.ts",
+        "tests/typescript-codec-structure-transfer.test.ts",
+        "tests/typescript-worker-codec.test.ts",
+        "tests/typescript-worker.test.ts",
+        "tests/typescript-bounded-transfer.test.ts"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2853542,
+      "childPid": 2853543,
+      "actualExit": 0,
+      "seconds": 24.637129545211792,
+      "logSha256": "a4ef3911006a086ee4fb2f3826e5a423228d2264b347de6bdece1b89c9167c85",
+      "targetExecution": false
+    },
+    {
+      "label": "full-stack-fastapi-compiled-head",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/production-heads/observer/qualify-typescript-production-head.mjs",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/production-heads/full-stack-fastapi-job.json",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/production-heads/full-stack-fastapi"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2949118,
+      "childPid": 2949143,
+      "actualExit": 0,
+      "seconds": 8.291425943374634,
+      "logSha256": "0debecd0a520989e3f33560bfa8fdc42d9bf534b8587780d85cb0454f8e40e56",
+      "targetExecution": false
+    },
+    {
+      "label": "full-tests",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "/home/ojoven/.nvm/versions/node/v22.12.0/lib/node_modules/npm/bin/npm-cli.js",
+        "test"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2855902,
+      "childPid": 2855903,
+      "actualExit": 0,
+      "seconds": 597.1888046264648,
+      "logSha256": "396d6fcc8f05868e4a1c74d6702d81ed63b64b34d74d4fc7010faca2aeb17f7b",
+      "targetExecution": false
+    },
+    {
+      "label": "generate-docs",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "scripts/generate-compatibility-docs.mjs"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2855875,
+      "childPid": 2855878,
+      "actualExit": 0,
+      "seconds": 0.13020038604736328,
+      "logSha256": "6286b75b9d3a536dcbc2b0eca4235ae834b840d80fe93fd980c26540dbc1b8e6",
+      "targetExecution": false
+    },
+    {
+      "label": "initial-typecheck",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "/home/ojoven/.nvm/versions/node/v22.12.0/lib/node_modules/npm/bin/npm-cli.js",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2852468,
+      "childPid": 2852470,
+      "actualExit": 0,
+      "seconds": 23.46267056465149,
+      "logSha256": "c1fee42b4fa7e6e1a30e8e81426f7690f45767a53800385021e8cd468ec6e8d9",
+      "targetExecution": false
+    },
+    {
+      "label": "memos-compiled-head",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/production-heads/observer/qualify-typescript-production-head.mjs",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/production-heads/memos-job.json",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/production-heads/memos"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2941953,
+      "childPid": 2941958,
+      "actualExit": 0,
+      "seconds": 68.19139528274536,
+      "logSha256": "02c43a6bb97f474f261c8bdd803d24c656d8dfe0a0a94235cdaac0e20bf16712",
+      "targetExecution": false
+    },
+    {
+      "label": "mixed-complete-graphs-absolute",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/mixed-complete-graphs/compare-current-compiled.mjs"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2939509,
+      "childPid": 2939511,
+      "actualExit": 0,
+      "seconds": 81.60908770561218,
+      "logSha256": "191521ddb43bed825dde774fe38823ecf01c041222304ce27fe829fafd69b952",
+      "targetExecution": false
+    },
+    {
+      "label": "preserve-qualified",
+      "argv": [
+        "python3",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/preserve-qualified.py"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2959469,
+      "childPid": 2959471,
+      "actualExit": 0,
+      "seconds": 1.696995735168457,
+      "logSha256": "f838024ae8b6c329378ccb98672fcf42a52bb72210c6b3d2a5528e1588251553",
+      "targetExecution": false
+    },
+    {
+      "label": "source-structure-node22",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "tests/fixtures/typescript-codec-structure-qualification.mjs",
+        "file:///var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine/src/",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/source-structure-node22.json"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2909761,
+      "childPid": 2909765,
+      "actualExit": 0,
+      "seconds": 10.741505146026611,
+      "logSha256": "6d08ee49e99217c87ab62e5833487748fb74fa4697c78812f45efdda91f8c2a9",
+      "targetExecution": false
+    },
+    {
+      "label": "source-structure-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "tests/fixtures/typescript-codec-structure-qualification.mjs",
+        "file:///var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine/src/",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/source-structure-node24.json"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2913505,
+      "childPid": 2913512,
+      "actualExit": 0,
+      "seconds": 9.92074966430664,
+      "logSha256": "2ed68b69df31203a8d9a9352ba45be199ecb48148e2dc412c0c73d721a175656",
+      "targetExecution": false
+    },
+    {
+      "label": "tooling-tests",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-concurrency=4",
+        "scripts/tests/graph-json-artifact.test.mjs",
+        "scripts/tests/native-release.test.mjs",
+        "scripts/tests/production-cache-git.test.mjs",
+        "scripts/tests/production-cache-observer.test.mjs",
+        "scripts/tests/production-graph-digest.test.mjs",
+        "scripts/tests/production-head-graphs.test.mjs",
+        "scripts/tests/production-history-audit.test.mjs",
+        "scripts/tests/production-history-blobs.test.mjs",
+        "scripts/tests/production-history-columns.test.mjs",
+        "scripts/tests/production-history-entrypoint-columns.test.mjs",
+        "scripts/tests/production-history-entrypoint-qualification.test.mjs",
+        "scripts/tests/production-history-entrypoint-report.test.mjs",
+        "scripts/tests/production-history-entrypoint.test.mjs",
+        "scripts/tests/production-history-inputs.test.mjs",
+        "scripts/tests/production-history-observer.test.mjs",
+        "scripts/tests/production-history-performance-qualification.test.mjs",
+        "scripts/tests/production-history-performance.test.mjs",
+        "scripts/tests/production-history-qualification.test.mjs",
+        "scripts/tests/production-history-recovery.test.mjs",
+        "scripts/tests/production-history-resume.test.mjs",
+        "scripts/tests/production-history-runtime-inputs.test.mjs",
+        "scripts/tests/production-history-storage.test.mjs",
+        "scripts/tests/production-history-tree.test.mjs",
+        "scripts/tests/production-source-contracts.test.mjs",
+        "scripts/tests/typescript-production-head.test.mjs"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2862270,
+      "childPid": 2862280,
+      "actualExit": 0,
+      "seconds": 39.89681553840637,
+      "logSha256": "838cd1c5ac9582d89a49f36abfcc169afae3be99d2f5bad44da71124cbaf8ef4",
+      "targetExecution": false
+    },
+    {
+      "label": "ui-build",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "/home/ojoven/.nvm/versions/node/v22.12.0/lib/node_modules/npm/bin/npm-cli.js",
+        "run",
+        "build:web"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2862577,
+      "childPid": 2862604,
+      "actualExit": 0,
+      "seconds": 39.20998668670654,
+      "logSha256": "2d4c8cb74f310eaa7ee862ca77b5b8efc622937ae651a2845f2cd30f1048155a",
+      "targetExecution": false
+    },
+    {
+      "label": "wire-and-decoded",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--max-old-space-size=1024",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/verify-wire.mjs"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2948026,
+      "childPid": 2948052,
+      "actualExit": 0,
+      "seconds": 9.349066495895386,
+      "logSha256": "dd1f173563a51229636da0778949d653ec1b7cb6f3ec64d1a5c8efa4b1ae9630",
+      "targetExecution": false
+    }
+  ],
+  "failedOwnChecks": [
+    {
+      "label": "mixed-complete-graphs",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        ".codiluce/validation-typescript-codec-structure-source/mixed-complete-graphs/compare-current-compiled.mjs"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2937640,
+      "childPid": 2937662,
+      "actualExit": 1,
+      "seconds": 0.021804332733154297,
+      "logSha256": "0ee3370a978f9d2e4614b2058e75e0252769f62c13cab2296e2530bae827ad20",
+      "targetExecution": false
+    },
+    {
+      "label": "qualify-source",
+      "argv": [
+        "python3",
+        "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/qualify-source.py"
+      ],
+      "cwd": "/var/www/html/codiluce/.codiluce/validation-typescript-codec-structure-source/engine",
+      "controllerPid": 2965354,
+      "childPid": 2965355,
+      "actualExit": 1,
+      "seconds": 0.5742948055267334,
+      "logSha256": "b0580aa6648707cc9aad69821fb369ca31db6c653721c067e57a968e85594ccb",
+      "targetExecution": false
+    }
+  ],
+  "sourceCopies": {
+    "regularFiles": 3311,
+    "bytes": 299511788,
+    "allBytesModesVerified": true
+  },
+  "processIdsGone": [
+    2835237,
+    2835252,
+    2852468,
+    2852470,
+    2853542,
+    2853543,
+    2855875,
+    2855878,
+    2855902,
+    2855903,
+    2858085,
+    2858103,
+    2862270,
+    2862280,
+    2862577,
+    2862604,
+    2909761,
+    2909765,
+    2912806,
+    2913505,
+    2913512,
+    2915877,
+    2916328,
+    2916346,
+    2918642,
+    2919214,
+    2919221,
+    2920907,
+    2921219,
+    2921224,
+    2922451,
+    2922700,
+    2922701,
+    2926905,
+    2926908,
+    2927784,
+    2928007,
+    2928020,
+    2937640,
+    2937662,
+    2939509,
+    2939511,
+    2941953,
+    2941958,
+    2942097,
+    2942100,
+    2942243,
+    2942248,
+    2944145,
+    2948026,
+    2948052,
+    2949118,
+    2949143,
+    2949415,
+    2959469,
+    2959471,
+    2965354,
+    2965355
+  ],
+  "targetExecution": false,
+  "failedProductionRetry": false,
+  "normalInstalledPackageQualified": false,
+  "fullProductionHistoryQualified": false,
+  "relativeTimeRssQualified": false,
+  "totalParentRssBounded": false,
+  "nativeWindowsMacOSQualified": false,
+  "fullGoalComplete": false,
+  "remaining": [
+    "First full normal installed-package gate with sixteen portable receipts",
+    "Parent graph/project ownership, pre-admission encoder key enumeration, decoded physical allocations, direct in-process, native/WASM and total RSS budgets",
+    "Complete changed-runtime 195 production histories and controlled time/RSS",
+    "Broader P7/P8/P9 original accuracy and native Windows/macOS",
+    "Concurrent projection/UI work remains outside this qualification"
+  ],
+  "archive": {
+    "schema": 1,
+    "passed": true,
+    "archive": "typescript-codec-structure-source-evidence.tar.gz",
+    "archiveBytes": 84391816,
+    "archiveSha256": "2ff30919204aca2b53fc304c1948b77e513d19bedafaad182c213b0f7cd3fcd2",
+    "manifestSha256": "bec572d2947dfe09eb2c3dd7269b833ba915357ecbc50f22f765138c35e72d0d",
+    "regularFiles": 5263,
+    "literalSymlinks": 0,
+    "uncompressedBytes": 561366717,
+    "allMembersReopenedAndVerified": true,
+    "allSourceBytesModesAndLinksBeforeAfterVerified": true,
+    "excludedActiveLogs": [
+      "archive-evidence.log"
+    ],
+    "pid": 2969675,
+    "seconds": 14.649987936019897,
+    "targetExecution": false
+  },
+  "archiveScope": "Selected exact qualified source, runtime vendors and compiled CLI/grammars; original inputs, current/prior complete graphs, prior source/compiled reconstruction, structure and existing worker probes, all successful/failed checks and readers. Working engine, Git/build caches and active archive log are excluded. Publication is verified separately."
+}

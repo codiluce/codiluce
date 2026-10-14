@@ -27,14 +27,25 @@ cp.fork = (...args) => {
 syncBuiltinESMExports();
 process.once('message', async message => {
   try {
-    const args = process.argv.slice(2), maxBytes = args.length === 0 ? 64 * 1024 * 1024 : args.length === 1 && /^--max-message-bytes=\d+$/.test(args[0]) ? Number(args[0].slice('--max-message-bytes='.length)) : NaN;
+    let maxBytes = 64 * 1024 * 1024, policy;
+    const seen = new Set();
+    for (const arg of process.argv.slice(2)) {
+      const name = arg.split('=', 1)[0];
+      if (seen.has(name)) throw Error('Duplicate owned compiler transfer limit');
+      seen.add(name);
+      if (/^--max-message-bytes=\d+$/.test(arg)) maxBytes = Number(arg.slice('--max-message-bytes='.length));
+      else if (/^--codec-limits=[\w-]{1,1024}$/.test(arg)) {
+        policy = JSON.parse(Buffer.from(arg.slice('--codec-limits='.length), 'base64url').toString());
+        if (!policy || typeof policy !== 'object' || Array.isArray(policy)) throw Error('Invalid owned compiler structural limits');
+      } else throw Error('Invalid owned compiler transfer argument');
+    }
     if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > 64 * 1024 * 1024) throw Error('Invalid owned compiler transfer limit');
     if (!Buffer.isBuffer(message) || message.length > maxBytes) throw Error('Invalid TypeScript worker input');
     const entry = new URL('./ts-worker.js', import.meta.url);
     const { analyzeTypeScriptWorker } = await import(existsSync(entry) ? entry.href : new URL('./ts-worker.ts', import.meta.url).href);
     const codec = new URL('./ts-worker-codec.js', import.meta.url);
     const { encodeTypeScriptPayload, decodeTypeScriptPayload } = await import(existsSync(codec) ? codec.href : new URL('./ts-worker-codec.ts', import.meta.url).href);
-    const result = encodeTypeScriptPayload(await analyzeTypeScriptWorker(decodeTypeScriptPayload(message, maxBytes)), maxBytes);
+    const result = encodeTypeScriptPayload(await analyzeTypeScriptWorker(decodeTypeScriptPayload(message, maxBytes, undefined, policy)), maxBytes, undefined, policy);
     process.send(result, error => { process.exitCode = error ? 1 : 0; intentionalDisconnect = true; if (process.connected) process.disconnect(); });
   } catch (error) {
     process.exitCode = 1;

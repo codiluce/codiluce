@@ -491,6 +491,10 @@ const compiler=new TemplateScriptParser();try{compiler.prewarm();const retiremen
   await cp(path.join(root,'tests/fixtures/typescript-bounded-codec-qualification.mjs'),boundedTransferCheck);
   await run(process.execPath,['--experimental-sqlite',boundedTransferCheck,pathToFileURL(path.join(installed,'dist/src/')).href,boundedTransferReceipt],consumer);
   const boundedTransfer=JSON.parse(await readFile(boundedTransferReceipt,'utf8'));assert.ok(boundedTransfer.passed&&!boundedTransfer.sourceLoader);assert.equal(boundedTransfer.caseCount,3);assert.equal(boundedTransfer.parentFullValueV8Serializations,0);
+  const structureCheck=path.join(consumer,'typescript-codec-structure-qualification.mjs'),structureReceipt=path.join(consumer,'typescript-codec-structure-validation.json');
+  await cp(path.join(root,'tests/fixtures/typescript-codec-structure-qualification.mjs'),structureCheck);
+  await run(process.execPath,['--experimental-sqlite',structureCheck,pathToFileURL(path.join(installed,'dist/src/')).href,structureReceipt],consumer);
+  const structure=JSON.parse(await readFile(structureReceipt,'utf8'));assert.ok(structure.passed&&!structure.sourceLoader);assert.equal(structure.caseCount,4);assert.equal(structure.parentFullValueV8Serializations,0);
   const bin = path.join(installed, 'bin/codiluce.js');
   for (const grammar of grammarManifest.grammars) assert.equal(createHash('sha256').update(await readFile(path.join(installed, 'dist/grammars', grammar.file))).digest('hex'), grammar.sha256);
   const dependencies = JSON.parse((await npm(['ls', '--omit=dev', '--all', '--json'], consumer)).stdout).dependencies[manifest.name].dependencies;
