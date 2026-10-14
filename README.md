@@ -24,7 +24,7 @@
   <a href="#contributing">Contributing</a>
 </p>
 
-![Codiluce mapping BookStack, an open-source wiki: files drawn as isometric buildings by their kind, one view selected and its details in the inspector.](site/public/shots/map.webp)
+![Codiluce mapping BookStack, an open-source wiki: files drawn as isometric buildings by their kind, one folder selected and its details in the inspector.](site/public/shots/map.webp)
 
 ## Why Codiluce?
 

@@ -27,8 +27,8 @@ export interface NodeChange {
 export interface ChangeCounts { added: number; removed: number; modified: number; moved: number }
 
 export type { Rect } from './layout.js';
-export type { Archetype, ArchetypeBasis, ArchetypeInfo } from './archetypes.js';
-import type { Archetype, ArchetypeInfo } from './archetypes.js';
+export type { Archetype, ArchetypeBasis, ArchetypeCount, ArchetypeInfo } from './archetypes.js';
+import type { Archetype, ArchetypeCount, ArchetypeInfo } from './archetypes.js';
 export interface NodeStats { files: number; symbols: number; endpoints: number; measuredLoc: number; unmeasuredFiles: number; descendants: number }
 export interface NodeSummary {
   id: string;
@@ -46,6 +46,8 @@ export interface NodeSummary {
   detail?: string; qualifiedName?: string; role?: string; explanation?: string;
   /** What kind of building block it is (its shape on the map), and why. */
   archetype?: ArchetypeInfo;
+  /** Areas: the blocks they hold by archetype, most first (what a closed area shows on its roof). */
+  archetypeCounts?: ArchetypeCount[];
   /** Unresolved findings attached within this node's spatial subtree. */
   diagnostics: number;
   stats: NodeStats;

@@ -3,14 +3,17 @@
 // A frame's scene holds the same nodes in the same places as the settled view
 // of that commit compared with the previous one, so swapping in the settled
 // view afterwards only adds detail (findings, relationships, lazy children).
-import type { EvolutionFrame, EvolutionNode, EvolutionResponse, NodeStats, NodeSummary } from '@engine/projection/dto';
+import type { Archetype, EvolutionFrame, EvolutionNode, EvolutionResponse, NodeStats, NodeSummary } from '@engine/projection/dto';
 import { Scene } from './scene';
+import { ARCHETYPE_LABELS } from './shapes';
 
 export type EvolutionData = Extract<EvolutionResponse, { status: 'ready' }>;
 export type EvolutionStatus = 'added' | 'modified' | 'moved' | 'removed';
 const STATUS: (EvolutionStatus | undefined)[] = [undefined, 'added', 'modified', 'moved', 'removed'];
 const SYMBOL_TYPES = new Set(['class', 'controller', 'component', 'function', 'method', 'model', 'test']);
 const INTERFACE_TYPES = new Set(['route', 'api_endpoint']);
+const AREA_TYPES = new Set(['repository', 'application', 'directory']);
+const ARCHETYPE_ORDER = new Map((Object.keys(ARCHETYPE_LABELS) as Archetype[]).map((kind, i) => [kind, i]));
 /** Every KEYFRAME-th frame's placements are kept, so any frame is at most KEYFRAME - 1 deltas away. */
 const KEYFRAME = 16, SCENE_CACHE = 24;
 /** A node in a frame: [parent, x, y, w, h, loc]. */
@@ -92,17 +95,23 @@ export class Evolution {
     for (let i = 0; i < order.length; i++) for (const child of children.get(order[i]!) ?? []) { depth.set(child, depth.get(order[i]!)! + 1); order.push(child); }
     const summaries = new Map<number, NodeSummary>();
     for (const node of order) summaries.set(node, this.summary(node, placed.get(node)!, depth.get(node)!, children.get(node)?.length ?? 0, status.get(node)));
+    // What each area holds by archetype, counted as the server does: the outermost blocks with one.
+    const held = new Map<number, Map<Archetype, number>>();
     for (let i = order.length - 1; i >= 0; i--) {
-      const node = summaries.get(order[i]!)!, s = node.stats;
-      if (node.change?.status !== 'removed') {
+      const node = summaries.get(order[i]!)!, s = node.stats, removed = node.change?.status === 'removed';
+      if (!removed) {
         if (node.type === 'file') { s.files++; if (node.loc !== undefined) s.measuredLoc += node.loc; else s.unmeasuredFiles++; }
         else if (SYMBOL_TYPES.has(node.type)) s.symbols++;
         else if (INTERFACE_TYPES.has(node.type)) s.endpoints++;
       }
+      const own = held.get(order[i]!);
+      if (own && (node.kind === 'group' || AREA_TYPES.has(node.type))) node.archetypeCounts = [...own].map(([kind, count]) => ({ kind, count })).sort((a, b) => b.count - a.count || ARCHETYPE_ORDER.get(a.kind)! - ARCHETYPE_ORDER.get(b.kind)!);
       const parent = placed.get(order[i]!)![0]!;
       if (parent < 0 || !summaries.has(parent)) continue;
       const p = summaries.get(parent)!.stats;
       p.files += s.files; p.symbols += s.symbols; p.endpoints += s.endpoints; p.measuredLoc += s.measuredLoc; p.unmeasuredFiles += s.unmeasuredFiles; p.descendants += s.descendants + 1;
+      const kind = node.archetype?.kind, passed = removed ? undefined : kind ? new Map([[kind, 1]]) : node.type === 'file' ? undefined : own;
+      if (passed) { const into = held.get(parent) ?? new Map<Archetype, number>(); for (const [k, count] of passed) into.set(k, (into.get(k) ?? 0) + count); held.set(parent, into); }
     }
     // Changes hidden inside closed areas: counts on every ancestor.
     for (const [node, code] of status) {

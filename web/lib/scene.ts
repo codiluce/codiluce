@@ -39,13 +39,38 @@ export function nodeHeight(node: Pick<NodeSummary, 'type' | 'rect' | 'loc'>): nu
     default: return 3;
   }
 }
+/**
+ * Streets: how far inside its place in the layout a block is drawn (world
+ * units), so streets open between neighbours: wider between areas, narrower
+ * between symbols. Always less than the padding a block keeps inside, so
+ * what it holds never reaches its edge.
+ */
+export function streetInset(node: Pick<NodeSummary, 'type' | 'rect' | 'archetype'>): number {
+  const side = Math.min(node.rect.w, node.rect.h);
+  switch (node.type) {
+    case 'repository': return 0;
+    case 'application': return Math.min(10, side * 0.02);
+    case 'directory': case 'group': return Math.min(6, side * 0.05);
+    case 'file': return Math.min(3.5, side * 0.13);
+    default: return Math.min(node.archetype ? 2.5 : 1, side * (node.archetype ? 0.12 : 0.08));
+  }
+}
+function onStreet(node: NodeSummary): NodeSummary {
+  const inset = streetInset(node);
+  if (!inset) return node;
+  const { x, y, w, h } = node.rect;
+  return { ...node, rect: { x: x + inset, y: y + inset, w: w - inset * 2, h: h - inset * 2 } };
+}
 /** Revisions are global so a replacement scene never repeats a revision the map has already drawn. */
 let revisions = 0;
 /** Painter's order among siblings: back (small x+y) to front. */
 function depthKey(node: NodeSummary): number { return node.rect.x + node.rect.y + (node.rect.w + node.rect.h) / 2; }
 
 export class Scene {
+  /** Nodes as drawn: with streets on, each a little inside its place in the layout. */
   readonly nodes = new Map<string, NodeSummary>();
+  /** Nodes as the server placed them. */
+  private readonly placed = new Map<string, NodeSummary>();
   readonly children = new Map<string, ChildList>();
   private readonly base = new Map<string, number>();
   private readonly ordered = new Map<string, string[]>();
@@ -55,15 +80,26 @@ export class Scene {
   frame?: number;
   /** Closed blocks with an archetype are drawn as its shape (Settings can turn this off). */
   shapes = true;
+  /** Blocks are drawn inside their places, with streets between them (Settings can turn this off). */
+  private streets = true;
 
+  setStreets(streets: boolean): void {
+    if (streets === this.streets) return;
+    this.streets = streets; this.base.clear(); this.ordered.clear();
+    for (const [id, node] of this.placed) this.nodes.set(id, streets ? onStreet(node) : node);
+    this.revision = ++revisions;
+  }
+  /** A node as the server placed it, before streets: for geometry that must match the server's (the split map's places). */
+  placedNode(id: string): NodeSummary | undefined { return this.placed.get(id); }
+  private add(node: NodeSummary): void { this.placed.set(node.id, node); this.nodes.set(node.id, this.streets ? onStreet(node) : node); }
   reset(root: NodeSummary): void {
-    this.nodes.clear(); this.children.clear(); this.base.clear(); this.ordered.clear();
-    this.rootId = root.id; this.nodes.set(root.id, root); this.revision = ++revisions;
+    this.nodes.clear(); this.placed.clear(); this.children.clear(); this.base.clear(); this.ordered.clear();
+    this.rootId = root.id; this.add(root); this.revision = ++revisions;
   }
   /** Add a known node (e.g. from search/locate) even before its parent's page is loaded. */
   upsert(node: NodeSummary): void {
     if (node.hidden) return;
-    if (!this.nodes.has(node.id)) { this.nodes.set(node.id, node); this.revision = ++revisions; }
+    if (!this.nodes.has(node.id)) { this.add(node); this.revision = ++revisions; }
     const parent = node.spatialParentId;
     if (!parent || !this.nodes.has(parent)) return;
     const list = this.childList(parent);
@@ -78,7 +114,7 @@ export class Scene {
     const list = this.childList(parentId);
     for (const item of items) {
       if (item.hidden) continue;
-      if (!this.nodes.has(item.id)) this.nodes.set(item.id, item);
+      if (!this.nodes.has(item.id)) this.add(item);
       if (!list.ids.includes(item.id)) list.ids.push(item.id);
     }
     list.total = total; list.loadedPages++; list.complete = !hasMore; list.loading = false; delete list.error;

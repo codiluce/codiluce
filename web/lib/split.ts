@@ -34,7 +34,7 @@ function ancestorsOf(scene: Scene, id: string): NodeSummary[] {
 export function sceneRegions(scene: Scene, level: RegionLevel): ChangeRegionsResult {
   const changed: string[] = [];
   for (const node of scene.nodes.values()) if (node.change && node.change.status !== 'unchanged') changed.push(node.id);
-  const picks = changeRegions(changed, id => scene.nodes.get(id), { level });
+  const picks = changeRegions(changed, id => scene.placedNode(id), { level });
   return { level: picks.level, changed: picks.changed, truncated: picks.truncated, regions: picks.regions.map(pick => ({ node: scene.nodes.get(pick.id)!, ancestors: ancestorsOf(scene, pick.id), counts: pick.counts, total: pick.total, frame: pick.box })) };
 }
 /**
@@ -45,7 +45,7 @@ export function sceneRegions(scene: Scene, level: RegionLevel): ChangeRegionsRes
 export function timelapseRegions(evolution: Evolution, from: number, to: number, level: RegionLevel): ChangeRegionsResult {
   const end = Math.max(0, Math.min(evolution.length - 1, to));
   const scene = evolution.scene(end), changes = evolution.changesBetween(from, end);
-  const lookup = (id: string) => { const node = scene.nodes.get(id), status = changes.get(id); return node && { ...node, change: status ? { status } : undefined }; };
+  const lookup = (id: string) => { const node = scene.placedNode(id), status = changes.get(id); return node && { ...node, change: status ? { status } : undefined }; };
   const picks = changeRegions(changes.keys(), lookup, { level });
   return { level: picks.level, changed: picks.changed, truncated: picks.truncated, regions: picks.regions.map(pick => ({ node: scene.nodes.get(pick.id)!, ancestors: ancestorsOf(scene, pick.id), counts: pick.counts, total: pick.total, frame: pick.box })) };
 }

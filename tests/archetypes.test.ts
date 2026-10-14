@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ProjectionIndex, type EntityRow } from '../src/projection/hierarchy.js';
-import { computeArchetypes } from '../src/projection/archetypes.js';
+import { computeArchetypeCounts, computeArchetypes } from '../src/projection/archetypes.js';
 
 /** A Laravel API and a Next.js frontend, with the entities their analyzers index. */
 function repository() {
@@ -83,4 +83,23 @@ test('entities take the archetype of their type; plain symbols have none', () =>
   assert.equal(archetypes.get('web/hooks/useOrders.ts#useOrders')?.kind, 'hook');
   assert.equal(archetypes.get('api/app/Services/PaymentService.php#PaymentService'), undefined);
   for (const id of ['r', 'api', 'web']) assert.equal(archetypes.get(id), undefined);
+});
+
+test('areas count the blocks they hold by archetype, most first; what is inside a block counts through it', () => {
+  const index = repository(), archetypes = computeArchetypes(index);
+  const counts = computeArchetypeCounts(index, archetypes);
+  const of = (id: string) => Object.fromEntries((counts.get(id) ?? []).map(entry => [entry.kind, entry.count]));
+  const web = of('web');
+  // Hooks: useOrders.ts, useMediaQuery.ts, state/cart.ts; the hook functions inside them do not count again.
+  assert.equal(web.hook, 3);
+  assert.equal(web.page, 1); assert.equal(web.layout, 1); assert.equal(web.component, 2); assert.equal(web.style, 1);
+  // The page route and the health endpoint sit in districts of their own and count as routes, beside the file declaring the endpoint.
+  assert.equal(web.routes, 3);
+  // The controller class inside its file is not a second controller.
+  assert.equal(of('api').controller, 1);
+  assert.deepEqual(counts.get('r')?.slice(0, 1), [{ kind: 'routes', count: 7 }]);
+  const total = (id: string) => (counts.get(id) ?? []).reduce((sum, entry) => sum + entry.count, 0);
+  assert.equal(total('r'), total('api') + total('web'));
+  // Files have shapes of their own, never a summary.
+  assert.equal(counts.get('web/app/orders/page.tsx'), undefined);
 });

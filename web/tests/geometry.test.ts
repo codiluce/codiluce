@@ -142,3 +142,22 @@ test('hit testing returns the frontmost primitive, including visible walls; repr
   scene.upsert(node('hidden-leaf', { x: 30, y: 30, w: 5, h: 5 }, { spatialParentId: 'deep-a', depth: 3 }));
   assert.equal(scene.representative('hidden-leaf', overview)?.node.id, overview.index.has('deep-a') ? 'deep-a' : 'left');
 });
+
+test('streets: blocks are drawn inside their places, never past the area holding them, and turning streets off restores the layout', () => {
+  const scene = new Scene();
+  const root = node('root', { x: 0, y: 0, w: 400, h: 400 }, { type: 'repository', childCount: 1 });
+  const area = node('area', { x: 48, y: 48, w: 200, h: 120 }, { type: 'directory', spatialParentId: 'root', childCount: 2 });
+  const a = node('a', { x: 58, y: 58, w: 32, h: 32 }, { type: 'file', spatialParentId: 'area' });
+  const b = node('b', { x: 95, y: 58, w: 23, h: 23 }, { type: 'file', spatialParentId: 'area' });
+  scene.reset(root); scene.addChildren('root', [area], 1, false); scene.addChildren('area', [a, b], 2, false);
+  const rect = (id: string) => scene.nodes.get(id)!.rect;
+  assert.deepEqual(rect('root'), root.rect);
+  // Files 5 apart in the layout get a street of 5 plus both insets; each stays inside its area, clear of its edge.
+  assert.ok(rect('b').x - (rect('a').x + rect('a').w) > 10);
+  for (const id of ['a', 'b']) assert.ok(rect(id).x > rect('area').x && rect(id).y > rect('area').y && rect(id).x + rect(id).w < rect('area').x + rect('area').w);
+  assert.deepEqual(scene.placedNode('a')!.rect, a.rect);
+  const revision = scene.revision;
+  scene.setStreets(false);
+  assert.ok(scene.revision > revision);
+  for (const [id, placed] of [['a', a], ['b', b], ['area', area]] as const) assert.deepEqual(rect(id), placed.rect);
+});
