@@ -221,6 +221,7 @@ function SettingsDialog({ onClose }: { onClose: () => void }) {
   const store = useStore();
   const moreThemes = useAtlas(state => state.moreThemes);
   const shapes = useAtlas(state => state.shapes);
+  const connections = useAtlas(state => state.connections);
   const close = useRef<HTMLButtonElement>(null);
   useEffect(() => { close.current?.focus(); const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, [onClose]);
   return (
@@ -231,6 +232,11 @@ function SettingsDialog({ onClose }: { onClose: () => void }) {
         <p className="note">The theme menu offers Codiluce Dusk and Codiluce Dawn. With more themes on, it also offers {THEMES.filter(item => !MAIN_THEMES.includes(item.id)).map(item => item.name).join(', ')}.</p>
         <label className="toggle"><input type="checkbox" checked={shapes} onChange={event => store.setShapes(event.target.checked)} /> Building shapes</label>
         <p className="note">Each kind of block gets its own shape on the map: controllers are traffic cops, tables are storage drums, pages are towers with windows. Small blocks show the kind as a mark on their roof. Turn it off for plain blocks.</p>
+        <div className="segmented" role="group" aria-label="Links on the map">
+          <button aria-pressed={connections === 'arcs'} onClick={() => store.setConnections('arcs')}>Arcs</button>
+          <button aria-pressed={connections === 'rails'} onClick={() => store.setConnections('rails')}>Rails</button>
+        </div>
+        <p className="note">Links on the map (relationships, flows): arcs over the blocks, or rails along the floors at right angles, round the blocks and out through the edge of each area. The map's ⌐ button switches too.</p>
         <button ref={close} className="button" onClick={onClose}>Close</button>
       </div>
     </div>

@@ -15,7 +15,7 @@ import type { SoftwareGraph } from '../../src/core/graph.js';
 import type { FlowSummary, NodeSummary, RequestFlow, RequestFlowEdge, RequestFlowNode } from '../../src/projection/dto.js';
 import { layoutRequestFlow, statusClass } from '../lib/request-flows';
 import { groupCatalog, kindsOf, visibleCatalog } from '../lib/catalog';
-import { branchDuration, branchesOf, branchPosition, flowAreas, flowLit, fromRequestFlow, fromSteps, groupBranches, WAVE_MS, type MapEdge, type MapStop } from '../lib/map-flow';
+import { branchesOf, flowAreas, flowDepths, flowLit, fromRequestFlow, fromSteps, groupBranches, type MapEdge, type MapStop } from '../lib/map-flow';
 import { AtlasStore } from '../lib/store';
 import { RecordingNavigator, ServiceApi } from './service-api';
 
@@ -169,7 +169,7 @@ test('a page on the map: opened directly first, then each control requesting it,
   assert.deepEqual(back(3), ['handleTab']);
   assert.deepEqual(groupBranches(map.branches).map(group => [group.label, group.title]), [['Direct visit', 'Opening the page: what the server does, then the page it renders'], ['From this page', 'Controls on this page that request it again'], ['From /lists', 'Made on the page /lists']]);
 });
-test('branches play from the start along real edges, in waves; siblings share a wave, the way back comes last', () => {
+test('branches run from the start along real edges, in waves; siblings share a wave, the way back comes last', () => {
   const stop = (key: string): MapStop => ({ key, entityId: key, ancestors: ['area'], label: key, kind: 'method', tone: 'server' });
   const edge = (from: string, to: string, extra: Partial<MapEdge> = {}): MapEdge => ({ key: `${from}>${to}`, from, fromAncestors: ['area'], to, toAncestors: ['area'], type: 'calls', ...extra });
   // page → (onClick) save → {api, cache}; page → load → api; api → back to save.
@@ -188,13 +188,12 @@ test('branches play from the start along real edges, in waves; siblings share a 
   assert.deepEqual(callers.map(branch => branch.waves.map(wave => wave.map(index => callerStops[index]!.key))), [[['a'], ['api']], [['b'], ['api']]]);
   assert.equal(branchesOf({ stops: [{ ...stop('/x'), kind: 'page' }, { ...stop('/y'), kind: 'page' }, stop('api')], edges: [edge('/x', 'api'), edge('/y', 'api')] })[0]!.group, 'pages', 'pages calling an endpoint are grouped together');
   assert.deepEqual(groupBranches(branches).map(group => [group.label, group.items.map(item => item.index)]), [['Panel', [0]], ['page', [1]]]);
-  // Timing: one wave per edge step plus a last one; before playing and at the end the whole branch shows.
-  assert.equal(branchDuration(save), WAVE_MS * 5);
-  assert.deepEqual(branchPosition(save!, { status: 'playing', progress: 0.3 }), { position: 1.5, front: 1 });
-  assert.deepEqual(branchPosition(save!, { status: 'idle', progress: 0 }), { position: 4, front: 2 });
+  // With every branch on the map, a stop is numbered by its earliest wave in any of them.
+  assert.deepEqual(Object.fromEntries([...flowDepths({ branches })].map(([index, depth]) => [stops[index]!.key, depth])), { page: 0, save: 1, api: 2, cache: 2, load: 1 });
 });
-test('the store lists every flow, shows one on the map, steps through it, and lists those through an entity', async () => {
+test('the store lists every flow, opens one on the map, in lanes and as an outline at once, and lists those through an entity', async () => {
   const atlas = await ready();
+  const navigator = atlas.navigator as RecordingNavigator;
   await atlas.showFlows();
   let catalog = atlas.getState().catalog;
   assert.equal(catalog.status, 'ready');
@@ -205,47 +204,59 @@ test('the store lists every flow, shows one on the map, steps through it, and li
   assert.equal(atlas.getState().catalog.filter, 'headless');
   atlas.setCatalogFilter('headless');
   assert.equal(atlas.getState().catalog.filter, undefined, 'choosing the same filter again clears it');
-  // A request on the map: its stops are placed in the scene, the request plays.
+  // A request in the middle: its lanes, its outline and the same flow on the map, made from the lanes.
   const login = catalog.data!.items.find(item => item.name === 'POST /auth/login')!;
   await atlas.openCatalogFlow(login);
-  let tour = atlas.getState().tour!;
+  let state = atlas.getState();
+  assert.equal(state.center, 'flow');
+  assert.deepEqual({ ...state.flowView, title: undefined, subtitle: undefined }, { id: login.id, title: undefined, subtitle: undefined, kind: 'request', lanes: true }, 'side by side: no view has the whole middle');
+  assert.equal(state.requests.open?.status, 'ready');
+  assert.equal(state.steps?.anchor, login.id, 'the outline starts where the lanes do');
+  assert.equal(state.steps?.status, 'ready');
+  let tour = state.tour!;
   assert.equal(tour.status, 'ready');
-  assert.equal(tour.title, 'POST /auth/login');
-  assert.equal(tour.playback.status, 'playing');
+  assert.equal(tour.key, `lanes:${login.id}`);
+  assert.equal(tour.branch, undefined, 'every branch at once');
   assert.ok(tour.flow!.stops.every(stop => atlas.scene.nodes.has(stop.entityId)), 'stops are placed in the scene');
   assert.ok(tour.flow!.stops.every(stop => stop.ancestors.every(ancestor => atlas.scene.nodes.has(ancestor))), 'and the areas holding them');
-  // Choosing something yourself pauses the flow, so its next stop does not take the selection away.
-  await atlas.select(id('LoginForm', 'component'), { fly: false });
-  assert.equal(atlas.getState().tour!.playback.status, 'paused');
-  atlas.tourAction({ type: 'play' });
-  assert.equal(atlas.getState().tour!.playback.status, 'playing');
-  // Played branch by branch to the end.
+  const nodesOf = (stops: MapStop[]) => new Set(stops.flatMap(stop => stop.node ? [stop.node.id] : []));
+  assert.deepEqual(new Set(navigator.fits.at(-1)), nodesOf(tour.flow!.stops), 'the map frames the whole flow');
+  // One branch on its own: its choice is selected and framed; choosing something else leaves it shown.
   assert.equal(tour.flow!.branches.length, 4);
-  atlas.tourAction({ type: 'tick', elapsedMs: 100_000, stepMs: 1000 });
-  assert.equal(atlas.getState().tour!.playback.status, 'finished');
-  // A stop chosen in the bar is selected.
-  const table = tour.flow!.stops.findIndex(stop => stop.label === 'users');
-  atlas.focusTourStop(table);
+  atlas.setTourBranch(1);
   await new Promise(resolve => setTimeout(resolve, 0));
-  assert.equal(atlas.getState().selection?.id, tour.flow!.stops[table]!.entityId);
-  // The lanes of a flow in the middle, as an outline too, then the same flow on the map.
-  await atlas.openRequestFlow(login.id);
-  assert.equal(atlas.getState().center, 'flow');
-  assert.equal(atlas.getState().requests.open?.status, 'ready');
+  tour = atlas.getState().tour!;
+  const branch = tour.flow!.branches[1]!;
+  assert.equal(tour.branch, 1);
+  assert.equal(atlas.getState().selection?.id, tour.flow!.stops[branch.head]!.entityId, 'the choice the branch follows is selected');
+  assert.deepEqual(new Set(navigator.fits.at(-1)), nodesOf(branch.waves.flat().map(index => tour.flow!.stops[index]!)));
+  await atlas.select(id('LoginForm', 'component'), { fly: false });
+  assert.equal(atlas.getState().tour?.branch, 1);
+  atlas.setTourBranch(undefined);
+  assert.equal(atlas.getState().tour?.branch, undefined);
+  // One view with the whole middle; showing a step on the map brings the map back beside the others.
+  atlas.setFlowPane('diagram');
+  assert.equal(atlas.getState().flowView?.pane, 'diagram');
   atlas.focusRequestNode(atlas.getState().requests.open!.data!.nodes[0]!.id);
   assert.ok(atlas.getState().requests.open?.focus);
-  await atlas.setFlowLayout('outline');
-  assert.equal(atlas.getState().steps?.anchor, login.id, 'the outline starts where the lanes do');
-  assert.equal(atlas.getState().steps?.status, 'ready');
-  await atlas.setFlowLayout('diagram');
-  atlas.traceRequestFlow();
-  assert.equal(atlas.getState().center, 'map', 'the map comes back to the middle');
-  assert.equal(atlas.getState().flowView?.id, login.id, 'the lanes stay open, a tab away');
-  assert.equal(atlas.getState().tour?.key, `lanes:${login.id}`);
+  const table = tour.flow!.stops.find(stop => stop.label === 'users')!;
+  atlas.showInFlowMap(table.entityId);
+  assert.equal(atlas.getState().flowView?.pane, undefined);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.equal(atlas.getState().selection?.id, table.entityId);
+  assert.equal(navigator.flights.at(-1)?.id, table.entityId);
+  // The shares of the middle stay where every view is usable.
+  atlas.setFlowSplit({ side: 0.9, bottom: 0.5 });
+  assert.deepEqual(atlas.getState().flowSplit, { side: 0.6, bottom: 0.5 });
+  // The next flow opens in the same tab, keeping the view that has the whole middle.
+  atlas.setFlowPane('outline');
+  const profiles = catalog.data!.items.find(item => item.name === 'PUT /profiles/{id}')!;
+  await atlas.openCatalogFlow(profiles);
+  state = atlas.getState();
+  assert.deepEqual([state.flowView?.id, state.flowView?.pane, state.tour?.key, state.steps?.anchor], [profiles.id, 'outline', `lanes:${profiles.id}`, profiles.id]);
   atlas.closeFlowView();
-  assert.equal(atlas.getState().requests.open, undefined);
-  atlas.closeTour();
-  assert.equal(atlas.getState().tour, undefined);
+  state = atlas.getState();
+  assert.deepEqual([state.center, state.flowView, state.requests.open, state.steps, state.tour], ['map', undefined, undefined, undefined, undefined], 'closing the flow takes it off the map too');
   // The flows through an entity: requests and the page journeys reaching it.
   const users = graph.entities.find(entity => entity.type === 'database_table' && entity.name === 'users')!;
   await atlas.showFlows({ entity: { id: users.id, name: users.name } });
@@ -256,18 +267,14 @@ test('the store lists every flow, shows one on the map, steps through it, and li
   await atlas.loadCatalog(null);
   assert.equal(atlas.getState().catalog.entity, undefined);
   assert.ok(atlas.getState().catalog.data!.items.some(item => item.kind === 'unmatched'));
-  // A page is shown through its Steps.
+  // A page is drawn through its steps: in layers, as an outline, and on the map.
   const account = atlas.getState().catalog.data!.items.find(item => item.kind === 'page' && item.name === '/account')!;
   await atlas.openCatalogFlow(account);
   tour = atlas.getState().tour!;
   assert.equal(tour.detail, 'steps');
+  assert.equal(atlas.getState().flowView?.lanes, false);
+  assert.equal(atlas.getState().requests.open, undefined, 'no lanes for a page');
   assert.equal(tour.flow?.stops[0]?.entityId, account.id);
-  // Branch by branch: the next one starts with its choice selected.
-  atlas.tourAction({ type: 'pause' });
-  atlas.tourAction({ type: 'next' });
-  tour = atlas.getState().tour!;
-  assert.equal(tour.playback.index, 1);
-  assert.equal(atlas.getState().selection?.id, tour.flow!.stops[tour.flow!.branches[1]!.head]!.entityId, 'the choice the branch plays is selected');
   // The coverage lens.
   await atlas.toggleCoverage();
   const coverage = atlas.getState().coverage;

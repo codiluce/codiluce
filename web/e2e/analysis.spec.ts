@@ -102,8 +102,8 @@ test('steps draw what happens from a page, with events, conditions, endpoints an
   await open(page);
   await select(page, '/account', '/account');
   await inspector(page).getByRole('button', { name: 'What happens from here' }).click();
-  // In the middle of the screen, as an outline.
-  const panel = page.getByRole('region', { name: 'What happens from /account' });
+  // In the middle of the screen: on the map, in layers and as an outline.
+  const panel = page.getByRole('region', { name: 'Outline of /account' });
   const outline = panel.getByRole('list', { name: 'Steps' });
   await expect(outline).toBeVisible();
   await expect(outline.locator('.step-card.kind-trigger', { hasText: 'handleSave' })).toBeVisible();
@@ -122,12 +122,17 @@ test('steps draw what happens from a page, with events, conditions, endpoints an
   // Clicking a step selects it on the map.
   await outline.locator('.step-card', { hasText: 'signIn' }).first().getByRole('button').first().click();
   await expect(inspector(page).getByRole('heading', { name: 'signIn', exact: true })).toBeVisible();
-  // The diagram lays out the same steps.
-  await panel.getByRole('group', { name: 'Layout' }).getByRole('button', { name: 'Diagram' }).click();
-  await expect(panel.locator('.steps-box').first()).toBeVisible();
-  expect(await panel.locator('.steps-box').count()).toBeGreaterThan(8);
-  await panel.getByRole('button', { name: 'Close this flow' }).click();
-  await expect(page.getByRole('region', { name: 'What happens from /account' })).toHaveCount(0);
+  // The diagram beside it lays out the same steps; it can have the whole middle.
+  const diagram = page.getByRole('region', { name: 'Diagram of /account' });
+  await expect(diagram.locator('.steps-box').first()).toBeVisible();
+  expect(await diagram.locator('.steps-box').count()).toBeGreaterThan(8);
+  await diagram.getByRole('button', { name: 'Give the diagram the whole middle' }).click();
+  await expect(panel).toBeHidden();
+  await expect(diagram.locator('.steps-box').first()).toBeVisible();
+  await diagram.getByRole('button', { name: 'Put the diagram back beside the other views' }).click();
+  await expect(panel).toBeVisible();
+  await page.getByRole('button', { name: 'Close this flow' }).click();
+  await expect(page.getByRole('region', { name: 'Outline of /account' })).toHaveCount(0);
   await expect(page.getByRole('tab', { name: 'Map' })).toHaveCount(0);
 });
 test('effects and call sites explain what a symbol does and what could not be resolved', async ({ page }) => {

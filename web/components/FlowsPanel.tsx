@@ -18,7 +18,7 @@ const EMPTY: Record<CatalogTab, string> = { all: 'No flows were indexed.', page:
 export function FlowsPanel({ onClose }: { onClose: () => void }) {
   const store = useStore();
   const catalog = useAtlas(state => state.catalog);
-  const active = useAtlas(state => state.tour?.key);
+  const active = useAtlas(state => state.flowView ? `${state.flowView.lanes ? 'lanes' : 'steps'}:${state.flowView.id}` : undefined);
   // Use the same identity as catalog loads, including live folder grouping.
   const stamp = useAtlas(() => store.viewStamp());
   useEffect(() => { if (catalog.status === 'idle' || (catalog.status === 'ready' && catalog.viewStamp !== stamp)) void store.loadCatalog(); }, [store, catalog.status, catalog.viewStamp, stamp]);
@@ -58,7 +58,7 @@ export function FlowsPanel({ onClose }: { onClose: () => void }) {
             <button className="button tiny" onClick={() => void store.loadCatalog(null)} aria-label="Show every flow">✕ all</button>
           </div>
         )}
-        <p className="note">{KIND_HINT[tab]} Choose one to see it on the map: what it touches stays lit, and it plays branch by branch, a pulse flowing along its links.</p>
+        <p className="note">{KIND_HINT[tab]} Choose one to open it in the middle: on the map (what it touches stays lit, its links streaming the way they run), in lanes and as an outline.</p>
         {catalog.status === 'loading' && !data && <div className="rf-loading" aria-live="polite"><span className="rf-spark" />Following every flow…</div>}
         {catalog.status === 'error' && <p className="note error">{catalog.error}</p>}
         {data && tiles && (
@@ -132,7 +132,7 @@ export function CatalogRow({ item, active }: { item: FlowSummary; active: boolea
   const status = completenessOf(item);
   return (
     <li>
-      <button className={`rf-row k-${item.kind}${status ? ` s-${status}` : ''}${active ? ' active' : ''}`} onClick={() => void store.openCatalogFlow(item)} aria-current={active ? 'true' : undefined} title={[item.goal, status ? STATUS_HINT[status] : 'Show on the map'].filter(Boolean).join('\n')} style={{ '--flow-kind': `var(--kind-${item.kind})` } as CSSProperties}>
+      <button className={`rf-row k-${item.kind}${status ? ` s-${status}` : ''}${active ? ' active' : ''}`} onClick={() => void store.openCatalogFlow(item)} aria-current={active ? 'true' : undefined} title={[item.goal, status ? STATUS_HINT[status] : 'Open: on the map, in lanes or layers, and as an outline'].filter(Boolean).join('\n')} style={{ '--flow-kind': `var(--kind-${item.kind})` } as CSSProperties}>
         {item.title && <span className="rf-row-title">{item.title}{item.actor && <span className="flow-actor">{item.actor}</span>}</span>}
         <span className="rf-row-top">
           {top}

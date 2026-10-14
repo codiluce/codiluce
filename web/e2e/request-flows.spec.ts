@@ -98,29 +98,29 @@ test('one list holds every flow, filtered by kind and completeness; a request is
   await panel.getByRole('group', { name: 'Filter by completeness' }).getByRole('button', { name: /Unmatched/ }).click();
   await panel.getByLabel('Filter flows').fill('AuthController::login');
   await panel.locator('.rf-row', { hasText: '/auth/login' }).first().click();
-  // On the map, branch by branch: one per place the request is made from, grouped by where that is, each shown wave by wave down to the table.
+  // In the middle, side by side: the flow on the map, its lanes and its outline.
+  await expect(page.getByRole('tab', { name: 'Flow · POST /auth/login' })).toHaveAttribute('aria-selected', 'true');
   const player = page.getByRole('region', { name: 'Flow on the map: POST /auth/login' });
+  const theater = page.getByRole('region', { name: 'Request flow POST /auth/login' });
+  const outline = page.getByRole('region', { name: 'Outline of /auth/login' });
+  await expect(player).toBeVisible();
+  await expect(theater).toBeVisible();
+  await expect(outline.getByRole('list', { name: 'Steps' }).locator('.step-card.kind-handler', { hasText: 'login' }).first()).toBeVisible();
+  // On the map, every branch at once, or one on its own: one per place the request is made from, grouped by where that is.
   const branches = player.getByRole('group', { name: 'Branches' });
-  await expect(branches.locator('.flow-branch')).toHaveCount(4);
+  await expect(branches.locator('.flow-branch:not(.all)')).toHaveCount(4);
   await expect(branches.locator('.flow-branch-group-label')).toHaveText(['From /account', 'From /login', 'No indexed trigger']);
-  await expect(branches.locator('.flow-branch.current')).toContainText('handleSave');
-  const waves = player.getByRole('list', { name: 'This branch, wave by wave' });
-  await expect(waves.locator('.flow-stop', { hasText: 'handleSave' })).toBeVisible();
-  await expect(waves.locator('.flow-stop').filter({ hasText: /^login$/ })).toHaveCount(0);
-  await expect(waves.locator('.flow-stop', { hasText: 'users' })).toBeVisible();
+  await expect(branches.getByRole('button', { name: 'All', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  const users = await idOf(page, 'users', 'database_table');
+  await expect.poll(() => page.evaluate(visibleIds), { timeout: 10000 }).toContain(users);
   await branches.getByRole('group', { name: 'Made on the page /login' }).locator('.flow-branch').click();
   await expect(branches.locator('.flow-branch.current')).toContainText('login');
   await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('heading', { name: 'login', exact: true })).toBeVisible();
-  await expect(waves.locator('.flow-stop', { hasText: 'handleSave' })).toHaveCount(0);
-  await branches.locator('.flow-branch', { hasText: 'handleSave' }).click();
-  const users = await idOf(page, 'users', 'database_table');
-  await expect.poll(() => page.evaluate(visibleIds), { timeout: 10000 }).toContain(users);
-  await player.getByRole('button', { name: 'Pause' }).click();
-  await player.locator('.flow-stop', { hasText: 'users' }).click();
-  await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('heading', { name: 'users', exact: true })).toBeVisible();
-  // The same flow as lanes, in the middle: one per layer the request passes, in order.
-  await player.getByRole('button', { name: 'Lanes' }).click();
-  const theater = page.getByRole('region', { name: 'Request flow POST /auth/login' });
+  await branches.getByRole('button', { name: 'All', exact: true }).click();
+  await expect(branches.locator('.flow-branch.current')).toHaveText('All');
+  // No player: nothing to play or pause, the links stream all the time.
+  await expect(page.getByRole('button', { name: /^(Play|Pause)/ })).toHaveCount(0);
+  // The lanes: one per layer the request passes, in order.
   await expect(theater).toBeVisible();
   await expect(theater.locator('.rf-lane-title')).toHaveText(['▦ Client', '↗ HTTP call', '⇥ Route', '◈ Middleware', '⚙ Controller', 'ƒ Services', '⛁ Models & data', '↩ Response', '↘ Back on the client']);
   await expect(theater.locator('.rf-node.k-page', { hasText: '/account' })).toBeVisible();
@@ -132,34 +132,46 @@ test('one list holds every flow, filtered by kind and completeness; a request is
   await expect(detail).toContainText('when response.ok');
   await expect(detail).toContainText('in handleSave');
   await detail.getByRole('button', { name: 'Close step details' }).click();
-  // The same flow as an outline of steps.
-  await theater.getByRole('group', { name: 'Layout' }).getByRole('button', { name: 'Outline' }).click();
-  await expect(theater.getByRole('list', { name: 'Steps' }).locator('.step-card.kind-handler', { hasText: 'login' }).first()).toBeVisible();
-  await theater.getByRole('group', { name: 'Layout' }).getByRole('button', { name: 'Lanes' }).click();
-  // Back on the map; the lanes stay a tab away.
-  await theater.getByRole('button', { name: 'Show on map', exact: true }).click();
-  await expect(theater).toHaveCount(0);
+  // A step shown on the map from the lanes: selected there.
+  await theater.locator('.rf-node.k-table', { hasText: 'users' }).dblclick();
+  await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('heading', { name: 'users', exact: true })).toBeVisible();
+  // One view with the whole middle at a time, and back side by side.
+  const views = page.getByRole('group', { name: 'Views' });
+  await views.getByRole('button', { name: 'Lanes' }).click();
+  await expect(player).toBeHidden();
+  await expect(outline).toBeHidden();
+  await expect(theater.locator('.rf-node.k-table', { hasText: 'users' })).toBeVisible();
+  await views.getByRole('button', { name: 'Outline' }).click();
+  await expect(outline).toBeVisible();
+  await expect(theater).toBeHidden();
+  await outline.getByRole('button', { name: 'Put the outline back beside the other views' }).click();
   await expect(player).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Flow · POST /auth/login' })).toBeVisible();
+  await expect(theater).toBeVisible();
+  // The bar between the map and the lanes moves with the keyboard too.
+  const bar = page.getByRole('separator', { name: 'Resize the lanes below the map' });
+  const before = Number(await bar.getAttribute('aria-valuenow'));
+  await bar.focus();
+  await page.keyboard.press('ArrowUp');
+  await expect(bar).toHaveAttribute('aria-valuenow', String(before + 3));
+  // Closing the tab takes the flow off the map too.
   await page.getByRole('button', { name: 'Close the flow tab' }).click();
   await expect(page.getByRole('tab', { name: 'Map' })).toHaveCount(0);
-  await player.getByRole('button', { name: 'Stop showing this flow on the map' }).click();
   await expect(player).toHaveCount(0);
+  await expect(theater).toHaveCount(0);
 });
 test('the inspector shows an endpoint\'s flow on the map, and lists the flows through a table', async ({ page }) => {
   await open(page);
   await page.getByRole('combobox', { name: 'Search the indexed graph' }).fill('PUT /profiles');
   await page.keyboard.press('Enter');
   const inspector = page.getByRole('complementary', { name: 'Inspector' });
-  await inspector.getByRole('button', { name: 'Show flow on map', exact: true }).click();
+  await inspector.getByRole('button', { name: 'Flow', exact: true }).click();
   const player = page.getByRole('region', { name: 'Flow on the map: PUT /profiles/{id}' });
-  await expect(player.locator('.flow-stop', { hasText: 'ProfileController::update' })).toBeVisible();
-  await player.getByRole('button', { name: 'Lanes' }).click();
+  await expect(player).toContainText('stops');
   const theater = page.getByRole('region', { name: 'Request flow PUT /profiles/{id}' });
   await expect(theater.locator('.rf-node.k-validation', { hasText: 'UpdateProfileRequest' })).toBeVisible();
   await expect(theater.locator('.rf-node.k-response')).toHaveCount(3);
   await expect(theater.locator('.rf-node.k-gap', { hasText: 'record()' })).toBeVisible();
-  await theater.getByRole('button', { name: 'Close this flow', exact: true }).click();
+  await page.getByRole('button', { name: 'Close this flow', exact: true }).click();
   await page.getByRole('combobox', { name: 'Search the indexed graph' }).fill('users');
   await page.keyboard.press('Enter');
   await expect(inspector.getByRole('heading', { name: 'users', exact: true })).toBeVisible();
@@ -193,8 +205,8 @@ test('search opens a result as its flow, its steps or its impact; a highlight li
   await box.fill('POST /auth/login');
   const result = page.getByRole('option').filter({ hasText: 'POST /auth/login' }).first();
   await result.hover();
-  await expect(result.getByRole('group', { name: /^Open .* as$/ }).getByRole('button')).toHaveText(['On map', 'Lanes', 'What happens', 'Impact']);
-  await result.getByRole('button', { name: 'Lanes' }).click();
+  await expect(result.getByRole('group', { name: /^Open .* as$/ }).getByRole('button')).toHaveText(['Flow', 'Impact']);
+  await result.getByRole('button', { name: 'Flow' }).click();
   const lanes = page.getByRole('region', { name: 'Request flow POST /auth/login' });
   await expect(lanes.locator('.rf-node.k-table', { hasText: 'users' })).toBeVisible();
   await expect(page.getByRole('tab', { name: 'Flow · POST /auth/login' })).toHaveAttribute('aria-selected', 'true');

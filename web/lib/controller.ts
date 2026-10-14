@@ -7,14 +7,15 @@ import type { NodeSummary, Rect, SourceResponse } from '@engine/projection/dto';
 import { easeInOut, fitBounds, fromScreen, panBy, projectedBounds, visibleBounds, worldToScreen, zoomAround, zoomPath, type Bounds, type Camera, type Point, type Viewport, type ZoomLimits } from './camera';
 import { CORNER_LOD, DEFAULT_LOD, abstractionLevel, screenSize, type LodConfig } from './lod';
 import { FLASH_MS, MapRenderer, RISE_MS, type CalloutOverlay, type CoverageOverlay, type EdgeOverlay, type FamilyOverlay, type FlowOverlay, type FrameOverlay, type MotionState, type RenderState } from './renderer';
-import { branchDuration, branchPosition, flowAreas, flowLit, type MapFlow } from './map-flow';
-import type { PlaybackState } from './playback';
+import { flowAreas, flowDepths, flowLit, type MapFlow } from './map-flow';
 import { nodeHeight, type Scene, type VisibleSet } from './scene';
 import { isContainer, type AtlasState, type AtlasStore, type MapNavigator, type ViewState } from './store';
 import { familyHues, featureHues, personHue, personHues, themeById } from './themes';
 
-/** A branch with more stops than this labels only its start and the waves around the front; at most this many pins show. */
-const CALLOUT_ALL = 18, PIN_MAX = 40;
+/** A flow labels at most this many stops (the first ones), and shows at most this many pins. */
+const CALLOUT_MAX = 18, PIN_MAX = 40;
+/** While only a flow's links stream, the map is drawn at most this often (milliseconds between frames). */
+const STREAM_FRAME_MS = 32;
 /** Delay between a rising area and its contents, so new districts build up level by level. */
 const CASCADE_MS = 70;
 /** While following playback, the camera frames the changes of this recent window… */
@@ -27,7 +28,7 @@ export interface MapControllerOptions {
   /**
    * `main`: the single map (the store's navigator and view status). `overview`:
    * the split map's whole repository. `region`: a view of the split map. Main
-   * and overview run the clocks (time-lapse, flow playback): one is mounted at a time.
+   * and overview run the time-lapse clock: one is mounted at a time.
    */
   role?: 'main' | 'overview' | 'region';
   lod?: LodConfig;
@@ -85,6 +86,11 @@ export class MapController implements MapNavigator {
    * (a flight, a fit) waits until the map is back.
    */
   private overview?: { camera: Camera; autoFit: boolean; pending?: () => void };
+  /** The last fit asked of the map, made again when the map is resized, until the user moves the camera. */
+  private refit?: () => void;
+  /** Something besides a flow's streaming changed since the last frame drawn. */
+  private dirty = true;
+  private lastDraw = 0;
 
   constructor(private readonly canvas: HTMLCanvasElement, private readonly store: AtlasStore, private readonly options: MapControllerOptions = {}) {
     const ctx = canvas.getContext('2d', { alpha: false });
@@ -177,10 +183,14 @@ export class MapController implements MapNavigator {
       this.camera = camera; this.autoFit = autoFit; this.animation = undefined; this.updateLimits();
       pending?.();
     } else if (this.autoFit && this.fitted) { this.updateLimits(); const target = this.homeCamera(); if (target) this.camera = target; }
+    else if (this.refit && this.fitted) { this.updateLimits(); this.refit(); }
     this.request();
   }
-  /** The main map is the overview in a corner (a tool is in the middle). */
-  private get small(): boolean { return this.role === 'main' && this.store.getState().center !== 'map'; }
+  /**
+   * The main map is not in the middle: an overview in a corner (a tool is in
+   * the middle), or hidden (another view of a flow has the whole middle).
+   */
+  private get small(): boolean { return this.role === 'main' && !mapInMiddle(this.store.getState()); }
   /** Whether a camera move must wait for the map to be back in the middle (it is kept as the one to make then). */
   private deferred(move: () => void): boolean {
     // Also while the map grows back (the middle changed, the canvas is not resized yet).
@@ -208,7 +218,9 @@ export class MapController implements MapNavigator {
     const fit = fitBounds(bounds, this.viewport, 24, { min: 1e-6, max: 1e6 });
     this.limits = { min: fit.scale * 0.4, max: 120 };
   }
-  request(): void {
+  /** Draw again on the next frame; `changed` false when only a flow's streaming moves. */
+  request(changed = true): void {
+    if (changed) this.dirty = true;
     if (!this.frame) this.frame = requestAnimationFrame(time => this.tick(time));
   }
   // MapNavigator --------------------------------------------------------------
@@ -220,7 +232,10 @@ export class MapController implements MapNavigator {
     if (!nodes.length || this.deferred(() => this.fitNodes(nodes))) return;
     const bounds = nodes.map(node => { const z = this.scene.nodes.has(node.id) ? this.scene.zBase(node.id) : 0; return projectedBounds(node.rect, z, z + nodeHeight(node)); })
       .reduce((a, b) => ({ minX: Math.min(a.minX, b.minX), minY: Math.min(a.minY, b.minY), maxX: Math.max(a.maxX, b.maxX), maxY: Math.max(a.maxY, b.maxY) }));
-    this.animateTo(fitBounds(bounds, this.viewport, 72, this.limits));
+    const padding = Math.min(72, Math.max(24, Math.min(this.viewport.width, this.viewport.height) * 0.12));
+    this.animateTo(fitBounds(bounds, this.viewport, padding, this.limits));
+    // Resizing the map (a split of the middle moving) frames the same nodes again.
+    this.refit = () => { this.camera = fitBounds(bounds, this.viewport, Math.min(72, Math.max(24, Math.min(this.viewport.width, this.viewport.height) * 0.12)), this.limits); this.animation = undefined; };
   }
   zoomBy(factor: number): void { if (this.deferred(() => this.zoomBy(factor))) return; this.animateTo(zoomAround(this.camera, this.viewport, this.viewport.width / 2, this.viewport.height / 2, factor, this.limits), 260); }
   flyTo(node: NodeSummary, options: { mode?: 'focus' | 'enter' } = {}): void {
@@ -237,6 +252,7 @@ export class MapController implements MapNavigator {
   }
   private animateTo(target: Camera, fixedDuration?: number): void {
     if (this.fitted) this.autoFit = false;
+    this.refit = undefined;
     if (this.motionReduced || !this.fitted) { this.camera = target; this.animation = undefined; this.fitted = true; this.request(); return; }
     const path = zoomPath(this.camera, target, this.viewport);
     const duration = fixedDuration ?? Math.min(1700, 450 + path.length * 260);
@@ -246,6 +262,9 @@ export class MapController implements MapNavigator {
   // Frame -----------------------------------------------------------------------
   private tick(time: number): void {
     this.frame = 0;
+    // Only the streaming of a flow moves: no need to draw every frame.
+    if (!this.dirty && !this.animation && time >= this.motionUntil && !this.store.getState().timeline.playing && time - this.lastDraw < STREAM_FRAME_MS) { this.request(false); return; }
+    this.dirty = false; this.lastDraw = time;
     const elapsed = this.lastFrame ? Math.min(100, time - this.lastFrame) : 16;
     this.lastFrame = time;
     const clock = this.role !== 'region';
@@ -273,13 +292,12 @@ export class MapController implements MapNavigator {
       // Labels use the theme's font: draw again once it has loaded.
       if (theme.style?.font && typeof document !== 'undefined') document.fonts?.load(`600 12px ${theme.style.font}`).then(() => this.request(), () => undefined);
     }
-    if (clock && state.tour?.playback.status === 'playing') this.store.tourAction({ type: 'tick', elapsedMs: elapsed, stepMs: branchDuration(state.tour.flow?.branches[state.tour.playback.index]) });
     const shown = this.shownFlow(this.store.getState());
     const extra = this.options.extra?.();
-    const flowAreas = shown && !this.store.previewScene ? this.areasOf(shown.flow, shown.playback.index) : undefined;
+    const flowAreas = shown && !this.store.previewScene ? this.areasOf(shown.flow, shown.branch) : undefined;
     const force = flowAreas && extra?.force ? new Set([...flowAreas, ...extra.force]) : flowAreas ?? extra?.force;
     this.scene.shapes = state.shapes;
-    const key = `${state.shapes ? 'S' : 'P'}|${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}|${this.scene.revision}|${shown ? `${shown.flow.key}#${shown.playback.index}` : ''}|${extra?.key ?? ''}`;
+    const key = `${state.shapes ? 'S' : 'P'}|${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}|${this.scene.revision}|${shown ? `${shown.flow.key}#${shown.branch ?? 'all'}` : ''}|${extra?.key ?? ''}`;
     if (key !== this.setKey) {
       this.set = this.scene.visible(this.camera, this.viewport, this.lod, force);
       this.setKey = key;
@@ -291,9 +309,10 @@ export class MapController implements MapNavigator {
     const moved = `${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}`;
     if (moved !== this.lastCamera) { this.lastCamera = moved; this.options.onCamera?.(); }
     this.scheduleReport(time);
-    const flowActive = state.tour?.playback.status === 'playing';
-    if (this.animation || flowActive || state.timeline.playing || time < this.motionUntil) this.request();
-    else if (this.motion.appear.size || this.motion.flash.size) { this.motion.appear.clear(); this.motion.flash.clear(); }
+    if (this.animation || state.timeline.playing || time < this.motionUntil || this.renderer.railsPending) this.request();
+    // A flow on the map streams all the time (not with reduced motion).
+    else if (shown && !this.motionReduced && !this.store.previewScene) this.request(false);
+    if (!this.animation && time >= this.motionUntil && (this.motion.appear.size || this.motion.flash.size)) { this.motion.appear.clear(); this.motion.flash.clear(); }
   }
   private reportTimer?: ReturnType<typeof setTimeout>;
   /** Throttled status reporting (level, focus chain, visible items) to the store. */
@@ -335,7 +354,7 @@ export class MapController implements MapNavigator {
     const unresolvedCount = selection && !isContainer(selection.node ?? { type: 'file', kind: 'entity' }) && selection.node?.type !== 'file' ? state.diagnostics.data?.codes.find(code => code.code === 'unresolved-http-call')?.count ?? 0 : 0;
     return {
       selectedId: selection?.id, hoveredId: state.hover?.id, emphasis, within, edges,
-      showDiagnostics: state.showDiagnostics, source: this.sourceFace(state), time, reducedMotion: this.motionReduced, shapes: state.shapes,
+      showDiagnostics: state.showDiagnostics, source: this.sourceFace(state), time, reducedMotion: this.motionReduced, shapes: state.shapes, connections: state.connections,
       ...(state.meta?.comparison ? { comparison: { dimUnchanged: state.timeline.dimUnchanged } } : {}),
       ...(unresolvedCount && selection ? { unresolved: { nodeId: selection.id, count: unresolvedCount } } : {}),
       ...this.analysisOverlays(state, time),
@@ -362,7 +381,7 @@ export class MapController implements MapNavigator {
     }
     const steps = (tool === 'map' || tool === 'flow') && state.steps?.status === 'ready' && state.steps.viewStamp === stamp ? state.steps.data : undefined;
     // A flow in lanes in the middle: the overview lights what it passes.
-    const lanes = tool === 'flow' && state.flowView?.layout === 'diagram' && state.requests.open?.id === state.flowView.id && state.requests.open.viewStamp === stamp ? state.requests.open.data : undefined;
+    const lanes = tool === 'flow' && state.flowView?.lanes && state.requests.open?.id === state.flowView.id && state.requests.open.viewStamp === stamp ? state.requests.open.data : undefined;
     if (lanes && !steps) {
       const emphasis = new Set<string>();
       for (const node of lanes.nodes) { for (const id of node.ancestors) emphasis.add(id); if (node.node) emphasis.add(node.node.id); }
@@ -447,45 +466,43 @@ export class MapController implements MapNavigator {
   private coverageCache?: { data: object; overlay: CoverageOverlay };
   private familyCache?: { data: object; focus?: string; overlay: FamilyOverlay };
   private featureCache?: { data: object; focus: string; overlay: FamilyOverlay };
-  /** The flow shown on the map (opened from the Flows panel, the inspector or the lanes). */
-  private shownFlow(state: AtlasState): { flow: MapFlow; playback: PlaybackState } | undefined {
+  /** The flow open in the middle, when this map shows it (the main map, beside the flow's other views or alone). */
+  private shownFlow(state: AtlasState): { flow: MapFlow; branch?: number } | undefined {
     const tour = state.tour;
-    // A tool in the middle hides it from the overview, unless the tool is the same flow.
-    if (this.role === 'main' && state.center !== 'map' && !(state.center === 'flow' && state.flowView?.id === tour?.id)) return undefined;
-    return tour?.flow && tour.viewStamp === this.store.viewStamp() ? { flow: tour.flow, playback: tour.playback } : undefined;
+    if (this.role !== 'main' || state.center !== 'flow' || state.flowView?.id !== tour?.id || !mapInMiddle(state)) return undefined;
+    return tour?.flow && tour.viewStamp === this.store.viewStamp() ? { flow: tour.flow, ...(tour.branch !== undefined ? { branch: tour.branch } : {}) } : undefined;
   }
-  /** The areas the current branch passes: opened whatever the zoom while it plays. */
-  private areasOf(flow: MapFlow, branch: number): Set<string> {
-    if (this.areasCache?.flow !== flow || this.areasCache.branch !== branch) this.areasCache = { flow, branch, areas: flowAreas(flow, flow.branches[branch]) };
+  /** The areas the branch shown passes (all of the flow without one): opened whatever the zoom. */
+  private areasOf(flow: MapFlow, branch: number | undefined): Set<string> {
+    if (this.areasCache?.flow !== flow || this.areasCache.branch !== branch) this.areasCache = { flow, branch, areas: flowAreas(flow, branch === undefined ? undefined : flow.branches[branch]) };
     return this.areasCache.areas;
   }
-  private areasCache?: { flow: MapFlow; branch: number; areas: Set<string> };
-  private litCache?: { flow: MapFlow; lit: Set<string> };
+  private areasCache?: { flow: MapFlow; branch: number | undefined; areas: Set<string> };
+  private litCache?: { flow: MapFlow; lit: Set<string>; depths: Map<number, number> };
   /**
-   * A flow on the map: everything it touches stays lit and the rest dims; the
-   * current branch's edges carry the pulse as far as it has flowed, its stops
-   * are marked (reached, at the front, still ahead) and labelled with their
-   * wave, and the pins of the stops reached show.
+   * A flow on the map: everything it touches stays lit and the rest dims. Its
+   * links (all of them, or the branch shown) stream from where they start to
+   * where they lead; its stops are marked and numbered by how far they are
+   * from the start, and the pins of those stops show.
    */
-  private mapFlowOverlay(shown: { flow: MapFlow; playback: PlaybackState }): Partial<RenderState> {
-    const { flow, playback } = shown;
-    if (this.litCache?.flow !== flow) this.litCache = { flow, lit: flowLit(flow) };
+  private mapFlowOverlay(shown: { flow: MapFlow; branch?: number }): Partial<RenderState> {
+    const { flow } = shown;
+    if (this.litCache?.flow !== flow) this.litCache = { flow, lit: flowLit(flow), depths: flowDepths(flow) };
     const result: Partial<RenderState> = { lit: this.litCache.lit, edges: [], emphasis: undefined, within: undefined };
-    const branch = flow.branches[playback.index];
-    if (!branch) return result;
-    const { position, front } = branchPosition(branch, playback);
-    const waveOf = new Map<number, number>();
-    branch.waves.forEach((wave, depth) => { for (const stop of wave) if (!waveOf.has(stop)) waveOf.set(stop, depth); });
-    const reached = new Set<string>();
-    for (const [stop, depth] of waveOf) if (depth <= position) reached.add(flow.stops[stop]!.entityId);
+    const branch = shown.branch === undefined ? undefined : flow.branches[shown.branch];
+    const depthOf = new Map<number, number>();
+    if (branch) branch.waves.forEach((wave, depth) => { for (const stop of wave) if (!depthOf.has(stop)) depthOf.set(stop, depth); });
+    else for (const [stop, depth] of this.litCache.depths) depthOf.set(stop, depth);
+    const links = branch ? branch.links.map(link => flow.edges[link.edge]!) : flow.edges;
     const overlay: FlowOverlay = {
-      links: branch.links.map(link => { const edge = flow.edges[link.edge]!; return { from: edge.from, fromAncestors: edge.fromAncestors, to: edge.to, toAncestors: edge.toAncestors, fill: Math.max(0, Math.min(1, position - link.wave)), back: !!edge.back }; }),
-      stops: [...waveOf].map(([stop, depth]) => ({ entityId: flow.stops[stop]!.entityId, ancestors: flow.stops[stop]!.ancestors, state: depth === front ? 'front' as const : depth <= position ? 'reached' as const : 'ahead' as const })),
-      moving: playback.status === 'playing' && !this.motionReduced,
+      links: links.map(edge => ({ from: edge.from, fromAncestors: edge.fromAncestors, to: edge.to, toAncestors: edge.toAncestors, back: !!edge.back })),
+      stops: (branch ? [...depthOf.keys()] : flow.stops.map((_, index) => index)).map(stop => ({ entityId: flow.stops[stop]!.entityId, ancestors: flow.stops[stop]!.ancestors, start: depthOf.get(stop) === 0 })),
+      moving: !this.motionReduced,
     };
-    const many = waveOf.size > CALLOUT_ALL;
-    const callouts: CalloutOverlay[] = [...waveOf].flatMap(([stop, depth]) => many && depth !== 0 && Math.abs(depth - front) > 1 ? [] : [{ entityId: flow.stops[stop]!.entityId, ancestors: flow.stops[stop]!.ancestors, number: depth + 1, label: flow.stops[stop]!.label, tone: flow.stops[stop]!.tone, current: depth === front }]);
-    const pins = flow.pins.filter(pin => reached.has(pin.after) && (!branch.pinKeys || branch.pinKeys.includes(pin.key))).slice(0, PIN_MAX);
+    const callouts: CalloutOverlay[] = [...depthOf].sort((a, b) => a[1] - b[1] || a[0] - b[0]).slice(0, CALLOUT_MAX)
+      .map(([stop, depth]) => ({ entityId: flow.stops[stop]!.entityId, ancestors: flow.stops[stop]!.ancestors, number: depth + 1, label: flow.stops[stop]!.label, tone: flow.stops[stop]!.tone, current: branch ? stop === branch.head : depth === 0 }));
+    const shownStops = new Set([...depthOf.keys()].map(stop => flow.stops[stop]!.entityId));
+    const pins = flow.pins.filter(pin => !branch || shownStops.has(pin.after) && (!branch.pinKeys || branch.pinKeys.includes(pin.key))).slice(0, PIN_MAX);
     return { ...result, flow: overlay, callouts, pins };
   }
   private impactCache?: { data: object; overlay: NonNullable<RenderState['impact']> };
@@ -561,8 +578,8 @@ export class MapController implements MapNavigator {
     this.animation = undefined; this.autoFit = false;
     this.camera = { x: this.camera.x + (target.x - this.camera.x) * k, y: this.camera.y + (target.y - this.camera.y) * k, scale: Math.exp(Math.log(this.camera.scale) + (Math.log(target.scale) - Math.log(this.camera.scale)) * k) };
   }
-  /** The user took the camera: stop following playback. */
-  private takeCamera(): void { if (this.store.getState().timeline.follow && this.store.getState().timeline.playing) this.store.setFollow(false); }
+  /** The user took the camera: stop following playback, and keep the camera where it is when the map is resized. */
+  private takeCamera(): void { this.refit = undefined; if (this.store.getState().timeline.follow && this.store.getState().timeline.playing) this.store.setFollow(false); }
   private report(state: AtlasState): void {
     const focus = this.set.focus;
     const chain: { id: string; name: string; type: string }[] = [];
@@ -615,6 +632,7 @@ export class MapController implements MapNavigator {
         const distance = Math.hypot(a!.x - b!.x, a!.y - b!.y);
         this.camera = zoomAround(this.camera, this.viewport, (a!.x + b!.x) / 2, (a!.y + b!.y) / 2, distance / this.drag.pinch, this.limits);
         this.drag.pinch = distance;
+        this.takeCamera();
       } else if (this.drag) {
         if (Math.hypot(point.x - this.drag.x, point.y - this.drag.y) > 4) this.drag.moved = true;
         if (this.drag.moved) { this.camera = panBy(this.camera, point.x - previous.x, point.y - previous.y); this.canvas.style.cursor = 'grabbing'; this.takeCamera(); }
@@ -672,6 +690,10 @@ export class MapController implements MapNavigator {
     action();
     this.request();
   }
+}
+/** Whether the map is in the middle: the Map tab, or a flow with its map beside its other views (or alone). */
+export function mapInMiddle(state: Pick<AtlasState, 'center' | 'flowView'>): boolean {
+  return state.center === 'map' || (state.center === 'flow' && !!state.flowView && (!state.flowView.pane || state.flowView.pane === 'map'));
 }
 function union(a: Bounds, b: Bounds): Bounds { return { minX: Math.min(a.minX, b.minX), minY: Math.min(a.minY, b.minY), maxX: Math.max(a.maxX, b.maxX), maxY: Math.max(a.maxY, b.maxY) }; }
 /** The key explanation overlays light under, and the hue of their badges. */
