@@ -1,0 +1,624 @@
+{
+  "schema": 1,
+  "passed": true,
+  "qualifiedAt": 1791966091.9267864,
+  "observations": [
+    {
+      "label": "memos-prior-node22",
+      "node": "v22.12.0",
+      "repository": "memos",
+      "graph": {
+        "sha256": "f4f20454d4bfd0300a641417b0f5280c71fd5188f199d20828fcc2174ccadee7",
+        "bytes": 67344062,
+        "peakChunkBytes": 65536,
+        "limits": {
+          "maxBytes": 1073741824,
+          "chunkBytes": 65536,
+          "maxDepth": 4096
+        },
+        "serialization": "lossless-plain-json-chunks",
+        "entities": 11356,
+        "relations": 44453,
+        "diagnostics": 75
+      },
+      "comparison": null,
+      "original": {
+        "tree": "/var/www/html/codiluce/.codiluce/validation-typescript-production-heads/originals/memos/tree",
+        "receiptSha256": "0d2395af292e9a81cafe64bdde7f82fdbbf1af56176e97a4de11404b437f2635",
+        "regularFiles": 1322,
+        "originalBytes": 12208526,
+        "regularFileDigest": "e3e25f1816755f93f8f4106d947750a97960a006327013be3f1f43b802bb0268",
+        "skipped": []
+      },
+      "contracts": 2,
+      "compilerRequestBytes": 41974252,
+      "compilerResponseBytes": 7339577,
+      "secondsWithVerification": 33.43515229225159,
+      "sampledTreePeakKiB": 1640988,
+      "incompleteSamples": 0
+    },
+    {
+      "label": "memos-current-source-node22",
+      "node": "v22.12.0",
+      "repository": "memos",
+      "graph": {
+        "sha256": "08bec6ffdb4342dc9bc7f7b77ff5a2ceacb944b76e96c5e694f15582c1e6e34c",
+        "bytes": 67344062,
+        "peakChunkBytes": 65536,
+        "limits": {
+          "maxBytes": 1073741824,
+          "chunkBytes": 65536,
+          "maxDepth": 4096
+        },
+        "serialization": "lossless-plain-json-chunks",
+        "entities": 11356,
+        "relations": 44453,
+        "diagnostics": 75
+      },
+      "comparison": {
+        "format": "complete-logical-production-json-v1",
+        "sha256": "2c3590515fa06ae7a87a4446869295aafcc351dffbec5d34e444b69cd04606a7",
+        "bytes": 67344061,
+        "counts": {
+          "entities": 11356,
+          "relations": 44453,
+          "diagnostics": 75
+        },
+        "storage": {
+          "files": 0,
+          "proofs": 0,
+          "references": 0,
+          "entries": 0
+        },
+        "peakChunkBytes": 65536,
+        "normalization": [],
+        "volatileFields": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "producerNormalization": false
+      },
+      "original": {
+        "tree": "/var/www/html/codiluce/.codiluce/validation-typescript-production-heads/originals/memos/tree",
+        "receiptSha256": "0d2395af292e9a81cafe64bdde7f82fdbbf1af56176e97a4de11404b437f2635",
+        "regularFiles": 1322,
+        "originalBytes": 12208526,
+        "regularFileDigest": "e3e25f1816755f93f8f4106d947750a97960a006327013be3f1f43b802bb0268",
+        "skipped": []
+      },
+      "contracts": 2,
+      "compilerRequestBytes": 41974270,
+      "compilerResponseBytes": 7339577,
+      "secondsWithVerification": 46.83398652076721,
+      "sampledTreePeakKiB": 1643456,
+      "incompleteSamples": 2
+    },
+    {
+      "label": "memos-current-installed-node22",
+      "node": "v22.12.0",
+      "repository": "memos",
+      "graph": {
+        "sha256": "dc4f10eb5da8b195343786e6a6f0bc7b9fccef95d64d8e28f2d941e16e53631d",
+        "bytes": 67344062,
+        "peakChunkBytes": 65536,
+        "limits": {
+          "maxBytes": 1073741824,
+          "chunkBytes": 65536,
+          "maxDepth": 4096
+        },
+        "serialization": "lossless-plain-json-chunks",
+        "entities": 11356,
+        "relations": 44453,
+        "diagnostics": 75
+      },
+      "comparison": {
+        "format": "complete-logical-production-json-v1",
+        "sha256": "2c3590515fa06ae7a87a4446869295aafcc351dffbec5d34e444b69cd04606a7",
+        "bytes": 67344061,
+        "counts": {
+          "entities": 11356,
+          "relations": 44453,
+          "diagnostics": 75
+        },
+        "storage": {
+          "files": 0,
+          "proofs": 0,
+          "references": 0,
+          "entries": 0
+        },
+        "peakChunkBytes": 65536,
+        "normalization": [],
+        "volatileFields": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "producerNormalization": false
+      },
+      "original": {
+        "tree": "/var/www/html/codiluce/.codiluce/validation-typescript-production-heads/originals/memos/tree",
+        "receiptSha256": "0d2395af292e9a81cafe64bdde7f82fdbbf1af56176e97a4de11404b437f2635",
+        "regularFiles": 1322,
+        "originalBytes": 12208526,
+        "regularFileDigest": "e3e25f1816755f93f8f4106d947750a97960a006327013be3f1f43b802bb0268",
+        "skipped": []
+      },
+      "contracts": 2,
+      "compilerRequestBytes": 41974270,
+      "compilerResponseBytes": 7339577,
+      "secondsWithVerification": 41.80787992477417,
+      "sampledTreePeakKiB": 1397300,
+      "incompleteSamples": 0
+    },
+    {
+      "label": "memos-current-installed-node24",
+      "node": "v24.21.0",
+      "repository": "memos",
+      "graph": {
+        "sha256": "f8a000d19815da3b6c1e11eb03305339cc04bbe15ff5140d3e248793b3f8b01d",
+        "bytes": 67344062,
+        "peakChunkBytes": 65536,
+        "limits": {
+          "maxBytes": 1073741824,
+          "chunkBytes": 65536,
+          "maxDepth": 4096
+        },
+        "serialization": "lossless-plain-json-chunks",
+        "entities": 11356,
+        "relations": 44453,
+        "diagnostics": 75
+      },
+      "comparison": {
+        "format": "complete-logical-production-json-v1",
+        "sha256": "2c3590515fa06ae7a87a4446869295aafcc351dffbec5d34e444b69cd04606a7",
+        "bytes": 67344061,
+        "counts": {
+          "entities": 11356,
+          "relations": 44453,
+          "diagnostics": 75
+        },
+        "storage": {
+          "files": 0,
+          "proofs": 0,
+          "references": 0,
+          "entries": 0
+        },
+        "peakChunkBytes": 65536,
+        "normalization": [],
+        "volatileFields": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "producerNormalization": false
+      },
+      "original": {
+        "tree": "/var/www/html/codiluce/.codiluce/validation-typescript-production-heads/originals/memos/tree",
+        "receiptSha256": "0d2395af292e9a81cafe64bdde7f82fdbbf1af56176e97a4de11404b437f2635",
+        "regularFiles": 1322,
+        "originalBytes": 12208526,
+        "regularFileDigest": "e3e25f1816755f93f8f4106d947750a97960a006327013be3f1f43b802bb0268",
+        "skipped": []
+      },
+      "contracts": 2,
+      "compilerRequestBytes": 41974270,
+      "compilerResponseBytes": 7339589,
+      "secondsWithVerification": 35.7576584815979,
+      "sampledTreePeakKiB": 1524952,
+      "incompleteSamples": 1
+    },
+    {
+      "label": "full-stack-fastapi-prior-node22",
+      "node": "v22.12.0",
+      "repository": "full-stack-fastapi",
+      "graph": {
+        "sha256": "3013d291ef07a17c96da76d1ea00651bea9a3313225be9ddac10e287f55c3ef0",
+        "bytes": 2616397,
+        "peakChunkBytes": 65536,
+        "limits": {
+          "maxBytes": 1073741824,
+          "chunkBytes": 65536,
+          "maxDepth": 4096
+        },
+        "serialization": "lossless-plain-json-chunks",
+        "entities": 787,
+        "relations": 2678,
+        "diagnostics": 9
+      },
+      "comparison": null,
+      "original": {
+        "tree": "/var/www/html/codiluce/.codiluce/validation-typescript-production-heads/originals/full-stack-fastapi/tree",
+        "receiptSha256": "23098159efd41d7c5f28c0c6db06a91dee22d17a8fca81df797ead8a3c24ff9b",
+        "regularFiles": 248,
+        "originalBytes": 1885645,
+        "regularFileDigest": "8378e5febf3bce16bd68f80a291c71f198cbfffad408c8ac3994fac323d9606b",
+        "skipped": [
+          {
+            "path": ".agents/skills/fastapi",
+            "mode": "120000",
+            "object": "c72ba0755dbaeefc9c7b47dcadae55c0e3925663",
+            "reason": "symlink-not-followed",
+            "sha256": "e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f"
+          },
+          {
+            "path": ".agents/skills/sqlmodel",
+            "mode": "120000",
+            "object": "8dfb559dff430e145f1c4cf6b549e99cbbbec457",
+            "reason": "symlink-not-followed",
+            "sha256": "2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e"
+          },
+          {
+            "path": ".claude/skills/fastapi",
+            "mode": "120000",
+            "object": "c72ba0755dbaeefc9c7b47dcadae55c0e3925663",
+            "reason": "symlink-not-followed",
+            "sha256": "e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f"
+          },
+          {
+            "path": ".claude/skills/sqlmodel",
+            "mode": "120000",
+            "object": "8dfb559dff430e145f1c4cf6b549e99cbbbec457",
+            "reason": "symlink-not-followed",
+            "sha256": "2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e"
+          }
+        ]
+      },
+      "contracts": 2,
+      "compilerRequestBytes": 909248,
+      "compilerResponseBytes": 1018475,
+      "secondsWithVerification": 5.683526515960693,
+      "sampledTreePeakKiB": 740664,
+      "incompleteSamples": 0
+    },
+    {
+      "label": "full-stack-fastapi-current-source-node22",
+      "node": "v22.12.0",
+      "repository": "full-stack-fastapi",
+      "graph": {
+        "sha256": "4caf05b1fa33f5545e78b9dd3158a4ed77ec2dd4597fb6d8bfdfc2debe04d23f",
+        "bytes": 2616397,
+        "peakChunkBytes": 65536,
+        "limits": {
+          "maxBytes": 1073741824,
+          "chunkBytes": 65536,
+          "maxDepth": 4096
+        },
+        "serialization": "lossless-plain-json-chunks",
+        "entities": 787,
+        "relations": 2678,
+        "diagnostics": 9
+      },
+      "comparison": {
+        "format": "complete-logical-production-json-v1",
+        "sha256": "16fa5224e5346f41f8eaf32ada8f4fc0e3ae81e8a117a43e1a8cec5ec4d2dcf1",
+        "bytes": 2616396,
+        "counts": {
+          "entities": 787,
+          "relations": 2678,
+          "diagnostics": 9
+        },
+        "storage": {
+          "files": 0,
+          "proofs": 0,
+          "references": 0,
+          "entries": 0
+        },
+        "peakChunkBytes": 65536,
+        "normalization": [],
+        "volatileFields": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "producerNormalization": false
+      },
+      "original": {
+        "tree": "/var/www/html/codiluce/.codiluce/validation-typescript-production-heads/originals/full-stack-fastapi/tree",
+        "receiptSha256": "23098159efd41d7c5f28c0c6db06a91dee22d17a8fca81df797ead8a3c24ff9b",
+        "regularFiles": 248,
+        "originalBytes": 1885645,
+        "regularFileDigest": "8378e5febf3bce16bd68f80a291c71f198cbfffad408c8ac3994fac323d9606b",
+        "skipped": [
+          {
+            "path": ".agents/skills/fastapi",
+            "mode": "120000",
+            "object": "c72ba0755dbaeefc9c7b47dcadae55c0e3925663",
+            "reason": "symlink-not-followed",
+            "sha256": "e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f"
+          },
+          {
+            "path": ".agents/skills/sqlmodel",
+            "mode": "120000",
+            "object": "8dfb559dff430e145f1c4cf6b549e99cbbbec457",
+            "reason": "symlink-not-followed",
+            "sha256": "2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e"
+          },
+          {
+            "path": ".claude/skills/fastapi",
+            "mode": "120000",
+            "object": "c72ba0755dbaeefc9c7b47dcadae55c0e3925663",
+            "reason": "symlink-not-followed",
+            "sha256": "e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f"
+          },
+          {
+            "path": ".claude/skills/sqlmodel",
+            "mode": "120000",
+            "object": "8dfb559dff430e145f1c4cf6b549e99cbbbec457",
+            "reason": "symlink-not-followed",
+            "sha256": "2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e"
+          }
+        ]
+      },
+      "contracts": 2,
+      "compilerRequestBytes": 909266,
+      "compilerResponseBytes": 1018475,
+      "secondsWithVerification": 6.048283815383911,
+      "sampledTreePeakKiB": 733544,
+      "incompleteSamples": 2
+    },
+    {
+      "label": "full-stack-fastapi-current-installed-node22",
+      "node": "v22.12.0",
+      "repository": "full-stack-fastapi",
+      "graph": {
+        "sha256": "31c90e641e3a634ff8541e60014ec1f1ffd6bba1e80d2dd55fda4036c7a94058",
+        "bytes": 2616397,
+        "peakChunkBytes": 65536,
+        "limits": {
+          "maxBytes": 1073741824,
+          "chunkBytes": 65536,
+          "maxDepth": 4096
+        },
+        "serialization": "lossless-plain-json-chunks",
+        "entities": 787,
+        "relations": 2678,
+        "diagnostics": 9
+      },
+      "comparison": {
+        "format": "complete-logical-production-json-v1",
+        "sha256": "16fa5224e5346f41f8eaf32ada8f4fc0e3ae81e8a117a43e1a8cec5ec4d2dcf1",
+        "bytes": 2616396,
+        "counts": {
+          "entities": 787,
+          "relations": 2678,
+          "diagnostics": 9
+        },
+        "storage": {
+          "files": 0,
+          "proofs": 0,
+          "references": 0,
+          "entries": 0
+        },
+        "peakChunkBytes": 65536,
+        "normalization": [],
+        "volatileFields": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "producerNormalization": false
+      },
+      "original": {
+        "tree": "/var/www/html/codiluce/.codiluce/validation-typescript-production-heads/originals/full-stack-fastapi/tree",
+        "receiptSha256": "23098159efd41d7c5f28c0c6db06a91dee22d17a8fca81df797ead8a3c24ff9b",
+        "regularFiles": 248,
+        "originalBytes": 1885645,
+        "regularFileDigest": "8378e5febf3bce16bd68f80a291c71f198cbfffad408c8ac3994fac323d9606b",
+        "skipped": [
+          {
+            "path": ".agents/skills/fastapi",
+            "mode": "120000",
+            "object": "c72ba0755dbaeefc9c7b47dcadae55c0e3925663",
+            "reason": "symlink-not-followed",
+            "sha256": "e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f"
+          },
+          {
+            "path": ".agents/skills/sqlmodel",
+            "mode": "120000",
+            "object": "8dfb559dff430e145f1c4cf6b549e99cbbbec457",
+            "reason": "symlink-not-followed",
+            "sha256": "2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e"
+          },
+          {
+            "path": ".claude/skills/fastapi",
+            "mode": "120000",
+            "object": "c72ba0755dbaeefc9c7b47dcadae55c0e3925663",
+            "reason": "symlink-not-followed",
+            "sha256": "e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f"
+          },
+          {
+            "path": ".claude/skills/sqlmodel",
+            "mode": "120000",
+            "object": "8dfb559dff430e145f1c4cf6b549e99cbbbec457",
+            "reason": "symlink-not-followed",
+            "sha256": "2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e"
+          }
+        ]
+      },
+      "contracts": 2,
+      "compilerRequestBytes": 909266,
+      "compilerResponseBytes": 1018475,
+      "secondsWithVerification": 4.999025106430054,
+      "sampledTreePeakKiB": 448036,
+      "incompleteSamples": 1
+    },
+    {
+      "label": "full-stack-fastapi-current-installed-node24",
+      "node": "v24.21.0",
+      "repository": "full-stack-fastapi",
+      "graph": {
+        "sha256": "3644eb7d27a5cadf96c825dd15c124065d64ea621779882e3540c985a2dda629",
+        "bytes": 2616397,
+        "peakChunkBytes": 65536,
+        "limits": {
+          "maxBytes": 1073741824,
+          "chunkBytes": 65536,
+          "maxDepth": 4096
+        },
+        "serialization": "lossless-plain-json-chunks",
+        "entities": 787,
+        "relations": 2678,
+        "diagnostics": 9
+      },
+      "comparison": {
+        "format": "complete-logical-production-json-v1",
+        "sha256": "16fa5224e5346f41f8eaf32ada8f4fc0e3ae81e8a117a43e1a8cec5ec4d2dcf1",
+        "bytes": 2616396,
+        "counts": {
+          "entities": 787,
+          "relations": 2678,
+          "diagnostics": 9
+        },
+        "storage": {
+          "files": 0,
+          "proofs": 0,
+          "references": 0,
+          "entries": 0
+        },
+        "peakChunkBytes": 65536,
+        "normalization": [],
+        "volatileFields": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "producerNormalization": false
+      },
+      "original": {
+        "tree": "/var/www/html/codiluce/.codiluce/validation-typescript-production-heads/originals/full-stack-fastapi/tree",
+        "receiptSha256": "23098159efd41d7c5f28c0c6db06a91dee22d17a8fca81df797ead8a3c24ff9b",
+        "regularFiles": 248,
+        "originalBytes": 1885645,
+        "regularFileDigest": "8378e5febf3bce16bd68f80a291c71f198cbfffad408c8ac3994fac323d9606b",
+        "skipped": [
+          {
+            "path": ".agents/skills/fastapi",
+            "mode": "120000",
+            "object": "c72ba0755dbaeefc9c7b47dcadae55c0e3925663",
+            "reason": "symlink-not-followed",
+            "sha256": "e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f"
+          },
+          {
+            "path": ".agents/skills/sqlmodel",
+            "mode": "120000",
+            "object": "8dfb559dff430e145f1c4cf6b549e99cbbbec457",
+            "reason": "symlink-not-followed",
+            "sha256": "2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e"
+          },
+          {
+            "path": ".claude/skills/fastapi",
+            "mode": "120000",
+            "object": "c72ba0755dbaeefc9c7b47dcadae55c0e3925663",
+            "reason": "symlink-not-followed",
+            "sha256": "e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f"
+          },
+          {
+            "path": ".claude/skills/sqlmodel",
+            "mode": "120000",
+            "object": "8dfb559dff430e145f1c4cf6b549e99cbbbec457",
+            "reason": "symlink-not-followed",
+            "sha256": "2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e"
+          }
+        ]
+      },
+      "contracts": 2,
+      "compilerRequestBytes": 909266,
+      "compilerResponseBytes": 1018475,
+      "secondsWithVerification": 4.685516595840454,
+      "sampledTreePeakKiB": 461492,
+      "incompleteSamples": 1
+    }
+  ],
+  "actualHeadRuns": 8,
+  "completeGraphComparisons": 6,
+  "independentPythonGraphComparisons": 6,
+  "originalRegularFiles": 1570,
+  "originalSymlinksSkipped": 4,
+  "toolingCasesPerNode": 224,
+  "allPriorToolingCasesRetained": 219,
+  "sourceRuntimeSha256": "70d1c03e198896af53fee766ec703013bff3db1a28da865771ede75ddb8483a1",
+  "priorRuntimeSha256": "ea9f45d5a868a740e7ca57edb0a15796ca7c444a18958345f8092ac1eadfe44c",
+  "actualFirstNormalTarballSha256": "960511df5045b7b12f11a72df975078ec8ac255b40bb4682a129d2449022e9a9",
+  "processIdsGone": [
+    1796963,
+    1796965,
+    1797005,
+    1797048,
+    1797270,
+    1797290,
+    1800007,
+    1800008,
+    1800047,
+    1800089,
+    1800321,
+    1800341,
+    1800830,
+    1800831,
+    1800832,
+    1800833,
+    1807198,
+    1808281,
+    1809671,
+    1810265,
+    1810305,
+    1810518,
+    1811182,
+    1811225,
+    1811263,
+    1811347,
+    1811406,
+    1811425,
+    1811548,
+    1811587,
+    1811604,
+    1811726,
+    1811745,
+    1811777
+  ],
+  "runtimeCopiesVerified": true,
+  "foreignFilesUnchanged": true,
+  "retainedOwnFailures": [
+    "initial-preparation-failure.json",
+    "tooling-initial-command-failure.json",
+    "qualification-initial-reader-failure.json"
+  ],
+  "failedProductionRetry": false,
+  "producerNormalization": false,
+  "volatileFields": [
+    "run.id",
+    "run.analyzedAt"
+  ],
+  "targetExecution": false,
+  "fullGoalComplete": false,
+  "fullProductionHistoryQualified": false,
+  "relativePerformanceQualified": false,
+  "nativeWindowsMacOSQualified": false,
+  "archive": {
+    "schema": 1,
+    "passed": true,
+    "archive": "typescript-production-head-isolation-evidence.tar.gz",
+    "archiveBytes": 119196702,
+    "archiveSha256": "32acf2856cc0d649b5e4b3522206a98ffad0612bfc57b5d03f237feba62c6c8b",
+    "manifestSha256": "2f00277a541daa68b8bbf94256a1c191c5a3f6b83dfbf17ca3653db30935315e",
+    "regularFiles": 7601,
+    "literalSymlinks": 6,
+    "uncompressedBytes": 691728181,
+    "allMembersReopenedAndVerified": true,
+    "allSourceBytesModesAndLinksBeforeAfterVerified": true,
+    "excludedActiveLogs": [
+      "archive-evidence.log"
+    ],
+    "pid": 1816549,
+    "seconds": 19.161914587020874,
+    "targetExecution": false
+  },
+  "archiveScope": "Closed workload inputs, all eight raw graphs, requests/responses identities, compiler stderr, sampled RSS, actual exits, all declared runtime copies, actual first normal tarball, tooling outputs, original failed controllers/readers and successful qualification. Subsequent report publication files are verified separately.",
+  "compilerLimits": {
+    "oldSpaceMiB": 1024,
+    "semiSpaceMiB": 16,
+    "frameBytes": 67108864,
+    "sourceFileBytes": 8388608
+  },
+  "method": "Two unchanged original head trees; prior source and current source on Node 22.12, actual preserved first normal installed package on Node 22.12 and Node 24.21. Complete comparisons replace run UUID/time only; independent Python compares every decoded graph field. No target code or dependency runs. Measurements include verification and overlapping tooling/preservation work and cannot establish a relative time/RSS gate.",
+  "remaining": [
+    "Complete 195-revision histories for the changed runtime",
+    "Controlled production relative time/RSS; preserved failed PHP performance baseline remains failed",
+    "Parent/graph/IPC encoding, direct in-process consumers, native/WASM and total RSS budgets",
+    "Broader P7/P8/P9 original source accuracy and native Windows/macOS release jobs"
+  ]
+}
