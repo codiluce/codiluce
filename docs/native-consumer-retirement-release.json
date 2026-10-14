@@ -1,0 +1,1352 @@
+{
+  "schema": 1,
+  "passed": true,
+  "qualifiedAt": 1791973508.4297385,
+  "sourceRevision": "c17cf36a20f8a595c99b51e62ad5b6777eb15b30",
+  "sourceRuntimeSha256": "4fbcc99286c1f15d8a93b2c62d1c6b7b1933a3bf55f55671524b402fb6b420c7",
+  "sourceRuntimeInputs": 1938,
+  "firstNormalPackage": {
+    "pid": 2309538,
+    "actualRunnerPid": 2309590,
+    "startedAt": 1791972830.7648597,
+    "command": [
+      "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+      "/home/ojoven/.nvm/versions/node/v22.12.0/lib/node_modules/npm/bin/npm-cli.js",
+      "run",
+      "test:package"
+    ],
+    "cwd": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/engine",
+    "node": "v22.12.0",
+    "revision": "c17cf36a20f8a595c99b51e62ad5b6777eb15b30",
+    "sourceRuntimeSha256": "4fbcc99286c1f15d8a93b2c62d1c6b7b1933a3bf55f55671524b402fb6b420c7",
+    "temporaryDirectory": "/tmp/codiluce-native-consumer-retirement-release-7xfwvjjv",
+    "temporaryDirectoryOutsideGit": true,
+    "before": {
+      "revision": "c17cf36a20f8a595c99b51e62ad5b6777eb15b30",
+      "gitVersion": "git version 2.34.1",
+      "trackedFiles": 1368,
+      "sourceDigest": "d77a231f1df82d0f8e1de4e2a70fd03fcde206c402c74abbac3e2c1005a57f1e",
+      "dirty": false
+    },
+    "targetExecution": false,
+    "freshOwnNpmCiClaim": false,
+    "completedAt": 1791973371.1294003,
+    "seconds": 540.3645408153534,
+    "actualExitCode": 0,
+    "interruptSignals": [],
+    "actualRunnerPidGone": true,
+    "after": {
+      "revision": "c17cf36a20f8a595c99b51e62ad5b6777eb15b30",
+      "gitVersion": "git version 2.34.1",
+      "trackedFiles": 1368,
+      "sourceDigest": "d77a231f1df82d0f8e1de4e2a70fd03fcde206c402c74abbac3e2c1005a57f1e",
+      "dirty": false
+    },
+    "sourceUnchanged": true,
+    "passed": true,
+    "runnerQualifiedThisRecordedHost": false,
+    "logSha256": "f137812a66231ac29660b8be2415630148bc18b6254aa08228ba40708a57a82d",
+    "fullNativeMatrixQualified": false
+  },
+  "collection": {
+    "schema": 1,
+    "startedAt": 1791972838.8174946,
+    "pid": 2310184,
+    "actualRunnerPid": 2309590,
+    "sourceRevision": "c17cf36a20f8a595c99b51e62ad5b6777eb15b30",
+    "sourceRuntimeSha256": "4fbcc99286c1f15d8a93b2c62d1c6b7b1933a3bf55f55671524b402fb6b420c7",
+    "passed": true,
+    "targetExecution": false,
+    "passiveReadOnlyCollection": true,
+    "normalPackageHarnessChanged": false,
+    "capturedValidations": [
+      {
+        "file": "typescript-input-ownership-validation.json",
+        "sha256": "ef740cf50ebfe1f3e409f60dc714798d93986b3989be02c75b3890da3dafa432"
+      },
+      {
+        "file": "literal-script-generation-validation.json",
+        "sha256": "8c40b258daba92524e2115d919eec6930a3c5b4821a17c4de6124878de668ed8"
+      },
+      {
+        "file": "rails-callback-chain-validation.json",
+        "sha256": "5356606bc861e5b9c463ead010d3fe4e90c96f4e235e7efa6d9855778d97ddd3"
+      },
+      {
+        "file": "jvm-build-selection-validation.json",
+        "sha256": "8d48a8b205d73b16a6afc9c03b4f92da302af2adaa6142158cde26c7c664fe58"
+      },
+      {
+        "file": "gradle-compiler-inputs-validation.json",
+        "sha256": "05fdbbfa32b11c7d08fe9c8371796926f9e71997718f414151b1ba7d892596fb"
+      },
+      {
+        "file": "spring-boot-gradle-validation.json",
+        "sha256": "bc4f4e08232a36c73b2696464536b25b20da9c8a49b8dc383f50074d11c1c4b3"
+      },
+      {
+        "file": "spring-boot-maven-validation.json",
+        "sha256": "10054482c39bdc5a8e9b93bafcc628571c904133e822ee88db5a55fb9008c9a8"
+      },
+      {
+        "file": "kotlin-spring-compiler-validation.json",
+        "sha256": "0731f78d4f6bfefe6decc4a7d449abbec16af8f22d6e69fdcc98ae4e7555b7ed"
+      },
+      {
+        "file": "kotlin-webflux-invoke-validation.json",
+        "sha256": "e9aa7517ce0afabdb2f97ba063f4ec89951141309d3c1ab69a2ef7ae76047980"
+      },
+      {
+        "file": "spring-boot35-validation.json",
+        "sha256": "dedcde72eb7bca806385054a5d8b659bd784f414674c7eb4a8135413741af729"
+      },
+      {
+        "file": "typescript-jsdoc-cache-validation.json",
+        "sha256": "a0dfdf1ddd6d32a0d2877a95c5ed824303e91dd79abe9d149a63008dbe5b93b0"
+      },
+      {
+        "file": "typescript-worker-validation.json",
+        "sha256": "e75c57ee5210dc8897360b4f582d14e1b9737b8b846670388314d979b1ca08ec"
+      },
+      {
+        "file": "typescript-preparation-validation.json",
+        "sha256": "7c4da8f113b0e1e46189ad9350b8d346fe5a365293206b51097f079d108a7e9d"
+      },
+      {
+        "file": "native-consumer-retirement-validation.json",
+        "sha256": "1c7a23fe8024e53ddd77623b976646421171c444ac9895e78b7c9041c804a513"
+      }
+    ],
+    "originalTemporaryPackageRoot": "/tmp/codiluce-native-consumer-retirement-release-7xfwvjjv/codiluce-package-tOhdnd",
+    "snapshotCapturedAt": 1791972875.6871386,
+    "snapshotFiles": 1970,
+    "snapshotLinks": 6,
+    "tarball": {
+      "file": "codiluce-0.1.1.tgz",
+      "sha256": "d1415085c5fb2063c1fe1145fcb40496ad4ca67c185e2929c3fde7c2f3a3f863",
+      "bytes": 7268721,
+      "members": 383
+    },
+    "completeCopiedBytesAndModesEqual": true,
+    "allTarballMembersEqualInstalledBytes": true,
+    "packageRunnerActualExitCode": 0,
+    "packageRunnerSourceUnchanged": true,
+    "normalHarnessTemporaryDirectoryRemoved": true,
+    "completedAt": 1791973371.2144248
+  },
+  "processClosure": {
+    "passed": true,
+    "observedAt": 1791973395.2369778,
+    "controllerSession": 80248,
+    "preserverSession": 36913,
+    "controllerActualTerminalExit": 0,
+    "preserverActualTerminalExit": 0,
+    "pidsObservedGone": [
+      2309538,
+      2309590,
+      2310184
+    ],
+    "runnerProcessGroupEmpty": true,
+    "portableReceiptCount": 14,
+    "normalTemporaryRootRemoved": true,
+    "cleanSourceBeforeAndAfter": true,
+    "foreignFilesUnchanged": true,
+    "targetExecution": false,
+    "fullGoalComplete": false
+  },
+  "installedProfile": {
+    "regularFiles": 1970,
+    "literalSymlinks": 6,
+    "ledgerSha256": "8803049157d60a9a2f17231bf43d7020f2250bf293b64200aa8e40570d103cbb"
+  },
+  "packagedDistMembers": 298,
+  "portableReceipts": [
+    {
+      "file": "typescript-input-ownership-validation.json",
+      "sha256": "ef740cf50ebfe1f3e409f60dc714798d93986b3989be02c75b3890da3dafa432",
+      "caseCount": 40
+    },
+    {
+      "file": "literal-script-generation-validation.json",
+      "sha256": "8c40b258daba92524e2115d919eec6930a3c5b4821a17c4de6124878de668ed8",
+      "caseCount": 65
+    },
+    {
+      "file": "rails-callback-chain-validation.json",
+      "sha256": "5356606bc861e5b9c463ead010d3fe4e90c96f4e235e7efa6d9855778d97ddd3",
+      "caseCount": 10
+    },
+    {
+      "file": "jvm-build-selection-validation.json",
+      "sha256": "8d48a8b205d73b16a6afc9c03b4f92da302af2adaa6142158cde26c7c664fe58",
+      "caseCount": 11
+    },
+    {
+      "file": "gradle-compiler-inputs-validation.json",
+      "sha256": "05fdbbfa32b11c7d08fe9c8371796926f9e71997718f414151b1ba7d892596fb",
+      "caseCount": 14
+    },
+    {
+      "file": "spring-boot-gradle-validation.json",
+      "sha256": "bc4f4e08232a36c73b2696464536b25b20da9c8a49b8dc383f50074d11c1c4b3",
+      "caseCount": 6
+    },
+    {
+      "file": "spring-boot-maven-validation.json",
+      "sha256": "10054482c39bdc5a8e9b93bafcc628571c904133e822ee88db5a55fb9008c9a8",
+      "caseCount": 9
+    },
+    {
+      "file": "kotlin-spring-compiler-validation.json",
+      "sha256": "0731f78d4f6bfefe6decc4a7d449abbec16af8f22d6e69fdcc98ae4e7555b7ed",
+      "caseCount": 11
+    },
+    {
+      "file": "kotlin-webflux-invoke-validation.json",
+      "sha256": "e9aa7517ce0afabdb2f97ba063f4ec89951141309d3c1ab69a2ef7ae76047980",
+      "caseCount": 7
+    },
+    {
+      "file": "spring-boot35-validation.json",
+      "sha256": "dedcde72eb7bca806385054a5d8b659bd784f414674c7eb4a8135413741af729",
+      "caseCount": 12
+    },
+    {
+      "file": "typescript-jsdoc-cache-validation.json",
+      "sha256": "a0dfdf1ddd6d32a0d2877a95c5ed824303e91dd79abe9d149a63008dbe5b93b0",
+      "caseCount": 7
+    },
+    {
+      "file": "typescript-worker-validation.json",
+      "sha256": "e75c57ee5210dc8897360b4f582d14e1b9737b8b846670388314d979b1ca08ec",
+      "caseCount": 12
+    },
+    {
+      "file": "typescript-preparation-validation.json",
+      "sha256": "7c4da8f113b0e1e46189ad9350b8d346fe5a365293206b51097f079d108a7e9d",
+      "caseCount": 5
+    },
+    {
+      "file": "native-consumer-retirement-validation.json",
+      "sha256": "1c7a23fe8024e53ddd77623b976646421171c444ac9895e78b7c9041c804a513",
+      "caseCount": 2
+    }
+  ],
+  "portableReceiptCount": 14,
+  "nativeRetirementNode22": {
+    "schema": 1,
+    "passed": true,
+    "caseCount": 2,
+    "cases": [
+      "complete-cold-warm-revision-native-consumer-retirement",
+      "failed-native-phase-retirement"
+    ],
+    "observations": [
+      {
+        "mode": "cold",
+        "rootsObserved": 13,
+        "liveAtNextPhase": 0,
+        "sourceMemoBefore": {
+          "bytes": 1128,
+          "entries": 6,
+          "maxBytes": 33554432,
+          "maxEntries": 4096,
+          "hits": 6,
+          "misses": 13,
+          "evictions": 0,
+          "bypasses": 0
+        },
+        "sourceMemoAfter": {
+          "bytes": 0,
+          "entries": 0,
+          "maxBytes": 33554432,
+          "maxEntries": 4096,
+          "hits": 6,
+          "misses": 13,
+          "evictions": 0,
+          "bypasses": 0
+        },
+        "completedGraphUnchanged": true
+      },
+      {
+        "mode": "warm",
+        "rootsObserved": 13,
+        "liveAtNextPhase": 0,
+        "sourceMemoBefore": {
+          "bytes": 1128,
+          "entries": 6,
+          "maxBytes": 33554432,
+          "maxEntries": 4096,
+          "hits": 5,
+          "misses": 13,
+          "evictions": 0,
+          "bypasses": 0
+        },
+        "sourceMemoAfter": {
+          "bytes": 0,
+          "entries": 0,
+          "maxBytes": 33554432,
+          "maxEntries": 4096,
+          "hits": 5,
+          "misses": 13,
+          "evictions": 0,
+          "bypasses": 0
+        },
+        "completedGraphUnchanged": true
+      },
+      {
+        "mode": "revision",
+        "rootsObserved": 13,
+        "liveAtNextPhase": 0,
+        "sourceMemoBefore": {
+          "bytes": 1128,
+          "entries": 6,
+          "maxBytes": 33554432,
+          "maxEntries": 4096,
+          "hits": 6,
+          "misses": 13,
+          "evictions": 0,
+          "bypasses": 0
+        },
+        "sourceMemoAfter": {
+          "bytes": 0,
+          "entries": 0,
+          "maxBytes": 33554432,
+          "maxEntries": 4096,
+          "hits": 6,
+          "misses": 13,
+          "evictions": 0,
+          "bypasses": 0
+        },
+        "completedGraphUnchanged": true
+      },
+      {
+        "mode": "failed-native-phase",
+        "rootsObserved": 13,
+        "liveAtNextPhase": 0,
+        "sourceMemoBefore": {
+          "bytes": 1128,
+          "entries": 6,
+          "maxBytes": 33554432,
+          "maxEntries": 4096,
+          "hits": 6,
+          "misses": 13,
+          "evictions": 0,
+          "bypasses": 0
+        },
+        "sourceMemoAfter": {
+          "bytes": 0,
+          "entries": 0,
+          "maxBytes": 33554432,
+          "maxEntries": 4096,
+          "hits": 6,
+          "misses": 13,
+          "evictions": 0,
+          "bypasses": 0
+        },
+        "completedGraphUnchanged": true
+      }
+    ],
+    "expectedPriorRetention": false,
+    "rootsPerObservation": 13,
+    "originalFiles": 14,
+    "graph": {
+      "entities": 38,
+      "relations": 49,
+      "diagnostics": 4,
+      "coldWarmSha256": "79f03e74484271dbce6d9efa56ea2fc5628fe82a95bfe4483354730a72b7997f"
+    },
+    "node": "v22.12.0",
+    "sourceLoader": false,
+    "targetExecution": false,
+    "scope": "Context ownership and forced-GC reachability after completed native consumers and on failure; later PHP and TypeScript facts, complete warm parity and revision records. This is not a global parent heap/RSS budget."
+  },
+  "nativeRetirementNode24": {
+    "schema": 1,
+    "passed": true,
+    "caseCount": 2,
+    "cases": [
+      "complete-cold-warm-revision-native-consumer-retirement",
+      "failed-native-phase-retirement"
+    ],
+    "observations": [
+      {
+        "mode": "cold",
+        "rootsObserved": 13,
+        "liveAtNextPhase": 0,
+        "sourceMemoBefore": {
+          "bytes": 1128,
+          "entries": 6,
+          "maxBytes": 33554432,
+          "maxEntries": 4096,
+          "hits": 6,
+          "misses": 13,
+          "evictions": 0,
+          "bypasses": 0
+        },
+        "sourceMemoAfter": {
+          "bytes": 0,
+          "entries": 0,
+          "maxBytes": 33554432,
+          "maxEntries": 4096,
+          "hits": 6,
+          "misses": 13,
+          "evictions": 0,
+          "bypasses": 0
+        },
+        "completedGraphUnchanged": true
+      },
+      {
+        "mode": "warm",
+        "rootsObserved": 13,
+        "liveAtNextPhase": 0,
+        "sourceMemoBefore": {
+          "bytes": 1128,
+          "entries": 6,
+          "maxBytes": 33554432,
+          "maxEntries": 4096,
+          "hits": 5,
+          "misses": 13,
+          "evictions": 0,
+          "bypasses": 0
+        },
+        "sourceMemoAfter": {
+          "bytes": 0,
+          "entries": 0,
+          "maxBytes": 33554432,
+          "maxEntries": 4096,
+          "hits": 5,
+          "misses": 13,
+          "evictions": 0,
+          "bypasses": 0
+        },
+        "completedGraphUnchanged": true
+      },
+      {
+        "mode": "revision",
+        "rootsObserved": 13,
+        "liveAtNextPhase": 0,
+        "sourceMemoBefore": {
+          "bytes": 1128,
+          "entries": 6,
+          "maxBytes": 33554432,
+          "maxEntries": 4096,
+          "hits": 6,
+          "misses": 13,
+          "evictions": 0,
+          "bypasses": 0
+        },
+        "sourceMemoAfter": {
+          "bytes": 0,
+          "entries": 0,
+          "maxBytes": 33554432,
+          "maxEntries": 4096,
+          "hits": 6,
+          "misses": 13,
+          "evictions": 0,
+          "bypasses": 0
+        },
+        "completedGraphUnchanged": true
+      },
+      {
+        "mode": "failed-native-phase",
+        "rootsObserved": 13,
+        "liveAtNextPhase": 0,
+        "sourceMemoBefore": {
+          "bytes": 1128,
+          "entries": 6,
+          "maxBytes": 33554432,
+          "maxEntries": 4096,
+          "hits": 6,
+          "misses": 13,
+          "evictions": 0,
+          "bypasses": 0
+        },
+        "sourceMemoAfter": {
+          "bytes": 0,
+          "entries": 0,
+          "maxBytes": 33554432,
+          "maxEntries": 4096,
+          "hits": 6,
+          "misses": 13,
+          "evictions": 0,
+          "bypasses": 0
+        },
+        "completedGraphUnchanged": true
+      }
+    ],
+    "expectedPriorRetention": false,
+    "rootsPerObservation": 13,
+    "originalFiles": 14,
+    "graph": {
+      "entities": 38,
+      "relations": 49,
+      "diagnostics": 4,
+      "coldWarmSha256": "79f03e74484271dbce6d9efa56ea2fc5628fe82a95bfe4483354730a72b7997f"
+    },
+    "node": "v24.21.0",
+    "sourceLoader": false,
+    "targetExecution": false,
+    "scope": "Context ownership and forced-GC reachability after completed native consumers and on failure; later PHP and TypeScript facts, complete warm parity and revision records. This is not a global parent heap/RSS budget."
+  },
+  "sourceInstalledGraphComparisons": 98,
+  "guideComparisons": 60,
+  "boot35Comparisons": 35,
+  "mixedComparisons": 3,
+  "originalGuideSnapshots": 4,
+  "recordedGuideContexts": 12,
+  "originalGuideFiles": 37,
+  "boot35Contexts": 7,
+  "boot35OriginalFiles": 22,
+  "mixedOriginalFiles": 171,
+  "mixedGraphs": [
+    {
+      "mode": "cold",
+      "bytes": 1304793,
+      "sha256": "04923fa598d34cc0cede1ac96dfe6b75c3712ac9e238985e964a5da71e4b3a62",
+      "entities": 803,
+      "relations": 1057,
+      "diagnostics": 26
+    },
+    {
+      "mode": "warm",
+      "bytes": 1304793,
+      "sha256": "04923fa598d34cc0cede1ac96dfe6b75c3712ac9e238985e964a5da71e4b3a62",
+      "entities": 803,
+      "relations": 1057,
+      "diagnostics": 26
+    },
+    {
+      "mode": "revision",
+      "bytes": 1304214,
+      "sha256": "415e623987349c6a27f138a0050fb14ef1ffd931e29a4e716967755a9a996f0c",
+      "entities": 803,
+      "relations": 1057,
+      "diagnostics": 23
+    }
+  ],
+  "installedProductionHeads": [
+    {
+      "id": "memos",
+      "graph": {
+        "sha256": "5657fd067a87946d848f9943bd33325ba7e90c21676b04b39ccafe1836ec9da1",
+        "bytes": 67344062,
+        "peakChunkBytes": 65536,
+        "limits": {
+          "maxBytes": 1073741824,
+          "chunkBytes": 65536,
+          "maxDepth": 4096
+        },
+        "serialization": "lossless-plain-json-chunks",
+        "entities": 11356,
+        "relations": 44453,
+        "diagnostics": 75
+      },
+      "completeComparison": {
+        "format": "complete-logical-production-json-v1",
+        "sha256": "2c3590515fa06ae7a87a4446869295aafcc351dffbec5d34e444b69cd04606a7",
+        "bytes": 67344061,
+        "counts": {
+          "entities": 11356,
+          "relations": 44453,
+          "diagnostics": 75
+        },
+        "storage": {
+          "files": 0,
+          "proofs": 0,
+          "references": 0,
+          "entries": 0
+        },
+        "peakChunkBytes": 65536,
+        "normalization": [],
+        "volatileFields": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "producerNormalization": false
+      },
+      "original": {
+        "tree": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/qualified-original-heads/memos/tree",
+        "receiptSha256": "0d2395af292e9a81cafe64bdde7f82fdbbf1af56176e97a4de11404b437f2635",
+        "regularFiles": 1322,
+        "originalBytes": 12208526,
+        "regularFileDigest": "e3e25f1816755f93f8f4106d947750a97960a006327013be3f1f43b802bb0268",
+        "skipped": []
+      },
+      "contracts": {
+        "schema": 1,
+        "manifestSha256": "75eec750d869174c6f386b42e46d29de15e80bcf39fae4574e014a3dbbcea720",
+        "corpusSha256": "dc21e2dbfa059f3c210dc3736457bb1944d7387de2521e434cd454bd04d3d6c6",
+        "originalSourcesVerified": true,
+        "graphContractsVerified": true,
+        "analysisQualified": false,
+        "contracts": [
+          {
+            "id": "memos-server",
+            "repository": "memos",
+            "commit": "b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e",
+            "path": "server/server.go",
+            "status": "graph-and-source-verified",
+            "fileSha256": "6bb3a6b268400a5d482b7e9f4a10c407847b9e635a1780629050b4f3b8cf53de",
+            "spanSha256": "c19595fee63872d9105fde05d2b034b4065df80a33e62d458aa22b19414b68a0",
+            "range": {
+              "startLine": 39,
+              "startColumn": 6,
+              "endLine": 47,
+              "endColumn": 2
+            },
+            "originalBytesVerified": true,
+            "entityId": "symbol:627b4c0619f8ff639bc03eb2",
+            "parentId": "file:c1085b058c4acbc5ddaf1d1c",
+            "graphOriginalVerified": true
+          },
+          {
+            "id": "memos-close-long-lived-connections",
+            "repository": "memos",
+            "commit": "b1fa9aefcc22fde5774b7f6cf0b3e19fc67acc6e",
+            "path": "server/server.go",
+            "status": "graph-and-source-verified",
+            "fileSha256": "6bb3a6b268400a5d482b7e9f4a10c407847b9e635a1780629050b4f3b8cf53de",
+            "spanSha256": "8ab9e1a38a5e9c5409a4fbad1e857d215212a3ea1b6ec6039c0fc98bed523050",
+            "range": {
+              "startLine": 162,
+              "startColumn": 1,
+              "endLine": 165,
+              "endColumn": 2
+            },
+            "originalBytesVerified": true,
+            "entityId": "symbol:87f7637e4206f3a17356e50b",
+            "parentId": "symbol:627b4c0619f8ff639bc03eb2",
+            "graphOriginalVerified": true
+          }
+        ],
+        "completedAt": "2026-10-14T10:23:50.829Z"
+      },
+      "workers": [
+        {
+          "pid": 2359401,
+          "module": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/first-normal-package-evidence/consumer/node_modules/codiluce/dist/src/analyzers/native-ts-worker.mjs",
+          "execArgv": [
+            "--max-old-space-size=1024",
+            "--max-semi-space-size=16"
+          ],
+          "requests": [
+            {
+              "bytes": 42003866,
+              "sha256": "4284788828497db99e9b1e1bac9c9bfd969ddca2f2229770b52481a69f830121"
+            }
+          ],
+          "responses": [
+            {
+              "bytes": 7339577,
+              "sha256": "ca78cd6db94d9d24cab551e181e0525560d3897a4ee54329c6939562fe4a0080"
+            }
+          ],
+          "code": 0,
+          "signal": null
+        }
+      ]
+    },
+    {
+      "id": "full-stack-fastapi",
+      "graph": {
+        "sha256": "56da6aedb74899c4989c717dc8f784fe66a849361297f76160f1754add6a5b49",
+        "bytes": 2616397,
+        "peakChunkBytes": 65536,
+        "limits": {
+          "maxBytes": 1073741824,
+          "chunkBytes": 65536,
+          "maxDepth": 4096
+        },
+        "serialization": "lossless-plain-json-chunks",
+        "entities": 787,
+        "relations": 2678,
+        "diagnostics": 9
+      },
+      "completeComparison": {
+        "format": "complete-logical-production-json-v1",
+        "sha256": "16fa5224e5346f41f8eaf32ada8f4fc0e3ae81e8a117a43e1a8cec5ec4d2dcf1",
+        "bytes": 2616396,
+        "counts": {
+          "entities": 787,
+          "relations": 2678,
+          "diagnostics": 9
+        },
+        "storage": {
+          "files": 0,
+          "proofs": 0,
+          "references": 0,
+          "entries": 0
+        },
+        "peakChunkBytes": 65536,
+        "normalization": [],
+        "volatileFields": [
+          "run.id",
+          "run.analyzedAt"
+        ],
+        "producerNormalization": false
+      },
+      "original": {
+        "tree": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/qualified-original-heads/full-stack-fastapi/tree",
+        "receiptSha256": "23098159efd41d7c5f28c0c6db06a91dee22d17a8fca81df797ead8a3c24ff9b",
+        "regularFiles": 248,
+        "originalBytes": 1885645,
+        "regularFileDigest": "8378e5febf3bce16bd68f80a291c71f198cbfffad408c8ac3994fac323d9606b",
+        "skipped": [
+          {
+            "path": ".agents/skills/fastapi",
+            "mode": "120000",
+            "object": "c72ba0755dbaeefc9c7b47dcadae55c0e3925663",
+            "reason": "symlink-not-followed",
+            "sha256": "e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f"
+          },
+          {
+            "path": ".agents/skills/sqlmodel",
+            "mode": "120000",
+            "object": "8dfb559dff430e145f1c4cf6b549e99cbbbec457",
+            "reason": "symlink-not-followed",
+            "sha256": "2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e"
+          },
+          {
+            "path": ".claude/skills/fastapi",
+            "mode": "120000",
+            "object": "c72ba0755dbaeefc9c7b47dcadae55c0e3925663",
+            "reason": "symlink-not-followed",
+            "sha256": "e31de9a380997a83efea49aa2c0f75ab0111380d5fc66c0b902289d84f059a4f"
+          },
+          {
+            "path": ".claude/skills/sqlmodel",
+            "mode": "120000",
+            "object": "8dfb559dff430e145f1c4cf6b549e99cbbbec457",
+            "reason": "symlink-not-followed",
+            "sha256": "2002fd90ad7fac76c9aee0a2a228c2d7d8276d96cb2d5dc4f7223de97f15cb9e"
+          }
+        ]
+      },
+      "contracts": {
+        "schema": 1,
+        "manifestSha256": "f4621d8f82e4cee12d55939c01526df3ec19c4a382fb2bdfdcbc08a20c57281f",
+        "corpusSha256": "dc21e2dbfa059f3c210dc3736457bb1944d7387de2521e434cd454bd04d3d6c6",
+        "originalSourcesVerified": true,
+        "graphContractsVerified": true,
+        "analysisQualified": false,
+        "contracts": [
+          {
+            "id": "full-stack-fastapi-read-item",
+            "repository": "full-stack-fastapi",
+            "commit": "f27b4721507824e57ebd0286ff1a84d82e83bf59",
+            "path": "backend/app/api/routes/items.py",
+            "status": "graph-and-source-verified",
+            "fileSha256": "7f0fa55d1f7b02188c4abd4f88aa6db92fe03de38258b765ed050ec72032b410",
+            "spanSha256": "870cfab8d486df87fae7301f6a511abc9ee27631ed8e4e0408b5b6b52c10c5d8",
+            "range": {
+              "startLine": 48,
+              "startColumn": 1,
+              "endLine": 58,
+              "endColumn": 16
+            },
+            "originalBytesVerified": true,
+            "entityId": "symbol:15ef7dda6b5ad6ba5ef4a1b0",
+            "parentId": "file:42ea33f80127154ee78c30a3",
+            "graphOriginalVerified": true
+          },
+          {
+            "id": "full-stack-fastapi-create-item",
+            "repository": "full-stack-fastapi",
+            "commit": "f27b4721507824e57ebd0286ff1a84d82e83bf59",
+            "path": "backend/app/api/routes/items.py",
+            "status": "graph-and-source-verified",
+            "fileSha256": "7f0fa55d1f7b02188c4abd4f88aa6db92fe03de38258b765ed050ec72032b410",
+            "spanSha256": "2651c63ecb96761600a856480ae2d8c3306b0ceb63dc2061530ff23d7ac53780",
+            "range": {
+              "startLine": 61,
+              "startColumn": 1,
+              "endLine": 72,
+              "endColumn": 16
+            },
+            "originalBytesVerified": true,
+            "entityId": "symbol:378d08414dd3f7e2028daeb8",
+            "parentId": "file:42ea33f80127154ee78c30a3",
+            "graphOriginalVerified": true
+          }
+        ],
+        "completedAt": "2026-10-14T10:24:03.835Z"
+      },
+      "workers": [
+        {
+          "pid": 2360682,
+          "module": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/first-normal-package-evidence/consumer/node_modules/codiluce/dist/src/analyzers/native-ts-worker.mjs",
+          "execArgv": [
+            "--max-old-space-size=1024",
+            "--max-semi-space-size=16"
+          ],
+          "requests": [
+            {
+              "bytes": 914700,
+              "sha256": "fd5d60d134fd11438b2e879e4dc3a71e1da7104b177954dc92d8b7cd99185b2a"
+            }
+          ],
+          "responses": [
+            {
+              "bytes": 1018475,
+              "sha256": "d764e912901e1cc8682348068745aed760b67e24a952596dd4aa436c2c4d2268"
+            }
+          ],
+          "code": 0,
+          "signal": null
+        }
+      ]
+    }
+  ],
+  "installedProductionHeadComparisons": 2,
+  "independentPythonHeadComparisons": 2,
+  "sourceInstalledProfileDifferences": {
+    "schema": 1,
+    "sourceRuntimeSha256": "4fbcc99286c1f15d8a93b2c62d1c6b7b1933a3bf55f55671524b402fb6b420c7",
+    "sourceRuntimeInputs": 1938,
+    "actualInstalledRegularFiles": 1970,
+    "actualInstalledProfileLedgerSha256": "8803049157d60a9a2f17231bf43d7020f2250bf293b64200aa8e40570d103cbb",
+    "sharedVendorChanged": [
+      {
+        "file": "node_modules/smol-toml/dist/extract.js",
+        "sourceSha256": "b964c8f39c737172295b31b9ee61b49e513ff12788e119ddfdbb68c448054c12",
+        "installedSha256": "3e6f1e5764a091acf2df6a3f257d0467c37a2b9dbfecab1573f17a6489349c90"
+      },
+      {
+        "file": "node_modules/smol-toml/dist/index.cjs",
+        "sourceSha256": "09ce310a8bcc1bb5c7dc2813c88b4bfbbeb685e4c186a9631ff54da7e85c880f",
+        "installedSha256": "f9029370259e9a43a2f3e64fa1d39e72f3598188380ace83a0abb8261fa33555"
+      },
+      {
+        "file": "node_modules/smol-toml/package.json",
+        "sourceSha256": "0e35bde6992fef675058596ea0e94c2d3ca65e5f9b73a326d94208be6210f192",
+        "installedSha256": "d7ad6488e35b31d46bac6412d2d35225db4d693f02a415d872714ceb7e3d7138"
+      }
+    ],
+    "sourceProfileVendorAbsentFromInstalled": [
+      "node_modules/@astrojs/compiler-binding-linux-x64-musl/README.md",
+      "node_modules/@astrojs/compiler-binding-linux-x64-musl/astro.linux-x64-musl.node",
+      "node_modules/@astrojs/compiler-binding-linux-x64-musl/package.json",
+      "node_modules/@esbuild/linux-x64/README.md",
+      "node_modules/@esbuild/linux-x64/bin/esbuild",
+      "node_modules/@esbuild/linux-x64/package.json",
+      "node_modules/esbuild/LICENSE.md",
+      "node_modules/esbuild/README.md",
+      "node_modules/esbuild/bin/esbuild",
+      "node_modules/esbuild/install.js",
+      "node_modules/esbuild/lib/main.d.ts",
+      "node_modules/esbuild/lib/main.js",
+      "node_modules/esbuild/package.json",
+      "node_modules/tsx/LICENSE",
+      "node_modules/tsx/README.md",
+      "node_modules/tsx/dist/cjs/api/index.cjs",
+      "node_modules/tsx/dist/cjs/api/index.d.cts",
+      "node_modules/tsx/dist/cjs/api/index.d.mts",
+      "node_modules/tsx/dist/cjs/api/index.mjs",
+      "node_modules/tsx/dist/cjs/index.cjs",
+      "node_modules/tsx/dist/cli.mjs",
+      "node_modules/tsx/dist/client-XItNFmsq.cjs",
+      "node_modules/tsx/dist/esm/api/index.cjs",
+      "node_modules/tsx/dist/esm/api/index.d.cts",
+      "node_modules/tsx/dist/esm/api/index.d.mts",
+      "node_modules/tsx/dist/esm/api/index.mjs",
+      "node_modules/tsx/dist/esm/index.mjs",
+      "node_modules/tsx/dist/index-Bqjv9TxC.mjs",
+      "node_modules/tsx/dist/index-DE3OBZuV.mjs",
+      "node_modules/tsx/dist/lexer-CGfpMDSb.cjs",
+      "node_modules/tsx/dist/lexer-CanA6ArK.mjs",
+      "node_modules/tsx/dist/loader.mjs",
+      "node_modules/tsx/dist/package-Dj0mHsMt.mjs",
+      "node_modules/tsx/dist/patch-repl.cjs",
+      "node_modules/tsx/dist/preflight.cjs",
+      "node_modules/tsx/dist/register-B1c7OH6V.cjs",
+      "node_modules/tsx/dist/register-nyXW-TH3.mjs",
+      "node_modules/tsx/dist/repl.mjs",
+      "node_modules/tsx/dist/require-CBjy4Foe.mjs",
+      "node_modules/tsx/dist/require-CVaYn9z3.cjs",
+      "node_modules/tsx/dist/suppress-warnings.cjs",
+      "node_modules/tsx/dist/temporary-directory-Du7LpLp9.mjs",
+      "node_modules/tsx/package.json"
+    ],
+    "installedProfileVendorAdditions": [
+      "node_modules/.package-lock.json"
+    ],
+    "profilesTreatedAsDistinct": true,
+    "targetExecution": false
+  },
+  "checks": [
+    {
+      "schema": 1,
+      "label": "boot35-complete-graphs",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        ".codiluce/validation-native-consumer-retirement-release/qualify-boot35-source-installed.mjs"
+      ],
+      "controllerPid": 2327412,
+      "childPid": 2327430,
+      "startedAt": 1791973011.005926,
+      "completedAt": 1791973019.8839843,
+      "seconds": 8.878058671951294,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/boot35-complete-graphs.log",
+      "logSha256": "99e080032a4f84fca4fd32377a9ce4795cc962ce3493ac1f6acd4673159ea00d",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "compare-guide-graphs",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        ".codiluce/validation-native-consumer-retirement-release/compare-originals.mjs"
+      ],
+      "controllerPid": 2329859,
+      "childPid": 2329872,
+      "startedAt": 1791973027.6362207,
+      "completedAt": 1791973028.254123,
+      "seconds": 0.6179022789001465,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/compare-guide-graphs.log",
+      "logSha256": "dfffda2682f5d9d55769c07d52297416942f8807f0bf90b06c8d16a94800b604",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "full-stack-fastapi-installed-head",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/production-heads/observer/qualify-typescript-production-head.mjs",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/production-heads/full-stack-fastapi-job.json",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/production-heads/full-stack-fastapi"
+      ],
+      "controllerPid": 2360627,
+      "childPid": 2360628,
+      "startedAt": 1791973439.3400002,
+      "completedAt": 1791973444.512617,
+      "seconds": 5.172617673873901,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/full-stack-fastapi-installed-head.log",
+      "logSha256": "9f61bf90adf55235b627a7a7ceee1e3fcca3df6cb4c5b20a1937ae3bee47f18f",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "installed-guide-complete-graphs",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        ".codiluce/validation-native-consumer-retirement-release/qualify-installed-originals-at-copied-root.mjs"
+      ],
+      "controllerPid": 2323533,
+      "childPid": 2323538,
+      "startedAt": 1791972975.5485806,
+      "completedAt": 1791972984.9008577,
+      "seconds": 9.352277040481567,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/installed-guide-complete-graphs.log",
+      "logSha256": "0ade4ff5bb5d82474c4ee422cc8098596059f91f11c24990cf0588246e55894b",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "installed-native-node24",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+        "--expose-gc",
+        "--experimental-sqlite",
+        ".codiluce/validation-native-consumer-retirement-release/engine/tests/fixtures/native-consumer-retirement.mjs",
+        "file:///var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/first-normal-package-evidence/consumer/node_modules/codiluce/dist/src/",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/installed-native-node24.json"
+      ],
+      "controllerPid": 2329983,
+      "childPid": 2329984,
+      "startedAt": 1791973028.7955363,
+      "completedAt": 1791973032.3044548,
+      "seconds": 3.5089190006256104,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/installed-native-node24.log",
+      "logSha256": "3375591240fccc762d4bbdc7c9b7e65ae4bc6bd2cb4e87c004dcdfcaba766d2d",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "memos-installed-head",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/production-heads/observer/qualify-typescript-production-head.mjs",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/production-heads/memos-job.json",
+        "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/production-heads/memos"
+      ],
+      "controllerPid": 2358125,
+      "childPid": 2358126,
+      "startedAt": 1791973395.296551,
+      "completedAt": 1791973439.310516,
+      "seconds": 44.01396560668945,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/memos-installed-head.log",
+      "logSha256": "00c17a3ac880632bf89b1902c590c14589ce24ac5b920fc7a426da679f9b4d66",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "mixed-complete-graphs",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        ".codiluce/validation-native-consumer-retirement-release/installed-mixed-graph-parity/compare-installed-profile.mjs"
+      ],
+      "controllerPid": 2329858,
+      "childPid": 2329925,
+      "startedAt": 1791973028.284367,
+      "completedAt": 1791973083.7160573,
+      "seconds": 55.43169045448303,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/mixed-complete-graphs.log",
+      "logSha256": "ec7c3adf0063b50b7700868954f9c74297681f4111f19df1d1801831217be024",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "prepare-parity",
+      "argv": [
+        "python3",
+        ".codiluce/validation-native-consumer-retirement-release/prepare-parity.py"
+      ],
+      "controllerPid": 2319712,
+      "childPid": 2319713,
+      "startedAt": 1791972936.9359717,
+      "completedAt": 1791972937.0061717,
+      "seconds": 0.07020020484924316,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/prepare-parity.log",
+      "logSha256": "431d2288887286f66fd1abe6c7bd513e818bee7b861d54acfc5e613d177c8f9c",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "prepare-production-heads",
+      "argv": [
+        "python3",
+        ".codiluce/validation-native-consumer-retirement-release/prepare-production-heads.py"
+      ],
+      "controllerPid": 2334729,
+      "childPid": 2334735,
+      "startedAt": 1791973075.623674,
+      "completedAt": 1791973075.9895024,
+      "seconds": 0.3658287525177002,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/prepare-production-heads.log",
+      "logSha256": "583569821862cd04ceb1de067ddaae81ec70d79ba74abafe7e53eb175746c779",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "prepare-release",
+      "argv": [
+        "python3",
+        ".codiluce/validation-native-consumer-retirement-release/prepare-release.py"
+      ],
+      "controllerPid": 2309166,
+      "childPid": 2309181,
+      "startedAt": 1791972819.210916,
+      "completedAt": 1791972825.2966108,
+      "seconds": 6.085695505142212,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/prepare-release.log",
+      "logSha256": "8b962a42300b455fa862bda8cc85d31f1171db690628ff8e12e1599da411e83e",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "preserve-parity-inputs",
+      "argv": [
+        "python3",
+        ".codiluce/validation-native-consumer-retirement-release/preserve-parity-inputs.py"
+      ],
+      "controllerPid": 2347062,
+      "childPid": 2347082,
+      "startedAt": 1791973232.2378333,
+      "completedAt": 1791973232.6261907,
+      "seconds": 0.38835763931274414,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/preserve-parity-inputs.log",
+      "logSha256": "aae6b2186ffcdc946ff6afdc76defd75a04b5ee3badc429ea22d36a191b76c2e",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "source-guide-complete-graphs",
+      "argv": [
+        "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+        "--experimental-sqlite",
+        ".codiluce/validation-native-consumer-retirement-release/qualify-source-originals-at-copied-root.mjs"
+      ],
+      "controllerPid": 2319709,
+      "childPid": 2319716,
+      "startedAt": 1791972937.0369043,
+      "completedAt": 1791972946.8617315,
+      "seconds": 9.824827432632446,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/source-guide-complete-graphs.log",
+      "logSha256": "0ade4ff5bb5d82474c4ee422cc8098596059f91f11c24990cf0588246e55894b",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "verify-package-closure",
+      "argv": [
+        "python3",
+        ".codiluce/validation-native-consumer-retirement-release/verify-package-closure.py"
+      ],
+      "controllerPid": 2358097,
+      "childPid": 2358101,
+      "startedAt": 1791973395.1737204,
+      "completedAt": 1791973395.2447572,
+      "seconds": 0.07103705406188965,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/verify-package-closure.log",
+      "logSha256": "efb2788cd04775149a68911f6109a92de1e3c76b1080bdc78d3fe8b49be2da0a",
+      "targetExecution": false
+    },
+    {
+      "schema": 1,
+      "label": "verify-packaged-profile",
+      "argv": [
+        "python3",
+        ".codiluce/validation-native-consumer-retirement-release/verify-packaged-profile.py"
+      ],
+      "controllerPid": 2350205,
+      "childPid": 2350207,
+      "startedAt": 1791973276.881365,
+      "completedAt": 1791973277.230843,
+      "seconds": 0.34947824478149414,
+      "actualExit": 0,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/verify-packaged-profile.log",
+      "logSha256": "138d190d63eaa08c3a015f24980ad2bd659f15872d5e18afc715699a0b49015a",
+      "targetExecution": false
+    }
+  ],
+  "controllers": {
+    "qualify-source-originals-at-copied-root.mjs": "47305dbf0a6a81b7984aedb4341eccc354611c39b12f56f319c4106f4c4dee3e",
+    "run-release.py": "37ba0d59e3de60d2c26897ac4412968b3ffecb86e4dc55e0dcff1c289d550fdc",
+    "qualify-installed-originals-at-copied-root.mjs": "7718c9134d7a00d6ceac0d9bbe759f8634f706b6caf43e440d2eb8dcd7b2e5cc",
+    "run-bootstrap.py": "71b1375abff91429449088e6ea2cb0ff1c9e8abb83081add528fb1af9b8ae72f",
+    "preserve-first-package.py": "bc616f81c27dec0b9741b4ed0de4baaf0ed253877b4ba93fef76e4e90200b0b4",
+    "preserve-parity-inputs.py": "32b4c730b9c1d63e47bb67511579c4f5a9d8a7426f1eed37986db365f171b43a",
+    "qualify-boot35-source-installed.mjs": "6706c57b5fe4518b8cb9c39aa3ee1e72308b03098f1b8734fd6fb6703715430a",
+    "qualify-release.py": "0507327199c07626f79124159c871d63cc3af00623a31d88f738a53af68144cc",
+    "run-check.py": "0d2c0832186f5c07fe4bffac8adcc81ffaeca5030a969f913926b8e640404738",
+    "prepare-parity.py": "8133b927635ebe3394d9371158d465d732f71fac1c20e01b355abffe2884037a",
+    "verify-packaged-profile.py": "42fc2d9f001b452ed6c3cd2da2803feb0c9a04cc9173286d88dab4b4d053b851",
+    "run-production-heads.py": "06ec5cf1f9c0dbe9d45c7f3437088933ba28fd79243c3bbc8b292fd28a8f9898",
+    "archive-evidence.py": "24c643933661b4a6fe4fe9042e60cbc58b669186ded6f74d3fdd11b16f339151",
+    "verify-package-closure.py": "b59bd09bdb85e5fb1402146edbd622bafc0728af26177406c60eb7b4be8b428f",
+    "qualify-release-v2.py": "4c45065c40ca91980363dc73f4bc857ff06c82859fe5921d33a12ab57ddd6022",
+    "prepare-release.py": "99f7eae5e47e78889caf4abae96b9b121fd6671694cc46d65bbf0f42f26065fa",
+    "prepare-production-heads.py": "186303402e7e771b7a40a2329f20ee31ca856385391b6a5ab55d65a904c75fb7",
+    "compare-originals.mjs": "1647051e479029c5230ef451c610745331cb5e1ed501ea1c5d25afbd9759e3b5",
+    "installed-mixed-graph-parity/compare-installed-profile.mjs": "33d38895ba26e997511479858b9aaba6881db3c409bdaffc01b6edd4a1fbeb93",
+    "production-heads/observer/process-memory.mjs": "16ca20fed24e5e46d4574c04cad567ee007087fd48bbef1c40cb698aa3763ed3",
+    "production-heads/observer/qualify-typescript-production-head.mjs": "b1a32ba273327bf2c051c0f67d95c77b3162ebbb8f8b4dd1dae61901ccae6452",
+    "production-heads/observer/production-history-performance-results.mjs": "6fc24272ca7a77ec75d7863de980d13c6345421b7006e4682efc998f8255e549",
+    "production-heads/observer/production-history-blobs.mjs": "da9e5451d850b1842a87933e58d56fe6386758c282cf7a1755e008314e88efe7",
+    "production-heads/observer/render-production-cache.mjs": "3c082e3ea220d5682259f732e5195fe3800cdb17bc768bdf45fe5facc3152c15",
+    "production-heads/observer/qualify-php-source.mjs": "b3303cd6dd1f6f994cf44b7de57a101a7b37aa75910a176b67cbc777f46187f0",
+    "production-heads/observer/qualify-native-generations.mjs": "a20c370c3221a76bb179071552d6549d8f1ec9016ef655da88b95e16a2ef57d8",
+    "production-heads/observer/qualify-production-history-entrypoint.mjs": "2eea48fa5b77c0bb38028e92ba08f2a13f9268ff8f97565a1afb5abd577d582c",
+    "production-heads/observer/qualify-erb-source.mjs": "52a8aa767908e1d870398f8fb7b534b071a2d01a2838ee400069def3cc77790f",
+    "production-heads/observer/qualify-razor-source.mjs": "7e8f2161bad5e6af22410e7e6f7afd9d1dc08076c15b13bec4884f218016bdc2",
+    "production-heads/observer/qualify-objc-cpp-source.mjs": "e3860a29614fa6ace7404ab8500bcd039983ade007622b5f9fcbcf724cc38cee",
+    "production-heads/observer/production-history-inputs.mjs": "dc513fb268388e07441b5c979668ba2d16ac1ddf53f56b2426a4ff6434d7b4c8",
+    "production-heads/observer/qualify-rust-proof.mjs": "9203dc97e48c3792c26158ebd6d9408a89fe9e8965e3becfd1a34d00efa7e5f5",
+    "production-heads/observer/qualify-php-import-source.mjs": "2bc92fd6bdc11079313f5b3c2b6382ec2e041944f1ee7fc7e0e28ee39b6c8087",
+    "production-heads/observer/production-head-graphs.mjs": "d90be0bc366b75984b5531dada9cf9d8e770a541eba468dbaf2f90aebe1179c1",
+    "production-heads/observer/observe-production-cache.mjs": "b62310b72bd57f21df42fe3e56289a689737ec1e6540e5ef6ec4036339ccfa06",
+    "production-heads/observer/qualify-rust-consumers.mjs": "888e8d4ba5ddc5fae21f51aee66c9bcc9ab921eccf1229690d7d5b40271b78b9",
+    "production-heads/observer/production-cache-results.mjs": "88be81d38642d0401eb79ff426853b262e3353668e60e93fca265bcfdc9e7e07",
+    "production-heads/observer/qualify-go-source.mjs": "b122174b9d11647d44e41eebf1f07d89038120ff7c3fdbc7b687252eab4581cd",
+    "production-heads/observer/production-cache-worker.mjs": "0dd4584e0cf815a13eca5b855d5d95f8dbfcbfa8e31405396de277664a30eebc",
+    "production-heads/observer/qualify-parser-lifetimes.mjs": "c53ba031d904703e9c4dbe1c5ab7bc223d3c5af66b06d41ce175dc8dbb262c92",
+    "production-heads/observer/graph-json-artifact.mjs": "d47899976c5d7b2ec73625d9b3f8d622d116ae8039cb0f4e01edb8afe190ad1e",
+    "production-heads/observer/production-history-tree-sync.mjs": "80b2f6dea5789558728b5e03e2170033b0bde4ec75b989bd7a6aea31d281af11",
+    "production-heads/observer/qualify-scala-source.mjs": "195f4ee5898be8010636edce5af6c896a6d4c9e2db822f7eac0a499885dd0a08",
+    "production-heads/observer/audit-production-history.mjs": "22be8425c286464dae5c7a0006e005f2f40d19d8e8650b8c1003df943612fc29",
+    "production-heads/observer/build-cli.mjs": "5a380f970a11e97b9317d15ad897ff6ce9071afb1b385c0c404bcbe99dbaa65b",
+    "production-heads/observer/qualify-production-source-contracts.mjs": "4f821d5181d70c6beeefa23048850495b99ff3e85597e4a132cb510a2590c23d",
+    "production-heads/observer/benchmark-compatibility.mjs": "8247b185ea9f31d6b5a8777e80106a139228deaf8b7d9848d345aabf97c125bd",
+    "production-heads/observer/qualify-jvm-dotnet-sources.mjs": "019cf968d5cbfb7fc66d8d06a5d785cd3d55be35c7a7754310bf798ca8d85673",
+    "production-heads/observer/production-history-performance-worker.mjs": "dfd8128544a424fa63dbd7ee07cc631ef6b0630a9734ad1e69d03009765ca6ad",
+    "production-heads/observer/prepare-production-cache-git.mjs": "704a337e06dbb19a8fc5861367743d83a70ac2d3a8c65a79387f02865ab4476c",
+    "production-heads/observer/qualify-rust-sources.mjs": "79b9704edb03fa82af1413209808abbade0beed38d2b638068bba3c43162793f",
+    "production-heads/observer/qualify-fsharp-source.mjs": "359b9fbe3b6666041100e9d9a98db55b624f2c67876e755d3d0fdf6c0021bcde",
+    "production-heads/observer/qualify-production-heads.mjs": "fdaf7f39342a27dbe74a656fc6e991f7fde38c210af4dc570246343c795d26ab",
+    "production-heads/observer/production-graph-digest.mjs": "9c59eb5dfa103713015eb886e1ce74a66b49a49d4e87a8de8215fbd577aaddc8",
+    "production-heads/observer/test-package.mjs": "05e7f3851c1e42c8c21b068a4c13c434b7ff8c97f629491395a7c4b1f8105546",
+    "production-heads/observer/production-history-runtime-inputs.mjs": "b6e555d8bd453d4a3f74c04388e96b8041342af9dfd42fd3be48265db0d90075",
+    "production-heads/observer/observe-production-history.mjs": "514ef9cde93c574d105cd4b0ad7406f94860cbbc5572a0877746b93de0eb5fde",
+    "production-heads/observer/qualify-rust-broader-consumers.mjs": "bf3f5a2bac12a9c271fc62ec0d477e45ad8714e54b097b1baa6de448f6213eb5",
+    "production-heads/observer/production-source-contracts.mjs": "02ac45d7f742bb808af2d91661f73c52503e231e0deb9a38bc21dfb8d036fbbf",
+    "production-heads/observer/qualify-rust-source.mjs": "83e557e3bd962f0a254b36c73f7eeb94789c99131b93a4889aafba069c2d5511",
+    "production-heads/observer/production-history-public-views.mjs": "3258281950ac8c9064de6787a8236715d41b20a8aaa0c24e04a319c2171a81c2",
+    "production-heads/observer/observe-production-history-performance.mjs": "5fb2a8e27fd39aede6f99a94d4305737b84b1df20e85d5d0246ba01ac6d308c7",
+    "production-heads/observer/render-production-cache-qualified.mjs": "b7aad80edbd5d03c24d5106715db7bb55d073b977b3879f20ce01e4f870e4ba4",
+    "production-heads/observer/benchmark-jvm-dotnet-compatibility.mjs": "79c3b57dcf98200fe8c0037cc4cff8617790e48bdf2ed229b116a03521ff296b",
+    "production-heads/observer/qualify-groovy-source.mjs": "d1af25c34efb76fb7f0bb76d3204a63b66982850c7229cb90843e1ed2b8818e7",
+    "production-heads/observer/production-history-recovery.mjs": "d6406b13627d553ebb9bab8e51745be1bd590dccc7ee3e2a82b76f3c4b88915f",
+    "production-heads/observer/production-history-storage.mjs": "a54011cca54f74f6550fed53467b631c453391d22fcfb3e716e13e25a37afe79",
+    "production-heads/observer/build-framework-worker.mjs": "44d92ca8100f091fe38843a02276ee6de2de17c5f57dd2e3471c1d65fcf9cc93",
+    "production-heads/observer/qualify-native-release.mjs": "cab716751c2fcd6b49cd1e897ad0c33c4b40c5e9aeb2bb492c2239514988745a",
+    "production-heads/observer/production-history-tree.mjs": "6c7580b14a3c761c2b519b48b48861cc5d4cd4695c7d8cabd88c5f84bfb801dd",
+    "production-heads/observer/qualify-swift-source.mjs": "8de43b528438a21633bc96cca127bc34bfe358d869bdccd98a834f9562427b2b",
+    "production-heads/observer/qualify-axum-sources.mjs": "606ac64a61aacc200c396a9957ea5a70db72364df6c9605c992f27c853e96b43",
+    "production-heads/observer/build-vbnet-grammar.mjs": "428712c77bb1d628fe354cd5c2a825794e78998f67169f41e00a564492519932",
+    "production-heads/observer/qualify-rust-namespaces.mjs": "a7d64b8022df1e9ea95a3c1671b6abb91111c06f0119df3db047fdd821b276a7",
+    "production-heads/observer/qualify-objc-source.mjs": "f008f30fa5df7cb8cc927475f9ce897147cf89c127f4cd472386dbfd6f344681",
+    "production-heads/observer/benchmark-rust-compatibility.mjs": "f33e0ece48f457e3d10f1c2eaaffa1f9b5d47dca65ec32486170199123c92599",
+    "production-heads/observer/qualify-ruby-source.mjs": "31236f58825b3275a6b746fd92d35ee127e7802f284f7e229660feaa69e37145",
+    "production-heads/observer/sync-grammars.mjs": "dfafa3f5b72c85263b2a5aa7621eb5a4f085096e01f3b2239a2320eca72a14f3",
+    "production-heads/observer/materialize-production-history.mjs": "d50d728ceeb3b8d7bd359e3d2c87c7951181e4c480b8639fa864d14f32fbdaf7",
+    "production-heads/observer/production-cache-git.mjs": "6fa78a2f93d7702d29a8f924c9d0e8dca570f04fc811ff2ff1223253ffcd9c6c",
+    "production-heads/observer/benchmark-go-compatibility.mjs": "3ebe277a9d31721e378ca564d4442c8189d3d3f3d888a37533179807c3889100",
+    "production-heads/observer/generate-compatibility-docs.mjs": "8488e5d039b962363843a697ed32cbfcb1f913003f992e368d26e18afbdcf7a2",
+    "production-heads/observer/qualify-production-history-performance.mjs": "d15b098df974cd9fbef2ce92866fac0fe6a25a047cae8381ead11a0ad506a281",
+    "production-heads/observer/production-history-storage-ledger.mjs": "766c976065126d1ef5ea2afc3a3d9c9ac9f57921dd10a28f792d2bccc9183199",
+    "production-heads/observer/observe-production-history-resume.mjs": "1282cf73f3d22a9d6a67a53be511e2edf88feaf4117dce2557c40549c1f1a3eb",
+    "production-heads/observer/native-release-runner.mjs": "4c41b22461ab5138d0c5ae60e750ddd13bd50f95b5d07c87057f795909735d74",
+    "production-heads/observer/build-groovy-grammar.mjs": "4745d67367070bc5137f973ad4d2c686c13419a7e5c7631d047600d436558984",
+    "production-heads/observer/build-native-worker.mjs": "2a247f310c5764f880c3c203ab112759e9f68b56149d587ae7a8ca79474de9e8",
+    "production-heads/observer/build-razor-grammar.mjs": "b558d8dd66a960ba59e7056e95e15ec5c2fb423bc587ec413ce0aa036c29dec9",
+    "production-heads/observer/qualify-vbnet-source.mjs": "92785b906d690784347f1ce50940c3f28022581468b2ef96c1b3ee3e15ef0733",
+    "production-heads/observer/benchmark-ruby-compatibility.mjs": "0e4dd53419460e6b70af72ead76e8c3eed1ebbc71ed564362b95a7504fc6fb7c",
+    "production-heads/observer/combine-compatibility-benchmarks.mjs": "db50ffd368ab0c00ae30e3360740f531494bc56ad7a276808909c382095f3d3e",
+    "production-heads/observer/qualify-production-history-inputs.mjs": "7d37cdd5a53c0f3a1eb8c0fa4a02d723ae479fb559c63f3ae8e1df9fa976d220",
+    "production-heads/observer/qualify-rust-router-sources.mjs": "31bbaa000e473c07576d3cf98f8261538c9a5bc34b03f592f600f08e1bc8415c",
+    "production-heads/observer/production-cache-measure.mjs": "d9a94850f4e77564534fc77a54f18af6f6ccf7d374988c64f8b77ec99b7c2566",
+    "production-heads/observer/copy-ui-licenses.mjs": "02378fad720800499eefa9169a81c4c599f73d28c61b7fe2b5cd457853dcdc69",
+    "production-heads/observer/qualify-jvm-source.mjs": "ac77977ec9e868c240c523f529c157dce5e785aaa546c54f3c8a1c53825d3b15",
+    "production-heads/observer/qualify-php-binding.mjs": "d07f3cac6f997317904736e394c572a59bd2c17b060a967449f99221b69bb687",
+    "production-heads/observer/qualify-liquid-source.mjs": "2680e7aaa6e006dd353725dbf1c3f08ba114b3001233923c5d9d2cf64f4f53be",
+    "production-heads/observer/build-script-worker.mjs": "41792374c67ada381e9500e27006e0f22e12915bfd7df48f6498c3e85f4dd3ed",
+    "production-heads/observer/qualify-cfamily-source.mjs": "eedfe75fe43a2f8d0cb2fafd29ec0797b9c27effc4563b8c3fb6d46264b41929",
+    "production-heads/observer/render-production-history-entrypoint.mjs": "96a5a9c2cc4331599a785839d48bdf246f3e721b800f895b720aa6e67482d7c7",
+    "production-heads/observer/benchmark-mixed-compatibility.mjs": "8b1c97c3a38730d9a548cae03a46a29e73eb3a0600b59dfd72b3ae128c2e65e7",
+    "production-heads/observer/build-liquid-grammar.mjs": "6e5fc57de1147e0c4d893dfe387b9b740aac56bc93ab72353719945db1da7e13",
+    "production-heads/observer/observe-production-history-entrypoint.mjs": "71cc7e9b011a63f40126ac3ba0417607a1d513375eff1cca185ff6b5be5b9a71",
+    "production-heads/observer/observe-production-history-views.mjs": "a1ee1cc4806c82e2c38242b0a3956f4de3d66e9fc3c1bc73fdd01499e6878ef5",
+    "production-heads/observer/qualify-csharp-source.mjs": "753624aaada7a19cbfe4071c8178dd4e9c9176558d90ff77247fa18a0c7be518",
+    "production-heads/observer/qualify-production-history.mjs": "312768171a8aa7afb22affd3557ab7655ad17b8996f8eca937c78d71389a3222",
+    "production-heads/observer/qualify-php-provider.mjs": "df90086892172d7a93a823c58ee8c81681452af35a29b3a340201dc47a1ef0d9"
+  },
+  "processIdsGone": [
+    2309166,
+    2309181,
+    2309538,
+    2309590,
+    2310184,
+    2319709,
+    2319712,
+    2319713,
+    2319716,
+    2323533,
+    2323538,
+    2327412,
+    2327430,
+    2329858,
+    2329859,
+    2329872,
+    2329925,
+    2329983,
+    2329984,
+    2334729,
+    2334735,
+    2347062,
+    2347082,
+    2350205,
+    2350207,
+    2358097,
+    2358101,
+    2358125,
+    2358126,
+    2359401,
+    2360627,
+    2360628,
+    2360682,
+    2361433,
+    2361434
+  ],
+  "failedOwnReleaseChecks": [
+    {
+      "schema": 1,
+      "label": "qualify-release",
+      "argv": [
+        "python3",
+        ".codiluce/validation-native-consumer-retirement-release/qualify-release.py"
+      ],
+      "controllerPid": 2361433,
+      "childPid": 2361434,
+      "startedAt": 1791973468.6538389,
+      "completedAt": 1791973468.7556605,
+      "seconds": 0.1018218994140625,
+      "actualExit": 1,
+      "interrupted": false,
+      "log": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release/qualify-release.log",
+      "logSha256": "7a0333a356476216ad4a10e307651c5a418376fd11f8472805d6e2680f7953d1",
+      "targetExecution": false
+    }
+  ],
+  "foreignFilesUnchanged": true,
+  "targetExecution": false,
+  "freshOwnNpmCiClaim": false,
+  "compilerProducerVersionsChanged": false,
+  "normalInstalledPackageQualified": true,
+  "fullGoalComplete": false,
+  "fullProductionHistoryQualified": false,
+  "relativeTimeRssQualified": false,
+  "totalParentRssBounded": false,
+  "nativeWindowsMacOSQualified": false,
+  "remaining": [
+    "Remaining graph/project/IPC encoding, direct in-process, native/WASM and total RSS budgets",
+    "Complete changed-runtime 195 production histories and controlled time/RSS",
+    "Broader P7/P8/P9 original accuracy and native Windows/macOS"
+  ],
+  "archive": {
+    "schema": 1,
+    "passed": true,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-native-consumer-retirement-release-evidence/native-consumer-retirement-first-normal-installed-evidence.tar.gz",
+    "archiveBytes": 355768179,
+    "archiveSha256": "ec14554c313da164528d6bde1d767f993cacf511c9e4f8e33c25f7e41f4d2f07",
+    "manifestSha256": "fb6e0efe6941c09f126497bd0efe1b77c942d2642d59238182abc1e5d35abdee",
+    "regularFiles": 20761,
+    "literalSymlinks": 23,
+    "uncompressedBytes": 1417795655,
+    "allMembersReopenedAndVerified": true,
+    "allSourceBytesModesAndLinksBeforeAfterVerified": true,
+    "excluded": [
+      "own active archive-evidence.log",
+      "engine/.git",
+      "untracked engine build caches outside selected runtime/vendor/dist/web output"
+    ],
+    "pid": 2363092,
+    "seconds": 44.28512907028198,
+    "normalInstalledPackageQualified": true,
+    "targetExecution": false
+  },
+  "archiveScope": "Closed clean source/vendors/dist/web output, the actual first tarball and complete installed profile, fourteen portable receipts, 98 complete source/installed graph comparisons, two original production-head graphs and their baselines/inputs, copied original declaration oracles, Node 24 retirement probe, actual process exits, source-phase archive and original failed/successful evidence readers. Publication is verified separately."
+}
