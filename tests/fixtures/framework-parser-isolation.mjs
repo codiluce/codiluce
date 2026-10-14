@@ -5,7 +5,7 @@ import {mkdtemp,writeFile,access,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 const source=new URL(process.argv[2]),{TemplateFrameworkParser}=await import(new URL('analysis/embedded/framework-parser.js',source)),{indexRepository}=await import(new URL('pipeline/index.js',source));
-const original=cp.fork,children=[];cp.fork=(...args)=>{if(!String(args[0]).endsWith('native-framework-worker.mjs'))return original(...args);assert.ok(children.every(child=>child.exitCode!==null||child.signalCode!==null),'A replacement must wait for all old optional parser address spaces');const child=original(...args);children.push(child);return child;};syncBuiltinESMExports();
+const original=cp.fork,children=[];cp.fork=(...args)=>{if(!String(args[0]).endsWith('native-framework-worker.mjs')&&!String(args[0]).endsWith('native-ts-worker.mjs'))return original(...args);assert.ok(children.every(child=>child.exitCode!==null||child.signalCode!==null),'A replacement must wait for all old optional parser address spaces');const child=original(...args);children.push(child);return child;};syncBuiltinESMExports();
 const root=await mkdtemp(path.join(tmpdir(),'codiluce-owned-framework-isolation-')),marker=path.join(root,'target-executed'),script=`import {writeFileSync} from 'node:fs';writeFileSync(${JSON.stringify(marker)},'target');export function original(){return "é😀";}`;
 const svelte=`<script>${script}</script>\r\n<div>é😀</div>`,astro=`---\r\n${script}\r\n---\r\n<div>é😀</div>`,parser=new TemplateFrameworkParser({maxJobs:2,maxSourceBytes:1048576});let passed=false;
 try{

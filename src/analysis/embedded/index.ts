@@ -13,6 +13,10 @@ export interface EmbeddedInput { file: ScannedFile; region?: EmbeddedRegion; rea
 export const EMBEDDED_SOURCE_MEMO_MAX_BYTES = 32 * 1024 * 1024;
 export const EMBEDDED_SOURCE_MEMO_MAX_ENTRIES = 4096;
 interface EmbeddedRecipe { input: EmbeddedInput; suffix: string; facadeText?: string }
+export interface EmbeddedSnapshot {
+  facts: [string, EmbeddedFacts][];
+  recipes: { file: ScannedFile; region?: EmbeddedRegion; suffix: string; facadeText?: string }[];
+}
 function bindings(input: EmbeddedInput, text: string): { names: Map<string, boolean>; exports: Map<string, boolean>; stars: string[] } {
   const names = new Map<string, boolean>(), exports = new Map<string, boolean>(), stars: string[] = [];
   const source = ts.createSourceFile(input.file.absolutePath, text, ts.ScriptTarget.Latest, true, input.region?.extension === 'tsx' ? ts.ScriptKind.TSX : input.region?.extension === 'jsx' ? ts.ScriptKind.JSX : input.region?.language === 'javascript' ? ts.ScriptKind.JS : ts.ScriptKind.TS);
@@ -55,6 +59,25 @@ export class EmbeddedSources {
    * compiler trees, semantic facts and physical process memory. */
   memoStats() { return { bytes: this.bytes, entries: this.texts.size, maxBytes: this.maxBytes, maxEntries: this.maxEntries, peakBytes: this.peakBytes, peakEntries: this.peakEntries, hits: this.hits, misses: this.misses, evictions: this.evictions, bypasses: this.bypasses }; }
   clearTextMemo(): void { this.texts.clear(); this.bytes = 0; }
+  /** Transfer recipes and original spans, never expanded text or parser objects. */
+  snapshot(): EmbeddedSnapshot {
+    return { facts: [...this.facts], recipes: [...this.recipes.values()].map(recipe => ({ file: recipe.input.file, region: recipe.input.region, suffix: recipe.suffix, facadeText: recipe.facadeText })) };
+  }
+  static fromSnapshot(context: AnalysisContext, snapshot: EmbeddedSnapshot): EmbeddedSources {
+    const service = new EmbeddedSources(context);
+    for (const [file, facts] of snapshot.facts) service.facts.set(file, facts);
+    for (const item of snapshot.recipes) {
+      const recipe = service.inputRecipe(item.file, item.region, item.facadeText);
+      recipe.suffix = item.suffix;
+      const absolute = item.region ? item.file.absolutePath : `${item.file.absolutePath}.__codiluce_component.ts`;
+      service.virtual.set(absolute, recipe.input); service.recipes.set(absolute, recipe);
+      if (item.region) {
+        const inputs = service.byOriginal.get(item.file.path) ?? [];
+        inputs.push(recipe.input); service.byOriginal.set(item.file.path, inputs);
+      } else service.facades.set(item.file.absolutePath, absolute);
+    }
+    return service;
+  }
   private forget(fileName: string): void { const cached = this.texts.get(fileName); if (cached) { this.bytes -= cached.bytes; this.texts.delete(fileName); } }
   private forgetOriginal(file: ScannedFile): void {
     for (const input of this.byOriginal.get(file.path) ?? []) this.forget(input.file.absolutePath);

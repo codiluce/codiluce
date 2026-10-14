@@ -10,6 +10,8 @@ import path from 'node:path';
 import ts from 'typescript';
 const { createApplicationProgram, TypeScriptSourceCache } = await import(new URL('analyzers/ts-program.js', sourceRoot));
 const { indexRepository } = await import(new URL('pipeline/index.js', sourceRoot));
+const { isolatedTypescriptAnalyzer } = await import(new URL('analyzers/typescript-isolated.js', sourceRoot));
+const { typescriptAnalyzer } = await import(new URL('analyzers/typescript.js', sourceRoot));
 const { resolveConfig } = await import(new URL('core/config.js', sourceRoot));
 const { AnalysisCache } = await import(new URL('pipeline/cache.js', sourceRoot));
 const { canonicalJson } = await import(new URL('history/fingerprint.js', sourceRoot));
@@ -153,6 +155,7 @@ test('Complete Express working-tree/cache/revision graphs keep original document
             documentedHandlerBypasses++;
         }
     });
+    const execution = mock.method(isolatedTypescriptAnalyzer, 'analyze', typescriptAnalyzer.analyze);
     try {
         const cache = new AnalysisCache(path.join(root, '.codiluce/cache')), cold = await indexRepository(root, { config, cache }), warm = await indexRepository(root, { config, cache });
         assert.equal(whole(cold), whole(reference));
@@ -168,6 +171,7 @@ test('Complete Express working-tree/cache/revision graphs keep original document
             assert.equal(await readFile(path.join(root, file), 'utf8'), text);
     }
     finally {
+        execution.mock.restore();
         get.mock.restore();
         put.mock.restore();
     }

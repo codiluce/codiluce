@@ -6,6 +6,8 @@ import path from 'node:path';
 import ts from 'typescript';
 import { createApplicationProgram, TypeScriptSourceCache, type TypeScriptCacheLimits } from '../src/analyzers/ts-program.js';
 import { indexRepository } from '../src/pipeline/index.js';
+import { isolatedTypescriptAnalyzer } from '../src/analyzers/typescript-isolated.js';
+import { typescriptAnalyzer } from '../src/analyzers/typescript.js';
 import { resolveConfig } from '../src/core/config.js';
 import { AnalysisCache } from '../src/pipeline/cache.js';
 import { canonicalJson } from '../src/history/fingerprint.js';
@@ -108,6 +110,7 @@ test('Complete Express working-tree/cache/revision graphs keep original document
             documentedHandlerBypasses++;
         }
     });
+    const execution = mock.method(isolatedTypescriptAnalyzer, 'analyze', typescriptAnalyzer.analyze);
     try {
         const cache = new AnalysisCache(path.join(root, '.codiluce/cache')), cold = await indexRepository(root, { config, cache }), warm = await indexRepository(root, { config, cache });
         assert.equal(whole(cold), whole(reference)); assert.equal(whole(warm), whole(reference)); assert.ok(cache.events.some(event => event.analyzer === 'typescript-nextjs' && event.hit));
@@ -115,5 +118,5 @@ test('Complete Express working-tree/cache/revision graphs keep original document
         const route = cold.entities.find(e => e.type === 'api_endpoint' && e.name === 'GET /v1/:id')!, handler = cold.entities.find(e => e.name === 'original' && e.path === 'handlers.js')!, leaf = cold.entities.find(e => e.name === 'leaf' && e.path === 'handlers.js')!;
         assert.ok(route && handler && leaf); assert.ok(cold.relations.some(r => r.type === 'handles' && r.from === route.id && r.to === handler.id)); assert.ok(cold.relations.some(r => r.type === 'calls' && r.from === handler.id && r.to === leaf.id));
         for (const [file, text] of Object.entries(files)) assert.equal(await readFile(path.join(root, file), 'utf8'), text);
-    } finally { get.mock.restore(); put.mock.restore(); }
+    } finally { execution.mock.restore(); get.mock.restore(); put.mock.restore(); }
 });

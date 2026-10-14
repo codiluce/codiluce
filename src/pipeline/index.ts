@@ -8,7 +8,7 @@ import { GraphBuilder, SCHEMA_VERSION, type AnalysisRun, type SoftwareGraph } fr
 import type { AnalysisContext, Analyzer } from '../core/analyzer.js';
 import { filesystemAnalyzer } from '../analyzers/filesystem.js';
 import { gitMetricsAnalyzer } from '../analyzers/git-metrics.js';
-import { typescriptAnalyzer } from '../analyzers/typescript.js';
+import { isolatedTypescriptAnalyzer as typescriptAnalyzer } from '../analyzers/typescript-isolated.js';
 import { laravelAnalyzer } from '../analyzers/laravel.js';
 import { phpStructureAnalyzer, phpLaravelStructureAnalyzer } from '../analysis/languages/php.js';
 import { phpImportsAnalyzer } from '../analysis/languages/php-imports.js';

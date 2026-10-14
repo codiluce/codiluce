@@ -44,6 +44,8 @@ export interface AnalysisContext {
   sourceReads?: Set<string>;
   projects?: ProjectCatalog;
   typescript?: TypeScriptServices;
+  /** Original inputs owned by a successfully completed isolated TS pass. */
+  typescriptFiles?: Set<string>;
   /** Serializable syntax facts and exact declaration sites for language services. */
   syntax?: Map<string, { facts: StructureFacts; declarations: Map<string, string> }>;
   python?: PythonResolver;

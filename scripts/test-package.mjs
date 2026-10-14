@@ -464,6 +464,12 @@ const compiler=new TemplateScriptParser();try{compiler.prewarm();const retiremen
   console.log('Checking installed parsed JSDoc cache ownership, original compiler types and complete framework graph replay…');
   const jsdocCacheConformance=await run(process.execPath,['--experimental-sqlite',jsdocCacheCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'typescript-jsdoc-cache-validation.json')],consumer);
   console.log(jsdocCacheConformance.stdout.trim());
+  const typescriptWorkerCheck=path.join(consumer,'check-typescript-worker.mjs');
+  await cp(path.join(root,'tests/fixtures/typescript-worker-qualification.mjs'),typescriptWorkerCheck);
+  for(const fixture of ['typescript-worker-control.mjs','typescript-worker-owner.mjs'])await cp(path.join(root,'tests/fixtures',fixture),path.join(consumer,fixture));
+  console.log('Checking installed compiler heap isolation, complete graph replay, failure atomicity and owned process retirement…');
+  const typescriptWorkerConformance=await run(process.execPath,['--experimental-sqlite',typescriptWorkerCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'typescript-worker-validation.json')],consumer);
+  console.log(typescriptWorkerConformance.stdout.trim());
   const bin = path.join(installed, 'bin/codiluce.js');
   for (const grammar of grammarManifest.grammars) assert.equal(createHash('sha256').update(await readFile(path.join(installed, 'dist/grammars', grammar.file))).digest('hex'), grammar.sha256);
   const dependencies = JSON.parse((await npm(['ls', '--omit=dev', '--all', '--json'], consumer)).stdout).dependencies[manifest.name].dependencies;

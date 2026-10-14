@@ -24,7 +24,7 @@ export const capabilitiesAnalyzer: Analyzer = {
       const analysis: FileAnalysis = { version: 1, adapter: 'recognition-only', adapterVersion: ANALYZER_VERSION, features: featureOutcomes('unsupported', 'No language analysis adapter is active') };
       if (!file.analyzable) analysis.features = featureOutcomes('disabled', String(entity.metadata.analysisSkipped ?? 'File content is unavailable'));
       else {
-        const isTs = ['typescript', 'javascript'].includes(file.language ?? '') && !!context.typescript?.projectFor(file.path);
+        const isTs = ['typescript', 'javascript'].includes(file.language ?? '') && (context.typescriptFiles?.has(file.path) || !!context.typescript?.projectFor(file.path));
         const php = file.language === 'php' && hasFramework(file.application, 'laravel');
         if (isTs || php) {
           analysis.adapter = isTs ? 'typescript' : 'php';

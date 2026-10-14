@@ -6,6 +6,8 @@ import path from 'node:path';
 import ts from 'typescript';
 import {createApplicationProgram,TypeScriptSourceCache,type TypeScriptCacheLimits} from '../src/analyzers/ts-program.js';
 import {indexRepository} from '../src/pipeline/index.js';
+import { isolatedTypescriptAnalyzer } from '../src/analyzers/typescript-isolated.js';
+import { typescriptAnalyzer } from '../src/analyzers/typescript.js';
 import {resolveConfig} from '../src/core/config.js';
 import {AnalysisCache} from '../src/pipeline/cache.js';
 import {canonicalJson} from '../src/history/fingerprint.js';
@@ -63,10 +65,11 @@ test('actual cold/warm/revision graphs preserve complete Express imports, handle
   const endpoint=reference.entities.find(e=>e.type==='api_endpoint'&&e.name==='GET /v1/:id'),handler=reference.entities.find(e=>e.name==='original'&&e.path==='handlers.ts'),leaf=reference.entities.find(e=>e.name==='leaf'&&e.path==='handlers.ts');assert.ok(endpoint&&handler&&leaf);assert.ok(reference.relations.some(r=>r.type==='handles'&&r.from===endpoint.id&&r.to===handler.id));assert.ok(reference.relations.some(r=>r.type==='calls'&&r.from===handler.id&&r.to===leaf.id));assert.equal(handler.sourceRange!.startLine,2);
   const originalGet=TypeScriptSourceCache.prototype.get,originalPut=TypeScriptSourceCache.prototype.put,replacements=new Map<TypeScriptSourceCache,TypeScriptSourceCache>(),replacement=(cache:TypeScriptSourceCache)=>{let value=replacements.get(cache);if(!value){value=new TypeScriptSourceCache(profile({maxBytes:50_000,maxNodes:100_000,maxEntries:1}));replacements.set(cache,value);}return value;};
   const get=mock.method(TypeScriptSourceCache.prototype,'get',function(this:TypeScriptSourceCache,key:string,text:string|undefined,parseKey:string){return originalGet.call(replacement(this),key,text,parseKey);}),put=mock.method(TypeScriptSourceCache.prototype,'put',function(this:TypeScriptSourceCache,key:string,parseKey:string,source:ts.SourceFile){originalPut.call(replacement(this),key,parseKey,source);});
+  const execution=mock.method(isolatedTypescriptAnalyzer,'analyze',typescriptAnalyzer.analyze);
   try{
    const cold=await indexRepository(root,{config,cache});assert.equal(compare(cold),compare(reference));const beginning=cache.events.length,warm=await indexRepository(root,{config,cache});assert.equal(compare(warm),compare(reference));assert.ok(cache.events.slice(beginning).some(event=>event.analyzer==='typescript-nextjs'&&event.hit));assert.equal(compare(await indexRepository(root,{config,revision})),compare(referenceRevision));
    assert.ok([...replacements.values()].some(cache=>cache.stats().evictions>0));for(const cache of replacements.values()){assert.ok(cache.stats().peakEntries<=1);assert.ok(cache.stats().peakBytes<=50_000);assert.ok(cache.stats().peakNodes<=100_000);}
-  }finally{get.mock.restore();put.mock.restore();}
+  }finally{execution.mock.restore();get.mock.restore();put.mock.restore();}
   assert.deepEqual((await readdir(root)).sort(),['.codiluce',...Object.keys(files)].sort());passed=true;
  }finally{if(passed)await rm(root,{recursive:true,force:true});else console.error('Retained compiler graph cache fixture:',root);}
 });

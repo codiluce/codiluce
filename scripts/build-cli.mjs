@@ -26,6 +26,7 @@ try {
   cpSync(new URL('../src/analysis/tree-sitter/native-script-worker.mjs', import.meta.url), new URL('../dist/src/analysis/tree-sitter/native-script-worker.mjs', import.meta.url));
   cpSync(new URL('../src/analysis/tree-sitter/native-worker.mjs', import.meta.url), new URL('../dist/src/analysis/tree-sitter/native-worker.mjs', import.meta.url));
   cpSync(new URL('../src/analysis/embedded/native-framework-worker.mjs', import.meta.url), new URL('../dist/src/analysis/embedded/native-framework-worker.mjs', import.meta.url));
+  cpSync(new URL('../src/analyzers/native-ts-worker.mjs', import.meta.url), new URL('../dist/src/analyzers/native-ts-worker.mjs', import.meta.url));
 } catch (error) {
   if (!error.status) console.error(error.message);
   process.exitCode = error.status ?? 1;

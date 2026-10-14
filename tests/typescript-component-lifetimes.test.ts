@@ -16,6 +16,7 @@ import type {AnalysisContext} from '../src/core/analyzer.js';
 import {filesystemAnalyzer} from '../src/analyzers/filesystem.js';
 import {projectAnalyzer} from '../src/analysis/project-model.js';
 import {typescriptAnalyzer} from '../src/analyzers/typescript.js';
+import {isolatedTypescriptAnalyzer} from '../src/analyzers/typescript-isolated.js';
 
 const parsed=(file:string)=>ts.createSourceFile(file,'// é😀\r\nexport function original(){return 1;}',ts.ScriptTarget.Latest,true);
 const declaration=(file:ts.SourceFile)=>file.statements[0]as ts.FunctionDeclaration;
@@ -30,7 +31,7 @@ async function repository(){
  const root=await mkdtemp(path.join(tmpdir(),'codiluce-component-lifetimes-')),files={'package.json':JSON.stringify({workspaces:['alpha','beta','shared']}),'alpha/package.json':JSON.stringify({name:'alpha',dependencies:{express:'5.1.0',shared:'workspace:*'}}),'alpha/main.ts':'import express from "express";import {original} from "shared";const app=express();app.get("/one",original);','beta/package.json':JSON.stringify({name:'beta',dependencies:{express:'5.1.0'}}),'beta/main.ts':'import express from "express";const app=express();function independent(){return 2}app.get("/two",independent);','shared/package.json':JSON.stringify({name:'shared',main:'source.ts'}),'shared/source.ts':'// é😀 original\r\nexport function original(req,res){return leaf()}\r\nfunction leaf(){return 1;}\r\nthrow new Error("target must never execute");'};
  for(const [file,text]of Object.entries(files)){await mkdir(path.dirname(path.join(root,file)),{recursive:true});await writeFile(path.join(root,file),text);}return root;
 }
-function addPack(pack:TypeScriptFrameworkPack){const observed=typescriptFrameworkPacks as TypeScriptFrameworkPack[];observed.push(pack);return()=>{const index=observed.indexOf(pack);assert.ok(index>=0);observed.splice(index,1);};}
+function addPack(pack:TypeScriptFrameworkPack){const observed=typescriptFrameworkPacks as TypeScriptFrameworkPack[];observed.push(pack);const execution=mock.method(isolatedTypescriptAnalyzer,'analyze',typescriptAnalyzer.analyze);return()=>{execution.mock.restore();const index=observed.indexOf(pack);assert.ok(index>=0);observed.splice(index,1);};}
 const compare=(graph:SoftwareGraph)=>canonicalJson({...graph,run:{...graph.run,id:'owned-run',analyzedAt:'owned-time'}});
 test('dependency components finish all framework/HTTP consumers before retirement and cold/warm/revision graphs match the prior retained-program lifetime',async()=>{
  const root=await repository();let passed=false,retain=false;const releases:ReturnType<typeof mock.method>[]=[],wrapped=new Set<TypeScriptProject>();let priorNodes:Array<{node:ts.Node;entity:Entity}>=[],boundaryChecked=false,lastScope:TypeScriptPackScope|undefined;

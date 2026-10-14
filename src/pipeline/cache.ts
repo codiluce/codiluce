@@ -36,6 +36,8 @@ interface Record_ {
   diagnostics: Diagnostic[]; http: StoredObservation[];
   inputs?: string[];
 }
+/** Plain analyzer output; compiler and parser objects never cross this boundary. */
+export type GraphPatch = Omit<Record_, 'format' | 'analyzer' | 'unit' | 'key'>;
 export interface CacheLimits { perUnit: number; maxBytes: number; /** Maximum decoded JSON bytes per entry; default 64 MiB. */ maxEntryBytes?: number }
 export interface CacheReplayPolicy {
   /** Revalidate recorded source dependencies immediately before mutation. */
@@ -57,6 +59,8 @@ export class AnalysisCache {
   }
   private file(analyzer: string, unit: string, key: string): string { return path.join(this.directory, `${analyzer}.${unitName(unit)}.${key}.json.gz`); }
   private event(event: CacheEvent): void { this.events.push(event); this.onEvent?.(event); }
+  /** Preserve cache telemetry from an isolated analyzer after its successful exit. */
+  acceptEvents(events: CacheEvent[]): void { for (const event of events) this.event(event); }
   static key(parts: unknown): string { return createHash('sha256').update(canonicalJson({ format: CACHE_FORMAT, schema: SCHEMA_VERSION, analyzer: ANALYZER_VERSION, parts })).digest('hex').slice(0, 32); }
 
   /** Run `work` for one unit of an analyzer, or replay what it did the last time its inputs were the same. */
@@ -65,7 +69,7 @@ export class AnalysisCache {
     const key = AnalysisCache.key(parts);
     const stored = this.read<Record_>(analyzer, unit, key);
     if (stored && stored.format === CACHE_FORMAT && stored.analyzer === analyzer && stored.unit === unit && stored.key === key && validRecord(stored) && replay(context, stored, () => policy.beforeReplay?.(stored.inputs) ?? true)) { this.event({ analyzer, unit, hit: true, ms: Date.now() - started }); return; }
-    const record = await capture(context, work);
+    const record = await captureGraphPatch(context, work);
     if (policy.shouldStore?.() ?? true) this.write(analyzer, unit, key, { format: CACHE_FORMAT, analyzer, unit, key, ...record, ...policy.inputs ? {inputs:policy.inputs()} : {} });
     this.event({ analyzer, unit, hit: false, ms: Date.now() - started });
   }
@@ -156,7 +160,7 @@ function validRecord(record: Record_): boolean {
 }
 
 /** Run `work` and record what it changed in the graph and the analysis context. */
-async function capture(context: AnalysisContext, work: () => Promise<void>): Promise<Omit<Record_, 'format' | 'analyzer' | 'unit' | 'key'>> {
+export async function captureGraphPatch(context: AnalysisContext, work: () => Promise<void>): Promise<GraphPatch> {
   const { graph } = context;
   const entities = new Set(graph.entities.keys());
   const shapes = new Map<string, { type: string; metadata: Map<string, string>; metrics: Map<string, string> }>();
@@ -200,6 +204,17 @@ async function capture(context: AnalysisContext, work: () => Promise<void>): Pro
     diagnostics: [...graph.diagnostics.values()].filter(diagnostic => !diagnostics.has(diagnostic.id)),
     http,
   });
+}
+/** Validate isolated output before any parent graph mutation. */
+export function applyGraphPatch(context: AnalysisContext, patch: GraphPatch): boolean {
+  const record: Record_ = { format: CACHE_FORMAT, analyzer: '', unit: '', key: '', ...patch };
+  if (!validRecord(record)) return false;
+  const added = new Set(patch.entities.map(entity => entity.id));
+  if (added.size !== patch.entities.length || new Set(patch.relations.map(relation => relation.id)).size !== patch.relations.length) return false;
+  const exists = (id: string) => context.graph.entities.has(id) || added.has(id);
+  if (patch.diagnostics.some(item => item.entityId && !exists(item.entityId))) return false;
+  if (patch.http.some(item => !exists(item.callerId) || !exists(item.fileId))) return false;
+  return replay(context, record);
 }
 /** Apply a record; returns false (changing nothing) when it does not fit the graph as it is. */
 function replay(context: AnalysisContext, record: Record_, beforeMutation: () => boolean = () => true): boolean {

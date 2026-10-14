@@ -1,0 +1,1143 @@
+{
+  "initialArchive": {
+    "schema": 1,
+    "passed": true,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source-evidence/typescript-compiler-heap-source-and-compiled-evidence.tar.gz",
+    "archiveBytes": 53972958,
+    "archiveSha256": "27806239fc28f40cf9cc52b44453332082516ad91f1510dcbb6067a81b6183f7",
+    "regularFiles": 3474,
+    "uncompressedBytes": 362143968,
+    "manifest": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source-evidence/artifact-manifest.json",
+    "manifestSha256": "6dda8e69880e4320245e4c41e79f56d82afbde31f97ffab0c6f6de3eb0c7e71e",
+    "allMembersReopened": true,
+    "controllerPid": 1473590,
+    "seconds": 7.533539056777954,
+    "completedAt": 1791958533.3146193,
+    "targetExecution": false
+  },
+  "archiveClosureCorrection": "Initial archive retained an empty snapshot of its own active stdout log. Its member verification is preserved; final archive excludes its own active log and verifies every closed input before and after archival. No engine or graph check reran.",
+  "schema": 1,
+  "passed": true,
+  "scope": "Source and ordinary compiled TypeScript compiler heap isolation; installed package, production time/RSS and native OS release gates remain open.",
+  "qualification": {
+    "schema": 1,
+    "passed": true,
+    "phase": "Default TypeScript compiler heap isolation \u2014 source and ordinary compiled Linux qualification",
+    "qualifiedAt": 1791958282.8638353,
+    "controllerPid": 1468060,
+    "baseCommit": "3c7210971ee01cbca4a1d40382a014608eee863d",
+    "runtime": "ea9f45d5a868a740e7ca57edb0a15796ca7c444a18958345f8092ac1eadfe44c",
+    "runtimeInputs": 1937,
+    "limits": {
+      "oldSpaceMiB": 1024,
+      "semiSpaceMiB": 16,
+      "maxMessageBytes": 67108864,
+      "maxStderrBytes": 65536
+    },
+    "fullTests": {
+      "engineAndUI": 1818,
+      "tooling": 219,
+      "total": 2037,
+      "previousTestNamesRetained": 1817,
+      "newNames": [
+        "Default TypeScript compiler worker passes all portable graph, cache, heap, protocol and process-retirement contracts"
+      ]
+    },
+    "checks": [
+      {
+        "schema": 1,
+        "label": "durable-wrapper-full-node22",
+        "argv": [
+          "npm",
+          "test"
+        ],
+        "controllerPid": 1374682,
+        "childPid": 1374683,
+        "startedAt": 1791957548.4617505,
+        "completedAt": 1791958064.3590834,
+        "seconds": 515.8973333835602,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/durable-wrapper-full-node22.log",
+        "logSha256": "8f499f3b2253eb93ef266e1916cd22426c2df82d3524d5743e43648de1b28f3d",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "final-tooling-node22",
+        "argv": [
+          "node",
+          "--experimental-sqlite",
+          "--import",
+          "tsx",
+          "--test",
+          "scripts/tests/graph-json-artifact.test.mjs",
+          "scripts/tests/native-release.test.mjs",
+          "scripts/tests/production-cache-git.test.mjs",
+          "scripts/tests/production-cache-observer.test.mjs",
+          "scripts/tests/production-graph-digest.test.mjs",
+          "scripts/tests/production-head-graphs.test.mjs",
+          "scripts/tests/production-history-audit.test.mjs",
+          "scripts/tests/production-history-blobs.test.mjs",
+          "scripts/tests/production-history-columns.test.mjs",
+          "scripts/tests/production-history-entrypoint-columns.test.mjs",
+          "scripts/tests/production-history-entrypoint-qualification.test.mjs",
+          "scripts/tests/production-history-entrypoint-report.test.mjs",
+          "scripts/tests/production-history-entrypoint.test.mjs",
+          "scripts/tests/production-history-inputs.test.mjs",
+          "scripts/tests/production-history-observer.test.mjs",
+          "scripts/tests/production-history-performance-qualification.test.mjs",
+          "scripts/tests/production-history-performance.test.mjs",
+          "scripts/tests/production-history-qualification.test.mjs",
+          "scripts/tests/production-history-recovery.test.mjs",
+          "scripts/tests/production-history-resume.test.mjs",
+          "scripts/tests/production-history-runtime-inputs.test.mjs",
+          "scripts/tests/production-history-storage.test.mjs",
+          "scripts/tests/production-history-tree.test.mjs",
+          "scripts/tests/production-source-contracts.test.mjs"
+        ],
+        "controllerPid": 1322810,
+        "childPid": 1322811,
+        "startedAt": 1791957113.5441647,
+        "completedAt": 1791957139.8678918,
+        "seconds": 26.32372736930847,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/final-tooling-node22.log",
+        "logSha256": "51561ddcb19a64aee1574350ed9895d96d5a72042ba8d8b985f51ae205cc2c89",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "focused-node24",
+        "argv": [
+          "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+          "--experimental-sqlite",
+          "--import",
+          "tsx",
+          "--test",
+          "--test-concurrency=2",
+          "tests/typescript-worker.test.ts",
+          "tests/typescript-jsdoc-cache.test.ts",
+          "tests/typescript-source-cache.test.ts",
+          "tests/typescript-component-lifetimes.test.ts",
+          "tests/embedded-source-residency.test.ts",
+          "tests/framework-parser-lifetimes.test.ts",
+          "tests/cache.test.ts"
+        ],
+        "controllerPid": 1391874,
+        "childPid": 1391905,
+        "startedAt": 1791957651.6623542,
+        "completedAt": 1791957701.426867,
+        "seconds": 49.76451301574707,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/focused-node24.log",
+        "logSha256": "4697bb05fe67f5db914ba2fe6413abbd20343af14c29e78531c412994324d158",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "compiled-worker-node22",
+        "argv": [
+          "node",
+          "--experimental-sqlite",
+          "tests/fixtures/typescript-worker-qualification.mjs",
+          "file:///var/www/html/codiluce/dist/src/",
+          "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/compiled-worker-node22.json"
+        ],
+        "controllerPid": 1317608,
+        "childPid": 1317650,
+        "startedAt": 1791957096.476002,
+        "completedAt": 1791957110.4071665,
+        "seconds": 13.931164741516113,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/compiled-worker-node22.log",
+        "logSha256": "d86765868598bbce6f09612f0a03534af9ca47af56b84accaea1bc01f86760d0",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "compiled-worker-node24",
+        "argv": [
+          "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+          "--experimental-sqlite",
+          "tests/fixtures/typescript-worker-qualification.mjs",
+          "file:///var/www/html/codiluce/dist/src/",
+          "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/compiled-worker-node24.json"
+        ],
+        "controllerPid": 1317607,
+        "childPid": 1317626,
+        "startedAt": 1791957096.4622014,
+        "completedAt": 1791957107.982707,
+        "seconds": 11.520505905151367,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/compiled-worker-node24.log",
+        "logSha256": "6ed8d8816717fc8e2685f1eec79e8f46ace5a02b1b4f2e5266da98fa99591411",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "default-compiled-pressure-node22",
+        "argv": [
+          "node",
+          "--experimental-sqlite",
+          ".codiluce/validation-typescript-heap-source/default-compiled-pressure.mjs",
+          "node22"
+        ],
+        "controllerPid": 1292581,
+        "childPid": 1292583,
+        "startedAt": 1791956961.4102743,
+        "completedAt": 1791956971.4340086,
+        "seconds": 10.023734331130981,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/default-compiled-pressure-node22.log",
+        "logSha256": "3d9348ebc6a7c1ab2b1b16a7c9af82221321d29980354cbc21fb7b63f5429f3b",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "default-compiled-pressure-node24",
+        "argv": [
+          "/home/ojoven/.nvm/versions/node/v24.21.0/bin/node",
+          "--experimental-sqlite",
+          ".codiluce/validation-typescript-heap-source/default-compiled-pressure.mjs",
+          "node24"
+        ],
+        "controllerPid": 1322483,
+        "childPid": 1322502,
+        "startedAt": 1791957112.3325627,
+        "completedAt": 1791957127.573298,
+        "seconds": 15.240735530853271,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/default-compiled-pressure-node24.log",
+        "logSha256": "a1f47efd169889c382f140352efc662602152e8f1dc00815819294ddf54badb4",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "durable-wrapper-typechecks",
+        "argv": [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        "controllerPid": 1374857,
+        "childPid": 1374858,
+        "startedAt": 1791957549.6237557,
+        "completedAt": 1791957570.9310606,
+        "seconds": 21.307305097579956,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/durable-wrapper-typechecks.log",
+        "logSha256": "c1fee42b4fa7e6e1a30e8e81426f7690f45767a53800385021e8cd468ec6e8d9",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "final-cli-build",
+        "argv": [
+          "npm",
+          "run",
+          "build:cli"
+        ],
+        "controllerPid": 1277366,
+        "childPid": 1277372,
+        "startedAt": 1791956866.4062955,
+        "completedAt": 1791956884.718939,
+        "seconds": 18.3126437664032,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/final-cli-build.log",
+        "logSha256": "35e452fc1cbfe25c74c045cb35ec2f66d675f53a21f0f3f10d9ca40ec382c7bf",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "final-ui-build",
+        "argv": [
+          "npm",
+          "run",
+          "build:web"
+        ],
+        "controllerPid": 1317609,
+        "childPid": 1317651,
+        "startedAt": 1791957096.4775186,
+        "completedAt": 1791957113.0695822,
+        "seconds": 16.592063665390015,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/final-ui-build.log",
+        "logSha256": "bbfa0b724a4f13cf0e2693908fd805f8ce6b6724d4a3ca17c33f9a30ae4cc454",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "checked-docs",
+        "argv": [
+          "node",
+          "scripts/generate-compatibility-docs.mjs",
+          "--check"
+        ],
+        "controllerPid": 1375107,
+        "childPid": 1375108,
+        "startedAt": 1791957550.7984512,
+        "completedAt": 1791957550.9646442,
+        "seconds": 0.16619396209716797,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/checked-docs.log",
+        "logSha256": "7f350318aded788c26d455e3d7459a0e9301d3f0990768890e944b47bbbdc600",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "whole-prior-current-mixed-graphs",
+        "argv": [
+          "node",
+          "--experimental-sqlite",
+          ".codiluce/validation-typescript-heap-source/whole-mixed-graph-parity/compare-prior-current.mjs"
+        ],
+        "controllerPid": 1361457,
+        "childPid": 1361471,
+        "startedAt": 1791957297.8181632,
+        "completedAt": 1791957368.3860526,
+        "seconds": 70.56788969039917,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/whole-prior-current-mixed-graphs.log",
+        "logSha256": "65bab572d54472ec48a0805eeeb8386b7b0aecd77ef10540894a584463895a2b",
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "label": "preserve-qualified-code",
+        "argv": [
+          "python3",
+          ".codiluce/validation-typescript-heap-source/preserve-qualified-code.py"
+        ],
+        "controllerPid": 1391587,
+        "childPid": 1391608,
+        "startedAt": 1791957650.4946332,
+        "completedAt": 1791957652.1312048,
+        "seconds": 1.6365723609924316,
+        "actualExit": 0,
+        "interrupted": false,
+        "log": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/preserve-qualified-code.log",
+        "logSha256": "41c3630e4be06cef133be467fbe02f01257adce4f4c7f37196350eb293595f09",
+        "targetExecution": false
+      }
+    ],
+    "focusedNode24Cases": 45,
+    "compiledContracts": [
+      {
+        "schema": 1,
+        "passed": true,
+        "caseCount": 12,
+        "completedCases": [
+          "Default compiler worker applies fixed heap flags, ignores caller startup options, reaps its process and returns only original-input facts",
+          "Embedded recipe transfer preserves original UTF-16 regions, module/setup shadowing, facades and exact virtual bytes without materialized text ownership",
+          "Complete default cold/warm/revision graphs preserve cross-project original handlers, calls, HTTP effect aliases and independent compilation scopes",
+          "A changed indexed original produces explicit source failure and cannot become a reusable healthy TypeScript cache entry",
+          "An unsupported framework registry rejects the worker without parent graph, HTTP or cache mutation and has no unbounded fallback",
+          "Invalid and oversized request budgets reject before launching any worker",
+          "Wrong protocols, duplicate messages, late failed exits and oversized responses all reject after actual worker retirement",
+          "A successful response remains unpublished until the worker actually exits",
+          "Actual compiler heap exhaustion rejects a whole component while the parent graph, HTTP and failed component cache stay untouched",
+          "Fatal owner exit retires its reported parser child before the failure reaches the caller",
+          "Owning process exit and default shutdown signals terminate outstanding compiler work",
+          "Malformed graph patches with dangling output or duplicate identities cannot partially mutate the parent graph"
+        ],
+        "sourceRoot": "file:///var/www/html/codiluce/dist/src/",
+        "typescriptSourceLoader": false,
+        "platform": "linux",
+        "node": "v22.12.0",
+        "limits": {
+          "oldSpaceMiB": 1024,
+          "semiSpaceMiB": 16,
+          "maxMessageBytes": 67108864,
+          "maxStderrBytes": 65536
+        },
+        "observations": [
+          {
+            "kind": "default-worker",
+            "pid": 1317951,
+            "heapLimitBytes": 1124073472,
+            "heapUsedBytes": 79569112,
+            "maxRssKiB": 184872,
+            "actualExit": 0,
+            "flags": [
+              "--max-old-space-size=1024",
+              "--max-semi-space-size=16"
+            ],
+            "originalInputs": [
+              "main.ts"
+            ]
+          },
+          {
+            "kind": "whole-parity",
+            "comparisons": 3,
+            "entities": 33,
+            "relations": 43,
+            "diagnostics": 7,
+            "sourceFiles": 12,
+            "normalization": [
+              "run.id",
+              "run.analyzedAt"
+            ]
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "wrong-protocol",
+            "pid": 1320817,
+            "actualExit": null,
+            "signal": "SIGKILL"
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "duplicate-response",
+            "pid": 1320843,
+            "actualExit": null,
+            "signal": "SIGKILL"
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "result-then-nonzero",
+            "pid": 1320893,
+            "actualExit": 23,
+            "signal": null
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "unexpected-exit",
+            "pid": 1320934,
+            "actualExit": 17,
+            "signal": null
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "oversized-response",
+            "pid": 1320961,
+            "actualExit": null,
+            "signal": "SIGKILL"
+          },
+          {
+            "kind": "authored-lower-heap-compiler-control",
+            "oldSpaceMiB": 96,
+            "pid": 1321094,
+            "actualExit": null,
+            "signal": "SIGABRT",
+            "originalBytes": 800066,
+            "originalSha256": "b45016946d29a7ee3f6ef335d76057d47c703976c84a4606a452b7401433493f",
+            "parentGraphUnchanged": true,
+            "failedComponentStored": false
+          },
+          {
+            "kind": "fatal-owner-child-retirement",
+            "parent": 1321479,
+            "child": 1321522,
+            "actualExit": 19,
+            "addressSpacesRetired": true,
+            "platform": "linux"
+          },
+          {
+            "kind": "owner-shutdown",
+            "mode": "exit",
+            "ownerPid": 1321550,
+            "workerPid": 1321725,
+            "code": 31,
+            "signal": null,
+            "addressSpacesRetired": true
+          },
+          {
+            "kind": "owner-shutdown",
+            "mode": "SIGTERM",
+            "ownerPid": 1321726,
+            "workerPid": 1321848,
+            "code": null,
+            "signal": "SIGTERM",
+            "addressSpacesRetired": true
+          }
+        ],
+        "targetExecution": false,
+        "scope": "Default indexer TypeScript old-space and bounded IPC isolation, graph/cache/revision parity, parser retirement, owner shutdown and rejection atomicity. Lower-heap authored control is separate from default-budget and total RSS qualification."
+      },
+      {
+        "schema": 1,
+        "passed": true,
+        "caseCount": 12,
+        "completedCases": [
+          "Default compiler worker applies fixed heap flags, ignores caller startup options, reaps its process and returns only original-input facts",
+          "Embedded recipe transfer preserves original UTF-16 regions, module/setup shadowing, facades and exact virtual bytes without materialized text ownership",
+          "Complete default cold/warm/revision graphs preserve cross-project original handlers, calls, HTTP effect aliases and independent compilation scopes",
+          "A changed indexed original produces explicit source failure and cannot become a reusable healthy TypeScript cache entry",
+          "An unsupported framework registry rejects the worker without parent graph, HTTP or cache mutation and has no unbounded fallback",
+          "Invalid and oversized request budgets reject before launching any worker",
+          "Wrong protocols, duplicate messages, late failed exits and oversized responses all reject after actual worker retirement",
+          "A successful response remains unpublished until the worker actually exits",
+          "Actual compiler heap exhaustion rejects a whole component while the parent graph, HTTP and failed component cache stay untouched",
+          "Fatal owner exit retires its reported parser child before the failure reaches the caller",
+          "Owning process exit and default shutdown signals terminate outstanding compiler work",
+          "Malformed graph patches with dangling output or duplicate identities cannot partially mutate the parent graph"
+        ],
+        "sourceRoot": "file:///var/www/html/codiluce/dist/src/",
+        "typescriptSourceLoader": false,
+        "platform": "linux",
+        "node": "v24.21.0",
+        "limits": {
+          "oldSpaceMiB": 1024,
+          "semiSpaceMiB": 16,
+          "maxMessageBytes": 67108864,
+          "maxStderrBytes": 65536
+        },
+        "observations": [
+          {
+            "kind": "default-worker",
+            "pid": 1317857,
+            "heapLimitBytes": 1124073472,
+            "heapUsedBytes": 57106936,
+            "maxRssKiB": 184252,
+            "actualExit": 0,
+            "flags": [
+              "--max-old-space-size=1024",
+              "--max-semi-space-size=16"
+            ],
+            "originalInputs": [
+              "main.ts"
+            ]
+          },
+          {
+            "kind": "whole-parity",
+            "comparisons": 3,
+            "entities": 33,
+            "relations": 43,
+            "diagnostics": 7,
+            "sourceFiles": 12,
+            "normalization": [
+              "run.id",
+              "run.analyzedAt"
+            ]
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "wrong-protocol",
+            "pid": 1320243,
+            "actualExit": null,
+            "signal": "SIGKILL"
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "duplicate-response",
+            "pid": 1320282,
+            "actualExit": null,
+            "signal": "SIGKILL"
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "result-then-nonzero",
+            "pid": 1320301,
+            "actualExit": 23,
+            "signal": null
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "unexpected-exit",
+            "pid": 1320328,
+            "actualExit": 17,
+            "signal": null
+          },
+          {
+            "kind": "transport-rejection",
+            "mode": "oversized-response",
+            "pid": 1320365,
+            "actualExit": null,
+            "signal": "SIGKILL"
+          },
+          {
+            "kind": "authored-lower-heap-compiler-control",
+            "oldSpaceMiB": 96,
+            "pid": 1320425,
+            "actualExit": null,
+            "signal": "SIGABRT",
+            "originalBytes": 800066,
+            "originalSha256": "b45016946d29a7ee3f6ef335d76057d47c703976c84a4606a452b7401433493f",
+            "parentGraphUnchanged": true,
+            "failedComponentStored": false
+          },
+          {
+            "kind": "fatal-owner-child-retirement",
+            "parent": 1320650,
+            "child": 1320679,
+            "actualExit": 19,
+            "addressSpacesRetired": true,
+            "platform": "linux"
+          },
+          {
+            "kind": "owner-shutdown",
+            "mode": "exit",
+            "ownerPid": 1320695,
+            "workerPid": 1320856,
+            "code": 31,
+            "signal": null,
+            "addressSpacesRetired": true
+          },
+          {
+            "kind": "owner-shutdown",
+            "mode": "SIGTERM",
+            "ownerPid": 1320859,
+            "workerPid": 1321121,
+            "code": null,
+            "signal": "SIGTERM",
+            "addressSpacesRetired": true
+          }
+        ],
+        "targetExecution": false,
+        "scope": "Default indexer TypeScript old-space and bounded IPC isolation, graph/cache/revision parity, parser retirement, owner shutdown and rejection atomicity. Lower-heap authored control is separate from default-budget and total RSS qualification."
+      }
+    ],
+    "defaultPressure": [
+      {
+        "schema": 1,
+        "passed": true,
+        "node": "v22.12.0",
+        "typescriptSourceLoader": false,
+        "parentPid": 1292583,
+        "parentHeapLimitBytes": 4345298944,
+        "limits": {
+          "oldSpaceMiB": 1024,
+          "semiSpaceMiB": 16,
+          "maxMessageBytes": 67108864,
+          "maxStderrBytes": 65536
+        },
+        "workerPid": 1292725,
+        "actualExit": null,
+        "signal": "SIGABRT",
+        "workerArguments": [
+          "--max-old-space-size=1024",
+          "--max-semi-space-size=16"
+        ],
+        "root": "/tmp/codiluce-default-compiler-pressure-BFw8kz",
+        "retainedOriginalDirectory": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/default-pressure-originals/node22/",
+        "maxFileBytes": 1048576,
+        "allOriginalsAdmittedBeforeDispatch": true,
+        "originals": [
+          {
+            "file": "tsconfig.json",
+            "bytes": 34,
+            "sha256": "8a0be08e163e2c4abdaa093cf10a87160812f29c8518583b42b71a51ab761f3c"
+          },
+          {
+            "file": "original00.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original01.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original02.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original03.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original04.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original05.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original06.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original07.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original08.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original09.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original10.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original11.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original12.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original13.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original14.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original15.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original16.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original17.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original18.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original19.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original20.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original21.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original22.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original23.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original24.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original25.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original26.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original27.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original28.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original29.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original30.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original31.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          }
+        ],
+        "graphBeforeSha256": "4ac48522965010ddc3103d5fdf84a217a51b107574d394f67a623d288f91746b",
+        "graphAfterSha256": "4ac48522965010ddc3103d5fdf84a217a51b107574d394f67a623d288f91746b",
+        "parentGraphUnchanged": true,
+        "parentCompilerObjectsAbsent": true,
+        "failedComponentStored": false,
+        "rawWorkerStderr": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/node22-default-pressure-worker-stderr.log",
+        "productionHistory": false,
+        "totalRssCapQualified": false,
+        "targetExecution": false
+      },
+      {
+        "schema": 1,
+        "passed": true,
+        "node": "v24.21.0",
+        "typescriptSourceLoader": false,
+        "parentPid": 1322502,
+        "parentHeapLimitBytes": 4496293888,
+        "limits": {
+          "oldSpaceMiB": 1024,
+          "semiSpaceMiB": 16,
+          "maxMessageBytes": 67108864,
+          "maxStderrBytes": 65536
+        },
+        "workerPid": 1322689,
+        "actualExit": null,
+        "signal": "SIGABRT",
+        "workerArguments": [
+          "--max-old-space-size=1024",
+          "--max-semi-space-size=16"
+        ],
+        "root": "/tmp/codiluce-default-compiler-pressure-PKbXTk",
+        "retainedOriginalDirectory": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/default-pressure-originals/node24/",
+        "maxFileBytes": 1048576,
+        "allOriginalsAdmittedBeforeDispatch": true,
+        "originals": [
+          {
+            "file": "tsconfig.json",
+            "bytes": 34,
+            "sha256": "8a0be08e163e2c4abdaa093cf10a87160812f29c8518583b42b71a51ab761f3c"
+          },
+          {
+            "file": "original00.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original01.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original02.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original03.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original04.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original05.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original06.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original07.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original08.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original09.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original10.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original11.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original12.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original13.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original14.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original15.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original16.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original17.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original18.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original19.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original20.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original21.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original22.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original23.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original24.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original25.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original26.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original27.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original28.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original29.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original30.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          },
+          {
+            "file": "original31.ts",
+            "bytes": 800067,
+            "sha256": "62cef417371ab1cbb6d3e6625e44d76a61fb7279d75202098272657fb98c9118"
+          }
+        ],
+        "graphBeforeSha256": "4ac48522965010ddc3103d5fdf84a217a51b107574d394f67a623d288f91746b",
+        "graphAfterSha256": "4ac48522965010ddc3103d5fdf84a217a51b107574d394f67a623d288f91746b",
+        "parentGraphUnchanged": true,
+        "parentCompilerObjectsAbsent": true,
+        "failedComponentStored": false,
+        "rawWorkerStderr": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source/node24-default-pressure-worker-stderr.log",
+        "productionHistory": false,
+        "totalRssCapQualified": false,
+        "targetExecution": false
+      }
+    ],
+    "mixed": {
+      "schema": 1,
+      "passed": true,
+      "completedAt": "2026-10-14T05:56:08.321Z",
+      "priorRuntime": "b433255301cdac75fb192bb3df4c68b2196384b233cd24e94097c240b51e18bf",
+      "priorRuntimeInputsVerified": 1933,
+      "currentRuntimeIdentity": "file:///var/www/html/codiluce/.codiluce/validation-typescript-heap-source/candidate-runtime-identity.json",
+      "currentRuntimeSha256": "ea9f45d5a868a740e7ca57edb0a15796ca7c444a18958345f8092ac1eadfe44c",
+      "sourceLoader": false,
+      "candidateCompilationRoot": "/var/www/html/codiluce/dist/src",
+      "acceptedPressureOriginalScriptsVerified": 32,
+      "expandedPressureInputUtf16Bytes": 38522496,
+      "compilerGenerations": [
+        {
+          "limits": {
+            "maxJobs": 64,
+            "maxSourceBytes": 16777216
+          },
+          "jobs": 0,
+          "sourceBytes": 0,
+          "peakJobs": 64,
+          "peakSourceBytes": 8012,
+          "generations": 2
+        },
+        {
+          "limits": {
+            "maxJobs": 64,
+            "maxSourceBytes": 16777216
+          },
+          "jobs": 0,
+          "sourceBytes": 0,
+          "peakJobs": 0,
+          "peakSourceBytes": 0,
+          "generations": 0
+        },
+        {
+          "limits": {
+            "maxJobs": 64,
+            "maxSourceBytes": 16777216
+          },
+          "jobs": 0,
+          "sourceBytes": 0,
+          "peakJobs": 64,
+          "peakSourceBytes": 8012,
+          "generations": 2
+        }
+      ],
+      "allowedOversizedNativeOriginalBytes": 17825835,
+      "literalTemplateOriginalsVerified": 66,
+      "scope": "Complete ordinary compiled cold/warm/revision graphs under the exact actual production dependency profile: frozen qualified prior runtime versus current ordinary compiled source; 20 grammar profiles, Cargo TOML and OpenAPI YAML, 66 literal-script templates, default 64-job compiler rotation, an allowed 17 MiB Python original and 32 accepted Astro scripts over the virtual text memo allowance. All semantic/provenance/metadata fields retained; only run UUID/time replaced.",
+      "retainedFixture": "/tmp/codiluce-owned-script-generation-parity-WPouPQ",
+      "originalFiles": 171,
+      "normalizations": [],
+      "volatileFields": [
+        "run.id",
+        "run.analyzedAt"
+      ],
+      "cacheWarmReplayObserved": true,
+      "graphs": [
+        {
+          "mode": "cold",
+          "bytes": 1304793,
+          "sha256": "04923fa598d34cc0cede1ac96dfe6b75c3712ac9e238985e964a5da71e4b3a62",
+          "entities": 803,
+          "relations": 1057,
+          "diagnostics": 26
+        },
+        {
+          "mode": "warm",
+          "bytes": 1304793,
+          "sha256": "04923fa598d34cc0cede1ac96dfe6b75c3712ac9e238985e964a5da71e4b3a62",
+          "entities": 803,
+          "relations": 1057,
+          "diagnostics": 26
+        },
+        {
+          "mode": "revision",
+          "bytes": 1304214,
+          "sha256": "415e623987349c6a27f138a0050fb14ef1ffd931e29a4e716967755a9a996f0c",
+          "entities": 803,
+          "relations": 1057,
+          "diagnostics": 23
+        }
+      ],
+      "targetExecution": false
+    },
+    "qualifiedCode": {
+      "files": 3268,
+      "bytes": 297935201,
+      "ledgerSha256": "7ae215ebf896364eba089a23d82a1d487731c4680e03865030d35953008da65c"
+    },
+    "foreignPreserved": {
+      "site/README.md": "7cd2595213f3238d1e1d3a4fdae13126974c51472f4b47179e791658de341151",
+      "site/app/globals.css": "697bdb5cf3db2b8b36c4c6f25a499d0a210f5250454aa259b675e2c411ff3431",
+      "site/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+      "site/app/layout.tsx": "dccb3c78fbba55c11019930203bddd8e955152d66025d45a79281ebac85a7057",
+      "web/app/icon.svg": "70e2aefd0999c41d574a042b500ff12d31a82dd0aff5d80e500342c31aec2fd8",
+      "docs/design/initial-setup.md": "fe45a79e6eae19c94f5d3e71d514fac209953745d731a751f38b463bcbc27186",
+      "site/AGENTS.md": "063098f6cb31bb44c6f8fbea25b3876de7ee1e5f7d00a50dbab506f6415eb7f0",
+      "site/public/social-preview.png": "a93ae9deaed990e050d95ec2b260bac2e5508b7ecd0ff9c1c3614a95085ae29c",
+      "site/scripts/social-preview.mjs": "1d9861e06e06de27a76e50dceb3ac90c45e9d6426360b1ede247454bdd9478ff"
+    },
+    "retainedFailures": {
+      "initialFinalQualifier": "First final evidence check expected unique labels to equal case count; the previous suite contains one duplicated label. Original check and failure retained; final check preserves the complete multiset of all 1817 prior cases.",
+      "initialFocused": "42/44; missing completed TS ownership marker made capability metadata disabled. Both original fixture roots and exact graph differences retained.",
+      "initialWorkerContracts": "9/11; authored unexpected-exit control used disconnect in its message callback, and pressure file exceeded the unchanged 1 MiB default input limit. Exact controls and fourteen original roots retained.",
+      "initialFull": "1817/1818; new wrapper attempted JSON extraction from Node test stdout after child exit 0. Outer raw log and exact wrapper source retained; that initial child stdout was not durably written by the wrapper. Corrected observer reads a JSON file and retains binary stdout/stderr on failure."
+    },
+    "primarySources": [
+      "https://nodejs.org/download/release/v22.12.0/docs/api/cli.html#--max-old-space-sizesize-in-mib",
+      "https://nodejs.org/download/release/v22.12.0/docs/api/cli.html#--max-semi-space-sizesize-in-mib",
+      "https://nodejs.org/download/release/v22.12.0/docs/api/child_process.html#child_processforkmodulepath-args-options"
+    ],
+    "installedPackageQualified": false,
+    "productionHistoryRerun": false,
+    "totalProcessTreeRssQualified": false,
+    "relativeProductionPerformanceQualified": false,
+    "nativeWindowsMacOSQualified": false,
+    "wholeGoalComplete": false,
+    "targetExecution": false
+  },
+  "archive": {
+    "schema": 1,
+    "passed": true,
+    "archive": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source-final-evidence/typescript-compiler-heap-source-and-compiled-evidence.tar.gz",
+    "archiveBytes": 53972107,
+    "archiveSha256": "a9b69148483b3e4f84bafafb649e1fa567fd43d173794a8fa834b254f2ed21f0",
+    "regularFiles": 3479,
+    "uncompressedBytes": 362161603,
+    "manifest": "/var/www/html/codiluce/.codiluce/validation-typescript-heap-source-final-evidence/artifact-manifest.json",
+    "manifestSha256": "9f205ad1575051b72b2918a437315ca89c7383c738c6edf2de2fcbeb3fa9a9c2",
+    "allMembersReopened": true,
+    "controllerPid": 1478595,
+    "seconds": 7.849768877029419,
+    "completedAt": 1791958749.6433544,
+    "targetExecution": false
+  }
+}

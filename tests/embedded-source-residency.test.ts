@@ -11,6 +11,8 @@ import {GraphBuilder} from '../src/core/graph.js';
 import type {AnalysisContext} from '../src/core/analyzer.js';
 import {filesystemAnalyzer} from '../src/analyzers/filesystem.js';
 import {indexRepository} from '../src/pipeline/index.js';
+import { isolatedTypescriptAnalyzer } from '../src/analyzers/typescript-isolated.js';
+import { typescriptAnalyzer } from '../src/analyzers/typescript.js';
 import {typescriptFrameworkPacks} from '../src/analysis/frameworks/index.js';
 import type {TypeScriptFrameworkPack} from '../src/analysis/frameworks/typescript-pack.js';
 const oracle=JSON.parse(await readFile(new URL('./fixtures/embedded-compiler-inputs.json',import.meta.url),'utf8'))as {fixtures:Record<string,string>;expected:Record<string,{virtualFile:string;text:string}[]>};
@@ -54,5 +56,6 @@ test('re-registering an original retires previous recipes, regions and memo whil
 });
 test('real TypeScript component completion and framework failure clear the virtual text memo after all current consumers',async()=>{
  const context=await contextFor({'package.json':'{"dependencies":{"vue":"3.5.0"}}','Pair.vue':'<script lang="ts">export function shared(){return 1;}</script><script setup lang="ts">function caller(){return shared();}</script>'});let failed=false;const snapshots:Array<{before:number;after:number}>=[],originalClear=EmbeddedSources.prototype.clearTextMemo,clear=mock.method(EmbeddedSources.prototype,'clearTextMemo',function(this:EmbeddedSources){const before=this.memoStats().entries;originalClear.call(this);snapshots.push({before,after:this.memoStats().entries});});let observed:EmbeddedSources|undefined;const pack:TypeScriptFrameworkPack={id:'owned-embedded-memory-observer',version:'1',applies:()=>true,declare(scope){observed=scope.context.embedded!;assert.ok(observed.memoStats().entries>0);if(failed)throw Error('Injected own embedded framework failure');},finish(){assert.ok(observed!.memoStats().entries>0);}};const packs=typescriptFrameworkPacks as TypeScriptFrameworkPack[];packs.push(pack);
- try{await indexRepository(context.root);assert.ok(snapshots.some(s=>s.before>0&&s.after===0));assert.equal(observed!.memoStats().entries,0);failed=true;await assert.rejects(indexRepository(context.root),/Injected own embedded framework failure/);assert.equal(observed!.memoStats().entries,0);assert.ok(snapshots.filter(s=>s.before>0&&s.after===0).length>=2);}finally{clear.mock.restore();packs.splice(packs.indexOf(pack),1);await rm(context.root,{recursive:true,force:true});}
+ const execution=mock.method(isolatedTypescriptAnalyzer,'analyze',typescriptAnalyzer.analyze);
+ try{await indexRepository(context.root);assert.ok(snapshots.some(s=>s.before>0&&s.after===0));assert.equal(observed!.memoStats().entries,0);failed=true;await assert.rejects(indexRepository(context.root),/Injected own embedded framework failure/);assert.equal(observed!.memoStats().entries,0);assert.ok(snapshots.filter(s=>s.before>0&&s.after===0).length>=2);}finally{execution.mock.restore();clear.mock.restore();packs.splice(packs.indexOf(pack),1);await rm(context.root,{recursive:true,force:true});}
 });

@@ -9,11 +9,15 @@
       "imports": "Indexed Node projects, workspace packages, aliases and shared compiler configs",
       "binding": "Partial lexical, source-type, callable and HTTP-wrapper binding",
       "frameworks": "Next.js, Express, Nest; component scripts",
-      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior; parsed syntax/JSDoc cache ownership is bounded separately from unqualified checker/program/token and RSS budgets",
+      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior. The default indexer isolates the compiler pass with 1024 MiB old space, 16 MiB semi-space and 64 MiB IPC frames; heap exhaustion rejects the pass without partial graph replay. Native allocations, total RSS, direct in-process compiler consumers, production performance and native OS qualification remain separate gates.",
       "sources": [
         "src/analyzers/typescript.ts",
         "src/analysis/resolution/typescript.ts",
-        "src/analyzers/ts-program.ts"
+        "src/analyzers/ts-program.ts",
+        "src/analyzers/typescript-isolated.ts",
+        "src/analyzers/ts-worker.ts",
+        "src/analyzers/ts-worker-protocol.ts",
+        "src/analyzers/native-ts-worker.mjs"
       ]
     },
     {
@@ -23,11 +27,15 @@
       "imports": "Indexed Node projects, workspace packages, aliases and shared compiler configs",
       "binding": "Partial lexical, source-type, callable and HTTP-wrapper binding",
       "frameworks": "Next.js, Express, Nest; component scripts",
-      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior; parsed syntax/JSDoc cache ownership is bounded separately from unqualified checker/program/token and RSS budgets",
+      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior. The default indexer isolates the compiler pass with 1024 MiB old space, 16 MiB semi-space and 64 MiB IPC frames; heap exhaustion rejects the pass without partial graph replay. Native allocations, total RSS, direct in-process compiler consumers, production performance and native OS qualification remain separate gates.",
       "sources": [
         "src/analyzers/typescript.ts",
         "src/analysis/resolution/typescript.ts",
-        "src/analyzers/ts-program.ts"
+        "src/analyzers/ts-program.ts",
+        "src/analyzers/typescript-isolated.ts",
+        "src/analyzers/ts-worker.ts",
+        "src/analyzers/ts-worker-protocol.ts",
+        "src/analyzers/native-ts-worker.mjs"
       ]
     },
     {
@@ -345,7 +353,8 @@
       "scope": "File routes/components, original handlers and qualified HTTP requests",
       "gaps": "Wider runtime/plugin/generated conventions remain outside the source profile",
       "tests": [
-        "tests/graph.test.ts"
+        "tests/graph.test.ts",
+        "tests/typescript-worker.test.ts"
       ],
       "sources": [
         {
@@ -388,7 +397,8 @@
       "gaps": "Unknown version keeps common syntax; regex/dynamic paths, unmounted routers and custom behavior remain constrained",
       "tests": [
         "tests/express.test.ts",
-        "tests/typescript-jsdoc-cache.test.ts"
+        "tests/typescript-jsdoc-cache.test.ts",
+        "tests/typescript-worker.test.ts"
       ],
       "sources": [
         {
@@ -481,7 +491,8 @@
       "scope": "Original script-setup/Options/Composition components, template callbacks and installed nested/lazy routes",
       "gaps": "Generated routes/macros, preprocessors, dynamic components, guards/loaders and deferred callbacks remain gaps",
       "tests": [
-        "tests/vue.test.ts"
+        "tests/vue.test.ts",
+        "tests/typescript-worker.test.ts"
       ],
       "sources": [
         {
@@ -506,7 +517,8 @@
       "scope": "Original callbacks/scopes, filesystem pages/layouts/loads, runtime endpoints and default/named actions",
       "gaps": "Dynamic config, hooks/matchers, custom extensions, deeper form/prop/navigation invocation and newer QUERY remain gaps",
       "tests": [
-        "tests/svelte.test.ts"
+        "tests/svelte.test.ts",
+        "tests/typescript-worker.test.ts"
       ],
       "sources": [
         {
@@ -533,7 +545,8 @@
       "scope": "Original layouts/components/renderers, pages, runtime endpoints, islands and separate static/build operations",
       "gaps": "Dynamic integrations/config, custom pipelines, Markdown/MDX, actions and generated concrete URLs remain gaps",
       "tests": [
-        "tests/astro.test.ts"
+        "tests/astro.test.ts",
+        "tests/typescript-worker.test.ts"
       ],
       "sources": [
         {
@@ -551,7 +564,8 @@
       "scope": "Literal config, nested pages/layouts, original component conventions, Nitro endpoints and contextual fetch",
       "gaps": "Older/broader ranges, layers/modules/generated imports, dynamic runtime options and deeper composables remain gaps",
       "tests": [
-        "tests/nuxt.test.ts"
+        "tests/nuxt.test.ts",
+        "tests/typescript-worker.test.ts"
       ],
       "sources": [
         {
