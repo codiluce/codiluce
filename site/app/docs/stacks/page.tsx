@@ -114,9 +114,9 @@ export default function Stacks() {
 
       <div className="callout">
         <p>
-          <strong>What ships where.</strong> The npm release (v{VERSION}) analyzes TypeScript, JavaScript, React, Next.js,
-          Laravel and Inertia, marked <StackStatus published /> below. Everything marked <StackStatus published={false} /> is
-          on the main branch: run Codiluce from a source checkout to use it today. It ships in the next npm release.
+          <strong>In the release.</strong> Every stack on this page ships in the npm release (v{VERSION}), marked
+          {' '}<StackStatus published /> below. Support deepens with every release: the table says how far each one goes today,
+          and what Codiluce cannot prove yet shows up in the map as a finding, never as a guess.
         </p>
       </div>
       <CodeBlock prompt code={INSTALL.source.join('\n')} />

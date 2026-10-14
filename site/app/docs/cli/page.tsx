@@ -6,7 +6,8 @@ import { DocsPager } from '../../../components/DocsNav';
 export const metadata: Metadata = { title: 'CLI & API', description: 'Every Codiluce command, its options, exit codes, the MCP server for agents and the HTTP API.' };
 
 const COMMANDS = [
-  { cmd: 'start [PATH]', what: 'Detect, index, serve and open the map. PATH defaults to the current directory.' },
+  { cmd: 'start [PATH]', what: 'Detect, index, serve and open the map. PATH defaults to the current directory. The first start asks the setup questions.' },
+  { cmd: 'setup [PATH]', what: 'Ask the setup questions again: history depth, API keys, describing the code, connecting agents.' },
   { cmd: 'init', what: 'Detect applications and write the configuration. Keeps an existing configuration and graph.' },
   { cmd: 'index', what: 'Analyze the repository into the graph. Reuses the cache for applications that did not change.' },
   { cmd: 'serve', what: 'Serve the API and the map for an existing index.' },
@@ -23,6 +24,8 @@ const OPTIONS = [
   { opt: '--port N', what: 'Server port. start tries 4300 and then the next free one; 0 asks the system.' },
   { opt: '--no-open', what: 'start: print the URL instead of opening a browser.' },
   { opt: '--no-cache', what: 'Analyze everything again instead of replaying unchanged applications.' },
+  { opt: '--yes', what: 'start: ask no questions (saved settings, or defaults that spend nothing).' },
+  { opt: '--history DEPTH', what: 'start: index this much history in the background this time: a number of commits, a Git date ("6 months ago"), all or none.' },
   { opt: '--history-indexing', what: 'Let the map index commits on demand.' },
   { opt: '--read-only', what: 'serve: refuse every write: on-demand history indexing (even with --history-indexing), and asking, renaming or deleting explanations.' },
   { opt: '--ui PATH | none', what: 'serve another build of the map, or only the API.' },

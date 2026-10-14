@@ -49,7 +49,11 @@ npx codiluce@latest start .
 ```
 
 Codiluce indexes the code, starts a local server and opens the map in your browser. You need Node.js 22.12 or newer.
-Add `.codiluce/` to your `.gitignore`: that is where the analysis lives.
+
+The first time, it asks a few questions in the terminal, with real estimates: how much Git history to index (in the
+background, while you use the map), which API keys to use for the optional language-model features, and which
+coding agents to connect. Enter keeps the defaults; `codiluce setup` asks again. The analysis lives in `.codiluce/`,
+which hides itself from Git.
 
 Want it always at hand? Run `npm install --global codiluce`, then `codiluce start .` in any repository.
 
@@ -62,15 +66,13 @@ once, from the repository:
 claude mcp add codiluce -- npx -y codiluce mcp
 ```
 
-Then ask it, for example, *"Use Codiluce to explain how checkout works, and publish it."* Its tools read the index
+`codiluce setup` does this for you when it finds Claude Code, Codex or Cursor. Then ask your agent, for example,
+*"Use Codiluce to explain how checkout works, and publish it."* Its tools read the index
 (flows, blast radius, history, source), so it starts from what the code provably does. `publish_explanation` checks
 that every file, symbol and flow it names exists, then saves the answer in the map's **Explain** column: point at a
 link and that code lights up on the map; click it to open it. Each explanation is pinned to the commit it was written
 against and says when the code it links changes. With an Anthropic or OpenAI key, you can also ask in the column
 itself, with files and folders attached by `@`.
-
-Explanations ship in the next npm release (0.1.1 does not have `codiluce mcp` yet); from a source checkout, the
-column's *Connect your agent* panel gives the exact command.
 
 ![An explanation of how BookStack saves a page, in the Explain column: its links name the controller, repository and revision code, which is lit on the map while the rest of the repository recedes.](site/public/shots/explanations.webp)
 
@@ -143,9 +145,9 @@ How far Codiluce follows the code depends on the stack:
 - **Map:** Angular, Remix, Fastify, Symfony, Quarkus, Blazor and every other language and framework are detected and
   mapped with their files, lines and Git metrics.
 
-The npm release (0.1.1) analyzes TypeScript, JavaScript, React, Next.js, Laravel and Inertia. Everything else is on
-`main`: [run it from source](CONTRIBUTING.md#develop-locally) today, and it ships in the next release. See what each
-framework covers, and what stays a visible gap, in [Languages & frameworks](https://codiluce.com/docs/stacks/).
+Everything above ships in the npm release (0.2.0). Support deepens with every release: see how far each framework
+goes, and what stays a visible gap, in [Languages & frameworks](https://codiluce.com/docs/stacks/). Missing your
+stack? [Open an issue](https://github.com/codiluce/codiluce/issues) with a public repository that shows it.
 
 <sub>Logos are trademarks of their owners, shown only to say which code Codiluce reads. Artwork from
 [Simple Icons](https://simpleicons.org) (CC0) and [Devicon](https://devicon.dev) (MIT).</sub>

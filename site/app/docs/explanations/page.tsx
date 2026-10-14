@@ -36,7 +36,6 @@ export default function ExplanationsDocs() {
         {' '}column, where every file, symbol and flow it names is a link: point at it and that code lights up on the map,
         click it to open it.
       </p>
-      <div className="callout"><p><strong>On main, in the next release.</strong> npm 0.1.1 does not have explanations yet; run Codiluce from a source checkout to try them now.</p></div>
 
       <Shot
         src="/shots/explanations.webp"
@@ -58,8 +57,9 @@ export default function ExplanationsDocs() {
         ].join('\n')}
       />
       <p>
-        Cursor and other clients take the same command (<code>npx</code> with <code>-y codiluce mcp</code>) in their MCP
-        configuration. The <em>Connect your agent</em> panel in the column shows the exact command for your setup. Then ask in
+        Or let <code>codiluce setup</code> do it: on the first <code>start</code> it finds Claude Code, Codex and Cursor and
+        offers to connect them. Other clients take the same command (<code>npx</code> with <code>-y codiluce mcp</code>) in
+        their MCP configuration; the <em>Connect your agent</em> panel in the column shows the exact command for your setup. Then ask in
         your own words, for example <em>&quot;Use Codiluce to explain how checkout works, and publish it&quot;</em>. Clients
         that support MCP prompts also get <code>explain-codebase</code>, <code>explain-flow</code>,
         {' '}<code>explain-commit</code>, <code>explain-pr</code>, <code>explain-path</code> and <code>explain-impact</code>.
@@ -110,10 +110,12 @@ export default function ExplanationsDocs() {
 
       <h2 id="ask" className="anchor">Ask in the map</h2>
       <p>
-        With an Anthropic or OpenAI key, the column asks a model directly, with the same tools and the same link check. Put
-        the key in a <code>.env</code> file in <code>.codiluce/</code> (or in the environment) and ask; no restart is needed.
+        With an Anthropic or OpenAI key, the column asks a model directly, with the same tools and the same link check.
+        {' '}<code>codiluce setup</code> asks for the key, checks it with the provider and keeps it in
+        {' '}<code>~/.config/codiluce/credentials</code>, readable only by you and never inside the repository. A key in the
+        environment works too, and no restart is needed.
       </p>
-      <CodeBlock prompt code={["echo 'ANTHROPIC_API_KEY=…' >> .codiluce/.env"].join('\n')} />
+      <CodeBlock prompt code={'npx codiluce setup'} />
       <ul>
         <li>Type <code>@</code> to attach files and folders. <strong>+ Add to question</strong> in the inspector attaches the selection.</li>
         <li><strong>✦ Explain</strong> in the inspector, on a flow or on a commit starts the question for you. <strong>Copy prompt</strong> copies it for your agent instead.</li>

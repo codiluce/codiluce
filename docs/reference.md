@@ -39,6 +39,18 @@ npm start -- /path/to/repository --history-indexing
 
 The equivalent CLI command is `npm run codiluce -- start --repo /path/to/repository`. Without a path or `--repo`, `start` scans its current working directory. `--ui PATH` uses an existing visualizer build and `--no-cache` forces fresh analysis. On a headless computer, the launcher prints the URL so you can open it manually.
 
+## The first start: setup questions
+
+`codiluce start` (or `npm start -- PATH` from a source checkout) asks a few questions on a repository's first start in a terminal, after the first analysis (so its estimates are real) and before the browser opens. `codiluce setup` asks them again; `start --yes` asks nothing, and `start --history DEPTH` overrides the history depth for one start.
+
+- **History:** the last 50 commits (default), the last 6 months, all, or none, each with a time estimate from the first analysis (its duration is what one commit costs, analyzed 6 at a time). `start` then indexes it in the background (`history index --json-progress` in a child process) with a live progress line, and turns on-demand indexing on (`history.onDemand`). Shallow clones, non-Git folders and subfolders of a repository skip the question with a note.
+- **Language models (optional):** Anthropic and/or OpenAI. Each key is typed hidden, checked with the provider (a free model listing; offline, it is saved unchecked) and saved to `~/.config/codiluce/credentials` (`$XDG_CONFIG_HOME/codiluce`, `%APPDATA%\codiluce` on Windows; dotenv, mode 0600) or, for one repository, to `<state>/.env`. Keys are read from the environment first, then the credentials file, then `<state>/.env`, then (source checkouts) the tool's `.env`; never from the target repository.
+- **Describing the code** (with an OpenAI key): the offline estimate of `annotate` for files, flows, folders, domains and the overview, with a cap of 1.5× the estimate; on a yes it runs in the background. Commit descriptions wait for `codiluce annotate` once history is indexed.
+- **Agents:** Claude Code (`claude mcp add -s local`, bound to this repository), Codex (`codex mcp add`, following its working directory) and Cursor (`~/.cursor/mcp.json`, with `--repo ${workspaceFolder}`) are found and connected to `codiluce mcp`. Other MCP clients get the JSON to paste.
+- **New repositories:** ask again, or reuse these answers without asking (`~/.config/codiluce/config.yml`).
+
+The answers go to `<state>/config.yml` (`history: { depth, onDemand }`, `annotations: { enabled, maxCost }`, beside the applications; comments kept), and a run record to `<state>/state.json` (setup done, the last version that ran, the duration of a full analysis). `<state>/.gitignore` (`*`) hides the state from Git unless something in it is already tracked. Later starts ask nothing: they print the address, index new commits in the background, and say once per version when the tool was updated or runs through npx. Without a terminal (`CI`, pipes, `--yes`), nothing is decided or spent: saved settings apply, and the output is plain lines.
+
 ## Run against a repository
 
 Requires Node >=22.12. The scripts enable the built-in SQLite API for the installed Node version.
@@ -56,7 +68,7 @@ Open **http://127.0.0.1:4300/api** for the endpoint directory, or **http://127.0
 
 `index` keeps a bounded analysis cache in `<state>/cache/`: an application whose files did not change since the last index is replayed instead of analyzed (on Etengabe, an unchanged re-index takes ~3.5 s instead of ~11 s; editing one frontend file re-analyzes only the frontend). The cache is safe to delete; `index --no-cache` re-analyzes everything.
 
-Generated state contains repository metadata, including file paths, symbols, routes, and diagnostics. Keep local state and inspection exports under `.codiluce/`, which is excluded by `.gitignore`. If you choose another state directory, add it to that workspace's `.gitignore` before publishing. Share only sanitized configuration examples.
+Generated state contains repository metadata, including file paths, symbols, routes, and diagnostics. Keep local state and inspection exports under `.codiluce/`, which hides itself from Git with its own `.gitignore`. If you choose another state directory, add it to that workspace's `.gitignore` before publishing. Share only sanitized configuration examples.
 
 ## Visualizer
 
