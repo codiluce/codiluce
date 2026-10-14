@@ -35,7 +35,7 @@ test('Python shows source, declarations and partial import/reference support', a
 
 test('structural-only languages show their declarations and analysis limits', async ({ page }) => {
   await open(page);
-  await select(page, 'StructureRuby', 'StructureRuby');
+  await select(page, 'StructureSwift', 'StructureSwift');
   const coverage = inspector(page).getByRole('region', { name: 'Analysis coverage' });
   await expect(coverage.locator('dt').filter({ hasText: /^Declarations$/ }).locator('+ dd')).toHaveText('Available');
   await expect(coverage).toContainText('Calls and flows are not measured for this file');
@@ -104,13 +104,17 @@ test('steps draw what happens from a page, with events, conditions, endpoints an
   await inspector(page).getByRole('button', { name: 'What happens from here' }).click();
   // In the middle of the screen: on the map, in layers and as an outline.
   const panel = page.getByRole('region', { name: 'Outline of /account' });
+  const interactions = panel.getByRole('region', { name: 'User interactions' });
+  await interactions.locator('.page-step-group', { hasText: 'AccountPanel' }).locator('summary').click();
+  await interactions.getByRole('button', { name: /handleSave/ }).click();
+  await panel.getByRole('button', { name: /^Show effects/ }).click();
   const outline = panel.getByRole('list', { name: 'Steps' });
   await expect(outline).toBeVisible();
   await expect(outline.locator('.step-card.kind-trigger', { hasText: 'handleSave' })).toBeVisible();
-  await expect(outline).toContainText('on onClick');
+  await expect(outline).toContainText('onClick');
   await expect(outline).toContainText('when email');
   await expect(outline.locator('.step-card.kind-endpoint', { hasText: 'POST /auth/login' }).first()).toContainText('backend');
-  await expect(outline.locator('.step-card.kind-effect', { hasText: 'response · abort · 404' })).toContainText('when $id < 1');
+  await expect(outline.locator('.step-card.kind-effect', { hasText: 'response · abort · 404' })).toHaveCount(0);
   await expect(outline.locator('.step-card.kind-effect', { hasText: 'database · read' }).first()).toBeVisible();
   // Each link is a chain of indexed relationships with evidence.
   const link = outline.locator('.steps-link', { hasText: 'when email' }).filter({ has: page.getByRole('button', { name: /hop/ }) }).first();
@@ -125,12 +129,18 @@ test('steps draw what happens from a page, with events, conditions, endpoints an
   // The diagram beside it lays out the same steps; it can have the whole middle.
   const diagram = page.getByRole('region', { name: 'Diagram of /account' });
   await expect(diagram.locator('.steps-box').first()).toBeVisible();
-  expect(await diagram.locator('.steps-box').count()).toBeGreaterThan(8);
+  await expect(diagram.locator('.steps-box.kind-trigger')).toHaveCount(1);
+  await expect(diagram.locator('.steps-box.kind-trigger')).toContainText('handleSave');
   await diagram.getByRole('button', { name: 'Give the diagram the whole middle' }).click();
   await expect(panel).toBeHidden();
   await expect(diagram.locator('.steps-box').first()).toBeVisible();
   await diagram.getByRole('button', { name: 'Put the diagram back beside the other views' }).click();
   await expect(panel).toBeVisible();
+  await panel.getByRole('button', { name: '← Page overview', exact: true }).click();
+  await interactions.locator('.page-step-group', { hasText: 'AccountPanel' }).locator('summary').click();
+  await interactions.getByRole('button', { name: /profile/i }).click();
+  await panel.getByRole('button', { name: /^Show effects/ }).click();
+  await expect(outline.locator('.step-card.kind-effect', { hasText: 'response · abort · 404' })).toContainText('when $id < 1');
   await page.getByRole('button', { name: 'Close this flow' }).click();
   await expect(page.getByRole('region', { name: 'Outline of /account' })).toHaveCount(0);
   await expect(page.getByRole('tab', { name: 'Map' })).toHaveCount(0);

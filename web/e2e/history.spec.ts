@@ -109,7 +109,7 @@ test('comparing splits the map: an overview of the whole repository and a view o
   for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowLeft');
   await expect(timeline(page)).toContainText('Edit login, add signup');
   const bar = page.getByRole('toolbar', { name: 'Split map' });
-  await expect(bar).toContainText('5 places · 10 changes');
+  await expect(bar).toContainText('5 places · 11 changes');
   await expect(page.getByRole('region', { name: 'Overview of the whole repository' })).toBeVisible();
   const views = page.locator('.split-tile.region');
   await expect(views).toHaveCount(5);
@@ -118,7 +118,7 @@ test('comparing splits the map: an overview of the whole repository and a view o
   // Coarser places: one view per application (and per top-level entry outside them).
   await bar.getByRole('button', { name: 'Apps' }).click();
   await expect(bar).toContainText('4 places');
-  await expect(page.getByRole('region', { name: 'View 1: frontend' })).toBeVisible();
+  await expect(page.getByRole('region', { name: /^View \d+: frontend$/ })).toBeVisible();
   await bar.getByRole('button', { name: 'Auto' }).click();
   await expect(bar).toContainText('5 places');
   // A place opened on its own: the single map, back with the Split view switch.

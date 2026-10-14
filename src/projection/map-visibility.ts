@@ -20,7 +20,7 @@ function read(file: string | undefined): string {
 }
 export class MapVisibility {
   private cached?: { key: string; state: MapVisibilityState; matcher: ReturnType<typeof ignore> };
-  constructor(private readonly options: { root?: string; stateDirectory?: string }, private readonly repositoryId: () => string) {}
+  constructor(private readonly options: { root?: string; stateDirectory?: string; readOnly?: boolean }, private readonly repositoryId: () => string) {}
   private get file(): string | undefined { return this.options.stateDirectory && path.join(this.options.stateDirectory, 'map-visibility.json'); }
   state(): MapVisibilityState {
     const repositoryId = this.repositoryId();
@@ -41,7 +41,7 @@ export class MapVisibility {
     };
     const hidden = list(local.hidden).map(mapPath), revealed = list(local.revealed).map(mapPath), disabledShared = list(local.disabledShared).filter(rule => shared.includes(rule));
     if (shared.length > MAX_ITEMS) throw new Error('Too many .codiluceignore rules');
-    const state = { shared, hidden, revealed, disabledShared, writable: !!this.file, revision: createHash('sha256').update(key).digest('hex').slice(0, 16) };
+    const state = { shared, hidden, revealed, disabledShared, writable: !!this.file && !this.options.readOnly, revision: createHash('sha256').update(key).digest('hex').slice(0, 16) };
     this.cached = { key, state, matcher: ignore({ ignorecase: false }).add(shared.filter(rule => !disabledShared.includes(rule))) };
     return state;
   }
@@ -58,6 +58,7 @@ export class MapVisibility {
   }
   update(action: MapVisibilityAction): MapVisibilityState {
     const state = this.state();
+    if (this.options.readOnly) throw new Error('Map preferences are read-only');
     if (!this.file) throw new Error('Map preferences need a state directory');
     let { hidden, revealed, disabledShared } = state;
     if (action.action === 'hide') { const relative = mapPath(action.path); hidden = [...new Set([...hidden, relative])]; revealed = revealed.filter(item => !within(item, relative)); }

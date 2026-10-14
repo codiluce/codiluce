@@ -89,10 +89,10 @@ const AREA_TYPES = new Set(['repository', 'application', 'directory']);
  * in its district); what is inside it counts through it, and nothing inside
  * a file without one counts at all.
  */
-export function computeArchetypeCounts(index: ProjectionIndex, archetypes: Map<string, ArchetypeInfo>): Map<string, ArchetypeCount[]> {
+export function computeArchetypeCounts(index: ProjectionIndex, archetypes: Map<string, ArchetypeInfo>, visible?: ReadonlySet<string>): Map<string, ArchetypeCount[]> {
   const counts = new Map<string, Map<Archetype, number>>();
   const visit = (node: ProjectionNode, areas: string[]): void => {
-    if (node.change?.status === 'removed') return;
+    if (node.change?.status === 'removed' || visible && !visible.has(node.id)) return;
     const kind = archetypes.get(node.id)?.kind;
     if (kind) {
       for (const area of areas) { const own = counts.get(area) ?? new Map<Archetype, number>(); own.set(kind, (own.get(kind) ?? 0) + 1); counts.set(area, own); }

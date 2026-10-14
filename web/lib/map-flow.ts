@@ -11,7 +11,6 @@
 // as alternatives at the same depth, and the way back (a response returning
 // to its caller) comes last. Pure.
 import type { FoldedEntity, FlowLane, NodeSummary, RequestFlow, RequestFlowNode, StepsResult } from '@engine/projection/dto';
-import type { PlaybackState } from './playback';
 import { pageStepBranch, pageStepGroups } from './page-steps';
 
 export type StopTone = 'client' | 'call' | 'route' | 'server' | 'data' | 'response' | 'return' | 'console';

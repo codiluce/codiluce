@@ -24,6 +24,7 @@ export interface LaunchOptions {
   open?: boolean;
   noCache?: boolean;
   historyIndexing?: boolean;
+  readOnly?: boolean;
   /** Ask the provider for pull requests (`--pr-metadata github`). */
   pullRequests?: 'github';
   signal?: AbortSignal;

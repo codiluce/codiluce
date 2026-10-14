@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { StepGuard, StepsResult } from '@engine/projection/dto';
 import { pageStepBranch, pageStepGroups, type PageStepChoice, type PageStepGroup } from '../lib/page-steps';
 import { StepsDiagram, StepsNotes, StepsOutline } from './StepsPanel';
@@ -9,18 +9,17 @@ function primaryConditions(guards: StepGuard[]): string {
   return (positive.length ? positive : guards).map(guard => guard.phrase).join(' · ');
 }
 
-export function PageSteps({ data, layout }: { data: StepsResult; layout: 'diagram' | 'outline' }) {
+export interface PageStepsView { selectedId?: string; effects: boolean; query: string }
+export function PageSteps({ data, layout, view, update }: { data: StepsResult; layout: 'diagram' | 'outline'; view: PageStepsView; update: (patch: Partial<PageStepsView>) => void }) {
   const groups = useMemo(() => pageStepGroups(data), [data]);
-  const [selectedId, setSelectedId] = useState<string>();
-  const [effects, setEffects] = useState(false);
-  const [query, setQuery] = useState('');
+  const { selectedId, effects, query } = view;
   const allGroups = [...groups.initialization, ...groups.interactions];
   const selectedGroup = allGroups.find(group => group.choices.some(choice => choice.id === selectedId));
   const choice = selectedGroup?.choices.find(item => item.id === selectedId);
   const fullBranch = useMemo(() => choice ? pageStepBranch(data, choice, true) : undefined, [data, choice]);
   const branch = useMemo(() => choice ? pageStepBranch(data, choice, effects) : undefined, [data, choice, effects]);
   const effectCount = fullBranch?.steps.filter(step => step.effect && step.id !== choice?.head).length ?? 0;
-  const select = (item: PageStepChoice) => { setSelectedId(item.id); setEffects(false); };
+  const select = (item: PageStepChoice) => { update({ selectedId: item.id, effects: false }); };
   const filter = (items: PageStepGroup[]) => {
     const needle = query.trim().toLowerCase();
     return items.flatMap(group => {
@@ -50,9 +49,9 @@ export function PageSteps({ data, layout }: { data: StepsResult; layout: 'diagra
   if (choice && branch) return (
     <div className="page-steps page-step-detail">
       <div className="page-step-toolbar">
-        <button className="button small" onClick={() => setSelectedId(undefined)}>← Page overview</button>
+        <button className="button small" onClick={() => update({ selectedId: undefined })}>← Page overview</button>
         <span className="page-step-context"><strong className="mono">{selectedGroup!.label}</strong><span>{choice.link.event ?? 'Initialization'} · {choice.label}</span></span>
-        {effectCount > 0 && <button className="button small" aria-pressed={effects} onClick={() => setEffects(value => !value)}>{effects ? 'Hide' : 'Show'} effects · {effectCount}</button>}
+        {effectCount > 0 && <button className="button small" aria-pressed={effects} onClick={() => update({ effects: !effects })}>{effects ? 'Hide' : 'Show'} effects · {effectCount}</button>}
       </div>
       {choice.link.via.length > 0 && <p className="page-step-path mono">{data.anchor.name} → {choice.link.via.map(item => item.name).join(' → ')} → {choice.label}</p>}
       {choice.link.when.length > 0 && <div className="page-step-conditions step-when">
@@ -65,7 +64,7 @@ export function PageSteps({ data, layout }: { data: StepsResult; layout: 'diagra
   return (
     <div className="page-steps page-step-overview">
       <p className="page-step-intro">Open a component, then choose one branch to follow. Controls on conditional cards are alternatives.</p>
-      <input type="search" className="input page-step-filter" aria-label="Filter page branches" placeholder="Find a component or handler…" value={query} onChange={event => setQuery(event.target.value)} />
+      <input type="search" className="input page-step-filter" aria-label="Filter page branches" placeholder="Find a component or handler…" value={query} onChange={event => update({ query: event.target.value })} />
       <div className="page-step-sections">
         <section aria-label="Page initialization" className="page-step-section initialization">
           <h3>Page initialization <span className="count">{groups.initialization.reduce((sum, group) => sum + group.choices.length, 0)}</span></h3>

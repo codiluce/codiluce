@@ -1758,8 +1758,8 @@ export class AtlasStore {
     if (!link.id) return;
     if (link.kind === 'flow') {
       await this.select(link.id, { fly: true });
-      if (link.detail === 'lanes') await this.openFlowView({ id: link.id, title: link.label ?? link.name ?? link.id, lanes: true }, 'diagram');
-      else await this.openSteps(link.id, 'diagram');
+      if (link.detail === 'lanes') await this.openFlowView({ id: link.id, title: link.label ?? link.name ?? link.id, lanes: true }, { pane: 'diagram' });
+      else await this.openSteps(link.id, { pane: 'diagram' });
       return;
     }
     this.setCenter('map');

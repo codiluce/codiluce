@@ -96,6 +96,16 @@ test('hiding a source file preserves connections and revealing it retains only t
   assert.equal(projection.locate(entity('backend/app/Http/Controllers/AuthController.php').id).node.hidden, true);
 });
 
+test('area roof counts omit hidden shapes while canonical file counts stay intact', async t => {
+  const { projection } = await setup(t);
+  const before = projection.meta().root;
+  const total = (node: typeof before) => node.archetypeCounts?.reduce((sum, item) => sum + item.count, 0) ?? 0;
+  projection.updateMapVisibility({ action: 'hide', path: 'backend' });
+  const after = projection.meta().root;
+  assert.ok(total(after) < total(before));
+  assert.equal(after.stats.files, before.stats.files);
+});
+
 test('a shared directory rule also hides entities without source paths and their synthetic districts', async t => {
   const { stateDirectory } = await setup(t);
   await writeFile(path.join(root, '.codiluceignore'), '/app/\n');
@@ -154,4 +164,16 @@ test('HTTP mutations are bounded, reject invalid paths and require the same-orig
   assert.deepEqual((await (await fetch(url)).json()).hidden, ['docs']);
   assert.equal((await post({ action: 'restore', path: 'docs' })).status, 200);
   assert.equal((await post({ action: 'hide', path: 'x'.repeat(70000) })).status, 413);
+});
+
+test('read-only servers refuse map mutations and disable editing controls', async t => {
+  const { store, stateDirectory } = await setup(t);
+  const server = createInspectionServer(store, { root, stateDirectory, readOnly: true });
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())));
+  const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/projection/map-visibility`;
+  assert.equal((await (await fetch(url)).json()).writable, false);
+  const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', [INDEX_REQUEST_HEADER]: 'map-visibility' }, body: JSON.stringify({ action: 'hide', path: 'docs' }) });
+  assert.equal(response.status, 403);
+  assert.deepEqual((await (await fetch(url)).json()).hidden, []);
 });

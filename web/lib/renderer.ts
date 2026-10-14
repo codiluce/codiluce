@@ -536,11 +536,11 @@ export class MapRenderer {
     if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
     return canvas;
   }
-  /** How lit each block is by the flow on the map: its front stop fully, stops it has reached partly (and the closed blocks holding them). */
+  /** Light the continuous flow and the closed blocks holding its stops. */
   private flowHeat(flow: FlowOverlay | undefined): Map<string, number> {
     const heat = new Map<string, number>();
     for (const stop of flow?.stops ?? []) {
-      const value = stop.state === 'front' ? 1 : stop.state === 'reached' ? 0.55 : 0;
+      const value = stop.start ? 1 : 0.55;
       if (!value) continue;
       for (const id of [stop.entityId, ...stop.ancestors]) heat.set(id, Math.max(heat.get(id) ?? 0, value));
     }

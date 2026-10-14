@@ -6,7 +6,7 @@
 // The lanes run wide, so they take the band along the bottom; the outline runs
 // long, so it takes a column beside the map. Each view can have the whole
 // middle, and the bars between them move.
-import { useMemo, useRef, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
 import { typeLabel } from '../lib/format';
 import { visibleCatalog } from '../lib/catalog';
 import { groupBranches, type MapBranch, type MapStop } from '../lib/map-flow';
@@ -14,7 +14,7 @@ import type { FlowPane, FlowSplit } from '../lib/store';
 import { useAtlas, useStore } from './context';
 import { LanesBadge, LanesBody, LanesStatus, lanesSubtitle, lanesTitle, StagePips } from './RequestFlows';
 import { StepsDiagram, StepsNotes, StepsOutline } from './StepsPanel';
-import { PageSteps } from './PageSteps';
+import { PageSteps, type PageStepsView } from './PageSteps';
 import { ExplainActions, ExplanationChips } from './ExplainActions';
 import { hrefForNode } from '@engine/explanations/links';
 
@@ -150,16 +150,23 @@ function BranchButton({ branch, index, current, stops }: { branch: MapBranch; in
 
 /** The flow's diagram and outline, and the bars between the views (the map is the workbench's). */
 export function FlowPanes() {
+  const id = useAtlas(state => state.flowView?.id);
+  return <SharedFlowPanes key={id} />;
+}
+type PageViewProps = { page: PageStepsView; update: (patch: Partial<PageStepsView>) => void };
+function SharedFlowPanes() {
+  const [page, setPage] = useState<PageStepsView>({ effects: false, query: '' });
+  const update = (patch: Partial<PageStepsView>) => setPage(current => ({ ...current, ...patch }));
   return (
     <>
       <SplitBar axis="side" />
-      <OutlinePane />
+      <OutlinePane page={page} update={update} />
       <SplitBar axis="bottom" />
-      <DiagramPane />
+      <DiagramPane page={page} update={update} />
     </>
   );
 }
-function DiagramPane() {
+function DiagramPane({ page, update }: PageViewProps) {
   const view = useAtlas(state => state.flowView);
   const data = useAtlas(state => state.flowView?.lanes && state.requests.open?.id === state.flowView.id ? state.requests.open.data : undefined);
   const steps = useAtlas(state => state.steps);
@@ -176,12 +183,12 @@ function DiagramPane() {
       <PaneHead pane="diagram" title="Diagram" />
       <div className="flow-pane-body">
         <StepsState />
-        {steps?.data && steps.anchor === view.id && (steps.data.anchor.type === 'route' ? <PageSteps key={steps.anchor} data={steps.data} layout="diagram" /> : <StepsDiagram data={steps.data} />)}
+        {steps?.data && steps.anchor === view.id && (steps.data.anchor.type === 'route' ? <PageSteps key={steps.anchor} data={steps.data} layout="diagram" view={page} update={update} /> : <StepsDiagram data={steps.data} />)}
       </div>
     </section>
   );
 }
-function OutlinePane() {
+function OutlinePane({ page, update }: PageViewProps) {
   const view = useAtlas(state => state.flowView);
   const steps = useAtlas(state => state.steps);
   const named = useFlowTitle();
@@ -191,7 +198,7 @@ function OutlinePane() {
       <PaneHead pane="outline" title="Outline" />
       <div className="flow-pane-body flow-outline">
         <StepsState />
-        {steps?.data && steps.anchor === view.id && (steps.data.anchor.type === 'route' ? <PageSteps key={steps.anchor} data={steps.data} layout="outline" /> : <><StepsNotes data={steps.data} /><StepsOutline data={steps.data} /></>)}
+        {steps?.data && steps.anchor === view.id && (steps.data.anchor.type === 'route' ? <PageSteps key={steps.anchor} data={steps.data} layout="outline" view={page} update={update} /> : <><StepsNotes data={steps.data} /><StepsOutline data={steps.data} /></>)}
       </div>
     </section>
   );

@@ -115,6 +115,7 @@ const VIEW_CACHE = 8, DATA_CACHE = 10;
 export const AGGREGATE_REACHED_MAX = 4000;
 const METHOD_ORDER: Record<string, number> = { GET: 0, HEAD: 1, POST: 2, PUT: 3, PATCH: 4, DELETE: 5, OPTIONS: 6 };
 export interface ProjectionOptions {
+  readOnly?: boolean;
   stateDirectory?: string;
   /** Repository root: Git rename detection for comparisons, and source reading. */
   root?: string;
@@ -298,7 +299,7 @@ export class ProjectionService {
   }
   private summary(current: View, node: ProjectionNode): NodeSummary {
     const archetypes = current.archetypes ??= computeArchetypes(current.index), archetype = archetypes.get(node.id);
-    const archetypeCounts = node.type === 'file' ? undefined : (current.archetypeCounts ??= computeArchetypeCounts(current.index, archetypes)).get(node.id);
+    const archetypeCounts = node.type === 'file' ? undefined : (current.archetypeCounts ??= computeArchetypeCounts(current.index, archetypes, new Set(current.mapNodes.keys()))).get(node.id);
     return {
       id: node.id, kind: node.kind, type: node.type, name: node.name,
       ...(node.path ? { path: node.path } : {}), ...(node.language ? { language: node.language } : {}), ...(node.sourceRange ? { sourceRange: node.sourceRange } : {}),

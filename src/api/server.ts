@@ -40,8 +40,8 @@ export const INDEX_REQUEST_HEADER = 'x-codiluce-request';
 export function createInspectionServer(store: GraphStore, options: InspectionServerOptions = {}): Server {
   const access = new HistoryAccess(options.stateDirectory);
   const notes = new AnnotationAccess(options.stateDirectory, existsSync);
-  const projection = new ProjectionService(store, { stateDirectory: options.stateDirectory, root: options.root, history: access.get, annotations: notes.get, ...(options.pullRequests ? { pullRequests: options.pullRequests } : {}) });
-  const history = new HistoryService({ root: options.root, stateDirectory: options.stateDirectory, store, history: access, indexing: options.historyIndexing });
+  const projection = new ProjectionService(store, { readOnly: options.readOnly, stateDirectory: options.stateDirectory, root: options.root, history: access.get, annotations: notes.get, ...(options.pullRequests ? { pullRequests: options.pullRequests } : {}) });
+  const history = new HistoryService({ root: options.root, stateDirectory: options.stateDirectory, store, history: access, indexing: options.historyIndexing && !options.readOnly });
   const projectionContext = { store, projection, history, root: options.root, maxFileBytes: options.maxFileBytes ?? 1024 * 1024 };
   // Explanations live in the state directory: text from language models whose links name code (src/explanations).
   const explanations = options.stateDirectory ? (() => {
@@ -57,7 +57,7 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
     let pathname: string;
     try { pathname = new URL(request.url ?? '/', 'http://127.0.0.1').pathname; } catch { response.writeHead(400).end(JSON.stringify({ error: 'Bad request' })); return; }
     if (request.method === 'POST' && pathname === '/api/history/index') { handleIndexRequest(request, response, history).catch(fail); return; }
-    if (request.method === 'POST' && pathname === '/api/projection/map-visibility') { handleMapVisibility(request, response, projection).catch(fail); return; }
+    if (request.method === 'POST' && pathname === '/api/projection/map-visibility') { if (options.readOnly) { response.writeHead(403).end(JSON.stringify({ error: 'Map preferences are read-only' })); return; } handleMapVisibility(request, response, projection).catch(fail); return; }
     if (isExplanationPath(pathname)) {
       if (!explanations) { response.writeHead(503).end(JSON.stringify({ error: 'Explanations need a state directory' })); return; }
       handleExplanationRoute(explanations, request, response, new URL(request.url ?? '/', 'http://127.0.0.1')).catch(fail);
