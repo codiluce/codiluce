@@ -9,15 +9,20 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
+import {packageEvidenceArgument,createPackageEvidenceDirectory,capturePackageEvidence} from './package-evidence.mjs';
 
 const execute = promisify(execFile);
 const root = fileURLToPath(new URL('../', import.meta.url));
+const requestedEvidence=packageEvidenceArgument(process.argv.slice(2),root);
 const npmCli = process.env.npm_execpath;
 assert.ok(npmCli, 'Run this check with npm run test:package');
 const temporary = await mkdtemp(path.join(tmpdir(), 'codiluce-package-'));
 const manifest = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
 const run = (command, args, cwd = root) => execute(command, args, { cwd, timeout: 120_000, maxBuffer: 4 * 1024 * 1024 });
 const npm = (args, cwd) => run(process.execPath, [npmCli, ...args], cwd);
+let evidence;
+try{if(requestedEvidence)evidence=await createPackageEvidenceDirectory(requestedEvidence,temporary);}catch(error){await rm(temporary,{recursive:true,force:true});throw error;}
+let packagedChecksPassed=false,packageFailure,evidenceCollectionFailed=false;
 let decodeRustEvidence;
 
 function assertPhpBinding(file) {
@@ -1274,6 +1279,21 @@ class PackagedWebFluxKotlin {
   assert.equal((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--version'], standalone)).stdout.trim(), manifest.version);
   assert.match((await npm(['exec', '--yes', `--package=${tarball}`, '--', 'codiluce', '--help'], standalone)).stdout, /Code and architecture visualizer/);
   console.log('Package installation, generic PHP original classes/interfaces/traits/enums/functions/members/promotions/hooks and bounded source parser, CLI/API/full original source/history and independence from Tree-sitter assets, twenty grammar assets, original Liquid regions/JS source declarations, indexed Shopify template dependencies, CLI/API/full original source/history and independent Liquid/HTML WASM/query isolation, original Razor component/view/C# members and literal JavaScript declarations, canonical source identity, CLI/API/full original source/history and independent Razor/HTML WASM/query isolation, original ERB template/Ruby/literal JavaScript declarations and canonical source identity, CLI/API/original source/history evidence and independent ERB/Ruby/HTML WASM/query isolation, original VB.NET namespaces/modules/classes/fields/properties/methods/New constructors, CLI/API/source/history evidence and independent VB WASM/query isolation, original F# source/signature modules/types/fields/union cases/functions/methods/properties/new constructors, original CLI/API/history evidence and source/signature WASM/query isolation, original Groovy traits/properties/fields/methods/records/components/script functions/import source syntax, CLI/API/history and Groovy asset isolation, original Scala namespaces/classes/objects/properties/givens/extension headers/enum cases/import source syntax, CLI/API/history and Scala asset isolation, original Swift structs/extensions/functions/labels/subscripts/properties/enum cases/source syntax, CLI/API/history and Swift asset isolation, Objective-C original interfaces/implementations/selectors/properties/ivars and module/synthesis syntax, six original enum/options macro profiles, separate C++ declarations and raw mixed selector headers, auxiliary-grammar isolation, explicit Objective-C++ gaps, original selector source proofs and stable history through CLI/API, C/C++ original structural declarations/prototypes/definitions/preprocessor contexts and source proofs, workspace binding, original Rust Cargo/workspace/shared-crate imports, scoped aliases, direct functions/inherent methods/callbacks and source closure ownership, separate compilation identities and CRLF/emoji declaration/source proofs through CLI/API, Axum 0.7/0.8, Actix Web 4, Rocket 0.5 and Warp 0.3/0.4 native routes/mounts/attributes/filter trees/original handlers/leaves/request flows through CLI/API, original C# MSBuild project references/namespace/static/alias/global Using items, logical partial fragments, direct calls/lambdas and original declaration/source proofs, ASP.NET 8–10 minimal hosting/groups/source helpers/method arrays, MVC attributes/conventional routes/partial original actions and original handler leaves and request-flow projections through CLI/API, original Java/Kotlin Maven imports/static members/aliases/declaration proofs, scoped direct JVM calls and original Spring MVC/WebFlux Java/Kotlin handler/request flows through CLI/API, Ruby literal loads/scopes/original paths, namespace reopenings/direct methods/initializers and lazy Rails/Zeitwerk original autoload/inflection evidence, Rails resources/original controller actions/private callback references/HTTP request flows/source proofs and inflection license, dynamic/conditional gaps, Go imports/build alternatives/lexical calls/concrete callbacks and net/http/Chi/Gin/Echo 4–5/Fiber 2–3/Gorilla router mounts/factories/original-handler flows, Vue/Svelte/Astro embedded scripts, Vue templates/events/nested lazy routes, Svelte callbacks/Kit v3 pages/loads/actions/HTTP handlers, Astro 7 pages/layouts/islands/runtime APIs/static output, Nuxt 4 nested pages/auto-components/fetch/original handlers, Express/Nest/FastAPI/Flask/Django registrations/handlers, Python imports/calls, static UI, API, history workers, signals and npm exec passed.');
+  packagedChecksPassed=true;
+} catch(error) {
+  packageFailure=error;throw error;
 } finally {
-  await rm(temporary, { recursive: true, force: true });
+  try {
+    if(evidence){
+      const collected=await capturePackageEvidence({temporary,output:evidence,packagedChecksPassed,error:packageFailure?.stack??packageFailure?.message});
+      console.log('Package evidence: '+evidence+' ('+collected.portableReceipts.length+' portable receipts, '+(collected.passed?'complete':'incomplete or failed')+')');
+      if(packagedChecksPassed)assert.equal(collected.passed,true,'Successful package checks lack complete retained evidence');
+    }
+  } catch(error) {
+    evidenceCollectionFailed=true;
+    if(packageFailure)throw new AggregateError([packageFailure,error],'Package check and evidence collection failed');throw error;
+  } finally {
+    if(evidence&&(!packagedChecksPassed||evidenceCollectionFailed))console.error('Retained failed package scratch: '+temporary);
+    else await rm(temporary, { recursive: true, force: true });
+  }
 }

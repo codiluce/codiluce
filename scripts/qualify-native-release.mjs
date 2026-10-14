@@ -18,7 +18,7 @@ const commands=[
   {name:'tests',executable:process.execPath,parameters:['--experimental-sqlite','--import','tsx','--test','--test-concurrency=4',...testFiles],requiresInstall:true},
   {name:'typecheck',executable:process.execPath,parameters:[npmCli,'run','typecheck'],requiresInstall:true},
   {name:'capability-docs',executable:process.execPath,parameters:['scripts/generate-compatibility-docs.mjs','--check'],requiresInstall:true},
-  {name:'installed-package',executable:process.execPath,parameters:[npmCli,'run','test:package'],requiresInstall:true},
+  {name:'installed-package',executable:process.execPath,parameters:[npmCli,'run','test:package','--','--evidence-dir',path.join(output,'installed-package-evidence')],requiresInstall:true,packageEvidence:'installed-package-evidence'},
 ];
 if(args.includes('--plan'))console.log(JSON.stringify({root,output,node:process.version,minimum:manifest.engines.node,commands},null,2));
 else{const receipt=await qualify({root,output,commands});console.log(JSON.stringify({output,qualified:receipt.qualified,sourceUnchanged:receipt.sourceUnchanged,checks:receipt.checks.map(({name,status})=>({name,status}))},null,2));if(!receipt.qualified)process.exitCode=1;}
