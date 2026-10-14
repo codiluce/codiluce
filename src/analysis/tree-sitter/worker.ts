@@ -13,6 +13,7 @@ import {extractErbScripts,extractLiteralScripts} from './erb-script.js';
 import {extractRazor,razorHostProjection,razorIssue,finishRazor} from './razor-structure.js';
 import {extractLiquid,liquidHostProjection,liquidIssue,extractLiquidBodyHosts,finishLiquid} from './liquid-structure.js';
 import {extractTemplateHost} from './embedded-host.js';
+import {createNativeWasmMemory,nativeWasmWorkerLimit} from './wasm-memory.js';
 
 const loaded = new Map<string, { parser: Parser; query: Query }>();
 function reply(id:number,response:{facts?:StructureFacts;error?:string}):void {
@@ -20,7 +21,8 @@ function reply(id:number,response:{facts?:StructureFacts;error?:string}):void {
   process.send?.({id,type:'completed',completedAtNs:process.hrtime.bigint().toString(),bytes:payload.byteLength});
   process.send?.({id,type:'result',payload});
 }
-const initialized = Parser.init();
+const wasm = createNativeWasmMemory(nativeWasmWorkerLimit(process.argv.slice(2)));
+const initialized = Parser.init({wasmMemory: wasm.memory});
 async function load(language: string): Promise<{ parser: Parser; query: Query }> {
   await initialized;
   let entry = loaded.get(language);
@@ -77,10 +79,14 @@ async function handle(job: { id: number; language: string; content: string; obje
         }
         facts=extractObjcMacroProfiles(facts,job.content);
       }
+      wasm.assertAvailable();
       reply(job.id,{facts});
     }
     finally { tree.delete(); }
-  } catch (error) { reply(job.id,{error:error instanceof Error?error.message:String(error)}); }
+  } catch (error) {
+    try {wasm.assertAvailable();} catch (memoryError) {error=memoryError;}
+    reply(job.id,{error:error instanceof Error?error.message:String(error)});
+  }
 }
 let pending = Promise.resolve();
 process.on('message', (job: Parameters<typeof handle>[0]) => { pending = pending.then(() => handle(job)); });

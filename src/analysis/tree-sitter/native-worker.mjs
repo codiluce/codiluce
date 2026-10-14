@@ -5293,6 +5293,37 @@ function extractLiquidBodyHosts(content, facts, bodyTags = true) {
   syntax.host.regions.sort((a, b) => a.start - b.start);
 }
 
+// src/analysis/tree-sitter/wasm-memory.ts
+var NATIVE_WASM_MEMORY_LIMITS = Object.freeze({ initialBytes: 32 * 1024 * 1024, maxBytes: 256 * 1024 * 1024, pageBytes: 65536 });
+function nativeWasmMemoryLimit(bytes = NATIVE_WASM_MEMORY_LIMITS.maxBytes) {
+  if (!Number.isSafeInteger(bytes) || bytes < NATIVE_WASM_MEMORY_LIMITS.initialBytes || bytes > NATIVE_WASM_MEMORY_LIMITS.maxBytes || bytes % NATIVE_WASM_MEMORY_LIMITS.pageBytes) throw Error("Native WASM memory limit must be page aligned between 32 and 256 MiB");
+  return bytes;
+}
+function nativeWasmWorkerLimit(args) {
+  if (!args.length) return NATIVE_WASM_MEMORY_LIMITS.maxBytes;
+  if (args.length !== 1 || !/^--max-wasm-bytes=\d+$/.test(args[0])) throw Error("Invalid owned native WASM argument");
+  return nativeWasmMemoryLimit(Number(args[0].slice("--max-wasm-bytes=".length)));
+}
+function createNativeWasmMemory(bytes = NATIVE_WASM_MEMORY_LIMITS.maxBytes) {
+  const maxBytes = nativeWasmMemoryLimit(bytes), memory = new WebAssembly.Memory({ initial: NATIVE_WASM_MEMORY_LIMITS.initialBytes / NATIVE_WASM_MEMORY_LIMITS.pageBytes, maximum: maxBytes / NATIVE_WASM_MEMORY_LIMITS.pageBytes });
+  const grow = memory.grow.bind(memory);
+  let growthFailed = false;
+  Object.defineProperty(memory, "grow", { value(pages) {
+    try {
+      const previous = grow(pages);
+      growthFailed = false;
+      return previous;
+    } catch (error) {
+      growthFailed = true;
+      throw error;
+    }
+  } });
+  const assertAvailable = () => {
+    if (growthFailed) throw Error(`Native Tree-sitter WASM memory exhausted at ${maxBytes} bytes`);
+  };
+  return { memory, maxBytes, assertAvailable };
+}
+
 // src/analysis/tree-sitter/worker.ts
 var loaded = /* @__PURE__ */ new Map();
 function reply(id, response) {
@@ -5300,7 +5331,8 @@ function reply(id, response) {
   process.send?.({ id, type: "completed", completedAtNs: process.hrtime.bigint().toString(), bytes: payload.byteLength });
   process.send?.({ id, type: "result", payload });
 }
-var initialized = Parser.init();
+var wasm = createNativeWasmMemory(nativeWasmWorkerLimit(process.argv.slice(2)));
+var initialized = Parser.init({ wasmMemory: wasm.memory });
 async function load(language) {
   await initialized;
   let entry = loaded.get(language);
@@ -5436,11 +5468,17 @@ async function handle(job) {
         }
         facts = extractObjcMacroProfiles(facts, job.content);
       }
+      wasm.assertAvailable();
       reply(job.id, { facts });
     } finally {
       tree.delete();
     }
   } catch (error) {
+    try {
+      wasm.assertAvailable();
+    } catch (memoryError) {
+      error = memoryError;
+    }
     reply(job.id, { error: error instanceof Error ? error.message : String(error) });
   }
 }

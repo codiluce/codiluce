@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { performance } from 'node:perf_hooks';
 import { deserialize } from 'node:v8';
 import type { StructureFacts } from '../facts.js';
+import {nativeWasmMemoryLimit} from './wasm-memory.js';
 
 const WORKER = fileURLToPath(new URL('./native-worker.mjs', import.meta.url));
 export interface ParserGenerationLimits { maxJobs: number; maxSourceBytes: number }
@@ -15,7 +16,10 @@ export class StructureParser<Facts = StructureFacts> {
   private closing = 0;
   private readonly generationLimits?:Readonly<ParserGenerationLimits>;
   private jobs=0;private sourceBytes=0;private peakJobs=0;private peakSourceBytes=0;private generations=0;
-  constructor(private readonly timeoutMs = 10_000, private readonly worker = WORKER, private readonly execArguments?:string[], private readonly resetOnReportedError=true, generationLimits?:ParserGenerationLimits) {
+  constructor(private readonly timeoutMs = 10_000, private readonly worker = WORKER, private readonly execArguments?:string[], private readonly resetOnReportedError=true, generationLimits?:ParserGenerationLimits, private readonly wasmMemoryBytes?:number) {
+    // Only an owned conformance caller can lower the actual bundled worker's
+    // memory. Repository configuration never selects this seam or raises it.
+    if(wasmMemoryBytes!==undefined){if(worker!==WORKER)throw Error('Native WASM limits require the owned Tree-sitter worker');nativeWasmMemoryLimit(wasmMemoryBytes);}
     if(generationLimits!==undefined){
       if(!generationLimits||typeof generationLimits!=='object')throw Error('Parser generation limits require positive safe integers');
       for(const limit of [generationLimits.maxJobs,generationLimits.maxSourceBytes])if(!Number.isSafeInteger(limit)||limit<1)throw Error('Parser generation limits require positive safe integers');
@@ -128,7 +132,7 @@ export class StructureParser<Facts = StructureFacts> {
     // retirement barrier that guards queued source requests.
     if(this.closing||this.retiring.size)throw Error('Parser worker is retiring');
     if(this.child&&(this.child.exitCode!==null||this.child.signalCode!==null))this.retire();
-    if (!this.child) {this.child = fork(this.worker, [], {
+    if (!this.child) {this.child = fork(this.worker, this.wasmMemoryBytes===undefined?[]:[`--max-wasm-bytes=${this.wasmMemoryBytes}`], {
       execArgv: this.execArguments ?? ['--max-old-space-size=256'],
       serialization: 'advanced', stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
     });this.generations++;}

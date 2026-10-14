@@ -41,6 +41,7 @@ const inputs=[
   "src/analysis/tree-sitter/template-facts.ts",
   "src/analysis/tree-sitter/vbnet-source.ts",
   "src/analysis/tree-sitter/vbnet-structure.ts",
+  "src/analysis/tree-sitter/wasm-memory.ts",
   "src/analysis/tree-sitter/worker.ts"
 ];
 

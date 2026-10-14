@@ -495,6 +495,11 @@ const compiler=new TemplateScriptParser();try{compiler.prewarm();const retiremen
   await cp(path.join(root,'tests/fixtures/typescript-codec-structure-qualification.mjs'),structureCheck);
   await run(process.execPath,['--experimental-sqlite',structureCheck,pathToFileURL(path.join(installed,'dist/src/')).href,structureReceipt],consumer);
   const structure=JSON.parse(await readFile(structureReceipt,'utf8'));assert.ok(structure.passed&&!structure.sourceLoader);assert.equal(structure.caseCount,4);assert.equal(structure.parentFullValueV8Serializations,0);
+  const wasmCheck=path.join(consumer,'native-wasm-memory-qualification.mjs'),wasmReceipt=path.join(consumer,'native-wasm-memory-validation.json'),wasmOriginals=path.join(consumer,'native-wasm-originals');
+  await cp(path.join(root,'tests/fixtures/native-wasm-memory-qualification.mjs'),wasmCheck);
+  await cp(path.join(root,'tests/fixtures/structure'),wasmOriginals,{recursive:true});
+  await run(process.execPath,[wasmCheck,pathToFileURL(path.join(installed,'dist/src/')).href,wasmReceipt,pathToFileURL(wasmOriginals+path.sep).href],consumer);
+  const wasmValidation=JSON.parse(await readFile(wasmReceipt,'utf8'));assert.ok(wasmValidation.passed&&!wasmValidation.sourceLoader);assert.equal(wasmValidation.caseCount,4);assert.equal(wasmValidation.profiles.length,20);assert.equal(wasmValidation.limits.maxBytes,256*1024*1024);
   const bin = path.join(installed, 'bin/codiluce.js');
   for (const grammar of grammarManifest.grammars) assert.equal(createHash('sha256').update(await readFile(path.join(installed, 'dist/grammars', grammar.file))).digest('hex'), grammar.sha256);
   const dependencies = JSON.parse((await npm(['ls', '--omit=dev', '--all', '--json'], consumer)).stdout).dependencies[manifest.name].dependencies;
