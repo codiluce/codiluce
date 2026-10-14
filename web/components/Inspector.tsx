@@ -83,6 +83,8 @@ function formatValue(key: string, value: unknown): string {
 function Selection() {
   const store = useStore();
   const selection = useAtlas(state => state.selection)!;
+  const visibility = useAtlas(state => state.mapVisibility);
+  const writable = useAtlas(state => state.meta?.mapVisibility?.writable);
   const node = selection.node, entity = selection.entity;
   if (!node) return selection.entityStatus === 'error' ? <p className="note error">Could not load this entity: {selection.error}</p> : <p className="absent">Locating…</p>;
   const container = isContainer(node);
@@ -97,9 +99,11 @@ function Selection() {
       </div>
       <div className="inspector-actions">
         {sourceable && <button className="button primary small" onClick={() => store.openCode()} title="Read its code in the middle of the screen">Code</button>}
-        <button className="button small" onClick={() => { store.setCenter('map'); store.navigator?.flyTo(node, { mode: container ? 'enter' : 'focus' }); }}>Zoom to</button>
+        <button className="button small" disabled={node.hidden} onClick={() => { store.setCenter('map'); store.navigator?.flyTo(node, { mode: container ? 'enter' : 'focus' }); }}>Zoom to</button>
+        {node.hidden && node.path ? <button className="button small" disabled={visibility.busy || !writable} onClick={() => void store.revealOnMap(node)}>Reveal on map</button> : node.path && node.path !== '.' && ['application', 'directory', 'file'].includes(node.type) && <button className="button small" disabled={visibility.busy || !writable} onClick={() => void store.hideFromMap(node)}>Hide from map</button>}
         <AnalysisButtons node={node} />
       </div>
+      {node.hidden && <p className="note">Hidden from map. Its code and connections remain available.</p>}
       <SummaryCard node={node} />
       <FamilyChip node={node} />
       <ArchetypeChip node={node} />
@@ -564,6 +568,7 @@ function RelationRow({ item, emphasized, selectedName }: { item: RelationItem; e
           {item.change && <ChangeBadge status={item.change} />}
           <span className="relation-phrase" style={{ color, background: `color-mix(in srgb, ${color} 16%, transparent)` }} title={`Graph relation: ${item.type} (${item.direction})`}>{relationPhrase(item.type, item.direction)}</span>
           <span className="label" title={item.other.name}>{item.other.name}</span>
+          {item.other.hidden && <span className="chip">Hidden from map</span>}
         </div>
         <div className="row-sub">{typeLabel(item.other.type, item.other.role)}{item.other.path ? ` · ${item.other.path}` : ''}{typeof item.metadata?.specifier === 'string' ? ` · “${item.metadata.specifier}”` : ''}{siteSummary(item.metadata)}</div>
         {item.inside && <div className="row-sub">through <button className="button link small" onClick={() => void store.select(item.inside!.id, { fly: true })}>{item.inside.name}</button> in this file</div>}

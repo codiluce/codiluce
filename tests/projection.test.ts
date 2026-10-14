@@ -388,6 +388,59 @@ test('steps and request flows are not capped; steps stop at navigation to anothe
     assert.deepEqual(keys, sorted, `order of what ${parent.node?.name ?? parent.id} leads to`);
   }
 });
+
+test('page flows do not execute returned hook functions; called and bound functions retain their guards', async () => {
+  const directory = await createFixture();
+  await mkdir(path.join(directory, 'frontend/src/app/flow-review'));
+  await writeFile(path.join(directory, 'frontend/src/app/flow-review/page.tsx'), `
+import { useEffect } from 'react';
+function deleteAccount() { localStorage.removeItem('account'); return fetch('https://api.fixture.test/auth/login', { method: 'POST' }); }
+function refreshToken() { localStorage.setItem('token', 'refreshed'); }
+function loadProfile() { localStorage.getItem('profile'); }
+function useTools() {
+  const initialize = () => localStorage.getItem('auth');
+  useEffect(initialize, []);
+  return { deleteAccount, refreshToken, loadProfile, initialize };
+}
+function SongCard({ enabled }: { enabled: boolean }) {
+  const { refreshToken } = useTools();
+  return enabled && <button onClick={refreshToken}>Refresh</button>;
+}
+function ExerciseCard() {
+  const solveExercise = () => localStorage.setItem('answer', 'correct');
+  return <button onClick={solveExercise}>Solve</button>;
+}
+function CardRenderer({ kind }: { kind: string }) {
+  if (kind === 'song') return <SongCard enabled />;
+  return <ExerciseCard />;
+}
+export default function FlowReview() {
+  const { loadProfile } = useTools();
+  loadProfile();
+  return <CardRenderer kind="song" />;
+}
+`);
+  const indexed = await indexRepository(directory);
+  const localStore = new GraphStore(':memory:'); localStore.save(indexed);
+  try {
+    const projection = new ProjectionService(localStore, { root: directory });
+    const named = (name: string) => indexed.entities.find(entity => entity.name === name)!;
+    const page = named('/flow-review'), deleted = named('deleteAccount');
+    const references = indexed.relations.filter(relation => relation.to === deleted.id && relation.type === 'references');
+    assert.ok(references.some(relation => (relation.metadata?.forms as string[] | undefined)?.includes('value')), 'the nominal reference remains available as evidence');
+    const steps = await projection.steps(page.id, { maxFileBytes: 1 << 20 });
+    assert.ok(!steps.steps.some(step => step.node?.id === deleted.id), 'returning a callable does not run it');
+    for (const name of ['loadProfile', 'initialize', 'refreshToken', 'solveExercise']) assert.ok(steps.steps.some(step => step.node?.id === named(name).id), name);
+    const refresh = steps.links.find(link => link.to === named('refreshToken').id)!;
+    assert.equal(refresh.event, 'onClick');
+    assert.ok(refresh.when.some(guard => guard.text === "kind === 'song'"), 'conditions in folded renderers survive');
+    assert.ok(refresh.when.some(guard => guard.text === 'enabled'), 'conditions at the binding survive');
+    assert.ok(!projection.flows({ entity: deleted.id }).items.some(flow => flow.id === page.id), 'catalog coverage uses the same behavior boundary');
+    const request = await projection.requestFlow(entityId('POST /auth/login', 'api_endpoint'), { maxFileBytes: 1 << 20 });
+    assert.ok(request.nodes.some(node => node.node?.id === deleted.id), 'the request is still indexed');
+    assert.ok(!request.nodes.some(node => node.node?.id === page.id), 'a returned value does not establish a page as a caller');
+  } finally { localStore.close(); }
+});
 test('tables sit in a Database district; their blast radius reaches code, endpoints, pages and dependent tables', () => {
   const projection = new ProjectionService(store);
   const users = entityId('users', 'database_table'), backend = entityId('backend', 'application');

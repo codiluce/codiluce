@@ -6,6 +6,7 @@
 // compared with). Changing the view swaps in a new scene that is prefetched
 // for the containers currently open, so the camera and the user's place on
 // the map are kept; a view epoch drops responses that belong to an old view.
+import type { MapVisibilityAction } from '@engine/projection/dto';
 import type { Entity, Relation } from '@engine/core/graph';
 import type { AggregateEdgesPage, AggregateGroup, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FlowList, FlowSummary, ImpactItem, ImpactResult, LocateResult, NodeSummary, ProjectionMeta, Rect, RelationItem, RequestFlow, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineEntry, TimelineResponse, ViewKey } from '@engine/projection/dto';
 import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, FamiliesResult, FeaturesResult, FileListResult, FlowStatus, ImpactGroupBy, PersonAuthorship } from '@engine/projection/dto';
@@ -193,6 +194,8 @@ export interface TourState {
 }
 export interface ViewState { level: Level; focus: { id: string; name: string; type: string }[]; zoom: number; visible: { id: string; name: string; type: string }[]; truncated: boolean }
 export interface AtlasState {
+  mapVisibility: { open: boolean; busy: boolean; error?: string; notice?: string; undo?: MapVisibilityAction };
+  mapMenu?: { node: NodeSummary; x: number; y: number };
   status: 'loading' | 'ready' | 'error'; error?: string;
   meta?: ProjectionMeta;
   selection?: SelectionState;
@@ -319,7 +322,7 @@ export class AtlasStore {
       status: 'loading', view: { level: 'Applications', focus: [], zoom: 1, visible: [], truncated: false },
       relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' },
       history: { entries: [], index: -1 }, showDiagnostics: prefs.showDiagnostics ?? true, themeId: prefs.themeId ?? DEFAULT_THEME, moreThemes: prefs.moreThemes ?? false, shapes: prefs.shapes ?? true,
-      staleIndex: false, sceneRevision: 0,
+      staleIndex: false, sceneRevision: 0, mapVisibility: { open: false, busy: false },
       impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '', open: {} }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, families: { show: false, status: 'idle' }, features: { status: 'idle', open: {} },
       people: { window: prefs.peopleWindow ?? 'all', show: false, status: 'idle', open: {} }, center: 'map',
       timeline: { open: false, status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true, split: prefs.split ?? true, regionLevel: prefs.regionLevel ?? 'auto', regions: { status: 'idle' } },
@@ -373,12 +376,20 @@ export class AtlasStore {
   startPolling(intervalMs = 30_000): void {
     if (this.pollTimer) clearInterval(this.pollTimer);
     this.pollTimer = setInterval(async () => {
-      try { const meta = await this.api.meta(); if (this.state.meta && meta.run.id !== this.state.meta.run.id) this.set({ staleIndex: true }); } catch { /* server may be restarting */ }
+      try {
+        const meta = await this.api.meta();
+        if (this.state.meta && meta.run.id !== this.state.meta.run.id) this.set({ staleIndex: true });
+        else if (!this.state.mapVisibility.busy && meta.mapVisibility?.revision !== this.state.meta?.mapVisibility?.revision) {
+          this.set(state => ({ mapVisibility: { ...state.mapVisibility, busy: true, undo: undefined, notice: undefined } }));
+          try { await this.refreshMapLayout(); }
+          finally { this.set(state => ({ mapVisibility: { ...state.mapVisibility, busy: false } })); }
+        }
+      } catch { /* server may be restarting */ }
     }, intervalMs);
   }
   async reload(): Promise<void> {
     const selected = this.state.selection?.id;
-    this.api.clear(); this.childLoads.clear();
+    this.api.clear(); this.childLoads.clear(); this.clearMapEvolution();
     this.set({ selection: undefined, relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' }, evidence: undefined, source: undefined });
     await this.init();
     if (selected && !this.state.selection) await this.select(selected, { fly: false, recordHistory: false }).catch(() => undefined);
@@ -428,7 +439,7 @@ export class AtlasStore {
       this.place(located, epoch);
       this.set(state => state.selection?.id === id ? { selection: { ...state.selection, node: located.node, locate: located } } : {});
       this.followCode();
-      if (options.fly !== false) this.navigator?.flyTo(located.node, { mode: options.mode ?? (isContainer(located.node) ? 'enter' : 'focus') });
+      if (options.fly !== false && !located.node.hidden) this.navigator?.flyTo(located.node, { mode: options.mode ?? (isContainer(located.node) ? 'enter' : 'focus') });
       void this.loadChildren(located.spatialAncestors.map(node => node.id).filter(nodeId => !this.scene.childList(nodeId).complete));
       const isEntity = located.node.kind === 'entity';
       const fileAncestor = [...located.canonicalAncestors].reverse().find(item => item.type === 'file');
@@ -617,6 +628,45 @@ export class AtlasStore {
   setMoreThemes(moreThemes: boolean): void { this.set({ moreThemes }); this.savePrefs(); }
   setShapes(shapes: boolean): void { this.set({ shapes }); this.savePrefs(); }
 
+  // Map visibility -----------------------------------------------------------
+  openMapMenu(node: NodeSummary, x: number, y: number): void { this.set({ mapMenu: { node, x, y } }); }
+  closeMapMenu(): void { this.set({ mapMenu: undefined }); }
+  showHiddenPaths(open: boolean): void { this.set(state => ({ mapMenu: undefined, mapVisibility: { ...state.mapVisibility, open } })); }
+  dismissMapNotice(): void { this.set(state => ({ mapVisibility: { ...state.mapVisibility, notice: undefined, undo: undefined, error: undefined } })); }
+  async changeMapVisibility(action: MapVisibilityAction, notice = 'Map visibility updated.', recordUndo = true): Promise<void> {
+    if (this.state.mapVisibility.busy) return;
+    const previous = this.state.meta?.mapVisibility;
+    this.set(state => ({ mapMenu: undefined, mapVisibility: { ...state.mapVisibility, busy: true, error: undefined } }));
+    try {
+      const result = await this.api.updateMapVisibility(action);
+      this.set(state => ({ meta: state.meta && { ...state.meta, mapVisibility: result }, mapVisibility: { ...state.mapVisibility, notice, undo: recordUndo && previous ? { action: 'set-local', hidden: previous.hidden, revealed: previous.revealed, disabledShared: previous.disabledShared } : undefined }, timeline: { ...state.timeline, evolution: { status: 'idle' }, regions: { status: 'idle' } } }));
+      await this.refreshMapLayout();
+    } catch (error) { this.set(state => ({ mapVisibility: { ...state.mapVisibility, error: error instanceof Error ? error.message : String(error) } })); }
+    finally { this.set(state => ({ mapVisibility: { ...state.mapVisibility, busy: false } })); }
+  }
+  private clearMapEvolution(): void {
+    this.pause(false); this.clearPreview(); this.aborts.get('evolution')?.abort();
+    this.evolution = undefined; this.evolutionLoad = undefined; this.evolutionKey = '';
+    this.setTimeline({ evolution: { status: 'idle' }, regions: { status: 'idle' } });
+  }
+  private async refreshMapLayout(): Promise<void> {
+    this.api.clear(); this.clearMapEvolution();
+    await this.applyView();
+    if (this.state.timeline.error) throw new Error(`Map preferences saved, but the map could not reload: ${this.state.timeline.error}`);
+    this.navigator?.fitAll();
+    if (this.state.timeline.open) void this.loadEvolution();
+  }
+  hideFromMap(node: NodeSummary): Promise<void> {
+    if (!node.path || !['directory', 'file', 'application'].includes(node.type) || node.path === '.') return Promise.resolve();
+    return this.changeMapVisibility({ action: 'hide', path: node.path }, `${node.path} hidden from the map.`);
+  }
+  async revealOnMap(node: NodeSummary): Promise<void> {
+    if (!node.path || this.state.mapVisibility.busy) return;
+    await this.changeMapVisibility({ action: 'reveal', path: node.path }, `${node.path} revealed on the map.`);
+    if (!this.state.mapVisibility.error) await this.select(node.id, { fly: true });
+  }
+  async undoMapVisibility(): Promise<void> { const action = this.state.mapVisibility.undo; if (action) await this.changeMapVisibility(action, 'Map visibility restored.', false); }
+
   // History -----------------------------------------------------------------
   private setTimeline(patch: Partial<TimelineState>): void { this.set(state => ({ timeline: { ...state.timeline, ...patch } })); }
   /** The snapshot/baseline pair every request reads. */
@@ -751,10 +801,11 @@ export class AtlasStore {
     this.evolutionLoad ??= (async () => {
       const key = evolutionKey(this.state.timeline.data);
       this.setTimeline({ evolution: { status: 'loading', progress: 0 } });
+      const signal = this.abortable('evolution');
       try {
         for (;;) {
-          const response = await this.api.evolution();
-          if (this.disposed) return false;
+          const response = await this.api.evolution(signal);
+          if (signal.aborted || this.disposed) return false;
           if (response.status === 'ready') {
             this.evolution = new Evolution(response); this.evolutionKey = key;
             this.setTimeline({ evolution: { status: 'ready' } });
@@ -764,9 +815,9 @@ export class AtlasStore {
           await new Promise(resolve => setTimeout(resolve, 400));
         }
       } catch (error) {
-        if (!this.disposed) this.setTimeline({ evolution: { status: 'error', error: error instanceof Error ? error.message : String(error) } });
+        if (!isAbort(error) && !this.disposed) this.setTimeline({ evolution: { status: 'error', error: error instanceof Error ? error.message : String(error) } });
         return false;
-      } finally { this.evolutionLoad = undefined; }
+      } finally { if (!signal.aborted) this.evolutionLoad = undefined; }
     })();
     return this.evolutionLoad;
   }
@@ -913,7 +964,7 @@ export class AtlasStore {
 
   // Blast radius and steps ----------------------------------------------------
   /** Identity of the current view, to tell whether loaded results still belong to it. */
-  viewStamp(): string { const meta = this.state.meta; return `${meta?.snapshot.id ?? ''}|${meta?.comparison?.baseline.id ?? ''}`; }
+  viewStamp(): string { const meta = this.state.meta; return `${meta?.snapshot.id ?? ''}|${meta?.comparison?.baseline.id ?? ''}|${meta?.mapVisibility?.revision ?? ''}`; }
   // The middle of the screen ---------------------------------------------------
   /** Bring the map, or an open tool, to the middle (the map then shows as an overview in a corner). */
   setCenter(view: CenterView): void {

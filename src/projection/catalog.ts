@@ -19,6 +19,7 @@
 // it: like assets, it is not measured). Pure and bounded; built once per view.
 import { CODE_LANGUAGES, FLOW_LANGUAGES } from '../core/languages.js';
 import type { ProjectionIndex, ProjectionNode } from './hierarchy.js';
+import { followsBehavior } from './behavior.js';
 
 export type CatalogKind = 'page' | 'request' | 'command' | 'schedule' | 'unmatched';
 export const CATALOG_KINDS: CatalogKind[] = ['page', 'request', 'command', 'schedule', 'unmatched'];
@@ -56,7 +57,7 @@ export function pageEndpoints(index: ProjectionIndex): Set<string> {
  * entering another page through navigation, plus models mapping the tables it
  * reaches. Bounded by `SLICE_LIMIT` entities.
  */
-export function forwardSlice(index: ProjectionIndex, entry: string, pages: Set<string>): { members: Set<string>; truncated: boolean } {
+export function forwardSlice(index: ProjectionIndex, entry: string, pages: Set<string>, referenceMetadata: ReadonlyMap<string, Record<string, unknown>> = new Map()): { members: Set<string>; truncated: boolean } {
   const members = new Set<string>([entry]);
   const queue = [entry];
   let truncated = false;
@@ -65,6 +66,7 @@ export function forwardSlice(index: ProjectionIndex, entry: string, pages: Set<s
     for (const i of index.adjacency.get(id) ?? []) {
       const relation = index.relations[i]!;
       if (relation.from !== id || relation.to === id || relation.change === 'removed' || !SLICE_FOLLOW.has(relation.type) || members.has(relation.to)) continue;
+      if (!followsBehavior(relation.type, referenceMetadata.get(relation.id) ?? {})) continue;
       if (members.size >= SLICE_LIMIT) { truncated = true; break; }
       members.add(relation.to);
       // Navigation reaches another page's endpoint: that is another journey.

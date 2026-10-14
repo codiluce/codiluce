@@ -12,6 +12,7 @@
 // to its caller) comes last. Pure.
 import type { FoldedEntity, FlowLane, NodeSummary, RequestFlow, RequestFlowNode, StepsResult } from '@engine/projection/dto';
 import type { PlaybackState } from './playback';
+import { pageStepBranch, pageStepGroups } from './page-steps';
 
 export type StopTone = 'client' | 'call' | 'route' | 'server' | 'data' | 'response' | 'return' | 'console';
 export interface MapStop {
@@ -49,6 +50,8 @@ export interface MapBranch {
   waves: number[][];
   /** Edges (indices into `edges`) with the wave each one flows in. */
   links: { edge: number; wave: number }[];
+  /** Page branches include only their own effects, including effects on a shared owner. */
+  pinKeys?: string[];
 }
 export interface MapFlow { key: string; title: string; subtitle?: string; stops: MapStop[]; edges: MapEdge[]; pins: MapPin[]; members: MapMember[]; branches: MapBranch[] }
 
@@ -183,7 +186,36 @@ export function fromSteps(result: StepsResult): MapFlow {
     ...result.links.flatMap(link => link.via),
   ]);
   const map = { key: `steps:${result.anchor.id}`, title: result.anchor.name, subtitle: 'what happens from here', stops, edges, pins, members };
-  return { ...map, branches: branchesOf(map) };
+  return { ...map, branches: result.anchor.type === 'route' ? pageBranches(result, map) : branchesOf(map) };
+}
+
+function pageBranches(result: StepsResult, map: Pick<MapFlow, 'stops' | 'edges'>): MapBranch[] {
+  const groups = pageStepGroups(result);
+  const stopOf = new Map(map.stops.map((stop, i) => [stop.key, i]));
+  const edgeOf = new Map(map.edges.map((edge, i) => [edge.key, i]));
+  const branches: MapBranch[] = [];
+  for (const [kind, items] of [['initialization', groups.initialization], ['interactions', groups.interactions]] as const) {
+    for (const group of items) for (const choice of group.choices) {
+      const branch = pageStepBranch(result, choice, true);
+      const layerOf = new Map(branch.steps.map(step => [step.id, step.layer]));
+      const waves: number[][] = [];
+      for (const step of branch.steps) {
+        const stop = stopOf.get(step.id);
+        if (stop !== undefined) (waves[step.layer] ??= []).push(stop);
+      }
+      // Effects have no stops, so they must not leave holes in playback waves.
+      for (let i = 0; i < waves.length; i++) waves[i] ??= [];
+      const links = branch.links.flatMap(link => {
+        const edge = edgeOf.get(link.id);
+        return edge === undefined ? [] : [{ edge, wave: link.back ? waves.length : layerOf.get(link.from) ?? 0 }];
+      });
+      branches.push({ key: choice.id, head: stopOf.get(choice.head) ?? stopOf.get(choice.link.from) ?? 0, label: choice.label,
+        ...(choice.link.event ? { event: choice.link.event } : {}), group: kind === 'initialization' ? `Initialization · ${group.label}` : group.label,
+        groupTitle: kind === 'initialization' ? `Work reachable when ${result.anchor.name} opens` : `Controls bound in ${group.label}`,
+        waves, links, pinKeys: branch.steps.filter(step => step.effect).map(step => step.id) });
+    }
+  }
+  return branches.length ? branches : branchesOf(map);
 }
 function membersOf(items: (MapMember | FoldedEntity)[]): MapMember[] {
   const byId = new Map<string, MapMember>();
@@ -380,7 +412,7 @@ export function flowAreas(flow: MapFlow, branch?: MapBranch): Set<string> {
   const stops = branch ? branch.waves.flat().map(index => flow.stops[index]!) : flow.stops;
   const reached = new Set(stops.map(stop => stop.entityId));
   for (const stop of stops) for (const id of stop.ancestors) areas.add(id);
-  for (const pin of flow.pins) if (reached.has(pin.after)) for (const id of pin.ownerAncestors) areas.add(id);
+  for (const pin of flow.pins) if (reached.has(pin.after) && (!branch?.pinKeys || branch.pinKeys.includes(pin.key))) for (const id of pin.ownerAncestors) areas.add(id);
   return areas;
 }
 /** What stays lit while a flow is shown: every entity it touches and the areas holding them. */

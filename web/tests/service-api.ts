@@ -1,6 +1,6 @@
 // AtlasApi backed by the server-side services (no HTTP), with optional
 // per-call delays and a call log. Shared by the store-level tests.
-import type { AuthorshipWindowKey, CatalogKind, NodeSummary, RegionLevel, SourceRequest, ViewKey } from '@engine/projection/dto';
+import type { MapVisibilityAction, AuthorshipWindowKey, CatalogKind, NodeSummary, RegionLevel, SourceRequest, ViewKey } from '@engine/projection/dto';
 import type { GraphStore } from '../../src/storage/sqlite.js';
 import type { ProjectionService } from '../../src/projection/service.js';
 import type { HistoryService } from '../../src/history/service.js';
@@ -19,6 +19,8 @@ export class ServiceApi implements AtlasApi {
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
     try { await this.projection.prepare(this.view); return await work(); } catch (error) { throw new ApiError(404, error instanceof Error ? error.message : String(error)); }
   }
+  mapVisibility(signal?: AbortSignal) { return this.run('mapVisibility', '', signal, () => this.projection.mapVisibility()); }
+  updateMapVisibility(action: MapVisibilityAction) { return this.run('updateMapVisibility', '', undefined, () => this.projection.updateMapVisibility(action)); }
   setView(view: ViewKey) { this.view = { ...view }; }
   meta(signal?: AbortSignal) { return this.run('meta', '', signal, () => this.projection.meta(this.view)); }
   children(id: string, offset: number, limit: number, signal?: AbortSignal) { return this.run('children', id, signal, () => this.projection.children(id, { offset, limit, view: this.view })); }

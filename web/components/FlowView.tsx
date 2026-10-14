@@ -10,6 +10,7 @@ import { visibleCatalog } from '../lib/catalog';
 import { useAtlas, useStore } from './context';
 import { LanesBadge, LanesBody, LanesStatus, lanesSubtitle, lanesTitle, useLanesMotion } from './RequestFlows';
 import { StepsDiagram, StepsNotes, StepsOutline } from './StepsPanel';
+import { PageSteps } from './PageSteps';
 
 export function FlowView() {
   const store = useStore();
@@ -59,7 +60,9 @@ export function FlowView() {
         <div className="flow-steps">
           {steps?.status === 'loading' && !steps.data && <div className="rf-loading big"><span className="rf-spark" />Following calls, handlers and requests…</div>}
           {steps?.status === 'error' && <p className="note error">{steps.error}</p>}
-          {steps?.data && steps.anchor === view.id && (view.layout === 'diagram'
+          {steps?.data && steps.anchor === view.id && (steps.data.anchor.type === 'route'
+            ? <PageSteps key={steps.anchor} data={steps.data} layout={view.layout} />
+            : view.layout === 'diagram'
             ? <StepsDiagram data={steps.data} />
             : (
               <div className="flow-outline">

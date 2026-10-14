@@ -4,7 +4,7 @@ import type { NodeSummary, SearchPage } from '@engine/projection/dto';
 import { isAbort } from '../lib/api';
 import { typeLabel } from '../lib/format';
 import { LANES_TYPES, type AtlasStore } from '../lib/store';
-import { useStore } from './context';
+import { useAtlas, useStore } from './context';
 import { TypeBadge } from './TypeBadge';
 
 /** What a search result can be opened as, besides selecting it on the map: its flow (on the map, in lanes, as steps) and what depends on it. */
@@ -13,7 +13,9 @@ const ON_MAP: SearchAction = { key: 'map', text: 'On map', title: 'Play the flow
 const LANES: SearchAction = { key: 'lanes', text: 'Lanes', title: 'The flow that starts here in lanes, left to right', run: (store, item) => { void store.select(item.id, { fly: false }); void store.openFlowView({ id: item.id, title: item.name, lanes: true }, 'diagram'); } };
 const STEPS: SearchAction = { key: 'steps', text: 'What happens', title: 'What it sets in motion, as an outline of steps', run: (store, item) => { void store.select(item.id, { fly: false }); void store.openFlowView({ id: item.id, title: item.name, lanes: LANES_TYPES.has(item.type) }, 'outline'); } };
 const IMPACT: SearchAction = { key: 'impact', text: 'Impact', title: 'What depends on it, hop by hop', run: (store, item) => { void store.select(item.id, { fly: false }); void store.showImpact(item.id); } };
+const REVEAL: SearchAction = { key: 'reveal', text: 'Reveal on map', title: 'Show this hidden path on the map', run: (store, item) => { store.setCenter('map'); void store.revealOnMap(item); } };
 function actionsOf(item: NodeSummary): SearchAction[] {
+  if (item.hidden && item.path) return [REVEAL, IMPACT];
   if (item.kind !== 'entity') return [];
   if (LANES_TYPES.has(item.type)) return [ON_MAP, LANES, STEPS, IMPACT];
   if (item.type === 'route') return [ON_MAP, STEPS, IMPACT];
@@ -23,6 +25,7 @@ function actionsOf(item: NodeSummary): SearchAction[] {
 
 export function SearchBox() {
   const store = useStore();
+  const revision = useAtlas(state => state.meta?.mapVisibility?.revision);
   const [query, setQuery] = useState('');
   const [type, setType] = useState<string | undefined>();
   const [results, setResults] = useState<SearchPage | null>(null);
@@ -55,7 +58,7 @@ export function SearchBox() {
       store.api.search(text, type, controller.signal).then(page => { setResults(page); setResultsKey(`${text}\u0000${type ?? ''}`); setActive(0); setStatus('idle'); }).catch(failure => { if (!isAbort(failure)) { setStatus('error'); setError(failure instanceof Error ? failure.message : String(failure)); } });
     }, 140);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [query, type, store]);
+  }, [query, type, store, revision]);
   const currentKey = `${query.trim()}\u0000${type ?? ''}`;
   const fresh = resultsKey === currentKey;
   const choose = (index: number) => {
@@ -119,7 +122,7 @@ export function SearchBox() {
               <div key={item.id} id={`result-${index}`} role="option" aria-selected={index === active} className="search-result" onMouseDown={event => event.preventDefault()} onClick={() => choose(index)} onMouseEnter={() => setActive(index)}>
                 <TypeBadge type={item.type} role={item.role} />
                 <span className="name">{item.change && item.change.status !== 'unchanged' && <span className={`change-badge ${item.change.status}`} style={{ marginRight: 6 }}>{item.change.status}</span>}{item.name}</span>
-                <span className="where">{item.qualifiedName && item.qualifiedName !== item.name ? `${item.qualifiedName} · ` : ''}{item.breadcrumb || item.path}</span>
+                <span className="where">{item.hidden && <span className="chip">Hidden from map</span>}{item.qualifiedName && item.qualifiedName !== item.name ? `${item.qualifiedName} · ` : ''}{item.breadcrumb || item.path}</span>
                 {actionsOf(item).length > 0 && (
                   <span className="search-actions" role="group" aria-label={`Open ${item.name} as`}>
                     {actionsOf(item).map(action => (

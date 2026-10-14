@@ -1,7 +1,7 @@
 // "What happens from here": a forward walk from an anchor (a page, an
 // endpoint, a component or any function) drawn as typed steps.
 //
-// The walk follows routes_to, renders, calls, references, requests and
+// The walk follows routes_to, renders, calls, callback/event references, requests and
 // handles. A node becomes a step when it is the anchor, a page route, an
 // endpoint, the handler an endpoint runs, a trigger (a function bound to an
 // event: onClick={save}, or called from an inline handler), or an action (it
@@ -13,6 +13,7 @@
 // page's endpoint is a step, but that page's own steps are another journey.
 import type { EffectFact, Entity } from '../core/graph.js';
 import type { ProjectionIndex, ProjectionNode, RelationRow } from './hierarchy.js';
+import { followsBehavior } from './behavior.js';
 
 export type StepKind = 'anchor' | 'route' | 'endpoint' | 'handler' | 'trigger' | 'action' | 'effect';
 export interface WalkStep {
@@ -46,7 +47,7 @@ export function walkSteps(context: WalkContext, anchor: string): Walk {
     // A linked request is drawn as its endpoint; a wrapper's request belongs to its callers.
     return Array.isArray(value) ? (value as EffectFact[]).filter(effect => !(effect.category === 'network' && (effect.endpoint || effect.wrapper))) : [];
   };
-  const outgoing = (id: string) => (index.adjacency.get(id) ?? []).filter(i => { const relation = index.relations[i]!; return relation.from === id && relation.to !== id && STEP_FOLLOW.has(relation.type) && relation.change !== 'removed'; });
+  const outgoing = (id: string) => (index.adjacency.get(id) ?? []).filter(i => { const relation = index.relations[i]!; return relation.from === id && relation.to !== id && STEP_FOLLOW.has(relation.type) && relation.change !== 'removed' && (relation.type !== 'references' || followsBehavior(relation.type, metaOf(relation))); });
   // Where a step's code is: its file and line (an effect: its owner's file, the effect's line).
   const placeOf = (item: { target: string; effect?: EffectFact & { owner: string } }): { path: string; line: number } => {
     const node = index.node(item.effect ? item.effect.owner : item.target);

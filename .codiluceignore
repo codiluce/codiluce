@@ -1,0 +1,2 @@
+# Documentation and audit artifacts stay indexed, but do not occupy the map.
+/docs/

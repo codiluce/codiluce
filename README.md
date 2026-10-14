@@ -67,6 +67,27 @@ Want it always at hand? Run `npm install --global codiluce`, then `codiluce star
 - **Add descriptions, if you like.** A language model can describe files, flows and commits, with the cost estimated
   and capped first.
 
+## Hide paths from the map
+
+Select a file or folder and choose **Hide from map** in the Inspector, or right-click it on the map.
+The map reclaims its space while its source, search results and connections stay indexed. Use the
+**Hidden paths** button in the toolbar to restore paths, or **Undo** to reverse the last change.
+Hidden search results offer **Reveal on map**, which shows that path without restoring its whole folder.
+
+Local choices are saved in `.codiluce/map-visibility.json` (or your configured state directory).
+For shared defaults, commit a `.codiluceignore` file at the repository root with Git-style patterns:
+
+```gitignore
+# Hide the root documentation folder from the map
+/docs/
+# Hide example folders anywhere
+examples/
+```
+
+Restoring a shared rule in the UI saves a local override and leaves `.codiluceignore` unchanged.
+These rules apply to the live map, history comparisons and playback. The existing `ignore` setting
+in `.codiluce/config.yml` separately excludes files from analysis.
+
 ## Private by design
 
 Codiluce runs on your machine. It reads your code but never runs it, never installs its dependencies and never writes

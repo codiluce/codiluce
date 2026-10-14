@@ -218,6 +218,12 @@ export class HistoryStore {
     for (const row of this.sql(`SELECT v.vid, ${ENTITY_COLUMNS} FROM entity_versions v`).all()) result.set(Number(row.vid), decodeEntity(row));
     return result;
   }
+  /** Paths and containment needed to filter history slots, without decoding symbol metadata. */
+  layoutEntities(): Pick<SnapshotEntity, 'id' | 'type' | 'path' | 'parentId'>[] {
+    return this.sql('SELECT entity_id, type, path, parent_id FROM entity_versions GROUP BY entity_id, type, path, parent_id ORDER BY MAX(vid)').all().map(row => ({
+      id: String(row.entity_id), type: String(row.type), ...(row.path ? { path: String(row.path) } : {}), ...(row.parent_id ? { parentId: String(row.parent_id) } : {}),
+    }));
+  }
   /** Entity versions in snapshot `seq` but not in `previous`, and the reverse (`previous` 0: every version of `seq`). */
   entityDelta(seq: number, previous: number): { added: number[]; removed: number[] } {
     const only = this.sql('SELECT version FROM snapshot_entities WHERE snapshot=? EXCEPT SELECT version FROM snapshot_entities WHERE snapshot=?');

@@ -19,7 +19,7 @@ export function stepTitle(step: Step): string {
 }
 function linkLabel(link: StepLink): string[] {
   const parts: string[] = [];
-  if (link.event) parts.push(`on ${link.event}`);
+    if (link.event) parts.push(link.event);
   for (const guard of link.when) parts.push(guard.phrase);
   return parts;
 }

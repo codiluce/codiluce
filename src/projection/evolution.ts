@@ -14,7 +14,7 @@ import type { SnapshotEntity } from '../history/snapshot.js';
 import type { HistoryStore, SnapshotRecord } from '../history/store.js';
 import type { EvolutionFrame, EvolutionNode } from './dto.js';
 import { INTERFACE_TYPES, ProjectionIndex, type ProjectionNode } from './hierarchy.js';
-import { leafSide, placeOnTimeline, type TimelineLayout, type TimelineRegistry } from './layout.js';
+import { leafSide, placeOnTimeline, type LayoutNode, type TimelineLayout, type TimelineRegistry } from './layout.js';
 import { computeArchetypes, type ArchetypeInfo } from './archetypes.js';
 
 export const EVOLUTION_STATUS = { added: 1, modified: 2, moved: 3, removed: 4 } as const;
@@ -32,7 +32,7 @@ const SLICE_MS = 12;
 function layoutInputs(entity: SnapshotEntity): string {
   const span = entity.sourceRange ? entity.sourceRange.endLine - entity.sourceRange.startLine + 1 : undefined;
   const grouping = INTERFACE_TYPES.has(entity.type) ? `${entity.name}\u0000${entity.routePath ?? ''}` : '';
-  return `${entity.type}\u0000${entity.parentId ?? ''}\u0000${grouping}\u0000${leafSide(entity.loc ?? span)}`;
+  return `${entity.type}\u0000${entity.path ?? ''}\u0000${entity.parentId ?? ''}\u0000${grouping}\u0000${leafSide(entity.loc ?? span)}`;
 }
 /**
  * Status of an entity present in both commits (possibly under a new identity), by the same facets as the
@@ -47,7 +47,7 @@ export function evolutionChange(before: SnapshotEntity, after: SnapshotEntity, p
 }
 
 /** Frames for `snapshots` (timeline order, oldest first). Undefined when cancelled. */
-export async function computeEvolution(history: HistoryStore, snapshots: SnapshotRecord[], placement: TimelinePlacement, job: EvolutionJob = { cancelled: false, progress: 0 }): Promise<EvolutionData | undefined> {
+export async function computeEvolution(history: HistoryStore, snapshots: SnapshotRecord[], placement: TimelinePlacement, job: EvolutionJob = { cancelled: false, progress: 0 }, mapNodes: (index: ProjectionIndex) => Map<string, LayoutNode> = index => index.layoutNodes()): Promise<EvolutionData | undefined> {
   const versions = history.entityVersions();
   const nodes: EvolutionNode[] = [], indexOf = new Map<string, number>();
   /** `archetypes`: those of the frame's hierarchy, computed only when a frame brings a node not seen before. */
@@ -112,7 +112,7 @@ export async function computeEvolution(history: HistoryStore, snapshots: Snapsho
     let next: Map<number, number[]>;
     if (structural) {
       const index = new ProjectionIndex(snapshot.id, [...present.values(), ...ghosts], [], []);
-      const { rects } = placeOnTimeline(index.layoutNodes(), index.rootId, registry, layout);
+      const { rects } = placeOnTimeline(mapNodes(index), index.rootId, registry, layout);
       next = new Map();
       let archetypes: Map<string, ArchetypeInfo> | undefined;
       const frameArchetypes = () => archetypes ??= computeArchetypes(index);

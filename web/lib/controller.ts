@@ -114,6 +114,13 @@ export class MapController implements MapNavigator {
     listen('pointercancel', event => { this.pointers.delete(event.pointerId); this.drag = undefined; });
     listen('pointerleave', () => { this.hoverPoint = undefined; this.store.hover(undefined); });
     listen('dblclick', event => this.onDoubleClick(event));
+    listen('contextmenu', event => {
+      const point = this.local(event);
+      let node = this.scene.hitTest(this.set, this.camera, this.viewport, point.x, point.y)?.node;
+      while (node && !['directory', 'file', 'application', 'repository'].includes(node.type)) node = node.spatialParentId ? this.scene.nodes.get(node.spatialParentId) : undefined;
+      if (!node?.path || node.path === '.' || node.type === 'repository') return;
+      event.preventDefault(); this.store.openMapMenu(node, event.clientX, event.clientY);
+    });
     listen('focus', () => this.options.onActivate?.());
     listen('keydown', event => this.onKey(event));
     // Tests read the map that runs the clocks: the single map, or the split map's overview.
@@ -462,7 +469,7 @@ export class MapController implements MapNavigator {
     };
     const many = waveOf.size > CALLOUT_ALL;
     const callouts: CalloutOverlay[] = [...waveOf].flatMap(([stop, depth]) => many && depth !== 0 && Math.abs(depth - front) > 1 ? [] : [{ entityId: flow.stops[stop]!.entityId, ancestors: flow.stops[stop]!.ancestors, number: depth + 1, label: flow.stops[stop]!.label, tone: flow.stops[stop]!.tone, current: depth === front }]);
-    const pins = flow.pins.filter(pin => reached.has(pin.after)).slice(0, PIN_MAX);
+    const pins = flow.pins.filter(pin => reached.has(pin.after) && (!branch.pinKeys || branch.pinKeys.includes(pin.key))).slice(0, PIN_MAX);
     return { ...result, flow: overlay, callouts, pins };
   }
   private impactCache?: { data: object; overlay: NonNullable<RenderState['impact']> };
@@ -568,6 +575,8 @@ export class MapController implements MapNavigator {
     this.request();
   }
   private onPointerDown(event: PointerEvent): void {
+    if (event.button !== 0) return;
+    this.store.closeMapMenu();
     this.canvas.focus({ preventScroll: true });
     this.options.onActivate?.();
     this.canvas.setPointerCapture(event.pointerId);

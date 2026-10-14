@@ -11,6 +11,13 @@ import type { Rect } from './layout.js';
 export type { ChangeFacet, ChangeStatus, DiffLine, DiffSummary, Hunk, LineageReason, PullRequestRef, SnapshotStats };
 /** Which snapshot (and baseline) a request reads; absent = the live working-tree index. */
 export interface ViewKey { snapshot?: string; compareTo?: string }
+export interface MapVisibilityState {
+  shared: string[]; hidden: string[]; revealed: string[]; disabledShared: string[];
+  revision: string; writable: boolean;
+}
+export type MapVisibilityAction = { action: 'hide' | 'restore' | 'reveal' | 'conceal'; path: string }
+  | { action: 'disable-rule' | 'enable-rule'; pattern: string } | { action: 'restore-all' }
+  | { action: 'set-local'; hidden: string[]; revealed: string[]; disabledShared: string[] };
 export interface SnapshotRef { id: string; kind: 'working_tree' | 'commit'; commitSha?: string; dirty?: boolean; analyzedAt: string }
 export interface NodeChange {
   status: ChangeStatus; facets: ChangeFacet[];
@@ -32,6 +39,8 @@ export interface NodeSummary {
   analysis?: import('../analysis/facts.js').FileAnalysis;
   canonicalParentId?: string; spatialParentId?: string;
   depth: number; rect: Rect; childCount: number;
+  /** Indexed and searchable, but has no spatial footprint in the current map. */
+  hidden?: boolean;
   /** Own LOC metric, absent when not measured. */
   loc?: number;
   detail?: string; qualifiedName?: string; role?: string; explanation?: string;
@@ -47,6 +56,7 @@ export interface NodeSummary {
 }
 export interface Page<T> { items: T[]; limit: number; offset: number; total: number; hasMore: boolean }
 export interface ProjectionMeta {
+  mapVisibility?: MapVisibilityState;
   run: AnalysisRun;
   snapshot: SnapshotRef;
   /** Present when the view compares against a baseline snapshot. */
@@ -221,7 +231,7 @@ export interface StepLink {
   hops: StepHop[];
   /** The event prop that binds the target (onClick, onSubmit…). */
   event?: string;
-  /** Conditions in the source step's own code under which the link happens. */
+  /** Conditions along the link, including the components folded into it. */
   when: StepGuard[];
   /** The target was already drawn at the same or an earlier layer. */
   back: boolean;

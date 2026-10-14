@@ -43,10 +43,11 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
   const { projection } = context;
   try {
     const view = viewParams(params);
-    if (pathname !== '/api/history') await projection.prepare(view);
+    if (pathname !== '/api/history' && pathname !== '/api/projection/map-visibility') await projection.prepare(view);
     let result: unknown;
     let match: RegExpExecArray | null;
-    if (pathname === '/api/projection') result = projection.meta(view);
+    if (pathname === '/api/projection/map-visibility') result = projection.mapVisibility();
+    else if (pathname === '/api/projection') result = projection.meta(view);
     else if ((match = new RegExp(`^/api/projection/children/${ID}$`).exec(pathname))) result = projection.children(decodeURIComponent(match[1]!), { ...page, view });
     else if (pathname === '/api/projection/nodes') result = projection.nodes((params.get('ids') ?? '').split(',').filter(Boolean), view);
     else if ((match = new RegExp(`^/api/projection/locate/${ID}$`).exec(pathname))) result = projection.locate(decodeURIComponent(match[1]!), view);

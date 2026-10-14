@@ -6,6 +6,7 @@ import { handleProjectionRoute, isProjectionPath, viewParams } from './projectio
 import { serveStatic } from './static.js';
 import { existsSync } from 'node:fs';
 import { AnnotationAccess } from '../ai/store.js';
+import type { MapVisibilityAction } from '../projection/dto.js';
 
 export interface InspectionServerOptions {
   /** Repository root; required for source viewing and live Git history. */
@@ -37,6 +38,7 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
     let pathname: string;
     try { pathname = new URL(request.url ?? '/', 'http://127.0.0.1').pathname; } catch { response.writeHead(400).end(JSON.stringify({ error: 'Bad request' })); return; }
     if (request.method === 'POST' && pathname === '/api/history/index') { handleIndexRequest(request, response, history).catch(fail); return; }
+    if (request.method === 'POST' && pathname === '/api/projection/map-visibility') { handleMapVisibility(request, response, projection).catch(fail); return; }
     if (request.method !== 'GET') { response.writeHead(405, { Allow: 'GET' }).end(JSON.stringify({ error: 'Read-only API' })); return; }
     if (options.uiDirectory && pathname !== '/api' && !pathname.startsWith('/api/')) { serveStatic(options.uiDirectory, pathname, response).catch(fail); return; }
     if (isProjectionPath(pathname)) {
@@ -77,6 +79,17 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
   });
   server.on('close', () => { access.close(); notes.close(); });
   return server;
+}
+async function handleMapVisibility(request: import('node:http').IncomingMessage, response: import('node:http').ServerResponse, projection: ProjectionService): Promise<void> {
+  if (request.headers[INDEX_REQUEST_HEADER] !== 'map-visibility' || !/^application\/json\b/.test(request.headers['content-type'] ?? '')) { response.writeHead(400).end(JSON.stringify({ error: 'Expected a JSON request with the X-Codiluce-Request: map-visibility header' })); return; }
+  let body = '';
+  for await (const chunk of request) { body += chunk; if (Buffer.byteLength(body) > 65536) { response.writeHead(413).end(JSON.stringify({ error: 'Request too large' })); return; } }
+  try {
+    const action: unknown = JSON.parse(body);
+    if (!action || typeof action !== 'object' || Array.isArray(action)) throw new Error('Expected a map visibility action');
+    const result = projection.updateMapVisibility(action as MapVisibilityAction);
+    response.end(JSON.stringify(result));
+  } catch (error) { response.writeHead(400).end(JSON.stringify({ error: error instanceof Error ? error.message : String(error) })); }
 }
 async function handleIndexRequest(request: import('node:http').IncomingMessage, response: import('node:http').ServerResponse, history: HistoryService): Promise<void> {
   if (!history.indexingEnabled) { response.writeHead(403).end(JSON.stringify({ error: 'On-demand indexing is disabled; start serve with --history-indexing' })); return; }

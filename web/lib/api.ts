@@ -1,6 +1,7 @@
 // Browser client for the read-only API. Responses are cached per analysis run
 // and view (immutable for that snapshot/baseline pair); in-flight requests can
 // be aborted by callers and aborted requests are never cached.
+import type { MapVisibilityAction, MapVisibilityState } from '@engine/projection/dto';
 import type { Entity, Relation } from '@engine/core/graph';
 import type { EvolutionResponse } from '@engine/projection/dto';
 import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, PersonAuthorship } from '@engine/projection/dto';
@@ -13,6 +14,8 @@ type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 export interface AtlasApi {
   /** The snapshot (and baseline) that every projection request reads. */
   setView(view: ViewKey): void;
+  mapVisibility(signal?: AbortSignal): Promise<MapVisibilityState>;
+  updateMapVisibility(action: MapVisibilityAction): Promise<MapVisibilityState>;
   meta(signal?: AbortSignal): Promise<ProjectionMeta>;
   children(id: string, offset: number, limit: number, signal?: AbortSignal): Promise<Page<NodeSummary>>;
   nodes(ids: string[], signal?: AbortSignal): Promise<{ items: NodeSummary[]; missing: string[] }>;
@@ -107,6 +110,14 @@ export class HttpAtlasApi implements AtlasApi {
       if (this.cache.size > MAX_CACHE) this.cache.delete(this.cache.keys().next().value!);
     }
     return body as T;
+  }
+  mapVisibility(signal?: AbortSignal) { return this.get<MapVisibilityState>('/api/projection/map-visibility', signal, false); }
+  async updateMapVisibility(action: MapVisibilityAction): Promise<MapVisibilityState> {
+    const response = await this.fetcher(`${this.base}/api/projection/map-visibility`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Codiluce-Request': 'map-visibility' }, body: JSON.stringify(action) });
+    const body = await response.json();
+    if (!response.ok) throw new ApiError(response.status, body.error ?? 'Could not update map visibility');
+    this.clear();
+    return body;
   }
   meta(signal?: AbortSignal) { return this.get<ProjectionMeta>(`/api/projection${this.q()}`, signal, false); }
   children(id: string, offset: number, limit: number, signal?: AbortSignal) { return this.get<Page<NodeSummary>>(`/api/projection/children/${encodeURIComponent(id)}${this.q({ offset, limit })}`, signal); }

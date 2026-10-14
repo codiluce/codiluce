@@ -25,6 +25,7 @@
 // command by name, the command, its handler and what it reaches.
 import type { EffectFact, Entity } from '../core/graph.js';
 import type { ProjectionIndex, ProjectionNode, RelationRow } from './hierarchy.js';
+import { followsBehavior } from './behavior.js';
 
 /** Columns of a request flow, in the order a request passes them. */
 export type FlowLane = 'client' | 'call' | 'route' | 'gate' | 'controller' | 'service' | 'data' | 'response' | 'return';
@@ -143,7 +144,7 @@ class FlowWalker {
   effects(id: string): EffectFact[] { const value = this.entity(id)?.metadata.effects; return Array.isArray(value) ? value as EffectFact[] : []; }
   name(id: string): string { const node = this.index.node(id); return node ? displayName(node) : id; }
   private relations(id: string, test: (relation: RelationRow) => boolean): number[] {
-    return (this.index.adjacency.get(id) ?? []).filter(i => { const relation = this.index.relations[i]!; return relation.change !== 'removed' && relation.from !== relation.to && test(relation); });
+    return (this.index.adjacency.get(id) ?? []).filter(i => { const relation = this.index.relations[i]!; return relation.change !== 'removed' && relation.from !== relation.to && test(relation) && (relation.type !== 'references' || followsBehavior(relation.type, this.meta(i))); });
   }
   incoming(id: string, types: Set<string>): number[] { return this.relations(id, relation => relation.to === id && types.has(relation.type)); }
   outgoing(id: string, types: Set<string>): number[] { return this.relations(id, relation => relation.from === id && types.has(relation.type)); }

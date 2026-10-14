@@ -9,6 +9,8 @@
 // every slot in history, so nothing moves while moving through commits, and
 // comparison views keep removed entities in their places as ghosts.
 import { createHash } from 'node:crypto';
+import { MapVisibility } from './map-visibility.js';
+import type { MapVisibilityAction, MapVisibilityState } from './dto.js';
 import { readFileSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { computeDiff, type EntityChange, type SnapshotDiff } from '../history/diff.js';
@@ -22,7 +24,7 @@ import { lineDiff } from '../history/textdiff.js';
 import { pagination, type GraphStore } from '../storage/sqlite.js';
 import type { Entity, Relation } from '../core/graph.js';
 import { CODE_LANGUAGES } from '../core/languages.js';
-import { extendRegistry, LAYOUT_VERSION, TIMELINE_LAYOUT_VERSION, layoutHierarchy, placeOnTimeline, timelineLayout, type LayoutResult, type LayoutState, type Rect, type TimelineLayout, type TimelineRegistry } from './layout.js';
+import { extendRegistry, LAYOUT_VERSION, TIMELINE_LAYOUT_VERSION, layoutHierarchy, placeOnTimeline, timelineLayout, type LayoutNode, type LayoutResult, type LayoutState, type Rect, type TimelineLayout, type TimelineRegistry } from './layout.js';
 import { ProjectionIndex, type EntityRow, type ProjectionNode, type RelationRow } from './hierarchy.js';
 import { dataFamilies, NO_FAMILY, type FamilyAssignment } from './families.js';
 import { readSnapshotFile, readSnapshotSource, snapshotRef, SourceError, splitLines, type SourceRequest, type SourceResponse } from './source.js';
@@ -53,7 +55,7 @@ interface View {
   key: string;
   target: SnapshotSource; baseline?: SnapshotSource;
   targetData: SnapshotData; baselineData?: SnapshotData;
-  index: ProjectionIndex; rects: Map<string, Rect>;
+  index: ProjectionIndex; rects: Map<string, Rect>; mapNodes: Map<string, LayoutNode>;
   persisted: boolean; holes: number; layoutSource: 'timeline' | 'persisted' | 'fresh';
   diff?: SnapshotDiff;
   addedDiagnostics: Set<string>;
@@ -104,7 +106,16 @@ export class ProjectionService {
   private timelineRevision = 0;
   private evolutionRun?: { key: string; job: EvolutionJob; done: Promise<void>; result?: EvolutionResponse; error?: string };
   private readonly authorLogs: AuthorLogs;
-  constructor(private readonly store: GraphStore, private readonly options: ProjectionOptions = {}) { this.authorLogs = new AuthorLogs(options.root, options.stateDirectory); }
+  private readonly visibility: MapVisibility;
+  constructor(private readonly store: GraphStore, private readonly options: ProjectionOptions = {}) { this.authorLogs = new AuthorLogs(options.root, options.stateDirectory); this.visibility = new MapVisibility(options, () => this.store.currentRun()?.repositoryId ?? ''); }
+  mapVisibility(): MapVisibilityState { return this.visibility.state(); }
+  updateMapVisibility(action: MapVisibilityAction): MapVisibilityState {
+    const result = this.visibility.update(action);
+    this.views.clear(); this.timeline?.layouts.clear();
+    if (this.evolutionRun) this.evolutionRun.job.cancelled = true;
+    this.evolutionRun = undefined;
+    return result;
+  }
 
   // Snapshots and views ---------------------------------------------------------------
   /** Undefined, `current` or the live run's ID: the working-tree index; otherwise a stored snapshot ID. */
@@ -185,11 +196,12 @@ export class ProjectionService {
     if (!base) return undefined;
     const timeline = this.timeline!;
     const extras = sources.filter(source => !timeline.snapshots.has(source.info.id));
-    const key = extras.map(source => source.info.id).sort().join(',');
+    const key = `${extras.map(source => source.info.id).sort().join(',')}|${this.visibility.state().revision}`;
     let entry = timeline.layouts.get(key);
     if (!entry) {
-      const registry = extras.length ? structuredClone(base.registry) : base.registry;
+      let registry = extras.length ? structuredClone(base.registry) : base.registry;
       for (const source of extras) { const own = new ProjectionIndex(source.info.id, this.snapshotData(source).entities, [], []); extendRegistry(registry, own.layoutNodes(), own.rootId); }
+      if (this.visibility.active) registry = this.visibility.registry(registry, [...this.options.history!()!.layoutEntities(), ...sources.flatMap(source => this.snapshotData(source).entities)]);
       entry = { registry, layout: timelineLayout(registry, rootId) };
       timeline.layouts.set(key, entry);
       if (timeline.layouts.size > 4) timeline.layouts.delete(timeline.layouts.keys().next().value!);
@@ -200,7 +212,7 @@ export class ProjectionService {
     const { target, baseline } = this.sources(view);
     // Any snapshot parameter selects the timeline layout (when history exists); none is the live, compact map.
     const historical = !!(view.snapshot || view.compareTo) && !!this.timelineBase();
-    const key = `${target.info.id}|${baseline?.info.id ?? ''}|${historical ? this.timeline!.stamp : 'live'}`;
+    const key = `${target.info.id}|${baseline?.info.id ?? ''}|${historical ? this.timeline!.stamp : 'live'}|${this.visibility.state().revision}`;
     const cached = this.views.get(key);
     if (cached) { this.views.delete(key); this.views.set(key, cached); return cached; }
     const targetData = this.snapshotData(target);
@@ -222,12 +234,13 @@ export class ProjectionService {
       for (const item of diff.addedDiagnostics) addedDiagnostics.add(item.id);
     }
     const index = new ProjectionIndex(target.info.id, rows, relations, targetData.diagnostics, !!baseline);
+    const mapNodes = this.visibility.layout(index);
     let result: LayoutResult, persisted = false, layoutSource: View['layoutSource'] = 'fresh';
     const timeline = historical ? this.timelineFor(baseline ? [target, baseline] : [target], index.rootId) : undefined;
-    if (timeline) { result = placeOnTimeline(index.layoutNodes(), index.rootId, timeline.registry, timeline.layout); layoutSource = 'timeline'; }
-    else if (target.info.kind === 'working_tree' && !baseline) ({ result, persisted, layoutSource } = this.liveLayout(index, target, 'layout.json'));
-    else result = layoutHierarchy(index.layoutNodes(), index.rootId);
-    const built: View = { key, target, ...(baseline ? { baseline } : {}), targetData, ...(baselineData ? { baselineData } : {}), index, rects: result.rects, persisted, holes: result.holes, layoutSource, ...(diff ? { diff } : {}), addedDiagnostics };
+    if (timeline) { result = placeOnTimeline(mapNodes, index.rootId, timeline.registry, timeline.layout); layoutSource = 'timeline'; }
+    else if (target.info.kind === 'working_tree' && !baseline) ({ result, persisted, layoutSource } = this.liveLayout(index, target, this.visibility.active ? 'map-layout.json' : 'layout.json', mapNodes));
+    else result = layoutHierarchy(mapNodes, index.rootId);
+    const built: View = { key, target, ...(baseline ? { baseline } : {}), targetData, ...(baselineData ? { baselineData } : {}), index, rects: result.rects, mapNodes, persisted, holes: result.holes, layoutSource, ...(diff ? { diff } : {}), addedDiagnostics };
     return this.cacheView(built);
   }
   private cacheView(view: View): View {
@@ -236,16 +249,16 @@ export class ProjectionService {
     return view;
   }
   /** Lay out a live map, carrying its slots forward in a state file (when there is a state directory). */
-  private liveLayout(index: ProjectionIndex, target: SnapshotSource, name: string): { result: LayoutResult; persisted: boolean; layoutSource: View['layoutSource'] } {
-    if (!this.options.stateDirectory || target.info.kind !== 'working_tree') return { result: layoutHierarchy(index.layoutNodes(), index.rootId), persisted: false, layoutSource: 'fresh' };
+  private liveLayout(index: ProjectionIndex, target: SnapshotSource, name: string, nodes: Map<string, LayoutNode>): { result: LayoutResult; persisted: boolean; layoutSource: View['layoutSource'] } {
+    if (!this.options.stateDirectory || target.info.kind !== 'working_tree') return { result: layoutHierarchy(nodes, index.rootId), persisted: false, layoutSource: 'fresh' };
     const file = path.join(this.options.stateDirectory, name);
     const run = target.info.run;
     let previous: LayoutState | undefined;
-    try { const parsed = JSON.parse(readFileSync(file, 'utf8')) as LayoutState & { repositoryId?: string }; if (parsed.version === LAYOUT_VERSION && parsed.repositoryId === run.repositoryId) previous = parsed; } catch { /* first layout or unreadable state: start fresh */ }
-    const result = layoutHierarchy(index.layoutNodes(), index.rootId, previous);
+    try { const parsed = JSON.parse(readFileSync(file, 'utf8')) as LayoutState & { repositoryId?: string; visibility?: string }; if (parsed.version === LAYOUT_VERSION && parsed.repositoryId === run.repositoryId && (name === 'layout.json' || parsed.visibility === this.visibility.state().revision)) previous = parsed; } catch { /* first layout or unreadable state: start fresh */ }
+    const result = layoutHierarchy(nodes, index.rootId, previous);
     try {
       const temporary = `${file}.${process.pid}.tmp`;
-      writeFileSync(temporary, JSON.stringify({ ...result.state, repositoryId: run.repositoryId, runId: run.id }));
+      writeFileSync(temporary, JSON.stringify({ ...result.state, repositoryId: run.repositoryId, runId: run.id, visibility: this.visibility.state().revision }));
       renameSync(temporary, file);
       return { result, persisted: true, layoutSource: 'persisted' };
     } catch { /* read-only state directory: layout is still deterministic for this graph */ }
@@ -258,7 +271,8 @@ export class ProjectionService {
       ...(node.path ? { path: node.path } : {}), ...(node.language ? { language: node.language } : {}), ...(node.sourceRange ? { sourceRange: node.sourceRange } : {}),
       ...(node.analysis ? { analysis: node.analysis } : {}),
       ...(node.canonicalParentId ? { canonicalParentId: node.canonicalParentId } : {}), ...(node.spatialParentId ? { spatialParentId: node.spatialParentId } : {}),
-      depth: node.depth, rect: current.rects.get(node.id)!, childCount: node.children.length,
+      depth: node.depth, rect: current.rects.get(node.id) ?? { x: 0, y: 0, w: 0, h: 0 }, childCount: current.mapNodes.get(node.id)?.children.length ?? 0,
+      ...(!current.rects.has(node.id) ? { hidden: true } : {}),
       ...(node.loc !== undefined ? { loc: node.loc } : {}), ...(node.detail ? { detail: node.detail } : {}), ...(node.qualifiedName ? { qualifiedName: node.qualifiedName } : {}),
       ...(node.role ? { role: node.role } : {}), ...(node.explanation ? { explanation: node.explanation } : {}),
       ...(archetype ? { archetype } : {}),
@@ -488,7 +502,7 @@ export class ProjectionService {
       snapshot: snapshotRef(current.target),
       ...(current.baseline && current.diff ? { comparison: { baseline: snapshotRef(current.baseline), summary: current.diff.summary, analyzerMismatch: JSON.stringify(current.baseline.info.run.analyzerVersions) !== JSON.stringify(current.target.info.run.analyzerVersions) } } : {}),
       history: { available: !!history, snapshots },
-      root: this.summary(current, root),
+      root: this.summary(current, root), mapVisibility: this.visibility.state(),
       layout: { version: LAYOUT_VERSION, persisted: current.persisted, holes: current.holes, bounds: current.rects.get(root.id), source: current.layoutSource },
       entityTypes: tally(data.entities, item => item.type).map(([type, count]) => ({ type, count })),
       relationTypes: [...relationTypes, ...(containment ? [['contains', containment] as [string, number]] : [])].sort((a, b) => a[0] < b[0] ? -1 : 1).map(([type, count]) => ({ type, count })),
@@ -506,8 +520,9 @@ export class ProjectionService {
     const current = this.load(options.view);
     const node = this.require(current, id);
     const { limit, offset } = pagination(options);
-    const ids = node.children.slice(offset, offset + limit);
-    return { items: ids.map(child => this.summary(current, current.index.node(child)!)), limit, offset, total: node.children.length, hasMore: offset + limit < node.children.length };
+    const children = current.mapNodes.get(node.id)?.children ?? [];
+    const ids = children.slice(offset, offset + limit);
+    return { items: ids.map(child => this.summary(current, current.index.node(child)!)), limit, offset, total: children.length, hasMore: offset + limit < children.length };
   }
   nodes(ids: string[], view?: ViewKey): { items: NodeSummary[]; missing: string[] } {
     if (ids.length > 200) throw new Error('At most 200 ids per request');
@@ -933,8 +948,9 @@ export class ProjectionService {
         id: `${link.from}>${link.to}`, from: link.from, to: link.to,
         via: link.via.map(viaId => { const node = current.index.node(viaId)!; return { id: node.id, name: node.name, type: node.type, ancestors: ancestorsOf(node.id) }; }),
         hops, ...(link.event ? { event: link.event } : {}), back: link.back,
-        // A step's own effect: the conditions at the effect's site.
-        when: hops[0]?.when ?? (link.via.length ? [] : steps.find(step => step.id === link.to)?.effect?.when ?? []),
+        // Keep guards from folded components too (for example a card type or
+        // a player being available), not just the first hop out of a page.
+        when: [...new Map((hops.length ? hops.flatMap(hop => hop.when) : steps.find(step => step.id === link.to)?.effect?.when ?? []).map(guard => [guard.phrase, guard])).values()],
       };
     }));
     const notices: string[] = [];
@@ -1062,11 +1078,16 @@ export class ProjectionService {
     }
     for (const id of new Set(index.diagnostics.flatMap(item => item.entityId && HTTP_FINDINGS.has(item.code) && index.node(item.entityId) && present(index.node(item.entityId)!) ? [item.entityId] : []))) entries.push({ id, kind: 'unmatched' });
     const flows: NonNullable<View['catalog']>['flows'] = [];
+    const referenceIds = index.relations.filter(relation => relation.type === 'references' && relation.change !== 'removed').map(relation => relation.id);
+    const referenceMetadata = new Map<string, Record<string, unknown>>();
+    for (let offset = 0; offset < referenceIds.length; offset += 1000) {
+      for (const [id, value] of current.target.relationMetadata(referenceIds.slice(offset, offset + 1000))) referenceMetadata.set(id, value);
+    }
     for (const entry of entries) {
       const node = index.node(entry.id)!;
       const raw = node.type === 'route' ? undefined : this.rawFlow(current, entry.id, context);
       if (node.type !== 'route' && !raw) continue;
-      const slice = entry.kind === 'unmatched' ? { members: new Set<string>(), truncated: false } : forwardSlice(index, entry.id, pages);
+      const slice = entry.kind === 'unmatched' ? { members: new Set<string>(), truncated: false } : forwardSlice(index, entry.id, pages, referenceMetadata);
       const members = new Set([...slice.members, ...raw?.members ?? [], entry.id]);
       const files = new Set([...members].map(fileOf).filter((file): file is string => !!file));
       const app = appName(current, node);
@@ -1235,7 +1256,7 @@ export class ProjectionService {
   regions(view: ViewKey, options: { level?: string }): ChangeRegionsResult {
     const current = this.comparison(view);
     if (options.level !== undefined && !isRegionLevel(options.level)) throw new Error('level must be auto, application, directory or file');
-    const lookup = (id: string) => { const node = current.index.node(id); return node && { id, kind: node.kind, type: node.type, rect: current.rects.get(id)!, childCount: node.children.length, ...(node.spatialParentId ? { spatialParentId: node.spatialParentId } : {}), ...(node.change ? { change: node.change } : {}) }; };
+    const lookup = (id: string) => { const node = current.index.node(id); return node && current.rects.has(id) ? { id, kind: node.kind, type: node.type, rect: current.rects.get(id)!, childCount: current.mapNodes.get(id)?.children.length ?? 0, ...(node.spatialParentId ? { spatialParentId: node.spatialParentId } : {}), ...(node.change ? { change: node.change } : {}) } : undefined; };
     const picks = changeRegions(current.diff.changes.keys(), lookup, { level: options.level ?? 'auto' });
     return {
       level: picks.level, changed: picks.changed, truncated: picks.truncated,
@@ -1347,15 +1368,15 @@ export class ProjectionService {
     const base = this.timelineBase();
     if (!history || !base) throw new NotFoundError('No timeline layout: run history index');
     const covered = snapshots.filter(id => this.timeline!.snapshots.has(id));
-    const key = `${base.stamp}|${covered.join(',')}`;
+    const key = `${base.stamp}|${covered.join(',')}|${this.visibility.state().revision}`;
     let entry = this.evolutionRun;
     if (entry?.key !== key) {
       if (entry) entry.job.cancelled = true;
       const records = covered.map(id => history.snapshot(id)).filter((record): record is SnapshotRecord => !!record);
       const job: EvolutionJob = { cancelled: false, progress: 0 };
       const run: NonNullable<typeof entry> = { key, job, done: Promise.resolve() };
-      run.done = computeEvolution(history, records, rootId => this.timelineFor([], rootId), job)
-        .then(data => { if (data) run.result = { status: 'ready', stamp: base.stamp, ...data }; })
+      run.done = computeEvolution(history, records, rootId => this.timelineFor([], rootId), job, index => this.visibility.layout(index))
+        .then(data => { if (data) run.result = { status: 'ready', stamp: key, ...data }; })
         .catch(error => { run.error = error instanceof Error ? error.message : String(error); });
       this.evolutionRun = entry = run;
     }

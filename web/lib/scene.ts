@@ -62,6 +62,7 @@ export class Scene {
   }
   /** Add a known node (e.g. from search/locate) even before its parent's page is loaded. */
   upsert(node: NodeSummary): void {
+    if (node.hidden) return;
     if (!this.nodes.has(node.id)) { this.nodes.set(node.id, node); this.revision = ++revisions; }
     const parent = node.spatialParentId;
     if (!parent || !this.nodes.has(parent)) return;
@@ -76,6 +77,7 @@ export class Scene {
   addChildren(parentId: string, items: NodeSummary[], total: number, hasMore: boolean): void {
     const list = this.childList(parentId);
     for (const item of items) {
+      if (item.hidden) continue;
       if (!this.nodes.has(item.id)) this.nodes.set(item.id, item);
       if (!list.ids.includes(item.id)) list.ids.push(item.id);
     }

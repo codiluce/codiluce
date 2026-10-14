@@ -12,6 +12,40 @@ async function idOf(page: Page, query: string, type: string): Promise<string> {
   return page.evaluate(async ([q, t]) => (await fetch(`/api/projection/search?q=${encodeURIComponent(q!)}&type=${t}`).then(response => response.json())).items[0].id as string, [query, type]);
 }
 
+test('page diagrams group initialization and interactions, then expand only one branch and its effects', async ({ page }) => {
+  await open(page);
+  await page.getByRole('combobox', { name: 'Search the indexed graph' }).fill('/account');
+  await page.keyboard.press('Enter');
+  const inspector = page.getByRole('complementary', { name: 'Inspector' });
+  await expect(inspector.getByRole('heading', { name: '/account', exact: true })).toBeVisible();
+  await inspector.getByRole('button', { name: 'What happens from here', exact: true }).click();
+  const flow = page.getByRole('region', { name: 'What happens from /account' });
+  await expect(flow.getByRole('region', { name: 'Page initialization' })).toBeVisible();
+  const interactions = flow.getByRole('region', { name: 'User interactions' });
+  await expect(interactions.locator('.page-step-group > summary')).toContainText(['AccountPanel', 'LoginForm']);
+  await flow.getByRole('searchbox', { name: 'Filter page branches' }).fill('handleSave');
+  await expect(interactions.locator('.page-step-group > summary')).toHaveCount(1);
+  await flow.getByRole('searchbox', { name: 'Filter page branches' }).fill('');
+  await flow.getByRole('group', { name: 'Layout' }).getByRole('button', { name: 'Diagram' }).click();
+  await expect(flow.locator('.steps-box')).toHaveCount(0);
+  await interactions.locator('.page-step-group', { hasText: 'AccountPanel' }).locator('summary').click();
+  await interactions.getByRole('button', { name: /handleSave/ }).click();
+  await expect(flow.locator('.page-step-context')).toContainText('AccountPanel');
+  await expect(flow.locator('.page-step-path')).toContainText('/account → AccountPage → AccountPanel → handleSave');
+  await expect(flow.locator('.steps-box.kind-trigger')).toHaveCount(1);
+  await expect(flow.locator('.steps-box.kind-trigger')).toContainText('handleSave');
+  await expect(flow.locator('.steps-box.kind-effect')).toHaveCount(0);
+  await flow.getByRole('button', { name: /^Show effects/ }).click();
+  await expect(flow.locator('.steps-box.kind-effect').first()).toBeVisible();
+  await flow.getByRole('group', { name: 'Layout' }).getByRole('button', { name: 'Outline' }).click();
+  await expect(flow.locator('.page-step-context')).toContainText('handleSave');
+  await expect(flow.locator('.step-card.kind-effect').first()).toBeVisible();
+  await flow.getByRole('button', { name: /^Hide effects/ }).click();
+  await expect(flow.locator('.step-card.kind-effect')).toHaveCount(0);
+  await flow.getByRole('button', { name: '← Page overview', exact: true }).click();
+  await expect(interactions).toBeVisible();
+});
+
 for (const empty of [true, false]) {
   test(`${empty ? 'empty' : 'populated'} Flows stays responsive through coverage and history`, async ({ page }) => {
     if (empty) await page.route('**/api/projection/flows*', route => route.fulfill({ json: { items: [], counts: { page: 0, request: 0, command: 0, schedule: 0, unmatched: 0 } } }));
