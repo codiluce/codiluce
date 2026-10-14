@@ -8,13 +8,13 @@ export const metadata: Metadata = { title: 'Using the map', description: 'Zoom l
 
 const SHAPES: [string, string, string][] = [
   ['Lighthouse', 'Entry point', 'public/index.php, artisan, main.tsx'], ['Gate', 'Routes', 'routes/web.php, urls.py, route.ts'],
-  ['Checkpoint', 'Middleware', 'app/Http/Middleware/, middleware.ts'], ['Traffic cop at a crossroads', 'Controller', 'app/Http/Controllers/, views.py'],
+  ['Checkpoint', 'Middleware', 'app/Http/Middleware/, middleware.ts'], ['Rail turntable', 'Controller', 'app/Http/Controllers/, views.py'],
   ['Workshop', 'Service', 'app/Services/, *Service.ts'], ['Tool shed', 'Helper', 'helpers.php, utils/'],
   ['Terminal kiosk', 'Command', 'app/Console/Commands/, management/commands/'], ['Clock tower', 'Scheduled task', 'routes/console.php'],
   ['Conveyor belt', 'Job or listener', 'app/Jobs/, app/Listeners/'], ['Stacked records', 'Model', 'app/Models/, models.py'],
-  ['Storage drums', 'Database table', 'database/migrations/'], ['Tower with windows', 'Page', 'app/**/page.tsx, resources/views/'],
+  ['Storage drums', 'Database table', 'database/migrations/'], ['Browser billboard', 'Page', 'app/**/page.tsx, resources/views/'],
   ['Open frame', 'Layout', 'layout.tsx, layouts/'], ['Building block', 'Component', 'components/, *.vue, *.svelte'],
-  ['Crane', 'Hook or store', 'use*.ts, composables/, stores/'], ["Painter's easel", 'Style sheet', '*.css, *.scss'],
+  ['Crane', 'Hook or store', 'use*.ts, composables/, stores/'], ["Painter's palette", 'Style sheet', '*.css, *.scss'],
   ['Control desk', 'Configuration', 'config/, *.config.ts'], ['Lab bench with test tubes', 'Test', 'tests/, *.test.ts'],
 ];
 
@@ -47,10 +47,12 @@ export default function MapDocs() {
 
       <h2 id="shapes" className="anchor">Building shapes</h2>
       <p>
-        Each kind of block has its own shape, the same in every language and framework: a gate for routes, a traffic cop
-        for a controller, a workshop for a service, storage drums for a table, a tower with windows for a page. Far
+        Each kind of block has its own shape, the same in every language and framework: a gate for routes, a rail turntable
+        for a controller, a workshop for a service, storage drums for a table, a browser billboard for a page. Far
         away a block is plain; once it is a few dozen pixels across it shows its kind as a mark on its roof, and closer still
-        it grows into its shape. Zoom into a file and it opens into its symbols as usual.
+        it grows into its shape. Zoom into a file and it opens into its symbols as usual. A closed folder shows the kinds
+        of block it holds most on its roof, each as a small shape with its count, and its inspector lists every kind it
+        holds. Blocks stand a little inside their places, so streets run between files and wider avenues between folders.
       </p>
       <p>
         A file&apos;s kind comes from the index where it can: the endpoints, page routes, commands, scheduled tasks or tables it
@@ -70,14 +72,14 @@ export default function MapDocs() {
       <p>
         Lenses keep working: coverage, data families and people color the shapes, a comparison tints what changed, and a
         flow on the map lights the stops it reaches. <strong>Settings → Building shapes</strong> turns them off for plain
-        blocks.
+        blocks, and <strong>Settings → Streets between blocks</strong> packs the blocks edge to edge again.
       </p>
 
       <h2 id="inspector" className="anchor">The inspector and evidence</h2>
       <Shot
         src="/shots/map.webp"
-        alt="A file-level view of BookStack's views with one Blade view selected and its kind, flows, people and latest changes in the inspector."
-        caption="Selecting a file: its kind and why, the flows that reach it, who changed it and when."
+        alt="A file-level view of BookStack's views with one folder of Blade views selected and the kinds of block it holds, its flows, data and people in the inspector."
+        caption="Selecting a folder: the kinds of block it holds, the flows that reach it, its data, and who changed it and when."
       />
       <p>
         Select anything to see its type, canonical path, source range and metrics. Incoming and outgoing relationships are

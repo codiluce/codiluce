@@ -1,6 +1,6 @@
 // Archetype shapes: each kind of building block drawn as a small isometric
-// object (a controller a traffic cop at a crossroads, a table storage drums, a
-// page a tower with windows) from a handful of primitives: boxes, roofs,
+// object (a controller a rail turntable, a table storage drums, a page a
+// browser billboard) from a handful of primitives: boxes, roofs,
 // cylinders and cones, balls, face decals and a glow. Shapes fit any footprint the layout gives, take
 // their colors from the block's palette and the theme (so lenses and themes
 // still apply), and only move while a flow passes through them.
@@ -12,8 +12,8 @@ import type { Hsl, Theme } from './themes';
 export const ICON_PX = 18, SHAPE_PX = 46, SHAPE_GROW_PX = 34;
 /** Shape height as a share of the footprint's shorter side (before the size of the file is taken into account). */
 const HEIGHT: Record<Archetype, number> = {
-  entry: 0.85, routes: 0.62, middleware: 0.62, controller: 0.74, service: 0.66, helper: 0.5, command: 0.72, schedule: 0.88, job: 0.52,
-  model: 0.6, table: 0.58, page: 0.92, layout: 0.66, component: 0.5, hook: 0.86, style: 0.66, config: 0.5, test: 0.66,
+  entry: 0.85, routes: 0.62, middleware: 0.62, controller: 0.62, service: 0.66, helper: 0.5, command: 0.72, schedule: 0.88, job: 0.52,
+  model: 0.6, table: 0.58, page: 0.8, layout: 0.66, component: 0.5, hook: 0.86, style: 0.42, config: 0.5, test: 0.66,
 };
 export function shapeHeight(kind: Archetype, side: number, loc: number | undefined): number {
   const size = loc === undefined ? 0.75 : Math.min(1.15, 0.7 + Math.log2(1 + loc / 40) * 0.12);
@@ -21,11 +21,11 @@ export function shapeHeight(kind: Archetype, side: number, loc: number | undefin
 }
 export const ARCHETYPE_LABELS: Record<Archetype, { name: string; shape: string }> = {
   entry: { name: 'Entry point', shape: 'lighthouse' }, routes: { name: 'Routes', shape: 'gate' }, middleware: { name: 'Middleware', shape: 'checkpoint' },
-  controller: { name: 'Controller', shape: 'traffic cop' }, service: { name: 'Service', shape: 'workshop' }, helper: { name: 'Helper', shape: 'tool shed' },
+  controller: { name: 'Controller', shape: 'rail turntable' }, service: { name: 'Service', shape: 'workshop' }, helper: { name: 'Helper', shape: 'tool shed' },
   command: { name: 'Command', shape: 'terminal kiosk' }, schedule: { name: 'Scheduled task', shape: 'clock tower' }, job: { name: 'Job or listener', shape: 'conveyor belt' },
-  model: { name: 'Model', shape: 'stacked records' }, table: { name: 'Database table', shape: 'storage drums' }, page: { name: 'Page', shape: 'tower with windows' },
+  model: { name: 'Model', shape: 'stacked records' }, table: { name: 'Database table', shape: 'storage drums' }, page: { name: 'Page', shape: 'browser billboard' },
   layout: { name: 'Layout', shape: 'open frame' }, component: { name: 'Component', shape: 'building block' }, hook: { name: 'Hook or store', shape: 'crane' },
-  style: { name: 'Style sheet', shape: "painter's easel" }, config: { name: 'Configuration', shape: 'control desk' }, test: { name: 'Test', shape: 'lab bench with test tubes' },
+  style: { name: 'Style sheet', shape: "painter's palette" }, config: { name: 'Configuration', shape: 'control desk' }, test: { name: 'Test', shape: 'lab bench with test tubes' },
 };
 
 export interface ShapeTheme { dark: boolean; ws: [number, number]; outline: string; accent: Hsl; ink: Hsl; glass: Hsl; entry: Hsl; face: Hsl }
@@ -55,7 +55,8 @@ function path(v: ShapeView, pts: V3[]): void {
   pts.forEach((p, i) => { const q = P(v, p[0], p[1], p[2]); if (i) c.lineTo(q[0], q[1]); else c.moveTo(q[0], q[1]); });
   c.closePath();
 }
-interface FaceOptions { both?: boolean; dl?: number; a?: number; top?: string; end?: string }
+/** `bare`: no edges (one of many facets of a curved side). */
+interface FaceOptions { both?: boolean; dl?: number; a?: number; top?: string; end?: string; bare?: boolean }
 /** A planar face; hidden when it turns away from the viewer, who looks along -(1,1,1). */
 function face(v: ShapeView, pts: V3[], n: V3, col: Hsl | string, o: FaceOptions = {}): void {
   if (!o.both && n[0] + n[1] + n[2] <= 1e-6) return;
@@ -64,7 +65,7 @@ function face(v: ShapeView, pts: V3[], n: V3, col: Hsl | string, o: FaceOptions 
   v.ctx.fill();
   // Edges only where they show: faces a few pixels across.
   const a = pts[0]!, b = pts[2]!;
-  if (v.s * (Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2])) > 14) { v.ctx.strokeStyle = v.T.outline; v.ctx.lineWidth = 0.75; v.ctx.stroke(); }
+  if (!o.bare && v.s * (Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2])) > 14) { v.ctx.strokeStyle = v.T.outline; v.ctx.lineWidth = 0.75; v.ctx.stroke(); }
 }
 function box(v: ShapeView, x: number, y: number, z: number, w: number, d: number, h: number, col: Hsl | string, o: FaceOptions = {}): void {
   if (w <= 0 || d <= 0 || h <= 0) return;
@@ -73,6 +74,13 @@ function box(v: ShapeView, x: number, y: number, z: number, w: number, d: number
   face(v, [[x, y, z + h], [x + w, y, z + h], [x + w, y + d, z + h], [x, y + d, z + h]], [0, 0, 1], o.top ?? col, o);
 }
 const boxR = (v: ShapeView, r: [number, number, number, number], z: number, h: number, col: Hsl | string, o?: FaceOptions) => box(v, r[0], r[1], z, r[2], r[3], h, col, o);
+/** A box of length L and width w turned by `angle` about its center (a turntable's bridge). Its visible sides never overlap, so any order will do. */
+function obox(v: ShapeView, cx: number, cy: number, z: number, L: number, w: number, h: number, angle: number, col: Hsl | string, o: FaceOptions = {}): void {
+  const ax = Math.cos(angle), ay = Math.sin(angle), at = (p: number, q: number, zz: number): V3 => [cx + ax * L / 2 * p - ay * w / 2 * q, cy + ay * L / 2 * p + ax * w / 2 * q, zz];
+  for (const p of [-1, 1]) face(v, [at(p, -1, z), at(p, 1, z), at(p, 1, z + h), at(p, -1, z + h)], [ax * p, ay * p, 0], col, o);
+  for (const q of [-1, 1]) face(v, [at(-1, q, z), at(1, q, z), at(1, q, z + h), at(-1, q, z + h)], [-ay * q, ax * q, 0], col, o);
+  face(v, [at(-1, -1, z + h), at(1, -1, z + h), at(1, 1, z + h), at(-1, 1, z + h)], [0, 0, 1], o.top ?? col, o);
+}
 /** Pitched roof, ridge along x or y; the visible gable end is the pediment. */
 function gable(v: ShapeView, x: number, y: number, z: number, w: number, d: number, h: number, axis: 'x' | 'y', col: Hsl, o: FaceOptions = {}): void {
   const end = o.end ?? col;
@@ -229,46 +237,56 @@ const DRAW: Record<Archetype, (k: K) => void> = {
     for (let i = 0; i < n; i++) face(v, [at(i / n, 0), at((i + 1) / n, 0), at((i + 1) / n, tz), at(i / n, tz)], [0, 1, 0], i % 2 ? css(c, 1, T.dark ? 40 : 0) : lit(k), { both: true });
   },
   controller(k) {
-    // A traffic cop on a podium at a crossroads, one arm up (stop), one pointing the way; a traffic light on the corner.
-    const { v, c, T, H } = k, m = k.m, cx = k.X + k.W / 2, cy = k.Y + k.D / 2, S = Math.SQRT1_2;
+    // A railway turntable at a junction: tracks leave in four directions and the bridge turns to the one a request takes; a signal box and a signal beside it.
+    const { v, c, T, H } = k, m = k.m, cx = k.X + k.W / 2, cy = k.Y + k.D / 2, r = m * 0.34, g = m * 0.075;
     lot(k);
-    const ground = frames(k.x, k.y, k.z, k.w, k.d, k.u * 0.3).T, road = ink(k, T.dark ? 0.55 : 0.4), dash = css(T.face, 1, 0, 0.6);
-    decal(v, ground, 0, 0.4, 1, 0.6, road); decal(v, ground, 0.4, 0, 0.6, 1, road);
-    for (let i = 0; i < 7; i++) {
-      const a = (i + 0.2) / 7;
-      if (Math.abs(a + 0.035 - 0.5) < 0.14) continue;
-      decal(v, ground, a, 0.49, a + 0.07, 0.51, dash); decal(v, ground, 0.49, a, 0.51, a + 0.07, dash);
+    const ground = frames(k.x, k.y, k.z, k.w, k.d, k.u * 0.3).T;
+    const plot = (x0: number, y0: number, x1: number, y1: number, fill: string) => decal(v, ground, (x0 - k.x) / k.w, (y0 - k.y) / k.d, (x1 - k.x) / k.w, (y1 - k.y) / k.d, fill);
+    // The bridge holds, then turns a quarter, while a flow passes; at rest it lines up with one pair of tracks.
+    const phase = k.t * 0.45, ease = clamp((phase % 1 - 0.55) / 0.45, 0, 1), turn = on(k) ? Math.floor(phase) + ease * ease * (3 - 2 * ease) : k.seed % 2;
+    const angle = turn * Math.PI / 2, aligned = on(k) && (ease === 0 || ease === 1), alongX = Math.round(turn) % 2 === 0;
+    const sleeper = css(c, 1, T.dark ? -14 : -16), tw = m * 0.022, step = m * 0.07;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+      const rail = css(aligned && (dx !== 0) === alongX ? T.accent : T.ink, 1, 0, aligned && (dx !== 0) === alongX ? 0.95 : 0.7);
+      const from = r * 0.98, to = dx ? (dx > 0 ? k.x + k.w - cx : cx - k.x) : (dy > 0 ? k.y + k.d - cy : cy - k.y);
+      for (let s = from + step / 2; s < to - step / 3; s += step) {
+        const px = cx + (dx || dy) * s * (dx ? 1 : 0), py = cy + (dx || dy) * s * (dy ? 1 : 0), half = g * 1.45, w2 = tw * 1.2;
+        if (dx) plot(px - w2, py - half, px + w2, py + half, sleeper); else plot(px - half, py - w2, px + half, py + w2, sleeper);
+      }
+      for (const side of [-1, 1]) {
+        const a = cx + side * g * (dx ? 0 : 1), b = cy + side * g * (dy ? 0 : 1);
+        if (dx) plot(Math.min(cx + dx * from, cx + dx * to), b - tw / 2, Math.max(cx + dx * from, cx + dx * to), b + tw / 2, rail);
+        else plot(a - tw / 2, Math.min(cy + dy * from, cy + dy * to), a + tw / 2, Math.max(cy + dy * from, cy + dy * to), rail);
+      }
     }
-    const pw = m * 0.05, lx = k.X + k.W * 0.06, ly = k.Y + k.D * 0.06, ph = H * 0.6, hw = m * 0.11, hd = m * 0.09, hh = H * 0.3;
-    box(v, lx, ly, k.Z, pw, pw, ph, T.ink, { dl: T.dark ? 10 : 8 });
-    const hx = lx - (hw - pw) / 2, hy = ly - (hd - pw) / 2, lamps = frames(hx, hy, k.Z + ph, hw, hd, hh).L, go = on(k) && Math.sin(k.t * 1.3) > -0.5;
-    box(v, hx, hy, k.Z + ph, hw, hd, hh, T.ink, { dl: T.dark ? 6 : 4 });
-    for (const [b, color, shining] of [[0.8, { h: 2, s: 82, l: 58 }, !go], [0.5, T.accent, false], [0.2, { h: 142, s: 68, l: 50 }, go]] as const) {
-      decalCircle(v, lamps, 0.5, b, Math.min(hw, hh / 3) * 0.34, css(color, 1, shining ? 0 : (T.dark ? -30 : -12), shining ? 1 : 0.55));
-      if (shining) glow(v, ...fpt(lamps, 0.5, b), m * 0.12, color, 0.45);
+    // The signal box at the back corner: glazed all round under a hipped roof, lit while it dispatches.
+    const sb = m * 0.24, sh = H * 0.56, box0 = frames(k.X, k.Y, k.Z, sb, sb, sh);
+    box(v, k.X, k.Y, k.Z, sb, sb, sh, c, { dl: T.dark ? 4 : -4 });
+    for (const [F, glass] of [[box0.L, glassL], [box0.R, glassR]] as const) decal(v, F, 0.12, 0.55, 0.88, 0.85, on(k) ? lit(k, 0.85) : glass(k));
+    hip(v, k.X - sb * 0.08, k.Y - sb * 0.08, k.Z + sh, sb * 1.16, sb * 1.16, H * 0.3, c, { dl: T.dark ? -6 : -12 });
+    // A signal on the right corner: red at rest, green (and shining) while the way is set.
+    const mx = k.X + k.W - m * 0.1, my = k.Y + m * 0.04, ms = m * 0.035, mh = H * 0.5, hw = m * 0.08, hh = H * 0.22;
+    box(v, mx, my, k.Z, ms, ms, mh, T.ink, { dl: T.dark ? 10 : 8 });
+    const hx = mx - (hw - ms) / 2, head = frames(hx, my, k.Z + mh, hw, ms * 1.6, hh).L;
+    box(v, hx, my, k.Z + mh, hw, ms * 1.6, hh, T.ink, { dl: T.dark ? 6 : 4 });
+    for (const [b, color, set] of [[0.72, { h: 2, s: 70, l: 52 }, !aligned], [0.3, { h: 142, s: 68, l: 50 }, aligned]] as const) {
+      decalCircle(v, head, 0.5, b, Math.min(hw, hh / 2) * 0.32, css(color, 1, set ? 0 : (T.dark ? -30 : -12), set ? (aligned ? 1 : 0.8) : 0.5));
+      if (set && aligned) glow(v, ...fpt(head, 0.5, b), m * 0.12, color, 0.45);
     }
-    const pr = m * 0.19, podium = H * 0.12;
-    cyl(v, cx, cy, k.Z, pr, podium, c, { dl: T.dark ? 6 : -4 });
-    band(v, cx, cy, k.Z + podium * 0.5, pr, lit(k, 0.9), Math.max(1, podium * v.s * 0.3));
-    // The officer: lateral offsets run across the screen (+ to the right), facing the viewer.
-    const z0 = k.Z + podium, uniform: Hsl = { h: 222, s: 30, l: T.dark ? 30 : 32 }, skin: Hsl = { h: 26, s: 36, l: T.dark ? 66 : 72 };
-    const side = (d: number): [number, number] => [cx + d * S, cy - d * S];
-    const legH = H * 0.28, torsoR = m * 0.088, torsoH = H * 0.26, zt = z0 + legH;
-    for (const d of [-m * 0.052, m * 0.052]) { const [x, y] = side(d); cyl(v, x, y, z0, m * 0.04, legH, uniform); }
-    const vest: Hsl = on(k) ? T.accent : { ...c, l: c.l + (T.dark ? 22 : -6) };
-    cyl(v, cx, cy, zt, torsoR, torsoH, vest);
-    for (const f of [0.35, 0.7]) band(v, cx, cy, zt + torsoH * f, torsoR, css(T.face, 1, 0, 0.9), Math.max(1, torsoH * v.s * 0.09));
-    const zs = zt + torsoH * 0.88, armW = Math.max(1.5, m * 0.07 * v.s), [lsx, lsy] = side(-torsoR * 1.05), [rsx, rsy] = side(torsoR * 1.05);
-    const raised: V3 = [lsx - m * 0.02 * S, lsy + m * 0.02 * S, zs + H * 0.3];
-    const sweep = on(k) ? Math.sin(k.t * 2.2) * 0.7 : 0, reach = m * 0.34;
-    const pointing: V3 = [rsx + Math.cos(-Math.PI / 4 + sweep) * reach, rsy + Math.sin(-Math.PI / 4 + sweep) * reach, zs + H * 0.02];
-    line3(v, [lsx, lsy, zs], raised, css(uniform, 1, 6), armW);
-    line3(v, [rsx, rsy, zs], pointing, css(uniform, 1, 6), armW);
-    ball(v, ...raised, m * 0.04, T.face); ball(v, ...pointing, m * 0.04, T.face);
-    const headR = m * 0.07, hz = zs + headR * 1.25;
-    ball(v, cx, cy, hz, headR, skin);
-    cyl(v, cx, cy, hz + headR * 0.5, headR * 1.08, H * 0.045, uniform);
-    disc(v, cx + headR * 0.7, cy + headR * 0.7, hz + headR * 0.5, headR * 0.62, css(uniform, 0.7));
+    // The pit's rim, its floor, and the bridge with its rails and the operator's hut at one end.
+    const rim = H * 0.1, zb = k.Z + rim;
+    cyl(v, cx, cy, k.Z, r, rim, c, { dl: T.dark ? -8 : -14, top: css(c, 1, T.dark ? -2 : -6) });
+    disc(v, cx, cy, zb, r * 0.84, css(c, 1, T.dark ? -14 : -20));
+    for (const f of [0.5]) band(v, cx, cy, k.Z + rim * f, r, ink(k, 0.3), Math.max(1, rim * v.s * 0.2));
+    const bl = r * 1.86, bw = g * 3, bh = H * 0.1, ax = Math.cos(angle), ay = Math.sin(angle);
+    obox(v, cx, cy, zb - bh * 0.4, bl, bw, bh, angle, c, { dl: T.dark ? 12 : 4 });
+    for (const side of [-1, 1]) {
+      const ox = -ay * g * side, oy = ax * g * side, z = zb + bh * 0.6;
+      line3(v, [cx - ax * bl / 2 + ox, cy - ay * bl / 2 + oy, z], [cx + ax * bl / 2 + ox, cy + ay * bl / 2 + oy, z], css(on(k) ? T.accent : T.ink, 1, 0, 0.8), Math.max(1, tw * v.s));
+    }
+    const hut = bl * 0.36;
+    obox(v, cx + ax * bl * 0.3, cy + ay * bl * 0.3, zb + bh * 0.6, hut * 0.62, bw * 0.92, H * 0.24, angle, c, { dl: T.dark ? 20 : -8 });
+    disc(v, cx, cy, zb + bh * 0.6 + 0.01, g * 0.7, css(T.ink, 1, T.dark ? 10 : 20));
   },
   service(k) {
     const { v, c, T, H } = k, hh = H * 0.5, rh = H * 0.24;
@@ -361,20 +379,36 @@ const DRAW: Record<Archetype, (k: K) => void> = {
     }
   },
   page(k) {
-    const { v, c, H } = k, th = H * 0.93;
+    // A billboard showing a browser window, its address bar first, behind a start line: where a visit begins.
+    const { v, c, T, H } = k, m = k.m, a = axis(k), alongX = k.w >= k.d;
     lot(k);
-    box(v, k.X, k.Y, k.Z, k.W, k.D, th, c);
-    // As many windows as fit at about 7 px a floor: far away a few bands, close up the full grid.
-    const f = frames(k.X, k.Y, k.Z, k.W, k.D, th), rows = Math.min(clamp(Math.floor(th / (k.m * 0.17)), 3, 9), Math.floor(th * v.s / 7));
-    if (rows < 2) { for (const [F, glass] of [[f.L, glassL], [f.R, glassR]] as const) for (const b of [0.3, 0.62]) decal(v, F, 0.12, b, 0.88, b + 0.14, glass(k, 0.9)); }
-    else ([[f.L, k.W, glassL], [f.R, k.D, glassR]] as const).forEach(([F, length, glass], side) => {
-      const cols = Math.max(1, Math.min(clamp(Math.round(length / (k.m * 0.2)), 2, 7), Math.floor(length * v.s * ISO_X / 7)));
-      for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) {
-        const seed = k.seed * 31 + side * 101 + i * 13 + j * 7, lights = hash(seed) > 0.72 || (on(k) && hash(seed + 9) > 0.4);
-        decal(v, F, (j + 0.22) / cols, 0.05 + (i + 0.25) / rows * 0.9, (j + 0.78) / cols, 0.05 + (i + 0.75) / rows * 0.9, lights ? lit(k, 0.8) : glass(k, 0.9));
-      }
-    });
-    box(v, k.X + k.W * 0.55, k.Y + k.D * 0.15, k.Z + th, k.W * 0.3, k.D * 0.3, H * 0.07, c);
+    const ground = frames(k.x, k.y, k.z, k.w, k.d, k.u * 0.3).T;
+    const flat = (a0: number, b0: number, a1: number, b1: number, fill: string) => alongX ? decal(v, ground, a0, b0, a1, b1, fill) : decal(v, ground, b0, a0, b1, a1, fill);
+    // The start line: a checkered strip across the front of the plot.
+    const cells = clamp(Math.round(a.L / (m * 0.085)), 6, 16);
+    for (let i = 0; i < cells; i++) for (let j = 0; j < 2; j++) flat(0.06 + 0.88 * i / cells, 0.74 + j * 0.07, 0.06 + 0.88 * (i + 1) / cells, 0.81 + j * 0.07, (i + j) % 2 ? css(T.face, 1, T.dark ? -6 : 0, 0.92) : ink(k, 0.85));
+    // Posts, then the board: thin across the plot, so its broad face is the one turned to the viewer.
+    const t = a.S * 0.1, b0 = a.S * 0.24, bz = k.Z + H * 0.18, bh = H * 0.8, post = m * 0.06;
+    for (const at of [0.18, 0.82]) boxR(v, a.R(a.L * at - post / 2, b0 + t / 2 - post / 2, post, post), k.Z, bz - k.Z, c, { dl: T.dark ? -6 : -12 });
+    const [bx, by, bw, bd] = a.R(0, b0, a.L, t);
+    box(v, bx, by, bz, bw, bd, bh, c);
+    const f = frames(bx, by, bz, bw, bd, bh), F = alongX ? f.L : f.R;
+    // The right face runs from right to left on screen: flip it so the window reads the same way on either.
+    const at = (u: number) => alongX ? u : 1 - u;
+    const pane = (a0: number, b0: number, a1: number, b1: number, fill: string) => decal(v, F, Math.min(at(a0), at(a1)), b0, Math.max(at(a0), at(a1)), b1, fill);
+    const page = css(T.face, 1, T.dark ? -8 : 0), bar = css(c, 0.82, T.dark ? -4 : -10);
+    pane(0.04, 0.06, 0.96, 0.8, page);
+    pane(0.04, 0.8, 0.96, 0.95, bar);
+    [2, 42, 142].forEach((hue, i) => decalCircle(v, F, at(0.075 + i * 0.045), 0.875, Math.min(bw + bd, bh) * 0.022, css(paint(T, hue))));
+    pane(0.22, 0.835, 0.93, 0.915, css(T.face, 1, T.dark ? -2 : 0));
+    // The address: a slash, and a loading bar that runs while a flow passes.
+    decalPoly(v, F, [[at(0.245), 0.85], [at(0.26), 0.85], [at(0.28), 0.9], [at(0.265), 0.9]], ink(k, 0.8));
+    for (const [x0, x1] of [[0.3, 0.46], [0.48, 0.58]] as const) pane(x0, 0.866, x1, 0.884, ink(k, 0.35));
+    if (on(k)) pane(0.22, 0.835, 0.22 + 0.71 * ((k.t * 0.6) % 1), 0.85, lit(k));
+    pane(0.08, 0.46, 0.56, 0.74, on(k) ? lit(k, 0.75) : css(paint(T, 205), 1, T.dark ? -6 : 12));
+    for (const [y, x1] of [[0.66, 0.92], [0.58, 0.84], [0.5, 0.88]] as const) pane(0.62, y, x1, y + 0.04, ink(k, 0.4));
+    for (const x0 of [0.08, 0.38, 0.68]) pane(x0, 0.12, x0 + 0.24, 0.38, glassL(k, 0.7));
+    if (on(k) && Math.floor(k.t * 1.5) % 2 === 0) decalPoly(v, F, [[at(0.44), 0.62], [at(0.44), 0.44], [at(0.48), 0.5], [at(0.53), 0.47]], ink(k, 0.95));
   },
   layout(k) {
     const { v, c, T, H } = k, p = k.m * 0.08, fh = H * 0.06, zt = k.Z + fh, ph = H * 0.82, o = { dl: T.dark ? 8 : -2 };
@@ -410,40 +444,43 @@ const DRAW: Record<Archetype, (k: K) => void> = {
     box(v, hx, jy + js / 2 - hs / 2, hz, hs, hs, hs, on(k) ? T.accent : T.ink, { dl: T.dark && !on(k) ? 14 : 0 });
   },
   style(k) {
-    // A painter's easel with a picture on its canvas, a paint pot with brushes, splashes on the ground.
-    const { v, c, T, H } = k, m = k.m, S = Math.SQRT1_2;
+    // A painter's palette lying flat: dabs of paint round its rim, a thumb hole by the notch, a stroke of mixed paint and the brush that made it.
+    const { v, c, T, H } = k, m = k.m, cx = k.X + k.W / 2, cy = k.Y + k.D / 2, rx = k.W * 0.47, ry = k.D * 0.45, th = H * 0.16, zt = k.Z + th;
     lot(k);
-    const ground = frames(k.x, k.y, k.z, k.w, k.d, k.u * 0.3).T;
-    for (const [a, b, r, hue] of [[0.18, 0.78, 0.075, 330], [0.3, 0.9, 0.045, 205], [0.1, 0.6, 0.04, 45]] as const) decalCircle(v, ground, a, b, r * m, css(paint(T, hue), 1, 0, 0.85));
-    // The canvas faces the viewer and leans back a little: across the screen (lat) and up (up).
-    const lat: V3 = [S, -S, 0], up: V3 = [-0.2 * S, -0.2 * S, 1], wood = css(c, 1, T.dark ? 14 : -18), legW = Math.max(1.2, m * 0.035 * v.s);
-    const pcx = k.X + k.W * 0.44, pcy = k.Y + k.D * 0.44, hw = m * 0.3, hh = H * 0.27, zc = k.Z + H * 0.3 + hh;
-    const at = (a: number, b: number): V3 => [pcx + lat[0] * a + up[0] * b, pcy + lat[1] * a + up[1] * b, zc + up[2] * b];
-    const span = (a0: number, b0: number, a1: number, b1: number): Face => { const o = at(a0, b0), ea = at(a1, b0), eb = at(a0, b1); return { o, u: [ea[0] - o[0], ea[1] - o[1], ea[2] - o[2]], v: [eb[0] - o[0], eb[1] - o[1], eb[2] - o[2]] }; };
-    line3(v, at(0, hh * 1.2), [pcx - S * m * 0.34, pcy - S * m * 0.34, k.Z], wood, legW);
-    decal(v, span(-hw, -hh, hw, hh), 0, 0, 1, 1, css(c, 0.8, T.dark ? 8 : -24));
-    const canvas = span(-hw + m * 0.025, -hh + m * 0.025, hw - m * 0.025, hh - m * 0.025);
-    decal(v, canvas, 0, 0, 1, 1, css(T.face, 1, T.dark ? -4 : 0));
-    decal(v, canvas, 0, 0.5, 1, 1, css(paint(T, 205), 1, T.dark ? -4 : 14));
-    decalCircle(v, canvas, 0.74, 0.78, hh * 0.17, css(T.accent));
-    decalPoly(v, canvas, [[0, 0.12], [0.22, 0.5], [0.42, 0.34], [0.68, 0.6], [1, 0.3], [1, 0], [0, 0]], css(paint(T, 145)));
-    // A bold stroke across the picture; while a flow passes it is painted again, left to right.
-    const reach = on(k) ? (k.t * 0.45) % 1 : 1, stroke: [number, number][] = [];
-    for (let i = 0; i <= 10; i++) stroke.push([0.08 + 0.84 * reach * i / 10, 0.26 + 0.07 * Math.sin(i * 0.9) + 0.045]);
-    for (let i = 10; i >= 0; i--) stroke.push([0.08 + 0.84 * reach * i / 10, 0.26 + 0.07 * Math.sin(i * 0.9) - 0.045]);
-    decalPoly(v, canvas, stroke, css(on(k) ? T.accent : paint(T, 330)));
-    line3(v, at(-hw * 1.1, -hh), at(hw * 1.1, -hh), wood, legW * 1.3);
-    line3(v, at(0, hh), at(0, hh * 1.2), wood, legW);
-    for (const side of [-1, 1]) line3(v, at(side * hw * 0.75, -hh), [pcx + lat[0] * side * hw * 0.95 + S * m * 0.14, pcy + lat[1] * side * hw * 0.95 + S * m * 0.14, k.Z], wood, legW);
-    // The paint pot, with two brushes standing in it.
-    const px = k.X + k.W * 0.82, py = k.Y + k.D * 0.8, pr = m * 0.1, potH = H * 0.18, handle = css({ h: 32, s: 38, l: T.dark ? 58 : 62 });
-    cyl(v, px, py, k.Z, pr, potH, c, { dl: T.dark ? 10 : -8 });
-    disc(v, px, py, k.Z + potH, pr * 0.82, css(on(k) ? T.accent : paint(T, 330)));
-    for (const [dx, dy, hue] of [[-0.55, -0.85, 45], [0.6, -0.35, 205]] as const) {
-      const from: V3 = [px + dx * pr * 0.3, py + dy * pr * 0.3, k.Z + potH], to: V3 = [px + dx * pr * 1.5, py + dy * pr * 1.5, k.Z + potH + H * 0.34];
-      line3(v, from, to, handle, Math.max(1.2, m * 0.03 * v.s));
-      line3(v, to, [to[0] + dx * pr * 0.25, to[1] + dy * pr * 0.25, to[2] + H * 0.07], css(paint(T, hue)), Math.max(1.8, m * 0.05 * v.s));
+    // The outline: an oval with a notch for the thumb on the front-left (+y), slightly uneven like a cut board.
+    const notch = Math.PI / 2 + 0.25, n = 44, outline: [number, number][] = [];
+    for (let i = 0; i < n; i++) {
+      const q = (i / n) * Math.PI * 2, dq = Math.atan2(Math.sin(q - notch), Math.cos(q - notch));
+      const R = 1 - 0.3 * Math.exp(-((dq / 0.32) ** 2)) + 0.03 * Math.sin(3 * q + k.seed);
+      outline.push([cx + rx * R * Math.cos(q), cy + ry * R * Math.sin(q)]);
     }
+    for (let i = 0; i < n; i++) {
+      const [x0, y0] = outline[i]!, [x1, y1] = outline[(i + 1) % n]!;
+      face(v, [[x0, y0, k.Z], [x1, y1, k.Z], [x1, y1, zt], [x0, y0, zt]], [y1 - y0, x0 - x1, 0], c, { dl: T.dark ? 4 : -6, bare: true });
+    }
+    path(v, outline.map(([x, y]) => [x, y, zt] as V3));
+    v.ctx.fillStyle = css(c, 1, T.dark ? 8 : 4); v.ctx.fill();
+    if (v.s * m > 60) { v.ctx.strokeStyle = T.outline; v.ctx.lineWidth = 0.75; v.ctx.stroke(); }
+    const spot = (q: number, R: number): [number, number] => [cx + rx * R * Math.cos(q), cy + ry * R * Math.sin(q)];
+    const ring = (x: number, y: number, rr: number, z: number): V3[] => [...Array(20)].map((_, i) => [x + Math.cos(i / 20 * Math.PI * 2) * rr, y + Math.sin(i / 20 * Math.PI * 2) * rr, z]);
+    const [hx, hy] = spot(notch + 0.62, 0.56);
+    path(v, ring(hx, hy, m * 0.075, zt)); v.ctx.fillStyle = css(c, 1, T.dark ? -12 : -14); v.ctx.fill();
+    // A stroke of mixed paint across the middle; while a flow passes it is painted again, the brush following its tip.
+    const reach = on(k) ? 0.1 + 0.9 * ((k.t * 0.45) % 1) : 1;
+    const stroke = (f: number): V3 => [cx - rx * 0.42 + rx * 0.7 * f, cy + ry * 0.2 - ry * 0.62 * f + Math.sin(f * Math.PI * 1.8) * ry * 0.1, zt];
+    const mix = css(on(k) ? T.accent : paint(T, [300, 205, 145, 25][k.seed % 4]!), 1, 0, 0.9);
+    v.ctx.beginPath(); for (let i = 0; i <= 24; i++) { const p = P(v, ...stroke(reach * i / 24)); if (i) v.ctx.lineTo(p[0], p[1]); else v.ctx.moveTo(p[0], p[1]); }
+    v.ctx.strokeStyle = mix; v.ctx.lineWidth = Math.max(1.5, m * 0.075 * v.s); v.ctx.lineCap = 'round'; v.ctx.lineJoin = 'round'; v.ctx.stroke();
+    // Dabs round the rim, away from the notch, drawn back to front.
+    const hues = [2, 42, 142, 205, 270, 320], first = k.seed % hues.length, count = 4 + (k.seed >> 3) % 3;
+    const dabs = [...Array(count)].map((_, i) => { const [x, y] = spot(notch + Math.PI + (i - (count - 1) / 2) * 0.48, 0.72); return { x, y, hue: hues[(first + i) % hues.length]! }; }).sort((p1, p2) => p1.x + p1.y - (p2.x + p2.y));
+    for (const dab of dabs) ball(v, dab.x, dab.y, zt + m * 0.025, m * 0.062, paint(T, dab.hue));
+    // The brush: its tip at the end of the stroke, its handle raised over the rim on the right.
+    const tip = stroke(reach), lift = H * 0.86, hand: V3 = [tip[0] + m * 0.2, tip[1] - m * 0.3, zt + lift];
+    const along = (f: number): V3 => [tip[0] + (hand[0] - tip[0]) * f, tip[1] + (hand[1] - tip[1]) * f, tip[2] + (hand[2] - tip[2]) * f];
+    line3(v, along(0.3), hand, css({ h: 32, s: 38, l: T.dark ? 58 : 60 }), Math.max(1.2, m * 0.04 * v.s));
+    line3(v, along(0.18), along(0.32), css(T.glass, 1, T.dark ? 18 : -10), Math.max(1.4, m * 0.05 * v.s));
+    line3(v, [tip[0], tip[1], tip[2] + m * 0.01], along(0.19), mix, Math.max(1.6, m * 0.06 * v.s));
   },
   config(k) {
     const { v, c, T, H } = k, bh = H * 0.72;
@@ -498,7 +535,7 @@ const ICONS: Record<Archetype, Op[]> = {
   entry: [['c', .5, .5, .3], ['h', .5, .5, .15], ['c', .5, .5, .07]],
   routes: [['r', .15, .22, .85, .34], ['r', .22, .34, .34, .82], ['r', .66, .34, .78, .82]],
   middleware: [['r', .08, .44, .3, .58], ['r', .39, .44, .61, .58], ['r', .7, .44, .92, .58], ['r', .08, .3, .16, .72]],
-  controller: [['r', .42, .04, .58, .96], ['r', .04, .42, .96, .58], ['h', .5, .5, .19], ['c', .5, .5, .09]],
+  controller: [['r', .44, .02, .56, .98], ['r', .02, .44, .98, .56], ['c', .5, .5, .3], ['h', .5, .5, .22], ['r', .24, .44, .76, .56]],
   service: [['p', [[.15, .82], [.15, .45], [.38, .62], [.38, .45], [.61, .62], [.61, .45], [.85, .62], [.85, .82]]]],
   helper: [['r', .16, .16, .56, .56], ['r', .62, .62, .84, .84]],
   command: [['p', [[.18, .25], [.48, .45], [.18, .65], [.18, .54], [.33, .45], [.18, .36]]], ['r', .52, .6, .82, .7]],
@@ -506,7 +543,7 @@ const ICONS: Record<Archetype, Op[]> = {
   job: [['r', .1, .4, .3, .6], ['r', .4, .4, .6, .6], ['r', .7, .4, .9, .6]],
   model: [['r', .18, .2, .82, .32], ['r', .18, .44, .82, .56], ['r', .18, .68, .82, .8]],
   table: [['c', .5, .5, .32], ['h', .5, .5, .2], ['c', .5, .5, .1]],
-  page: [0, 1, 2].flatMap(i => [0, 1, 2].map(j => ['r', .14 + i * .26, .14 + j * .26, .34 + i * .26, .34 + j * .26] as Op)),
+  page: [['r', .1, .12, .9, .3], ['r', .1, .3, .15, .88], ['r', .85, .3, .9, .88], ['r', .1, .83, .9, .88], ['r', .22, .4, .52, .64], ['r', .58, .42, .78, .48], ['r', .58, .54, .74, .6]],
   layout: [['r', .15, .15, .85, .27], ['r', .15, .15, .27, .85], ['r', .73, .15, .85, .85], ['r', .15, .73, .85, .85]],
   component: [['c', .3, .3, .13], ['c', .7, .3, .13], ['c', .3, .7, .13], ['c', .7, .7, .13]],
   hook: [['r', .55, .15, .65, .72], ['p', [[.3, .6], [.4, .6], [.4, .75], [.55, .75], [.55, .62], [.65, .62], [.65, .86], [.3, .86]]]],

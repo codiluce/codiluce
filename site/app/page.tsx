@@ -50,8 +50,8 @@ export default function Home() {
         <div className="container">
           <Shot
             src="/shots/map.webp"
-            alt="Codiluce map of the BookStack repository at file level: its Blade views drawn as towers with lit windows and its layouts as open frames, with one view selected and the inspector saying why it is a page."
-            caption="BookStack, an open-source wiki, at file level. Each file is drawn as the shape of its kind, sized by its code; the inspector says why the selected view is a page."
+            alt="Codiluce map of the BookStack repository at file level: one folder of Blade views drawn as browser billboards with streets between them, selected, and the inspector listing the kinds of block it holds."
+            caption="BookStack, an open-source wiki, at file level. Each file is drawn as the shape of its kind, sized by its code; the inspector lists the kinds of block the selected folder holds."
             priority
           />
         </div>
@@ -143,13 +143,14 @@ export default function Home() {
               <p className="eyebrow">Shapes</p>
               <h2 className="section-title">Every kind of file has a shape.</h2>
               <p>
-                Controllers are traffic cops directing requests, services are workshops, tables are storage drums, pages are
-                towers with lit windows and tests are lab benches. Codiluce takes each file&apos;s kind from the index where it can (a controller class, the endpoints a
+                Controllers are rail turntables sending requests on their way, services are workshops, tables are storage drums,
+                pages are browser billboards and tests are lab benches. Codiluce takes each file&apos;s kind from the index where it can (a controller class, the endpoints a
                 file declares, a page route) and from folder conventions otherwise, with one set of shapes for every language and
                 framework. A folder of components and a folder of migrations look different before you read a label.
               </p>
               <ul className="ticks">
                 <li>Eighteen shapes, from entry points to tests</li>
+                <li>A closed folder shows the kinds it holds, with a count</li>
                 <li>Lenses still color them: coverage, data families, people</li>
                 <li>A playing flow lights each stop it reaches</li>
               </ul>

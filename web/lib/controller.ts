@@ -271,7 +271,7 @@ export class MapController implements MapNavigator {
     const extra = this.options.extra?.();
     const flowAreas = shown && !this.store.previewScene ? this.areasOf(shown.flow, shown.playback.index) : undefined;
     const force = flowAreas && extra?.force ? new Set([...flowAreas, ...extra.force]) : flowAreas ?? extra?.force;
-    this.scene.shapes = state.shapes;
+    this.scene.shapes = state.shapes; this.scene.setStreets(state.streets);
     const key = `${state.shapes ? 'S' : 'P'}|${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}|${this.scene.revision}|${shown ? `${shown.flow.key}#${shown.playback.index}` : ''}|${extra?.key ?? ''}`;
     if (key !== this.setKey) {
       this.set = this.scene.visible(this.camera, this.viewport, this.lod, force);
@@ -328,7 +328,7 @@ export class MapController implements MapNavigator {
     const unresolvedCount = selection && !isContainer(selection.node ?? { type: 'file', kind: 'entity' }) && selection.node?.type !== 'file' ? state.diagnostics.data?.codes.find(code => code.code === 'unresolved-http-call')?.count ?? 0 : 0;
     return {
       selectedId: selection?.id, hoveredId: state.hover?.id, emphasis, within, edges,
-      showDiagnostics: state.showDiagnostics, source: this.sourceFace(state), time, reducedMotion: this.motionReduced, shapes: state.shapes,
+      showDiagnostics: state.showDiagnostics, source: this.sourceFace(state), time, reducedMotion: this.motionReduced, shapes: state.shapes, streets: state.streets,
       ...(state.meta?.comparison ? { comparison: { dimUnchanged: state.timeline.dimUnchanged } } : {}),
       ...(unresolvedCount && selection ? { unresolved: { nodeId: selection.id, count: unresolvedCount } } : {}),
       ...this.analysisOverlays(state, time),

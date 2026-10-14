@@ -16,6 +16,8 @@ const PLATES = [{ x: 0, y: 0, w: 32, d: 32, label: 'backend' }, { x: 34, y: 0, w
 const FLOW = [13, 17, 1, 2, 4, 5, 6, 9];
 const KINDS = Object.keys(ARCHETYPE_LABELS) as Archetype[];
 const STOP_MS = 900, HOLD_MS = 2600;
+/** Each lot is drawn this far inside its place, so streets run between them as on the map. */
+const STREET = 0.5;
 
 const P = (s: number, ox: number, oy: number, x: number, y: number, z: number) => [ox + (x - y) * ISO_X * s, oy + ((x + y) * ISO_Y - z) * s] as const;
 const css = (c: Hsl, a = 1) => `hsla(${c.h} ${c.s}% ${c.l}% / ${a})`;
@@ -56,11 +58,11 @@ export function ShapeGallery() {
       for (const i of order) {
         const [kind, x, y, lw, ld, loc] = LOTS[i]!, stop = FLOW.indexOf(i);
         const flowHot = focused ? 0 : stop >= 0 && stop <= progress + 0.02 ? Math.max(0.45, 1 - (progress - stop) * 0.9) : 0;
-        drawShape(v, kind, { x, y, z: 0.9, w: lw, d: ld, H: shapeHeight(kind, Math.min(lw, ld), loc), c: focused && focused !== kind ? { ...DUSK_FILE, l: 22 } : DUSK_FILE, t, hot: focused === kind ? 1 : flowHot, seed: seedOf(`${kind}${i}`) });
+        drawShape(v, kind, { x: x + STREET, y: y + STREET, z: 0.9, w: lw - STREET * 2, d: ld - STREET * 2, H: shapeHeight(kind, Math.min(lw, ld) - STREET * 2, loc), c: focused && focused !== kind ? { ...DUSK_FILE, l: 22 } : DUSK_FILE, t, hot: focused === kind ? 1 : flowHot, seed: seedOf(`${kind}${i}`) });
       }
       if (!focused) {
         // The request's links, filled as far as the pulse has gone.
-        const anchor = (i: number) => { const [kind, x, y, lw, ld, loc] = LOTS[i]!; return P(s, ox, oy, x + lw / 2, y + ld / 2, 0.9 + shapeHeight(kind, Math.min(lw, ld), loc) * 0.95); };
+        const anchor = (i: number) => { const [kind, x, y, lw, ld, loc] = LOTS[i]!; return P(s, ox, oy, x + lw / 2, y + ld / 2, 0.9 + shapeHeight(kind, Math.min(lw, ld) - STREET * 2, loc) * 0.95); };
         for (let k = 0; k < FLOW.length - 1; k++) {
           const a = anchor(FLOW[k]!), b = anchor(FLOW[k + 1]!), lift = Math.min(70, Math.hypot(b[0] - a[0], b[1] - a[1]) * 0.3), m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - lift];
           const point = (u: number) => [(1 - u) ** 2 * a[0] + 2 * (1 - u) * u * m[0]! + u * u * b[0], (1 - u) ** 2 * a[1] + 2 * (1 - u) * u * m[1]! + u * u * b[1]];
@@ -86,7 +88,7 @@ export function ShapeGallery() {
   return (
     <div className="shape-gallery">
       <div className="shot-frame shape-stage">
-        <canvas ref={ref} role="img" aria-label="An isometric district of two applications, each file drawn as the shape of its kind: a gate for routes, a traffic cop for a controller, a workshop for a service, drums for a table, towers for pages. A request lights them up one after another." />
+        <canvas ref={ref} role="img" aria-label="An isometric district of two applications, each file drawn as the shape of its kind: a gate for routes, a rail turntable for a controller, a workshop for a service, drums for a table, browser billboards for pages. A request lights them up one after another." />
       </div>
       <ul className="shape-legend" aria-label="Building shapes">
         {KINDS.map(kind => (

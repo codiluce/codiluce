@@ -186,6 +186,10 @@ test('the split map: the places of a comparison are placed in the scene, and a t
     const places = (result: ChangeRegionsResult) => result.regions.map(region => [region.node.id, region.total, region.frame]);
     assert.deepEqual(places(sceneRegions(scene, level)), places(projection.regions(view, { level })), level);
   }
+  // Its areas count the blocks they hold by kind as the server does, so a closed area's roof is the same in both.
+  const counted = [...scene.nodes.values()].filter(node => node.archetypeCounts);
+  assert.ok(counted.length > 0);
+  for (const node of counted) assert.deepEqual(node.archetypeCounts, projection.locate(node.id, view).node.archetypeCounts, node.id);
   // While playing, the views wait where the next frames change things: B's and C's places together.
   const frameC = atlas.evolution!.frameOf(snapshotOf('C').id)!;
   assert.deepEqual(timelapseRegions(atlas.evolution!, frameC, frameC, 'file').regions.map(region => region.node.id), sceneRegions(scene, 'file').regions.map(region => region.node.id));

@@ -2,6 +2,7 @@
 import { useEffect, useRef } from 'react';
 import type { Archetype, NodeSummary } from '@engine/projection/dto';
 import { ISO_X, ISO_Y } from '../lib/camera';
+import { compactNumber } from '../lib/format';
 import { ARCHETYPE_LABELS, drawShape, shapeHeight, shapeTheme } from '../lib/shapes';
 import { PaletteCache, paletteKey, themeById, type Hsl } from '../lib/themes';
 import { useAtlas } from './context';
@@ -43,6 +44,25 @@ export function ArchetypeChip({ node }: { node: NodeSummary }) {
         {archetype.reason && <div className="archetype-reason">{archetype.reason} <span className="muted">({BASIS[archetype.basis]})</span></div>}
       </div>
     </div>
+  );
+}
+
+/** An area's blocks by kind, most first: what its roof shows on the map, in full. */
+export function ArchetypeHoldings({ node }: { node: NodeSummary }) {
+  const counts = node.archetypeCounts;
+  if (!counts?.length) return null;
+  const where = node.type === 'repository' ? 'repository' : node.type === 'application' ? 'application' : node.kind === 'group' ? 'district' : 'folder';
+  return (
+    <section className="section archetype-holdings">
+      <h4>Kinds of block in this {where}</h4>
+      <ul className="coverage-keys">
+        {counts.map(({ kind, count }) => (
+          <li key={kind} title={`${ARCHETYPE_LABELS[kind].name}: drawn as a ${ARCHETYPE_LABELS[kind].shape}`}>
+            <ArchetypeIcon kind={kind} width={24} height={22} />{ARCHETYPE_LABELS[kind].name}<span className="count">{compactNumber(count)}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

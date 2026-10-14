@@ -1,14 +1,14 @@
 // Canvas 2D renderer for the isometric map. Stateless per frame: everything it
 // draws comes from the visible set, the camera and a RenderState.
-import type { NodeSummary } from '@engine/projection/dto';
+import type { Archetype, NodeSummary } from '@engine/projection/dto';
 import { ISO_X, ISO_Y, toScreen, worldToScreen, type Bounds, type Camera, type Point, type Viewport } from './camera';
-import type { LodConfig } from './lod';
+import { openProgress, type LodConfig } from './lod';
 import type { Scene, VisibleItem, VisibleSet } from './scene';
 import { familyHashHue, PaletteCache, paletteKey, type Theme } from './themes';
 import type { StopTone } from './map-flow';
 import { compactNumber, typeLabel } from './format';
 import { NOT_MEASURED } from './coverage';
-import { drawIcon, drawShape, hexToHsl, ICON_PX, mixHsl, seedOf, shapeTheme, type ShapeTheme, type ShapeView } from './shapes';
+import { drawIcon, drawShape, hexToHsl, ICON_PX, mixHsl, seedOf, shapeHeight, shapeTheme, type ShapeTheme, type ShapeView } from './shapes';
 import type { Hsl } from './themes';
 
 export interface EdgeOverlay { key: string; from: string; to: string; fromAncestors: string[]; toAncestors: string[]; type: string; count: number; emphasized?: boolean; change?: 'added' | 'removed' }
@@ -71,6 +71,8 @@ export interface RenderState {
   frames?: FrameOverlay[];
   /** Archetype shapes and roof icons (default on). */
   shapes?: boolean;
+  /** Blocks drawn inside their places: open areas' floors take a road's tone between them. */
+  streets?: boolean;
   time: number;
   reducedMotion: boolean;
 }
@@ -90,6 +92,8 @@ export const RISE_MS = 520, FLASH_MS = 900;
 const SOFT_PX = 16;
 /** How far what a focus does not reach recedes, as a share of the theme's dimming. */
 const FOCUS_DIM = 0.35;
+/** Closed areas at least this large on screen show what they hold on their roof; past these sizes, room for more kinds. */
+const RESUME_PX = 64, RESUME_FADE_PX = 14, RESUME_KINDS: [number, number][] = [[100, 2], [150, 4], [Infinity, 6]];
 
 export class MapRenderer {
   private palettes: PaletteCache;
@@ -97,7 +101,7 @@ export class MapRenderer {
   private dpr = 1;
   private shapeTheme: ShapeTheme;
   constructor(private theme: Theme) { this.palettes = new PaletteCache(theme); this.font = theme.style?.font ?? FONT; this.shapeTheme = shapeTheme(theme); }
-  setTheme(theme: Theme): void { this.theme = theme; this.palettes = new PaletteCache(theme); this.font = theme.style?.font ?? FONT; this.shapeTheme = shapeTheme(theme); }
+  setTheme(theme: Theme): void { this.theme = theme; this.palettes = new PaletteCache(theme); this.font = theme.style?.font ?? FONT; this.shapeTheme = shapeTheme(theme); this.sprites.clear(); }
 
   render(ctx: CanvasRenderingContext2D, dpr: number, viewport: Viewport, camera: Camera, scene: Scene, set: VisibleSet, state: RenderState, lod: LodConfig): void {
     const theme = this.theme;
@@ -136,7 +140,11 @@ export class MapRenderer {
       const person = category || family ? undefined : peopleOf?.(item.node);
       const paletteOverride = category ? `coverage:${category}` : family ? `family:${this.familyHue(family, state.families!)}` : person ? `family:${this.familyHue(person, state.people!)}` : undefined;
       if (item.shape !== undefined) this.shape(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId, paletteOverride, hot.get(item.node.id) ?? 0, this.shapeTint(item, state), state);
-      else this.prism(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId, paletteOverride, state.shapes !== false);
+      else {
+        this.prism(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId, paletteOverride, state.shapes !== false, !!state.streets && item.open);
+        const resume = this.resumeShare(item, state, camera, lod);
+        if (resume > 0) this.resume(ctx, viewport, camera, item, alpha * resume, paletteOverride);
+      }
       if (state.coverage && !item.open && !category && state.coverage.areas.has(item.node.id)) this.coverageBadge(ctx, viewport, camera, item, alpha, state.coverage.areas.get(item.node.id)!);
       if (state.families && !item.open && !family && state.families.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.families.areas.get(item.node.id)!, state.families);
       else if (state.feature && !state.coverage && !item.open && state.feature.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.feature.areas.get(item.node.id)!, state.feature);
@@ -146,7 +154,7 @@ export class MapRenderer {
       if (state.impact) this.impactOverlay(ctx, viewport, camera, item, alpha, state.impact);
       if (state.showDiagnostics && !item.open && item.node.diagnostics > 0 && item.size > 10) this.diagnosticMarker(ctx, viewport, camera, item, alpha);
       // Receded areas keep their names (in a quieter color) to stay oriented; receded blocks lose theirs.
-      this.collectLabel(labels, viewport, camera, item, state, dimmed && !flowSet && item.tier === 'district' ? alpha / recede : alpha, dimmed ?? false);
+      this.collectLabel(labels, viewport, camera, item, state, dimmed && !flowSet && item.tier === 'district' ? alpha / recede : alpha, dimmed ?? false, lod);
     }
     const selected = state.selectedId ? items[set.index.get(state.selectedId) ?? -1] : undefined;
     if (selected) this.outline(ctx, viewport, camera, selected, theme.selection, 2.5, true);
@@ -332,7 +340,7 @@ export class MapRenderer {
     }
     ctx.globalAlpha = 1;
   }
-  private prism(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, hovered: boolean, paletteOverride?: string, icons = false): void {
+  private prism(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, hovered: boolean, paletteOverride?: string, icons = false, road = false): void {
     const palette = this.palettes.get(paletteOverride ?? paletteKey(item.node), item.node.depth);
     const r = this.radius(item, camera);
     ctx.globalAlpha = alpha;
@@ -345,7 +353,7 @@ export class MapRenderer {
         ctx.fillStyle = palette.right; polygon(ctx, [top[1], top[2], bottom[2], bottom[1]]); ctx.fill();
       }
     }
-    ctx.fillStyle = hovered ? palette.hoverTop : palette.top;
+    ctx.fillStyle = hovered ? palette.hoverTop : road ? this.road(paletteOverride ?? paletteKey(item.node), item.node.depth) : palette.top;
     this.topPath(ctx, viewport, camera, item, r); ctx.fill();
     const sheen = this.theme.style?.sheen;
     if (sheen && item.size > 28) {
@@ -369,6 +377,11 @@ export class MapRenderer {
     }
     ctx.globalAlpha = 1;
   }
+  /** An open area's floor with streets on: a shade darker than its blocks' plots, like asphalt between them. */
+  private road(key: string, depth: number): string {
+    const base = this.palettes.base(key, depth);
+    return `hsl(${base.h} ${base.s * 0.7}% ${(this.theme.dark ? base.l * 0.72 : base.l - 7).toFixed(1)}%)`;
+  }
   private view(viewport: Viewport, camera: Camera): ShapeView {
     return { ctx: this.ctxRef!, s: camera.scale, ox: viewport.width / 2 - camera.x * camera.scale, oy: viewport.height / 2 - camera.y * camera.scale, T: this.shapeTheme };
   }
@@ -380,18 +393,80 @@ export class MapRenderer {
     if (tint) color = mixHsl(color, tint, 0.6);
     if (hovered) color = { ...color, l: color.l + (this.theme.dark ? 9 : -7) };
     const input = { x: node.rect.x, y: node.rect.y, z: item.zBase, w: node.rect.w, d: node.rect.h, H: item.zTop - item.zBase, c: color, t: state.reducedMotion ? 0 : state.time / 1000, hot, seed: seedOf(node.id) };
-    if (alpha >= 0.98) { drawShape(this.view(viewport, camera), node.archetype!.kind, input); return; }
-    // A faded shape is drawn whole on a layer and faded as one picture, so its inner faces never show through each other.
+    this.composite(ctx, viewport, camera, item, alpha, v => drawShape(v, node.archetype!.kind, input));
+  }
+  /**
+   * Draw a picture standing on an item. Faded, it is drawn whole on a layer
+   * and faded as one, so its inner faces never show through each other.
+   */
+  private composite(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, draw: (v: ShapeView) => void): void {
+    if (alpha >= 0.98) { draw(this.view(viewport, camera)); return; }
     const top = this.corners(viewport, camera, item, item.zTop), bottom = this.corners(viewport, camera, item, item.zBase), margin = 4 + item.size * 0.5;
     const x0 = Math.max(0, Math.floor(top[3].x - margin)), x1 = Math.min(viewport.width, Math.ceil(top[1].x + margin));
     const y0 = Math.max(0, Math.floor(top[0].y - margin)), y1 = Math.min(viewport.height, Math.ceil(bottom[2].y + 2));
     if (x1 <= x0 || y1 <= y0) return;
     const layer = this.layer(viewport), lctx = layer.getContext('2d')!, d = this.dpr;
     lctx.setTransform(d, 0, 0, d, 0, 0); lctx.clearRect(x0, y0, x1 - x0, y1 - y0);
-    drawShape({ ...this.view(viewport, camera), ctx: lctx }, node.archetype!.kind, input);
+    draw({ ...this.view(viewport, camera), ctx: lctx });
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = alpha;
     ctx.drawImage(layer, x0 * d, y0 * d, (x1 - x0) * d, (y1 - y0) * d, x0 * d, y0 * d, (x1 - x0) * d, (y1 - y0) * d);
     ctx.restore();
+  }
+  /**
+   * How much of what an area holds its roof shows (0..1): closed areas from
+   * RESUME_PX, fading out as an opening area's own blocks fade in. Lenses and
+   * comparisons badge areas with their own summary instead.
+   */
+  private resumeShare(item: VisibleItem, state: RenderState, camera: Camera, lod: LodConfig): number {
+    if (state.shapes === false || !item.node.archetypeCounts?.length || item.shape !== undefined) return 0;
+    if (state.comparison || state.impact || state.coverage || state.families || state.feature || state.person || state.people) return 0;
+    if (item.open) return Math.max(0, 1 - openProgress(item.node, camera.scale, lod) * 2.5);
+    return Math.min(1, Math.max(0, (item.size - RESUME_PX) / RESUME_FADE_PX));
+  }
+  /** An area's roof: the kinds of block it holds most, each as a small shape over its count. */
+  private resume(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, paletteOverride: string | undefined): void {
+    const node = item.node, counts = node.archetypeCounts!, { x, y, w, h } = node.rect, side = Math.min(w, h);
+    const n = Math.min(counts.length, RESUME_KINDS.find(([px]) => item.size < px)![1]);
+    const along = n <= 2 ? n : n <= 4 ? 2 : 3, across = Math.ceil(n / along), [cols, rows] = w >= h ? [along, across] : [across, along];
+    const margin = side * 0.1, cw = (w - margin * 2) / cols, ch = (h - margin * 2) / rows, fs = Math.min(cw * 0.76, ch * 0.76, side * 0.46);
+    const color = this.palettes.base(paletteOverride ?? 'file', node.depth + 1);
+    const cells = counts.slice(0, n).map((entry, i) => ({ ...entry, cx: x + margin + cw * (i % cols + 0.5), cy: y + margin + ch * (Math.floor(i / cols) + 0.5) }));
+    const behind = [...cells].sort((a, b) => a.cx + a.cy - (b.cx + b.cy));
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    for (const cell of behind) {
+      const sprite = this.sprite(cell.kind, fs * camera.scale, color), back = worldToScreen(camera, viewport, cell.cx - fs / 2, cell.cy - fs / 2, item.zTop), k = fs * camera.scale / sprite.side;
+      ctx.drawImage(sprite.canvas, back.x - sprite.ox * k, back.y - sprite.oy * k, sprite.width * k, sprite.height * k);
+    }
+    // The counts, under each shape's front corner.
+    ctx.font = `700 ${Math.min(12, 9.5 + item.size / 120).toFixed(1)}px ${this.font}`; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.lineJoin = 'round';
+    ctx.lineWidth = 3; ctx.strokeStyle = this.theme.text.halo; ctx.fillStyle = this.theme.text.primary;
+    for (const cell of cells) {
+      const p = worldToScreen(camera, viewport, cell.cx + fs / 2, cell.cy + fs / 2, item.zTop), text = compactNumber(cell.count);
+      ctx.strokeText(text, p.x, p.y + 1); ctx.fillText(text, p.x, p.y + 1);
+    }
+    ctx.restore();
+  }
+  /** Small static shapes (the kinds on areas' roofs) drawn once per kind, color and size, then copied: panning only blits them. */
+  private sprites = new Map<string, { canvas: HTMLCanvasElement; side: number; ox: number; oy: number; width: number; height: number }>();
+  private sprite(kind: Archetype, sidePx: number, color: Hsl) {
+    // Sizes step by 8%, each drawn scaled by at most 4% either way.
+    const step = Math.round(Math.log(Math.max(2, sidePx)) / Math.log(1.08)), side = 1.08 ** step;
+    const key = `${kind}|${step}|${color.h}|${color.s}|${color.l}|${this.dpr}`;
+    const known = this.sprites.get(key);
+    if (known) return known;
+    // Room above the shape for its glow (a lighthouse lamp shines past its top).
+    const F = 8, s = side / F, H = shapeHeight(kind, F, undefined) * s, pad = 3, top = side * 0.8 + 4;
+    const width = Math.ceil(side * 2 * ISO_X + pad * 2), height = Math.ceil(side + H + top + pad * 2), ox = pad + side * ISO_X, oy = pad + top + H;
+    const canvas = document.createElement('canvas'), d = this.dpr;
+    canvas.width = Math.ceil(width * d); canvas.height = Math.ceil(height * d);
+    const sctx = canvas.getContext('2d')!;
+    sctx.setTransform(d, 0, 0, d, 0, 0);
+    drawShape({ ctx: sctx, s, ox, oy, T: this.shapeTheme }, kind, { x: 0, y: 0, z: 0, w: F, d: F, H: H / s, c: color, t: 0, hot: 0, seed: seedOf(kind) });
+    const sprite = { canvas, side, ox, oy, width, height };
+    if (this.sprites.size >= 400) for (const old of [...this.sprites.keys()].slice(0, 100)) this.sprites.delete(old);
+    this.sprites.set(key, sprite);
+    return sprite;
   }
   private layerCanvas?: HTMLCanvasElement;
   /** A scratch canvas the size of the map, for drawing a shape whole before fading it. */
@@ -566,7 +641,7 @@ export class MapRenderer {
     }
     ctx.globalAlpha = 1;
   }
-  private collectLabel(labels: Label[], viewport: Viewport, camera: Camera, item: VisibleItem, state: RenderState, alpha: number, dimmed: boolean): void {
+  private collectLabel(labels: Label[], viewport: Viewport, camera: Camera, item: VisibleItem, state: RenderState, alpha: number, dimmed: boolean, lod: LodConfig): void {
     if (item.tier === 'hidden' || alpha < 0.25) return;
     const node = item.node, theme = this.theme;
     const important = node.id === state.selectedId || node.id === state.hoveredId;
@@ -581,8 +656,9 @@ export class MapRenderer {
       return;
     }
     const { x, y, w, h } = node.rect;
-    // Shapes keep their label off the roof: under their front corner, like a street sign.
-    const center = item.shape !== undefined ? worldToScreen(camera, viewport, x + w, y + h, item.zBase) : worldToScreen(camera, viewport, x + w / 2, y + h / 2, item.zTop);
+    // Shapes, and areas showing what they hold, keep their label off the roof: under their front corner, like a street sign.
+    const sign = item.shape !== undefined || this.resumeShare(item, state, camera, lod) > 0;
+    const center = sign ? worldToScreen(camera, viewport, x + w, y + h, item.zBase) : worldToScreen(camera, viewport, x + w / 2, y + h / 2, item.zTop);
     const big = node.type === 'application';
     const nameSize = big ? Math.min(22, 13 + item.size / 60) : Math.min(14, 10 + item.size / 70);
     const lines: Label['lines'] = [{ text: `${state.comparison ? changeGlyph(node) : ''}${displayName(node)}`, font: `${big || important ? 700 : 600} ${nameSize.toFixed(1)}px ${this.font}`, color }];
@@ -594,7 +670,7 @@ export class MapRenderer {
       const detail = detailLine(node);
       if (detail) lines.push({ text: detail, font: `400 ${Math.max(9, nameSize - 3).toFixed(1)}px ${node.detail?.startsWith('(') ? MONO : this.font}`, color: theme.text.secondary });
     }
-    labels.push({ x: center.x, y: center.y, align: item.shape !== undefined ? 'below' : 'center', priority: (important ? 2e9 : 0) + item.size, lines });
+    labels.push({ x: center.x, y: center.y, align: sign ? 'below' : 'center', priority: (important ? 2e9 : 0) + item.size, lines });
   }
   private labels(ctx: CanvasRenderingContext2D, labels: Label[]): void {
     labels.sort((a, b) => b.priority - a.priority);

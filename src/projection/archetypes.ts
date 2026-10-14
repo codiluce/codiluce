@@ -21,6 +21,8 @@ export const ARCHETYPES: Archetype[] = ['entry', 'routes', 'middleware', 'contro
 /** `indexed`: an entity type, role or declaration in the index; `convention`: a path or name rule; `language`: the file's language. */
 export type ArchetypeBasis = 'indexed' | 'convention' | 'language';
 export interface ArchetypeInfo { kind: Archetype; basis: ArchetypeBasis; reason: string }
+/** How many blocks of one archetype an area holds. */
+export interface ArchetypeCount { kind: Archetype; count: number }
 
 const STYLE_LANGUAGES = new Set(['css', 'scss', 'sass', 'less', 'stylus', 'postcss']);
 const DATA_LANGUAGES = new Set(['json', 'yaml', 'toml', 'ini', 'xml', 'dotenv', 'properties']);
@@ -77,6 +79,32 @@ export function computeArchetypes(index: ProjectionIndex): Map<string, Archetype
     if (info) result.set(node.id, info);
   }
   return result;
+}
+
+const AREA_TYPES = new Set(['repository', 'application', 'directory']);
+/**
+ * What each area (repository, application, directory, district) holds, by
+ * archetype, most first: the summary a closed area shows on its roof. A block
+ * is the outermost node with an archetype (a file, or an endpoint or table
+ * in its district); what is inside it counts through it, and nothing inside
+ * a file without one counts at all.
+ */
+export function computeArchetypeCounts(index: ProjectionIndex, archetypes: Map<string, ArchetypeInfo>): Map<string, ArchetypeCount[]> {
+  const counts = new Map<string, Map<Archetype, number>>();
+  const visit = (node: ProjectionNode, areas: string[]): void => {
+    if (node.change?.status === 'removed') return;
+    const kind = archetypes.get(node.id)?.kind;
+    if (kind) {
+      for (const area of areas) { const own = counts.get(area) ?? new Map<Archetype, number>(); own.set(kind, (own.get(kind) ?? 0) + 1); counts.set(area, own); }
+      return;
+    }
+    if (node.type === 'file') return;
+    const inner = node.kind === 'group' || AREA_TYPES.has(node.type) ? [...areas, node.id] : areas;
+    for (const id of node.children) { const child = index.node(id); if (child) visit(child, inner); }
+  };
+  visit(index.node(index.rootId)!, []);
+  const order = new Map(ARCHETYPES.map((kind, i) => [kind, i]));
+  return new Map([...counts].map(([area, own]) => [area, [...own].map(([kind, count]) => ({ kind, count })).sort((a, b) => b.count - a.count || order.get(a.kind)! - order.get(b.kind)!)]));
 }
 
 function classifyEntity(node: ProjectionNode): ArchetypeInfo | undefined {

@@ -9,7 +9,7 @@ import { coverageCss, familyCss, familyHues, featureHues, personHue, themeById }
 import { COVERAGE_TEXT, NOT_MEASURED } from '../lib/coverage';
 import { useAtlas, useStore } from './context';
 import { TypeBadge } from './TypeBadge';
-import { ArchetypeChip } from './ArchetypeMark';
+import { ArchetypeChip, ArchetypeHoldings } from './ArchetypeMark';
 import { AnalysisSupport } from './AnalysisSupport';
 import { CallSitesSection, CommitImpactChip, EffectsSection } from './Analysis';
 import { CommitList, KindTag, PersonDot, WindowPicker, windowText } from './PeoplePanel';
@@ -111,6 +111,7 @@ function Selection() {
       {node.change?.status === 'removed' && <p className="note">This entity existed in the baseline and was removed. It is shown as a ghost where it used to be; its facts below are from the baseline.</p>}
       {selection.change && <ChangeSection node={node} />}
       <FlowsSection node={node} />
+      <ArchetypeHoldings node={node} />
       {node.kind === 'entity' && (node.type === 'directory' || node.type === 'application' || node.type === 'repository') && <DataBreakdown key={node.id} node={node} />}
       <PeopleSection key={`people:${node.id}`} />
       <Facts node={node} entity={entity} />
