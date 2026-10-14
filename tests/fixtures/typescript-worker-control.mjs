@@ -4,7 +4,7 @@ import {fork} from 'node:child_process';
 if(process.argv.includes('--child'))setInterval(()=>{},1000);
 else process.once('message',message=>{
  const request=deserialize(message),mode=request.context.config.repository.name;
- const result={protocol:2,patch:{entities:[],patches:[],relations:[],merged:[],diagnostics:[],http:[]},typescriptFiles:[],sourceReads:[],sourceFailures:[],cacheEvents:[],usage:{pid:process.pid,heapLimitBytes:getHeapStatistics().heap_size_limit,heapUsedBytes:process.memoryUsage().heapUsed,maxRssKiB:process.resourceUsage().maxRSS}};
+ const result={protocol:3,patch:{entities:[],patches:[],relations:[],merged:[],diagnostics:[],http:[]},typescriptFiles:[],sourceReads:[],sourceFailures:[],cacheEvents:[],usage:{pid:process.pid,heapLimitBytes:getHeapStatistics().heap_size_limit,heapUsedBytes:process.memoryUsage().heapUsed,maxRssKiB:process.resourceUsage().maxRSS}};
  const finish=code=>{process.exitCode=code;process.disconnect();};
  if(mode==='unexpected-exit'){process.exit(17);}
  if(mode==='owner-hang'){setInterval(()=>{},1000);return;}

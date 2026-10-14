@@ -1,6 +1,5 @@
 // Source-only bootstrap. Production loads compiled Codiluce, never target modules.
 import { existsSync } from 'node:fs';
-import { deserialize, serialize } from 'node:v8';
 import cp from 'node:child_process';
 import { syncBuiltinESMExports } from 'node:module';
 
@@ -28,11 +27,14 @@ cp.fork = (...args) => {
 syncBuiltinESMExports();
 process.once('message', async message => {
   try {
-    if (!Buffer.isBuffer(message) || message.length > 64 * 1024 * 1024) throw Error('Invalid TypeScript worker input');
+    const args = process.argv.slice(2), maxBytes = args.length === 0 ? 64 * 1024 * 1024 : args.length === 1 && /^--max-message-bytes=\d+$/.test(args[0]) ? Number(args[0].slice('--max-message-bytes='.length)) : NaN;
+    if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > 64 * 1024 * 1024) throw Error('Invalid owned compiler transfer limit');
+    if (!Buffer.isBuffer(message) || message.length > maxBytes) throw Error('Invalid TypeScript worker input');
     const entry = new URL('./ts-worker.js', import.meta.url);
     const { analyzeTypeScriptWorker } = await import(existsSync(entry) ? entry.href : new URL('./ts-worker.ts', import.meta.url).href);
-    const result = serialize(await analyzeTypeScriptWorker(deserialize(message)));
-    if (result.length > 64 * 1024 * 1024) throw Error('TypeScript worker output exceeds 64 MiB');
+    const codec = new URL('./ts-worker-codec.js', import.meta.url);
+    const { encodeTypeScriptPayload, decodeTypeScriptPayload } = await import(existsSync(codec) ? codec.href : new URL('./ts-worker-codec.ts', import.meta.url).href);
+    const result = encodeTypeScriptPayload(await analyzeTypeScriptWorker(decodeTypeScriptPayload(message, maxBytes)), maxBytes);
     process.send(result, error => { process.exitCode = error ? 1 : 0; intentionalDisconnect = true; if (process.connected) process.disconnect(); });
   } catch (error) {
     process.exitCode = 1;

@@ -487,6 +487,10 @@ const compiler=new TemplateScriptParser();try{compiler.prewarm();const retiremen
   const nativeRetirement=await run(process.execPath,['--expose-gc','--experimental-sqlite',nativeRetirementCheck,pathToFileURL(path.join(installed,'dist/src/')).href,path.join(consumer,'native-consumer-retirement-validation.json')],consumer);
   const nativeRetirementReceipt=JSON.parse(await readFile(path.join(consumer,'native-consumer-retirement-validation.json'),'utf8'));
   assert.equal(nativeRetirementReceipt.passed,true);assert.equal(nativeRetirementReceipt.caseCount,2);assert.equal(nativeRetirementReceipt.sourceLoader,false);assert.ok(nativeRetirementReceipt.observations.every(row=>row.liveAtNextPhase===0));
+  const boundedTransferCheck=path.join(consumer,'typescript-bounded-codec-qualification.mjs'),boundedTransferReceipt=path.join(consumer,'typescript-bounded-transfer-validation.json');
+  await cp(path.join(root,'tests/fixtures/typescript-bounded-codec-qualification.mjs'),boundedTransferCheck);
+  await run(process.execPath,['--experimental-sqlite',boundedTransferCheck,pathToFileURL(path.join(installed,'dist/src/')).href,boundedTransferReceipt],consumer);
+  const boundedTransfer=JSON.parse(await readFile(boundedTransferReceipt,'utf8'));assert.ok(boundedTransfer.passed&&!boundedTransfer.sourceLoader);assert.equal(boundedTransfer.caseCount,3);assert.equal(boundedTransfer.parentFullValueV8Serializations,0);
   const bin = path.join(installed, 'bin/codiluce.js');
   for (const grammar of grammarManifest.grammars) assert.equal(createHash('sha256').update(await readFile(path.join(installed, 'dist/grammars', grammar.file))).digest('hex'), grammar.sha256);
   const dependencies = JSON.parse((await npm(['ls', '--omit=dev', '--all', '--json'], consumer)).stdout).dependencies[manifest.name].dependencies;

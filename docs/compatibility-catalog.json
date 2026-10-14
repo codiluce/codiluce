@@ -9,7 +9,7 @@
       "imports": "Indexed Node projects, workspace packages, aliases and shared compiler configs",
       "binding": "Partial lexical, source-type, callable and HTTP-wrapper binding",
       "frameworks": "Next.js, Express, Nest; component scripts",
-      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior. The default indexer isolates the compiler preparation/semantic pass with 1024 MiB old space, 16 MiB semi-space and 64 MiB IPC frames; heap exhaustion rejects the pass without partial graph replay. Native allocations, total RSS, direct in-process compiler consumers, production performance and native OS qualification remain separate gates. Completed native-language context roots and indexed text memos retire before this worker; completed graph facts remain available to later consumers. This lifetime boundary does not cap native extraction, parent graph/project ownership or IPC encoding allocations.",
+      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior. The default indexer isolates the compiler preparation/semantic pass with 1024 MiB old space, 16 MiB semi-space and 64 MiB IPC frames; heap exhaustion rejects the pass without partial graph replay. Native allocations, total RSS, direct in-process compiler consumers, production performance and native OS qualification remain separate gates. Completed native-language context roots and indexed text memos retire before this worker; completed graph facts remain available to later consumers. This lifetime boundary does not cap native extraction, parent graph/project ownership or IPC encoding allocations. Private compiler protocol 3 uses a bounded reference-preserving binary encoding, checking string/binary payload bytes before chunk copies. At most 64 MiB of output blocks and 64 MiB of final concatenation are allocated per direction; bounded chunks preserve every UTF-16 code unit, undefined field, graph proof and object/HTTP alias. Reference/traversal tables, parent graph/project construction, decoded ownership, native allocation and total RSS remain separate budgets. Explicit alternate-worker fault probes retain their legacy V8 transport and are outside the default boundary.",
       "sources": [
         "src/analyzers/typescript.ts",
         "src/analysis/resolution/typescript.ts",
@@ -18,7 +18,8 @@
         "src/analyzers/ts-worker.ts",
         "src/analyzers/ts-worker-protocol.ts",
         "src/analyzers/native-ts-worker.mjs",
-        "src/pipeline/language-retirement.ts"
+        "src/pipeline/language-retirement.ts",
+        "src/analyzers/ts-worker-codec.ts"
       ]
     },
     {
@@ -28,7 +29,7 @@
       "imports": "Indexed Node projects, workspace packages, aliases and shared compiler configs",
       "binding": "Partial lexical, source-type, callable and HTTP-wrapper binding",
       "frameworks": "Next.js, Express, Nest; component scripts",
-      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior. The default indexer isolates the compiler preparation/semantic pass with 1024 MiB old space, 16 MiB semi-space and 64 MiB IPC frames; heap exhaustion rejects the pass without partial graph replay. Native allocations, total RSS, direct in-process compiler consumers, production performance and native OS qualification remain separate gates. Completed native-language context roots and indexed text memos retire before this worker; completed graph facts remain available to later consumers. This lifetime boundary does not cap native extraction, parent graph/project ownership or IPC encoding allocations.",
+      "gaps": "Runtime module/plugin execution, ambiguous overloads and type-only runtime uses; declaration-only inputs do not yield runtime behavior. The default indexer isolates the compiler preparation/semantic pass with 1024 MiB old space, 16 MiB semi-space and 64 MiB IPC frames; heap exhaustion rejects the pass without partial graph replay. Native allocations, total RSS, direct in-process compiler consumers, production performance and native OS qualification remain separate gates. Completed native-language context roots and indexed text memos retire before this worker; completed graph facts remain available to later consumers. This lifetime boundary does not cap native extraction, parent graph/project ownership or IPC encoding allocations. Private compiler protocol 3 uses a bounded reference-preserving binary encoding, checking string/binary payload bytes before chunk copies. At most 64 MiB of output blocks and 64 MiB of final concatenation are allocated per direction; bounded chunks preserve every UTF-16 code unit, undefined field, graph proof and object/HTTP alias. Reference/traversal tables, parent graph/project construction, decoded ownership, native allocation and total RSS remain separate budgets. Explicit alternate-worker fault probes retain their legacy V8 transport and are outside the default boundary.",
       "sources": [
         "src/analyzers/typescript.ts",
         "src/analysis/resolution/typescript.ts",
@@ -37,7 +38,8 @@
         "src/analyzers/ts-worker.ts",
         "src/analyzers/ts-worker-protocol.ts",
         "src/analyzers/native-ts-worker.mjs",
-        "src/pipeline/language-retirement.ts"
+        "src/pipeline/language-retirement.ts",
+        "src/analyzers/ts-worker-codec.ts"
       ]
     },
     {

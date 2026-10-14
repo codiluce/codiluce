@@ -11,6 +11,7 @@ import { applyGraphPatch } from '../pipeline/cache.js';
 import { TYPESCRIPT_WORKER_LIMITS, TYPESCRIPT_WORKER_PROTOCOL, type TypeScriptWorkerRequest, type TypeScriptWorkerResult } from './ts-worker-protocol.js';
 import { typescriptAnalyzer } from './typescript.js';
 import { embeddedAnalyzer, EMBEDDED_VERSION } from '../analysis/embedded/index.js';
+import { encodeTypeScriptPayload, decodeTypeScriptPayload, TypeScriptCodecLimitError } from './ts-worker-codec.js';
 
 const WORKER = fileURLToPath(new URL('./native-ts-worker.mjs', import.meta.url));
 const activeWorkers = new Map<ReturnType<typeof fork>, Set<number>>();
@@ -66,7 +67,9 @@ async function retireChildren(pid: number | undefined, children: Set<number>): P
 export async function runTypeScriptWorker(request: TypeScriptWorkerRequest, options: TypeScriptWorkerOptions = {}): Promise<TypeScriptWorkerResult> {
   const worker = options.worker ?? WORKER, old = options.oldSpaceMiB ?? TYPESCRIPT_WORKER_LIMITS.oldSpaceMiB, young = options.semiSpaceMiB ?? TYPESCRIPT_WORKER_LIMITS.semiSpaceMiB, maxBytes = options.maxMessageBytes ?? TYPESCRIPT_WORKER_LIMITS.maxMessageBytes;
   for (const value of [old, young, maxBytes]) if (!Number.isSafeInteger(value) || value < 1) throw Error('TypeScript worker limits require positive safe integers');
-  const payload = serialize(request);
+  let payload: Buffer;
+  try { payload = worker === WORKER ? encodeTypeScriptPayload(request, maxBytes) : serialize(request); }
+  catch (error) { if (error instanceof TypeScriptCodecLimitError) throw Error(`TypeScript worker input exceeds ${maxBytes} bytes`); throw error; }
   if (payload.length > maxBytes) throw Error(`TypeScript worker input exceeds ${maxBytes} bytes`);
   const execArgv = [`--max-old-space-size=${old}`, `--max-semi-space-size=${young}`];
   if (worker === WORKER && !existsSync(new URL('./ts-worker.js', import.meta.url))) execArgv.push('--import', createRequire(import.meta.url).resolve('tsx'));
@@ -74,7 +77,8 @@ export async function runTypeScriptWorker(request: TypeScriptWorkerRequest, opti
   // compiler budget or execute inside the child. The owned source loader is
   // needed only for development; an installed package uses ordinary JS.
   const env = { ...process.env }; delete env.NODE_OPTIONS; delete env.NODE_PATH;
-  const child = fork(worker, [], { cwd: path.dirname(worker), execArgv, env, detached: process.platform !== 'win32', serialization: 'advanced', stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
+  const args = worker === WORKER && maxBytes < TYPESCRIPT_WORKER_LIMITS.maxMessageBytes ? [`--max-message-bytes=${maxBytes}`] : [];
+  const child = fork(worker, args, { cwd: path.dirname(worker), execArgv, env, detached: process.platform !== 'win32', serialization: 'advanced', stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
   return new Promise((resolve, reject) => {
     let response: TypeScriptWorkerResult | undefined, failure: Error | undefined, stderr = '', stderrBytes = 0;
     const children = new Set<number>();
@@ -96,7 +100,7 @@ export async function runTypeScriptWorker(request: TypeScriptWorkerRequest, opti
       if (!Buffer.isBuffer(message)) { stop(Error(`TypeScript worker failed: ${typeof message === 'object' && message && 'error' in message ? String(message.error) : 'invalid response'}`)); return; }
       if (message.length > maxBytes) { stop(Error(`TypeScript worker output exceeds ${maxBytes} bytes`)); return; }
       try {
-        const result = deserialize(message) as TypeScriptWorkerResult;
+        const result = (worker === WORKER ? decodeTypeScriptPayload(message, maxBytes) : deserialize(message)) as TypeScriptWorkerResult;
         const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(item => typeof item === 'string');
         if (!result || result.protocol !== TYPESCRIPT_WORKER_PROTOCOL || !result.patch || !strings(result.sourceReads) || !strings(result.typescriptFiles) || !Array.isArray(result.sourceFailures) || !result.sourceFailures.every(item => Array.isArray(item) && item.length === 2 && item.every(value => typeof value === 'string')) || !Array.isArray(result.cacheEvents) || !result.cacheEvents.every(event => typeof event.analyzer === 'string' && typeof event.unit === 'string' && typeof event.hit === 'boolean' && Number.isFinite(event.ms) && event.ms >= 0) || result.usage?.pid !== child.pid || !Number.isSafeInteger(result.usage.heapLimitBytes) || result.usage.heapLimitBytes > (old + 3 * young) * 1024 * 1024) throw Error('Invalid TypeScript worker result');
         response = result;
