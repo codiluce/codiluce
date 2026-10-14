@@ -256,7 +256,7 @@ function scripted(answers: string[], seen: ProviderRequest[] = []): ChatProvider
 }
 test('the chat answers with the tools, sends unresolved links back once, and saves the answer with its question', async () => {
   const seen: ProviderRequest[] = [];
-  const chat = new ChatService({ service, tools: codeTools({ service, projection, history, root, maxFileBytes: 1 << 20 }), keyDirectories: [], providers: { anthropic: scripted(['## Form\nSee [it](wrong/path.tsx).', `## Form\nSee [it](${LOGIN_FORM}).`], seen) } });
+  const chat = new ChatService({ service, tools: codeTools({ service, projection, history, root, maxFileBytes: 1 << 20 }), keyFiles: [], providers: { anthropic: scripted(['## Form\nSee [it](wrong/path.tsx).', `## Form\nSee [it](${LOGIN_FORM}).`], seen) } });
   assert.equal(chat.models().find(model => model.default)!.id, 'claude-opus-5-5');
   const events: AskEvent[] = [];
   const saved = await chat.ask({ question: 'What does the form do?', context: [LOGIN_FORM] }, event => events.push(event), new AbortController().signal);
@@ -278,7 +278,7 @@ test('the chat answers with the tools, sends unresolved links back once, and sav
   assert.equal(refreshed.turns[0]!.text, 'What does the form do?');
   // No key for a model, and read-only servers, refuse clearly.
   await assert.rejects(chat.ask({ question: 'x', model: 'gpt-6.1-sol' }, () => undefined, new AbortController().signal), /OPENAI_API_KEY/);
-  const readOnly = new ChatService({ service: new ExplanationService({ stateDirectory: state, root, projection, readOnly: true }), tools: [], keyDirectories: [], providers: { anthropic: scripted(['x']) } });
+  const readOnly = new ChatService({ service: new ExplanationService({ stateDirectory: state, root, projection, readOnly: true }), tools: [], keyFiles: [], providers: { anthropic: scripted(['x']) } });
   await assert.rejects(readOnly.ask({ question: 'x' }, () => undefined, new AbortController().signal), /read-only/);
 });
 
@@ -320,7 +320,7 @@ test('Claude through the SDK: streamed tool loop, fallbacks on, cached prefix, c
   process.env.ANTHROPIC_BASE_URL = mock.url;
   try {
     const tools: ToolSpec[] = codeTools({ service, projection, history, root, maxFileBytes: 1 << 20 });
-    const chat = new ChatService({ service, tools, keyDirectories: [], providers: { anthropic: new AnthropicChat('test-key') } });
+    const chat = new ChatService({ service, tools, keyFiles: [], providers: { anthropic: new AnthropicChat('test-key') } });
     const events: AskEvent[] = [];
     const saved = await chat.ask({ question: 'Where is the form?' }, event => events.push(event), new AbortController().signal);
     assert.equal(mock.bodies.length, 2);

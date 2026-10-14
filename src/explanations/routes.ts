@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 import type { ChatService } from './chat.js';
 import type { AskEvent, ExplanationsSetup } from './model.js';
 import { ReadOnlyError, type ExplanationService } from './service.js';
+import { mcpLaunch, shellLine } from '../setup/agents.js';
+import { installKind } from '../setup/settings.js';
 
 export const EXPLAIN_REQUEST = 'explain';
 export interface ExplanationRoutes { service: ExplanationService; chat: ChatService; stateDirectory: string }
@@ -64,21 +66,17 @@ async function ask(chat: ChatService, body: unknown, response: ServerResponse): 
 /** How to reach explanations from here: writing allowed, models with keys, and the command that connects an agent. */
 function setup(context: ExplanationRoutes): ExplanationsSetup {
   const root = context.service.root;
-  const fromSource = fileURLToPath(import.meta.url).endsWith('.ts');
   const tool = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-  const repo = root ? ['--repo', root] : [];
-  const state = root && path.resolve(context.stateDirectory) !== path.join(root, '.codiluce') ? ['--state-dir', path.resolve(context.stateDirectory)] : [];
-  const { command, args } = fromSource
-    ? { command: process.execPath, args: ['--experimental-sqlite', '--no-warnings', '--import', path.join(tool, 'node_modules/tsx/dist/loader.mjs'), path.join(tool, 'src/cli.ts'), 'mcp', ...repo, ...state] }
-    : { command: 'npx', args: ['-y', 'codiluce', 'mcp', ...repo, ...state] };
-  const line = [command, ...args].map(quote).join(' ');
+  const kind = installKind(tool, root);
+  const state = root && path.resolve(context.stateDirectory) !== path.join(root, '.codiluce') ? path.resolve(context.stateDirectory) : undefined;
+  const project = mcpLaunch(tool, kind, { ...(root ? { repo: root } : {}), ...(state ? { stateDirectory: state } : {}) });
+  const line = shellLine(project);
   return {
     readOnly: context.service.readOnly, ...(root ? { root } : {}),
-    mcp: { command, args, claude: `claude mcp add codiluce -- ${line}`, codex: `codex mcp add codiluce -- ${line}` },
+    mcp: { command: project.command, args: project.args, claude: `claude mcp add codiluce -- ${line}`, codex: `codex mcp add codiluce -- ${line}` },
     models: context.chat.models(), keyFiles: context.chat.keyFiles(), maxCost: context.chat.cap,
   };
 }
-function quote(part: string): string { return /^[\w@%+=:,./-]+$/.test(part) ? part : `'${part.replace(/'/g, `'\\''`)}'`; }
 class BodyError extends Error { constructor(readonly status: number, message: string) { super(message); } }
 async function readJson(request: IncomingMessage, limit: number): Promise<unknown> {
   let body = '';

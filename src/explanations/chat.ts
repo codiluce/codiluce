@@ -5,8 +5,7 @@
 // as `annotate` does. Each question has a spending cap; an answer whose links
 // do not resolve is sent back once to be fixed.
 import Anthropic from '@anthropic-ai/sdk';
-import { existsSync } from 'node:fs';
-import path from 'node:path';
+import { findKey } from '../setup/settings.js';
 import { openAiKey } from '../ai/openai.js';
 import { costOf as openAiCost } from '../ai/pricing.js';
 import { LINK_GUIDE, parseLink } from './links.js';
@@ -67,8 +66,8 @@ export interface ChatOptions {
   service: ExplanationService;
   /** The read-only tools (the chat saves its answer itself). */
   tools: ToolSpec[];
-  /** Where to look for a `.env` holding the keys (the tool workspace and the state directory; never the target repository). */
-  keyDirectories: string[];
+  /** Files that may hold the keys, first match wins after the environment (src/setup/settings.ts `keyFiles`). */
+  keyFiles: string[];
   maxCost?: number;
   /** Tests: providers that do not reach the network. */
   providers?: Partial<Record<'anthropic' | 'openai', ChatProvider>>;
@@ -96,11 +95,11 @@ export class ChatService {
   get cap(): number { return this.maxCost; }
   /** Models with whether a key is set for them (read again on each call, so a key added to .env works without a restart). */
   models(): ChatModelInfo[] {
-    const keys = { anthropic: !!this.options.providers?.anthropic || !!anthropicKey(this.options.keyDirectories), openai: !!this.options.providers?.openai || !!openAiKey(this.options.keyDirectories) };
+    const keys = { anthropic: !!this.options.providers?.anthropic || !!anthropicKey(this.options.keyFiles), openai: !!this.options.providers?.openai || !!openAiKey(this.options.keyFiles) };
     const preferred = CHAT_MODELS.find(model => keys[model.provider])?.id;
     return CHAT_MODELS.map(model => ({ id: model.id, label: model.label, provider: model.provider, available: keys[model.provider], ...(model.id === preferred ? { default: true } : {}), ...(model.note ? { note: model.note } : {}) }));
   }
-  keyFiles(): string[] { return this.options.keyDirectories.map(directory => path.join(directory, '.env')); }
+  keyFiles(): string[] { return this.options.keyFiles; }
 
   async ask(input: AskInput, emit: (event: AskEvent) => void, signal: AbortSignal): Promise<ExplanationDetail> {
     const service = this.options.service;
@@ -110,8 +109,8 @@ export class ChatService {
     if (question.length > 20_000) throw new Error('The question is too long');
     const available = this.models().filter(model => model.available);
     const chosen = CHAT_MODELS.find(model => model.id === (input.model ?? available.find(item => item.default)?.id));
-    if (!chosen) throw new Error(available.length ? `Unknown model ${input.model}` : `No API key: add ANTHROPIC_API_KEY or OPENAI_API_KEY to ${this.keyFiles().join(' or ')}`);
-    if (!available.some(model => model.id === chosen.id)) throw new Error(`No ${chosen.provider === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'OPENAI_API_KEY'} is set (environment, or ${this.keyFiles().join(' or ')})`);
+    if (!chosen) throw new Error(available.length ? `Unknown model ${input.model}` : `No API key: run codiluce setup, or add ANTHROPIC_API_KEY or OPENAI_API_KEY to ${this.keyFiles()[0]}`);
+    if (!available.some(model => model.id === chosen.id)) throw new Error(`No ${chosen.provider === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'OPENAI_API_KEY'} is set (run codiluce setup, or add it to ${this.keyFiles()[0]})`);
     const existing = input.explanationId ? await service.detail(input.explanationId) : undefined;
     if (input.explanationId && !existing) throw new Error(`No explanation ${input.explanationId}`);
     if (input.refresh && !existing) throw new Error('Refresh needs an explanation');
@@ -129,7 +128,7 @@ export class ChatService {
       emit({ type: 'retry', reason: `${missing.length} link${missing.length === 1 ? '' : 's'} did not resolve; asking the model to fix ${missing.length === 1 ? 'it' : 'them'}` });
       return `These links in your answer do not name anything indexed:\n${missing.map(link => `- ${link.href}: ${link.reason ?? 'not found'}`).join('\n')}\nFind the right paths with the tools (search) and write the whole answer again with correct links.`;
     };
-    const provider = this.options.providers?.[chosen.provider] ?? (chosen.provider === 'anthropic' ? new AnthropicChat(anthropicKey(this.options.keyDirectories)!) : new OpenAiChat(openAiKey(this.options.keyDirectories)!));
+    const provider = this.options.providers?.[chosen.provider] ?? (chosen.provider === 'anthropic' ? new AnthropicChat(anthropicKey(this.options.keyFiles)!) : new OpenAiChat(openAiKey(this.options.keyFiles)!));
     const result = await provider.run({ model: chosen, instructions: CHAT_INSTRUCTIONS, question: prompt.text, tools: this.options.tools, budget, emit, signal, review });
     if (!result.text.trim()) throw new Error('The model gave no answer');
     return service.publish({
@@ -173,17 +172,8 @@ export class ChatService {
   }
 }
 
-/** The Anthropic key: the environment, else a `.env` file of the tool workspace or the state directory. */
-export function anthropicKey(directories: string[]): string | undefined {
-  if (process.env.ANTHROPIC_API_KEY) return process.env.ANTHROPIC_API_KEY;
-  for (const directory of directories) {
-    const file = path.join(directory, '.env');
-    if (!existsSync(file)) continue;
-    try { process.loadEnvFile(file); } catch { continue; }
-    if (process.env.ANTHROPIC_API_KEY) return process.env.ANTHROPIC_API_KEY;
-  }
-  return undefined;
-}
+/** The Anthropic key: the environment, else the first key file that sets it. */
+export function anthropicKey(files: string[]): string | undefined { return findKey('ANTHROPIC_API_KEY', files)?.value; }
 export function anthropicCost(model: string, usage: { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number | null; cache_creation_input_tokens?: number | null }): number {
   const price = ANTHROPIC_PRICES[model] ?? Object.entries(ANTHROPIC_PRICES).find(([name]) => model.startsWith(name))?.[1] ?? ANTHROPIC_PRICES['claude-opus-5-5']!;
   return (usage.input_tokens * price.input + (usage.cache_read_input_tokens ?? 0) * price.cacheRead + (usage.cache_creation_input_tokens ?? 0) * price.input * 1.25 + usage.output_tokens * price.output) / 1e6;

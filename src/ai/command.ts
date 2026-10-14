@@ -16,8 +16,8 @@ import { STE_TARGET } from './ste.js';
 const execute = promisify(execFile);
 export interface AnnotateOptions {
   root: string; stateDirectory: string;
-  /** Where to look for a `.env` holding OPENAI_API_KEY (the tool workspace; never the target repository). */
-  keyDirectories: string[];
+  /** Files that may hold OPENAI_API_KEY (the user's credentials, then `.env` files; never the target repository). */
+  keyFiles: string[];
   tasks?: string; estimateOnly: boolean; pilot: boolean; maxCost: number; concurrency: number; force: boolean;
 }
 export async function annotateCommand(options: AnnotateOptions): Promise<number> {
@@ -37,9 +37,9 @@ export async function annotateCommand(options: AnnotateOptions): Promise<number>
     const input = await loadAnnotationInput(store, projection, annotations, options.root, history);
     let planned = await estimate(input, tasks, { force: options.force });
     printEstimate(planned, 'Estimate (before measuring)');
-    const key = openAiKey(options.keyDirectories);
+    const key = openAiKey(options.keyFiles);
     if (options.pilot || !options.estimateOnly) {
-      if (!key) { console.error('OPENAI_API_KEY is not set (environment, or a .env file in the tool workspace or the state directory).'); return 1; }
+      if (!key) { console.error(`OPENAI_API_KEY is not set: run codiluce setup, or set it in the environment or in ${options.keyFiles[0]}.`); return 1; }
       if (planned.total > options.maxCost * 3) { console.error(`The estimate ($${planned.total.toFixed(2)}) is far above --max-cost ($${options.maxCost.toFixed(2)}): not measured, not run.`); return 3; }
       const model = new OpenAiResponses(key);
       console.error('Measuring with one request per small task (its answers are kept)…');

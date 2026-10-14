@@ -321,7 +321,7 @@ function Composer() {
             </select>
             <button className="button small primary" disabled={streaming || !draft.text.trim()} onClick={() => void store.ask()} title={`Asks ${draft.model ?? 'the model'}, at most $${setup!.maxCost.toFixed(2)} a question. Your question, the attached code and the excerpts it reads are sent to ${available.find(model => model.id === draft.model)?.provider === 'openai' ? 'OpenAI' : 'Anthropic'}.`}>{detail ? 'Ask follow-up' : 'Ask'}</button>
           </>
-        ) : setup && !setup.readOnly ? <span className="absent" title={setup.keyFiles.join('\n')}>To ask here, add ANTHROPIC_API_KEY or OPENAI_API_KEY to <code>{setup.keyFiles[setup.keyFiles.length - 1]}</code></span> : null}
+        ) : setup && !setup.readOnly ? <span className="absent" title={`Read from the environment, or from:\n${setup.keyFiles.join('\n')}`}>To ask here, run <code>codiluce setup</code> in a terminal, or add ANTHROPIC_API_KEY or OPENAI_API_KEY to <code>{setup.keyFiles[0]}</code></span> : null}
         <CopyButton text={agentText} label="Copy for agent" className="button small" title="Copy this question as a prompt for your agent connected to Codiluce over MCP" />
       </div>
       {canAsk && <p className="composer-note">Sent to {available.find(model => model.id === draft.model)?.provider === 'openai' ? 'OpenAI' : 'Anthropic'} with the code the model reads · up to ${setup!.maxCost.toFixed(2)} a question</p>}

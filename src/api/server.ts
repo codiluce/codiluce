@@ -12,6 +12,7 @@ import { ChatService } from '../explanations/chat.js';
 import { codeTools } from '../explanations/tools.js';
 import { handleExplanationRoute, isExplanationPath } from '../explanations/routes.js';
 import { SERVE_FILE } from '../explanations/mcp.js';
+import { keyFiles } from '../setup/settings.js';
 
 export interface InspectionServerOptions {
   /** Repository root; required for source viewing and live Git history. */
@@ -28,8 +29,8 @@ export interface InspectionServerOptions {
   historyIndexing?: boolean;
   /** Refuse every write: on-demand history indexing and explanations (asking, renaming, deleting). */
   readOnly?: boolean;
-  /** Where the chat looks for a `.env` with ANTHROPIC_API_KEY or OPENAI_API_KEY (never the target repository). */
-  keyDirectories?: string[];
+  /** Files the chat reads ANTHROPIC_API_KEY or OPENAI_API_KEY from (src/setup/settings.ts `keyFiles`; never the target repository). */
+  keyFiles?: string[];
 }
 /** Header that a cross-origin page cannot send without a CORS preflight, which this server never grants. */
 export const INDEX_REQUEST_HEADER = 'x-codiluce-request';
@@ -43,7 +44,7 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
   const explanations = options.stateDirectory ? (() => {
     const service = new ExplanationService({ stateDirectory: options.stateDirectory!, root: options.root, projection, history, readOnly: options.readOnly });
     const tools = codeTools({ service, projection, history, root: options.root, maxFileBytes: projectionContext.maxFileBytes });
-    return { service, chat: new ChatService({ service, tools, keyDirectories: options.keyDirectories ?? [options.stateDirectory!] }), stateDirectory: options.stateDirectory! };
+    return { service, chat: new ChatService({ service, tools, keyFiles: options.keyFiles ?? keyFiles(options.stateDirectory!) }), stateDirectory: options.stateDirectory! };
   })() : undefined;
   const server = createServer((request, response) => {
     response.setHeader('Content-Type', 'application/json; charset=utf-8');
