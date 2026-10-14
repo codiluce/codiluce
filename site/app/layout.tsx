@@ -8,10 +8,20 @@ import { SiteFooter, SiteHeader } from '../components/SiteChrome';
 import { GA_ID } from '../lib/site';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://codiluce.com'),
   title: { default: 'Codiluce — Bring your code to light', template: '%s · Codiluce' },
   description: 'Codiluce helps engineers understand their code and its architecture as agents keep changing it: every flow from the interface to the data, linked by evidence, through its whole Git history. Local and open source.',
   applicationName: 'Codiluce',
-  openGraph: { title: 'Codiluce — Bring your code to light', description: 'Understand your code and its architecture as agents keep changing it: an evidenced, zoomable map of flows, history and data.', type: 'website' },
+  openGraph: {
+    title: 'Codiluce — Bring your code to light',
+    description: 'Understand your code and its architecture as agents keep changing it: an evidenced, zoomable map of flows, history and data.',
+    type: 'website',
+    images: [{ url: '/social-preview.png', width: 1280, height: 640, alt: 'Codiluce — Bring your code to light. An amber eclipse lights a map of code.' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: [{ url: '/social-preview.png', alt: 'Codiluce — Bring your code to light. An amber eclipse lights a map of code.' }],
+  },
 };
 
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#0a0a0b', colorScheme: 'dark' };

@@ -20,3 +20,6 @@ npm run preview    # serves out/ on http://localhost:4321
   repository, at 1600 × 1000 CSS px and device scale 2, and save them as 2400 × 1500 WebP.
 - Install commands, the version, links, the call booking URL and the Google Analytics ID are in `lib/site.ts`.
   The Google tag (`app/layout.tsx`) is only included in production builds, so `npm run dev` is not counted.
+- `public/social-preview.png`: the 1280 × 640 social card used by Open Graph and Twitter metadata.
+  Regenerate from the repository root with `node site/scripts/social-preview.mjs` after installing the
+  root and site dependencies and Playwright Chromium. It uses the site's fonts and a still frame of `HeroShader.tsx`.
