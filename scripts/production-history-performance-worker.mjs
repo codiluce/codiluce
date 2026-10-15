@@ -8,10 +8,13 @@ import {performance} from 'node:perf_hooks';
 import {productionSnapshotDigest} from './production-history-storage.mjs';
 import {snapshotStorageLedger} from './production-history-storage-ledger.mjs';
 import {processPeakRssKiB} from './process-memory.mjs';
+import {historyRuntimeLayout} from './production-history-runtime-layout.mjs';
 
 const request=JSON.parse(await readFile(process.argv[2],'utf8'));
+const layout=historyRuntimeLayout(request.engineIdentity);
+assert.deepEqual(process.execArgv,layout.execArgv,'Measurement worker used a different runtime loader');
 const fromEngine=file=>import(pathToFileURL(path.join(request.engine,file)).href);
-const [{indexHistory,historyIdentity},{HistoryStore}]=await Promise.all([fromEngine('src/history/indexer.ts'),fromEngine('src/history/store.ts')]);
+const [{indexHistory,historyIdentity},{HistoryStore}]=await Promise.all([fromEngine(layout.modules.indexer),fromEngine(layout.modules.store)]);
 assert.equal(historyIdentity(request.record.config),request.record.historyIdentity);
 const acknowledge=type=>new Promise((resolve,reject)=>{
  const cleanup=()=>{process.off('message',receive);process.off('disconnect',disconnected);};

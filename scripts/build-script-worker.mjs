@@ -8,13 +8,13 @@ import {fileURLToPath} from 'node:url';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const output='src/analysis/tree-sitter/native-script-worker.mjs';
-const inputs=['src/analysis/source-map.ts','src/analysis/tree-sitter/erb-script.ts','src/analysis/tree-sitter/script-worker.ts','src/analysis/tree-sitter/template-facts.ts'];
+const inputs=['src/analyzers/ts-worker-codec.ts','src/analysis/source-map.ts','src/analysis/tree-sitter/erb-script.ts','src/analysis/tree-sitter/frames.ts','src/analysis/tree-sitter/script-worker.ts','src/analysis/tree-sitter/template-facts.ts'].sort();
 
 export async function scriptWorkerBundle(){
   const result=await build({absWorkingDir:root,entryPoints:['src/analysis/tree-sitter/script-worker.ts'],outfile:output,bundle:true,format:'esm',platform:'node',target:'node22.12',packages:'external',write:false,metafile:true,legalComments:'inline',banner:{js:'// Generated from Codiluce’s typed source-only parser. Do not edit.\n// Rebuild: npm run build:script-worker'}});
   assert.deepEqual(Object.keys(result.metafile.inputs).sort(),inputs,'Compiler bootstrap must include only the approved source-only helpers');
   const imports=Object.values(result.metafile.outputs).flatMap(item=>item.imports);
-  assert.deepEqual(imports.map(({path,kind,external})=>({path,kind,external})),[{path:'node:v8',kind:'import-statement',external:true},{path:'typescript',kind:'dynamic-import',external:true}]);
+  assert.deepEqual(imports.map(({path,kind,external})=>({path,kind,external})),[{path:'node:util',kind:'import-statement',external:true},{path:'typescript',kind:'dynamic-import',external:true}]);
   const text=result.outputFiles[0].text,source=ts.createSourceFile('owned-script-worker.mjs',text,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
   let compilerImports=0;
   function visit(node){

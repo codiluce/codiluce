@@ -6,6 +6,7 @@ import {mkdir,open,readFile,rename,stat} from 'node:fs/promises';
 import {arch,release,type} from 'node:os';
 import path from 'node:path';
 import {promisify} from 'node:util';
+import {verifyPackageEvidence} from './package-evidence.mjs';
 
 const execute=promisify(execFile);
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -48,7 +49,7 @@ export async function runLoggedCommand(command,parameters,{root,log}){
 }
 
 export function renderReceipt(receipt){
-  const rows=receipt.checks.map(check=>`<tr><td>${escape(check.name)}</td><td>${escape(check.status)}</td><td>${check.seconds===undefined?'—':check.seconds.toFixed(2)}</td><td>${check.log?`<a href="${escape(check.log)}">original log</a>`:'—'}</td></tr>`).join('');
+  const rows=receipt.checks.map(check=>`<tr><td>${escape(check.name)}</td><td>${escape(check.status)}</td><td>${check.seconds===undefined?'—':check.seconds.toFixed(2)}</td><td>${check.log?`<a href="${escape(check.log)}">original log</a>`:'—'}${check.packageEvidence?` · <a href="${escape(check.packageEvidence.file)}">package and portable receipts</a>`:''}</td></tr>`).join('');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Native compatibility qualification</title><style>body{font:16px/1.6 system-ui;margin:0;padding:clamp(16px,4vw,40px);background:#101822;color:#e5ecf4}main{max-width:1000px;margin:auto}h1{line-height:1.2}a{color:#8bddd8}.status{padding:16px;border:1px solid #8293a8;border-radius:8px}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;min-width:480px}td,th{padding:12px;text-align:left;border-bottom:1px solid #344353}pre,p{overflow-wrap:anywhere}pre{white-space:pre-wrap;font-size:12px}</style></head><body><main><h1>Native compatibility qualification</h1><p class="status"><strong>${receipt.qualified?'PASS for this recorded native host':receipt.completedAt?'NOT QUALIFIED':'INCOMPLETE — checks have not all finished'}</strong></p><p>${escape(receipt.host.platform)}/${escape(receipt.host.architecture)} · ${escape(receipt.host.osType)} ${escape(receipt.host.osRelease)} · Node ${escape(receipt.host.node)}</p><p>This record covers Codiluce's own conformance, typecheck, capability documentation and production-only installed-package checks. The package harness checks parser assets, original source coordinates and identities, framework handlers, cross-file cache changes, inspector HTTP flows and compiled history. Target applications, toolchains, dependencies, hooks and builds never run. A result from one host does not establish another OS, architecture or Node version; native release qualification requires all configured matrix jobs. Wider source accuracy and production performance remain separate gates.</p><div class="scroll"><table><thead><tr><th>Check</th><th>Outcome</th><th>Seconds</th><th>Evidence</th></tr></thead><tbody>${rows}</tbody></table></div><details><summary>Host, exact source identity, commands and receipts</summary><pre>${escape(JSON.stringify(receipt,null,2))}</pre></details></main></body></html>`;
 }
 
@@ -73,6 +74,13 @@ export async function qualify({root,output,commands,identity=()=>sourceIdentity(
       Object.assign(check,{status:'running',command:command.executable,parameters:command.parameters,log:`${index+1}-${command.name}.log`});await writeReceipt(output,receipt);
       console.log(`Starting ${command.name}`);const start=performance.now();
       Object.assign(check,await runLoggedCommand(command.executable,command.parameters,{root,log:path.join(output,check.log)}),{seconds:(performance.now()-start)/1000});
+      if(command.packageEvidence){
+        try{
+          const evidence=await verifyPackageEvidence(path.join(output,command.packageEvidence));
+          if(evidence.host.node!==host.node||evidence.host.platform!==host.platform||evidence.host.architecture!==host.architecture)throw Error('Package evidence belongs to a different native host');
+          check.packageEvidence=evidence;
+        }catch(error){check.status='failed';check.evidenceError=error.message;}
+      }
       if(command.install&&check.status!=='passed')dependenciesAvailable=false;
       await writeReceipt(output,receipt);console.log(`${command.name}: ${check.status}`);
     }

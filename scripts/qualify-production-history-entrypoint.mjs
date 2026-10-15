@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {createReadStream} from 'node:fs';
-import {lstat,readFile,realpath,writeFile} from 'node:fs/promises';
+import {lstat,readFile,readlink,realpath,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {validateCorpus} from './production-history-inputs.mjs';
 import {compareHistoryRuntimeInputs} from './production-history-runtime-inputs.mjs';
+import {historySourceIdentity,historyRuntimeLayout,historyRuntimeLedgers} from './production-history-runtime-layout.mjs';
 
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const tableNames=['snapshots','entity_versions','relation_versions','diagnostic_versions','snapshot_entities','snapshot_relations','snapshot_diagnostics'];
@@ -23,7 +24,7 @@ export function verifyEntrypointQualification({corpus,receipt,baseline,columns})
  terminal(receipt);terminal(baseline);
  assert.equal(receipt.phase,'fresh-production-indexHistory-entrypoint-workers-and-resume');
  assert.equal(receipt.baselineEngineSha256,baseline.engineIdentity.sha256);
- const runtimeInputComparison=compareHistoryRuntimeInputs(receipt.engineIdentity,baseline.engineIdentity);
+ const runtimeInputComparison=compareHistoryRuntimeInputs(historySourceIdentity(receipt.engineIdentity),historySourceIdentity(baseline.engineIdentity));
  if(Object.hasOwn(receipt,'runtimeInputComparison'))assert.deepEqual(receipt.runtimeInputComparison,runtimeInputComparison,'Observed runtime input comparison differs');
  else assert.equal(runtimeInputComparison.added.length,0,'Added runtime inputs require the observer comparison');
  for(const key of ['corpusSha256','profilesSha256'])assert.equal(receipt[key],baseline[key]);
@@ -69,8 +70,8 @@ async function fileHash(file){const h=createHash('sha256');for await(const chunk
 async function regular(file){assert.equal(await realpath(file),file,'Input crosses an alias');assert.equal((await lstat(file)).isFile(),true);}
 function dead(pid){assert.ok(Number.isSafeInteger(pid)&&pid>0);try{process.kill(pid,0);}catch(error){if(error.code==='ESRCH')return;throw error;}assert.fail('Completed process is still live: '+pid);}
 
-export async function qualifyEntrypointArtifacts({manifest:manifestFile,output,engine}){
- manifestFile=path.resolve(manifestFile);output=path.resolve(output);engine=await realpath(engine??fileURLToPath(new URL('../',import.meta.url)));assert.equal(await realpath(path.dirname(output)),path.dirname(output));
+export async function qualifyEntrypointArtifacts({manifest:manifestFile,output,engine,observerRoot}){
+ manifestFile=path.resolve(manifestFile);output=path.resolve(output);engine=await realpath(engine??fileURLToPath(new URL('../',import.meta.url)));observerRoot=await realpath(observerRoot??engine);assert.equal(await realpath(path.dirname(output)),path.dirname(output));
  const artifacts=new Map(),databases=[],load=async file=>{file=path.resolve(file);await regular(file);const bytes=await readFile(file),sha256=hash(bytes);if(artifacts.has(file))assert.equal(artifacts.get(file),sha256,'Evidence changed between reads');artifacts.set(file,sha256);return {file,bytes,value:JSON.parse(bytes)};};
  const runtimeHelper=fileURLToPath(new URL('./production-history-runtime-inputs.mjs',import.meta.url));await regular(runtimeHelper);artifacts.set(runtimeHelper,await fileHash(runtimeHelper));
  const manifest=(await load(manifestFile)).value;assert.equal(manifest.schema,1);
@@ -85,16 +86,16 @@ export async function qualifyEntrypointArtifacts({manifest:manifestFile,output,e
  const args=controller.value.args;for(const [flag,expected] of [['--output',path.dirname(fresh.file)],['--baseline',old.file],['--qualification',qualification.file]])assert.equal(args[args.indexOf(flag)+1],expected);
  assert.deepEqual((await load(args[args.indexOf('--engine-identity')+1])).value,receipt.engineIdentity);
  assert.equal(receipt.engineIdentity.node,process.version);assert.equal(receipt.engineIdentity.platform,process.platform);assert.equal(receipt.engineIdentity.architecture,process.arch);assert.equal(hash(JSON.stringify(receipt.engineIdentity.files)),receipt.engineIdentity.sha256);
- compareHistoryRuntimeInputs(receipt.engineIdentity,baseline.engineIdentity);
- for(const r of receipt.engineIdentity.files){const file=path.resolve(engine,r.file);assert.ok(!outside(engine,file));await regular(file);assert.equal(await fileHash(file),r.sha256,'Frozen engine differs');artifacts.set(file,r.sha256);}
- for(const [name,expected] of Object.entries(receipt.observer)){const file=path.resolve(engine,'scripts',name);assert.ok(!outside(path.join(engine,'scripts'),file));await regular(file);assert.equal(await fileHash(file),expected);artifacts.set(file,expected);}
+ compareHistoryRuntimeInputs(historySourceIdentity(receipt.engineIdentity),historySourceIdentity(baseline.engineIdentity));
+ for(const ledger of historyRuntimeLedgers(receipt.engineIdentity,engine)){assert.equal(hash(JSON.stringify(ledger.identity.files)),ledger.identity.sha256);for(const r of ledger.identity.files){const file=path.resolve(ledger.root,r.file);assert.ok(!outside(ledger.root,file));await regular(file);assert.equal(await fileHash(file),r.sha256,'Frozen '+ledger.role+' runtime differs');artifacts.set(file,r.sha256);}for(const link of ledger.identity.links??[]){const file=path.resolve(ledger.root,link.file);assert.ok(!outside(ledger.root,file));assert.equal(await readlink(file),link.target);}}
+ for(const [name,expected] of Object.entries(receipt.observer)){const file=path.resolve(observerRoot,'scripts',name);assert.ok(!outside(path.join(observerRoot,'scripts'),file));await regular(file);assert.equal(await fileHash(file),expected);artifacts.set(file,expected);}
  for(const [name,expected] of [['input-corpus.json',corpus.bytes],['input-profiles.json',profiles.bytes],['input-baseline.json',old.bytes],['input-qualification.json',qualification.bytes]])assert.deepEqual((await load(path.join(path.dirname(fresh.file),name))).bytes,expected);
  assert.deepEqual((await load(path.join(path.dirname(fresh.file),'input-engine.json'))).value,receipt.engineIdentity);
  const columns=[];
  for(const item of manifest.columns){
   const audit=await load(item.audit),captured=await load(audit.value.inputSnapshot.file),unit=path.join(path.dirname(fresh.file),item.id),child=await load(path.join(unit,'child-receipt.json')),job=await load(path.join(unit,'job.json'));
   assert.equal(hash(captured.bytes),audit.value.inputSnapshot.sha256);assert.equal(hash(child.bytes),audit.value.childReceiptSha256);assert.equal(hash(job.bytes),audit.value.jobSha256);assert.equal(path.resolve(captured.value.receiptFile),fresh.file);
-  for(const [name,expected] of [['audit-history-entrypoint-columns.py',audit.value.auditorSha256],['audit-history-columns.py',audit.value.columnAuditorSha256]]){const file=path.join(engine,'scripts',name);await regular(file);assert.equal(await fileHash(file),expected);artifacts.set(file,expected);}
+  for(const [name,expected] of [['audit-history-entrypoint-columns.py',audit.value.auditorSha256],['audit-history-columns.py',audit.value.columnAuditorSha256]]){const file=path.join(observerRoot,'scripts',name);await regular(file);assert.equal(await fileHash(file),expected);artifacts.set(file,expected);}
   const row=receipt.repositories.find(r=>r.id===item.id);assert.ok(row);dead(row.process.pid);for(const worker of row.child.workers)dead(worker.pid);
   const original=baseline.repositories.find(r=>r.id===item.id);dead(original.worker.pid);const originalDb=path.resolve(path.dirname(old.file),original.database);assert.equal(originalDb,path.join(path.dirname(old.file),item.id,'state/history.db'));assert.equal(row.originalDatabaseSha256,qualification.value.repositories.find(r=>r.id===item.id).originalDatabaseSha256);
   for(const revision of original.revisions){const source=(await load(path.join(path.dirname(old.file),item.id,revision.commit+'-original.json'))).value;assert.equal(source.commit,revision.commit);assert.equal(source.recordDigest,revision.original.recordDigest);assert.equal(hash(JSON.stringify(source.entries)),source.recordDigest);assert.equal(source.allOriginalBytesVerified,true);assert.equal(source.symlinkTargetsFollowed,false);}
@@ -103,6 +104,7 @@ export async function qualifyEntrypointArtifacts({manifest:manifestFile,output,e
   }
   columns.push({id:item.id,audit:audit.value,input:captured.value,child:child.value,job:job.value});
  }
+ if(receipt.executionLayout)assert.deepEqual(receipt.executionLayout,historyRuntimeLayout(receipt.engineIdentity));
  const coverage=verifyEntrypointQualification({corpus:corpus.value,receipt,baseline,columns});assert.equal(coverage.revisions,195);
  for(const [file,expected] of artifacts)assert.equal(await fileHash(file),expected,'Frozen evidence changed');for(const d of databases){assert.equal(await fileHash(d.file),d.sha256);try{assert.equal((await lstat(d.file+'-wal')).size,0);}catch(error){if(error.code!=='ENOENT')throw error;}}
  const result={schema:1,passed:true,completedAt:new Date().toISOString(),phase:'complete-fresh-production-indexHistory-entrypoint-and-independent-storage-qualification',engineSha256:receipt.engineIdentity.sha256,baselineEngineSha256:receipt.baselineEngineSha256,...coverage,databases,artifacts:[...artifacts].map(([file,sha256])=>({file,sha256})),manifestSha256:await fileHash(manifestFile),qualifierSha256:await fileHash(fileURLToPath(import.meta.url)),full195RevisionEntrypointQualified:true,relativeHistoryTimeRssQualified:false,nativeWindowsMacOSQualified:false,sourceAccuracyQualified:false,method:'Exact terminal six-repository/195-revision join of actual fresh indexHistory contiguous workers, original bytes/full graphs, real store/readback/ACKs, pending-zero resume, complete public views and 42 independent Python raw SQLite column ledgers. Only cross-run UUID/time changes; same-worker/store graphs never normalized. Frozen runtime/evidence and original/fresh database bytes checked before and after. Observation overhead is included; targets never execute.'};
@@ -110,6 +112,6 @@ export async function qualifyEntrypointArtifacts({manifest:manifestFile,output,e
 }
 
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const options={};for(let i=2;i<process.argv.length;i+=2){const key=process.argv[i],value=process.argv[i+1];assert.ok(['--manifest','--output','--engine'].includes(key)&&value&&!Object.hasOwn(options,key));options[key.slice(2)]=value;}
+ const options={};for(let i=2;i<process.argv.length;i+=2){const key=process.argv[i],value=process.argv[i+1];assert.ok(['--manifest','--output','--engine','--observer-root'].includes(key)&&value&&!Object.hasOwn(options,key));options[key==='--observer-root'?'observerRoot':key.slice(2)]=value;}
  const result=await qualifyEntrypointArtifacts(options);console.log(JSON.stringify({passed:result.passed,revisions:result.revisions,workers:result.workers,independentCompleteColumnLedgers:result.independentCompleteColumnLedgers}));
 }

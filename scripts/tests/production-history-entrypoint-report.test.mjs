@@ -38,3 +38,41 @@ test('report refuses pending jobs, smaller scopes, equal-count substitutions and
 test('report cannot turn arbitrary source URLs into executable links',()=>{
  const {qualified,receipt}=fixture();for(const archiveUrl of ['javascript:alert(1)','data:text/html,unsafe','not a URL'])assert.throws(()=>renderEntrypointReport(qualified,receipt,{archiveUrl}));
 });
+
+function installedFixture(){
+ const value=fixture(1939),roles=['history/indexer','history/worker','history/store','history/git','projection/service','storage/sqlite'];
+ const source=value.receipt.engineIdentity;
+ Object.assign(source,{node:'v22.12.0',platform:'linux',architecture:'x64'});
+ roles.forEach((name,index)=>{source.files[index].file='src/'+name+'.ts';});source.sha256=hash(source.files);
+ const files=Array.from({length:1971},(_,index)=>({file:index<roles.length?'codiluce/dist/src/'+roles[index]+'.js':'owned/dependency-'+index+'.js',sha256:'3'.repeat(64)}));
+ value.receipt.engineIdentity={node:source.node,platform:source.platform,architecture:source.architecture,files,sha256:hash(files),executionLayout:{schema:1,kind:'installed-package',packageDirectory:'codiluce'},sourceQualification:{root:'/separately-qualified-source',identity:source}};
+ value.receipt.executionLayout={kind:'installed-package',modules:Object.fromEntries(['indexer','worker','store','git','projection','graphStore'].map((role,index)=>[role,'codiluce/dist/src/'+roles[index]+'.js'])),execArgv:['--experimental-sqlite']};
+ value.receipt.qualificationSourceRuntimeSha256=source.sha256;value.qualified.engineSha256=value.receipt.engineIdentity.sha256;
+ return value;
+}
+test('installed report distinguishes actual packaged execution from the separate qualified source inventory',()=>{
+ const {qualified,receipt}=installedFixture(),html=renderEntrypointReport(qualified,receipt,{receiptName:'new-history-receipt.json',validationName:'new-history-validation.json'});
+ assert.match(html,/1,971-file installed execution ledger and separate 1,939-file qualification source ledger/);
+ assert.ok(html.includes('installed execution SHA-256 is <code>'+receipt.engineIdentity.sha256));
+ assert.ok(html.includes('separately qualified source SHA-256 is <code>'+receipt.engineIdentity.sourceQualification.identity.sha256));
+ assert.match(html,/--engine \/existing\/consumer\/node_modules/);assert.match(html,/--observer-root \/existing\/owned\/observer/);
+ assert.doesNotMatch(html,/--import tsx/);assert.doesNotMatch(html,/the frozen 1,971-file runtime/);
+ assert.match(html,/href="new-history-receipt.json"/);assert.match(html,/href="new-history-validation.json"/);assert.doesNotMatch(html,/href="production-history-entrypoint-complete-receipt.json"/);
+});
+test('installed report rejects stale source pairs, absent packaged modules and false loader or lineage claims',()=>{
+ for(const change of [
+  v=>{v.receipt.engineIdentity.sourceQualification.identity.sha256='4'.repeat(64);},
+  v=>{const identity=v.receipt.engineIdentity;identity.files.shift();identity.sha256=hash(identity.files);v.qualified.engineSha256=identity.sha256;},
+  v=>{v.receipt.executionLayout.execArgv.push('--import','tsx');},
+  v=>{v.receipt.qualificationSourceRuntimeSha256='5'.repeat(64);},
+  v=>{v.receipt.engineIdentity.sourceQualification.identity.files[0].file='../outside';}
+ ]){const value=installedFixture();change(value);assert.throws(()=>renderEntrypointReport(value.qualified,value.receipt));}
+ const source=fixture();source.receipt.engineIdentity.sourceQualification={root:'/other',identity:fixture().receipt.engineIdentity};assert.throws(()=>renderEntrypointReport(source.qualified,source.receipt));
+});
+test('report artifact names cannot escape the report directory or alias the two evidence inputs',()=>{
+ const {qualified,receipt}=fixture();
+ for(const name of ['../outside.json','/outside.json','folder/input.json','input\\other.json','javascript:alert(1)','unsafe".json','input.html','']){
+  for(const key of ['receiptName','validationName'])assert.throws(()=>renderEntrypointReport(qualified,receipt,{[key]:name}));
+ }
+ assert.throws(()=>renderEntrypointReport(qualified,receipt,{receiptName:'same.json',validationName:'same.json'}));
+});

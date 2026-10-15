@@ -73,6 +73,7 @@ test('the production plan includes the complete native release gates without run
   const project=fileURLToPath(new URL('../../',import.meta.url)),output=path.join(await directory(),'uncreated-report');
   const {stdout}=await execute(process.execPath,['scripts/qualify-native-release.mjs','--install','--plan','--output',output],{cwd:project});
   const plan=JSON.parse(stdout);assert.deepEqual(plan.commands.map(item=>item.name),['dependencies','tests','typecheck','capability-docs','installed-package']);
+  const packaged=plan.commands.find(command=>command.name==='installed-package');assert.equal(packaged.packageEvidence,'installed-package-evidence');assert.deepEqual(packaged.parameters.slice(-3),['--','--evidence-dir',path.join(output,'installed-package-evidence')]);
   assert.ok(plan.commands[0].parameters.includes('--ignore-scripts'));assert.ok(plan.commands[1].parameters.includes('tests/mixed-release.test.ts'));assert.ok(plan.commands[1].parameters.includes('tests/indexed-sources.test.ts'));assert.ok(plan.commands[1].parameters.includes('tests/history.test.ts'));assert.ok(plan.commands[1].parameters.includes('web/tests/request-flows.test.ts'));assert.ok(plan.commands[1].parameters.includes('scripts/tests/native-release.test.mjs'));
   await assert.rejects(readFile(path.join(output,'receipt.json')),/ENOENT/,'Planning must not execute checks or publish a receipt');
   const workflow=parseYaml(await readFile(path.join(project,'.github/workflows/native-compatibility.yml'),'utf8')),matrix=workflow.jobs.qualify.strategy.matrix;
@@ -80,4 +81,11 @@ test('the production plan includes the complete native release gates without run
   const artifact=workflow.jobs.qualify.steps.find(step=>step.uses?.startsWith('actions/upload-artifact@'));assert.equal(artifact.if,'always()');assert.equal(artifact.with['if-no-files-found'],'error');
   for(const step of workflow.jobs.qualify.steps.filter(step=>step.uses))assert.match(step.uses,/@[a-f0-9]{40}$/,'CI action versions must be immutable');
   const python=workflow.jobs.qualify.steps.find(step=>step.uses?.startsWith('actions/setup-python@'));assert.equal(python.with['python-version'],'3.13');assert.ok(workflow.jobs.qualify.steps.indexOf(python)<workflow.jobs.qualify.steps.findIndex(step=>step.run?.includes('qualify-native-release.mjs')));
+});
+
+
+test('zero-exit native package commands cannot qualify without preserved package observations',async()=>{
+ const root=await directory(),output=path.join(root,'report');
+ const result=await qualify({root,output,identity,commands:[{...command('installed-package',''),packageEvidence:'installed-package-evidence'}]});
+ assert.equal(result.checks[0].exitCode,0);assert.equal(result.checks[0].status,'failed');assert.match(result.checks[0].evidenceError,/ENOENT/);assert.equal(result.qualified,false);
 });

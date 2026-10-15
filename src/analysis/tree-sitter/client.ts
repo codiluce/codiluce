@@ -3,8 +3,13 @@ import { fileURLToPath } from 'node:url';
 import { performance } from 'node:perf_hooks';
 import { deserialize } from 'node:v8';
 import type { StructureFacts } from '../facts.js';
+import {nativeWasmMemoryLimit} from './wasm-memory.js';
+import {PARSER_FRAME_BYTES,PARSER_FRAME_ENCODING,encodeParserFrame,decodeParserFrame} from './frames.js';
 
 const WORKER = fileURLToPath(new URL('./native-worker.mjs', import.meta.url));
+const SCRIPT_WORKER=fileURLToPath(new URL('./native-script-worker.mjs',import.meta.url));
+const FRAMEWORK_WORKER=fileURLToPath(new URL('../embedded/native-framework-worker.mjs',import.meta.url));
+function boundedWorker(worker:string):boolean{return worker===WORKER||worker===SCRIPT_WORKER||worker===FRAMEWORK_WORKER;}
 export interface ParserGenerationLimits { maxJobs: number; maxSourceBytes: number }
 export class StructureParser<Facts = StructureFacts> {
   private child?: ChildProcess;
@@ -15,7 +20,10 @@ export class StructureParser<Facts = StructureFacts> {
   private closing = 0;
   private readonly generationLimits?:Readonly<ParserGenerationLimits>;
   private jobs=0;private sourceBytes=0;private peakJobs=0;private peakSourceBytes=0;private generations=0;
-  constructor(private readonly timeoutMs = 10_000, private readonly worker = WORKER, private readonly execArguments?:string[], private readonly resetOnReportedError=true, generationLimits?:ParserGenerationLimits) {
+  constructor(private readonly timeoutMs = 10_000, private readonly worker = WORKER, private readonly execArguments?:string[], private readonly resetOnReportedError=true, generationLimits?:ParserGenerationLimits, private readonly wasmMemoryBytes?:number) {
+    // Only an owned conformance caller can lower the actual bundled worker's
+    // memory. Repository configuration never selects this seam or raises it.
+    if(wasmMemoryBytes!==undefined){if(worker!==WORKER)throw Error('Native WASM limits require the owned Tree-sitter worker');nativeWasmMemoryLimit(wasmMemoryBytes);}
     if(generationLimits!==undefined){
       if(!generationLimits||typeof generationLimits!=='object')throw Error('Parser generation limits require positive safe integers');
       for(const limit of [generationLimits.maxJobs,generationLimits.maxSourceBytes])if(!Number.isSafeInteger(limit)||limit<1)throw Error('Parser generation limits require positive safe integers');
@@ -65,19 +73,22 @@ export class StructureParser<Facts = StructureFacts> {
     const started = process.hrtime.bigint(), deadline = started + BigInt(Math.ceil(this.timeoutMs * 1_000_000));
     return new Promise((resolve, reject) => {
       let settled = false;
-      let completedBytes: number | undefined, expiry: ReturnType<typeof setImmediate> | undefined;
+      let completedBytes: number | undefined, completedEncoding:unknown, expiry: ReturnType<typeof setImmediate> | undefined;
       let deliveryTimer: ReturnType<typeof setTimeout> | undefined;
       const cleanup = () => { clearTimeout(timer); clearTimeout(deliveryTimer); clearImmediate(expiry); child.off('message', message); child.off('error', failure); child.off('exit', exited); };
       const failure = (error: Error) => { if (settled) return; settled = true; cleanup(); if (this.child === child) this.retire(); reject(error); };
       const exceeded = () => failure(new Error(`Parser exceeded ${this.timeoutMs} ms for ${language}`));
       const exited = (code: number | null, signal: string | null) => failure(new Error(`Parser worker exited (${signal ?? code})`));
-      const message = (result: { id: number; type?: string; completedAtNs?: unknown; bytes?: unknown; payload?: unknown }) => {
+      const message = (result: { id: number; type?: string; completedAtNs?: unknown; bytes?: unknown; payload?: unknown;encoding?:unknown }) => {
         if (result.id !== id) return;
         if (settled) return;
         if (result.type === 'completed') {
           if (completedBytes !== undefined || typeof result.completedAtNs !== 'string' || !/^\d{1,20}$/.test(result.completedAtNs) || typeof result.bytes !== 'number' || !Number.isSafeInteger(result.bytes) || result.bytes < 1) {
             failure(Error('Invalid parser completion')); return;
           }
+          if(result.bytes>PARSER_FRAME_BYTES){failure(Error(`Parser response exceeds ${PARSER_FRAME_BYTES} bytes`));return;}
+          if(result.encoding!==undefined&&result.encoding!==PARSER_FRAME_ENCODING||boundedWorker(this.worker)&&result.encoding!==PARSER_FRAME_ENCODING){failure(Error('Invalid parser response encoding'));return;}
+          completedEncoding=result.encoding;
           // Forked workers share the host's monotonic clock. Include startup,
           // input delivery, parsing, extraction and response serialization in
           // the original budget, independently of the parent's busy loop.
@@ -98,11 +109,14 @@ export class StructureParser<Facts = StructureFacts> {
           deliveryTimer = setTimeout(awaitPayload, this.timeoutMs);
           return;
         }
-        if (result.type !== 'result' || completedBytes === undefined || !Buffer.isBuffer(result.payload) || result.payload.byteLength !== completedBytes) {
+        if (result.type !== 'result' || completedBytes === undefined || !Buffer.isBuffer(result.payload) || result.payload.byteLength !== completedBytes || result.payload.byteLength>PARSER_FRAME_BYTES || result.encoding!==completedEncoding) {
           failure(Error('Invalid parser response')); return;
         }
-        let decoded: {facts?: Facts; error?: string};
-        try { decoded = deserialize(result.payload); if (!decoded || typeof decoded !== 'object') throw Error('Invalid parser response'); }
+        let decoded: {facts?: Facts; error?: string; fatal?: boolean};
+        try {
+          decoded = completedEncoding===PARSER_FRAME_ENCODING?decodeParserFrame(result.payload) as typeof decoded:deserialize(result.payload);
+          if (!decoded || typeof decoded !== 'object' || decoded.fatal !== undefined && (typeof decoded.fatal !== 'boolean' || decoded.fatal && (typeof decoded.error !== 'string' || !decoded.error))) throw Error('Invalid parser response');
+        }
         catch { failure(Error('Invalid parser response')); return; }
         settled = true;
         cleanup();
@@ -110,7 +124,7 @@ export class StructureParser<Facts = StructureFacts> {
           // A WASM trap can leave the runtime/loaded parsers unusable. Never
           // reuse that process after a caught error. Providers which create a
           // fresh engine per job can opt out for ordinary reported source errors.
-          if (this.child === child && (this.resetOnReportedError || !decoded.error)) this.retire();
+          if (this.child === child && (decoded.fatal || this.resetOnReportedError || !decoded.error)) this.retire();
           reject(new Error(decoded.error ?? 'Invalid parser result'));
         }
         else resolve(decoded.facts);
@@ -119,7 +133,13 @@ export class StructureParser<Facts = StructureFacts> {
       // stamped inside the original deadline can cancel this expiry.
       const timer = setTimeout(() => { expiry = setImmediate(() => { if (completedBytes === undefined) exceeded(); }); }, this.timeoutMs);
       child.on('message', message); child.once('error', failure); child.once('exit', exited);
-      child.send({ id,...payload }, error => { if (error) failure(error); });
+      try{
+        // Actual bundled native/template workers receive only the bounded
+        // encoded request. Legacy transport remains for explicit alternate
+        // provider/fault workers, including the separately bounded PHP AST.
+        const message=boundedWorker(this.worker)?{id,encoding:PARSER_FRAME_ENCODING,payload:encodeParserFrame(payload)}:{id,...payload};
+        child.send(message,error=>{if(error)failure(error);});
+      }catch(error){failure(error instanceof Error?error:Error(String(error)));}
     });
   }
   /** Only launches the process; no source job or optional compiler import. */
@@ -128,7 +148,7 @@ export class StructureParser<Facts = StructureFacts> {
     // retirement barrier that guards queued source requests.
     if(this.closing||this.retiring.size)throw Error('Parser worker is retiring');
     if(this.child&&(this.child.exitCode!==null||this.child.signalCode!==null))this.retire();
-    if (!this.child) {this.child = fork(this.worker, [], {
+    if (!this.child) {this.child = fork(this.worker, this.wasmMemoryBytes===undefined?[]:[`--max-wasm-bytes=${this.wasmMemoryBytes}`], {
       execArgv: this.execArguments ?? ['--max-old-space-size=256'],
       serialization: 'advanced', stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
     });this.generations++;}
