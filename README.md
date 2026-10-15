@@ -198,7 +198,7 @@ How far Codiluce follows the code depends on the stack:
 - **Map:** Angular, Remix, Fastify, Symfony, Quarkus, Blazor and every other language and framework are detected and
   mapped with their files, lines and Git metrics.
 
-Everything above ships in the npm release (0.2.0). Support deepens with every release: see how far each framework
+Everything above ships in the npm release (0.3.0). Support deepens with every release: see how far each framework
 goes, and what stays a visible gap, in [Languages & frameworks](https://codiluce.com/docs/stacks/). Missing your
 stack? [Open an issue](https://github.com/codiluce/codiluce/issues) with a public repository that shows it.
 

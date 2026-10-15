@@ -58,7 +58,7 @@ export async function inspectCodex(root: string, threadId?: string): Promise<Cod
         }
       }
     });
-    send({ id: 1, method: 'initialize', params: { clientInfo: { name: 'codiluce-activity', version: '0.2.0' }, capabilities: { experimentalApi: true } } });
+    send({ id: 1, method: 'initialize', params: { clientInfo: { name: 'codiluce-activity', version: '0.3.0' }, capabilities: { experimentalApi: true } } });
   });
 }
 
