@@ -30,9 +30,9 @@ import { followsBehavior } from './behavior.js';
 /** Columns of a request flow, in the order a request passes them. */
 export type FlowLane = 'client' | 'call' | 'route' | 'gate' | 'controller' | 'service' | 'data' | 'response' | 'return';
 export const FLOW_LANES: FlowLane[] = ['client', 'call', 'route', 'gate', 'controller', 'service', 'data', 'response', 'return'];
-export type FlowNodeKind = 'page' | 'entry' | 'trigger' | 'caller' | 'endpoint' | 'command' | 'schedule' | 'middleware' | 'validation' | 'handler' | 'method' | 'model' | 'table' | 'effect' | 'response' | 'receive' | 'continuation' | 'gap';
+export type FlowNodeKind = 'page' | 'entry' | 'trigger' | 'caller' | 'endpoint' | 'command' | 'schedule' | 'middleware' | 'validation' | 'handler' | 'method' | 'model' | 'table' | 'effect' | 'external' | 'response' | 'receive' | 'continuation' | 'gap';
 export type FlowEdgeKind = 'triggers' | 'calls' | 'requests' | 'invokes' | 'routes' | 'handles' | 'reads' | 'writes' | 'maps' | 'effect' | 'responds' | 'returns' | 'renders' | 'then' | 'gap';
-export type FlowGapReason = 'no-trigger' | 'no-caller' | 'unmatched' | 'no-handler' | 'unresolved-calls' | 'no-response';
+export type FlowGapReason = 'no-trigger' | 'no-caller' | 'unmatched' | 'no-handler' | 'unresolved-calls' | 'unresolved-dispatch' | 'no-response';
 /** `unmatched`: a request no indexed endpoint answers. `headless`: an endpoint no indexed code calls (a command nothing schedules or runs: run by hand). */
 export type FlowStatus = 'complete' | 'partial' | 'headless' | 'unmatched';
 export interface FlowStages {
@@ -47,7 +47,7 @@ export interface FlowStages {
   /** Something the caller does after the response arrives was found. */
   returns: boolean;
 }
-export interface FlowGap { reason: FlowGapReason; text: string; names?: string[]; count?: number }
+export interface FlowGap { reason: FlowGapReason; text: string; names?: string[]; count?: number; source?: { owner: string; line: number; column?: number } }
 export interface RawFlowNode {
   id: string; lane: FlowLane; kind: FlowNodeKind;
   /** Sub-column inside the lane (deeper calls in the same layer move right). */
@@ -70,7 +70,7 @@ export interface RawFlowEdge {
   site?: { owner: string; line: number; hint?: string };
 }
 export interface RawFlow {
-  id: string; kind: 'endpoint' | 'unmatched' | 'command' | 'schedule'; anchor: string;
+  id: string; kind: 'endpoint' | 'unmatched' | 'command' | 'schedule' | 'operation'; anchor: string;
   name: string; method: string; path: string;
   nodes: RawFlowNode[]; edges: RawFlowEdge[];
   stages: FlowStages; status: FlowStatus; gaps: number;
@@ -81,6 +81,9 @@ export interface RawFlow {
   /** Every entity drawn, for "flows through this entity". */
   members: string[];
   notices: string[];
+  channel?: import('./catalog.js').FlowChannel;
+  evidenceCoverage?: import('./catalog.js').EvidenceCoverage;
+  laneLabels?: Partial<Record<FlowLane, string>>;
 }
 export interface FlowContext {
   index: ProjectionIndex;
@@ -94,7 +97,7 @@ const LANE_COLUMNS = 3;
 // `handles` reaches the endpoint serving an Inertia page from the handler that renders it.
 const CLIENT_FOLLOW = new Set(['calls', 'references', 'renders', 'routes_to', 'handles']);
 const ENTRY_TYPES = new Set(['route', 'api_endpoint']);
-const SERVER_FOLLOW = new Set(['calls', 'references']);
+const SERVER_FOLLOW = new Set(['calls', 'references','invokes']);
 const CALLABLE = new Set(['method', 'function']);
 const LANE_ORDER = new Map(FLOW_LANES.map((lane, index) => [lane, index]));
 /** A FormRequest type-hint: the framework validates before the handler body runs (the analyzer's phrasing). */
@@ -290,6 +293,14 @@ class FlowWalker {
     while (queue.length) {
       const id = queue.shift()!;
       const from = placed.get(id)!;
+      let file=this.index.node(id);
+      while(file && file.type !== 'file') file=file.canonicalParentId ? this.index.node(file.canonicalParentId) : undefined;
+      const referenceSupport=file?.analysis?.features.references;
+      if(referenceSupport && ['unsupported','disabled','failed'].includes(referenceSupport.status)) {
+        const line=this.index.node(id)?.sourceRange?.startLine;
+        const gap=builder.add({id:`gap:analysis:${id}`,lane:'service',kind:'gap',depth:2,entityId:id,label:'? source analysis',gap:{reason:'unresolved-dispatch',text:referenceSupport.reason ?? `Call analysis is ${referenceSupport.status} for this source`,...(line ? {source:{owner:id,line}}:{})}});
+        builder.link(from,gap,'gap');
+      }
       // Effects of this callable.
       for (const effect of this.effects(id)) {
         const site = { owner: id, line: effect.line, hint: effect.detail };
@@ -316,7 +327,7 @@ class FlowWalker {
           } else builder.link(from, builder.add({ id: `fx:${id}:${effect.line}:database`, lane: 'data', kind: 'effect', depth: 0, label: `database · ${effect.operation}`, detail: effect.detail, effect: { ...effect, owner: id } }), 'effect', { site });
         } else if (!(effect.category === 'network' && effect.wrapper)) {
           data = true;
-          builder.link(from, builder.add({ id: `fx:${id}:${effect.line}:${effect.category}:${effect.operation}`, lane: 'data', kind: 'effect', depth: 0, label: `${effect.category} · ${effect.operation}`, detail: effect.targetName ?? effect.detail, effect: { ...effect, owner: id } }), 'effect', { site });
+          builder.link(from, builder.add({ id: `fx:${id}:${effect.line}:${effect.category}:${effect.operation}`, lane: 'data', kind: effect.boundary ? 'external' : 'effect', depth: 0, label: effect.boundary ? `External · ${effect.boundary.name}` : `${effect.category} · ${effect.operation}`, detail: effect.targetName ?? effect.detail, effect: { ...effect, owner: id } }), 'effect', { site });
         }
       }
       // Table access the effects did not already draw.
@@ -332,8 +343,17 @@ class FlowWalker {
         builder.link(from, tableNode(relation.to), relation.type === 'writes' ? 'writes' : 'reads', { label: relation.type === 'writes' ? 'write' : 'read', chain: [relationIndex], ...(line ? { site: { owner: id, line } } : {}) });
       }
       // What this callable calls that the index could not resolve.
-      const sites = this.entity(id)?.metadata.callSites as { unresolved?: number; unresolvedNames?: Record<string, number> } | undefined;
-      if (sites?.unresolved) {
+      const sites = this.entity(id)?.metadata.callSites as { unresolved?: number; unresolvedNames?: Record<string, number>; unresolvedSites?: { name: string; line: number; column?: number }[] } | undefined;
+      const located = sites?.unresolvedSites ?? [];
+      for (const [ordinal, site] of located.entries()) {
+        const gap = builder.add({ id: `gap:site:${id}:${site.line}:${site.column ?? ordinal}`, lane: 'service', kind: 'gap', depth: 2, entityId: id, label: `? ${site.name}()`, detail: `line ${site.line}${site.column ? `:${site.column}` : ''}`, gap: { reason: 'unresolved-calls', names: [site.name], count: 1, source: { owner: id, line: site.line, ...(site.column ? { column: site.column } : {}) }, text: `The target of ${site.name}() at this source site is unresolved; downstream behavior is unknown.` } });
+        builder.link(from,gap,'gap',{ site: { owner: id, line: site.line, hint: site.name } });
+      }
+      for (const [ordinal,gapSite] of ((this.entity(id)?.metadata.flowGaps ?? []) as { line: number; text: string }[]).entries()) {
+        const gap = builder.add({ id: `gap:dispatch:${id}:${ordinal}`, lane: 'service', kind: 'gap', depth: 2, entityId: id, label: '? dispatch', detail: `line ${gapSite.line}`, gap: { reason: 'unresolved-dispatch', text: gapSite.text, source: { owner: id, line: gapSite.line } } });
+        builder.link(from,gap,'gap',{ site: { owner:id,line:gapSite.line } });
+      }
+      if (sites?.unresolved && sites.unresolved > located.length) {
         const names = Object.keys(sites.unresolvedNames ?? {}).sort();
         const lane: FlowLane = from.lane === 'controller' ? 'service' : from.lane;
         const gap = builder.add({ id: `gap:calls:${id}`, lane, kind: 'gap', depth: Math.min(LANE_COLUMNS - 1, from.lane === lane ? from.depth + 1 : 0), label: names.length ? `? ${names.slice(0, 4).map(name => `${name}()`).join(', ')}${names.length > 4 ? ` +${names.length - 4}` : ''}` : `? ${sites.unresolved} call${sites.unresolved === 1 ? '' : 's'}`, detail: `${sites.unresolved} unresolved call site${sites.unresolved === 1 ? '' : 's'}`, gap: { reason: 'unresolved-calls', names, count: sites.unresolved, text: `${sites.unresolved} call site${sites.unresolved === 1 ? '' : 's'} in ${this.name(id)} could not be resolved (dynamic receivers, untyped properties, callbacks); what ${sites.unresolved === 1 ? 'it reaches' : 'they reach'} is not drawn.` } });
@@ -372,6 +392,13 @@ function finish(builder: FlowBuilder, base: Pick<RawFlow, 'id' | 'kind' | 'ancho
     members: [...new Set(nodes.flatMap(node => node.entityId ? [node.entityId] : []))],
     notices: [...new Set(builder.notices)],
   };
+}
+
+export function evidenceCoverageOf(flow:RawFlow): 'known-gaps'|'no-known-gaps' {
+  return evidenceGapCount(flow) ? 'known-gaps' : 'no-known-gaps';
+}
+export function evidenceGapCount(flow:RawFlow): number {
+  return flow.nodes.filter(node => node.gap && !['no-caller','no-trigger'].includes(node.gap.reason)).length;
 }
 
 /** The request flow of an endpoint: who calls it, what its handler does, and what goes back. */
@@ -515,6 +542,27 @@ export function commandFlow(context: FlowContext, commandId: string): RawFlow | 
   }
   const handled = handlerSide(walker, builder, commandId, commandNode, entity?.metadata.handlerKind === 'closure');
   return finish(builder, { id: commandId, kind: 'command', anchor: commandId, name: command.name, method: 'ARTISAN', path: String(entity?.metadata.signature ?? command.name), ...(handled.name ? { handler: handled.name } : {}) }, { client, call: invokers.length > 0, handler: handled.found, data: handled.data, response: false, returns: false }, invokers.length);
+}
+
+/** Non-HTTP entries use the same evidenced behavior walk without requiring a
+ * client request or HTTP response. The lanes describe roles, not a timeline. */
+export function operationFlow(context: FlowContext, entryId: string): RawFlow | undefined {
+  const entry = context.index.node(entryId), entity = context.entity(entryId);
+  if (!entry || entry.type !== 'user_flow' || !entity) return undefined;
+  const walker = new FlowWalker(context), builder = new FlowBuilder();
+  const trigger = builder.add({ id: `entry:${entryId}`, lane: 'client', kind: 'entry', depth: 0, entityId:entryId, label:entry.name, detail: String(entity.metadata.registration ?? 'entry point') });
+  const handled = handlerSide(walker,builder,entryId,trigger,false);
+  for (const [ordinal,gapSite] of ((entity.metadata.flowGaps ?? []) as {line:number;text:string}[]).entries()) {
+    const gap=builder.add({id:`gap:entry:${entryId}:${ordinal}`,lane:'route',kind:'gap',depth:0,label:'? entry',entityId:entryId,gap:{reason:'unresolved-dispatch',text:gapSite.text,...(entity.sourceRange ? {source:{owner:entryId,line:gapSite.line}} : {})}});
+    builder.link(trigger,gap,'gap');
+  }
+  for (const node of builder.nodes.values()) if (node.effect?.category === 'process' && ['return','exit','output','send'].includes(node.effect.operation)) node.lane = 'response';
+  const result = finish(builder,{ id:entryId,kind:'operation',anchor:entryId,name:entry.name,method:String(entity.metadata.flowKind ?? 'function').toUpperCase(),path:entry.name,...(handled.name ? { handler:handled.name } : {}) },{ client:true,call:true,handler:handled.found,data:handled.data,response:[...builder.nodes.values()].some(node => node.lane === 'response'),returns:false },1);
+  result.channel = (entity.metadata.flowChannel ?? entity.metadata.flowKind) as RawFlow['channel'];
+  result.evidenceCoverage = evidenceCoverageOf(result);
+  result.laneLabels = { client:'Trigger',call:'Invocation',route:'Dispatch',gate:'Conditions',controller:'Handler',service:'Processing',data:'Effects',response:'Outcome',return:'Continuation' };
+  result.notices.push('Static behavior graph: lanes group roles. Links and source guards establish dependencies, not a recorded execution order.');
+  return result;
 }
 
 /** A scheduled task: its cadence, the command or job it runs, and what that reaches. */

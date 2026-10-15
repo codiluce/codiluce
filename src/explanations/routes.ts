@@ -1,12 +1,14 @@
-// HTTP routes for explanations. Reads are plain GETs; writes (asking, renaming,
-// deleting) need the X-Codiluce-Request header that a cross-origin page cannot
-// send without a CORS preflight, which this server never grants. Asking
-// streams the answer as it is written: one JSON event per line.
+// HTTP routes for explanations, and what connected agents are doing. Reads
+// are plain GETs; writes (asking, renaming, deleting) need the
+// X-Codiluce-Request header that a cross-origin page cannot send without a
+// CORS preflight, which this server never grants. Asking streams the answer
+// as it is written: one JSON event per line.
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ChatService } from './chat.js';
-import type { AskEvent, ExplanationsSetup } from './model.js';
+import { readActivity } from './activity.js';
+import type { AgentActivityList, AskEvent, ExplanationsSetup } from './model.js';
 import { ReadOnlyError, type ExplanationService } from './service.js';
 import { mcpLaunch, shellLine } from '../setup/agents.js';
 import { installKind } from '../setup/settings.js';
@@ -24,6 +26,8 @@ export async function handleExplanationRoute(context: ExplanationRoutes, request
     if (method === 'GET') {
       if (!rest) return send(200, await service.list());
       if (rest === 'setup') return send(200, setup(context));
+      // Agents connected over MCP and what they are explaining right now (polled every few seconds: files only, no index work).
+      if (rest === 'activity') return send(200, { items: readActivity(context.stateDirectory) } satisfies AgentActivityList);
       const entity = /^entity\/([^/]+)$/.exec(rest);
       if (entity) return send(200, await service.forEntity(decodeURIComponent(entity[1]!)));
       if (/^[^/]+$/.test(rest)) { const detail = await service.detail(decodeURIComponent(rest)); return detail ? send(200, detail) : send(404, { error: 'No such explanation' }); }

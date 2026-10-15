@@ -6,11 +6,12 @@
 import type { NodeSummary, Rect, SourceResponse } from '@engine/projection/dto';
 import { easeInOut, fitBounds, fromScreen, panBy, projectedBounds, visibleBounds, worldToScreen, zoomAround, zoomPath, type Bounds, type Camera, type Point, type Viewport, type ZoomLimits } from './camera';
 import { CORNER_LOD, DEFAULT_LOD, abstractionLevel, screenSize, type LodConfig } from './lod';
-import { FLASH_MS, MapRenderer, RISE_MS, type CalloutOverlay, type CoverageOverlay, type EdgeOverlay, type FamilyOverlay, type FlowOverlay, type FrameOverlay, type MotionState, type RenderState } from './renderer';
+import { FLASH_MS, MapRenderer, RISE_MS, type CalloutOverlay, type CoverageOverlay, type EdgeOverlay, type FamilyOverlay, type FlowOverlay, type FrameOverlay, type LevelOverlay, type MotionState, type RenderState } from './renderer';
 import { flowAreas, flowDepths, flowLit, type MapFlow } from './map-flow';
 import { nodeHeight, type Scene, type VisibleSet } from './scene';
 import { isContainer, type AtlasState, type AtlasStore, type MapNavigator, type ViewState } from './store';
 import { familyHues, featureHues, personHue, personHues, pullHue, themeById } from './themes';
+import { LENS_TEXT } from './lenses';
 
 /** A flow labels at most this many stops (the first ones), and shows at most this many pins. */
 const CALLOUT_MAX = 18, PIN_MAX = 40;
@@ -360,7 +361,7 @@ export class MapController implements MapNavigator {
       ...this.analysisOverlays(state, time),
       motion: this.motion,
       // A time-lapse frame compares with the previous commit; overlays loaded for the settled view wait until it is back.
-      ...(this.store.previewScene ? { edges: [], emphasis: undefined, within: undefined, lit: undefined, flow: undefined, callouts: undefined, pins: undefined, coverage: undefined, families: undefined, feature: undefined, people: undefined, person: undefined, pull: undefined, explanation: undefined, pointer: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
+      ...(this.store.previewScene ? { edges: [], emphasis: undefined, within: undefined, lit: undefined, flow: undefined, callouts: undefined, pins: undefined, coverage: undefined, families: undefined, measure: undefined, feature: undefined, people: undefined, person: undefined, pull: undefined, explanation: undefined, pointer: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
     };
   }
   /**
@@ -449,6 +450,12 @@ export class MapController implements MapNavigator {
       if (this.peopleCache?.data !== people) this.peopleCache = { data: people, overlay: { of: new Map(Object.entries(people.of)), areas: new Map(Object.entries(people.areas)), names: new Map(people.people.map(person => [person.key, person.name])), hues: personHues(people.people), none: 'Not changed' } };
       result.people = this.peopleCache.overlay;
     }
+    // A measure: files (and functions) by level.
+    const measure = state.lens.show && state.lens.data?.available && state.lens.data.lens === state.lens.show && state.lens.stamp === this.store.lensStamp() ? state.lens.data : undefined;
+    if (measure) {
+      if (this.measureCache?.data !== measure) this.measureCache = { data: measure, overlay: { of: new Map(Object.entries(measure.of).map(([id, level]) => [id, String(level)])), areas: new Map(Object.entries(measure.areas)), symbols: measure.symbols, words: LENS_TEXT[measure.lens].words } };
+      result.measure = this.measureCache.overlay;
+    }
     const person = state.people.focus && state.people.person?.key === state.people.focus && state.people.person.stamp === peopleStamp ? state.people.person.data : undefined;
     if (person) {
       if (this.personCache?.data !== person) {
@@ -462,7 +469,9 @@ export class MapController implements MapNavigator {
     if (pull) {
       if (this.pullCache?.data !== pull) {
         const key = pull.pull.id;
-        this.pullCache = { data: pull, overlay: { of: new Map([...Object.keys(pull.files), ...pull.entries].map(id => [id, key])), areas: new Map(Object.entries(pull.areas).map(([id, count]) => [id, { [key]: count }])), names: new Map([[key, pull.pull.number !== undefined ? `#${pull.pull.number}` : pull.pull.title]]), hues: new Map([[key, pullHue(pull.pull.state)]]), focus: key, none: 'Not changed' } };
+        // Folders that will hold files it adds say so under their name while open.
+        const notes = new Map(pull.folders.flatMap(folder => folder.newFiles ? [[folder.id, `+${folder.newFiles} new${folder.newFolders?.length ? ` · ${folder.newFolders.slice(0, 2).map(name => `${name}/`).join(', ')}${folder.newFolders.length > 2 ? '…' : ''}` : ''}`] as const] : []));
+        this.pullCache = { data: pull, overlay: { of: new Map([...Object.keys(pull.files), ...pull.entries].map(id => [id, key])), areas: new Map(Object.entries(pull.areas).map(([id, count]) => [id, { [key]: count }])), names: new Map([[key, pull.pull.number !== undefined ? `#${pull.pull.number}` : pull.pull.title]]), hues: new Map([[key, pullHue(pull.pull.state)]]), focus: key, none: 'Not changed', ...(notes.size ? { notes } : {}) } };
       }
       result.pull = this.pullCache.overlay;
     }
@@ -472,6 +481,7 @@ export class MapController implements MapNavigator {
   private explainHoverCache?: { link: object; overlay: FamilyOverlay };
   private pullCache?: { data: object; overlay: FamilyOverlay };
   private peopleCache?: { data: object; overlay: FamilyOverlay };
+  private measureCache?: { data: object; overlay: LevelOverlay };
   private personCache?: { data: object; overlay: FamilyOverlay };
   private coverageCache?: { data: object; overlay: CoverageOverlay };
   private familyCache?: { data: object; focus?: string; overlay: FamilyOverlay };

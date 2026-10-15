@@ -6,6 +6,11 @@ async function open(page: Page) {
   await page.goto(`${base}/`);
   await page.waitForFunction(() => (window.__CODILUCE__?.visibleIds().length ?? 0) > 2);
 }
+/** Color the map's files by one thing, from the top bar's Color by menu. */
+async function colorBy(page: Page, label: string) {
+  await page.getByRole('button', { name: /^Color by:/ }).click();
+  await page.getByRole('menuitemradio', { name: new RegExp(`^${label}`) }).click();
+}
 const timeline = (page: Page) => page.getByRole('region', { name: 'History' });
 /** World-space origins of what is on screen: containers resize with their content, but nothing moves. */
 const positions = (page: Page) => page.evaluate(() => Object.fromEntries(window.__CODILUCE__!.visibleIds().map(id => [id, window.__CODILUCE__!.rectOf(id)])));
@@ -26,7 +31,7 @@ test('Flows stays responsive when entering, stepping and leaving indexed history
   await page.getByRole('button', { name: 'Close history', exact: true }).click();
   await expect(timeline(page)).toHaveCount(0);
   await expect(rows.first()).toBeVisible();
-  await page.getByRole('button', { name: 'Coverage', exact: true }).click();
+  await colorBy(page, 'Flow coverage');
   await expect(page.getByRole('region', { name: 'Coverage lens' })).toBeVisible();
 });
 

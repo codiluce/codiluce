@@ -5,13 +5,14 @@
 // Pointing at a link lights what it names on the map (the camera stays put;
 // off-screen code gets an arrow at the map's edge); clicking it opens it. An
 // explanation is pinned to the commit it was written against, and says when
-// the code it links changed since.
+// the code it links changed since. While a connected agent works on one, the
+// column shows it from the agent's first step, until it is saved.
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import type { ExplanationDetail, ExplanationSummary, ResolvedLink } from '@engine/explanations/model';
+import { agentLabel, type AgentActivity, type ExplanationDetail, type ExplanationSummary, type ResolvedLink } from '@engine/explanations/model';
 import { hrefForNode } from '@engine/explanations/links';
 import type { NodeSummary } from '@engine/projection/dto';
 import { relativeTime, shortSha, typeLabel } from '../lib/format';
-import type { ContextChip } from '../lib/store';
+import { workingAgents, workKey, type ContextChip } from '../lib/store';
 import { useAtlas, useStore } from './context';
 import { CopyButton, useAgentPrompt } from './ExplainActions';
 import { Markdown, type LinkHandlers } from './Markdown';
@@ -32,6 +33,7 @@ export function ExplanationsPanel({ onClose }: { onClose: () => void }) {
         <button className="icon-button small" onClick={onClose} aria-label="Hide the explanations" title="Hide">⇤</button>
       </div>
       <div className="panel-body explain-body" ref={body}>
+        {!showAsking && <AgentsAtWork compact={!!detail} />}
         {detail ? <Reader /> : !showAsking && <History />}
         {showAsking && <Asking />}
       </div>
@@ -100,12 +102,15 @@ function EmptyState() {
 /** How to connect an agent over MCP, with a first prompt to try. */
 function ConnectAgent({ open = false }: { open?: boolean }) {
   const setup = useAtlas(state => state.explain.setup);
+  const agents = useAtlas(state => state.explain.agents);
   const prompt = useAgentPrompt();
   if (!setup) return null;
   const json = JSON.stringify({ mcpServers: { codiluce: { command: setup.mcp.command, args: setup.mcp.args } } }, null, 2);
+  const connected = [...new Set(agents.map(agent => agentLabel(agent.agent)))];
   return (
     <div className="connect">
       {open && <h4>Connect your agent</h4>}
+      {connected.length > 0 && <p className="agent-connected" role="status"><span className="dot" aria-hidden="true" /><span>{connected.join(', ')} {connected.length === 1 ? 'is' : 'are'} connected: what {connected.length === 1 ? 'it explains' : 'they explain'} shows here as {connected.length === 1 ? 'it works' : 'they work'}.</span></p>}
       <p className="note">Claude Code, in a terminal:</p>
       <div className="command-row"><code className="mono">{setup.mcp.claude}</code><CopyButton text={setup.mcp.claude} /></div>
       <p className="note">Codex:</p>
@@ -239,6 +244,72 @@ function Asking() {
         : <div className="note error"><p>{asking.error}</p><button className="button tiny" onClick={() => store.dismissAskError()}>Back to the question</button></div>}
     </section>
   );
+}
+
+/** Agents connected over MCP working on an explanation: shown from their first tool call (or the prompt they were given) until they save it. */
+function AgentsAtWork({ compact }: { compact: boolean }) {
+  const store = useStore();
+  const agents = useAtlas(state => state.explain.agents);
+  const dismissed = useAtlas(state => state.explain.dismissed);
+  const working = useMemo(() => workingAgents({ agents, dismissed }), [agents, dismissed]);
+  const now = useNow(working.length > 0);
+  if (!working.length) return null;
+  if (compact) {
+    const first = working[0]!;
+    return (
+      <div className="agent-banner" role="status">
+        <span className="agent-pulse" aria-hidden="true" />
+        <span className="agent-banner-text">{working.length > 1 ? `${working.length} agents are working` : `${agentLabel(first.agent)} is ${named(first) ? 'explaining' : 'reading the code'}`}{working.length === 1 && first.work?.title ? `: ${first.work.title}` : '…'}</span>
+        <button className="button tiny" onClick={() => store.closeExplanation()} title="Back to every explanation, where its steps show">Show</button>
+      </div>
+    );
+  }
+  return <>{working.map(agent => <AgentCard key={workKey(agent)} agent={agent} now={now} onHide={() => store.dismissAgentWork(agent)} />)}</>;
+}
+function AgentCard({ agent, now, onHide }: { agent: AgentActivity; now: number; onHide: () => void }) {
+  const work = agent.work!;
+  const label = agentLabel(agent.agent);
+  const last = work.steps.at(-1);
+  const quiet = now - Date.parse(last?.at ?? work.startedAt);
+  const saving = !!last && /^(publish|update)_explanation\b/.test(last.text);
+  // A long pause after reading usually means it is writing (the whole answer arrives in one call).
+  const status = saving ? 'Saving the explanation…' : !last ? 'Starting…' : quiet > 15_000 ? `${named(agent) ? 'Writing the explanation' : 'Thinking'}… · last step ${duration(quiet)} ago` : 'Reading the code…';
+  return (
+    <section className="agent-work" aria-label={`${label} is working`}>
+      <div className="agent-work-head">
+        <span className="agent-pulse" aria-hidden="true" />
+        <strong>{label} is {named(agent) ? 'explaining' : 'reading the code'}</strong>
+        <span className="agent-work-time" title={`Since ${new Date(work.startedAt).toLocaleTimeString()}`}>{duration(now - Date.parse(work.startedAt))}</span>
+        <button className="icon-button small" onClick={onHide} aria-label="Hide" title="Hide this (what it saves still shows here)">×</button>
+      </div>
+      {work.title && <p className="agent-work-title">{work.title}</p>}
+      {work.question && <div className="explain-question"><span className="who">Question</span><p>{work.question}</p></div>}
+      {work.steps.length > 0 && (
+        <ul className="asking-tools" aria-label="Steps so far">
+          {work.count > work.steps.length && <li className="absent">{work.count - work.steps.length} earlier</li>}
+          {work.steps.slice(-6).map((step, index) => <li key={`${step.at}-${index}`} className="mono">{step.text}</li>)}
+        </ul>
+      )}
+      <div className="rf-loading" aria-live="polite"><span className="rf-spark" />{status}</div>
+    </section>
+  );
+}
+/** Asked to explain something (a prompt, `start_explanation`), not only reading the code. */
+function named(agent: AgentActivity): boolean { return !!(agent.work?.title || agent.work?.question); }
+/** The clock, ticking each second while `active`. */
+function useNow(active: boolean): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!active) return;
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [active]);
+  return now;
+}
+function duration(ms: number): string {
+  const seconds = Math.max(0, Math.round(ms / 1000));
+  return seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)} min ${String(seconds % 60).padStart(2, '0')} s`;
 }
 
 /** The question box: text, the code it is about (chips; @ adds one), the model, and asking here or copying for an agent. */

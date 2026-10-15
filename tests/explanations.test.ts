@@ -16,6 +16,8 @@ import { ExplanationStore, parseExplanation, serializeExplanation } from '../src
 import { ExplanationService, UnresolvedLinksError } from '../src/explanations/service.js';
 import { codeTools, explanationTools, runTool, type ToolSpec } from '../src/explanations/tools.js';
 import { McpSession } from '../src/explanations/mcp.js';
+import { activityDirectory, readActivity, WORK_TIMEOUT_MS } from '../src/explanations/activity.js';
+import { createInspectionServer } from '../src/api/server.js';
 import { AnthropicChat, ChatService, anthropicCost, type ChatProvider, type ProviderRequest } from '../src/explanations/chat.js';
 import { agentPrompt, chatQuestion, MCP_PROMPTS } from '../src/explanations/prompts.js';
 import type { AskEvent, ExplanationRecord } from '../src/explanations/model.js';
@@ -224,6 +226,56 @@ test('MCP: initialize negotiates, lists tools with hints and prompts, and report
     const prompt = (await send({ jsonrpc: '2.0', id: 9, method: 'prompts/get', params: { name: 'explain-flow', arguments: { flow: 'POST /auth/login' } } }))!.result!;
     assert.match(JSON.stringify(prompt), /flow:POST \/auth\/login/);
   } finally { session.close(); }
+});
+
+test('activity: an MCP session shows on the map from connecting, each prompt and tool call, until it publishes', async () => {
+  const session = new McpSession({ root, stateDirectory: state, version: '9.9.9' });
+  const send = async (message: unknown) => session.receive(JSON.stringify(message)) as Promise<{ result?: Record<string, unknown> } | undefined>;
+  const call = async (id: number, name: string, args: Record<string, unknown>) => JSON.parse(((await send({ jsonrpc: '2.0', id, method: 'tools/call', params: { name, arguments: args } }))!.result!.content as { text: string }[])[0]!.text) as Record<string, unknown>;
+  const only = () => { const items = readActivity(state); assert.equal(items.length, 1); return items[0]!; };
+  let saved: string | undefined;
+  try {
+    assert.deepEqual(readActivity(state), []);
+    await send({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', clientInfo: { name: 'claude-code' } } });
+    assert.equal(only().state, 'connected');
+    assert.equal(only().agent, 'claude-code');
+    // A prompt (a slash command) is work before the first tool call.
+    await send({ jsonrpc: '2.0', id: 2, method: 'prompts/get', params: { name: 'explain-flow', arguments: { flow: 'POST /auth/login' } } });
+    assert.equal(only().state, 'working');
+    assert.deepEqual(only().work, { ...only().work!, title: 'Explain a flow: POST /auth/login', subject: { kind: 'flow', ref: 'flow:POST /auth/login' }, steps: [], count: 0 });
+    // Each tool call is a step, recorded before the tool answers; start_explanation names the work and keeps them.
+    await call(3, 'flow', { flow: 'flow:POST /auth/login' });
+    assert.deepEqual(only().work!.steps.map(step => step.text), ['flow flow:POST /auth/login']);
+    assert.deepEqual(await call(4, 'start_explanation', { title: 'How login works', question: 'How does login work?' }), { started: true, next: 'Read the code with the Codiluce tools, then save the answer with publish_explanation.' });
+    assert.equal(only().work!.title, 'How login works');
+    assert.equal(only().work!.question, 'How does login work?');
+    assert.equal(only().work!.count, 1);
+    // Publishing ends the work; the question and subject it was started with are saved with the answer.
+    saved = String((await call(5, 'publish_explanation', { markdown: `## How login works\n[form](${LOGIN_FORM})` })).saved);
+    assert.equal(only().state, 'connected');
+    assert.equal(only().work, undefined);
+    assert.equal(only().published!.id, saved);
+    const detail = (await service.detail(saved))!;
+    assert.equal(detail.turns[0]!.text, 'How does login work?');
+    assert.equal(detail.subject.kind, 'flow');
+    // A step after that is new, unnamed work; quiet work stops showing as working.
+    await call(6, 'search', { query: 'Login' });
+    assert.deepEqual([only().work!.title, only().work!.count], [undefined, 1]);
+    assert.equal(readActivity(state, Date.now() + WORK_TIMEOUT_MS + 1000)[0]!.state, 'connected');
+    // serve reports it to the map.
+    const server = createInspectionServer(store, { root, stateDirectory: state });
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+    try {
+      const { port } = server.address() as { port: number };
+      const body = await (await fetch(`http://127.0.0.1:${port}/api/explanations/activity`)).json() as { items: { agent: string; state: string; work: { steps: { text: string }[] } }[] };
+      assert.deepEqual(body.items.map(item => [item.agent, item.state, item.work.steps[0]!.text]), [['claude-code', 'working', 'search Login']]);
+    } finally { await new Promise(resolve => server.close(resolve)); }
+  } finally { session.close(); if (saved) service.remove(saved); }
+  // The session's file goes with it; one left by a process that ended is not shown.
+  assert.deepEqual(readActivity(state), []);
+  await writeFile(path.join(activityDirectory(state), '1-ended.json'), JSON.stringify({ session: '1-ended', pid: 99_999_999, connectedAt: new Date().toISOString(), updatedAt: new Date().toISOString() }));
+  assert.deepEqual(readActivity(state), []);
+  await rm(path.join(activityDirectory(state), '1-ended.json'));
 });
 
 test('prompts name what to explain, how to start, and how to publish', () => {

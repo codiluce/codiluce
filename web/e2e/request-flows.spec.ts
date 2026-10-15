@@ -8,6 +8,11 @@ async function open(page: Page) {
   await page.goto('/');
   await page.waitForFunction(() => ((window as unknown as { __CODILUCE__?: { visibleIds(): string[] } }).__CODILUCE__?.visibleIds().length ?? 0) > 2);
 }
+/** Color the map's files by one thing, from the top bar's Color by menu. */
+async function colorBy(page: Page, label: string) {
+  await page.getByRole('button', { name: /^Color by:/ }).click();
+  await page.getByRole('menuitemradio', { name: new RegExp(`^${label}`) }).click();
+}
 async function idOf(page: Page, query: string, type: string): Promise<string> {
   return page.evaluate(async ([q, t]) => (await fetch(`/api/projection/search?q=${encodeURIComponent(q!)}&type=${t}`).then(response => response.json())).items[0].id as string, [query, type]);
 }
@@ -56,9 +61,9 @@ for (const empty of [true, false]) {
     await page.getByRole('button', { name: 'Flows', exact: true }).click();
     const panel = page.getByRole('complementary', { name: 'Flows' });
     if (!empty) await panel.getByRole('button', { name: 'Expand all', exact: true }).click();
-    const loaded = empty ? panel.getByText('No flows were indexed.', { exact: true }) : panel.locator('.rf-row').first();
+    const loaded = empty ? panel.getByText('No flows in this scope match these filters.', { exact: true }) : panel.locator('.rf-row').first();
     await expect(loaded).toBeVisible();
-    await page.getByRole('button', { name: 'Coverage', exact: true }).click();
+    await colorBy(page, 'Flow coverage');
     await expect(page.getByRole('region', { name: 'Coverage lens' })).toBeVisible();
     await page.getByRole('button', { name: 'History', exact: true }).click();
     await expect(page.getByRole('region', { name: 'History' })).toContainText('No history indexed yet.');
@@ -69,16 +74,16 @@ for (const empty of [true, false]) {
     await page.getByRole('button', { name: 'Hide the flows panel', exact: true }).click();
     await page.getByRole('button', { name: 'Flows', exact: true }).click();
     await expect(loaded).toBeVisible();
-    await page.getByRole('button', { name: 'Coverage', exact: true }).click();
+    await colorBy(page, 'Type');
     await expect(page.getByRole('region', { name: 'Coverage lens' })).toHaveCount(0);
   });
 }
 
-test('one list holds every flow, filtered by kind and completeness; a request is shown on the map, then as lanes', async ({ page }) => {
+test('one list holds every flow, filtered by channel and evidence; a request is shown on the map, then as lanes', async ({ page }) => {
   await open(page);
   await page.getByRole('button', { name: 'Flows', exact: true }).click();
   const panel = page.getByRole('complementary', { name: 'Flows' });
-  await expect(panel.getByRole('tablist', { name: 'Kinds of flows' }).getByRole('tab')).toHaveText([/^All/, /^Pages/, /^Requests/, /^Console/]);
+  await expect(panel.getByRole('tablist', { name: 'Kinds of flows' }).getByRole('tab')).toHaveText([/^All/, /^CLI/, /^HTTP/, /^UI/, /^MCP/, /^Worker/, /^Functions/]);
   await expect(panel.getByRole('tab', { name: /^All/ })).toHaveAttribute('aria-selected', 'true');
   await expect(panel.locator('.rf-row')).toHaveCount(0);
   await panel.getByRole('button', { name: 'Expand all', exact: true }).click();
@@ -86,19 +91,19 @@ test('one list holds every flow, filtered by kind and completeness; a request is
   await expect(panel.locator('.rf-row.k-page', { hasText: '/account' }).first()).toBeVisible();
   await expect(panel.locator('.rf-row.k-request', { hasText: '/auth/login' }).first()).toBeVisible();
   await expect(panel.locator('.rf-row.k-command', { hasText: 'reports:send' })).toBeVisible();
-  // The kind filters narrow it; completeness is only offered where there are HTTP flows.
-  await panel.getByRole('tab', { name: /^Console/ }).click();
+  // Channel and evidence filters are independent, including CLI flows.
+  await panel.getByRole('tab', { name: /^CLI/ }).click();
   await expect(panel.locator('.rf-row', { hasText: 'daily at 02:00' })).toBeVisible();
   await expect(panel.locator('.rf-row:not(.k-command):not(.k-schedule)')).toHaveCount(0);
-  await expect(panel.getByRole('group', { name: 'Filter by completeness' })).toHaveCount(0);
-  await panel.getByRole('tab', { name: /^Pages/ }).click();
+  await expect(panel.getByRole('group', { name: 'Filter by evidence coverage' })).toBeVisible();
+  await panel.getByRole('tab', { name: /^UI/ }).click();
   await expect(panel.locator('.rf-row:not(.k-page)')).toHaveCount(0);
   await panel.getByRole('tab', { name: /^All/ }).click();
-  // Completeness filters.
-  await panel.getByRole('group', { name: 'Filter by completeness' }).getByRole('button', { name: /Unmatched/ }).click();
+  // Evidence filters also include unmatched requests.
+  await panel.getByRole('group', { name: 'Filter by evidence coverage' }).getByRole('button', { name: /Known gaps/ }).click();
   await expect(panel.locator('.rf-row', { hasText: '/nowhere/at/all' })).toBeVisible();
-  await expect(panel.locator('.rf-row:not(.s-unmatched)')).toHaveCount(0);
-  await panel.getByRole('group', { name: 'Filter by completeness' }).getByRole('button', { name: /Unmatched/ }).click();
+  await expect(panel.locator('.rf-row', { hasText: 'No known gaps' })).toHaveCount(0);
+  await panel.getByRole('group', { name: 'Filter by evidence coverage' }).getByRole('button', { name: /Known gaps/ }).click();
   await panel.getByLabel('Filter flows').fill('AuthController::login');
   await panel.locator('.rf-row', { hasText: '/auth/login' }).first().click();
   // In the middle, side by side: the flow on the map, its lanes and its outline.
@@ -195,7 +200,7 @@ test('a file says whether flows touch it and why; the coverage lens colors the m
   await expect(inspector.locator('.coverage-reason')).toContainText('Entry point: command reports:prune');
   await expect(inspector.locator('.relation-phrase', { hasText: 'writes' })).toBeVisible();
   await expect(inspector).toContainText('through handle in this file');
-  await page.getByRole('button', { name: 'Coverage', exact: true }).click();
+  await colorBy(page, 'Flow coverage');
   const legend = page.getByRole('region', { name: 'Coverage lens' });
   await expect(legend).toContainText('% of');
   await expect(legend).toContainText('Entry point');
@@ -223,7 +228,7 @@ test('search opens a result as its flow, its steps or its impact; a highlight li
   await expect(page.getByRole('region', { name: 'Blast radius' }).locator('h2')).toHaveText('Impact of authenticate');
   // Coverage lists the files of a category, to copy.
   await page.getByRole('tab', { name: 'Map', exact: true }).click();
-  await page.getByRole('button', { name: 'Coverage', exact: true }).click();
+  await colorBy(page, 'Flow coverage');
   await page.getByRole('region', { name: 'Coverage lens' }).getByRole('button', { name: /^In flows/ }).click();
   const files = page.getByRole('region', { name: 'Files lit: Coverage: In flows' });
   await expect(files.locator('.files-file', { hasText: 'AuthService.php' })).toBeVisible();
@@ -232,14 +237,45 @@ test('search opens a result as its flow, its steps or its impact; a highlight li
   await files.getByRole('button', { name: 'Close the list of files' }).click();
   await expect(files).toHaveCount(0);
 });
-test('Dusk is the default theme, Dawn the other; Settings offers the rest', async ({ page }) => {
+test('Settings previews every theme with its palette and typeface, and remembers a choice', async ({ page }) => {
   await open(page);
-  const themes = page.getByRole('combobox', { name: 'Theme' });
-  await expect(themes).toHaveValue('codiluce-dusk');
-  await expect(themes.locator('option')).toHaveText(['Codiluce Dusk', 'Codiluce Dawn']);
-  await page.getByRole('button', { name: 'Settings' }).click();
-  await page.getByRole('dialog', { name: 'Settings' }).getByLabel('More themes').check();
-  await page.getByRole('dialog', { name: 'Settings' }).getByRole('button', { name: 'Close' }).click();
-  await expect(themes.locator('option')).toHaveCount(12);
-  await expect(themes.locator('option').nth(2)).toHaveText('Midnight');
+  await expect(page.locator('.topbar').getByRole('combobox', { name: 'Theme' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+  const themes = settings.getByRole('radio');
+  const dusk = settings.getByRole('radio', { name: 'Codiluce Dusk', exact: true });
+  const dawn = settings.getByRole('radio', { name: 'Codiluce Dawn', exact: true });
+  await expect(themes).toHaveCount(8);
+  await expect(settings.locator('.theme-name')).toHaveText([
+    'Codiluce DuskDark · Space Grotesk', 'Codiluce DawnLight · Space Grotesk', 'PhosphorDark · JetBrains Mono',
+    'MidnightDark · System', 'PaperLight · System', 'GazetteLight · Fraunces', 'BrutalLight · Archivo', 'NeonDark · Space Grotesk',
+  ]);
+  await expect(dusk).toBeChecked();
+  await expect(settings.getByRole('combobox')).toHaveCount(0);
+  await expect(settings.getByLabel('More themes')).toHaveCount(0);
+  await expect(settings.locator('.theme-type')).toHaveText(Array(8).fill('A'));
+  await expect(settings.locator('.theme-swatch')).toHaveCount(48);
+  await expect(settings.locator('.theme-option', { has: page.getByRole('radio', { name: 'Gazette', exact: true }) }).locator('.theme-type')).toHaveCSS('font-family', /Fraunces/);
+  await dawn.check();
+  await expect(page.locator('.codiluce')).toHaveAttribute('data-theme', 'codiluce-dawn');
+  await dawn.press('ArrowDown');
+  await expect(settings.getByRole('radio', { name: 'Phosphor', exact: true })).toBeChecked();
+  await settings.getByRole('radio', { name: 'Phosphor', exact: true }).press('ArrowDown');
+  await expect(settings.getByRole('radio', { name: 'Midnight', exact: true })).toBeChecked();
+  await expect(page.locator('.codiluce')).toHaveAttribute('data-theme', 'midnight');
+  await settings.getByRole('tab', { name: 'Map', exact: true }).click();
+  await expect(settings.getByLabel('Building shapes')).toBeVisible();
+  await expect(themes).toHaveCount(0);
+  await settings.getByRole('tab', { name: 'Map', exact: true }).press('ArrowLeft');
+  await expect(settings.getByRole('tab', { name: 'Appearance', exact: true })).toBeFocused();
+  await expect(settings.getByRole('radio', { name: 'Midnight', exact: true })).toBeChecked();
+  await page.keyboard.press('Escape');
+  await expect(settings).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Settings', exact: true })).toBeFocused();
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await expect(settings.getByRole('radio', { name: 'Midnight', exact: true })).toBeChecked();
+  await page.reload();
+  await expect(page.locator('.codiluce')).toHaveAttribute('data-theme', 'midnight');
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await expect(settings.getByRole('radio', { name: 'Midnight', exact: true })).toBeChecked();
 });

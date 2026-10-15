@@ -15,7 +15,9 @@
 // Open: the provider's open pull requests, and branches not merged into the
 // base (a branch whose head a pull request has is that pull request). Their
 // changes are the net change since they forked, placed on the map by path
-// (the path before a rename first). Closed: the provider's, unmerged.
+// (the path before a rename first). A file they add is not on the map yet: it
+// goes to the deepest folder of the map holding its path (the repository at
+// worst), with the new folders below it. Closed: the provider's, unmerged.
 import { resolvePeople, type AuthorHistory, type AuthorLog, type FoldedCommit } from '../history/authors.js';
 import { pullRequestFromMessage, type ProviderPull, type PullFileChange, type PullFileStatus, type PullRequestRef } from '../history/pull-requests.js';
 import type { BaseBranch, OpenBranch } from '../history/pull-sources.js';
@@ -269,11 +271,35 @@ export function computePulls(inputs: PullsInputs): PullsComputation {
 function placeOf(computed: PullsComputation, change: PullChange): string | undefined {
   return (change.from !== undefined ? computed.fileOf(change.from) : undefined) ?? computed.fileOf(change.path);
 }
+const folderCache = new WeakMap<ProjectionIndex, Map<string, string>>();
+/** Folders of a view by path (a directory before an application at the same path). */
+function foldersByPath(index: ProjectionIndex): Map<string, string> {
+  let folders = folderCache.get(index);
+  if (folders) return folders;
+  folders = new Map();
+  for (const node of index.nodes.values()) {
+    if (node.kind !== 'entity' || !node.path || node.change?.status === 'removed') continue;
+    if (node.type === 'directory' || (node.type === 'application' && !folders.has(node.path))) folders.set(node.path, node.id);
+  }
+  folderCache.set(index, folders);
+  return folders;
+}
+/** Where a file this view does not have would be: the deepest folder holding its path (the repository at worst), and the folders below it that do not exist yet. */
+export function nearestFolder(index: ProjectionIndex, path: string): { id: string; fresh: string[] } {
+  const folders = foldersByPath(index), parts = path.split('/').slice(0, -1);
+  for (let depth = parts.length; depth > 0; depth--) {
+    const id = folders.get(parts.slice(0, depth).join('/'));
+    if (id) return { id, fresh: parts.slice(depth) };
+  }
+  return { id: index.rootId, fresh: parts };
+}
+/** A file the change set adds that is not on this view's map. */
+const isNew = (computed: PullsComputation, change: PullChange) => change.status === 'added' && !placeOf(computed, change);
 export function pullSummary(computed: PullsComputation, set: ChangeSet): PullSummary {
   if (!set.changes) return { ...set.summary, commits: set.commits.length };
-  let inView = 0;
-  for (const change of set.changes) if (placeOf(computed, change)) inView++;
-  return { ...set.summary, files: set.changes.length, ...sum(set.changes), inView, commits: set.commits.length };
+  let inView = 0, newFiles = 0;
+  for (const change of set.changes) { if (placeOf(computed, change)) inView++; else if (change.status === 'added') newFiles++; }
+  return { ...set.summary, files: set.changes.length, ...sum(set.changes), inView, ...(newFiles ? { newFiles } : {}), commits: set.commits.length };
 }
 /** Words of a query, all of which must be in the title, number, branch or author. */
 function matcher(query: string | undefined): (set: ChangeSet) => boolean {
@@ -299,21 +325,35 @@ export function pullsResult(computed: PullsComputation, context: { base?: BaseBr
   };
 }
 
-/** What one pull request changes on the map: its files, the areas and folders holding them, the rest, its commits and people. */
+/** What one pull request changes on the map: its files, the files it adds in the folders that will hold them, the areas and folders holding both, the rest, its commits and people. */
 export function pullDetail(computed: PullsComputation, set: ChangeSet, index: ProjectionIndex): PullDetail {
   const files: PullDetail['files'] = {}, areas: Record<string, number> = {};
-  const folders = new Map<string, { files: number; lines: number }>();
+  const folders = new Map<string, { files: number; lines: number; newFiles: number; newFolders: Set<string> }>();
+  const folder = (id: string) => { let entry = folders.get(id); if (!entry) { entry = { files: 0, lines: 0, newFiles: 0, newFolders: new Set() }; folders.set(id, entry); } return entry; };
   const outside: PullFile[] = [];
   let outsideTotal = 0;
   for (const change of set.changes ?? []) {
     const id = placeOf(computed, change);
-    if (!id) { outsideTotal++; if (outside.length < OUTSIDE) outside.push({ path: change.path, added: change.added, deleted: change.deleted, ...(change.status ? { status: change.status } : {}), ...(change.from ? { from: change.from } : {}) }); continue; }
+    if (!id) {
+      outsideTotal++;
+      // A file it adds: counted in the folder that will hold it, and the areas around.
+      const near = change.status === 'added' ? nearestFolder(index, change.path) : undefined;
+      if (near) {
+        const node = index.node(near.id)!;
+        for (const area of [...index.spatialAncestors(node), node]) areas[area.id] = (areas[area.id] ?? 0) + 1;
+        const entry = folder(near.id);
+        entry.newFiles++; entry.lines += change.added + change.deleted;
+        if (near.fresh.length) entry.newFolders.add(near.fresh.join('/'));
+      }
+      if (outside.length < OUTSIDE) outside.push({ path: change.path, added: change.added, deleted: change.deleted, ...(change.status ? { status: change.status } : {}), ...(change.from ? { from: change.from } : {}), ...(near ? { near: near.id } : {}) });
+      continue;
+    }
     const known = files[id];
     if (known) { known.added += change.added; known.deleted += change.deleted; continue; }
     files[id] = { added: change.added, deleted: change.deleted, ...(change.status ? { status: change.status } : {}) };
     const node = index.node(id)!;
     for (const ancestor of index.spatialAncestors(node)) areas[ancestor.id] = (areas[ancestor.id] ?? 0) + 1;
-    if (node.canonicalParentId) { const folder = folders.get(node.canonicalParentId) ?? { files: 0, lines: 0 }; folder.files++; folder.lines += change.added + change.deleted; folders.set(node.canonicalParentId, folder); }
+    if (node.canonicalParentId) { const entry = folder(node.canonicalParentId); entry.files++; entry.lines += change.added + change.deleted; }
   }
   const entries: string[] = [];
   for (const node of index.nodes.values()) {
@@ -323,20 +363,26 @@ export function pullDetail(computed: PullsComputation, set: ChangeSet, index: Pr
   }
   return {
     pull: pullSummary(computed, set), window: computed.window, files, entries, areas,
-    folders: [...folders].map(([id, folder]) => ({ id, path: index.node(id)?.path ?? index.node(id)?.name ?? id, ...folder })).sort((a, b) => b.files - a.files || b.lines - a.lines || (a.path < b.path ? -1 : 1)).slice(0, FOLDERS),
+    folders: [...folders].map(([id, { files, lines, newFiles, newFolders }]) => ({ id, path: index.node(id)?.path ?? index.node(id)?.name ?? id, files, lines, ...(newFiles ? { newFiles, ...(newFolders.size ? { newFolders: [...newFolders].sort() } : {}) } : {}) }))
+      .sort((a, b) => b.files + (b.newFiles ?? 0) - a.files - (a.newFiles ?? 0) || b.lines - a.lines || (a.path < b.path ? -1 : 1)).slice(0, FOLDERS),
     outside: outside.sort((a, b) => (a.path < b.path ? -1 : 1)), outsideTotal,
     commits: set.commits.slice(0, COMMITS), shas: set.commits.map(commit => commit.sha.slice(0, 12)),
     people: set.people, ...(set.unknown && !set.changes ? { unknownReason: set.unknown } : {}),
   };
 }
 
-/** The open pull requests changing a selection (a file; a symbol's or an entry point's file; the files of an area), and the latest merged ones. */
+/** The open pull requests changing a selection (a file; a symbol's or an entry point's file; the files of an area, with those they add in it), and the latest merged ones. */
 export function entityPulls(computed: PullsComputation, index: ProjectionIndex, node: ProjectionNode): EntityPulls {
   const covered = coveredFiles(index, node);
   const ids = new Set(covered.files.map(file => file.id));
+  const within = (folder: string) => folder === node.id || index.spatialAncestors(index.node(folder)!).some(ancestor => ancestor.id === node.id);
   const touching = (sets: ChangeSet[]): EntityPull[] => sets.flatMap(set => {
     let files = 0, added = 0, deleted = 0;
-    for (const change of set.changes ?? []) { const id = placeOf(computed, change); if (!id || !ids.has(id)) continue; files++; added += change.added; deleted += change.deleted; }
+    for (const change of set.changes ?? []) {
+      const id = placeOf(computed, change);
+      if (id ? !ids.has(id) : !isNew(computed, change) || !within(nearestFolder(index, change.path).id)) continue;
+      files++; added += change.added; deleted += change.deleted;
+    }
     return files ? [{ ...pullSummary(computed, set), here: { files, added, deleted } }] : [];
   });
   const merged = ids.size ? touching(computed.merged) : [];

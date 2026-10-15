@@ -27,14 +27,15 @@ import { CODE_LANGUAGES } from '../core/languages.js';
 import { extendRegistry, LAYOUT_VERSION, TIMELINE_LAYOUT_VERSION, layoutHierarchy, placeOnTimeline, timelineLayout, type LayoutNode, type LayoutResult, type LayoutState, type Rect, type TimelineLayout, type TimelineRegistry } from './layout.js';
 import { ProjectionIndex, type EntityRow, type ProjectionNode, type RelationRow } from './hierarchy.js';
 import { dataFamilies, NO_FAMILY, type FamilyAssignment } from './families.js';
+import { isMetricLens, metricLens, unavailableLens, type MeasuredValues, type MetricLensResult } from './lenses.js';
 import { readSnapshotFile, readSnapshotSource, snapshotRef, SourceError, splitLines, type SourceRequest, type SourceResponse } from './source.js';
 import type { AggregateResult, ChangeRegionsResult, ChangesPage, CoverageDetail, CoverageExport, CoverageExportSymbol, CoverageResult, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, FamiliesResult, FeaturesResult, FileListResult, FlowList, FlowSummary, ImpactGroup, ImpactGroupBy, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowEdge, RequestFlowList, RequestFlowNode, RequestFlowSummary, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
 import { computeImpact, DEFAULT_IMPACT_DEPTH, FILE_IMPACT_TYPES, impactPath, MAX_IMPACT_SEEDS, seedsOf, SYMBOL_IMPACT_TYPES, type ImpactComputation } from './impact.js';
 import { walkSteps } from './steps.js';
 import { computeArchetypeCounts, computeArchetypes, type ArchetypeCount, type ArchetypeInfo } from './archetypes.js';
 import { changeRegions, isRegionLevel } from './regions.js';
-import { commandFlow, displayName, endpointFlow, FLOW_LANES, scheduleFlow, unmatchedFlow, type FlowContext, type RawFlow } from './request-flows.js';
-import { CATALOG_KINDS, computeCoverage, fileResolver, forwardSlice, pageEndpoints, type CatalogKind, type CoverageComputation } from './catalog.js';
+import { commandFlow, displayName, endpointFlow, FLOW_LANES, scheduleFlow, unmatchedFlow, operationFlow, evidenceCoverageOf, evidenceGapCount, type FlowContext, type RawFlow } from './request-flows.js';
+import { CATALOG_KINDS, computeCoverage, fileResolver, forwardSlice, pageEndpoints, flowScope, type CatalogKind, type FlowScope, type CoverageComputation } from './catalog.js';
 import type { AnnotationStore } from '../ai/store.js';
 import { assignDomains, PLATFORM, type DomainAssignment, type DomainRule } from '../ai/domains.js';
 import type { AnnotationsOverview, EntityAnnotation, TimelineResponse, WorkingOrigin } from './dto.js';
@@ -82,6 +83,8 @@ interface View {
   families?: FamilyAssignment;
   /** Authorship by window (lazily). */
   authorship?: Map<string, AuthorshipComputation>;
+  /** What code health measured (lazily). */
+  measured?: Map<string, MeasuredValues>;
   /** Pull requests by window (lazily), with what they were computed from. */
   pulls?: Map<string, { stamp: string; computed: PullsComputation }>;
   /** What explanation links resolve against (lazily). */
@@ -385,6 +388,22 @@ export class ProjectionService {
     const computed = await this.authorshipOf(current, options.window);
     if ('reason' in computed) return { id, available: false, reason: computed.reason, scope: node.type === 'file' ? 'file' : 'area', files: 0, changedFiles: 0, commits: 0, lines: 0, people: [], recent: [] };
     return entityAuthorship(computed, current.index, node, this.snapshotLookup());
+  }
+  // Lenses (projection/lenses.ts) ---------------------------------------------------
+  /** Files colored by a measure: complexity, how often they changed in the window, or both (hotspots). */
+  async metricLens(view: ViewKey | undefined, options: { lens?: string; window?: string }): Promise<MetricLensResult> {
+    const lens = options.lens;
+    if (!isMetricLens(lens)) throw new Error('lens must be complexity, changes or hotspots');
+    const current = this.load(view);
+    let measured: Map<string, MeasuredValues> | undefined;
+    if (lens !== 'changes') {
+      measured = current.measured ??= current.target.measuredValues();
+      if (!measured.size) return unavailableLens(lens, current.target.info.run.analyzerVersions?.['code-health'] ? 'No file here is in a language code health measures (TypeScript, JavaScript, PHP, Python and Go).' : current.target.info.kind === 'commit' ? 'This commit was indexed before code health was measured: index the history again to measure it.' : 'This index was made before code health was measured: index the repository again to measure it.');
+    }
+    if (lens === 'complexity') return metricLens(current.index, lens, { measured: measured! });
+    const computed = await this.authorshipOf(current, options.window);
+    if ('reason' in computed) return unavailableLens(lens, computed.reason);
+    return metricLens(current.index, lens, { ...(measured ? { measured } : {}), changes: computed.changes, window: computed.window });
   }
   // Pull requests (history/pull-sources.ts, projection/pulls.ts) -------------------------
   private readonly mergeMessages = new Map<string, Promise<Map<string, { subject: string; body: string }>>>();
@@ -1163,7 +1182,7 @@ export class ProjectionService {
     if (!current.requestFlows.has(id)) {
       const node = current.index.node(id);
       const using = context ?? this.flowContext(current);
-      current.requestFlows.set(id, !node || node.kind !== 'entity' ? undefined : node.type === 'api_endpoint' ? endpointFlow(using, id) : node.type === 'command' ? commandFlow(using, id) : node.type === 'scheduled_task' ? scheduleFlow(using, id) : unmatchedFlow(using, id));
+      current.requestFlows.set(id, !node || node.kind !== 'entity' ? undefined : node.type === 'api_endpoint' ? endpointFlow(using, id) : node.type === 'command' ? commandFlow(using, id) : node.type === 'scheduled_task' ? scheduleFlow(using, id) : node.type === 'user_flow' ? operationFlow(using,id) : unmatchedFlow(using, id));
     }
     return current.requestFlows.get(id);
   }
@@ -1229,7 +1248,7 @@ export class ProjectionService {
       via: edge.via.map(viaId => { const node = current.index.node(viaId)!; return { id: node.id, name: displayName(node), type: node.type, ancestors: ancestorsOf(node.id) }; }),
       when: edge.site ? await guards(edge.site.owner, edge.site.line, edge.site.hint === undefined ? undefined : hintOf(edge.site.hint) ?? edge.site.hint) : [],
     })));
-    return { ...this.flowSummary(current, flow), anchor: this.summary(current, anchor), lanes: FLOW_LANES.filter(lane => nodes.some(node => node.lane === lane)), nodes, edges, notices: flow.notices };
+    return { ...this.flowSummary(current, flow), evidenceCoverage: evidenceCoverageOf(flow), evidenceGaps:evidenceGapCount(flow), ...(flow.channel ? { channel:flow.channel } : {}), ...(flow.laneLabels ? { laneLabels:flow.laneLabels } : {}), anchor: this.summary(current, anchor), lanes: FLOW_LANES.filter(lane => nodes.some(node => node.lane === lane)), nodes, edges, notices: flow.notices };
   }
 
   // Flow catalog and coverage ------------------------------------------------------------
@@ -1242,6 +1261,8 @@ export class ProjectionService {
     const fileOf = fileResolver(index);
     const present = (node: ProjectionNode) => node.kind === 'entity' && node.change?.status !== 'removed';
     const all = [...index.nodes.values()].filter(present);
+    const metadataCache = new Map<string,Record<string,unknown> | undefined>();
+    const metadataOf = (id:string) => { if (!metadataCache.has(id)) metadataCache.set(id,current.target.entity(id)?.metadata); return metadataCache.get(id); };
     const gets = new Set(all.filter(node => node.type === 'api_endpoint' && node.name.startsWith('GET ')).map(node => `${node.canonicalParentId}|${node.name.slice(4)}`));
     const entries: { id: string; kind: CatalogKind }[] = [];
     for (const node of all) {
@@ -1249,6 +1270,10 @@ export class ProjectionService {
       else if (node.type === 'api_endpoint' && !(node.name.startsWith('HEAD ') && gets.has(`${node.canonicalParentId}|${node.name.slice(5)}`))) entries.push({ id: node.id, kind: pages.has(node.id) ? 'page' : 'request' });
       else if (node.type === 'command') entries.push({ id: node.id, kind: 'command' });
       else if (node.type === 'scheduled_task') entries.push({ id: node.id, kind: 'schedule' });
+      else if (node.type === 'user_flow') {
+        const kind = metadataOf(node.id)?.flowKind;
+        if (typeof kind === 'string' && CATALOG_KINDS.includes(kind as CatalogKind)) entries.push({ id:node.id,kind:kind as CatalogKind });
+      }
     }
     for (const id of new Set(index.diagnostics.flatMap(item => item.entityId && HTTP_FINDINGS.has(item.code) && index.node(item.entityId) && present(index.node(item.entityId)!) ? [item.entityId] : []))) entries.push({ id, kind: 'unmatched' });
     const flows: NonNullable<View['catalog']>['flows'] = [];
@@ -1265,12 +1290,14 @@ export class ProjectionService {
       const members = new Set([...slice.members, ...raw?.members ?? [], entry.id]);
       const files = new Set([...members].map(fileOf).filter((file): file is string => !!file));
       const app = appName(current, node);
-      const base = { id: entry.id, kind: entry.kind, entry: { id: node.id, type: node.type, name: node.name }, ...(app ? { app } : {}), entities: members.size, files: files.size, ...(slice.truncated ? { truncated: true } : {}) };
+      const channel = entry.kind === 'page' ? 'ui' : ['request','unmatched'].includes(entry.kind) ? 'http' : ['command','schedule'].includes(entry.kind) ? 'cli' : metadataOf(entry.id)?.flowChannel ?? entry.kind;
+      const knownGaps = slice.truncated || !!raw && evidenceCoverageOf(raw) === 'known-gaps' || [...members].some(id => { const metadata = metadataOf(id); return Number((metadata?.callSites as { unresolved?:number } | undefined)?.unresolved ?? 0) > 0 || Array.isArray(metadata?.flowGaps) && metadata.flowGaps.length > 0; });
+      const base = { id: entry.id, kind: entry.kind, channel: channel as FlowSummary['channel'], scope: flowScope(node.path), evidenceCoverage: knownGaps ? 'known-gaps' as const : 'no-known-gaps' as const, ...(raw ? {evidenceGaps:evidenceGapCount(raw)} : {}), entry: { id: node.id, type: node.type, name: node.name }, ...(app ? { app } : {}), entities: members.size, files: files.size, ...(slice.truncated ? { truncated: true } : {}) };
       let summary: FlowSummary;
       if (!raw) summary = { ...base, name: node.name, path: node.name, group: `/${node.name.split('/').filter(Boolean)[0] ?? ''}`, detail: 'steps' };
       else {
         const request = this.flowSummary(current, raw);
-        const group = entry.kind === 'command' ? (node.name.includes(':') ? `${node.name.split(':')[0]}:` : 'commands') : entry.kind === 'schedule' ? 'scheduler' : request.group;
+        const group = entry.kind === 'command' ? (node.name.includes(':') ? `${node.name.split(':')[0]}:` : 'commands') : entry.kind === 'schedule' ? 'scheduler' : entry.kind === 'cli' ? 'Commands' : entry.kind === 'mcp' ? 'MCP operations' : entry.kind === 'worker' ? 'Messages' : entry.kind === 'function' ? 'Functions' : request.group;
         summary = { ...base, name: request.name, group, method: request.method, path: request.path, detail: 'lanes', status: request.status, stages: request.stages, gaps: request.gaps, tables: request.tables, responses: request.responses, callers: request.callers, ...(request.handler ? { handler: request.handler } : {}), ...(entry.kind === 'schedule' ? { cadence: request.path } : {}) };
       }
       flows.push({ summary, members });
@@ -1295,23 +1322,27 @@ export class ProjectionService {
     return [...found].sort((a, b) => a - b);
   }
   /** Every flow of the view by entry point: pages, requests, commands, scheduled tasks and unmatched requests. */
-  flows(options: { view?: ViewKey; entity?: string; kind?: string } = {}): FlowList {
+  flows(options: { view?: ViewKey; entity?: string; kind?: string; scope?: FlowScope | 'all' } = {}): FlowList {
     const current = this.load(options.view);
     if (options.kind && !CATALOG_KINDS.includes(options.kind as CatalogKind)) throw new Error(`kind must be one of ${CATALOG_KINDS.join(', ')}`);
+    if (options.scope && !['application','test','fixture','all'].includes(options.scope)) throw new Error('scope must be application, test, fixture or all');
     const catalog = this.catalog(current);
     const indices = options.entity ? this.flowsThrough(current, this.require(current, options.entity)) : catalog.flows.map((_, i) => i);
     const counts = Object.fromEntries(CATALOG_KINDS.map(kind => [kind, 0])) as FlowList['counts'];
     const items: FlowSummary[] = [];
+    const scopeCounts = { application:0,test:0,fixture:0 };
     // A flow belongs to the feature where it starts (its entry point's).
     const domains = this.domains();
     for (const i of indices) {
       const summary = catalog.flows[i]!.summary;
+      scopeCounts[summary.scope ?? 'application']++;
+      if (options.scope && options.scope !== 'all' && summary.scope !== options.scope) continue;
       counts[summary.kind]++;
       if (options.kind && summary.kind !== options.kind) continue;
       const feature = domains?.of.get(summary.entry.id);
       items.push(feature ? { ...summary, feature } : summary);
     }
-    return { items, counts, ...(options.entity ? { entity: options.entity } : {}) };
+    return { items, counts, scopeCounts, ...(options.entity ? { entity: options.entity } : {}) };
   }
   private coverageOfView(current: View): CoverageComputation {
     const catalog = this.catalog(current);

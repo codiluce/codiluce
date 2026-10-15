@@ -1,6 +1,6 @@
 // AtlasApi backed by the server-side services (no HTTP), with optional
 // per-call delays and a call log. Shared by the store-level tests.
-import type { MapVisibilityAction, AuthorshipWindowKey, CatalogKind, NodeSummary, RegionLevel, SourceRequest, ViewKey } from '@engine/projection/dto';
+import type { MapVisibilityAction, AuthorshipWindowKey, CatalogKind, MetricLens, NodeSummary, RegionLevel, SourceRequest, ViewKey } from '@engine/projection/dto';
 import type { GraphStore } from '../../src/storage/sqlite.js';
 import type { ProjectionService } from '../../src/projection/service.js';
 import type { HistoryService } from '../../src/history/service.js';
@@ -76,6 +76,7 @@ export class ServiceApi implements AtlasApi {
   features(signal?: AbortSignal) { return this.run('features', '', signal, () => this.projection.features(this.view)); }
   files(query: FileQuery, signal?: AbortSignal) { return this.run('files', JSON.stringify(query), signal, () => this.projection.fileList(this.view, query)); }
   authorship(window: AuthorshipWindowKey, signal?: AbortSignal) { return this.run('authorship', window, signal, () => this.projection.authorship(this.view, { window })); }
+  lens(lens: MetricLens, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.run('lens', `${lens}|${window}`, signal, () => this.projection.metricLens(this.view, { lens, window })); }
   personAuthorship(key: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.run('personAuthorship', `${key}|${window}`, signal, () => this.projection.personAuthorship(key, this.view, { window })); }
   entityAuthorship(id: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.run('entityAuthorship', `${id}|${window}`, signal, () => this.projection.entityAuthorship(id, this.view, { window })); }
   pulls(window: AuthorshipWindowKey, options: { query?: string; refresh?: boolean }, signal?: AbortSignal) { return this.run('pulls', `${window}|${options.query ?? ''}`, signal, () => this.projection.pulls(this.view, { window, ...options })); }

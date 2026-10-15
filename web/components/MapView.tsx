@@ -5,10 +5,11 @@ import { typeLabel } from '../lib/format';
 import { LEVELS } from '../lib/lod';
 import { coverageCss, familyCss, familyHues, featureHues, personHue, pullHue, themeById } from '../lib/themes';
 import { KindTag, PersonDot, windowText } from './PeoplePanel';
-import { pullName, SourceTag } from './PullsPanel';
+import { newHere, pullName, SourceTag } from './PullsPanel';
 import { COVERAGE_HINT, COVERAGE_ORDER, COVERAGE_TEXT, NOT_MEASURED } from '../lib/coverage';
 import { impactColors } from '../lib/renderer';
 import { NO_FAMILY } from '../lib/store';
+import { LensLegend } from './ColorBy';
 import { useAtlas, useStore } from './context';
 
 export function MapView() {
@@ -32,6 +33,7 @@ export function MapView() {
       <Legend />
       <CoverageLegend />
       <FamiliesLegend />
+      <LensLegend />
       <FeatureLegend />
       <PeopleLegend />
       <PersonLegend />
@@ -61,10 +63,7 @@ export function MapView() {
 function MapControls() {
   const store = useStore();
   const diagnostics = useAtlas(state => state.showDiagnostics);
-  const coverage = useAtlas(state => state.coverage.show);
-  const families = useAtlas(state => state.families.show);
   const rails = useAtlas(state => state.connections === 'rails');
-  const tables = useAtlas(state => state.meta?.coverage.databaseTables ?? 0);
   return (
     <div className="map-controls">
       <div className="control-group" role="group" aria-label="Zoom">
@@ -75,8 +74,6 @@ function MapControls() {
         <button onClick={() => store.navigator?.fitAll()} aria-label="Fit whole repository" title="Fit / reset view (F)">⤢</button>
         <button onClick={() => { const node = store.getState().selection?.node; if (node) store.navigator?.flyTo(node, { mode: node.childCount > 0 ? 'enter' : 'focus' }); }} aria-label="Zoom to selection" title="Zoom to selection (Enter)">◎</button>
         <button onClick={() => store.toggleDiagnostics()} aria-pressed={diagnostics} aria-label="Show unresolved findings on the map" title="Unresolved findings">⚠</button>
-        <button onClick={() => void store.toggleCoverage()} aria-pressed={coverage} aria-label="Color files by flow coverage" title="Coverage: which files flows touch">◑</button>
-        {tables > 0 && <button onClick={() => void store.toggleFamilies()} aria-pressed={families} aria-label="Color files by data family" title="Data families: color files by the tables they use">▦</button>}
         <button onClick={() => store.setConnections(rails ? 'arcs' : 'rails')} aria-pressed={rails} aria-label="Draw links as rails along the floor" title={rails ? 'Links run as rails along the floors, at right angles (click for arcs over the blocks)' : 'Links arc over the blocks (click for rails along the floors, at right angles)'}>⌐</button>
       </div>
     </div>
@@ -331,12 +328,14 @@ function PullLegend() {
   const summary = pull?.data?.pull;
   if (!pull || !summary) return null;
   const lit = Object.keys(pull.data!.files).length;
+  // Files it adds are counted in the nearest folders of the map; the rest are gone since, or not analyzed.
+  const added = summary.newFiles ?? 0, landing = pull.data!.folders.filter(folder => folder.newFiles).length, rest = pull.data!.outsideTotal - added;
   return (
     <div className="feature-legend" role="status">
       <span className="domain-dot" style={{ background: familyCss(pullHue(summary.state), dark) }} />
       <button className="feature-legend-name" onClick={() => void store.revealPulls()} title="Show it in the Pull requests panel"><strong>{pullName(summary)}</strong></button>
       <SourceTag pull={summary} />
-      <span className="absent">{lit} file{lit === 1 ? '' : 's'} it {summary.state === 'merged' ? 'changed' : 'changes'} lit{pull.data!.outsideTotal ? ` · ${pull.data!.outsideTotal} not on the map` : ''}</span>
+      <span className="absent">{lit} file{lit === 1 ? '' : 's'} it {summary.state === 'merged' ? 'changed' : 'changes'} lit{added ? ` · ${added} new in ${landing} folder${landing === 1 ? '' : 's'}` : ''}{rest > 0 ? ` · ${rest} not on the map` : ''}</span>
       <button className="button tiny" onClick={() => void store.openFiles({ kind: 'pull', key: summary.id })} title="The files lit, as a list">List</button>
       <button className="button tiny" onClick={() => void store.showPullImpact(summary.id)} title="What depends on the code it changes">Impact</button>
       <button className="icon-button small" onClick={() => void store.focusPull(undefined)} aria-label="Show every file again" title="Show every file again">✕</button>
@@ -414,8 +413,11 @@ function PeopleHover({ id }: { id: string }) {
 function PullHover({ id }: { id: string }) {
   const lit = useAtlas(state => state.pulls.focus && state.pulls.pull?.id === state.pulls.focus ? state.pulls.pull.data : undefined);
   const own = lit?.files[id];
-  if (!own) return null;
-  return <div className="hover-change">{lit!.pull.number !== undefined ? `#${lit!.pull.number}` : lit!.pull.title}: {own.status ? `${own.status} · ` : ''}+{own.added} −{own.deleted}</div>;
+  const landing = own ? undefined : lit?.folders.find(folder => folder.id === id && folder.newFiles);
+  if (!own && !landing) return null;
+  const name = lit!.pull.number !== undefined ? `#${lit!.pull.number}` : lit!.pull.title;
+  if (landing) return <div className="hover-change">{name}: adds {newHere(landing)}</div>;
+  return <div className="hover-change">{name}: {own!.status ? `${own!.status} · ` : ''}+{own!.added} −{own!.deleted}</div>;
 }
 /** Screen-reader/keyboard access to the most prominent visible map items. */
 function VisibleList() {

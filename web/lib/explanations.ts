@@ -1,6 +1,6 @@
 // Browser client for explanations: reading them, the explanations that link an
-// entity, and asking the chat (its answer streams in, one JSON event a line).
-import type { AskEvent, ExplanationDetail, ExplanationList, ExplanationsSetup } from '@engine/explanations/model';
+// entity, what connected agents are doing, and asking the chat (its answer streams in, one JSON event a line).
+import type { AgentActivityList, AskEvent, ExplanationDetail, ExplanationList, ExplanationsSetup } from '@engine/explanations/model';
 import type { EntityExplanations } from '@engine/explanations/service';
 import { ApiError } from './api';
 
@@ -11,6 +11,8 @@ export interface ExplanationsApi {
   setup(signal?: AbortSignal): Promise<ExplanationsSetup>;
   detail(id: string, signal?: AbortSignal): Promise<ExplanationDetail>;
   forEntity(id: string, signal?: AbortSignal): Promise<EntityExplanations>;
+  /** Agents connected over MCP, and what they are explaining right now. */
+  activity(signal?: AbortSignal): Promise<AgentActivityList>;
   ask(request: AskRequest, onEvent: (event: AskEvent) => void, signal?: AbortSignal): Promise<void>;
   remove(id: string): Promise<void>;
   rename(id: string, title: string): Promise<void>;
@@ -35,6 +37,7 @@ export class HttpExplanationsApi implements ExplanationsApi {
   setup(signal?: AbortSignal) { return this.get<ExplanationsSetup>('/api/explanations/setup', signal); }
   detail(id: string, signal?: AbortSignal) { return this.get<ExplanationDetail>(`/api/explanations/${encodeURIComponent(id)}`, signal); }
   forEntity(id: string, signal?: AbortSignal) { return this.get<EntityExplanations>(`/api/explanations/entity/${encodeURIComponent(id)}`, signal); }
+  activity(signal?: AbortSignal) { return this.get<AgentActivityList>('/api/explanations/activity', signal); }
   async remove(id: string) { await this.send('DELETE', `/api/explanations/${encodeURIComponent(id)}`); }
   async rename(id: string, title: string) { await this.send('PATCH', `/api/explanations/${encodeURIComponent(id)}`, { title }); }
   async ask(request: AskRequest, onEvent: (event: AskEvent) => void, signal?: AbortSignal): Promise<void> {

@@ -13,6 +13,7 @@ import { LINK_GUIDE, parseLink, schemeHref } from './links.js';
 import { latestAnswer, type ExplanationDetail, type ResolvedLink, type SubjectKind } from './model.js';
 import { hrefOf, resolveLink } from './resolve.js';
 import { UnresolvedLinksError, type ExplanationService } from './service.js';
+import type { ActivityWriter } from './activity.js';
 
 const execute = promisify(execFile);
 export type JsonSchema = Record<string, unknown>;
@@ -29,6 +30,8 @@ export interface ToolContext {
   serverUrl?: () => string | undefined;
   /** Who publishes through these tools (the MCP client's name). */
   agent?: () => string | undefined;
+  /** What the agent is doing, shown on the map while it works (the MCP server's session file). */
+  activity?: Pick<ActivityWriter, 'begin' | 'published' | 'work'>;
 }
 export class ToolInputError extends Error {}
 
@@ -72,12 +75,12 @@ export function codeTools(context: ToolContext): ToolSpec[] {
         const meta = projection.meta(LIVE);
         const ctx = links();
         const root = ctx.index.node(ctx.index.rootId)!;
-        const applications = root.children.map(id => ctx.index.node(id)).filter((node): node is ProjectionNode => node?.type === 'application').map(node => {
+        const applications = [...ctx.index.nodes.values()].filter(node => node.type === 'application').map(node => {
           const entity = projection.entity(node.id, LIVE);
           return { name: node.name, link: hrefOf(node, ctx), frameworks: entity?.metadata.frameworks, files: node.stats.files };
         });
         const flowCounts: Record<string, number> = {};
-        for (const flow of ctx.flows) flowCounts[flow.summary.kind] = (flowCounts[flow.summary.kind] ?? 0) + 1;
+        for (const flow of ctx.flows.filter(flow => (flow.summary.scope ?? 'application') === 'application')) flowCounts[flow.summary.kind] = (flowCounts[flow.summary.kind] ?? 0) + 1;
         const notes = projection.annotationsOverview();
         const features = notes.available ? projection.features(LIVE).features.map(item => ({ name: item.name, link: schemeHref('feature', item.key), files: item.files, summary: item.summary })) : [];
         return json({
@@ -143,17 +146,17 @@ export function codeTools(context: ToolContext): ToolSpec[] {
     },
     {
       name: 'flows', title: 'Flows by entry point', readOnly: true,
-      description: 'Every flow of the code by where it starts: pages, HTTP requests, console commands, scheduled tasks (and requests no endpoint answers). Filter by kind, by an entity they touch, or by words of their name.',
-      inputSchema: object({ kind: { type: 'string', enum: ['page', 'request', 'command', 'schedule', 'unmatched'] }, link: string('Only the flows touching this (a path or link)'), query: string('Words of the flow name or title'), limit: integer('At most this many (default 60)', 1, 300) }),
+      description: 'Every evidenced entry: UI, HTTP, CLI, MCP, worker messages and configured functions. Tests and fixtures have their own source scopes. Filter by kind, source scope, an entity they touch, or words of their name.',
+      inputSchema: object({ kind: { type: 'string', enum: ['page', 'request', 'command', 'schedule', 'cli', 'mcp', 'worker', 'function', 'unmatched'] }, scope:{ type:'string',enum:['application','test','fixture','all'],description:'Application source by default; test and fixture flows are separate scopes' }, link: string('Only the flows touching this (a path or link)'), query: string('Words of the flow name or title'), limit: integer('At most this many (default 60)', 1, 300) }),
       async run(input) {
         const entity = input.link !== undefined ? (await target(input.link)).node.id : undefined;
-        const list = projection.flows({ view: LIVE, entity, kind: optionalText(input.kind) });
+        const list = projection.flows({ view: LIVE, entity, kind: optionalText(input.kind), scope:(optionalText(input.scope) ?? 'application') as 'application'|'test'|'fixture'|'all' });
         const words = optionalText(input.query)?.toLowerCase().split(/\s+/).filter(Boolean) ?? [];
         const items = list.items.filter(item => words.every(word => `${item.name} ${item.title ?? ''} ${item.goal ?? ''}`.toLowerCase().includes(word)));
         const limit = optionalNumber(input.limit) ?? 60;
-        return json({ counts: list.counts, total: items.length, items: items.slice(0, limit).map(item => ({
+        return json({ counts: list.counts,scopeCounts:list.scopeCounts, total: items.length, items: items.slice(0, limit).map(item => ({
           name: item.name, kind: item.kind, link: item.kind === 'unmatched' ? undefined : schemeHref('flow', item.name), ...(item.title ? { title: item.title } : {}), ...(item.goal ? { goal: item.goal } : {}),
-          entry: brief(projection.linkContext(LIVE).index.node(item.entry.id) ?? { id: item.entry.id, type: item.entry.type, name: item.entry.name } as ProjectionNode), files: item.files, ...(item.status ? { completeness: item.status, gaps: item.gaps } : {}), ...(item.tables ? { tables: item.tables } : {}), ...(item.cadence ? { runs: item.cadence } : {}),
+          channel:item.channel,scope:item.scope,evidenceCoverage:item.evidenceCoverage,entry: brief(projection.linkContext(LIVE).index.node(item.entry.id) ?? { id: item.entry.id, type: item.entry.type, name: item.entry.name } as ProjectionNode), files: item.files, ...(item.status ? { gaps: item.gaps } : {}), ...(item.tables ? { tables: item.tables } : {}), ...(item.cadence ? { runs: item.cadence } : {}),
         })) });
       },
     },
@@ -174,7 +177,7 @@ export function codeTools(context: ToolContext): ToolSpec[] {
           const byId = new Map(lanes.nodes.map(item => [item.id, item]));
           const label = (id: string) => { const item = byId.get(id); return item ? `${item.lane}: ${item.label}` : id; };
           return json({
-            flow: flow.summary.name, kind: flow.summary.kind, ...(flow.summary.title ? { title: flow.summary.title } : {}), completeness: lanes.status, notices: lanes.notices,
+            flow: flow.summary.name, kind: flow.summary.kind,channel:flow.summary.channel,evidenceCoverage:lanes.evidenceCoverage,laneLabels:lanes.laneLabels, ...(flow.summary.title ? { title: flow.summary.title } : {}), notices: lanes.notices,
             nodes: lanes.nodes.map(item => ({ lane: item.lane, kind: item.kind, label: item.label, ...(item.detail ? { detail: item.detail } : {}), ...(item.node ? { entity: brief(item.node, ctx) } : {}), ...(item.page ? { page: brief(item.page.node, ctx) } : {}), ...(item.effect ? { effect: `${item.effect.category} ${item.effect.operation}: ${item.effect.detail} in ${item.effect.ownerName} (line ${item.effect.line})` } : {}), ...(item.gap ? { gap: item.gap.text } : {}), ...(item.status ? { status: item.status } : {}) })),
             edges: lanes.edges.map(edge => ({ from: label(edge.from), to: label(edge.to), kind: edge.kind, ...(edge.label ? { label: edge.label } : {}), ...(edge.via.length ? { via: edge.via.map(item => item.name) } : {}), ...(edge.when.length ? { when: edge.when.map(guard => guard.phrase) } : {}) })),
           });
@@ -308,14 +311,26 @@ export function explanationTools(context: ToolContext): ToolSpec[] {
     if (!(error instanceof UnresolvedLinksError)) throw error;
     return json({ saved: false, reason: 'Some links do not name anything indexed. Fix them (search finds the right path; copy the link values tools return) and call again, or pass allowUnresolved: true to save anyway.', unresolved: error.links.map(link => ({ href: link.href, reason: link.reason })) });
   };
+  // Asked to explain without saying what (no question given): the question start_explanation named.
+  const asked = (question: string | undefined) => question ?? context.activity?.work?.question;
+  const published = (detail: ExplanationDetail) => { context.activity?.published(detail); return detail; };
   return [
+    ...(context.activity ? [{
+      name: 'start_explanation', title: 'Say what you are explaining', readOnly: true,
+      description: 'Call this first when the user asks you to explain something, before reading the code: the Codiluce map shows at once that an explanation is on its way, with their question and each tool you call, until `publish_explanation` saves it. Saves nothing.',
+      inputSchema: object({ title: string('What you are explaining, in a few words'), question: string('What the user asked, in their words'), subject: subjectSchema }),
+      async run(input: Record<string, unknown>) {
+        context.activity!.begin({ title: optionalText(input.title), question: optionalText(input.question), subject: subjectInput(input.subject) });
+        return json({ started: true, next: 'Read the code with the Codiluce tools, then save the answer with publish_explanation.' });
+      },
+    } satisfies ToolSpec] : []),
     {
       name: 'publish_explanation', title: 'Save an explanation', readOnly: false,
       description: `Save what you explained so the user reads it in Codiluce's Explanations column: hovering a link lights that code on the map, clicking it opens it. Links are checked first; the explanation is pinned to the indexed commit so it shows when the code changes later. Write Markdown with headings and short paragraphs.\n\n${LINK_GUIDE}`,
       inputSchema: object({ title: string('A short title (default: the first heading)'), markdown: string('The explanation, in Markdown, with links'), question: string('What the user asked, in their words'), subject: subjectSchema, allowUnresolved: { type: 'boolean', description: 'Save even if some links do not resolve' } }, ['markdown']),
       async run(input) {
         try {
-          const detail = await service.publish({ markdown: requireText(input.markdown, 'markdown'), title: optionalText(input.title), question: optionalText(input.question), subject: subjectInput(input.subject), source: 'agent', agent: context.agent?.(), allowUnresolved: input.allowUnresolved === true });
+          const detail = published(await service.publish({ markdown: requireText(input.markdown, 'markdown'), title: optionalText(input.title), question: asked(optionalText(input.question)), subject: subjectInput(input.subject) ?? context.activity?.work?.subject, source: 'agent', agent: context.agent?.(), allowUnresolved: input.allowUnresolved === true }));
           return saved(detail, 'saved');
         } catch (error) { return unresolved(error); }
       },
@@ -326,7 +341,7 @@ export function explanationTools(context: ToolContext): ToolSpec[] {
       inputSchema: object({ id: string('The explanation ID'), markdown: string('The new answer, in Markdown, with links'), question: string('The follow-up question, if any'), mode: { type: 'string', enum: ['append', 'replace'], description: 'append (default) or replace' }, allowUnresolved: { type: 'boolean' } }, ['id', 'markdown']),
       async run(input) {
         try {
-          const detail = await service.publish({ id: requireText(input.id, 'id'), markdown: requireText(input.markdown, 'markdown'), question: optionalText(input.question), mode: input.mode === 'replace' ? 'replace' : 'append', source: 'agent', agent: context.agent?.(), allowUnresolved: input.allowUnresolved === true });
+          const detail = published(await service.publish({ id: requireText(input.id, 'id'), markdown: requireText(input.markdown, 'markdown'), question: optionalText(input.question), mode: input.mode === 'replace' ? 'replace' : 'append', source: 'agent', agent: context.agent?.(), allowUnresolved: input.allowUnresolved === true }));
           return saved(detail, 'updated');
         } catch (error) { return unresolved(error); }
       },
@@ -369,6 +384,12 @@ function optionalNumber(value: unknown): number | undefined {
   const number = Number(value);
   if (!Number.isFinite(number)) throw new ToolInputError('Expected a number');
   return Math.round(number);
+}
+/** A tool call as one line (`flow POST /api/orders`): the steps shown while an answer is being written. */
+export function describeTool(name: string, input: unknown): string {
+  const value = input && typeof input === 'object' ? input as Record<string, unknown> : {};
+  const main = value.link ?? value.flow ?? value.query ?? value.commit ?? value.kind ?? value.title ?? value.id ?? '';
+  return `${name}${typeof main === 'string' || typeof main === 'number' ? ` ${String(main)}` : ''}`.trim();
 }
 function safe<T>(work: () => T): T | undefined { try { return work(); } catch { return undefined; } }
 function json(value: unknown): string { return JSON.stringify(value, (_key, item) => item === undefined ? undefined : item); }

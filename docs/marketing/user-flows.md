@@ -141,7 +141,7 @@ pages, chapters, books and shelves into one `entities` table.
 
 **Who:** a team lead splitting work, or an engineer learning the domain. **Repository:** bookstack.
 
-1. Turn on ▦ (data families) in the map controls.
+1. Choose **Color by → Data families** in the top bar.
 2. Files, commands and tables take the color of their family. Families come from foreign keys and table names,
    with no language model.
 3. Select a folder. The inspector's **Data in this folder** shows its files per family. Select a family to light

@@ -11,6 +11,7 @@ import type { GraphStore } from '../storage/sqlite.js';
 import { contentKey, shapeHash } from './fingerprint.js';
 import { readBlobAt } from './git.js';
 import { fileAnalysis } from '../analysis/facts.js';
+import type { MeasuredValues } from '../projection/lenses.js';
 import type { HistoryStore, SnapshotRecord } from './store.js';
 
 export interface SnapshotEntity extends EntityRow {
@@ -28,6 +29,13 @@ export interface SnapshotInfo {
   id: string; kind: 'working_tree' | 'commit';
   run: AnalysisRun; commitSha?: string; dirty?: boolean;
 }
+function measuredRows(rows: Record<string, unknown>[]): Map<string, MeasuredValues> {
+  const number = (value: unknown) => typeof value === 'number' ? value : undefined;
+  return new Map(rows.map(row => {
+    const complexity = number(row.complexity), maxComplexity = number(row.maxComplexity), functions = number(row.functions);
+    return [String(row.id), { ...(complexity !== undefined ? { complexity } : {}), ...(maxComplexity !== undefined ? { maxComplexity } : {}), ...(functions !== undefined ? { functions } : {}) }];
+  }));
+}
 export class SnapshotFileError extends Error { constructor(readonly status: number, message: string) { super(message); } }
 export interface SnapshotSource {
   readonly info: SnapshotInfo;
@@ -39,6 +47,8 @@ export interface SnapshotSource {
   relationMetadata(ids: string[]): Map<string, Record<string, unknown>>;
   /** Call sites the analyzers could not resolve, by the name they call (`callSites.unresolvedNames`). */
   unresolvedCallNames(): { entityId: string; name: string; count: number }[];
+  /** What code health measured: each function's complexity, each file's most complex function and function count. */
+  measuredValues(): Map<string, MeasuredValues>;
   /** Content of an indexed file as of this snapshot, bounded by size. */
   readFile(relative: string, maxBytes: number): Promise<Buffer>;
 }
@@ -94,6 +104,9 @@ export class WorkingTreeSnapshot implements SnapshotSource {
   unresolvedCallNames(): { entityId: string; name: string; count: number }[] {
     return this.store.db.prepare("SELECT e.id AS entity, j.key AS name, j.value AS count FROM entities e, json_each(e.metadata, '$.callSites.unresolvedNames') j").all().map(row => ({ entityId: String(row.entity), name: String(row.name), count: Number(row.count) }));
   }
+  measuredValues(): Map<string, MeasuredValues> {
+    return measuredRows(this.store.db.prepare("SELECT entity_id AS id, json_extract(data, '$.complexity') AS complexity, json_extract(data, '$.maxComplexity') AS maxComplexity, json_extract(data, '$.functions') AS functions FROM metrics WHERE json_extract(data, '$.complexity') IS NOT NULL OR json_extract(data, '$.functions') IS NOT NULL").all());
+  }
   /** Lexical containment, then no symlink anywhere between root and file. */
   async readFile(relative: string, maxBytes: number): Promise<Buffer> {
     if (!this.root) throw new SnapshotFileError(503, 'Source viewing requires the server to be started with a repository root');
@@ -128,6 +141,7 @@ export class CommitSnapshot implements SnapshotSource {
     return result;
   }
   unresolvedCallNames(): { entityId: string; name: string; count: number }[] { return this.history.unresolvedCallNames(this.record.seq); }
+  measuredValues(): Map<string, MeasuredValues> { return measuredRows(this.history.measuredValues(this.record.seq)); }
   async readFile(relative: string, maxBytes: number): Promise<Buffer> {
     if (!this.root) throw new SnapshotFileError(503, 'Historical source requires the server to be started with a repository root');
     // The commit comes from the snapshot record and the path from its indexed file entity; neither is caller-supplied.

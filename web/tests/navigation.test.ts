@@ -180,6 +180,31 @@ test('data families: loaded for the inspector without coloring the map, lit one 
   await atlas.toggleCoverage(true);
   assert.equal(atlas.getState().families.show, false, 'coverage replaces families');
 });
+test('color by: one coloring of the files at a time; a measure is loaded once per view and says why it has nothing', async () => {
+  const { atlas } = await ready();
+  assert.equal(atlas.colorMode(), 'type');
+  await atlas.colorBy('complexity');
+  const lens = atlas.getState().lens;
+  assert.equal(atlas.colorMode(), 'complexity');
+  assert.equal(lens.status, 'ready');
+  assert.equal(lens.data?.available, true);
+  assert.equal(lens.stamp, atlas.lensStamp());
+  assert.ok(Object.keys(lens.data!.of).includes(id('AuthController.php', 'file')), 'the PHP files are measured');
+  await atlas.colorBy('complexity');
+  assert.equal(atlas.getState().lens.data, lens.data, 'loaded once per view');
+  await atlas.colorBy('coverage');
+  assert.equal(atlas.colorMode(), 'coverage');
+  assert.equal(atlas.getState().lens.show, undefined, 'coverage replaces the measure');
+  await atlas.colorBy('changes');
+  assert.equal(atlas.getState().coverage.show, false, 'and the other way round');
+  assert.equal(atlas.getState().lens.data?.available, false, 'without Git history there are no changes to count');
+  assert.match(atlas.getState().lens.data!.reason!, /Git/);
+  await atlas.togglePeopleColors(true);
+  assert.equal(atlas.colorMode(), 'people', 'people replace the measure');
+  await atlas.colorBy('type');
+  const state = atlas.getState();
+  assert.deepEqual([state.coverage.show, state.families.show, state.people.show, state.lens.show], [false, false, false, undefined]);
+});
 test('features: lit one at a time (a lit family lets go), framed on the map, the tree remembers its open branches', async () => {
   const api = new ServiceApi();
   const controllers = id('Controllers', 'directory'), auth = id('AuthController.php', 'file');

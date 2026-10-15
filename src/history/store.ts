@@ -232,6 +232,10 @@ export class HistoryStore {
   unresolvedCallNames(seq: number): { entityId: string; name: string; count: number }[] {
     return this.sql("SELECT v.entity_id AS entity, j.key AS name, j.value AS count FROM snapshot_entities m JOIN entity_versions v ON v.vid=m.version, json_each(v.data, '$.metadata.callSites.unresolvedNames') j WHERE m.snapshot=?").all(seq).map(row => ({ entityId: String(row.entity), name: String(row.name), count: Number(row.count) }));
   }
+  /** Code health of snapshot `seq`: functions with a complexity, files with a function count. */
+  measuredValues(seq: number): Record<string, unknown>[] {
+    return this.sql("SELECT v.entity_id AS id, json_extract(v.data, '$.metrics.complexity') AS complexity, json_extract(v.data, '$.metrics.maxComplexity') AS maxComplexity, json_extract(v.data, '$.metrics.functions') AS functions FROM snapshot_entities m JOIN entity_versions v ON v.vid=m.version WHERE m.snapshot=? AND (json_extract(v.data, '$.metrics.complexity') IS NOT NULL OR json_extract(v.data, '$.metrics.functions') IS NOT NULL)").all(seq);
+  }
   relations(seq: number): SnapshotRelation[] {
     return this.sql('SELECT r.relation_id, r.from_id, r.to_id, r.type FROM snapshot_relations m JOIN relation_versions r ON r.vid=m.version WHERE m.snapshot=? ORDER BY r.relation_id').all(seq)
       .map(row => ({ id: String(row.relation_id), from: String(row.from_id), to: String(row.to_id), type: String(row.type) }));

@@ -3,8 +3,9 @@
 // branches not merged yet), what was merged into the branch up to the commit
 // the map shows (in the people window), and what was closed unmerged.
 // Selecting one lights the files it changes (the camera frames the folders
-// holding them); under it, its folders, the files not on the map, its commits
-// and people, its blast radius and its list of files. The map never moves.
+// holding them); under it, its folders, the files it adds (each in the nearest
+// folder of the map holding it), the files not on the map, its commits and
+// people, its blast radius and its list of files. The map never moves.
 import { useEffect, useState, type ReactNode } from 'react';
 import type { PullPerson, PullSource, PullState, PullSummary, PullsResult } from '@engine/projection/dto';
 import { compactNumber, relativeTime, shortSha } from '../lib/format';
@@ -55,6 +56,17 @@ export function pullWhen(pull: PullSummary): string {
 export function pullSize(pull: PullSummary): string {
   if (pull.files === undefined) return 'files not read yet';
   return `${compactNumber(pull.files)} file${pull.files === 1 ? '' : 's'} (+${compactNumber(pull.added ?? 0)} −${compactNumber(pull.deleted ?? 0)})`;
+}
+/** How much of it is on the map: the files there, and the new ones placed in their nearest folder. */
+function pullReach(pull: PullSummary): string {
+  if (pull.inView === undefined || pull.files === undefined || pull.inView === pull.files) return '';
+  return [`${pull.inView} on the map`, pull.newFiles ? `${pull.newFiles} new` : ''].filter(Boolean).join(' · ');
+}
+/** The files a pull request adds in a folder of the map: how many, and the new folders they go in. */
+export function newHere(folder: { newFiles?: number; newFolders?: string[] }): string {
+  if (!folder.newFiles) return '';
+  const folders = folder.newFolders ?? [];
+  return `${folder.newFiles} new file${folder.newFiles === 1 ? '' : 's'}${folders.length ? ` in ${folders.slice(0, 3).map(name => `${name}/`).join(', ')}${folders.length > 3 ? ` +${folders.length - 3}` : ''}` : ''}`;
 }
 function ProviderLine({ data }: { data: PullsResult }) {
   const store = useStore();
@@ -146,6 +158,9 @@ function PullItem({ pull }: { pull: PullSummary }) {
   const historyOpen = useAtlas(state => state.timeline.open);
   const lit = focus === pull.id;
   const names = new Map(detail?.data?.people.flatMap(person => person.key ? [[person.key, person.name] as const] : []) ?? []);
+  // Files it adds are placed in the nearest folder of the map; the rest of those not on the map are gone since, or not analyzed.
+  const added = detail?.data?.outside.filter(file => file.near) ?? [], missing = detail?.data?.outside.filter(file => !file.near) ?? [];
+  const newTotal = detail?.data?.pull.newFiles ?? 0, rest = (detail?.data?.outsideTotal ?? 0) - newTotal;
   return (
     <li className={`tree-item${lit ? ' lit' : ''}`}>
       <div className="tree-row">
@@ -154,7 +169,7 @@ function PullItem({ pull }: { pull: PullSummary }) {
           <PullDot state={pull.state} />
           <span className="label">{pull.number !== undefined && <span className="pull-number">#{pull.number}</span>}{pull.title}</span>
           <SourceTag pull={pull} />
-          <span className="pull-meta">{[pull.author?.name, pullWhen(pull), pullSize(pull), pull.inView !== undefined && pull.files !== undefined && pull.inView < pull.files ? `${pull.inView} on the map` : ''].filter(Boolean).join(' · ')}</span>
+          <span className="pull-meta">{[pull.author?.name, pullWhen(pull), pullSize(pull), pullReach(pull)].filter(Boolean).join(' · ')}</span>
         </button>
       </div>
       {open && (
@@ -185,19 +200,34 @@ function PullItem({ pull }: { pull: PullSummary }) {
                   <ul className="tree-leaves">
                     {(all ? detail.data!.folders : detail.data!.folders.slice(0, ROWS)).map(folder => (
                       <li key={folder.id}>
-                        <button className="tree-leaf" onClick={() => void store.select(folder.id, { fly: true })} title={`Select ${folder.path} on the map: ${folder.files} file${folder.files === 1 ? '' : 's'} changed, ${folder.lines} lines`}>
-                          <span className="mono label">{folder.path}</span><span className="count">{folder.files}</span>
+                        <button className="tree-leaf" onClick={() => void store.select(folder.id, { fly: true })} title={`Select ${folder.path} on the map: ${[folder.files ? `${folder.files} file${folder.files === 1 ? '' : 's'} changed` : '', newHere(folder)].filter(Boolean).join(', ')}, ${folder.lines} lines`}>
+                          <span className="mono label">{folder.path}{folder.newFolders?.length ? <span className="absent pull-folder-new">/{folder.newFolders[0]}/{folder.newFolders.length > 1 ? ` +${folder.newFolders.length - 1}` : ''}</span> : null}</span>{folder.newFiles ? <span className="pull-new-count">+{folder.newFiles} new</span> : null}<span className="count">{folder.files + (folder.newFiles ?? 0)}</span>
                         </button>
                       </li>
                     ))}
                   </ul>
                 )}
               </Branch>
-              {detail.data.outsideTotal > 0 && (
-                <Branch id={`${pull.id}:outside`} title="Not on the map" count={detail.data.outside.length} total={detail.data.outsideTotal}>
+              {added.length > 0 && (
+                <Branch id={`${pull.id}:new`} title="New files" count={added.length} total={newTotal}>
                   {(all: boolean) => (
                     <ul className="tree-leaves">
-                      {(all ? detail.data!.outside : detail.data!.outside.slice(0, ROWS)).map(file => (
+                      {(all ? added : added.slice(0, ROWS)).map(file => (
+                        <li key={file.path}>
+                          <button className="tree-leaf pull-new" onClick={() => void store.select(file.near!, { fly: true })} title={`${file.path}: a file it adds, not on the map of this commit. Select the folder that will hold it.`}>
+                            <span className="mono label">{file.path.split('/').at(-1)}<span className="absent">{file.path.split('/').slice(0, -1).join('/')}</span></span><span className="count">+{file.added}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </Branch>
+              )}
+              {rest > 0 && (
+                <Branch id={`${pull.id}:outside`} title="Not on the map" count={missing.length} total={rest}>
+                  {(all: boolean) => (
+                    <ul className="tree-leaves">
+                      {(all ? missing : missing.slice(0, ROWS)).map(file => (
                         <li key={file.path} className="tree-leaf pull-outside">
                           <span className="mono label" title={file.from ? `${file.from} → ${file.path}` : file.path}>{file.path.split('/').at(-1)}<span className="absent">{file.path.split('/').slice(0, -1).join('/')}</span></span><span className="count" title={file.status === 'added' ? 'A file it adds: not on the map of this commit' : 'Not on the map: gone since, or not analyzed'}>{file.status === 'added' ? 'new · ' : file.status === 'removed' ? 'deleted · ' : ''}+{file.added} −{file.deleted}</span>
                         </li>

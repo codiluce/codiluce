@@ -21,8 +21,14 @@ import { CODE_LANGUAGES, FLOW_LANGUAGES } from '../core/languages.js';
 import type { ProjectionIndex, ProjectionNode } from './hierarchy.js';
 import { followsBehavior } from './behavior.js';
 
-export type CatalogKind = 'page' | 'request' | 'command' | 'schedule' | 'unmatched';
-export const CATALOG_KINDS: CatalogKind[] = ['page', 'request', 'command', 'schedule', 'unmatched'];
+export type CatalogKind = 'page' | 'request' | 'command' | 'schedule' | 'unmatched' | 'cli' | 'mcp' | 'worker' | 'function';
+export const CATALOG_KINDS: CatalogKind[] = ['page', 'request', 'command', 'schedule', 'cli', 'mcp', 'worker', 'function', 'unmatched'];
+export type FlowChannel = 'ui' | 'http' | 'cli' | 'mcp' | 'worker' | 'function';
+export type FlowScope = 'application' | 'test' | 'fixture';
+export type EvidenceCoverage = 'no-known-gaps' | 'known-gaps';
+export function flowScope(relative: string | undefined): FlowScope {
+  return /(^|\/)(fixtures?|__fixtures__|testdata)(\/|$)/i.test(relative ?? '') ? 'fixture' : TEST_PATH.test(relative ?? '') ? 'test' : 'application';
+}
 export type CoverageCategory = 'entry' | 'flow' | 'supporting' | 'test' | 'config' | 'explained' | 'unreached' | 'outside' | 'unanalyzed' | 'asset';
 export const COVERAGE_CATEGORIES: CoverageCategory[] = ['entry', 'flow', 'supporting', 'test', 'config', 'explained', 'unreached', 'outside', 'unanalyzed', 'asset'];
 /** Categories outside the measure: no flow can reach these files. */

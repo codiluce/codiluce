@@ -1,7 +1,7 @@
 // `codiluce start`, as people see it in a terminal: a banner, one line per
 // step (a spinner while it runs), the first-run setup after the analysis, the
 // address of the map, then background work (history, descriptions) on one
-// live line. Without a terminal it prints the same plain lines as before.
+// live line. Without a terminal it prints plain text without animation.
 import path from 'node:path';
 import { existsSync } from 'node:fs';
 import { launchLocal, plainReporter, toolDirectory, type AnalysisFacts, type LaunchReporter, type LocalSession } from '../launcher.js';
@@ -14,7 +14,7 @@ import { estimate } from '../ai/runner.js';
 import { ExplanationStore } from '../explanations/store.js';
 import { BackgroundWork, StatusLine } from './background.js';
 import { depthOf, gitFacts, installKind, packageVersion, readRepositorySettings, readState, tilde, writeState, DEFAULT_HISTORY, type HistoryDepth, type InstallKind } from './settings.js';
-import { createTerminal, elapsed, Writer, spinner, type Terminal } from './terminal.js';
+import { createTerminal, elapsed, Writer, spinner, width, wrapText, type Terminal } from './terminal.js';
 import { FIRST_TASKS, printSummary, runSetup, setupMode, type DescribeEstimate, type SetupContext, type SetupResult } from './wizard.js';
 
 export interface StartOptions {
@@ -37,7 +37,7 @@ export async function startCommand(options: StartOptions): Promise<LocalSession 
   const pretty = !!terminal.output.isTTY;
   const tool = await toolDirectory();
   const version = packageVersion(tool);
-  if (pretty) banner(w, version);
+  banner(w, version);
   let setup: SetupResult | undefined, kind: InstallKind = 'global', history: HistoryDepth = 'none', facts: AnalysisFacts | undefined, mode: ReturnType<typeof setupMode>;
   const session = await launchLocal({
     repo: options.repo, stateDirectory: options.stateDirectory, port: options.port, uiDirectory: options.uiDirectory, buildUi: options.buildUi,
@@ -101,9 +101,25 @@ async function background(w: Writer, pretty: boolean, work: BackgroundWork, cont
 }
 
 function banner(w: Writer, version: string): void {
-  const { c, s } = w;
+  const { c } = w;
+  // The Eclipse mark: two filled halves with a horizontal band of light.
+  const logo = [
+    '     .------.     ',
+    "  .-'########'-.  ",
+    ' /##############\\ ',
+    '                  ',
+    ' \\##############/ ',
+    "  '-.########.-'  ",
+    "     '------'     ",
+  ];
+  const title = `${c.bold('codiluce')} ${c.dim(version)}`;
+  const tagline = c.muted('Bring your code to light');
+  const beside = (w.terminal.output.columns ?? 80) >= 52;
   w.write();
-  w.write(`  ${c.accent(s.mark)}  ${c.bold('codiluce')} ${c.dim(version)}  ${c.muted('Bring your code to light')}`);
+  logo.forEach((line, index) => w.write(`  ${c.accent(line)}${beside && index === 2 ? `  ${title}` : beside && index === 4 ? `  ${tagline}` : ''}`.trimEnd()));
+  if (!beside) { w.write(`  ${title}`); w.write(`  ${tagline}`); }
+  w.write();
+  for (const line of wrapText('See how your code fits together. Explore files, flows and dependencies, and understand the impact of changes.', width(w.terminal) - 2)) w.write(`  ${c.muted(line)}`);
   w.write();
 }
 function note(w: Writer, pretty: boolean, text: string): void {

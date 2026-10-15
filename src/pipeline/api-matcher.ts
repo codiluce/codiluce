@@ -13,7 +13,7 @@ import {preferRocketRoutes,matchRocketQuery} from '../analysis/routes/rocket-pat
 import { preferRustRoutes } from '../analysis/routes/rust-patterns.js';
 import { preferWarpRoutes } from '../analysis/routes/warp-patterns.js';
 export const apiMatcher: Analyzer = {
-  name: 'api-matcher', version: `${ANALYZER_VERSION}:17`,
+  name: 'api-matcher', version: `${ANALYZER_VERSION}:18`,
   async analyze(context: AnalysisContext): Promise<void> {
     const endpoints = [...context.graph.entities.values()].filter(entity => entity.type === 'api_endpoint');
     const appsById = new Map(context.config.applications.map(app => [context.applicationIds.get(app.name), app]));
@@ -38,7 +38,7 @@ export const apiMatcher: Analyzer = {
       if (contract?.aspnet) method=method.toUpperCase();
       if (contract?.excludedMethods?.includes(method)) return false;
       if (contract?.guards?.some(guard => guard.excludedMethods?.includes(method) || guard.methods !== '*' && !guard.methods.includes(method))) return false;
-      return endpoint.metadata.method === method || methods === '*' || Array.isArray(methods) && methods.includes(method);
+      return endpoint.metadata.method === method || endpoint.metadata.framework === 'node-http' && endpoint.metadata.method === 'ANY' || methods === '*' || Array.isArray(methods) && methods.includes(method);
     };
     const literalEligible = new Map<string, IndexedPathCandidates<Entity>>(), resolvedEligible = new Map<string, Entity[]>();
     const link = (observation: HttpObservation, endpoint: Entity, facts: Evidence[], metadata: Record<string, unknown>) => {
@@ -56,6 +56,11 @@ export const apiMatcher: Analyzer = {
         else throw new Error('Relative URLs without a leading slash require browser/base URL context');
       } catch (error) { context.graph.diagnose({ analyzer: 'api-matcher', severity: 'warning', code: 'unresolved-http-url', entityId: observation.callerId, file: observation.evidence.file, line: observation.evidence.line, reason: error instanceof Error ? error.message : String(error) }); continue; }
       const callerApp = requestApplication(context, observation);
+      const external = origin && callerApp?.externalServices?.find(service => service.origin === origin);
+      if (external) {
+        if (observation.effect) observation.effect.boundary = external;
+        continue;
+      }
       const key = JSON.stringify([observation.method, origin, callerApp?.name, observation.transport]);
       let eligible = literalEligible.get(key);
       if (!eligible) {
@@ -80,7 +85,7 @@ export const apiMatcher: Analyzer = {
       const targetPath = proxy ? proxyPath(proxy, pathname) : pathname;
       let candidates = eligible.candidates(targetPath).filter(endpoint => {
         const action = contracts.get(endpoint.id)?.action;
-        return observedConstraints(endpoint, origin, query) && (!action || (action.name === 'default' ? selectors.length === 0 : selectors.length === 1 && selectors[0] === `/${action.name}`)) && (!proxy || appFor(endpoint)?.name === proxy.target) && matchPath(endpoint, targetPath);
+        return (!endpoint.metadata.rawUrl || !search) && observedConstraints(endpoint, origin, query) && (!action || (action.name === 'default' ? selectors.length === 0 : selectors.length === 1 && selectors[0] === `/${action.name}`)) && (!proxy || appFor(endpoint)?.name === proxy.target) && matchPath(endpoint, targetPath);
       });
       if (origin || !candidates.some(needsOrigin)) candidates = preferSpringRoutes(preferRailsRoutes(preferGoRoutes(candidates, endpoint => contracts.get(endpoint.id), observation.method), endpoint => contracts.get(endpoint.id), observation.method),endpoint=>contracts.get(endpoint.id),observation.method);
       if (origin || !candidates.some(needsOrigin)) candidates = preferWebFluxRoutes(candidates,endpoint=>contracts.get(endpoint.id));

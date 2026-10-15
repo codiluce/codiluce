@@ -10,10 +10,12 @@ import { HistoryAccess, HistoryService } from '../history/service.js';
 import { AnnotationAccess } from '../ai/store.js';
 import { ProjectionService } from '../projection/service.js';
 import { GraphStore } from '../storage/sqlite.js';
+import { ActivityWriter } from './activity.js';
 import { LINK_GUIDE } from './links.js';
-import { agentPrompt, MCP_PROMPTS } from './prompts.js';
+import type { SubjectKind } from './model.js';
+import { agentPrompt, MCP_PROMPTS, type PromptKind } from './prompts.js';
 import { ExplanationService } from './service.js';
-import { codeTools, explanationTools, runTool, type ToolContext, type ToolSpec } from './tools.js';
+import { codeTools, describeTool, explanationTools, runTool, type ToolContext, type ToolSpec } from './tools.js';
 
 const PROTOCOL_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05'];
 /** Where `serve` says it listens, so a saved explanation can be opened. */
@@ -24,7 +26,7 @@ interface Message { jsonrpc?: string; id?: Id; method?: string; params?: Record<
 export const MCP_INSTRUCTIONS = [
   'Codiluce has indexed this repository into an evidenced graph: files, symbols, routes and endpoints, tables, the calls and HTTP requests between them (across frontend and backend), every flow by entry point, the blast radius of a change, and the Git history.',
   'Use these tools to understand the code before reading files one by one: start with `overview`, find things with `search`, then `entity`, `flow`, `impact`, `commit` and `source`.',
-  'When the user wants to understand something, save your explanation with `publish_explanation`: they read it in the Explanations column of the Codiluce map, where hovering a link lights that code and clicking opens it.',
+  'When the user wants to understand something, call `start_explanation` first (with their question), so the Codiluce map shows at once that an explanation is on its way, then save your explanation with `publish_explanation`: they read it in the Explanations column of the Codiluce map, where hovering a link lights that code and clicking opens it.',
   LINK_GUIDE,
 ].join('\n\n');
 
@@ -49,12 +51,13 @@ export async function runMcpServer(options: McpOptions): Promise<void> {
   session.close();
 }
 
-/** One client's session: the index opened on first use, its tools and prompts. */
+/** One client's session: the index opened on first use, its tools and prompts, and what it is doing (shown on the map). */
 export class McpSession {
   private client?: { name?: string; version?: string };
   private opened?: { store: GraphStore; access: HistoryAccess; notes: AnnotationAccess; tools: ToolSpec[] };
-  constructor(private readonly options: McpOptions) {}
-  close(): void { if (this.opened) { this.opened.access.close(); this.opened.notes.close(); this.opened.store.close(); } }
+  readonly activity: ActivityWriter;
+  constructor(private readonly options: McpOptions) { this.activity = new ActivityWriter(options.stateDirectory); }
+  close(): void { this.activity.close(); if (this.opened) { this.opened.access.close(); this.opened.notes.close(); this.opened.store.close(); } }
 
   async receive(line: string): Promise<unknown> {
     let message: Message;
@@ -77,6 +80,7 @@ export class McpSession {
         const requested = typeof params.protocolVersion === 'string' ? params.protocolVersion : '';
         const info = params.clientInfo as { name?: string; version?: string } | undefined;
         this.client = info && typeof info === 'object' ? { ...(typeof info.name === 'string' ? { name: info.name } : {}), ...(typeof info.version === 'string' ? { version: info.version } : {}) } : undefined;
+        this.activity.connect(this.client?.name);
         return {
           protocolVersion: PROTOCOL_VERSIONS.includes(requested) ? requested : PROTOCOL_VERSIONS[1],
           capabilities: { tools: { listChanged: false }, prompts: { listChanged: false } },
@@ -90,6 +94,8 @@ export class McpSession {
       case 'tools/call': {
         const name = typeof params.name === 'string' ? params.name : '';
         if (!this.tools().some(tool => tool.name === name)) throw new RpcError(-32602, `Unknown tool ${name}`);
+        // Recorded before the tool runs: the map shows the step while it is taken.
+        if (name !== 'start_explanation') this.activity.step(describeTool(name, params.arguments));
         const { text, isError } = await runTool(this.tools(), name, params.arguments ?? {});
         return { content: [{ type: 'text', text }], isError };
       }
@@ -100,7 +106,11 @@ export class McpSession {
         const args = (params.arguments ?? {}) as Record<string, unknown>;
         const value = prompt.argument ? args[prompt.argument.name] : undefined;
         if (prompt.argument && (typeof value !== 'string' || !value.trim())) throw new RpcError(-32602, `The ${prompt.argument.name} argument is required`);
-        return { description: prompt.description, messages: [{ role: 'user', content: { type: 'text', text: agentPrompt(prompt.target(typeof value === 'string' ? value.trim() : undefined)) } }] };
+        const target = prompt.target(typeof value === 'string' ? value.trim() : undefined);
+        // The user just ran the prompt (a slash command): the explanation is on its way before the agent's first tool call.
+        const kind = PROMPT_SUBJECTS[target.kind];
+        this.activity.begin({ title: typeof value === 'string' && value.trim() ? `${prompt.title}: ${value.trim()}` : prompt.title, ...(kind ? { subject: { kind, ...(target.ref ? { ref: target.ref } : {}) } } : {}) }, { fresh: true });
+        return { description: prompt.description, messages: [{ role: 'user', content: { type: 'text', text: agentPrompt(target) } }] };
       }
       case 'resources/list': return { resources: [] };
       default: throw new RpcError(-32601, `Method not found: ${method}`);
@@ -116,11 +126,12 @@ export class McpSession {
     const projection = new ProjectionService(store, { stateDirectory: this.options.stateDirectory, root: this.options.root, history: access.get, annotations: notes.get });
     const history = new HistoryService({ root: this.options.root, stateDirectory: this.options.stateDirectory, store, history: access });
     const service = new ExplanationService({ stateDirectory: this.options.stateDirectory, root: this.options.root, projection, history });
-    const context: ToolContext = { service, projection, history, root: this.options.root, maxFileBytes: this.options.maxFileBytes ?? 1024 * 1024, serverUrl: () => serveUrl(this.options.stateDirectory), agent: () => this.client?.name };
+    const context: ToolContext = { service, projection, history, root: this.options.root, maxFileBytes: this.options.maxFileBytes ?? 1024 * 1024, serverUrl: () => serveUrl(this.options.stateDirectory), agent: () => this.client?.name, activity: this.activity };
     this.opened = { store, access, notes, tools: [...codeTools(context), ...explanationTools(context)] };
     return this.opened.tools;
   }
 }
+const PROMPT_SUBJECTS: Record<PromptKind, SubjectKind | undefined> = { overview: 'overview', flow: 'flow', commit: 'commit', pr: 'pr', entity: 'entity', impact: 'entity', coverage: 'entity', refresh: undefined };
 class RpcError extends Error { constructor(readonly code: number, message: string) { super(message); } }
 function error(id: Id, code: number, message: string) { return { jsonrpc: '2.0', id, error: { code, message } }; }
 function notIndexed(root: string): ToolSpec {

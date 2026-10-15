@@ -270,7 +270,7 @@ export interface RequestFlowEdge {
 }
 export interface RequestFlowSummary {
   /** The endpoint's ID, or the calling entity's ID for an unmatched request. */
-  id: string; kind: 'endpoint' | 'unmatched' | 'command' | 'schedule';
+  id: string; kind: 'endpoint' | 'unmatched' | 'command' | 'schedule' | 'operation';
   name: string; method: string; path: string;
   /** Application of the endpoint (of the caller for an unmatched request). */
   app?: string;
@@ -281,6 +281,10 @@ export interface RequestFlowSummary {
   handler?: string;
   /** Unmatched requests: the entity making them. */
   caller?: string;
+  channel?: import('./catalog.js').FlowChannel;
+  evidenceCoverage?: import('./catalog.js').EvidenceCoverage;
+  evidenceGaps?: number;
+  laneLabels?: Partial<Record<import('./request-flows.js').FlowLane, string>>;
 }
 export interface RequestFlow extends RequestFlowSummary {
   anchor: NodeSummary;
@@ -297,7 +301,7 @@ export interface RequestFlowList {
 }
 
 // Flow catalog and coverage -------------------------------------------------------
-export type { CatalogKind, CoverageCategory, CoverageCounts } from './catalog.js';
+export type { CatalogKind, FlowChannel, FlowScope, EvidenceCoverage, CoverageCategory, CoverageCounts } from './catalog.js';
 /** One flow of the catalog: where it starts and what it touches. */
 export interface FlowSummary {
   /** The entry entity's ID (the endpoint, page route, command, task, or the entity making unmatched requests). */
@@ -321,12 +325,17 @@ export interface FlowSummary {
   title?: string; goal?: string; actor?: string;
   /** The feature (domain key) its entry point belongs to, once domains are described. */
   feature?: string;
+  channel?: import('./catalog.js').FlowChannel;
+  scope?: import('./catalog.js').FlowScope;
+  evidenceCoverage?: import('./catalog.js').EvidenceCoverage;
+  evidenceGaps?: number;
 }
 export interface FlowList {
   items: FlowSummary[];
   counts: Record<import('./catalog.js').CatalogKind, number>;
   /** `entity` filter: the flows touching this entity (or anything inside it). */
   entity?: string;
+  scopeCounts?: Record<import('./catalog.js').FlowScope, number>;
 }
 /** File coverage by flows, per file (code and assets) and rolled up per area. */
 export interface CoverageResult {
@@ -367,6 +376,7 @@ export interface CoverageDetail {
 
 // Data families (projection/families.ts) -------------------------------------------------
 export type { DataFamily } from './families.js';
+export type { LensLevel, MetricLens, MetricLensResult } from './lenses.js';
 export interface FamiliesResult {
   /** Most files first. */
   families: import('./families.js').DataFamily[];
@@ -518,6 +528,8 @@ export interface PullSummary {
   files?: number; added?: number; deleted?: number;
   /** Of the files changed, those on this map. */
   inView?: number;
+  /** Of the files changed, those it adds that this map does not have yet (placed in the nearest folder holding their path). */
+  newFiles?: number;
   /** Its commits (merges left out). */
   commits: number;
   /** The history snapshot of the merged commit, when indexed: History shows it compared with the commit before. */
@@ -550,18 +562,26 @@ export interface PullsResult {
   /** The branch listing failed. */
   branchError?: string;
 }
-export interface PullFile { path: string; added: number; deleted: number; status?: PullFileStatus; from?: string }
+export interface PullFile {
+  path: string; added: number; deleted: number; status?: PullFileStatus; from?: string;
+  /** A file it adds: the nearest folder of this map holding its path (the repository at worst). */
+  near?: string;
+}
 export interface PullDetail {
   pull: PullSummary; window?: AuthorshipWindow;
   /** Files of this view it changes. */
   files: Record<string, { added: number; deleted: number; status?: PullFileStatus }>;
   /** Routes, endpoints, commands and scheduled tasks defined in those files. */
   entries: string[];
-  /** Per area: how many of its files it changes. */
+  /** Per area: how many of its files it changes or adds. */
   areas: Record<string, number>;
-  /** Folders (or applications) directly holding them, most files first. */
-  folders: { id: string; path: string; files: number; lines: number }[];
-  /** Changed files not on this map (added by open work, gone since, or not indexed), at most a few hundred of `outsideTotal`. */
+  /**
+   * Folders (or applications) directly holding them, most files first: `files`
+   * on the map, `newFiles` it adds that the map does not have yet (here or in
+   * `newFolders`, paths below it that do not exist yet).
+   */
+  folders: { id: string; path: string; files: number; lines: number; newFiles?: number; newFolders?: string[] }[];
+  /** Changed files not on this map (added by open work: with `near`; gone since, or not indexed), at most a few hundred of `outsideTotal`. */
   outside: PullFile[]; outsideTotal: number;
   /** Its commits, newest first (at most a hundred). */
   commits: AuthorshipCommit[];

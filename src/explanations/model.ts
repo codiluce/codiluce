@@ -99,6 +99,35 @@ export interface ExplanationsSetup {
   maxCost: number;
 }
 export interface ChatModelInfo { id: string; label: string; provider: 'anthropic' | 'openai'; available: boolean; default?: boolean; note?: string }
+/** An agent connected over MCP (one per agent process), as `serve` reports it: what it is explaining while it works, before anything is saved. */
+export interface AgentActivity {
+  session: string;
+  /** The MCP client's name (e.g. `claude-code`). */
+  agent?: string;
+  /** working: it took a step recently and has not published since; connected: idle. */
+  state: 'connected' | 'working';
+  connectedAt: string; updatedAt: string;
+  /** What it is doing since it last published: what it was asked (a prompt or `start_explanation`) and the tool calls so far. */
+  work?: AgentWork;
+  /** The explanation it saved last. */
+  published?: { id: string; title: string; at: string };
+}
+export interface AgentWork {
+  startedAt: string; updatedAt: string;
+  title?: string; question?: string;
+  subject?: { kind: SubjectKind; ref?: string };
+  /** The latest tool calls, oldest first (`flow POST /api/orders`), and how many there were in all. */
+  steps: { text: string; at: string }[];
+  count: number;
+}
+export interface AgentActivityList { items: AgentActivity[] }
+/** How a client names itself, as a person reads it. */
+export function agentLabel(name: string | undefined): string {
+  if (!name) return 'Your agent';
+  const known: Record<string, string> = { 'claude-code': 'Claude Code', claude: 'Claude', 'claude-ai': 'Claude', codex: 'Codex', 'codex-mcp-client': 'Codex', cursor: 'Cursor', 'cursor-vscode': 'Cursor', windsurf: 'Windsurf', zed: 'Zed', 'gemini-cli-mcp-client': 'Gemini CLI', vscode: 'VS Code', 'visual-studio-code': 'VS Code' };
+  return known[name.toLowerCase()] ?? name;
+}
+
 /** One step of an answer being written, streamed to the browser as a line of JSON. */
 export type AskEvent =
   | { type: 'start'; id: string; model: string }

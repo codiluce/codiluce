@@ -46,7 +46,7 @@ export interface ProjectionNode {
 export const SYMBOL_TYPES = new Set(['class', 'controller', 'component', 'function', 'method', 'model', 'test']);
 export const INTERFACE_TYPES = new Set(['route', 'api_endpoint']);
 export const DATA_TYPES = new Set(['database_table']);
-export const CONSOLE_TYPES = new Set(['command', 'scheduled_task']);
+export const CONSOLE_TYPES = new Set(['command', 'scheduled_task', 'user_flow']);
 const BAND: Record<string, number> = { application: 0, group: 1, directory: 2, file: 3 };
 const PADDING: Record<string, number> = { repository: 48, application: 28, group: 10, directory: 10, file: 4, class: 3, controller: 3, component: 3, function: 2, method: 2 };
 function compareText(a: string, b: string): number { const x = a.toLowerCase(), y = b.toLowerCase(); return x < y ? -1 : x > y ? 1 : a < b ? -1 : a > b ? 1 : 0; }
@@ -125,7 +125,7 @@ export class ProjectionIndex {
         for (const item of tables) build(item, district);
       }
       if (console.length) {
-        const district = group(`projection:console:${row.id}`, 'Console', node, `Projection grouping: Artisan commands and scheduled tasks of ${row.type} ${row.name}, entry points that run without an HTTP request. Their containment is unchanged.`);
+        const district = group(`projection:console:${row.id}`, console.some(item => item.type === 'user_flow') ? 'Entry points' : 'Console', node, `Projection grouping: console commands, tasks and configured/registered source entries of ${row.type} ${row.name}. Their containment is unchanged.`);
         console.sort((a, b) => compareText(a.type, b.type) || compareText(a.name, b.name) || compareText(a.id, b.id));
         for (const item of console) build(item, district);
       }

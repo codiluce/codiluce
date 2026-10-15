@@ -239,7 +239,7 @@ test('TypeScript calls, renders and handler references resolve through the type 
   assert.deepEqual(entity('UserPage').metadata.callSites, { resolved: 2, external: 2, unresolved: 0 }, 'getInstance() and profile(); useMemo and useEffect are external');
   // Call-site coverage: package calls are external, a callback parameter is unresolved.
   assert.deepEqual(entity('AccountPanel').metadata.callSites, { resolved: 2, external: 2, unresolved: 0 });
-  assert.deepEqual(entity('localFetch').metadata.callSites, { resolved: 0, external: 0, unresolved: 1, unresolvedNames: { fetch: 1 } });
+  assert.deepEqual(entity('localFetch').metadata.callSites, { resolved: 0, external: 0, unresolved: 1, unresolvedNames: { fetch: 1 }, unresolvedSites:[{name:'fetch',line:10,column:70}] });
 });
 test('HTTP URLs built from a proven base link to endpoints with every hop as evidence', () => {
   const signIn = relation('signIn', 'POST /auth/login', 'requests')!;

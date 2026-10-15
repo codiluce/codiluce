@@ -69,6 +69,11 @@ export interface ApplicationConfig {
   sourceRoots?: Record<string, string[]>;
   /** Explicit framework entry modules/factories (e.g. flask: ["shop:create_app"]). */
   entrypoints?: Record<string, string[]>;
+  /** Explicit source functions to expose as flows. Paths are application-relative;
+   * selectors name a parameter whose literal branches are separate entry points. */
+  flowEntries?: { name: string; path: string; symbol: string; kind?: 'cli' | 'mcp' | 'worker' | 'function'; selector?: string }[];
+  /** Expected HTTP services outside the indexed repository. Never inferred from a miss. */
+  externalServices?: { name: string; origin: string }[];
   go?: GoBuildConfig;
   ruby?: RubyRuntimeConfig;
   php?: PhpRuntimeConfig;
@@ -217,7 +222,17 @@ export async function detectApplications(root: string, rootName = path.basename(
     const entries = (await readdir(directory, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name, 'en'));
     const names = entries.filter(entry => !entry.isSymbolicLink() && !inventory?.files.has(path.posix.join(relative, entry.name)) && !ignores.some(glob => matchesGlob(path.posix.join(relative, entry.name), glob))).map(entry => entry.name);
     if (previousDepth === undefined) {
-      const found = await readManifests(directory, names, relative);
+      let found = await readManifests(directory, names, relative);
+      // A UI can share its parent's package.json (e.g. `next dev web`). Its
+      // own config and App Router root still establish an application boundary.
+      const nextRoot = await exists(path.join(directory, 'app')) || await exists(path.join(directory, 'src/app'));
+      if (!found && nextRoot && names.some(name => /^next\.config\.[cm]?[jt]s$/.test(name))) found = { application: true, frameworks: ['nextjs','react'], ecosystems: ['node'] };
+      if (found && !nextRoot && names.includes('package.json')) {
+        const manifest = JSON.parse(await readFile(path.join(directory,'package.json'),'utf8')) as { bin?:unknown };
+        // A tool that parses frontend code can depend on Next without being a
+        // Next application. Its nested UI has its own configuration boundary.
+        if (manifest.bin && !names.some(name => /^next\.config\.[cm]?[jt]s$/.test(name))) found = { ...found,frameworks:found.frameworks.filter(framework => framework !== 'nextjs') };
+      }
       await declaredMembers(relative, names);
       if (found?.application) {
         apps.push({ name: relative === '.' ? rootName : relative.replaceAll('/', '-'), path: relative, frameworks: found.frameworks, ecosystems: found.ecosystems });
@@ -356,6 +371,16 @@ export async function resolveConfig(root: string, raw: RawConfig): Promise<Atlas
       for (const roots of Object.values(app.sourceRoots)) for (const sourceRoot of roots) repoPath(root, path.posix.join(app.path, sourceRoot));
     }
     if (app.entrypoints !== undefined && (!app.entrypoints || typeof app.entrypoints !== 'object' || Array.isArray(app.entrypoints) || !Object.entries(app.entrypoints).every(([framework, entries]) => IDENTIFIER.test(framework) && Array.isArray(entries) && entries.length > 0 && entries.length <= 64 && new Set(entries).size === entries.length && entries.every(entry => typeof entry === 'string' && entry.length <= 512 && /^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*(?::[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)?$/.test(entry))))) throw new Error('entrypoints must map framework names to unique Python module[:attribute] entries');
+    if (app.flowEntries !== undefined) {
+      if (!Array.isArray(app.flowEntries) || app.flowEntries.length > 128 || !app.flowEntries.every(entry => entry && typeof entry.name === 'string' && entry.name.trim() && entry.name.length <= 256 && typeof entry.path === 'string' && entry.path.length <= 512 && !path.isAbsolute(entry.path) && !/[\\\0#]/.test(entry.path) && typeof entry.symbol === 'string' && /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/.test(entry.symbol) && (entry.kind === undefined || ['cli','mcp','worker','function'].includes(entry.kind)) && (entry.selector === undefined || typeof entry.selector === 'string' && /^[A-Za-z_$][\w$]*$/.test(entry.selector))) || new Set(app.flowEntries.map(entry => entry.name)).size !== app.flowEntries.length) throw new Error('flowEntries must contain unique names, application-relative paths, symbols and supported kinds');
+      for (const entry of app.flowEntries) {
+        const relative = path.posix.normalize(entry.path);
+        if (relative === '..' || relative.startsWith('../')) throw new Error('Flow entry path escapes application');
+        repoPath(root, path.posix.join(app.path, relative));
+      }
+    }
+    if (app.externalServices !== undefined && (!Array.isArray(app.externalServices) || app.externalServices.length > 128 || !app.externalServices.every(service => service && typeof service.name === 'string' && service.name.trim() && typeof service.origin === 'string' && /^https?:\/\//.test(service.origin) && new URL(service.origin).origin === service.origin) || new Set(app.externalServices.map(service => service.origin)).size !== app.externalServices.length)) throw new Error('externalServices must contain names and unique HTTP origins without paths');
+    if (app.externalServices?.some(service => config.applications.some(owner => owner.apiOrigins?.includes(service.origin)))) throw new Error('External service origin also belongs to an indexed application');
   }
   const envOwners = new Map<string, string>();
   for (const app of config.applications) for (const name of app.apiOriginEnv ?? []) { if (envOwners.has(name) && envOwners.get(name) !== app.name) throw new Error(`apiOriginEnv ${name} is declared for more than one application`); envOwners.set(name, app.name); }
@@ -379,7 +404,12 @@ async function configuredApplication(root: string, input: ApplicationInput): Pro
   if (!(await stat(resolved)).isDirectory()) throw new Error('Application path must be a directory');
   const found = await readManifests(resolved, await readdir(resolved), relative).catch(() => undefined);
   const { type, ...rest } = input;
-  const allFrameworks = [...new Set([...(type ? [type] : []), ...frameworks, ...found?.frameworks ?? []])];
+  let inferred = found?.frameworks ?? [];
+  if (inferred.includes('nextjs') && !await exists(path.join(resolved,'app')) && !await exists(path.join(resolved,'src/app'))) {
+    const manifest = await readFile(path.join(resolved,'package.json'),'utf8').then(text => JSON.parse(text) as {bin?:unknown}).catch(() => undefined);
+    if (manifest?.bin && !(await readdir(resolved)).some(name => /^next\.config\.[cm]?[jt]s$/.test(name))) inferred = inferred.filter(framework => framework !== 'nextjs');
+  }
+  const allFrameworks = [...new Set([...(type ? [type] : []), ...frameworks, ...inferred])];
   const implied = allFrameworks.flatMap(framework => IMPLIED_ECOSYSTEM[framework] ?? []);
   return { ...rest, path: relative, frameworks: allFrameworks, ecosystems: [...new Set([...ecosystems as Ecosystem[], ...found?.ecosystems ?? [], ...implied])] };
 }

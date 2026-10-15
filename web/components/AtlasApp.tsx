@@ -1,12 +1,14 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { HttpAtlasApi } from '../lib/api';
 import { HttpExplanationsApi } from '../lib/explanations';
+import { agentLabel } from '@engine/explanations/model';
 import { shortSha, relativeTime } from '../lib/format';
-import { AtlasStore } from '../lib/store';
-import { MAIN_THEMES, THEMES, themeById, UI_PROPERTIES } from '../lib/themes';
+import { AtlasStore, workingAgents } from '../lib/store';
+import { themeById, UI_PROPERTIES } from '../lib/themes';
 import { Breadcrumbs } from './Breadcrumbs';
 import { CodeView } from './CodeView';
+import { ColorBy } from './ColorBy';
 import { AtlasContext, useAtlas, useStore } from './context';
 import { EclipseMark } from './EclipseMark';
 import { ExplanationsPanel } from './ExplanationsPanel';
@@ -15,7 +17,8 @@ import { FlowsPanel } from './FlowsPanel';
 import { PeoplePanel } from './PeoplePanel';
 import { PullsPanel } from './PullsPanel';
 import { Inspector } from './Inspector';
-import { HiddenPathsButton, MapVisibilityUI } from './MapVisibility';
+import { MapVisibilityUI } from './MapVisibility';
+import { SettingsDialog } from './SettingsDialog';
 import { SearchBox } from './SearchBox';
 import { Timeline } from './Timeline';
 import { Workbench } from './Workbench';
@@ -35,7 +38,10 @@ export function AtlasApp() {
     setStore(instance);
     void instance.init();
     instance.startPolling();
-    return () => instance.dispose();
+    // Back on the page: what an agent did meanwhile shows at once (hidden pages have their timers slowed).
+    const shown = () => { if (document.visibilityState === 'visible') void instance.refreshActivity(); };
+    document.addEventListener('visibilitychange', shown);
+    return () => { document.removeEventListener('visibilitychange', shown); instance.dispose(); };
   }, []);
   if (!store) return null;
   return (
@@ -86,6 +92,8 @@ function Shell() {
   const [explainWidth, setExplainWidth] = usePanelWidth('codiluce:explain-width', 400);
   const explainOpen = useAtlas(state => state.explain.open);
   const unseen = useAtlas(state => state.explain.unseen.length);
+  // An agent connected over MCP is working on an explanation: the button says so before anything is saved.
+  const working = useAtlas(state => { const agents = workingAgents(state.explain); return agents.length === 1 ? agentLabel(agents[0]!.agent) : agents.length ? `${agents.length} agents` : ''; });
   const explanations = useAtlas(state => state.explain.list.data?.items.length ?? 0);
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [leftOpen, setLeftOpen] = useState(false);
@@ -99,7 +107,6 @@ function Shell() {
   useEffect(() => { if (peopleReveal) { setLeftOpen(true); setLeftTab('people'); } }, [peopleReveal]);
   const pullsReveal = useAtlas(state => state.pulls.reveal);
   useEffect(() => { if (pullsReveal) { setLeftOpen(true); setLeftTab('pulls'); } }, [pullsReveal]);
-  const coverage = useAtlas(state => state.coverage.show);
   const features = useAtlas(state => state.annotations.data?.domains.length ?? 0);
   // Comparing in History: one view per place that changed, around an overview (unless the single map is chosen).
   const split = useAtlas(state => state.timeline.open && state.timeline.compare && state.timeline.split && (!!state.meta?.comparison || state.timeline.preview !== undefined));
@@ -107,11 +114,9 @@ function Shell() {
   const tabs = [...(features > 0 ? ['features' as const] : []), 'flows' as const, 'people' as const, 'pulls' as const];
   const impactOpen = useAtlas(state => state.impact.open && state.center === 'impact');
   const codeOpen = useAtlas(state => !!state.code);
-  const moreThemes = useAtlas(state => state.moreThemes);
-  // The theme menu: Dusk and Dawn, the theme in use, and every other once "More themes" is on in Settings.
-  const themes = THEMES.filter(item => moreThemes || MAIN_THEMES.includes(item.id) || item.id === theme.id);
   const [help, setHelp] = useState(false);
   const [settings, setSettings] = useState(false);
+  const closeSettings = useCallback(() => setSettings(false), []);
   // Floating themes paint a backdrop behind panels held apart by the theme's gap; the others dock panels on a flat background.
   const style = useMemo(() => ({ ...theme.ui, background: theme.style?.floating ? theme.ui['--app-bg'] ?? theme.ui['--bg'] : theme.ui['--bg'] }) as React.CSSProperties, [theme]);
   useEffect(() => {
@@ -158,24 +163,33 @@ function Shell() {
         )}
         <SearchBox />
         <div className="top-actions">
-          <button className="icon-button" onClick={() => void store.back()} disabled={history.index <= 0} aria-label="Back to previous selection" title="Back (Alt+←)">←</button>
-          <button className="icon-button" onClick={() => void store.forward()} disabled={history.index >= history.entries.length - 1} aria-label="Forward" title="Forward (Alt+→)">→</button>
-          <button className="button" onClick={() => void (timelineOpen ? store.closeTimeline() : store.openTimeline())} aria-pressed={timelineOpen} title={meta?.history.available ? `Browse ${meta.history.snapshots} indexed commits` : 'No history indexed yet'}>History</button>
-          {features > 0 && <button className="button" onClick={() => showLeft('features')} aria-pressed={leftOpen && leftTab === 'features'} aria-controls="left-panel" title={`The ${features} features of the product, as the model described them: select one to light its files and see its flows`}>Features</button>}
-          <button className="button rf-top" onClick={() => showLeft('flows')} aria-pressed={leftOpen && leftTab === 'flows'} aria-controls="left-panel" title="Every flow of the code in one list: pages, requests, console commands and scheduled tasks">Flows</button>
-          <button className="button" onClick={() => showLeft('people')} aria-pressed={leftOpen && leftTab === 'people'} aria-controls="left-panel" title="Who changed which code, from the Git history: select a person to light the files they changed">People</button>
-          <button className="button" onClick={() => showLeft('pulls')} aria-pressed={leftOpen && leftTab === 'pulls'} aria-controls="left-panel" title="Pull requests, open and merged: select one to light the files it changes">PRs</button>
-          <button className="button" onClick={() => impactOpen ? store.setCenter('map') : store.openImpactTool()} aria-pressed={impactOpen} title="What depends on the selection, or on your uncommitted changes, hop by hop">Impact</button>
-          <button className="button explain-top" onClick={() => store.toggleExplanations()} aria-pressed={explainOpen} aria-controls="explain-panel" title={`Explanations: ask about the code, or read what your agent explained (${explanations} saved); their links light the code on the map`}>Explain{unseen > 0 && <span className="badge" aria-label={`${unseen} new`}>{unseen}</span>}</button>
-          <button className="button" onClick={() => codeOpen ? store.closeCode() : store.openCode()} aria-pressed={codeOpen} title="The code of the selection beside the inspector: a file, or a symbol in its file, with the file's outline">Code</button>
-          <button className="button" onClick={() => void store.toggleCoverage()} aria-pressed={coverage} title="Color every file by whether flows touch it: entry points, in flows, supporting, not reached">Coverage</button>
-          <HiddenPathsButton />
-          <label className="sr-only" htmlFor="theme-select">Theme</label>
-          <select id="theme-select" className="select" value={themeId} onChange={event => store.setTheme(event.target.value)}>
-            {themes.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-          </select>
-          <button className="icon-button" onClick={() => setSettings(open => !open)} aria-expanded={settings} aria-label="Settings" title="Settings">⚙</button>
-          <button className="icon-button" onClick={() => setHelp(open => !open)} aria-expanded={help} aria-label="Keyboard shortcuts">?</button>
+          <div className="top-action-group" role="group" aria-label="Selection navigation">
+            <button className="icon-button" onClick={() => void store.back()} disabled={history.index <= 0} aria-label="Back to previous selection" title="Back (Alt+←)">←</button>
+            <button className="icon-button" onClick={() => void store.forward()} disabled={history.index >= history.entries.length - 1} aria-label="Forward" title="Forward (Alt+→)">→</button>
+          </div>
+          <div className="top-action-group" role="group" aria-label="Timeline" title="Opens the history timeline below the map">
+            <button className="button" onClick={() => void (timelineOpen ? store.closeTimeline() : store.openTimeline())} aria-pressed={timelineOpen} title={meta?.history.available ? `Browse ${meta.history.snapshots} indexed commits` : 'No history indexed yet'}>History</button>
+          </div>
+          <div className="top-action-group" role="group" aria-label="Sidebar panels" title="Opens in the left sidebar">
+            {features > 0 && <button className="button" onClick={() => showLeft('features')} aria-pressed={leftOpen && leftTab === 'features'} aria-controls="left-panel" title={`The ${features} features of the product, as the model described them: select one to light its files and see its flows`}>Features</button>}
+            <button className="button" onClick={() => showLeft('flows')} aria-pressed={leftOpen && leftTab === 'flows'} aria-controls="left-panel" title="Flows by CLI, HTTP, UI, MCP and worker entry points, with source scope and evidence coverage">Flows</button>
+            <button className="button" onClick={() => showLeft('people')} aria-pressed={leftOpen && leftTab === 'people'} aria-controls="left-panel" title="Who changed which code, from the Git history: select a person to light the files they changed">People</button>
+            <button className="button" onClick={() => showLeft('pulls')} aria-pressed={leftOpen && leftTab === 'pulls'} aria-controls="left-panel" title="Pull requests, open and merged: select one to light the files it changes">PRs</button>
+          </div>
+          <div className="top-action-group" role="group" aria-label="Center tools" title="Opens in a center tab">
+            <button className="button" onClick={() => impactOpen ? store.setCenter('map') : void store.openImpactTool()} aria-pressed={impactOpen} title="What depends on the selection, or on your uncommitted changes, hop by hop">Impact</button>
+          </div>
+          <div className="top-action-group" role="group" aria-label="Additional columns" title="Opens an additional column beside the map">
+            <button className={`button explain-top${working ? ' working' : ''}`} onClick={() => store.toggleExplanations()} aria-pressed={explainOpen} aria-controls="explain-panel" title={`${working ? `${working} ${working.endsWith(' agents') ? 'are' : 'is'} working on an explanation. ` : ''}Explanations: ask about the code, or read what your agent explained (${explanations} saved); their links light the code on the map`}>Explain{working && <span className="agent-pulse" role="status" aria-label={`${working} working`} />}{unseen > 0 && <span className="badge" aria-label={`${unseen} new`}>{unseen}</span>}</button>
+            <button className="button" onClick={() => codeOpen ? store.closeCode() : store.openCode()} aria-pressed={codeOpen} title="The code of the selection beside the inspector: a file, or a symbol in its file, with the file's outline">Code</button>
+          </div>
+          <div className="top-action-group" role="group" aria-label="Map overlays" title="Changes the colors on the map">
+            <ColorBy />
+          </div>
+          <div className="top-action-group" role="group" aria-label="Settings and help">
+            <button className="icon-button" onClick={() => setSettings(open => !open)} aria-expanded={settings} aria-label="Settings" title="Settings">⚙</button>
+            <button className="icon-button" onClick={() => setHelp(open => !open)} aria-expanded={help} aria-label="Keyboard shortcuts">?</button>
+          </div>
         </div>
       </header>
       <Breadcrumbs />
@@ -216,41 +230,13 @@ function Shell() {
       </main>
       {timelineOpen && <Timeline />}
       {help && <HelpDialog onClose={() => setHelp(false)} />}
-      {settings && <SettingsDialog onClose={() => setSettings(false)} />}
+      {settings && <SettingsDialog onClose={closeSettings} />}
       <MapVisibilityUI />
     </div>
   );
 }
 type LeftTab = 'features' | 'flows' | 'people' | 'pulls';
 const TAB_TEXT: Record<LeftTab, string> = { features: 'Features', flows: 'Flows', people: 'People', pulls: 'PRs' };
-function SettingsDialog({ onClose }: { onClose: () => void }) {
-  const store = useStore();
-  const moreThemes = useAtlas(state => state.moreThemes);
-  const shapes = useAtlas(state => state.shapes);
-  const connections = useAtlas(state => state.connections);
-  const streets = useAtlas(state => state.streets);
-  const close = useRef<HTMLButtonElement>(null);
-  useEffect(() => { close.current?.focus(); const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, [onClose]);
-  return (
-    <div className="center-state" style={{ pointerEvents: 'auto', background: 'rgba(0,0,0,0.35)', zIndex: 30 }} onClick={onClose}>
-      <div className="card" role="dialog" aria-modal="true" aria-labelledby="settings-title" onClick={event => event.stopPropagation()} style={{ textAlign: 'left' }}>
-        <h2 id="settings-title" style={{ marginTop: 0, fontSize: 15 }}>Settings</h2>
-        <label className="toggle"><input type="checkbox" checked={moreThemes} onChange={event => store.setMoreThemes(event.target.checked)} /> More themes</label>
-        <p className="note">The theme menu offers Codiluce Dusk and Codiluce Dawn. With more themes on, it also offers {THEMES.filter(item => !MAIN_THEMES.includes(item.id)).map(item => item.name).join(', ')}.</p>
-        <label className="toggle"><input type="checkbox" checked={shapes} onChange={event => store.setShapes(event.target.checked)} /> Building shapes</label>
-        <p className="note">Each kind of block gets its own shape on the map: controllers are rail turntables, tables are storage drums, pages are browser billboards. Small blocks show the kind as a mark on their roof, and closed folders show what they hold: the kinds they have most of, with a count. Turn it off for plain blocks.</p>
-        <label className="toggle"><input type="checkbox" checked={streets} onChange={event => store.setStreets(event.target.checked)} /> Streets between blocks</label>
-        <p className="note">Draws every block a little inside its place, so streets run between files and wider avenues between folders. Nothing moves: turn it off to see the blocks packed edge to edge.</p>
-        <div className="segmented" role="group" aria-label="Links on the map">
-          <button aria-pressed={connections === 'arcs'} onClick={() => store.setConnections('arcs')}>Arcs</button>
-          <button aria-pressed={connections === 'rails'} onClick={() => store.setConnections('rails')}>Rails</button>
-        </div>
-        <p className="note">Links on the map (relationships, flows): arcs over the blocks, or rails along the floors at right angles, round the blocks and out through the edge of each area. The map's ⌐ button switches too.</p>
-        <button ref={close} className="button" onClick={onClose}>Close</button>
-      </div>
-    </div>
-  );
-}
 function HelpDialog({ onClose }: { onClose: () => void }) {
   const close = useRef<HTMLButtonElement>(null);
   useEffect(() => { close.current?.focus(); const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, [onClose]);

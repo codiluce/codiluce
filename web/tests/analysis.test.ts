@@ -39,6 +39,26 @@ async function ready(hash = '') {
   return { atlas, replaced };
 }
 
+test('the Impact tool starts with the selection, offers a chooser without one, and preserves an existing origin', async () => {
+  const { atlas } = await ready();
+  await atlas.openImpactTool();
+  assert.equal(atlas.getState().center, 'impact');
+  assert.equal(atlas.getState().impact.forId, undefined);
+  assert.equal(atlas.getState().impact.status, 'idle');
+  const authenticate = symbol('App\\Services\\AuthService::authenticate');
+  await atlas.select(authenticate, { fly: false });
+  await atlas.openImpactTool();
+  assert.equal(atlas.getState().impact.forId, authenticate);
+  assert.equal(atlas.getState().impact.status, 'ready');
+  assert.ok(atlas.getState().impact.items.length > 0);
+  await atlas.select(id('signIn'), { fly: false });
+  atlas.setCenter('map');
+  await atlas.openImpactTool();
+  assert.equal(atlas.getState().impact.forId, authenticate, 'returning to the tool keeps the radius being inspected');
+  atlas.hideImpact();
+  await atlas.openImpactTool();
+  assert.equal(atlas.getState().impact.forId, id('signIn'), 'a new radius starts from the current selection');
+});
 test('impact stays on its origin while the selection moves, pages its items, groups them and writes itself into the link', async () => {
   const { atlas, replaced } = await ready();
   const authenticate = symbol('App\\Services\\AuthService::authenticate');

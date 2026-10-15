@@ -254,7 +254,8 @@ export function resolveReferences(context: AnalysisContext, state: TsApplication
     if (!ts.isSourceFile(node) && !sourceMapped(context, source.fileName, node.getStart(source), node.end)) return;
     if (ts.isCallExpression(node) && node.expression.kind !== ts.SyntaxKind.ImportKeyword && node.expression.kind !== ts.SyntaxKind.SuperKeyword) {
       const from = owner(node);
-      if (!runtimeReference(node.expression, checker)) { sites.count(from.id, 'unresolved', calleeName(node.expression)); ts.forEachChild(node, visit); return; }
+      const callSite = { line: lineOf(node), column: source.getLineAndCharacterOfPosition(node.getStart(source)).character + 1 };
+      if (!runtimeReference(node.expression, checker)) { sites.count(from.id, 'unresolved', calleeName(node.expression), callSite); ts.forEachChild(node, visit); return; }
       let target: Entity | undefined;
       let declaration: ts.Declaration | undefined;
       try { declaration = checker.getResolvedSignature(node)?.declaration as ts.Declaration | undefined; } catch { declaration = undefined; }
@@ -268,7 +269,7 @@ export function resolveReferences(context: AnalysisContext, state: TsApplication
         sites.count(from.id, 'resolved');
       } else if (!callEffect(from, node)) {
         const outcome = declaration && !indexed(declaration) ? 'external' : origin(node.expression);
-        sites.count(from.id, outcome, outcome === 'unresolved' ? calleeName(node.expression) : undefined);
+        sites.count(from.id, outcome, outcome === 'unresolved' ? calleeName(node.expression) : undefined, callSite);
       } else sites.count(from.id, 'external');
       for (const argument of node.arguments) reference(from, argument, 'callback', `Passes ${short(argument)} to ${calleeText}(…)`);
     } else if (ts.isNewExpression(node)) {

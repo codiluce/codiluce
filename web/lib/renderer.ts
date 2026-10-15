@@ -35,7 +35,13 @@ export interface CoverageOverlay { files: Map<string, string>; areas: Map<string
  * one in grey); closed areas badged with their main family. With `focus`, what
  * is outside that family recedes.
  */
-export interface FamilyOverlay { of: Map<string, string>; areas: Map<string, Record<string, number>>; names: Map<string, string>; hues: Map<string, number>; focus?: string; /** What the `none` key means in badges (default: no tables). */ none?: string }
+export interface FamilyOverlay { of: Map<string, string>; areas: Map<string, Record<string, number>>; names: Map<string, string>; hues: Map<string, number>; focus?: string; /** What the `none` key means in badges (default: no tables). */ none?: string; /** A tag under an open area's front corner (a pull request's files not on the map yet, in the folder that will hold them). */ notes?: Map<string, string> }
+/**
+ * A measure (complexity, changes, hotspots): files by level, 1 to 4 (`none`:
+ * no level), functions by their own when the lens measures them; closed areas
+ * badged with how many files they hold at their highest level.
+ */
+export interface LevelOverlay { of: Map<string, string>; areas: Map<string, Record<string, number>>; /** Symbols without a level of their own: their file's (`inherit`), or 1 when their file has one (`simple`). */ symbols: 'inherit' | 'simple'; /** What a badge calls the files of a level (`3`: `complex`). */ words: Record<string, string> }
 /** A feature in focus (the Features panel) has the same shape: its files and the areas holding them stay lit, closed areas say how many. */
 /** Another view of the split map, drawn on the overview: the part of the plane it shows (so its size tells its zoom), numbered. */
 export interface FrameOverlay { key: string; number: number; bounds: Bounds; /** The view in use. */ active: boolean; /** On the current page (the others are dashed). */ shown: boolean }
@@ -64,6 +70,8 @@ export interface RenderState {
   pins?: PinOverlay[];
   coverage?: CoverageOverlay;
   families?: FamilyOverlay;
+  /** Files colored by a measure's level. */
+  measure?: LevelOverlay;
   feature?: FamilyOverlay;
   /** Files colored by the person who changed each most (the `none` key: nobody in the window). */
   people?: FamilyOverlay;
@@ -145,6 +153,7 @@ export class MapRenderer {
     const familyOf = state.families ? this.familyResolver(scene, state.families) : undefined;
     const familyLit = state.families?.focus ? this.familyLit(scene, state.families, familyOf!) : undefined;
     const peopleOf = state.people ? this.familyResolver(scene, state.people) : undefined;
+    const levelOf = state.measure ? this.levelResolver(scene, state.measure) : undefined;
     const focusLit = state.explanation?.focus ? this.familyLit(scene, state.explanation, this.familyResolver(scene, state.explanation))
       : state.feature?.focus ? this.familyLit(scene, state.feature, this.familyResolver(scene, state.feature))
       : state.person?.focus ? this.familyLit(scene, state.person, this.familyResolver(scene, state.person)) : state.pull?.focus ? this.familyLit(scene, state.pull, this.familyResolver(scene, state.pull)) : familyLit;
@@ -157,6 +166,7 @@ export class MapRenderer {
     const links = state.flow ? this.resolveLinks(scene, set, state.flow) : [];
     this.railsPending = false;
     const rails = state.connections === 'rails' && (edges.length || links.length) ? this.planRails(viewport, camera, scene, set, edges, links, state) : undefined;
+    const notes: [VisibleItem, number][] = [];
     for (const [index, item] of items.entries()) {
       if (inside) inside[index] = state.within!.has(item.node.id) || (item.parent >= 0 && inside[item.parent] === 1) ? 1 : 0;
       // A playing flow decides what stays lit; then the feature or family in focus (chosen on purpose, it wins over the selection); then what the selection reaches.
@@ -169,7 +179,8 @@ export class MapRenderer {
       const category = coverageOf?.(item.node);
       const family = category ? undefined : familyOf?.(item.node);
       const person = category || family ? undefined : peopleOf?.(item.node);
-      const paletteOverride = category ? `coverage:${category}` : family ? `family:${this.familyHue(family, state.families!)}` : person ? `family:${this.familyHue(person, state.people!)}` : undefined;
+      const level = category || family || person ? undefined : levelOf?.(item.node);
+      const paletteOverride = category ? `coverage:${category}` : family ? `family:${this.familyHue(family, state.families!)}` : person ? `family:${this.familyHue(person, state.people!)}` : level ? `level:${level}` : undefined;
       if (item.shape !== undefined) this.shape(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId, paletteOverride, hot.get(item.node.id) ?? 0, this.shapeTint(item, state), state);
       else {
         this.prism(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId, paletteOverride, state.shapes !== false, !!state.streets && item.open);
@@ -183,6 +194,8 @@ export class MapRenderer {
       else if (state.person && !state.coverage && !item.open && state.person.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.person.areas.get(item.node.id)!, state.person);
       else if (state.pull && !state.coverage && !item.open && state.pull.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.pull.areas.get(item.node.id)!, state.pull);
       else if (state.people && !item.open && !person && state.people.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.people.areas.get(item.node.id)!, state.people);
+      else if (state.measure && !item.open && !level && state.measure.areas.has(item.node.id)) this.levelBadge(ctx, viewport, camera, item, alpha, state.measure.areas.get(item.node.id)!, state.measure);
+      if (item.open && state.pull?.notes?.has(item.node.id)) notes.push([item, alpha]);
       if (state.comparison) this.changeOverlay(ctx, viewport, camera, item, alpha, state);
       if (state.impact) this.impactOverlay(ctx, viewport, camera, item, alpha, state.impact);
       if (state.showDiagnostics && !item.open && item.node.diagnostics > 0 && item.size > 10) this.diagnosticMarker(ctx, viewport, camera, item, alpha);
@@ -204,6 +217,7 @@ export class MapRenderer {
     this.edges(ctx, viewport, camera, rails ? rails.edges : edges);
     if (state.unresolved && state.unresolved.count > 0) this.unresolvedStub(ctx, viewport, camera, scene, set, state.unresolved);
     if (state.flow) { this.flowArcs(ctx, viewport, camera, rails ? rails.links : links, state); this.flowStops(ctx, viewport, camera, set, state.flow); }
+    for (const [item, alpha] of notes) this.areaNote(ctx, viewport, camera, item, alpha, state.pull!);
     this.labels(ctx, labels);
     if (state.pins?.length) this.pins(ctx, viewport, camera, set, state.pins);
     if (state.callouts?.length) this.callouts(ctx, viewport, camera, set, state.callouts);
@@ -479,7 +493,7 @@ export class MapRenderer {
    */
   private resumeShare(item: VisibleItem, state: RenderState, camera: Camera, lod: LodConfig): number {
     if (state.shapes === false || !item.node.archetypeCounts?.length || item.shape !== undefined) return 0;
-    if (state.comparison || state.impact || state.coverage || state.families || state.feature || state.person || state.people) return 0;
+    if (state.comparison || state.impact || state.coverage || state.families || state.feature || state.person || state.people || state.measure) return 0;
     if (item.open) return Math.max(0, 1 - openProgress(item.node, camera.scale, lod) * 2.5);
     return Math.min(1, Math.max(0, (item.size - RESUME_PX) / RESUME_FADE_PX));
   }
@@ -1094,6 +1108,75 @@ export class MapRenderer {
       cursor += share * (width - 10);
     }
     ctx.fillStyle = this.theme.text.primary; ctx.fillText(text, anchor.x, anchor.y - 2);
+    ctx.restore();
+  }
+  /**
+   * The level a block is drawn in: files and entry points by their own (`none`
+   * without one); symbols by their own, else by their file's (or level 1 in a
+   * file with a level, when the lens measures functions); areas get a badge.
+   */
+  private levelResolver(scene: Scene, measure: LevelOverlay): (node: NodeSummary) => string | undefined {
+    const cached = this.levelCache.get(measure);
+    if (cached) return cached;
+    const cache = new Map<string, string | undefined>();
+    const resolve = (node: NodeSummary): string | undefined => {
+      if (cache.has(node.id)) return cache.get(node.id);
+      let found: string | undefined;
+      if (node.kind !== 'entity' || ['repository', 'application', 'directory'].includes(node.type)) found = undefined;
+      else if (measure.of.has(node.id)) found = measure.of.get(node.id);
+      else if (['file', 'route', 'api_endpoint', 'command', 'scheduled_task', 'database_table'].includes(node.type)) found = 'none';
+      else {
+        const parent = node.spatialParentId ? scene.nodes.get(node.spatialParentId) : undefined;
+        const held = parent ? resolve(parent) : undefined;
+        found = measure.symbols === 'simple' && held && held !== 'none' ? '1' : held;
+      }
+      cache.set(node.id, found);
+      return found;
+    };
+    this.levelCache.set(measure, resolve);
+    return resolve;
+  }
+  private levelCache = new WeakMap<LevelOverlay, (node: NodeSummary) => string | undefined>();
+  /** A closed area: how many of its code files are at the highest level it holds (from 2), over a bar of every level. */
+  private levelBadge(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, counts: Record<string, number>, measure: LevelOverlay): void {
+    if (item.size < 34) return;
+    const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    const high = ['4', '3', '2'].find(key => counts[key]);
+    if (!total || !high) return;
+    const text = `${counts[high]} ${measure.words[high] ?? ''}`.trim();
+    const { x, y, w, h } = item.node.rect;
+    const anchor = worldToScreen(camera, viewport, x + w * 0.5, y + h - Math.min(h, w) * 0.12, item.zTop);
+    ctx.save();
+    ctx.globalAlpha = Math.max(0.75, alpha);
+    ctx.font = `700 10px ${this.font}`; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+    const width = Math.max(64, ctx.measureText(text).width + 14);
+    ctx.fillStyle = this.theme.dark ? 'rgba(8,12,26,0.86)' : 'rgba(255,253,248,0.94)';
+    roundRect(ctx, anchor.x - width / 2, anchor.y - 11, width, 22, 7); ctx.fill();
+    let cursor = anchor.x - width / 2 + 5;
+    for (const key of ['4', '3', '2', '1', 'none']) {
+      if (!counts[key]) continue;
+      const share = counts[key]! / total;
+      ctx.fillStyle = this.palettes.get(`level:${key}`, 0).top;
+      ctx.fillRect(cursor, anchor.y + 5, share * (width - 10), 3);
+      cursor += share * (width - 10);
+    }
+    ctx.fillStyle = this.theme.text.primary; ctx.fillText(text, anchor.x, anchor.y - 2);
+    ctx.restore();
+  }
+  /** An open area's note (files a pull request adds there, not on the map yet): a tag under its front corner, in the pull request's color. */
+  private areaNote(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, alpha: number, families: FamilyOverlay): void {
+    const text = families.notes!.get(item.node.id)!;
+    const { x, y, w, h } = item.node.rect;
+    const corner = worldToScreen(camera, viewport, x + w, y + h, item.zTop);
+    ctx.save();
+    ctx.globalAlpha = Math.max(0.75, alpha);
+    ctx.font = `700 10px ${this.font}`; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    const width = ctx.measureText(text).width + 24, top = corner.y + 6;
+    ctx.fillStyle = this.theme.dark ? 'rgba(8,12,26,0.86)' : 'rgba(255,253,248,0.94)';
+    roundRect(ctx, corner.x - width / 2, top, width, 20, 7); ctx.fill();
+    ctx.fillStyle = this.palettes.get(`family:${this.familyHue(families.focus!, families)}`, 0).top;
+    ctx.beginPath(); ctx.arc(corner.x - width / 2 + 10, top + 10, 3.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = this.theme.text.primary; ctx.fillText(text, corner.x - width / 2 + 18, top + 10);
     ctx.restore();
   }
   /** A closed area: the share of its code files that flows touch (entry points included), as a small bar and a percentage. */

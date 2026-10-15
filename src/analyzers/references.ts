@@ -28,12 +28,13 @@ export class SiteCollector {
     group.forms.add(site.form);
     if (site.event) group.events.add(site.event);
   }
-  count(owner: string, outcome: 'resolved' | 'external' | 'unresolved', name?: string): void {
+  count(owner: string, outcome: 'resolved' | 'external' | 'unresolved', name?: string, site?: { line: number; column?: number }): void {
     const entry = this.coverage.get(owner) ?? { resolved: 0, external: 0, unresolved: 0 };
     entry[outcome]++;
     if (outcome === 'unresolved' && name) {
       const names = entry.unresolvedNames ??= {};
       if (names[name] !== undefined || Object.keys(names).length < MAX_UNRESOLVED_NAMES) names[name] = (names[name] ?? 0) + 1;
+      if (site && (entry.unresolvedSites?.length ?? 0) < MAX_UNRESOLVED_NAMES) (entry.unresolvedSites ??= []).push({ name, ...site });
     }
     this.coverage.set(owner, entry);
   }

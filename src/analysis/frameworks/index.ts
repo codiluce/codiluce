@@ -5,5 +5,6 @@ import { vuePack } from './vue.js';
 import { sveltePack } from './svelte.js';
 import { astroPack } from './astro.js';
 import { nuxtPack } from './nuxt.js';
+import { nodeRuntimePack } from './node-runtime.js';
 
-export const typescriptFrameworkPacks: readonly TypeScriptFrameworkPack[] = [expressPack, nestPack, vuePack, sveltePack, astroPack, nuxtPack];
+export const typescriptFrameworkPacks: readonly TypeScriptFrameworkPack[] = [expressPack, nestPack, vuePack, sveltePack, astroPack, nuxtPack, nodeRuntimePack];

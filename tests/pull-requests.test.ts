@@ -1,7 +1,8 @@
 // Pull requests: merged ones read from a scripted Git history (a squash
 // merge, a GitHub merge commit, a merged branch, a pull of a branch's remote
 // copy that is none, direct commits that are none), branches not merged yet
-// (one squash-merged branch left behind is not open work), the provider's
+// (one squash-merged branch left behind is not open work; the files one adds
+// placed in the nearest folder of the map holding them), the provider's
 // open, merged and closed pull requests through a fake GitHub API, what each
 // changes on the map, what changes a selection, their blast radius, the routes.
 import assert from 'node:assert/strict';
@@ -21,7 +22,7 @@ import { diffChanges, PullSources } from '../src/history/pull-sources.js';
 import { createInspectionServer } from '../src/api/server.js';
 
 const fixture = fileURLToPath(new URL('./fixtures/repository', import.meta.url));
-const ACCOUNT = 'frontend/src/components/AccountPanel.tsx', LOGIN = 'frontend/src/components/LoginForm.tsx', SERVICE = 'backend/app/Services/AuthService.php', AUDIT = 'backend/app/Services/AuditLog.php', PACKAGE = 'frontend/package.json', NEW_SERVICE = 'backend/app/Services/NewService.php';
+const ACCOUNT = 'frontend/src/components/AccountPanel.tsx', LOGIN = 'frontend/src/components/LoginForm.tsx', SERVICE = 'backend/app/Services/AuthService.php', AUDIT = 'backend/app/Services/AuditLog.php', PACKAGE = 'frontend/package.json', NEW_SERVICE = 'backend/app/Services/NewService.php', REPORT = 'backend/app/Reports/Monthly.php';
 let root: string, state: string, store: GraphStore, projection: ProjectionService;
 const commits: Record<string, string> = {};
 
@@ -84,22 +85,26 @@ before(async () => {
   git(['commit', '-q', '-am', 'Fix the package (#9)'], BEN, '2026-03-07T10:00:00Z'); commits.S9 = head();
   await append(SERVICE, '// tidy\n');
   git(['commit', '-q', '-am', 'Tidy the service'], 'Ana Lopez <ana@example.test>', '2026-03-10T10:00:00Z'); commits.F = head();
-  // Open work: a branch with a remote-tracking copy, adding a file.
+  // Open work: a branch with a remote-tracking copy, adding a file to a folder and one in a new folder.
   git(['checkout', '-q', '-b', 'wip']);
   await append(SERVICE, '// wip\n');
   await writeFile(path.join(root, NEW_SERVICE), '<?php\nclass NewService {}\n');
+  await mkdir(path.join(root, 'backend/app/Reports'));
+  await writeFile(path.join(root, REPORT), '<?php\nclass Monthly {}\n');
   git(['add', '-A']);
   git(['commit', '-q', '-m', 'Start the new service'], BEN, '2026-03-12T10:00:00Z'); commits.W1 = head();
   git(['update-ref', 'refs/remotes/origin/wip', commits.W1!]);
   git(['checkout', '-q', 'main']);
   git(['update-ref', 'refs/remotes/origin/main', commits.F!]);
   await rm(path.join(root, NEW_SERVICE), { force: true });
+  await rm(path.join(root, 'backend/app/Reports'), { recursive: true, force: true });
   store = new GraphStore(':memory:');
   store.save(await indexRepository(root));
   projection = new ProjectionService(store, { root, stateDirectory: state });
 });
 after(async () => { store?.close(); await rm(root, { recursive: true, force: true }); await rm(state, { recursive: true, force: true }); });
 const fileId = (filePath: string) => store.entities({ path: filePath, type: 'file' }).items[0]!.id;
+const folderId = (folderPath: string) => store.entities({ path: folderPath, type: 'directory' }).items[0]!.id;
 
 test('merged pull requests come from the first-parent line: squash and merge conventions, merged branches, no pulls of a remote copy', async () => {
   assert.deepEqual(mergedBranch("Merge branch 'main' of github.com:o/r", 'main'), undefined);
@@ -145,12 +150,18 @@ test('open work: branches not merged, one entry per head, a squash-merged branch
   assert.deepEqual(result.open.map(pull => [pull.id, pull.source, pull.state]), [['branch:wip', 'branch', 'open']], 'old-fix is in main by content; origin/main is the base');
   const wip = result.open[0]!;
   assert.equal(wip.commit, commits.W1);
-  assert.deepEqual([wip.files, wip.inView, wip.commits, wip.author?.name, wip.baseRef], [2, 1, 1, 'Ben Jones', 'main']);
+  assert.deepEqual([wip.files, wip.inView, wip.newFiles, wip.commits, wip.author?.name, wip.baseRef], [3, 1, 2, 1, 'Ben Jones', 'main']);
   const detail = await projection.pull('branch:wip');
   assert.deepEqual(Object.keys(detail.files), [fileId(SERVICE)]);
   assert.equal(detail.files[fileId(SERVICE)]!.status, 'modified');
-  assert.deepEqual(detail.outside, [{ path: NEW_SERVICE, added: 2, deleted: 0, status: 'added' }], 'a file it adds is not on the map yet');
-  assert.equal(detail.outsideTotal, 1);
+  const services = folderId('backend/app/Services'), app = folderId('backend/app');
+  assert.deepEqual(detail.outside, [
+    { path: REPORT, added: 2, deleted: 0, status: 'added', near: app },
+    { path: NEW_SERVICE, added: 2, deleted: 0, status: 'added', near: services },
+  ], 'the files it adds are not on the map yet: each is placed in the nearest folder holding its path');
+  assert.equal(detail.outsideTotal, 2);
+  assert.deepEqual(detail.folders.map(folder => [folder.path, folder.files, folder.newFiles, folder.newFolders]), [['backend/app/Services', 1, 1, undefined], ['backend/app', 0, 1, ['Reports']]], 'a new folder is named under the folder that will hold it');
+  assert.deepEqual([detail.areas[services], detail.areas[app], detail.areas[store.entities({ type: 'repository' }).items[0]!.id]], [2, 3, 3], 'areas count the files it adds');
   assert.deepEqual(detail.shas, [commits.W1!.slice(0, 12)]);
 });
 
@@ -182,6 +193,9 @@ test('a selection: the open work changing it and the latest merged', async () =>
   const area = await projection.entityPulls(backend);
   assert.equal(area.scope, 'area');
   assert.deepEqual(area.merged.map(pull => pull.id), [`merge-${commits.M2!.slice(0, 12)}`, 'pr-7']);
+  assert.deepEqual(area.open.map(pull => [pull.id, pull.here.files, pull.here.added]), [['branch:wip', 3, 5]], 'with the files it adds in the area');
+  const folder = await projection.entityPulls(folderId('backend/app/Services'));
+  assert.deepEqual(folder.open.map(pull => [pull.id, pull.here.files]), [['branch:wip', 2]], 'not the file it adds in a new folder next to it');
 });
 
 test('the blast radius of a pull request starts from the code of its files on the map', async () => {
@@ -190,12 +204,12 @@ test('the blast radius of a pull request starts from the code of its files on th
   assert.deepEqual(impact.origin.kind === 'pull' ? [impact.origin.id, impact.origin.files, impact.origin.missing, impact.origin.state] : [], ['pr-8', 1, 0, 'merged']);
   assert.ok(impact.seeds > 0);
   const open = await projection.pullImpact('branch:wip', undefined, {});
-  assert.deepEqual(open.origin.kind === 'pull' ? [open.origin.files, open.origin.missing] : [], [1, 1]);
+  assert.deepEqual(open.origin.kind === 'pull' ? [open.origin.files, open.origin.missing] : [], [1, 2]);
 });
 
 test('the net change of a commit range: status, renames, lines', async () => {
   const changes = await diffChanges(root, commits.F!, commits.W1!);
-  assert.deepEqual(changes.map(change => [change.path, change.status, change.added, change.deleted]), [[SERVICE, 'modified', 1, 0], [NEW_SERVICE, 'added', 2, 0]]);
+  assert.deepEqual(changes.map(change => [change.path, change.status, change.added, change.deleted]), [[REPORT, 'added', 2, 0], [SERVICE, 'modified', 1, 0], [NEW_SERVICE, 'added', 2, 0]]);
 });
 
 test('the provider: open, merged and closed pull requests, files of one whose commits are not here', async () => {
@@ -215,7 +229,7 @@ test('the provider: open, merged and closed pull requests, files of one whose co
   assert.deepEqual(result.provider, { name: 'github', status: 'ok', token: true, repository: 'octo/fixture', fetchedAt: result.provider.fetchedAt });
   assert.deepEqual(result.open.map(item => [item.id, item.source, item.draft ?? false]), [['pr-13', 'github', true], ['pr-12', 'github', false]], 'the wip branch is pull request #12');
   const twelve = result.open.find(item => item.id === 'pr-12')!;
-  assert.deepEqual([twelve.files, twelve.commits, twelve.author?.name, twelve.author?.login], [2, 1, 'Ben Jones', 'benj'], 'its commits are here: read from Git; the login is matched to the person by their no-reply address');
+  assert.deepEqual([twelve.files, twelve.commits, twelve.author?.name, twelve.author?.login], [3, 1, 'Ben Jones', 'benj'], 'its commits are here: read from Git; the login is matched to the person by their no-reply address');
   const thirteen = result.open.find(item => item.id === 'pr-13')!;
   assert.deepEqual([thirteen.files, thirteen.inView, thirteen.commits, thirteen.author?.name], [2, 1, 0, 'someone'], 'its files were asked for (a token is set)');
   assert.ok(requested.some(url => url.endsWith('/repos/octo/fixture/pulls/13/files?per_page=100&page=1')));
@@ -225,7 +239,7 @@ test('the provider: open, merged and closed pull requests, files of one whose co
   assert.deepEqual(result.closed.map(item => [item.id, item.state, item.files]), [['pr-11', 'closed', undefined]], 'files unknown until selected');
   const detail = await service.pull('pr-13');
   assert.deepEqual(Object.keys(detail.files), [fileId(LOGIN)]);
-  assert.deepEqual(detail.outside.map(file => [file.path, file.status]), [['frontend/src/new.ts', 'added']]);
+  assert.deepEqual(detail.outside.map(file => [file.path, file.status, file.near]), [['frontend/src/new.ts', 'added', folderId('frontend/src')]]);
   // A closed pull request: the provider is asked for its files when selected, and says it cannot.
   const closed = await service.pull('pr-11');
   assert.equal(closed.unknownReason, undefined, 'the fake API answers with no files');

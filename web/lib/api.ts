@@ -4,7 +4,7 @@
 import type { MapVisibilityAction, MapVisibilityState } from '@engine/projection/dto';
 import type { Entity, Relation } from '@engine/core/graph';
 import type { EvolutionResponse } from '@engine/projection/dto';
-import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, EntityPulls, PersonAuthorship, PullDetail, PullsResult } from '@engine/projection/dto';
+import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, EntityPulls, MetricLens, MetricLensResult, PersonAuthorship, PullDetail, PullsResult } from '@engine/projection/dto';
 import type { AggregateEdgesPage, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageExport, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FamiliesResult, FeaturesResult, FileListResult, FlowList, ImpactGroupBy, ImpactResult, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
 
 export class ApiError extends Error { constructor(readonly status: number, message: string, readonly body?: unknown) { super(message); } }
@@ -70,6 +70,8 @@ export interface AtlasApi {
   files(query: FileQuery, signal?: AbortSignal): Promise<FileListResult>;
   /** Who changed the view's files in a window of the Git history: people, the person who changed each file most, per area. */
   authorship(window: AuthorshipWindowKey, signal?: AbortSignal): Promise<AuthorshipResult>;
+  /** Files (and functions) by level of a measure: complexity, changes in the window, or both. */
+  lens(lens: MetricLens, window: AuthorshipWindowKey, signal?: AbortSignal): Promise<MetricLensResult>;
   /** What one person changed in the window: files, areas, folders and commits. */
   personAuthorship(key: string, window: AuthorshipWindowKey, signal?: AbortSignal): Promise<PersonAuthorship>;
   /** Who changed an entity (a file, a symbol's file, the files of an area) in the window, and its latest commits. */
@@ -176,6 +178,7 @@ export class HttpAtlasApi implements AtlasApi {
   features(signal?: AbortSignal) { return this.get<FeaturesResult>(`/api/projection/features${this.q()}`, signal); }
   files(query: FileQuery, signal?: AbortSignal) { return this.get<FileListResult>(`/api/projection/files${this.q({ ...query })}`, signal); }
   authorship(window: AuthorshipWindowKey, signal?: AbortSignal) { return this.get<AuthorshipResult>(`/api/authorship${this.q({ window })}`, signal); }
+  lens(lens: MetricLens, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.get<MetricLensResult>(`/api/projection/lens${this.q(lens === 'complexity' ? { lens } : { lens, window })}`, signal); }
   personAuthorship(key: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.get<PersonAuthorship>(`/api/authorship/person/${encodeURIComponent(key)}${this.q({ window })}`, signal); }
   entityAuthorship(id: string, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.get<EntityAuthorship>(`/api/authorship/entity/${encodeURIComponent(id)}${this.q({ window })}`, signal); }
   // Open work changes without a new analysis run: pull requests are never cached.

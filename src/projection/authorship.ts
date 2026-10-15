@@ -32,6 +32,8 @@ export interface AuthorshipComputation {
   files: Map<string, Map<number, FileShare>>;
   /** Present file node → the person who changed it most. */
   main: Map<string, number>;
+  /** Present file node → the commits of the window that changed it. */
+  changes: Map<string, number>;
   /** Most commits first. */
   people: PersonSummary[];
   /** Person key → person index. */
@@ -62,6 +64,7 @@ export function computeAuthorship(history: AuthorHistory, folded: FoldedHistory,
   const byPath = new Map(presentFiles(index).map(node => [node.path!, node.id]));
   const fileOf = (path: string) => byPath.get(path);
   const files = new Map<string, Map<number, FileShare>>();
+  const changes = new Map<string, number>();
   const totals = new Map<number, PersonTotals>();
   for (const commit of commits) {
     const lines = commit.changes.reduce((sum, change) => sum + change.added + change.deleted, 0);
@@ -73,9 +76,11 @@ export function computeAuthorship(history: AuthorHistory, folded: FoldedHistory,
       if (newer(total.first, commit.authoredAt)) total.first = commit.authoredAt;
       if (newer(commit.authoredAt, total.last)) total.last = commit.authoredAt;
     });
+    const touched = new Set<string>();
     for (const change of commit.changes) {
       const id = fileOf(change.path);
       if (!id) continue;
+      if (!touched.has(id)) { touched.add(id); changes.set(id, (changes.get(id) ?? 0) + 1); }
       let shares = files.get(id);
       if (!shares) { shares = new Map(); files.set(id, shares); }
       commit.people.forEach((person, position) => {
@@ -99,7 +104,7 @@ export function computeAuthorship(history: AuthorHistory, folded: FoldedHistory,
   }).sort((a, b) => b.commits - a.commits || b.lines - a.lines || compare(a.name, b.name) || compare(a.key, b.key));
   const byKey = new Map(history.people.map((person, position) => [person.key, position]));
   const window: AuthorshipWindow = { key: options.window, anchor: folded.anchor, until, ...(since ? { since } : {}), ...(options.window === 'range' ? { baseline: options.baseline! } : {}), commits: commits.length };
-  return { window, truncated: history.log.truncated, history, commits, files, main, people, byKey, fileOf };
+  return { window, truncated: history.log.truncated, history, commits, files, main, changes, people, byKey, fileOf };
 }
 function compare(a: string, b: string): number { return a < b ? -1 : a > b ? 1 : 0; }
 

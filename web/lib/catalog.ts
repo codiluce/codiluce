@@ -1,15 +1,18 @@
 // The flow catalog in the visualizer: one list of every flow, filtered by
 // kind, completeness and text, and grouped by area. Pure.
-import type { CatalogKind, FlowStatus, FlowSummary } from '@engine/projection/dto';
+import type { CatalogKind, FlowChannel, FlowScope, EvidenceCoverage, FlowStatus, FlowSummary } from '@engine/projection/dto';
 
 /** What the panel's kind filter can show: everything, or one kind of start. */
-export type CatalogTab = CatalogKind | 'all';
-export const CATALOG_TABS: CatalogTab[] = ['all', 'page', 'request', 'command'];
+export type CatalogTab = CatalogKind | FlowChannel | 'all';
+export const CATALOG_TABS: CatalogTab[] = ['all', 'cli', 'http', 'ui', 'mcp', 'worker', 'function'];
 /** The kinds behind a filter: requests include the requests no endpoint answers; the console holds commands and scheduled tasks. */
 export function kindsOf(tab: CatalogTab): CatalogKind[] {
-  return tab === 'all' ? ['page', 'request', 'unmatched', 'command', 'schedule'] : tab === 'request' ? ['request', 'unmatched'] : tab === 'command' ? ['schedule', 'command'] : [tab];
+  return tab === 'all' ? ['page', 'request', 'unmatched', 'command', 'schedule', 'cli', 'mcp', 'worker', 'function'] : tab === 'request' || tab === 'http' ? ['request', 'unmatched'] : tab === 'cli' ? ['cli','schedule','command'] : tab === 'command' ? ['schedule','command'] : tab === 'ui' ? ['page'] : [tab];
 }
-export const KIND_TEXT: Record<CatalogTab, string> = { all: 'All', page: 'Pages', request: 'Requests', command: 'Console', schedule: 'Scheduled', unmatched: 'Unmatched' };
+export function belongsTo(item:FlowSummary,tab:CatalogTab):boolean {
+  return ['ui','http','cli','mcp','worker','function'].includes(tab) && item.channel ? item.channel === tab : kindsOf(tab).includes(item.kind);
+}
+export const KIND_TEXT: Record<CatalogTab, string> = { all: 'All', page: 'UI', ui: 'UI', request: 'HTTP', http:'HTTP', command: 'CLI', cli:'CLI', mcp:'MCP', worker:'Worker', function:'Functions', schedule: 'Scheduled', unmatched: 'Unmatched' };
 export const KIND_HINT: Record<CatalogTab, string> = {
   all: 'Every flow the index can follow: pages, HTTP requests, and work that starts without a request.',
   page: 'What a user can do from each page: the page, what it renders, the requests it makes and what those reach.',
@@ -17,7 +20,18 @@ export const KIND_HINT: Record<CatalogTab, string> = {
   command: 'Artisan commands and scheduled tasks: work that starts without a request, from the scheduler, from code, or by hand.',
   schedule: 'Tasks the scheduler runs, and what they reach.',
   unmatched: 'Requests made by indexed code that no indexed endpoint answers.',
+  cli:'Command-line dispatch, console commands and scheduled work, followed through their source handlers.',
+  http:'HTTP requests and handlers, with external services and unresolved boundaries shown explicitly.',
+  ui:'Pages and the interactions they start, followed through rendering, calls and requests.',
+  mcp:'Registered MCP tools and explicitly configured protocol dispatch entries.',
+  worker:'Registered process and worker message callbacks. Unproved message destinations stay visible as gaps.',
+  function:'Explicitly configured source functions and generic request callbacks.',
 };
+export const COVERAGE_TEXT: Record<EvidenceCoverage,string> = { 'no-known-gaps':'No known gaps','known-gaps':'Known gaps' };
+export const COVERAGE_HINT: Record<EvidenceCoverage,string> = { 'no-known-gaps':'No unresolved behavior was recorded in this static graph. This is not proof that every runtime path is covered.', 'known-gaps':'Unresolved dispatch, calls or boundaries are shown at their source locations.' };
+export function evidenceOf(item: FlowSummary): EvidenceCoverage {
+  return item.evidenceCoverage ?? (item.status && item.status !== 'complete' || (item.gaps ?? 0) > 0 || item.truncated ? 'known-gaps' : 'no-known-gaps');
+}
 /** Completeness is about HTTP: a page with lanes, a request, an unmatched request. Console flows have none. */
 export function completenessOf(item: FlowSummary): FlowStatus | undefined {
   return item.kind === 'command' || item.kind === 'schedule' ? undefined : item.status;
@@ -53,8 +67,8 @@ export function groupCatalog(items: FlowSummary[], query = '', status?: FlowStat
   return [...groups.values()].sort((a, b) => order(a) < order(b) ? -1 : order(a) > order(b) ? 1 : 0);
 }
 /** The flows the panel lists, in its order (a completeness filter only applies where the list has HTTP flows). */
-export function visibleCatalog(items: FlowSummary[], options: { tab: CatalogTab; query: string; status?: FlowStatus }): CatalogGroup[] {
+export function visibleCatalog(items: FlowSummary[], options: { tab: CatalogTab; query: string; status?: FlowStatus; coverage?: EvidenceCoverage; scope?: FlowScope | 'all' }): CatalogGroup[] {
   const kinds = kindsOf(options.tab);
-  const listed = items.filter(item => kinds.includes(item.kind));
+  const listed = items.filter(item => belongsTo(item,options.tab) && (!options.scope || options.scope === 'all' || (item.scope ?? 'application') === options.scope) && (!options.coverage || evidenceOf(item) === options.coverage));
   return groupCatalog(listed, options.query, listed.some(item => completenessOf(item)) ? options.status : undefined);
 }

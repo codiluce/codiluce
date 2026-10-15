@@ -68,7 +68,7 @@ test('catalog flows are grouped by application and group, filtered by text and c
   assert.deepEqual(groupCatalog(items, '', 'headless').flatMap(group => group.items.map(entry => entry.name)), ['GET /b']);
   assert.deepEqual(kindsOf('request'), ['request', 'unmatched'], 'the Requests filter includes requests no endpoint answers');
   assert.deepEqual(kindsOf('command'), ['schedule', 'command']);
-  assert.deepEqual(kindsOf('all'), ['page', 'request', 'unmatched', 'command', 'schedule']);
+  assert.deepEqual(kindsOf('all'), ['page', 'request', 'unmatched', 'command', 'schedule', 'cli', 'mcp', 'worker', 'function']);
   // One list: a page and the requests under its path share a group; console flows come after the areas.
   const page: FlowSummary = { id: 'page', kind: 'page', entry: { id: 'page', type: 'api_endpoint', name: 'GET /a' }, name: 'GET /a', path: '/a', app: 'api', group: '/a', detail: 'lanes', status: 'complete', entities: 1, files: 1 };
   const command: FlowSummary = { id: 'command', kind: 'command', entry: { id: 'command', type: 'command', name: 'reports:send' }, name: 'reports:send', app: 'api', group: 'reports:', detail: 'lanes', status: 'partial', entities: 1, files: 1 };

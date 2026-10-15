@@ -41,10 +41,10 @@ export function FlowHead() {
   const about = useMemo(() => explanations?.items.filter(item => item.subject.target === view?.id) ?? [], [explanations, view?.id]);
   const anchor = data?.anchor ?? (steps?.anchor === view?.id ? steps?.data?.anchor : undefined);
   const ref = anchor ? hrefForNode(anchor) : undefined;
-  const entry = !!anchor && ['route', 'api_endpoint', 'command', 'scheduled_task'].includes(anchor.type);
+  const entry = !!anchor && ['route', 'api_endpoint', 'command', 'scheduled_task', 'user_flow'].includes(anchor.type);
   const suggestions = ref && anchor ? [{ target: { kind: entry ? 'flow' as const : 'entity' as const, ref, label: anchor.name, type: anchor.type }, text: entry ? 'Explain this flow' : `Explain ${anchor.name}`, title: 'Explain what this code sets in motion' }] : [];
   // Previous / next flow, in the list as filtered in the Flows panel.
-  const order = useMemo(() => catalog.data ? visibleCatalog(catalog.data.items, { tab: catalog.kind, query: catalog.query, status: catalog.filter }).flatMap(group => group.items) : [], [catalog.data, catalog.kind, catalog.query, catalog.filter]);
+  const order = useMemo(() => catalog.data ? visibleCatalog(catalog.data.items, { tab: catalog.kind, query: catalog.query, coverage: catalog.evidence, scope: catalog.scope ?? 'application' }).flatMap(group => group.items) : [], [catalog.data, catalog.kind, catalog.query, catalog.evidence,catalog.scope]);
   if (!view || !named) return null;
   const position = order.findIndex(item => item.id === view.id && (item.detail === 'lanes') === view.lanes);
   const step = (delta: number) => { const item = order[position + delta]; if (item) void store.openCatalogFlow(item); };
@@ -52,7 +52,7 @@ export function FlowHead() {
   const panes: { pane?: FlowPane; text: string; title: string }[] = [
     { text: 'Split', title: 'The map, the diagram and the outline side by side' },
     { pane: 'map', text: 'Map', title: 'The map alone, with the flow on it' },
-    { pane: 'diagram', text: diagram, title: view.lanes ? 'The lanes alone: client, call, route, middleware, controller, services, data, response' : 'The steps in layers alone, top down from where they start' },
+    { pane: 'diagram', text: diagram, title: view.lanes ? 'The flow in lanes, grouped by the role of each step' : 'The steps in layers alone, top down from where they start' },
     { pane: 'outline', text: 'Outline', title: 'The outline of steps alone, with the conditions on each link' },
   ];
   return (
@@ -174,7 +174,7 @@ function DiagramPane({ page, update }: PageViewProps) {
   if (!view) return null;
   if (view.lanes) return (
     <section className="flow-pane flow-pane-diagram" role="region" aria-label={data ? `Request flow ${data.name}` : 'Lanes'}>
-      <PaneHead pane="diagram" title="Lanes">{data && <StagePips stages={data.stages} labels />}</PaneHead>
+      <PaneHead pane="diagram" title="Lanes">{data && <StagePips stages={data.stages} labels operation={data.kind === 'operation'} />}</PaneHead>
       <LanesBody />
     </section>
   );

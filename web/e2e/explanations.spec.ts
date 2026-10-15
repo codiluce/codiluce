@@ -30,3 +30,27 @@ test('explanations: asking without a key says where the key goes, and the questi
   await expect(column(page).locator('.context-chip')).toHaveCount(1);
   await expect(column(page).getByRole('button', { name: 'Copy for agent' })).toBeVisible();
 });
+test('explanations: an agent at work shows on the button and in the column before it saves anything', async ({ page }) => {
+  const now = new Date().toISOString();
+  const work = { startedAt: now, updatedAt: now, title: 'How login works', question: 'How does login work?', steps: [{ text: 'flow flow:POST /auth/login', at: now }], count: 1 };
+  let items: unknown[] = [{ session: '1-abc', agent: 'claude-code', state: 'working', connectedAt: now, updatedAt: now, work }];
+  await page.route('**/api/explanations/activity', route => route.fulfill({ json: { items } }));
+  await page.goto('/');
+  const button = page.getByRole('button', { name: /^Explain/ });
+  await expect(button).toHaveClass(/working/);
+  await expect(button).toHaveAttribute('title', /^Claude Code is working on an explanation/);
+  await button.click();
+  const card = column(page).getByRole('region', { name: 'Claude Code is working' });
+  await expect(card).toContainText('Claude Code is explaining');
+  await expect(card).toContainText('How does login work?');
+  await expect(card).toContainText('flow flow:POST /auth/login');
+  // Reading another explanation, a line says it is still working.
+  await column(page).getByRole('button', { name: /How login works/ }).click();
+  await expect(column(page).getByRole('status').filter({ hasText: 'Claude Code is explaining: How login works' })).toBeVisible();
+  await column(page).getByRole('button', { name: 'Show' }).click();
+  await card.getByRole('button', { name: 'Hide' }).click();
+  await expect(card).toHaveCount(0);
+  // Its work ended (it published, or stopped): the button stops pulsing.
+  items = [{ session: '1-abc', agent: 'claude-code', state: 'connected', connectedAt: now, updatedAt: now }];
+  await expect(button).not.toHaveClass(/working/);
+});

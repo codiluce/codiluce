@@ -68,10 +68,11 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
     else if ((match = new RegExp(`^/api/projection/impact/${ID}$`).exec(pathname))) result = projection.impact(decodeURIComponent(match[1]!), { ...page, ...impactParams(params), view });
     else if ((match = new RegExp(`^/api/projection/steps/${ID}$`).exec(pathname))) result = await projection.steps(decodeURIComponent(match[1]!), { view, maxFileBytes: context.maxFileBytes });
     else if (pathname === '/api/projection/request-flows') result = projection.requestFlows({ view, entity: text(params, 'entity') });
-    else if (pathname === '/api/projection/flows') result = projection.flows({ view, entity: text(params, 'entity'), kind: text(params, 'kind') });
+    else if (pathname === '/api/projection/flows') result = projection.flows({ view, entity: text(params, 'entity'), kind: text(params, 'kind'),scope:text(params,'scope') as 'application'|'test'|'fixture'|'all'|undefined });
     else if (pathname === '/api/projection/coverage') result = projection.coverage(view);
     else if (pathname === '/api/projection/coverage/export') result = projection.coverageExport(view);
     else if (pathname === '/api/projection/families') result = projection.families(view);
+    else if (pathname === '/api/projection/lens') result = await projection.metricLens(view, { lens: text(params, 'lens'), window: text(params, 'window') });
     else if (pathname === '/api/projection/features') result = projection.features(view);
     else if (pathname === '/api/projection/files') result = await projection.fileList(view, { feature: params.get('feature') ?? undefined, family: params.get('family') ?? undefined, coverage: params.get('coverage') ?? undefined, person: params.get('person') ?? undefined, pull: params.get('pull') ?? undefined, window: text(params, 'window') });
     else if (pathname === '/api/authorship') result = await projection.authorship(view, { window: text(params, 'window') });

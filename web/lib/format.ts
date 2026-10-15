@@ -3,7 +3,7 @@ const TYPE_LABELS: Record<string, string> = {
   repository: 'Repository', application: 'Application', group: 'District', directory: 'Directory', file: 'File',
   class: 'Class', controller: 'Controller', component: 'Component', function: 'Function', method: 'Method',
   route: 'Page route', api_endpoint: 'Endpoint', model: 'Model', database_table: 'Database table',
-  external_service: 'External service', test: 'Test', user_flow: 'User flow', domain: 'Domain',
+  external_service: 'External service', test: 'Test', user_flow: 'Flow entry', domain: 'Domain',
   command: 'Command', scheduled_task: 'Scheduled task',
 };
 export function typeLabel(type: string, role?: string): string {

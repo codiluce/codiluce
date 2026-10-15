@@ -1,0 +1,32 @@
+# Paths and symbols refer to the repository being analyzed, never Codiluce's
+# own installed source. Copy the relevant fields into .codiluce/config.yml.
+repository:
+  name: my-tool
+applications:
+  - name: engine
+    path: .
+    ecosystems: [node]
+    flowEntries:
+      - name: Build catalog
+        path: src/catalog.ts
+        symbol: buildCatalog
+        kind: function
+      # For a custom protocol dispatcher, select its original parameter.
+      # Literal if/switch branches become separate guarded flows.
+      - name: MCP
+        path: src/protocol.ts
+        symbol: Session.dispatch
+        kind: mcp
+        selector: method
+    externalServices:
+      - name: Content API
+        origin: https://content.example.com
+  - name: map
+    path: web
+    frameworks: [nextjs, react]
+    apiProxies:
+      - target: engine
+        pathPrefix: /api
+        targetPrefix: /api
+ignore: []
+maxFileBytes: 1048576

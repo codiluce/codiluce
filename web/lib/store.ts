@@ -9,15 +9,15 @@
 import type { MapVisibilityAction } from '@engine/projection/dto';
 import type { Entity, Relation } from '@engine/core/graph';
 import type { AggregateEdgesPage, AggregateGroup, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FlowList, FlowSummary, ImpactItem, ImpactResult, LocateResult, NodeSummary, ProjectionMeta, Rect, RelationItem, RequestFlow, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineEntry, TimelineResponse, ViewKey } from '@engine/projection/dto';
-import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, EntityPulls, FamiliesResult, FeaturesResult, FileListResult, FlowStatus, ImpactGroupBy, PersonAuthorship, PullDetail, PullsResult } from '@engine/projection/dto';
+import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, EntityPulls, FamiliesResult, FeaturesResult, FileListResult, FlowStatus, ImpactGroupBy, MetricLens, MetricLensResult, PersonAuthorship, PullDetail, PullsResult } from '@engine/projection/dto';
 import type { CatalogTab } from './catalog';
 import { fromRequestFlow, fromSteps, type MapFlow } from './map-flow';
 import { isAbort, type AtlasApi } from './api';
 import type { Level } from './lod';
 import { Scene } from './scene';
 import { Evolution } from './evolution';
-import { DEFAULT_THEME } from './themes';
-import type { AskEvent, ExplanationDetail, ExplanationList, ExplanationsSetup, ResolvedLink } from '@engine/explanations/model';
+import { themeById } from './themes';
+import type { AgentActivity, AskEvent, ExplanationDetail, ExplanationList, ExplanationsSetup, ResolvedLink } from '@engine/explanations/model';
 import type { EntityExplanations } from '@engine/explanations/service';
 // A relative import: the store also runs under Node (web/tests), where the @engine alias is for types only.
 import { chatQuestion, type PromptTarget } from '../../src/explanations/prompts';
@@ -159,6 +159,8 @@ export interface CatalogState {
   query: string;
   /** Only the HTTP flows with this completeness. */
   filter?: FlowStatus;
+  evidence?: import('@engine/projection/dto').EvidenceCoverage;
+  scope?: import('@engine/projection/dto').FlowScope | 'all';
   /** Only the flows touching this entity (or anything inside it). */
   entity?: { id: string; name: string };
   /** Incremented to ask the shell to show the Flows panel. */
@@ -195,6 +197,10 @@ export interface PeopleState {
   /** Incremented to ask the shell to show the People panel. */
   reveal?: number;
 }
+/** A measure drawn over the map (`show`): complexity, changes in the people window, or both (hotspots); `stamp` is the view (and window) of `data`. */
+export interface LensState { show?: MetricLens; status: Status; stamp?: string; data?: MetricLensResult; error?: string }
+/** What colors the map's files: their type (the theme's colors), or one lens at a time. */
+export type ColorMode = 'type' | 'coverage' | 'families' | 'people' | MetricLens;
 /**
  * Pull requests in the people window: merged into the branch up to the commit
  * shown, open now (pull requests and branches), closed. The Pull requests
@@ -245,6 +251,10 @@ export interface ExplainState {
   asking?: { status: 'streaming' | 'error'; explanationId?: string; refresh?: boolean; question: string; context: ContextChip[]; text: string; tools: string[]; model?: string; note?: string; error?: string };
   /** Explanations an agent saved while the column was closed. */
   unseen: string[];
+  /** Agents connected over MCP, and what they are explaining right now (before they save it). */
+  agents: AgentActivity[];
+  /** Work the reader hid from the column (`workKey`). */
+  dismissed: string[];
   /** Incremented to ask the shell to show the column. */
   reveal?: number;
 }
@@ -268,7 +278,6 @@ export interface AtlasState {
   showDiagnostics: boolean;
   themeId: string;
   /** Settings: the theme menu offers every theme, not only Dusk and Dawn. */
-  moreThemes: boolean;
   /** Draw blocks as their archetype's shape (a controller a turntable, a table drums…) instead of plain boxes. */
   shapes: boolean;
   /** Draw blocks a little inside their places, with streets between them. */
@@ -287,6 +296,7 @@ export interface AtlasState {
   families: FamiliesState;
   features: FeaturesState;
   people: PeopleState;
+  lens: LensState;
   pulls: PullsState;
   center: CenterView;
   flowView?: FlowViewState;
@@ -343,6 +353,12 @@ export function entryOf(timeline: TimelineResponse | undefined, id: string | und
   return id ? timeline?.entries.find(item => item.snapshot?.id === id) : undefined;
 }
 /** Which snapshots a time-lapse covers: the indexed commits of the timeline, in order. */
+/** One piece of an agent's work (hiding it hides only that piece). */
+export function workKey(activity: AgentActivity): string { return `${activity.session}|${activity.work?.startedAt ?? ''}`; }
+/** Agents working on an explanation now, minus the work the reader hid. */
+export function workingAgents(explain: Pick<ExplainState, 'agents' | 'dismissed'>): AgentActivity[] {
+  return explain.agents.filter(agent => agent.state === 'working' && agent.work && !explain.dismissed.includes(workKey(agent)));
+}
 function evolutionKey(timeline: TimelineResponse | undefined): string { return (timeline?.entries ?? []).flatMap(entry => entry.snapshot ? [entry.snapshot.id] : []).join(','); }
 export function isContainer(node: Pick<NodeSummary, 'type' | 'kind'>): boolean {
   return node.kind === 'group' || ['repository', 'application', 'directory'].includes(node.type);
@@ -355,6 +371,8 @@ export class AtlasStore {
   private readonly childLoads = new Set<string>();
   private pollTimer?: ReturnType<typeof setInterval>;
   private explainTimer?: ReturnType<typeof setInterval>;
+  private activityTimer?: ReturnType<typeof setTimeout>;
+  private activity = { key: '', busy: false };
   private timelineTimer?: ReturnType<typeof setTimeout>;
   /** Incremented on every view change; async work started under an older epoch is discarded. */
   private epoch = 0;
@@ -381,16 +399,16 @@ export class AtlasStore {
   private openingHash?: string;
   constructor(readonly api: AtlasApi, private readonly options: StoreOptions = {}) {
     this.openingHash = options.location?.hash;
-    let prefs: { themeId?: string; moreThemes?: boolean; shapes?: boolean; streets?: boolean; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey; explainLens?: boolean; chatModel?: string; flowSplit?: FlowSplit; connections?: Connections } = {};
+    let prefs: { themeId?: string; shapes?: boolean; streets?: boolean; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey; explainLens?: boolean; chatModel?: string; flowSplit?: FlowSplit; connections?: Connections } = {};
     try { prefs = JSON.parse(options.storage?.getItem('codiluce:prefs') ?? '{}'); } catch { /* defaults */ }
     this.state = {
       status: 'loading', view: { level: 'Applications', focus: [], zoom: 1, visible: [], truncated: false },
       relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' },
-      history: { entries: [], index: -1 }, showDiagnostics: prefs.showDiagnostics ?? true, themeId: prefs.themeId ?? DEFAULT_THEME, moreThemes: prefs.moreThemes ?? false, shapes: prefs.shapes ?? true, streets: prefs.streets ?? true,
+      history: { entries: [], index: -1 }, showDiagnostics: prefs.showDiagnostics ?? true, themeId: themeById(prefs.themeId).id, shapes: prefs.shapes ?? true, streets: prefs.streets ?? true,
       staleIndex: false, sceneRevision: 0, mapVisibility: { open: false, busy: false },
       impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '', open: {} }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, families: { show: false, status: 'idle' }, features: { status: 'idle', open: {} },
-      people: { window: prefs.peopleWindow ?? 'all', show: false, status: 'idle', open: {} }, pulls: { status: 'idle', tab: 'open', query: '', open: {} }, center: 'map',
-      explain: { open: false, list: { status: 'idle' }, lens: prefs.explainLens ?? true, draft: { text: '', context: [], ...(prefs.chatModel ? { model: prefs.chatModel } : {}) }, unseen: [] },
+      people: { window: prefs.peopleWindow ?? 'all', show: false, status: 'idle', open: {} }, lens: { status: 'idle' }, pulls: { status: 'idle', tab: 'open', query: '', open: {} }, center: 'map',
+      explain: { open: false, list: { status: 'idle' }, lens: prefs.explainLens ?? true, draft: { text: '', context: [], ...(prefs.chatModel ? { model: prefs.chatModel } : {}) }, unseen: [], agents: [], dismissed: [] },
       flowSplit: clampSplit(prefs.flowSplit ?? FLOW_SPLIT), connections: prefs.connections === 'rails' ? 'rails' : 'arcs',
       timeline: { open: false, status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true, split: prefs.split ?? true, regionLevel: prefs.regionLevel ?? 'auto', regions: { status: 'idle' } },
     };
@@ -410,9 +428,9 @@ export class AtlasStore {
   }
   private bumpScene(): void { this.set(state => ({ sceneRevision: state.sceneRevision + 1 })); }
   private savePrefs(): void {
-    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, moreThemes: this.state.moreThemes, shapes: this.state.shapes, streets: this.state.streets, flowSplit: this.state.flowSplit, connections: this.state.connections, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window, explainLens: this.state.explain.lens, ...(this.state.explain.draft.model ? { chatModel: this.state.explain.draft.model } : {}) })); } catch { /* preferences are optional */ }
+    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, shapes: this.state.shapes, streets: this.state.streets, flowSplit: this.state.flowSplit, connections: this.state.connections, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window, explainLens: this.state.explain.lens, ...(this.state.explain.draft.model ? { chatModel: this.state.explain.draft.model } : {}) })); } catch { /* preferences are optional */ }
   }
-  dispose(): void { this.disposed = true; for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.explainTimer) clearInterval(this.explainTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
+  dispose(): void { this.disposed = true; for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.explainTimer) clearInterval(this.explainTimer); if (this.activityTimer) clearTimeout(this.activityTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
 
   async init(): Promise<void> {
     this.set({ status: 'loading', error: undefined });
@@ -447,6 +465,8 @@ export class AtlasStore {
     if (this.explainTimer) clearInterval(this.explainTimer);
     // An agent may save an explanation at any time: the list is checked more often than the index.
     if (this.options.explanations) this.explainTimer = setInterval(() => void this.pollExplanations(), 6_000);
+    // What an agent is doing is cheap to read and should show the moment it starts.
+    void this.refreshActivity();
     if (this.pollTimer) clearInterval(this.pollTimer);
     this.pollTimer = setInterval(async () => {
       try {
@@ -471,6 +491,7 @@ export class AtlasStore {
     if (this.state.people.focus) void this.loadPerson(this.state.people.focus);
     if (this.state.pulls.status !== 'idle') void this.loadPulls();
     if (this.state.pulls.focus) void this.loadPull(this.state.pulls.focus);
+    if (this.state.lens.show) void this.loadLens();
   }
   /** Fetch the next page of children for each container (bounded, de-duplicated). */
   async loadChildren(ids: string[]): Promise<void> {
@@ -697,8 +718,6 @@ export class AtlasStore {
   setDiffWhitespace(ignoreWhitespace: boolean): void { const diff = this.state.diff; if (diff) void this.openDiff(diff.entity, diff.title, { ignoreWhitespace }); }
   toggleDiagnostics(): void { this.set(state => ({ showDiagnostics: !state.showDiagnostics })); this.savePrefs(); }
   setTheme(themeId: string): void { this.set({ themeId }); this.savePrefs(); }
-  /** Settings: offer every theme in the theme menu (otherwise Dusk and Dawn, and the theme in use). */
-  setMoreThemes(moreThemes: boolean): void { this.set({ moreThemes }); this.savePrefs(); }
   setShapes(shapes: boolean): void { this.set({ shapes }); this.savePrefs(); }
   setStreets(streets: boolean): void { this.set({ streets }); this.savePrefs(); }
 
@@ -1023,6 +1042,7 @@ export class AtlasStore {
       if (this.state.catalog.status !== 'idle') void this.loadCatalog();
       if (this.state.coverage.show) void this.loadCoverage();
       if (this.state.families.show) void this.loadFamilies();
+      if (this.state.lens.show) void this.loadLens();
       if (this.state.features.status !== 'idle') void this.loadFeatures();
       if (this.state.people.status !== 'idle') void this.loadPeople();
       if (this.state.people.focus) void this.loadPerson(this.state.people.focus);
@@ -1059,9 +1079,11 @@ export class AtlasStore {
   }
   /** What the uncommitted changes of the live index affect. */
   showWorkingImpact(): Promise<void> { return this.showImpact(WORKING_CHANGES); }
-  /** Open the Impact tool on nothing yet: it offers the selection and the uncommitted changes. */
-  openImpactTool(): void {
-    if (this.state.impact.open) { this.setCenter('impact'); return; }
+  /** Start from the selection; an existing radius stays on its origin while its results are inspected. */
+  async openImpactTool(): Promise<void> {
+    if (this.state.impact.open && this.state.impact.forId) { this.setCenter('impact'); return; }
+    const selection = this.state.selection?.node;
+    if (selection?.kind === 'entity') { await this.showImpact(selection.id); return; }
     this.set(state => ({ center: 'impact', impact: { ...state.impact, open: true, status: 'idle', forId: undefined, data: undefined, items: [], filter: {}, error: undefined } }));
   }
   hideImpact(): void {
@@ -1199,6 +1221,8 @@ export class AtlasStore {
   /** Filter the Flows list; the groups follow the filter again (open while filtering). */
   setCatalogQuery(query: string): void { this.setCatalog({ query, open: {} }); }
   setCatalogFilter(filter: FlowStatus | undefined): void { this.setCatalog(catalog => ({ filter: catalog.filter === filter ? undefined : filter })); }
+  setCatalogEvidence(evidence: CatalogState['evidence']): void { this.setCatalog(catalog => ({ evidence:catalog.evidence === evidence ? undefined : evidence })); }
+  setCatalogScope(scope: NonNullable<CatalogState['scope']>): void { this.setCatalog({ scope,open:{} }); }
   /** Open a flow of the catalog in the middle. */
   openCatalogFlow(item: FlowSummary, options: { pane?: FlowPane | null } = {}): Promise<void> {
     const entry = flowEntry(item);
@@ -1287,7 +1311,7 @@ export class AtlasStore {
   /** Show or hide the coverage lens: files colored by whether flows touch them. */
   async toggleCoverage(show = !this.state.coverage.show): Promise<void> {
     // Coverage and data families both color files: one at a time.
-    this.set(state => ({ coverage: { ...state.coverage, show }, ...(show && state.families.show ? { families: { ...state.families, show: false, focus: undefined } } : {}), ...(show && state.people.show ? { people: { ...state.people, show: false } } : {}) }));
+    this.set(state => ({ coverage: { ...state.coverage, show }, ...(show && state.families.show ? { families: { ...state.families, show: false, focus: undefined } } : {}), ...(show && state.people.show ? { people: { ...state.people, show: false } } : {}), ...(show && state.lens.show ? { lens: { ...state.lens, show: undefined } } : {}) }));
     if (show && (this.state.coverage.status !== 'ready' || this.state.coverage.viewStamp !== this.viewStamp())) await this.loadCoverage();
   }
   async loadCoverage(): Promise<void> {
@@ -1302,7 +1326,7 @@ export class AtlasStore {
   }
   /** Show or hide data families: files colored by the tables they use (or the code they use does). */
   async toggleFamilies(show = !this.state.families.show): Promise<void> {
-    this.set(state => ({ families: { ...state.families, show, ...(show ? {} : { focus: undefined }) }, ...(show && state.coverage.show ? { coverage: { ...state.coverage, show: false } } : {}), ...(show && state.people.show ? { people: { ...state.people, show: false } } : {}) }));
+    this.set(state => ({ families: { ...state.families, show, ...(show ? {} : { focus: undefined }) }, ...(show && state.coverage.show ? { coverage: { ...state.coverage, show: false } } : {}), ...(show && state.people.show ? { people: { ...state.people, show: false } } : {}), ...(show && state.lens.show ? { lens: { ...state.lens, show: undefined } } : {}) }));
     if (show && (this.state.families.status !== 'ready' || this.state.families.viewStamp !== this.viewStamp())) await this.loadFamilies();
   }
   /** Families of the current view, loaded when they are not yet (the inspector reads them without coloring the map). */
@@ -1413,9 +1437,34 @@ export class AtlasStore {
       this.set(state => state.selection?.id === id ? { selection: { ...state.selection, authorship: { status: 'ready', stamp, data } } } : {});
     } catch (error) { if (!isAbort(error)) this.set(state => state.selection?.id === id ? { selection: { ...state.selection, authorship: { status: 'error', error: error instanceof Error ? error.message : String(error) } } } : {}); }
   }
+  /** What colors the map's files now. */
+  colorMode(state = this.state): ColorMode { return state.coverage.show ? 'coverage' : state.families.show ? 'families' : state.people.show ? 'people' : state.lens.show ?? 'type'; }
+  /** Color the map's files by one thing at a time (`type`: the theme's colors by kind). */
+  async colorBy(mode: ColorMode): Promise<void> {
+    if (mode === 'coverage') return this.toggleCoverage(true);
+    if (mode === 'families') return this.toggleFamilies(true);
+    if (mode === 'people') return this.togglePeopleColors(true);
+    this.set(state => ({ coverage: { ...state.coverage, show: false }, families: { ...state.families, show: false, focus: undefined }, people: { ...state.people, show: false }, lens: { ...state.lens, show: mode === 'type' ? undefined : mode } }));
+    const lens = this.state.lens;
+    if (lens.show && (lens.status !== 'ready' || lens.stamp !== this.lensStamp())) await this.loadLens();
+  }
+  /** The view (and, for changes and hotspots, the people window) a lens was computed for. */
+  lensStamp(lens = this.state.lens.show): string { return lens === 'complexity' ? `${this.viewStamp()}|${lens}` : `${this.peopleStamp()}|${lens}`; }
+  async loadLens(): Promise<void> {
+    const lens = this.state.lens.show;
+    if (!lens) return;
+    const signal = this.abortable('lens');
+    const stamp = this.lensStamp(lens);
+    this.set(state => ({ lens: { ...state.lens, status: 'loading', error: undefined } }));
+    try {
+      const data = await this.api.lens(lens, this.peopleWindow(), signal);
+      if (signal.aborted) return;
+      this.set(state => state.lens.show === lens ? { lens: { ...state.lens, status: 'ready', data, stamp } } : {});
+    } catch (error) { if (!isAbort(error)) this.set(state => ({ lens: { ...state.lens, status: 'error', error: error instanceof Error ? error.message : String(error) } })); }
+  }
   /** Color files by the person who changed each most (coverage and data families let go: one coloring at a time). */
   async togglePeopleColors(show = !this.state.people.show): Promise<void> {
-    this.set(state => ({ people: { ...state.people, show }, ...(show && state.coverage.show ? { coverage: { ...state.coverage, show: false } } : {}), ...(show && state.families.show ? { families: { ...state.families, show: false, focus: undefined } } : {}) }));
+    this.set(state => ({ people: { ...state.people, show }, ...(show && state.coverage.show ? { coverage: { ...state.coverage, show: false } } : {}), ...(show && state.families.show ? { families: { ...state.families, show: false, focus: undefined } } : {}), ...(show && state.lens.show ? { lens: { ...state.lens, show: undefined } } : {}) }));
     if (show) await this.ensurePeople();
   }
   /**
@@ -1455,6 +1504,7 @@ export class AtlasStore {
       this.state.pulls.focus ? this.loadPull(this.state.pulls.focus) : undefined,
       selection?.pulls ? this.loadSelectionPulls(selection.id, this.aborts.get('selection')?.signal ?? new AbortController().signal) : undefined,
       this.state.files?.kind === 'person' || this.state.files?.kind === 'pull' ? this.loadFiles() : undefined,
+      this.state.lens.show && this.state.lens.show !== 'complexity' ? this.loadLens() : undefined,
     ]);
   }
   /** Expand or collapse a row of the People panel (`open` undefined: toggle). */
@@ -1724,6 +1774,34 @@ export class AtlasStore {
       if (selection) void this.loadSelectionExplanations(selection.id, this.aborts.get('selection')?.signal ?? new AbortController().signal);
     } catch { /* the server may be restarting */ }
   }
+  /**
+   * What connected agents are doing: their work shows in the column from their first step, and what they publish is read at once.
+   * Read every second while an agent is connected (its next step should show at once), every 3 s otherwise; and at once when the
+   * page is shown again, since hidden pages have their timers slowed.
+   */
+  async refreshActivity(): Promise<void> {
+    if (!this.options.explanations || this.disposed || this.activity.busy) return;
+    if (this.activityTimer) clearTimeout(this.activityTimer);
+    await this.pollActivity();
+    if (this.activityTimer) clearTimeout(this.activityTimer);
+    if (!this.disposed) this.activityTimer = setTimeout(() => void this.refreshActivity(), this.state.explain.agents.length ? 1_000 : 3_000);
+  }
+  private async pollActivity(): Promise<void> {
+    const api = this.options.explanations;
+    if (!api) return;
+    this.activity.busy = true;
+    try {
+      const { items } = await api.activity();
+      const key = JSON.stringify(items);
+      if (this.disposed || key === this.activity.key) return;
+      const before = this.activity.key ? this.state.explain.agents : undefined;
+      this.activity.key = key;
+      // Hidden work that ended is forgotten: that agent's next work shows again.
+      this.setExplain(explain => ({ agents: items, dismissed: explain.dismissed.filter(hidden => items.some(item => item.work && workKey(item) === hidden)) }));
+      if (before && items.some(item => item.published && item.published.at !== before.find(old => old.session === item.session)?.published?.at)) void this.pollExplanations();
+    } catch { /* the server may be restarting */ } finally { this.activity.busy = false; }
+  }
+  dismissAgentWork(activity: AgentActivity): void { this.setExplain(explain => ({ dismissed: [...new Set([...explain.dismissed, workKey(activity)])] })); }
   async openExplanation(id: string, options: { quiet?: boolean } = {}): Promise<void> {
     const api = this.options.explanations;
     if (!api) return;
@@ -1844,7 +1922,7 @@ export class AtlasStore {
 }
 /** How a catalog flow is opened (in lanes, or by its steps), and its title. */
 export function flowEntry(item: FlowSummary): { id: string; detail: 'lanes' | 'steps'; title: string; subtitle?: string; kind: CatalogKind } {
-  const technical = item.kind === 'command' || item.kind === 'schedule' || item.detail === 'steps' ? item.name : `${item.method ?? ''} ${item.path ?? item.name}`.trim();
+  const technical = item.kind === 'command' || item.kind === 'schedule' || ['cli','mcp','worker','function'].includes(item.kind) || item.detail === 'steps' ? item.name : `${item.method ?? ''} ${item.path ?? item.name}`.trim();
   const context = item.kind === 'schedule' ? item.cadence : item.kind === 'command' ? (item.handler ? `runs ${item.handler}` : undefined) : item.detail === 'steps' ? 'page' : item.handler ? `handled by ${item.handler}` : undefined;
   // A title the models gave reads first; the technical name stays beside it.
   const subtitle = item.title ? [technical, context].filter(Boolean).join(' · ') : context;

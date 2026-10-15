@@ -7,12 +7,13 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { FlowLane, FlowStages, RequestFlow, RequestFlowEdge, RequestFlowNode } from '@engine/projection/dto';
 import { typeLabel } from '../lib/format';
-import { fitScale, layoutRequestFlow, LANE_TEXT, STAGES, statusClass, STATUS_HINT, STATUS_TEXT, type PlacedFlowEdge, type RequestFlowLayout } from '../lib/request-flows';
+import { fitScale, layoutRequestFlow, LANE_TEXT, STAGES, statusClass, type PlacedFlowEdge, type RequestFlowLayout } from '../lib/request-flows';
 import { useAtlas, useStore } from './context';
 import { TypeBadge } from './TypeBadge';
+import { COVERAGE_TEXT, COVERAGE_HINT } from '../lib/catalog';
 
-const KIND_ICON: Record<string, string> = { page: '▦', entry: '◆', trigger: '⚡', caller: '↗', endpoint: '⇥', command: '⌘', schedule: '⏱', middleware: '◈', validation: '✓', handler: '⚙', method: 'ƒ', model: '◉', table: '⛁', effect: '✦', response: '↩', receive: '↘', continuation: '➜', gap: '?' };
-const KIND_TEXT: Record<string, string> = { page: 'page', entry: 'entry point', trigger: 'event handler', caller: 'makes the request', endpoint: 'endpoint', command: 'Artisan command', schedule: 'scheduled task', middleware: 'middleware', validation: 'validation', handler: 'handler', method: 'method', model: 'model', table: 'table', effect: 'side effect', response: 'response', receive: 'receives the response', continuation: 'then, on the client', gap: 'gap' };
+const KIND_ICON: Record<string, string> = { page: '▦', entry: '◆', trigger: '⚡', caller: '↗', endpoint: '⇥', command: '⌘', schedule: '⏱', middleware: '◈', validation: '✓', handler: '⚙', method: 'ƒ', model: '◉', table: '⛁', effect: '✦', external: '↗', response: '↩', receive: '↘', continuation: '➜', gap: '?' };
+const KIND_TEXT: Record<string, string> = { page: 'page', entry: 'entry point', trigger: 'event handler', caller: 'makes the request', endpoint: 'endpoint', command: 'Artisan command', schedule: 'scheduled task', middleware: 'middleware', validation: 'validation', handler: 'handler', method: 'method', model: 'model', table: 'table', effect: 'side effect', external: 'external service', response: 'response', receive: 'receives the response', continuation: 'then, on the client', gap: 'gap' };
 const LANE_ICON: Record<FlowLane, string> = { client: '▦', call: '↗', route: '⇥', gate: '◈', controller: '⚙', service: 'ƒ', data: '⛁', response: '↩', return: '↘' };
 const STAGE_LANE: Record<string, FlowLane> = { client: 'client', call: 'call', handler: 'controller', data: 'data', response: 'response', returns: 'return' };
 const clip = (text: string, max: number) => text.length > max ? `${text.slice(0, max - 1)}…` : text;
@@ -26,10 +27,11 @@ export function MethodBadge({ method }: { method: string }) {
   const known = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'].includes(method.toUpperCase());
   return <span className={`rf-method m-${known ? method.toLowerCase() : 'other'}`}>{known ? method.toUpperCase() : method.slice(0, 6) || 'HTTP'}</span>;
 }
-export function StagePips({ stages, labels }: { stages: FlowStages; labels?: boolean }) {
+export function StagePips({ stages, labels, operation }: { stages: FlowStages; labels?: boolean; operation?: boolean }) {
+  const shown = operation ? [['client','Trigger'],['handler','Handler'],['data','Effects'],['response','Outcome']] as const : STAGES;
   return (
-    <span className={`rf-pips${labels ? ' labelled' : ''}`} aria-label={`Stages found: ${STAGES.filter(([key]) => stages[key]).map(([, text]) => text).join(', ') || 'none'}`}>
-      {STAGES.map(([key, text]) => (
+    <span className={`rf-pips${labels ? ' labelled' : ''}`} aria-label={`Stages found: ${shown.filter(([key]) => stages[key]).map(([, text]) => text).join(', ') || 'none'}`}>
+      {shown.map(([key, text]) => (
         <span key={key} className={`rf-pip${stages[key] ? ' on' : ''}`} style={{ '--pip': `var(--lane-${STAGE_LANE[key]})` } as CSSProperties} title={`${text}: ${stages[key] ? 'found' : 'not found'}`}>
           {labels && <span className="rf-pip-text">{text}</span>}
         </span>
@@ -40,7 +42,7 @@ export function StagePips({ stages, labels }: { stages: FlowStages; labels?: boo
 
 // Lanes ------------------------------------------------------------------------
 /** The heading of a flow drawn in lanes: a request's path, or a command's or task's name. */
-export function lanesTitle(data: RequestFlow): string { return data.kind === 'command' || data.kind === 'schedule' ? data.name : data.path; }
+export function lanesTitle(data: RequestFlow): string { return data.kind === 'command' || data.kind === 'schedule' || data.kind === 'operation' ? data.name : data.path; }
 export function lanesSubtitle(data: RequestFlow): string {
   return `${data.kind === 'unmatched' ? `requested by ${data.caller}` : data.kind === 'schedule' ? data.path : data.handler ? `${data.kind === 'command' ? 'runs' : 'handled by'} ${data.handler}` : 'no handler resolved'}${data.app ? ` · ${data.app}` : ''}`;
 }
@@ -48,7 +50,9 @@ export function LanesBadge({ data }: { data?: RequestFlow }) {
   return data ? (data.kind === 'command' ? <span className="rf-method m-other">⌘</span> : data.kind === 'schedule' ? <span className="rf-method m-other">⏱</span> : <MethodBadge method={data.method} />) : <span className="rf-method m-other">…</span>;
 }
 export function LanesStatus({ data }: { data: RequestFlow }) {
-  return <span className={`rf-status s-${data.status}`} title={STATUS_HINT[data.status]}>{STATUS_TEXT[data.status]}{data.gaps ? ` · ${data.gaps} gap${data.gaps === 1 ? '' : 's'}` : ''}</span>;
+  const coverage = data.evidenceCoverage ?? (data.gaps || data.status !== 'complete' ? 'known-gaps' : 'no-known-gaps');
+  const gaps=data.evidenceGaps ?? data.gaps;
+  return <span className={`rf-status s-${coverage === 'no-known-gaps' ? 'complete' : 'partial'}`} title={COVERAGE_HINT[coverage]}>{COVERAGE_TEXT[coverage]}{gaps ? ` · ${gaps} gap${gaps === 1 ? '' : 's'}` : ''}</span>;
 }
 /** A flow in lanes, left to right: the diagram with the focused step's details, and the legend. */
 export function LanesBody() {
@@ -67,7 +71,7 @@ export function LanesBody() {
   const data = open.data;
   return (
     <div className="lanes-body">
-      {open.status === 'loading' && !data && <div className="rf-loading big"><span className="rf-spark" />Following the request…</div>}
+      {open.status === 'loading' && !data && <div className="rf-loading big"><span className="rf-spark" />Following the flow…</div>}
       {open.status === 'error' && <p className="note error" style={{ margin: 16 }}>{open.error}</p>}
       {data && (
         <div className="rf-body">
@@ -82,8 +86,8 @@ export function LanesBody() {
 function FlowFooter({ flow }: { flow: RequestFlow }) {
   return (
     <footer className="rf-foot">
-      <span className="rf-foot-item"><span className="rf-legend-line" /> indexed relationship, streaming the way it runs</span>
-      <span className="rf-foot-item"><span className="rf-legend-line returns" /> response going back</span>
+      <span className="rf-foot-item"><span className="rf-legend-line" /> indexed relationship; source guards show when it can run</span>
+      <span className="rf-foot-item"><span className="rf-legend-line returns" /> {flow.kind === 'operation' ? 'outcome or continuation' : 'response going back'}</span>
       <span className="rf-foot-item"><span className="rf-legend-line gap" /> gap: the index cannot see further</span>
       <span className="rf-foot-item"><span className="rf-legend-when" /> conditional</span>
       <span className="rf-foot-stats">
@@ -132,7 +136,7 @@ function FlowDiagram({ flow, focus }: { flow: RequestFlow; focus?: string }) {
       onPointerDown={event => { if (!background(event.target) || !canvas.current) return; drag.current = { x: event.clientX, y: event.clientY, left: canvas.current.scrollLeft, top: canvas.current.scrollTop }; }}
       onPointerMove={event => { const start = drag.current, element = canvas.current; if (!start || !element) return; element.scrollLeft = start.left - (event.clientX - start.x); element.scrollTop = start.top - (event.clientY - start.y); }}
       onPointerUp={() => { drag.current = null; }} onPointerLeave={() => { drag.current = null; }}>
-      <svg ref={svg} width={Math.round(layout.width * scale)} height={Math.round(layout.height * scale)} viewBox={`0 0 ${layout.width} ${layout.height}`} role="img" aria-label={`Request flow diagram: ${flow.name}`}>
+      <svg ref={svg} width={Math.round(layout.width * scale)} height={Math.round(layout.height * scale)} viewBox={`0 0 ${layout.width} ${layout.height}`} role="img" aria-label={`${flow.kind === 'operation' ? 'Flow' : 'Request flow'} diagram: ${flow.name}`}>
         <defs>
           <filter id="rf-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
           <filter id="rf-soft" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="4" floodOpacity="0.18" /></filter>
@@ -141,7 +145,7 @@ function FlowDiagram({ flow, focus }: { flow: RequestFlow; focus?: string }) {
         {layout.lanes.map(band => (
           <g key={band.lane} className="rf-lane" style={{ '--lane': `var(--lane-${band.lane})` } as CSSProperties}>
             <rect x={band.x - 10} y={6} width={band.w + 20} height={layout.height - 12} rx={18} className="rf-lane-band" />
-            <text x={band.x + 2} y={30} className="rf-lane-title">{LANE_ICON[band.lane as FlowLane]} {clip(LANE_TEXT[band.lane as FlowLane], Math.max(6, Math.floor(band.w / 8.5)))}</text>
+            <text x={band.x + 2} y={30} className="rf-lane-title">{LANE_ICON[band.lane as FlowLane]} {clip(flow.laneLabels?.[band.lane as FlowLane] ?? LANE_TEXT[band.lane as FlowLane], Math.max(6, Math.floor(band.w / 8.5)))}</text>
             <text x={band.x + band.w} y={30} textAnchor="end" className="rf-lane-count">{counts.get(band.lane) ?? 0}</text>
           </g>
         ))}
@@ -228,13 +232,15 @@ function FlowDetail({ flow, focus }: { flow: RequestFlow; focus?: string }) {
   const at = node.node;
   return (
     <aside className="rf-detail" aria-label={`Step ${node.label}`} style={{ '--lane': `var(--lane-${node.lane})` } as CSSProperties}>
-      <div className="rf-detail-kind"><span className="rf-detail-icon">{KIND_ICON[node.kind]}</span>{LANE_TEXT[node.lane]} · {KIND_TEXT[node.kind]}<button className="icon-button small" onClick={() => store.focusRequestNode(undefined)} aria-label="Close step details">✕</button></div>
+      <div className="rf-detail-kind"><span className="rf-detail-icon">{KIND_ICON[node.kind]}</span>{flow.laneLabels?.[node.lane] ?? LANE_TEXT[node.lane]} · {KIND_TEXT[node.kind]}<button className="icon-button small" onClick={() => store.focusRequestNode(undefined)} aria-label="Close step details">✕</button></div>
       <h3 className={node.node || node.effect ? 'mono' : undefined}>{node.label}</h3>
       {node.gap && <p className="note warning">{node.gap.text}</p>}
+      {node.gap?.source && <p className="row-sub mono">{at?.path}:{node.gap.source.line}{node.gap.source.column ? `:${node.gap.source.column}` : ''}</p>}
       {node.detail && !node.gap && <p className="rf-detail-text mono">{node.detail}</p>}
       {at && <div className="row-sub"><TypeBadge type={at.type} role={at.role} /> <span className="mono">{at.path ?? ''}</span></div>}
       {node.effect && <div className="row-sub">in {node.effect.ownerName}{node.effect.ownerPath ? <span className="mono"> · {node.effect.ownerPath}:{node.effect.line}</span> : null} · matched on {node.effect.via}</div>}
       <div className="inspector-actions">
+        {node.gap?.source && <button className="button small" onClick={() => void store.openSource({ entity:node.gap!.source!.owner,start:node.gap!.source!.line,end:node.gap!.source!.line },'Unresolved source site')}>Source at gap</button>}
         {node.node && <button className="button small primary" onClick={() => store.showInFlowMap(node.node!.id)}>Show on map</button>}
         {node.node && node.node.path && <button className="button small" onClick={() => void store.openSource({ entity: node.node!.id }, node.label)}>Source</button>}
         {node.effect && <button className="button small" onClick={() => void store.openSource({ entity: node.effect!.owner, start: Math.max(1, node.effect!.line - 12), end: node.effect!.line + 12 }, `${node.label} · ${node.effect!.ownerName}:${node.effect!.line}`)}>Source</button>}

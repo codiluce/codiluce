@@ -13,7 +13,7 @@ import { latestAnswer, type AskEvent, type ChatModelInfo, type ExplanationDetail
 import { chatQuestion } from './prompts.js';
 import { resolveLink } from './resolve.js';
 import type { ExplanationService } from './service.js';
-import { runTool, type ToolSpec } from './tools.js';
+import { describeTool, runTool, type ToolSpec } from './tools.js';
 
 interface ChatModel { id: string; label: string; provider: 'anthropic' | 'openai'; note?: string; fallback?: boolean; effort: 'low' | 'medium' | 'high' }
 /** Models the chat offers, best first; the first one with a key is the default. */
@@ -177,11 +177,6 @@ export function anthropicKey(files: string[]): string | undefined { return findK
 export function anthropicCost(model: string, usage: { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number | null; cache_creation_input_tokens?: number | null }): number {
   const price = ANTHROPIC_PRICES[model] ?? Object.entries(ANTHROPIC_PRICES).find(([name]) => model.startsWith(name))?.[1] ?? ANTHROPIC_PRICES['claude-opus-5-5']!;
   return (usage.input_tokens * price.input + (usage.cache_read_input_tokens ?? 0) * price.cacheRead + (usage.cache_creation_input_tokens ?? 0) * price.input * 1.25 + usage.output_tokens * price.output) / 1e6;
-}
-function describeTool(name: string, input: unknown): string {
-  const value = input && typeof input === 'object' ? input as Record<string, unknown> : {};
-  const main = value.link ?? value.flow ?? value.query ?? value.commit ?? value.kind ?? '';
-  return `${name}${main ? ` ${String(main)}` : ''}`;
 }
 /** Close to the cap or the round limit: the next request answers without tools. */
 function finishing(round: number, budget: ProviderRequest['budget']): boolean { return round >= MAX_ROUNDS - 1 || budget.spent() >= budget.max * 0.75; }

@@ -449,10 +449,24 @@ const DEFINED: Theme[] = [
     },
   },
 ];
-/** The brand themes, offered first: Dusk (the default), then Dawn. The others are offered once "More themes" is on in Settings. */
+/** The brand themes, offered first: Dusk (the default), then Dawn. */
 export const MAIN_THEMES = ['codiluce-dusk', 'codiluce-dawn'];
 export const DEFAULT_THEME = MAIN_THEMES[0]!;
-export const THEMES: Theme[] = [...MAIN_THEMES.map(id => DEFINED.find(theme => theme.id === id)!), ...DEFINED.filter(theme => !MAIN_THEMES.includes(theme.id))];
+/** Available themes in picker order. Commented entries keep their definitions above. */
+const THEME_ORDER = [
+  ...MAIN_THEMES,
+  'phosphor',
+  'midnight',
+  'paper',
+  // 'sorbet',
+  // 'sorbet-night',
+  // 'ink',
+  // 'void',
+  'gazette',
+  'brutal',
+  'neon',
+];
+export const THEMES: Theme[] = THEME_ORDER.map(id => DEFINED.find(theme => theme.id === id)!);
 /** Every custom property any theme sets, so switching themes can clear the ones the next theme lacks. */
 export const UI_PROPERTIES = [...new Set(THEMES.flatMap(theme => Object.keys(theme.ui)))];
 /** A stable hue per key (a family's when the order of the families is not at hand). */
@@ -497,6 +511,16 @@ const COVERAGE_HSL: Record<string, [dark: Hsl, light: Hsl]> = {
 };
 export function coverageHsl(category: string, dark: boolean): Hsl { const pair = COVERAGE_HSL[category] ?? COVERAGE_HSL.asset!; return dark ? pair[0] : pair[1]; }
 export function coverageCss(category: string, dark: boolean): string { const c = coverageHsl(category, dark); return `hsl(${c.h} ${c.s}% ${c.l}%)`; }
+/**
+ * Measure lenses (complexity, changes, hotspots): four levels from a calm
+ * blue-green to red, so the few high ones stand out; no level in grey.
+ */
+const LEVEL_HSL: Record<string, [dark: Hsl, light: Hsl]> = {
+  1: [hsl(178, 30, 44), hsl(178, 30, 62)], 2: [hsl(48, 82, 56), hsl(46, 86, 50)], 3: [hsl(26, 90, 58), hsl(24, 88, 50)], 4: [hsl(354, 84, 60), hsl(354, 76, 50)],
+  none: [hsl(220, 8, 32), hsl(220, 8, 80)],
+};
+export function levelHsl(level: string, dark: boolean): Hsl { const pair = LEVEL_HSL[level] ?? LEVEL_HSL.none!; return dark ? pair[0] : pair[1]; }
+export function levelCss(level: string, dark: boolean): string { const c = levelHsl(level, dark); return `hsl(${c.h} ${c.s}% ${c.l}%)`; }
 export class PaletteCache {
   private readonly cache = new Map<string, Palette>();
   constructor(readonly theme: Theme) {}
@@ -514,6 +538,7 @@ export class PaletteCache {
   /** The top color of a (type, depth) combination, from which walls and shapes are shaded. */
   base(type: string, depth: number): Hsl {
     const base = type.startsWith('coverage:') ? coverageHsl(type.slice(9), this.theme.dark)
+      : type.startsWith('level:') ? levelHsl(type.slice(6), this.theme.dark)
       : type.startsWith('family:') ? familyHsl(type === 'family:none' ? 'none' : Number(type.slice(7)), this.theme.dark)
       : this.theme.entity[type] ?? this.theme.entity[type.split(':')[0]!] ?? this.theme.fallbackEntity;
     const structural = type === 'directory' || type === 'group' || type.startsWith('application');

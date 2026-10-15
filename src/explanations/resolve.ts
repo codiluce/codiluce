@@ -16,7 +16,7 @@ export const MEMBER_LIMIT = 2000;
 /** Entities lit by one explanation, at most. */
 export const FOOTPRINT_LIMIT = 6000;
 const CONTAINERS = new Set(['repository', 'application', 'directory', 'group']);
-const ENTRY_TYPES = new Set(['route', 'api_endpoint', 'command', 'scheduled_task']);
+const ENTRY_TYPES = new Set(['route', 'api_endpoint', 'command', 'scheduled_task', 'user_flow']);
 
 export function resolveLink(parsed: ParsedLink, environment: ResolveEnvironment): ResolvedLink {
   const { context } = environment;

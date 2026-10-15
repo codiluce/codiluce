@@ -1,20 +1,19 @@
 'use client';
 // The Flows panel: one list of every flow of the index (pages, requests,
-// console commands and scheduled tasks), filtered by kind, completeness and
+// CLI, MCP and worker entries), filtered by channel, evidence coverage and
 // text, and grouped by application and area in collapsible branches (long
 // lists start collapsed). Choosing one shows it on the map; "through" an entity
 // lists only the flows touching it. Everything listed is derived from indexed
 // relationships.
 import { useEffect, useMemo, type CSSProperties } from 'react';
 import type { FlowSummary } from '@engine/projection/dto';
-import { CATALOG_TABS, completenessOf, KIND_HINT, KIND_TEXT, kindsOf, visibleCatalog, type CatalogGroup, type CatalogTab } from '../lib/catalog';
-import { STATUS_HINT, STATUS_TEXT } from '../lib/request-flows';
+import { CATALOG_TABS, belongsTo, evidenceOf, COVERAGE_TEXT, COVERAGE_HINT, KIND_HINT, KIND_TEXT, visibleCatalog, type CatalogGroup, type CatalogTab } from '../lib/catalog';
 import { useAtlas, useStore } from './context';
-import { MethodBadge, StagePips } from './RequestFlows';
+import { MethodBadge } from './RequestFlows';
 
 /** Above this many flows shown (and without a filter), area groups start collapsed. */
 const COLLAPSE_ABOVE = 40;
-const EMPTY: Record<CatalogTab, string> = { all: 'No flows were indexed.', page: 'No pages were indexed.', request: 'No endpoints or HTTP requests were indexed.', command: 'No Artisan commands or scheduled tasks were indexed.', schedule: 'No scheduled tasks were indexed.', unmatched: 'Every indexed request has an endpoint.' };
+const EMPTY = 'No flows in this scope match these filters.';
 export function FlowsPanel({ onClose }: { onClose: () => void }) {
   const store = useStore();
   const catalog = useAtlas(state => state.catalog);
@@ -24,11 +23,13 @@ export function FlowsPanel({ onClose }: { onClose: () => void }) {
   useEffect(() => { if (catalog.status === 'idle' || (catalog.status === 'ready' && catalog.viewStamp !== stamp)) void store.loadCatalog(); }, [store, catalog.status, catalog.viewStamp, stamp]);
   const data = catalog.data;
   const tab = catalog.kind;
-  const items = useMemo(() => data ? data.items.filter(item => kindsOf(tab).includes(item.kind)) : [], [data, tab]);
-  // Completeness applies to HTTP flows; the tiles show when the list has any.
-  const statusCounts = useMemo(() => { const counts = { complete: 0, partial: 0, headless: 0, unmatched: 0 }; for (const item of items) { const status = completenessOf(item); if (status) counts[status]++; } return counts; }, [items]);
+  const scope = catalog.scope ?? 'application';
+  const scoped = useMemo(() => data ? data.items.filter(item => scope === 'all' || (item.scope ?? 'application') === scope) : [],[data,scope]);
+  const items = useMemo(() => scoped.filter(item => belongsTo(item,tab)), [scoped, tab]);
+  // Evidence coverage applies independently of the entry kind.
+  const statusCounts = useMemo(() => { const counts = { 'no-known-gaps': 0, 'known-gaps':0 }; for (const item of items) counts[evidenceOf(item)]++; return counts; }, [items]);
   const tiles = Object.values(statusCounts).some(Boolean);
-  const groups = useMemo(() => data ? visibleCatalog(data.items, { tab, query: catalog.query, status: catalog.filter }) : [], [data, tab, catalog.query, catalog.filter]);
+  const groups = useMemo(() => data ? visibleCatalog(data.items, { tab, query: catalog.query, coverage: catalog.evidence,scope }) : [], [data, tab, catalog.query, catalog.evidence,scope]);
   const shown = groups.reduce((sum, group) => sum + group.items.length, 0);
   // Applications, then their area groups; the group holding the flow on the map starts open.
   const apps = useMemo(() => { const byApp = new Map<string, CatalogGroup[]>(); for (const group of groups) byApp.set(group.app ?? '', [...byApp.get(group.app ?? '') ?? [], group]); return [...byApp]; }, [groups]);
@@ -37,7 +38,7 @@ export function FlowsPanel({ onClose }: { onClose: () => void }) {
   const isOpen = (key: string, fallback: boolean) => catalog.open[key] ?? fallback;
   const groupOpen = (group: CatalogGroup) => isOpen(group.key, !collapsedFirst || group.items.some(item => active === `${item.detail}:${item.id}`));
   const branchKeys = [...(nested ? apps.map(([app]) => `app:${app}`) : []), ...groups.map(group => group.key)];
-  const count = (kind: CatalogTab) => data ? kindsOf(kind).reduce((sum, item) => sum + data.counts[item], 0) : undefined;
+  const count = (kind: CatalogTab) => data ? scoped.filter(item => belongsTo(item,kind)).length : undefined;
   return (
     <>
       <div className="panel-header">
@@ -45,6 +46,9 @@ export function FlowsPanel({ onClose }: { onClose: () => void }) {
         <button className="icon-button small" onClick={onClose} aria-label="Hide the flows panel">⇤</button>
       </div>
       <div className="panel-body rf-panel">
+        <label className="flow-scope">Scope <select className="text-input" value={scope} onChange={event => store.setCatalogScope(event.target.value as 'application'|'test'|'fixture'|'all')}>
+          <option value="application">Application</option><option value="test">Tests</option><option value="fixture">Fixtures</option><option value="all">All source</option>
+        </select></label>
         <div className="segmented flow-kinds" role="tablist" aria-label="Kinds of flows">
           {CATALOG_TABS.map(kind => (
             <button key={kind} role="tab" aria-selected={tab === kind} aria-pressed={tab === kind} onClick={() => store.setCatalogKind(kind)} title={KIND_HINT[kind]}>
@@ -62,11 +66,11 @@ export function FlowsPanel({ onClose }: { onClose: () => void }) {
         {catalog.status === 'loading' && !data && <div className="rf-loading" aria-live="polite"><span className="rf-spark" />Following every flow…</div>}
         {catalog.status === 'error' && <p className="note error">{catalog.error}</p>}
         {data && tiles && (
-          <div className="rf-tiles" role="group" aria-label="Filter by completeness">
-            {(['complete', 'partial', 'headless', 'unmatched'] as const).map(item => (
-              <button key={item} className={`rf-tile s-${item}`} aria-pressed={catalog.filter === item} onClick={() => store.setCatalogFilter(item)} title={STATUS_HINT[item]}>
+          <div className="rf-tiles evidence-tiles" role="group" aria-label="Filter by evidence coverage">
+            {(['no-known-gaps', 'known-gaps'] as const).map(item => (
+              <button key={item} className={`rf-tile s-${item === 'no-known-gaps' ? 'complete' : 'partial'}`} aria-pressed={catalog.evidence === item} onClick={() => store.setCatalogEvidence(item)} title={COVERAGE_HINT[item]}>
                 <span className="rf-tile-count">{statusCounts[item]}</span>
-                <span className="rf-tile-text">{STATUS_TEXT[item]}</span>
+                <span className="rf-tile-text">{COVERAGE_TEXT[item]}</span>
               </button>
             ))}
           </div>
@@ -74,7 +78,7 @@ export function FlowsPanel({ onClose }: { onClose: () => void }) {
         {data && (
           <>
             <label className="sr-only" htmlFor="flow-query">Filter flows</label>
-            <input id="flow-query" className="text-input rf-query" placeholder={tab === 'command' ? 'Filter: command, schedule, handler…' : 'Filter: path, handler, caller, command…'} value={catalog.query} onChange={event => store.setCatalogQuery(event.target.value)} />
+            <input id="flow-query" className="text-input rf-query" placeholder={tab === 'command' ? 'Filter: command, schedule, handler…' : 'Filter: entry, handler, path…'} value={catalog.query} onChange={event => store.setCatalogQuery(event.target.value)} />
             {(shown !== items.length || groups.length > 1) && (
               <div className="tree-tools">
                 {shown !== items.length && <span className="absent">{shown} of {items.length} shown</span>}
@@ -84,7 +88,7 @@ export function FlowsPanel({ onClose }: { onClose: () => void }) {
                 </>}
               </div>
             )}
-            {!items.length && <p className="absent">{catalog.entity ? `No flow${tab === 'all' ? '' : ' of this kind'} touches it.` : EMPTY[tab]}</p>}
+            {!shown && <p className="absent">{EMPTY}</p>}
             <div className="rf-groups">
               {apps.map(([app, list]) => {
                 const appOpen = !nested || isOpen(`app:${app}`, true);
@@ -126,21 +130,23 @@ export function CatalogRow({ item, active }: { item: FlowSummary; active: boolea
   const size = `${item.files} file${item.files === 1 ? '' : 's'}`;
   let top: React.ReactNode, sub: string;
   if (item.kind === 'command') { top = <><span className="flow-glyph" aria-hidden>⌘</span><span className="rf-row-path mono">{item.name}</span></>; sub = `${item.callers ? `started from ${item.callers} place${item.callers === 1 ? '' : 's'}` : 'run by hand'} · ${size}`; }
+  else if (['cli','mcp','worker','function'].includes(item.kind)) { top = <><span className="flow-glyph" aria-hidden>{item.kind === 'cli' ? '⌘' : item.kind === 'worker' ? '⇄' : item.kind === 'mcp' ? '◇' : 'ƒ'}</span><span className="rf-row-path mono">{item.name}</span></>; sub = `${item.handler ?? 'unresolved handler'} · ${size}`; }
   else if (item.kind === 'schedule') { top = <><span className="flow-glyph" aria-hidden>⏱</span><span className="rf-row-path">{item.cadence}</span></>; sub = `${item.name} · ${size}`; }
   else if (item.kind === 'page') { top = <><span className="flow-glyph" aria-hidden>▦</span><span className="rf-row-path mono">{item.entry.type === 'route' ? item.name : item.path}</span></>; sub = `${item.entry.type === 'route' ? 'Next.js page' : 'Inertia page'} · ${size}`; }
   else { top = <><MethodBadge method={item.method ?? ''} /><span className="rf-row-path mono">{item.path}</span></>; sub = `${item.kind === 'unmatched' ? `requested by ${item.entry.name}` : item.handler ?? 'no handler resolved'} · ${size}`; }
-  const status = completenessOf(item);
+  const status = evidenceOf(item) === 'known-gaps' ? 'partial' : 'complete';
+  const gaps = item.evidenceGaps ?? item.gaps ?? 0;
   return (
     <li>
-      <button className={`rf-row k-${item.kind}${status ? ` s-${status}` : ''}${active ? ' active' : ''}`} onClick={() => void store.openCatalogFlow(item)} aria-current={active ? 'true' : undefined} title={[item.goal, status ? STATUS_HINT[status] : 'Open: on the map, in lanes or layers, and as an outline'].filter(Boolean).join('\n')} style={{ '--flow-kind': `var(--kind-${item.kind})` } as CSSProperties}>
+      <button className={`rf-row k-${item.kind}${status ? ` s-${status}` : ''}${active ? ' active' : ''}`} onClick={() => void store.openCatalogFlow(item)} aria-current={active ? 'true' : undefined} title={[item.goal, COVERAGE_HINT[evidenceOf(item)]].filter(Boolean).join('\n')} style={{ '--flow-kind': `var(--kind-${item.kind})` } as CSSProperties}>
         {item.title && <span className="rf-row-title">{item.title}{item.actor && <span className="flow-actor">{item.actor}</span>}</span>}
         <span className="rf-row-top">
           {top}
-          {(item.gaps ?? 0) > 0 && <span className="rf-gaps" title={`${item.gaps} gap${item.gaps === 1 ? '' : 's'}: what the index could not see`}>{item.gaps}?</span>}
+          {gaps > 0 && <span className="rf-gaps" title={`${gaps} gap${gaps === 1 ? '' : 's'}: what the index could not see`}>{gaps}?</span>}
         </span>
         <span className="rf-row-bottom">
           <span className="rf-row-sub">{sub}</span>
-          {item.stages && status && <StagePips stages={item.stages} />}
+          <span className="chip" title={COVERAGE_HINT[evidenceOf(item)]}>{COVERAGE_TEXT[evidenceOf(item)]}</span>
         </span>
       </button>
     </li>

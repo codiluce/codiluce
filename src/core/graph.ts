@@ -27,9 +27,11 @@ export interface EffectFact {
   wrapper?: boolean;
   /** response: the Inertia page component rendered (`Inertia::render('words/index')`), by its literal name. */
   page?: string;
+  /** Explicitly configured service outside the indexed repository. */
+  boundary?: { name: string; origin: string };
 }
 /** Per-symbol call-site coverage: which calls were linked, left the indexed code, or could not be resolved. */
-export interface CallSites { resolved: number; external: number; unresolved: number; unresolvedNames?: Record<string, number> }
+export interface CallSites { resolved: number; external: number; unresolved: number; unresolvedNames?: Record<string, number>; unresolvedSites?: { name: string; line: number; column?: number }[] }
 export interface SourceRange { startLine: number; endLine: number; startColumn?: number; endColumn?: number }
 export interface Evidence {
   source: 'filesystem' | 'typescript' | 'php' | 'syntax' | 'framework' | 'git' | 'runtime' | 'heuristic' | 'ai';
