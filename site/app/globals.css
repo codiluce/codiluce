@@ -96,10 +96,11 @@ code, pre { font-family: var(--font-mono); }
 }
 .hero-backdrop {
   position: absolute; inset: 0; z-index: -1;
-  /* Shown until (or instead of) the shader: the eclipse as a plain glow. */
+  /* Shown until (or instead of) the shader: the eclipse as a plain glow, at the height the shader draws it
+     (`--horizon`, set from lib/hero.ts as the hero is parsed). */
   background:
-    radial-gradient(ellipse 60% 3px at 50% 26%, rgba(255, 236, 200, 0.9), transparent 70%),
-    radial-gradient(ellipse 34% 16% at 50% 26%, rgba(255, 191, 71, 0.16), transparent 70%),
+    radial-gradient(ellipse 60% 3px at 50% var(--horizon, 26%), rgba(255, 236, 200, 0.9), transparent 70%),
+    radial-gradient(ellipse 34% 16% at 50% var(--horizon, 26%), rgba(255, 191, 71, 0.16), transparent 70%),
     var(--bg);
 }
 .hero-canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; }

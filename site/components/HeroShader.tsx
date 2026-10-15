@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { heroDisc } from '../lib/hero';
 
 /**
  * The hero background: the Eclipse mark as a light source. A dark disc is cut by a band of light that
@@ -180,7 +181,7 @@ export function HeroShader() {
     let width = 0, height = 0;
     // The disc fills the space between the header and the hero text, so the text never covers it.
     const disc = { y: 0.2, r: 0.12 };
-    const hero = canvas.closest('.hero');
+    const hero = canvas.closest<HTMLElement>('.hero');
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
       // Large screens render a little under device resolution: the image is soft light, not text.
@@ -190,12 +191,11 @@ export function HeroShader() {
       if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
       gl.viewport(0, 0, width, height);
       const text = hero?.querySelector('.hero-content > :first-child')?.getBoundingClientRect();
-      const top = 64 + 28;
-      const bottom = text ? text.top - rect.top - 36 : rect.height * 0.45;
-      const radius = Math.max(36, Math.min((bottom - top) / 2, rect.width * 0.28, 150));
-      const center = Math.max(top + radius, (top + bottom) / 2);
+      const { center, radius } = heroDisc(rect.width, rect.height, text ? text.top - rect.top : null);
       disc.y = 0.5 - center / rect.height;
       disc.r = radius / rect.height;
+      // Keep the CSS line under the canvas at the same height, as it shows through while the canvas fades in.
+      hero?.style.setProperty('--horizon', `${center}px`);
     };
 
     const target = { x: 0, y: 0 };

@@ -12,6 +12,7 @@ import { NextTag } from '../components/NextTag';
 import { ShapeGallery } from '../components/ShapeGallery';
 import { Stacks } from '../components/Stacks';
 import { GitHubIcon } from '../components/SiteChrome';
+import { HORIZON_SCRIPT } from '../lib/hero';
 import { CALL_URL, GITHUB_URL, ISSUES_URL, NEXT_RELEASE, VERSION } from '../lib/site';
 
 const glyph = (d: ReactNode) => <svg viewBox="0 0 24 24" aria-hidden="true" className="more-glyph">{d}</svg>;
@@ -63,7 +64,7 @@ function CalendarIcon() {
 export default function Home() {
   return (
     <>
-      <section className="hero" aria-labelledby="hero-title">
+      <section className="hero" aria-labelledby="hero-title" suppressHydrationWarning>
         <div className="hero-backdrop" aria-hidden="true"><HeroShader /></div>
         <div className="container hero-content">
           <p className="hero-badge"><span className="pulse-dot" aria-hidden="true" />v{VERSION} · early preview · MIT</p>
@@ -79,6 +80,7 @@ export default function Home() {
           </div>
           <p className="hero-note">Node.js 22.12 or newer. Run it in the repository you want to see.</p>
         </div>
+        <script dangerouslySetInnerHTML={{ __html: HORIZON_SCRIPT }} />
       </section>
 
       <section className="showcase" aria-label="Codiluce at work">
