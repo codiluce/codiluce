@@ -10,6 +10,48 @@ import {GraphBuilder} from '../src/core/graph.js';
 const roundtrip = (value: unknown) => decode(encode(value, 64 * 1024 * 1024), 64 * 1024 * 1024);
 const reference = (value: unknown) => deserialize(serialize(value));
 
+test('string encoding allocates no intermediate Latin-1 or UTF-16 buffers while retaining complete values and aliases', () => {
+  const proof = {original: 'é😀\ud800\u0000\udfff'.repeat(1000)}, value: any = {proof, alias: proof, distinct: 'a'.repeat(70000)}; value.self = value;
+  const from = Buffer.from, stats = {} as TypeScriptCodecStats;
+  const temporary = mock.method(Buffer, 'from', ((...args: any[]) => {
+    if (typeof args[0] === 'string' && ['latin1', 'utf16le'].includes(args[1])) throw Error('Forbidden intermediate codec string Buffer');
+    return Reflect.apply(from, Buffer, args);
+  }) as typeof Buffer.from);
+  let encoded: Buffer;
+  try { encoded = encode(value, 1024 * 1024, stats); } finally { temporary.mock.restore(); }
+  const actual = decode(encoded, 1024 * 1024) as typeof value;
+  assert.deepEqual(actual, reference(value)); assert.equal(actual.proof, actual.alias); assert.equal(actual.self, actual);
+  assert.equal(stats.peakStringTemporaryBytes, 0); assert.ok(stats.allocatedBlockBytes <= 1024 * 1024);
+});
+
+test('direct string writes preserve the approved wire bytes at odd block edges and isolated UTF-16 code units', () => {
+  const uint = (value: number) => {const bytes: number[] = []; do {const digit = value % 128; value = Math.floor(value / 128); bytes.push(digit + (value ? 128 : 0));} while (value); return Buffer.from(bytes);};
+  const utf16 = '😀\ud800é\udfff\u0000'.repeat(10000);
+  for (let shift = 0; shift < 16; shift++) {
+    const prefix = 'a'.repeat(TYPESCRIPT_CODEC_BLOCK_BYTES - 32 + shift), value = {prefix, utf16};
+    // Independent golden layout for this fixed two-string object. Whole
+    // Buffer conversions belong only to this small owned reference oracle.
+    const expected = Buffer.concat([Buffer.from([0x43, 0x44, 0x54, 1, 12, 8, 6]), Buffer.from('prefix', 'latin1'), Buffer.from([8]), uint(prefix.length), Buffer.from(prefix, 'latin1'), Buffer.from([8, 5]), Buffer.from('utf16', 'latin1'), Buffer.from([9]), uint(utf16.length), Buffer.from(utf16, 'utf16le'), Buffer.from([0])]);
+    const stats = {} as TypeScriptCodecStats, encoded = encode(value, expected.length, stats);
+    assert.deepEqual(encoded, expected); assert.deepEqual(decode(encoded, expected.length), value);
+    assert.equal(stats.peakStringTemporaryBytes, 0); assert.ok(stats.allocatedBlockBytes <= expected.length);
+    const rejected = {} as TypeScriptCodecStats;
+    assert.throws(() => encode(value, expected.length - 1, rejected), TypeScriptCodecLimitError); assert.equal(rejected.concatenatedBytes, 0);
+  }
+});
+
+test('oversized direct strings are rejected before any native string write or final concatenation', () => {
+  const write = Buffer.prototype.write; let writes = 0;
+  const observation = mock.method(Buffer.prototype, 'write', function(this: Buffer, ...args: any[]) {writes++; return Reflect.apply(write, this, args);});
+  try {
+    for (const value of ['a'.repeat(1020), '\ud800'.repeat(600)]) {
+      const stats = {} as TypeScriptCodecStats; assert.throws(() => encode(value, 1024, stats), TypeScriptCodecLimitError);
+      assert.ok(stats.allocatedBlockBytes <= 1024); assert.equal(stats.concatenatedBytes, 0); assert.equal(stats.peakStringTemporaryBytes, 0);
+    }
+    assert.equal(writes, 0);
+  } finally {observation.mock.restore();}
+});
+
 test('bounded compiler encoding preserves all primitive values and exact Latin-1/UTF-16 strings including lone surrogates and chunk boundaries', () => {
   for (const value of [undefined, null, true, false, -0, 0, 1, -1, 0xffffffff, -0x80000000, Number.MAX_SAFE_INTEGER, Infinity, -Infinity, NaN, 1.5, 0n, -1n, 2n ** 8192n, -(2n ** 8192n), '', 'é😀\ud800\udfff\0\r\n', '.'.repeat(4095) + '😀' + 'é'.repeat(4097)]) assert.deepEqual(roundtrip(value), reference(value));
 });

@@ -64,6 +64,23 @@ class Writer {
       block.set(value.subarray(offset, offset + size), this.used); this.used += size; this.bytes += size; offset += size;
     }
   }
+  text(value: string, latin: boolean): void {
+    const width = latin ? 1 : 2;
+    this.reserve(value.length * width);
+    for (let offset = 0; offset < value.length;) {
+      const block = this.room(), units = Math.min(STRING_UNITS, value.length - offset, Math.floor((block.length - this.used) / width));
+      if (!units) {
+        // A UTF-16 code unit may straddle an odd block boundary. Fill that
+        // byte and the next admitted block without padding or a temporary.
+        const unit = value.charCodeAt(offset++); this.byte(unit & 255); this.byte(unit >>> 8); continue;
+      }
+      // Keep the native string slice bounded while writing straight into the
+      // admitted output block. No per-string Buffer is allocated or copied.
+      const bytes = block.write(value.slice(offset, offset + units), this.used, units * width, latin ? 'latin1' : 'utf16le');
+      if (bytes !== units * width) throw Error('Incomplete compiler transport string');
+      this.used += bytes; this.bytes += bytes; offset += units;
+    }
+  }
   double(value: number): void { const bytes = Buffer.allocUnsafe(8); bytes.writeDoubleLE(value); this.raw(bytes); }
   finish(): Buffer {
     if (this.block) this.blocks.push(this.block.subarray(0, this.used));
@@ -91,11 +108,7 @@ export function encodeTypeScriptPayload(value: unknown, maxBytes: number, stats?
     writer.byte(latin ? Tag.String8 : Tag.String16); writer.uint(text.length);
     writer.reserve(text.length * (latin ? 1 : 2));
     budget.add('strings'); budget.add('stringUnits', text.length); strings.set(text, strings.size);
-    for (let offset = 0; offset < text.length; offset += STRING_UNITS) {
-      const bytes = Buffer.from(text.slice(offset, offset + STRING_UNITS), latin ? 'latin1' : 'utf16le');
-      if (stats) stats.peakStringTemporaryBytes = Math.max(stats.peakStringTemporaryBytes, bytes.length);
-      writer.raw(bytes);
-    }
+    writer.text(text, latin);
   };
   writer.raw(MAGIC);
   const stack: Task[] = [];

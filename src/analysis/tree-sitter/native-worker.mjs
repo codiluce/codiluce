@@ -98,6 +98,24 @@ var Writer = class {
       offset += size2;
     }
   }
+  text(value, latin) {
+    const width = latin ? 1 : 2;
+    this.reserve(value.length * width);
+    for (let offset = 0; offset < value.length; ) {
+      const block = this.room(), units = Math.min(STRING_UNITS, value.length - offset, Math.floor((block.length - this.used) / width));
+      if (!units) {
+        const unit = value.charCodeAt(offset++);
+        this.byte(unit & 255);
+        this.byte(unit >>> 8);
+        continue;
+      }
+      const bytes = block.write(value.slice(offset, offset + units), this.used, units * width, latin ? "latin1" : "utf16le");
+      if (bytes !== units * width) throw Error("Incomplete compiler transport string");
+      this.used += bytes;
+      this.bytes += bytes;
+      offset += units;
+    }
+  }
   double(value) {
     const bytes = Buffer.allocUnsafe(8);
     bytes.writeDoubleLE(value);
@@ -135,11 +153,7 @@ function encodeTypeScriptPayload(value, maxBytes, stats, policy) {
     budget.add("strings");
     budget.add("stringUnits", text.length);
     strings.set(text, strings.size);
-    for (let offset = 0; offset < text.length; offset += STRING_UNITS) {
-      const bytes = Buffer.from(text.slice(offset, offset + STRING_UNITS), latin ? "latin1" : "utf16le");
-      if (stats) stats.peakStringTemporaryBytes = Math.max(stats.peakStringTemporaryBytes, bytes.length);
-      writer.raw(bytes);
-    }
+    writer.text(text, latin);
   };
   writer.raw(MAGIC);
   const stack = [];
