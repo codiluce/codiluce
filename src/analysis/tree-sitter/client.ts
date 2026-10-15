@@ -8,6 +8,8 @@ import {PARSER_FRAME_BYTES,PARSER_FRAME_ENCODING,encodeParserFrame,decodeParserF
 
 const WORKER = fileURLToPath(new URL('./native-worker.mjs', import.meta.url));
 const SCRIPT_WORKER=fileURLToPath(new URL('./native-script-worker.mjs',import.meta.url));
+const FRAMEWORK_WORKER=fileURLToPath(new URL('../embedded/native-framework-worker.mjs',import.meta.url));
+function boundedWorker(worker:string):boolean{return worker===WORKER||worker===SCRIPT_WORKER||worker===FRAMEWORK_WORKER;}
 export interface ParserGenerationLimits { maxJobs: number; maxSourceBytes: number }
 export class StructureParser<Facts = StructureFacts> {
   private child?: ChildProcess;
@@ -85,7 +87,7 @@ export class StructureParser<Facts = StructureFacts> {
             failure(Error('Invalid parser completion')); return;
           }
           if(result.bytes>PARSER_FRAME_BYTES){failure(Error(`Parser response exceeds ${PARSER_FRAME_BYTES} bytes`));return;}
-          if(result.encoding!==undefined&&result.encoding!==PARSER_FRAME_ENCODING||(this.worker===WORKER||this.worker===SCRIPT_WORKER)&&result.encoding!==PARSER_FRAME_ENCODING){failure(Error('Invalid parser response encoding'));return;}
+          if(result.encoding!==undefined&&result.encoding!==PARSER_FRAME_ENCODING||boundedWorker(this.worker)&&result.encoding!==PARSER_FRAME_ENCODING){failure(Error('Invalid parser response encoding'));return;}
           completedEncoding=result.encoding;
           // Forked workers share the host's monotonic clock. Include startup,
           // input delivery, parsing, extraction and response serialization in
@@ -135,7 +137,7 @@ export class StructureParser<Facts = StructureFacts> {
         // Actual bundled native/template workers receive only the bounded
         // encoded request. Legacy transport remains for explicit alternate
         // provider/fault workers, including the separately bounded PHP AST.
-        const message=this.worker===WORKER||this.worker===SCRIPT_WORKER?{id,encoding:PARSER_FRAME_ENCODING,payload:encodeParserFrame(payload)}:{id,...payload};
+        const message=boundedWorker(this.worker)?{id,encoding:PARSER_FRAME_ENCODING,payload:encodeParserFrame(payload)}:{id,...payload};
         child.send(message,error=>{if(error)failure(error);});
       }catch(error){failure(error instanceof Error?error:Error(String(error)));}
     });

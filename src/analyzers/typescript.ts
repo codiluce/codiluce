@@ -1,3 +1,4 @@
+import {PARSER_FRAME_POLICY} from '../analysis/tree-sitter/frames.js';
 import ts from 'typescript';
 import path from 'node:path';
 import type { Analyzer, AnalysisContext, ScannedFile } from '../core/analyzer.js';
@@ -68,7 +69,7 @@ export const typescriptAnalyzer: Analyzer = {
       const run = () => analyzeComponent(context, component, services);
       const resolutionInputs = [...new Set([...resolutionFiles.map(file => file.path), ...services.resolver.configInputs])].sort().map(file => fileKey(context, file));
       const unit = component.length === 1 ? component[0]!.project.name : `group:${component.map(runtime => runtime.project.root).sort().join(',')}`;
-      if (context.cache && inputsAvailable) await context.cache.unit(context, 'typescript-nextjs', unit, { projects: component.map(runtime => runtime.project), options: component.map(runtime => services.resolver.options.get(runtime.project.id)), files: files.map(file => fileKey(context, file.path)), resolutionInputs, paths: pathSetKey(context), config: context.config, applications: [...context.applicationIds], typescript: ts.version, http: HTTP_ANALYSIS_VERSION, embedded: EMBEDDED_VERSION, packs: typescriptFrameworkPacks.map(pack => [pack.id, pack.version]) }, run);
+      if (context.cache && inputsAvailable) await context.cache.unit(context, 'typescript-nextjs', unit, { projects: component.map(runtime => runtime.project), options: component.map(runtime => services.resolver.options.get(runtime.project.id)), files: files.map(file => fileKey(context, file.path)), resolutionInputs, paths: pathSetKey(context), config: context.config, applications: [...context.applicationIds], typescript: ts.version, http: HTTP_ANALYSIS_VERSION, embedded: EMBEDDED_VERSION, frameworkFramePolicy: PARSER_FRAME_POLICY, packs: typescriptFrameworkPacks.map(pack => [pack.id, pack.version]) }, run);
       else await run();
       } finally {
         // Every framework/reference/HTTP consumer in this dependency component

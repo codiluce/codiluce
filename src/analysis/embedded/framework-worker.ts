@@ -1,12 +1,8 @@
 // Parse only original component syntax with Codiluce's own parser packages.
 // Never compile a render program, resolve target imports or evaluate source.
-import {serialize} from 'node:v8';
+import {replyParserFrame,parserJob} from '../tree-sitter/frames.js';
 import type {FrameworkParseFailure,FrameworkParseFacts} from './framework-parser.js';
-function reply(id:number,facts:FrameworkParseFacts):void {
-  const payload=serialize({facts});
-  process.send?.({id,type:'completed',completedAtNs:process.hrtime.bigint().toString(),bytes:payload.byteLength});
-  process.send?.({id,type:'result',payload});
-}
+function reply(id:number,facts:FrameworkParseFacts):void {replyParserFrame(id,{facts});}
 async function handle(job:{id:number;language:'svelte'|'astro';content:string;file?:string}):Promise<void>{
   try{
     if(job.language==='svelte'){
@@ -21,5 +17,7 @@ async function handle(job:{id:number;language:'svelte'|'astro';content:string;fi
   }
 }
 let pending=Promise.resolve();
-process.on('message',(job:Parameters<typeof handle>[0])=>{pending=pending.then(()=>handle(job));});
+process.on('message',(message:Parameters<typeof parserJob>[0])=>{
+  pending=pending.then(async()=>{try{await handle(parserJob(message) as Parameters<typeof handle>[0]);}catch(error){replyParserFrame(message.id,{error:error instanceof Error?error.message:String(error),fatal:true});}});
+});
 process.once('disconnect',()=>process.exit(0));

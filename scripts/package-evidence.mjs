@@ -11,7 +11,7 @@ export const packagePortableReceipts=Object.freeze([
  'jvm-build-selection-validation.json','gradle-compiler-inputs-validation.json','spring-boot-gradle-validation.json','spring-boot-maven-validation.json',
  'kotlin-spring-compiler-validation.json','kotlin-webflux-invoke-validation.json','spring-boot35-validation.json','typescript-jsdoc-cache-validation.json',
  'typescript-worker-validation.json','typescript-preparation-validation.json','native-consumer-retirement-validation.json',
- 'typescript-bounded-transfer-validation.json','typescript-codec-structure-validation.json','native-wasm-memory-validation.json','parser-fatal-validation.json','parser-frame-validation.json'
+ 'typescript-bounded-transfer-validation.json','typescript-codec-structure-validation.json','native-wasm-memory-validation.json','parser-fatal-validation.json','parser-frame-validation.json','framework-frame-validation.json'
 ]);
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const inside=(root,file)=>file.startsWith(root+path.sep);
@@ -61,7 +61,7 @@ export async function capturePackageEvidence({temporary,output,packagedChecksPas
  const installed=path.join(consumer,'node_modules');if(await exists(installed))await observe('installed-profile',async()=>{const profile=await packageInstallationProfile(installed),bytes=JSON.stringify(profile,null,2)+'\n',file=path.join(output,'installed-profile.json');await writeFile(file,bytes,{flag:'wx'});const row={file:'installed-profile.json',bytes:Buffer.byteLength(bytes),sha256:sha(bytes)};receipt.artifacts.push(row);receipt.installation={...row,regularFiles:profile.files.length,literalLinks:profile.links.length};});else receipt.collectionErrors.push({input:'installed-profile',error:'Installation was not created'});
  if(await exists(consumer)){
   for(const name of (await readdir(consumer)).sort())if(name.endsWith('.mjs')||name==='package.json')await observe(name,()=>copy(path.join(consumer,name),'probes/'+name));
-  for(const name of ['native-wasm-originals','parser-fatal-fixtures','parser-frame-fixtures']){
+  for(const name of ['native-wasm-originals','parser-fatal-fixtures','parser-frame-fixtures','framework-frame-fixtures']){
    const directory=path.join(consumer,name);if(!await exists(directory))continue;
    await observe(name,async()=>{const profile=await packageInstallationProfile(directory);assert.equal(profile.links.length,0,'Owned qualification originals must be regular');for(const row of profile.files)await copy(path.join(directory,...row.file.split('/')),'inputs/'+name+'/'+row.file);});
   }
