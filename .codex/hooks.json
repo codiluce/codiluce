@@ -110,5 +110,6 @@
         ]
       }
     ]
-  }
+  },
+  "description": "Observe activity for the local Codiluce map; sends hook metadata to this repository only."
 }

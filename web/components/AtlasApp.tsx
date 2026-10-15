@@ -11,6 +11,7 @@ import { CodeView } from './CodeView';
 import { ColorBy } from './ColorBy';
 import { AtlasContext, useAtlas, useStore } from './context';
 import { EclipseMark } from './EclipseMark';
+import { ActivityConnection, AgentsPanel } from './AgentsPanel';
 import { ExplanationsPanel } from './ExplanationsPanel';
 import { FeaturesPanel } from './FeaturesPanel';
 import { FlowsPanel } from './FlowsPanel';
@@ -95,6 +96,9 @@ function Shell() {
   // An agent connected over MCP is working on an explanation: the button says so before anything is saved.
   const working = useAtlas(state => { const agents = workingAgents(state.explain); return agents.length === 1 ? agentLabel(agents[0]!.agent) : agents.length ? `${agents.length} agents` : ''; });
   const explanations = useAtlas(state => state.explain.list.data?.items.length ?? 0);
+  const runningAgents = useAtlas(state => state.agents.connected && state.agents.snapshot?.enabled
+    ? state.agents.snapshot.sessions.filter(session => session.status === 'running' && state.agents.now - session.lastSeen <= 300_000).length
+    : 0);
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [leftOpen, setLeftOpen] = useState(false);
   // The left panel holds the features (once described), every flow (pages, requests, console), the people who changed the code and the pull requests.
@@ -111,7 +115,7 @@ function Shell() {
   // Comparing in History: one view per place that changed, around an overview (unless the single map is chosen).
   const split = useAtlas(state => state.timeline.open && state.timeline.compare && state.timeline.split && (!!state.meta?.comparison || state.timeline.preview !== undefined));
   const showLeft = (tab: LeftTab) => { if (leftOpen && leftTab === tab) setLeftOpen(false); else { setLeftOpen(true); setLeftTab(tab); } };
-  const tabs = [...(features > 0 ? ['features' as const] : []), 'flows' as const, 'people' as const, 'pulls' as const];
+  const tabs = [...(features > 0 ? ['features' as const] : []), 'flows' as const, 'people' as const, 'pulls' as const, 'agents' as const];
   const impactOpen = useAtlas(state => state.impact.open && state.center === 'impact');
   const codeOpen = useAtlas(state => !!state.code);
   const [help, setHelp] = useState(false);
@@ -145,6 +149,7 @@ function Shell() {
   const commitDate = (sha: string | undefined) => when(timeline?.entries.find(entry => entry.sha === sha)?.authoredAt);
   return (
     <div className="codiluce" style={style} data-theme={theme.id} data-dark={String(theme.dark)} data-floating={String(!!theme.style?.floating)}>
+      <ActivityConnection />
       <header className="topbar">
         <div className="brand">
           <EclipseMark />
@@ -175,6 +180,7 @@ function Shell() {
             <button className="button" onClick={() => showLeft('flows')} aria-pressed={leftOpen && leftTab === 'flows'} aria-controls="left-panel" title="Flows by CLI, HTTP, UI, MCP and worker entry points, with source scope and evidence coverage">Flows</button>
             <button className="button" onClick={() => showLeft('people')} aria-pressed={leftOpen && leftTab === 'people'} aria-controls="left-panel" title="Who changed which code, from the Git history: select a person to light the files they changed">People</button>
             <button className="button" onClick={() => showLeft('pulls')} aria-pressed={leftOpen && leftTab === 'pulls'} aria-controls="left-panel" title="Pull requests, open and merged: select one to light the files it changes">PRs</button>
+            <button className={`button agents-top${runningAgents > 0 ? ' has-running' : ''}`} onClick={() => showLeft('agents')} aria-label="Agents" aria-pressed={leftOpen && leftTab === 'agents'} aria-controls="left-panel" title={`${runningAgents > 0 ? `${runningAgents} agent${runningAgents === 1 ? '' : 's'} running · ` : ''}Live agent sessions and observed file activity`}>Agents{runningAgents > 0 && <span className="badge" aria-label={`${runningAgents} agent${runningAgents === 1 ? '' : 's'} running`}>{runningAgents}</span>}</button>
           </div>
           <div className="top-action-group" role="group" aria-label="Center tools" title="Opens in a center tab">
             <button className="button" onClick={() => impactOpen ? store.setCenter('map') : void store.openImpactTool()} aria-pressed={impactOpen} title="What depends on the selection, or on your uncommitted changes, hop by hop">Impact</button>
@@ -202,6 +208,7 @@ function Shell() {
               </div>
             )}
             {leftTab === 'features' && features > 0 ? <FeaturesPanel onClose={() => setLeftOpen(false)} />
+              : leftTab === 'agents' ? <AgentsPanel onClose={() => setLeftOpen(false)} />
               : leftTab === 'people' ? <PeoplePanel onClose={() => setLeftOpen(false)} />
               : leftTab === 'pulls' ? <PullsPanel onClose={() => setLeftOpen(false)} />
               : <FlowsPanel onClose={() => setLeftOpen(false)} />}
@@ -235,8 +242,8 @@ function Shell() {
     </div>
   );
 }
-type LeftTab = 'features' | 'flows' | 'people' | 'pulls';
-const TAB_TEXT: Record<LeftTab, string> = { features: 'Features', flows: 'Flows', people: 'People', pulls: 'PRs' };
+type LeftTab = 'features' | 'flows' | 'people' | 'pulls' | 'agents';
+const TAB_TEXT: Record<LeftTab, string> = { features: 'Features', flows: 'Flows', people: 'People', pulls: 'PRs', agents: 'Agents' };
 function HelpDialog({ onClose }: { onClose: () => void }) {
   const close = useRef<HTMLButtonElement>(null);
   useEffect(() => { close.current?.focus(); const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, [onClose]);

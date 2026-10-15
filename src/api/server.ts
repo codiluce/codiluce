@@ -1,5 +1,5 @@
 import { createServer, type Server } from 'node:http';
-import type { GraphStore } from '../storage/sqlite.js';
+import { GraphStore } from '../storage/sqlite.js';
 import { ProjectionService } from '../projection/service.js';
 import { HistoryAccess, HistoryService } from '../history/service.js';
 import { handleProjectionRoute, isProjectionPath, viewParams } from './projection-routes.js';
@@ -14,6 +14,12 @@ import { codeTools } from '../explanations/tools.js';
 import { handleExplanationRoute, isExplanationPath } from '../explanations/routes.js';
 import { SERVE_FILE } from '../explanations/mcp.js';
 import { keyFiles } from '../setup/settings.js';
+import { ActivityService } from '../activity/service.js';
+import { handleActivityRoute } from '../activity/routes.js';
+import { AgentMetadata } from '../activity/providers.js';
+import { repositoryPath } from '../activity/normalize.js';
+import type { ActivityPath } from '../activity/model.js';
+import { stat } from 'node:fs/promises';
 
 export interface InspectionServerOptions {
   /** Repository root; required for source viewing and live Git history. */
@@ -41,6 +47,42 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
   const access = new HistoryAccess(options.stateDirectory);
   const notes = new AnnotationAccess(options.stateDirectory, existsSync);
   const projection = new ProjectionService(store, { readOnly: options.readOnly, stateDirectory: options.stateDirectory, root: options.root, history: access.get, annotations: notes.get, ...(options.pullRequests ? { pullRequests: options.pullRequests } : {}) });
+  const agentMetadata = options.root && options.stateDirectory ? new AgentMetadata(options.root, options.stateDirectory) : undefined;
+  const resolveActivityPath = (target: ActivityPath): ActivityPath => {
+    const context = projection.linkContext();
+    let relative = target.path;
+    let id = relative === '.' ? context.index.rootId : target.scope === 'file' ? context.index.fileByPath.get(relative) : context.byPath.get(relative);
+    const exact = !!id;
+    while (!id && relative !== '.') { relative = path.posix.dirname(relative); id = context.byPath.get(relative); }
+    id ??= context.index.rootId;
+    const node = context.index.node(id);
+    return { ...target, id, exact, ancestors: node ? context.index.spatialAncestors(node).map(item => item.id) : [] };
+  };
+  const activity = new ActivityService(options.root, !!options.root && !options.readOnly, options.stateDirectory, resolveActivityPath, session => agentMetadata?.title(session) ?? Promise.resolve(undefined));
+  let activityIndexing: Promise<void> | undefined;
+  const revealActivityPath = async (target: ActivityPath): Promise<{ path: ActivityPath; refreshed: boolean }> => {
+    const current = resolveActivityPath(target);
+    if (current.exact || target.scope === 'directory') return { path: current, refreshed: false };
+    const root = options.root!, stateDirectory = options.stateDirectory;
+    if (!stateDirectory || repositoryPath(root, root, target.path) !== target.path) throw new Error('This file cannot be revealed outside the repository.');
+    const info = await stat(path.join(root, target.path)).catch(() => undefined);
+    if (!info?.isFile()) throw new Error('This file no longer exists. Its earlier activity remains in the feed.');
+    // Only an explicit click on an observed file may refresh the architecture index.
+    activityIndexing ??= (async () => {
+      const { indexRepository } = await import('../pipeline/index.js');
+      const { readRawConfig, resolveConfig } = await import('../core/config.js');
+      const raw = await readRawConfig(stateDirectory);
+      const config = await resolveConfig(root, { ...raw, repository: raw.repository ?? { name: store.currentRun()!.repositoryName } });
+      const graph = await indexRepository(root, { stateDirectory, config, cache: path.join(stateDirectory, 'cache') });
+      const database = store.db.prepare('PRAGMA database_list').all().find(row => row.name === 'main')?.file;
+      const writable = store.readOnly ? new GraphStore(String(database)) : store;
+      try { writable.save(graph); } finally { if (writable !== store) writable.close(); }
+    })().finally(() => { activityIndexing = undefined; });
+    await activityIndexing;
+    const resolved = resolveActivityPath(target);
+    if (!resolved.exact) throw new Error('This file is excluded from the index. Update the repository indexing settings to show it on the map.');
+    return { path: resolved, refreshed: true };
+  };
   const history = new HistoryService({ root: options.root, stateDirectory: options.stateDirectory, store, history: access, indexing: options.historyIndexing && !options.readOnly });
   const projectionContext = { store, projection, history, root: options.root, maxFileBytes: options.maxFileBytes ?? 1024 * 1024 };
   // Explanations live in the state directory: text from language models whose links name code (src/explanations).
@@ -56,6 +98,7 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
     const fail = (error: unknown) => { if (!response.headersSent) response.writeHead(500); response.end(JSON.stringify({ error: error instanceof Error ? error.message : String(error) })); };
     let pathname: string;
     try { pathname = new URL(request.url ?? '/', 'http://127.0.0.1').pathname; } catch { response.writeHead(400).end(JSON.stringify({ error: 'Bad request' })); return; }
+    if (pathname === '/api/agents' || pathname.startsWith('/api/agents/')) { handleActivityRoute(activity, request, response, new URL(request.url ?? '/', 'http://127.0.0.1'), options.stateDirectory, { connections: () => agentMetadata?.connections() ?? Promise.resolve([]), ...(!options.readOnly ? { reveal: revealActivityPath } : {}) }).catch(fail); return; }
     if (request.method === 'POST' && pathname === '/api/history/index') { handleIndexRequest(request, response, history).catch(fail); return; }
     if (request.method === 'POST' && pathname === '/api/projection/map-visibility') { if (options.readOnly) { response.writeHead(403).end(JSON.stringify({ error: 'Map preferences are read-only' })); return; } handleMapVisibility(request, response, projection).catch(fail); return; }
     if (isExplanationPath(pathname)) {
@@ -75,7 +118,7 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
       const limit = params.has('limit') ? Number(params.get('limit')) : undefined;
       const offset = params.has('offset') ? Number(params.get('offset')) : undefined;
       let result: unknown;
-      if (url.pathname === '/' || url.pathname === '/api') result = { name: 'Codiluce inspection API', endpoints: ['/api/summary', '/api/entities?search=login&type=method&limit=100', '/api/entities/:id', '/api/entities/:id/children', '/api/entities/:id/relations?direction=outgoing&type=handles', '/api/relations/:id', '/api/diagnostics?severity=error', '/api/projection', '/api/projection/children/:id', '/api/projection/locate/:id', '/api/projection/search?q=login', '/api/projection/relations/:id', '/api/projection/aggregate/:id', '/api/projection/diagnostics/:id', '/api/projection/between?a=ID&b=ID', '/api/projection/impact/:id?depth=4&types=calls,renders&group=feature', '/api/projection/impact-working?group=app', '/api/projection/steps/:id', '/api/projection/request-flows?entity=ID', '/api/projection/request-flows/:id', '/api/history/impact?snapshot=ID&compareTo=ID', '/api/source?entity=ID', '/api/history', '/api/history/changes?snapshot=ID&compareTo=ID', '/api/history/change/:id?snapshot=ID&compareTo=ID', '/api/history/entity/:id', '/api/history/evolution', '/api/source/diff?entity=ID&snapshot=ID&compareTo=ID', '/api/projection/flows?entity=ID&kind=page', '/api/projection/coverage', '/api/projection/families', '/api/projection/features', '/api/projection/files?feature=KEY|family=KEY|coverage=CATEGORY|person=KEY', '/api/annotations', '/api/authorship?window=90d', '/api/authorship/person/:key', '/api/authorship/entity/:id', '/api/pulls?window=90d&q=TEXT&refresh=1', '/api/pulls/item/:id', '/api/pulls/entity/:id', '/api/projection/impact-pull?pull=ID', '/api/projection/files?pull=ID'], views: 'Projection, source and entity/relation detail routes accept snapshot=ID (a history snapshot) and compareTo=ID (a baseline).' };
+      if (url.pathname === '/' || url.pathname === '/api') result = { name: 'Codiluce inspection API', endpoints: ['/api/agents', '/api/agents/stream', '/api/agents/setup', '/api/agents/events', '/api/summary', '/api/entities?search=login&type=method&limit=100', '/api/entities/:id', '/api/entities/:id/children', '/api/entities/:id/relations?direction=outgoing&type=handles', '/api/relations/:id', '/api/diagnostics?severity=error', '/api/projection', '/api/projection/children/:id', '/api/projection/locate/:id', '/api/projection/search?q=login', '/api/projection/relations/:id', '/api/projection/aggregate/:id', '/api/projection/diagnostics/:id', '/api/projection/between?a=ID&b=ID', '/api/projection/impact/:id?depth=4&types=calls,renders&group=feature', '/api/projection/impact-working?group=app', '/api/projection/steps/:id', '/api/projection/request-flows?entity=ID', '/api/projection/request-flows/:id', '/api/history/impact?snapshot=ID&compareTo=ID', '/api/source?entity=ID', '/api/history', '/api/history/changes?snapshot=ID&compareTo=ID', '/api/history/change/:id?snapshot=ID&compareTo=ID', '/api/history/entity/:id', '/api/history/evolution', '/api/source/diff?entity=ID&snapshot=ID&compareTo=ID', '/api/projection/flows?entity=ID&kind=page', '/api/projection/coverage', '/api/projection/families', '/api/projection/features', '/api/projection/files?feature=KEY|family=KEY|coverage=CATEGORY|person=KEY', '/api/annotations', '/api/authorship?window=90d', '/api/authorship/person/:key', '/api/authorship/entity/:id', '/api/pulls?window=90d&q=TEXT&refresh=1', '/api/pulls/item/:id', '/api/pulls/entity/:id', '/api/projection/impact-pull?pull=ID', '/api/projection/files?pull=ID'], views: 'Projection, source and entity/relation detail routes accept snapshot=ID (a history snapshot) and compareTo=ID (a baseline).' };
       else if (url.pathname === '/api/summary') result = store.summary();
       else if (url.pathname === '/api/entities') result = store.entities({ limit, offset, search: params.get('search') ?? undefined, type: params.get('type') ?? undefined, path: params.get('path') ?? undefined, parentId: params.get('parentId') ?? undefined });
       else if (url.pathname === '/api/diagnostics') result = store.diagnostics({ limit, offset, severity: params.get('severity') ?? undefined, code: params.get('code') ?? undefined });
@@ -109,6 +152,8 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
     try { writeFileSync(serveFile, `${JSON.stringify({ url: `http://127.0.0.1:${address.port}/`, pid: process.pid, startedAt: new Date().toISOString() })}\n`); } catch { /* optional */ }
   });
   server.on('close', () => {
+    activity.close();
+    agentMetadata?.close();
     access.close(); notes.close();
     if (serveFile) { try { if ((JSON.parse(readFileSync(serveFile, 'utf8')) as { pid?: number }).pid === process.pid) rmSync(serveFile); } catch { /* optional */ } }
   });

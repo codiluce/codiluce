@@ -6,7 +6,7 @@ test('header groups its layouts and opens Impact on the selection', async ({ pag
   await page.goto('/');
   const header = page.locator('.topbar');
   const sidebar = header.getByRole('group', { name: 'Sidebar panels', exact: true });
-  await expect(sidebar.getByRole('button')).toHaveText(['Flows', 'People', 'PRs']);
+  await expect(sidebar.getByRole('button')).toHaveText(['Flows', 'People', 'PRs', 'Agents']);
   await expect(header.getByRole('group', { name: 'Center tools' }).getByRole('button')).toHaveText(['Impact']);
   await expect(header.getByRole('group', { name: 'Additional columns' }).getByRole('button')).toHaveText(['Explain', 'Code']);
   await expect(header.getByRole('combobox', { name: 'Theme' })).toHaveCount(0);

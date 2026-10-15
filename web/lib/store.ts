@@ -1,3 +1,4 @@
+import type { ActivitySnapshot } from '@engine/activity/model';
 // Framework-agnostic application state. React panels subscribe through
 // useSyncExternalStore; the canvas controller subscribes directly. Each
 // concern owns an AbortController so rapid navigation cancels stale requests.
@@ -304,6 +305,7 @@ export interface AtlasState {
   connections: Connections;
   files?: FilesState;
   code?: CodeState;
+  agents: { connected: boolean; show: boolean; now: number; focus?: string; snapshot?: ActivitySnapshot };
   explain: ExplainState;
 }
 export interface MapNavigator {
@@ -408,11 +410,13 @@ export class AtlasStore {
       staleIndex: false, sceneRevision: 0, mapVisibility: { open: false, busy: false },
       impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '', open: {} }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, families: { show: false, status: 'idle' }, features: { status: 'idle', open: {} },
       people: { window: prefs.peopleWindow ?? 'all', show: false, status: 'idle', open: {} }, lens: { status: 'idle' }, pulls: { status: 'idle', tab: 'open', query: '', open: {} }, center: 'map',
+      agents: { connected: false, show: true, now: Date.now() },
       explain: { open: false, list: { status: 'idle' }, lens: prefs.explainLens ?? true, draft: { text: '', context: [], ...(prefs.chatModel ? { model: prefs.chatModel } : {}) }, unseen: [], agents: [], dismissed: [] },
       flowSplit: clampSplit(prefs.flowSplit ?? FLOW_SPLIT), connections: prefs.connections === 'rails' ? 'rails' : 'arcs',
       timeline: { open: false, status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true, split: prefs.split ?? true, regionLevel: prefs.regionLevel ?? 'auto', regions: { status: 'idle' } },
     };
   }
+  setActivity(patch: Partial<AtlasState['agents']>): void { this.set({ agents: { ...this.state.agents, ...patch } }); }
   getState = (): AtlasState => this.state;
   subscribe = (listener: () => void): (() => void) => { this.listeners.add(listener); return () => this.listeners.delete(listener); };
   private set(patch: Partial<AtlasState> | ((state: AtlasState) => Partial<AtlasState>)): void {

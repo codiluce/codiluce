@@ -17,6 +17,8 @@ import { setupCommand } from './setup/command.js';
 import { CancelledError } from './setup/terminal.js';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { activityLaunch, forwardHook, hookConfiguration } from './activity/hooks.js';
+import { installKind } from './setup/settings.js';
 
 const HELP = `Codiluce — Bring your code to light
 Code and architecture visualizer
@@ -36,6 +38,7 @@ npx codiluce history status [--repo PATH] [--state-dir PATH]
 npx codiluce annotate [--repo PATH] [--state-dir PATH] [--tasks files,flows,commits,folders,domains,overview,chapters]
                        [--estimate] [--pilot] [--max-cost 10] [--concurrency 6] [--force]
 npx codiluce mcp [--repo PATH] [--state-dir PATH]
+npx codiluce activity hooks --agent codex|claude-code [--repo PATH] [--state-dir PATH]
 
 Options: --search TEXT --type TYPE --id ID --path PATH --parent ID
          --direction incoming|outgoing|both --severity info|warning|error
@@ -96,10 +99,14 @@ to Claude Code with: claude mcp add codiluce -- npx -y codiluce mcp
 async function main(): Promise<void> {
   const string = { type: 'string' } as const;
   const boolean = { type: 'boolean' } as const;
-  const options = { yes: boolean, history: string, 'json-progress': boolean, tasks: string, 'max-cost': string, concurrency: string, estimate: boolean, pilot: boolean, force: boolean, repo: string, 'state-dir': string, port: string, ui: string, search: string, type: string, id: string, path: string, parent: string, direction: string, severity: string, code: string, limit: string, offset: string, ref: string, since: string, commits: string, jobs: string, 'pr-metadata': string, 'all-parents': boolean, 'history-indexing': boolean, 'no-cache': boolean, 'no-open': boolean, 'build-ui': boolean, 'read-only': boolean, help: boolean };
+  const options = { agent: string, yes: boolean, history: string, 'json-progress': boolean, tasks: string, 'max-cost': string, concurrency: string, estimate: boolean, pilot: boolean, force: boolean, repo: string, 'state-dir': string, port: string, ui: string, search: string, type: string, id: string, path: string, parent: string, direction: string, severity: string, code: string, limit: string, offset: string, ref: string, since: string, commits: string, jobs: string, 'pr-metadata': string, 'all-parents': boolean, 'history-indexing': boolean, 'no-cache': boolean, 'no-open': boolean, 'build-ui': boolean, 'read-only': boolean, help: boolean };
   const { positionals, values } = parseArgs({ allowPositionals: true, options });
   const command = positionals[0];
   if (values.help || !command) { console.log(HELP); return; }
+  if (command === 'activity' && positionals[1] === 'hook') {
+    if (values.agent === 'codex' || values.agent === 'claude-code') await forwardHook(values.agent, path.resolve(values['state-dir'] ?? path.join(values.repo ?? process.cwd(), '.codiluce')), process.stdin);
+    return;
+  }
   if (values['pr-metadata'] !== undefined && values['pr-metadata'] !== 'github') throw new Error('--pr-metadata supports: github');
   const prMetadata = () => values['pr-metadata'] === 'github' ? 'github' as const : undefined;
   if (command === 'start') {
@@ -137,6 +144,12 @@ async function main(): Promise<void> {
   const root = await realpath(String(repoValue ?? (command === 'mcp' ? await gitTop(process.cwd()) : process.cwd())));
   const stateDirectory = path.resolve(String(values['state-dir'] ?? path.join(root, '.codiluce')));
   const database = path.join(stateDirectory, 'codiluce.db');
+  if (command === 'activity') {
+    if (positionals[1] !== 'hooks' || values.agent !== 'codex' && values.agent !== 'claude-code') throw new Error('Usage: codiluce activity hooks --agent codex|claude-code [--repo PATH] [--state-dir PATH]');
+    const tool = await toolDirectory();
+    console.log(JSON.stringify(hookConfiguration(values.agent, activityLaunch(tool, installKind(tool, root), values.agent, root, stateDirectory)), null, 2));
+    return;
+  }
   if (command === 'init') {
     await mkdir(stateDirectory, { recursive: true });
     const configFile = path.join(stateDirectory, 'config.yml');
@@ -217,7 +230,7 @@ async function main(): Promise<void> {
       console.log(`Graph inspection API: http://127.0.0.1:${port}/api`);
       console.log(uiDirectory ? `Visualizer: http://127.0.0.1:${port}/` : 'Visualizer UI not built (npm run build:web); API only');
     });
-    const stop = () => server.close(() => { store.close(); process.exit(0); });
+    const stop = () => { server.close(() => { store.close(); process.exit(0); }); server.closeAllConnections(); };
     process.once('SIGINT', stop); process.once('SIGTERM', stop);
     return;
   }

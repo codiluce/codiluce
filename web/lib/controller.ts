@@ -1,3 +1,4 @@
+import { activityMarks } from './activity';
 // Owns a canvas: input, camera animation, render scheduling and lazy child
 // loading. React never renders map primitives; it only mounts controllers.
 // The single map has one (`main`); the split map of History has an `overview`
@@ -311,8 +312,8 @@ export class MapController implements MapNavigator {
     if (moved !== this.lastCamera) { this.lastCamera = moved; this.options.onCamera?.(); }
     this.scheduleReport(time);
     if (this.animation || state.timeline.playing || time < this.motionUntil || this.renderer.railsPending) this.request();
-    // A flow on the map streams all the time (not with reduced motion).
-    else if (shown && !this.motionReduced && !this.store.previewScene) this.request(false);
+    // Flows stream; a new activity mark pulses briefly (not with reduced motion).
+    else if ((shown || render.activity?.some(mark => mark.age < 2000)) && !this.motionReduced && !this.store.previewScene) this.request(false);
     if (!this.animation && time >= this.motionUntil && (this.motion.appear.size || this.motion.flash.size)) { this.motion.appear.clear(); this.motion.flash.clear(); }
   }
   private reportTimer?: ReturnType<typeof setTimeout>;
@@ -354,6 +355,7 @@ export class MapController implements MapNavigator {
     }
     const unresolvedCount = selection && !isContainer(selection.node ?? { type: 'file', kind: 'entity' }) && selection.node?.type !== 'file' ? state.diagnostics.data?.codes.find(code => code.code === 'unresolved-http-call')?.count ?? 0 : 0;
     return {
+      activity: state.agents.show && state.meta?.snapshot.kind !== 'commit' && !this.store.previewScene ? activityMarks(state.agents.snapshot?.events ?? [], Date.now(), state.agents.focus) : undefined,
       selectedId: selection?.id, hoveredId: state.hover?.id, emphasis, within, edges,
       showDiagnostics: state.showDiagnostics, source: this.sourceFace(state), time, reducedMotion: this.motionReduced, shapes: state.shapes, streets: state.streets, connections: state.connections,
       ...(state.meta?.comparison ? { comparison: { dimUnchanged: state.timeline.dimUnchanged } } : {}),
