@@ -39,6 +39,7 @@ break.
 
 Codiluce keeps understanding in step with the code. It reads your repository and draws it as a map you can zoom,
 search and replay, where every link between pages, requests, functions and tables comes with the evidence behind it.
+Your agents explain the code on that map, and you see what each of them touches while it works.
 
 ## Quick start
 
@@ -57,47 +58,66 @@ which hides itself from Git.
 
 Want it always at hand? Run `npm install --global codiluce`, then `codiluce start .` in any repository.
 
-## Explain it with your agent
+## Work with your agents
 
-Ask Claude Code, Codex or Cursor to explain the code, and read the answer on the map. Connect your agent to Codiluce
-once, from the repository:
+Codiluce is made for code that agents write. Connect Claude Code, Codex or Cursor once: they explain the code on your
+map, and **Agents** shows you what every session is touching while it works.
+
+### Ask your agent, read the answer on the map
+
+Connect your agent to Codiluce's MCP server, from the repository:
 
 ```bash
 claude mcp add codiluce -- npx -y codiluce mcp
 ```
 
-`codiluce setup` does this for you when it finds Claude Code, Codex or Cursor. Then ask your agent, for example,
-*"Use Codiluce to explain how checkout works, and publish it."* Its tools read the index
-(flows, blast radius, history, source), so it starts from what the code provably does. `publish_explanation` checks
-that every file, symbol and flow it names exists, then saves the answer in the map's **Explain** column: point at a
-link and that code lights up on the map; click it to open it. Each explanation is pinned to the commit it was written
-against and says when the code it links changes. With an Anthropic or OpenAI key, you can also ask in the column
-itself, with files and folders attached by `@`.
+`codiluce setup` does this for you when it finds Claude Code, Codex or Cursor. Then ask in your own words, for example
+*"Use Codiluce to explain how checkout works, and publish it."* Its tools read the index (flows, blast radius, history,
+source), so the agent starts from what the code provably does instead of guessing from file names.
+
+- **Watch it explain.** While the agent works, the map's **Explain** column shows a card with what it is explaining,
+  your question and each tool it calls.
+- **Every link checked.** `publish_explanation` checks that every file, symbol and flow the answer names exists, then
+  saves it in the column. Point at a link and that code lights up on the map; click it to open it.
+- **Never silently stale.** Each explanation is pinned to the commit it was written against and says when the code it
+  links changes.
+- **No agent at hand?** With an Anthropic or OpenAI key, ask in the column itself, with files and folders attached by `@`.
 
 ![An explanation of how BookStack saves a page, in the Explain column: its links name the controller, repository and revision code, which is lit on the map while the rest of the repository recedes.](site/public/shots/explanations.webp)
 
-## Watch agents work
+### Watch your agents work
 
-Open **Agents** to see live Codex and Claude Code activity beside the map. Connect either agent with the hook
-configuration under **Agent connections** in the panel footer. Reads, edits and searches mark their observed paths, with a fading trail and a color
-for each session. Only agent-attributed observations appear; the activity service does not watch filesystem changes.
-Select an observed file to reveal it on the map. If it was added after the last analysis, this explicit selection refreshes
-the index first. Searches do not count as reads of every matching file.
-See [connection details and coverage](docs/design/agents.md).
+Open **Agents** beside the map to follow every Claude Code and Codex session at once. Each read, edit and search
+outlines the code it touched in that session's color, and fades after 30 seconds. When two sessions touch the same
+file, both marks show. Click a path in the feed to reveal the file, even one added since the last analysis.
+
+Agents report their activity through hooks. **Agents → Agent connections** in the map shows the configuration to merge
+into `.claude/settings.local.json` or `.codex/hooks.json`, and the CLI prints it too:
+
+```bash
+npx codiluce activity hooks --agent claude-code   # or: --agent codex
+```
+
+Only what the hooks report is shown; Codiluce does not watch the file system or guess who changed what. It keeps paths,
+searches, tool names and session titles, in memory, and never prompts, file contents or command output. More in
+[Agents](https://codiluce.com/docs/agents/) and the [design notes](docs/design/agents.md).
 
 ## What you can do
 
-- **Zoom from the whole repository to a single line.** Applications, folders, files and symbols nest inside each other,
-  sized by their code.
-- **Follow a flow end to end.** From a page or a command, through the request, to the handler and the tables it reads
-  and writes.
 - **Ask, and read the answer on the map.** Explanations from your agent, or from the chat in the map, link the code
   they talk about: every link lights its code, and stale answers say what changed.
+- **Watch your agents work.** Every file a Claude Code or Codex session reads, edits or searches lights up in its color,
+  as it happens.
+- **Zoom from the whole repository to a single line.** Applications, folders, files and symbols nest inside each other,
+  sized by their code, each file drawn as the shape of its kind.
+- **Follow a flow end to end.** From a page or a command, through the request, to the handler and the tables it reads
+  and writes.
 - **Replay your Git history.** Every commit becomes a snapshot. Compare any two, or watch the architecture change as a
   time-lapse.
-- **See the blast radius.** Pick anything and see what depends on it, hop by hop.
+- **See the blast radius.** Pick anything, or your uncommitted changes, and see what depends on it, hop by hop.
 - **Review pull requests on the map.** Open and merged pull requests, and branches not merged yet, light the files they
   change, with their commits, people and blast radius.
+- **Color the map by what matters.** Flow coverage, who changed the code most, complexity, recent changes or hotspots.
 - **Check the evidence.** Every link opens the file and line that proves it. What cannot be proven shows up as a
   finding, never as a guess.
 - **Add descriptions, if you like.** A language model can describe files, flows and commits, with the cost estimated
@@ -128,7 +148,8 @@ in `.codiluce/config.yml` separately excludes files from analysis.
 
 Codiluce runs on your machine. It reads your code but never runs it, never installs its dependencies and never writes
 to your checkout. Nothing leaves your computer unless you ask for AI descriptions, ask a question in the map's chat or
-ask for GitHub pull request data. Your agent reads the index through Codiluce's MCP server, on your machine.
+ask for GitHub pull request data. Your agent reads the index through Codiluce's MCP server, and reports its activity
+through hooks, both on your machine.
 
 ## Languages and frameworks
 
@@ -394,7 +415,8 @@ dynamic configuration, middleware policies and generated URLs retain gaps. Bound
 ## Learn more
 
 - [Getting started](https://codiluce.com/docs/), [languages & frameworks](https://codiluce.com/docs/stacks/),
-  [using the map](https://codiluce.com/docs/map/) and [explanations](https://codiluce.com/docs/explanations/)
+  [using the map](https://codiluce.com/docs/map/), [explanations](https://codiluce.com/docs/explanations/) and
+  [agents](https://codiluce.com/docs/agents/)
 - [History](https://codiluce.com/docs/history/), [CLI & API](https://codiluce.com/docs/cli/) and
   [configuration](https://codiluce.com/docs/configuration/)
 - [How it works](https://codiluce.com/docs/how-it-works/), the [technical reference](docs/reference.md) and the

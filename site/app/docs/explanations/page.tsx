@@ -2,11 +2,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CodeBlock } from '../../../components/CodeBlock';
 import { DocsPager } from '../../../components/DocsNav';
+import { NextTag } from '../../../components/NextTag';
 import { Shot } from '../../../components/Shot';
 
 export const metadata: Metadata = { title: 'Explanations', description: 'Ask your agent, or the map, to explain the code, and read the answer with every file, symbol and flow it names lit on the map.' };
 
 const TOOLS = [
+  { tool: 'start_explanation', what: 'Say what it is about to explain, before reading the code: the map shows it at once, with your question and each tool the agent calls. Saves nothing.' },
   { tool: 'overview', what: 'The applications, their frameworks, the size, the flows by kind, the features, and the link syntax.' },
   { tool: 'search', what: 'Files, folders, symbols, routes, endpoints, tables, commands and tasks by name or path.' },
   { tool: 'entity', what: 'One entity: its description and feature, its symbols or contents, the flows through it, its relationships, what it does outside the code, who changed it, and the explanations that link it.' },
@@ -73,6 +75,14 @@ export default function ExplanationsDocs() {
           <tbody>{TOOLS.map(row => <tr key={row.tool}><td><code>{row.tool}</code></td><td>{row.what}</td></tr>)}</tbody>
         </table>
       </div>
+      <h3 id="working" className="anchor">While it works<NextTag feature="working-card" /></h3>
+      <p>
+        You do not have to wait for the answer to know it is coming. While an agent works on an explanation, the
+        {' '}<strong>Explain</strong> button pulses and the column shows a card: which agent, what it is explaining, your
+        question, and each tool it calls, with how long it has been working. When <code>publish_explanation</code> saves the
+        answer, the explanation takes its place. Codiluce&apos;s MCP server asks agents to call <code>start_explanation</code>
+        {' '}first; an agent that skips it still shows its steps as it reads the code.
+      </p>
       <p>
         <code>publish_explanation</code> checks every link against the index first. A path that names nothing comes back
         with the reason, and nothing is saved until the agent fixes it. The server reads the index and writes only

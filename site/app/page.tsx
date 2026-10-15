@@ -1,19 +1,54 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
+import { AgentTerminal, HookStatus } from '../components/AgentWork';
+import { CodeBlock } from '../components/CodeBlock';
 import { ComprehensionGap } from '../components/ComprehensionGap';
 import { EclipseMark } from '../components/EclipseMark';
-import { FlowChain } from '../components/FlowChain';
+import { GoalDiff } from '../components/GoalDiff';
 import { HeroShader } from '../components/HeroShader';
 import { InstallCommand } from '../components/InstallCommand';
+import { MapDemo } from '../components/MapDemo';
+import { NextTag } from '../components/NextTag';
 import { ShapeGallery } from '../components/ShapeGallery';
-import { Shot } from '../components/Shot';
 import { Stacks } from '../components/Stacks';
 import { GitHubIcon } from '../components/SiteChrome';
-import { CALL_URL, GITHUB_URL, ISSUES_URL, VERSION } from '../lib/site';
+import { CALL_URL, GITHUB_URL, ISSUES_URL, NEXT_RELEASE, VERSION } from '../lib/site';
 
-const QUESTIONS = [
-  { q: 'What does this code do?', a: 'Every file, symbol, route and table sits in one zoomable map, from the whole repository down to a line of source.' },
-  { q: 'Which flow is it part of?', a: 'Pages, requests, commands and scheduled tasks are traced end to end, so each file says which flows reach it.' },
-  { q: 'What changed since I last looked?', a: 'Every commit is a snapshot. Compare any two to see what was added, removed or moved, and what depends on it.' },
+const glyph = (d: ReactNode) => <svg viewBox="0 0 24 24" aria-hidden="true" className="more-glyph">{d}</svg>;
+const MORE: { title: string; glyph: ReactNode; text: ReactNode; next?: 'pull-requests' }[] = [
+  {
+    title: 'Impact',
+    glyph: glyph(<><circle cx="12" cy="12" r="2.5" /><circle cx="12" cy="12" r="6" opacity="0.6" /><circle cx="12" cy="12" r="9.5" opacity="0.3" /></>),
+    text: 'Pick anything, or your uncommitted changes, and see what depends on it, hop by hop, grouped by application, feature and folder.',
+  },
+  {
+    title: 'Pull requests',
+    next: 'pull-requests',
+    glyph: glyph(<><circle cx="6" cy="5" r="2" /><circle cx="6" cy="19" r="2" /><circle cx="18" cy="19" r="2" /><path d="M6 7v10M18 17V10a3 3 0 0 0-3-3h-4" /><path d="M13 4.5 10.5 7 13 9.5" /></>),
+    text: 'Open pull requests and branches not merged yet light the files they change, with their commits, people and blast radius.',
+  },
+  {
+    title: 'People',
+    glyph: glyph(<><circle cx="9" cy="8" r="3" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><circle cx="17" cy="9" r="2.4" opacity="0.6" /><path d="M15.5 14.2A4.5 4.5 0 0 1 21 18.5" opacity="0.6" /></>),
+    text: 'Who changed which code, read from Git without a model. Coding agents and bots are marked as such.',
+  },
+  {
+    title: 'Color by',
+    glyph: glyph(<><rect x="3" y="3" width="8" height="8" rx="1.5" /><rect x="13" y="3" width="8" height="8" rx="1.5" opacity="0.6" /><rect x="3" y="13" width="8" height="8" rx="1.5" opacity="0.6" /><rect x="13" y="13" width="8" height="8" rx="1.5" opacity="0.3" /></>),
+    text: NEXT_RELEASE.includes('code-health')
+      ? <>Color the map by the code no flow reaches, or by who changed it most. Complexity, recent changes and hotspots come with the next release.</>
+      : <>Color the map by the code no flow reaches, who changed it most, complexity, recent changes or hotspots.</>,
+  },
+  {
+    title: 'Evidence',
+    glyph: glyph(<><circle cx="10.5" cy="10.5" r="6" /><path d="m15 15 5.5 5.5" /><path d="m8 10.5 1.8 1.8L13 9" /></>),
+    text: 'Every link opens the file and line that proves it. What cannot be proven shows up as a finding, never as a guess.',
+  },
+  {
+    title: 'Private by design',
+    glyph: glyph(<><rect x="4.5" y="10.5" width="15" height="10" rx="2" /><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" /></>),
+    text: 'It runs on your machine, reads your code without running it, and never writes to your checkout. Nothing leaves unless you ask.',
+  },
 ];
 
 function CalendarIcon() {
@@ -34,8 +69,8 @@ export default function Home() {
           <p className="hero-badge"><span className="pulse-dot" aria-hidden="true" />v{VERSION} · early preview · MIT</p>
           <h1 id="hero-title">Bring your code to light</h1>
           <p className="hero-lede">
-            Codiluce helps engineers understand their code and its architecture: every flow from the interface to the data,
-            linked by evidence, through its whole Git history.
+            Codiluce helps engineers understand their code and its architecture while agents keep changing it: every flow
+            from the interface to the data, every commit, and every file an agent touches, linked by evidence.
           </p>
           <InstallCommand />
           <div className="hero-actions">
@@ -46,14 +81,10 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="showcase" aria-label="The map">
+      <section className="showcase" aria-label="Codiluce at work">
         <div className="container">
-          <Shot
-            src="/shots/map.webp"
-            alt="Codiluce map of the BookStack repository at file level: one folder of Blade views drawn as browser billboards with streets between them, selected, and the inspector listing the kinds of block it holds."
-            caption="BookStack, an open-source wiki, at file level. Each file is drawn as the shape of its kind, sized by its code; the inspector lists the kinds of block the selected folder holds."
-            priority
-          />
+          <MapDemo />
+          <p className="demo-note">A scripted replay of the map on a small made-up repository. Run it on yours to see the real thing.</p>
         </div>
       </section>
 
@@ -63,115 +94,93 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section" id="goal" aria-labelledby="goal-title">
+      <section className="section goal-section" id="goal" aria-labelledby="goal-title">
         <div className="container">
           <p className="eyebrow">Goal</p>
           <h2 id="goal-title" className="section-title">Agents keep changing the code. Humans should still understand it.</h2>
           <p className="section-lede">
-            Codiluce exists so the people responsible for a system still understand its code and architecture, whoever made
-            the last commit. It answers the questions a diff cannot.
+            Codiluce exists so the people responsible for a system still understand it, whoever made the last commit. It
+            answers the questions a review of the diff cannot.
           </p>
-          <div className="questions">
-            {QUESTIONS.map((item, index) => (
-              <article key={item.q} className="question">
-                <span className="question-index">0{index + 1}</span>
-                <h3>{item.q}</h3>
-                <p>{item.a}</p>
-              </article>
-            ))}
+          <GoalDiff />
+        </div>
+      </section>
+
+      <section className="section agents-section" id="agents" aria-labelledby="agents-title">
+        <div className="container">
+          <p className="eyebrow">Agents</p>
+          <h2 id="agents-title" className="section-title">Work with your agents, not behind them.</h2>
+          <p className="section-lede">
+            Connect Claude Code, Codex or Cursor once. Your agent reads the index instead of guessing from file names,
+            explains what it finds on your map, and every file it touches lights up while it works.
+          </p>
+          <div className="agent-cards">
+            <article className="agent-card">
+              <AgentTerminal />
+              <div className="agent-card-text">
+                <h3>Explain it with your agent</h3>
+                <p>
+                  Ask in your own words. The agent follows flows, blast radius, history and source through Codiluce&apos;s MCP
+                  server, and publishes its answer to the map&apos;s Explain column. While it works, the map shows what it is
+                  explaining and each tool it calls.<NextTag feature="working-card" />
+                </p>
+                <ul className="ticks">
+                  <li>Every link is checked against the index before the answer is saved</li>
+                  <li>Answers are pinned to their commit and say when the code they link changes</li>
+                  <li>No agent at hand? Ask in the map, with your own Anthropic or OpenAI key</li>
+                </ul>
+                <CodeBlock prompt code="claude mcp add codiluce -- npx -y codiluce mcp" />
+                <Link href="/docs/explanations/" className="text-link">Explanations →</Link>
+              </div>
+            </article>
+            <article className="agent-card">
+              <HookStatus />
+              <div className="agent-card-text">
+                <h3>Watch them work <NextTag feature="agents" /></h3>
+                <p>
+                  Open <strong>Agents</strong> beside the map to follow every Claude Code and Codex session at once. Each read,
+                  edit and search marks the code it touched in that session&apos;s color, and fades after 30 seconds.
+                </p>
+                <ul className="ticks">
+                  <li>When two sessions touch the same file, both marks show</li>
+                  <li>Click a path in the feed to reveal the file, even one added since the last index</li>
+                  <li>Only paths, searches and tool names are kept, in memory: never prompts, file contents or output</li>
+                </ul>
+                <Link href="/docs/agents/" className="text-link">Agents →</Link>
+              </div>
+            </article>
           </div>
         </div>
       </section>
 
-      <section className="section features" aria-label="Features">
+      <section className="section more-section" id="more" aria-labelledby="more-title">
         <div className="container">
-          <div className="feature">
-            <div className="feature-text">
-              <p className="eyebrow">Flows</p>
-              <h2 className="section-title">From the click to the table.</h2>
-              <p>
-                Codiluce follows a click across the whole system: from the interface, through the request, even when its URL
-                is built in code, to the handler that answers it and the tables it reads.
-              </p>
-              <ul className="ticks">
-                <li>One list of every flow: pages, requests, commands, scheduled tasks</li>
-                <li>A flow plays on the map itself, branch by branch</li>
-                <li>Coverage shows the code that no flow reaches</li>
-              </ul>
-            </div>
-            <FlowChain />
-          </div>
+          <p className="eyebrow">And more</p>
+          <h2 id="more-title" className="section-title">One map for every question about the code.</h2>
+          <ul className="more-grid">
+            {MORE.map(item => (
+              <li key={item.title} className="more-item">
+                {item.glyph}
+                <h3>{item.title}{item.next ? <NextTag feature={item.next} /> : null}</h3>
+                <p>{item.text}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
 
-          <div className="feature reverse">
-            <div className="feature-text">
-              <p className="eyebrow">History</p>
-              <h2 className="section-title">Watch the architecture change.</h2>
-              <p>
-                Codiluce indexes every commit of a branch as a snapshot. Scrub the timeline and nothing jumps: the layout keeps
-                each entity in its place. Compare any two commits and the map splits into an overview plus a view on each place
-                that changed.
-              </p>
-              <ul className="ticks">
-                <li>Added, removed, modified and moved, drawn in place</li>
-                <li>Source diffs and the history of any entity</li>
-                <li>A time-lapse of the whole branch</li>
-              </ul>
-            </div>
-            <Shot src="/shots/history.webp" alt="History compare view: an overview of the repository plus four zoomed views on the places a commit changed, with the timeline below." />
-          </div>
-
-          <div className="feature">
-            <div className="feature-text">
-              <p className="eyebrow">Explanations</p>
-              <h2 className="section-title">Ask your agent. Read the answer on the map.</h2>
-              <p>
-                Connect Claude Code, Codex or Cursor to Codiluce, and ask it how something works. It reads the index instead of
-                guessing from file names, and saves its answer beside the map. Every file, symbol and flow the answer names is a
-                link: point at it and that code lights up; click it and it opens.
-              </p>
-              <ul className="ticks">
-                <li>Links are checked against the index before an answer is saved</li>
-                <li>Each answer is pinned to its commit, and says when the code it links changes</li>
-                <li>Ask in the map too, with your own Anthropic or OpenAI key</li>
-              </ul>
-            </div>
-            <Shot src="/shots/explanations.webp" alt="An explanation of how BookStack saves a page, beside the map: the code it links is lit while the rest of the repository recedes." />
-          </div>
-
-          <div className="feature reverse">
-            <div className="feature-text">
-              <p className="eyebrow">Data</p>
-              <h2 className="section-title">See the code by the data it touches.</h2>
-              <p>
-                Codiluce reads the schema from your migrations. Tables group into families by their foreign keys, and code takes
-                the family of the tables it reads and writes. Color the map by family, or ask any folder which data its files
-                serve, with no model required.
-              </p>
-              <ul className="ticks">
-                <li>Blast radius of any entity, hop by hop</li>
-                <li>Steps: what a page or function sets in motion</li>
-                <li>Any folder's files broken down by data family</li>
-              </ul>
-            </div>
-            <Shot src="/shots/data.webp" alt="The Data view: BookStack's code arranged by data family, such as Roles, Entities, Images and Attachments, each in its own color." />
-          </div>
-
+      <section className="section shapes-section" id="shapes" aria-labelledby="shapes-title">
+        <div className="container">
           <div className="feature stacked">
             <div className="feature-text">
               <p className="eyebrow">Shapes</p>
-              <h2 className="section-title">Every kind of file has a shape.</h2>
+              <h2 id="shapes-title" className="section-title">Every kind of file has a shape.</h2>
               <p>
                 Controllers are rail turntables sending requests on their way, services are workshops, tables are storage drums,
-                pages are browser billboards and tests are lab benches. Codiluce takes each file&apos;s kind from the index where it can (a controller class, the endpoints a
-                file declares, a page route) and from folder conventions otherwise, with one set of shapes for every language and
-                framework. A folder of components and a folder of migrations look different before you read a label.
+                pages are browser billboards and tests are lab benches. Codiluce takes each file&apos;s kind from the index where it
+                can, and from folder conventions otherwise, with one set of shapes for every language and framework. A folder of
+                components and a folder of migrations look different before you read a label.
               </p>
-              <ul className="ticks">
-                <li>Eighteen shapes, from entry points to tests</li>
-                <li>A closed folder shows the kinds it holds, with a count</li>
-                <li>Lenses still color them: coverage, data families, people</li>
-                <li>A playing flow lights each stop it reaches</li>
-              </ul>
             </div>
             <ShapeGallery />
           </div>

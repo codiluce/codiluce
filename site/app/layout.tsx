@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   applicationName: 'Codiluce',
   openGraph: {
     title: 'Codiluce — Bring your code to light',
-    description: 'Understand your code and its architecture as agents keep changing it: an evidenced, zoomable map of flows, history and data.',
+    description: 'Understand your code and its architecture as agents keep changing it: an evidenced, zoomable map of flows and history, where your agents explain the code and you watch them work.',
     type: 'website',
     images: [{ url: '/social-preview.png', width: 1280, height: 640, alt: 'Codiluce — Bring your code to light. An amber eclipse lights a map of code.' }],
   },

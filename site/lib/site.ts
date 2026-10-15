@@ -4,6 +4,9 @@ export const NPM_URL = 'https://www.npmjs.com/package/codiluce';
 export const CALL_URL = 'https://calendly.com/mikeltorresugarte-ynlf/30min';
 export const GA_ID = 'G-M9ZTKE5NLC';
 export const VERSION = '0.2.0';
+/** Features on main that the npm release does not have yet; the site tags them "Next release". Empty it after publishing. */
+export type NextFeature = 'agents' | 'working-card' | 'pull-requests' | 'code-health';
+export const NEXT_RELEASE: readonly NextFeature[] = ['agents', 'working-card', 'pull-requests', 'code-health'];
 
 export const INSTALL = {
   npx: ['npx codiluce@latest start .'],
@@ -18,6 +21,7 @@ export const DOCS_NAV = [
   { href: '/docs/stacks/', title: 'Languages & frameworks' },
   { href: '/docs/map/', title: 'Using the map' },
   { href: '/docs/explanations/', title: 'Explanations' },
+  { href: '/docs/agents/', title: 'Agents' },
   { href: '/docs/history/', title: 'History' },
   { href: '/docs/cli/', title: 'CLI & API' },
   { href: '/docs/configuration/', title: 'Configuration' },
