@@ -46,6 +46,7 @@ import { PhpSources } from '../analysis/php/sources.js';
 import { PHP_SOURCE_PROVIDER_VERSION } from '../analysis/php/version.js';
 import {analyzePhp,phpAnalysisInputs,phpAnalysisServices} from './php-analysis.js';
 import { retireNativeLanguageServices } from './language-retirement.js';
+import { codeHealthAnalyzer } from '../analysis/metrics/analyzer.js';
 
 const phpSourcePreparation:Analyzer = {
   name:'php-source-units',version:PHP_SOURCE_PROVIDER_VERSION,
@@ -56,7 +57,7 @@ const phpSourcePreparation:Analyzer = {
 };
 
 const execute = promisify(execFile);
-export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, phpSourcePreparation, structureAnalyzer, liquidAnalyzer, pythonAnalyzer, goAnalyzer, rubyAnalyzer, jvmAnalyzer, csharpAnalyzer, rustAnalyzer, rustSymbolsAnalyzer, rustRoutersAnalyzer, embeddedAnalyzer, typescriptAnalyzer, typescriptServicesRelease, phpStructureAnalyzer, phpImportsAnalyzer, laravelAnalyzer, phpLaravelStructureAnalyzer, phpSymbolsAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer];
+export const analyzers: Analyzer[] = [filesystemAnalyzer, gitMetricsAnalyzer, projectAnalyzer, phpSourcePreparation, structureAnalyzer, liquidAnalyzer, pythonAnalyzer, goAnalyzer, rubyAnalyzer, jvmAnalyzer, csharpAnalyzer, rustAnalyzer, rustSymbolsAnalyzer, rustRoutersAnalyzer, embeddedAnalyzer, typescriptAnalyzer, typescriptServicesRelease, phpStructureAnalyzer, phpImportsAnalyzer, laravelAnalyzer, phpLaravelStructureAnalyzer, phpSymbolsAnalyzer, inertiaLinker, apiMatcher, capabilitiesAnalyzer, codeHealthAnalyzer];
 export interface IndexOptions {
   stateDirectory?: string; config?: AtlasConfig; onProgress?: (name: string) => void;
   /** Index a materialized commit tree: Git is not consulted and the run records this commit, clean. */

@@ -91,6 +91,19 @@ export class AnalysisCache {
     this.event({ analyzer, unit, hit: false, ms: Date.now() - started });
     return value;
   }
+  /**
+   * The value last kept under these inputs, for work an analyzer updates in
+   * place: per-file results keyed by content inside one entry, read once and
+   * kept again whole, rather than one entry (and one prune) per file.
+   */
+  kept<T>(analyzer: string, unit: string, parts: unknown): T | undefined {
+    const stored = this.read<{ format: number; value: T }>(analyzer, unit, AnalysisCache.key(parts));
+    return stored && stored.format === CACHE_FORMAT && Object.hasOwn(stored, 'value') ? stored.value : undefined;
+  }
+  /** Replace the value kept under these inputs. */
+  keep(analyzer: string, unit: string, parts: unknown, value: unknown): void {
+    this.write(analyzer, unit, AnalysisCache.key(parts), { format: CACHE_FORMAT, value });
+  }
   private read<T>(analyzer: string, unit: string, key: string): T | undefined {
     if (!this.limits.perUnit || !this.limits.maxBytes || !this.maxEntryBytes) return undefined;
     let descriptor: number | undefined;

@@ -9,8 +9,9 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const require = createRequire(import.meta.url);
-const manifest = JSON.parse(readFileSync(path.join(root, 'grammars/manifest.json'), 'utf8'));
-for (const grammar of manifest.grammars) {
+// manifest.json: the structural catalog; metrics.json: grammars only code health metrics use.
+const grammars = ['manifest.json', 'metrics.json'].flatMap(name => JSON.parse(readFileSync(path.join(root, 'grammars', name), 'utf8')).grammars);
+for (const grammar of grammars) {
   if(grammar.artifactBuild){
     const target=path.join(root,'grammars',grammar.file);
     let bytes;try{bytes=readFileSync(target);}catch{throw Error(`Pinned ${grammar.language} built asset missing; restore from version control or run node ${grammar.artifactBuild.script}`);}
@@ -35,4 +36,4 @@ for (const grammar of manifest.grammars) {
   if (hash !== grammar.sha256) throw new Error(`Grammar checksum mismatch: ${grammar.language}`);
   copyFileSync(source, path.join(root, 'grammars', grammar.file));
 }
-console.log(`Verified/restored ${manifest.grammars.length} pinned grammar assets.`);
+console.log(`Verified/restored ${grammars.length} pinned grammar assets.`);

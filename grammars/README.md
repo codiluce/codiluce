@@ -35,6 +35,16 @@ invalidate structural fact caches and historical analysis identities. A new
 grammar release requires declaration, range, overload, malformed-source and
 installed-package conformance checks before updating the checksum.
 
+`queries/<language>/metrics.scm` describe the syntax behind code health metrics
+(function length, complexity, nesting, parameters) for one shared engine,
+`src/analysis/metrics/measure.ts`, whose header defines the captures and rules.
+`tests/fixtures/health/` writes the same functions in each language and
+`tests/health-metrics.test.ts` requires identical metrics. Metrics queries
+exist for Python and Go, and for TypeScript (with TSX), JavaScript and PHP,
+whose grammars are not shipped yet: the prototype loads those three from the
+`@vscode/tree-sitter-wasm` development dependency. Metrics queries do not take
+part in structural cache identities.
+
 The current adapters extract named types, modules/namespaces, functions and
 methods for Python, Go, Ruby, Rust, Java, C#, Kotlin, C, C++, Objective-C, Swift, Scala, Groovy, F# and VB.NET. Decorators/annotations,
 modifiers, signatures and lexical containment are preserved where the grammar
