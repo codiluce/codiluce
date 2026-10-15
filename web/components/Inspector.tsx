@@ -16,6 +16,7 @@ import { CommitList, KindTag, PersonDot, WindowPicker, windowText } from './Peop
 import { ExplainActions, ExplanationChips, type Suggestion } from './ExplainActions';
 import { hrefForNode } from '@engine/explanations/links';
 import { PullDot, pullWhen, SourceTag } from './PullsPanel';
+import { CodeHealthSection } from './CodeHealth';
 
 export function Inspector({ onClose }: { onClose: () => void }) {
   const selection = useAtlas(state => state.selection);
@@ -126,6 +127,7 @@ function Selection() {
       <PeopleSection key={`people:${node.id}`} />
       <PullsSection key={`pulls:${node.id}`} />
       <Facts node={node} entity={entity} />
+      {entity && <CodeHealthSection node={node} entity={entity} />}
       <AnalysisSupport analysis={node.analysis ?? fileAnalysis(selection.file?.metadata.analysis)} />
       {node.type === 'database_table' && entity && <TableSection entity={entity} />}
       <HttpCalls selectionId={node.id} file={selection.file} />

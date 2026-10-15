@@ -9,9 +9,9 @@ import { languageOf } from '../src/core/languages.js';
 import { createMeasurer, metricsDialect } from '../src/analysis/metrics/grammars.js';
 import { generatedReason } from '../src/analysis/metrics/generated.js';
 import type { FunctionMetrics } from '../src/analysis/metrics/measure.js';
+import { TEST_FILE } from '../src/analysis/metrics/analyzer.js';
 
 const SKIP_DIRECTORIES = new Set(['.git', 'node_modules', 'vendor', 'dist', 'build', 'out', '.next', 'target', '__pycache__', '.venv', 'venv', 'third_party']);
-const TEST_PATH = /(^|\/)(tests?|__tests__|__mocks__|e2e|spec|testdata|fixtures)\/|[._-](test|spec)\.[cm]?[jt]sx?$|_test\.go$|(^|\/)test_[^/]*\.py$|Test\.php$/i;
 const MAX_BYTES = 512 * 1024;
 const METRICS = ['length', 'complexity', 'nesting', 'parameters'] as const;
 
@@ -40,7 +40,7 @@ for (const root of args) {
       if (reason || content === undefined) { stats.skipped++; skippedBy.set(reason!, (skippedBy.get(reason!) ?? 0) + 1); continue; }
       const result = measurer.measure(dialect, content);
       stats.files++; stats.lines += result.lines;
-      const file = `${path.basename(root)}/${relative}`, test = TEST_PATH.test(relative);
+      const file = `${path.basename(root)}/${relative}`, test = TEST_FILE.test(relative);
       for (const item of result.functions) rows.push({ ...item, file, language, test });
     }
   };

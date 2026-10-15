@@ -62,33 +62,38 @@ export function measure(root: Node, query: Query): FileMetrics {
   }
 
   const units: Unit[] = [], fileLines = new Set<number>();
+  // Most nodes change nothing: a node shares its parent's frame, copied only when it differs.
   const enter = (cursor: TreeCursor, parent: Frame): Frame => {
     const id = cursor.nodeId;
-    const frame: Frame = { ...parent, comment: parent.comment || comments.has(id) };
+    let frame = parent;
+    if (!parent.comment && comments.has(id)) frame = { ...parent, comment: true };
     const scope = scopes.get(id);
-    if (scope) frame.scope = [...parent.scope, scope];
-    if (named.has(id) || (lambdas.has(id) && (!parent.unit || parent.unit.anonymous))) {
-      const own = named.has(id) ? named.get(id) ?? '(anonymous)' : lambdas.get(id) ?? '(anonymous)';
-      const unit: Unit = { name: [...frame.scope, own].join('.'), anonymous: !named.has(id), startLine: cursor.startPosition.row + 1, endLine: cursor.endPosition.row + 1, lines: new Set(), decisions: 0, nesting: 0, parameters: 0 };
+    if (scope) { if (frame === parent) frame = { ...parent }; frame.scope = [...parent.scope, scope]; }
+    const isNamed = named.has(id), isLambda = lambdas.has(id);
+    if (isNamed || (isLambda && (!parent.unit || parent.unit.anonymous))) {
+      const name = (isNamed ? named.get(id) : lambdas.get(id)) ?? '(anonymous)';
+      const row = cursor.startPosition.row, qualified = [...frame.scope, name];
+      const unit: Unit = { name: qualified.join('.'), anonymous: !isNamed, startLine: row + 1, endLine: cursor.endPosition.row + 1, lines: new Set(), decisions: 0, nesting: 0, parameters: 0 };
       units.push(unit);
       // Its first line declares it, even as bare punctuation: `() => {`.
-      unit.lines.add(cursor.startPosition.row); fileLines.add(cursor.startPosition.row);
-      Object.assign(frame, { unit, own: true, depth: 0, scope: [...frame.scope, own] });
-      return frame;
+      unit.lines.add(row); fileLines.add(row);
+      return { ...frame, unit, own: true, depth: 0, scope: qualified };
     }
-    if (lambdas.has(id)) { frame.depth++; frame.own = false; }
-    if (!frame.unit) return frame;
-    if (branches.has(id)) frame.unit.decisions++;
-    if (nesting.has(id) && !elseIf.has(id)) { frame.depth++; frame.unit.nesting = Math.max(frame.unit.nesting, frame.depth); }
+    const unit = frame.unit;
+    if (!unit) return frame;
+    if (isLambda) { if (frame === parent) frame = { ...parent }; frame.depth++; frame.own = false; }
+    if (branches.has(id)) unit.decisions++;
+    if (nesting.has(id) && !elseIf.has(id)) { if (frame === parent) frame = { ...parent }; frame.depth++; unit.nesting = Math.max(unit.nesting, frame.depth); }
     // Parameters belong to the closest function: the unit itself, not a lambda inside it.
-    if (parameters.has(id) && frame.own) frame.unit.parameters++;
+    if (parameters.has(id) && frame.own) unit.parameters++;
     return frame;
   };
   const leaf = (cursor: TreeCursor, frame: Frame): void => {
-    if (frame.comment || cursor.startIndex === cursor.endIndex) return;
+    if (frame.comment) return;
     // Anonymous tokens are keywords (`else`, `return`) or punctuation (`}`, `;`): only keywords hold code.
     if (!cursor.nodeIsNamed && !/\w/.test(cursor.nodeType)) return;
     const start = cursor.startPosition, end = cursor.endPosition;
+    if (start.row === end.row && start.column === end.column) return;
     const last = end.column === 0 && end.row > start.row ? end.row - 1 : end.row;
     for (let row = start.row; row <= last; row++) { fileLines.add(row); frame.unit?.lines.add(row); }
   };

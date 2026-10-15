@@ -10,6 +10,6 @@ export function generatedReason(file: string, content: string): string | undefin
   if (GENERATED_PATH.test(file)) return 'a generated or minified file, by its name';
   if (GENERATED_BANNER.test(content.slice(0, 1024))) return 'marked as generated in its first lines';
   const lines = content.split('\n', 2000).length;
-  if (content.length > 4096 && content.length / lines > MINIFIED_LINE) return 'minified: very long lines';
+  if (content.length > 4096 && content.length / lines > MINIFIED_LINE) return 'very long lines, as minified code or embedded data';
   return undefined;
 }

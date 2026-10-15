@@ -322,6 +322,10 @@ try {
     for (const asset of [grammar.file, grammar.licenseFile, `queries/${grammar.language}/declarations.scm`]) assert.ok(files.includes(`dist/grammars/${asset}`), `tarball is missing ${asset}`);
   }
   assert.ok(files.includes('dist/grammars/manifest.json'));
+  for (const grammar of JSON.parse(await readFile(path.join(root, 'grammars/metrics.json'), 'utf8')).grammars) {
+    for (const asset of [grammar.file, grammar.licenseFile]) assert.ok(files.includes(`dist/grammars/${asset}`), `tarball is missing ${asset}`);
+  }
+  for (const language of ['typescript', 'javascript', 'php', 'python', 'go']) assert.ok(files.includes(`dist/grammars/queries/${language}/metrics.scm`), `tarball is missing the ${language} metrics query`);
   for (const file of files) {
     assert.doesNotMatch(file, /(?:^|\/)(?:\.env(?:\..*)?|\.codiluce|node_modules|tests|test-results|brand-explorations)(?:\/|$)|\.(?:db|sqlite|tgz|ts|tsx|tsbuildinfo)$/, `unexpected package file: ${file}`);
   }

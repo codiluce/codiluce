@@ -42,7 +42,16 @@ export interface Evidence {
   commit?: string;
   explanation?: string;
 }
-export interface Metrics { loc?: number; complexity?: number; churn?: number; authors?: number; commits?: number; lastChangedAt?: string; lastCommit?: string }
+/**
+ * `loc`: lines a declaration spans. Git (files): commits, authors, churn, last change.
+ * Code health (analysis/metrics): `codeLines` lines holding
+ * code, `complexity` cyclomatic, `nesting` deepest, `parameters`; on a file,
+ * `codeLines` of the whole file, `functions` measured and the worst of them.
+ */
+export interface Metrics {
+  loc?: number; complexity?: number; churn?: number; authors?: number; commits?: number; lastChangedAt?: string; lastCommit?: string;
+  codeLines?: number; nesting?: number; parameters?: number; functions?: number; maxComplexity?: number; maxNesting?: number;
+}
 export interface Entity {
   id: string; type: EntityType; name: string; path?: string; language?: string; parentId?: string;
   sourceRange?: SourceRange; metadata: Record<string, unknown>; metrics?: Metrics; evidence: Evidence[];

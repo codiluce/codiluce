@@ -16,8 +16,7 @@ try {
   await verifyNativeWorkerBundle();
   await verifyFrameworkWorkerBundle();
   execFileSync(process.execPath, [require.resolve('typescript/bin/tsc'), '-p', 'tsconfig.build.json'], { cwd: root, stdio: 'inherit' });
-  const manifest = JSON.parse(readFileSync(new URL('../grammars/manifest.json', import.meta.url), 'utf8'));
-  for (const grammar of manifest.grammars) {
+  for (const grammar of ['manifest.json', 'metrics.json'].flatMap(name => JSON.parse(readFileSync(new URL(`../grammars/${name}`, import.meta.url), 'utf8')).grammars)) {
     const bytes = readFileSync(new URL(`../grammars/${grammar.file}`, import.meta.url));
     if (createHash('sha256').update(bytes).digest('hex') !== grammar.sha256) throw new Error(`Grammar checksum mismatch: ${grammar.language}`);
   }
