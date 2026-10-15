@@ -9,6 +9,7 @@ import { Breadcrumbs } from './Breadcrumbs';
 import { CodeView } from './CodeView';
 import { AtlasContext, useAtlas, useStore } from './context';
 import { EclipseMark } from './EclipseMark';
+import { ActivityConnection, AgentsPanel } from './AgentsPanel';
 import { ExplanationsPanel } from './ExplanationsPanel';
 import { FeaturesPanel } from './FeaturesPanel';
 import { FlowsPanel } from './FlowsPanel';
@@ -87,6 +88,9 @@ function Shell() {
   const explainOpen = useAtlas(state => state.explain.open);
   const unseen = useAtlas(state => state.explain.unseen.length);
   const explanations = useAtlas(state => state.explain.list.data?.items.length ?? 0);
+  const runningAgents = useAtlas(state => state.agents.connected && state.agents.snapshot?.enabled
+    ? state.agents.snapshot.sessions.filter(session => session.status === 'running' && state.agents.now - session.lastSeen <= 300_000).length
+    : 0);
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [leftOpen, setLeftOpen] = useState(false);
   // The left panel holds the features (once described), every flow (pages, requests, console), the people who changed the code and the pull requests.
@@ -104,7 +108,7 @@ function Shell() {
   // Comparing in History: one view per place that changed, around an overview (unless the single map is chosen).
   const split = useAtlas(state => state.timeline.open && state.timeline.compare && state.timeline.split && (!!state.meta?.comparison || state.timeline.preview !== undefined));
   const showLeft = (tab: LeftTab) => { if (leftOpen && leftTab === tab) setLeftOpen(false); else { setLeftOpen(true); setLeftTab(tab); } };
-  const tabs = [...(features > 0 ? ['features' as const] : []), 'flows' as const, 'people' as const, 'pulls' as const];
+  const tabs = [...(features > 0 ? ['features' as const] : []), 'flows' as const, 'people' as const, 'pulls' as const, 'agents' as const];
   const impactOpen = useAtlas(state => state.impact.open && state.center === 'impact');
   const codeOpen = useAtlas(state => !!state.code);
   const moreThemes = useAtlas(state => state.moreThemes);
@@ -140,6 +144,7 @@ function Shell() {
   const commitDate = (sha: string | undefined) => when(timeline?.entries.find(entry => entry.sha === sha)?.authoredAt);
   return (
     <div className="codiluce" style={style} data-theme={theme.id} data-dark={String(theme.dark)} data-floating={String(!!theme.style?.floating)}>
+      <ActivityConnection />
       <header className="topbar">
         <div className="brand">
           <EclipseMark />
@@ -166,6 +171,7 @@ function Shell() {
           <button className="button" onClick={() => showLeft('people')} aria-pressed={leftOpen && leftTab === 'people'} aria-controls="left-panel" title="Who changed which code, from the Git history: select a person to light the files they changed">People</button>
           <button className="button" onClick={() => showLeft('pulls')} aria-pressed={leftOpen && leftTab === 'pulls'} aria-controls="left-panel" title="Pull requests, open and merged: select one to light the files it changes">PRs</button>
           <button className="button" onClick={() => impactOpen ? store.setCenter('map') : store.openImpactTool()} aria-pressed={impactOpen} title="What depends on the selection, or on your uncommitted changes, hop by hop">Impact</button>
+          <button className={`button agents-top${runningAgents > 0 ? ' has-running' : ''}`} onClick={() => showLeft('agents')} aria-label="Agents" aria-pressed={leftOpen && leftTab === 'agents'} aria-controls="left-panel" title={`${runningAgents > 0 ? `${runningAgents} agent${runningAgents === 1 ? '' : 's'} running · ` : ''}Live agent sessions and observed file activity`}>Agents{runningAgents > 0 && <span className="badge" aria-label={`${runningAgents} agent${runningAgents === 1 ? '' : 's'} running`}>{runningAgents}</span>}</button>
           <button className="button explain-top" onClick={() => store.toggleExplanations()} aria-pressed={explainOpen} aria-controls="explain-panel" title={`Explanations: ask about the code, or read what your agent explained (${explanations} saved); their links light the code on the map`}>Explain{unseen > 0 && <span className="badge" aria-label={`${unseen} new`}>{unseen}</span>}</button>
           <button className="button" onClick={() => codeOpen ? store.closeCode() : store.openCode()} aria-pressed={codeOpen} title="The code of the selection beside the inspector: a file, or a symbol in its file, with the file's outline">Code</button>
           <button className="button" onClick={() => void store.toggleCoverage()} aria-pressed={coverage} title="Color every file by whether flows touch it: entry points, in flows, supporting, not reached">Coverage</button>
@@ -188,6 +194,7 @@ function Shell() {
               </div>
             )}
             {leftTab === 'features' && features > 0 ? <FeaturesPanel onClose={() => setLeftOpen(false)} />
+              : leftTab === 'agents' ? <AgentsPanel onClose={() => setLeftOpen(false)} />
               : leftTab === 'people' ? <PeoplePanel onClose={() => setLeftOpen(false)} />
               : leftTab === 'pulls' ? <PullsPanel onClose={() => setLeftOpen(false)} />
               : <FlowsPanel onClose={() => setLeftOpen(false)} />}
@@ -221,8 +228,8 @@ function Shell() {
     </div>
   );
 }
-type LeftTab = 'features' | 'flows' | 'people' | 'pulls';
-const TAB_TEXT: Record<LeftTab, string> = { features: 'Features', flows: 'Flows', people: 'People', pulls: 'PRs' };
+type LeftTab = 'features' | 'flows' | 'people' | 'pulls' | 'agents';
+const TAB_TEXT: Record<LeftTab, string> = { features: 'Features', flows: 'Flows', people: 'People', pulls: 'PRs', agents: 'Agents' };
 function SettingsDialog({ onClose }: { onClose: () => void }) {
   const store = useStore();
   const moreThemes = useAtlas(state => state.moreThemes);

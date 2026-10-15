@@ -1,3 +1,4 @@
+import type { ActivityMark } from './activity';
 // Canvas 2D renderer for the isometric map. Stateless per frame: everything it
 // draws comes from the visible set, the camera and a RenderState.
 import type { Archetype, NodeSummary } from '@engine/projection/dto';
@@ -41,6 +42,7 @@ export interface FamilyOverlay { of: Map<string, string>; areas: Map<string, Rec
 export interface FrameOverlay { key: string; number: number; bounds: Bounds; /** The view in use. */ active: boolean; /** On the current page (the others are dashed). */ shown: boolean }
 export interface SourceOverlay { nodeId: string; start: number; lines: string[]; focus?: { startLine: number; endLine: number }; /** Lines where the symbol calls, renders or references an indexed entity. */ marks?: Set<number> }
 export interface RenderState {
+  activity?: ActivityMark[];
   selectedId?: string; hoveredId?: string;
   /** When set, nodes outside it (and outside their ancestors) are dimmed. */
   emphasis?: Set<string>;
@@ -208,6 +210,7 @@ export class MapRenderer {
     if (state.pins?.length) this.pins(ctx, viewport, camera, set, state.pins);
     if (state.callouts?.length) this.callouts(ctx, viewport, camera, set, state.callouts);
     if (state.frames?.length) this.frames(ctx, viewport, camera, state.frames);
+    if (state.activity?.length) this.activityBadges(ctx, viewport, camera, scene, set, state.activity, state.reducedMotion);
     if (state.pointer) this.pointer(ctx, viewport, camera, scene, set, items, state.pointer);
   }
   /**
@@ -215,6 +218,36 @@ export class MapRenderer {
    * nearest drawn area otherwise); off screen, an arrow at the edge of the map
    * points to it, so the camera never has to move while reading.
    */
+  private activityBadges(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, scene: Scene, set: VisibleSet, marks: ActivityMark[], reduced: boolean): void {
+    const grouped = new Map<string, { item: VisibleItem; marks: ActivityMark[] }>();
+    for (const mark of marks) {
+      const item = set.items[set.index.get(mark.id) ?? -1] ?? scene.representative(mark.id, set) ?? [...mark.ancestors].reverse().map(id => set.items[set.index.get(id) ?? -1]).find(Boolean);
+      if (!item) continue;
+      const group = grouped.get(item.node.id) ?? { item, marks: [] };
+      if (!group.marks.some(other => other.actor === mark.actor)) group.marks.push(mark);
+      grouped.set(item.node.id, group);
+    }
+    for (const { item, marks: actors } of grouped.values()) {
+      const first = actors[0]!;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0.15, 1 - first.age / 30000);
+      this.outline(ctx, viewport, camera, item, first.color, !reduced && first.age < 2000 ? 2.5 + Math.sin(first.age / 160) : 2, false, first.search ? [4, 4] : undefined);
+      const point = worldToScreen(camera, viewport, item.node.rect.x + item.node.rect.w / 2, item.node.rect.y + item.node.rect.h / 2, item.zTop);
+      let y = Math.max(12, Math.min(viewport.height - 24, point.y - 16));
+      for (const mark of actors.slice(0, 4)) {
+        ctx.globalAlpha = Math.max(0.2, 1 - mark.age / 30000);
+        ctx.font = `600 10px ${this.theme.style?.font ?? 'sans-serif'}`;
+        const label = mark.label, width = ctx.measureText(label).width + 14;
+        const x = Math.max(4, Math.min(viewport.width - width - 4, point.x - width / 2));
+        ctx.fillStyle = this.theme.background[0]; ctx.strokeStyle = mark.color; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.roundRect(x, y, width, 18, 5); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = this.theme.text.primary; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(label, x + width / 2, y + 9);
+        y += 21;
+      }
+      ctx.restore();
+    }
+  }
   private pointer(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, scene: Scene, set: VisibleSet, items: VisibleItem[], pointer: { id: string; ancestors: string[] }): void {
     const theme = this.theme;
     const drawn = items[set.index.get(pointer.id) ?? -1] ?? scene.representative(pointer.id, set) ?? [...pointer.ancestors].reverse().map(id => items[set.index.get(id) ?? -1]).find(Boolean);

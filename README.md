@@ -76,6 +76,15 @@ itself, with files and folders attached by `@`.
 
 ![An explanation of how BookStack saves a page, in the Explain column: its links name the controller, repository and revision code, which is lit on the map while the rest of the repository recedes.](site/public/shots/explanations.webp)
 
+## Watch agents work
+
+Open **Agents** to see live Codex and Claude Code activity beside the map. Connect either agent with the hook
+configuration under **Agent connections** in the panel footer. Reads, edits and searches mark their observed paths, with a fading trail and a color
+for each session. Only agent-attributed observations appear; the activity service does not watch filesystem changes.
+Select an observed file to reveal it on the map. If it was added after the last analysis, this explicit selection refreshes
+the index first. Searches do not count as reads of every matching file.
+See [connection details and coverage](docs/design/agents.md).
+
 ## What you can do
 
 - **Zoom from the whole repository to a single line.** Applications, folders, files and symbols nest inside each other,

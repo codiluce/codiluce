@@ -1,0 +1,115 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node --no-warnings --import /var/www/html/codiluce-agents/node_modules/tsx/dist/loader.mjs /var/www/html/codiluce-agents/src/activity/hook-cli.ts --agent codex --repo /var/www/html/codiluce-agents --state-dir /var/www/html/codiluce-agents/.codiluce",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node --no-warnings --import /var/www/html/codiluce-agents/node_modules/tsx/dist/loader.mjs /var/www/html/codiluce-agents/src/activity/hook-cli.ts --agent codex --repo /var/www/html/codiluce-agents --state-dir /var/www/html/codiluce-agents/.codiluce",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node --no-warnings --import /var/www/html/codiluce-agents/node_modules/tsx/dist/loader.mjs /var/www/html/codiluce-agents/src/activity/hook-cli.ts --agent codex --repo /var/www/html/codiluce-agents --state-dir /var/www/html/codiluce-agents/.codiluce",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node --no-warnings --import /var/www/html/codiluce-agents/node_modules/tsx/dist/loader.mjs /var/www/html/codiluce-agents/src/activity/hook-cli.ts --agent codex --repo /var/www/html/codiluce-agents --state-dir /var/www/html/codiluce-agents/.codiluce",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node --no-warnings --import /var/www/html/codiluce-agents/node_modules/tsx/dist/loader.mjs /var/www/html/codiluce-agents/src/activity/hook-cli.ts --agent codex --repo /var/www/html/codiluce-agents --state-dir /var/www/html/codiluce-agents/.codiluce",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node --no-warnings --import /var/www/html/codiluce-agents/node_modules/tsx/dist/loader.mjs /var/www/html/codiluce-agents/src/activity/hook-cli.ts --agent codex --repo /var/www/html/codiluce-agents --state-dir /var/www/html/codiluce-agents/.codiluce",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node --no-warnings --import /var/www/html/codiluce-agents/node_modules/tsx/dist/loader.mjs /var/www/html/codiluce-agents/src/activity/hook-cli.ts --agent codex --repo /var/www/html/codiluce-agents --state-dir /var/www/html/codiluce-agents/.codiluce",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node --no-warnings --import /var/www/html/codiluce-agents/node_modules/tsx/dist/loader.mjs /var/www/html/codiluce-agents/src/activity/hook-cli.ts --agent codex --repo /var/www/html/codiluce-agents --state-dir /var/www/html/codiluce-agents/.codiluce",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node --no-warnings --import /var/www/html/codiluce-agents/node_modules/tsx/dist/loader.mjs /var/www/html/codiluce-agents/src/activity/hook-cli.ts --agent codex --repo /var/www/html/codiluce-agents --state-dir /var/www/html/codiluce-agents/.codiluce",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Interrupt": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node --no-warnings --import /var/www/html/codiluce-agents/node_modules/tsx/dist/loader.mjs /var/www/html/codiluce-agents/src/activity/hook-cli.ts --agent codex --repo /var/www/html/codiluce-agents --state-dir /var/www/html/codiluce-agents/.codiluce",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "description": "Observe activity for the local Codiluce map; sends hook metadata to this repository only."
+}

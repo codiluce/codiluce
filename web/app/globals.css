@@ -1189,3 +1189,56 @@ a.xlink:hover, a.xlink:focus-visible { background: color-mix(in srgb, var(--link
   .workspace.with-explain, .workspace.with-explain.with-code { grid-template-columns: 1fr; }
   .panel.explain-panel { z-index: 9; left: 0; right: auto; }
 }
+
+/* Observed agent activity, kept separate from architecture and Git authorship. */
+.button.agents-top.has-running { border-color: var(--accent); }
+.agents-status-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.agents-info { position: relative; flex: none; }
+.agents-info summary { list-style: none; cursor: pointer; font-size: 16px; color: var(--muted); line-height: 1; border-radius: 50%; }
+.agents-info summary::-webkit-details-marker { display: none; }
+.agents-info > p { position: absolute; z-index: 12; top: calc(100% + 8px); right: 0; width: min(300px, calc(100vw - 40px)); padding: 12px; background: var(--panel-solid); border: 1px solid var(--panel-border); border-radius: var(--radius-float, 8px); box-shadow: var(--shadow); }
+.agents-footer { flex: none; padding: 10px 12px; border-top: 1px solid var(--panel-border); }
+.agents-footer > .button { width: 100%; justify-content: flex-start; }
+.agents-footer > .button > span:last-child { margin-left: auto; }
+.agent-connections-backdrop { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 20px; background: rgba(0,0,0,.4); }
+.agent-connections-dialog { display: flex; flex-direction: column; gap: 14px; width: min(600px, 100%); max-height: calc(100dvh - 40px); overflow-y: auto; padding: 20px; border: 1px solid var(--panel-border); border-radius: var(--radius-panel, 12px); background: var(--panel-solid); box-shadow: var(--shadow); }
+.agent-connections-dialog h2 { margin: 0; font-size: 15px; }
+.agent-connections-dialog p { margin: 0; }
+.agent-connections-dialog summary { cursor: pointer; font-size: 12px; }
+.agents-connection-summary { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.agents-source { overflow-wrap: anywhere; font-size: 10px; margin-top: 8px !important; color: var(--muted); }
+.agents-panel { display: flex; flex-direction: column; gap: 14px; }
+.agents-panel p { margin: 0; }
+.agents-panel h3 { font-size: 12px; margin: 0 0 10px; }
+.agents-connection, .agents-toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.agents-live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+.agents-live-dot.on { background: #37b99a; box-shadow: 0 0 0 3px #37b99a20; }
+.agent-session { display: flex; align-items: center; gap: 9px; width: 100%; padding: 10px 8px; border: 1px solid var(--panel-border); border-radius: 6px; background: transparent; color: inherit; text-align: left; margin-bottom: 7px; cursor: pointer; }
+.agent-session[aria-pressed="true"] { border-color: var(--text); background: #80808015; }
+.agent-name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+.agent-name strong { overflow-wrap: anywhere; }
+.agent-name small { opacity: .6; font-size: 10px; }
+.agent-status { font-size: 10px; opacity: .7; }
+.agent-status.running { color: #37b99a; opacity: 1; }
+.agent-status.waiting, .agent-status.error { color: #df9850; opacity: 1; }
+.agents-setup { border-block: 1px solid var(--panel-border); padding-block: 12px; }
+.agents-setup summary { cursor: pointer; font-size: 12px; }
+.agents-setup[open] { display: flex; flex-direction: column; gap: 10px; }
+.agents-config { max-height: 210px; overflow: auto; font-size: 10px; line-height: 1.5; background: #80808010; padding: 10px; border-radius: 6px; }
+.activity-feed { list-style: none; margin: 0; padding: 0; }
+.activity-feed li { padding: 11px 0; border-top: 1px solid var(--panel-border); opacity: .65; }
+.activity-feed li.recent { opacity: 1; }
+.activity-event-head { display: flex; align-items: center; gap: 6px; font-size: 11px; margin-bottom: 5px; }
+.activity-event-head strong { flex: 1; overflow-wrap: anywhere; }
+.activity-event-head time { opacity: .6; font-size: 10px; }
+.activity-feed small { font-size: 10px; }
+.activity-path { display: block; max-width: 100%; padding: 4px 0; font-size: 11px; text-align: left; color: inherit; background: none; border: 0; overflow-wrap: anywhere; cursor: pointer; }
+.activity-path:disabled { cursor: default; opacity: .5; }
+.activity-path:hover:enabled { text-decoration: underline; }
+.activity-query { font-size: 11px; overflow-wrap: anywhere; padding-top: 6px; }
+
+/* Keep the expanded set of map tools reachable on smaller screens. */
+@media (max-width: 1380px) {
+  .topbar { flex-wrap: wrap; }
+  .top-actions { flex: 1 1 100%; flex-wrap: wrap; margin-left: 0; }
+}
