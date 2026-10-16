@@ -11,3 +11,17 @@
 - Do not create Cursor Canvas reports or `.canvas.tsx` files to present findings.
 - Give routine findings in the conversation. Create a separate report only when a standalone artifact is needed.
 - When needed, create a browser-accessible HTML report in a suitable project location and provide its URL or opening instructions.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues for codiluce/codiluce, through the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default labels: needs-triage, needs-info, ready-for-agent, ready-for-human and wontfix. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` and `docs/adr/` at the repo root, both created only when needed. See `docs/agents/domain.md`.
