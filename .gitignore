@@ -55,3 +55,6 @@ playwright-report/
 # Local example checkouts and analysis output; keep only the catalog tracked
 /examples/*
 !/examples/readme.md
+
+# Local research notes, source material, and reading guides
+/research/
