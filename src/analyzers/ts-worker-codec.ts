@@ -230,13 +230,14 @@ export function decodeTypeScriptPayload(bytes: Buffer, maxBytes: number, stats?:
     const text = reader.text(size * (tag === Tag.String8 ? 1 : 2), tag === Tag.String8 ? 'latin1' : 'utf16le'); strings.push(text); return text;
   };
   const frame = (current: Frame): void => {
-    const tag = reader.byte(); if (tag === Tag.End) return;
+    // Restore inheritance only after every original own field is complete.
+    const tag = reader.byte(); if (tag === Tag.End) {if (current.kind === 'object') Object.setPrototypeOf(current.value, Object.prototype); return;}
     push(() => frame(current));
     if (current.kind === 'object' || current.kind === 'array') {
       const key = tag === Tag.Index && current.kind === 'array' ? String(reader.uint()) : string(tag);
       if (current.keys.has(key) || current.kind === 'array' && (key === 'length' || /^(?:0|[1-9]\d*)$/.test(key) && Number(key) < 0xffffffff && Number(key) >= current.length!)) throw Error('Invalid or duplicate compiler property');
       budget.peak('keysPerObject', current.keys.size + 1); budget.add('properties');
-      current.keys.add(key); push(() => value(item => {Object.defineProperty(current.value, key, {value: item, writable: true, enumerable: true, configurable: true});}, current.depth + 1));
+      current.keys.add(key); push(() => value(item => {if (current.kind === 'object') current.value[key] = item; else Object.defineProperty(current.value, key, {value: item, writable: true, enumerable: true, configurable: true});}, current.depth + 1));
     } else if (current.kind === 'set') { budget.add('properties'); reader.offset--; push(() => value(item => {current.value.add(item);}, current.depth + 1)); }
     else if (current.kind === 'map') {
       const map = current.value;
@@ -255,7 +256,8 @@ export function decodeTypeScriptPayload(bytes: Buffer, maxBytes: number, stats?:
     else if (tag === Tag.BigInt) { const sign = reader.byte(); if (sign > 1) throw Error('Invalid compiler integer sign'); const size = reader.uint(); budget.add('binaryBytes', size); const hex = reader.raw(size).toString('hex'); item = (sign ? -1n : 1n) * BigInt('0x' + (hex || '00')); }
     else {
       budget.add('objects');
-      if (tag === Tag.Object) { item = {}; container = {kind: 'object', value: item as Record<string, unknown>, keys: new Set(), depth}; }
+      // Keep ordinary-object writes inert to inherited setters/read-only fields.
+      if (tag === Tag.Object) { item = Object.setPrototypeOf({}, null); container = {kind: 'object', value: item as Record<string, unknown>, keys: new Set(), depth}; }
       else if (tag === Tag.Array) { const length = reader.uint(); if (length > 0xffffffff) throw Error('Invalid compiler array length'); budget.add('arraySlots', length); item = new Array(length); container = {kind: 'array', value: item as unknown as Record<string, unknown>, length, keys: new Set(), depth}; }
       else if (tag === Tag.Map) { item = new Map(); container = {kind: 'map', value: item as Map<unknown, unknown>, depth}; }
       else if (tag === Tag.Set) { item = new Set(); container = {kind: 'set', value: item as Set<unknown>, depth}; }

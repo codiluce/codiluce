@@ -10,6 +10,24 @@ import {GraphBuilder} from '../src/core/graph.js';
 const roundtrip = (value: unknown) => decode(encode(value, 64 * 1024 * 1024), 64 * 1024 * 1024);
 const reference = (value: unknown) => deserialize(serialize(value));
 
+test('ordinary decoder properties avoid descriptor temporaries while preserving inherited guards, prototypes and boxed aliases', () => {
+  const shared = {text: 'original é😀\ud800\udfff\0'}, boxed = Object(17n), key = {shared}, array: any = new Array(1000), value: any = {shared, alias: shared, boxed, boxedAlias: boxed, sibling: Object(-23n), array, map: new Map(), set: new Set(), error: new TypeError('original', {cause: shared}), codecInertSetter: shared, codecInertReadOnly: shared};
+  value.self = value; array[999] = value; array.extra = shared; value.map.set(key, boxed); value.map.set(boxed, value); value.set.add(value.map);
+  Object.defineProperty(value, '__proto__', {value: shared, enumerable: true, writable: true, configurable: true}); Object.defineProperty(array, '__proto__', {value, enumerable: true, writable: true, configurable: true});
+  const encoded = encode(value, 1024 * 1024), expected = reference(value), defineProperty = Object.defineProperty; let setters = 0;
+  defineProperty(Object.prototype, 'codecInertSetter', {set() {setters++;}, configurable: true}); defineProperty(Object.prototype, 'codecInertReadOnly', {value: 'inherited', writable: false, configurable: true});
+  const observation = mock.method(Object, 'defineProperty', ((object: object, key: PropertyKey, descriptor: PropertyDescriptor) => {
+    if (Object.getPrototypeOf(object) === Object.prototype) throw Error('Forbidden per-field ordinary decoder descriptor');
+    return defineProperty(object, key, descriptor);
+  }) as typeof Object.defineProperty);
+  let actual: typeof value;
+  try {actual = decode(encoded, 1024 * 1024);} finally {observation.mock.restore(); delete (Object.prototype as any).codecInertSetter; delete (Object.prototype as any).codecInertReadOnly;}
+  assert.deepEqual(actual, expected); assert.deepEqual(serialize(actual), serialize(expected)); assert.deepEqual(encode(actual, 1024 * 1024), encoded);
+  assert.equal(setters, 0); assert.equal(Object.getPrototypeOf(actual), Object.prototype); assert.equal(Object.getPrototypeOf(actual.shared), Object.prototype); assert.equal(Object.getPrototypeOf([...actual.map.keys()][0]), Object.prototype); assert.equal(Object.getPrototypeOf(actual.array), Array.prototype);
+  assert.equal(actual.self, actual); assert.equal(actual.shared, actual.alias); assert.equal(actual.shared, actual.__proto__); assert.equal(actual.array.__proto__, actual); assert.equal(actual.array[999], actual); assert.equal(actual.error.cause, actual.shared); assert.equal(actual.boxed, actual.boxedAlias); assert.equal(actual.boxed.valueOf(), 17n); assert.equal(actual.sibling.valueOf(), -23n); assert.equal(actual.map.get(actual.boxed), actual); assert.ok(actual.set.has(actual.map)); assert.equal(Object.hasOwn(actual.array, '0'), false);
+  assert.deepEqual(Object.getOwnPropertyDescriptors(actual), Object.getOwnPropertyDescriptors(expected)); assert.deepEqual(Object.getOwnPropertyDescriptors(actual.array), Object.getOwnPropertyDescriptors(expected.array));
+});
+
 test('bounded decoder reads original scalar and string fields without per-field Buffer views', () => {
   const shared = {text: 'original é😀\ud800\udfff\0'.repeat(50)}, value: any = {shared, alias: shared, latin: 'é'.repeat(100), numbers: Array.from({length: 64}, (_, index) => index + .5), negative: -4, zero: -0, notNumber: NaN, inf: Infinity}; value.self = value;
   Object.defineProperty(value, '__proto__', {value: shared, writable: true, enumerable: true, configurable: true});

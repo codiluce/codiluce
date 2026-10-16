@@ -402,7 +402,10 @@ function decodeTypeScriptPayload(bytes, maxBytes, stats, policy) {
   };
   const frame = (current) => {
     const tag = reader.byte();
-    if (tag === 0 /* End */) return;
+    if (tag === 0 /* End */) {
+      if (current.kind === "object") Object.setPrototypeOf(current.value, Object.prototype);
+      return;
+    }
     push(() => frame(current));
     if (current.kind === "object" || current.kind === "array") {
       const key = tag === 14 /* Index */ && current.kind === "array" ? String(reader.uint()) : string(tag);
@@ -411,7 +414,8 @@ function decodeTypeScriptPayload(bytes, maxBytes, stats, policy) {
       budget.add("properties");
       current.keys.add(key);
       push(() => value((item) => {
-        Object.defineProperty(current.value, key, { value: item, writable: true, enumerable: true, configurable: true });
+        if (current.kind === "object") current.value[key] = item;
+        else Object.defineProperty(current.value, key, { value: item, writable: true, enumerable: true, configurable: true });
       }, current.depth + 1));
     } else if (current.kind === "set") {
       budget.add("properties");
@@ -457,7 +461,7 @@ function decodeTypeScriptPayload(bytes, maxBytes, stats, policy) {
     } else {
       budget.add("objects");
       if (tag === 12 /* Object */) {
-        item = {};
+        item = Object.setPrototypeOf({}, null);
         container = { kind: "object", value: item, keys: /* @__PURE__ */ new Set(), depth };
       } else if (tag === 13 /* Array */) {
         const length = reader.uint();
