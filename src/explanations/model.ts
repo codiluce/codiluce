@@ -57,6 +57,52 @@ export interface ResolvedLink {
   label?: string;
   reason?: string;
 }
+/** How a scene of a tour shows its code: where it lives on the map, how its pieces relate, or the flow it follows. */
+export type SceneView = 'map' | 'diagram' | 'flow';
+export const SCENE_VIEWS: readonly SceneView[] = ['map', 'diagram', 'flow'];
+/** A relationship a scene draws between two of its boxes, as the model names it (not necessarily a call or an import). */
+export interface SceneArrow { from: string; to: string; label: string; undirected?: boolean }
+/** What a scene's marker holds: its view, the links it shows and the arrows between them (links as in the text). */
+export interface SceneSpec {
+  view?: SceneView;
+  /** The links shown (default: the code links of the scene's text). */
+  focus?: string[];
+  /** Diagram: the box in the first column. */
+  start?: string;
+  arrows?: SceneArrow[];
+  /** Short labels by link, on the map and on the boxes. */
+  captions?: Record<string, string>;
+  /** Flow scenes: the flow, as a `flow:` link. */
+  flow?: string;
+}
+/** One scene as written: its section of the answer (a `##` title and its text) and its marker. */
+export interface Scene extends SceneSpec { title: string; markdown: string }
+/** One relationship the index holds between the two ends of an arrow (or what is inside them). */
+export interface ArrowEvidence { type: string; count: number; reverse?: boolean }
+export interface SceneBox {
+  /** The box's key: the entity ID, or the href for what has none. */
+  key: string;
+  link: ResolvedLink;
+  /** The file box holding this symbol, when the file is in the scene too. */
+  parent?: string;
+  /** The folder it is grouped in (repository-relative; `''`: none). */
+  group: string;
+  caption?: string;
+}
+export interface ResolvedArrow extends SceneArrow {
+  /** The ends as box keys. */
+  fromKey: string; toKey: string;
+  evidence: ArrowEvidence[];
+}
+export interface ResolvedScene {
+  index: number; title: string; markdown: string; view: SceneView;
+  boxes: SceneBox[]; arrows: ResolvedArrow[];
+  /** Key of the first column's box. */
+  start?: string;
+  flow?: ResolvedLink;
+}
+/** The tour of an explanation: the scenes of its latest answer that has any. */
+export interface ExplanationTour { turn: number; intro: string; scenes: ResolvedScene[] }
 export interface Staleness {
   /** Linked targets whose code changed since the latest answer, and those that no longer exist. */
   changed: number; missing: number; linked: number;
@@ -70,6 +116,8 @@ export interface ExplanationSummary {
   createdAt: string; updatedAt: string; commit?: string;
   source: ExplanationRecord['source']; agent?: string; model?: string; cost?: number;
   turns: number; links: number;
+  /** Scenes of its tour, when it has one. */
+  scenes?: number;
   /** First words of the latest answer. */
   excerpt: string;
   stale: Staleness;
@@ -79,6 +127,8 @@ export interface ExplanationDetail extends ExplanationRecord {
   stale: Staleness;
   /** What lights on the map while it is open: entity IDs, and per area how many of them it holds. */
   footprint: { ids: string[]; areas: Record<string, number> };
+  /** Its scenes, resolved, when an answer was written as a tour. */
+  tour?: ExplanationTour;
   /** The file holding it, relative to the state directory. */
   file: string;
 }
@@ -150,6 +200,6 @@ export function latestAnswer(record: Pick<ExplanationRecord, 'turns'>): Explanat
   return undefined;
 }
 export function excerptOf(markdown: string, max = 160): string {
-  const text = markdown.replace(/^\s*#{1,6}\s+.*(?:\n|$)/, '').replace(/```[\s\S]*?```/g, ' ').replace(/!\[[^\]]*\]\([^)]*\)/g, ' ').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[#>*_`|-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const text = markdown.replace(/<!--[\s\S]*?-->/g, ' ').replace(/^\s*#{1,6}\s+.*(?:\n|$)/, '').replace(/```[\s\S]*?```/g, ' ').replace(/!\[[^\]]*\]\([^)]*\)/g, ' ').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[#>*_`|-]+/g, ' ').replace(/\s+/g, ' ').trim();
   return text.length > max ? `${text.slice(0, max - 1).replace(/\s+\S*$/, '')}…` : text;
 }

@@ -163,6 +163,8 @@ streamable HTTP transport. The map would then take a `show` event the same way i
 
 ### Tour playback
 
+Designed and being built: see [explanation-tours.md](explanation-tours.md). The original idea:
+
 Step through an explanation's links in order, with the camera flying from one to the next, the way a flow plays on
 the map. A paragraph is one stop. *Follow* (the camera frames the links of the paragraph being read) is the light
 version.
