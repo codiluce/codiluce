@@ -34,8 +34,69 @@ test('normalizes Codex patches and simple shell reads, searches and tests withou
   assert.deepEqual(shell("rg -n 'hello world' src").paths, [{ path: 'src', scope: 'directory' }]);
   assert.equal(shell("rg -n 'hello world' src").query, 'hello world');
   assert.equal(shell('npm test').kind, 'test');
-  for (const command of ['python script.py', 'cat src/a.ts && cat src/b.ts', 'rg -g "*.ts" hello src', 'cat $SECRET', 'node -e "readFileSync(\'src/a.ts\')"']) {
+  for (const command of ['python script.py', 'rg -g "*.ts" hello src', 'cat $SECRET', 'node -e "readFileSync(\'src/a.ts\')"']) {
     assert.equal(shell(command).kind, 'command'); assert.deepEqual(shell(command).paths, []);
+  }
+});
+
+test('Codex batched exploration exposes every literal file read, including the reported dashboard regression', () => {
+  const command = "sed -n '1,160p' web/e2e/agents.spec.ts && cat playwright.config.ts && sed -n '1,100p' scripts/build-cli.mjs && sed -n '1,170p' src/storage/sqlite.ts && sed -n '1,90p' web/components/Markdown.tsx";
+  for (const tool of ['Bash', 'exec_command', 'shell_command']) {
+    for (const phase of ['PreToolUse', 'PostToolUse']) {
+      const event = normalizeHook(root, 'codex', hook({ tool_name: tool, hook_event_name: phase, tool_input: { command } }))!;
+      assert.equal(event.kind, 'read');
+      assert.deepEqual(event.paths.map(item => item.path), ['web/e2e/agents.spec.ts', 'playwright.config.ts', 'scripts/build-cli.mjs', 'src/storage/sqlite.ts', 'web/components/Markdown.tsx']);
+      assert.equal(event.phase, phase === 'PreToolUse' ? 'started' : 'completed');
+    }
+  }
+});
+
+test('literal batches handle separators and quoting, retain read paths in mixed searches, and honor workdir', () => {
+  const shell = (command: string, workdir?: string) => normalizeHook(root, 'codex', hook({ tool_name: 'Bash', tool_input: { command, ...(workdir ? { workdir } : {}) } }))!;
+  for (const separator of [' && ', '; ', '\n']) {
+    assert.deepEqual(shell(`cat src/a.ts${separator}cat src/b.ts`).paths.map(item => item.path), ['src/a.ts', 'src/b.ts']);
+  }
+  assert.deepEqual(shell('cat src/a.ts && cat src/a.ts').paths.map(item => item.path), ['src/a.ts']);
+  assert.deepEqual(shell("cat 'src/a && b.ts' \"src/a; b.ts\" src/a\\ b.ts").paths.map(item => item.path), ['src/a && b.ts', 'src/a; b.ts', 'src/a b.ts']);
+  assert.deepEqual(shell("cat 'src/$literal.ts' &&\n cat src/b.ts;\n").paths.map(item => item.path), ['src/$literal.ts', 'src/b.ts']);
+  assert.deepEqual(shell('cat src/\\\na.ts').paths.map(item => item.path), ['src/a.ts']);
+  assert.deepEqual(shell("cat src/a.ts && rg -n 'hello|world' src && sed -n '1,20p' src/b.ts").paths, [{ path: 'src/a.ts', scope: 'file' }, { path: 'src/b.ts', scope: 'file' }]);
+  assert.deepEqual(shell('head -n 20 a.ts && tail -n 10 b.ts', 'src').paths.map(item => item.path), ['src/a.ts', 'src/b.ts']);
+  assert.deepEqual(shell('cat ../secret escape/secret && cat src/a.ts').paths.map(item => item.path), ['src/a.ts']);
+  const searches = shell('rg -n login src && grep -n login src');
+  assert.equal(searches.kind, 'search');
+  assert.equal(searches.query, 'login');
+  assert.deepEqual(searches.paths, [{ path: 'src', scope: 'directory' }]);
+});
+
+test('common read flags consume their values instead of treating options as files', () => {
+  for (const command of [
+    'head -n 80 src/a.ts', 'head -n80 src/a.ts', 'head -80 src/a.ts',
+    'head --lines 80 src/a.ts', 'head --lines=80 src/a.ts', 'head -q -c 80 src/a.ts',
+    'tail -n +20 src/a.ts', 'tail -n+20 src/a.ts', 'tail --bytes=80 src/a.ts',
+    'cat -n src/a.ts', 'cat -bns src/a.ts', 'cat --number src/a.ts',
+    "sed -n '1,20p' -- src/a.ts",
+  ]) {
+    const event = normalizeHook(root, 'codex', hook({ tool_name: 'Bash', tool_input: { command } }))!;
+    assert.equal(event.kind, 'read', command);
+    assert.deepEqual(event.paths, [{ path: 'src/a.ts', scope: 'file' }], command);
+  }
+  const literal = normalizeHook(root, 'codex', hook({ tool_name: 'Bash', tool_input: { command: 'cat -- -notes.ts' } }))!;
+  assert.deepEqual(literal.paths, [{ path: '-notes.ts', scope: 'file' }]);
+});
+
+test('ambiguous shell syntax and flags never invent file reads', () => {
+  for (const command of [
+    'cat src/a.ts | head -n 20', 'cat src/a.ts || cat src/b.ts', 'cat src/a.ts &',
+    'cat src/a.ts > src/b.ts', 'cat < src/a.ts', 'cat $(pwd)/src/a.ts', 'cat `pwd`/src/a.ts',
+    'cat "$SECRET"', 'cat src/*.ts', 'cat ~/src/a.ts', "cat 'src/a.ts", 'cat src/a.ts &&',
+    'cd src && cat a.ts', 'eval cat src/a.ts', 'python script.py && cat src/a.ts', 'cat src/a.ts && ; cat src/b.ts',
+    'head -n PRIVATE src/a.ts', 'head --unknown src/a.ts', 'tail -f src/a.ts', 'cat -z src/a.ts',
+    "sed -i '1,20p' src/a.ts", "cat src/a.ts\n# cat src/b.ts", 'cat src/a.ts\0',
+  ]) {
+    const event = normalizeHook(root, 'codex', hook({ tool_name: 'Bash', tool_input: { command } }))!;
+    assert.equal(event.kind, 'command', command);
+    assert.deepEqual(event.paths, [], command);
   }
 });
 
@@ -151,7 +212,7 @@ test('HTTP stream, quiet bridge and generated lightweight hook work end to end; 
     await reader.read();
     const body = { provider: 'codex', payload: hook() };
     assert.equal((await fetch(`${url}/api/agents/events`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })).status, 400);
-    await forwardHook('codex', state, (async function* () { yield JSON.stringify(hook()); })());
+    await forwardHook('codex', state, (async function* () { yield JSON.stringify(hook({ tool_name: 'Bash', tool_input: { command: "head -n 20 src/a.ts && sed -n '1,10p' src/b.ts" } })); })());
     const data = new TextDecoder().decode((await reader.read()).value);
     assert.match(data, /session-one/);
     const launch = activityLaunch(process.cwd(), 'checkout', 'claude-code', root, state);
@@ -161,6 +222,8 @@ test('HTTP stream, quiet bridge and generated lightweight hook work end to end; 
     assert.deepEqual(result, { stdout: '', stderr: '' });
     const snapshot = await (await fetch(`${url}/api/agents`)).json() as ActivitySnapshot;
     assert.deepEqual(snapshot.events.map(event => event.provider), ['codex', 'claude-code']);
+    assert.equal(snapshot.events[0]!.kind, 'read');
+    assert.deepEqual(snapshot.events[0]!.paths.map(item => item.path), ['src/a.ts', 'src/b.ts']);
     assert.ok(hookConfiguration('codex', launch).hooks.PreToolUse);
     assert.ok(hookConfiguration('claude-code', launch).hooks.PostToolUseFailure);
     assert.equal(hookConfiguration('codex', launch).hooks.PostToolUseFailure, undefined);

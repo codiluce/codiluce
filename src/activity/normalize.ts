@@ -2,6 +2,7 @@ import path from 'node:path';
 import { realpathSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import type { ActivityEvent, ActivityKind, ActivityPath, AgentProvider, AgentStatus } from './model.js';
+import { shellInput } from './shell.js';
 
 const object = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const text = (value: unknown, max = 256): string => typeof value === 'string' ? value.slice(0, max) : '';
@@ -21,26 +22,6 @@ export function repositoryPath(root: string, cwd: string, value: string): string
   return path.relative(root, absolute).split(path.sep).join('/') || '.';
 }
 
-/** Only simple, literal shell invocations are interpreted. Scripts, expansions and pipelines remain commands. */
-function shellInput(command: string): { tool: string; input: Record<string, unknown> } | undefined {
-  if (/[;|&><\n`$()]/.test(command)) return undefined;
-  const tokens = command.match(/"[^"]*"|'[^']*'|[^\s"']+/g)?.map(token => token.replace(/^(["'])(.*)\1$/, '$2')) ?? [];
-  const tool = tokens.shift();
-  if (['cat', 'head', 'tail'].includes(tool ?? '')) {
-    if (tokens.some(token => token.startsWith('-'))) return undefined;
-    return { tool: 'Read', input: { paths: tokens } };
-  }
-  if (tool === 'sed' && tokens.length === 3 && tokens[0] === '-n' && /^\d+(,\d+)?p$/.test(tokens[1]!)) return { tool: 'Read', input: { paths: [tokens[2]] } };
-  if (tool === 'rg' || tool === 'grep') {
-    // Value-taking flags and globs are deliberately left unknown.
-    const flags = new Set(['-n', '-l', '-i', '-w', '-F', '--hidden', '--no-heading', '--files-with-matches']);
-    if (tokens.some(token => token.startsWith('-') && !flags.has(token))) return undefined;
-    const args = tokens.filter(token => !flags.has(token));
-    if (args.length) return { tool: 'Grep', input: { pattern: args[0], paths: args.slice(1).length ? args.slice(1) : ['.'] } };
-  }
-  return undefined;
-}
-
 export function normalizeHook(root: string, provider: AgentProvider, payload: unknown, now = Date.now()): ActivityEvent | undefined {
   const body = object(payload), event = text(body.hook_event_name), sessionId = text(body.session_id);
   if (!sessionId || !HOOK_EVENTS.includes(event as typeof HOOK_EVENTS[number]) && event !== 'PostToolUseFailure') return undefined;
@@ -51,7 +32,8 @@ export function normalizeHook(root: string, provider: AgentProvider, payload: un
   const tool = text(body.tool_name), original = object(body.tool_input);
   const command = text(original.command ?? original.cmd, 64 * 1024);
   const interpreted = ['Bash', 'exec_command', 'shell_command'].includes(tool) ? shellInput(command) : undefined;
-  const name = interpreted?.tool ?? tool, input = interpreted?.input ?? original;
+  const name = interpreted?.tool ?? tool;
+  const input: Record<string, unknown> = interpreted?.input ?? original;
   let kind: ActivityKind = 'status', label = event;
   const paths: ActivityPath[] = [];
   const workdir = typeof original.workdir === 'string' ? path.resolve(cwd, original.workdir) : cwd;
