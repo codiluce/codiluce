@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Proposed Codiluce memory optimization: process-tree telemetry, memory-aware history scheduling, and smaller graph transfers.">
+  <title>Memory optimization proposal · Codiluce</title>
+  <style>
+    :root { color-scheme: light; --ink: #18313d; --muted: #526773; --line: #d5e0e4; --accent: #08696d; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 20px; }
+    body { margin: 0; background: #f4f7f7; color: var(--ink); font: 16px/1.65 system-ui, sans-serif; }
+    main { max-width: 1000px; margin: auto; padding: clamp(20px, 5vw, 48px); }
+    h1, h2, h3 { line-height: 1.25; }
+    h1 { font-size: clamp(30px, 5vw, 44px); margin: 12px 0 20px; }
+    h2 { margin: 0 0 20px; font-size: 26px; }
+    h3 { font-size: 19px; margin-top: 28px; }
+    p, li, dd, a, code { overflow-wrap: anywhere; }
+    a { color: var(--accent); text-underline-offset: 3px; }
+    a:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+    code { font: .88em ui-monospace, monospace; background: #edf2f3; padding: 2px 4px; border-radius: 3px; }
+    section, .status { background: white; border: 1px solid var(--line); border-radius: 12px; padding: clamp(18px, 4vw, 30px); margin: 26px 0; }
+    .status { border-left: 5px solid #aa742c; }
+    .eyebrow, .muted, footer { color: var(--muted); }
+    .eyebrow { font-size: 14px; }
+    nav ul { display: flex; flex-wrap: wrap; gap: 8px 24px; padding: 0; list-style: none; }
+    li + li { margin-top: 9px; }
+    nav li + li { margin-top: 0; }
+    dt { font-weight: 650; margin-top: 18px; }
+    dd { margin: 4px 0 16px; }
+    .formula { padding: 14px 18px; background: #edf4f4; border-radius: 6px; }
+    footer { margin-top: 36px; font-size: 14px; }
+    @media print { body { background: white; } main { max-width: none; padding: 0; } nav { display: none; } section, .status { border-radius: 0; } h2, h3 { break-after: avoid; } }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">Codiluce design note · recorded 15 October 2026</p>
+    <h1>Memory optimization proposal</h1>
+    <p>Measure the complete indexing process tree, use those measurements to schedule history work, and reduce the graph data copied between processes.</p>
+    <div class="status"><strong>Status: proposed future optimization.</strong> This note records a design for later implementation. The telemetry service, adaptive scheduler, streaming transport, and proposed CLI controls below are not implemented by this document. Sampling intervals, frame sizes, safety margins, and performance targets require qualification.</div>
+    <nav aria-label="Document navigation"><ul>
+      <li><a href="#baseline">Current baseline</a></li>
+      <li><a href="#telemetry">1. Telemetry</a></li>
+      <li><a href="#scheduling">2. History scheduling</a></li>
+      <li><a href="#transfers">3. Graph transfers</a></li>
+      <li><a href="#validation">Validation</a></li>
+      <li><a href="#rollout">Rollout and decisions</a></li>
+    </ul></nav>
+  </header>
+
+  <section id="baseline">
+    <h2>Current baseline and motivation</h2>
+    <p>A working-tree index of Codiluce reproduced TypeScript worker heap exhaustion with a 1 GiB old-space limit. Increasing the fixed limit to 2 GiB allowed that command and a subsequent warm-cache run to complete. This establishes additional capacity for that repository; it does not establish a safe size for every repository or a total-process memory guarantee.</p>
+    <ul>
+      <li><code>src/analyzers/ts-worker-protocol.ts</code> sets TypeScript old space to 2,048 MiB, semi-space to 16 MiB, and each request/response frame to at most 64 MiB. Old space excludes other V8 spaces, buffers, native allocation, and other processes.</li>
+      <li><code>src/analyzers/typescript-isolated.ts</code> sends the complete existing graph to the TypeScript worker. A large mixed-language graph can hit the transfer ceiling even when its TypeScript portion is small.</li>
+      <li><code>src/history/indexer.ts</code> derives default concurrency from CPU count, up to six analysis workers. Each can own additional compiler/parser children. Explicit job counts can exceed that default ceiling.</li>
+      <li><code>src/history/worker-channel.ts</code> limits each worker to one unacknowledged completed result. It waits for the parent to handle the result before proceeding, but individual graphs remain whole-object transfers.</li>
+      <li><code>scripts/process-memory.mjs</code> already samples Linux process trees, including descendants forked from any thread, and records per-process <code>VmHWM</code>. It is benchmark tooling rather than a packaged runtime telemetry service.</li>
+      <li>The parent graph, metadata snapshots, patch clones, and final graph materialization have no shared byte budget. Existing source/AST caches, parser generations, heap/WASM limits, and transport limits each cover narrower ownership boundaries.</li>
+    </ul>
+    <p>The optimization must preserve complete graph contents, source/hash validation, compiler project scopes, HTTP-effect references, cache correctness, failed-pass publication rules, and resumable history indexing. It must not execute target repository code or silently reduce analysis coverage to fit memory.</p>
+  </section>
+
+  <section id="telemetry">
+    <h2>1. Total-process memory telemetry</h2>
+    <h3>Runtime monitoring</h3>
+    <p>Extract the reusable sampler into a packaged runtime module and run a small monitor in a separate owned process. A timer in the analyzer or coordinator alone cannot observe peaks while synchronous compiler work or SQLite operations block that process's event loop. An initial production sampling interval of 250 ms is a proposal to benchmark, not a measured optimum.</p>
+    <p>Maintain an ownership registry for the coordinator, history workers, TypeScript workers, parser workers, and the monitor itself. Record process role, owning history slot, commit, stage/component, and process start identity. Combine lifecycle registration with descendant discovery, deduplicate PIDs, and guard against PID reuse. Include monitor overhead in the job footprint and retire it on owner shutdown.</p>
+    <dl>
+      <dt>Whole-job measurements</dt>
+      <dd>Current tree RSS, observed simultaneous tree peak, process count, per-role and per-worker-subtree RSS, available host memory, effective container limits/headroom, timestamp, and sample availability/completeness.</dd>
+      <dt>Stage measurements</dt>
+      <dd>At analyzer/component and transfer boundaries, participating Node processes report heap usage/limit, external allocation, buffers, elapsed time, and relevant file/entity/relation counts. Keep these allocation categories separate: external memory includes buffers, and RSS already includes resident heap/native pages.</dd>
+      <dt>Transfer and scheduling measurements</dt>
+      <dd>Encoded/decoded bytes, largest frame, in-flight bytes, temporary storage bytes, admitted/active jobs, reservations, scheduling pauses, and storage/merge-stage memory.</dd>
+    </dl>
+    <h3>Measurement accuracy</h3>
+    <ul>
+      <li>Compute the observed tree peak from the sum at each sampling instant. Do not add historical peaks from different processes: those peaks may have occurred at different times.</li>
+      <li>Label tree RSS as an approximation. Shared resident pages can be counted repeatedly, and short-lived processes or peaks can occur between polls. Preserve incomplete/missing samples explicitly.</li>
+      <li>Use Linux <code>VmHWM</code> for that process image's peak where available; do not substitute an inherited launcher high-water value. Per-process peaks supplement the simultaneous sampler.</li>
+      <li>Read effective container constraints, including relevant ancestor constraints, rather than assuming host RAM is available to the job. Container usage may include unrelated processes; report it as pressure information rather than attributing all of it to Codiluce.</li>
+      <li>Provide platform-specific readers with tests. Until a platform has a reliable total-process reader, mark that measurement unavailable and use conservative scheduling. A missing reading is not zero usage.</li>
+    </ul>
+    <h3>Output and integration</h3>
+    <p>Expose typed telemetry through index/history options and progress events. Show a small end-of-run summary by default once overhead is qualified. Offer bounded, opt-in JSONL diagnostics with rotation or a byte quota. Record counters and stage identities rather than source contents or graph payloads. Telemetry stays outside canonical graph fields, analyzer identities, and cache keys.</p>
+    <p>Relevant seams: <code>scripts/process-memory.mjs</code>, <code>src/pipeline/index.ts</code>, <code>src/analyzers/typescript-isolated.ts</code>, <code>src/analysis/tree-sitter/client.ts</code>, and <code>src/history/indexer.ts</code>. Test/package the new monitor entrypoint in both source and installed JavaScript execution.</p>
+  </section>
+
+  <section id="scheduling">
+    <h2>2. Memory-aware history concurrency</h2>
+    <h3>Separate storage acknowledgment from admission</h3>
+    <p>Introduce coordinator-granted permission to start each commit. Preserve contiguous commit order within each worker so its tree mirror continues applying small diffs.</p>
+    <p class="formula">Analyze commit → deliver result → acknowledge storage handling → release completed result → wait for permission to start the next commit.</p>
+    <p>Always acknowledge a handled result, including a recorded save failure, under the existing contract. Do not withhold that acknowledgment as a throttle: doing so keeps a completed graph alive. Wait for the next permission only after the previous result's references can be released. Release an analysis reservation after its descendants have retired and its result has been handled; continue accounting for any resident idle worker.</p>
+    <h3>Budget and admission policy</h3>
+    <p>Distinguish a total job-memory budget from the TypeScript old-space limit. Treat the requested job count as a documented upper bound; actual concurrency can be lower when the memory policy requires it. Proposed controls such as <code>--memory-budget</code>, <code>--typescript-heap</code>, and <code>--memory-log</code> are illustrative names, not existing CLI options.</p>
+    <p class="formula"><code>target concurrency = min(CPU ceiling, requested jobs, floor((job budget − coordinator reserve) / worker reservation))</code></p>
+    <p>A worker reservation covers its complete analysis subtree, not only its TypeScript heap. Coordinator reserves cover storage ingestion, graph merge/validation, history layout work, monitoring, and a safety margin. An admission decision must satisfy both the configured job budget and current host/container headroom. Free-memory readings already reflect running allocations; avoid subtracting those allocations twice.</p>
+    <p>Start conservatively with one commit and a conservative reservation for an unknown workload. Update estimates from observed subtree peaks plus a measured safety margin; increase concurrency gradually. Keep completed high-water observations when recent warm work is smaller. A later revision can be much heavier than the first, so estimates never replace ongoing pressure checks. If even one reservation cannot fit, report that condition rather than forcing the formula's result to one.</p>
+    <h3>Pressure and recovery</h3>
+    <ul>
+      <li>Pause new admission when either budget or machine headroom is insufficient. Use hysteresis before resuming to avoid repeated pause/resume oscillation.</li>
+      <li>Retire idle workers when their retained address spaces prevent progress. Resume their remaining work with a fresh owned worker and tree mirror when capacity permits.</li>
+      <li>If a running subtree exceeds the emergency policy, cancel an owned analysis attempt, reap its descendants, and retain completed snapshots. A separate monitor can observe pressure even while the coordinator is blocked.</li>
+      <li>Report a confirmed budget cancellation distinctly from V8 heap exhaustion, transfer-size failure, disk exhaustion, and an unexplained signal. A signal alone does not prove an OS out-of-memory kill.</li>
+      <li>Retry only under an explicit bounded policy. If a commit cannot fit alone, fail clearly and leave it resumable. Do not loop indefinitely, raise the heap automatically without headroom, or store an incomplete snapshot as successful.</li>
+    </ul>
+    <p>This is cooperative admission and recovery, not a hard physical-memory guarantee: a process can allocate between samples. Strong OS-level enforcement would require a separately designed platform-specific job/container boundary.</p>
+    <p>Relevant seams: <code>src/history/indexer.ts</code>, <code>src/history/worker.ts</code>, <code>src/history/worker-channel.ts</code>, history progress events, and CLI option/help handling.</p>
+  </section>
+
+  <section id="transfers">
+    <h2>3. Smaller graph transfers</h2>
+    <h3>First reduce the TypeScript input model</h3>
+    <p>Audit every graph read made by TypeScript analysis, embedded preparation, project/resolution services, framework packs, cache capture, and graph validation. Replace the complete prior graph with an explicit worker input contract containing only the records and fields those consumers require.</p>
+    <p>The starting inventory includes repository/application identity and configuration, indexed file identities and source hashes, resolution inventories, embedded recipes/facts, and required pre-existing declarations, metadata, and ownership relationships. Preserve non-TypeScript file/asset information needed for resolution. Do not assume that selecting TypeScript files or a single application's records is sufficient.</p>
+    <p>Validate the reduced contract against the existing full-input path on mixed-language and cross-project repositories. Patches must preserve parent fields absent from the worker projection. Resolve all required parent/endpoint identities and potential collisions explicitly before dropping foreign-language symbols, relationships, or diagnostics. Transport-only changes should not alter semantic producer versions or graph identities.</p>
+    <h3>Then stream bounded records</h3>
+    <p>Introduce a new private protocol version for coordinator/TypeScript and history/coordinator transfers. Generate small frames incrementally, initially targeting 1–4 MiB subject to benchmarking, with sequence numbers, stream identity, checksums, declared counts, and an explicit completion marker. Keep a small bounded number of unacknowledged frames and a global in-flight byte allowance.</p>
+    <ul>
+      <li>Encode incrementally from records. Encoding the complete message and slicing its buffer afterward retains the allocation spike.</li>
+      <li>Preserve every current field, original UTF-16 code unit, explicit undefined value, supported alias/cycle contract, and HTTP-effect relationship. Cross-frame references need an explicit representation and bounded reference-index ownership.</li>
+      <li>Retain structural admission checks and define a bounded policy for an individual record larger than a frame: supported field-level segmentation or a specific limit failure, never an unrestricted fallback.</li>
+      <li>Bound temporary storage, record/reference counts, decoder allocations, and cumulative transfer work separately. Removing the single 64 MiB message ceiling must not create an unlimited spool or in-memory queue.</li>
+      <li>Streaming the existing patch can be an intermediate step. Later, make patch diff/emission incremental to reduce the complete patch clone in <code>captureGraphPatch</code>; frame transport alone does not remove that allocation.</li>
+    </ul>
+    <h3>Stage, validate, then publish</h3>
+    <p>Write received frames to private temporary storage with quotas and cleanup. Validate ordering, checksums, completeness, record shapes, identities, graph references, and the unchanged parent baseline. Require successful worker completion and proven parser/worker retirement before publication.</p>
+    <p>For history, import records progressively under a SQLite transaction/savepoint and publish snapshot membership only after the complete stream validates. Roll back on transfer, validation, storage, or worker failure; acknowledge successful storage only after commit.</p>
+    <p>For TypeScript, the parent graph currently uses mutable Maps rather than SQLite transactions. A staged stream therefore needs a mutation transaction, overlay, or undo mechanism before incremental application is safe. Validation followed by an unprotected second read is insufficient: a disk/read/apply failure must also leave parent objects, HTTP state, and embedded state unchanged. Preserve the existing rules for completed atomic cache units; failed or incomplete units must not be published as valid cache entries.</p>
+    <p>Relevant seams: <code>src/analyzers/ts-worker-protocol.ts</code>, <code>ts-worker-codec.ts</code>, <code>native-ts-worker.mjs</code>, <code>ts-worker.ts</code>, <code>typescript-isolated.ts</code>, <code>src/pipeline/cache.ts</code>, and history worker/channel/store code. The compiler's live state and final parent graph still require separate budgets after transfer copies are reduced.</p>
+  </section>
+
+  <section id="validation">
+    <h2>Validation and acceptance criteria</h2>
+    <ul>
+      <li><strong>Telemetry:</strong> test all-thread descendant discovery, PID reuse, disappearing/short-lived children, unavailable readers, blocked event loops, native allocations, container constraints, simultaneous peaks, monitor shutdown, and bounded logs. Reuse <code>tests/process-memory.test.ts</code> as a starting point.</li>
+      <li><strong>Scheduler:</strong> use deterministic synthetic memory/headroom readers to prove admission, reservations, pressure pauses, hysteresis, worker retirement, missing measurements, later heavy revisions, insufficient single-job capacity, and bounded retries. Never infer correctness from nondeterministic host memory alone.</li>
+      <li><strong>Storage acknowledgment:</strong> extend <code>tests/history-worker-memory.test.ts</code> to prove that throttle waits occur after releasing completed results, saves remain independent, failure/resume works, and serial/adaptive histories retain equal snapshots.</li>
+      <li><strong>Transport:</strong> transfer a valid graph over 64 MiB with every frame within its selected bound. Exercise large individual records, shared references, cycles, UTF-16 edge cases, duplicate/reordered/missing/corrupt frames, missing completion, source changes, disk exhaustion, interrupted application, worker death, parent death, and orphan cleanup.</li>
+      <li><strong>Graph parity:</strong> compare complete cold, population, warm, edited, and revision graphs against the existing path. Permit only established volatile run UUID/time fields to vary. Retain cross-project compiler scope, framework bindings, original ranges/proofs, HTTP-effect aliases, actual cache hits, and full history/resume behavior.</li>
+      <li><strong>Distribution:</strong> run source, ordinary compiled JavaScript, and production-only installed package checks. Verify process ownership and telemetry availability honestly on each supported native OS.</li>
+      <li><strong>Performance:</strong> measure fresh-process and long-history time, simultaneous tree RSS, parent peak, worst observed worker subtree, transfer/in-flight bytes, temporary disk use, monitoring overhead, and throughput under restricted budgets. Include large mixed graphs, connected TypeScript monorepos, dense files, and warm-cache workloads.</li>
+    </ul>
+    <p>Agree on overhead/regression thresholds before release comparisons, preserve failing observations, and demonstrate the targeted memory reduction. Smaller frames or a lower sampled peak alone do not establish an overall physical-memory bound.</p>
+  </section>
+
+  <section id="rollout">
+    <h2>Rollout and open decisions</h2>
+    <ol>
+      <li><strong>Telemetry only:</strong> package and qualify the monitor, stage events, summaries, and optional bounded logs. Collect baseline measurements with scheduling and graph transport behavior unchanged.</li>
+      <li><strong>History admission:</strong> introduce separate start permissions and memory reservations. Qualify serial/adaptive snapshot parity, storage acknowledgment, failure recovery, and operator-visible throttling before enabling automatic scheduling by default.</li>
+      <li><strong>TypeScript input projection:</strong> establish the audited smaller input contract and prove parity against full-input analysis.</li>
+      <li><strong>Streaming transfers:</strong> qualify framing, quotas, backpressure, staging, transactional publication, and installed execution independently for TypeScript and history. Remove additional patch/graph copies only with separate evidence.</li>
+    </ol>
+    <p>Open decisions include CLI names/defaults, auto-budget policy, platform readers, sampling interval, reservation margins and expiry, pressure thresholds, cancellation/retry behavior, frame/record/spool limits, cross-frame reference storage, TypeScript mutation rollback, and acceptable monitoring overhead. These are future implementation choices, not commitments or measured results.</p>
+    <p>Further work remains on compiler state within large dependency components, parent graph residency, parser/native allocations, and projection/layout memory. The three changes above provide measurements and reduce concurrency/transfer pressure without claiming to solve every allocation source.</p>
+  </section>
+
+  <section id="references">
+    <h2>References and related documents</h2>
+    <ul>
+      <li><a href="../language-framework-compatibility.html#implementation">Implementation roadmap and existing qualification history</a></li>
+      <li><a href="../architecture-visualizer.md">Architecture and history contracts</a></li>
+      <li><a href="https://nodejs.org/download/release/v22.12.0/docs/api/process.html#processmemoryusage">Node 22.12 process memory categories</a></li>
+      <li><a href="https://nodejs.org/download/release/v22.12.0/docs/api/process.html#processconstrainedmemory">Node constrained and available process memory</a></li>
+      <li><a href="https://docs.kernel.org/admin-guide/cgroup-v2.html#memory-interface-files">Linux cgroup v2 memory accounting and limits</a></li>
+    </ul>
+  </section>
+  <footer>Design proposal for future optimization · 15 October 2026. Open this HTML file directly or serve the repository's docs directory. No runtime behavior is introduced by this note.</footer>
+</main>
+</body>
+</html>
