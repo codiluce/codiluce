@@ -293,18 +293,20 @@ function encodeTypeScriptPayload(value, maxBytes, stats, policy) {
       writer.byte(index);
       writer.uint(item.byteLength);
       writer.raw(new Uint8Array(item.buffer, item.byteOffset, item.byteLength));
-    } else if (types.isNumberObject(item)) {
-      writer.byte(22 /* BoxedNumber */);
-      writer.double(Number.prototype.valueOf.call(item));
-    } else if (types.isStringObject(item)) {
-      writer.byte(23 /* BoxedString */);
-      string(String.prototype.valueOf.call(item));
-    } else if (types.isBooleanObject(item)) {
-      writer.byte(24 /* BoxedBoolean */);
-      writer.byte(Boolean.prototype.valueOf.call(item) ? 1 : 0);
-    } else if (types.isBigIntObject(item)) {
-      writer.byte(25 /* BoxedBigInt */);
-      push({ kind: "value", value: BigInt.prototype.valueOf.call(item), depth: task.depth + 1 });
+    } else if (types.isBoxedPrimitive(item)) {
+      if (types.isNumberObject(item)) {
+        writer.byte(22 /* BoxedNumber */);
+        writer.double(Number.prototype.valueOf.call(item));
+      } else if (types.isStringObject(item)) {
+        writer.byte(23 /* BoxedString */);
+        string(String.prototype.valueOf.call(item));
+      } else if (types.isBooleanObject(item)) {
+        writer.byte(24 /* BoxedBoolean */);
+        writer.byte(Boolean.prototype.valueOf.call(item) ? 1 : 0);
+      } else if (types.isBigIntObject(item)) {
+        writer.byte(25 /* BoxedBigInt */);
+        push({ kind: "value", value: BigInt.prototype.valueOf.call(item), depth: task.depth + 1 });
+      } else throw Error("Unsupported compiler transport object");
     } else if (types.isNativeError(item)) {
       writer.byte(26 /* Error */);
       const error = item;
@@ -317,7 +319,7 @@ function encodeTypeScriptPayload(value, maxBytes, stats, policy) {
       writer.byte(cause ? 1 : 0);
       if (cause) push({ kind: "value", value: error.cause, depth: task.depth + 1 });
     } else {
-      if (types.isBoxedPrimitive(item) || types.isExternal(item)) throw Error("Unsupported compiler transport object");
+      if (types.isExternal(item)) throw Error("Unsupported compiler transport object");
       writer.byte(12 /* Object */);
       push(properties(item, false, task.depth));
     }

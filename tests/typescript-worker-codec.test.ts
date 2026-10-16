@@ -5,10 +5,38 @@ import {encodeTypeScriptPayload as encode, decodeTypeScriptPayload as decode, Ty
 import {runTypeScriptWorker, typeScriptWorkerRequest} from '../src/analyzers/typescript-isolated.js';
 import cp from 'node:child_process';
 import {syncBuiltinESMExports} from 'node:module';
+import {runInNewContext} from 'node:vm';
 import type {AnalysisContext} from '../src/core/analyzer.js';
 import {GraphBuilder} from '../src/core/graph.js';
 const roundtrip = (value: unknown) => decode(encode(value, 64 * 1024 * 1024), 64 * 1024 * 1024);
 const reference = (value: unknown) => deserialize(serialize(value));
+
+test('native boxed brands survive changed prototypes and realms without reading user tags', () => {
+  let tagReads = 0;
+  const factories = [() => new Number(-0), () => new Number(NaN), () => new String('é😀\ud800\udfff'), () => new Boolean(false), () => Object(-23n)];
+  for (const make of factories) for (const prototype of [undefined, null, Object.prototype]) {
+    const boxed = make();
+    if (prototype !== undefined) Object.setPrototypeOf(boxed, prototype);
+    Object.defineProperty(boxed, Symbol.toStringTag, {get() {tagReads++; throw Error('Unexpected user brand getter');}});
+    const input = {boxed, alias: boxed}, actual = roundtrip(input) as typeof input;
+    assert.deepEqual(actual, reference(input)); assert.equal(actual.boxed, actual.alias);
+  }
+  for (const expression of ["new Number(-0)", "new String('original')", "new Boolean(true)", "Object(17n)"]) {
+    const boxed = runInNewContext(expression), input = {boxed, alias: boxed}, actual = roundtrip(input) as typeof input;
+    assert.deepEqual(actual, reference(input)); assert.equal(actual.boxed, actual.alias);
+  }
+  for (const prototype of [Number.prototype, String.prototype, Boolean.prototype, BigInt.prototype, Symbol.prototype]) {
+    const spoof = Object.create(prototype); spoof.original = 'ordinary own field';
+    Object.defineProperty(spoof, Symbol.toStringTag, {get() {tagReads++; throw Error('Unexpected user brand getter');}});
+    assert.deepEqual(roundtrip(spoof), {original: 'ordinary own field'});
+  }
+  for (const boxed of [Object(Symbol('original')), runInNewContext("Object(Symbol('original'))")]) {
+    assert.throws(() => encode(boxed, 1024), {message: 'Unsupported compiler transport object'});
+    Object.setPrototypeOf(boxed, null);
+    assert.throws(() => encode(boxed, 1024), {message: 'Unsupported compiler transport object'});
+  }
+  assert.equal(tagReads, 0);
+});
 
 test('ordinary decoder properties avoid descriptor temporaries while preserving inherited guards, prototypes and boxed aliases', () => {
   const shared = {text: 'original é😀\ud800\udfff\0'}, boxed = Object(17n), key = {shared}, array: any = new Array(1000), value: any = {shared, alias: shared, boxed, boxedAlias: boxed, sibling: Object(-23n), array, map: new Map(), set: new Set(), error: new TypeError('original', {cause: shared}), codecInertSetter: shared, codecInertReadOnly: shared};
