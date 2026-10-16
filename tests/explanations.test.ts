@@ -228,7 +228,7 @@ test('MCP: initialize negotiates, lists tools with hints and prompts, and report
   } finally { session.close(); }
 });
 
-test('activity: an MCP session shows on the map from connecting, each prompt and tool call, until it publishes', async () => {
+test('activity: only explicit explanation requests start work; ordinary reads and session searches stay connected', async () => {
   const session = new McpSession({ root, stateDirectory: state, version: '9.9.9' });
   const send = async (message: unknown) => session.receive(JSON.stringify(message)) as Promise<{ result?: Record<string, unknown> } | undefined>;
   const call = async (id: number, name: string, args: Record<string, unknown>) => JSON.parse(((await send({ jsonrpc: '2.0', id, method: 'tools/call', params: { name, arguments: args } }))!.result!.content as { text: string }[])[0]!.text) as Record<string, unknown>;
@@ -239,6 +239,12 @@ test('activity: an MCP session shows on the map from connecting, each prompt and
     await send({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', clientInfo: { name: 'claude-code' } } });
     assert.equal(only().state, 'connected');
     assert.equal(only().agent, 'claude-code');
+    await call(20, 'overview', {});
+    await call(21, 'search', { query: 'Login' });
+    await send({ jsonrpc: '2.0', id: 22, method: 'tools/call', params: { name: 'source', arguments: { link: LOGIN_FORM } } });
+    await call(23, 'search_conversations', { query: 'Markdown' });
+    assert.equal(only().state, 'connected');
+    assert.equal(only().work, undefined, 'ordinary MCP session reads are not explanations');
     // A prompt (a slash command) is work before the first tool call.
     await send({ jsonrpc: '2.0', id: 2, method: 'prompts/get', params: { name: 'explain-flow', arguments: { flow: 'POST /auth/login' } } });
     assert.equal(only().state, 'working');
@@ -258,9 +264,12 @@ test('activity: an MCP session shows on the map from connecting, each prompt and
     const detail = (await service.detail(saved))!;
     assert.equal(detail.turns[0]!.text, 'How does login work?');
     assert.equal(detail.subject.kind, 'flow');
-    // A step after that is new, unnamed work; quiet work stops showing as working.
+    // Ordinary reads after publication do not restart explanation activity.
     await call(6, 'search', { query: 'Login' });
-    assert.deepEqual([only().work!.title, only().work!.count], [undefined, 1]);
+    assert.equal(only().state, 'connected');
+    await call(7, 'start_explanation', { title: 'Explain recent changes', subject: { kind: 'commit' } });
+    await call(8, 'search', { query: 'Login' });
+    assert.equal(only().work!.count, 1);
     assert.equal(readActivity(state, Date.now() + WORK_TIMEOUT_MS + 1000)[0]!.state, 'connected');
     // serve reports it to the map.
     const server = createInspectionServer(store, { root, stateDirectory: state });
@@ -276,6 +285,10 @@ test('activity: an MCP session shows on the map from connecting, each prompt and
   await writeFile(path.join(activityDirectory(state), '1-ended.json'), JSON.stringify({ session: '1-ended', pid: 99_999_999, connectedAt: new Date().toISOString(), updatedAt: new Date().toISOString() }));
   assert.deepEqual(readActivity(state), []);
   await rm(path.join(activityDirectory(state), '1-ended.json'));
+  const old = path.join(activityDirectory(state), 'legacy-read.json');
+  await writeFile(old, JSON.stringify({ session: 'legacy-read', pid: process.pid, connectedAt: new Date().toISOString(), updatedAt: new Date().toISOString(), work: { startedAt: new Date().toISOString(), updatedAt: new Date().toISOString(), steps: [{ text: 'overview' }], count: 1 } }));
+  assert.equal(readActivity(state)[0]?.state, 'connected', 'legacy inferred reads do not light Explanations');
+  await rm(old);
 });
 
 test('prompts name what to explain, how to start, and how to publish', () => {

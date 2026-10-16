@@ -113,6 +113,7 @@ export interface AgentActivity {
   published?: { id: string; title: string; at: string };
 }
 export interface AgentWork {
+  intent?: 'explanation';
   startedAt: string; updatedAt: string;
   title?: string; question?: string;
   subject?: { kind: SubjectKind; ref?: string };

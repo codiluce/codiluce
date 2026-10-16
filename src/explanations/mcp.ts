@@ -28,7 +28,7 @@ interface Message { jsonrpc?: string; id?: Id; method?: string; params?: Record<
 export const MCP_INSTRUCTIONS = [
   'Codiluce has indexed this repository into an evidenced graph: files, symbols, routes and endpoints, tables, the calls and HTTP requests between them (across frontend and backend), every flow by entry point, the blast radius of a change, and the Git history.',
   'Use these tools to understand the code before reading files one by one: start with `overview`, find things with `search`, then `entity`, `flow`, `impact`, `commit` and `source`.',
-  'When the user wants to understand something, call `start_explanation` first (with their question), so the Codiluce map shows at once that an explanation is on its way, then save your explanation with `publish_explanation`: they read it in the Explanations column of the Codiluce map, where hovering a link lights that code and clicking opens it.',
+  'Only when the user explicitly requests an explanation of code, a PR, history or another codebase topic, call `start_explanation` first (with their question), then save the explanation with `publish_explanation`. Reading code or implementing changes does not request an explanation. Explanations appear in the Explanations column, where hovering a link lights that code and clicking opens it.',
   LINK_GUIDE,
 ].join('\n\n');
 
@@ -98,7 +98,7 @@ export class McpSession {
         const name = typeof params.name === 'string' ? params.name : '';
         if (!this.tools().some(tool => tool.name === name)) throw new RpcError(-32602, `Unknown tool ${name}`);
         // Recorded before the tool runs: the map shows the step while it is taken.
-        if (name !== 'start_explanation') this.activity.step(describeTool(name, params.arguments));
+        if (!['start_explanation', 'search_conversations', 'read_conversation'].includes(name)) this.activity.step(describeTool(name, params.arguments));
         const { text, isError } = await runTool(this.tools(), name, params.arguments ?? {});
         return { content: [{ type: 'text', text }], isError };
       }

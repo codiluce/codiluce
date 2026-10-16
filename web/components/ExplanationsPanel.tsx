@@ -246,7 +246,7 @@ function Asking() {
   );
 }
 
-/** Agents connected over MCP working on an explanation: shown from their first tool call (or the prompt they were given) until they save it. */
+/** Agents connected over MCP working on an explanation: shown after an explicit explanation start or prompt until they save it. */
 function AgentsAtWork({ compact }: { compact: boolean }) {
   const store = useStore();
   const agents = useAtlas(state => state.explain.agents);
@@ -259,7 +259,7 @@ function AgentsAtWork({ compact }: { compact: boolean }) {
     return (
       <div className="agent-banner" role="status">
         <span className="agent-pulse" aria-hidden="true" />
-        <span className="agent-banner-text">{working.length > 1 ? `${working.length} agents are working` : `${agentLabel(first.agent)} is ${named(first) ? 'explaining' : 'reading the code'}`}{working.length === 1 && first.work?.title ? `: ${first.work.title}` : '…'}</span>
+        <span className="agent-banner-text">{working.length > 1 ? `${working.length} agents are working` : `${agentLabel(first.agent)} is explaining`}{working.length === 1 && first.work?.title ? `: ${first.work.title}` : '…'}</span>
         <button className="button tiny" onClick={() => store.closeExplanation()} title="Back to every explanation, where its steps show">Show</button>
       </div>
     );
@@ -273,12 +273,12 @@ function AgentCard({ agent, now, onHide }: { agent: AgentActivity; now: number; 
   const quiet = now - Date.parse(last?.at ?? work.startedAt);
   const saving = !!last && /^(publish|update)_explanation\b/.test(last.text);
   // A long pause after reading usually means it is writing (the whole answer arrives in one call).
-  const status = saving ? 'Saving the explanation…' : !last ? 'Starting…' : quiet > 15_000 ? `${named(agent) ? 'Writing the explanation' : 'Thinking'}… · last step ${duration(quiet)} ago` : 'Reading the code…';
+  const status = saving ? 'Saving the explanation…' : !last ? 'Starting…' : quiet > 15_000 ? `Waiting for an explanation update… · last step ${duration(quiet)} ago` : 'Reading the code…';
   return (
     <section className="agent-work" aria-label={`${label} is working`}>
       <div className="agent-work-head">
         <span className="agent-pulse" aria-hidden="true" />
-        <strong>{label} is {named(agent) ? 'explaining' : 'reading the code'}</strong>
+        <strong>{label} is explaining</strong>
         <span className="agent-work-time" title={`Since ${new Date(work.startedAt).toLocaleTimeString()}`}>{duration(now - Date.parse(work.startedAt))}</span>
         <button className="icon-button small" onClick={onHide} aria-label="Hide" title="Hide this (what it saves still shows here)">×</button>
       </div>
@@ -294,8 +294,6 @@ function AgentCard({ agent, now, onHide }: { agent: AgentActivity; now: number; 
     </section>
   );
 }
-/** Asked to explain something (a prompt, `start_explanation`), not only reading the code. */
-function named(agent: AgentActivity): boolean { return !!(agent.work?.title || agent.work?.question); }
 /** The clock, ticking each second while `active`. */
 function useNow(active: boolean): number {
   const [now, setNow] = useState(() => Date.now());

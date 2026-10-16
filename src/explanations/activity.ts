@@ -1,7 +1,7 @@
 // What an agent connected over MCP is doing right now, so the map shows an
 // explanation on its way long before it is saved. `codiluce mcp` keeps one
 // small JSON file per session in `<state>/explanations/activity/`: written when
-// the client connects, on every prompt and tool call (before the tool runs),
+// the client connects, on explicit explanation prompts and their tool calls (before the tool runs),
 // and when it publishes; removed when the session ends. `serve` reads the
 // folder: a session whose process ended is left out, and work quiet for long
 // (the agent stopped, or used the tools for something else) is no longer shown
@@ -42,17 +42,18 @@ export class ActivityWriter {
     if (!this.written) pruneEnded(this.stateDirectory);
     this.write();
   }
-  /** It was asked to explain something. An MCP prompt (`fresh`) starts new work; `start_explanation` names the work under way, whose steps so far stay. */
+  /** It was asked to explain something. An MCP prompt (`fresh`) starts new work; `start_explanation` names explicit work under way, whose steps so far stay. */
   begin(start: WorkStart, options: { fresh?: boolean } = {}): void {
     const at = this.now().toISOString();
     const current = options.fresh ? undefined : this.current();
-    this.record.work = current ? { ...current, ...clean(start), updatedAt: at } : { startedAt: at, updatedAt: at, ...clean(start), steps: [], count: 0 };
+    this.record.work = current ? { ...current, ...clean(start), updatedAt: at } : { intent: 'explanation', startedAt: at, updatedAt: at, ...clean(start), steps: [], count: 0 };
     this.write();
   }
-  /** A tool call, as one line (`flow POST /api/orders`). After publishing, or a long pause, it starts new work. */
+  /** A tool call belongs to an explicitly started explanation; reads alone never start one. */
   step(text: string): void {
     const at = this.now().toISOString();
-    const work = this.current() ?? { startedAt: at, updatedAt: at, steps: [], count: 0 };
+    const work = this.current();
+    if (!work) return;
     work.steps = [...work.steps, { text: text.length > 160 ? `${text.slice(0, 159)}…` : text, at }].slice(-STEP_LIMIT);
     work.count++;
     work.updatedAt = at;
@@ -67,11 +68,12 @@ export class ActivityWriter {
   }
   /** The work under way, if any (what `publish_explanation` falls back on for the question and subject). */
   get work(): AgentWork | undefined { return this.current(); }
+  finish(): void { delete this.record.work; this.write(); }
   close(): void { if (this.written) { try { rmSync(this.file, { force: true }); } catch { /* already gone */ } } }
 
   private current(): AgentWork | undefined {
     const work = this.record.work;
-    return work && this.now().getTime() - Date.parse(work.updatedAt) < WORK_TIMEOUT_MS ? work : undefined;
+    return work?.intent === 'explanation' && this.now().getTime() - Date.parse(work.updatedAt) < WORK_TIMEOUT_MS ? work : undefined;
   }
   private write(): void {
     // Only where Codiluce already keeps state: an agent in a repository that was never indexed leaves no folder behind.
@@ -94,7 +96,7 @@ export function readActivity(stateDirectory: string, now = Date.now()): AgentAct
   for (const { record } of sessions(directory)) {
     if (!alive(record.pid)) continue;
     const { pid: _pid, work, ...rest } = record;
-    const working = !!work && now - Date.parse(work.updatedAt) < WORK_TIMEOUT_MS;
+    const working = work?.intent === 'explanation' && now - Date.parse(work.updatedAt) < WORK_TIMEOUT_MS;
     items.push({ ...rest, state: working ? 'working' : 'connected', ...(working ? { work } : {}) });
   }
   return items.sort((a, b) => (a.state === b.state ? (a.updatedAt < b.updatedAt ? 1 : -1) : a.state === 'working' ? -1 : 1));

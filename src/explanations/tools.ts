@@ -317,7 +317,7 @@ export function explanationTools(context: ToolContext): ToolSpec[] {
   return [
     ...(context.activity ? [{
       name: 'start_explanation', title: 'Say what you are explaining', readOnly: true,
-      description: 'Call this first when the user asks you to explain something, before reading the code: the Codiluce map shows at once that an explanation is on its way, with their question and each tool you call, until `publish_explanation` saves it. Saves nothing.',
+      description: 'Call this only when the user explicitly asks for a code, PR or history explanation, before reading the code. Do not call for implementation or ordinary reads. Once started, the Codiluce map shows at once that an explanation is on its way, with their question and each tool you call, until `publish_explanation` saves it. Saves nothing.',
       inputSchema: object({ title: string('What you are explaining, in a few words'), question: string('What the user asked, in their words'), subject: subjectSchema }),
       async run(input: Record<string, unknown>) {
         context.activity!.begin({ title: optionalText(input.title), question: optionalText(input.question), subject: subjectInput(input.subject) });
