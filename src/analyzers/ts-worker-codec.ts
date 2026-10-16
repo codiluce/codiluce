@@ -112,7 +112,10 @@ export function encodeTypeScriptPayload(value: unknown, maxBytes: number, stats?
   };
   writer.raw(MAGIC);
   const stack: Task[] = [];
-  const push = (...tasks: Task[]): void => { budget.peak('tasks', stack.length + tasks.length); stack.push(...tasks); };
+  // Admit the whole ordered batch before scheduling it, without a rest array.
+  const push = (task: Task): void => { budget.peak('tasks', stack.length + 1); stack.push(task); };
+  const pushPair = (first: Task, second: Task): void => { budget.peak('tasks', stack.length + 2); stack.push(first, second); };
+  const pushTriple = (first: Task, second: Task, third: Task): void => { budget.peak('tasks', stack.length + 3); stack.push(first, second, third); };
   const properties = (value: object, array: boolean, depth: number): Task => {
     const keys = Object.keys(value); budget.peak('keysPerObject', keys.length); budget.add('properties', keys.length);
     return {kind: 'properties', value, keys, index: 0, array, depth};
@@ -126,17 +129,17 @@ export function encodeTypeScriptPayload(value: unknown, maxBytes: number, stats?
       if (task.array && /^(?:0|[1-9]\d*)$/.test(key) && Number(key) < 0xffffffff) { writer.byte(Tag.Index); writer.uint(Number(key)); }
       else string(key);
       // Snapshot enumerable own keys, then read each value once, as cloning does.
-      push(task, {kind: 'value', value: (task.value as Record<string, unknown>)[key], depth: task.depth + 1}); continue;
+      pushPair(task, {kind: 'value', value: (task.value as Record<string, unknown>)[key], depth: task.depth + 1}); continue;
     }
     if (task.kind === 'map') {
       const entry = task.iterator.next();
       if (entry.done) { writer.byte(Tag.End); continue; }
-      budget.add('properties', 2); push(task, {kind: 'value', value: entry.value[1], depth: task.depth + 1}, {kind: 'value', value: entry.value[0], depth: task.depth + 1}); continue;
+      budget.add('properties', 2); pushTriple(task, {kind: 'value', value: entry.value[1], depth: task.depth + 1}, {kind: 'value', value: entry.value[0], depth: task.depth + 1}); continue;
     }
     if (task.kind === 'set') {
       const entry = task.iterator.next();
       if (entry.done) { writer.byte(Tag.End); continue; }
-      budget.add('properties'); push(task, {kind: 'value', value: entry.value, depth: task.depth + 1}); continue;
+      budget.add('properties'); pushPair(task, {kind: 'value', value: entry.value, depth: task.depth + 1}); continue;
     }
     budget.peak('depth', task.depth); const item = task.value;
     if (item === undefined) { writer.byte(Tag.Undefined); continue; }

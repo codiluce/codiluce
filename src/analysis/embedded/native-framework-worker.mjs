@@ -154,9 +154,17 @@ function encodeTypeScriptPayload(value, maxBytes, stats, policy) {
   };
   writer.raw(MAGIC);
   const stack = [];
-  const push = (...tasks) => {
-    budget.peak("tasks", stack.length + tasks.length);
-    stack.push(...tasks);
+  const push = (task) => {
+    budget.peak("tasks", stack.length + 1);
+    stack.push(task);
+  };
+  const pushPair = (first, second) => {
+    budget.peak("tasks", stack.length + 2);
+    stack.push(first, second);
+  };
+  const pushTriple = (first, second, third) => {
+    budget.peak("tasks", stack.length + 3);
+    stack.push(first, second, third);
   };
   const properties = (value2, array, depth) => {
     const keys = Object.keys(value2);
@@ -177,7 +185,7 @@ function encodeTypeScriptPayload(value, maxBytes, stats, policy) {
         writer.byte(14 /* Index */);
         writer.uint(Number(key));
       } else string(key);
-      push(task, { kind: "value", value: task.value[key], depth: task.depth + 1 });
+      pushPair(task, { kind: "value", value: task.value[key], depth: task.depth + 1 });
       continue;
     }
     if (task.kind === "map") {
@@ -187,7 +195,7 @@ function encodeTypeScriptPayload(value, maxBytes, stats, policy) {
         continue;
       }
       budget.add("properties", 2);
-      push(task, { kind: "value", value: entry.value[1], depth: task.depth + 1 }, { kind: "value", value: entry.value[0], depth: task.depth + 1 });
+      pushTriple(task, { kind: "value", value: entry.value[1], depth: task.depth + 1 }, { kind: "value", value: entry.value[0], depth: task.depth + 1 });
       continue;
     }
     if (task.kind === "set") {
@@ -197,7 +205,7 @@ function encodeTypeScriptPayload(value, maxBytes, stats, policy) {
         continue;
       }
       budget.add("properties");
-      push(task, { kind: "value", value: entry.value, depth: task.depth + 1 });
+      pushPair(task, { kind: "value", value: entry.value, depth: task.depth + 1 });
       continue;
     }
     budget.peak("depth", task.depth);
