@@ -104,6 +104,8 @@ export async function qualifyCompilerHead(job, output) {
     syncBuiltinESMExports();
     await publish();
     const {indexRepository} = await import(pathToFileURL(entry).href); imported = true;
+    const {TYPESCRIPT_WORKER_LIMITS: limits} = await import(new URL('../analyzers/ts-worker-protocol.js', pathToFileURL(entry)).href);
+    receipt.compilerLimits = limits;
     const started = performance.now();
     const graph = await indexRepository(originalRoot, {config: structuredClone(job.profile.config), revision: job.profile.commit, onProgress: name => receipt.stages.push(name)});
     receipt.indexMilliseconds = performance.now() - started;
@@ -124,8 +126,8 @@ export async function qualifyCompilerHead(job, output) {
     for (const worker of receipt.workers) {
       assert.equal(worker.code, 0); assert.equal(worker.signal, null);
       assert.equal(worker.requests.length, 1); assert.equal(worker.responses.length, 1);
-      assert.ok(worker.execArgv.includes('--max-old-space-size=1024') && worker.execArgv.includes('--max-semi-space-size=16'));
-      for (const frame of [...worker.requests, ...worker.responses]) assert.ok(frame.bytes <= 64 * 1024 * 1024);
+      assert.ok(worker.execArgv.includes(`--max-old-space-size=${limits.oldSpaceMiB}`) && worker.execArgv.includes(`--max-semi-space-size=${limits.semiSpaceMiB}`));
+      for (const frame of [...worker.requests, ...worker.responses]) assert.ok(frame.bytes <= limits.maxMessageBytes);
     }
     receipt.passed = true;
   } catch (error) {
