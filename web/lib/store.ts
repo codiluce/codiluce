@@ -16,6 +16,7 @@ import { fromRequestFlow, fromSteps, type MapFlow } from './map-flow';
 import { isAbort, type AtlasApi } from './api';
 import type { Level } from './lod';
 import { Scene } from './scene';
+import { SessionListCache } from './session-cache';
 import { Evolution } from './evolution';
 import { themeById } from './themes';
 import type { AgentActivity, AskEvent, ExplanationDetail, ExplanationList, ExplanationsSetup, ResolvedLink } from '@engine/explanations/model';
@@ -108,7 +109,7 @@ export interface ImpactState {
   data?: ImpactResult; items: ImpactItem[]; error?: string;
 }
 /** What the middle of the screen shows: the map, or a tool with the map as a small overview in a corner. */
-export type CenterView = 'map' | 'flow' | 'impact' | 'files';
+export type CenterView = 'map' | 'flow' | 'impact' | 'files' | 'conversations';
 /** A view of the flow open in the middle: the map, its lanes (or layers), its outline. */
 export type FlowPane = 'map' | 'diagram' | 'outline';
 /**
@@ -300,12 +301,13 @@ export interface AtlasState {
   lens: LensState;
   pulls: PullsState;
   center: CenterView;
+  journal: { open: ('conversations')[]; conversationId?: string; messageId?: string; path?: string; reveal?: number; expanded?: boolean };
   flowView?: FlowViewState;
   flowSplit: FlowSplit;
   connections: Connections;
   files?: FilesState;
   code?: CodeState;
-  agents: { connected: boolean; show: boolean; now: number; focus?: string; snapshot?: ActivitySnapshot };
+  agents: { connected: boolean; show: boolean; now: number; focus?: string; snapshot?: ActivitySnapshot; live?: import('@engine/conversations/model').LiveSession[] };
   explain: ExplainState;
 }
 export interface MapNavigator {
@@ -367,6 +369,7 @@ export function isContainer(node: Pick<NodeSummary, 'type' | 'kind'>): boolean {
 }
 
 export class AtlasStore {
+  readonly sessions: SessionListCache;
   private state: AtlasState;
   private readonly listeners = new Set<() => void>();
   private readonly aborts = new Map<string, AbortController>();
@@ -400,6 +403,7 @@ export class AtlasStore {
   /** The address the page opened with: read once, as another store (React's development double mount) may rewrite it first. */
   private openingHash?: string;
   constructor(readonly api: AtlasApi, private readonly options: StoreOptions = {}) {
+    this.sessions = new SessionListCache(options.storage);
     this.openingHash = options.location?.hash;
     let prefs: { themeId?: string; shapes?: boolean; streets?: boolean; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey; explainLens?: boolean; chatModel?: string; flowSplit?: FlowSplit; connections?: Connections } = {};
     try { prefs = JSON.parse(options.storage?.getItem('codiluce:prefs') ?? '{}'); } catch { /* defaults */ }
@@ -409,7 +413,7 @@ export class AtlasStore {
       history: { entries: [], index: -1 }, showDiagnostics: prefs.showDiagnostics ?? true, themeId: themeById(prefs.themeId).id, shapes: prefs.shapes ?? true, streets: prefs.streets ?? true,
       staleIndex: false, sceneRevision: 0, mapVisibility: { open: false, busy: false },
       impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '', open: {} }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, families: { show: false, status: 'idle' }, features: { status: 'idle', open: {} },
-      people: { window: prefs.peopleWindow ?? 'all', show: false, status: 'idle', open: {} }, lens: { status: 'idle' }, pulls: { status: 'idle', tab: 'open', query: '', open: {} }, center: 'map',
+      people: { window: prefs.peopleWindow ?? 'all', show: false, status: 'idle', open: {} }, lens: { status: 'idle' }, pulls: { status: 'idle', tab: 'open', query: '', open: {} }, center: 'map', journal: { open: [] },
       agents: { connected: false, show: true, now: Date.now() },
       explain: { open: false, list: { status: 'idle' }, lens: prefs.explainLens ?? true, draft: { text: '', context: [], ...(prefs.chatModel ? { model: prefs.chatModel } : {}) }, unseen: [], agents: [], dismissed: [] },
       flowSplit: clampSplit(prefs.flowSplit ?? FLOW_SPLIT), connections: prefs.connections === 'rails' ? 'rails' : 'arcs',
@@ -421,6 +425,10 @@ export class AtlasStore {
   subscribe = (listener: () => void): (() => void) => { this.listeners.add(listener); return () => this.listeners.delete(listener); };
   private set(patch: Partial<AtlasState> | ((state: AtlasState) => Partial<AtlasState>)): void {
     const next = typeof patch === 'function' ? patch(this.state) : patch;
+    if (next.meta && next.meta.sessionScope !== this.sessions.scope) {
+      this.sessions.setScope(next.meta.sessionScope);
+      if (next.meta.sessionScope) void this.sessions.refresh().catch(() => { /* Agents can retry without blocking the map. */ });
+    }
     this.state = { ...this.state, ...next };
     for (const listener of this.listeners) listener();
   }
@@ -434,7 +442,7 @@ export class AtlasStore {
   private savePrefs(): void {
     try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, shapes: this.state.shapes, streets: this.state.streets, flowSplit: this.state.flowSplit, connections: this.state.connections, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window, explainLens: this.state.explain.lens, ...(this.state.explain.draft.model ? { chatModel: this.state.explain.draft.model } : {}) })); } catch { /* preferences are optional */ }
   }
-  dispose(): void { this.disposed = true; for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.explainTimer) clearInterval(this.explainTimer); if (this.activityTimer) clearTimeout(this.activityTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
+  dispose(): void { this.disposed = true; this.sessions.close(); for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.explainTimer) clearInterval(this.explainTimer); if (this.activityTimer) clearTimeout(this.activityTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
 
   async init(): Promise<void> {
     this.set({ status: 'loading', error: undefined });
@@ -457,6 +465,8 @@ export class AtlasStore {
       const impactDepth = Number(param('impact')), impactOf = param('impactOf') ?? (this.state.selection ? deepLink : undefined);
       if (impactOf && Number.isInteger(impactDepth) && impactDepth >= 1 && impactDepth <= 10) void this.showImpact(impactOf, impactDepth);
       if (param('code')) this.openCode();
+      const conversation = param('sessions') ?? param('conversation');
+      if (conversation) this.openJournal('conversations', { id: conversation === 'list' ? undefined : conversation, messageId: param('message') });
       const explain = param('explain');
       if (explain) void this.openExplanations(explain === 'list' ? {} : { id: explain });
       else void this.loadExplanations();
@@ -573,6 +583,7 @@ export class AtlasStore {
     if (impact.open && impact.forId) { parts.push(`impact=${impact.depth}`); if (impact.forId !== id) parts.push(`impactOf=${encodeURIComponent(impact.forId)}`); }
     if (this.state.code) parts.push('code=1');
     const explain = this.state.explain;
+    if (this.state.journal.open.includes('conversations')) { parts.push(`sessions=${encodeURIComponent(this.state.journal.conversationId ?? 'list')}`); if (this.state.journal.messageId) parts.push(`message=${encodeURIComponent(this.state.journal.messageId)}`); }
     if (explain.open) parts.push(`explain=${encodeURIComponent(explain.detail?.id ?? 'list')}`);
     if (timeline.open) {
       const at = snapshotToken(timeline.data, timeline.target) ?? 'live', vs = timeline.compare ? snapshotToken(timeline.data, timeline.baseline ?? timeline.data?.workingTree?.id) : undefined;
@@ -1069,8 +1080,20 @@ export class AtlasStore {
   /** Bring the map, or an open tool, to the middle (the map then shows as an overview in a corner). */
   setCenter(view: CenterView): void {
     const state = this.state;
+    if (view === 'conversations') { this.showAgents(); return; }
     if (view !== 'map' && !(view === 'flow' ? state.flowView : view === 'impact' ? state.impact.open : state.files)) return;
-    if (state.center !== view) this.set({ center: view });
+    if (state.center !== view) { this.set({ center: view }); this.writeHash(); }
+  }
+  openJournal(view: 'conversations', options: { id?: string; messageId?: string; path?: string } = {}): void {
+    this.set(state => ({ center: 'map', journal: { ...state.journal, open: [...new Set([...state.journal.open, view])], conversationId: options.id, messageId: options.messageId, path: options.path, reveal: (state.journal.reveal ?? 0) + 1 } }));
+    this.writeHash();
+  }
+  showAgents(): void {
+    this.set(state => ({ center: 'map', journal: { ...state.journal, open: [...new Set([...state.journal.open, 'conversations' as const])], reveal: (state.journal.reveal ?? 0) + 1 } })); this.writeHash();
+  }
+  expandAgents(expanded: boolean): void { this.set(state => ({ journal: { ...state.journal, expanded } })); }
+  closeJournal(view: 'conversations'): void {
+    this.set(state => ({ journal: { ...state.journal, open: state.journal.open.filter(item => item !== view), expanded: false }, agents: { ...state.agents, focus: undefined } })); this.writeHash();
   }
   /** A tool closed: the map comes back to the middle if the tool was there. */
   private leaveCenter(view: CenterView): Partial<AtlasState> { return this.state.center === view ? { center: 'map' } : {}; }

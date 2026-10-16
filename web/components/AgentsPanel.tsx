@@ -1,21 +1,42 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import type { ActivityEvent, ActivityPath, ActivitySnapshot, AgentConnection, AgentProvider, AgentSetup } from '@engine/activity/model';
-import { ACTIVITY_TRAIL_MS } from '@engine/activity/model';
-import { agentColor, providerName } from '../lib/activity';
+import type { ActivitySnapshot, AgentConnection, AgentProvider, AgentSetup } from '@engine/activity/model';
+import { providerName } from '../lib/activity';
 import { useAtlas, useStore } from './context';
+import { AgentSessionsView } from './AgentSessionsView';
+import type { LiveSession } from '@engine/conversations/model';
 
 /** One connection for the map, independent of whether the panel is open. */
 export function ActivityConnection() {
   const store = useStore();
   useEffect(() => {
-    const source = new EventSource('/api/agents/stream');
-    source.onmessage = message => {
-      try { store.setActivity({ snapshot: JSON.parse(message.data) as ActivitySnapshot, connected: true, now: Date.now() }); } catch { /* wait for the next snapshot */ }
+    const controller = new AbortController(); let busy = false, checked = 0;
+    const refresh = async () => {
+      if (busy || document.visibilityState !== 'visible' || Date.now() - checked < 1500) return;
+      if (!store.getState().agents.snapshot?.sessions.some(session => Date.now() - session.lastSeen <= 300_000)) { store.setActivity({ live: [] }); return; }
+      busy = true; checked = Date.now();
+      try {
+        const response = await fetch('/api/conversations/live', { signal: controller.signal });
+        if (response.ok) { const data = await response.json() as { items: LiveSession[] }; if (!controller.signal.aborted) store.setActivity({ live: data.items }); }
+      } catch { /* The hook connection already reports server availability. */ }
+      finally { busy = false; }
     };
-    source.onerror = () => store.setActivity({ connected: false });
+    let source: EventSource | undefined;
+    const connect = () => {
+      if (document.visibilityState !== 'visible') { source?.close(); source = undefined; store.setActivity({ connected: false }); return; }
+      if (source) return;
+      const current = source = new EventSource('/api/agents/stream');
+      current.onmessage = message => {
+        if (source !== current) return;
+        try { store.setActivity({ snapshot: JSON.parse(message.data) as ActivitySnapshot, connected: true, now: Date.now() }); void refresh(); } catch { /* wait for the next snapshot */ }
+      };
+      current.onerror = () => { if (source === current) store.setActivity({ connected: false }); };
+      void refresh();
+    };
+    document.addEventListener('visibilitychange', connect); connect();
     const timer = setInterval(() => { const agents = store.getState().agents; if (agents.snapshot?.sessions.length) store.setActivity({ now: Date.now() }); }, 1000);
-    return () => { source.close(); clearInterval(timer); };
+    const updates = setInterval(() => void refresh(), 3000);
+    return () => { controller.abort(); source?.close(); source = undefined; document.removeEventListener('visibilitychange', connect); clearInterval(timer); clearInterval(updates); };
   }, [store]);
   return null;
 }
@@ -23,67 +44,25 @@ export function ActivityConnection() {
 export function AgentsPanel({ onClose }: { onClose: () => void }) {
   const store = useStore();
   const agents = useAtlas(state => state.agents);
+  const expanded = useAtlas(state => !!state.journal.expanded);
   const historical = useAtlas(state => state.meta?.snapshot.kind === 'commit' || state.timeline.preview !== undefined);
   const [connectionsOpen, setConnectionsOpen] = useState(false);
-  const [pendingPath, setPendingPath] = useState<string>();
-  const [pathError, setPathError] = useState<string>();
   const snapshot = agents.snapshot;
-  const events = [...snapshot?.events ?? []].reverse().filter(event => !agents.focus || event.actor === agents.focus).slice(0, 80);
-  const sessions = [...snapshot?.sessions ?? []].reverse();
-  const titles = new Map(sessions.map(session => [session.actor, session.title]));
-  const lastEvent = Math.max(0, ...sessions.map(session => session.lastSeen));
-  const select = async (event: ActivityEvent, index: number) => {
-    const target = event.paths[index]; if (!target || historical || pendingPath) return;
-    setPendingPath(target.path); setPathError(undefined);
-    try {
-      let path = target;
-      if (target.scope === 'file') {
-        const response = await fetch('/api/agents/reveal', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Codiluce-Request': 'activity' }, body: JSON.stringify({ eventId: event.id, index }) });
-        const data = await response.json() as { path: ActivityPath; refreshed: boolean; snapshot: ActivitySnapshot; error?: string };
-        if (!response.ok) throw new Error(data.error ?? 'Could not reveal this file');
-        path = data.path; store.setActivity({ snapshot: data.snapshot, now: Date.now() });
-        if (data.refreshed) await store.reload();
-      }
-      if (!path.id) throw new Error('This path is not available on the map.');
-      store.setCenter('map');
-      await store.select(path.id, { fly: true });
-      const node = store.getState().selection?.node;
-      if (node?.hidden) await store.revealOnMap(node);
-    } catch (error) { setPathError(error instanceof Error ? error.message : 'Could not reveal this file'); }
-    finally { setPendingPath(undefined); }
-  };
   return <>
-    <div className="panel-header"><h2>Agents</h2><button className="icon-button small" onClick={onClose} aria-label="Hide the agents panel">⇤</button></div>
-    <div className="panel-body agents-panel">
+    <div className="panel-header"><h2>Agents</h2><div className="agents-panel-actions"><button className="button small" onClick={() => store.expandAgents(!expanded)} aria-label={expanded ? 'Dock Agents beside the map' : 'Expand Agents'}>{expanded ? 'Dock beside map' : 'Expand'}</button><button className="icon-button small" onClick={onClose} aria-label="Hide the agents panel">⇤</button></div></div>
+    <div className="agents-toolbar">
       <div className="agents-status-row">
         <div className="agents-connection" role="status"><span className={`agents-live-dot${agents.connected && snapshot?.enabled ? ' on' : ''}`} />{agents.connected ? snapshot?.enabled ? 'Live activity' : 'Activity disabled' : 'Connecting to activity…'}</div>
         <details className="agents-info" onKeyDown={event => { if (event.key === 'Escape') event.currentTarget.open = false; }}>
           <summary aria-label="About agent activity" title="About agent activity">ⓘ</summary>
-          <p className="note">Observed actions from Codex and Claude Code. Map badges fade after 30 seconds; they show recent actions, not what an agent is thinking about. Live activity indicates that the map is receiving updates from the server; check Agent connections for hook configuration and delivery.</p>
+          <p className="note">Observed actions from Codex and Claude Code. Map badges fade after 30 seconds. Agent sessions refresh while recently observed sessions are active; messages may arrive after tool activity. Live activity confirms server updates; check Agent connections for hook configuration and delivery.</p>
         </details>
       </div>
       <label className="agents-toggle"><input type="checkbox" checked={agents.show} onChange={event => store.setActivity({ show: event.target.checked })} /> Show activity on the map</label>
       {historical && <p className="note">Activity belongs to the working tree. Return to the live map to see its badges.</p>}
-      <section aria-label="Agent sessions"><h3>Sessions <span className="count">{sessions.length}</span></h3>
-        {!sessions.length && <p className="absent">No sessions observed yet. Open Agent connections below to check your setup.</p>}
-        {sessions.map(session => <button key={session.actor} className="agent-session" aria-pressed={agents.focus === session.actor} onClick={() => store.setActivity({ focus: agents.focus === session.actor ? undefined : session.actor })}>
-          <span className="domain-dot" style={{ background: agentColor(session.actor) }} /><span className="agent-name"><strong title={session.title}>{session.title ?? `${providerName(session.provider)} session`}</strong><small>{providerName(session.provider)} · <span className="mono" title={session.sessionId}>{session.agentId ? `agent ${session.agentId.slice(0, 12)}` : session.sessionId.slice(0, 12)}</span></small></span><span className={`agent-status ${session.status}`}>{agents.now - session.lastSeen > 300_000 && ['running', 'waiting'].includes(session.status) ? 'unknown' : session.status}</span>
-        </button>)}
-        {agents.focus && <button className="button small" onClick={() => store.setActivity({ focus: undefined })}>Show every agent</button>}
-      </section>
-      <section aria-label="Recent activity"><h3>Recent activity</h3>
-        {pendingPath && <p className="note" role="status">Revealing {pendingPath}…{events.some(event => event.paths.some(path => path.path === pendingPath && path.exact === false)) ? ' Updating the map index to include this file.' : ''}</p>}
-        {pathError && <p className="note error" role="alert">{pathError}</p>}
-        {!events.length && <p className="absent">Waiting for observed activity…</p>}
-        <ol className="activity-feed">{events.map(event => <li key={event.id} className={agents.now - event.at < ACTIVITY_TRAIL_MS ? 'recent' : ''}>
-          <div className="activity-event-head"><span className="domain-dot" style={{ background: agentColor(event.actor) }} /><strong>{event.label}</strong><span className="absent">{event.phase === 'status' ? event.status : event.phase}</span><time dateTime={new Date(event.at).toISOString()} title={new Date(event.at).toLocaleString()}>{Math.max(0, Math.floor((agents.now - event.at) / 1000))}s</time></div>
-          <small className="absent">{titles.get(event.actor) ? `${titles.get(event.actor)} · ` : ''}{providerName(event.provider)} · {event.agentId?.slice(0, 8) ?? event.sessionId?.slice(0, 8)}</small>
-          {event.query && <p className="activity-query">Search: <code>{event.query}</code></p>}
-          {event.paths.map((target, index) => <button key={`${target.path}:${index}`} className="activity-path mono" disabled={!!pendingPath || historical || !target.id && target.scope !== 'file'} onClick={() => void select(event, index)} title={target.scope === 'file' ? target.exact === false ? 'Update the index and reveal this file on the map' : 'Reveal this file on the map' : 'Select this search scope on the map'}>{target.path}{target.scope === 'directory' && target.path !== '.' ? '/' : ''}{target.exact === false && <span className="absent">{target.scope === 'file' ? ' · reveal file' : ' · nearest folder'}</span>}</button>)}
-        </li>)}</ol>
-      </section>
     </div>
-    <div className="agents-footer"><button className="button" onClick={() => setConnectionsOpen(true)} aria-haspopup="dialog"><span className={`agents-live-dot${lastEvent && agents.connected ? ' on' : ''}`} />Agent connections<span aria-hidden="true">⚙</span></button></div>
+    <AgentSessionsView compact={!expanded} />
+    <div className="agents-footer"><button className="button" onClick={() => setConnectionsOpen(true)} aria-haspopup="dialog">Agent connections<span aria-hidden="true">⚙</span></button></div>
     {connectionsOpen && <AgentConnectionsDialog onClose={() => setConnectionsOpen(false)} />}
   </>;
 }

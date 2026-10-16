@@ -122,6 +122,7 @@ function Selection() {
       {selection.change && <ChangeSection node={node} />}
       <FlowsSection node={node} />
       <ExplainedIn />
+      {node.path && <section className="section"><h3>Agent sessions</h3><button className="button small" onClick={() => store.openJournal('conversations', { path: node.path })}>Find activity in {node.type === 'file' ? 'this file' : 'this path'}</button></section>}
       <ArchetypeHoldings node={node} />
       {node.kind === 'entity' && (node.type === 'directory' || node.type === 'application' || node.type === 'repository') && <DataBreakdown key={node.id} node={node} />}
       <PeopleSection key={`people:${node.id}`} />

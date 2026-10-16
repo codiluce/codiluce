@@ -16,6 +16,8 @@ import type { SubjectKind } from './model.js';
 import { agentPrompt, MCP_PROMPTS, type PromptKind } from './prompts.js';
 import { ExplanationService } from './service.js';
 import { codeTools, describeTool, explanationTools, runTool, type ToolContext, type ToolSpec } from './tools.js';
+import { ConversationService } from '../conversations/service.js';
+import { conversationTools } from '../conversations/tools.js';
 
 const PROTOCOL_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05'];
 /** Where `serve` says it listens, so a saved explanation can be opened. */
@@ -55,9 +57,10 @@ export async function runMcpServer(options: McpOptions): Promise<void> {
 export class McpSession {
   private client?: { name?: string; version?: string };
   private opened?: { store: GraphStore; access: HistoryAccess; notes: AnnotationAccess; tools: ToolSpec[] };
+  private journal?: { conversations: ConversationService; tools: ToolSpec[] };
   readonly activity: ActivityWriter;
   constructor(private readonly options: McpOptions) { this.activity = new ActivityWriter(options.stateDirectory); }
-  close(): void { this.activity.close(); if (this.opened) { this.opened.access.close(); this.opened.notes.close(); this.opened.store.close(); } }
+  close(): void { this.activity.close(); this.journal?.conversations.close(); if (this.opened) { this.opened.access.close(); this.opened.notes.close(); this.opened.store.close(); } }
 
   async receive(line: string): Promise<unknown> {
     let message: Message;
@@ -118,8 +121,12 @@ export class McpSession {
   }
   private tools(): ToolSpec[] {
     if (this.opened) return this.opened.tools;
+    this.journal ??= (() => {
+      const conversations = new ConversationService({ root: this.options.root, stateDirectory: this.options.stateDirectory });
+      return { conversations, tools: conversationTools(conversations) };
+    })();
     const database = path.join(this.options.stateDirectory, 'codiluce.db');
-    if (!existsSync(database)) return [notIndexed(this.options.root)];
+    if (!existsSync(database)) return [notIndexed(this.options.root), ...this.journal.tools];
     const store = new GraphStore(database, true);
     const access = new HistoryAccess(this.options.stateDirectory);
     const notes = new AnnotationAccess(this.options.stateDirectory, existsSync);
@@ -127,7 +134,7 @@ export class McpSession {
     const history = new HistoryService({ root: this.options.root, stateDirectory: this.options.stateDirectory, store, history: access });
     const service = new ExplanationService({ stateDirectory: this.options.stateDirectory, root: this.options.root, projection, history });
     const context: ToolContext = { service, projection, history, root: this.options.root, maxFileBytes: this.options.maxFileBytes ?? 1024 * 1024, serverUrl: () => serveUrl(this.options.stateDirectory), agent: () => this.client?.name, activity: this.activity };
-    this.opened = { store, access, notes, tools: [...codeTools(context), ...explanationTools(context)] };
+    this.opened = { store, access, notes, tools: [...codeTools(context), ...explanationTools(context), ...this.journal.tools] };
     return this.opened.tools;
   }
 }

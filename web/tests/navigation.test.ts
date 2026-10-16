@@ -234,3 +234,35 @@ test('features: lit one at a time (a lit family lets go), framed on the map, the
   atlas.setCatalogQuery('login');
   assert.deepEqual(atlas.getState().catalog.open, {}, 'a new filter opens the groups again');
 });
+
+test('Agents opens conversation sources beside the map and expansion preserves selection and filters', async () => {
+  const { atlas } = await ready();
+  atlas.openJournal('conversations', { id: 'codex:session', messageId: 'answer', path: 'frontend/src/' });
+  assert.equal(atlas.getState().center, 'map');
+  assert.equal(atlas.getState().journal.conversationId, 'codex:session');
+  assert.equal(atlas.getState().journal.messageId, 'answer');
+  atlas.expandAgents(true);
+  assert.equal(atlas.getState().journal.path, 'frontend/src/');
+  atlas.expandAgents(false);
+  assert.equal(atlas.getState().journal.conversationId, 'codex:session');
+  atlas.showAgents();
+  assert.equal(atlas.getState().journal.messageId, 'answer');
+  atlas.closeJournal('conversations');
+  assert.equal(atlas.getState().journal.expanded, false);
+  assert.ok(!atlas.getState().journal.open.includes('conversations'));
+});
+
+test('session fragments replace conversation fragments and legacy source links still open', async () => {
+  for (const name of ['sessions', 'conversation']) {
+    for (const session of ['list', 'codex:session']) {
+      let hash = `#${name}=${encodeURIComponent(session)}&message=answer`;
+      const atlas = new AtlasStore(new ServiceApi(), { location: { hash, replace: value => { hash = value; } } });
+      await atlas.init();
+      assert.ok(atlas.getState().journal.open.includes('conversations'));
+      assert.equal(atlas.getState().journal.conversationId, session === 'list' ? undefined : session);
+      assert.equal(atlas.getState().journal.messageId, 'answer');
+      assert.match(hash, /sessions=/); assert.doesNotMatch(hash, /conversation=/);
+      atlas.dispose();
+    }
+  }
+});

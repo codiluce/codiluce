@@ -1,4 +1,4 @@
-import { activityMarks } from './activity';
+import { activityMarks, activeAgentOverlay } from './activity';
 // Owns a canvas: input, camera animation, render scheduling and lazy child
 // loading. React never renders map primitives; it only mounts controllers.
 // The single map has one (`main`); the split map of History has an `overview`
@@ -427,6 +427,11 @@ export class MapController implements MapNavigator {
       if (this.explainCache?.detail !== detail) this.explainCache = { detail, overlay: { of: new Map(detail.footprint.ids.map(id => [id, EXPLAINED])), areas: new Map(Object.entries(detail.footprint.areas).map(([id, count]) => [id, { [EXPLAINED]: count }])), names: new Map([[EXPLAINED, 'Linked']]), hues: new Map([[EXPLAINED, EXPLAINED_HUE]]), focus: EXPLAINED } };
       result.explanation = this.explainCache.overlay;
     }
+    if (!result.explanation && tool === 'map' && state.agents.show && state.agents.connected && state.meta?.snapshot.kind !== 'commit') {
+      const epoch = Math.floor(Date.now() / 1000), snapshot = state.agents.snapshot;
+      if (!this.agentWorkCache || this.agentWorkCache.snapshot !== snapshot || this.agentWorkCache.focus !== state.agents.focus || this.agentWorkCache.epoch !== epoch) this.agentWorkCache = { snapshot, focus: state.agents.focus, epoch, overlay: activeAgentOverlay(snapshot, Date.now(), state.agents.focus) };
+      result.explanation = this.agentWorkCache.overlay;
+    }
     if (tool !== 'map' && tool !== 'files') return result;
     const coverage = state.coverage.show && state.coverage.data && state.coverage.viewStamp === stamp ? state.coverage.data : undefined;
     if (coverage) {
@@ -480,6 +485,7 @@ export class MapController implements MapNavigator {
     return result;
   }
   private explainCache?: { detail: object; overlay: FamilyOverlay };
+  private agentWorkCache?: { snapshot: AtlasState['agents']['snapshot']; focus?: string; epoch: number; overlay?: FamilyOverlay };
   private explainHoverCache?: { link: object; overlay: FamilyOverlay };
   private pullCache?: { data: object; overlay: FamilyOverlay };
   private peopleCache?: { data: object; overlay: FamilyOverlay };

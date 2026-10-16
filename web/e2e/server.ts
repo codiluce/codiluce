@@ -27,4 +27,23 @@ await writeFile(path.join(root, '.codiluce/explanations/2026-10-14-how-login-wor
   '<!-- codiluce:answer at=2026-10-14T08:00:00.000Z -->',
   'The [login form](frontend/src/components/LoginForm.tsx) calls [the login request](flow:POST%20/auth/login), answered by [login](backend/app/Http/Controllers/AuthController.php#AuthController.login). [Gone](backend/nope.php).', '',
 ].join('\n'));
-createInspectionServer(store, { root, stateDirectory: path.join(root, '.codiluce'), uiDirectory: ui }).listen(port, '127.0.0.1', () => console.log(`e2e server on ${port}`));
+// Isolated provider history: browser tests must never import the developer's chats.
+const codexHome = path.join(root, '.codiluce/agent-fixtures/codex'), claudeHome = path.join(root, '.codiluce/agent-fixtures/claude');
+await mkdir(path.join(codexHome, 'sessions'), { recursive: true });
+await mkdir(path.join(claudeHome, 'projects/repo'), { recursive: true });
+const jsonl = (rows: unknown[]) => rows.map(row => JSON.stringify(row)).join('\n') + '\n';
+await writeFile(path.join(codexHome, 'sessions/codex-e2e.jsonl'), jsonl([
+  { type: 'session_meta', timestamp: '2026-10-15T10:00:00.000Z', payload: { id: 'codex-e2e', cwd: root, title: 'Preserve readable session history' } },
+  { type: 'response_item', payload: { type: 'message', role: 'user', content: [{ type: 'input_text', text: `# AGENTS.md instructions for ${root}\n\n<INSTRUCTIONS>\nAlways show this injected setup marker.\n</INSTRUCTIONS>\n<environment_context>cwd=${root}</environment_context>` }] } },
+  { type: 'response_item', payload: { type: 'message', role: 'user', content: [{ type: 'input_text', text: 'How should we browse our login session history?' }] } },
+  { type: 'response_item', payload: { type: 'function_call', name: 'Read', call_id: 'read-form', arguments: JSON.stringify({ file_path: 'frontend/src/components/LoginForm.tsx' }) } },
+  { type: 'response_item', payload: { type: 'function_call_output', call_id: 'read-form', output: 'Login form code.' } },
+  { type: 'response_item', payload: { type: 'message', role: 'assistant', content: [{ type: 'output_text', text: 'Keep session history readable as Markdown, with original messages and tool activity.' }] } },
+]));
+await writeFile(path.join(claudeHome, 'projects/repo/claude-e2e.jsonl'), jsonl([
+  { type: 'user', uuid: 'claude-user', sessionId: 'claude-e2e', cwd: root, timestamp: '2026-10-15T09:00:00.000Z', message: { content: 'Add a session viewer.' } },
+  { type: 'assistant', uuid: 'claude-edit', cwd: root, message: { content: [{ type: 'tool_use', id: 'edit-form', name: 'Edit', input: { file_path: 'frontend/src/components/LoginForm.tsx' } }] } },
+  { type: 'user', uuid: 'claude-result', cwd: root, message: { content: [{ type: 'tool_result', tool_use_id: 'edit-form', content: 'Updated successfully.' }] } },
+  { type: 'ai-title', aiTitle: 'Add a human-readable session viewer', sessionId: 'claude-e2e' },
+]));
+createInspectionServer(store, { root, stateDirectory: path.join(root, '.codiluce'), uiDirectory: ui, conversationSources: { codexHome, claudeHome } }).listen(port, '127.0.0.1', () => console.log(`e2e server on ${port}`));

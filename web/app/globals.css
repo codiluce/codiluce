@@ -1272,6 +1272,7 @@ a.xlink:hover, a.xlink:focus-visible { background: color-mix(in srgb, var(--link
 .agent-connections-backdrop { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 20px; background: rgba(0,0,0,.4); }
 .agent-connections-dialog { display: flex; flex-direction: column; gap: 14px; width: min(600px, 100%); max-height: calc(100dvh - 40px); overflow-y: auto; padding: 20px; border: 1px solid var(--panel-border); border-radius: var(--radius-panel, 12px); background: var(--panel-solid); box-shadow: var(--shadow); }
 .agent-connections-dialog h2 { margin: 0; font-size: 15px; }
+.agent-connections-dialog .hidden-paths-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .agent-connections-dialog p { margin: 0; }
 .agent-connections-dialog summary { cursor: pointer; font-size: 12px; }
 .agents-connection-summary { display: flex; align-items: center; gap: 8px; font-size: 12px; }
@@ -1310,4 +1311,113 @@ a.xlink:hover, a.xlink:focus-visible { background: color-mix(in srgb, var(--link
 @media (max-width: 1380px) {
   .topbar { flex-wrap: wrap; }
   .top-actions { flex: 1 1 100%; flex-wrap: wrap; margin-left: 0; }
+}
+
+/* Agent sessions show history beside their source messages. */
+.journal-view { position: absolute; inset: 0; display: flex; flex-direction: column; min-width: 0; background: var(--panel-solid); overflow: hidden; }
+.journal-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 18px 22px 12px; border-bottom: 1px solid var(--panel-border); }
+.journal-heading h2 { margin: 0; font-size: 20px; }
+.journal-heading p { margin: 4px 0 0; color: var(--muted); }
+.journal-filters { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 22px; border-bottom: 1px solid var(--panel-border); }
+.journal-filters .text-input { flex: 1 1 180px; min-width: 80px; }
+.journal-view > .note { margin: 0; padding: 8px 22px; border-bottom: 1px solid var(--panel-border); }
+.journal-columns { flex: 1; display: grid; grid-template-columns: minmax(200px, 300px) minmax(0, 1fr); min-height: 0; overflow: hidden; }
+.journal-list { overflow: auto; padding: 12px; border-right: 1px solid var(--panel-border); min-width: 0; }
+.journal-list > .text-input { width: 100%; margin-bottom: 12px; }
+.journal-card { display: flex; flex-direction: column; gap: 5px; text-align: left; width: 100%; padding: 12px; margin-bottom: 8px; color: var(--text); background: var(--chip); border: 1px solid var(--panel-border); border-radius: var(--radius, 7px); overflow-wrap: anywhere; }
+.journal-card:hover, .journal-card[aria-pressed="true"] { background: var(--chip-active); border-color: var(--accent); }
+.journal-card strong { font-size: 13px; }
+.journal-card > span { font-size: 12px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; color: var(--muted); }
+.journal-card small { color: var(--muted); font-size: 10px; }
+.journal-reader { padding: 20px 24px 180px; overflow: auto; min-width: 0; overflow-wrap: anywhere; }
+.journal-reader-head { display: flex; align-items: flex-start; gap: 12px; justify-content: space-between; flex-wrap: wrap; margin-bottom: 16px; }
+.journal-reader-head h3 { font-size: 19px; margin: 4px 0 8px; }
+.journal-reader-head > div { min-width: 0; flex: 1 1 180px; }
+.journal-reader h3 { margin-top: 18px; }
+.journal-empty { padding: 32px; color: var(--muted); max-width: 520px; }
+.journal-empty h3 { color: var(--text); font-size: 20px; }
+.journal-pagination { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin: 16px 0; font-size: 11px; color: var(--muted); }
+.journal-messages { list-style: none; padding: 0; margin: 0; }
+.journal-message { border: 1px solid var(--panel-border); border-radius: var(--radius, 7px); padding: 14px; margin: 0 0 12px; scroll-margin: 20px; }
+.journal-message.user { background: var(--chip); }
+.journal-message.match, .journal-message.selected { border-color: var(--accent); }
+.journal-message-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; font-size: 10px; color: var(--muted); }
+.journal-message-meta strong { color: var(--text); font-size: 12px; }
+.journal-message-meta label { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.journal-message-meta mark { background: var(--accent); color: var(--accent-ink); padding: 1px 4px; border-radius: 2px; }
+.journal-message pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 11px/1.6 var(--font-mono, monospace); max-height: 380px; overflow: auto; }
+.journal-message summary, .journal-footprint summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+.journal-footprint { padding: 12px; border: 1px solid var(--panel-border); border-radius: var(--radius, 7px); margin-bottom: 16px; }
+.journal-paths { display: flex; flex-direction: column; gap: 8px; }
+.journal-paths > div { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--panel-border); padding-top: 8px; }
+.journal-paths > div > span:not(.journal-path), .journal-call-path > span:first-child { font-size: 10px; color: var(--muted); }
+.journal-path { display: inline-flex; flex-direction: column; max-width: 100%; margin-right: 8px; }
+.journal-path button { white-space: normal; overflow-wrap: anywhere; text-align: left; }
+.journal-call-path { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; margin-top: 8px; }
+@media (max-width: 1650px) { .topbar { flex-wrap: wrap; } .top-actions { flex: 1 1 100%; flex-wrap: wrap; margin-left: 0; } }
+@media (max-width: 1000px) { .journal-columns { grid-template-columns: minmax(160px, 220px) minmax(0, 1fr); } .journal-reader { padding: 14px 12px 150px; } }
+@media (max-width: 700px) { .journal-columns { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(100px, 30%) minmax(0, 1fr); } .journal-list { border-right: none; border-bottom: 1px solid var(--panel-border); } .journal-heading, .journal-filters { padding: 10px; } .journal-empty { padding: 18px; } }
+
+
+/* One Agents panel keeps its reader and filters mounted when expanded. */
+.agents-host { min-width: 0; overflow: hidden; }
+.agents-panel-actions { display: flex; align-items: center; gap: 6px; }
+.agents-toolbar { padding: 8px 12px; border-bottom: 1px solid var(--panel-border); flex: none; }
+.agents-toolbar .agents-toggle { margin-top: 6px; }
+.agents-toolbar .note { margin: 6px 0 0; }
+.agents-history.journal-view { position: relative; inset: auto; flex: 1; min-height: 0; }
+.agents-history .journal-heading h3 { margin: 0; font-size: 14px; }
+.agents-history .journal-columns { flex: 1; min-height: 0; }
+.agents-conversation-pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.agents-conversation-pane > .journal-reader { flex: 1; min-height: 0; }
+.agents-history .agent-session { display: flex; align-items: stretch; }
+.agent-conversation-title { display: flex !important; align-items: flex-start; gap: 8px; color: var(--text) !important; }
+.agent-conversation-title strong { flex: 1; min-width: 0; }
+.agent-conversation-title .agent-status { flex: none; }
+.agents-conversation-live { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+.agents-back { align-self: flex-start; flex: none; margin: 10px 12px 0; }
+.agents-observed, .journal-tool-group { border: 1px solid var(--panel-border); border-radius: var(--radius, 7px); padding: 10px; margin: 12px 0; }
+.agents-observed > summary, .journal-tool-group > details > summary { cursor: pointer; font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
+.journal-tool-group .journal-message { margin: 10px 0 0; }
+.agents-history.compact .journal-heading, .agents-history.compact .journal-filters { padding: 10px 12px; gap: 8px; }
+.agents-history.compact .journal-heading p { display: none; }
+.agents-history .journal-filters { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(80px, .8fr) minmax(0, 1fr); }
+.agents-history .journal-filters > input, .agents-history .journal-filters > select { width: 100%; min-width: 0; }
+.agents-history.compact .journal-filters { gap: 6px; }
+.agents-history.compact .journal-filters > input, .agents-history.compact .journal-filters > select { font-size: 11px; padding: 6px; }
+.agents-history.compact .journal-columns { display: flex; flex-direction: column; }
+.agents-history.compact .journal-list { flex: 1; border: none; }
+.agents-history.compact .journal-empty { display: none; }
+.agents-history.compact .has-reader > .journal-list { display: none; }
+.agents-history.compact:has(.has-reader) > .journal-heading { display: none; }
+.agents-history.compact .agents-conversation-pane { flex: 1; }
+.agents-history.compact .journal-reader { padding: 12px; }
+.agents-history.compact .journal-reader-head h3 { font-size: 16px; }
+.agents-history.compact .journal-message { padding: 10px; }
+.agent-session-block { margin-bottom: 8px; }
+.agent-session-block.agent-work { margin: 0 0 10px; padding: 10px; }
+.agent-session-block > .journal-card { margin-bottom: 0; }
+.agent-session-block.agent-work > .journal-card { padding: 0; background: none; border: none; }
+.agent-session-block.agent-work .agent-conversation-title::before { content: ''; width: 7px; height: 7px; flex: none; margin-top: 5px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent); }
+.session-current-activity { margin: 12px 0; min-width: 0; }
+.session-live-update { align-items: flex-start; }
+.agent-dots { display: inline-grid; grid-template-columns: repeat(2, 3px); grid-template-rows: repeat(3, 3px); gap: 2px; width: 8px; height: 13px; flex: none; color: currentColor; }
+.agent-dots i { width: 3px; height: 3px; border-radius: 1px; background: currentColor; animation: agent-dot-chase 900ms steps(1, end) infinite; animation-delay: calc((var(--dot-step) - 6) * 150ms); }
+.session-live-update .agent-dots { margin-top: 3px; color: var(--accent); }
+.sessions-refresh { margin-left: 10px; font-size: 10px; }
+@keyframes agent-dot-chase { 0%, 100% { opacity: 1; } 16.666% { opacity: .75; } 33.333% { opacity: .5; } 50% { opacity: .25; } 66.666%, 83.333% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .agent-dots i { animation: none; opacity: .6; } .agent-dots i:nth-child(1), .agent-dots i:nth-child(2) { opacity: 0; } }
+.session-live-update p { margin: 0; min-width: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; overflow-wrap: anywhere; font-size: 12px; font-weight: normal; }
+.session-current-files { display: flex; flex-direction: column; gap: 5px; margin: 10px 0; min-width: 0; }
+.session-current-files > small { color: var(--muted); font-size: 10px; }
+.session-file { min-width: 0; display: flex; flex-direction: column; }
+.session-file > button { font-size: 11px; display: block; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.workspace.agents-expanded > .agents-host { position: absolute; inset: 0; width: auto !important; z-index: 10; }
+.workspace.agents-expanded > :not(.agents-host) { visibility: hidden; pointer-events: none; }
+.workspace.agents-expanded .agents-host > .panel-tabs { display: none; }
+@media (max-width: 700px) {
+  .agents-expanded .agents-history .journal-columns { grid-template-rows: minmax(100px, 28%) minmax(0, 1fr); }
+  .agents-expanded .agents-history .journal-columns:not(.has-reader) { display: flex; }
+  .agents-expanded .agents-history .journal-columns:not(.has-reader) > .journal-list { flex: 1; }
+  .agents-expanded .agents-history .journal-columns:not(.has-reader) > .journal-empty { display: none; }
 }

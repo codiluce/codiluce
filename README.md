@@ -102,6 +102,26 @@ Only what the hooks report is shown; Codiluce does not watch the file system or 
 searches, tool names and session titles, in memory, and never prompts, file contents or command output. More in
 [Agents](https://codiluce.com/docs/agents/) and the [design notes](docs/design/agents.md).
 
+### Search agent sessions
+
+Open **Agents → Import / refresh history** to import available local Codex and Claude Code transcripts for
+this repository. Search messages and titles, filter by agent or by a file/folder read, edited or added in a tool
+call, and open the original discussion beside the map, or expand Agents for reading. Live sessions appear in the
+same list, with a highlighted activity card, observed files and one replacing public progress or response line.
+The three session filters share one row; Codex setup instructions are hidden in the reader. Recently observed sessions refresh every ten seconds
+while Agents is open, without moving your reading position. Public live updates use a bounded transcript tail every
+three seconds and do not require a full history import. Refresh imports new messages without duplicating earlier ones. Failed and
+unconfirmed calls are labelled; scripts and dynamic paths are not assigned guessed file activity.
+Session summaries stay cached when Agents closes. The first page also survives browser reloads, scoped to this
+project's archive, while a background check retrieves changes. Unchanged lists reuse the cache; imports remain
+incremental. Open the list directly with `#sessions=list`; older `#conversation=` links still work.
+Running agents use a clockwise six-dot indicator beside the Agents menu label and current public update.
+
+Live hook observations provide status and map activity; transcript imports save messages and tool outputs
+locally in `<state>/conversations.db`. System instructions and reasoning are excluded; tool outputs over
+100,000 characters are shortened and labelled. Provider retention and transcript-format changes can affect what
+is available. Rebuilding the code index does not erase imported history.
+
 ## What you can do
 
 - **Ask, and read the answer on the map.** Explanations from your agent, or from the chat in the map, link the code

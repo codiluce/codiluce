@@ -58,6 +58,8 @@ export interface NodeSummary {
 }
 export interface Page<T> { items: T[]; limit: number; offset: number; total: number; hasMore: boolean }
 export interface ProjectionMeta {
+  /** Stable identity for this repository's session archive, independent of code reindexing. */
+  sessionScope?: string;
   mapVisibility?: MapVisibilityState;
   run: AnalysisRun;
   snapshot: SnapshotRef;

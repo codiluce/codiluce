@@ -3,9 +3,11 @@
 Developed in `/var/www/html/codiluce-agents`, branch `feature/live-agents`.
 
 The **Agents** button opens a panel beside the map, like the other navigation
-tools. It lists Codex and Claude Code sessions, their observed runtime status,
-session titles when available, recent file actions, searches and commands. Select a session to filter the feed
-and map. Select a file path to reveal the exact file, including files hidden from
+tools. It combines searchable Codex and Claude Code agent sessions with observed runtime status,
+correlated by provider and session ID. Active agent sessions rise to the top. Select one to read
+human and assistant messages; consecutive tool calls and observed activity are collapsed.
+The same panel can expand for reading and dock again without losing its filters or reading position.
+Use **Focus map activity** to filter recent map badges to the selected agent. Select a file path to reveal the exact file, including files hidden from
 the map. If the file is missing from the current index, this explicit click refreshes
 the repository index before selecting it. Deleted or excluded files show an explanation
 instead of silently selecting their folder. Search scopes can select their nearest
@@ -49,9 +51,13 @@ No API key, model call, transcript access, or app-server launch is required.
   become unknown after five minutes without an observation.
 - Direct file reads and edits, patch headers (including old and new paths for
   moves), and explicit grep/glob scopes carry repository-relative paths.
-- A small set of literal shell reads (`cat`, `head`, `tail`, `sed -n 'Np'`) and
-  simple `rg`/`grep` searches are interpreted. Pipelines, shell expansions,
-  scripts and unfamiliar flags stay commands with no claimed file access.
+- Literal shell reads (`cat`, `head`, `tail`, `sed -n 'Np'`) and simple
+  `rg`/`grep` searches are interpreted, including batches separated by `&&`,
+  semicolons or newlines. Common read options such as `head -n 80`, `tail -n +20`
+  and `cat -n` are supported, with quoting and explicit tool working directories
+  respected. In mixed read/search batches, explicit file reads take precedence;
+  search scopes are not counted as file reads. Pipelines, shell expansions,
+  scripts, directory changes and unfamiliar flags stay commands with no claimed file access.
   Known test commands are labelled as tests. Raw commands are not retained.
 - There is no filesystem activity watcher. Only hook observations with a session
   identity enter the feed and map. Changes made by commands whose paths cannot be
@@ -97,6 +103,9 @@ header). This endpoint cannot index an arbitrary client-supplied path. Retained
 observations resolve against the latest index, so folder fallbacks do not persist
 after indexing. The selected file is then revealed and focused on the map.
 
+Explanations activate only through an explicit explanation prompt or `start_explanation`; ordinary
+MCP reads do not start an explanation. Old inferred activity records are ignored.
+
 ## Connection status and titles
 
 The inline information icon explains activity coverage and the server connection.
@@ -116,6 +125,28 @@ delivery remain available, and trust is unknown. The modal refreshes its check o
 open or **Check again**; title lookups are throttled to once per actor per 30 seconds.
 Claude custom `session_title` metadata is retained from hook input. Missing titles
 fall back to the provider and short session id; prompts are never used as titles.
+
+## Agent session history
+
+**Import / refresh history** saves available project transcripts locally, independently of
+live hook observations and the rebuildable architecture index. While Agents is open,
+recently observed sessions refresh every ten seconds. Live history refresh only reads transcript
+filenames matching observed provider/session IDs; it does not reimport unrelated history.
+Session lists are prefetched alongside the map and cached across panel opens. The default first page of
+30 summaries is persisted in browser storage for up to seven days (128 KB maximum), scoped by repository
+root and state directory; full transcripts are not stored in the browser. Filtered pages use a bounded
+in-memory cache. Revalidation retains visible rows and uses ETags; local imports and imports from other
+processes invalidate them. Hidden tabs release their live event stream and reconnect when visible.
+Canonical links use `#sessions=list` or `#sessions=<provider:session-id>` with optional `message`;
+legacy `conversation` fragments remain readable. A six-position, four-dot clockwise animation identifies
+running agents in the menu and public update; reduced-motion preferences use a static indicator.
+Public progress and response text is read from a bounded 512 KB transcript tail every three seconds;
+only the newest update is displayed in each running session card. Private reasoning is excluded.
+Current-turn file observations stay highlighted while the agent is running, and clear when it becomes idle.
+Codex setup messages remain in the archive but are hidden in the session reader. The UI filters are a
+single row: text, agent and file/folder. Messages can lag hook activity. Sessions without available transcripts retain their observed
+activity and show a pending explanation. Refresh does not move the reader; **Latest messages**
+lets the reader move explicitly. File and folder filters continue to use literal tool associations.
 
 ## Future adapters
 

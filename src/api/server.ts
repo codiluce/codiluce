@@ -20,6 +20,8 @@ import { AgentMetadata } from '../activity/providers.js';
 import { repositoryPath } from '../activity/normalize.js';
 import type { ActivityPath } from '../activity/model.js';
 import { stat } from 'node:fs/promises';
+import { ConversationService } from '../conversations/service.js';
+import { handleConversationRoute, isConversationPath } from '../conversations/routes.js';
 
 export interface InspectionServerOptions {
   /** Repository root; required for source viewing and live Git history. */
@@ -40,6 +42,8 @@ export interface InspectionServerOptions {
   keyFiles?: string[];
   /** Read pull requests from the provider (open, merged, closed), with GITHUB_TOKEN when set. Off by default: the server makes no other network request. */
   pullRequests?: 'github';
+  /** Override provider stores, primarily for isolated installations and fixtures. */
+  conversationSources?: { codexHome?: string; claudeHome?: string };
 }
 /** Header that a cross-origin page cannot send without a CORS preflight, which this server never grants. */
 export const INDEX_REQUEST_HEADER = 'x-codiluce-request';
@@ -59,6 +63,11 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
     return { ...target, id, exact, ancestors: node ? context.index.spatialAncestors(node).map(item => item.id) : [] };
   };
   const activity = new ActivityService(options.root, !!options.root && !options.readOnly, options.stateDirectory, resolveActivityPath, session => agentMetadata?.title(session) ?? Promise.resolve(undefined));
+  const journal = options.root && options.stateDirectory ? {
+    conversations: new ConversationService({ root: options.root, stateDirectory: options.stateDirectory, readOnly: options.readOnly, ...options.conversationSources }),
+    readOnly: options.readOnly,
+    liveSessions: () => activity.snapshot().sessions.filter(session => Date.now() - session.lastSeen <= 300_000),
+  } : undefined;
   let activityIndexing: Promise<void> | undefined;
   const revealActivityPath = async (target: ActivityPath): Promise<{ path: ActivityPath; refreshed: boolean }> => {
     const current = resolveActivityPath(target);
@@ -84,7 +93,7 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
     return { path: resolved, refreshed: true };
   };
   const history = new HistoryService({ root: options.root, stateDirectory: options.stateDirectory, store, history: access, indexing: options.historyIndexing && !options.readOnly });
-  const projectionContext = { store, projection, history, root: options.root, maxFileBytes: options.maxFileBytes ?? 1024 * 1024 };
+  const projectionContext = { store, projection, history, root: options.root, maxFileBytes: options.maxFileBytes ?? 1024 * 1024, sessionScope: journal?.conversations.scope };
   // Explanations live in the state directory: text from language models whose links name code (src/explanations).
   const explanations = options.stateDirectory ? (() => {
     const service = new ExplanationService({ stateDirectory: options.stateDirectory!, root: options.root, projection, history, readOnly: options.readOnly });
@@ -98,6 +107,10 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
     const fail = (error: unknown) => { if (!response.headersSent) response.writeHead(500); response.end(JSON.stringify({ error: error instanceof Error ? error.message : String(error) })); };
     let pathname: string;
     try { pathname = new URL(request.url ?? '/', 'http://127.0.0.1').pathname; } catch { response.writeHead(400).end(JSON.stringify({ error: 'Bad request' })); return; }
+    if (isConversationPath(pathname)) {
+      if (!journal) { response.writeHead(503).end(JSON.stringify({ error: 'Agent session history needs a repository and state directory' })); return; }
+      handleConversationRoute(journal, request, response, new URL(request.url ?? '/', 'http://127.0.0.1')).catch(fail); return;
+    }
     if (pathname === '/api/agents' || pathname.startsWith('/api/agents/')) { handleActivityRoute(activity, request, response, new URL(request.url ?? '/', 'http://127.0.0.1'), options.stateDirectory, { connections: () => agentMetadata?.connections() ?? Promise.resolve([]), ...(!options.readOnly ? { reveal: revealActivityPath } : {}) }).catch(fail); return; }
     if (request.method === 'POST' && pathname === '/api/history/index') { handleIndexRequest(request, response, history).catch(fail); return; }
     if (request.method === 'POST' && pathname === '/api/projection/map-visibility') { if (options.readOnly) { response.writeHead(403).end(JSON.stringify({ error: 'Map preferences are read-only' })); return; } handleMapVisibility(request, response, projection).catch(fail); return; }
@@ -152,6 +165,7 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
     try { writeFileSync(serveFile, `${JSON.stringify({ url: `http://127.0.0.1:${address.port}/`, pid: process.pid, startedAt: new Date().toISOString() })}\n`); } catch { /* optional */ }
   });
   server.on('close', () => {
+    journal?.conversations.close();
     activity.close();
     agentMetadata?.close();
     access.close(); notes.close();

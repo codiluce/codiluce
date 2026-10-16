@@ -10,7 +10,7 @@ import type { ViewKey } from '../projection/dto.js';
 import type { HistoryService } from '../history/service.js';
 import type { GraphStore } from '../storage/sqlite.js';
 
-export interface ProjectionContext { store: GraphStore; projection: ProjectionService; history?: HistoryService; root?: string; maxFileBytes: number }
+export interface ProjectionContext { store: GraphStore; projection: ProjectionService; history?: HistoryService; root?: string; maxFileBytes: number; sessionScope?: string }
 const ID = '([^/]+)';
 function numberParam(params: URLSearchParams, name: string): number | undefined { return params.has(name) ? Number(params.get(name)) : undefined; }
 function text(params: URLSearchParams, name: string): string | undefined { return params.get(name) ?? undefined; }
@@ -47,7 +47,7 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
     let result: unknown;
     let match: RegExpExecArray | null;
     if (pathname === '/api/projection/map-visibility') result = projection.mapVisibility();
-    else if (pathname === '/api/projection') result = projection.meta(view);
+    else if (pathname === '/api/projection') result = { ...projection.meta(view), ...(context.sessionScope ? { sessionScope: context.sessionScope } : {}) };
     else if ((match = new RegExp(`^/api/projection/children/${ID}$`).exec(pathname))) result = projection.children(decodeURIComponent(match[1]!), { ...page, view });
     else if (pathname === '/api/projection/nodes') result = projection.nodes((params.get('ids') ?? '').split(',').filter(Boolean), view);
     else if ((match = new RegExp(`^/api/projection/locate/${ID}$`).exec(pathname))) result = projection.locate(decodeURIComponent(match[1]!), view);

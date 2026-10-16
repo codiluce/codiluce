@@ -19,10 +19,11 @@ export function Workbench({ split }: { split: boolean }) {
   const center = useAtlas(state => state.center);
   const flow = useAtlas(state => state.center === 'flow' ? state.flowView : undefined);
   const shares = useAtlas(state => state.flowSplit);
+  const reading = center === 'conversations';
   // The map is in the middle on its tab, and beside a flow's other views (or alone) when a flow is open.
   const mapShown = center === 'map' || (!!flow && (!flow.pane || flow.pane === 'map'));
   // Another tool in the middle: the map is an overview in a corner.
-  const corner = !mapShown && !flow;
+  const corner = !mapShown && !flow && !reading;
   const [overview, setOverview] = useState(true);
   const style = flow ? { '--flow-side': `${shares.side}fr`, '--flow-main': `${1 - shares.side}fr`, '--flow-bottom': `${shares.bottom}fr`, '--flow-top': `${1 - shares.bottom}fr` } as CSSProperties : undefined;
   return (
@@ -32,7 +33,7 @@ export function Workbench({ split }: { split: boolean }) {
         {flow && <FlowHead />}
         {center === 'impact' && <ImpactView />}
         {center === 'files' && <FilesView />}
-        <div className={`map-holder${corner ? ' small' : ''}${(corner && !overview) || (flow && !mapShown) ? ' hidden' : ''}`} aria-hidden={corner || (!!flow && !mapShown) || undefined}>
+        <div className={`map-holder${corner ? ' small' : ''}${reading || (corner && !overview) || (flow && !mapShown) ? ' hidden' : ''}`} aria-hidden={reading || corner || (!!flow && !mapShown) || undefined}>
           {flow && mapShown && <FlowMapBar />}
           {split && center === 'map' ? <SplitMap /> : <MapView />}
           {corner && <button className="overview-open" onClick={() => store.setCenter('map')} aria-label="Back to the map" title="Back to the map" tabIndex={-1} />}

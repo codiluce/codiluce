@@ -12,6 +12,7 @@ import { ColorBy } from './ColorBy';
 import { AtlasContext, useAtlas, useStore } from './context';
 import { EclipseMark } from './EclipseMark';
 import { ActivityConnection, AgentsPanel } from './AgentsPanel';
+import { AgentDots } from './AgentDots';
 import { ExplanationsPanel } from './ExplanationsPanel';
 import { FeaturesPanel } from './FeaturesPanel';
 import { FlowsPanel } from './FlowsPanel';
@@ -42,7 +43,13 @@ export function AtlasApp() {
     // Back on the page: what an agent did meanwhile shows at once (hidden pages have their timers slowed).
     const shown = () => { if (document.visibilityState === 'visible') void instance.refreshActivity(); };
     document.addEventListener('visibilitychange', shown);
-    return () => { document.removeEventListener('visibilitychange', shown); instance.dispose(); };
+    const followJournalLink = () => {
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      const conversation = params.get('sessions') ?? params.get('conversation');
+      if (conversation) instance.openJournal('conversations', { id: conversation === 'list' ? undefined : conversation, messageId: params.get('message') ?? undefined });
+    };
+    window.addEventListener('hashchange', followJournalLink);
+    return () => { document.removeEventListener('visibilitychange', shown); window.removeEventListener('hashchange', followJournalLink); instance.dispose(); };
   }, []);
   if (!store) return null;
   return (
@@ -101,6 +108,9 @@ function Shell() {
     : 0);
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [leftOpen, setLeftOpen] = useState(false);
+  const agentsReveal = useAtlas(state => state.journal.reveal);
+  const agentsExpanded = useAtlas(state => !!state.journal.expanded);
+  useEffect(() => { if (agentsReveal) { setLeftOpen(true); setLeftTab('agents'); } }, [agentsReveal]);
   // The left panel holds the features (once described), every flow (pages, requests, console), the people who changed the code and the pull requests.
   const [leftTab, setLeftTab] = useState<LeftTab>('flows');
   const reveal = useAtlas(state => state.catalog.reveal);
@@ -114,7 +124,11 @@ function Shell() {
   const features = useAtlas(state => state.annotations.data?.domains.length ?? 0);
   // Comparing in History: one view per place that changed, around an overview (unless the single map is chosen).
   const split = useAtlas(state => state.timeline.open && state.timeline.compare && state.timeline.split && (!!state.meta?.comparison || state.timeline.preview !== undefined));
-  const showLeft = (tab: LeftTab) => { if (leftOpen && leftTab === tab) setLeftOpen(false); else { setLeftOpen(true); setLeftTab(tab); } };
+  const closeAgents = () => { setLeftOpen(false); store.closeJournal('conversations'); };
+  const showLeft = (tab: LeftTab) => {
+    if (leftOpen && leftTab === tab) { if (tab === 'agents') closeAgents(); else setLeftOpen(false); }
+    else { if (tab === 'agents') store.showAgents(); else { store.closeJournal('conversations'); setLeftOpen(true); setLeftTab(tab); } }
+  };
   const tabs = [...(features > 0 ? ['features' as const] : []), 'flows' as const, 'people' as const, 'pulls' as const, 'agents' as const];
   const impactOpen = useAtlas(state => state.impact.open && state.center === 'impact');
   const codeOpen = useAtlas(state => !!state.code);
@@ -180,7 +194,7 @@ function Shell() {
             <button className="button" onClick={() => showLeft('flows')} aria-pressed={leftOpen && leftTab === 'flows'} aria-controls="left-panel" title="Flows by CLI, HTTP, UI, MCP and worker entry points, with source scope and evidence coverage">Flows</button>
             <button className="button" onClick={() => showLeft('people')} aria-pressed={leftOpen && leftTab === 'people'} aria-controls="left-panel" title="Who changed which code, from the Git history: select a person to light the files they changed">People</button>
             <button className="button" onClick={() => showLeft('pulls')} aria-pressed={leftOpen && leftTab === 'pulls'} aria-controls="left-panel" title="Pull requests, open and merged: select one to light the files it changes">PRs</button>
-            <button className={`button agents-top${runningAgents > 0 ? ' has-running' : ''}`} onClick={() => showLeft('agents')} aria-label="Agents" aria-pressed={leftOpen && leftTab === 'agents'} aria-controls="left-panel" title={`${runningAgents > 0 ? `${runningAgents} agent${runningAgents === 1 ? '' : 's'} running · ` : ''}Live agent sessions and observed file activity`}>Agents{runningAgents > 0 && <span className="badge" aria-label={`${runningAgents} agent${runningAgents === 1 ? '' : 's'} running`}>{runningAgents}</span>}</button>
+            <button className={`button agents-top${runningAgents > 0 ? ' has-running' : ''}`} onClick={() => showLeft('agents')} aria-label="Agents" aria-pressed={leftOpen && leftTab === 'agents'} aria-controls="left-panel" title={`${runningAgents > 0 ? `${runningAgents} agent${runningAgents === 1 ? '' : 's'} running · ` : ''}Live and searchable agent sessions beside the map`}>{runningAgents > 0 && <AgentDots />}Agents{runningAgents > 0 && <span className="badge" aria-label={`${runningAgents} agent${runningAgents === 1 ? '' : 's'} running`}>{runningAgents}</span>}</button>
           </div>
           <div className="top-action-group" role="group" aria-label="Center tools" title="Opens in a center tab">
             <button className="button" onClick={() => impactOpen ? store.setCenter('map') : void store.openImpactTool()} aria-pressed={impactOpen} title="What depends on the selection, or on your uncommitted changes, hop by hop">Impact</button>
@@ -199,20 +213,20 @@ function Shell() {
         </div>
       </header>
       <Breadcrumbs />
-      <main className={`workspace${codeOpen ? ' with-code' : ''}${explainOpen ? ' with-explain' : ''}`}>
+      <main className={`workspace${codeOpen ? ' with-code' : ''}${explainOpen ? ' with-explain' : ''}${leftOpen && leftTab === 'agents' && agentsExpanded ? ' agents-expanded' : ''}`}>
         {leftOpen ? (
-          <aside id="left-panel" className="panel left" style={{ width: Math.max(flowWidth, 340) }} aria-label={TAB_TEXT[leftTab]}>
+          <aside id="left-panel" className={`panel left${leftTab === 'agents' ? ' agents-host' : ''}`} style={{ width: Math.max(flowWidth, leftTab === 'agents' ? 420 : 340) }} aria-label={TAB_TEXT[leftTab]}>
             {tabs.length > 1 && (
               <div className="segmented panel-tabs" role="tablist" aria-label="Left panel">
-                {tabs.map(tab => <button key={tab} role="tab" aria-selected={leftTab === tab} aria-pressed={leftTab === tab} onClick={() => setLeftTab(tab)}>{TAB_TEXT[tab]}</button>)}
+                {tabs.map(tab => <button key={tab} role="tab" aria-selected={leftTab === tab} aria-pressed={leftTab === tab} onClick={() => { if (tab === 'agents') store.showAgents(); else { store.closeJournal('conversations'); setLeftTab(tab); } }}>{TAB_TEXT[tab]}</button>)}
               </div>
             )}
             {leftTab === 'features' && features > 0 ? <FeaturesPanel onClose={() => setLeftOpen(false)} />
-              : leftTab === 'agents' ? <AgentsPanel onClose={() => setLeftOpen(false)} />
+              : leftTab === 'agents' ? <AgentsPanel onClose={closeAgents} />
               : leftTab === 'people' ? <PeoplePanel onClose={() => setLeftOpen(false)} />
               : leftTab === 'pulls' ? <PullsPanel onClose={() => setLeftOpen(false)} />
               : <FlowsPanel onClose={() => setLeftOpen(false)} />}
-            <ResizeHandle side="left" width={flowWidth} onResize={setFlowWidth} label="Resize the left panel" />
+            {!(leftTab === 'agents' && agentsExpanded) && <ResizeHandle side="left" width={flowWidth} onResize={setFlowWidth} label="Resize the left panel" />}
           </aside>
         ) : <div />}
         {explainOpen && (
