@@ -1,0 +1,4 @@
+# Use this repository and the same state as its map on port 4300.
+[mcp_servers.codiluce]
+command = "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node"
+args = [ "--experimental-sqlite", "--no-warnings", "--import", "/var/www/html/codiluce/node_modules/tsx/dist/loader.mjs", "/var/www/html/codiluce/src/cli.ts", "mcp", "--repo", "/var/www/html/codiluce", "--state-dir", "/var/www/html/codiluce/.codiluce/codiluce" ]
