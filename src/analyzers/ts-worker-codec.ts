@@ -200,13 +200,14 @@ class Reader {
   offset = 0;
   constructor(readonly bytes: Buffer) {}
   raw(size: number): Buffer { if (!Number.isSafeInteger(size) || size < 0 || size > this.bytes.length - this.offset) throw Error('Truncated compiler transport'); const start = this.offset; this.offset += size; return this.bytes.subarray(start, this.offset); }
-  byte(): number { return this.raw(1)[0]!; }
+  byte(): number { if (this.offset >= this.bytes.length) throw Error('Truncated compiler transport'); return this.bytes[this.offset++]!; }
   uint(): number {
     let result = 0, scale = 1;
     for (let i = 0; i < 8; i++) { const byte = this.byte(); result += (byte & 127) * scale; if (!Number.isSafeInteger(result)) break; if (byte < 128) { if (i && !byte) break; return result; } scale *= 128; }
     throw Error('Invalid compiler transport integer');
   }
-  double(): number { return this.raw(8).readDoubleLE(); }
+  double(): number { if (8 > this.bytes.length - this.offset) throw Error('Truncated compiler transport'); const value = this.bytes.readDoubleLE(this.offset); this.offset += 8; return value; }
+  text(size: number, encoding: 'latin1' | 'utf16le'): string { if (!Number.isSafeInteger(size) || size < 0 || size > this.bytes.length - this.offset) throw Error('Truncated compiler transport'); const start = this.offset; this.offset += size; return this.bytes.toString(encoding, start, this.offset); }
 }
 type Frame = ({kind: 'object' | 'array'; value: Record<string, unknown>; length?: number; keys: Set<string>} | {kind: 'map'; value: Map<unknown, unknown>} | {kind: 'set'; value: Set<unknown>}) & {depth: number};
 
@@ -223,7 +224,7 @@ export function decodeTypeScriptPayload(bytes: Buffer, maxBytes: number, stats?:
     if (tag === Tag.StringRef) { const known = strings[reader.uint()]; if (known === undefined) throw Error('Invalid compiler string reference'); return known; }
     if (tag !== Tag.String8 && tag !== Tag.String16) throw Error('Invalid compiler property or string');
     const size = reader.uint(); budget.add('strings'); budget.add('stringUnits', size);
-    const text = reader.raw(size * (tag === Tag.String8 ? 1 : 2)).toString(tag === Tag.String8 ? 'latin1' : 'utf16le'); strings.push(text); return text;
+    const text = reader.text(size * (tag === Tag.String8 ? 1 : 2), tag === Tag.String8 ? 'latin1' : 'utf16le'); strings.push(text); return text;
   };
   const frame = (current: Frame): void => {
     const tag = reader.byte(); if (tag === Tag.End) return;

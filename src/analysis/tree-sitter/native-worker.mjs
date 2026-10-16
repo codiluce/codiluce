@@ -336,7 +336,8 @@ var Reader = class {
     return this.bytes.subarray(start, this.offset);
   }
   byte() {
-    return this.raw(1)[0];
+    if (this.offset >= this.bytes.length) throw Error("Truncated compiler transport");
+    return this.bytes[this.offset++];
   }
   uint() {
     let result = 0, scale = 1;
@@ -353,7 +354,16 @@ var Reader = class {
     throw Error("Invalid compiler transport integer");
   }
   double() {
-    return this.raw(8).readDoubleLE();
+    if (8 > this.bytes.length - this.offset) throw Error("Truncated compiler transport");
+    const value = this.bytes.readDoubleLE(this.offset);
+    this.offset += 8;
+    return value;
+  }
+  text(size2, encoding) {
+    if (!Number.isSafeInteger(size2) || size2 < 0 || size2 > this.bytes.length - this.offset) throw Error("Truncated compiler transport");
+    const start = this.offset;
+    this.offset += size2;
+    return this.bytes.toString(encoding, start, this.offset);
   }
 };
 function decodeTypeScriptPayload(bytes, maxBytes, stats, policy) {
@@ -378,7 +388,7 @@ function decodeTypeScriptPayload(bytes, maxBytes, stats, policy) {
     const size2 = reader.uint();
     budget.add("strings");
     budget.add("stringUnits", size2);
-    const text = reader.raw(size2 * (tag === 8 /* String8 */ ? 1 : 2)).toString(tag === 8 /* String8 */ ? "latin1" : "utf16le");
+    const text = reader.text(size2 * (tag === 8 /* String8 */ ? 1 : 2), tag === 8 /* String8 */ ? "latin1" : "utf16le");
     strings.push(text);
     return text;
   };

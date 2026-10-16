@@ -10,6 +10,18 @@ import {GraphBuilder} from '../src/core/graph.js';
 const roundtrip = (value: unknown) => decode(encode(value, 64 * 1024 * 1024), 64 * 1024 * 1024);
 const reference = (value: unknown) => deserialize(serialize(value));
 
+test('bounded decoder reads original scalar and string fields without per-field Buffer views', () => {
+  const shared = {text: 'original é😀\ud800\udfff\0'.repeat(50)}, value: any = {shared, alias: shared, latin: 'é'.repeat(100), numbers: Array.from({length: 64}, (_, index) => index + .5), negative: -4, zero: -0, notNumber: NaN, inf: Infinity}; value.self = value;
+  Object.defineProperty(value, '__proto__', {value: shared, writable: true, enumerable: true, configurable: true});
+  const encoded = encode(value, 1024 * 1024), subarray = Buffer.prototype.subarray; let views = 0, actual: typeof value;
+  const observation = mock.method(Buffer.prototype, 'subarray', function(this: Buffer, ...args: any[]) { if (this === encoded) views++; return Reflect.apply(subarray, this, args); });
+  try { actual = decode(encoded, 1024 * 1024); } finally { observation.mock.restore(); }
+  assert.deepEqual(actual, reference(value)); assert.equal(actual.self, actual); assert.equal(actual.shared, actual.alias); assert.equal(actual.__proto__, actual.shared); assert.equal(Object.getPrototypeOf(actual), Object.prototype);
+  // Only the four-byte header still needs an input view. Scalar tags,
+  // varints, doubles and complete original strings read the admitted frame.
+  assert.equal(views, 1, 'Scalar and string decoding must retain only the header input view');
+});
+
 test('string encoding allocates no intermediate Latin-1 or UTF-16 buffers while retaining complete values and aliases', () => {
   const proof = {original: 'é😀\ud800\u0000\udfff'.repeat(1000)}, value: any = {proof, alias: proof, distinct: 'a'.repeat(70000)}; value.self = value;
   const from = Buffer.from, stats = {} as TypeScriptCodecStats;
