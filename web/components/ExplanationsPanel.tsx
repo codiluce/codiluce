@@ -77,6 +77,7 @@ function HistoryItem({ item, onOpen }: { item: ExplanationSummary; onOpen: () =>
           <SubjectBadge subject={item.subject} />
           <span>{item.agent ?? (item.source === 'chat' ? item.model ?? 'chat' : item.source)}</span>
           <span>{relativeTime(item.updatedAt)}</span>
+          {item.scenes ? <span className="chip tour-tag" title="Told as a tour: it plays scene by scene in the middle">▶ {item.scenes} scenes</span> : null}
           {item.links > 0 && <span>{item.links} link{item.links === 1 ? '' : 's'}</span>}
           {stale > 0 && <span className="chip warning" title={`${item.stale.changed} linked item${item.stale.changed === 1 ? '' : 's'} changed and ${item.stale.missing} disappeared since it was written`}>{stale} changed</span>}
         </span>
@@ -174,7 +175,9 @@ function Reader() {
         ? <div key={index} className="explain-question"><span className="who">Question</span><p>{turn.text}</p></div>
         : (
           <section key={index} className="explain-answer">
-            <Markdown text={index === firstAnswer ? withoutTitle(turn.text, data.title) : turn.text} links={links} />
+            {data.tour?.turn === index
+              ? <TourText data={data} intro={index === firstAnswer ? withoutTitle(data.tour.intro, data.title) : data.tour.intro} links={links} />
+              : <Markdown text={index === firstAnswer ? withoutTitle(turn.text, data.title) : turn.text} links={links} />}
             {(turn.model || turn.commit) && <p className="model-note" title="Generated text: the links were checked against the index, the sentences were not. Facts are in the inspector.">AI{turn.model ? ` · ${turn.model}` : ''}{turn.commit ? ` · written at ${shortSha(turn.commit)}` : ''}{turn.cost !== undefined ? ` · $${turn.cost.toFixed(3)}` : ''}</p>}
           </section>
         ))}
@@ -187,6 +190,29 @@ function Reader() {
         </details>
       )}
     </article>
+  );
+}
+/** A tour's text: its intro, then each scene as a section; the one on stage is marked and kept in view, and a section's title puts it on stage. */
+function TourText({ data, intro, links }: { data: ExplanationDetail; intro: string; links: LinkHandlers }) {
+  const store = useStore();
+  const tour = data.tour!;
+  const current = useAtlas(state => state.center === 'tour' && state.explain.tour?.id === data.id ? state.explain.tour.scene : undefined);
+  const sections = useRef<(HTMLElement | null)[]>([]);
+  useEffect(() => { if (current !== undefined) sections.current[current]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [current]);
+  return (
+    <>
+      {intro.trim() && <Markdown text={intro} links={links} />}
+      {current === undefined && <button className="button small tour-play" onClick={() => store.showScene(0)}>▶ Play the tour <span className="note">{tour.scenes.length} scenes</span></button>}
+      {tour.scenes.map((scene, index) => (
+        <section key={index} ref={element => { sections.current[index] = element; }} className={`scene-section${index === current ? ' current' : ''}`} aria-current={index === current ? 'step' : undefined}>
+          <button className="scene-head" onClick={() => store.showScene(index)} title={index === current ? 'On stage' : 'Show this scene'}>
+            <span className="scene-number">{index + 1}</span><span className="scene-title">{scene.title}</span>
+            <span className="scene-view">{scene.view}</span>
+          </button>
+          <Markdown text={scene.markdown} links={links} />
+        </section>
+      ))}
+    </>
   );
 }
 function LinkedRow({ link, links }: { link: ResolvedLink; links: LinkHandlers }) {

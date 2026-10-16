@@ -5,7 +5,8 @@ import { activityMarks, activeAgentOverlay } from './activity';
 // of the whole repository and a `region` controller per place that changed,
 // all drawing the same scene from their own camera.
 import type { NodeSummary, Rect, SourceResponse } from '@engine/projection/dto';
-import { easeInOut, fitBounds, fromScreen, panBy, projectedBounds, visibleBounds, worldToScreen, zoomAround, zoomPath, type Bounds, type Camera, type Point, type Viewport, type ZoomLimits } from './camera';
+import type { ResolvedScene } from '@engine/explanations/model';
+import { easeInOut, fitBounds, fromScreen, panBy, projectedBounds, toScreen, visibleBounds, worldToScreen, zoomAround, zoomPath, type Bounds, type Camera, type Point, type Viewport, type ZoomLimits } from './camera';
 import { CORNER_LOD, DEFAULT_LOD, abstractionLevel, screenSize, type LodConfig } from './lod';
 import { FLASH_MS, MapRenderer, RISE_MS, type CalloutOverlay, type CoverageOverlay, type EdgeOverlay, type FamilyOverlay, type FlowOverlay, type FrameOverlay, type LevelOverlay, type MotionState, type RenderState } from './renderer';
 import { flowAreas, flowDepths, flowLit, type MapFlow } from './map-flow';
@@ -153,6 +154,21 @@ export class MapController implements MapNavigator {
   has(id: string): boolean { return this.set.index.has(id); }
   /** Containers open on this map (top-down). */
   openContainers(): string[] { return this.set.items.filter(item => item.open).map(item => item.node.id); }
+  /**
+   * Where a node's block is drawn, in client pixels: its own, or the nearest
+   * drawn ancestor's when it is too small to draw at this level of detail.
+   * Undefined when neither is on the map. Where a diagram's boxes rise from.
+   */
+  screenRect(id: string, ancestors: string[] = []): { x: number; y: number; w: number; h: number; own: boolean } | undefined {
+    let index = this.set.index.get(id), own = true;
+    for (let at = ancestors.length - 1; index === undefined && at >= 0; at--) { index = this.set.index.get(ancestors[at]!); own = false; }
+    if (index === undefined) return undefined;
+    const item = this.set.items[index]!;
+    const bounds = projectedBounds(item.node.rect, item.zBase, item.zTop);
+    const a = toScreen(this.camera, this.viewport, { x: bounds.minX, y: bounds.minY }), b = toScreen(this.camera, this.viewport, { x: bounds.maxX, y: bounds.maxY });
+    const box = this.canvas.getBoundingClientRect();
+    return { x: box.left + a.x, y: box.top + a.y, w: b.x - a.x, h: b.y - a.y, own };
+  }
   /** CSS pixels per plane unit. */
   scale(): number { return this.camera.scale; }
   /** The part of the projection plane on screen. */
@@ -415,6 +431,21 @@ export class MapController implements MapNavigator {
     if (this.small) { result.callouts = undefined; result.pins = undefined; }
     // Explanations: the link under the pointer lights what it names; otherwise the open explanation lights everything it links.
     const explain = state.explain;
+    const scene = tool === 'tour' ? sceneOnStage(state) : undefined;
+    // A tour's scene lights its code; a map scene numbers it, with the scene's captions.
+    if (scene && !explain.hover) {
+      if (this.sceneCache?.scene !== scene) {
+        const shown = scene.boxes.filter(box => box.link.status !== 'missing');
+        this.sceneCache = {
+          scene, overlay: linkOverlay([...shown.map(box => box.link), ...scene.flow && scene.flow.status !== 'missing' ? [scene.flow] : []], scene.title),
+          callouts: scene.view === 'map' ? shown.flatMap((box, index) => box.link.id ? [{ entityId: box.link.id, ancestors: box.link.ancestors ?? [], number: index + 1, label: box.caption ?? box.link.label ?? box.link.name ?? box.link.href, tone: 'call' as const, current: false }] : []) : undefined,
+        };
+      }
+      result.explanation = this.sceneCache.overlay;
+      result.edges = [];
+      result.callouts = this.sceneCache.callouts;
+      result.pins = undefined;
+    }
     if (explain.hover) {
       const link = explain.hover;
       if (this.explainHoverCache?.link !== link) this.explainHoverCache = { link, overlay: linkOverlay([link], link.label ?? link.name ?? link.href) };
@@ -422,7 +453,7 @@ export class MapController implements MapNavigator {
       // While reading, the link is what matters: the selection's connections step aside.
       result.edges = [];
       if (link.id) result.pointer = { id: link.id, ancestors: link.ancestors ?? [] };
-    } else if (explain.open && explain.lens && explain.detail?.data && explain.detail.data.footprint.ids.length) {
+    } else if (!scene && explain.open && explain.lens && explain.detail?.data && explain.detail.data.footprint.ids.length) {
       const detail = explain.detail.data;
       if (this.explainCache?.detail !== detail) this.explainCache = { detail, overlay: { of: new Map(detail.footprint.ids.map(id => [id, EXPLAINED])), areas: new Map(Object.entries(detail.footprint.areas).map(([id, count]) => [id, { [EXPLAINED]: count }])), names: new Map([[EXPLAINED, 'Linked']]), hues: new Map([[EXPLAINED, EXPLAINED_HUE]]), focus: EXPLAINED } };
       result.explanation = this.explainCache.overlay;
@@ -485,6 +516,7 @@ export class MapController implements MapNavigator {
     return result;
   }
   private explainCache?: { detail: object; overlay: FamilyOverlay };
+  private sceneCache?: { scene: ResolvedScene; overlay: FamilyOverlay; callouts?: CalloutOverlay[] };
   private agentWorkCache?: { snapshot: AtlasState['agents']['snapshot']; focus?: string; epoch: number; overlay?: FamilyOverlay };
   private explainHoverCache?: { link: object; overlay: FamilyOverlay };
   private pullCache?: { data: object; overlay: FamilyOverlay };
@@ -711,6 +743,8 @@ export class MapController implements MapNavigator {
     };
     const action = actions[event.key];
     if (!action || event.metaKey || event.ctrlKey || event.altKey) return;
+    // During a tour, ← and → step through its scenes (the stage listens), not the camera.
+    if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') && this.store.getState().center === 'tour') return;
     event.preventDefault();
     this.animation = undefined;
     this.autoFit = false;
@@ -720,8 +754,13 @@ export class MapController implements MapNavigator {
   }
 }
 /** Whether the map is in the middle: the Map tab, or a flow with its map beside its other views (or alone). */
+/** The scene of the open explanation's tour on stage, if one is. */
+export function sceneOnStage(state: Pick<AtlasState, 'center' | 'explain'>): ResolvedScene | undefined {
+  const tour = state.explain.tour, data = state.explain.detail?.data;
+  return state.center === 'tour' && tour && data?.id === tour.id ? data.tour?.scenes[tour.scene] : undefined;
+}
 export function mapInMiddle(state: Pick<AtlasState, 'center' | 'flowView'>): boolean {
-  return state.center === 'map' || (state.center === 'flow' && !!state.flowView && (!state.flowView.pane || state.flowView.pane === 'map'));
+  return state.center === 'map' || state.center === 'tour' || (state.center === 'flow' && !!state.flowView && (!state.flowView.pane || state.flowView.pane === 'map'));
 }
 function union(a: Bounds, b: Bounds): Bounds { return { minX: Math.min(a.minX, b.minX), minY: Math.min(a.minY, b.minY), maxX: Math.max(a.maxX, b.maxX), maxY: Math.max(a.maxY, b.maxY) }; }
 /** The key explanation overlays light under, and the hue of their badges. */

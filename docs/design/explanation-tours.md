@@ -86,6 +86,22 @@ For an arrow A → B, the server collects A and the entities inside it (a file's
 the same for B, then reads the index's relationships between the two sets, either way. The chip names the types
 and counts (`calls ×3 · imports`), with the direction when it runs against the arrow. A folder end counts its files.
 
+## Decisions taken while building
+
+- **Left to right, or top to bottom.** A chain of five boxes left to right is unreadable in the middle beside both side
+  panels, so the diagram lays itself out both ways and keeps the one that fits the stage at a larger scale (left to
+  right unless top to bottom is clearly better). Bands are rows one way and columns the other.
+- **Labels in the gaps.** Arrows fanning out of one box are labelled near where they arrive (fanning in: near where
+  they leave), each label is held in the gap between the two layers, and overlapping labels are pushed apart.
+- **Rise without a flash.** Boxes are held at their blocks with transitions off, then released, so the browser never
+  animates them toward the map first.
+- **The keyboard.** During a tour, ← and → step scenes, even with the map focused (the camera keeps its other keys).
+  A starting tour takes focus from the empty composer, never from text being typed.
+- **Clicking a box** selects it and opens its code without leaving the stage (`openFromTour`); flows and commits
+  open as links do.
+- **Flow scenes, for now,** light the flow on the map with a card that opens it; playing the flow view in the stage
+  is phase 2.
+
 ## Phases
 
 1. Scenes in the schema and the store, checks on publish, the tour in the middle with map and diagram scenes, the
