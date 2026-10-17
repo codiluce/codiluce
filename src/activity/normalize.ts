@@ -1,8 +1,10 @@
 import path from 'node:path';
-import { realpathSync } from 'node:fs';
+import { realpathSync, statSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import type { ActivityEvent, ActivityKind, ActivityPath, AgentProvider, AgentStatus } from './model.js';
 import { shellInput } from './shell.js';
+import { decodeActivity } from '../harnesses/activity.js';
+import { sessionKey } from '../harnesses/registry.js';
 
 const object = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const text = (value: unknown, max = 256): string => typeof value === 'string' ? value.slice(0, max) : '';
@@ -23,16 +25,18 @@ export function repositoryPath(root: string, cwd: string, value: string): string
 }
 
 export function normalizeHook(root: string, provider: AgentProvider, payload: unknown, now = Date.now()): ActivityEvent | undefined {
-  const body = object(payload), event = text(body.hook_event_name), sessionId = text(body.session_id);
-  if (!sessionId || !HOOK_EVENTS.includes(event as typeof HOOK_EVENTS[number]) && event !== 'PostToolUseFailure') return undefined;
+  const decoded = decodeActivity(provider, payload); if (!decoded) return undefined;
+  const body = object(decoded), event = text(body.hook_event_name), sessionId = text(body.session_id, 512);
+  if (!sessionId || !HOOK_EVENTS.includes(event as typeof HOOK_EVENTS[number]) && !['PostToolUseFailure', 'RuntimeError', 'RuntimeRunning'].includes(event)) return undefined;
   const cwd = typeof body.cwd === 'string' ? path.resolve(body.cwd) : root;
   if (repositoryPath(root, root, cwd) === undefined) return undefined;
   const agentId = text(body.agent_id) || undefined;
-  const actor = `${provider}:${sessionId}${agentId ? `:${agentId}` : ''}`;
+  const actor = sessionKey(provider, sessionId, agentId);
   const tool = text(body.tool_name), original = object(body.tool_input);
   const command = text(original.command ?? original.cmd, 64 * 1024);
-  const interpreted = ['Bash', 'exec_command', 'shell_command'].includes(tool) ? shellInput(command) : undefined;
-  const name = interpreted?.tool ?? tool;
+  const observedTool = text(body.observed_tool) || tool;
+  const interpreted = ['Bash', 'exec_command', 'shell_command'].includes(observedTool) ? shellInput(command) : undefined;
+  const name = interpreted?.tool ?? observedTool;
   const input: Record<string, unknown> = interpreted?.input ?? original;
   let kind: ActivityKind = 'status', label = event;
   const paths: ActivityPath[] = [];
@@ -40,7 +44,10 @@ export function normalizeHook(root: string, provider: AgentProvider, payload: un
   const add = (value: unknown, scope: ActivityPath['scope']) => {
     if (typeof value !== 'string') return;
     const relative = repositoryPath(root, workdir, value);
-    if (relative !== undefined && !paths.some(item => item.path === relative)) paths.push({ path: relative, scope });
+    if (relative !== undefined && !paths.some(item => item.path === relative)) {
+      try { if (scope === 'file' && statSync(path.resolve(root, relative)).isDirectory()) scope = 'directory'; } catch { /* Deleted/new files retain the source's literal scope. */ }
+      paths.push({ path: relative, scope });
+    }
   };
   const isTool = ['PreToolUse', 'PostToolUse', 'PostToolUseFailure', 'PermissionRequest'].includes(event);
   if (isTool) {
@@ -60,15 +67,18 @@ export function normalizeHook(root: string, provider: AgentProvider, payload: un
     if (Array.isArray(input.paths)) for (const item of input.paths.slice(0, 40)) add(item, kind === 'search' ? 'directory' : 'file');
   }
   const response = object(body.tool_response);
-  const failed = event === 'PostToolUseFailure' || response.isError === true || typeof response.exit_code === 'number' && response.exit_code !== 0;
+  const failed = event === 'PostToolUseFailure' || response.isError === true || response.is_error === true || response.success === false || response.resultType === 'failure' || typeof response.exit_code === 'number' && response.exit_code !== 0;
   let status: AgentStatus | undefined;
   if (event === 'PermissionRequest') status = 'waiting';
   else if (event === 'SessionEnd' || event === 'SubagentStop') status = 'finished';
   else if (event === 'Stop') status = 'idle';
   else if (event === 'Interrupt') status = 'interrupted';
-  else status = failed ? 'error' : 'running';
+  else status = failed || event === 'RuntimeError' ? 'error' : 'running';
   const phase = failed ? 'failed' : event === 'PostToolUse' ? 'completed' : isTool ? 'started' : 'status';
   const query = kind === 'search' ? text(input.pattern ?? input.query, 256) : '';
   const sessionTitle = text(body.session_title).replace(/[\u0000-\u001f\u007f]/g, ' ').trim();
-  return { id: randomUUID(), at: now, provider, actor, sessionId, ...(agentId ? { agentId } : {}), ...(tool ? { tool } : {}), ...(text(body.tool_use_id) ? { toolId: text(body.tool_use_id) } : {}), kind, phase, label, paths: paths.slice(0, 40), ...(query ? { query } : {}), ...(sessionTitle ? { sessionTitle } : {}), status };
+  const lifecycle: ActivityEvent['lifecycle'] = ({ SessionStart: 'session-start', SessionEnd: 'session-end', UserPromptSubmit: 'turn-start', Stop: 'turn-end', SubagentStart: 'child-start', SubagentStop: 'child-end', Interrupt: 'interrupt' } as const)[event as 'SessionStart'];
+  return { id: randomUUID(), at: now, provider, actor, sessionId, ...(agentId ? { agentId } : {}), ...(tool ? { tool } : {}), ...(text(body.tool_use_id) ? { toolId: text(body.tool_use_id) } : {}), kind, phase, label, paths: paths.slice(0, 40), ...(query ? { query } : {}), ...(sessionTitle ? { sessionTitle } : {}), status,
+    ...(lifecycle ? { lifecycle } : {}), ...(text(body.turn_id) ? { turnId: text(body.turn_id) } : {}), ...(text(body.parent_session_id) ? { parentSessionId: text(body.parent_session_id) } : {}), ...(text(body.source_event_id) ? { sourceEventId: text(body.source_event_id) } : {}), ...(text(body.source_instance_id) ? { sourceInstanceId: text(body.source_instance_id) } : {}),
+  };
 }

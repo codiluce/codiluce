@@ -5,21 +5,22 @@
 // notebook for editing…) or a bubble (thinking, writing the reply, asking).
 // The origin of a character is its feet; the session's color is a ring on
 // the ground. Drawing only: what the agents do is decided in crew.ts.
+import { HARNESSES, harnessId, type HarnessId } from '../../src/harnesses/registry';
+import { CHARACTERS, type CharacterSprite } from './crew-characters';
 
 export type Pose =
   | 'idle' | 'read' | 'edit' | 'search' | 'command' | 'test' | 'wait' | 'sit' | 'sleep' | 'wave'
   | 'think' | 'reply' | 'plan' | 'web';
-export type Provider = 'claude-code' | 'codex' | 'other';
+export type Provider = HarnessId | 'other';
 export const POSE_LABEL: Record<Pose, string> = {
   idle: 'idle', read: 'reading', edit: 'editing', search: 'searching', command: 'running a command', test: 'running tests', wait: 'waiting for permission',
   sit: 'resting', sleep: 'asleep', wave: 'done', think: 'thinking', reply: 'writing the reply', plan: 'planning', web: 'on the web',
 };
-export const PROVIDER: Record<Provider, { label: string; short: string }> = {
-  'claude-code': { label: 'Claude Code', short: 'CC' },
-  codex: { label: 'Codex', short: 'CX' },
+export const PROVIDER = {
+  ...Object.fromEntries(HARNESSES.map(item => [item.id, { label: item.label, short: item.short }])),
   other: { label: 'Other agent', short: '··' },
-};
-export function providerOf(provider: string): Provider { return provider === 'codex' || provider === 'claude-code' ? provider : 'other'; }
+} as Record<Provider, { label: string; short: string }>;
+export function providerOf(provider: string): Provider { return harnessId(provider) ?? 'other'; }
 export interface Look {
   provider: Provider;
   /** The session's color (ground ring, name). */
@@ -70,7 +71,7 @@ function zees(ctx: CanvasRenderingContext2D, x: number, y: number, u: number, ti
   ctx.restore();
 }
 
-interface Sprite { rows: string[]; colors: Record<string, string>; hand: [number, number] }
+type Sprite = CharacterSprite;
 // Clawd: the banner's 16 × 5 half-blocks with rows doubled (square pixels), a lighter top and a shaded base.
 const CLAWD_ROWS = [
   '...TTTTTTTTTTTT...',
@@ -123,11 +124,11 @@ const BOLT_ROWS = [
   '...DD..DD...',
   '............',
 ];
-const SPRITES: Record<Provider, Sprite> = {
+const SPRITES = Object.assign(Object.fromEntries(HARNESSES.map(item => [item.id, CHARACTERS[item.character] ?? { rows: BOLT_ROWS, colors: { B: '#9aa0aa', L: '#c4c9d1', D: '#4a4f58', W: '#e9f3ff', C: '#f2c94c' }, hand: [11, 8] }] as const)) as Record<Provider, Sprite>, {
   'claude-code': { rows: CLAWD_ROWS, colors: { B: '#d97757', A: '#d97757', R: '#d97757', T: '#e8977a', S: '#bf6142', L: '#bf6142', E: '#24140f' }, hand: [17, 4] },
   codex: { rows: CODEX_ROWS, colors: { B: '#3e6ff4', A: '#2f58dc', R: '#2f58dc', L: '#86a6ff', D: '#2747c4', K: '#0c1736', C: '#9fe6ff', N: '#1b2f78' }, hand: [15, 14] },
   other: { rows: BOLT_ROWS, colors: { B: '#9aa0aa', L: '#c4c9d1', D: '#4a4f58', W: '#e9f3ff', C: '#f2c94c' }, hand: [11, 8] },
-};
+});
 const PROPS: Partial<Record<Pose, { rows: string[]; colors: Record<string, string> }>> = {
   read: { rows: ['.WWW...', 'W...W..', 'W...W..', 'W...W..', '.WWW...', '....HH.', '.....HH'], colors: { W: '#e8e2d4', H: '#8a5a3c' } },
   edit: { rows: ['NNNNN..', 'NRNNN..', 'NRNNNY.', 'NRNNYY.', 'NRNYY..', 'NNNNN..', '.......'], colors: { N: '#f4ecd8', R: '#c95f4a', Y: '#f2c94c' } },

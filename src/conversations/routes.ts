@@ -3,6 +3,7 @@ import type { ConversationService } from './service.js';
 import type { ConversationQuery } from './model.js';
 import type { AgentProvider } from '../activity/model.js';
 import { createHash } from 'node:crypto';
+import { isHarnessId } from '../harnesses/registry.js';
 
 export interface ConversationRoutes { conversations: ConversationService; readOnly?: boolean; liveSessions?: () => { provider: AgentProvider; sessionId: string }[] }
 export function isConversationPath(pathname: string): boolean { return /^\/api\/conversations(?:\/|$)/.test(pathname); }
@@ -20,7 +21,7 @@ export async function handleConversationRoute(context: ConversationRoutes, reque
         return item ? send(200, item) : send(404, { error: 'This agent session has not been imported. Refresh history to import available sessions.' });
       }
       const params = url.searchParams, provider = params.get('provider'), action = params.get('action');
-      if (provider && provider !== 'codex' && provider !== 'claude-code') throw new Error('Unsupported provider');
+      if (provider && !isHarnessId(provider)) throw new Error('Unsupported provider');
       if (action && !['read', 'edited', 'added'].includes(action)) throw new Error('Invalid file action');
       const query: ConversationQuery = { query: params.get('q') ?? undefined, provider: provider as ConversationQuery['provider'] || undefined, path: params.get('path') ?? undefined, action: action as ConversationQuery['action'] || undefined, limit: params.has('limit') ? Number(params.get('limit')) : undefined, offset: params.has('offset') ? Number(params.get('offset')) : undefined };
       const etag = `"${createHash('sha256').update(JSON.stringify([context.conversations.scope, context.conversations.store.revision(), !!context.readOnly, query])).digest('hex').slice(0, 32)}"`;

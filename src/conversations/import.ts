@@ -7,6 +7,8 @@ import type { AgentProvider } from '../activity/model.js';
 import { repositoryPath } from '../activity/normalize.js';
 import { conversationId, type CallStatus, type Conversation, type ConversationMessage } from './model.js';
 import { toolPaths } from './paths.js';
+import { harnessTranscriptSource, importHarnessTranscript } from '../harnesses/history.js';
+import { harnessLabel, sessionKey } from '../harnesses/registry.js';
 
 export const object = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const text = (value: unknown): string => typeof value === 'string' ? value : '';
@@ -29,6 +31,7 @@ export async function transcriptFiles(directory: string, depth = 0): Promise<str
 }
 
 export async function transcriptSource(root: string, file: string, provider: AgentProvider): Promise<TranscriptSource | undefined> {
+  if (!['codex', 'claude-code'].includes(provider) || path.basename(path.dirname(file)) === 'agent-exports') return harnessTranscriptSource(root, file, provider);
   const handle = await open(file, 'r');
   try {
     const buffer = Buffer.alloc(256 * 1024);
@@ -63,6 +66,7 @@ function outputStatus(value: unknown, failed = false): CallStatus {
 
 /** Stream original JSONL. System instructions and reasoning are intentionally excluded. */
 export async function importTranscript(root: string, source: TranscriptSource): Promise<Conversation> {
+  if (!['codex', 'claude-code'].includes(source.provider) || path.basename(path.dirname(source.file)) === 'agent-exports') return importHarnessTranscript(root, source);
   const conversation: Conversation = { id: conversationId(source.provider, source.sessionId), provider: source.provider, sessionId: source.sessionId, title: source.title ?? '', cwd: source.cwd, excerpt: '', messages: [], paths: [] };
   const calls = new Map<string, { message: ConversationMessage; wrapper: boolean }>();
   const seen = new Set<string>();
@@ -111,7 +115,7 @@ export async function importTranscript(root: string, source: TranscriptSource): 
         if (row.type === 'turn_context' && typeof item.cwd === 'string') cwd = path.resolve(item.cwd);
         if (row.type === 'event_msg' && ['user_message', 'agent_message'].includes(text(item.type))) { fallback.push({ id, role: item.type === 'user_message' ? 'user' : 'assistant', text: text(item.message), at }); positions.set(id, lineNumber); }
         if (row.type !== 'response_item') continue;
-        if (item.type === 'message' && ['user', 'assistant'].includes(text(item.role))) {
+        if (item.type === 'message' && ['user', 'assistant'].includes(text(item.role)) && (!item.channel || ['commentary', 'final'].includes(text(item.channel)))) {
           const content = messageText(item.content); if (content) append({ id: text(item.id) || id, role: item.role as 'user' | 'assistant', text: content, at });
         } else if (item.type === 'function_call' || item.type === 'custom_tool_call') {
           let input: unknown = item.input ?? item.arguments;
@@ -142,7 +146,7 @@ export async function importTranscript(root: string, source: TranscriptSource): 
   for (const role of ['user', 'assistant'] as const) if (!conversation.messages.some(message => message.role === role)) for (const message of fallback.filter(message => message.role === role)) append(message);
   conversation.messages.sort((a, b) => (positions.get(a.id) ?? 0) - (positions.get(b.id) ?? 0));
   const first = conversation.messages.find(message => message.role === 'user' && !/^# AGENTS\.md instructions|^<environment_context>|^<INSTRUCTIONS>/.test(message.text))?.text ?? '';
-  conversation.title ||= first.replace(/<[^>]+>[\s\S]*?<\/[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 140) || `${source.provider === 'codex' ? 'Codex' : 'Claude Code'} · ${source.sessionId.slice(0, 12)}`;
+  conversation.title ||= first.replace(/<[^>]+>[\s\S]*?<\/[^>]+>/g, '').replace(/\s+/g, ' ').trim().slice(0, 140) || `${harnessLabel(source.provider)} · ${source.sessionId.slice(0, 12)}`;
   conversation.excerpt = first.replace(/\s+/g, ' ').slice(0, 220);
   return conversation;
 }

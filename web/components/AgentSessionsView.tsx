@@ -8,6 +8,7 @@ import { providerName } from '../lib/activity';
 import { agentConversations } from '../lib/agent-conversations';
 import { ObservedActivity, SessionActivity } from './AgentSessionActivity';
 import { isSessionSetup } from '@engine/conversations/presentation';
+import { HARNESSES, sessionKey } from '@engine/harnesses/registry';
 
 const plainLinks = { resolve: () => undefined, hover: () => {}, follow: () => {}, pending: true };
 async function request<T>(url: string, options: { signal?: AbortSignal; method?: string; body?: unknown } = {}): Promise<T> {
@@ -63,8 +64,8 @@ export function AgentSessionsView({ compact = false }: { compact?: boolean }) {
     return () => { clearInterval(timer); controller.abort(); };
   }, [store, !!page, page?.readOnly]);
   const threads = agentConversations(page?.items ?? [], (agents.snapshot?.sessions ?? []).filter(session => !provider || session.provider === provider), agents.now, !query.trim() && !path && offset === 0);
-  const selectedSessions = agents.snapshot?.sessions.filter(session => `${session.provider}:${session.sessionId}` === journal.conversationId) ?? [];
-  const events = [...agents.snapshot?.events ?? []].reverse().filter(event => `${event.provider}:${event.sessionId}` === journal.conversationId);
+  const selectedSessions = agents.snapshot?.sessions.filter(session => sessionKey(session.provider, session.sessionId) === journal.conversationId) ?? [];
+  const events = [...agents.snapshot?.events ?? []].reverse().filter(event => event.sessionId && sessionKey(event.provider, event.sessionId) === journal.conversationId);
   const open = (id?: string) => { store.setActivity({ focus: undefined }); store.openJournal('conversations', { id, path }); };
   const sync = async () => {
     setSyncing(true); setError('');
@@ -75,7 +76,7 @@ export function AgentSessionsView({ compact = false }: { compact?: boolean }) {
     <header className="journal-heading"><div><h3>Agent sessions</h3><p>Live sessions and the discussions behind your code.</p></div><button className="button" disabled={syncing || !page || page.readOnly} onClick={() => void sync()}>{syncing ? 'Importing history…' : 'Import / refresh history'}</button></header>
     <div className="journal-filters">
       <input className="text-input" aria-label="Search agent sessions" placeholder="Search messages and titles…" value={query} onChange={event => { setQuery(event.target.value); setOffset(0); }} />
-      <select className="select" aria-label="Agents filter" value={provider} onChange={event => { setProvider(event.target.value); setOffset(0); }}><option value="">All agents</option><option value="codex">Codex</option><option value="claude-code">Claude Code</option></select>
+      <select className="select" aria-label="Agents filter" value={provider} onChange={event => { setProvider(event.target.value); setOffset(0); }}><option value="">All agents</option>{HARNESSES.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
       <input className="text-input mono" aria-label="Filter agent sessions by file or folder" placeholder="File or folder…" value={path} onChange={event => { setPath(event.target.value); setOffset(0); }} />
 
     </div>
@@ -84,7 +85,7 @@ export function AgentSessionsView({ compact = false }: { compact?: boolean }) {
     <div className={`journal-columns${journal.conversationId ? ' has-reader' : ''}`}>
       <aside className="journal-list" aria-label="Saved agent sessions">
         <p className="note">{page ? `${page.total} agent session${page.total === 1 ? '' : 's'}` : 'Loading history…'}{page && checking && <small className="sessions-refresh" role="status">Checking for updates…</small>}</p>
-        {page?.total === 0 && !threads.length && <p className="absent">{query || path || provider ? 'No agent sessions match these filters.' : 'Import available local Codex and Claude Code history for this repository. Refresh again to include new messages. Imports stay on this machine.'}</p>}
+        {page?.total === 0 && !threads.length && <p className="absent">{query || path || provider ? 'No agent sessions match these filters.' : 'Import available local session history for this repository. Refresh again to include new messages. Imports stay on this machine.'}</p>}
         {threads.map(item => <div key={item.id} className={['running', 'waiting'].includes(item.status ?? '') ? 'agent-work agent-session-block' : 'agent-session-block'}><button className={`journal-card${item.sessions.length ? ' agent-session' : ''}`} aria-pressed={journal.conversationId === item.id} onClick={() => open(item.id)}>
           <span className="agent-conversation-title"><strong>{item.title}</strong>{item.status && <span className={`agent-status ${item.status}`}>{item.status}</span>}</span>
           <small>{providerName(item.provider)} · {date(item.saved?.updatedAt ?? (item.lastSeen ? new Date(item.lastSeen).toISOString() : undefined))}{item.sessions.length > 1 ? ` · ${item.sessions.length} agents` : ''}</small>

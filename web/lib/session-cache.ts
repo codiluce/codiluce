@@ -1,4 +1,5 @@
 import type { ConversationPage, ConversationQuery, ConversationSummary } from '../../src/conversations/model';
+import { isHarnessId } from '../../src/harnesses/registry';
 
 export type SessionPage = ConversationPage & { readOnly: boolean; scope: string };
 type StorageLike = Pick<Storage, 'getItem' | 'setItem'>;
@@ -69,5 +70,5 @@ function validPage(value: unknown, scope: string): value is SessionPage {
 function validSummary(value: unknown): value is ConversationSummary {
   if (!value || typeof value !== 'object') return false;
   const item = value as ConversationSummary;
-  return ['codex', 'claude-code'].includes(item.provider) && ['id', 'sessionId', 'title', 'excerpt', 'cwd'].every(key => typeof item[key as keyof ConversationSummary] === 'string') && Number.isSafeInteger(item.messages) && item.messages >= 0 && Number.isSafeInteger(item.paths) && item.paths >= 0 && (item.startedAt === undefined || typeof item.startedAt === 'string') && (item.updatedAt === undefined || typeof item.updatedAt === 'string');
+  return isHarnessId(item.provider) && ['id', 'sessionId', 'title', 'excerpt', 'cwd'].every(key => typeof item[key as keyof ConversationSummary] === 'string') && Number.isSafeInteger(item.messages) && item.messages >= 0 && Number.isSafeInteger(item.paths) && item.paths >= 0 && (item.startedAt === undefined || typeof item.startedAt === 'string') && (item.updatedAt === undefined || typeof item.updatedAt === 'string');
 }

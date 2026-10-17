@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { sessionKey } from '../../src/harnesses/registry';
 import { test } from 'node:test';
 import type { ActivityEvent } from '../../src/activity/model';
 import { activityMarks, agentColor } from '../lib/activity';
@@ -37,4 +38,12 @@ test('active work keeps observed files lit until idle, suppresses failed calls, 
   assert.ok(overlay.areas.has('other')); assert.ok(overlay.areas.has('root'));
   assert.equal(activeAgentOverlay({ ...snapshot, sessions: snapshot.sessions.map(session => ({ ...session, status: 'idle' })) }, 60000), undefined);
   assert.equal(activeAgentOverlay(snapshot, 400001), undefined, 'unconfirmed stale activity stops lighting the map');
+});
+
+test('new harness session keys retain file activity when native IDs contain separators', async () => {
+  const { activeSessionFiles } = await import('../lib/activity');
+  const id = sessionKey('pi', 'session:one');
+  const snapshot = { enabled: true, sessions: [{ actor: id, provider: 'pi' as const, sessionId: 'session:one', status: 'running' as const, lastSeen: 2000, label: 'Read' }], events: [event({ actor: id, provider: 'pi', sessionId: 'session:one' })] };
+  assert.equal(activeSessionFiles(snapshot, 2000, id).length, 1);
+  assert.equal(activeSessionFiles(snapshot, 2000, 'pi:another').length, 0);
 });

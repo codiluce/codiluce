@@ -5,6 +5,8 @@ import { activityLaunch, hookConfiguration } from './hooks.js';
 import { toolDirectory } from '../launcher.js';
 import { installKind } from '../setup/settings.js';
 import type { ActivityPath, AgentConnection } from './model.js';
+import { HARNESSES, harnessId } from '../harnesses/registry.js';
+import { integrationConfiguration } from '../harnesses/setup.js';
 
 export interface ActivityRouteOptions {
   connections?: () => Promise<AgentConnection[]>;
@@ -16,7 +18,10 @@ export async function handleActivityRoute(service: ActivityService, request: Inc
   if (request.method === 'GET' && url.pathname === '/api/agents/setup') {
     if (!service.root || !stateDirectory) return send(200, { available: false });
     const tool = await toolDirectory(), kind = installKind(tool, service.root);
-    return send(200, { available: service.enabled, codex: hookConfiguration('codex', activityLaunch(tool, kind, 'codex', service.root, stateDirectory)), claude: hookConfiguration('claude-code', activityLaunch(tool, kind, 'claude-code', service.root, stateDirectory)), connections: await options.connections?.() ?? [] });
+    return send(200, { available: service.enabled, codex: hookConfiguration('codex', activityLaunch(tool, kind, 'codex', service.root, stateDirectory)), claude: hookConfiguration('claude-code', activityLaunch(tool, kind, 'claude-code', service.root, stateDirectory)), connections: await options.connections?.() ?? [],
+      harnesses: HARNESSES.map(({ id, label, profiles, historyNote, childAttribution }) => ({ id, label, profiles, historyNote, childAttribution })),
+      integrations: HARNESSES.flatMap(item => item.profiles.map(profile => integrationConfiguration(item.id, tool, kind, service.root!, stateDirectory, { profile: profile.id }))),
+    });
   }
   if (request.method === 'GET' && url.pathname === '/api/agents/stream') {
     response.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' });
@@ -46,8 +51,9 @@ export async function handleActivityRoute(service: ActivityService, request: Inc
         return send(200, { ...result, snapshot: service.snapshot() });
       } catch (error) { return send(422, { error: error instanceof Error ? error.message : 'Could not reveal the observed file' }); }
     }
-    if (body.provider !== 'codex' && body.provider !== 'claude-code') return send(400, { error: 'Unsupported agent provider' });
-    const event = normalizeHook(service.root, body.provider, body.payload);
+    const provider = harnessId(body.provider);
+    if (!provider) return send(400, { error: 'Unsupported agent provider' });
+    const event = normalizeHook(service.root, provider, body.payload);
     if (!event) return send(400, { error: 'Invalid or out-of-repository hook event' });
     service.record(event); send(202, { accepted: true });
   } catch { send(400, { error: 'Invalid hook event' }); }

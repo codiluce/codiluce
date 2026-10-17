@@ -1,9 +1,15 @@
 # Agents: observed activity on the map
 
+Twelve harness families now share a registry and adapters: Codex, Claude Code, Cursor,
+OpenCode, Pi, GitHub Copilot, Gemini CLI, Cline, Antigravity, Cascade (Windsurf / Devin
+Desktop), OpenClaw and Hermes. See the [connection guide](../agents/harnesses.md) for
+setup commands, runtime profiles, history coverage and validation limits. The
+[compatibility roadmap](agent-harness-compatibility.html) records the original plan.
+
 Developed in `/var/www/html/codiluce-agents`, branch `feature/live-agents`.
 
 The **Agents** button opens a panel beside the map, like the other navigation
-tools. It combines searchable Codex and Claude Code agent sessions with observed runtime status,
+tools. It combines searchable connected harness sessions with observed runtime status,
 correlated by provider and session ID. Active agent sessions rise to the top. Select one to read
 human and assistant messages; consecutive tool calls and observed activity are collapsed.
 The same panel can expand for reading and dock again without losing its filters or reading position.
@@ -31,6 +37,12 @@ The CLI can print the same mergeable configuration:
 npm run codiluce -- activity hooks --agent codex --repo /path/to/repository
 npm run codiluce -- activity hooks --agent claude-code --repo /path/to/repository
 ```
+
+For any registered harness, `codiluce harness setup --agent NAME` previews MCP and
+activity files; append `--apply` to install. OpenCode and Pi use native plugins or
+extensions. OpenClaw supplies a plugin and manifest; follow its printed enablement
+instructions. Hermes uses native shell hooks. The connection dialog selects the
+runtime and shows independent MCP configuration, activity and history information.
 
 Installed packages use `codiluce activity hooks ...` instead. Pass
 `--state-dir` if the map uses a custom state directory. The generated command
@@ -76,7 +88,7 @@ as server-sent events, initially and on changes, with a heartbeat. Reconnection
 gets the current bounded snapshot rather than duplicating events. The live
 connection stays mounted when the panel is closed.
 
-`POST /api/agents/events` accepts `{ provider: "codex" | "claude-code", payload }`
+`POST /api/agents/events` accepts `{ provider: <registered harness ID>, payload }`
 with JSON content type and `X-Codiluce-Request: activity`. It normalizes the
 provider payload, rejects foreign working directories and repository escapes
 (including symlink escapes), and resolves paths against the current index.
@@ -160,3 +172,8 @@ becoming their conversation host.
 Protocol references: [Codex hooks](https://learn.chatgpt.com/docs/hooks),
 [Codex app-server](https://learn.chatgpt.com/docs/app-server),
 [Claude Code hooks](https://code.claude.com/docs/en/hooks).
+
+Native Pi session trees, Copilot CLI events, Gemini CLI project chat files and
+repository-scoped OpenClaw JSONL can also be imported. All twelve families accept
+explicit session exports; OpenCode's native JSON export can be imported directly.
+The capability notes distinguish these paths from automatic history discovery.

@@ -1,5 +1,7 @@
 import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { HARNESSES, harnessId } from './harnesses/registry.js';
+import { planIntegration, applyIntegration, integrationConfiguration } from './harnesses/setup.js';
 import { parseArgs } from 'node:util';
 import { stringify } from 'yaml';
 import { detectApplications, exists, loadConfig } from './core/config.js';
@@ -38,7 +40,10 @@ npx codiluce history status [--repo PATH] [--state-dir PATH]
 npx codiluce annotate [--repo PATH] [--state-dir PATH] [--tasks files,flows,commits,folders,domains,overview,chapters]
                        [--estimate] [--pilot] [--max-cost 10] [--concurrency 6] [--force]
 npx codiluce mcp [--repo PATH] [--state-dir PATH]
-npx codiluce activity hooks --agent codex|claude-code [--repo PATH] [--state-dir PATH]
+npx codiluce harness list
+npx codiluce harness setup --agent NAME [--profile PROFILE] [--scope project|user] [--apply] [--repo PATH]
+npx codiluce harness import --agent NAME --path EXPORT [--repo PATH] [--state-dir PATH]
+npx codiluce activity hooks --agent NAME [--profile PROFILE] [--repo PATH] [--state-dir PATH]
 
 Options: --search TEXT --type TYPE --id ID --path PATH --parent ID
          --direction incoming|outgoing|both --severity info|warning|error
@@ -101,12 +106,13 @@ to Claude Code with: claude mcp add codiluce -- npx -y codiluce mcp
 async function main(): Promise<void> {
   const string = { type: 'string' } as const;
   const boolean = { type: 'boolean' } as const;
-  const options = { agent: string, yes: boolean, history: string, 'json-progress': boolean, tasks: string, 'max-cost': string, concurrency: string, estimate: boolean, pilot: boolean, force: boolean, repo: string, 'state-dir': string, port: string, ui: string, search: string, type: string, id: string, path: string, parent: string, direction: string, severity: string, code: string, limit: string, offset: string, ref: string, since: string, commits: string, jobs: string, 'pr-metadata': string, 'all-parents': boolean, 'history-indexing': boolean, 'no-cache': boolean, 'no-open': boolean, 'build-ui': boolean, 'read-only': boolean, help: boolean };
+  const options = { agent: string, profile: string, scope: string, apply: boolean, event: string, yes: boolean, history: string, 'json-progress': boolean, tasks: string, 'max-cost': string, concurrency: string, estimate: boolean, pilot: boolean, force: boolean, repo: string, 'state-dir': string, port: string, ui: string, search: string, type: string, id: string, path: string, parent: string, direction: string, severity: string, code: string, limit: string, offset: string, ref: string, since: string, commits: string, jobs: string, 'pr-metadata': string, 'all-parents': boolean, 'history-indexing': boolean, 'no-cache': boolean, 'no-open': boolean, 'build-ui': boolean, 'read-only': boolean, help: boolean };
   const { positionals, values } = parseArgs({ allowPositionals: true, options });
   const command = positionals[0];
   if (values.help || !command) { console.log(HELP); return; }
   if (command === 'activity' && positionals[1] === 'hook') {
-    if (values.agent === 'codex' || values.agent === 'claude-code') await forwardHook(values.agent, path.resolve(values['state-dir'] ?? path.join(values.repo ?? process.cwd(), '.codiluce')), process.stdin);
+    const provider = harnessId(values.agent);
+    if (provider) await forwardHook(provider, path.resolve(values['state-dir'] ?? path.join(values.repo ?? process.cwd(), '.codiluce')), process.stdin, { event: values.event, profile: values.profile });
     return;
   }
   if (values['pr-metadata'] !== undefined && values['pr-metadata'] !== 'github') throw new Error('--pr-metadata supports: github');
@@ -143,14 +149,36 @@ async function main(): Promise<void> {
   }
   // An MCP client starts the server in the folder it works in (Codex), or fills in its workspace (Cursor's ${workspaceFolder}; left as is by clients that do not): the repository is that folder's Git top level.
   const repoValue = command === 'mcp' && typeof values.repo === 'string' && values.repo.includes('${') ? undefined : values.repo;
-  const root = await realpath(String(repoValue ?? (command === 'mcp' ? await gitTop(process.cwd()) : process.cwd())));
+  const root = await realpath(String(repoValue ?? (command === 'mcp' || command === 'harness' ? await gitTop(process.cwd()) : process.cwd())));
   const stateDirectory = path.resolve(String(values['state-dir'] ?? path.join(root, '.codiluce')));
   const database = path.join(stateDirectory, 'codiluce.db');
   if (command === 'activity') {
-    if (positionals[1] !== 'hooks' || values.agent !== 'codex' && values.agent !== 'claude-code') throw new Error('Usage: codiluce activity hooks --agent codex|claude-code [--repo PATH] [--state-dir PATH]');
+    const provider = harnessId(values.agent);
+    if (positionals[1] !== 'hooks' || !provider) throw new Error('Usage: codiluce activity hooks --agent NAME [--profile PROFILE] [--repo PATH] [--state-dir PATH]');
     const tool = await toolDirectory();
-    console.log(JSON.stringify(hookConfiguration(values.agent, activityLaunch(tool, installKind(tool, root), values.agent, root, stateDirectory)), null, 2));
+    console.log(JSON.stringify(['codex', 'claude-code'].includes(provider) ? hookConfiguration(provider, activityLaunch(tool, installKind(tool, root), provider, root, stateDirectory), values.profile) : integrationConfiguration(provider, tool, installKind(tool, root), root, stateDirectory, { profile: values.profile, mcp: false }), null, 2));
     return;
+  }
+  if (command === 'harness') {
+    if (positionals[1] === 'list') { console.log(JSON.stringify(HARNESSES, null, 2)); return; }
+    const provider = harnessId(values.agent);
+    if (!provider) throw new Error(`Choose --agent: ${HARNESSES.map(item => item.id).join(', ')}`);
+    if (positionals[1] === 'setup') {
+      if (values.scope && !['project', 'user'].includes(values.scope)) throw new Error('--scope must be project or user');
+      const tool = await toolDirectory();
+      const plan = await planIntegration(provider, tool, installKind(tool, root), root, stateDirectory, { profile: values.profile, scope: values.scope as 'project' | 'user' | undefined });
+      if (values.apply) await applyIntegration(plan);
+      console.log(JSON.stringify({ applied: !!values.apply, ...plan.integration, changes: plan.changes.map(file => ({ path: file.path, changed: file.before !== file.after })) }, null, 2));
+      return;
+    }
+    if (positionals[1] === 'import') {
+      if (!values.path) throw new Error('Specify --path to a session export');
+      const { importSessionExport } = await import('./harnesses/history.js');
+      const imported = await importSessionExport(provider, root, stateDirectory, path.resolve(values.path));
+      console.log(JSON.stringify(imported, null, 2));
+      return;
+    }
+    throw new Error('Usage: codiluce harness list|setup|import');
   }
   if (command === 'init') {
     await mkdir(stateDirectory, { recursive: true });

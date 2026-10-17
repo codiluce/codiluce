@@ -1,4 +1,6 @@
-import { normalizeHook, repositoryPath } from '../activity/normalize.js';
+import { repositoryPath } from '../activity/normalize.js';
+import { shellInput } from '../activity/shell.js';
+import path from 'node:path';
 import type { ConversationPath, FileAction } from './model.js';
 
 const record = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -86,8 +88,11 @@ export function toolPaths(root: string, cwd: string, name: string, raw: unknown)
     for (const match of patch.matchAll(/^\*\*\* (Add File|Update File|Delete File|Move to): (.+)\r?$/gm)) add(match[2]!.trim(), match[1] === 'Add File' ? 'added' : 'edited');
   } else if (/^(Bash|exec_command|shell_command)$/.test(tool)) {
     // Share the live feed's conservative shell interpretation; never execute the command.
-    const observed = normalizeHook(root, 'codex', { cwd, session_id: 'history-import', hook_event_name: 'PreToolUse', tool_name: tool, tool_input: input });
-    if (observed?.kind === 'read') for (const target of observed.paths) add(target.path, 'read', target.scope, root);
+    const observed = shellInput(String(input.command ?? input.cmd ?? ''));
+    const base = typeof input.workdir === 'string' ? path.resolve(cwd, input.workdir) : cwd;
+    if (observed?.tool === 'Read') {
+      if (Array.isArray(observed.input.paths)) for (const file of observed.input.paths) add(file, 'read', 'file', base);
+    }
   }
   return results;
 }

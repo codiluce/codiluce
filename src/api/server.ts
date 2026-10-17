@@ -43,7 +43,7 @@ export interface InspectionServerOptions {
   /** Read pull requests from the provider (open, merged, closed), with GITHUB_TOKEN when set. Off by default: the server makes no other network request. */
   pullRequests?: 'github';
   /** Override provider stores, primarily for isolated installations and fixtures. */
-  conversationSources?: { codexHome?: string; claudeHome?: string };
+  conversationSources?: { codexHome?: string; claudeHome?: string; harnessHomes?: Partial<Record<import('../harnesses/registry.js').HarnessId, string>> };
 }
 /** Header that a cross-origin page cannot send without a CORS preflight, which this server never grants. */
 export const INDEX_REQUEST_HEADER = 'x-codiluce-request';
