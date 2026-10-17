@@ -1,5 +1,9 @@
 # Design documents
 
+- [Software design and architecture feasibility](software-design-architecture-feasibility.html): research on
+  visualizing SOLID, ports and adapters, dependency injection, all 23 GoF patterns, and advanced architecture
+  techniques; deterministic checks, optional LLM assistance, current analyzer gaps, and a staged proposal.
+  Open the self-contained HTML in a browser. Research only; no application implementation.
 - [Agent harness compatibility roadmap](agent-harness-compatibility.html): ten target harnesses, MCP, hooks,
   session history, subagents and characters, with an extensible adapter design and delivery plan. Open the
   self-contained HTML in a browser.
