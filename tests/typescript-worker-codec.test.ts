@@ -11,6 +11,25 @@ import {GraphBuilder} from '../src/core/graph.js';
 const roundtrip = (value: unknown) => decode(encode(value, 64 * 1024 * 1024), 64 * 1024 * 1024);
 const reference = (value: unknown) => deserialize(serialize(value));
 
+test('ordinary decoder rejects duplicate own fields without a per-object key Set', () => {
+  const shared = {original: 'é😀\ud800\udfff'}, array: any = new Array(1000), value: any = {shared, alias: shared, array, map: new Map([[shared, shared]]), set: new Set([shared])};
+  value.self = value; array[999] = value;
+  Object.defineProperty(shared, '__proto__', {value: undefined, enumerable: true, writable: true, configurable: true});
+  const frame = encode(value, 1024 * 1024), NativeSet = globalThis.Set; let allocations = 0, actual: typeof value;
+  globalThis.Set = new Proxy(NativeSet, {construct(target, args, newTarget) {allocations++; return Reflect.construct(target, args, newTarget);}});
+  try {actual = decode(frame, 1024 * 1024);} finally {globalThis.Set = NativeSet;}
+  assert.equal(allocations, 2, 'Only the actual Set value and the sparse array key guard need Sets');
+  assert.deepEqual(actual, reference(value)); assert.deepEqual(serialize(actual), serialize(reference(value)));
+  assert.equal(actual.self, actual); assert.equal(actual.shared, actual.alias); assert.equal(actual.array[999], actual);
+  assert.equal(actual.map.get(actual.shared), actual.shared); assert.ok(actual.set.has(actual.shared));
+  assert.equal(Object.getPrototypeOf(actual.shared), Object.prototype); assert.ok(Object.hasOwn(actual.shared, '__proto__'));
+  for (const key of ['original', '__proto__', 'constructor', 'hasOwnProperty']) for (const original of [undefined, Object(19n), shared]) {
+    const object = Object.create(null); object[key] = original;
+    const encoded = encode(object, 1024 * 1024), malformed = Buffer.concat([encoded.subarray(0, -1), Buffer.from([10, 0, 2, 0])]);
+    assert.throws(() => decode(malformed, 1024 * 1024), {message: 'Invalid or duplicate compiler property'});
+  }
+});
+
 test('native boxed brands survive changed prototypes and realms without reading user tags', () => {
   let tagReads = 0;
   const factories = [() => new Number(-0), () => new Number(NaN), () => new String('é😀\ud800\udfff'), () => new Boolean(false), () => Object(-23n)];

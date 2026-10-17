@@ -406,15 +406,23 @@ function decodeTypeScriptPayload(bytes, maxBytes, stats, policy) {
       return;
     }
     push(() => frame(current));
-    if (current.kind === "object" || current.kind === "array") {
-      const key = tag === 14 /* Index */ && current.kind === "array" ? String(reader.uint()) : string(tag);
-      if (current.keys.has(key) || current.kind === "array" && (key === "length" || /^(?:0|[1-9]\d*)$/.test(key) && Number(key) < 4294967295 && Number(key) >= current.length)) throw Error("Invalid or duplicate compiler property");
+    if (current.kind === "object") {
+      const key = string(tag);
+      if (Object.hasOwn(current.value, key)) throw Error("Invalid or duplicate compiler property");
+      budget.peak("keysPerObject", current.keys + 1);
+      budget.add("properties");
+      current.keys++;
+      push(() => value((item) => {
+        current.value[key] = item;
+      }, current.depth + 1));
+    } else if (current.kind === "array") {
+      const key = tag === 14 /* Index */ ? String(reader.uint()) : string(tag);
+      if (current.keys.has(key) || key === "length" || /^(?:0|[1-9]\d*)$/.test(key) && Number(key) < 4294967295 && Number(key) >= current.length) throw Error("Invalid or duplicate compiler property");
       budget.peak("keysPerObject", current.keys.size + 1);
       budget.add("properties");
       current.keys.add(key);
       push(() => value((item) => {
-        if (current.kind === "object") current.value[key] = item;
-        else Object.defineProperty(current.value, key, { value: item, writable: true, enumerable: true, configurable: true });
+        Object.defineProperty(current.value, key, { value: item, writable: true, enumerable: true, configurable: true });
       }, current.depth + 1));
     } else if (current.kind === "set") {
       budget.add("properties");
@@ -461,7 +469,7 @@ function decodeTypeScriptPayload(bytes, maxBytes, stats, policy) {
       budget.add("objects");
       if (tag === 12 /* Object */) {
         item = Object.setPrototypeOf({}, null);
-        container = { kind: "object", value: item, keys: /* @__PURE__ */ new Set(), depth };
+        container = { kind: "object", value: item, keys: 0, depth };
       } else if (tag === 13 /* Array */) {
         const length = reader.uint();
         if (length > 4294967295) throw Error("Invalid compiler array length");

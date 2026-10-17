@@ -215,7 +215,7 @@ class Reader {
   double(): number { if (8 > this.bytes.length - this.offset) throw Error('Truncated compiler transport'); const value = this.bytes.readDoubleLE(this.offset); this.offset += 8; return value; }
   text(size: number, encoding: 'latin1' | 'utf16le'): string { if (!Number.isSafeInteger(size) || size < 0 || size > this.bytes.length - this.offset) throw Error('Truncated compiler transport'); const start = this.offset; this.offset += size; return this.bytes.toString(encoding, start, this.offset); }
 }
-type Frame = ({kind: 'object' | 'array'; value: Record<string, unknown>; length?: number; keys: Set<string>} | {kind: 'map'; value: Map<unknown, unknown>} | {kind: 'set'; value: Set<unknown>}) & {depth: number};
+type Frame = ({kind: 'object'; value: Record<string, unknown>; keys: number} | {kind: 'array'; value: Record<string, unknown>; length: number; keys: Set<string>} | {kind: 'map'; value: Map<unknown, unknown>} | {kind: 'set'; value: Set<unknown>}) & {depth: number};
 
 /** Decode only a complete bounded frame; the caller publishes nothing until
  * its existing protocol, graph and actual worker-exit checks also succeed. */
@@ -236,11 +236,16 @@ export function decodeTypeScriptPayload(bytes: Buffer, maxBytes: number, stats?:
     // Restore inheritance only after every original own field is complete.
     const tag = reader.byte(); if (tag === Tag.End) {if (current.kind === 'object') Object.setPrototypeOf(current.value, Object.prototype); return;}
     push(() => frame(current));
-    if (current.kind === 'object' || current.kind === 'array') {
-      const key = tag === Tag.Index && current.kind === 'array' ? String(reader.uint()) : string(tag);
-      if (current.keys.has(key) || current.kind === 'array' && (key === 'length' || /^(?:0|[1-9]\d*)$/.test(key) && Number(key) < 0xffffffff && Number(key) >= current.length!)) throw Error('Invalid or duplicate compiler property');
+    if (current.kind === 'object') {
+      const key = string(tag);
+      if (Object.hasOwn(current.value, key)) throw Error('Invalid or duplicate compiler property');
+      budget.peak('keysPerObject', current.keys + 1); budget.add('properties'); current.keys++;
+      push(() => value(item => {current.value[key] = item;}, current.depth + 1));
+    } else if (current.kind === 'array') {
+      const key = tag === Tag.Index ? String(reader.uint()) : string(tag);
+      if (current.keys.has(key) || key === 'length' || /^(?:0|[1-9]\d*)$/.test(key) && Number(key) < 0xffffffff && Number(key) >= current.length) throw Error('Invalid or duplicate compiler property');
       budget.peak('keysPerObject', current.keys.size + 1); budget.add('properties');
-      current.keys.add(key); push(() => value(item => {if (current.kind === 'object') current.value[key] = item; else Object.defineProperty(current.value, key, {value: item, writable: true, enumerable: true, configurable: true});}, current.depth + 1));
+      current.keys.add(key); push(() => value(item => {Object.defineProperty(current.value, key, {value: item, writable: true, enumerable: true, configurable: true});}, current.depth + 1));
     } else if (current.kind === 'set') { budget.add('properties'); reader.offset--; push(() => value(item => {current.value.add(item);}, current.depth + 1)); }
     else if (current.kind === 'map') {
       const map = current.value;
@@ -260,7 +265,7 @@ export function decodeTypeScriptPayload(bytes: Buffer, maxBytes: number, stats?:
     else {
       budget.add('objects');
       // Keep ordinary-object writes inert to inherited setters/read-only fields.
-      if (tag === Tag.Object) { item = Object.setPrototypeOf({}, null); container = {kind: 'object', value: item as Record<string, unknown>, keys: new Set(), depth}; }
+      if (tag === Tag.Object) { item = Object.setPrototypeOf({}, null); container = {kind: 'object', value: item as Record<string, unknown>, keys: 0, depth}; }
       else if (tag === Tag.Array) { const length = reader.uint(); if (length > 0xffffffff) throw Error('Invalid compiler array length'); budget.add('arraySlots', length); item = new Array(length); container = {kind: 'array', value: item as unknown as Record<string, unknown>, length, keys: new Set(), depth}; }
       else if (tag === Tag.Map) { item = new Map(); container = {kind: 'map', value: item as Map<unknown, unknown>, depth}; }
       else if (tag === Tag.Set) { item = new Set(); container = {kind: 'set', value: item as Set<unknown>, depth}; }
