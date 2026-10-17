@@ -161,7 +161,21 @@
         ".codiluce/validation-codec-own-key-history-performance/controller.json",
         ".codiluce/validation-codec-own-key-history-performance/corpus/receipt.json"
       ],
-      "exit": "Only separately approved changed-runtime work; preserve original samples, unchanged 1.1 median guard, full graphs and column ledgers; new output directory."
+      "exit": "Only separately approved changed-runtime work; preserve original samples, unchanged 1.1 median guard, full graphs and column ledgers; new output directory.",
+      "promisingCandidates": [
+        {
+          "name": "Array decoder own-key admission",
+          "status": "Private unexecuted draft; remove per-array key Set allocations while preserving malformed-key admission and exact wire/error behavior."
+        },
+        {
+          "name": "Per-language native service retirement",
+          "status": "Private unexecuted draft; release completed native services earlier, with future/shared syntax, Rust ordering, custom composition and failure cleanup proofs required."
+        },
+        {
+          "name": "String/property/identity-map allocation and GC profiling",
+          "status": "Use original fact frames to locate allocation cost; preserve prior held/failed prototypes. These are investigation hypotheses, not delivered improvements."
+        }
+      ]
     },
     {
       "id": "F2",
@@ -196,5 +210,58 @@
     "file": "docs/compatibility-catalog.json",
     "sha256": "5fffa8523832189abb128a240eae06c74eb893bdcf54ea9373e327898a1204aa",
     "revision": "0dc32ef0ab8b55ff6d70beddd39ba74b548751d5"
+  },
+  "reproduction": {
+    "runDuringClosure": false,
+    "workingDirectory": "/var/www/html/codiluce-multilingual/.codiluce/validation-codec-own-key-history-performance/observer",
+    "argv": [
+      "/home/ojoven/.nvm/versions/node/v22.12.0/bin/node",
+      "--experimental-sqlite",
+      "--import",
+      "tsx",
+      "/var/www/html/codiluce-multilingual/.codiluce/validation-codec-own-key-history-performance/observer/scripts/observe-production-history-performance.mjs",
+      "--qualification",
+      "/var/www/html/codiluce-multilingual/.codiluce/validation-codec-own-key-history/installed-history-qualification.json",
+      "--baseline",
+      "/var/www/html/codiluce-multilingual/.codiluce/validation-compiler-structure-history/current-source-baseline/corpus/receipt.json",
+      "--baseline-execution-receipt",
+      "/var/www/html/codiluce-multilingual/.codiluce/validation-compiler-structure-history/installed-entrypoint/corpus/receipt.json",
+      "--baseline-execution-qualification",
+      "/var/www/html/codiluce-multilingual/.codiluce/validation-compiler-structure-history/installed-history-qualification.json",
+      "--baseline-engine",
+      "/var/www/html/codiluce-multilingual/.codiluce/validation-typescript-codec-structure-release/first-normal-package-evidence/consumer/node_modules",
+      "--current-engine",
+      "/var/www/html/codiluce-multilingual/.codiluce/validation-codec-own-key-release/actual-first-installation/consumer/node_modules",
+      "--git-metadata",
+      "/var/www/html/codiluce-multilingual/.codiluce/validation-compiler-structure-history/git-metadata.json",
+      "--corpus",
+      "/var/www/html/codiluce-multilingual/.codiluce/validation-codec-own-key-history-performance/inputs/production-history-corpus.json",
+      "--profiles",
+      "/var/www/html/codiluce-multilingual/.codiluce/validation-codec-own-key-history-performance/inputs/production-head-profiles.json",
+      "--output",
+      "/var/www/html/codiluce-multilingual/test-results/multilingual-performance-follow-up-NEW",
+      "--repetitions",
+      "3",
+      "--source",
+      "flask=/var/www/html/codiluce-multilingual/.codiluce/validation-compiler-structure-history/sources/flask",
+      "--source",
+      "memos=/var/www/html/codiluce-multilingual/.codiluce/validation-compiler-structure-history/sources/memos",
+      "--source",
+      "bookstack=/var/www/html/codiluce-multilingual/.codiluce/validation-compiler-structure-history/sources/bookstack",
+      "--source",
+      "firefly-iii=/var/www/html/codiluce-multilingual/.codiluce/validation-compiler-structure-history/sources/firefly-iii",
+      "--source",
+      "axum=/var/www/html/codiluce-multilingual/.codiluce/validation-compiler-structure-history/sources/axum",
+      "--source",
+      "full-stack-fastapi=/var/www/html/codiluce-multilingual/.codiluce/validation-compiler-structure-history/sources/full-stack-fastapi"
+    ],
+    "originalOutputPreserved": "/var/www/html/codiluce-multilingual/.codiluce/validation-codec-own-key-history-performance/corpus",
+    "newOutputMustNotExist": true,
+    "controllerFile": ".codiluce/validation-codec-own-key-history-performance/controller.json",
+    "controllerSha256": "5af83fa43cff7965c5d7aba5b8e61d5eef018870a15e1e26998d1548ded59e19",
+    "prerequisites": "Original frozen observer, both exact retained actual package installations, source clones, copied Git metadata, corpus/configuration inputs and completed source/installed/history receipts. A clean clone lacks these ignored assets: reconstruct and qualify matching prerequisites before a separately approved new attempt.",
+    "corpusFile": "docs/production-history-corpus.json",
+    "profilesFile": "docs/production-head-profiles.json",
+    "targetExecution": false
   }
 }
