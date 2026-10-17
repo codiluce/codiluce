@@ -155,21 +155,21 @@ test('the cast hops to the files it reads and steps outside, beside the nearest 
   assert.equal(cast.actors.size, 0);
 });
 
-test('the map projection is a saved preference, the 2D plan by default, and every map draws in it', async () => {
+test('the map projection is a saved preference, 3D by default, and every map draws in it', async () => {
   // Preferences and the middle need no API calls.
   const api = {} as AtlasApi;
   const saved = new Map<string, string>();
   const storage = { getItem: (key: string) => saved.get(key) ?? null, setItem: (key: string, value: string) => void saved.set(key, value) };
   const store = new AtlasStore(api, { storage });
   assert.deepEqual(store.getState().views, DEFAULT_VIEWS);
-  assert.equal(DEFAULT_VIEWS.map, 'plan');
+  assert.equal(DEFAULT_VIEWS.map, 'iso');
+  close(project(10, 0).y, 5);
+  store.setViews({ map: 'plan', focus: 'gather', labels: 'numbered' });
   // In plan, the projection is the ground seen from above: elevation does not show.
   assert.deepEqual(project(10, 20, 5), { x: 10, y: 20 });
   assert.deepEqual(projectedBounds({ x: 1, y: 2, w: 3, h: 4 }, 0, 9), { minX: 1, minY: 2, maxX: 4, maxY: 6 });
-  store.setViews({ map: 'iso', focus: 'gather', labels: 'numbered' });
-  close(project(10, 0).y, 5);
   const again = new AtlasStore(api, { storage });
-  assert.deepEqual(again.getState().views, { map: 'iso', focus: 'gather', labels: 'numbered' });
+  assert.deepEqual(again.getState().views, { map: 'plan', focus: 'gather', labels: 'numbered' });
   // Unknown values fall back to the defaults.
   saved.set('codiluce:prefs', JSON.stringify({ views: { map: 'lift', focus: 'gather' } }));
   assert.deepEqual(new AtlasStore(api, { storage }).getState().views, { ...DEFAULT_VIEWS, focus: 'gather' });

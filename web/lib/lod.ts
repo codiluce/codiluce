@@ -4,7 +4,7 @@
 import type { NodeSummary, Rect } from '@engine/projection/dto';
 
 export interface LodConfig {
-  /** Container opens (children drawn and loaded) at this on-screen size in CSS px. */
+  /** Container opens (children drawn and loaded) at this on-screen size in CSS px (main map: Settings › Map › Open folders from). */
   openPx: number;
   /** Children fade in between openPx and openPx * (1 + fadeRange). */
   fadeRange: number;
@@ -18,7 +18,7 @@ export interface LodConfig {
   /** Upper bound on drawn primitives per frame; deeper containers stay closed beyond it. */
   budget: number;
 }
-export const DEFAULT_LOD: LodConfig = { openPx: 210, fadeRange: 0.45, labelPx: 30, summaryPx: 90, detailPx: 150, sourcePx: 560, budget: 7000 };
+export const DEFAULT_LOD: LodConfig = { openPx: 150, fadeRange: 0.45, labelPx: 30, summaryPx: 90, detailPx: 150, sourcePx: 560, budget: 7000 };
 /** The map as a small overview in a corner (a tool in the middle): areas open early, names only, no source. */
 export const CORNER_LOD: LodConfig = { ...DEFAULT_LOD, openPx: 70, labelPx: 46, summaryPx: 1e9, detailPx: 1e9, sourcePx: 1e9, budget: 2500 };
 

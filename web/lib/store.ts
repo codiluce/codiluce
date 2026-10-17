@@ -14,7 +14,7 @@ import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, Entity
 import type { CatalogTab } from './catalog';
 import { fromRequestFlow, fromSteps, type MapFlow } from './map-flow';
 import { isAbort, type AtlasApi } from './api';
-import type { Level } from './lod';
+import { DEFAULT_LOD, type Level } from './lod';
 import { Scene } from './scene';
 import { SessionListCache } from './session-cache';
 import { setFlat } from './camera';
@@ -132,8 +132,8 @@ export type Connections = 'arcs' | 'rails';
 /**
  * How the map and the tools drawing it look (Settings, Views). The map's
  * projection is one for everything (the map, History's commits, Focus, the
- * agents on the map): the plan seen from straight above (`plan`, the default) or
- * the isometric view. Focus keeps what it shows at its places on the map
+ * agents on the map): the isometric view (`iso`, the default) or the plan seen
+ * from straight above. Focus keeps what it shows at its places on the map
  * (`map`, the default) or gathers it, packed (`gather`).
  */
 export type MapProjection = 'plan' | 'iso';
@@ -141,8 +141,13 @@ export type FocusLayout = 'map' | 'gather';
 /** Where arrow labels go: placed where they cover least, numbered with a legend, or on the line. */
 export type ArrowLabels = 'placed' | 'numbered' | 'line';
 export interface ViewPrefs { map: MapProjection; focus: FocusLayout; labels: ArrowLabels }
-export const DEFAULT_VIEWS: ViewPrefs = { map: 'plan', focus: 'map', labels: 'placed' };
+export const DEFAULT_VIEWS: ViewPrefs = { map: 'iso', focus: 'map', labels: 'placed' };
 const VIEW_CHOICES: { [K in keyof ViewPrefs]: readonly ViewPrefs[K][] } = { map: ['plan', 'iso'], focus: ['map', 'gather'], labels: ['placed', 'numbered', 'line'] };
+/** Settings › Map › Open folders from, in on-screen CSS px: kept within the slider's range; missing or invalid, the default. */
+export const OPEN_PX_RANGE = { min: 60, max: 360, step: 10 } as const;
+export function openSize(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.min(OPEN_PX_RANGE.max, Math.max(OPEN_PX_RANGE.min, Math.round(value))) : DEFAULT_LOD.openPx;
+}
 export function viewPrefs(saved: Partial<Record<keyof ViewPrefs, string>> | undefined): ViewPrefs {
   const pick = <K extends keyof ViewPrefs>(key: K): ViewPrefs[K] => (VIEW_CHOICES[key] as readonly string[]).includes(saved?.[key] ?? '') ? saved![key] as ViewPrefs[K] : DEFAULT_VIEWS[key];
   return { map: pick('map'), focus: pick('focus'), labels: pick('labels') };
@@ -313,6 +318,8 @@ export interface AtlasState {
   shapes: boolean;
   /** Draw blocks a little inside their places, with streets between them. */
   streets: boolean;
+  /** Settings › Map: on-screen size (CSS px) from which the main map opens a folder to show what it holds. */
+  openPx: number;
   staleIndex: boolean;
   sceneRevision: number;
   impact: ImpactState;
@@ -444,12 +451,14 @@ export class AtlasStore {
   constructor(readonly api: AtlasApi, private readonly options: StoreOptions = {}) {
     this.sessions = new SessionListCache(options.storage);
     this.openingHash = options.location?.hash;
-    let prefs: { themeId?: string; shapes?: boolean; streets?: boolean; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey; explainLens?: boolean; chatModel?: string; flowSplit?: FlowSplit; connections?: Connections; views?: Partial<Record<keyof ViewPrefs, string>>; tourView?: string; showAgents?: boolean } = {};
+    // Building shapes and findings on the map are opt-in, saved as `buildingShapes` and `mapFindings`: earlier
+    // versions saved `shapes: true` and `showDiagnostics: true` with every preference.
+    let prefs: { themeId?: string; buildingShapes?: boolean; streets?: boolean; openPx?: number; mapFindings?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey; explainLens?: boolean; chatModel?: string; flowSplit?: FlowSplit; connections?: Connections; views?: Partial<Record<keyof ViewPrefs, string>>; tourView?: string; showAgents?: boolean } = {};
     try { prefs = JSON.parse(options.storage?.getItem('codiluce:prefs') ?? '{}'); } catch { /* defaults */ }
     this.state = {
       status: 'loading', view: { level: 'Applications', focus: [], zoom: 1, visible: [], truncated: false },
       relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' },
-      history: { entries: [], index: -1 }, showDiagnostics: prefs.showDiagnostics ?? true, themeId: themeById(prefs.themeId).id, shapes: prefs.shapes ?? true, streets: prefs.streets ?? true,
+      history: { entries: [], index: -1 }, showDiagnostics: prefs.mapFindings ?? false, themeId: themeById(prefs.themeId).id, shapes: prefs.buildingShapes ?? false, streets: prefs.streets ?? true, openPx: openSize(prefs.openPx),
       staleIndex: false, sceneRevision: 0, mapVisibility: { open: false, busy: false },
       impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '', open: {} }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, families: { show: false, status: 'idle' }, features: { status: 'idle', open: {} },
       people: { window: prefs.peopleWindow ?? 'all', show: false, status: 'idle', open: {} }, lens: { status: 'idle' }, pulls: { status: 'idle', tab: 'open', query: '', open: {} }, center: 'map', journal: { open: [] },
@@ -481,7 +490,7 @@ export class AtlasStore {
   }
   private bumpScene(): void { this.set(state => ({ sceneRevision: state.sceneRevision + 1 })); }
   private savePrefs(): void {
-    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, shapes: this.state.shapes, streets: this.state.streets, flowSplit: this.state.flowSplit, connections: this.state.connections, views: this.state.views, tourView: this.state.tourView, showAgents: this.state.agents.show, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window, explainLens: this.state.explain.lens, ...(this.state.explain.draft.model ? { chatModel: this.state.explain.draft.model } : {}) })); } catch { /* preferences are optional */ }
+    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, buildingShapes: this.state.shapes, streets: this.state.streets, ...(this.state.openPx !== DEFAULT_LOD.openPx ? { openPx: this.state.openPx } : {}), flowSplit: this.state.flowSplit, connections: this.state.connections, views: this.state.views, tourView: this.state.tourView, showAgents: this.state.agents.show, mapFindings: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window, explainLens: this.state.explain.lens, ...(this.state.explain.draft.model ? { chatModel: this.state.explain.draft.model } : {}) })); } catch { /* preferences are optional */ }
   }
   dispose(): void { this.disposed = true; this.sessions.close(); for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.explainTimer) clearInterval(this.explainTimer); if (this.activityTimer) clearTimeout(this.activityTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
 
@@ -784,6 +793,7 @@ export class AtlasStore {
   toggleDiagnostics(): void { this.set(state => ({ showDiagnostics: !state.showDiagnostics })); this.savePrefs(); }
   setTheme(themeId: string): void { this.set({ themeId }); this.savePrefs(); }
   setShapes(shapes: boolean): void { this.set({ shapes }); this.savePrefs(); }
+  setOpenPx(openPx: number): void { this.set({ openPx: openSize(openPx) }); this.savePrefs(); }
   setStreets(streets: boolean): void { this.set({ streets }); this.savePrefs(); }
 
   // Map visibility -----------------------------------------------------------

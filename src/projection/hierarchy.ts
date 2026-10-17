@@ -24,6 +24,15 @@ export interface EntityRow {
 export interface RelationRow { id: string; from: string; to: string; type: string; change?: 'added' | 'removed' }
 export interface DiagnosticRow { id: string; severity: string; code: string; reason: string; analyzer: string; file?: string; line?: number; entityId?: string }
 import type { ChangeCounts, NodeChange, NodeStats } from './dto.js';
+/**
+ * Findings where code reaches for something the index could not tie to a
+ * target (a request, an import, a dispatch, a table or page): the map draws no
+ * link for them, so nodes count them. Parse gaps, skipped files, duplicate
+ * names and budgets are listed in the Inspector only.
+ */
+export function hidesLink(code: string): boolean {
+  return /unresolved|unmatched|ambiguous|constrained|import|boundary|not-indexed|not-found/.test(code);
+}
 export interface ProjectionNode {
   id: string; kind: 'entity' | 'group'; type: string; name: string;
   path?: string; language?: string; sourceRange?: SourceRange;
@@ -175,6 +184,7 @@ export class ProjectionIndex {
     for (const diagnostic of diagnostics) {
       const nodeId = diagnostic.entityId && this.nodes.has(diagnostic.entityId) ? diagnostic.entityId : diagnostic.file && this.fileByPath.has(diagnostic.file) ? this.fileByPath.get(diagnostic.file)! : this.rootId;
       this.diagnostics.push({ ...diagnostic, nodeId });
+      if (!hidesLink(diagnostic.code)) continue;
       const node = this.nodes.get(nodeId)!;
       node.ownDiagnostics++;
       for (let current: ProjectionNode | undefined = node; current; current = current.spatialParentId ? this.nodes.get(current.spatialParentId) : undefined) current.diagnostics++;

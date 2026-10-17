@@ -48,7 +48,7 @@ export interface NodeSummary {
   archetype?: ArchetypeInfo;
   /** Areas: the blocks they hold by archetype, most first (what a closed area shows on its roof). */
   archetypeCounts?: ArchetypeCount[];
-  /** Unresolved findings attached within this node's spatial subtree. */
+  /** Findings that leave a link out (`hidesLink`) attached within this node's spatial subtree. */
   diagnostics: number;
   stats: NodeStats;
   /** Comparison views: this node versus the baseline (absent when identical). */

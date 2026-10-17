@@ -67,8 +67,15 @@ export class MapController implements MapNavigator {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly renderer: MapRenderer;
   private readonly lodConfig: LodConfig;
-  /** Level of detail: the map's own, or the corner overview's while a tool is in the middle. */
-  private get lod(): LodConfig { return this.small ? CORNER_LOD : this.lodConfig; }
+  /** Level of detail: the map's own (folders open from Settings › Map's size, unless given one), or the corner overview's while a tool is in the middle. */
+  private get lod(): LodConfig {
+    if (this.small) return CORNER_LOD;
+    const openPx = this.options.lod ? this.lodConfig.openPx : this.store.getState().openPx;
+    if (openPx === this.lodConfig.openPx) return this.lodConfig;
+    if (this.tuned?.openPx !== openPx) this.tuned = { ...this.lodConfig, openPx };
+    return this.tuned;
+  }
+  private tuned?: LodConfig;
   private readonly role: NonNullable<MapControllerOptions['role']>;
   private lastCamera = '';
   private camera: Camera = { x: 0, y: 0, scale: 0.05 };
@@ -338,7 +345,7 @@ export class MapController implements MapNavigator {
     const force = opened.length > 1 ? new Set(opened.flatMap(areas => [...areas])) : opened[0];
     // Shapes are buildings: in plan, blocks stay flat.
     this.scene.shapes = state.shapes && !this.flat; this.scene.setStreets(state.streets);
-    const key = `${state.shapes ? 'S' : 'P'}|${this.flat ? 'plan' : 'iso'}|${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}|${this.scene.revision}|${shown ? `${shown.flow.key}#${shown.branch ?? 'all'}` : ''}|${extra?.key ?? ''}|${this.beat?.force ? this.beat.key : ''}`;
+    const key = `${state.shapes ? 'S' : 'P'}|${this.flat ? 'plan' : 'iso'}|${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}|${this.scene.revision}|${shown ? `${shown.flow.key}#${shown.branch ?? 'all'}` : ''}|${extra?.key ?? ''}|${this.beat?.force ? this.beat.key : ''}|${this.lod.openPx}`;
     if (key !== this.setKey) {
       this.set = this.scene.visible(this.camera, this.viewport, this.lod, force);
       this.setKey = key;

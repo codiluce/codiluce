@@ -9,7 +9,7 @@ import { indexRepository } from '../src/pipeline/index.js';
 import { GraphStore } from '../src/storage/sqlite.js';
 import { createInspectionServer } from '../src/api/server.js';
 import { ProjectionService } from '../src/projection/service.js';
-import { ProjectionIndex, ROUTE_SUBGROUP_THRESHOLD, type EntityRow } from '../src/projection/hierarchy.js';
+import { hidesLink, ProjectionIndex, ROUTE_SUBGROUP_THRESHOLD, type EntityRow } from '../src/projection/hierarchy.js';
 import { layoutHierarchy, pack, type LayoutNode, type Rect } from '../src/projection/layout.js';
 import { readIndexedSource, SourceError, SOURCE_MAX_LINES } from '../src/projection/source.js';
 import type { SoftwareGraph } from '../src/core/graph.js';
@@ -743,4 +743,16 @@ test('data families color the map and count files per folder', async () => {
   try {
     assert.equal((await fetch(`${base}/api/projection/families`)).status, 200);
   } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
+});
+test('nodes count the findings that leave a link out, not parse gaps, skipped files or duplicate names', () => {
+  for (const code of ['unresolved-http-call', 'unmatched-http-call', 'ambiguous-http-match', 'constrained-http-match', 'unverified-relative-api-boundary', 'unresolved-flow-dispatch', 'unresolved-local-import', 'unsupported-local-import', 'dynamic-import', 'php-import-unresolved', 'model-table-not-indexed', 'inertia-page-not-found']) assert.ok(hidesLink(code), code);
+  for (const code of ['duplicate-symbol', 'file-content-skipped', 'syntax-parse-error', 'syntax-extraction-gap', 'go-project-gap', 'http-wrapper', 'syntax-budget-exceeded']) assert.ok(!hidesLink(code), code);
+  const rows: EntityRow[] = [{ id: 'repo', type: 'repository', name: 'r' }, { id: 'f', type: 'file', name: 'a.ts', path: 'a.ts', parentId: 'repo' }];
+  const index = new ProjectionIndex('run', rows, [], [
+    { id: 'd1', severity: 'warning', code: 'unresolved-http-call', reason: '', analyzer: 'x', file: 'a.ts' },
+    { id: 'd2', severity: 'warning', code: 'duplicate-symbol', reason: '', analyzer: 'x', file: 'a.ts' },
+  ]);
+  // The Inspector still lists both.
+  assert.equal(index.diagnostics.length, 2);
+  assert.equal(index.node('f')!.diagnostics, 1);
 });

@@ -13,6 +13,7 @@ test('twelve harnesses expose distinct sessions, characters and runtime-specific
     expect(response.status(), item.id).toBe(202);
   }
   await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Isometric 3D map', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'Agents', exact: true }).click();
   const panel = page.getByRole('complementary', { name: 'Agents' });
   const filter = panel.getByRole('combobox', { name: 'Agents filter' });

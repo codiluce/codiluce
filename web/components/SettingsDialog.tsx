@@ -1,5 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { DEFAULT_LOD } from '../lib/lod';
+import { OPEN_PX_RANGE } from '../lib/store';
 import { THEMES } from '../lib/themes';
 import { useAtlas, useStore } from './context';
 import { HiddenPathsSettings } from './MapVisibility';
@@ -18,6 +20,7 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
   const shapes = useAtlas(state => state.shapes);
   const connections = useAtlas(state => state.connections);
   const streets = useAtlas(state => state.streets);
+  const openPx = useAtlas(state => state.openPx);
   const views = useAtlas(state => state.views);
   const tourView = useAtlas(state => state.tourView);
   const [tab, setTab] = useState<SettingsTab>('appearance');
@@ -83,9 +86,15 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
           </fieldset>}
           {tab === 'map' && <>
             <label className="toggle"><input type="checkbox" checked={shapes} onChange={event => store.setShapes(event.target.checked)} /> Building shapes</label>
-            <p className="note">Each kind of block gets its own shape: controllers are rail turntables, tables are storage drums, and pages are browser billboards. Turn it off for plain blocks.</p>
+            <p className="note">In isometric, each kind of block gets its own shape: controllers are rail turntables, tables are storage drums, and pages are browser billboards. Off (and in the 2D plan), blocks stay plain and pages, endpoints, models and tables, jobs and tests show a small mark before their name.</p>
             <label className="toggle"><input type="checkbox" checked={streets} onChange={event => store.setStreets(event.target.checked)} /> Streets between blocks</label>
             <p className="note">Leave streets between files and wider avenues between folders, or pack blocks edge to edge.</p>
+            <label className="settings-label" htmlFor="settings-open-px">Open folders from <span className="settings-value">{openPx} px</span></label>
+            <div className="settings-range">
+              <input id="settings-open-px" type="range" min={OPEN_PX_RANGE.min} max={OPEN_PX_RANGE.max} step={OPEN_PX_RANGE.step} value={openPx} onChange={event => store.setOpenPx(Number(event.target.value))} />
+              <button className="button small" disabled={openPx === DEFAULT_LOD.openPx} onClick={() => store.setOpenPx(DEFAULT_LOD.openPx)}>Default ({DEFAULT_LOD.openPx})</button>
+            </div>
+            <p className="note">A folder opens to show its files once it is this big on the map (the side of a square of its area, in screen pixels). Smaller opens folders when you are zoomed further out, with more drawn at once.</p>
             <span className="settings-label">Links on the map</span>
             <div className="segmented" role="group" aria-label="Links on the map">
               <button aria-pressed={connections === 'arcs'} onClick={() => store.setConnections('arcs')}>Arcs</button>

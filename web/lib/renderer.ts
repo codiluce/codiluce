@@ -13,6 +13,7 @@ import type { StopTone } from './map-flow';
 import { compactNumber, typeLabel } from './format';
 import { NOT_MEASURED } from './coverage';
 import { drawIcon, drawShape, hexToHsl, ICON_PX, mixHsl, seedOf, shapeHeight, shapeTheme, type ShapeTheme, type ShapeView } from './shapes';
+import { drawGlyph, GLYPH_PX, glyphOf, type Glyph } from './glyphs';
 import type { Hsl } from './themes';
 
 /** `label`: words on the link (a tour's arrow), placed where they cover no other label; `directed` false: no arrowhead. */
@@ -119,7 +120,7 @@ export interface BeatLabel { id: string; ancestors: string[]; status: 'added' | 
  */
 export interface ImpactOverlay { distances: Map<string, number>; areas: Map<string, { count: number; distance: number }>; depth: number; dimOthers: boolean }
 /** `corner`: x, y is the top-left corner (an open area's name inside its corner, in plan). */
-interface Label { x: number; y: number; lines: { text: string; font: string; color: string }[]; priority: number; align: 'center' | 'above' | 'below' | 'corner' }
+interface Label { x: number; y: number; lines: { text: string; font: string; color: string; /** Drawn before the text, its size. */ glyph?: Glyph }[]; priority: number; align: 'center' | 'above' | 'below' | 'corner' }
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 const MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
 /** Duration of a block rising into place, and of a change flash. */
@@ -493,6 +494,7 @@ export class MapRenderer {
       // Projection districts get a dashed rim: they are spatial groupings, not entities.
       ctx.setLineDash([4, 4]); ctx.strokeStyle = this.theme.text.secondary; ctx.lineWidth = 1; this.topPath(ctx, viewport, camera, item, r); ctx.stroke(); ctx.setLineDash([]);
     }
+    if (!item.open && item.size > 12 && receding(item.node)) this.hatch(ctx, viewport, camera, item, r);
     const archetype = item.node.archetype?.kind;
     if (icons && archetype && (item.open ? item.size > 160 : item.size >= ICON_PX)) {
       // Too small for its shape: the archetype's mark on the roof. An open file keeps it as a trim at its front corner.
@@ -500,6 +502,17 @@ export class MapRenderer {
       drawIcon(this.view(viewport, camera), archetype, x, y, item.zTop, w, h, hovered ? { ...base, l: base.l + (this.theme.dark ? 9 : -7) } : base, item.open ? 0.7 : 1, item.open ? Math.min(0.22, 60 / Math.max(1, item.size)) : 1, item.open ? 'front-left' : 'center');
     }
     ctx.globalAlpha = 1;
+  }
+  /** Faint diagonal lines over a block's roof, in the text's color: set aside, without taking a color from the lenses. */
+  private hatch(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, item: VisibleItem, r: number): void {
+    const corners = this.corners(viewport, camera, item, item.zTop), xs = corners.map(point => point.x), ys = corners.map(point => point.y);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    ctx.save();
+    this.topPath(ctx, viewport, camera, item, r); ctx.clip();
+    ctx.beginPath();
+    for (let at = x0 - (y1 - y0); at < x1; at += 6) { ctx.moveTo(at, y1); ctx.lineTo(at + (y1 - y0), y0); }
+    ctx.globalAlpha *= this.theme.dark ? 0.12 : 0.14; ctx.strokeStyle = this.theme.text.primary; ctx.lineWidth = 1; ctx.stroke();
+    ctx.restore();
   }
   /** An open area's floor with streets on: a shade darker than its blocks' plots, like asphalt between them. */
   private road(key: string, depth: number): string {
@@ -787,6 +800,9 @@ export class MapRenderer {
     const big = node.type === 'application';
     const nameSize = big ? Math.min(22, 13 + item.size / 60) : Math.min(14, 10 + item.size / 70);
     const lines: Label['lines'] = [{ text: `${state.comparison ? changeGlyph(node) : ''}${displayName(node)}`, font: `${big || important ? 700 : 600} ${nameSize.toFixed(1)}px ${this.font}`, color }];
+    // Where its kind is not drawn as a shape (shapes off, or the plan), a block says it with a glyph before its name.
+    const glyph = item.size >= GLYPH_PX && (state.shapes === false || this.flat) ? glyphOf(node.archetype?.kind) : undefined;
+    if (glyph) lines[0]!.glyph = glyph;
     if (item.tier === 'summary' || item.tier === 'detail') {
       const summary = summaryLine(node);
       if (summary) lines.push({ text: summary, font: `500 ${Math.max(9.5, nameSize - 2.5).toFixed(1)}px ${this.font}`, color: theme.text.secondary });
@@ -906,7 +922,12 @@ export class MapRenderer {
     for (const label of labels) {
       if (count > 450) break;
       let width = 0, height = 0;
-      const metrics = label.lines.map(line => { ctx.font = line.font; const w = Math.min(320, ctx.measureText(line.text).width); const h = parseFloat(/(\d+(?:\.\d+)?)px/.exec(line.font)![1]!) * 1.25; width = Math.max(width, w); height += h; return { w, h }; });
+      const metrics = label.lines.map(line => {
+        ctx.font = line.font;
+        const px = parseFloat(/(\d+(?:\.\d+)?)px/.exec(line.font)![1]!), glyph = line.glyph ? Math.min(14, Math.max(11, px * 1.05)) : 0;
+        const w = Math.min(320, ctx.measureText(line.text).width) + (glyph ? glyph + 4 : 0), h = px * 1.25;
+        width = Math.max(width, w); height += h; return { w, h, glyph };
+      });
       const y0 = label.align === 'above' ? label.y - height : label.align === 'below' ? label.y + 2 : label.align === 'corner' ? label.y : label.y - height / 2;
       const x = label.align === 'corner' ? label.x + width / 2 : label.x;
       const box = { x0: x - width / 2 - 3, y0: y0 - 2, x1: x + width / 2 + 3, y1: y0 + height + 2 };
@@ -916,9 +937,12 @@ export class MapRenderer {
       label.lines.forEach((line, i) => {
         const h = metrics[i]!.h;
         ctx.font = line.font;
-        const text = fit(ctx, line.text, 320);
-        ctx.lineWidth = 3.5; ctx.strokeStyle = this.theme.text.halo; ctx.strokeText(text, x, cursor + h / 2);
-        ctx.fillStyle = line.color; ctx.fillText(text, x, cursor + h / 2);
+        const text = fit(ctx, line.text, 320), { w, glyph } = metrics[i]!;
+        // A glyph goes before the text, the pair centred where the text alone would be.
+        if (line.glyph && glyph) drawGlyph(ctx, line.glyph, x - w / 2 + glyph / 2, cursor + h / 2, glyph, line.color, this.theme.text.halo);
+        const tx = glyph ? x + (glyph + 4) / 2 : x;
+        ctx.lineWidth = 3.5; ctx.strokeStyle = this.theme.text.halo; ctx.strokeText(text, tx, cursor + h / 2);
+        ctx.fillStyle = line.color; ctx.fillText(text, tx, cursor + h / 2);
         cursor += h;
       });
     }
@@ -1555,6 +1579,12 @@ function polygon(ctx: CanvasRenderingContext2D, points: Point[]): void {
 }
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
   ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+/** Tests recede behind a hatch, and so does a closed folder that mostly holds tests. */
+export function receding(node: Pick<NodeSummary, 'archetype' | 'archetypeCounts' | 'stats'>): boolean {
+  if (node.archetype) return node.archetype.kind === 'test';
+  const tests = node.archetypeCounts?.find(count => count.kind === 'test')?.count ?? 0;
+  return tests > 0 && tests >= 0.6 * node.stats.files;
 }
 function fit(ctx: CanvasRenderingContext2D, text: string, max: number): string {
   if (ctx.measureText(text).width <= max) return text;
