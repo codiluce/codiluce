@@ -112,6 +112,7 @@ button.chip:hover { border-color: var(--panel-border); }
 .control-group { display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--panel-border); border-radius: var(--radius-float, 9px); overflow: hidden; box-shadow: var(--shadow); }
 .control-group button { border: none; background: none; width: 34px; height: 32px; display: grid; place-items: center; font-size: 15px; }
 .control-group button + button { border-top: 1px solid var(--panel-border); }
+.control-group .projection-toggle { font-size: 11px; font-weight: 800; letter-spacing: 0.02em; }
 .control-group button:hover { background: var(--chip-active); }
 .control-group button[aria-pressed="true"] { color: var(--accent); }
 
@@ -238,6 +239,7 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .chip.pr { text-decoration: none; color: var(--link); max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
 .chip.pr.unverified { color: var(--muted); font-style: italic; }
 .timeline-summary { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; }
+.timeline-summary .change-line { flex: 1 1 220px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
 .timeline-summary .sep { width: 1px; height: 14px; background: var(--panel-border); margin: 0 4px; }
 .change-chip { border: 1px solid var(--panel-border); background: var(--chip); border-radius: 999px; padding: 1px 9px; font-size: 12px; display: inline-flex; gap: 4px; align-items: center; }
 .change-chip .glyph { font-weight: 800; }

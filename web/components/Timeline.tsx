@@ -8,6 +8,7 @@ import { CommitImpactChip } from './Analysis';
 import { familyCss, personHue, pullHue, themeById } from '../lib/themes';
 import type { ExplanationSummary } from '@engine/explanations/model';
 import { ExplainActions, ExplanationChips } from './ExplainActions';
+import { changeLine, planBeat } from '../lib/beat';
 
 const SCRUB_MS = 140;
 /** Explanations about commits and pull requests, by the commit they are about (a PR by its merge commit on the timeline). */
@@ -173,6 +174,14 @@ function FileTimeline({ data, close }: { data: TimelineResponse; close: () => vo
   const detail = timeline.gitChanges;
   const analyzing = !!entry && (data.indexing.active === entry.sha || data.indexing.queued.includes(entry.sha));
   const fresh = entry?.snapshot && !entry.snapshot.stale;
+  // One line about what it changes on the map (the frame on screen, with Git's lines per file).
+  const frame = timeline.playing ? undefined : timeline.preview;
+  const line = useMemo(() => {
+    const scene = frame !== undefined && store.previewScene?.frame === frame ? store.previewScene : undefined;
+    if (!scene) return undefined;
+    const lines = new Map(detail?.data?.files.map(file => [file.path, { added: file.added, removed: file.deleted }]) ?? []);
+    return changeLine(planBeat(scene, { t0: 0, lines })) || undefined;
+  }, [store, frame, detail?.data]);
   return (
     <section className="timeline" aria-label="History">
       <div className="timeline-head">
@@ -187,6 +196,12 @@ function FileTimeline({ data, close }: { data: TimelineResponse; close: () => vo
           {entry && <span className="meta">{entry.authorName} · {formatDate(entry.committedAt)}</span>}
         </div>
         <span className="chip">Git file evolution</span>
+        {timeline.evolution.status === 'ready' && (
+          <div className="timeline-play" role="group" aria-label="Time-lapse">
+            <button className="chip" onClick={() => store.setSpeed(SPEEDS[(SPEEDS.indexOf(timeline.speed) + 1) % SPEEDS.length]!)} title="Playback speed" aria-label={`Playback speed ${timeline.speed}×`}>{timeline.speed}×</button>
+            <button className="chip" aria-pressed={timeline.follow} onClick={() => store.setFollow(!timeline.follow)} title="The camera flies to what each commit changes (and follows the changes while playing)">Follow</button>
+          </div>
+        )}
         {entry && (data.indexing.enabled || fresh) && <button className="button small primary" disabled={analyzing || timeline.playing} onClick={() => void store.openArchitecture(entry.sha)}>{analyzing ? 'Analyzing architecture…' : fresh ? 'Explore architecture' : 'Generate architecture snapshot'}</button>}
         {data.entries.some(item => item.snapshot) && <button className="chip" onClick={() => void store.setHistoryMode('architecture')}>Architecture comparisons</button>}
         <button className="icon-button small" onClick={close} aria-label="Close history">✕</button>
@@ -194,6 +209,7 @@ function FileTimeline({ data, close }: { data: TimelineResponse; close: () => vo
       {summary && <div className="timeline-summary" aria-label="File changes in this commit">
         {(['added', 'modified', 'moved', 'removed'] as const).map(status => <span key={status} className={`change-chip ${status}`}>{compactNumber(summary[status])} {status}</span>)}
         <span className="change-stat">{compactNumber(summary.files)} files · <span className="added">+{compactNumber(summary.insertions)}</span> <span className="removed">−{compactNumber(summary.deletions)}</span> lines{summary.binary ? ` · ${summary.binary} binary` : ''}</span>
+        {line && <span className="change-line" title="What the commit changes on the map, from its files">{line}</span>}
       </div>}
       <Track data={data} />
       <div className="timeline-foot">

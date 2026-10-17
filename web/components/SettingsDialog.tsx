@@ -4,7 +4,12 @@ import { THEMES } from '../lib/themes';
 import { useAtlas, useStore } from './context';
 import { HiddenPathsSettings } from './MapVisibility';
 
-const TABS = [['appearance', 'Appearance'], ['map', 'Map'], ['hidden', 'Hidden paths']] as const;
+const TABS = [['appearance', 'Appearance'], ['map', 'Map'], ['views', 'Views'], ['hidden', 'Hidden paths']] as const;
+/** How the map looks, everywhere it is drawn; the first choice of each is the default. */
+const VIEW_GROUPS: { key: 'map' | 'focus'; label: string; note: string; choices: [string, string][] }[] = [
+  { key: 'map', label: 'Map projection', note: 'The map seen from straight above, as a plan where every area is a frame, or as an isometric city. One projection for everything: the map, History’s commits, Focus and Agents at work (who hop from roof to roof in isometric). The 3D control on the map switches it too.', choices: [['plan', '2D plan'], ['iso', 'Isometric']] },
+  { key: 'focus', label: 'Focus layout', note: 'A selection and what it is connected to, a pull request’s files or what an explanation links: kept at their places on the map, the areas holding them opened as nested frames, or gathered and packed together.', choices: [['map', 'On the map'], ['gather', 'Gathered']] },
+];
 type SettingsTab = typeof TABS[number][0];
 
 export function SettingsDialog({ onClose }: { onClose: () => void }) {
@@ -13,6 +18,7 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
   const shapes = useAtlas(state => state.shapes);
   const connections = useAtlas(state => state.connections);
   const streets = useAtlas(state => state.streets);
+  const views = useAtlas(state => state.views);
   const [tab, setTab] = useState<SettingsTab>('appearance');
   const dialog = useRef<HTMLDivElement>(null);
   const close = useRef<HTMLButtonElement>(null);
@@ -85,6 +91,20 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
               <button aria-pressed={connections === 'rails'} onClick={() => store.setConnections('rails')}>Rails</button>
             </div>
             <p className="note">Draw links over the blocks, or along the floors at right angles. You can also switch from the map's link control.</p>
+          </>}
+          {tab === 'views' && <>
+            {VIEW_GROUPS.map(group => <div key={group.key}>
+              <span className="settings-label">{group.label}</span>
+              <div className="segmented" role="group" aria-label={group.label}>
+                {group.choices.map(([value, label]) => <button key={value} aria-pressed={views[group.key] === value} onClick={() => store.setViews({ [group.key]: value })}>{label}</button>)}
+              </div>
+              <p className="note">{group.note}</p>
+            </div>)}
+            <span className="settings-label">Arrow labels</span>
+            <div className="segmented" role="group" aria-label="Arrow labels">
+              {([['placed', 'Placed'], ['numbered', 'Numbered'], ['line', 'On the line']] as const).map(([value, label]) => <button key={value} aria-pressed={views.labels === value} onClick={() => store.setViews({ labels: value })}>{label}</button>)}
+            </div>
+            <p className="note">Placed: where they cover least, off names and blocks, as numbers with a legend when nothing fits. Numbered: always numbers. On the line: in the middle of the longest run. Labels never cover one another.</p>
           </>}
           {tab === 'hidden' && <HiddenPathsSettings />}
         </div>

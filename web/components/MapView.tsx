@@ -19,6 +19,7 @@ export function MapView() {
   const error = useAtlas(state => state.error);
   const stale = useAtlas(state => state.staleIndex);
   const switching = useAtlas(state => state.timeline.switching);
+  const plan = useAtlas(state => state.views.map === 'plan');
   const [failure, setFailure] = useState<string>();
   useEffect(() => {
     if (!canvas.current) return;
@@ -27,7 +28,7 @@ export function MapView() {
   }, [store]);
   return (
     <div className="map-stage">
-      <canvas ref={canvas} className="map-canvas" tabIndex={0} role="application" aria-roledescription="code map" aria-label="Isometric map of the repository. Drag or use arrow keys to pan, wheel or plus/minus to zoom, click to select." aria-describedby="map-status" />
+      <canvas ref={canvas} className="map-canvas" tabIndex={0} role="application" aria-roledescription="code map" aria-label={`${plan ? 'Plan' : 'Isometric map'} of the repository. Drag or use arrow keys to pan, wheel or plus/minus to zoom, click to select.`} aria-describedby="map-status" />
       <MapControls />
       <StatusBar />
       <Legend />
@@ -64,6 +65,7 @@ function MapControls() {
   const store = useStore();
   const diagnostics = useAtlas(state => state.showDiagnostics);
   const rails = useAtlas(state => state.connections === 'rails');
+  const plan = useAtlas(state => state.views.map === 'plan');
   return (
     <div className="map-controls">
       <div className="control-group" role="group" aria-label="Zoom">
@@ -74,6 +76,7 @@ function MapControls() {
         <button onClick={() => store.navigator?.fitAll()} aria-label="Fit whole repository" title="Fit / reset view (F)">⤢</button>
         <button onClick={() => { const node = store.getState().selection?.node; if (node) store.navigator?.flyTo(node, { mode: node.childCount > 0 ? 'enter' : 'focus' }); }} aria-label="Zoom to selection" title="Zoom to selection (Enter)">◎</button>
         <button onClick={() => store.toggleDiagnostics()} aria-pressed={diagnostics} aria-label="Show unresolved findings on the map" title="Unresolved findings">⚠</button>
+        <button className="projection-toggle" onClick={() => store.setViews({ map: plan ? 'iso' : 'plan' })} aria-pressed={!plan} aria-label="Isometric 3D map" title={plan ? 'A 2D plan seen from above (click for the isometric city)' : 'The isometric city (click for a 2D plan seen from above)'}>3D</button>
         <button onClick={() => store.setConnections(rails ? 'arcs' : 'rails')} aria-pressed={rails} aria-label="Draw links as rails along the floor" title={rails ? 'Links run as rails along the floors, at right angles (click for arcs over the blocks)' : 'Links arc over the blocks (click for rails along the floors, at right angles)'}>⌐</button>
       </div>
     </div>

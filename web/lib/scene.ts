@@ -2,7 +2,7 @@
 // Coordinates come from the server layout; nothing here moves a node. Load
 // order only decides what is available to draw, never where it is drawn.
 import type { NodeSummary } from '@engine/projection/dto';
-import { fromScreen, intersects, projectedBounds, unproject, visibleBounds, type Camera, type Viewport } from './camera';
+import { fromScreen, intersects, isFlat, projectedBounds, unproject, visibleBounds, type Camera, type Viewport } from './camera';
 import { DEFAULT_LOD, labelTier, openProgress, screenSize, shouldOpen, type LabelTier, type LodConfig } from './lod';
 import { SHAPE_GROW_PX, SHAPE_PX, shapeHeight } from './shapes';
 
@@ -190,14 +190,15 @@ export class Scene {
     set.pending = pending.sort((a, b) => b.size - a.size).map(item => item.id);
     return set;
   }
-  /** Frontmost item under a screen point, testing top faces and the visible walls. */
+  /** Frontmost item under a screen point, testing top faces and the visible walls (in plan, the innermost block under it). */
   hitTest(set: VisibleSet, camera: Camera, viewport: Viewport, sx: number, sy: number): VisibleItem | undefined {
     const plane = fromScreen(camera, viewport, { x: sx, y: sy });
-    const ground = unproject(plane.x, plane.y, 0);
+    const ground = unproject(plane.x, plane.y, 0), flat = isFlat();
     for (let i = set.items.length - 1; i >= 0; i--) {
       const item = set.items[i]!;
       if (item.alpha < 0.2 && item.parent >= 0) continue;
-      if (hitPrism(item.node.rect, item.zBase, item.zTop, ground)) return item;
+      const r = item.node.rect;
+      if (flat ? ground.x >= r.x && ground.x <= r.x + r.w && ground.y >= r.y && ground.y <= r.y + r.h : hitPrism(r, item.zBase, item.zTop, ground)) return item;
     }
     return undefined;
   }

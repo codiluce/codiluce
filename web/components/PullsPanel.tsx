@@ -123,6 +123,7 @@ export function PullsPanel({ onClose }: { onClose: () => void }) {
                 <span className="pull-focus-name">Lit: <strong>{pullName(focused)}</strong></span>
                 <button className="button tiny" onClick={() => void store.openFiles({ kind: 'pull', key: focused.id })} title="The files of this view it changes, as a list">List files</button>
                 <button className="button tiny" onClick={() => void store.showPullImpact(focused.id)} title="What depends on the code it changes, hop by hop">Impact</button>
+                <button className="button tiny" onClick={() => store.openFocus({ kind: 'pull', id: focused.id, title: pullName(focused) })} title="Its files at their places on the map, with the links between them">Focus</button>
                 <button className="button tiny" onClick={() => void store.focusPull(undefined)}>✕ Show all</button>
               </div>
             )}
@@ -186,6 +187,8 @@ function PullItem({ pull }: { pull: PullSummary }) {
             {!lit && <button className="button tiny" onClick={() => void store.focusPull(pull.id, { fit: true })}>Light its files</button>}
             <button className="button tiny" onClick={() => void store.showPullImpact(pull.id)} title="What depends on the code it changes, hop by hop">Impact</button>
             <button className="button tiny" onClick={() => void store.openFiles({ kind: 'pull', key: pull.id })} title="The files of this view it changes, as a list">List files</button>
+            <button className="button tiny" onClick={() => store.openFocus({ kind: 'pull', id: pull.id, title: pullName(pull) })} title="Its files at their places on the map, with the links between them (in the middle of the screen)">Focus</button>
+            {pull.state === 'merged' && pull.commit && <button className="button tiny" onClick={() => void store.openTimeline({ mode: 'git', files: pull.commit! })} title="What it changed, played on the map: History on its merge commit">Replay</button>}
             {pull.snapshot && <button className="button tiny" onClick={() => void store.showCommit(pull.snapshot!)} title={historyOpen ? 'View its merge commit, compared with the one before' : 'Open History on its merge commit, compared with the one before'}>History</button>}
             {pull.url && <a className="button tiny" href={pull.url} target="_blank" rel="noreferrer" title="Open it on GitHub">GitHub ↗</a>}
           </div>

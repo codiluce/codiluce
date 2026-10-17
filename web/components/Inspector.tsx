@@ -219,11 +219,13 @@ function AnalysisButtons({ node }: { node: NodeSummary }) {
   const store = useStore();
   const impactOpen = useAtlas(state => state.impact.open && state.impact.forId === node.id);
   const flowOpen = useAtlas(state => state.flowView?.id === node.id);
+  const focusOpen = useAtlas(state => state.focusView?.kind === 'selection' && state.focusView.id === node.id);
   const runs = node.kind === 'entity' && !['repository', 'application', 'directory', 'file', 'database_table'].includes(node.type);
   const lanes = LANES_TYPES.has(node.type);
   return (
     <>
       {node.kind === 'entity' && <button className="button small" aria-pressed={impactOpen} onClick={() => impactOpen ? store.hideImpact() : void store.showImpact(node.id)} title="What depends on this, hop by hop (in the middle of the screen)">{impactOpen ? 'Hide impact' : 'Impact'}</button>}
+      {node.kind === 'entity' && node.type !== 'repository' && <button className="button small" aria-pressed={focusOpen} onClick={() => focusOpen ? store.closeFocus() : store.openFocus({ kind: 'selection', id: node.id, title: node.name })} title="It and what it is connected to, at their places on the map, with the links between them (in the middle of the screen)">Focus</button>}
       {runs && <button className="button small" aria-pressed={flowOpen} onClick={() => flowOpen ? store.closeFlowView() : void store.openSteps(node.id)} title={lanes ? 'The flow that starts here: on the map, in lanes and as an outline of steps' : 'What this sets in motion: handlers, requests, endpoints and effects, on the map, in layers and as an outline'}>{lanes ? 'Flow' : 'What happens from here'}</button>}
     </>
   );
@@ -651,7 +653,7 @@ function Relations({ node }: { node: NodeSummary }) {
       )}
       {relations.status === 'loading' && relations.items.length === 0 && <p className="absent">Loading relationships…</p>}
       {relations.status === 'error' && <p className="note error">{relations.error}</p>}
-      {relations.items.length > 0 && <button className="button small" style={{ marginBottom: 8 }} onClick={() => store.navigator?.fitNodes([node, ...relations.items.filter(item => !relations.type || item.type === relations.type).map(item => item.other)])}>Fit selection and connections on the map</button>}
+      {relations.items.length > 0 && <div className="row-actions" style={{ marginBottom: 8, justifyContent: 'flex-start' }}><button className="button small" onClick={() => store.navigator?.fitNodes([node, ...relations.items.filter(item => !relations.type || item.type === relations.type).map(item => item.other)])}>Fit selection and connections on the map</button><button className="button small" onClick={() => store.openFocus({ kind: 'selection', id: node.id, title: node.name })} title="Them at their places on the map, with the links as arrows (in the middle of the screen)">Focus on them</button></div>}
       {groups.map(group => (
         <div key={group.direction} style={{ marginBottom: 8 }}>
           <div className="direction" style={{ margin: '6px 0 4px' }}>{group.direction === 'outgoing' ? `Outgoing → from ${node.name}` : group.direction === 'incoming' ? `← Incoming to ${node.name}` : 'Self'}</div>

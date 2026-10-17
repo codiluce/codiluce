@@ -5,9 +5,11 @@ import { activityMarks, activeAgentOverlay } from './activity';
 // of the whole repository and a `region` controller per place that changed,
 // all drawing the same scene from their own camera.
 import type { NodeSummary, Rect, SourceResponse } from '@engine/projection/dto';
-import { easeInOut, fitBounds, fromScreen, panBy, projectedBounds, visibleBounds, worldToScreen, zoomAround, zoomPath, type Bounds, type Camera, type Point, type Viewport, type ZoomLimits } from './camera';
+import { easeInOut, fitBounds, fromScreen, ISO_X, ISO_Y, isFlat, panBy, projectedBounds, visibleBounds, worldToScreen, zoomAround, zoomPath, type Bounds, type Camera, type Point, type Viewport, type ZoomLimits } from './camera';
+import { fileOf, planBeat, type BeatPlan } from './beat';
+import type { Box } from './labels';
 import { CORNER_LOD, DEFAULT_LOD, abstractionLevel, screenSize, type LodConfig } from './lod';
-import { FLASH_MS, MapRenderer, RISE_MS, type CalloutOverlay, type CoverageOverlay, type EdgeOverlay, type FamilyOverlay, type FlowOverlay, type FrameOverlay, type LevelOverlay, type MotionState, type RenderState } from './renderer';
+import { FLASH_MS, MapRenderer, RISE_MS, type BeatLabel, type BeatOverlay, type CalloutOverlay, type CoverageOverlay, type EdgeOverlay, type FamilyOverlay, type FlowOverlay, type FrameOverlay, type LevelOverlay, type MotionState, type RenderState } from './renderer';
 import { flowAreas, flowDepths, flowLit, type MapFlow } from './map-flow';
 import { nodeHeight, type Scene, type VisibleSet } from './scene';
 import { isContainer, type AtlasState, type AtlasStore, type MapNavigator, type ViewState } from './store';
@@ -24,6 +26,12 @@ const CASCADE_MS = 70;
 const FOLLOW_WINDOW_MS = 1600;
 /** …approaching them with this time constant, never closer than this fraction of the whole map. */
 const FOLLOW_EASE_MS = 700, FOLLOW_MIN_SPAN = 0.22;
+/** A commit's beat starts this long after it is on screen (the camera flies to its changes meanwhile). */
+const BEAT_DELAY_MS = 450;
+/** Up to this many changed files, the areas holding them open whatever the zoom, so each file is drawn. */
+const BEAT_OPEN_MAX = 80;
+/** Panels over the map that labels keep clear of. */
+const PANELS = ':scope > .map-controls, :scope > .status-bar, :scope > .legend, :scope > .coverage-legend, :scope > .feature-legend, :scope > .banner, :scope > .switching';
 interface Animation { at(t: number): Camera; start: number; duration: number }
 export interface DebugHandle { screenPositionOf(id: string): { x: number; y: number } | undefined; camera(): Camera; visibleIds(): string[]; rectOf(id: string): { x: number; y: number; w: number; h: number } | undefined }
 export interface MapControllerOptions {
@@ -92,6 +100,10 @@ export class MapController implements MapNavigator {
   private refit?: () => void;
   /** Something besides a flow's streaming changed since the last frame drawn. */
   private dirty = true;
+  /** The projection the camera is in (camera.ts `isFlat`): switching converts the camera. */
+  private flat = isFlat();
+  /** The commit told on the map now. */
+  private beat?: { key: string; plan: BeatPlan; frame: Scene; at: Map<string, number>; force?: Set<string>; labels?: { lines: object | undefined; files: BeatLabel[] } };
   private lastDraw = 0;
 
   constructor(private readonly canvas: HTMLCanvasElement, private readonly store: AtlasStore, private readonly options: MapControllerOptions = {}) {
@@ -273,7 +285,9 @@ export class MapController implements MapNavigator {
     if (clock && this.store.getState().timeline.playing) this.store.advancePlayback(elapsed);
     const state = this.store.getState();
     const scene = this.scene;
+    if (isFlat() !== this.flat) this.projectionChanged();
     if (scene !== this.drawnScene) { this.sceneChanged(this.drawnScene, scene, time, state); this.drawnScene = scene; }
+    this.updateBeat(state, time);
     if (this.role === 'main' && state.timeline.playing && state.timeline.follow) this.follow(time, elapsed);
     if (!this.fitted && this.scene.rootId) {
       this.updateLimits();
@@ -297,9 +311,11 @@ export class MapController implements MapNavigator {
     const shown = this.shownFlow(this.store.getState());
     const extra = this.options.extra?.();
     const flowAreas = shown && !this.store.previewScene ? this.areasOf(shown.flow, shown.branch) : undefined;
-    const force = flowAreas && extra?.force ? new Set([...flowAreas, ...extra.force]) : flowAreas ?? extra?.force;
-    this.scene.shapes = state.shapes; this.scene.setStreets(state.streets);
-    const key = `${state.shapes ? 'S' : 'P'}|${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}|${this.scene.revision}|${shown ? `${shown.flow.key}#${shown.branch ?? 'all'}` : ''}|${extra?.key ?? ''}`;
+    const opened = [flowAreas, extra?.force, this.beat?.force].filter((areas): areas is ReadonlySet<string> => !!areas?.size);
+    const force = opened.length > 1 ? new Set(opened.flatMap(areas => [...areas])) : opened[0];
+    // Shapes are buildings: in plan, blocks stay flat.
+    this.scene.shapes = state.shapes && !this.flat; this.scene.setStreets(state.streets);
+    const key = `${state.shapes ? 'S' : 'P'}|${this.flat ? 'plan' : 'iso'}|${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}|${this.scene.revision}|${shown ? `${shown.flow.key}#${shown.branch ?? 'all'}` : ''}|${extra?.key ?? ''}|${this.beat?.force ? this.beat.key : ''}`;
     if (key !== this.setKey) {
       this.set = this.scene.visible(this.camera, this.viewport, this.lod, force);
       this.setKey = key;
@@ -307,6 +323,7 @@ export class MapController implements MapNavigator {
     }
     const render = this.renderState(state, time);
     if (extra?.frames) render.frames = extra.frames;
+    if (render.beat || render.callouts?.length) render.keepClear = this.panels();
     this.renderer.render(this.ctx, this.dpr, this.viewport, this.camera, this.scene, this.set, render, this.lod);
     const moved = `${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}`;
     if (moved !== this.lastCamera) { this.lastCamera = moved; this.options.onCamera?.(); }
@@ -315,6 +332,110 @@ export class MapController implements MapNavigator {
     // Flows stream; a new activity mark pulses briefly (not with reduced motion).
     else if ((shown || render.activity?.some(mark => mark.age < 2000)) && !this.motionReduced && !this.store.previewScene) this.request(false);
     if (!this.animation && time >= this.motionUntil && (this.motion.appear.size || this.motion.flash.size)) { this.motion.appear.clear(); this.motion.flash.clear(); }
+  }
+  /** The projection changed (2D plan ⇄ isometric): the same place stays in the middle, at about the same size. */
+  private projectionChanged(): void {
+    const flat = isFlat();
+    const center = this.camera;
+    // Ground point under the middle in the old projection, then where it is in the new one.
+    const ground = flat ? { x: (center.x / ISO_X + center.y / ISO_Y) / 2, y: (center.y / ISO_Y - center.x / ISO_X) / 2 } : { x: center.x, y: center.y };
+    const plane = flat ? ground : { x: (ground.x - ground.y) * ISO_X, y: (ground.x + ground.y) * ISO_Y };
+    this.flat = flat; this.animation = undefined; this.setKey = '';
+    this.camera = { ...this.camera, ...plane };
+    this.updateLimits();
+    if (this.autoFit || !this.fitted) { const target = this.homeCamera(); if (target) this.camera = target; }
+    else this.camera = { ...this.camera, scale: Math.max(this.limits.min, Math.min(this.limits.max, this.camera.scale)) };
+    if (this.overview) this.overview.camera = this.camera;
+    this.dirty = true;
+  }
+  /**
+   * The commit on screen in History, told on the map: its changed files land
+   * one after another (removals, moves, additions, then changes, the biggest
+   * first), each labeled, after the camera has flown to them (while following).
+   * Not while playing: the time-lapse moves on too fast to read.
+   */
+  private updateBeat(state: AtlasState, time: number): void {
+    const timeline = state.timeline, evolution = this.store.evolution;
+    const commit = timeline.mode === 'git' ? timeline.gitTarget : timeline.target;
+    const frameIndex = this.role === 'main' && timeline.open && !timeline.playing && commit && evolution ? evolution.frameOf(commit) : undefined;
+    if (frameIndex === undefined) { this.beat = undefined; return; }
+    // The frame of that commit: what changed there, as the History time-lapse places it.
+    const key = `${timeline.mode}|${commit}|${evolution!.stamp}`;
+    if (this.beat?.key === key) return;
+    const preview = this.store.previewScene;
+    const frame = preview?.frame === frameIndex ? preview : evolution!.scene(frameIndex, { ghosts: true });
+    const plan = planBeat(frame, { t0: time + (this.motionReduced ? 0 : BEAT_DELAY_MS) });
+    const at = new Map<string, number>();
+    for (const file of plan.files) {
+      at.set(file.id, file.at);
+      // The areas holding it change when it lands (a new folder appears just before its first file).
+      for (let node = frame.nodes.get(file.id); node?.spatialParentId; node = frame.nodes.get(node.spatialParentId)) {
+        const parent = frame.nodes.get(node.spatialParentId);
+        if (!parent?.change || parent.change.status === 'unchanged') continue;
+        at.set(parent.id, Math.min(at.get(parent.id) ?? Infinity, file.at - 120));
+      }
+    }
+    // Symbols change with their file.
+    for (const node of frame.nodes.values()) {
+      if (at.has(node.id) || !node.change || node.change.status === 'unchanged') continue;
+      const file = fileOf(frame, node.id);
+      const landing = file ? at.get(file) : undefined;
+      if (landing !== undefined) at.set(node.id, landing);
+    }
+    let force: Set<string> | undefined;
+    if (plan.files.length && plan.files.length <= BEAT_OPEN_MAX) {
+      force = new Set();
+      for (const file of plan.files) for (let node = frame.nodes.get(file.id); node?.spatialParentId; node = frame.nodes.get(node.spatialParentId)) force.add(node.spatialParentId);
+    }
+    this.beat = { key, plan, frame, at, ...(force ? { force } : {}) };
+    if (this.motionReduced) return;
+    // Rises and flashes when each lands, not all at once.
+    for (const [id, landing] of at) {
+      const status = frame.nodes.get(id)?.change?.status;
+      if (status === 'added') this.motion.appear.set(id, landing); else this.motion.appear.delete(id);
+      this.motion.flash.set(id, landing);
+    }
+    this.motionUntil = Math.max(this.motionUntil, plan.end + FLASH_MS);
+    if (timeline.follow) this.frameBeat(frame, plan);
+  }
+  /** Fly to a beat's changes, with some of the map around them. */
+  private frameBeat(frame: Scene, plan: BeatPlan): void {
+    const root = this.rootBounds();
+    const boxes = plan.files.flatMap(file => { const node = this.scene.nodes.get(file.id) ?? frame.nodes.get(file.id); if (!node) return []; const z = this.scene.nodes.has(node.id) ? this.scene.zBase(node.id) : 0; return [projectedBounds(node.rect, z, z + nodeHeight(node))]; });
+    if (!boxes.length || !root || this.deferred(() => this.frameBeat(frame, plan))) return;
+    const bounds = boxes.reduce(union);
+    const grow = (min: number, max: number, span: number) => { const missing = Math.max(0, span - (max - min)) / 2; return [min - missing, max + missing] as const; };
+    const [minX, maxX] = grow(bounds.minX, bounds.maxX, (root.maxX - root.minX) * FOLLOW_MIN_SPAN), [minY, maxY] = grow(bounds.minY, bounds.maxY, (root.maxY - root.minY) * FOLLOW_MIN_SPAN);
+    const target = fitBounds({ minX, maxX, minY, maxY }, this.viewport, Math.min(110, Math.max(40, Math.min(this.viewport.width, this.viewport.height) * 0.16)), this.limits);
+    this.animateTo(target, 650);
+  }
+  /** The beat as the renderer draws it; labels carry the lines Git reports per file once they arrive. */
+  private beatOverlay(state: AtlasState): BeatOverlay {
+    const beat = this.beat!;
+    const changes = state.timeline.mode === 'git' && state.timeline.gitChanges?.data && state.timeline.gitChanges.data.sha === state.timeline.gitTarget ? state.timeline.gitChanges.data : undefined;
+    if (!beat.labels || beat.labels.lines !== changes) {
+      const lines = new Map(changes?.files.map(file => [file.path, { added: file.added, removed: file.deleted }]) ?? []);
+      beat.labels = {
+        lines: changes,
+        files: beat.plan.files.map(file => {
+          const ancestors: string[] = [];
+          for (let node = beat.frame.nodes.get(file.id); node?.spatialParentId; node = beat.frame.nodes.get(node.spatialParentId)) ancestors.unshift(node.spatialParentId);
+          const counted = lines.get(file.path);
+          return { id: file.id, ancestors, status: file.status, name: file.name, at: file.at, ...(counted ? { lines: counted } : file.lines.added + file.lines.removed ? { lines: file.lines } : {}) };
+        }),
+      };
+    }
+    return { at: beat.at, files: beat.labels.files };
+  }
+  /** The panels over this map, in canvas pixels. */
+  private panels(): Box[] {
+    const stage = this.canvas.parentElement;
+    if (!stage) return [];
+    const box = this.canvas.getBoundingClientRect();
+    return [...stage.querySelectorAll<HTMLElement>(PANELS)].flatMap(element => {
+      const rect = element.getBoundingClientRect();
+      return rect.width && rect.height ? [{ x0: rect.left - box.left - 4, y0: rect.top - box.top - 4, x1: rect.right - box.left + 4, y1: rect.bottom - box.top + 4 }] : [];
+    });
   }
   private reportTimer?: ReturnType<typeof setTimeout>;
   /** Throttled status reporting (level, focus chain, visible items) to the store. */
@@ -363,7 +484,8 @@ export class MapController implements MapNavigator {
       ...this.analysisOverlays(state, time),
       motion: this.motion,
       // A time-lapse frame compares with the previous commit; overlays loaded for the settled view wait until it is back.
-      ...(this.store.previewScene ? { edges: [], emphasis: undefined, within: undefined, lit: undefined, flow: undefined, callouts: undefined, pins: undefined, coverage: undefined, families: undefined, measure: undefined, feature: undefined, people: undefined, person: undefined, pull: undefined, explanation: undefined, pointer: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
+      ...(this.store.previewScene ? { edges: [], emphasis: undefined, within: undefined, lit: undefined, flow: undefined, callouts: undefined, pins: undefined, coverage: undefined, families: undefined, measure: undefined, feature: undefined, people: undefined, person: undefined, pull: undefined, explanation: undefined, pointer: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare || state.timeline.mode === 'git' ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
+      ...(this.beat && !this.small ? { beat: this.beatOverlay(state) } : {}),
     };
   }
   /**

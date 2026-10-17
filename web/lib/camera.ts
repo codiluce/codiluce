@@ -1,11 +1,13 @@
-// World ↔ isometric plane ↔ screen transforms. World coordinates come from the
-// layout (ground plane x/y plus elevation z). The isometric projection is a
-// fixed affine map; the camera (center + scale) is the only viewport state.
+// World ↔ projection plane ↔ screen transforms. World coordinates come from
+// the layout (ground plane x/y plus elevation z). The projection is a fixed
+// affine map: isometric, or the plan seen from straight above (`setFlat`, the
+// map's 2D projection, where elevation does not show); the camera (center +
+// scale) is the only viewport state.
 import type { Rect } from '@engine/projection/dto';
 
 export interface Point { x: number; y: number }
 export interface Viewport { width: number; height: number }
-/** Camera center in isometric-plane units and CSS pixels per unit. */
+/** Camera center in projection-plane units and CSS pixels per unit. */
 export interface Camera { x: number; y: number; scale: number }
 export interface Bounds { minX: number; minY: number; maxX: number; maxY: number }
 export interface ZoomLimits { min: number; max: number }
@@ -13,11 +15,17 @@ export interface ZoomLimits { min: number; max: number }
 export const ISO_X = Math.cos(Math.PI / 6);
 export const ISO_Y = 0.5;
 
+/** The plan (true) or the isometric view (false): one projection for every map on screen. */
+let flat = false;
+export function setFlat(value: boolean): void { flat = value; }
+export function isFlat(): boolean { return flat; }
+
 export function project(x: number, y: number, z = 0): Point {
-  return { x: (x - y) * ISO_X, y: (x + y) * ISO_Y - z };
+  return flat ? { x, y } : { x: (x - y) * ISO_X, y: (x + y) * ISO_Y - z };
 }
 /** Inverse of `project` for a known elevation. */
 export function unproject(px: number, py: number, z = 0): Point {
+  if (flat) return { x: px, y: py };
   const a = px / ISO_X, b = (py + z) / ISO_Y;
   return { x: (a + b) / 2, y: (b - a) / 2 };
 }
@@ -34,8 +42,9 @@ export function screenToWorld(camera: Camera, viewport: Viewport, sx: number, sy
   const plane = fromScreen(camera, viewport, { x: sx, y: sy });
   return unproject(plane.x, plane.y, z);
 }
-/** Isometric-plane bounds of a world box (rect footprint from zBase to zTop). */
+/** Projection-plane bounds of a world box (rect footprint from zBase to zTop). */
 export function projectedBounds(rect: Rect, zBase: number, zTop: number): Bounds {
+  if (flat) return { minX: rect.x, maxX: rect.x + rect.w, minY: rect.y, maxY: rect.y + rect.h };
   return {
     minX: (rect.x - rect.y - rect.h) * ISO_X,
     maxX: (rect.x + rect.w - rect.y) * ISO_X,
@@ -43,7 +52,7 @@ export function projectedBounds(rect: Rect, zBase: number, zTop: number): Bounds
     maxY: (rect.x + rect.w + rect.y + rect.h) * ISO_Y - zBase,
   };
 }
-/** Isometric-plane region currently on screen. */
+/** Projection-plane region currently on screen. */
 export function visibleBounds(camera: Camera, viewport: Viewport, margin = 0): Bounds {
   const halfW = viewport.width / 2 / camera.scale + margin / camera.scale, halfH = viewport.height / 2 / camera.scale + margin / camera.scale;
   return { minX: camera.x - halfW, maxX: camera.x + halfW, minY: camera.y - halfH, maxY: camera.y + halfH };

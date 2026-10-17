@@ -47,6 +47,7 @@ export function AgentsPanel({ onClose }: { onClose: () => void }) {
   const expanded = useAtlas(state => !!state.journal.expanded);
   const historical = useAtlas(state => state.meta?.snapshot.kind === 'commit' || state.timeline.preview !== undefined);
   const [connectionsOpen, setConnectionsOpen] = useState(false);
+  const crewOpen = useAtlas(state => state.crewView);
   const snapshot = agents.snapshot;
   return <>
     <div className="panel-header"><h2>Agents</h2><div className="agents-panel-actions"><button className="button small" onClick={() => store.expandAgents(!expanded)} aria-label={expanded ? 'Dock Agents beside the map' : 'Expand Agents'}>{expanded ? 'Dock beside map' : 'Expand'}</button><button className="icon-button small" onClick={onClose} aria-label="Hide the agents panel">⇤</button></div></div>
@@ -59,6 +60,7 @@ export function AgentsPanel({ onClose }: { onClose: () => void }) {
         </details>
       </div>
       <label className="agents-toggle"><input type="checkbox" checked={agents.show} onChange={event => store.setActivity({ show: event.target.checked })} /> Show activity on the map</label>
+      <button className="button small" aria-pressed={crewOpen} onClick={() => crewOpen ? store.closeCrew() : store.openCrew()} title="The agents as characters on the map, in the middle: on the files they read and edit, outside for what is about no file">Watch them at work</button>
       {historical && <p className="note">Activity belongs to the working tree. Return to the live map to see its badges.</p>}
     </div>
     <AgentSessionsView compact={!expanded} />

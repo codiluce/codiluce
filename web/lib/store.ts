@@ -17,6 +17,7 @@ import { isAbort, type AtlasApi } from './api';
 import type { Level } from './lod';
 import { Scene } from './scene';
 import { SessionListCache } from './session-cache';
+import { setFlat } from './camera';
 import { Evolution } from './evolution';
 import { themeById } from './themes';
 import type { AgentActivity, AskEvent, ExplanationDetail, ExplanationList, ExplanationsSetup, ResolvedLink } from '@engine/explanations/model';
@@ -113,7 +114,7 @@ export interface ImpactState {
   data?: ImpactResult; items: ImpactItem[]; error?: string;
 }
 /** What the middle of the screen shows: the map, or a tool with the map as a small overview in a corner. */
-export type CenterView = 'map' | 'flow' | 'impact' | 'files' | 'conversations';
+export type CenterView = 'map' | 'flow' | 'impact' | 'files' | 'conversations' | 'focus' | 'crew';
 /** A view of the flow open in the middle: the map, its lanes (or layers), its outline. */
 export type FlowPane = 'map' | 'diagram' | 'outline';
 /**
@@ -128,6 +129,26 @@ export interface FlowSplit { side: number; bottom: number }
 export const FLOW_SPLIT: FlowSplit = { side: 0.3, bottom: 0.42 };
 /** How links are drawn on the map: arcs over the blocks, or rails along the floor, at right angles. */
 export type Connections = 'arcs' | 'rails';
+/**
+ * How the map and the tools drawing it look (Settings, Views). The map's
+ * projection is one for everything (the map, History's commits, Focus,
+ * Agents at work): the plan seen from straight above (`plan`, the default) or
+ * the isometric view. Focus keeps what it shows at its places on the map
+ * (`map`, the default) or gathers it, packed (`gather`).
+ */
+export type MapProjection = 'plan' | 'iso';
+export type FocusLayout = 'map' | 'gather';
+/** Where arrow labels go: placed where they cover least, numbered with a legend, or on the line. */
+export type ArrowLabels = 'placed' | 'numbered' | 'line';
+export interface ViewPrefs { map: MapProjection; focus: FocusLayout; labels: ArrowLabels }
+export const DEFAULT_VIEWS: ViewPrefs = { map: 'plan', focus: 'map', labels: 'placed' };
+const VIEW_CHOICES: { [K in keyof ViewPrefs]: readonly ViewPrefs[K][] } = { map: ['plan', 'iso'], focus: ['map', 'gather'], labels: ['placed', 'numbered', 'line'] };
+export function viewPrefs(saved: Partial<Record<keyof ViewPrefs, string>> | undefined): ViewPrefs {
+  const pick = <K extends keyof ViewPrefs>(key: K): ViewPrefs[K] => (VIEW_CHOICES[key] as readonly string[]).includes(saved?.[key] ?? '') ? saved![key] as ViewPrefs[K] : DEFAULT_VIEWS[key];
+  return { map: pick('map'), focus: pick('focus'), labels: pick('labels') };
+}
+/** What the Focus tool shows: a selection and what it is connected to, the files of a pull request, or the links of an explanation. */
+export interface FocusSubject { kind: 'selection' | 'pull' | 'explanation'; id: string; title: string }
 /** What a list of files is of: a feature, a data family, a coverage category or a person (the highlight on the map). */
 export interface FileSubject { kind: 'feature' | 'family' | 'coverage' | 'person' | 'pull'; key: string }
 export interface FilesState extends FileSubject { status: Status; stamp: string; data?: FileListResult; error?: string }
@@ -309,6 +330,12 @@ export interface AtlasState {
   flowView?: FlowViewState;
   flowSplit: FlowSplit;
   connections: Connections;
+  /** How the map (and the tools drawing it) look. */
+  views: ViewPrefs;
+  /** The Focus tool's subject, while it is open. */
+  focusView?: FocusSubject;
+  /** The Agents at work tool is open. */
+  crewView: boolean;
   files?: FilesState;
   code?: CodeState;
   agents: { connected: boolean; show: boolean; now: number; focus?: string; snapshot?: ActivitySnapshot; live?: import('@engine/conversations/model').LiveSession[] };
@@ -410,7 +437,7 @@ export class AtlasStore {
   constructor(readonly api: AtlasApi, private readonly options: StoreOptions = {}) {
     this.sessions = new SessionListCache(options.storage);
     this.openingHash = options.location?.hash;
-    let prefs: { themeId?: string; shapes?: boolean; streets?: boolean; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey; explainLens?: boolean; chatModel?: string; flowSplit?: FlowSplit; connections?: Connections } = {};
+    let prefs: { themeId?: string; shapes?: boolean; streets?: boolean; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey; explainLens?: boolean; chatModel?: string; flowSplit?: FlowSplit; connections?: Connections; views?: Partial<Record<keyof ViewPrefs, string>> } = {};
     try { prefs = JSON.parse(options.storage?.getItem('codiluce:prefs') ?? '{}'); } catch { /* defaults */ }
     this.state = {
       status: 'loading', view: { level: 'Applications', focus: [], zoom: 1, visible: [], truncated: false },
@@ -421,9 +448,11 @@ export class AtlasStore {
       people: { window: prefs.peopleWindow ?? 'all', show: false, status: 'idle', open: {} }, lens: { status: 'idle' }, pulls: { status: 'idle', tab: 'open', query: '', open: {} }, center: 'map', journal: { open: [] },
       agents: { connected: false, show: true, now: Date.now() },
       explain: { open: false, list: { status: 'idle' }, lens: prefs.explainLens ?? true, draft: { text: '', context: [], ...(prefs.chatModel ? { model: prefs.chatModel } : {}) }, unseen: [], agents: [], dismissed: [] },
-      flowSplit: clampSplit(prefs.flowSplit ?? FLOW_SPLIT), connections: prefs.connections === 'rails' ? 'rails' : 'arcs',
+      flowSplit: clampSplit(prefs.flowSplit ?? FLOW_SPLIT), connections: prefs.connections === 'rails' ? 'rails' : 'arcs', views: viewPrefs(prefs.views), crewView: false,
       timeline: { open: false, mode: 'git', status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true, split: prefs.split ?? true, regionLevel: prefs.regionLevel ?? 'auto', regions: { status: 'idle' } },
     };
+    // One projection for every map on screen.
+    setFlat(this.state.views.map === 'plan');
   }
   setActivity(patch: Partial<AtlasState['agents']>): void { this.set({ agents: { ...this.state.agents, ...patch } }); }
   getState = (): AtlasState => this.state;
@@ -445,7 +474,7 @@ export class AtlasStore {
   }
   private bumpScene(): void { this.set(state => ({ sceneRevision: state.sceneRevision + 1 })); }
   private savePrefs(): void {
-    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, shapes: this.state.shapes, streets: this.state.streets, flowSplit: this.state.flowSplit, connections: this.state.connections, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window, explainLens: this.state.explain.lens, ...(this.state.explain.draft.model ? { chatModel: this.state.explain.draft.model } : {}) })); } catch { /* preferences are optional */ }
+    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, shapes: this.state.shapes, streets: this.state.streets, flowSplit: this.state.flowSplit, connections: this.state.connections, views: this.state.views, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window, explainLens: this.state.explain.lens, ...(this.state.explain.draft.model ? { chatModel: this.state.explain.draft.model } : {}) })); } catch { /* preferences are optional */ }
   }
   dispose(): void { this.disposed = true; this.sessions.close(); for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.explainTimer) clearInterval(this.explainTimer); if (this.activityTimer) clearTimeout(this.activityTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
 
@@ -788,6 +817,7 @@ export class AtlasStore {
   async undoMapVisibility(): Promise<void> { const action = this.state.mapVisibility.undo; if (action) await this.changeMapVisibility(action, 'Map visibility restored.', false); }
   /** Draw the links on the map as arcs over the blocks or as rails along the floor. */
   setConnections(connections: Connections): void { this.set({ connections }); this.savePrefs(); }
+  setViews(patch: Partial<ViewPrefs>): void { this.set(state => ({ views: { ...state.views, ...patch } })); setFlat(this.state.views.map === 'plan'); this.savePrefs(); }
 
   // History -----------------------------------------------------------------
   private setTimeline(patch: Partial<TimelineState>): void { this.set(state => ({ timeline: { ...state.timeline, ...patch } })); }
@@ -1179,7 +1209,7 @@ export class AtlasStore {
   setCenter(view: CenterView): void {
     const state = this.state;
     if (view === 'conversations') { this.showAgents(); return; }
-    if (view !== 'map' && !(view === 'flow' ? state.flowView : view === 'impact' ? state.impact.open : state.files)) return;
+    if (view !== 'map' && !(view === 'flow' ? state.flowView : view === 'impact' ? state.impact.open : view === 'focus' ? state.focusView : view === 'crew' ? state.crewView : state.files)) return;
     if (state.center !== view) { this.set({ center: view }); this.writeHash(); }
   }
   openJournal(view: 'conversations', options: { id?: string; messageId?: string; path?: string } = {}): void {
@@ -1195,6 +1225,12 @@ export class AtlasStore {
   }
   /** A tool closed: the map comes back to the middle if the tool was there. */
   private leaveCenter(view: CenterView): Partial<AtlasState> { return this.state.center === view ? { center: 'map' } : {}; }
+  /** Focus on a set of things in the middle: a selection and what it is connected to, a pull request's files, an explanation's links. */
+  openFocus(subject: FocusSubject): void { this.set({ center: 'focus', focusView: subject }); }
+  closeFocus(): void { this.set({ ...this.leaveCenter('focus'), focusView: undefined }); }
+  /** Watch the agents at work as characters on the map, in the middle. */
+  openCrew(): void { this.set({ center: 'crew', crewView: true }); }
+  closeCrew(): void { this.set({ ...this.leaveCenter('crew'), crewView: false }); }
   /** Show what depends on an entity (the selection by default) or on the uncommitted changes (`WORKING_CHANGES`) in the middle; it stays on that origin. */
   async showImpact(id = this.state.selection?.id, depth = this.state.impact.depth): Promise<void> {
     if (!id) return;

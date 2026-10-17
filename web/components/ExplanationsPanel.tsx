@@ -165,6 +165,7 @@ function Reader() {
       <Staleness data={data} />
       <div className="explain-tools">
         <label className="toggle small" title="Light everything this explanation links on the map; the rest recedes"><input type="checkbox" checked={lens} onChange={event => store.setExplanationLens(event.target.checked)} /> Light on map{linked.length ? ` (${data.footprint.ids.length})` : ''}</label>
+        {data.links.some(link => link.id && link.kind !== 'external') && <button className="button tiny" onClick={() => store.openFocus({ kind: 'explanation', id: data.id, title: data.title })} title="What it links at its places on the map, with the links between them (in the middle of the screen)">Focus</button>}
         <CopyButton text={() => toMarkdown(data)} label="Copy Markdown" title="The explanation as Markdown, with its links (repository-relative paths)" />
         <button className="button tiny" onClick={() => setRenaming(data.title)}>Rename</button>
         {confirming ? <span className="confirm"><button className="button tiny danger" onClick={() => void store.deleteExplanation(data.id)}>Delete it</button><button className="button tiny" onClick={() => setConfirming(false)}>Keep</button></span>

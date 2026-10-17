@@ -1,8 +1,11 @@
 import type { ActivityMark } from './activity';
-// Canvas 2D renderer for the isometric map. Stateless per frame: everything it
-// draws comes from the visible set, the camera and a RenderState.
+// Canvas 2D renderer for the map, isometric or in plan (camera.ts `setFlat`:
+// the blocks seen from straight above, without walls, shadows or shapes).
+// Stateless per frame: everything it draws comes from the visible set, the
+// camera and a RenderState.
 import type { Archetype, NodeSummary } from '@engine/projection/dto';
-import { ISO_X, ISO_Y, toScreen, worldToScreen, type Bounds, type Camera, type Point, type Viewport } from './camera';
+import { ISO_X, ISO_Y, isFlat, toScreen, worldToScreen, type Bounds, type Camera, type Point, type Viewport } from './camera';
+import { placeLabels, type Box, type LabelAsk } from './labels';
 import { openProgress, type LodConfig } from './lod';
 import { nodeHeight, type Scene, type VisibleItem, type VisibleSet } from './scene';
 import { RailCache, type Rail, type RailWorld } from './rails';
@@ -66,6 +69,10 @@ export interface RenderState {
   comparison?: { dimUnchanged: boolean };
   /** Moving through history: blocks that appeared rise from the ground, changed ones flash. Start times by node ID. */
   motion?: MotionState;
+  /** A commit told on the map: its changes land one after another, each changed file labeled. */
+  beat?: BeatOverlay;
+  /** Screen boxes labels must leave free (panels over the map). */
+  keepClear?: Box[];
   /** Blast radius of the selection or of a comparison. */
   impact?: ImpactOverlay;
   callouts?: CalloutOverlay[];
@@ -97,12 +104,21 @@ export interface RenderState {
 }
 export interface MotionState { appear: Map<string, number>; flash: Map<string, number> }
 /**
+ * A commit beat: when each changed node lands (before that it is drawn as it
+ * was), and a label for each changed file, shown once it lands. Files too
+ * small to draw at this level of detail are counted on the area drawn for
+ * them.
+ */
+export interface BeatOverlay { at: Map<string, number>; files: BeatLabel[] }
+export interface BeatLabel { id: string; ancestors: string[]; status: 'added' | 'modified' | 'moved' | 'removed'; name: string; lines?: { added: number; removed: number }; at: number }
+/**
  * Blast radius on the map: reached entities by hop count (seeds are 0), and
  * closed areas with how many affected entities they hold. With `dimOthers`,
  * everything unreached recedes.
  */
 export interface ImpactOverlay { distances: Map<string, number>; areas: Map<string, { count: number; distance: number }>; depth: number; dimOthers: boolean }
-interface Label { x: number; y: number; lines: { text: string; font: string; color: string }[]; priority: number; align: 'center' | 'above' | 'below' }
+/** `corner`: x, y is the top-left corner (an open area's name inside its corner, in plan). */
+interface Label { x: number; y: number; lines: { text: string; font: string; color: string }[]; priority: number; align: 'center' | 'above' | 'below' | 'corner' }
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 const MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace';
 /** Duration of a block rising into place, and of a change flash. */
@@ -128,6 +144,8 @@ interface RailStroke {
 interface RailPlan { strokes: RailStroke[]; byHost: Map<number, { stroke: RailStroke; run: RailStroke['runs'][number] }[]>; edges: DrawnEdge[]; links: DrawnLink[] }
 /** Closed areas at least this large on screen show what they hold on their roof; past these sizes, room for more kinds. */
 const RESUME_PX = 64, RESUME_FADE_PX = 14, RESUME_KINDS: [number, number][] = [[100, 2], [150, 4], [Infinity, 6]];
+/** Map a commit's changed files need around each of them (px²) to be labeled one by one; closer, an area labels them together. */
+const BEAT_ROOM = 150 * 44;
 
 export class MapRenderer {
   private palettes: PaletteCache;
@@ -135,13 +153,19 @@ export class MapRenderer {
   private dpr = 1;
   private shapeTheme: ShapeTheme;
   private readonly rails = new RailCache();
+  /** In plan this frame (camera.ts `isFlat`). */
+  private flat = false;
+  /** The names drawn on the last frame (screen boxes): what is drawn over the map keeps off them. */
+  labelBoxes: Box[] = [];
+  /** Where each beat label went on the previous frame (kept while free). */
+  private readonly beatSlots = new Map<string, string>();
   railsPending = false;
   constructor(private theme: Theme) { this.palettes = new PaletteCache(theme); this.font = theme.style?.font ?? FONT; this.shapeTheme = shapeTheme(theme); }
   setTheme(theme: Theme): void { this.theme = theme; this.palettes = new PaletteCache(theme); this.font = theme.style?.font ?? FONT; this.shapeTheme = shapeTheme(theme); this.sprites.clear(); }
 
   render(ctx: CanvasRenderingContext2D, dpr: number, viewport: Viewport, camera: Camera, scene: Scene, set: VisibleSet, state: RenderState, lod: LodConfig): void {
     const theme = this.theme;
-    this.dpr = dpr; this.ctxRef = ctx;
+    this.dpr = dpr; this.ctxRef = ctx; this.flat = isFlat();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.background(ctx, viewport);
     if (theme.style?.grid === 'dots') this.dotGrid(ctx, viewport, camera); else if (theme.style?.grid !== 'none') this.grid(ctx, viewport, camera);
@@ -175,9 +199,11 @@ export class MapRenderer {
       const dimmed = flowSet ? !flowSet.has(item.node.id) : focusLit ? !focusLit(item.node) : !!emphasis && !emphasis.has(item.node.id) && !inside?.[index];
       // In a comparison, blocks a change reaches stay lit instead of fading with the unchanged ones.
       const reached = impactLit?.has(item.node.id) && item.node.change?.status !== 'removed';
-      const alpha = item.alpha * (dimmed ? (flowSet ? theme.flow.dimAlpha : recede) : 1) * (state.comparison && !reached ? this.changeAlpha(item, state.comparison) : 1) * (state.impact?.dimOthers && !reached ? theme.dimAlpha : 1);
+      // A beat's change not landed yet: drawn as it was (a file it removes is not a ghost yet).
+      const landing = state.beat && state.time < (state.beat.at.get(item.node.id) ?? -Infinity);
+      const alpha = item.alpha * (dimmed ? (flowSet ? theme.flow.dimAlpha : recede) : 1) * (state.comparison && !reached && !landing ? this.changeAlpha(item, state.comparison) : 1) * (state.impact?.dimOthers && !reached ? theme.dimAlpha : 1);
       if (alpha <= 0.01) { if (rails) this.railRuns(ctx, rails, index, state); continue; }
-      if (theme.style?.shadow && item.parent >= 0 && item.size > SOFT_PX) this.shadow(ctx, viewport, camera, item, alpha);
+      if (theme.style?.shadow && item.parent >= 0 && item.size > SOFT_PX && !this.flat) this.shadow(ctx, viewport, camera, item, alpha);
       const category = coverageOf?.(item.node);
       const family = category ? undefined : familyOf?.(item.node);
       const person = category || family ? undefined : peopleOf?.(item.node);
@@ -185,7 +211,7 @@ export class MapRenderer {
       const paletteOverride = category ? `coverage:${category}` : family ? `family:${this.familyHue(family, state.families!)}` : person ? `family:${this.familyHue(person, state.people!)}` : level ? `level:${level}` : undefined;
       if (item.shape !== undefined) this.shape(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId, paletteOverride, hot.get(item.node.id) ?? 0, this.shapeTint(item, state), state);
       else {
-        this.prism(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId, paletteOverride, state.shapes !== false, !!state.streets && item.open);
+        this.prism(ctx, viewport, camera, item, alpha, item.node.id === state.hoveredId, paletteOverride, state.shapes !== false && !this.flat, !!state.streets && item.open);
         const resume = this.resumeShare(item, state, camera, lod);
         if (resume > 0) this.resume(ctx, viewport, camera, item, alpha * resume, paletteOverride);
       }
@@ -198,7 +224,7 @@ export class MapRenderer {
       else if (state.people && !item.open && !person && state.people.areas.has(item.node.id)) this.familyBadge(ctx, viewport, camera, item, alpha, state.people.areas.get(item.node.id)!, state.people);
       else if (state.measure && !item.open && !level && state.measure.areas.has(item.node.id)) this.levelBadge(ctx, viewport, camera, item, alpha, state.measure.areas.get(item.node.id)!, state.measure);
       if (item.open && state.pull?.notes?.has(item.node.id)) notes.push([item, alpha]);
-      if (state.comparison) this.changeOverlay(ctx, viewport, camera, item, alpha, state);
+      if (state.comparison && !landing) this.changeOverlay(ctx, viewport, camera, item, alpha, state);
       if (state.impact) this.impactOverlay(ctx, viewport, camera, item, alpha, state.impact);
       if (state.showDiagnostics && !item.open && item.node.diagnostics > 0 && item.size > 10) this.diagnosticMarker(ctx, viewport, camera, item, alpha);
       if (rails) this.railRuns(ctx, rails, index, state);
@@ -220,9 +246,12 @@ export class MapRenderer {
     if (state.unresolved && state.unresolved.count > 0) this.unresolvedStub(ctx, viewport, camera, scene, set, state.unresolved);
     if (state.flow) { this.flowArcs(ctx, viewport, camera, rails ? rails.links : links, state); this.flowStops(ctx, viewport, camera, set, state.flow); }
     for (const [item, alpha] of notes) this.areaNote(ctx, viewport, camera, item, alpha, state.pull!);
-    this.labels(ctx, labels);
+    // A beat's labels take their places first; the map's names keep off them.
+    const beat = state.beat?.files.length ? this.beatLabels(ctx, viewport, camera, scene, set, items, state) : undefined;
+    this.labels(ctx, labels, beat?.boxes);
+    beat?.draw();
     if (state.pins?.length) this.pins(ctx, viewport, camera, set, state.pins);
-    if (state.callouts?.length) this.callouts(ctx, viewport, camera, set, state.callouts);
+    if (state.callouts?.length) this.callouts(ctx, viewport, camera, set, state.callouts, state.keepClear);
     if (state.frames?.length) this.frames(ctx, viewport, camera, state.frames);
     if (state.activity?.length) this.activityBadges(ctx, viewport, camera, scene, set, state.activity, state.reducedMotion);
     if (state.pointer) this.pointer(ctx, viewport, camera, scene, set, items, state.pointer);
@@ -335,6 +364,7 @@ export class MapRenderer {
     const spacing = 4 ** Math.ceil(Math.log(minPx / camera.scale) / Math.log(4));
     const corners = [[0, 0], [viewport.width, 0], [0, viewport.height], [viewport.width, viewport.height]].map(([sx, sy]) => {
       const px = (sx! - viewport.width / 2) / camera.scale + camera.x, py = (sy! - viewport.height / 2) / camera.scale + camera.y;
+      if (this.flat) return { x: px, y: py };
       const a = px / ISO_X, b = py / ISO_Y;
       return { x: (a + b) / 2, y: (b - a) / 2 };
     });
@@ -397,6 +427,12 @@ export class MapRenderer {
       const height = item.zTop - item.zBase;
       lift[index] = below + height * (rise - 1);
       if (below === 0 && rise === 1) return item;
+      if (this.flat) {
+        // Heights do not show in plan: a block that appears grows out of its center instead.
+        if (rise === 1) return item;
+        const k = Math.max(0.05, rise), r = item.node.rect;
+        return { ...item, node: { ...item.node, rect: { x: r.x + r.w * (1 - k) / 2, y: r.y + r.h * (1 - k) / 2, w: r.w * k, h: r.h * k } }, alpha: item.alpha * fade };
+      }
       const zBase = item.zBase + below;
       return { ...item, zBase, zTop: zBase + height * Math.max(0, rise), alpha: item.alpha * fade };
     });
@@ -419,7 +455,8 @@ export class MapRenderer {
     const k = camera.scale, d = this.dpr;
     const origin = worldToScreen(camera, viewport, x, y, z);
     // Path points are transformed when added, so the footprint can be drawn in its own plane and stroked/filled afterwards.
-    ctx.setTransform(d * ISO_X * k, d * ISO_Y * k, -d * ISO_X * k, d * ISO_Y * k, d * (origin.x + dx), d * (origin.y + dy));
+    if (this.flat) ctx.setTransform(d * k, 0, 0, d * k, d * (origin.x + dx), d * (origin.y + dy));
+    else ctx.setTransform(d * ISO_X * k, d * ISO_Y * k, -d * ISO_X * k, d * ISO_Y * k, d * (origin.x + dx), d * (origin.y + dy));
     if (r > 0) ctx.roundRect(0, 0, w, h, Math.min(r + grow, w / 2, h / 2));
     else ctx.rect(0, 0, w, h);
     ctx.setTransform(d, 0, 0, d, 0, 0);
@@ -451,7 +488,7 @@ export class MapRenderer {
     const palette = this.palettes.get(paletteOverride ?? paletteKey(item.node), item.node.depth);
     const r = this.radius(item, camera);
     ctx.globalAlpha = alpha;
-    const wallPx = (item.zTop - item.zBase) * camera.scale;
+    const wallPx = this.flat ? 0 : (item.zTop - item.zBase) * camera.scale;
     if (wallPx >= 0.75 && item.size > 3) {
       if (r > 0) this.roundedWalls(ctx, viewport, camera, item, r, palette.left, palette.right);
       else {
@@ -525,7 +562,7 @@ export class MapRenderer {
    * comparisons badge areas with their own summary instead.
    */
   private resumeShare(item: VisibleItem, state: RenderState, camera: Camera, lod: LodConfig): number {
-    if (state.shapes === false || !item.node.archetypeCounts?.length || item.shape !== undefined) return 0;
+    if (state.shapes === false || this.flat || !item.node.archetypeCounts?.length || item.shape !== undefined) return 0;
     if (state.comparison || state.impact || state.coverage || state.families || state.feature || state.person || state.people || state.measure) return 0;
     if (item.open) return Math.max(0, 1 - openProgress(item.node, camera.scale, lod) * 2.5);
     return Math.min(1, Math.max(0, (item.size - RESUME_PX) / RESUME_FADE_PX));
@@ -634,7 +671,7 @@ export class MapRenderer {
     const r = this.radius(item, camera);
     // A change that just happened flashes, then settles into its status color.
     const start = state.reducedMotion ? undefined : state.motion?.flash.get(node.id);
-    const boost = start === undefined ? 0 : Math.max(0, 1 - (state.time - start) / FLASH_MS) ** 2;
+    const boost = start === undefined || state.time < start ? 0 : Math.max(0, 1 - (state.time - start) / FLASH_MS) ** 2;
     if (status && status !== 'unchanged') {
       const color = colors[status];
       ctx.save();
@@ -759,7 +796,8 @@ export class MapRenderer {
       const top = worldToScreen(camera, viewport, node.rect.x, node.rect.y, item.zTop);
       const size = node.type === 'application' ? 15 : node.type === 'repository' ? 13 : 11;
       const text = `${state.comparison ? changeGlyph(node) : ''}${node.type === 'repository' ? node.name : node.kind === 'group' ? `${node.name}` : node.type === 'directory' ? `${node.name}/` : node.name}`;
-      labels.push({ x: top.x, y: top.y - 4, align: 'above', priority: 1e9 - node.depth * 1e6 + item.size - (dimmed ? 5e5 : 0), lines: [{ text, font: `${node.type === 'application' ? 700 : 600} ${size}px ${this.font}`, color: dimmed ? theme.text.secondary : theme.text.district }] });
+      // In plan an area's name sits inside its top-left corner, as on a floor plan; in isometric, above its back corner.
+      labels.push({ x: this.flat ? top.x + 5 : top.x, y: this.flat ? top.y + 3 : top.y - 4, align: this.flat ? 'corner' : 'above', priority: 1e9 - node.depth * 1e6 + item.size - (dimmed ? 5e5 : 0), lines: [{ text, font: `${node.type === 'application' ? 700 : 600} ${size}px ${this.font}`, color: dimmed ? theme.text.secondary : theme.text.district }] });
       return;
     }
     const { x, y, w, h } = node.rect;
@@ -779,26 +817,128 @@ export class MapRenderer {
     }
     labels.push({ x: center.x, y: center.y, align: sign ? 'below' : 'center', priority: (important ? 2e9 : 0) + item.size, lines });
   }
-  private labels(ctx: CanvasRenderingContext2D, labels: Label[]): void {
+  /**
+   * A beat's labels, for the files landed so far: each where it covers no
+   * other label and no panel (beside its file, further out with a leader
+   * line, or in a column at the side of the map), the first landed first.
+   * Files inside an area drawn closed are counted on that area, unless its
+   * own change badge already says so. Returns the boxes taken, and what draws
+   * them once the map's names are drawn around them.
+   */
+  private beatLabels(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, scene: Scene, set: VisibleSet, items: VisibleItem[], state: RenderState): { boxes: Box[]; draw: () => void } {
+    const beat = state.beat!, time = state.time, theme = this.theme;
+    const groups = new Map<string, { item: VisibleItem; files: BeatLabel[]; at: number; cluster?: Box }>();
+    const screenBox = (item: VisibleItem): Box => { const corners = this.corners(viewport, camera, item, item.zTop); const xs = corners.map(p => p.x), ys = corners.map(p => p.y); return { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) }; };
+    // Files drawn on their own, by the area holding them: an area whose changed files sit too close together to label one by one gets one label for them all (they part as the map zooms in).
+    const byArea = new Map<number, { files: BeatLabel[]; boxes: Box[] }>();
+    for (const file of beat.files) {
+      if (time < file.at) continue;
+      const at = this.resolve(set, file.id, file.ancestors);
+      if (!at) continue;
+      const item = items[set.index.get(at.item.node.id) ?? -1] ?? at.item;
+      // Off screen (an open area drawn, the file not): no label. A closed area big enough for its change badge already counts what changed inside.
+      if (at.hidden && (item.open || item.size > 34 && item.node.changes)) continue;
+      if (!at.hidden && item.parent >= 0) {
+        const area = byArea.get(item.parent) ?? { files: [], boxes: [] };
+        area.files.push(file); area.boxes.push(screenBox(item)); byArea.set(item.parent, area);
+        continue;
+      }
+      const group = groups.get(item.node.id) ?? { item, files: [], at: file.at };
+      group.files.push(file); groups.set(item.node.id, group);
+    }
+    for (const [parent, area] of byArea) {
+      const cluster = area.boxes.reduce((a, b) => ({ x0: Math.min(a.x0, b.x0), y0: Math.min(a.y0, b.y0), x1: Math.max(a.x1, b.x1), y1: Math.max(a.y1, b.y1) }));
+      // Room for each label: about a label's size of map around every file.
+      const crowded = area.files.length >= 3 && (cluster.x1 - cluster.x0 + 60) * (cluster.y1 - cluster.y0 + 30) < area.files.length * BEAT_ROOM;
+      if (crowded) { const item = items[parent]!; groups.set(item.node.id, { item, files: area.files, at: Math.min(...area.files.map(file => file.at)), cluster }); continue; }
+      for (const file of area.files) groups.set(file.id, { item: items[set.index.get(file.id)!]!, files: [file], at: file.at });
+    }
+    if (!groups.size) return { boxes: [], draw: () => undefined };
+    const glyphs = { added: '+', modified: '~', moved: '→', removed: '−' } as const;
+    const font = `700 11px ${this.font}`, sub = `600 10px ${this.font}`;
+    ctx.save();
+    const entries = [...groups.values()].sort((a, b) => a.at - b.at).map(group => {
+      let target: Box = group.cluster ?? screenBox(group.item);
+      const tiny = Math.max(target.x1 - target.x0, target.y1 - target.y0) < 12;
+      if (tiny) { const cx = (target.x0 + target.x1) / 2, cy = (target.y0 + target.y1) / 2; target = { x0: cx - 6, y0: cy - 6, x1: cx + 6, y1: cy + 6 }; }
+      const own = !group.cluster && group.files.length === 1 && group.files[0]!.id === group.item.node.id;
+      const file = group.files[0]!;
+      // A file: its glyph, name and lines; an area: its name and what changed inside, by status.
+      const runs: { text: string; color: string; font: string }[] = own
+        ? [{ text: `${glyphs[file.status]} `, color: theme.change[file.status], font }, { text: file.name, color: theme.text.primary, font }, ...(file.lines && file.lines.added + file.lines.removed ? [{ text: `  +${compactNumber(file.lines.added)} −${compactNumber(file.lines.removed)}`, color: theme.text.secondary, font: sub }] : [])]
+        : [{ text: displayName(group.item.node), color: theme.text.primary, font }, ...(['added', 'modified', 'moved', 'removed'] as const).flatMap(status => { const n = group.files.filter(item => item.status === status).length; return n ? [{ text: `  ${glyphs[status]}${n}`, color: theme.change[status], font }] : []; })];
+      const widths = runs.map(run => { ctx.font = run.font; return Math.min(260, ctx.measureText(run.text).width); });
+      const w = widths.reduce((sum, width) => sum + width, 0) + 16, h = 20;
+      const color = own ? theme.change[file.status] : theme.change[group.files.some(item => item.status !== 'modified') ? group.files.find(item => item.status !== 'modified')!.status : 'modified'];
+      return { key: group.item.node.id, target, tiny, runs, widths, w, h, color, at: group.at, ask: { key: group.item.node.id, target, w, h } satisfies LabelAsk };
+    });
+    ctx.restore();
+    const margin = 8;
+    const bounds = { x0: margin, y0: margin, x1: viewport.width - margin, y1: viewport.height - margin };
+    const asks = entries.map(entry => entry.ask), soft = entries.map(entry => entry.target);
+    // What finds no room is counted in a note at the top of the map, which then stays clear too.
+    const note: Box = { x0: viewport.width / 2 - 150, y0: margin, x1: viewport.width / 2 + 150, y1: margin + 20 };
+    let { placed, left } = placeLabels(asks, { bounds, avoid: state.keepClear ?? [], soft, memory: this.beatSlots });
+    if (left.length) ({ placed, left } = placeLabels(asks, { bounds, avoid: [...state.keepClear ?? [], note], soft, memory: this.beatSlots }));
+    const byKey = new Map(entries.map(entry => [entry.key, entry]));
+    const boxes = placed.map(item => item.box);
+    const more = left.length;
+    const draw = () => {
+      ctx.save();
+      ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.lineJoin = 'round';
+      for (const spot of placed) {
+        const entry = byKey.get(spot.key)!;
+        const fade = state.reducedMotion ? 1 : Math.min(1, Math.max(0, (time - entry.at) / 220));
+        ctx.globalAlpha = fade;
+        ctx.strokeStyle = entry.color; ctx.fillStyle = entry.color;
+        if (entry.tiny) { const cx = (entry.target.x0 + entry.target.x1) / 2, cy = (entry.target.y0 + entry.target.y1) / 2; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.stroke(); }
+        if (spot.leader) {
+          ctx.lineWidth = 1.3; ctx.globalAlpha = fade * 0.85;
+          ctx.beginPath(); ctx.moveTo(spot.leader.from.x, spot.leader.from.y); ctx.lineTo(spot.leader.to.x, spot.leader.to.y); ctx.stroke();
+          ctx.globalAlpha = fade; ctx.beginPath(); ctx.arc(spot.leader.from.x, spot.leader.from.y, 2.2, 0, Math.PI * 2); ctx.fill();
+        }
+        const { x0, y0 } = spot.box;
+        ctx.fillStyle = theme.dark ? 'rgba(10,14,30,0.94)' : 'rgba(255,255,255,0.97)';
+        roundRect(ctx, x0, y0, entry.w, entry.h, entry.h / 2); ctx.fill();
+        ctx.lineWidth = 1.3; ctx.stroke();
+        let cursor = x0 + 8;
+        entry.runs.forEach((run, i) => { ctx.font = run.font; ctx.fillStyle = run.color; ctx.fillText(fit(ctx, run.text, entry.widths[i]! + 0.5), cursor, y0 + entry.h / 2 + 0.5); cursor += entry.widths[i]!; });
+      }
+      if (more) {
+        // What found no room: counted, at the top of the map.
+        const text = `+${more} more changed ${more === 1 ? 'place' : 'places'} · listed under History`;
+        ctx.globalAlpha = 0.95; ctx.font = `600 11px ${this.font}`;
+        const w = ctx.measureText(text).width + 18, x = (viewport.width - w) / 2, y = margin;
+        ctx.fillStyle = theme.dark ? 'rgba(10,14,30,0.9)' : 'rgba(255,255,255,0.95)'; ctx.strokeStyle = theme.text.secondary; ctx.lineWidth = 1;
+        roundRect(ctx, x, y, w, 20, 10); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = theme.text.secondary; ctx.fillText(text, x + 9, y + 10.5);
+      }
+      ctx.restore();
+    };
+    return { boxes: more ? [...boxes, note] : boxes, draw };
+  }
+  private labels(ctx: CanvasRenderingContext2D, labels: Label[], reserved: readonly Box[] = []): void {
     labels.sort((a, b) => b.priority - a.priority);
-    const placed: { x0: number; y0: number; x1: number; y1: number }[] = [];
+    const placed: { x0: number; y0: number; x1: number; y1: number }[] = [...reserved];
+    this.labelBoxes = [];
     ctx.textBaseline = 'middle'; ctx.textAlign = 'center'; ctx.lineJoin = 'round';
     let count = 0;
     for (const label of labels) {
       if (count > 450) break;
       let width = 0, height = 0;
       const metrics = label.lines.map(line => { ctx.font = line.font; const w = Math.min(320, ctx.measureText(line.text).width); const h = parseFloat(/(\d+(?:\.\d+)?)px/.exec(line.font)![1]!) * 1.25; width = Math.max(width, w); height += h; return { w, h }; });
-      const y0 = label.align === 'above' ? label.y - height : label.align === 'below' ? label.y + 2 : label.y - height / 2;
-      const box = { x0: label.x - width / 2 - 3, y0: y0 - 2, x1: label.x + width / 2 + 3, y1: y0 + height + 2 };
+      const y0 = label.align === 'above' ? label.y - height : label.align === 'below' ? label.y + 2 : label.align === 'corner' ? label.y : label.y - height / 2;
+      const x = label.align === 'corner' ? label.x + width / 2 : label.x;
+      const box = { x0: x - width / 2 - 3, y0: y0 - 2, x1: x + width / 2 + 3, y1: y0 + height + 2 };
       if (placed.some(other => box.x0 < other.x1 && box.x1 > other.x0 && box.y0 < other.y1 && box.y1 > other.y0)) continue;
-      placed.push(box); count++;
+      placed.push(box); this.labelBoxes.push(box); count++;
       let cursor = y0;
       label.lines.forEach((line, i) => {
         const h = metrics[i]!.h;
         ctx.font = line.font;
         const text = fit(ctx, line.text, 320);
-        ctx.lineWidth = 3.5; ctx.strokeStyle = this.theme.text.halo; ctx.strokeText(text, label.x, cursor + h / 2);
-        ctx.fillStyle = line.color; ctx.fillText(text, label.x, cursor + h / 2);
+        ctx.lineWidth = 3.5; ctx.strokeStyle = this.theme.text.halo; ctx.strokeText(text, x, cursor + h / 2);
+        ctx.fillStyle = line.color; ctx.fillText(text, x, cursor + h / 2);
         cursor += h;
       });
     }
@@ -1249,31 +1389,28 @@ export class MapRenderer {
    * beside each block (or the area holding it), placed where it does not
    * cover another, with a leader line to its block.
    */
-  private callouts(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, set: VisibleSet, callouts: CalloutOverlay[]): void {
-    const placed: { x0: number; y0: number; x1: number; y1: number }[] = [];
+  private callouts(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, set: VisibleSet, callouts: CalloutOverlay[], keepClear: readonly Box[] = []): void {
     const resolved = callouts.map(callout => ({ callout, at: this.resolve(set, callout.entityId, callout.ancestors) })).filter(item => item.at);
     // The current stop first, so it always gets the best place.
     resolved.sort((a, b) => Number(b.callout.current) - Number(a.callout.current) || a.callout.number - b.callout.number);
     ctx.save();
     ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-    for (const { callout, at } of resolved) {
+    const entries = resolved.map(({ callout, at }) => {
       const anchor = this.anchor(viewport, camera, at!.item);
-      const color = this.toneColor(callout.tone);
       ctx.font = `${callout.current ? 800 : 700} ${callout.current ? 12.5 : 11}px ${this.font}`;
       const text = fit(ctx, callout.label, callout.current ? 260 : 190);
       const h = callout.current ? 24 : 20, badge = h - 6;
       const w = ctx.measureText(text).width + badge + 16;
-      const candidates = [[18, -h - 10], [18, 10], [-w - 18, -h - 10], [-w - 18, 10], [-w / 2, -h - 22], [-w / 2, 16]];
-      let box: { x0: number; y0: number; x1: number; y1: number } | undefined;
-      for (const [dx, dy] of candidates) {
-        const candidate = { x0: anchor.x + dx!, y0: anchor.y + dy!, x1: anchor.x + dx! + w, y1: anchor.y + dy! + h };
-        if (candidate.x0 < 2 || candidate.y0 < 2 || candidate.x1 > viewport.width - 2 || candidate.y1 > viewport.height - 2) continue;
-        if (!placed.some(other => candidate.x0 < other.x1 && candidate.x1 > other.x0 && candidate.y0 < other.y1 && candidate.y1 > other.y0)) { box = candidate; break; }
-      }
-      // No free place: the current stop still shows (on top), the others only keep their number on the map.
-      if (!box && !callout.current) continue;
-      box ??= { x0: anchor.x + 18, y0: anchor.y - h - 10, x1: anchor.x + 18 + w, y1: anchor.y - 10 };
-      placed.push(box);
+      return { callout, anchor, text, h, badge, w, key: `${callout.number}|${callout.entityId}` };
+    });
+    // Beside the stop, never over another label: one with no free place keeps only its number on the map.
+    const { placed } = placeLabels(entries.map(entry => ({ key: entry.key, target: { x0: entry.anchor.x - 8, y0: entry.anchor.y - 8, x1: entry.anchor.x + 8, y1: entry.anchor.y + 8 }, w: entry.w, h: entry.h })), {
+      bounds: { x0: 2, y0: 2, x1: viewport.width - 2, y1: viewport.height - 2 }, avoid: keepClear, memory: this.calloutSlots, directions: ['ne', 'se', 'nw', 'sw', 'n', 's', 'e', 'w'], distances: [10, 26, 48], columns: false,
+    });
+    const byKey = new Map(entries.map(entry => [entry.key, entry]));
+    for (const spot of placed) {
+      const { callout, anchor, text, h, badge, w } = byKey.get(spot.key)!;
+      const box = spot.box, color = this.toneColor(callout.tone);
       const near = { x: Math.max(box.x0, Math.min(anchor.x, box.x1)), y: Math.max(box.y0, Math.min(anchor.y, box.y1)) };
       ctx.globalAlpha = callout.current ? 1 : 0.92;
       ctx.strokeStyle = color; ctx.lineWidth = callout.current ? 2 : 1.4;
@@ -1294,6 +1431,7 @@ export class MapRenderer {
     }
     ctx.restore();
   }
+  private readonly calloutSlots = new Map<string, string>();
   /** Pins stacked under their block: what the flow does there that is not an entity. */
   private pins(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, set: VisibleSet, pins: PinOverlay[]): void {
     const tones = { ok: this.theme.dark ? '#4ade80' : '#15803d', warn: this.theme.dark ? '#fbbf24' : '#b45309', error: this.theme.dark ? '#f87171' : '#b91c1c', info: this.theme.text.secondary };
@@ -1328,7 +1466,8 @@ export class MapRenderer {
     const lineHeight = Math.min(22 / k, Math.max(13 / k, h / (lines.length + 1)));
     if (lineHeight * k < 12) return;
     ctx.save();
-    ctx.transform(ISO_X * k, ISO_Y * k, -ISO_X * k, ISO_Y * k, origin.x, origin.y);
+    if (this.flat) ctx.transform(k, 0, 0, k, origin.x, origin.y);
+    else ctx.transform(ISO_X * k, ISO_Y * k, -ISO_X * k, ISO_Y * k, origin.x, origin.y);
     ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.clip();
     ctx.fillStyle = this.theme.dark ? 'rgba(6,10,22,0.82)' : 'rgba(255,253,248,0.88)'; ctx.fillRect(0, 0, w, h);
     ctx.font = `${(lineHeight * 0.78).toFixed(3)}px ${MONO}`; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
