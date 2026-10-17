@@ -8,12 +8,24 @@ type Kind = 'cli' | 'mcp' | 'worker' | 'function';
 type Callable = ts.FunctionDeclaration | ts.MethodDeclaration | ts.ArrowFunction | ts.FunctionExpression;
 const callable = (node: ts.Node): node is Callable => ts.isFunctionDeclaration(node) || ts.isMethodDeclaration(node) || ts.isArrowFunction(node) || ts.isFunctionExpression(node);
 const verbs = ['GET','POST','PUT','PATCH','DELETE','HEAD','OPTIONS'];
+/** Test and fixture files (as the project model scopes them, plus `*.test.*` and e2e). */
+const TEST_FILE = /(?:^|\/)(?:tests?|__tests__|spec|e2e|fixtures|__fixtures__|testdata)\/|\.(?:test|spec)\.[cm]?[jt]sx?$/;
+/** A function the server's request reaches, with the declarations holding the request, its URL object or its path, and where it was handed over. */
+interface Router { frame: TypeScriptPackFile; fn: Callable; requests: Set<ts.Declaration>; urls: Set<ts.Declaration>; paths: Set<ts.Declaration>; via?: { router: Router; call: ts.CallExpression } }
+const disjuncts = (expression: ts.Expression): ts.Expression[] => { const value = unwrap(expression); return ts.isBinaryExpression(value) && value.operatorToken.kind === ts.SyntaxKind.BarBarToken ? [...disjuncts(value.left),...disjuncts(value.right)] : [value]; };
+const returns = (node: ts.Node): boolean => {
+  if (callable(node)) return false;
+  if (ts.isReturnStatement(node)||ts.isThrowStatement(node)) return true;
+  return ts.forEachChild(node,child=>returns(child)||undefined) ?? false;
+};
+/** The one expression a function returns (an arrow's body, or a lone return statement). */
+const returned = (fn: Callable): ts.Expression | undefined => !fn.body ? undefined : !ts.isBlock(fn.body) ? fn.body : fn.body.statements.length === 1 && ts.isReturnStatement(fn.body.statements[0]!) ? fn.body.statements[0]!.expression : undefined;
 
 /** Original Node registrations only: no target execution, package loading or
  * name-only callback matching. Dispatch branches own their exact source spans,
  * so one CLI command cannot walk the bodies of all the other commands. */
 export const nodeRuntimePack: TypeScriptFrameworkPack = {
-  id: 'node-runtime', version: '1.0.0',
+  id: 'node-runtime', version: '1.1.0',
   applies: scope => scope.files.some(frame => frame.file.application?.ecosystems.includes('node')),
   declare(scope) { new NodeEntries(scope).run(); },
   finish(scope) { new NodeEntries(scope).effects(); },
@@ -24,7 +36,9 @@ class NodeEntries {
   private readonly registrations = new Map<string,number>();
   private readonly writes = new Set<ts.Declaration>();
   private readonly assignments = new Map<ts.Declaration, ts.Expression[]>();
+  private readonly frames: Map<ts.SourceFile, TypeScriptPackFile>;
   constructor(private readonly scope: TypeScriptPackScope) {
+    this.frames = new Map(scope.files.map(frame => [frame.source, frame]));
     for (const frame of scope.files) {
       const visit = (node: ts.Node): void => {
         const target = ts.isBinaryExpression(node) && node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment && node.operatorToken.kind <= ts.SyntaxKind.LastAssignment ? node.left : (ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) && [ts.SyntaxKind.PlusPlusToken,ts.SyntaxKind.MinusMinusToken].includes(node.operator) ? node.operand : undefined;
@@ -240,84 +254,212 @@ class NodeEntries {
   }
   private http(frame: TypeScriptPackFile, registration: ts.CallExpression, fn: Callable, callback: Entity): void {
     const request = fn.parameters[0]; if (!request || !fn.body) return;
-    const selector = (value: ts.Expression, field: 'url'|'method'|'pathname', depth = 0): boolean => {
-      value = unwrap(value); if (depth > 12) return false;
-      if (field === 'url' && ts.isBinaryExpression(value) && value.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken && ts.isStringLiteralLike(value.right)) return selector(value.left,field,depth+1);
-      if (ts.isPropertyAccessExpression(value)) {
-        if (value.name.text === field && valueDeclaration(value.expression,frame.state.checker) === request && !this.writes.has(request)) return field !== 'pathname';
-        if (field === 'pathname' && value.name.text === 'pathname') {
-          let base = unwrap(value.expression), declaration = valueDeclaration(base,frame.state.checker);
-          if (declaration && !this.writes.has(declaration) && ts.isVariableDeclaration(declaration) && declaration.initializer) base = unwrap(declaration.initializer);
-          return ts.isNewExpression(base) && this.global(frame,base.expression,'URL') && !!base.arguments?.[0] && selector(base.arguments[0],'url',depth+1);
-        }
-      }
-      const declaration = valueDeclaration(value,frame.state.checker);
-      if (declaration && ts.isVariableDeclaration(declaration)) {
-        const assignments = this.assignments.get(declaration) ?? [];
-        const initial = !this.writes.has(declaration) ? declaration.initializer : !declaration.initializer && assignments.length === 1 ? assignments[0] : undefined;
-        return !!initial && selector(initial,field,depth+1);
-      }
-      return false;
-    };
-    const methodAt = (node: ts.Node): string => {
-      for (let at: ts.Node | undefined = node; at && at !== fn; at = at.parent) {
-        if (ts.isIfStatement(at) && at.thenStatement.pos <= node.pos && at.thenStatement.end >= node.end) {
-          const method = this.equality(frame,at.expression,value => selector(value,'method'));
-          if (method && verbs.includes(method)) return method;
-        }
-        if (ts.isCaseClause(at) && ts.isSwitchStatement(at.parent.parent) && selector(at.parent.parent.expression,'method')) {
-          const method=this.literal(frame,at.expression);if(method&&verbs.includes(method))return method;
-        }
-      }
-      if (fn.body && ts.isBlock(fn.body)) for (const statement of fn.body.statements) {
-        if (statement.pos >= node.pos) break;
-        if (!ts.isIfStatement(statement) || !ts.isBinaryExpression(statement.expression) || ![ts.SyntaxKind.ExclamationEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken].includes(statement.expression.operatorToken.kind)) continue;
-        const condition = statement.expression;
-        const method = selector(condition.left,'method') ? this.literal(frame,condition.right) : selector(condition.right,'method') ? this.literal(frame,condition.left) : undefined;
-        const terminal = ts.isBlock(statement.thenStatement) ? statement.thenStatement.statements.at(-1) : statement.thenStatement;
-        if (method && verbs.includes(method) && terminal && (ts.isReturnStatement(terminal) || ts.isThrowStatement(terminal))) return method;
-      }
-      return 'ANY';
-    };
-    const knownGuard=(expression:ts.Expression):boolean=>{
-      expression=unwrap(expression);
-      if (!ts.isBinaryExpression(expression)) return false;
-      if (expression.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken) return knownGuard(expression.left)&&knownGuard(expression.right);
-      if (![ts.SyntaxKind.EqualsEqualsToken,ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken].includes(expression.operatorToken.kind)) return false;
-      const field=(value:ts.Expression)=>selector(value,'url')||selector(value,'pathname')||selector(value,'method');
-      return field(expression.left)&&this.literal(frame,expression.right)!==undefined || field(expression.right)&&this.literal(frame,expression.left)!==undefined;
-    };
-    const returns=(node:ts.Node):boolean=>{
-      if (callable(node)) return false;
-      if (ts.isReturnStatement(node)||ts.isThrowStatement(node)) return true;
-      return ts.forEachChild(node,child=>returns(child)||undefined) ?? false;
-    };
-    const unknownGates=(node:ts.Node):ts.IfStatement[]=>{
-      const gates=new Set<ts.IfStatement>();
-      for(let at:ts.Node|undefined=node.parent;at&&at!==fn;at=at.parent) if(ts.isIfStatement(at)&&!knownGuard(at.expression))gates.add(at);
-      if(fn.body&&ts.isBlock(fn.body))for(const statement of fn.body.statements)if(statement.pos<node.pos&&ts.isIfStatement(statement)&&!knownGuard(statement.expression)&&returns(statement.thenStatement))gates.add(statement);
-      return [...gates];
-    };
-    const count = this.dispatch(frame,fn.body,value => selector(value,'pathname') || selector(value,'url'),(node,url,condition) => {
-      if (!/^\/[\w/.-]*$/.test(url)) { this.issue(frame,condition,'Node HTTP path is outside the literal path contract'); return; }
-      const method = methodAt(node), graph = this.scope.context.graph, range = sourceRange(condition), app = frame.file.application!;
-      const handler = this.branch(frame,node,`http:${method}:${url}`), fact = evidence('framework','node-runtime',frame.file.path,range.startLine,'Literal request path dispatch inside an imported Node HTTP server callback');
-      const gates=unknownGates(node);
-      if(gates.length) handler.metadata.flowGaps ??= [];
-      for(const gate of gates)(handler.metadata.flowGaps as unknown[]).push({line:sourceRange(gate.expression).startLine,text:'An earlier or enclosing routing guard is outside the literal Node dispatch contract: '+gate.expression.getText().slice(0,160)});
-      const id = graph.id('node-endpoint',app.name,frame.file.path,callback.id,method,url);
-      const existing = graph.entities.get(id);
-      if (existing) { existing.metadata.constraintsUnresolved = true; this.issue(frame,node,'Repeated path dispatch has unresolved branch precedence'); return; }
-      const rawUrl = ts.isExpression(condition) && this.equality(frame,condition,value => selector(value,'url')) === url;
-      const endpoint = graph.contain({ id, type: 'api_endpoint', name: `${method} ${url}`, path: frame.file.path, sourceRange: sourceRange(node), parentId: this.scope.context.applicationIds.get(app.name)!, metadata: { framework: 'node-http', registration: 'explicit', method, routePath: url, rawUrl, callback: callback.id,...(gates.length ? {constraintsUnresolved:true}:{}) }, evidence: [fact] });
-      graph.relate(endpoint.id,handler.id,'handles',[fact],{ lines: [range.startLine], forms: ['handler'] });
-    });
+    const count = this.routes({ frame, fn, requests: new Set([request]), urls: new Set(), paths: new Set() }, frame, callback, new Set());
     if (!count) {
       const entry=this.entry(frame,registration,callback.name,'function',callback);
       entry.metadata.flowChannel='http';
       entry.metadata.flowGaps=[{line:sourceRange(registration).startLine,text:'Node request callback detected; no literal route inventory was extracted. Dynamic or delegated routing remains outside this adapter.'}];
     }
-    this.issue(frame,registration,'HTTP dispatch coverage is limited to literal path branches; dynamic routes and delegated routers require their own registration proof');
+    this.issue(frame,registration,'HTTP dispatch coverage is limited to literal path branches (in the callback and the functions it hands its request to); dynamic routes require their own registration proof');
+  }
+  /**
+   * Literal path branches of a function the server's request reaches: the
+   * callback, then each function it hands the request, its URL or its path to
+   * (`handleProjectionRoute(context, new URL(request.url), response)`),
+   * followed by declaration, never by name.
+   */
+  private routes(router: Router, server: TypeScriptPackFile, callback: Entity, seen: Set<Callable>): number {
+    const { frame, fn } = router;
+    if (!fn.body || seen.has(fn)) return 0;
+    seen.add(fn);
+    let count = this.dispatch(frame,fn.body,value => this.selector(router,value,'pathname') || this.selector(router,value,'url'),(node,url,condition) => {
+      if (!/^\/[\w/.-]*$/.test(url)) { this.issue(frame,condition,'Node HTTP path is outside the literal path contract'); return; }
+      const method = this.methodAt(router,node), graph = this.scope.context.graph, range = sourceRange(condition), app = server.file.application!;
+      const handler = this.branch(frame,node,`http:${method}:${url}`), fact = evidence('framework','node-runtime',frame.file.path,range.startLine,router.via ? 'Literal request path dispatch in a function the Node HTTP server callback hands its request to' : 'Literal request path dispatch inside an imported Node HTTP server callback');
+      const gates=this.gates(router,node,url,method);
+      if(gates.length) handler.metadata.flowGaps ??= [];
+      for(const gate of gates)(handler.metadata.flowGaps as unknown[]).push(gate);
+      const id = graph.id('node-endpoint',app.name,frame.file.path,callback.id,method,url);
+      const existing = graph.entities.get(id);
+      if (existing) { existing.metadata.constraintsUnresolved = true; this.issue(frame,node,'Repeated path dispatch has unresolved branch precedence'); return; }
+      const rawUrl = ts.isExpression(condition) && this.equality(frame,condition,value => this.selector(router,value,'url')) === url;
+      const endpoint = graph.contain({ id, type: 'api_endpoint', name: `${method} ${url}`, path: frame.file.path, sourceRange: sourceRange(node), parentId: this.scope.context.applicationIds.get(app.name)!, metadata: { framework: 'node-http', registration: 'explicit', method, routePath: url, rawUrl, callback: callback.id,...(gates.length ? {constraintsUnresolved:true}:{}) }, evidence: [fact] });
+      graph.relate(endpoint.id,handler.id,'handles',[fact],{ lines: [range.startLine], forms: ['handler'] });
+    });
+    let depth = 0; for (let at = router.via; at; at = at.router.via) depth++;
+    // A server a test starts stands in for the real one: following it into the application's routers would give each route a twin.
+    if (depth >= 3 || TEST_FILE.test(server.file.path)) return count;
+    const visit = (node: ts.Node): void => {
+      if (node !== fn.body && callable(node)) return;
+      if (ts.isCallExpression(node)) {
+        const target = this.functionOf(frame,node.expression), inner = target && this.frames.get(target.getSourceFile());
+        if (target?.body && inner && !seen.has(target)) {
+          const next: Router = { frame: inner, fn: target, requests: new Set(), urls: new Set(), paths: new Set(), via: { router, call: node } };
+          node.arguments.forEach((argument,index) => {
+            const parameter = target.parameters[index];
+            if (!parameter || parameter.dotDotDotToken || !ts.isIdentifier(parameter.name) || this.writes.has(parameter)) return;
+            const declaration = valueDeclaration(unwrap(argument),frame.state.checker);
+            if (declaration && router.requests.has(declaration) && !this.writes.has(declaration)) next.requests.add(parameter);
+            else if (this.urlObject(router,argument)) next.urls.add(parameter);
+            else if (this.selector(router,argument,'pathname')) next.paths.add(parameter);
+          });
+          if (next.requests.size || next.urls.size || next.paths.size) count += this.routes(next,server,callback,seen);
+        }
+      }
+      ts.forEachChild(node,visit);
+    };
+    visit(fn.body);
+    return count;
+  }
+  /** Whether a value is the request's URL, pathname or method, through declarations from the request or a router's parameters. */
+  private selector(router: Router, value: ts.Expression, field: 'url'|'method'|'pathname', depth = 0): boolean {
+    const { frame } = router;
+    value = unwrap(value); if (depth > 12) return false;
+    if (field === 'url' && ts.isBinaryExpression(value) && value.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken && ts.isStringLiteralLike(value.right)) return this.selector(router,value.left,field,depth+1);
+    if (ts.isPropertyAccessExpression(value)) {
+      const receiver = valueDeclaration(value.expression,frame.state.checker);
+      if (value.name.text === field && receiver && router.requests.has(receiver) && !this.writes.has(receiver)) return field !== 'pathname';
+      if (field === 'pathname' && value.name.text === 'pathname') return this.urlObject(router,value.expression,depth+1);
+    }
+    const declaration = valueDeclaration(value,frame.state.checker);
+    if (field === 'pathname' && declaration && router.paths.has(declaration) && !this.writes.has(declaration)) return true;
+    // `const { pathname } = url`
+    if (field === 'pathname' && declaration && ts.isBindingElement(declaration) && !declaration.dotDotDotToken && !this.writes.has(declaration) && (declaration.propertyName ?? declaration.name).getText() === 'pathname' && ts.isObjectBindingPattern(declaration.parent) && ts.isVariableDeclaration(declaration.parent.parent) && declaration.parent.parent.initializer) return this.urlObject(router,declaration.parent.parent.initializer,depth+1);
+    if (declaration && ts.isVariableDeclaration(declaration)) {
+      const assignments = this.assignments.get(declaration) ?? [];
+      const initial = !this.writes.has(declaration) ? declaration.initializer : !declaration.initializer && assignments.length === 1 ? assignments[0] : undefined;
+      return !!initial && this.selector(router,initial,field,depth+1);
+    }
+    return false;
+  }
+  /** A URL object of the request: `new URL(request.url, base)`, a variable holding one, or a router parameter given one. */
+  private urlObject(router: Router, value: ts.Expression, depth = 0): boolean {
+    value = unwrap(value); if (depth > 12) return false;
+    if (ts.isNewExpression(value)) return this.global(router.frame,value.expression,'URL') && !!value.arguments?.[0] && this.selector(router,value.arguments[0],'url',depth+1);
+    const declaration = valueDeclaration(value,router.frame.state.checker);
+    if (!declaration || this.writes.has(declaration)) return false;
+    if (router.urls.has(declaration)) return true;
+    return ts.isVariableDeclaration(declaration) && !!declaration.initializer && this.urlObject(router,declaration.initializer,depth+1);
+  }
+  /** The HTTP method a branch is limited to by the guards around and before it, here or where the request was handed over. */
+  private methodAt(router: Router, node: ts.Node): string {
+    const { frame, fn } = router, method = (value: ts.Expression) => this.selector(router,value,'method');
+    for (let at: ts.Node | undefined = node; at && at !== fn; at = at.parent) {
+      if (ts.isIfStatement(at) && at.thenStatement.pos <= node.pos && at.thenStatement.end >= node.end) {
+        const verb = this.equality(frame,at.expression,method);
+        if (verb && verbs.includes(verb)) return verb;
+      }
+      if (ts.isCaseClause(at) && ts.isSwitchStatement(at.parent.parent) && method(at.parent.parent.expression)) {
+        const verb=this.literal(frame,at.expression);if(verb&&verbs.includes(verb))return verb;
+      }
+    }
+    if (fn.body && ts.isBlock(fn.body)) for (const statement of fn.body.statements) {
+      if (statement.end > node.pos) break;
+      if (!ts.isIfStatement(statement)) continue;
+      // `if (request.method !== 'POST' || …) return …`: past it, the method is POST.
+      const verb = disjuncts(statement.expression).map(term => ts.isBinaryExpression(term) && [ts.SyntaxKind.ExclamationEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken].includes(term.operatorToken.kind) ? method(term.left) ? this.literal(frame,term.right) : method(term.right) ? this.literal(frame,term.left) : undefined : undefined).find(Boolean);
+      const terminal = ts.isBlock(statement.thenStatement) ? statement.thenStatement.statements.at(-1) : statement.thenStatement;
+      if (verb && verbs.includes(verb) && terminal && (ts.isReturnStatement(terminal) || ts.isThrowStatement(terminal))) return verb;
+    }
+    return router.via ? this.methodAt(router.via.router,router.via.call) : 'ANY';
+  }
+  private knownGuard(router: Router, expression: ts.Expression): boolean {
+    expression=unwrap(expression);
+    if (!ts.isBinaryExpression(expression)) return false;
+    if (expression.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken) return this.knownGuard(router,expression.left)&&this.knownGuard(router,expression.right);
+    if (![ts.SyntaxKind.EqualsEqualsToken,ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken].includes(expression.operatorToken.kind)) return false;
+    const field=(value:ts.Expression)=>this.selector(router,value,'url')||this.selector(router,value,'pathname')||this.selector(router,value,'method');
+    return field(expression.left)&&this.literal(router.frame,expression.right)!==undefined || field(expression.right)&&this.literal(router.frame,expression.left)!==undefined;
+  }
+  /**
+   * Guards around or before a branch, outside the literal contract, that the
+   * source does not prove let this path through (here, or where the request
+   * was handed over): the endpoint stays a candidate, never an exact match.
+   */
+  private gates(router: Router, node: ts.Node, url: string, method: string, line?: number): { line: number; text: string }[] {
+    const { fn } = router, found = new Set<ts.IfStatement>();
+    for (let at: ts.Node | undefined = node.parent; at && at !== fn; at = at.parent) if (ts.isIfStatement(at) && !this.knownGuard(router,at.expression)) {
+      const taken = at.thenStatement.pos <= node.pos && at.thenStatement.end >= node.end;
+      if (this.holds(router,at.expression,url,method) !== taken) found.add(at);
+    }
+    if (fn.body && ts.isBlock(fn.body)) for (const statement of fn.body.statements) if (statement.end <= node.pos && ts.isIfStatement(statement) && !this.knownGuard(router,statement.expression) && returns(statement.thenStatement) && this.holds(router,statement.expression,url,method) !== false) found.add(statement);
+    // A guard where the request was handed over is reported at the start of the function that received it.
+    const own = [...found].map(gate => ({ line: line ?? sourceRange(gate.expression).startLine, text: `An earlier or enclosing routing guard is outside the literal Node dispatch contract: ${gate.expression.getText().slice(0,160)}${line === undefined ? '' : ` (${router.frame.file.path}:${sourceRange(gate.expression).startLine})`}` }));
+    return router.via ? [...own, ...this.gates(router.via.router,router.via.call,url,method,line ?? sourceRange(fn).startLine)] : own;
+  }
+  /**
+   * Whether a guard is truthy for a request to this literal path and method,
+   * when the source alone decides it: path and method comparisons,
+   * startsWith/endsWith/includes, literal lists, regular expressions, `!`,
+   * `&&`, `||`, and predicates of the path that return one such expression
+   * (`isProjectionPath(pathname)`). Anything else is unknown.
+   */
+  private holds(router: Router, expression: ts.Expression, url: string, method: string, depth = 0): boolean | undefined {
+    const value = unwrap(expression), { frame } = router;
+    if (depth > 6) return undefined;
+    if (ts.isPrefixUnaryExpression(value) && value.operator === ts.SyntaxKind.ExclamationToken) { const inner = this.holds(router,value.operand,url,method,depth); return inner === undefined ? undefined : !inner; }
+    if (ts.isBinaryExpression(value)) {
+      const operator = value.operatorToken.kind;
+      if (operator === ts.SyntaxKind.AmpersandAmpersandToken || operator === ts.SyntaxKind.BarBarToken) {
+        const left = this.holds(router,value.left,url,method,depth), right = this.holds(router,value.right,url,method,depth);
+        if (operator === ts.SyntaxKind.AmpersandAmpersandToken) return left === false || right === false ? false : left && right ? true : undefined;
+        return left === true || right === true ? true : left === false && right === false ? false : undefined;
+      }
+      // `(match = pattern.exec(pathname))`
+      if (operator === ts.SyntaxKind.EqualsToken) return this.holds(router,value.right,url,method,depth);
+      const equal = [ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.EqualsEqualsToken].includes(operator);
+      if (!equal && ![ts.SyntaxKind.ExclamationEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsToken].includes(operator)) return undefined;
+      const same = (side: ts.Expression, other: ts.Expression): boolean | undefined => {
+        const text = this.literal(frame,other);
+        if (text === undefined) return undefined;
+        if (this.selector(router,side,'pathname')) return text === url;
+        if (this.selector(router,side,'method')) return method === 'ANY' ? undefined : text === method;
+        return undefined;
+      };
+      const result = same(value.left,value.right) ?? same(value.right,value.left);
+      return result === undefined ? undefined : equal ? result : !result;
+    }
+    if (!ts.isCallExpression(value)) return undefined;
+    const callee = unwrap(value.expression), [first] = value.arguments;
+    if (ts.isPropertyAccessExpression(callee) && first && value.arguments.length === 1) {
+      const name = callee.name.text, receiver = unwrap(callee.expression);
+      if (['startsWith','endsWith','includes'].includes(name) && this.selector(router,receiver,'pathname')) {
+        const text = this.literal(frame,first);
+        return text === undefined ? undefined : name === 'startsWith' ? url.startsWith(text) : name === 'endsWith' ? url.endsWith(text) : url.includes(text);
+      }
+      if (name === 'includes' && ts.isArrayLiteralExpression(receiver) && this.selector(router,first,'pathname')) {
+        const items = receiver.elements.map(element => ts.isSpreadElement(element) ? undefined : this.literal(frame,element));
+        return items.some(item => item === undefined) ? undefined : items.includes(url);
+      }
+      if (['test','exec'].includes(name) && this.selector(router,first,'pathname')) return this.pattern(frame,receiver)?.test(url);
+    }
+    const target = this.functionOf(frame,callee), body = target && returned(target);
+    const at = value.arguments.findIndex(argument => this.selector(router,argument,'pathname')), parameter = target?.parameters[at];
+    const inner = target && this.frames.get(target.getSourceFile());
+    if (!body || !parameter || !inner || !ts.isIdentifier(parameter.name) || this.writes.has(parameter)) return undefined;
+    return this.holds({ frame: inner, fn: target, requests: new Set(), urls: new Set(), paths: new Set([parameter]) },body,url,method,depth+1);
+  }
+  /** A regular expression the source spells out: a literal, or `new RegExp` of literal text. */
+  private pattern(frame: TypeScriptPackFile, expression: ts.Expression, depth = 0): RegExp | undefined {
+    const value = unwrap(expression);
+    if (depth > 8) return undefined;
+    try {
+      if (ts.isRegularExpressionLiteral(value)) { const end = value.text.lastIndexOf('/'); return new RegExp(value.text.slice(1,end),value.text.slice(end+1)); }
+      if (ts.isNewExpression(value) && this.global(frame,value.expression,'RegExp') && value.arguments?.length && value.arguments.length <= 2) {
+        const source = this.text(frame,value.arguments[0]!), flags = value.arguments[1] ? this.literal(frame,value.arguments[1]) : '';
+        return source === undefined || flags === undefined ? undefined : new RegExp(source,flags);
+      }
+    } catch { return undefined; }
+    const declaration = valueDeclaration(value,frame.state.checker);
+    return declaration && !this.writes.has(declaration) && ts.isVariableDeclaration(declaration) && declaration.initializer ? this.pattern(frame,declaration.initializer,depth+1) : undefined;
+  }
+  /** A string the source spells out: a literal, or a template whose parts are literals. */
+  private text(frame: TypeScriptPackFile, expression: ts.Expression): string | undefined {
+    const value = unwrap(expression);
+    if (!ts.isTemplateExpression(value)) return this.literal(frame,value);
+    let text = value.head.text;
+    for (const span of value.templateSpans) { const part = this.literal(frame,span.expression); if (part === undefined) return undefined; text += part + span.literal.text; }
+    return text;
   }
   effects(): void {
     const entryHandlers = new Set([...this.scope.context.graph.relations.values()].filter(relation => relation.type === 'handles' && this.scope.context.graph.entities.get(relation.from)?.type === 'user_flow').map(relation => relation.to));

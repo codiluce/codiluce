@@ -192,6 +192,29 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeP
     while (parent) { if (symbols.has(parent)) return symbols.get(parent); parent = parent.parent; }
     return undefined;
   }
+  /**
+   * Where the object literal holding a method sits, below the parent symbol:
+   * the variable or properties holding it and, in a list, its `name`, `id` or
+   * `key` (else its position). `foldersTask.collect` and `codeTools.search.run`,
+   * rather than one `collect` and one `run` for all of them.
+   */
+  function literalPath(method: ts.MethodDeclaration): string[] {
+    const path: string[] = [];
+    let at: ts.Node = method.parent;
+    for (let depth = 0; depth < 8 && (ts.isObjectLiteralExpression(at) || ts.isArrayLiteralExpression(at)); depth++) {
+      let child: ts.Node = at, holder = at.parent;
+      while (ts.isParenthesizedExpression(holder) || ts.isAsExpression(holder) || ts.isSatisfiesExpression(holder) || ts.isTypeAssertionExpression(holder)) { child = holder; holder = holder.parent; }
+      if (ts.isPropertyAssignment(holder) && holder.initializer === child) { path.unshift(ts.isIdentifier(holder.name) || ts.isStringLiteralLike(holder.name) || ts.isNumericLiteral(holder.name) ? holder.name.text : holder.name.getText(source)); at = holder.parent; continue; }
+      if (ts.isArrayLiteralExpression(holder)) {
+        const label = ts.isObjectLiteralExpression(at) ? at.properties.find((property): property is ts.PropertyAssignment => ts.isPropertyAssignment(property) && ts.isIdentifier(property.name) && ['name', 'id', 'key'].includes(property.name.text) && ts.isStringLiteralLike(property.initializer)) : undefined;
+        path.unshift(label ? (label.initializer as ts.StringLiteralLike).text : String(holder.elements.indexOf(child as ts.Expression)));
+        at = holder; continue;
+      }
+      if (ts.isVariableDeclaration(holder) && ts.isIdentifier(holder.name)) path.unshift(holder.name.text);
+      break;
+    }
+    return path;
+  }
   function importModule(node: ts.Node, specifier: string, relationType: 'imports' | 'exports'): void {
     const moduleLiteral = ts.isImportDeclaration(node) || ts.isExportDeclaration(node) ? node.moduleSpecifier : ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference) ? node.moduleReference.expression : ts.isCallExpression(node) ? node.arguments[0] : undefined;
     const mode = moduleLiteral && ts.isStringLiteralLike(moduleLiteral) ? ts.getModeForUsageLocation(source, moduleLiteral, options) : undefined;
@@ -281,7 +304,7 @@ function analyzeFile(context: AnalysisContext, file: ScannedFile, project: NodeP
     if (name && type) {
       if (type === 'function' && (/^[A-Z]/.test(name) || name === 'default') && hasJsx(node)) type = 'component';
       const parent = parentSymbol(node);
-      const qualified = `${parent?.metadata.qualifiedName ? `${parent.metadata.qualifiedName}.` : file.embedded ? `${file.embedded.key}.` : ''}${name}`;
+      const qualified = `${parent?.metadata.qualifiedName ? `${parent.metadata.qualifiedName}.` : file.embedded ? `${file.embedded.key}.` : ''}${[...ts.isMethodDeclaration(node) ? literalPath(node) : [], name].join('.')}`;
       const id = graph.id('symbol', file.language!, app?.name ?? project.id, modulePath, qualified, signature);
       if (graph.entities.has(id)) graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'warning', code: 'duplicate-symbol', file: file.path, line: location(node).startLine, reason: `Duplicate/overloaded symbol identity ${qualified}${signature}` });
       else {

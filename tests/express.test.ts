@@ -152,15 +152,16 @@ test('GET includes implicit HEAD and all() covers other verbs without inventing 
 test('generic endpoints require explicit origins or browser proxy proof; server-relative calls stay unresolved', async () => {
   const root = await repository({
     'web/package.json': json({ dependencies: { next: '*' } }),
-    'web/client.ts': '"use client"; export function absolute() { fetch("https://api.invalid/items/7"); } export function relative() { fetch("/proxy/items/7"); }',
+    'web/client.ts': '"use client"; export function absolute() { fetch("https://api.invalid/items/7"); } export function relative() { fetch("/proxy/items/7"); } export function templated(id: string) { fetch(`/proxy/items/${id}`); }',
     'server/package.json': json({ dependencies: { express: '^5.1.0' } }),
     'server/main.ts': 'import express from "express"; const app = express(); app.get("/items/:id", () => {}); app.get("/outgoing", () => fetch("/items/7"));',
   });
   const applications: ApplicationInput[] = [{ name: 'web', path: 'web', apiProxies: [{ target: 'server', pathPrefix: '/proxy', targetPrefix: '/' }] }, { name: 'server', path: 'server', apiOrigins: ['https://api.invalid'] }];
   const graph = await indexRepository(root, { config: await resolveConfig(root, { repository: { name: 'fixture' }, applications }) });
   const requests = graph.relations.filter(relation => relation.type === 'requests');
-  assert.equal(requests.length, 2, canonicalJson(graph.diagnostics));
-  assert.ok(requests.some(relation => relation.metadata?.resolution === 'configured-proxy'));
+  // The literal and the templated relative URLs both pass the configured proxy.
+  assert.equal(requests.length, 3, canonicalJson(graph.diagnostics));
+  assert.equal(requests.filter(relation => relation.metadata?.resolution === 'configured-proxy').length, 2);
   assert.ok(graph.diagnostics.some(diagnostic => diagnostic.code === 'unverified-relative-api-boundary' && diagnostic.file === 'server/main.ts'));
   const configWithout = await resolveConfig(root, { repository: { name: 'fixture' }, applications: applications.map(app => ({ ...app, apiProxies: undefined })) });
   const without = await indexRepository(root, { config: configWithout });

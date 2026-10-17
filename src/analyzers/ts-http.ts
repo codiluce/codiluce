@@ -29,10 +29,10 @@ import { runtimeReference } from '../analysis/languages/typescript-runtime.js';
 import type { AnalysisContext, HttpObservation, ScannedFile } from '../core/analyzer.js';
 import { evidence, type EffectFact, type Entity, type Evidence } from '../core/graph.js';
 import type { SiteCollector } from './references.js';
-import { emptyScope, MISSING_ARGUMENT, type ResolvedUrl, type Scope, type Unresolved, type UrlEvaluator } from './ts-url.js';
+import { emptyScope, MISSING_ARGUMENT, parameterValues, type ResolvedUrl, type Scope, type Unresolved, type UrlEvaluator } from './ts-url.js';
 
 export const HTTP_METHODS = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD']);
-export const HTTP_ANALYSIS_VERSION = '3';
+export const HTTP_ANALYSIS_VERSION = '4';
 const AXIOS_VERBS = new Set(['get', 'post', 'put', 'patch', 'delete', 'options', 'head']);
 const INERTIA_MODULES = new Set(['@inertiajs/react', '@inertiajs/vue3', '@inertiajs/svelte', '@inertiajs/core', '@inertiajs/inertia', '@inertiajs/inertia-react']);
 const INERTIA_VERBS = new Set(['get', 'post', 'put', 'patch', 'delete']);
@@ -399,7 +399,8 @@ export function expandWrappers(input: WrapperContext, roots: WrapperRoot[]): Map
       if (ts.isCallExpression(node) && runtimeReference(node.expression, checker)) {
         let target: ts.SignatureDeclaration | undefined;
         try { const declaration = checker.getResolvedSignature(node)?.declaration; target = declaration && !ts.isJSDocSignature(declaration) ? declaration : undefined; } catch { target = undefined; }
-        if (target) { const list = callSites.get(target) ?? []; list.push(node); callSites.set(target, list); }
+        const held = heldFunction(node.expression, checker, input.sources);
+        for (const reached of new Set([target, held])) if (reached) { const list = callSites.get(reached) ?? []; list.push(node); callSites.set(reached, list); }
       }
       ts.forEachChild(node, visit);
     };
@@ -489,6 +490,21 @@ export function expandWrappers(input: WrapperContext, roots: WrapperRoot[]): Map
     return target as ts.SignatureDeclaration;
   }
   return results;
+}
+/**
+ * The function a call through a const or a constructor parameter property
+ * reaches when it is the only value that can be there: `this.fetcher(url)`,
+ * whose default is `(input, init) => fetch(input, init)` and which every
+ * `new` of its class leaves out. Its type alone names no function.
+ */
+function heldFunction(expression: ts.Expression, checker: ts.TypeChecker, sources: readonly ts.SourceFile[]): ts.SignatureDeclaration | undefined {
+  const declaration = checker.getSymbolAtLocation(ts.isPropertyAccessExpression(expression) ? expression.name : expression)?.valueDeclaration;
+  const fn = (value: ts.Expression | undefined) => value && (ts.isArrowFunction(value) || ts.isFunctionExpression(value)) ? value : undefined;
+  if (declaration && ts.isVariableDeclaration(declaration)) return ts.isVariableDeclarationList(declaration.parent) && declaration.parent.flags & ts.NodeFlags.Const ? fn(declaration.initializer) : undefined;
+  if (!declaration || !ts.isParameter(declaration)) return undefined;
+  const given = parameterValues(declaration, checker, sources);
+  const reached = 'reason' in given ? [] : [...new Set(given.values.map(({ value }) => fn(value)))];
+  return reached.length === 1 ? reached[0] : undefined;
 }
 export function reportWrapper(context: AnalysisContext, root: WrapperRoot, stats: WrapperStats): void {
   const { found, resolved, failed } = stats, name = displayName(root.wrapper), { graph } = context;

@@ -95,7 +95,9 @@ export interface AtlasConfig {
 }
 export type RawConfig = Omit<Partial<AtlasConfig>, 'applications'> & { applications?: ApplicationInput[] };
 export const DEFAULT_IGNORES = [
-  '**/node_modules/**', '**/vendor/**', '**/.git/**', '**/.next/**', '**/storage/**', '**/coverage/**',
+  '**/node_modules/**', '**/vendor/**', '**/.git/**', '**/.next/**', '**/coverage/**',
+  // Laravel's runtime storage and Rails' Active Storage blobs (two-character shards), not every folder named storage.
+  '**/storage/app/**', '**/storage/framework/**', '**/storage/logs/**', '**/storage/??/??/**',
   '**/build/**', '**/dist/**', '**/out/**', '**/.codiluce/**', '**/.cache/**', '**/.gradle/**', '**/Pods/**',
   '**/.venv/**', '**/__pycache__/**', '**/bootstrap/cache/**', '**/public/phpmyadmin/**', '**/__db__/**',
   '**/.cursor/**', '**/.agents/**', '**/next-env.d.ts', '**/*.generated.*', '**/*.min.js', '**/*.map',

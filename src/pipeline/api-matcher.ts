@@ -134,7 +134,8 @@ export const apiMatcher: Analyzer = {
           if (observation.transport === 'nuxt-fetch') return app.name === callerApp?.name && endpoint.metadata.framework === 'nuxt';
           if (endpoint.metadata.framework === 'sveltekit' && app.name !== callerApp?.name && !callerApp?.apiProxies?.some(proxy => proxy.target === app.name)) return false;
           if (endpoint.metadata.framework === 'nuxt' && app.name !== callerApp?.name && !callerApp?.apiProxies?.some(proxy => proxy.target === app.name)) return false;
-          return !!contracts.get(endpoint.id) || app.name === callerApp?.name || (hasFramework(app, 'laravel') && !hasFramework(callerApp, 'laravel'));
+          // A configured proxy (apiProxies) makes its target's endpoints eligible; the boundary is still proved below.
+          return !!contracts.get(endpoint.id) || app.name === callerApp?.name || !!callerApp?.apiProxies?.some(proxy => proxy.target === app.name) || (hasFramework(app, 'laravel') && !hasFramework(callerApp, 'laravel'));
         });
         resolvedEligible.set(key, eligible);
       }

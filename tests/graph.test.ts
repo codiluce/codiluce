@@ -10,7 +10,7 @@ import { stringify } from 'yaml';
 import { indexRepository } from '../src/pipeline/index.js';
 import { GraphStore } from '../src/storage/sqlite.js';
 import { createInspectionServer } from '../src/api/server.js';
-import { applicationAt, loadConfig, matchesGlob } from '../src/core/config.js';
+import { applicationAt, DEFAULT_IGNORES, loadConfig, matchesGlob } from '../src/core/config.js';
 import { validateGraph, type SoftwareGraph, type Entity } from '../src/core/graph.js';
 import { nextRoute } from '../src/analyzers/typescript.js';
 import { shapeHash } from '../src/history/fingerprint.js';
@@ -102,7 +102,7 @@ test('stable entity and relation identities survive repeated indexing and checko
 });
 test('scanner prunes dependencies/custom ignores/secrets, records LOC, skips binary/oversized content', async () => {
   const root = await createFixture();
-  for (const directory of ['frontend/node_modules/x', 'backend/vendor/x', 'backend/storage', 'frontend/custom-ignored']) { await mkdir(path.join(root, directory), { recursive: true }); await writeFile(path.join(root, directory, 'ignored.ts'), 'export const ignored = 1;'); }
+  for (const directory of ['frontend/node_modules/x', 'backend/vendor/x', 'backend/storage/framework', 'frontend/custom-ignored']) { await mkdir(path.join(root, directory), { recursive: true }); await writeFile(path.join(root, directory, 'ignored.ts'), 'export const ignored = 1;'); }
   await writeFile(path.join(root, '.env'), 'SECRET=do-not-index');
   await writeFile(path.join(root, 'frontend/src/binary.ts'), Buffer.from([0, 1, 2]));
   await writeFile(path.join(root, 'frontend/src/oversized.ts'), ' '.repeat(1024 * 1024 + 1));
@@ -209,6 +209,10 @@ test('route translation and ignore globs support root/nested paths and catch-all
   assert.ok(matchesGlob('node_modules', '**/node_modules/**'));
   assert.ok(matchesGlob('frontend/node_modules/a/file.ts', '**/node_modules/**'));
   assert.ok(!matchesGlob('frontend/src/vendor-name.ts', '**/vendor/**'));
+  // Laravel's runtime storage and Rails' Active Storage blobs are ignored; a source folder named storage is not.
+  const ignored = (file: string) => DEFAULT_IGNORES.some(glob => matchesGlob(file, glob));
+  for (const file of ['storage/framework/views/a.php', 'backend/storage/logs/laravel.log', 'storage/app/public/a.png', 'storage/ab/cd/blobkey']) assert.ok(ignored(file), file);
+  for (const file of ['src/storage/sqlite.ts', 'app/Storage/Disk.php', 'lib/storage/index.ts']) assert.ok(!ignored(file), file);
 });
 test('CLI persists parse diagnostics and exits with analyzer error status', async () => {
   const root = await createFixture();

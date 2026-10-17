@@ -48,6 +48,53 @@ const fail = (reason: string, parameter?: ts.ParameterDeclaration): Result => ({
 const text = (value: string): Alternative => ({ parts: [{ kind: 'text', value }], proof: [] });
 function short(node: ts.Node): string { const value = node.getText().replace(/\s+/g, ' '); return value.length > 80 ? `${value.slice(0, 77)}…` : value; }
 
+const constructions = new WeakMap<readonly ts.SourceFile[], { news: Map<ts.ClassLikeDeclaration, ts.NewExpression[]>; extended: Set<ts.ClassLikeDeclaration> }>();
+/**
+ * Every `new` of a class in these sources (what its constructor parameters
+ * receive), or undefined when it can also be built where they do not show:
+ * a subclass calls its constructor.
+ */
+export function constructionsOf(owner: ts.ClassLikeDeclaration, checker: ts.TypeChecker, sources: readonly ts.SourceFile[]): ts.NewExpression[] | undefined {
+  let found = constructions.get(sources);
+  if (!found) {
+    const classOf = (expression: ts.Expression): ts.ClassLikeDeclaration | undefined => {
+      let symbol = checker.getSymbolAtLocation(expression);
+      if (symbol && symbol.flags & ts.SymbolFlags.Alias) { try { symbol = checker.getAliasedSymbol(symbol); } catch { return undefined; } }
+      const declaration = symbol?.valueDeclaration;
+      return declaration && ts.isClassLike(declaration) ? declaration : undefined;
+    };
+    const news = new Map<ts.ClassLikeDeclaration, ts.NewExpression[]>(), extended = new Set<ts.ClassLikeDeclaration>();
+    for (const source of sources) {
+      const visit = (node: ts.Node): void => {
+        if (ts.isNewExpression(node)) { const target = classOf(node.expression); if (target) news.set(target, [...news.get(target) ?? [], node]); }
+        if (ts.isHeritageClause(node) && node.token === ts.SyntaxKind.ExtendsKeyword) for (const type of node.types) { const target = classOf(type.expression); if (target) extended.add(target); }
+        ts.forEachChild(node, visit);
+      };
+      visit(source);
+    }
+    found = { news, extended };
+    constructions.set(sources, found);
+  }
+  return found.extended.has(owner) ? undefined : found.news.get(owner) ?? [];
+}
+/** What a constructor parameter property holds: each `new` of its class gives its argument, or the default where it is left out. */
+export function parameterValues(member: ts.ParameterDeclaration, checker: ts.TypeChecker, sources: readonly ts.SourceFile[]): { values: { value: ts.Expression; site: ts.Node }[] } | { reason: string } {
+  const constructor = member.parent, owner = constructor.parent;
+  if (!ts.isConstructorDeclaration(constructor) || !ts.isClassLike(owner) || !(ts.getCombinedModifierFlags(member) & (ts.ModifierFlags.Readonly | ts.ModifierFlags.Private))) return { reason: 'is set from a constructor parameter' };
+  const index = constructor.parameters.indexOf(member), news = constructionsOf(owner, checker, sources);
+  if (!news?.length) return { reason: news ? 'is set from a constructor parameter, and its class is never built in indexed code' : 'is set from a constructor parameter of a class that is extended' };
+  const values: { value: ts.Expression; site: ts.Node }[] = [];
+  for (const site of news) {
+    const given = site.arguments ?? [];
+    if (given.slice(0, index + 1).some(ts.isSpreadElement)) return { reason: 'is set from a spread constructor argument' };
+    const argument = given[index];
+    if (argument && !(ts.isIdentifier(argument) && argument.text === 'undefined')) values.push({ value: argument, site });
+    else if (member.initializer) values.push({ value: member.initializer, site: member });
+    else return { reason: 'is left out of a constructor call and has no default' };
+  }
+  return { values };
+}
+
 export class UrlEvaluator {
   private readonly envOwners = new Map<string, string>();
   private readonly originOwners = new Map<string, string>();
@@ -63,6 +110,8 @@ export class UrlEvaluator {
     const start = source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1, end = source.getLineAndCharacterOfPosition(node.getEnd()).line + 1;
     return { ...evidence('typescript', 'typescript-nextjs', this.relative(node), start, explanation), endLine: end };
   }
+  private indexedSources?: ts.SourceFile[];
+  private sources(): ts.SourceFile[] { return this.indexedSources ??= this.program.getSourceFiles().filter(source => this.indexed(source)); }
   private indexed(node: ts.Node): boolean {
     const source = node.getSourceFile();
     return !this.program.isSourceFileDefaultLibrary(source) && this.context.files.has(this.relative(node));
@@ -309,9 +358,12 @@ export class UrlEvaluator {
     const member = declarations.find(declaration => ts.isPropertyDeclaration(declaration) || ts.isParameter(declaration));
     const owner = member?.parent && (ts.isClassLike(member.parent) ? member.parent : ts.isConstructorDeclaration(member.parent) ? member.parent.parent : undefined);
     if (!member || !owner) return fail(`${short(node)} is not a resolvable property`);
-    if (ts.isParameter(member)) return fail(`${short(node)} is set from a constructor parameter`);
     const values: { value: ts.Expression; site: ts.Node }[] = [];
-    if (ts.isPropertyDeclaration(member) && member.initializer) values.push({ value: member.initializer, site: member });
+    if (ts.isParameter(member)) {
+      const given = parameterValues(member, this.checker, this.sources());
+      if ('reason' in given) return fail(`${short(node)} ${given.reason}`);
+      values.push(...given.values);
+    } else if (member.initializer) values.push({ value: member.initializer, site: member });
     const visit = (child: ts.Node): void => {
       if (ts.isBinaryExpression(child) && child.operatorToken.kind === ts.SyntaxKind.EqualsToken && ts.isPropertyAccessExpression(child.left) && child.left.expression.kind === ts.SyntaxKind.ThisKeyword && child.left.name.text === node.name.text) values.push({ value: child.right, site: child });
       ts.forEachChild(child, visit);

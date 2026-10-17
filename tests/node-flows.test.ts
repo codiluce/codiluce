@@ -180,3 +180,43 @@ fetch('https://local.test/items');`},{apiOrigins:['https://local.test']});
     assert.ok(flow.nodes.some(node=>node.gap?.text.includes('routing guard')&&node.gap?.source?.line===2));
   }finally{p.store.close();}
 });
+
+test('routers the server hands its request to keep their literal routes; guards proven for a path do not constrain it',async()=>{
+  const routes=`import type {ServerResponse} from 'node:http';
+export function isApiPath(pathname:string){return pathname.startsWith('/api/');}
+export async function handleApi(url:URL,res:ServerResponse){const {pathname}=url;
+if(!isApiPath(pathname))return;
+let match;
+if(pathname==='/api/items')return res.end(items());
+else if((match=new RegExp(\`^/api/items/\${ID}$\`).exec(pathname)))return res.end(match[1]);
+else if(pathname==='/api/other')return res.end('other');}
+const ID='([^/]+)';function items(){return 'ok';}`;
+  const server=(guard:string)=>`import {createServer} from 'node:http';import {handleApi,isApiPath} from './routes';
+createServer((req,res)=>{let pathname:string;try{pathname=new URL(req.url ?? '/','http://local').pathname;}catch{return;}
+if(/^\\/legacy(?:\\/|$)/.test(pathname)){res.end('legacy');return;}
+${guard}
+if(req.method !== 'GET'){res.end('bad');return;}
+if(isApiPath(pathname)){void handleApi(new URL(req.url ?? '/','http://local'),res);return;}
+});
+fetch('https://local.test/api/items');fetch('https://local.test/api/other');`;
+  // A server a test starts with the same router stands in for the real one: it adds no second endpoint.
+  const testServer=`import {createServer} from 'node:http';import {handleApi} from '../routes';createServer((req,res)=>{void handleApi(new URL(req.url ?? '/','http://local'),res);});`;
+  const proven=await project({'main.ts':server(''),'routes.ts':routes,'tests/server.ts':testServer},{apiOrigins:['https://local.test']});
+  try {
+    assert.equal(proven.graph.entities.filter(entity=>entity.type==='api_endpoint'&&entity.name==='GET /api/items').length,1);
+    for (const name of ['GET /api/items','GET /api/other']) {
+      const endpoint=proven.graph.entities.find(entity=>entity.type==='api_endpoint'&&entity.name===name);assert.ok(endpoint,name);
+      assert.equal(endpoint.path,'routes.ts');assert.equal(endpoint.metadata.constraintsUnresolved,undefined,name);
+    }
+    assert.equal(proven.graph.relations.filter(relation=>relation.type==='requests').length,2,JSON.stringify(proven.graph.diagnostics));
+  }finally{proven.store.close();}
+  // A guard the source cannot decide, before the hand-over, keeps the routes candidates: reported in the router, naming where it is.
+  const unproven=await project({'main.ts':server('if(skip(req)){res.end("skipped");return;}'),'routes.ts':routes},{apiOrigins:['https://local.test']});
+  try {
+    const endpoint=unproven.graph.entities.find(entity=>entity.type==='api_endpoint'&&entity.name==='GET /api/items');assert.ok(endpoint);
+    assert.equal(endpoint.metadata.constraintsUnresolved,true);
+    assert.equal(unproven.graph.relations.some(relation=>relation.type==='requests'),false);
+    const flow=await unproven.projection.requestFlow(endpoint.id,{maxFileBytes:1<<20});
+    assert.ok(flow.nodes.some(node=>node.gap?.text.includes('skip(req) (main.ts:4)')),JSON.stringify(flow.nodes.map(node=>node.gap?.text).filter(Boolean)));
+  }finally{unproven.store.close();}
+});
