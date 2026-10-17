@@ -66,7 +66,7 @@ for (const empty of [true, false]) {
     await colorBy(page, 'Flow coverage');
     await expect(page.getByRole('region', { name: 'Coverage lens' })).toBeVisible();
     await page.getByRole('button', { name: 'History', exact: true }).click();
-    await expect(page.getByRole('region', { name: 'History' })).toContainText('No history indexed yet.');
+    await expect(page.getByRole('region', { name: 'History' })).toContainText('History unavailable.');
     await page.getByRole('button', { name: 'Close history', exact: true }).click();
     await expect(page.getByRole('region', { name: 'History' })).toHaveCount(0);
     await expect(loaded).toBeVisible();
