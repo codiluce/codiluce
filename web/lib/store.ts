@@ -114,7 +114,7 @@ export interface ImpactState {
   data?: ImpactResult; items: ImpactItem[]; error?: string;
 }
 /** What the middle of the screen shows: the map, or a tool with the map as a small overview in a corner. */
-export type CenterView = 'map' | 'flow' | 'impact' | 'files' | 'conversations' | 'focus' | 'crew';
+export type CenterView = 'map' | 'flow' | 'impact' | 'files' | 'conversations' | 'focus' | 'crew' | 'tour';
 /** A view of the flow open in the middle: the map, its lanes (or layers), its outline. */
 export type FlowPane = 'map' | 'diagram' | 'outline';
 /**
@@ -284,6 +284,8 @@ export interface ExplainState {
   dismissed: string[];
   /** Incremented to ask the shell to show the column. */
   reveal?: number;
+  /** The tour of the open explanation, playing in the middle: the scene on stage. */
+  tour?: { id: string; scene: number };
 }
 export interface ViewState { level: Level; focus: { id: string; name: string; type: string }[]; zoom: number; visible: { id: string; name: string; type: string }[]; truncated: boolean }
 export interface AtlasState {
@@ -347,6 +349,8 @@ export interface MapNavigator {
   fitNodes(nodes: NodeSummary[]): void;
   fitAll(): void;
   zoomBy(factor: number): void;
+  /** Where a node's block (or its nearest drawn ancestor's) is on screen, in client pixels. */
+  screenRect?(id: string, ancestors?: string[]): { x: number; y: number; w: number; h: number; own: boolean } | undefined;
 }
 export interface StoreOptions {
   storage?: Pick<Storage, 'getItem' | 'setItem'> & Partial<Pick<Storage, 'removeItem'>>;
@@ -503,7 +507,8 @@ export class AtlasStore {
       const conversation = param('sessions') ?? param('conversation');
       if (conversation) this.openJournal('conversations', { id: conversation === 'list' ? undefined : conversation, messageId: param('message') });
       const explain = param('explain');
-      if (explain) void this.openExplanations(explain === 'list' ? {} : { id: explain });
+      const scene = Number(param('scene'));
+      if (explain) void this.openExplanations(explain === 'list' ? {} : { id: explain, ...(Number.isInteger(scene) && scene >= 1 ? { scene: scene - 1 } : {}) });
       else void this.loadExplanations();
     } catch (error) {
       this.set({ status: 'error', error: error instanceof Error ? error.message : String(error) });
@@ -625,6 +630,7 @@ export class AtlasStore {
     const explain = this.state.explain;
     if (this.state.journal.open.includes('conversations')) { parts.push(`sessions=${encodeURIComponent(this.state.journal.conversationId ?? 'list')}`); if (this.state.journal.messageId) parts.push(`message=${encodeURIComponent(this.state.journal.messageId)}`); }
     if (explain.open) parts.push(`explain=${encodeURIComponent(explain.detail?.id ?? 'list')}`);
+    if (explain.open && explain.tour && explain.tour.id === explain.detail?.id) parts.push(`scene=${explain.tour.scene + 1}`);
     if (timeline.open && timeline.mode === 'git') parts.push(`files=${timeline.gitTarget?.slice(0, 12) ?? 'latest'}`);
     if (timeline.open && timeline.mode === 'architecture') {
       const at = snapshotToken(timeline.data, timeline.target) ?? 'live', vs = timeline.compare ? snapshotToken(timeline.data, timeline.baseline ?? timeline.data?.workingTree?.id) : undefined;
@@ -1209,7 +1215,7 @@ export class AtlasStore {
   setCenter(view: CenterView): void {
     const state = this.state;
     if (view === 'conversations') { this.showAgents(); return; }
-    if (view !== 'map' && !(view === 'flow' ? state.flowView : view === 'impact' ? state.impact.open : view === 'focus' ? state.focusView : view === 'crew' ? state.crewView : state.files)) return;
+    if (view !== 'map' && !(view === 'flow' ? state.flowView : view === 'impact' ? state.impact.open : view === 'focus' ? state.focusView : view === 'crew' ? state.crewView : view === 'tour' ? state.explain.tour : state.files)) return;
     if (state.center !== view) { this.set({ center: view }); this.writeHash(); }
   }
   openJournal(view: 'conversations', options: { id?: string; messageId?: string; path?: string } = {}): void {
@@ -1889,10 +1895,10 @@ export class AtlasStore {
     this.set(state => ({ explain: { ...state.explain, ...(typeof patch === 'function' ? patch(state.explain) : patch) } }));
   }
   /** Show the column (and an explanation in it). */
-  async openExplanations(options: { id?: string } = {}): Promise<void> {
+  async openExplanations(options: { id?: string; scene?: number } = {}): Promise<void> {
     this.setExplain(explain => ({ open: true, unseen: [], reveal: (explain.reveal ?? 0) + 1 }));
     this.writeHash();
-    await Promise.all([this.loadExplanations(), this.loadExplanationSetup(), options.id ? this.openExplanation(options.id) : Promise.resolve()]);
+    await Promise.all([this.loadExplanations(), this.loadExplanationSetup(), options.id ? this.openExplanation(options.id, { ...(options.scene !== undefined ? { scene: options.scene } : {}) }) : Promise.resolve()]);
   }
   closeExplanations(): void { this.setExplain({ open: false, hover: undefined }); this.writeHash(); }
   toggleExplanations(): void { if (this.state.explain.open) this.closeExplanations(); else void this.openExplanations(); }
@@ -1963,7 +1969,8 @@ export class AtlasStore {
     } catch { /* the server may be restarting */ } finally { this.activity.busy = false; }
   }
   dismissAgentWork(activity: AgentActivity): void { this.setExplain(explain => ({ dismissed: [...new Set([...explain.dismissed, workKey(activity)])] })); }
-  async openExplanation(id: string, options: { quiet?: boolean } = {}): Promise<void> {
+  /** Open an explanation in the column; one written as a tour plays in the middle too (from `scene`, else the first). */
+  async openExplanation(id: string, options: { quiet?: boolean; scene?: number } = {}): Promise<void> {
     const api = this.options.explanations;
     if (!api) return;
     const signal = this.abortable('explanation');
@@ -1972,13 +1979,57 @@ export class AtlasStore {
     try {
       const data = await api.detail(id, signal);
       this.setExplain(explain => explain.detail?.id === id || !explain.detail ? { detail: { id, status: 'ready', data } } : {});
+      const tour = this.state.explain.tour;
+      if (!data.tour) { if (tour?.id === id) this.closeTour(); }
+      else if (!options.quiet) this.showScene(options.scene ?? (tour?.id === id ? tour.scene : 0));
+      // A quiet refresh (a follow-up, a rewrite) keeps the scene on stage while it still exists.
+      else if (tour?.id === id && tour.scene >= data.tour.scenes.length) this.showScene(data.tour.scenes.length - 1);
       this.writeHash();
     } catch (error) {
       if (isAbort(error)) return;
       this.setExplain(explain => explain.detail?.id === id ? { detail: { id, status: 'error', error: error instanceof Error ? error.message : String(error) } } : {});
     }
   }
-  closeExplanation(): void { this.aborts.get('explanation')?.abort(); this.setExplain({ detail: undefined, hover: undefined }); this.writeHash(); }
+  closeExplanation(): void { this.aborts.get('explanation')?.abort(); this.closeTour(); this.setExplain({ detail: undefined, hover: undefined }); this.writeHash(); }
+  /** Put a scene of the open explanation's tour on stage, in the middle. */
+  showScene(index: number): void {
+    const data = this.state.explain.detail?.data;
+    const count = data?.tour?.scenes.length ?? 0;
+    if (!data || !count) return;
+    const scene = Math.max(0, Math.min(count - 1, Math.round(index)));
+    if (this.state.explain.tour?.id === data.id && this.state.explain.tour.scene === scene && this.state.center === 'tour') return;
+    this.set(state => ({ center: 'tour', explain: { ...state.explain, hover: undefined, tour: { id: data.id, scene } } }));
+    this.writeHash();
+  }
+  /** Make sure these entities are on the map (their areas loaded), so a scene can frame them and boxes rise from their blocks. */
+  async placeOnMap(ids: string[]): Promise<void> {
+    const epoch = this.epoch;
+    const missing = [...new Set(ids)].filter(id => !this.scene.nodes.has(id)).slice(0, 24);
+    await Promise.all(missing.map(async id => {
+      try {
+        const located = await this.api.locate(id);
+        if (epoch !== this.epoch) return;
+        this.place(located, epoch);
+        await this.loadChildren(located.spatialAncestors.map(node => node.id).filter(nodeId => !this.scene.childList(nodeId).complete));
+      } catch { /* not on the map: the scene frames the rest */ }
+    }));
+  }
+  /** A box of a tour clicked: select what it names and read its code, while the tour stays on stage. */
+  async openFromTour(link: ResolvedLink): Promise<void> {
+    this.setExplain({ hover: undefined });
+    if (link.kind !== 'path' && link.kind !== 'table') { await this.followLink(link); return; }
+    if (!link.id) return;
+    await this.select(link.id, { fly: false });
+    const node = this.state.selection?.node;
+    if (node && !isContainer(node) && node.type !== 'database_table') this.openCode();
+  }
+  stepScene(delta: number): void { const tour = this.state.explain.tour; if (tour) this.showScene(tour.scene + delta); }
+  /** Stop the tour: the map comes back to the middle. */
+  closeTour(): void {
+    if (!this.state.explain.tour) return;
+    this.set(state => ({ ...this.leaveCenter('tour'), explain: { ...state.explain, tour: undefined } }));
+    this.writeHash();
+  }
   /** A link the pointer is on (undefined: none): what it names lights on the map. */
   hoverLink(link: ResolvedLink | undefined): void {
     if (link?.href === this.state.explain.hover?.href && link?.id === this.state.explain.hover?.id) return;

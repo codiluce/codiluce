@@ -21,6 +21,7 @@ import { createInspectionServer } from '../src/api/server.js';
 import { AnthropicChat, ChatService, anthropicCost, type ChatProvider, type ProviderRequest } from '../src/explanations/chat.js';
 import { agentPrompt, chatQuestion, MCP_PROMPTS } from '../src/explanations/prompts.js';
 import type { AskEvent, ExplanationRecord } from '../src/explanations/model.js';
+import { composeTour, sceneProblems, scenesOf } from '../src/explanations/scenes.js';
 import { FIXTURE_CONFIG } from './history-fixture.js';
 
 const fixture = fileURLToPath(new URL('./fixtures/repository', import.meta.url));
@@ -201,6 +202,77 @@ test('tools return links that resolve, and publishing through them reports unres
   assert.deepEqual(commit.files.map(item => item.path), [LOGIN_FORM]);
 });
 
+test('scenes: a tour is stored as markers before ## sections, read back the same, and checked before saving', () => {
+  const scenes = [
+    { title: 'Where it lives', view: 'map' as const, markdown: `The [form](${LOGIN_FORM}) -- on the map.`, captions: { [LOGIN_FORM]: 'the form' } },
+    { title: 'How it talks', markdown: 'The form calls the controller.', arrows: [{ from: LOGIN_FORM, to: 'backend/app/Http/Controllers/AuthController.php', label: 'posts to' }] },
+  ];
+  const text = composeTour('An intro.', scenes);
+  assert.match(text, /^An intro\.\n\n<!-- codiluce:scene \{"view":"map"/);
+  for (const marker of text.split('\n').filter(line => line.startsWith('<!-- codiluce:scene'))) assert.doesNotMatch(marker.slice(4, -3), /--/, 'a marker never holds -- (it would end the comment)');
+  const read = scenesOf(text);
+  assert.equal(read.intro, 'An intro.');
+  assert.deepEqual(read.scenes.map(scene => scene.title), ['Where it lives', 'How it talks']);
+  assert.equal(read.scenes[0]!.view, 'map');
+  assert.equal(read.scenes[0]!.captions![LOGIN_FORM], 'the form');
+  assert.equal(read.scenes[1]!.arrows![0]!.label, 'posts to');
+  assert.equal(read.scenes[1]!.markdown, 'The form calls the controller.');
+  assert.deepEqual(scenesOf('Plain text, no scenes.').scenes, []);
+  // The turn markers are untouched: a tour round-trips as one answer.
+  const record = parseExplanation('x', serializeExplanation({ id: 'x', title: 'T', subject: { kind: 'question' }, createdAt: 'a', updatedAt: 'a', source: 'agent', pins: {}, turns: [{ role: 'answer', text, at: 'a' }] }), 'a');
+  assert.equal(record.turns.length, 1);
+  assert.equal(scenesOf(record.turns[0]!.text).scenes.length, 2);
+  const problems = sceneProblems([
+    { title: '', markdown: 'x' },
+    { title: 'Flow', view: 'flow', markdown: 'x' },
+    { title: 'Arrow', markdown: 'x', arrows: [{ from: LOGIN_FORM, to: 'commit:abcd', label: '' }] },
+    { title: 'Crowded', markdown: Array.from({ length: 13 }, (_, index) => `[f${index}](f${index}.ts)`).join(' ') },
+  ]);
+  assert.equal(problems.length, 5, problems.join('\n'));
+});
+
+test('a tour publishes as scenes: boxes nest symbols in their file, group by folder, and arrows carry the index\'s evidence', async () => {
+  const controller = 'backend/app/Http/Controllers/AuthController.php';
+  await assert.rejects(service.publish({ source: 'agent', scenes: [{ title: 'Bad', markdown: 'x', arrows: [{ from: LOGIN_FORM, to: 'no/such.ts', label: 'calls' }] }] }), UnresolvedLinksError);
+  const saved = await service.publish({
+    source: 'agent', question: 'How does login reach the server?', markdown: 'Login, in two scenes.',
+    scenes: [
+      { title: 'Where it lives', view: 'map', markdown: `The [form](${LOGIN_FORM}) and [the controller](${controller}).` },
+      { title: 'How it connects', markdown: `The [login](${controller}#AuthController.login) action answers [the request](flow:POST%20/auth/login).`, focus: [controller, `${controller}#AuthController.login`, LOGIN_FORM, 'backend/app/Services/AuthService.php'], start: LOGIN_FORM,
+        arrows: [
+          { from: LOGIN_FORM, to: `${controller}#AuthController.login`, label: 'posts the credentials to' },
+          { from: controller, to: 'backend/app/Services/AuthService.php', label: 'asks' },
+          { from: 'backend/app/Services/AuthService.php', to: LOGIN_FORM, label: 'shares a name with', undirected: true },
+        ] },
+    ],
+  });
+  assert.equal(saved.title, 'How does login reach the server?', 'the question names it when no title is given');
+  const tour = saved.tour!;
+  assert.equal(tour.intro, 'Login, in two scenes.');
+  assert.equal(tour.scenes.length, 2);
+  assert.equal(tour.scenes[0]!.view, 'map');
+  assert.deepEqual(tour.scenes[0]!.boxes.map(box => box.link.path), [LOGIN_FORM, controller]);
+  const second = tour.scenes[1]!;
+  assert.equal(second.view, 'diagram');
+  const login = second.boxes.find(box => box.link.type === 'method')!;
+  const file = second.boxes.find(box => box.link.path === controller && box.link.type === 'file')!;
+  assert.equal(login.parent, file.key, 'the method sits in its file box');
+  assert.equal(file.group, 'backend/app/Http/Controllers');
+  assert.equal(second.start, second.boxes.find(box => box.link.path === LOGIN_FORM)!.key);
+  const asks = second.arrows.find(arrow => arrow.label === 'asks')!;
+  assert.ok(asks.evidence.length >= 1, `the controller uses the service: ${JSON.stringify(asks.evidence)}`);
+  assert.equal(second.arrows.find(arrow => arrow.undirected)!.evidence.length, 0, 'a conceptual arrow has no evidence, and is still drawn');
+  assert.ok(saved.links.some(link => link.href === 'backend/app/Services/AuthService.php'), 'links outside the text are resolved and pinned');
+  assert.ok(saved.pins['backend/app/Services/AuthService.php']);
+  const listed = (await service.list()).items.find(item => item.id === saved.id)!;
+  assert.equal(listed.scenes, 2);
+  assert.equal(listed.excerpt.startsWith('Login, in two scenes.'), true);
+  // A text follow-up keeps the tour of the answer that has one.
+  const followed = await service.publish({ id: saved.id, markdown: 'And the form validates first.', source: 'agent' });
+  assert.equal(followed.tour!.turn, 1);
+  assert.equal(followed.tour!.scenes.length, 2);
+});
+
 test('MCP: initialize negotiates, lists tools with hints and prompts, and reports errors as JSON-RPC', async () => {
   // The MCP server reads the index from the state directory.
   const disk = new GraphStore(path.join(state, 'codiluce.db'));
@@ -252,7 +324,7 @@ test('activity: only explicit explanation requests start work; ordinary reads an
     // Each tool call is a step, recorded before the tool answers; start_explanation names the work and keeps them.
     await call(3, 'flow', { flow: 'flow:POST /auth/login' });
     assert.deepEqual(only().work!.steps.map(step => step.text), ['flow flow:POST /auth/login']);
-    assert.deepEqual(await call(4, 'start_explanation', { title: 'How login works', question: 'How does login work?' }), { started: true, next: 'Read the code with the Codiluce tools, then save the answer with publish_explanation.' });
+    assert.deepEqual(await call(4, 'start_explanation', { title: 'How login works', question: 'How does login work?' }), { started: true, next: 'Read the code with the Codiluce tools, then save the answer with publish_explanation (as scenes, a tour, when it walks through several places or a process).' });
     assert.equal(only().work!.title, 'How login works');
     assert.equal(only().work!.question, 'How does login work?');
     assert.equal(only().work!.count, 1);

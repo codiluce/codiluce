@@ -8,6 +8,7 @@ import { stringify } from 'yaml';
 import { indexRepository } from '../../src/pipeline/index.js';
 import { GraphStore } from '../../src/storage/sqlite.js';
 import { createInspectionServer } from '../../src/api/server.js';
+import { composeTour } from '../../src/explanations/scenes.js';
 
 const port = Number(process.env.E2E_PORT ?? 4399);
 const fixture = fileURLToPath(new URL('../../tests/fixtures/repository', import.meta.url));
@@ -26,6 +27,17 @@ await writeFile(path.join(root, '.codiluce/explanations/2026-10-14-how-login-wor
   '<!-- codiluce:question at=2026-10-14T08:00:00.000Z -->', 'How does login work?', '',
   '<!-- codiluce:answer at=2026-10-14T08:00:00.000Z -->',
   'The [login form](frontend/src/components/LoginForm.tsx) calls [the login request](flow:POST%20/auth/login), answered by [login](backend/app/Http/Controllers/AuthController.php#AuthController.login). [Gone](backend/nope.php).', '',
+].join('\n'));
+// And one told as a tour: a map scene, then a diagram with a symbol inside its file (explanations.spec.ts).
+const form = 'frontend/src/components/LoginForm.tsx', controller = 'backend/app/Http/Controllers/AuthController.php';
+await writeFile(path.join(root, '.codiluce/explanations/2026-10-16-login-in-scenes-e2e1.md'), [
+  '---', 'title: Login in scenes', 'subject:', '  kind: question', 'source: agent', 'agent: e2e', 'updatedAt: 2026-10-16T08:00:00.000Z', '---', '',
+  '<!-- codiluce:answer at=2026-10-16T08:00:00.000Z -->',
+  composeTour('Login, in two scenes.', [
+    { title: 'Where login lives', view: 'map', markdown: `The [form](${form}) and [the controller](${controller}).` },
+    { title: 'How the form reaches the server', markdown: `The form posts to [login](${controller}#AuthController.login).`, focus: [form, controller, `${controller}#AuthController.login`, 'backend/app/Services/AuthService.php'], start: form,
+      arrows: [{ from: form, to: `${controller}#AuthController.login`, label: 'posts the credentials to' }, { from: controller, to: 'backend/app/Services/AuthService.php', label: 'asks' }] },
+  ]), '',
 ].join('\n'));
 // Isolated provider history: browser tests must never import the developer's chats.
 const codexHome = path.join(root, '.codiluce/agent-fixtures/codex'), claudeHome = path.join(root, '.codiluce/agent-fixtures/claude');

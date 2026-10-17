@@ -32,6 +32,8 @@ function blocks(lines: string[]): Block[] {
   while (index < lines.length) {
     const line = lines[index]!;
     if (!line.trim()) { index++; continue; }
+    // HTML comments (a tour's scene markers) are not read.
+    if (/^ {0,3}<!--[\s\S]*-->\s*$/.test(line)) { index++; continue; }
     const fence = FENCE.exec(line);
     if (fence) {
       const marker = fence[1]!, body: string[] = [];

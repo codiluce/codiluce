@@ -16,6 +16,7 @@ import { FocusView } from './FocusView';
 import { MapView } from './MapView';
 import { SourcePanel } from './SourcePanel';
 import { SplitMap } from './SplitMap';
+import { TourStage } from './TourStage';
 
 export function Workbench({ split }: { split: boolean }) {
   const store = useStore();
@@ -24,8 +25,8 @@ export function Workbench({ split }: { split: boolean }) {
   const shares = useAtlas(state => state.flowSplit);
   const reading = center === 'conversations';
   const drawsMap = center === 'focus' || center === 'crew';
-  // The map is in the middle on its tab, and beside a flow's other views (or alone) when a flow is open.
-  const mapShown = center === 'map' || (!!flow && (!flow.pane || flow.pane === 'map'));
+  // The map is in the middle on its tab, behind a tour's scenes, and beside a flow's other views (or alone) when a flow is open.
+  const mapShown = center === 'map' || center === 'tour' || (!!flow && (!flow.pane || flow.pane === 'map'));
   // Another tool in the middle: the map is an overview in a corner.
   const corner = !mapShown && !flow && !reading && !drawsMap;
   const [overview, setOverview] = useState(true);
@@ -47,6 +48,7 @@ export function Workbench({ split }: { split: boolean }) {
         </div>
         {corner && !overview && <button className="button small overview-show" onClick={() => setOverview(true)} title="Show the map as an overview in this corner">Overview map</button>}
         {flow && <FlowPanes />}
+        {center === 'tour' && <TourStage />}
       </div>
       <SourcePanel />
     </section>
@@ -63,7 +65,8 @@ function CenterTabs() {
   const files = useAtlas(state => state.files);
   const focus = useAtlas(state => state.focusView);
   const crew = useAtlas(state => state.crewView);
-  if (!flow && !impact && !files && !focus && !crew) return null;
+  const tour = useAtlas(state => state.explain.tour && state.explain.detail?.data?.id === state.explain.tour.id ? state.explain.detail.data.title : undefined);
+  if (!flow && !impact && !files && !focus && !crew && !tour) return null;
   const tab = (view: typeof center, label: string, title: string, close?: { text: string; run: () => void }) => (
     <div className={`center-tab${center === view ? ' current' : ''}`} key={view}>
       <button role="tab" aria-selected={center === view} onClick={() => store.setCenter(view)} title={title}><span className="center-tab-label">{label}</span></button>
@@ -75,6 +78,7 @@ function CenterTabs() {
       {tab('map', 'Map', 'The map of the repository')}
       {flow && tab('flow', `Flow · ${lanes && flow.lanes ? (lanes.kind === 'command' || lanes.kind === 'schedule' ? lanes.name : `${lanes.method} ${lanes.path}`) : flow.title}`, `${flow.title} on the map, ${flow.lanes ? 'in lanes' : 'in layers'} and as an outline`, { text: 'Close the flow tab', run: () => store.closeFlowView() })}
       {impact && tab('impact', impact.forId ? `Impact · ${impactOriginName(impact.forId, impact.data, known)}` : 'Impact', 'What depends on it, hop by hop', { text: 'Close the impact tab', run: () => store.hideImpact() })}
+      {tour && tab('tour', `Tour · ${tour}`, 'The explanation, scene by scene', { text: 'Stop the tour', run: () => store.closeTour() })}
       {files && tab('files', filesTitle(files, files.data), 'The files lit on the map, as a list', { text: 'Close the files tab', run: () => store.closeFiles() })}
       {focus && tab('focus', `Focus · ${focus.title}`, 'What it is about at its places on the map, with the links between them', { text: 'Close the focus tab', run: () => store.closeFocus() })}
       {crew && tab('crew', 'Agents at work', 'The agents at work as characters on the map', { text: 'Close the agents at work tab', run: () => store.closeCrew() })}

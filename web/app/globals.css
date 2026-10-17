@@ -1431,3 +1431,75 @@ a.xlink:hover, a.xlink:focus-visible { background: color-mix(in srgb, var(--link
 .timeline-file-changes li { display: flex; align-items: baseline; gap: 8px; padding: 3px 0; }
 .timeline-file-changes .link-button { text-align: left; overflow-wrap: anywhere; }
 .timeline-file-diff pre { font: 11px/1.5 var(--font-mono, ui-monospace, monospace); white-space: pre; }
+
+/* Code diagrams: boxes in columns, a band per folder, labelled arrows (tours; later Impact). */
+.code-diagram { position: absolute; inset: 0; overflow: hidden; }
+.code-diagram.leaving { pointer-events: none; }
+.cd-plane { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.cd-band { position: absolute; border: 1px dashed color-mix(in srgb, var(--panel-border) 80%, var(--muted)); border-radius: var(--radius-float, 12px); background: color-mix(in srgb, var(--chip) 35%, transparent); opacity: 0; transition: opacity 0.4s ease 0.35s; }
+.cd-band-label { position: absolute; left: 12px; top: 5px; font-size: 11px; color: var(--muted); max-width: calc(100% - 24px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cd-arrows { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; opacity: 0; transition: opacity 0.4s ease 0.45s; }
+.cd-arrow path { fill: none; stroke: var(--muted); stroke-width: 1.6; }
+.cd-arrow polygon { fill: var(--muted); }
+.cd-arrow.undirected path { stroke-dasharray: 2 5; stroke-linecap: round; }
+.cd-arrow.evidenced path { stroke: var(--accent); }
+.cd-arrow.evidenced polygon { fill: var(--accent); }
+.cd-arrow-label { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 2px; max-width: 140px; pointer-events: none; opacity: 0; transition: opacity 0.4s ease 0.5s; }
+.cd-arrow-text { font-size: 11.5px; line-height: 1.25; text-align: center; color: var(--text); background: var(--panel-solid); border-radius: 6px; padding: 1px 6px; box-shadow: 0 0 0 3px var(--panel-solid); }
+.cd-chip { font: 10px var(--font-mono, ui-monospace, monospace); color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--panel-solid)); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); border-radius: 999px; padding: 0 6px; pointer-events: auto; cursor: help; }
+.code-diagram.shown .cd-band, .code-diagram.shown .cd-arrows, .code-diagram.shown .cd-arrow-label { opacity: 1; }
+.code-diagram.leaving .cd-band, .code-diagram.leaving .cd-arrows, .code-diagram.leaving .cd-arrow-label { transition-delay: 0s; transition-duration: 0.2s; }
+.cd-box { position: absolute; display: flex; flex-direction: column; background: color-mix(in srgb, var(--panel-solid) 93%, var(--text)); border: 1px solid color-mix(in srgb, var(--panel-border) 70%, var(--text)); border-radius: var(--radius, 9px); box-shadow: var(--shadow); transform-origin: 0 0; transition: left 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.68s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease; overflow: hidden; }
+.cd-box.fading { opacity: 0; }
+.cd-box.s-changed { border-style: dashed; border-color: var(--warning); }
+.cd-box.s-missing { border-style: dashed; opacity: 0.5; box-shadow: none; }
+.cd-box-head { all: unset; box-sizing: border-box; display: flex; flex-direction: column; gap: 1px; padding: 8px 12px 6px; height: 62px; cursor: pointer; min-width: 0; }
+.cd-box-head:hover .cd-title, .cd-box-head:focus-visible .cd-title { color: var(--link); }
+.cd-box-head:focus-visible, .cd-part:focus-visible { outline: 2px solid var(--link); outline-offset: -2px; }
+.cd-kind { font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.cd-title { font-weight: 650; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cd-subtitle { font-size: 10.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cd-caption { height: 18px; padding: 0 12px; font-size: 11.5px; font-style: italic; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cd-parts { list-style: none; margin: 0; padding: 4px 8px; border-top: 1px solid var(--panel-border); background: color-mix(in srgb, var(--chip) 50%, transparent); }
+.cd-part { all: unset; box-sizing: border-box; display: flex; align-items: baseline; gap: 6px; width: 100%; height: 26px; padding: 4px 6px; border-radius: 6px; cursor: pointer; font-size: 12px; overflow: hidden; white-space: nowrap; }
+.cd-part:hover { background: var(--chip-active); }
+.cd-part.s-changed .cd-part-title { text-decoration: underline dashed var(--warning); }
+.cd-part.s-missing { opacity: 0.5; text-decoration: line-through; }
+.cd-part-title { font-family: var(--font-mono, ui-monospace, monospace); overflow: hidden; text-overflow: ellipsis; }
+@media (prefers-reduced-motion: reduce) { .cd-box { transition: opacity 0.3s ease; } .cd-band, .cd-arrows, .cd-arrow-label { transition-delay: 0s; } }
+
+/* An explanation's tour on stage, over the map. */
+.tour-stage { position: absolute; inset: 0; z-index: 8; pointer-events: none; }
+.tour-stage > * { pointer-events: auto; }
+.tour-stage > .tour-backdrop { pointer-events: none; position: absolute; inset: 0; background: var(--panel-solid); opacity: 0; transition: opacity 0.6s ease; }
+.tour-backdrop.on { opacity: 0.9; }
+.tour-backdrop.on.peek { opacity: 0.55; }
+.tour-stage .code-diagram { bottom: 62px; }
+.tour-stage:not(.with-diagram) > .code-diagram { pointer-events: none; }
+.tour-bar { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; max-width: calc(100% - 28px); padding: 6px 8px 6px 6px; background: var(--panel-solid); border: 1px solid var(--panel-border); border-radius: 999px; box-shadow: var(--shadow); }
+.tour-bar .icon-button.small { border-radius: 999px; width: 30px; height: 30px; justify-content: center; font-size: 18px; padding: 0; }
+.tour-where { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.tour-count { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tour-title { font-weight: 650; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34ch; }
+.tour-pips { display: flex; gap: 5px; }
+.tour-pip { width: 8px; height: 8px; padding: 0; border-radius: 50%; border: 0; background: var(--panel-border); cursor: pointer; }
+.tour-pip:hover { background: var(--muted); }
+.tour-pip.current { background: var(--accent); width: 18px; border-radius: 4px; }
+.tour-stop { border: 0; background: transparent; color: var(--muted); }
+.tour-flow-card { position: absolute; left: 16px; top: 16px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--panel-solid); border: 1px solid var(--panel-border); border-radius: var(--radius, 9px); box-shadow: var(--shadow); }
+@media (max-width: 700px) { .tour-pips { display: none; } .tour-title { max-width: 18ch; } }
+
+/* The tour's text in the Explanations column, in step with the stage. */
+.tour-play { margin: 6px 0 10px; }
+.tour-tag { color: var(--accent); }
+.scene-section { margin: 10px -10px; padding: 4px 10px 2px; border-left: 3px solid transparent; border-radius: 0 8px 8px 0; transition: background 0.3s ease, border-color 0.3s ease; }
+.scene-section.current { border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.scene-head { all: unset; box-sizing: border-box; display: flex; align-items: baseline; gap: 8px; width: 100%; cursor: pointer; padding: 4px 0; }
+.scene-head:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 4px; }
+.scene-number { flex: none; display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 700; background: var(--chip); color: var(--muted); }
+.scene-section.current .scene-number { background: var(--accent); color: var(--accent-ink, var(--panel-solid)); }
+.scene-title { font-weight: 650; font-size: 14px; flex: 1; min-width: 0; }
+.scene-head:hover .scene-title { color: var(--link); }
+.scene-view { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--subtle); }
+/* Held at its origin (before rising): no transition, so releasing it is what moves. */
+.cd-box.held { transition: none; }

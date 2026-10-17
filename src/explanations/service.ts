@@ -6,9 +6,11 @@ import { pullRequestFromMessage } from '../history/pull-requests.js';
 import type { HistoryService } from '../history/service.js';
 import type { ProjectionService } from '../projection/service.js';
 import { parseLink, schemeHref } from './links.js';
-import { excerptOf, latestAnswer, type ExplanationDetail, type ExplanationList, type ExplanationRecord, type ExplanationSubject, type ExplanationSummary, type ResolvedLink, type Staleness, type SubjectKind } from './model.js';
+import { excerptOf, latestAnswer, type ExplanationDetail, type ExplanationList, type ExplanationRecord, type ExplanationSubject, type ExplanationSummary, type ExplanationTour, type ResolvedLink, type Scene, type Staleness, type SubjectKind } from './model.js';
 import { fingerprintOf, footprintOf, resolveAll, resolveLink, type CommitRef, type ResolveEnvironment } from './resolve.js';
+import { composeTour, sceneExtraHrefs, sceneProblems, scenesOf } from './scenes.js';
 import { ExplanationStore, EXPLANATIONS_DIRECTORY } from './store.js';
+import { resolveTour } from './tour.js';
 
 export interface ExplanationServiceOptions {
   stateDirectory: string; root?: string;
@@ -17,7 +19,10 @@ export interface ExplanationServiceOptions {
   readOnly?: boolean;
 }
 export interface PublishInput {
-  markdown: string; title?: string; question?: string;
+  /** The answer; with `scenes`, the intro before the first scene (optional). */
+  markdown?: string; title?: string; question?: string;
+  /** The answer told as a tour: each scene a `##` section of it, with what it shows. */
+  scenes?: Scene[];
   subject?: { kind: SubjectKind; ref?: string };
   source: ExplanationRecord['source']; agent?: string; model?: string; cost?: number;
   /** Add to an existing explanation (a follow-up, a refresh) instead of starting one. */
@@ -29,6 +34,10 @@ export interface PublishInput {
 }
 export class UnresolvedLinksError extends Error {
   constructor(readonly links: ResolvedLink[]) { super(`${links.length} link${links.length === 1 ? '' : 's'} do not resolve: ${links.map(link => `${link.href} (${link.reason ?? 'not found'})`).join('; ')}`); }
+}
+/** Scenes publishing refuses, with each problem. */
+export class SceneError extends Error {
+  constructor(readonly problems: string[]) { super(`The scenes need fixing: ${problems.join('; ')}`); }
 }
 export class ReadOnlyError extends Error { constructor() { super('Explanations are read-only on this server (serve --read-only)'); } }
 export interface EntityExplanations {
@@ -111,12 +120,21 @@ export class ExplanationService {
   /** Save an answer (and its question) after checking its links; returns it resolved. */
   async publish(input: PublishInput): Promise<ExplanationDetail> {
     if (this.readOnly) throw new ReadOnlyError();
-    const markdown = input.markdown.trim();
+    const scenes = input.scenes?.length ? input.scenes : undefined;
+    if (scenes) { const problems = sceneProblems(scenes); if (problems.length) throw new SceneError(problems); }
+    const markdown = scenes ? composeTour(input.markdown, scenes) : (input.markdown ?? '').trim();
     if (!markdown) throw new Error('The explanation is empty');
     if (markdown.length > 400_000) throw new Error('The explanation is too long (at most 400 000 characters)');
     const environment = await this.environment();
     const { context } = environment;
-    const links = resolveAll(markdown, environment);
+    const cache = new Map<string, ResolvedLink>();
+    const links = resolveAll(markdown, environment, cache);
+    for (const href of scenes ? scenes.flatMap(sceneExtraHrefs) : []) if (!links.some(link => link.href === href)) { const resolved = resolveHref(href, environment, cache); if (resolved) links.push(resolved); }
+    if (scenes) {
+      // A flow scene needs a flow the index knows; its other links are checked with the text's.
+      const problems = scenes.flatMap((scene, index) => scene.flow && links.find(link => link.href === scene.flow)?.status === 'ok' && links.find(link => link.href === scene.flow)?.kind !== 'flow' ? [`Scene ${index + 1}: flow must name a flow`] : []);
+      if (problems.length) throw new SceneError(problems);
+    }
     const missing = links.filter(link => link.status === 'missing');
     if (missing.length && !input.allowUnresolved) throw new UnresolvedLinksError(missing);
     const existing = input.id ? this.store.get(input.id) : undefined;
@@ -128,7 +146,7 @@ export class ExplanationService {
     if (input.question?.trim()) turns.push({ role: 'question', text: input.question.trim(), at: now });
     turns.push({ role: 'answer', text: markdown, at: now, ...(input.model ? { model: input.model } : {}), ...(input.cost !== undefined ? { cost: input.cost } : {}), ...(context.commitSha ? { commit: context.commitSha } : {}) });
     const subject = input.subject ? this.subjectOf(input.subject, environment) : existing?.subject ?? { kind: 'question' as const };
-    const title = input.title?.trim() || existing?.title || titleOf(markdown, input.question, subject);
+    const title = input.title?.trim() || existing?.title || titleOf(scenes ? input.markdown ?? '' : markdown, input.question, subject);
     const cost = input.cost !== undefined ? (existing?.cost ?? 0) + input.cost : existing?.cost;
     const record: ExplanationRecord = {
       id: existing?.id ?? this.store.newId(title), title: title.slice(0, 200), subject,
@@ -175,7 +193,16 @@ export class ExplanationService {
     if (cached?.key === key) return cached.detail;
     const cache = new Map<string, ResolvedLink>();
     const links: ResolvedLink[] = [];
-    for (const turn of record.turns) if (turn.role === 'answer') for (const link of resolveAll(turn.text, environment, cache)) if (!links.some(item => item.href === link.href)) links.push(link);
+    let toured: { text: string; turn: number } | undefined;
+    record.turns.forEach((turn, index) => {
+      if (turn.role !== 'answer') return;
+      const add = (link: ResolvedLink | undefined) => { if (link && !links.some(item => item.href === link.href)) links.push(link); };
+      for (const link of resolveAll(turn.text, environment, cache)) add(link);
+      const { scenes } = scenesOf(turn.text);
+      if (!scenes.length) return;
+      toured = { text: turn.text, turn: index };
+      for (const href of scenes.flatMap(sceneExtraHrefs)) add(resolveHref(href, environment, cache));
+    });
     let changed = 0, missing = 0, linked = 0;
     const resolved = links.map(link => {
       if (link.status === 'external') return link;
@@ -190,7 +217,9 @@ export class ExplanationService {
       const at = environment.commits.findIndex(commit => commit.sha === record.commit);
       if (at >= 0) stale.commitsSince = environment.commits.length - 1 - at;
     }
-    const detail: ExplanationDetail = { ...record, links: resolved, stale, footprint: footprintOf(resolved, context), file: `${EXPLANATIONS_DIRECTORY}/${record.id}.md` };
+    const byHref = new Map(resolved.map(link => [link.href, link]));
+    const tour: ExplanationTour | undefined = toured ? resolveTour(toured.text, toured.turn, context, href => byHref.get(href) ?? resolveHref(href, environment, cache)) : undefined;
+    const detail: ExplanationDetail = { ...record, links: resolved, stale, footprint: footprintOf(resolved, context), ...(tour ? { tour } : {}), file: `${EXPLANATIONS_DIRECTORY}/${record.id}.md` };
     this.details.set(record.id, { key, detail });
     return detail;
   }
@@ -201,9 +230,20 @@ export class ExplanationService {
       ...(detail.commit ? { commit: detail.commit } : {}), source: detail.source, ...(detail.agent ? { agent: detail.agent } : {}),
       ...(detail.model ? { model: detail.model } : {}), ...(detail.cost !== undefined ? { cost: detail.cost } : {}),
       turns: detail.turns.filter(turn => turn.role === 'question').length || 1, links: detail.links.filter(link => link.status !== 'external').length,
+      ...(detail.tour ? { scenes: detail.tour.scenes.length } : {}),
       excerpt: answer ? excerptOf(answer.text) : '', stale: detail.stale,
     };
   }
+}
+/** One link written outside the text (a scene's focus, arrows, start), resolved once. */
+function resolveHref(href: string, environment: ResolveEnvironment, cache: Map<string, ResolvedLink>): ResolvedLink | undefined {
+  const cached = cache.get(href);
+  if (cached) return cached;
+  const parsed = parseLink(href);
+  if (!parsed) return undefined;
+  const resolved = resolveLink(parsed, environment);
+  cache.set(href, resolved);
+  return resolved;
 }
 /** A title from the text's first heading, else the question, else the subject. */
 export function titleOf(markdown: string, question: string | undefined, subject: ExplanationSubject): string {

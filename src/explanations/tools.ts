@@ -12,7 +12,8 @@ import type { NodeSummary, ViewKey } from '../projection/dto.js';
 import { LINK_GUIDE, parseLink, schemeHref } from './links.js';
 import { latestAnswer, type ExplanationDetail, type ResolvedLink, type SubjectKind } from './model.js';
 import { hrefOf, resolveLink } from './resolve.js';
-import { UnresolvedLinksError, type ExplanationService } from './service.js';
+import { MAX_SCENE_BOXES, MAX_SCENES, scenesInput } from './scenes.js';
+import { SceneError, UnresolvedLinksError, type ExplanationService } from './service.js';
 import type { ActivityWriter } from './activity.js';
 
 const execute = promisify(execFile);
@@ -42,6 +43,25 @@ const integer = (description: string, minimum: number, maximum: number) => ({ ty
 const object = (properties: Record<string, unknown>, required: string[] = []) => ({ type: 'object', properties, required, additionalProperties: false });
 const LINK_INPUT = string('What to look at: a repository-relative path (file or folder/), path#Symbol, path#L10-L20, flow:<entry>, table:<name>, or a link a tool returned');
 const SUBJECTS: SubjectKind[] = ['overview', 'flow', 'commit', 'pr', 'entity', 'question'];
+const LINK_VALUE = 'A link, as in the text: a path, path#Symbol, flow:<entry> or table:<name>';
+/** Scenes of a tour, as `publish_explanation` and `update_explanation` take them. */
+const SCENES_INPUT = {
+  type: 'array', maxItems: MAX_SCENES,
+  description: `Optional: tell the answer as a tour the user steps through in the middle of Codiluce, scene by scene, beside the full text. Worth it when the answer walks through several places in the code or a process; a short answer stays plain markdown. Each scene is a ## section of the answer (do not repeat it in markdown, which becomes the intro). A scene shows its code as a diagram (the default: its files, folders and symbols as boxes, grouped by folder, with your arrows between them; a symbol sits inside its file's box when both are shown), on the map (where the code lives: good for the first scene) or as a flow (the flow view of a flow: link). At most ${MAX_SCENE_BOXES} boxes a scene.`,
+  items: object({
+    title: string('The scene\'s title (its ## heading)'),
+    markdown: string('What this scene says, in a few short paragraphs, with links'),
+    view: { type: 'string', enum: ['diagram', 'map', 'flow'], description: 'diagram (default), map, or flow' },
+    focus: { type: 'array', items: { type: 'string' }, description: `The links shown (default: the code links of the scene's markdown). ${LINK_VALUE}` },
+    arrows: {
+      type: 'array', description: 'Diagram: relationships between two shown links, as you would explain them (not only imports or calls: "feeds grammars to", "mirrors"). Where the index holds a direct relationship between the two, the arrow shows it as evidence.',
+      items: object({ from: string(LINK_VALUE), to: string(LINK_VALUE), label: string('What the relationship is, in a few words (required)'), undirected: { type: 'boolean', description: 'No direction (e.g. "mirrors")' } }, ['from', 'to', 'label']),
+    },
+    start: string(`Diagram: the link in the first column (e.g. where it starts). ${LINK_VALUE}`),
+    captions: { type: 'object', additionalProperties: { type: 'string' }, description: 'Short labels by link, shown on the map and on the boxes' },
+    flow: string('Flow scenes: the flow, as a flow: link'),
+  }, ['title', 'markdown']),
+};
 
 /** The read-only tools over the index. */
 export function codeTools(context: ToolContext): ToolSpec[] {
@@ -308,6 +328,7 @@ export function explanationTools(context: ToolContext): ToolSpec[] {
     pinnedTo: detail.commit,
   });
   const unresolved = (error: unknown): string => {
+    if (error instanceof SceneError) return json({ saved: false, reason: 'Some scenes need fixing; fix them and call again.', problems: error.problems });
     if (!(error instanceof UnresolvedLinksError)) throw error;
     return json({ saved: false, reason: 'Some links do not name anything indexed. Fix them (search finds the right path; copy the link values tools return) and call again, or pass allowUnresolved: true to save anyway.', unresolved: error.links.map(link => ({ href: link.href, reason: link.reason })) });
   };
@@ -321,16 +342,17 @@ export function explanationTools(context: ToolContext): ToolSpec[] {
       inputSchema: object({ title: string('What you are explaining, in a few words'), question: string('What the user asked, in their words'), subject: subjectSchema }),
       async run(input: Record<string, unknown>) {
         context.activity!.begin({ title: optionalText(input.title), question: optionalText(input.question), subject: subjectInput(input.subject) });
-        return json({ started: true, next: 'Read the code with the Codiluce tools, then save the answer with publish_explanation.' });
+        return json({ started: true, next: 'Read the code with the Codiluce tools, then save the answer with publish_explanation (as scenes, a tour, when it walks through several places or a process).' });
       },
     } satisfies ToolSpec] : []),
     {
       name: 'publish_explanation', title: 'Save an explanation', readOnly: false,
       description: `Save what you explained so the user reads it in Codiluce's Explanations column: hovering a link lights that code on the map, clicking it opens it. Links are checked first; the explanation is pinned to the indexed commit so it shows when the code changes later. Write Markdown with headings and short paragraphs.\n\n${LINK_GUIDE}`,
-      inputSchema: object({ title: string('A short title (default: the first heading)'), markdown: string('The explanation, in Markdown, with links'), question: string('What the user asked, in their words'), subject: subjectSchema, allowUnresolved: { type: 'boolean', description: 'Save even if some links do not resolve' } }, ['markdown']),
+      inputSchema: object({ title: string('A short title (default: the first heading)'), markdown: string('The explanation, in Markdown, with links; with scenes, the intro before the first scene (optional)'), scenes: SCENES_INPUT, question: string('What the user asked, in their words'), subject: subjectSchema, allowUnresolved: { type: 'boolean', description: 'Save even if some links do not resolve' } }),
       async run(input) {
         try {
-          const detail = published(await service.publish({ markdown: requireText(input.markdown, 'markdown'), title: optionalText(input.title), question: asked(optionalText(input.question)), subject: subjectInput(input.subject) ?? context.activity?.work?.subject, source: 'agent', agent: context.agent?.(), allowUnresolved: input.allowUnresolved === true }));
+          const scenes = sceneList(input.scenes);
+          const detail = published(await service.publish({ markdown: scenes ? optionalText(input.markdown) : requireText(input.markdown, 'markdown'), ...(scenes ? { scenes } : {}), title: optionalText(input.title), question: asked(optionalText(input.question)), subject: subjectInput(input.subject) ?? context.activity?.work?.subject, source: 'agent', agent: context.agent?.(), allowUnresolved: input.allowUnresolved === true }));
           return saved(detail, 'saved');
         } catch (error) { return unresolved(error); }
       },
@@ -338,10 +360,11 @@ export function explanationTools(context: ToolContext): ToolSpec[] {
     {
       name: 'update_explanation', title: 'Add to or replace an explanation', readOnly: false,
       description: 'Answer a follow-up in an existing explanation (append), or rewrite it after the code changed (replace). Links are checked and pinned again.',
-      inputSchema: object({ id: string('The explanation ID'), markdown: string('The new answer, in Markdown, with links'), question: string('The follow-up question, if any'), mode: { type: 'string', enum: ['append', 'replace'], description: 'append (default) or replace' }, allowUnresolved: { type: 'boolean' } }, ['id', 'markdown']),
+      inputSchema: object({ id: string('The explanation ID'), markdown: string('The new answer, in Markdown, with links; with scenes, the intro before the first scene (optional)'), scenes: SCENES_INPUT, question: string('The follow-up question, if any'), mode: { type: 'string', enum: ['append', 'replace'], description: 'append (default) or replace' }, allowUnresolved: { type: 'boolean' } }, ['id']),
       async run(input) {
         try {
-          const detail = published(await service.publish({ id: requireText(input.id, 'id'), markdown: requireText(input.markdown, 'markdown'), question: optionalText(input.question), mode: input.mode === 'replace' ? 'replace' : 'append', source: 'agent', agent: context.agent?.(), allowUnresolved: input.allowUnresolved === true }));
+          const scenes = sceneList(input.scenes);
+          const detail = published(await service.publish({ id: requireText(input.id, 'id'), markdown: scenes ? optionalText(input.markdown) : requireText(input.markdown, 'markdown'), ...(scenes ? { scenes } : {}), question: optionalText(input.question), mode: input.mode === 'replace' ? 'replace' : 'append', source: 'agent', agent: context.agent?.(), allowUnresolved: input.allowUnresolved === true }));
           return saved(detail, 'updated');
         } catch (error) { return unresolved(error); }
       },
@@ -368,6 +391,10 @@ export function explanationTools(context: ToolContext): ToolSpec[] {
   ];
 }
 
+function sceneList(value: unknown): ReturnType<typeof scenesInput> {
+  try { const scenes = scenesInput(value); return scenes?.length ? scenes : undefined; }
+  catch (error) { throw new ToolInputError(error instanceof Error ? error.message : String(error)); }
+}
 function subjectInput(value: unknown): { kind: SubjectKind; ref?: string } | undefined {
   if (!value || typeof value !== 'object') return undefined;
   const { kind, ref } = value as { kind?: unknown; ref?: unknown };
