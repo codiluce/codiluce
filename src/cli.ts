@@ -2,6 +2,7 @@ import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { HARNESSES, harnessId } from './harnesses/registry.js';
 import { planIntegration, applyIntegration, integrationConfiguration } from './harnesses/setup.js';
+import { neutralHookOutput } from './activity/forward.js';
 import { parseArgs } from 'node:util';
 import { stringify } from 'yaml';
 import { detectApplications, exists, loadConfig } from './core/config.js';
@@ -113,6 +114,7 @@ async function main(): Promise<void> {
   if (command === 'activity' && positionals[1] === 'hook') {
     const provider = harnessId(values.agent);
     if (provider) await forwardHook(provider, path.resolve(values['state-dir'] ?? path.join(values.repo ?? process.cwd(), '.codiluce')), process.stdin, { event: values.event, profile: values.profile });
+    process.stdout.write(neutralHookOutput(provider, values.profile, values.event));
     return;
   }
   if (values['pr-metadata'] !== undefined && values['pr-metadata'] !== 'github') throw new Error('--pr-metadata supports: github');

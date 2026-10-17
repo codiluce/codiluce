@@ -175,3 +175,12 @@ test('hook subprocesses provide native no-op output even with a stopped map', as
     assert.equal(output.trim(), expected);
   }
 });
+
+test('the lightweight hook also accepts the public npx activity-hook argument layout', async () => {
+  const launch = activityLaunch(process.cwd(), 'checkout', 'cline', root, path.join(directory, 'stopped'));
+  const entry = launch.args.findIndex(arg => arg.endsWith('/src/activity/hook-cli.ts'));
+  const args = [...launch.args.slice(0, entry + 1), 'activity', 'hook', ...launch.args.slice(entry + 1), '--profile', 'cline-legacy', '--event', 'PostToolUse'];
+  const child = execFile(launch.command, args, { timeout: 5000 }); child.stdin!.end('broken');
+  const result = await new Promise<{ out: string; error: string }>((resolve, reject) => { let out = '', error = ''; child.stdout!.on('data', chunk => out += chunk); child.stderr!.on('data', chunk => error += chunk); child.on('error', reject); child.on('exit', code => code ? reject(new Error(error)) : resolve({ out, error })); });
+  assert.equal(result.out.trim(), '{"cancel":false}'); assert.equal(result.error, '');
+});
