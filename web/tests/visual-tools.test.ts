@@ -155,6 +155,26 @@ test('the cast hops to the files it reads and steps outside, beside the nearest 
   assert.equal(cast.actors.size, 0);
 });
 
+test('an agent with no observed file starts outside and appears when the map finishes loading', () => {
+  const map = scene();
+  let root: NodeSummary['rect'] | undefined;
+  const cast = new Cast(id => map.nodes.get(id)?.rect, () => root, () => 'red', true);
+  cast.push([crewEvent(event('command', 100, { kind: 'command', phase: 'started', toolId: 'c', status: 'running' }), 100, sessions)!]);
+  cast.advance(100);
+  const actor = cast.actors.get('claude-code:s1')!;
+  assert.equal(actor.target, undefined);
+  root = map.nodes.get('repo')!.rect;
+  cast.advance(200);
+  assert.equal(actor.target, `${YARD}claude-code:s1`);
+  const mat = cast.rectOf(actor.target!)!;
+  assert.ok(mat.x > root.x + root.w || mat.x + mat.w < root.x || mat.y > root.y + root.h || mat.y + mat.h < root.y);
+  assert.equal(actor.lastFile, undefined, 'no file activity is invented');
+  assert.equal(actor.pose, 'command');
+  cast.push([crewEvent(event('read', 300, { kind: 'read', phase: 'started', paths: [{ path: 'src/b.ts', scope: 'file', id: 'src/b.ts' }] }), 300, sessions)!]);
+  cast.advance(300);
+  assert.deepEqual([actor.target, actor.pose, actor.lastFile], ['src/b.ts', 'read', 'src/b.ts']);
+});
+
 test('the map projection is a saved preference, 3D by default, and every map draws in it', async () => {
   // Preferences and the middle need no API calls.
   const api = {} as AtlasApi;

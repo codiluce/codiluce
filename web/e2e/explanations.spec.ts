@@ -62,6 +62,10 @@ test('explanations: a tour plays in the middle, scene by scene, with the column 
   await expect(bar).toContainText('Where login lives');
   await expect(page.getByRole('tab', { name: /Tour · Login in scenes/ })).toBeVisible();
   await expect(column(page).locator('.scene-section.current')).toContainText('Where login lives');
+  // Opening the Agents sidebar must leave this tour on stage.
+  await page.getByRole('button', { name: 'Agents', exact: true }).click();
+  await expect(bar).toBeVisible();
+  await page.getByRole('button', { name: 'Agents', exact: true }).click();
   // The diagram scene stays on the map by default, its files numbered where they are and its arrows drawn between them.
   await page.keyboard.press('ArrowRight');
   await expect(bar).toContainText('2 / 2');

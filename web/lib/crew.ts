@@ -126,6 +126,9 @@ export class Cast {
   advance(now: number): void {
     while (this.queue.length && this.queue[0]!.t <= now) this.apply(this.queue.shift()!);
     for (const actor of this.actors.values()) {
+      // Activity can arrive before the map loads. Place the actor once its
+      // boundary is available, even if no further event arrives.
+      if (!actor.target) this.outside(actor, actor.pose, now);
       const working = actor.pose === 'read' || actor.pose === 'edit' || actor.pose === 'search';
       const busy = actor.open.size > 0 || actor.clones.some(clone => !clone.end);
       // Nothing in flight for a while: the model is thinking (live), or the agent went quiet.
@@ -145,8 +148,8 @@ export class Cast {
   private outside(actor: Actor, pose: Pose, now: number) {
     const id = this.yardOf(actor);
     if (actor.target !== id) {
-      const near = actor.lastFile ? this.place(actor.lastFile) : actor.target ? this.rectOf(actor.target) : undefined;
       const root = this.root();
+      const near = (actor.lastFile ? this.place(actor.lastFile) : actor.target ? this.rectOf(actor.target) : undefined) ?? root;
       if (near && root) this.yards.set(id, yardFor(root, near, actor.slot));
       if (this.yards.has(id)) this.moveTo(actor, id, now);
     }
@@ -173,9 +176,9 @@ export class Cast {
       if (start?.startsWith(YARD)) { this.yards.set(this.yardOf(actor), this.yards.get(start)!); actor.target = this.yardOf(actor); if (parent?.lastFile) actor.lastFile = parent.lastFile; }
       else if (start) { actor.target = start; actor.lastFile = start; }
       else {
-        // Nothing to stand on yet: start outside, by the files this actor will touch first.
+        // Start outside, by its first file when known, otherwise by the map.
         const first = this.queue.find(other => other.actor === ev.actor && other.targets.length)?.targets[0];
-        const rect = first ? this.place(first) : undefined, root = this.root();
+        const root = this.root(), rect = (first ? this.place(first) : undefined) ?? root;
         if (rect && root) { this.yards.set(this.yardOf(actor), yardFor(root, rect, actor.slot)); actor.target = this.yardOf(actor); actor.lastFile = first; }
       }
       this.actors.set(ev.actor, actor);

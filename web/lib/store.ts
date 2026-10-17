@@ -889,6 +889,7 @@ export class AtlasStore {
   }
   /** Open the timeline. Without a deep link the live index is compared with its predecessor (its HEAD commit when indexed). */
   async openTimeline(options: { at?: string; vs?: string; select?: string; files?: string; mode?: 'git' | 'architecture' } = {}): Promise<void> {
+    this.setCenter('map');
     const mode = options.mode ?? (options.at || options.vs ? 'architecture' : 'git');
     if (mode !== this.state.timeline.mode) this.clearMapEvolution();
     this.setTimeline({ open: true, mode, status: 'loading', notice: undefined });
@@ -1234,11 +1235,11 @@ export class AtlasStore {
     if (state.center !== view) { this.set({ center: view }); this.writeHash(); }
   }
   openJournal(view: 'conversations', options: { id?: string; messageId?: string; path?: string } = {}): void {
-    this.set(state => ({ center: 'map', journal: { ...state.journal, open: [...new Set([...state.journal.open, view])], conversationId: options.id, messageId: options.messageId, path: options.path, reveal: (state.journal.reveal ?? 0) + 1 } }));
+    this.set(state => ({ journal: { ...state.journal, open: [...new Set([...state.journal.open, view])], conversationId: options.id, messageId: options.messageId, path: options.path, reveal: (state.journal.reveal ?? 0) + 1 } }));
     this.writeHash();
   }
   showAgents(): void {
-    this.set(state => ({ center: 'map', journal: { ...state.journal, open: [...new Set([...state.journal.open, 'conversations' as const])], reveal: (state.journal.reveal ?? 0) + 1 } })); this.writeHash();
+    this.set(state => ({ journal: { ...state.journal, open: [...new Set([...state.journal.open, 'conversations' as const])], reveal: (state.journal.reveal ?? 0) + 1 } })); this.writeHash();
   }
   expandAgents(expanded: boolean): void { this.set(state => ({ journal: { ...state.journal, expanded } })); }
   closeJournal(view: 'conversations'): void {
