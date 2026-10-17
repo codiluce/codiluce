@@ -1,0 +1,200 @@
+{
+  "schema": 1,
+  "kind": "initial-scope-closure-with-documented-limitations",
+  "closedOn": "2026-10-17",
+  "milestoneClosed": true,
+  "fullOriginalRoadmapComplete": false,
+  "evidenceSummaryOnly": true,
+  "implementationFrozenAt": "0dc32ef0ab8b55ff6d70beddd39ba74b548751d5",
+  "validatedSourceRevision": "4cc1210be4ea9464f529374d0d0efed2d6b7fde0",
+  "sourceRuntimeSha256": "637671ee80a1035a671b178095646c91ba246e1bd571eec0b6d8d84f096c3050",
+  "actualInstalledRuntimeSha256": "a2694d3247e6718f98a2380c60d4073ac47a60842b77746683d55be2a955f130",
+  "supportedSubsets": "Existing reviewed profiles in docs/compatibility-catalog.json; no new syntax/version/runtime guarantees.",
+  "acceptance": "User-approved closure of initial multilingual compatibility subsets; further optimization stopped and remaining hardening explicitly deferred.",
+  "qualification": {
+    "existingSourceCorrectnessPassed": true,
+    "engineUiTests": 1876,
+    "toolingTests": 254,
+    "existingInstalledPackagePassed": true,
+    "fullInstalledHistoryCorrectnessPassed": true,
+    "revisions": 195,
+    "repositories": 6,
+    "workers": 12,
+    "independentCompleteColumnLedgers": 42,
+    "publicViewNodes": 1484294,
+    "performanceQualified": false,
+    "totalMemoryBudgetQualified": false,
+    "nativeWindowsMacOSQualified": false
+  },
+  "interruptedPerformanceRun": {
+    "plannedSamples": 36,
+    "completedSamples": 19,
+    "interruptedSamples": 1,
+    "notStartedSamples": 16,
+    "completedSevenTableLedgers": 133,
+    "interruptedUnit": "firefly-iii-current-0",
+    "completedRowsUnchanged": true,
+    "originalReceiptSha256": "c645641344b433292b3f7cb4dbf49f8cb92ac468cc6cd055165479bee23b38ac",
+    "operatorMarkedReceiptSha256": "32134fab5e611623f902d6aa72716cedce09db0726977d84044aafbdd0599e60",
+    "complete": false,
+    "passed": false,
+    "flask": {
+      "samples": [
+        {
+          "id": "flask",
+          "label": "baseline",
+          "repetition": 0,
+          "status": "complete",
+          "milliseconds": 33359.967839000004,
+          "treePeakKiB": 1161412,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "id": "flask",
+          "label": "current",
+          "repetition": 0,
+          "status": "complete",
+          "milliseconds": 38350.199399000005,
+          "treePeakKiB": 1161200,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "id": "flask",
+          "label": "current",
+          "repetition": 1,
+          "status": "complete",
+          "milliseconds": 37927.682252,
+          "treePeakKiB": 1185164,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "id": "flask",
+          "label": "baseline",
+          "repetition": 1,
+          "status": "complete",
+          "milliseconds": 32649.149556000004,
+          "treePeakKiB": 1134744,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "id": "flask",
+          "label": "baseline",
+          "repetition": 2,
+          "status": "complete",
+          "milliseconds": 32945.321371,
+          "treePeakKiB": 1130080,
+          "exitCode": 0,
+          "signal": null
+        },
+        {
+          "id": "flask",
+          "label": "current",
+          "repetition": 2,
+          "status": "complete",
+          "milliseconds": 37329.053556,
+          "treePeakKiB": 1148096,
+          "exitCode": 0,
+          "signal": null
+        }
+      ],
+      "medians": {
+        "baseline": {
+          "milliseconds": 32945.321371,
+          "treePeakKiB": 1134744
+        },
+        "current": {
+          "milliseconds": 37927.682252,
+          "treePeakKiB": 1161200
+        }
+      },
+      "slowdownPercent": 15.12312120101431,
+      "unchangedAllowedRegressionPercent": 10,
+      "guardrailMet": false,
+      "sampleCount": 6
+    }
+  },
+  "shutdown": {
+    "allOwnedBenchmarksAndControllersGone": true,
+    "automaticCommitControllersStopped": true,
+    "completedObservationsAndFailuresPreserved": true,
+    "arrayCodecPrototypeHeldUnexecuted": true,
+    "perLanguageLifetimeDraftHeldUnexecuted": true,
+    "furtherFullValidationCyclesScheduled": false
+  },
+  "privateEvidence": [
+    {
+      "file": ".codiluce/validation-codec-decoder-own-key-admission/source-qualification.json",
+      "sha256": "455311b536322790ad133d9603bf3dc2254f586402818f219228b5fe40654494",
+      "availability": "Retained locally under ignored .codiluce; not included in a clean checkout."
+    },
+    {
+      "file": ".codiluce/validation-codec-own-key-release/installed-release-qualification.json",
+      "sha256": "eb55af6d8ed4519a5bbaefb2fb060923d6898f5de35474467d6a8fc0b1d2dcbe",
+      "availability": "Retained locally under ignored .codiluce; not included in a clean checkout."
+    },
+    {
+      "file": ".codiluce/validation-codec-own-key-history/installed-history-qualification.json",
+      "sha256": "66b333103aa192ff9eaf6055f84f946d53ffd3f842c2396700935c957348e278",
+      "availability": "Retained locally under ignored .codiluce; not included in a clean checkout."
+    },
+    {
+      "file": ".codiluce/validation-multilingual-milestone-closure/interruption.json",
+      "sha256": "5bd373ee801b4ba1d470422692c91df70a318b09abaf4d49a8aeb3dcb8fab381",
+      "availability": "Retained locally under ignored .codiluce; not included in a clean checkout."
+    },
+    {
+      "file": ".codiluce/validation-multilingual-milestone-closure/process-stop.json",
+      "sha256": "0758f415d2e0870cfdbb31c79d1eaa56bb7482d017ed75a81edf787d352bcc5b",
+      "availability": "Retained locally under ignored .codiluce; not included in a clean checkout."
+    }
+  ],
+  "followUps": [
+    {
+      "id": "F1",
+      "scope": "Production history time/RSS regression",
+      "inputs": [
+        ".codiluce/validation-codec-own-key-history-performance/preparation.json",
+        ".codiluce/validation-codec-own-key-history-performance/controller.json",
+        ".codiluce/validation-codec-own-key-history-performance/corpus/receipt.json"
+      ],
+      "exit": "Only separately approved changed-runtime work; preserve original samples, unchanged 1.1 median guard, full graphs and column ledgers; new output directory."
+    },
+    {
+      "id": "F2",
+      "scope": "Remaining parent/compiler/semantic allocation and total memory budgets",
+      "inputs": [
+        ".codiluce/validation-native-phase-retirement/final-boundary-reviewed-draft-inputs.json",
+        ".codiluce/validation-native-phase-retirement/operator-hold.json",
+        ".codiluce/validation-codec-array-own-key-admission/operator-hold.json"
+      ],
+      "exit": "Separate approved scope, red/green reachability and graph proofs, actual process-tree measurements; no claim of a total RSS cap from byte/cardinality limits."
+    },
+    {
+      "id": "F3",
+      "scope": "Broader original syntax/version/framework accuracy",
+      "inputs": [
+        "docs/compatibility-catalog.json",
+        "docs/analysis-capabilities.html"
+      ],
+      "exit": "Expand explicit profiles through unchanged original-source precision/recall and negative cases; retain unsupported/ambiguous diagnostics."
+    },
+    {
+      "id": "F4",
+      "scope": "Native Windows/macOS qualification",
+      "inputs": [
+        ".github/workflows/native-compatibility.yml",
+        "docs/native-compatibility-release.html"
+      ],
+      "exit": "Separately authorized CI execution; all real host/Node jobs and complete installed evidence pass. No push or dispatch performed for closure."
+    }
+  ],
+  "frozenScopeCatalog": {
+    "file": "docs/compatibility-catalog.json",
+    "sha256": "5fffa8523832189abb128a240eae06c74eb893bdcf54ea9373e327898a1204aa",
+    "revision": "0dc32ef0ab8b55ff6d70beddd39ba74b548751d5"
+  }
+}
