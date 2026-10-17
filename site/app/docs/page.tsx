@@ -40,7 +40,7 @@ export default function GettingStarted() {
         <li><strong>History:</strong> the last 50 commits, the last 6 months, everything or nothing, each with the time it takes. It is indexed in the background while you use the map.</li>
         <li><strong>Language models (optional):</strong> an Anthropic or OpenAI key, typed hidden and checked with the provider, for asking questions in the map and describing the code. Keys stay in <code>~/.config/codiluce/credentials</code>, readable only by you.</li>
         <li><strong>Describing the code:</strong> with an OpenAI key, the cost is estimated first and capped; nothing is spent without a yes.</li>
-        <li><strong>Your agent:</strong> Claude Code, Codex and Cursor are found and connected to Codiluce&apos;s MCP server, so they can <Link href="/docs/explanations/">explain the code</Link> on the map.</li>
+        <li><strong>Your agents:</strong> installed coding harnesses (Claude Code, Codex, Cursor, OpenCode and others) are found and connected to Codiluce&apos;s MCP server, so they can <Link href="/docs/explanations/">explain the code</Link> on the map. Their hooks put them <Link href="/docs/agents/">on the map as characters</Link> while they work.</li>
       </ul>
       <p>
         Without a terminal (CI, scripts) or with <code>--yes</code>, nothing is asked and nothing is spent.
@@ -100,7 +100,7 @@ export default function GettingStarted() {
         <li><strong>Zoom</strong> with the wheel, a pinch or <kbd>+</kbd> / <kbd>−</kbd>; drag or use the arrow keys to pan; <kbd>F</kbd> fits the view.</li>
         <li><strong>Search</strong> with <kbd>/</kbd>: files, symbols, routes, endpoints, controllers, tables. Choose a result and the map flies there.</li>
         <li><strong>Select</strong> anything to see its relationships drawn on the map and its facts in the inspector. <strong>Why?</strong> on a relationship opens its evidence.</li>
-        <li>Open <strong>Flows</strong>, <strong>History</strong>, <strong>Explain</strong> or <strong>Coverage</strong> from the header.</li>
+        <li>Open <strong>Flows</strong>, <strong>History</strong>, <strong>Explain</strong>, <strong>Agents</strong> or <strong>Coverage</strong> from the header, and switch between 3D and the 2D plan with the <strong>3D</strong> button beside the map.</li>
       </ul>
       <p>The next page explains the map in detail.</p>
 

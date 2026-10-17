@@ -11,8 +11,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { GAP_GHOSTS, GAP_MILESTONES, agentOutput, gapArea, gapLine, gapScale, humanComprehension, withCodiluce } from '../lib/gap.ts';
-import { FRAMEWORKS, LANGUAGES, PUBLISHED, type Stack } from '../lib/stacks.ts';
-import { VERSION } from '../lib/site.ts';
+import { FRAMEWORKS, LANGUAGES, type Stack } from '../lib/stacks.ts';
 
 const site = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const out = path.resolve(site, '../docs/readme');
@@ -36,13 +35,6 @@ function logo(stack: Stack, x: number, y: number, size: number, theme: Theme): s
   return `<svg x="${x}" y="${y}" width="${size}" height="${size}" viewBox="${viewBox}">${body}</svg>`;
 }
 
-function status(published: boolean, x: number, y: number, theme: Theme): string {
-  const c = THEMES[theme];
-  return published
-    ? `<circle cx="${x}" cy="${y}" r="3.5" fill="${c.accent}"/>`
-    : `<circle cx="${x}" cy="${y}" r="3" fill="none" stroke="${c.muted}" stroke-width="1.3"/>`;
-}
-
 function stacksWall(theme: Theme): string {
   const c = THEMES[theme];
   const width = 880, gap = 10;
@@ -56,7 +48,6 @@ function stacksWall(theme: Theme): string {
     parts.push(`<rect x="${x + 0.5}" y="${y + 0.5}" width="${tileW - 1}" height="${tileH - 1}" rx="10" fill="${c.tile}" stroke="${c.border}"/>`);
     parts.push(logo(stack, x + (tileW - 34) / 2, y + 16, 34, theme));
     parts.push(`<text x="${x + tileW / 2}" y="${y + 76}" fill="${c.text}" font-family="${FONT}" font-size="13.5" font-weight="600" text-anchor="middle">${escape(stack.name)}</text>`);
-    parts.push(status(PUBLISHED.has(stack.id), x + tileW - 12, y + 12, theme));
   });
 
   const top = 24 + 2 * tileH + gap + 34;
@@ -67,16 +58,9 @@ function stacksWall(theme: Theme): string {
     parts.push(`<rect x="${x + 0.5}" y="${y + 0.5}" width="${langW - 1}" height="${langH - 1}" rx="10" fill="${c.tile}" stroke="${c.border}"/>`);
     parts.push(logo(stack, x + (langW - 24) / 2, y + 12, 24, theme));
     parts.push(`<text x="${x + langW / 2}" y="${y + 56}" fill="${c.text}" font-family="${FONT}" font-size="12" font-weight="600" text-anchor="middle">${escape(stack.name)}</text>`);
-    parts.push(status(PUBLISHED.has(stack.id), x + langW - 10, y + 10, theme));
   });
 
-  const legend = top + 12 + langH + 30;
-  parts.push(status(true, 4, legend - 4, theme));
-  parts.push(`<text x="14" y="${legend}" fill="${c.muted}" font-family="${FONT}" font-size="12">In the npm release, v${VERSION}</text>`);
-  parts.push(status(false, 196, legend - 4, theme));
-  parts.push(`<text x="206" y="${legend}" fill="${c.muted}" font-family="${FONT}" font-size="12">On main: run it from source, ships in the next release</text>`);
-
-  const height = legend + 8;
+  const height = top + 12 + langH + 2;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Frameworks and languages Codiluce analyzes"><title>Frameworks and languages Codiluce analyzes</title>${parts.join('')}</svg>\n`;
 }
 

@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CodeBlock } from '../../../components/CodeBlock';
 import { DocsPager } from '../../../components/DocsNav';
-import { StackStatus } from '../../../components/Stacks';
-import { INSTALL, ISSUES_URL, VERSION } from '../../../lib/site';
-import { DETECTED, PUBLISHED } from '../../../lib/stacks';
+import { ISSUES_URL } from '../../../lib/site';
+import { DETECTED } from '../../../lib/stacks';
 
 export const metadata: Metadata = {
   title: 'Languages & frameworks',
@@ -112,14 +110,10 @@ export default function Stacks() {
         stack: the frameworks on this page get routes, handlers and calls, each linked to the source that proves it.
       </p>
 
-      <div className="callout">
-        <p>
-          <strong>In the release.</strong> Every stack on this page ships in the npm release (v{VERSION}), marked
-          {' '}<StackStatus published /> below. Support deepens with every release: the table says how far each one goes today,
-          and what Codiluce cannot prove yet shows up in the map as a finding, never as a guess.
-        </p>
-      </div>
-      <CodeBlock prompt code={INSTALL.source.join('\n')} />
+      <p>
+        Support deepens with every release: the table says how far each one goes today, and what Codiluce cannot prove yet
+        shows up in the map as a finding, never as a guess.
+      </p>
 
       <h2 id="depth" className="anchor">How deep it goes</h2>
       <div className="table-wrap">
@@ -139,7 +133,6 @@ export default function Stacks() {
           <h2 id={`eco-${ecosystem.id}`} className="anchor eco-title">
             <span className="eco-logos" aria-hidden="true">{ecosystem.languages.map(id => <Logo key={id} id={id} size={26} />)}</span>
             {ecosystem.name}
-            <StackStatus published={ecosystem.languages.some(id => PUBLISHED.has(id))} />
           </h2>
           <p>{ecosystem.summary}</p>
           <div className="fw-grid">
@@ -151,7 +144,6 @@ export default function Stacks() {
                     <h3>{framework.name}</h3>
                     {framework.versions ? <span className="fw-versions">{framework.versions}</span> : null}
                   </div>
-                  <StackStatus published={PUBLISHED.has(framework.id)} />
                 </header>
                 <p>{framework.reads}</p>
                 {framework.gaps ? <p className="fw-gaps"><span>Gaps</span>{framework.gaps}</p> : null}

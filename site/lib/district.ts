@@ -1,6 +1,7 @@
-// The small repository the landing page's map demo draws: two applications, each file a building of its kind.
+// The small repository the landing page's map demo draws: two applications, each file a block marked with its kind,
+// as the map draws them by default (building shapes are a setting).
 // Positions are in map units, laid out by hand like the map's folder layout, with streets between the lots.
-import { DUSK, DUSK_FILE, DUSK_PLATE, drawShape, ISO_X, ISO_Y, seedOf, shapeHeight, type Archetype, type Hsl, type ShapeView } from './shapes';
+import { DUSK, DUSK_FILE, DUSK_PLATE, drawBlock, ISO_X, ISO_Y, seedOf, shapeHeight, type Archetype, type Hsl, type ShapeView } from './shapes';
 
 export interface Lot { id: string; kind: Archetype; name: string; path: string; x: number; y: number; w: number; d: number; loc: number }
 export interface Plate { x: number; y: number; w: number; d: number; label: string }
@@ -40,8 +41,10 @@ export const LOT = Object.fromEntries(LOTS.map(item => [item.id, item])) as Reco
 export const CONTROLLERS: Rect = { x: 0.6, y: 7.6, w: 22.8, d: 9.8 };
 
 /** Lots are drawn this far inside their place, so streets run between them as on the map. */
-const STREET = 0.5, PLATE_H = 0.9;
-export const lotHeight = (item: Lot) => shapeHeight(item.kind, Math.min(item.w, item.d) - STREET * 2, item.loc);
+const STREET = 0.5;
+export const PLATE_H = 0.9;
+/** Blocks are lower than the buildings they replace (the map's shapes are off by default). */
+export const lotHeight = (item: Lot) => shapeHeight(item.kind, Math.min(item.w, item.d) - STREET * 2, item.loc) * 0.55;
 const ORDER = [...LOTS].sort((a, b) => (a.x + a.y + a.w / 2 + a.d / 2) - (b.x + b.y + b.w / 2 + b.d / 2));
 
 export interface Projection { s: number; ox: number; oy: number }
@@ -59,8 +62,8 @@ export const hsl = (c: Hsl, a = 1) => `hsla(${c.h} ${c.s}% ${c.l}% / ${a})`;
 /** How the scene wants each lot drawn. `grow` scales the height (a file being added rises, a removed one sinks). */
 export interface LotStyle { hidden?: boolean; color?: Hsl; hot?: number; grow?: number }
 
-function plate(ctx: CanvasRenderingContext2D, p: Projection, r: Plate) {
-  const at = (x: number, y: number, z: number) => project(p, x, y, z);
+function plate(ctx: CanvasRenderingContext2D, p: Projection, r: Plate, rise: number) {
+  const at = (x: number, y: number, z: number) => project(p, x, y, z * rise);
   const quad = (pts: [number, number][], fill: string) => { ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); };
   const tone = (f: number) => hsl({ ...DUSK_PLATE, l: DUSK_PLATE.l * f });
   quad([at(r.x, r.y + r.d, 0), at(r.x + r.w, r.y + r.d, 0), at(r.x + r.w, r.y + r.d, PLATE_H), at(r.x, r.y + r.d, PLATE_H)], tone(DUSK.ws[0]));
@@ -69,22 +72,61 @@ function plate(ctx: CanvasRenderingContext2D, p: Projection, r: Plate) {
   ctx.strokeStyle = DUSK.outline; ctx.lineWidth = 1; ctx.stroke();
 }
 
-/** The plates and every lot, back to front. */
-export function drawDistrict(ctx: CanvasRenderingContext2D, p: Projection, t: number, style: (item: Lot) => LotStyle) {
-  for (const r of PLATES) plate(ctx, p, r);
+/** The plates and every lot, back to front; `rise` scales every height (it sinks to the ground on the way to the plan). */
+export function drawDistrict(ctx: CanvasRenderingContext2D, p: Projection, t: number, style: (item: Lot) => LotStyle, rise = 1) {
+  for (const r of PLATES) plate(ctx, p, r, rise);
   const v: ShapeView = { ctx, s: p.s, ox: p.ox, oy: p.oy, T: DUSK };
   for (const item of ORDER) {
     const look = style(item);
     if (look.hidden) continue;
     const grow = look.grow ?? 1;
     if (grow <= 0.02) continue;
-    drawShape(v, item.kind, {
-      x: item.x + STREET, y: item.y + STREET, z: PLATE_H, w: item.w - STREET * 2, d: item.d - STREET * 2,
-      H: lotHeight(item) * grow, c: look.color ?? DUSK_FILE, t, hot: look.hot ?? 0, seed: seedOf(item.id),
+    drawBlock(v, item.kind, {
+      x: item.x + STREET, y: item.y + STREET, z: PLATE_H * rise, w: item.w - STREET * 2, d: item.d - STREET * 2,
+      H: lotHeight(item) * grow * rise, c: look.color ?? DUSK_FILE, t, hot: look.hot ?? 0, seed: seedOf(item.id),
     });
   }
   ctx.font = '500 10.5px "Geist Mono Variable", "Geist Mono", ui-monospace, monospace'; ctx.fillStyle = '#6b6b72';
-  for (const r of PLATES) { const [lx, ly] = project(p, r.x, r.y + r.d, PLATE_H); ctx.fillText(r.label, lx + 6, ly + 15); }
+  if (rise > 0.5) for (const r of PLATES) { const [lx, ly] = project(p, r.x, r.y + r.d, PLATE_H); ctx.fillText(r.label, lx + 6, ly + 15); }
+}
+
+/** The 2D plan: the district seen from above, as the map's plan projection draws it. */
+export interface Plan { s: number; ox: number; oy: number }
+export function planFit(w: number, h: number, pad = 28): Plan {
+  const width = 62, depth = 33, s = Math.min((w - pad * 2) / width, (h - pad * 2) / depth);
+  return { s, ox: (w - width * s) / 2, oy: (h - depth * s) / 2 };
+}
+/**
+ * The canvas transform (as for `setTransform`) that lays the isometric ground (z = 0) onto the plan. Mixed with the
+ * identity while the heights sink, it turns the 3D map into the 2D plan in place.
+ */
+export function isoToPlan(p: Projection, q: Plan): [number, number, number, number, number, number] {
+  const det = 2 * p.s * p.s * ISO_X * ISO_Y, k = (q.s * p.s) / det;
+  const a = k * ISO_Y, c = k * ISO_X, b = -k * ISO_Y, d = k * ISO_X;
+  return [a, b, c, d, q.ox - (a * p.ox + c * p.oy), q.oy - (b * p.ox + d * p.oy)];
+}
+/** The district from above: plates, then each lot as a flat tile with its name where it fits (low on the `occupied` one, under the agent standing there). */
+export function drawPlan(ctx: CanvasRenderingContext2D, q: Plan, alpha: number, names: number, occupied?: string) {
+  ctx.save(); ctx.globalAlpha = alpha;
+  for (const r of PLATES) {
+    ctx.fillStyle = hsl(DUSK_PLATE); ctx.strokeStyle = DUSK.outline; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(q.ox + r.x * q.s, q.oy + r.y * q.s, r.w * q.s, r.d * q.s, 4); ctx.fill(); ctx.stroke();
+  }
+  for (const item of LOTS) {
+    const x = q.ox + (item.x + STREET) * q.s, y = q.oy + (item.y + STREET) * q.s, w = (item.w - STREET * 2) * q.s, d = (item.d - STREET * 2) * q.s;
+    ctx.fillStyle = hsl({ ...DUSK_FILE, l: DUSK_FILE.l - 4 }); ctx.strokeStyle = 'rgba(245,245,243,0.2)';
+    ctx.beginPath(); ctx.roundRect(x, y, w, d, 3); ctx.fill(); ctx.stroke();
+  }
+  ctx.font = '500 10.5px "Geist Mono Variable", "Geist Mono", ui-monospace, monospace'; ctx.fillStyle = '#6b6b72';
+  for (const r of PLATES) ctx.fillText(r.label, q.ox + r.x * q.s + 6, q.oy + (r.y + r.d) * q.s + 15);
+  ctx.restore();
+  if (names <= 0) return;
+  for (const item of LOTS) {
+    const w = (item.w - STREET * 2) * q.s;
+    if (w < item.name.length * 5.6) continue;
+    const y = item.id === occupied ? (item.y + item.d - STREET) * q.s - 9 : (item.y + item.d / 2) * q.s;
+    label(ctx, item.name, q.ox + (item.x + item.w / 2) * q.s, q.oy + y, names * alpha);
+  }
 }
 
 /** A lot's footprint on its plate, as a closed path (for outlines). */

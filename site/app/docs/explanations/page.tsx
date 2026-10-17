@@ -110,6 +110,22 @@ export default function ExplanationsDocs() {
         <li>Explanations about a commit or a pull request are marked on the timeline. Those about a flow show on the flow, and those about a file show in its inspector.</li>
       </ul>
 
+      <h2 id="tours" className="anchor">Tours <NextTag feature="tours" /></h2>
+      <p>
+        When an answer walks through several places or a process, your agent can tell it as a <strong>tour</strong>: a few
+        scenes, each with a title, a short text and a picture of the code it is about. Opening the explanation plays the tour
+        in the middle of the screen while the full text stays in the column.
+      </p>
+      <ul>
+        <li><strong>Map scenes</strong> frame where the code lives on the map itself, with short captions on its blocks.</li>
+        <li><strong>Diagram scenes</strong> lift the scene&apos;s files and symbols off their blocks into boxes, joined by the arrows the agent declared, each with a label. When the index proves a relationship between two boxes, the arrow carries it as evidence (<code>calls ×3</code>).</li>
+        <li><strong>Flow scenes</strong> play an existing flow with the scene&apos;s links emphasized.</li>
+      </ul>
+      <p>
+        Step through with the arrows at the bottom or the ← and → keys; point at a box to light its block, click it to open
+        its code. A box whose code changed since the tour was written is dashed.
+      </p>
+
       <h2 id="stale" className="anchor">When the code changes</h2>
       <p>
         Each explanation is pinned to the commit it was written against, with a fingerprint of everything it links. When a

@@ -50,22 +50,24 @@ export function AgentTerminal() {
 }
 
 const PRODUCTS = [
-  { name: 'Claude Code', flag: 'claude-code', note: <>Merge the printed hooks into <code>.claude/settings.local.json</code>.</> },
-  { name: 'Codex', flag: 'codex', note: <>Merge them into <code>.codex/hooks.json</code>, then trust them with <code>/hooks</code>.</> },
+  { name: 'Claude Code', flag: 'claude-code', note: <>Writes MCP to <code>.mcp.json</code> and hooks to <code>.claude/settings.local.json</code>.</> },
+  { name: 'Codex', flag: 'codex', note: <>Writes <code>.codex/config.toml</code> and <code>.codex/hooks.json</code>; trust the hooks with <code>/hooks</code>.</> },
+  { name: 'Cursor', flag: 'cursor', note: <>Writes <code>.cursor/mcp.json</code> and <code>.cursor/hooks.json</code>.</> },
+  { name: 'OpenCode', flag: 'opencode', note: <>Writes <code>opencode.json</code> and an observer plugin.</> },
 ];
 
-/** The map's Agent connections window: one hook configuration per product, and proof that its events arrive. */
+/** The map's Agent connections window: one setup per harness, and proof that its events arrive. */
 export function HookStatus() {
   const [beat, setBeat] = useState(0);
   const ref = useTicker(1000, () => setBeat(value => value + 1));
   const product = PRODUCTS[Math.floor(beat / 5) % PRODUCTS.length]!, ago = beat % 5 % 3;
   return (
-    <div ref={ref} className="hooks" role="img" aria-label="The map's Agent connections window: hook delivery confirmed for Claude Code and for Codex, and the command that prints each one's hook configuration.">
+    <div ref={ref} className="hooks" role="img" aria-label="The map's Agent connections window: hook delivery confirmed for Claude Code, Codex, Cursor and OpenCode, and the command that sets up each one.">
       <div className="hooks-head" aria-hidden="true"><strong>Agent connections</strong><span>×</span></div>
       <div className="hooks-body" aria-hidden="true">
         <div className="hooks-seg">{PRODUCTS.slice().reverse().map(item => <span key={item.flag} className={item === product ? 'is-on' : ''}>{item.name}</span>)}</div>
         <p className="hooks-state"><span className={`hooks-dot${ago === 0 ? ' is-ping' : ''}`} key={beat} /><strong>Hook delivery confirmed</strong><em>last hook {ago} s ago</em></p>
-        <pre className="hooks-code"><span className="prompt">$ </span>npx codiluce activity hooks \{'\n'}    --agent {product.flag}</pre>
+        <pre className="hooks-code"><span className="prompt">$ </span>npx codiluce harness setup \{'\n'}    --agent {product.flag} --apply</pre>
         <p className="hooks-note">{product.note}</p>
       </div>
     </div>

@@ -1,18 +1,20 @@
 'use client';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { CONTROLLERS, DUSK, DUSK_FILE, LOT, drawDistrict, fit, footprint, hsl, label, pill, project, roof, type Lot, type LotStyle, type Projection, type Rect } from '../lib/district';
+import { CONTROLLERS, DUSK, DUSK_FILE, LOT, PLATE_H, drawDistrict, drawPlan, fit, footprint, hsl, isoToPlan, label, lotHeight, planFit, project, roof, type Lot, type LotStyle, type Projection, type Rect } from '../lib/district';
+import { drawCharacter, drawShadow, sparkle, type Pose, type Who } from '../lib/pixel-crew';
 import { EclipseMark } from './EclipseMark';
 import { NextTag } from './NextTag';
 
 /**
  * The landing page's map demo: Codiluce's window, drawn with the map's own building shapes, playing its biggest
- * features one after another (agents at work, an explanation, a flow, the history). Everything here is a scripted
- * imitation of the app on a made-up repository; the timings are compressed so each scene fits in a few seconds.
+ * features one after another (agents at work, the 2D plan, an explanation, a flow, the history). Everything here is a
+ * scripted imitation of the app on a made-up repository; the timings are compressed so each scene fits in a few seconds.
  */
-export type SceneId = 'agents' | 'explain' | 'flows' | 'history';
+export type SceneId = 'agents' | 'plan' | 'explain' | 'flows' | 'history';
 interface Scene { id: SceneId; tab: string; caption: string; ms: number; still: number; tool: string }
 export const SCENES: Scene[] = [
-  { id: 'agents', tab: 'Agents', tool: 'Agents', caption: 'Each Claude Code or Codex session lights the code it reads, edits and searches, as it happens.', ms: 9800, still: 7200 },
+  { id: 'agents', tab: 'Agents', tool: 'Agents', caption: 'Each Claude Code or Codex session is a character on the map: it hops to the files it reads and edits, and splits to read several at once.', ms: 10600, still: 3900 },
+  { id: 'plan', tab: '3D or 2D', tool: '', caption: 'Turn the buildings into a flat 2D plan and back. The same place stays in the middle, and the agents walk on both.', ms: 9000, still: 4200 },
   { id: 'explain', tab: 'Explain', tool: 'Explain', caption: 'Your agent explains the code through Codiluce. Point at a link in its answer and that code lights up.', ms: 12400, still: 7500 },
   { id: 'flows', tab: 'Flows', tool: 'Flows', caption: 'Follow a click through the request to the handler and the table it reads, link by link.', ms: 8400, still: 6000 },
   { id: 'history', tab: 'History', tool: 'History', caption: 'Every commit is a snapshot: watch what each one added, changed and removed, in place.', ms: 10200, still: 3900 },
@@ -28,25 +30,34 @@ const within = (t: number, from: number, to: number, fade = 260) => clamp01(Math
 const DIM = { ...DUSK_FILE, l: 19 };
 const ACCENT = hsl(DUSK.accent);
 
-// Agents: two sessions working at once, as their hooks report them.
-interface Session { key: string; product: string; title: string; id: string; color: string }
-const CLAUDE: Session = { key: 'claude', product: 'Claude Code', title: 'Add password reset', id: '8f3a1c2e', color: 'hsl(265 80% 74%)' };
-const CODEX: Session = { key: 'codex', product: 'Codex', title: 'Fix the order import', id: '019a7d4b', color: 'hsl(186 72% 54%)' };
-interface AgentEvent { at: number; who: Session; verb: string; lot?: string; folder?: Rect; path?: string; query?: string }
+// Agents: two sessions working at once, each a character hopping between the files its hooks report.
+interface Session { key: Who; product: string; title: string; id: string; color: string; out: [number, number] }
+const CLAUDE: Session = { key: 'claude', product: 'Claude Code', title: 'Add password reset', id: '8f3a1c2e', color: 'hsl(265 80% 74%)', out: [12, 39] };
+const CODEX: Session = { key: 'codex', product: 'Codex', title: 'Fix the order import', id: '019a7d4b', color: 'hsl(186 72% 54%)', out: [51, 33] };
+/** Where a character goes: a lot, the controllers' folder it searches, or beside the map (`out`) for what is about no file. */
+type Place = string;
+interface AgentEvent { at: number; who: Session; verb: string; pose: Pose; places: Place[]; until?: number; path?: string; query?: string }
 const EVENTS: AgentEvent[] = [
-  { at: 300, who: CLAUDE, verb: 'Search', folder: CONTROLLERS, path: 'app/Http/Controllers/', query: 'reset' },
-  { at: 1200, who: CODEX, verb: 'Read file', lot: 'import' },
-  { at: 2000, who: CLAUDE, verb: 'Read file', lot: 'pw-ctrl' },
-  { at: 2800, who: CODEX, verb: 'Read file', lot: 'console' },
-  { at: 3500, who: CLAUDE, verb: 'Read file', lot: 'reset-svc' },
-  { at: 4400, who: CLAUDE, verb: 'Edit file', lot: 'reset-svc' },
-  { at: 5200, who: CODEX, verb: 'Edit file', lot: 'import' },
-  { at: 6000, who: CLAUDE, verb: 'Edit file', lot: 'mail-job' },
-  { at: 6900, who: CLAUDE, verb: 'Edit file', lot: 'reset-form' },
-  { at: 7800, who: CODEX, verb: 'Run tests' },
+  { at: 0, who: CLAUDE, verb: 'Thinking', pose: 'think', places: ['out'] },
+  { at: 200, who: CODEX, verb: 'Thinking', pose: 'think', places: ['out'] },
+  { at: 700, who: CLAUDE, verb: 'Search', pose: 'search', places: ['controllers'], path: 'app/Http/Controllers/', query: 'reset' },
+  { at: 1300, who: CODEX, verb: 'Read file', pose: 'read', places: ['import'] },
+  { at: 2100, who: CLAUDE, verb: 'Read file', pose: 'read', places: ['pw-ctrl'] },
+  { at: 2800, who: CODEX, verb: 'Read file', pose: 'read', places: ['console'] },
+  // Three reads at once: the character splits, a copy to each file.
+  { at: 3500, who: CLAUDE, verb: 'Read 3 files', pose: 'read', places: ['reset-svc', 'mail-job', 'user'], until: 5000 },
+  { at: 4300, who: CODEX, verb: 'Edit file', pose: 'edit', places: ['import'] },
+  { at: 5600, who: CLAUDE, verb: 'Edit file', pose: 'edit', places: ['reset-svc'] },
+  { at: 6100, who: CODEX, verb: 'Run tests', pose: 'test', places: ['out'] },
+  { at: 7000, who: CLAUDE, verb: 'Edit file', pose: 'edit', places: ['reset-form'] },
+  { at: 8200, who: CLAUDE, verb: 'Writing the reply', pose: 'reply', places: ['out'] },
+  { at: 8500, who: CODEX, verb: 'Read file', pose: 'read', places: ['orders'] },
 ];
-/** Marks fade over 30 seconds in the app; here, faster. */
-const MARK_MS = 6500;
+const HOP = 560, BACK = 600;
+
+// 2D plan: the map sinks into a plan seen from above, stays a moment, and rises again.
+const TO_PLAN = [1100, 2500], TO_ISO = [6200, 7600];
+const planShare = (t: number) => ease((t - TO_PLAN[0]!) / (TO_PLAN[1]! - TO_PLAN[0]!)) * (1 - ease((t - TO_ISO[0]!) / (TO_ISO[1]! - TO_ISO[0]!)));
 
 // Explain: the agent's working card, then its answer.
 // The card lists each tool call as the app does (start_explanation itself is not a step).
@@ -102,6 +113,7 @@ function lotStyle(scene: SceneId, t: number, item: Lot): LotStyle {
     return touched ? { hot: 1 - (t - touched.at) / 1800 } : {};
   }
   if (death) return { hidden: true };
+  if (scene === 'plan') return {};
   if (scene === 'explain') {
     if (t < ANSWER_AT) return {};
     const shown = ease((t - ANSWER_AT) / 500);
@@ -123,33 +135,8 @@ function lotStyle(scene: SceneId, t: number, item: Lot): LotStyle {
 }
 
 function drawOverlay(ctx: CanvasRenderingContext2D, p: Projection, scene: SceneId, t: number) {
-  if (scene === 'agents') {
-    // The latest mark of each session on each lot (or folder), as the map keeps them.
-    const latest = new Map<string, AgentEvent>();
-    for (const event of EVENTS) if (event.at <= t && (event.lot || event.folder)) latest.set(`${event.lot ?? 'folder'}|${event.who.key}`, event);
-    const groups = new Map<string, AgentEvent[]>();
-    for (const event of latest.values()) { const key = event.lot ?? 'folder'; groups.set(key, [...(groups.get(key) ?? []), event]); }
-    for (const marks of groups.values()) {
-      marks.sort((a, b) => b.at - a.at);
-      const first = marks[0]!, age = t - first.at, alpha = Math.max(0.2, 1 - age / MARK_MS) * clamp01(age / 180);
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      footprint(ctx, p, first.folder ?? LOT[first.lot!]!, first.folder ? 0 : undefined);
-      ctx.setLineDash(first.folder ? [5, 4] : []);
-      ctx.strokeStyle = first.who.color; ctx.lineWidth = age < 1500 ? 2.4 + Math.sin(age / 150) : 2;
-      if (age < 1500) { ctx.shadowColor = first.who.color; ctx.shadowBlur = 12; }
-      ctx.stroke();
-      ctx.restore();
-      const item = first.lot ? LOT[first.lot]! : undefined;
-      let [x, y] = item ? roof(p, item) : project(p, CONTROLLERS.x + CONTROLLERS.w / 2, CONTROLLERS.y + CONTROLLERS.d / 2, 0.9);
-      if (item) { label(ctx, item.name, x, y - 6, Math.max(0.55, alpha)); y -= 26; } else y -= 4;
-      for (const mark of marks) {
-        const markAge = t - mark.at;
-        pill(ctx, mark.verb, x, y - (1 - ease(markAge / 220)) * 6, mark.who.color, Math.max(0.25, 1 - markAge / MARK_MS) * clamp01(markAge / 160));
-        y -= 21;
-      }
-    }
-  } else if (scene === 'explain' && t >= ANSWER_AT) {
+  if (scene === 'agents') drawAgents(ctx, p, t);
+  else if (scene === 'explain' && t >= ANSWER_AT) {
     const hover = HOVERS.find(h => t >= h.from && t <= h.to);
     for (const [link, id] of Object.entries(LINKS)) {
       const item = LOT[id]!, on = hover?.link === link, k = hover ? (on ? within(t, hover.from, hover.to) : 0) : ease((t - ANSWER_AT) / 500) * 0.7;
@@ -199,13 +186,89 @@ function drawOverlay(ctx: CanvasRenderingContext2D, p: Projection, scene: SceneI
   }
 }
 
+const lerp = (a: [number, number], b: [number, number], k: number): [number, number] => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+const characterSize = (p: Projection) => Math.max(18, Math.min(40, p.s * 2.8));
+/** Where a character stands at a place. */
+function spot(p: Projection, who: Session, place: Place): [number, number] {
+  if (place === 'out') return project(p, who.out[0], who.out[1], 0);
+  if (place === 'controllers') return project(p, CONTROLLERS.x + CONTROLLERS.w / 2, CONTROLLERS.y + CONTROLLERS.d / 2, PLATE_H);
+  return roof(p, LOT[place]!);
+}
+/** A hop from one spot to another along an arc: where it is, and how high in the air. */
+function hop(from: [number, number], to: [number, number], k: number): { at: [number, number]; air: number } {
+  const e = ease(k), [x, y] = lerp(from, to, e), air = Math.sin(clamp01(k) * Math.PI) * Math.min(60, Math.hypot(to[0] - from[0], to[1] - from[1]) * 0.3);
+  return { at: [x, y - air], air };
+}
+
+/** The agents as the app draws them: one character per session, its copies, and an outline on the lot each stands on. */
+function drawAgents(ctx: CanvasRenderingContext2D, p: Projection, t: number) {
+  const size = characterSize(p), bodies: { y: number; paint: () => void }[] = [];
+  const outline = (place: Place, color: string, alpha: number) => {
+    if (place === 'out') return;
+    ctx.save(); ctx.globalAlpha = alpha;
+    footprint(ctx, p, place === 'controllers' ? CONTROLLERS : LOT[place]!, place === 'controllers' ? 0 : undefined);
+    ctx.setLineDash(place === 'controllers' ? [5, 4] : []); ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.shadowColor = color; ctx.shadowBlur = 8; ctx.stroke();
+    ctx.restore();
+  };
+  const name = (place: Place, x: number, y: number, since: number) => {
+    if (place === 'out' || place === 'controllers' || since > 2200) return;
+    label(ctx, LOT[place]!.name, x, y + 13, Math.min(clamp01(since / 200), clamp01((2200 - since) / 400)));
+  };
+  for (const who of [CLAUDE, CODEX]) {
+    const mine = EVENTS.filter(event => event.who === who && event.at <= t);
+    const now = mine.at(-1), before = mine.at(-2);
+    if (!now) continue;
+    const to = spot(p, who, now.places[0]!), from = before ? spot(p, who, before.places[0]!) : to;
+    const k = before && before.places[0] !== now.places[0] ? clamp01((t - now.at) / HOP) : 1;
+    const { at, air } = hop(from, to, k), facing: 1 | -1 = to[0] >= from[0] ? 1 : -1, since = t - now.at - HOP;
+    if (k >= 1) { outline(now.places[0]!, who.color, 0.75); name(now.places[0]!, to[0], to[1], since); }
+    bodies.push({ y: at[1], paint: () => { drawShadow(ctx, at[0], at[1] + air, size, air); drawCharacter(ctx, at[0], at[1], { who: who.key, color: who.color, size, pose: k < 1 ? 'idle' : now.pose, facing, time: t + (who === CODEX ? 700 : 0), alpha: clamp01((t - mine[0]!.at) / 300), walking: k < 1, seed: who === CODEX ? 5 : 1, poseAge: t - now.at }); } });
+    // Copies: one to each other file read at once, back into the character when the reads complete.
+    for (const event of mine.filter(item => item.places.length > 1 && item.until !== undefined && t < item.until + BACK)) {
+      const origin = spot(p, who, mine[mine.indexOf(event) - 1]?.places[0] ?? event.places[0]!), home = spot(p, who, event.places[0]!);
+      event.places.slice(1).forEach((place, i) => {
+        const there = spot(p, who, place), out = clamp01((t - event.at - 80) / HOP), back = clamp01((t - event.until!) / BACK);
+        const { at: cat, air: cair } = back > 0 ? hop(there, home, back) : hop(origin, there, out);
+        if (out >= 1 && back <= 0) { outline(place, who.color, 0.55); name(place, there[0], there[1], t - event.at - 80 - HOP); }
+        bodies.push({ y: cat[1], paint: () => {
+          drawShadow(ctx, cat[0], cat[1] + cair, size, cair, 0.9);
+          drawCharacter(ctx, cat[0], cat[1], { who: who.key, color: who.color, size, pose: back > 0 || out < 1 ? 'idle' : 'read', facing: (back > 0 ? home[0] - there[0] : there[0] - origin[0]) >= 0 ? 1 : -1, time: t + i * 300, alpha: 0.92 * (1 - back * 0.6), walking: out < 1 || back > 0, seed: 11 + i, poseAge: t - event.at });
+          sparkle(ctx, cat[0], cat[1], t - event.at - 80, who.color); sparkle(ctx, cat[0], cat[1], t - event.until!, who.color);
+        } });
+      });
+    }
+  }
+  for (const body of bodies.sort((a, b) => a.y - b.y)) body.paint();
+}
+
+/** The map sinking into its 2D plan and rising again, with an agent at work on it all along. */
+function drawPlanScene(ctx: CanvasRenderingContext2D, p: Projection, w: number, h: number, dpr: number, now: number, t: number, still: boolean) {
+  const k = planShare(t), q = planFit(w, h), m = isoToPlan(p, q);
+  const mix = (a: number, b: number) => a + (b - a) * k;
+  const transform: [number, number, number, number, number, number] = [mix(1, m[0]), mix(0, m[1]), mix(0, m[2]), mix(1, m[3]), mix(0, m[4]), mix(0, m[5])];
+  const apply = ([x, y]: [number, number]): [number, number] => [transform[0] * x + transform[2] * y + transform[4], transform[1] * x + transform[3] * y + transform[5]];
+  const rise = Math.max(0.04, 1 - k);
+  if (k < 0.98) {
+    ctx.save(); ctx.transform(...transform);
+    drawDistrict(ctx, p, still ? 0 : now / 1000, () => ({}), rise);
+    ctx.restore();
+  }
+  if (k > 0.5) drawPlan(ctx, q, ease((k - 0.5) / 0.5), clamp01((k - 0.9) / 0.1), 'reset-svc');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // Claude keeps reading ResetService through the switch: its spot moves with the map.
+  const item = LOT['reset-svc']!, size = characterSize(p);
+  const [x, y] = apply(project(p, item.x + item.w / 2, item.y + item.d / 2, (PLATE_H + lotHeight(item)) * rise));
+  drawShadow(ctx, x, y, size, 0);
+  drawCharacter(ctx, x, y, { who: 'claude', color: CLAUDE.color, size, pose: 'read', facing: 1, time: t, alpha: 1, walking: false, seed: 1, poseAge: t });
+}
+
 function PanelHead({ title }: { title: string }) {
   return <div className="demo-panel-head"><span>{title}</span><span aria-hidden="true">⇤</span></div>;
 }
 
 function AgentsPanel({ t }: { t: number }) {
-  const seen = EVENTS.filter(event => event.at <= t).reverse().slice(0, 5);
-  const status = (session: Session) => session === CODEX && t > 8600 ? 'idle' : 'running';
+  const seen = EVENTS.filter(event => event.at <= t && event.pose !== 'think').reverse().slice(0, 5);
+  const status = (session: Session) => session === CLAUDE && t > 8800 ? 'idle' : 'running';
   return (
     <>
       <PanelHead title="Agents" />
@@ -214,7 +277,7 @@ function AgentsPanel({ t }: { t: number }) {
         <h4>Sessions <span className="demo-count">2</span></h4>
         {[CLAUDE, CODEX].map(session => (
           <div key={session.key} className="demo-session">
-            <span className="demo-dot" style={{ background: session.color }} />
+            <span className="demo-swatch" style={{ background: session.color }} />
             <span className="demo-session-name"><strong>{session.title}</strong><small>{session.product} · <span className="mono">{session.id}</span></small></span>
             <span className={`demo-status ${status(session)}`}>{status(session)}</span>
           </div>
@@ -224,16 +287,34 @@ function AgentsPanel({ t }: { t: number }) {
           {seen.map(event => (
             <li key={event.at}>
               <div className="demo-feed-head">
-                <span className="demo-dot" style={{ background: event.who.color }} />
+                <span className="demo-swatch" style={{ background: event.who.color }} />
                 <strong>{event.verb}</strong>
-                <span className="demo-subtle">completed</span>
                 <time>{Math.floor((t - event.at) / 1000)}s</time>
               </div>
               {event.query ? <p className="demo-feed-line">Search: <code>{event.query}</code></p> : null}
-              {event.lot || event.path ? <p className="demo-feed-path mono">{event.path ?? LOT[event.lot!]!.path}</p> : <p className="demo-feed-line">{event.who.title} · {event.who.product}</p>}
+              {event.path || event.places[0] !== 'out' ? <p className="demo-feed-path mono">{event.path ?? event.places.map(place => LOT[place]!.path.split('/').pop()).join(', ')}</p> : <p className="demo-feed-line">{event.who.title} · {event.who.product}</p>}
             </li>
           ))}
         </ol>
+      </div>
+    </>
+  );
+}
+
+function PlanPanel({ t }: { t: number }) {
+  const plan = planShare(t) > 0.5;
+  return (
+    <>
+      <PanelHead title="Map" />
+      <div className="demo-panel-body">
+        <h4>Projection</h4>
+        <p className="demo-seg"><span className={plan ? '' : 'is-on'}>3D buildings</span><span className={plan ? 'is-on' : ''}>2D plan</span></p>
+        <ul className="demo-ticks">
+          <li>The place in the middle stays in the middle, at about the same size.</li>
+          <li>From above, names never overlap and every block reads at a glance.</li>
+          <li>Agents, flows, history and explanations work on both.</li>
+        </ul>
+        <p className="demo-foot demo-optional">The choice is remembered. Switch with the 3D button beside the map.</p>
       </div>
     </>
   );
@@ -363,6 +444,7 @@ export function MapDemo() {
       if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
       const p = fit(w, h), id = SCENES[c.scene]!.id, st = c.t;
+      if (id === 'plan') { drawPlanScene(ctx, p, w, h, dpr, now, st, c.still); return; }
       drawDistrict(ctx, p, c.still ? 0 : now / 1000, item => lotStyle(id, st, item));
       drawOverlay(ctx, p, id, st);
     };
@@ -439,10 +521,11 @@ export function MapDemo() {
         </div>
         <div className="demo-body">
           <div className="demo-panel" aria-hidden="true" key={active.id}>
-            {active.id === 'agents' ? <AgentsPanel t={t} /> : active.id === 'explain' ? <ExplainPanel t={t} linkRef={linkRef} /> : active.id === 'flows' ? <FlowsPanel t={t} /> : <HistoryPanel t={t} />}
+            {active.id === 'agents' ? <AgentsPanel t={t} /> : active.id === 'plan' ? <PlanPanel t={t} /> : active.id === 'explain' ? <ExplainPanel t={t} linkRef={linkRef} /> : active.id === 'flows' ? <FlowsPanel t={t} /> : <HistoryPanel t={t} />}
           </div>
           <div className="demo-map">
-            <canvas ref={canvasRef} role="img" aria-label="A repository drawn by Codiluce as an isometric map: each file is a building shaped by its kind. The demo plays agents marking the files they touch, an explanation lighting the code it links, a request flowing from a page to a table, and commits adding and removing files." />
+            <canvas ref={canvasRef} role="img" aria-label="A repository drawn by Codiluce as an isometric map: each file is a building shaped by its kind. The demo plays two agents as pixel characters hopping between the files they read and edit, the map turning into a flat 2D plan and back, an explanation lighting the code it links, a request flowing from a page to a table, and commits adding and removing files." />
+            <span className={`demo-projection${active.id === 'plan' && planShare(t) > 0.5 ? ' is-plan' : ''}`} aria-hidden="true">{active.id === 'plan' && planShare(t) > 0.5 ? '2D' : '3D'}</span>
             {history ? (
               <div className="demo-timeline" aria-hidden="true">
                 <span className="demo-timeline-label">Timeline</span>
@@ -463,7 +546,7 @@ export function MapDemo() {
           {SCENES.map((item, index) => (
             <button key={item.id} type="button" role="tab" aria-selected={index === scene} className="demo-tab" onClick={() => select(index)}>
               <span className="demo-tab-bar"><span style={{ transform: `scaleX(${index === scene ? Math.min(1, t / item.ms) : index < scene ? 1 : 0})` }} /></span>
-              <strong>{item.tab}{item.id === 'agents' ? <NextTag feature="agents" /> : null}</strong>
+              <strong>{item.tab}{item.id === 'agents' ? <NextTag feature="characters" /> : item.id === 'plan' ? <NextTag feature="plan" /> : null}</strong>
               <span>{item.caption}</span>
             </button>
           ))}

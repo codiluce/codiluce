@@ -522,6 +522,17 @@ const DRAW: Record<Archetype, (k: K) => void> = {
   },
 };
 
+/**
+ * One block as the map draws a file by default (building shapes off): a box in its color, its kind's icon on the roof,
+ * warmed and glowing when `hot` (lit by a flow, an explanation or a change).
+ */
+export function drawBlock(v: ShapeView, kind: Archetype, input: ShapeInput): void {
+  const { x, y, z, w, d, H, c, hot } = input;
+  const color = hot > 0.02 ? mixHsl(c, v.T.accent, Math.min(0.8, hot * 0.7)) : c;
+  box(v, x, y, z, w, d, H, color);
+  drawIcon(v, kind, x, y, z + H, w, d, color, 1, 0.62);
+  if (hot > 0.05) glow(v, x + w / 2, y + d / 2, z + H, Math.min(w, d) * 0.8, v.T.accent, 0.16 * hot);
+}
 /** Draw one block as its archetype's shape, within its footprint and height. */
 export function drawShape(v: ShapeView, kind: Archetype, input: ShapeInput): void {
   const m0 = Math.min(input.w, input.d), i = m0 * 0.08, u = m0 / 8;

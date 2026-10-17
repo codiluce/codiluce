@@ -9,14 +9,24 @@ import { HeroShader } from '../components/HeroShader';
 import { InstallCommand } from '../components/InstallCommand';
 import { MapDemo } from '../components/MapDemo';
 import { NextTag } from '../components/NextTag';
-import { ShapeGallery } from '../components/ShapeGallery';
 import { Stacks } from '../components/Stacks';
 import { GitHubIcon } from '../components/SiteChrome';
 import { HORIZON_SCRIPT } from '../lib/hero';
-import { CALL_URL, GITHUB_URL, ISSUES_URL, NEXT_RELEASE, VERSION } from '../lib/site';
+import { CALL_URL, GITHUB_URL, ISSUES_URL, NEXT_RELEASE, VERSION, type NextFeature } from '../lib/site';
 
 const glyph = (d: ReactNode) => <svg viewBox="0 0 24 24" aria-hidden="true" className="more-glyph">{d}</svg>;
-const MORE: { title: string; glyph: ReactNode; text: ReactNode; next?: 'pull-requests' }[] = [
+const MORE: { title: string; glyph: ReactNode; text: ReactNode; next?: NextFeature }[] = [
+  {
+    title: '3D or 2D',
+    next: 'plan',
+    glyph: glyph(<><path d="M12 3 20 7.5 12 12 4 7.5z" /><path d="M4 7.5v9L12 21l8-4.5v-9" opacity="0.6" /><path d="M12 12v9" opacity="0.6" /></>),
+    text: 'See the code as blocks in 3D, or as a flat plan from above where names never overlap. Switching keeps the same place in the middle.',
+  },
+  {
+    title: 'History',
+    glyph: glyph(<><circle cx="12" cy="12" r="9" opacity="0.6" /><path d="M12 7v5l3.5 2" /></>),
+    text: 'Play the Git history of every file: additions, edits, moves and deletions in place, with diffs and who made them. Architecture snapshots on demand.',
+  },
   {
     title: 'Impact',
     glyph: glyph(<><circle cx="12" cy="12" r="2.5" /><circle cx="12" cy="12" r="6" opacity="0.6" /><circle cx="12" cy="12" r="9.5" opacity="0.3" /></>),
@@ -44,6 +54,11 @@ const MORE: { title: string; glyph: ReactNode; text: ReactNode; next?: 'pull-req
     title: 'Evidence',
     glyph: glyph(<><circle cx="10.5" cy="10.5" r="6" /><path d="m15 15 5.5 5.5" /><path d="m8 10.5 1.8 1.8L13 9" /></>),
     text: 'Every link opens the file and line that proves it. What cannot be proven shows up as a finding, never as a guess.',
+  },
+  {
+    title: 'Hide what you do not need',
+    glyph: glyph(<><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z" opacity="0.6" /><circle cx="12" cy="12" r="2.5" /><path d="M4 20 20 4" /></>),
+    text: 'Right-click a file or folder to hide it from the map, the history and its playback; Settings lists what is hidden. The analysis still covers it.',
   },
   {
     title: 'Private by design',
@@ -113,8 +128,9 @@ export default function Home() {
           <p className="eyebrow">Agents</p>
           <h2 id="agents-title" className="section-title">Work with your agents, not behind them.</h2>
           <p className="section-lede">
-            Connect Claude Code, Codex or Cursor once. Your agent reads the index instead of guessing from file names,
-            explains what it finds on your map, and every file it touches lights up while it works.
+            Connect Claude Code, Codex, Cursor or any of twelve coding harnesses<NextTag feature="harnesses" /> once. Your
+            agent reads the index instead of guessing from file names, explains what it finds on your map, and you watch it
+            walk through the files it touches.
           </p>
           <div className="agent-cards">
             <article className="agent-card">
@@ -127,6 +143,7 @@ export default function Home() {
                   explaining and each tool it calls.<NextTag feature="working-card" />
                 </p>
                 <ul className="ticks">
+                  <li>Answers can be tours: scenes on the map, and diagrams that rise from it<NextTag feature="tours" /></li>
                   <li>Every link is checked against the index before the answer is saved</li>
                   <li>Answers are pinned to their commit and say when the code they link changes</li>
                   <li>No agent at hand? Ask in the map, with your own Anthropic or OpenAI key</li>
@@ -138,14 +155,15 @@ export default function Home() {
             <article className="agent-card">
               <HookStatus />
               <div className="agent-card-text">
-                <h3>Watch them work <NextTag feature="agents" /></h3>
+                <h3>Watch them work <NextTag feature="characters" /></h3>
                 <p>
-                  Open <strong>Agents</strong> beside the map to follow every Claude Code and Codex session at once. Each read,
-                  edit and search marks the code it touched in that session&apos;s color, and fades after 30 seconds.
+                  Every session is a little character on the map. It hops to each file it reads or edits, splits into copies to
+                  read several at once, and steps beside the map to think, run the tests or wait for you. A colored square ties
+                  it to its session in <strong>Agents</strong>.
                 </p>
                 <ul className="ticks">
-                  <li>When two sessions touch the same file, both marks show</li>
-                  <li>Click a path in the feed to reveal the file, even one added since the last index</li>
+                  <li>Open a session to keep only its characters; point at one to dim the others</li>
+                  <li>Search past sessions by message or by the files they touched, and replay a finished one on the map<NextTag feature="sessions" /></li>
                   <li>Only paths, searches and tool names are kept, in memory: never prompts, file contents or output</li>
                 </ul>
                 <Link href="/docs/agents/" className="text-link">Agents →</Link>
@@ -168,24 +186,6 @@ export default function Home() {
               </li>
             ))}
           </ul>
-        </div>
-      </section>
-
-      <section className="section shapes-section" id="shapes" aria-labelledby="shapes-title">
-        <div className="container">
-          <div className="feature stacked">
-            <div className="feature-text">
-              <p className="eyebrow">Shapes</p>
-              <h2 id="shapes-title" className="section-title">Every kind of file has a shape.</h2>
-              <p>
-                Controllers are rail turntables sending requests on their way, services are workshops, tables are storage drums,
-                pages are browser billboards and tests are lab benches. Codiluce takes each file&apos;s kind from the index where it
-                can, and from folder conventions otherwise, with one set of shapes for every language and framework. A folder of
-                components and a folder of migrations look different before you read a label.
-              </p>
-            </div>
-            <ShapeGallery />
-          </div>
         </div>
       </section>
 

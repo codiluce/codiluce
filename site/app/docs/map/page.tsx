@@ -2,9 +2,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CodeBlock } from '../../../components/CodeBlock';
 import { DocsPager } from '../../../components/DocsNav';
+import { ShapeGallery } from '../../../components/ShapeGallery';
 import { Shot } from '../../../components/Shot';
 
-export const metadata: Metadata = { title: 'Using the map', description: 'Zoom levels, the inspector, flows, coverage, blast radius, data families and descriptions.' };
+export const metadata: Metadata = { title: 'Using the map', description: 'Zoom levels, 3D or 2D, the inspector, flows, coverage, blast radius, data families and descriptions.' };
 
 const SHAPES: [string, string, string][] = [
   ['Lighthouse', 'Entry point', 'public/index.php, artisan, main.tsx'], ['Gate', 'Routes', 'routes/web.php, urls.py, route.ts'],
@@ -24,8 +25,8 @@ export default function MapDocs() {
       <p className="eyebrow">Docs</p>
       <h1>Using the map</h1>
       <p className="lede">
-        The map draws the repository in isometric 3D: applications, folders, files and symbols nested inside each other,
-        each sized by its code.
+        The map draws the repository in isometric 3D or as a flat 2D plan: applications, folders, files and symbols nested
+        inside each other, each sized by its code.
       </p>
 
       <h2 id="zoom" className="anchor">Zoom levels</h2>
@@ -44,16 +45,42 @@ export default function MapDocs() {
         The layout comes from the server and is deterministic. Selecting, searching or filtering never moves anything, and
         new files take new slots instead of pushing the others around.
       </p>
-
-      <h2 id="shapes" className="anchor">Building shapes</h2>
       <p>
-        Each kind of block has its own shape, the same in every language and framework: a gate for routes, a rail turntable
-        for a controller, a workshop for a service, storage drums for a table, a browser billboard for a page. Far
-        away a block is plain; once it is a few dozen pixels across it shows its kind as a mark on its roof, and closer still
-        it grows into its shape. Zoom into a file and it opens into its symbols as usual. A closed folder shows the kinds
-        of block it holds most on its roof, each as a small shape with its count, and its inspector lists every kind it
-        holds. Blocks stand a little inside their places, so streets run between files and wider avenues between folders.
+        Folders open once they are about 150 pixels across on screen. <strong>Settings → Open folders from</strong> moves
+        that point between 60 and 360 pixels: lower opens more of the map from further out, higher keeps it calmer.
       </p>
+
+      <h2 id="projection" className="anchor">3D or 2D</h2>
+      <p>
+        The <strong>3D</strong> button beside the map switches between the isometric view and a <strong>2D plan</strong>,
+        the same map seen from straight above. The place in the middle stays in the middle at about the same size, and
+        the choice is remembered. In the plan every block reads at a glance and names never overlap: a name that does not
+        fit beside its block moves further out with a leader line, or into a column at the side. Agents, flows, history,
+        comparisons and explanation tours work in both.
+      </p>
+      <Shot
+        src="/shots/plan.webp"
+        alt="BookStack's map as a 2D plan seen from above: folders as nested rectangles with their names, tests hatched, and three agent characters on the files they work on."
+        caption="The 2D plan of BookStack, with three agents at work on it."
+      />
+
+      <h2 id="kinds" className="anchor">Kinds of file</h2>
+      <p>
+        Blocks are plain by default, so color stays free for the lenses. The kinds that matter when you read a flow carry
+        a small mark before their name once the block is about 60 pixels across: a page, an endpoint, data (models and
+        tables), a job or scheduled task, and a test. Tests, and closed folders that are mostly tests, are hatched so they
+        recede. Blocks stand a little inside their places, so streets run between files and wider avenues between folders.
+      </p>
+
+      <h3 id="shapes" className="anchor">Building shapes</h3>
+      <p>
+        <strong>Settings → Building shapes</strong> gives each kind of block its own building in 3D, the same in every
+        language and framework: a gate for routes, a rail turntable for a controller, a workshop for a service, storage
+        drums for a table, a browser billboard for a page. Far away a block stays plain; once it is a few dozen pixels across
+        it shows its kind as a mark on its roof, and closer still it grows into its shape. A closed folder shows the kinds
+        of block it holds most on its roof, each with its count, and its inspector lists every kind it holds.
+      </p>
+      <ShapeGallery />
       <p>
         A file&apos;s kind comes from the index where it can: the endpoints, page routes, commands, scheduled tasks or tables it
         declares, and the controllers, models, components and hooks it contains. Otherwise it comes from folder and name
@@ -71,8 +98,8 @@ export default function MapDocs() {
       </div>
       <p>
         Lenses keep working: coverage, data families and people color the shapes, a comparison tints what changed, and a
-        flow on the map lights the stops it reaches. <strong>Settings → Building shapes</strong> turns them off for plain
-        blocks, and <strong>Settings → Streets between blocks</strong> packs the blocks edge to edge again.
+        flow on the map lights the stops it reaches. In the 2D plan blocks are always flat. <strong>Settings → Streets
+        between blocks</strong> packs the blocks edge to edge again.
       </p>
 
       <h2 id="inspector" className="anchor">The inspector and evidence</h2>
@@ -93,7 +120,8 @@ export default function MapDocs() {
       </p>
       <p>
         What the analyzers cannot prove is never guessed. It stays a <strong>finding</strong>, listed per entity and per
-        area, and you can show findings as markers on the map.
+        area. The <strong>⚠</strong> button beside the map marks the blocks where a link could not be proven (an
+        unresolved request, an unmatched route, a missing import); it is off by default.
       </p>
 
       <h2 id="flows" className="anchor">Flows</h2>
