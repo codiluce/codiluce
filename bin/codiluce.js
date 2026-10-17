@@ -13,6 +13,12 @@ async function main() {
     console.log(JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version);
     return;
   }
+  if (args[0] === 'activity' && args[1] === 'hook') {
+    // npx observers use the same quiet entry as direct installations, without SQLite or analyzers.
+    const hook = new URL('../dist/src/activity/hook-cli.js', import.meta.url);
+    if (existsSync(hook)) await import(hook.href);
+    return;
+  }
   const cli = new URL('../dist/src/cli.js', import.meta.url);
   if (!existsSync(cli)) {
     throw new Error('The compiled Codiluce CLI is missing. Run npm run build:cli in a source checkout, or reinstall Codiluce.');

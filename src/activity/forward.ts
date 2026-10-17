@@ -1,6 +1,12 @@
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import type { AgentProvider } from './model.js';
+export function neutralHookOutput(provider?: AgentProvider, profile?: string, event?: string): string {
+  if (provider === 'cline') return profile === 'cline-legacy' ? '{"cancel":false}\n' : '{}\n';
+  if (provider === 'cursor') return '{}\n';
+  if (provider === 'antigravity') return event === 'Stop' ? '{"decision":"stop"}\n' : '{}\n';
+  return '';
+}
 /** A quiet, fail-open observer. The bridge has no model credentials and never prints hook decisions. */
 export async function forwardHook(provider: AgentProvider, stateDirectory: string, input: AsyncIterable<Uint8Array | string>, options: { event?: string; profile?: string } = {}): Promise<void> {
   try {
