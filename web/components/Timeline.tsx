@@ -27,7 +27,7 @@ function useCommitExplanations(entries: TimelineEntry[] | undefined): Map<string
 const SPEEDS = [0.5, 1, 2, 4];
 /** The snapshot on screen: the time-lapse frame while scrubbing or playing, otherwise the viewed one. */
 function shownSnapshot(store: AtlasStore, timeline: { preview?: number; target?: string }): string | undefined {
-  return timeline.preview !== undefined && store.evolution ? store.evolution.snapshotAt(timeline.preview) : timeline.target;
+  return timeline.preview !== undefined && store.evolution ? store.evolution.snapshotAt(timeline.preview) : store.getState().timeline.mode === 'git' ? store.getState().timeline.gitTarget : timeline.target;
 }
 function formatDate(iso: string): string { const date = new Date(iso); return Number.isNaN(date.getTime()) ? iso : date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }); }
 function label(data: TimelineResponse | undefined, id: string | undefined): string {
@@ -63,12 +63,13 @@ export function Timeline() {
   if (!data.available) return (
     <section className="timeline" aria-label="History">
       <div className="timeline-empty">
-        <span><strong>No history indexed yet.</strong> {data.reason}</span>
+        <span><strong>History unavailable.</strong> {data.reason}</span>
         <button className="icon-button small" onClick={close} aria-label="Close history">✕</button>
       </div>
     </section>
   );
   const shown = shownSnapshot(store, timeline);
+  if (timeline.mode === 'git') return <FileTimeline data={data} close={close} />;
   const target = entryOf(data, shown);
   const comparison = meta?.comparison;
   const summary = comparison?.summary;
@@ -113,6 +114,7 @@ export function Timeline() {
           </div>
         )}
         <div className="timeline-compare">
+          {data.fileHistory && <button className="chip" onClick={() => void store.setHistoryMode('git')}>File evolution</button>}
           <div className="segmented" role="group" aria-label="View mode">
             <button aria-pressed={!timeline.compare} onClick={() => void store.setCompare(false)}>Snapshot</button>
             <button aria-pressed={timeline.compare} onClick={() => void store.setCompare(true)} disabled={!data.entries.some(entry => entry.snapshot)}>Compare</button>
@@ -161,6 +163,62 @@ export function Timeline() {
     </section>
   );
 }
+/** Git evolution is available even when no architecture snapshots exist. */
+function FileTimeline({ data, close }: { data: TimelineResponse; close: () => void }) {
+  const store = useStore();
+  const timeline = useAtlas(state => state.timeline);
+  const sha = shownSnapshot(store, timeline);
+  const entry = data.entries.find(item => item.sha === sha);
+  const summary = entry?.files;
+  const detail = timeline.gitChanges;
+  const analyzing = !!entry && (data.indexing.active === entry.sha || data.indexing.queued.includes(entry.sha));
+  const fresh = entry?.snapshot && !entry.snapshot.stale;
+  return (
+    <section className="timeline" aria-label="History">
+      <div className="timeline-head">
+        <PlayButton />
+        <div className="timeline-nav" role="group" aria-label="Step through commits">
+          <button className="icon-button small" onClick={() => void store.stepTarget(-1)} aria-label="Previous commit">◀</button>
+          <button className="icon-button small" onClick={() => void store.stepTarget(1)} aria-label="Next commit">▶</button>
+        </div>
+        <div className="timeline-target" aria-live="polite">
+          <span className="mono sha">{entry ? shortSha(entry.sha) : 'Git'}</span>
+          <span className="subject">{entry?.subject ?? 'File evolution'}</span>
+          {entry && <span className="meta">{entry.authorName} · {formatDate(entry.committedAt)}</span>}
+        </div>
+        <span className="chip">Git file evolution</span>
+        {entry && (data.indexing.enabled || fresh) && <button className="button small primary" disabled={analyzing || timeline.playing} onClick={() => void store.openArchitecture(entry.sha)}>{analyzing ? 'Analyzing architecture…' : fresh ? 'Explore architecture' : 'Generate architecture snapshot'}</button>}
+        {data.entries.some(item => item.snapshot) && <button className="chip" onClick={() => void store.setHistoryMode('architecture')}>Architecture comparisons</button>}
+        <button className="icon-button small" onClick={close} aria-label="Close history">✕</button>
+      </div>
+      {summary && <div className="timeline-summary" aria-label="File changes in this commit">
+        {(['added', 'modified', 'moved', 'removed'] as const).map(status => <span key={status} className={`change-chip ${status}`}>{compactNumber(summary[status])} {status}</span>)}
+        <span className="change-stat">{compactNumber(summary.files)} files · <span className="added">+{compactNumber(summary.insertions)}</span> <span className="removed">−{compactNumber(summary.deletions)}</span> lines{summary.binary ? ` · ${summary.binary} binary` : ''}</span>
+      </div>}
+      <Track data={data} />
+      <div className="timeline-foot">
+        <span>{data.ref} · first-parent history · {data.entries.length} commits{data.fileHistory?.truncated ? ' (latest 5,000)' : ''}</span>
+        <span>Files and folders from Git. Dependencies are available in architecture snapshots.{timeline.playing ? ' Playing…' : ''}</span>
+        {timeline.notice && <span className="note warning inline">{timeline.notice}</span>}
+        {timeline.evolution.error && <span className="note error inline">{timeline.evolution.error}</span>}
+      </div>
+      {!timeline.playing && detail?.data && detail.data.sha === entry?.sha && <details className="timeline-file-changes" key={entry?.sha}>
+        <summary>{detail.data.files.length} changed files</summary>
+        <ul>{detail.data.files.slice(0, 100).map(file => <li key={file.path}><span className={`change-chip ${file.status}`}>{file.status}</span> <button className="link-button mono" onClick={() => void store.openGitDiff(file.path)}>{file.from ? `${file.from} → ` : ''}{file.path}</button> <span className="meta">{file.binary ? 'binary' : `+${file.added} −${file.deleted}`}</span></li>)}</ul>
+        {detail.data.files.length > 100 && <p className="note">Showing the first 100 files.</p>}
+      </details>}
+      {timeline.gitDiff && !timeline.playing && <div className="timeline-file-diff" aria-label="Git source diff">
+        <strong>{timeline.gitDiff.path}</strong>
+        {timeline.gitDiff.status === 'loading' && <span className="note"> Loading diff…</span>}
+        {timeline.gitDiff.error && <p className="note error">{timeline.gitDiff.error}</p>}
+        {timeline.gitDiff.data?.unavailable && <p className="note">{timeline.gitDiff.data.unavailable}</p>}
+        {timeline.gitDiff.data?.patch && <pre>{timeline.gitDiff.data.patch}</pre>}
+      </div>}
+      {detail?.error && <p className="note error">{detail.error}</p>}
+      {entry && !data.indexing.enabled && !fresh && <p className="note">To explore this architecture: <code>npx codiluce history index --commits {entry.sha}</code></p>}
+    </section>
+  );
+}
 function PullRequestChip({ entry }: { entry: TimelineEntry }) {
   const store = useStore();
   const pr = entry.pullRequest!;
@@ -178,6 +236,7 @@ function PullRequestChip({ entry }: { entry: TimelineEntry }) {
 /** The commit track: ticks per first-parent commit, a size sparkline, target/baseline handles and the compared range. */
 function Track({ data }: { data: TimelineResponse }) {
   const store = useStore();
+  const fileMode = useAtlas(state => state.timeline.mode) === 'git';
   const timeline = useAtlas(state => state.timeline);
   const svg = useRef<SVGSVGElement>(null);
   const [width, setWidth] = useState(800);
@@ -190,7 +249,7 @@ function Track({ data }: { data: TimelineResponse }) {
     observer.observe(svg.current);
     return () => observer.disconnect();
   }, []);
-  const count = data.entries.length + (data.workingTree ? 1 : 0);
+  const count = data.entries.length + (!fileMode && data.workingTree ? 1 : 0);
   const chapters = data.chapters ?? [];
   const pad = 14, height = chapters.length ? 80 : 64, base = 46;
   const [chapterHover, setChapterHover] = useState<number>();
@@ -202,6 +261,7 @@ function Track({ data }: { data: TimelineResponse }) {
   const openChapter = (chapter: NonNullable<TimelineResponse['chapters']>[number]) => {
     const span = chapterSpan(chapter);
     if (!span) return;
+    if (fileMode) { void store.setGitTarget(data.entries[span.to]!.sha); return; }
     const target = data.entries.slice(span.from, span.to + 1).reverse().find(entry => entry.snapshot)?.snapshot?.id;
     const baseline = data.entries.slice(0, span.from).reverse().find(entry => entry.snapshot)?.snapshot?.id;
     if (!target) return;
@@ -214,22 +274,23 @@ function Track({ data }: { data: TimelineResponse }) {
   };
   /** Nearest snapshot to a track position (unindexed commits cannot be viewed). */
   const nearestIndexed = (index: number): number | undefined => {
+    if (fileMode) return Math.max(0, Math.min(data.entries.length - 1, index));
     for (let distance = 0; distance < count; distance++) for (const candidate of [index - distance, index + distance]) {
       if (candidate === data.entries.length && data.workingTree) return candidate;
       if (data.entries[candidate]?.snapshot) return candidate;
     }
     return undefined;
   };
-  const idAt = (index: number) => index === data.entries.length ? undefined : data.entries[index]?.snapshot?.id;
+  const idAt = (index: number) => fileMode ? data.entries[index]?.sha : index === data.entries.length ? undefined : data.entries[index]?.snapshot?.id;
   const shown = shownSnapshot(store, timeline);
   // A time-lapse frame compares with the previous commit (unless a baseline is pinned).
   const baselineId = timeline.compare ? (timeline.preview !== undefined && !timeline.pinned ? predecessor(data, shown) : timeline.baseline) : undefined;
   const targetIndex = timelineIndex(data, shown), baselineIndex = baselineId ? timelineIndex(data, baselineId) : -1;
   const sparkline = useMemo(() => {
-    const points = data.entries.map((entry, index) => ({ index, loc: entry.snapshot?.stats.loc })).filter((point): point is { index: number; loc: number } => point.loc !== undefined);
+    const points = data.entries.map((entry, index) => ({ index, loc: fileMode && entry.files ? entry.files.insertions + entry.files.deletions : entry.snapshot?.stats.loc })).filter((point): point is { index: number; loc: number } => point.loc !== undefined);
     const max = Math.max(1, ...points.map(point => point.loc));
     return { points, max };
-  }, [data]);
+  }, [data, fileMode]);
   const marks = useMemo(() => axisMarks(data.entries), [data]);
   const explained = useCommitExplanations(data.entries);
   // The person lit on the map: their commits are marked on the track.
@@ -244,12 +305,12 @@ function Track({ data }: { data: TimelineResponse }) {
     if (index === undefined) return;
     if (scrub.current.timer) clearTimeout(scrub.current.timer);
     if (store.scrubTo(idAt(index))) { if (release) void store.settle(); return; }
-    const apply = () => void store.setTarget(idAt(index));
+    const apply = () => void (fileMode ? store.setGitTarget(idAt(index)) : store.setTarget(idAt(index)));
     if (release) apply(); else scrub.current.timer = setTimeout(apply, SCRUB_MS);
   };
   const onKeyDown = (event: React.KeyboardEvent) => {
     const keys: Record<string, () => void> = {
-      ArrowLeft: () => void (event.shiftKey ? moveBaseline(-1) : store.stepTarget(-1)), ArrowRight: () => void (event.shiftKey ? moveBaseline(1) : store.stepTarget(1)),
+      ArrowLeft: () => void (!fileMode && event.shiftKey ? moveBaseline(-1) : store.stepTarget(-1)), ArrowRight: () => void (!fileMode && event.shiftKey ? moveBaseline(1) : store.stepTarget(1)),
       Home: () => choose(nearestIndexed(0), true), End: () => choose(count - 1 === data.entries.length && data.workingTree ? count - 1 : nearestIndexed(count - 1), true),
       ' ': () => store.togglePlay(),
     };
@@ -268,10 +329,10 @@ function Track({ data }: { data: TimelineResponse }) {
     <div className="timeline-track">
       <svg
         ref={svg} width="100%" height={height} role="slider" tabIndex={0} style={{ ...(person ? { '--person': familyCss(personHue(person.person.order), dark) } : {}), ...(landed ? { '--pull': familyCss(pullHue('merged'), dark) } : {}) } as React.CSSProperties}
-        aria-label="Commit timeline. Left and right arrows step through indexed commits; Shift with arrows moves the comparison baseline; Space plays the history."
-        aria-valuemin={0} aria-valuemax={count - 1} aria-valuenow={targetIndex} aria-valuetext={label(data, timeline.target)}
+        aria-label={fileMode ? "Commit timeline. Left and right arrows step through commits; Space plays file evolution." : "Commit timeline. Left and right arrows step through indexed commits; Shift with arrows moves the comparison baseline; Space plays the history."}
+        aria-valuemin={0} aria-valuemax={count - 1} aria-valuenow={targetIndex} aria-valuetext={label(data, shown)}
         onKeyDown={onKeyDown}
-        onPointerDown={event => { (event.target as Element).setPointerCapture?.(event.pointerId); scrub.current.dragging = true; const index = indexAt(event.clientX); setPicked(undefined); if (data.entries[index] && !data.entries[index]!.snapshot) { setPicked(index); scrub.current.dragging = false; return; } choose(nearestIndexed(index), false); }}
+        onPointerDown={event => { (event.target as Element).setPointerCapture?.(event.pointerId); scrub.current.dragging = true; const index = indexAt(event.clientX); setPicked(undefined); if (!fileMode && data.entries[index] && !data.entries[index]!.snapshot) { setPicked(index); scrub.current.dragging = false; return; } choose(nearestIndexed(index), false); }}
         onPointerMove={event => { const index = indexAt(event.clientX); setHover(index); if (scrub.current.dragging) choose(nearestIndexed(index), false); }}
         onPointerUp={event => { if (scrub.current.dragging) choose(nearestIndexed(indexAt(event.clientX)), true); scrub.current.dragging = false; }}
         onPointerLeave={() => { if (!scrub.current.dragging) setHover(undefined); }}
@@ -291,10 +352,10 @@ function Track({ data }: { data: TimelineResponse }) {
             </g>
           );
         })}
-        {data.workingTree && <g className="tick now"><line x1={x(data.entries.length)} x2={x(data.entries.length)} y1={base - 14} y2={base} /><text x={x(data.entries.length)} y={base + 13} textAnchor="end">Now</text></g>}
+        {!fileMode && data.workingTree && <g className="tick now"><line x1={x(data.entries.length)} x2={x(data.entries.length)} y1={base - 14} y2={base} /><text x={x(data.entries.length)} y={base + 13} textAnchor="end">Now</text></g>}
         {marks.map(mark => <text key={mark.index} className="mark" x={x(mark.index)} y={base + 13}>{mark.text}</text>)}
         {baselineIndex >= 0 && <g className="handle baseline" transform={`translate(${x(baselineIndex)} ${base})`}><circle r={5.5} /><title>Baseline: {label(data, timeline.baseline)}</title></g>}
-        {targetIndex >= 0 && <g className="handle target" transform={`translate(${x(targetIndex)} ${base})`}><path d="M -6 -22 L 6 -22 L 0 -14 Z" /><circle r={6.5} /><title>Viewing: {label(data, timeline.target)}</title></g>}
+        {targetIndex >= 0 && <g className="handle target" transform={`translate(${x(targetIndex)} ${base})`}><path d="M -6 -22 L 6 -22 L 0 -14 Z" /><circle r={6.5} /><title>Viewing: {label(data, shown)}</title></g>}
         {chapters.map((chapter, index) => {
           const span = chapterSpan(chapter);
           if (!span) return null;
@@ -315,7 +376,7 @@ function Track({ data }: { data: TimelineResponse }) {
               <div><span className="mono">{shortSha(hovered.sha)}</span> · {formatDate(hovered.authoredAt)} · {hovered.authorName}</div>
               <div className="subject">{hovered.note ? <><span className={`intent-chip i-${hovered.note.intent}`}>{hovered.note.intent}</span> {hovered.note.title}</> : hovered.subject}</div>
               {hovered.note && <div className="meta note-summary">{hovered.note.summary}</div>}
-              <div className="meta">{hovered.snapshot ? `${compactNumber(hovered.snapshot.stats.files)} files · ${compactNumber(hovered.snapshot.stats.loc)} lines · ${compactNumber(hovered.snapshot.stats.symbols)} symbols` : 'not indexed'}{hovered.merge ? ' · merge' : ''}{hovered.pullRequest ? ` · PR #${hovered.pullRequest.number}${hovered.pullRequest.source === 'github' ? '' : ' (unverified)'}` : ''}</div>
+              <div className="meta">{hovered.snapshot ? `${compactNumber(hovered.snapshot.stats.files)} files · ${compactNumber(hovered.snapshot.stats.loc)} lines · ${compactNumber(hovered.snapshot.stats.symbols)} symbols` : (hovered.files ? `${hovered.files.files} changed files · +${hovered.files.insertions} −${hovered.files.deletions} lines` : 'not indexed')}{hovered.merge ? ' · merge' : ''}{hovered.pullRequest ? ` · PR #${hovered.pullRequest.number}${hovered.pullRequest.source === 'github' ? '' : ' (unverified)'}` : ''}</div>
             </>
           ) : <div>Working tree (live index)</div>}
         </div>

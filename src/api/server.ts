@@ -92,7 +92,7 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
     if (!resolved.exact) throw new Error('This file is excluded from the index. Update the repository indexing settings to show it on the map.');
     return { path: resolved, refreshed: true };
   };
-  const history = new HistoryService({ root: options.root, stateDirectory: options.stateDirectory, store, history: access, indexing: options.historyIndexing && !options.readOnly });
+  const history = new HistoryService({ root: options.root, stateDirectory: options.stateDirectory, store, history: access, indexing: options.historyIndexing && !options.readOnly, readOnly: options.readOnly });
   const projectionContext = { store, projection, history, root: options.root, maxFileBytes: options.maxFileBytes ?? 1024 * 1024, sessionScope: journal?.conversations.scope };
   // Explanations live in the state directory: text from language models whose links name code (src/explanations).
   const explanations = options.stateDirectory ? (() => {

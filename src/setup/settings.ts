@@ -15,9 +15,9 @@ const execute = promisify(execFile);
 export const STATE_FILE = 'state.json';
 export const SETUP_VERSION = 1;
 
-/** `none`: no history; `all`; a number of the newest commits; otherwise a Git date ("6 months ago"). */
+/** Precomputed architecture snapshots: `none`, `all`, a count, or a Git date ("6 months ago"). Git file evolution is independent. */
 export type HistoryDepth = number | string;
-export interface HistorySettings { depth: HistoryDepth; onDemand: boolean }
+export interface HistorySettings { depth: HistoryDepth; onDemand: boolean; /** Explicit opt-in to bulk semantic snapshots on startup. */ precompute?: boolean }
 export interface AnnotationSettings { enabled: boolean; maxCost: number }
 export interface RepositorySettings { history?: HistorySettings; annotations?: AnnotationSettings }
 export interface RunState {
@@ -29,7 +29,7 @@ export interface RunState {
 }
 export interface UserSettings { defaults?: RepositorySettings; askOnFirstRun?: boolean }
 
-export const DEFAULT_HISTORY: HistorySettings = { depth: 50, onDemand: true };
+export const DEFAULT_HISTORY: HistorySettings = { depth: 'none', onDemand: true };
 export const DEFAULT_ANNOTATIONS: AnnotationSettings = { enabled: false, maxCost: 10 };
 
 // Paths ----------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ export function readRepositorySettings(stateDirectory: string): RepositorySettin
 function settingsFrom(raw: Record<string, unknown>): RepositorySettings {
   const result: RepositorySettings = {};
   const history = raw.history as Record<string, unknown> | undefined;
-  if (history && typeof history === 'object') result.history = { depth: depthOf(history.depth) ?? DEFAULT_HISTORY.depth, onDemand: history.onDemand !== false };
+  if (history && typeof history === 'object') result.history = { depth: depthOf(history.depth) ?? DEFAULT_HISTORY.depth, onDemand: history.onDemand !== false, ...(typeof history.precompute === 'boolean' ? { precompute: history.precompute } : {}) };
   const annotations = raw.annotations as Record<string, unknown> | undefined;
   if (annotations && typeof annotations === 'object') result.annotations = { enabled: annotations.enabled === true, maxCost: typeof annotations.maxCost === 'number' && annotations.maxCost > 0 ? annotations.maxCost : DEFAULT_ANNOTATIONS.maxCost };
   return result;
@@ -113,7 +113,7 @@ export function writeRepositorySettings(stateDirectory: string, settings: Reposi
   const file = path.join(stateDirectory, 'config.yml');
   mkdirSync(stateDirectory, { recursive: true });
   const document = existsSync(file) ? parseDocument(readFileSync(file, 'utf8')) : parseDocument(stringify(base ? { repository: base.repository, applications: base.applications, ignore: [], maxFileBytes: base.maxFileBytes } : {}));
-  if (settings.history) document.set('history', { depth: settings.history.depth, onDemand: settings.history.onDemand });
+  if (settings.history) document.set('history', { ...settings.history });
   if (settings.annotations) document.set('annotations', { enabled: settings.annotations.enabled, maxCost: settings.annotations.maxCost });
   writeFileSync(file, String(document));
 }

@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { execFileSync } from 'node:child_process';
-import { appendFile } from 'node:fs/promises';
+import { appendFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { indexRepository } from '../../src/pipeline/index.js';
 import { GraphStore } from '../../src/storage/sqlite.js';
@@ -48,10 +48,61 @@ async function ready(hash = '') {
   return { atlas, api, location };
 }
 
+test('history defaults to Git file playback and source diffs without requesting architecture analysis', async () => {
+  const { atlas, api, location } = await ready();
+  await atlas.openTimeline();
+  assert.equal(atlas.getState().timeline.mode, 'git');
+  assert.equal(atlas.getState().timeline.gitTarget, fixture.commits.D);
+  assert.ok(atlas.previewScene);
+  assert.ok([...atlas.previewScene.nodes.values()].every(node => ['file', 'directory', 'repository', 'group'].includes(node.type)));
+  await atlas.stepTarget(-1);
+  assert.equal(atlas.getState().timeline.gitTarget, fixture.commits.C);
+  assert.equal(atlas.scrubTo(fixture.commits.B), true);
+  await atlas.settle();
+  assert.equal(location.hash, `#files=${fixture.commits.B.slice(0, 12)}`);
+  const restored = await ready(location.hash);
+  assert.equal(restored.atlas.getState().timeline.gitTarget, fixture.commits.B);
+  await atlas.openGitDiff('frontend/src/components/LoginForm.tsx');
+  assert.match(atlas.getState().timeline.gitDiff?.data?.patch ?? '', /const body = email.trim/);
+  await atlas.play(); atlas.advancePlayback(60_000);
+  await until(() => !atlas.getState().timeline.playing && atlas.getState().timeline.gitChanges?.data?.sha === fixture.commits.D);
+  assert.equal(atlas.getState().timeline.mode, 'git');
+  assert.ok(!api.calls.some(call => call.startsWith('requestIndex')), 'scrubbing, diffs and playback never request semantic analysis');
+  await atlas.openArchitecture(fixture.commits.B);
+  assert.equal(atlas.getState().timeline.mode, 'architecture');
+  assert.equal(atlas.getState().meta?.snapshot.commitSha, fixture.commits.B);
+  assert.ok(!api.calls.some(call => call.startsWith('requestIndex')), 'an existing snapshot is reused');
+  await atlas.closeTimeline();
+  assert.equal(atlas.previewScene, undefined);
+});
+
+test('Git timeline polling follows an appended HEAD without losing the file scene or generating snapshots', async () => {
+  const f = await createHistoryFixture();
+  const localAccess = new HistoryAccess(f.state);
+  const localProjection = new ProjectionService(store, { root: f.root, stateDirectory: f.state, history: localAccess.get });
+  const localService = new HistoryService({ root: f.root, stateDirectory: f.state, store, history: localAccess });
+  const api = new ServiceApi(store, localProjection, { history: localService });
+  const atlas = new AtlasStore(api);
+  try {
+    await atlas.init(); await atlas.openTimeline();
+    assert.equal(atlas.getState().timeline.data?.entries.filter(entry => entry.snapshot).length, 0);
+    await writeFile(path.join(f.root, 'new-head.txt'), 'new file\n');
+    const env = { ...process.env, GIT_AUTHOR_NAME: 'Fixture', GIT_AUTHOR_EMAIL: 'fixture@test.invalid', GIT_COMMITTER_NAME: 'Fixture', GIT_COMMITTER_EMAIL: 'fixture@test.invalid' };
+    execFileSync('git', ['add', 'new-head.txt'], { cwd: f.root, env });
+    execFileSync('git', ['commit', '-qm', 'New HEAD'], { cwd: f.root, env });
+    const sha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: f.root, encoding: 'utf8' }).trim();
+    await atlas.refreshTimeline();
+    await until(() => atlas.evolution?.length === 5 && atlas.getState().timeline.gitChanges?.data?.sha === sha);
+    assert.equal(atlas.getState().timeline.gitTarget, sha);
+    assert.ok([...atlas.previewScene!.nodes.values()].some(node => node.path === 'new-head.txt'), 'new HEAD has a file scene');
+    assert.ok(!api.calls.some(call => call.startsWith('requestIndex')), 'polling never requests snapshots');
+  } finally { atlas.dispose(); localAccess.close(); await f.cleanup(); }
+});
+
 test('opening history compares the live index with its HEAD commit on the timeline layout', async () => {
   const { atlas, location } = await ready();
   assert.equal(atlas.getState().meta?.history.available, true);
-  await atlas.openTimeline();
+  await atlas.openTimeline({ mode: 'architecture' });
   const { timeline, meta } = atlas.getState();
   assert.equal(timeline.status, 'ready');
   assert.equal(timeline.data?.entries.length, 4);
@@ -67,7 +118,7 @@ test('opening history compares the live index with its HEAD commit on the timeli
 });
 test('stepping through commits swaps the scene, follows the baseline and carries the selection through renames', async () => {
   const { atlas } = await ready();
-  await atlas.openTimeline();
+  await atlas.openTimeline({ mode: 'architecture' });
   await atlas.setTarget(snapshotOf('C').id);
   let state = atlas.getState();
   assert.equal(state.timeline.baseline, snapshotOf('B').id, 'baseline follows the previous commit');
@@ -95,7 +146,7 @@ test('stepping through commits swaps the scene, follows the baseline and carries
 });
 test('a pinned baseline stays while the target moves; source diffs and entity history load', async () => {
   const { atlas } = await ready();
-  await atlas.openTimeline();
+  await atlas.openTimeline({ mode: 'architecture' });
   await atlas.setTarget(snapshotOf('B').id);
   await atlas.setBaseline(snapshotOf('A').id);
   assert.equal(atlas.getState().timeline.pinned, true);
@@ -128,7 +179,7 @@ test('deep links open the named commits (pinned when not adjacent) and the selec
 });
 test('rapid scrubbing keeps only the last view', async () => {
   const { atlas, api } = await ready();
-  await atlas.openTimeline();
+  await atlas.openTimeline({ mode: 'architecture' });
   api.delays.set('', 30);
   const pending = [atlas.setTarget(snapshotOf('A').id), atlas.setTarget(snapshotOf('B').id), atlas.setTarget(snapshotOf('C').id)];
   await Promise.all(pending);
@@ -140,7 +191,7 @@ test('rapid scrubbing keeps only the last view', async () => {
 });
 test('the time-lapse shows commits at once while scrubbing and playing, then settles on the real view', async () => {
   const { atlas, api } = await ready();
-  await atlas.openTimeline();
+  await atlas.openTimeline({ mode: 'architecture' });
   await until(() => atlas.getState().timeline.evolution.status === 'ready');
   assert.equal(atlas.evolution?.length, 4);
   // Scrubbing puts the frame on screen without asking the server for a view.
@@ -169,7 +220,7 @@ test('the time-lapse shows commits at once while scrubbing and playing, then set
 });
 test('the split map: the places of a comparison are placed in the scene, and a time-lapse frame is grouped as the server groups it', async () => {
   const { atlas } = await ready();
-  await atlas.openTimeline();
+  await atlas.openTimeline({ mode: 'architecture' });
   await atlas.setTarget(snapshotOf('C').id);
   await until(() => atlas.getState().timeline.regions.status === 'ready');
   const { data } = atlas.getState().timeline.regions;
@@ -234,7 +285,7 @@ test('people: who changed the code, one coloring and one focus at a time, in a w
   // The range of a comparison: only while comparing; C compared with B counts C alone.
   await atlas.setPeopleWindow('range');
   assert.equal(atlas.peopleWindow(), 'all');
-  await atlas.openTimeline();
+  await atlas.openTimeline({ mode: 'architecture' });
   await atlas.setTarget(snapshotOf('C').id);
   // Opening History compared the live index with HEAD first; the view on C follows.
   await until(() => atlas.getState().people.data?.window?.key === 'range' && atlas.getState().people.data?.window?.anchor === fixture.commits.C);

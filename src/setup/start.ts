@@ -47,7 +47,7 @@ export async function startCommand(options: StartOptions): Promise<LocalSession 
       facts = found;
       kind = installKind(tool, found.root);
       const state = readState(found.stateDirectory);
-      if (state.version && state.version !== version) note(w, pretty, `Codiluce was updated (${state.version} → ${version}). History snapshots from the old version are analyzed again in the background (time only, no cost); descriptions are kept.`);
+      if (state.version && state.version !== version) note(w, pretty, `Codiluce was updated (${state.version} → ${version}). Git evolution is reused; architecture snapshots are refreshed when requested.`);
       if (found.full) writeState(found.stateDirectory, { analysisMs: found.durationMs });
       mode = setupMode(found.stateDirectory, terminal.interactive);
       if (mode) {
@@ -65,7 +65,9 @@ export async function startCommand(options: StartOptions): Promise<LocalSession 
       }
       const settings = readRepositorySettings(found.stateDirectory);
       const override = options.history !== undefined ? depthOf(options.history) : undefined;
-      history = override ?? settings.history?.depth ?? (mode === 'quiet' ? 'none' : DEFAULT_HISTORY.depth);
+      // Legacy depth settings must not silently keep rebuilding semantic history.
+      // Bulk work is explicit: --history, or precompute chosen in setup.
+      history = override ?? (settings.history?.precompute ? settings.history.depth : 'none');
       writeState(found.stateDirectory, { version, lastStart: new Date().toISOString() });
       return { historyIndexing: !options.readOnly && (options.historyIndexing || (settings.history?.onDemand ?? DEFAULT_HISTORY.onDemand)) };
     },
@@ -88,7 +90,7 @@ async function background(w: Writer, pretty: boolean, work: BackgroundWork, cont
   // npx keeps the data but not the version: once per version, say how to keep one.
   const state = readState(session.stateDirectory);
   if (context.kind === 'npx' && state.npxHint !== context.version) {
-    note(w, pretty, `Running through npx: your results stay in ${tilde(session.stateDirectory)}, but each new version analyzes history again. To keep one version: npm install --global codiluce`);
+    note(w, pretty, `Running through npx: your Git history and cached architecture snapshots stay in ${tilde(session.stateDirectory)}.`);
     writeState(session.stateDirectory, { npxHint: context.version });
   }
   const tasks: Promise<unknown>[] = [];

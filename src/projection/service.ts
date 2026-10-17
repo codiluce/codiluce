@@ -1588,6 +1588,8 @@ export class ProjectionService {
     if (entry.error) throw new Error(entry.error);
     return entry.result ?? { status: 'computing', progress: entry.job.progress };
   }
+  /** Apply the same map visibility rules to the Git-only file hierarchy. */
+  fileHistoryLayout(index: ProjectionIndex): Map<string, LayoutNode> { return this.visibility.layout(index); }
   /** The time-lapse once computed (for callers that can wait, such as tests). */
   async awaitEvolution(snapshots: string[]): Promise<EvolutionResponse> {
     this.evolution(snapshots);

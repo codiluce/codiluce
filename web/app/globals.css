@@ -1421,3 +1421,11 @@ a.xlink:hover, a.xlink:focus-visible { background: color-mix(in srgb, var(--link
   .agents-expanded .agents-history .journal-columns:not(.has-reader) > .journal-list { flex: 1; }
   .agents-expanded .agents-history .journal-columns:not(.has-reader) > .journal-empty { display: none; }
 }
+
+/* Git history details stay bounded while the file map remains visible. */
+.timeline-file-changes, .timeline-file-diff { padding: 8px 14px; border-top: 1px solid var(--panel-border); max-height: 200px; overflow: auto; }
+.timeline-file-changes summary { cursor: pointer; }
+.timeline-file-changes ul { list-style: none; margin: 8px 0; padding: 0; }
+.timeline-file-changes li { display: flex; align-items: baseline; gap: 8px; padding: 3px 0; }
+.timeline-file-changes .link-button { text-align: left; overflow-wrap: anywhere; }
+.timeline-file-diff pre { font: 11px/1.5 var(--font-mono, ui-monospace, monospace); white-space: pre; }

@@ -6,6 +6,7 @@ import { indexRepository } from '../../src/pipeline/index.js';
 import { GraphStore } from '../../src/storage/sqlite.js';
 import { createHistoryFixture } from '../../tests/history-fixture.js';
 import path from 'node:path';
+import { copyFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 const port = Number(process.env.E2E_HISTORY_PORT ?? 4398);
@@ -14,5 +15,9 @@ const fixture = await createHistoryFixture();
 await indexHistory({ root: fixture.root, stateDirectory: fixture.state, ref: 'main', jobs: 1 });
 const store = new GraphStore(path.join(fixture.state, 'codiluce.db'));
 store.save(await indexRepository(fixture.root, { config: (await revisionConfig(await historyConfig(fixture.root, fixture.state), fixture.root)).config }));
+const freshState = path.join(fixture.state, 'on-demand');
+await mkdir(freshState);
+await copyFile(path.join(fixture.state, 'config.yml'), path.join(freshState, 'config.yml'));
+createInspectionServer(store, { root: fixture.root, stateDirectory: freshState, uiDirectory: ui, historyIndexing: true }).listen(port - 1, '127.0.0.1');
 createInspectionServer(store, { root: fixture.root, stateDirectory: fixture.state, uiDirectory: ui }).listen(port, '127.0.0.1', () => console.log(`e2e history server on ${port}`));
 for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, () => void fixture.cleanup().finally(() => process.exit(0)));

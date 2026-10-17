@@ -7,7 +7,7 @@ import type { ActivitySnapshot } from '@engine/activity/model';
 // compared with). Changing the view swaps in a new scene that is prefetched
 // for the containers currently open, so the camera and the user's place on
 // the map are kept; a view epoch drops responses that belong to an old view.
-import type { MapVisibilityAction } from '@engine/projection/dto';
+import type { GitCommitChanges, GitFileDiff, MapVisibilityAction } from '@engine/projection/dto';
 import type { Entity, Relation } from '@engine/core/graph';
 import type { AggregateEdgesPage, AggregateGroup, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FlowList, FlowSummary, ImpactItem, ImpactResult, LocateResult, NodeSummary, ProjectionMeta, Rect, RelationItem, RequestFlow, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineEntry, TimelineResponse, ViewKey } from '@engine/projection/dto';
 import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, EntityPulls, FamiliesResult, FeaturesResult, FileListResult, FlowStatus, ImpactGroupBy, MetricLens, MetricLensResult, PersonAuthorship, PullDetail, PullsResult } from '@engine/projection/dto';
@@ -61,6 +61,10 @@ export interface SourceState { request: SourceRequest; title: string; status: St
 export interface DiffState { entity: string; title: string; status: Status; data?: SourceDiffResponse; error?: string; ignoreWhitespace: boolean; layout: 'unified' | 'split' }
 export interface TimelineState {
   open: boolean;
+  mode: 'git' | 'architecture';
+  gitTarget?: string;
+  gitChanges?: { status: Status; data?: GitCommitChanges; error?: string };
+  gitDiff?: { path: string; status: Status; data?: GitFileDiff; error?: string };
   status: Status; data?: TimelineResponse; error?: string;
   /** Viewed snapshot; undefined is the live working-tree index. */
   target?: string;
@@ -340,7 +344,7 @@ export function snapshotFromToken(timeline: TimelineResponse | undefined, token:
 export function timelineIndex(timeline: TimelineResponse | undefined, id: string | undefined): number {
   if (!timeline) return -1;
   if (!id || id === timeline.workingTree?.id) return timeline.entries.length;
-  return timeline.entries.findIndex(item => item.snapshot?.id === id);
+  return timeline.entries.findIndex(item => item.snapshot?.id === id || item.sha === id);
 }
 /** The indexed snapshot before `id` on the timeline: the default comparison baseline. */
 export function predecessor(timeline: TimelineResponse | undefined, id: string | undefined): string | undefined {
@@ -354,7 +358,7 @@ export function predecessor(timeline: TimelineResponse | undefined, id: string |
   return undefined;
 }
 export function entryOf(timeline: TimelineResponse | undefined, id: string | undefined): TimelineEntry | undefined {
-  return id ? timeline?.entries.find(item => item.snapshot?.id === id) : undefined;
+  return id ? timeline?.entries.find(item => item.snapshot?.id === id || item.sha === id) : undefined;
 }
 /** Which snapshots a time-lapse covers: the indexed commits of the timeline, in order. */
 /** One piece of an agent's work (hiding it hides only that piece). */
@@ -363,7 +367,7 @@ export function workKey(activity: AgentActivity): string { return `${activity.se
 export function workingAgents(explain: Pick<ExplainState, 'agents' | 'dismissed'>): AgentActivity[] {
   return explain.agents.filter(agent => agent.state === 'working' && agent.work && !explain.dismissed.includes(workKey(agent)));
 }
-function evolutionKey(timeline: TimelineResponse | undefined): string { return (timeline?.entries ?? []).flatMap(entry => entry.snapshot ? [entry.snapshot.id] : []).join(','); }
+function evolutionKey(timeline: TimelineResponse | undefined, mode: 'git' | 'architecture'): string { return `${mode}:` + (timeline?.entries ?? []).flatMap(entry => mode === 'git' ? [entry.sha] : entry.snapshot ? [entry.snapshot.id] : []).join(','); }
 export function isContainer(node: Pick<NodeSummary, 'type' | 'kind'>): boolean {
   return node.kind === 'group' || ['repository', 'application', 'directory'].includes(node.type);
 }
@@ -388,6 +392,7 @@ export class AtlasStore {
   previewScene?: Scene;
   private evolutionLoad?: Promise<boolean>;
   /** Indexed snapshots the loaded time-lapse covers; a different list means it is outdated. */
+  private pendingArchitecture?: string;
   private evolutionKey = '';
   /** Fractional frame position while playing. */
   private playhead = 0;
@@ -417,7 +422,7 @@ export class AtlasStore {
       agents: { connected: false, show: true, now: Date.now() },
       explain: { open: false, list: { status: 'idle' }, lens: prefs.explainLens ?? true, draft: { text: '', context: [], ...(prefs.chatModel ? { model: prefs.chatModel } : {}) }, unseen: [], agents: [], dismissed: [] },
       flowSplit: clampSplit(prefs.flowSplit ?? FLOW_SPLIT), connections: prefs.connections === 'rails' ? 'rails' : 'arcs',
-      timeline: { open: false, status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true, split: prefs.split ?? true, regionLevel: prefs.regionLevel ?? 'auto', regions: { status: 'idle' } },
+      timeline: { open: false, mode: 'git', status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true, split: prefs.split ?? true, regionLevel: prefs.regionLevel ?? 'auto', regions: { status: 'idle' } },
     };
   }
   setActivity(patch: Partial<AtlasState['agents']>): void { this.set({ agents: { ...this.state.agents, ...patch } }); }
@@ -459,8 +464,9 @@ export class AtlasStore {
       const hash = this.openingHash ?? this.options.location?.hash ?? '';
       this.openingHash = undefined;
       const param = (name: string) => { const value = new RegExp(`(?:^#|&)${name}=([^&]+)`).exec(hash)?.[1]; return value ? decodeURIComponent(value) : undefined; };
-      const deepLink = param('id'), at = param('at'), vs = param('vs');
-      if ((at || vs) && meta.history.available) await this.openTimeline({ at, vs, select: deepLink });
+      const deepLink = param('id'), at = param('at'), vs = param('vs'), files = param('files');
+      if (files) await this.openTimeline({ mode: 'git', files });
+      else if ((at || vs) && meta.history.available) await this.openTimeline({ at, vs, select: deepLink });
       else if (deepLink) await this.select(deepLink, { fly: true });
       const impactDepth = Number(param('impact')), impactOf = param('impactOf') ?? (this.state.selection ? deepLink : undefined);
       if (impactOf && Number.isInteger(impactDepth) && impactDepth >= 1 && impactDepth <= 10) void this.showImpact(impactOf, impactDepth);
@@ -532,6 +538,11 @@ export class AtlasStore {
     this.bumpScene();
   }
   async select(id: string, options: { fly?: boolean; recordHistory?: boolean; mode?: 'focus' | 'enter' } = {}): Promise<void> {
+    if (this.state.timeline.open && this.state.timeline.mode === 'git' && this.previewScene) {
+      const node = this.previewScene.nodes.get(id);
+      if (node && options.fly !== false) this.navigator?.flyTo(node, { mode: isContainer(node) ? 'enter' : 'focus' });
+      return;
+    }
     const signal = this.abortable('selection');
     const epoch = this.epoch;
     const known = this.scene.nodes.get(id);
@@ -585,7 +596,8 @@ export class AtlasStore {
     const explain = this.state.explain;
     if (this.state.journal.open.includes('conversations')) { parts.push(`sessions=${encodeURIComponent(this.state.journal.conversationId ?? 'list')}`); if (this.state.journal.messageId) parts.push(`message=${encodeURIComponent(this.state.journal.messageId)}`); }
     if (explain.open) parts.push(`explain=${encodeURIComponent(explain.detail?.id ?? 'list')}`);
-    if (timeline.open) {
+    if (timeline.open && timeline.mode === 'git') parts.push(`files=${timeline.gitTarget?.slice(0, 12) ?? 'latest'}`);
+    if (timeline.open && timeline.mode === 'architecture') {
       const at = snapshotToken(timeline.data, timeline.target) ?? 'live', vs = timeline.compare ? snapshotToken(timeline.data, timeline.baseline ?? timeline.data?.workingTree?.id) : undefined;
       parts.push(`at=${at}`);
       if (vs && timeline.baseline) parts.push(`vs=${vs}`);
@@ -782,7 +794,7 @@ export class AtlasStore {
   /** The snapshot/baseline pair every request reads. */
   viewKey(): ViewKey {
     const timeline = this.state.timeline;
-    if (!timeline.open) return {};
+    if (!timeline.open || timeline.mode === 'git') return {};
     // The live index is named explicitly in history mode, so it is drawn on the timeline layout like every commit.
     const snapshot = timeline.target ?? timeline.data?.workingTree?.id;
     return { ...(snapshot ? { snapshot } : {}), ...(timeline.compare && timeline.baseline ? { compareTo: timeline.baseline } : {}) };
@@ -790,12 +802,25 @@ export class AtlasStore {
   async refreshTimeline(): Promise<TimelineResponse | undefined> {
     try {
       const data = await this.api.timeline();
+      const previousHead = this.state.timeline.data?.entries.at(-1)?.sha;
       this.setTimeline({ data, status: 'ready', error: undefined });
-      if (this.evolution && evolutionKey(data) !== this.evolutionKey) {
-        // Commits were indexed since: rebuild the time-lapse (the server recomputes it for the new list).
-        this.evolution = undefined;
-        this.setTimeline({ evolution: { status: 'idle' } });
-        if (!this.state.timeline.playing) { this.clearPreview(); void this.loadEvolution(); }
+      const requested = data.entries.find(entry => entry.sha === this.pendingArchitecture);
+      if (requested?.snapshot && !requested.snapshot.stale) {
+        this.pendingArchitecture = undefined;
+        await this.openArchitecture(requested.sha);
+      } else if (this.pendingArchitecture && data.indexing.failed.some(item => item.sha === this.pendingArchitecture)) {
+        const failure = data.indexing.failed.find(item => item.sha === this.pendingArchitecture)!;
+        this.pendingArchitecture = undefined;
+        this.setTimeline({ notice: `Architecture analysis failed: ${failure.error}` });
+      }
+      if (this.evolution && evolutionKey(data, this.state.timeline.mode) !== this.evolutionKey) {
+        const timeline = this.state.timeline;
+        const selected = timeline.preview !== undefined ? this.evolution.snapshotAt(timeline.preview) : timeline.gitTarget;
+        this.clearMapEvolution();
+        if (timeline.mode === 'git') {
+          const target = selected === previousHead ? data.entries.at(-1)?.sha : data.entries.find(entry => entry.sha === selected)?.sha ?? data.entries.at(-1)?.sha;
+          void this.setGitTarget(target);
+        } else void this.loadEvolution();
       }
       return data;
     } catch (error) {
@@ -812,10 +837,20 @@ export class AtlasStore {
     this.timelineTimer = setTimeout(() => void this.refreshTimeline(), busy ? 2500 : 30_000);
   }
   /** Open the timeline. Without a deep link the live index is compared with its predecessor (its HEAD commit when indexed). */
-  async openTimeline(options: { at?: string; vs?: string; select?: string } = {}): Promise<void> {
-    this.setTimeline({ open: true, status: 'loading', notice: undefined });
+  async openTimeline(options: { at?: string; vs?: string; select?: string; files?: string; mode?: 'git' | 'architecture' } = {}): Promise<void> {
+    const mode = options.mode ?? (options.at || options.vs ? 'architecture' : 'git');
+    if (mode !== this.state.timeline.mode) this.clearMapEvolution();
+    this.setTimeline({ open: true, mode, status: 'loading', notice: undefined });
     const data = await this.refreshTimeline();
     if (!data) { if (options.select) await this.select(options.select, { fly: true }); return; }
+    if (mode === 'git' && data.fileHistory) {
+      this.clearSelection();
+      this.setTimeline({ compare: false, baseline: undefined, target: undefined });
+      await this.applyView();
+      await this.setGitTarget(data.entries.find(entry => options.files ? entry.sha.startsWith(options.files) : entry.sha === this.state.timeline.gitTarget)?.sha ?? data.entries.at(-1)?.sha);
+      return;
+    }
+    this.setTimeline({ mode: 'architecture' });
     const target = snapshotFromToken(data, options.at);
     const compare = options.at ? !!options.vs : true;
     const baseline = compare ? (options.vs ? snapshotFromToken(data, options.vs) : undefined) ?? predecessor(data, target) : undefined;
@@ -826,12 +861,67 @@ export class AtlasStore {
   }
   async closeTimeline(): Promise<void> {
     if (this.timelineTimer) clearTimeout(this.timelineTimer);
+    this.pendingArchitecture = undefined;
+    this.aborts.get('git-commit')?.abort(); this.aborts.get('git-diff')?.abort();
+    this.clearMapEvolution();
     this.setTimeline({ open: false, notice: undefined, changes: EMPTY_CHANGES, playing: false });
     this.clearPreview();
     await this.applyView();
   }
+  async setHistoryMode(mode: 'git' | 'architecture'): Promise<void> {
+    if (mode !== this.state.timeline.mode) { this.pendingArchitecture = undefined; await this.openTimeline({ mode }); }
+  }
+  /** Browse a Git commit without changing the architecture view or requesting analysis. */
+  async setGitTarget(sha: string | undefined): Promise<void> {
+    if (!sha || this.state.timeline.mode !== 'git') return;
+    if (this.pendingArchitecture !== sha) this.pendingArchitecture = undefined;
+    const fit = !this.previewScene;
+    this.pause(false); this.cancelView();
+    this.setTimeline({ gitTarget: sha, notice: undefined, gitChanges: { status: 'loading' }, gitDiff: undefined });
+    this.writeHash();
+    this.aborts.get('git-diff')?.abort();
+    const signal = this.abortable('git-commit');
+    const detail = this.api.gitCommit(sha, signal).then(data => {
+      if (!signal.aborted && this.state.timeline.open && this.state.timeline.mode === 'git') this.setTimeline({ gitChanges: { status: 'ready', data } });
+    }).catch(error => { if (!isAbort(error)) this.setTimeline({ gitChanges: { status: 'error', error: error instanceof Error ? error.message : String(error) } }); });
+    if (await this.loadEvolution() && this.state.timeline.open && this.state.timeline.mode === 'git' && this.state.timeline.gitTarget === sha) {
+      const frame = this.evolution?.frameOf(sha);
+      if (frame !== undefined) {
+        this.previewFrame(frame);
+        const root = this.previewScene?.nodes.get(this.previewScene.rootId ?? '');
+        if (fit && root) this.navigator?.fitNodes([root]);
+      }
+    }
+    await detail;
+  }
+  async openGitDiff(path: string): Promise<void> {
+    const sha = this.state.timeline.gitTarget;
+    if (!sha) return;
+    const signal = this.abortable('git-diff');
+    this.setTimeline({ gitDiff: { path, status: 'loading' } });
+    try {
+      const data = await this.api.gitDiff(sha, path, signal);
+      if (!signal.aborted) this.setTimeline({ gitDiff: { path, status: 'ready', data } });
+    } catch (error) { if (!isAbort(error)) this.setTimeline({ gitDiff: { path, status: 'error', error: error instanceof Error ? error.message : String(error) } }); }
+  }
+  /** Generate just this commit when needed, then open the cached semantic view. */
+  async openArchitecture(sha: string): Promise<void> {
+    const entry = this.state.timeline.data?.entries.find(item => item.sha === sha);
+    if (!entry) return;
+    if (entry.snapshot && !entry.snapshot.stale) {
+      this.clearMapEvolution();
+      this.setTimeline({ mode: 'architecture', compare: false, baseline: undefined, target: entry.snapshot.id, notice: undefined });
+      await this.applyView();
+      this.navigator?.fitAll();
+      void this.loadEvolution();
+    } else {
+      this.pendingArchitecture = sha;
+      await this.indexCommit(sha);
+    }
+  }
   /** View another snapshot (undefined: the live index). The baseline follows unless pinned. */
   async setTarget(id: string | undefined): Promise<void> {
+    if (this.state.timeline.mode === 'git') { this.clearMapEvolution(); this.setTimeline({ mode: 'architecture' }); }
     if (this.state.timeline.playing) this.setTimeline({ playing: false });
     const timeline = this.state.timeline;
     // The time-lapse frame of that commit shows at once (it compares with the previous commit, as this view will).
@@ -857,6 +947,13 @@ export class AtlasStore {
   }
   /** Move the viewed snapshot to the previous/next indexed commit (the live index is after the last commit). */
   async stepTarget(delta: -1 | 1): Promise<void> {
+    if (this.state.timeline.mode === 'git') {
+      const entries = this.state.timeline.data?.entries ?? [];
+      const current = this.state.timeline.preview !== undefined && this.evolution ? this.evolution.snapshotAt(this.state.timeline.preview) : this.state.timeline.gitTarget;
+      const index = entries.findIndex(entry => entry.sha === current);
+      await this.setGitTarget(entries[Math.max(0, Math.min(entries.length - 1, index + delta))]?.sha);
+      return;
+    }
     const timeline = this.state.timeline, data = timeline.data;
     if (!data) return;
     // From the frame on screen when scrubbing or playing.
@@ -901,7 +998,7 @@ export class AtlasStore {
   /** Ask the server to analyze a timeline commit that has no snapshot yet. */
   async indexCommit(sha: string): Promise<void> {
     try { await this.api.requestIndex(sha); this.setTimeline({ notice: undefined }); await this.refreshTimeline(); }
-    catch (error) { this.setTimeline({ notice: error instanceof Error ? error.message : String(error) }); }
+    catch (error) { this.pendingArchitecture = undefined; this.setTimeline({ notice: error instanceof Error ? error.message : String(error) }); }
   }
 
   // Time-lapse ----------------------------------------------------------------
@@ -909,12 +1006,12 @@ export class AtlasStore {
   loadEvolution(): Promise<boolean> {
     if (this.evolution) return Promise.resolve(true);
     this.evolutionLoad ??= (async () => {
-      const key = evolutionKey(this.state.timeline.data);
+      const key = evolutionKey(this.state.timeline.data, this.state.timeline.mode);
       this.setTimeline({ evolution: { status: 'loading', progress: 0 } });
       const signal = this.abortable('evolution');
       try {
         for (;;) {
-          const response = await this.api.evolution(signal);
+          const response = await this.api.evolution(signal, this.state.timeline.mode);
           if (signal.aborted || this.disposed) return false;
           if (response.status === 'ready') {
             this.evolution = new Evolution(response); this.evolutionKey = key;
@@ -936,10 +1033,10 @@ export class AtlasStore {
     const evolution = this.evolution;
     if (!evolution || !evolution.length) return;
     const index = Math.max(0, Math.min(evolution.length - 1, Math.round(frame)));
-    const ghosts = this.state.timeline.compare;
+    const ghosts = this.state.timeline.mode === 'git' || this.state.timeline.compare;
     if (this.state.timeline.preview === index && this.previewScene?.frame === index) return;
     this.previewScene = evolution.scene(index, { ghosts });
-    this.set(state => ({ sceneRevision: state.sceneRevision + 1, timeline: { ...state.timeline, preview: index } }));
+    this.set(state => ({ sceneRevision: state.sceneRevision + 1, timeline: { ...state.timeline, preview: index, ...(state.timeline.mode === 'git' ? { gitDiff: undefined } : {}) } }));
   }
   private clearPreview(): void {
     if (!this.previewScene && this.state.timeline.preview === undefined) return;
@@ -965,6 +1062,7 @@ export class AtlasStore {
   async settle(): Promise<void> {
     const preview = this.state.timeline.preview;
     if (preview === undefined || !this.evolution) return;
+    if (this.state.timeline.mode === 'git') { await this.setGitTarget(this.evolution.snapshotAt(preview)); return; }
     await this.setTarget(this.evolution.snapshotAt(preview));
   }
   /** Play the history from the frame on screen (from the first commit when at the end). */
@@ -972,7 +1070,7 @@ export class AtlasStore {
     if (this.state.timeline.playing || !this.state.timeline.open) return;
     if (!await this.loadEvolution() || !this.state.timeline.open) return;
     const evolution = this.evolution!;
-    let frame = this.state.timeline.preview ?? evolution.frameOf(this.state.timeline.target) ?? evolution.length - 1;
+    let frame = this.state.timeline.preview ?? evolution.frameOf(this.state.timeline.mode === 'git' ? this.state.timeline.gitTarget : this.state.timeline.target) ?? evolution.length - 1;
     if (frame >= evolution.length - 1) frame = 0;
     this.cancelView();
     this.playhead = frame;

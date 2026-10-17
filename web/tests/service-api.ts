@@ -51,9 +51,12 @@ export class ServiceApi implements AtlasApi {
   sourceDiff(entity: string, options: { ignoreWhitespace?: boolean }, signal?: AbortSignal) { return this.run('sourceDiff', entity, signal, () => this.projection.sourceDiff(entity, this.options.maxFileBytes ?? 1024 * 1024, this.view, options)); }
   requestIndex(sha: string) { return this.run('requestIndex', sha, undefined, () => { if (!this.options.history) throw new Error('No history'); return this.options.history.request(sha); }); }
   /** Waits for the time-lapse instead of reporting progress. */
-  evolution(signal?: AbortSignal) {
+  gitCommit(sha: string, signal?: AbortSignal) { return this.run('gitCommit', sha, signal, () => this.options.history!.commitFiles(sha)); }
+  gitDiff(sha: string, path: string, signal?: AbortSignal) { return this.run('gitDiff', sha, signal, () => this.options.history!.commitDiff(sha, path)); }
+  evolution(signal?: AbortSignal, mode?: 'git' | 'architecture') {
     return this.run('evolution', '', signal, async () => {
       if (!this.options.history) throw new Error('No history');
+      if (mode === 'git') return this.options.history.gitEvolution();
       const timeline = await this.options.history.timeline();
       return this.projection.awaitEvolution(timeline.entries.flatMap(entry => entry.snapshot ? [entry.snapshot.id] : []));
     });

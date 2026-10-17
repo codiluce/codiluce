@@ -202,7 +202,7 @@ test('setup asks the questions, saves the answers where they belong, and connect
   assert.equal(setupMode(state, true, env), 'ask');
   assert.equal(setupMode(state, false, env), 'quiet');
   const { terminal, output } = scriptedTerminal([
-    [/History/, `${DOWN}${ENTER}`],                 // None
+    [/History/, ENTER],                             // Git evolution, architecture on demand
     [/Language models/, ENTER],                    // no provider
     [/Connect your agent/, `${SPACE}${ENTER}`],     // all three were selected; drop Claude Code
     [/In a new repository/, `${DOWN}${ENTER}`],     // use these answers

@@ -187,7 +187,7 @@ function Shell() {
             <button className="icon-button" onClick={() => void store.forward()} disabled={history.index >= history.entries.length - 1} aria-label="Forward" title="Forward (Alt+→)">→</button>
           </div>
           <div className="top-action-group" role="group" aria-label="Timeline" title="Opens the history timeline below the map">
-            <button className="button" onClick={() => void (timelineOpen ? store.closeTimeline() : store.openTimeline())} aria-pressed={timelineOpen} title={meta?.history.available ? `Browse ${meta.history.snapshots} indexed commits` : 'No history indexed yet'}>History</button>
+            <button className="button" onClick={() => void (timelineOpen ? store.closeTimeline() : store.openTimeline())} aria-pressed={timelineOpen} title="Browse Git file evolution; explore architecture snapshots on demand">History</button>
           </div>
           <div className="top-action-group" role="group" aria-label="Sidebar panels" title="Opens in the left sidebar">
             {features > 0 && <button className="button" onClick={() => showLeft('features')} aria-pressed={leftOpen && leftTab === 'features'} aria-controls="left-panel" title={`The ${features} features of the product, as the model described them: select one to light its files and see its flows`}>Features</button>}

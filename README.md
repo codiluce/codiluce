@@ -51,9 +51,8 @@ npx codiluce@latest start .
 
 Codiluce indexes the code, starts a local server and opens the map in your browser. You need Node.js 22.12 or newer.
 
-The first time, it asks a few questions in the terminal, with real estimates: how much Git history to index (in the
-background, while you use the map), which API keys to use for the optional language-model features, and which
-coding agents to connect. Enter keeps the defaults; `codiluce setup` asks again. The analysis lives in `.codiluce/`,
+The first time, it asks whether to precompute architecture snapshots (optional; Git file evolution is available
+immediately), which API keys to use for the optional language-model features, and which coding agents to connect. Enter keeps the defaults; `codiluce setup` asks again. The analysis lives in `.codiluce/`,
 which hides itself from Git.
 
 Want it always at hand? Run `npm install --global codiluce`, then `codiluce start .` in any repository.
@@ -132,8 +131,9 @@ is available. Rebuilding the code index does not erase imported history.
   sized by their code, each file drawn as the shape of its kind.
 - **Follow a flow end to end.** From a page or a command, through the request, to the handler and the tables it reads
   and writes.
-- **Replay your Git history.** Every commit becomes a snapshot. Compare any two, or watch the architecture change as a
-  time-lapse.
+- **Replay your Git history.** Browse and play file additions, edits, moves and deletions directly from Git, with source
+  diffs and author activity. Generate a full architecture snapshot for a selected commit when needed, then compare
+  cached snapshots. Bulk snapshot generation is optional.
 - **See the blast radius.** Pick anything, or your uncommitted changes, and see what depends on it, hop by hop.
 - **Review pull requests on the map.** Open and merged pull requests, and branches not merged yet, light the files they
   change, with their commits, people and blast radius.

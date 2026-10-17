@@ -74,7 +74,8 @@ export async function runSetup(w: Writer, context: SetupContext, options: { mode
     w.write(`${c.dim(w.s.start)}  ${c.bold(`Set up Codiluce for ${context.repositoryName}`)}`);
     w.note('Enter keeps the default. Change any of this later with codiluce setup.');
     w.rail();
-    history = { ...history, depth: await askHistory(w, git, context.analysisMs, history.depth) };
+    const depth = await askHistory(w, git, context.analysisMs, history.precompute ? history.depth : 'none');
+    history = { ...history, depth, ...(depth !== 'none' ? { precompute: true } : history.precompute !== undefined ? { precompute: false } : {}) };
     const keys = await askKeys(w, files, env);
     result.keys = keys.saved;
     if (keys.openai) {
@@ -88,7 +89,7 @@ export async function runSetup(w: Writer, context: SetupContext, options: { mode
       choices: [{ value: 'ask', label: 'Ask me again', hint: 'these questions, on its first start' }, { value: 'reuse', label: 'Use these answers', hint: 'and do not ask' }],
       initial: user.askOnFirstRun === false ? 'reuse' : 'ask',
     });
-    writeUserSettings({ defaults: { history: { depth: history.depth, onDemand: history.onDemand }, annotations: { enabled: annotations.enabled, maxCost: annotations.maxCost } }, askOnFirstRun: defaults === 'ask' }, env);
+    writeUserSettings({ defaults: { history: { ...history }, annotations: { enabled: annotations.enabled, maxCost: annotations.maxCost } }, askOnFirstRun: defaults === 'ask' }, env);
   }
   result.settings = { history, annotations };
   // Without a terminal, nothing is decided for the user: saved choices stay, and the setup stays due.
@@ -108,12 +109,12 @@ async function askHistory(w: Writer, git: GitFacts, analysisMs: number | undefin
   const count = (commits: number) => `${commits.toLocaleString('en-US')} commit${commits === 1 ? '' : 's'}`;
   const last = Math.min(50, git.commits);
   const choices: Choice<HistoryDepth>[] = [
+    { value: 'none', label: 'Git evolution; architecture on demand', hint: 'recommended · no full analysis per commit' },
     { value: 50, label: `Last ${last} commit${last === 1 ? '' : 's'}`, hint: time(last) },
     ...(git.recent > last && git.recent < git.commits ? [{ value: git.recentSince, label: 'Last 6 months', hint: [count(git.recent), time(git.recent)].filter(Boolean).join(' · ') }] : []),
     ...(git.commits > last ? [{ value: 'all', label: `All ${count(git.commits)}`, hint: time(git.commits) }] : []),
-    { value: 'none', label: 'None', hint: 'a commit is still indexed when you open it' },
   ];
-  const detail = `${git.branch ?? 'This branch'} has ${count(git.commits)}.${per ? ` Each takes about ${Math.max(1, Math.round(per / 1000))} s to analyze, ${JOBS} at a time,` : ' They are analyzed'} in the background while you use the map. Then the timeline replays the architecture, compares any two commits, and shows who changed what.`;
+  const detail = `${git.branch ?? 'This branch'} has ${count(git.commits)}. File evolution comes directly from Git. Full architecture snapshots are generated when requested. Optionally precompute snapshots in the background${per ? ` (about ${Math.max(1, Math.round(per / 1000))} s per commit, ${JOBS} at a time)` : ''}.`;
   const initialValue = choices.some(choice => choice.value === initial) ? initial : typeof initial === 'number' ? 50 : initial;
   return select<HistoryDepth>(w, { message: 'History', detail, choices, initial: initialValue });
 }
@@ -235,7 +236,7 @@ export function printSummary(w: Writer, result: SetupResult, context: SetupConte
   const { c } = w;
   const depth = result.settings.history.depth;
   const commits = result.git.commits;
-  const historyText = depth === 'none' ? 'not indexed; a commit is indexed when you open it'
+  const historyText = depth === 'none' ? 'Git file evolution; architecture snapshots on demand'
     : depth === 'all' || (typeof depth === 'number' && commits && commits <= depth) ? `all ${commits.toLocaleString('en-US')} commits, in the background`
       : typeof depth === 'number' ? `the last ${depth} commits, in the background` : `commits since ${depth}, in the background`;
   const inside = path.relative(context.root, context.stateDirectory);

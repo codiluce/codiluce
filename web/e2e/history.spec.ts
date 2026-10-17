@@ -15,6 +15,38 @@ const timeline = (page: Page) => page.getByRole('region', { name: 'History' });
 /** World-space origins of what is on screen: containers resize with their content, but nothing moves. */
 const positions = (page: Page) => page.evaluate(() => Object.fromEntries(window.__CODILUCE__!.visibleIds().map(id => [id, window.__CODILUCE__!.rectOf(id)])));
 
+test('Git history browses and plays with no snapshots, then generates only the requested architecture', async ({ page }) => {
+  const fresh = `http://127.0.0.1:${Number(process.env.E2E_HISTORY_PORT ?? 4398) - 1}`;
+  let indexingRequests = 0;
+  page.on('request', request => { if (request.method() === 'POST' && request.url().endsWith('/api/history/index')) indexingRequests++; });
+  await page.goto(fresh);
+  await page.getByRole('button', { name: 'History', exact: true }).click();
+  await expect(timeline(page)).toContainText('Git file evolution');
+  await expect(timeline(page)).toContainText('4 commits');
+  const slider = page.getByRole('slider', { name: /Commit timeline/ });
+  await slider.focus(); await page.keyboard.press('ArrowLeft'); await page.keyboard.press('ArrowLeft');
+  await expect(timeline(page)).toContainText('Edit login, add signup');
+  await timeline(page).getByText('changed files', { exact: false }).last().click();
+  await timeline(page).getByRole('button', { name: 'frontend/src/components/LoginForm.tsx', exact: true }).click();
+  await expect(page.getByLabel('Git source diff')).toContainText('+  const body = email.trim();');
+  expect(indexingRequests).toBe(0);
+  const before = await (await page.request.get(`${fresh}/api/history`)).json();
+  expect(before.entries.every((entry: { snapshot?: unknown }) => !entry.snapshot)).toBeTruthy();
+  await page.getByRole('button', { name: 'Play the history as a time-lapse' }).click();
+  await expect(page.getByRole('button', { name: 'Pause the time-lapse' })).toBeVisible();
+  await page.getByRole('button', { name: 'Pause the time-lapse' }).click();
+  await expect(page.getByRole('button', { name: 'Generate architecture snapshot' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Generate architecture snapshot' }).click();
+  await expect(page.getByRole('button', { name: 'Snapshot', exact: true })).toBeVisible({ timeout: 25_000 });
+  expect(indexingRequests).toBe(1);
+  const after = await (await page.request.get(`${fresh}/api/history`)).json();
+  expect(after.entries.filter((entry: { snapshot?: unknown }) => entry.snapshot)).toHaveLength(1);
+  await page.getByRole('button', { name: 'File evolution', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Explore architecture', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Explore architecture', exact: true }).click();
+  expect(indexingRequests).toBe(1);
+});
+
 test('Flows stays responsive when entering, stepping and leaving indexed history', async ({ page }) => {
   await open(page);
   await page.getByRole('button', { name: 'Flows', exact: true }).click();
@@ -23,6 +55,7 @@ test('Flows stays responsive when entering, stepping and leaving indexed history
   const rows = panel.locator('.rf-row');
   await expect(rows.first()).toBeVisible();
   await page.getByRole('button', { name: 'History', exact: true }).click();
+  await page.getByRole('button', { name: 'Architecture comparisons', exact: true }).click();
   await expect(timeline(page)).toContainText('4 commits, 4 indexed');
   await page.getByRole('slider', { name: /Commit timeline/ }).focus();
   await page.keyboard.press('ArrowLeft');
@@ -38,6 +71,7 @@ test('Flows stays responsive when entering, stepping and leaving indexed history
 test('the timeline steps through commits without moving the map, and shows what changed', async ({ page }) => {
   await open(page);
   await page.getByRole('button', { name: 'History' }).click();
+  await page.getByRole('button', { name: 'Architecture comparisons', exact: true }).click();
   await expect(timeline(page)).toContainText('4 commits, 4 indexed');
   await expect(timeline(page)).toContainText('Working tree');
   const slider = page.getByRole('slider', { name: /Commit timeline/ });
@@ -67,6 +101,7 @@ test('the timeline steps through commits without moving the map, and shows what 
 test('a modified symbol opens a line diff between the two commits', async ({ page }) => {
   await open(page);
   await page.getByRole('button', { name: 'History' }).click();
+  await page.getByRole('button', { name: 'Architecture comparisons', exact: true }).click();
   const slider = page.getByRole('slider', { name: /Commit timeline/ });
   await slider.focus();
   for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowLeft');
@@ -86,6 +121,7 @@ test('a modified symbol opens a line diff between the two commits', async ({ pag
 test('dragging the timeline shows each commit at once, and play runs through the history', async ({ page }) => {
   await open(page);
   await page.getByRole('button', { name: 'History' }).click();
+  await page.getByRole('button', { name: 'Architecture comparisons', exact: true }).click();
   await expect(page.locator('.play-button')).not.toHaveClass(/preparing/);
   const slider = page.getByRole('slider', { name: /Commit timeline/ });
   const box = (await slider.boundingBox())!;
@@ -109,6 +145,7 @@ test('dragging the timeline shows each commit at once, and play runs through the
 test('comparing splits the map: an overview of the whole repository and a view on each place that changed', async ({ page }) => {
   await open(page);
   await page.getByRole('button', { name: 'History' }).click();
+  await page.getByRole('button', { name: 'Architecture comparisons', exact: true }).click();
   const slider = page.getByRole('slider', { name: /Commit timeline/ });
   await slider.focus();
   for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowLeft');

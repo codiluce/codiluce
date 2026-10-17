@@ -3,7 +3,7 @@
 // be aborted by callers and aborted requests are never cached.
 import type { MapVisibilityAction, MapVisibilityState } from '@engine/projection/dto';
 import type { Entity, Relation } from '@engine/core/graph';
-import type { EvolutionResponse } from '@engine/projection/dto';
+import type { EvolutionResponse, GitCommitChanges, GitFileDiff } from '@engine/projection/dto';
 import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, EntityPulls, MetricLens, MetricLensResult, PersonAuthorship, PullDetail, PullsResult } from '@engine/projection/dto';
 import type { AggregateEdgesPage, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageExport, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FamiliesResult, FeaturesResult, FileListResult, FlowList, ImpactGroupBy, ImpactResult, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
 
@@ -39,7 +39,9 @@ export interface AtlasApi {
   regions(level: RegionLevel, signal?: AbortSignal): Promise<ChangeRegionsResult>;
   entityHistory(id: string, signal?: AbortSignal): Promise<EntityHistoryResponse>;
   /** The history time-lapse (status `computing` with progress until the server has built it). */
-  evolution(signal?: AbortSignal): Promise<EvolutionResponse>;
+  evolution(signal?: AbortSignal, mode?: 'git' | 'architecture'): Promise<EvolutionResponse>;
+  gitCommit(sha: string, signal?: AbortSignal): Promise<GitCommitChanges>;
+  gitDiff(sha: string, path: string, signal?: AbortSignal): Promise<GitFileDiff>;
   sourceDiff(entity: string, options: { ignoreWhitespace?: boolean }, signal?: AbortSignal): Promise<SourceDiffResponse>;
   requestIndex(sha: string): Promise<{ queued: boolean; position: number }>;
   /** Blast radius of an entity; `comparison` asks for what the viewed comparison's changes reach. */
@@ -156,7 +158,9 @@ export class HttpAtlasApi implements AtlasApi {
   regions(level: RegionLevel, signal?: AbortSignal) { return this.get<ChangeRegionsResult>(`/api/history/regions${this.q({ level })}`, signal); }
   change(id: string, signal?: AbortSignal) { return this.get<EntityChangeDetail>(`/api/history/change/${encodeURIComponent(id)}${this.q()}`, signal); }
   entityHistory(id: string, signal?: AbortSignal) { return this.get<EntityHistoryResponse>(`/api/history/entity/${encodeURIComponent(id)}`, signal, false); }
-  evolution(signal?: AbortSignal) { return this.get<EvolutionResponse>('/api/history/evolution', signal, false); }
+  evolution(signal?: AbortSignal, mode?: 'git' | 'architecture') { return this.get<EvolutionResponse>(`/api/history/evolution${mode ? `?mode=${mode}` : ''}`, signal, false); }
+  gitCommit(sha: string, signal?: AbortSignal) { return this.get<GitCommitChanges>(`/api/history/git-commit?sha=${encodeURIComponent(sha)}`, signal, false); }
+  gitDiff(sha: string, path: string, signal?: AbortSignal) { return this.get<GitFileDiff>(`/api/history/git-diff?sha=${encodeURIComponent(sha)}&path=${encodeURIComponent(path)}`, signal, false); }
   sourceDiff(entity: string, options: { ignoreWhitespace?: boolean }, signal?: AbortSignal) { return this.get<SourceDiffResponse>(`/api/source/diff${this.q({ entity, whitespace: options.ignoreWhitespace ? 'ignore' : undefined })}`, signal); }
   impact(id: string | { comparison: true } | { working: true } | { pull: string; window: AuthorshipWindowKey }, options: ImpactOptions, signal?: AbortSignal) {
     const params = { depth: options.depth, type: options.type, distance: options.distance, offset: options.offset ?? 0, limit: options.limit ?? 100, group: options.group, groupKey: options.groupKey };

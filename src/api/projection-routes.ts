@@ -43,7 +43,7 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
   const { projection } = context;
   try {
     const view = viewParams(params);
-    if (pathname !== '/api/history' && pathname !== '/api/projection/map-visibility') await projection.prepare(view);
+    if (!['/api/history', '/api/history/git-commit', '/api/history/git-diff', '/api/projection/map-visibility'].includes(pathname)) await projection.prepare(view);
     let result: unknown;
     let match: RegExpExecArray | null;
     if (pathname === '/api/projection/map-visibility') result = projection.mapVisibility();
@@ -105,6 +105,12 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
     } else if (pathname === '/api/history') {
       if (!context.history) throw new SourceError(503, 'History is unavailable');
       result = projection.annotateTimeline(await context.history.timeline(text(params, 'ref')));
+    } else if (pathname === '/api/history/git-commit') {
+      if (!context.history) throw new SourceError(503, 'History is unavailable');
+      result = await context.history.commitFiles(params.get('sha') ?? '', text(params, 'ref'));
+    } else if (pathname === '/api/history/git-diff') {
+      if (!context.history) throw new SourceError(503, 'History is unavailable');
+      result = await context.history.commitDiff(params.get('sha') ?? '', params.get('path') ?? '', text(params, 'ref'));
     } else if (pathname === '/api/history/changes') result = projection.changes(view, { ...page, status: text(params, 'status'), type: text(params, 'type') });
     else if (pathname === '/api/history/regions') result = projection.regions(view, { level: text(params, 'level') });
     else if ((match = new RegExp(`^/api/history/change/${ID}$`).exec(pathname))) result = projection.change(decodeURIComponent(match[1]!), view);
@@ -130,7 +136,11 @@ async function evolutionRoute(context: ProjectionContext, params: URLSearchParam
   try {
     if (!context.history) throw new SourceError(503, 'History is unavailable');
     const timeline = await context.history.timeline(text(params, 'ref'));
-    const result = context.projection.evolution(timeline.entries.flatMap(entry => entry.snapshot ? [entry.snapshot.id] : []));
+    const mode = text(params, 'mode');
+    if (mode !== undefined && mode !== 'git' && mode !== 'architecture') throw new Error('mode must be git or architecture');
+    const result = mode === 'git'
+      ? await context.history.gitEvolution(text(params, 'ref'), index => context.projection.fileHistoryLayout(index), context.projection.mapVisibility().revision)
+      : context.projection.evolution(timeline.entries.flatMap(entry => entry.snapshot ? [entry.snapshot.id] : []));
     if (result.status === 'computing') { response.writeHead(202).end(JSON.stringify(result)); return true; }
     let encoded = encodedEvolution.get(result);
     if (!encoded) { const json = JSON.stringify(result); encoded = { json, gzip: await gzipAsync(json) }; encodedEvolution.set(result, encoded); }

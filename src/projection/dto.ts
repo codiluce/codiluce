@@ -145,6 +145,8 @@ export interface TimelineEntry {
   sha: string; parents: string[]; authorName: string; authoredAt: string; committedAt: string; subject: string;
   merge: boolean; pullRequest?: PullRequestRef;
   snapshot?: { id: string; stale: boolean; stats: SnapshotStats };
+  /** File changes from Git, independent of semantic architecture snapshots. */
+  files?: GitChangeSummary;
   /** Language-model explanation of the commit (`annotate`), from its message and indexed changes. */
   note?: CommitNote;
 }
@@ -159,14 +161,25 @@ export interface TimelineResponse {
   workingTree?: SnapshotRef & { stats: { entities: number } };
   indexing: { enabled: boolean; active?: string; queued: string[]; failed: { sha: string; error: string }[] };
   chapters?: HistoryChapter[];
+  fileHistory?: { truncated: boolean };
 }
+export interface GitFileChange {
+  path: string; from?: string; status: 'added' | 'modified' | 'removed' | 'moved';
+  added: number; deleted: number; binary: boolean;
+  /** Git object and mode after the change, for reconstructing file history without parsing source. */
+  blob: string; mode: string;
+}
+export interface GitChangeSummary { files: number; added: number; modified: number; removed: number; moved: number; insertions: number; deletions: number; binary: number }
+export interface GitCommitChanges { sha: string; files: GitFileChange[]; summary: GitChangeSummary }
+export interface GitFileDiff { patch: string; unavailable?: string }
 export interface EntityHistoryPoint { sha: string; snapshotId: string; status: 'introduced' | 'modified' | 'moved' | 'removed' | 'reintroduced'; name: string; path?: string }
 export interface EntityHistoryResponse { id: string; points: EntityHistoryPoint[]; indexedSnapshots: number; present: number }
 /** A node of the time-lapse: everything that exists in some frame. */
 /** `archetype`: the kind of building block where the node first appears (its shape in the time-lapse). */
 export interface EvolutionNode { id: string; kind: 'entity' | 'group'; type: string; name: string; detail?: string; language?: string; path?: string; archetype?: Archetype }
 /**
- * One indexed commit of the time-lapse, as a change to the frame before it (the first: to an empty map).
+ * One commit of the time-lapse, as a change to the frame before it (the first: to an empty map).
+ * `snapshot` is a semantic snapshot ID in architecture mode, or a commit SHA in Git file mode.
  * `set`: nodes that appear, or whose parent, rectangle or measured lines changed: [node, parent (-1: none), x, y, w, h, loc (-1: not measured)].
  * `drop`: nodes no longer drawn. `changes`: entities changed since the previous frame: [node, 1 added | 2 modified | 3 moved | 4 removed (a ghost for one frame)].
  */

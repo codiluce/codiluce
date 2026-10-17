@@ -1,13 +1,15 @@
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { after, test } from 'node:test';
+import { after, mock, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { launchLocal, listenLocally, prepareVisualizer } from '../src/launcher.js';
+import { startCommand } from '../src/setup/start.js';
+import { BackgroundWork } from '../src/setup/background.js';
 
 const temporary: string[] = [];
 after(async () => { for (const directory of temporary) await rm(directory, { recursive: true, force: true }); });
@@ -28,6 +30,26 @@ async function shutdown(server: Server): Promise<void> {
   const done = once(server, 'close'); server.close(); server.closeAllConnections(); await done;
 }
 const quiet = () => undefined;
+
+test('start with legacy depth settings serves Git history without launching bulk snapshot analysis', async () => {
+  const { root, ui } = await fixture();
+  const env = { ...process.env, GIT_AUTHOR_NAME: 'Fixture', GIT_AUTHOR_EMAIL: 'fixture@test.invalid', GIT_COMMITTER_NAME: 'Fixture', GIT_COMMITTER_EMAIL: 'fixture@test.invalid' };
+  for (const args of [['init', '-qb', 'main'], ['add', '-A'], ['commit', '-qm', 'Initial']]) execFileSync('git', args, { cwd: root, env });
+  const stateDirectory = await directory();
+  await writeFile(path.join(stateDirectory, 'config.yml'), 'repository:\n  name: fixture\nhistory:\n  depth: 50\n  onDemand: true\n');
+  await writeFile(path.join(stateDirectory, 'state.json'), JSON.stringify({ setup: 1 }));
+  const bulk = mock.method(BackgroundWork.prototype, 'history', async () => ({ indexed: 0, skipped: 0, failed: 0 }));
+  const session = await startCommand({ repo: root, stateDirectory, uiDirectory: ui, port: 0, open: false, yes: true });
+  try {
+    const timeline = await (await fetch(`${session.url}api/history`)).json() as { available: boolean; entries: { snapshot?: unknown }[] };
+    await new Promise(resolve => setTimeout(resolve, 100));
+    assert.equal(timeline.available, true);
+    assert.equal(timeline.entries.length, 1);
+    assert.equal(timeline.entries[0]!.snapshot, undefined);
+    assert.equal(bulk.mock.callCount(), 0);
+    await assert.rejects(readFile(path.join(stateDirectory, 'history.db')));
+  } finally { await session.close(); bulk.mock.restore(); }
+});
 
 test('launch indexes an uninitialized repository and serves its map, API and source together', async () => {
   const { root, ui } = await fixture();

@@ -238,6 +238,31 @@ References: [TypeScript compiler API](https://github.com/microsoft/TypeScript/wi
 
 ## 13. History
 
+The timeline defaults to **Git file evolution**: first-parent additions, modifications, renames, deletions and
+line counts are read with Git raw/numstat output, without materializing source or invoking analyzers.
+`src/history/file-history.ts` caches commit deltas in `<state>/git-file-history.json`; advancing HEAD reads only
+missing commits. Rewritten history/branch switches reuse only matching SHAs. Binary files retain their change
+status without invented line counts. Merge changes are compared with the first parent.
+
+File playback reconstructs tracked regular files and directories from these deltas, seeding bounded windows from
+the preceding Git tree. It uses a separate timeline layout with uniform file footprints: it does not claim historical
+symbols, dependencies or semantic measurements. Source patches are available on request, bounded by file/display
+limits, without target diff helpers or textconv. Git data works before `history.db` exists. At most the latest 5,000
+commits appear; the UI discloses truncation. Map visibility and indexing ignores apply to file playback.
+
+**Generate architecture snapshot** analyzes only the selected commit, caches it, then opens the complete graph.
+Comparisons can use two cached endpoint snapshots without analyzing intermediate commits. Existing architecture
+playback/comparisons remain available explicitly. `start` no longer rebuilds historical snapshots by default,
+including repositories with legacy `history.depth` settings. Bulk work requires `start --history DEPTH`,
+`history index`, or `history: { precompute: true, depth: 50, onDemand: true }` chosen through setup.
+`serve --history-indexing` opts into on-demand generation; `start` enables it by default unless configured off.
+Read-only serving never writes the Git delta cache or generates snapshots.
+
+`/api/history` includes Git change summaries alongside optional semantic snapshots;
+`/api/history/git-commit?sha=SHA` supplies changed files and `/api/history/git-diff?sha=SHA&path=PATH`
+reads a source patch. `/api/history/evolution?mode=git` supplies file playback; `mode=architecture` supplies
+semantic playback (the omitted mode retains the earlier API behavior).
+
 ```text
 Git commits (+ optional GitHub PR records)
       ↓  history index: materialize each commit from Git objects, run the same analyzers

@@ -47,7 +47,7 @@ export function evolutionChange(before: SnapshotEntity, after: SnapshotEntity, p
 }
 
 /** Frames for `snapshots` (timeline order, oldest first). Undefined when cancelled. */
-export async function computeEvolution(history: HistoryStore, snapshots: SnapshotRecord[], placement: TimelinePlacement, job: EvolutionJob = { cancelled: false, progress: 0 }, mapNodes: (index: ProjectionIndex) => Map<string, LayoutNode> = index => index.layoutNodes()): Promise<EvolutionData | undefined> {
+export async function computeEvolution(history: Pick<HistoryStore, 'entityVersions' | 'entityDelta'>, snapshots: Pick<SnapshotRecord, 'id' | 'seq'>[], placement: TimelinePlacement, job: EvolutionJob = { cancelled: false, progress: 0 }, mapNodes: (index: ProjectionIndex) => Map<string, LayoutNode> = index => index.layoutNodes()): Promise<EvolutionData | undefined> {
   const versions = history.entityVersions();
   const nodes: EvolutionNode[] = [], indexOf = new Map<string, number>();
   /** `archetypes`: those of the frame's hierarchy, computed only when a frame brings a node not seen before. */
