@@ -1,18 +1,29 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { ConversationService } from './service.js';
 import type { ConversationQuery } from './model.js';
-import type { AgentProvider } from '../activity/model.js';
+import type { ActivityPath, AgentProvider } from '../activity/model.js';
 import { createHash } from 'node:crypto';
 import { isHarnessId } from '../harnesses/registry.js';
 
-export interface ConversationRoutes { conversations: ConversationService; readOnly?: boolean; liveSessions?: () => { provider: AgentProvider; sessionId: string }[] }
+export interface ConversationRoutes {
+  conversations: ConversationService; readOnly?: boolean; liveSessions?: () => { provider: AgentProvider; sessionId: string }[];
+  /** Places a replayed path on the current map (as observed activity is). */
+  resolve?: (target: ActivityPath) => ActivityPath;
+}
 export function isConversationPath(pathname: string): boolean { return /^\/api\/conversations(?:\/|$)/.test(pathname); }
 export async function handleConversationRoute(context: ConversationRoutes, request: IncomingMessage, response: ServerResponse, url: URL): Promise<void> {
   const send = (status: number, value: unknown) => { response.writeHead(status); response.end(JSON.stringify(value)); };
   try {
-    const match = /^\/api\/conversations(?:\/([^/]+))?$/.exec(url.pathname);
+    const match = /^\/api\/conversations(?:\/([^/]+)(\/replay)?)?$/.exec(url.pathname);
     if (!match) return send(404, { error: 'Not found' });
     const id = match[1] ? decodeURIComponent(match[1]) : undefined;
+    if (match[2] && id) {
+      if (request.method !== 'GET') return send(405, { error: 'Method not allowed' });
+      const replay = context.conversations.store.replay(id);
+      if (!replay) return send(404, { error: 'This agent session has not been imported. Refresh history to import available sessions.' });
+      const resolve = context.resolve;
+      return send(200, resolve ? { ...replay, steps: replay.steps.map(step => ({ ...step, paths: step.paths.map(target => ({ ...resolve(target), action: target.action })) })) } : replay);
+    }
     if (request.method === 'GET') {
       if (id === 'live') return send(200, { items: await context.conversations.live(context.liveSessions?.() ?? []) });
       if (id) {

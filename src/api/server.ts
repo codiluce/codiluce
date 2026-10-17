@@ -67,6 +67,7 @@ export function createInspectionServer(store: GraphStore, options: InspectionSer
     conversations: new ConversationService({ root: options.root, stateDirectory: options.stateDirectory, readOnly: options.readOnly, ...options.conversationSources }),
     readOnly: options.readOnly,
     liveSessions: () => activity.snapshot().sessions.filter(session => Date.now() - session.lastSeen <= 300_000),
+    resolve: resolveActivityPath,
   } : undefined;
   let activityIndexing: Promise<void> | undefined;
   const revealActivityPath = async (target: ActivityPath): Promise<{ path: ActivityPath; refreshed: boolean }> => {

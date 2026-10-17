@@ -12,6 +12,7 @@ import { handleConversationRoute, isConversationPath } from '../src/conversation
 import { McpSession } from '../src/explanations/mcp.js';
 import { isSessionSetup } from '../src/conversations/presentation.js';
 import { latestPublicUpdate } from '../src/conversations/live.js';
+import type { ConversationReplay } from '../src/conversations/model.js';
 
 let directory: string, root: string, codex: string, claude: string, state: string;
 const at = '2026-10-15T10:00:00.000Z';
@@ -211,7 +212,7 @@ test('HTTP session routes require write headers, reject writes in read-only mode
   assert.equal(isConversationPath('/api/decisions/old-record'), false);
   const conversations = new ConversationService({ root, stateDirectory: state, codexHome: codex, claudeHome: claude });
   let readOnly = false;
-  const server = createServer((req, res) => { res.setHeader('Content-Type', 'application/json'); void handleConversationRoute({ conversations, readOnly }, req, res, new URL(req.url!, 'http://localhost')); });
+  const server = createServer((req, res) => { res.setHeader('Content-Type', 'application/json'); void handleConversationRoute({ conversations, readOnly, resolve: target => ({ ...target, id: `map:${target.path}`, exact: true }) }, req, res, new URL(req.url!, 'http://localhost')); });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
   try {
@@ -231,8 +232,15 @@ test('HTTP session routes require write headers, reject writes in read-only mode
     assert.equal(fromMcp.status, 200);
     assert.equal((await fromMcp.json() as { items: { title: string }[] }).items.some(item => item.title === 'Updated through another process'), true);
     const detail = await (await fetch(`${base}/api/conversations/codex%3Acodex-one?limit=2`)).json() as { messages: unknown[]; totalMessages: number }; assert.equal(detail.messages.length, 2); assert.ok(detail.totalMessages > 2);
+    // A replay: every step in order, each call's paths placed on the current map.
+    const replay = await (await fetch(`${base}/api/conversations/codex%3Acodex-one/replay`)).json() as ConversationReplay;
+    assert.equal(replay.steps.length, saved.totalMessages);
+    const call = replay.steps.find(step => step.paths.length)!;
+    assert.equal(call.role, 'tool'); assert.equal(call.paths[0]!.id, `map:${call.paths[0]!.path}`); assert.ok(call.paths[0]!.action);
+    assert.equal((await fetch(`${base}/api/conversations/codex%3Amissing/replay`)).status, 404);
     readOnly = true;
     assert.equal((await fetch(`${base}/api/conversations`, { headers: { 'If-None-Match': fromMcp.headers.get('ETag')! } })).status, 200, 'capability changes also invalidate the cached page');
+    assert.equal((await fetch(`${base}/api/conversations/codex%3Acodex-one/replay`)).status, 200, 'replays are read-only');
     assert.equal((await fetch(`${base}/api/conversations/sync`, { method: 'POST', headers: { 'X-Codiluce-Request': 'journal' } })).status, 403);
   } finally { await new Promise<void>(resolve => server.close(() => resolve())); conversations.close(); }
 });

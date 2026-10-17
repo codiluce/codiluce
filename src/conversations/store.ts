@@ -2,7 +2,7 @@ import { DatabaseSync, type SQLInputValue } from 'node:sqlite';
 import { mkdirSync, existsSync, openSync, closeSync } from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
-import type { Conversation, ConversationDetail, ConversationPage, ConversationQuery, ConversationSummary } from './model.js';
+import type { CallStatus, Conversation, ConversationDetail, ConversationMessage, ConversationPage, ConversationPath, ConversationQuery, ConversationReplay, ConversationSummary } from './model.js';
 
 /** Independent of the rebuildable architecture database. */
 export class ConversationStore {
@@ -108,6 +108,24 @@ export class ConversationStore {
     const db = this.open(), row = db?.prepare('SELECT data FROM conversations WHERE id=?').get(id); if (!row || !db) return undefined;
     const summary = JSON.parse(String(row.data)) as ConversationSummary;
     return { ...summary, messages: db.prepare('SELECT data FROM messages WHERE conversation_id=? ORDER BY position').all(id).map(row => JSON.parse(String(row.data))), paths: db.prepare('SELECT data FROM paths WHERE conversation_id=?').all(id).map(row => JSON.parse(String(row.data))) };
+  }
+  /** The latest `limit` prompts, replies and tool calls of a session, in order, each call with the paths it named (unresolved). */
+  replay(id: string, limit = 1000): ConversationReplay | undefined {
+    const db = this.open(), row = db?.prepare('SELECT data FROM conversations WHERE id=?').get(id); if (!row || !db) return undefined;
+    const summary = JSON.parse(String(row.data)) as ConversationSummary;
+    const rows = db.prepare("SELECT json_extract(data,'$.id') AS id, json_extract(data,'$.role') AS role, json_extract(data,'$.at') AS at, json_extract(data,'$.tool') AS tool, json_extract(data,'$.callId') AS callId, json_extract(data,'$.status') AS status FROM (SELECT data,position FROM messages WHERE conversation_id=? ORDER BY position DESC LIMIT ?) ORDER BY position").all(id, limit + 1);
+    const truncated = rows.length > limit;
+    const paths = new Map<string, ConversationPath[]>();
+    for (const item of db.prepare('SELECT data FROM paths WHERE conversation_id=?').all(id)) {
+      const target = JSON.parse(String(item.data)) as ConversationPath;
+      paths.set(target.messageId, [...paths.get(target.messageId) ?? [], target]);
+    }
+    const steps = rows.slice(truncated ? 1 : 0).map(item => ({
+      role: String(item.role) as ConversationMessage['role'],
+      ...(item.at ? { at: String(item.at) } : {}), ...(item.tool ? { tool: String(item.tool) } : {}), ...(item.callId ? { callId: String(item.callId) } : {}), ...(item.status ? { status: String(item.status) as CallStatus } : {}),
+      paths: (paths.get(String(item.id)) ?? []).map(target => ({ path: target.path, scope: target.scope, action: target.action })),
+    }));
+    return { id: summary.id, provider: summary.provider, sessionId: summary.sessionId, title: summary.title, steps, truncated };
   }
   read(id: string, options: { offset?: number; limit?: number; messageId?: string; query?: string } = {}): ConversationDetail | undefined {
     const db = this.open(), row = db?.prepare('SELECT data FROM conversations WHERE id=?').get(id); if (!row || !db) return undefined;
