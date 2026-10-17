@@ -1,4 +1,4 @@
-import { activityMarks, activeAgentOverlay } from './activity';
+import { activeAgentOverlay } from './activity';
 // Owns a canvas: input, camera animation, render scheduling and lazy child
 // loading. React never renders map primitives; it only mounts controllers.
 // The single map has one (`main`); the split map of History has an `overview`
@@ -9,6 +9,8 @@ import type { ResolvedScene } from '@engine/explanations/model';
 import { easeInOut, fitBounds, fromScreen, ISO_X, ISO_Y, isFlat, panBy, projectedBounds, toScreen, visibleBounds, worldToScreen, zoomAround, zoomPath, type Bounds, type Camera, type Point, type Viewport, type ZoomLimits } from './camera';
 import { fileOf, planBeat, type BeatPlan } from './beat';
 import type { Box } from './labels';
+import { CrewOnMap } from './crew-map';
+import { ensureNodes } from './focus-set';
 import { CORNER_LOD, DEFAULT_LOD, abstractionLevel, screenSize, type LodConfig } from './lod';
 import { FLASH_MS, MapRenderer, RISE_MS, type BeatLabel, type BeatOverlay, type CalloutOverlay, type CoverageOverlay, type EdgeOverlay, type FamilyOverlay, type FlowOverlay, type FrameOverlay, type LevelOverlay, type MotionState, type RenderState } from './renderer';
 import { flowAreas, flowDepths, flowLit, type MapFlow } from './map-flow';
@@ -31,6 +33,8 @@ const FOLLOW_EASE_MS = 700, FOLLOW_MIN_SPAN = 0.22;
 const BEAT_DELAY_MS = 450;
 /** Up to this many changed files, the areas holding them open whatever the zoom, so each file is drawn. */
 const BEAT_OPEN_MAX = 80;
+/** Between frames while the agents on the map stand still (their idle poses change every 480 ms). */
+const CREW_IDLE_MS = 160;
 /** Panels over the map that labels keep clear of. */
 const PANELS = ':scope > .map-controls, :scope > .status-bar, :scope > .legend, :scope > .coverage-legend, :scope > .feature-legend, :scope > .banner, :scope > .switching';
 /** Panels of the middle that float over the map from outside it. */
@@ -159,6 +163,7 @@ export class MapController implements MapNavigator {
   destroy(): void {
     cancelAnimationFrame(this.frame);
     if (this.reportTimer) clearTimeout(this.reportTimer);
+    if (this.crewTimer) clearTimeout(this.crewTimer);
     for (const dispose of this.cleanup) dispose();
     if (this.store.navigator === this) { this.store.navigator = undefined; this.store.visibility = undefined; this.store.openContainers = undefined; }
     const global = window as unknown as { __CODILUCE__?: DebugHandle };
@@ -341,16 +346,34 @@ export class MapController implements MapNavigator {
     }
     const render = this.renderState(state, time);
     if (extra?.frames) render.frames = extra.frames;
-    if (render.beat || render.callouts?.length || render.edges.some(edge => edge.label)) render.keepClear = this.panels();
+    // The agents at work, on the map: they take their places first (the map's labels give way), their names last.
+    const crew = this.crewFrame(state, time);
+    if (crew) render.reserved = crew.reserved;
+    if (crew || render.beat || render.callouts?.length || render.edges.some(edge => edge.label)) render.keepClear = this.panels();
     this.renderer.render(this.ctx, this.dpr, this.viewport, this.camera, this.scene, this.set, render, this.lod);
+    crew?.draw(this.ctx, [...this.renderer.labelBoxes, ...this.renderer.badgeBoxes, ...render.keepClear ?? []]);
     const moved = `${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}`;
     if (moved !== this.lastCamera) { this.lastCamera = moved; this.options.onCamera?.(); }
     this.scheduleReport(time);
     if (this.animation || state.timeline.playing || time < this.motionUntil || this.renderer.railsPending) this.request();
-    // Flows stream; a new activity mark pulses briefly (not with reduced motion).
-    else if ((shown || render.activity?.some(mark => mark.age < 2000)) && !this.motionReduced && !this.store.previewScene) this.request(false);
+    // Flows stream (not with reduced motion); the agents on the map move (every frame) or breathe (a few frames a second).
+    else if ((shown && !this.motionReduced && !this.store.previewScene) || crew?.moving) this.request(false);
+    else if (crew && !this.crewTimer) this.crewTimer = setTimeout(() => { this.crewTimer = undefined; this.request(false); }, CREW_IDLE_MS);
     if (!this.animation && time >= this.motionUntil && (this.motion.appear.size || this.motion.flash.size)) { this.motion.appear.clear(); this.motion.flash.clear(); }
   }
+  /**
+   * Agents on the map (Agents › Show agents on the map): the main map, in the
+   * middle, on the live index (activity belongs to the working tree, not to a
+   * commit in History).
+   */
+  private crewFrame(state: AtlasState, time: number) {
+    if (this.role !== 'main' || this.small || !state.agents.show || state.meta?.snapshot.kind === 'commit' || this.store.previewScene) return undefined;
+    this.crew ??= new CrewOnMap(() => this.store.scene, (ids, areas) => void ensureNodes(this.store, ids, areas).catch(() => undefined));
+    this.crew.sync(state.agents.snapshot, state.agents.replay);
+    return this.crew.frame(this.viewport, this.camera, this.set, themeById(state.themeId), time, this.motionReduced, state.agents.focus);
+  }
+  private crew?: CrewOnMap;
+  private crewTimer?: ReturnType<typeof setTimeout>;
   /** The projection changed (2D plan ⇄ isometric): the same place stays in the middle, at about the same size. */
   private projectionChanged(): void {
     const flat = isFlat();
@@ -494,7 +517,6 @@ export class MapController implements MapNavigator {
     }
     const unresolvedCount = selection && !isContainer(selection.node ?? { type: 'file', kind: 'entity' }) && selection.node?.type !== 'file' ? state.diagnostics.data?.codes.find(code => code.code === 'unresolved-http-call')?.count ?? 0 : 0;
     return {
-      activity: state.agents.show && state.meta?.snapshot.kind !== 'commit' && !this.store.previewScene ? activityMarks(state.agents.snapshot?.events ?? [], Date.now(), state.agents.focus) : undefined,
       selectedId: selection?.id, hoveredId: state.hover?.id, emphasis, within, edges,
       showDiagnostics: state.showDiagnostics, source: this.sourceFace(state), time, reducedMotion: this.motionReduced, shapes: state.shapes, streets: state.streets, connections: state.connections,
       ...(state.meta?.comparison ? { comparison: { dimUnchanged: state.timeline.dimUnchanged } } : {}),

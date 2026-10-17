@@ -42,7 +42,8 @@ test('twelve harnesses expose distinct sessions, characters and runtime-specific
   await details.locator('summary').first().click();
   await expect(details).toContainText('.vscode/mcp.json');
   await dialog.getByRole('button', { name: 'Done', exact: true }).click();
-  await panel.getByRole('button', { name: 'Watch them at work' }).click();
-  await expect(page.getByRole('button', { name: 'Close the agents at work tab' })).toBeVisible();
+  // The agents are on the map itself, not in a view of their own.
+  await expect(panel.getByRole('checkbox', { name: 'Show agents on the map' })).toBeChecked();
+  await expect(page.getByRole('tab', { name: /Agents at work/ })).toHaveCount(0);
   expect(errors).toEqual([]);
 });

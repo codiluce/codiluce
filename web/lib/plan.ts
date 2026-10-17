@@ -3,8 +3,8 @@
 // animated and everything stays where the reader learned it. Areas are drawn
 // as nested frames, files as flat blocks with their names; arrows run along
 // the streets (the rail router), with their labels placed where they cover
-// least. Used by the Focus and Agents at work tools, in the map's projection
-// (the map itself is drawn by renderer.ts, in plan or isometric).
+// least. Used by the Focus tool, in the map's projection (the map itself is
+// drawn by renderer.ts, in plan or isometric; its pills label the agents on it).
 import type { NodeSummary, Rect } from '@engine/projection/dto';
 import { fromScreen, toScreen, type Bounds, type Camera, type Point, type Viewport } from './camera';
 import { placeLabels } from './labels';

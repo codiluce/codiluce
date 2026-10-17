@@ -1,4 +1,3 @@
-import type { ActivityMark } from './activity';
 // Canvas 2D renderer for the map, isometric or in plan (camera.ts `setFlat`:
 // the blocks seen from straight above, without walls, shadows or shapes).
 // Stateless per frame: everything it draws comes from the visible set, the
@@ -52,7 +51,6 @@ export interface LevelOverlay { of: Map<string, string>; areas: Map<string, Reco
 export interface FrameOverlay { key: string; number: number; bounds: Bounds; /** The view in use. */ active: boolean; /** On the current page (the others are dashed). */ shown: boolean }
 export interface SourceOverlay { nodeId: string; start: number; lines: string[]; focus?: { startLine: number; endLine: number }; /** Lines where the symbol calls, renders or references an indexed entity. */ marks?: Set<number> }
 export interface RenderState {
-  activity?: ActivityMark[];
   selectedId?: string; hoveredId?: string;
   /** When set, nodes outside it (and outside their ancestors) are dimmed. */
   emphasis?: Set<string>;
@@ -74,6 +72,8 @@ export interface RenderState {
   beat?: BeatOverlay;
   /** Screen boxes labels must leave free (panels over the map). */
   keepClear?: Box[];
+  /** Screen boxes taken by what is drawn over the map afterwards (the agents on it): every label gives way to them. */
+  reserved?: Box[];
   /** Blast radius of the selection or of a comparison. */
   impact?: ImpactOverlay;
   callouts?: CalloutOverlay[];
@@ -157,7 +157,7 @@ export class MapRenderer {
   /** In plan this frame (camera.ts `isFlat`). */
   private flat = false;
   /** Badges drawn on areas this frame (counts, shares): labels placed afterwards keep off them. */
-  private badgeBoxes: Box[] = [];
+  badgeBoxes: Box[] = [];
   /** Words on the links drawn this frame (a tour's arrows), placed once the map's names are. */
   private linkLabels: { at: Point; text: string; color: string }[] = [];
   private readonly linkSlots = new Map<string, string>();
@@ -255,16 +255,15 @@ export class MapRenderer {
     // A beat's labels take their places first; the map's names keep off them.
     const beat = state.beat?.files.length ? this.beatLabels(ctx, viewport, camera, scene, set, items, state) : undefined;
     // Then the words on links and the numbered labels; the map's names give way to all of them.
-    const taken = [...state.keepClear ?? [], ...beat?.boxes ?? [], ...this.badgeBoxes];
+    const taken = [...state.keepClear ?? [], ...state.reserved ?? [], ...beat?.boxes ?? [], ...this.badgeBoxes];
     const worded = this.linkLabels.length ? this.placeLinkLabels(ctx, viewport, taken) : undefined;
     const numbered = state.callouts?.length ? this.placeCallouts(ctx, viewport, camera, set, state.callouts, [...taken, ...worded?.boxes ?? []]) : undefined;
-    this.labels(ctx, labels, [...beat?.boxes ?? [], ...this.badgeBoxes, ...worded?.boxes ?? [], ...numbered?.boxes ?? []]);
+    this.labels(ctx, labels, [...state.reserved ?? [], ...beat?.boxes ?? [], ...this.badgeBoxes, ...worded?.boxes ?? [], ...numbered?.boxes ?? []]);
     beat?.draw();
     worded?.draw();
     if (state.pins?.length) this.pins(ctx, viewport, camera, set, state.pins);
     numbered?.draw();
     if (state.frames?.length) this.frames(ctx, viewport, camera, state.frames);
-    if (state.activity?.length) this.activityBadges(ctx, viewport, camera, scene, set, state.activity, state.reducedMotion);
     if (state.pointer) this.pointer(ctx, viewport, camera, scene, set, items, state.pointer);
   }
   /**
@@ -272,36 +271,6 @@ export class MapRenderer {
    * nearest drawn area otherwise); off screen, an arrow at the edge of the map
    * points to it, so the camera never has to move while reading.
    */
-  private activityBadges(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, scene: Scene, set: VisibleSet, marks: ActivityMark[], reduced: boolean): void {
-    const grouped = new Map<string, { item: VisibleItem; marks: ActivityMark[] }>();
-    for (const mark of marks) {
-      const item = set.items[set.index.get(mark.id) ?? -1] ?? scene.representative(mark.id, set) ?? [...mark.ancestors].reverse().map(id => set.items[set.index.get(id) ?? -1]).find(Boolean);
-      if (!item) continue;
-      const group = grouped.get(item.node.id) ?? { item, marks: [] };
-      if (!group.marks.some(other => other.actor === mark.actor)) group.marks.push(mark);
-      grouped.set(item.node.id, group);
-    }
-    for (const { item, marks: actors } of grouped.values()) {
-      const first = actors[0]!;
-      ctx.save();
-      ctx.globalAlpha = Math.max(0.15, 1 - first.age / 30000);
-      this.outline(ctx, viewport, camera, item, first.color, !reduced && first.age < 2000 ? 2.5 + Math.sin(first.age / 160) : 2, false, first.search ? [4, 4] : undefined);
-      const point = worldToScreen(camera, viewport, item.node.rect.x + item.node.rect.w / 2, item.node.rect.y + item.node.rect.h / 2, item.zTop);
-      let y = Math.max(12, Math.min(viewport.height - 24, point.y - 16));
-      for (const mark of actors.slice(0, 4)) {
-        ctx.globalAlpha = Math.max(0.2, 1 - mark.age / 30000);
-        ctx.font = `600 10px ${this.theme.style?.font ?? 'sans-serif'}`;
-        const label = mark.label, width = ctx.measureText(label).width + 14;
-        const x = Math.max(4, Math.min(viewport.width - width - 4, point.x - width / 2));
-        ctx.fillStyle = this.theme.background[0]; ctx.strokeStyle = mark.color; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.roundRect(x, y, width, 18, 5); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = this.theme.text.primary; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(label, x + width / 2, y + 9);
-        y += 21;
-      }
-      ctx.restore();
-    }
-  }
   private pointer(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, scene: Scene, set: VisibleSet, items: VisibleItem[], pointer: { id: string; ancestors: string[] }): void {
     const theme = this.theme;
     const drawn = items[set.index.get(pointer.id) ?? -1] ?? scene.representative(pointer.id, set) ?? [...pointer.ancestors].reverse().map(id => items[set.index.get(id) ?? -1]).find(Boolean);
@@ -889,8 +858,8 @@ export class MapRenderer {
     const asks = entries.map(entry => entry.ask), soft = entries.map(entry => entry.target);
     // What finds no room is counted in a note at the top of the map, which then stays clear too.
     const note: Box = { x0: viewport.width / 2 - 150, y0: margin, x1: viewport.width / 2 + 150, y1: margin + 20 };
-    let { placed, left } = placeLabels(asks, { bounds, avoid: [...state.keepClear ?? [], ...this.badgeBoxes], soft, memory: this.beatSlots });
-    if (left.length) ({ placed, left } = placeLabels(asks, { bounds, avoid: [...state.keepClear ?? [], ...this.badgeBoxes, note], soft, memory: this.beatSlots }));
+    let { placed, left } = placeLabels(asks, { bounds, avoid: [...state.keepClear ?? [], ...state.reserved ?? [], ...this.badgeBoxes], soft, memory: this.beatSlots });
+    if (left.length) ({ placed, left } = placeLabels(asks, { bounds, avoid: [...state.keepClear ?? [], ...state.reserved ?? [], ...this.badgeBoxes, note], soft, memory: this.beatSlots }));
     const byKey = new Map(entries.map(entry => [entry.key, entry]));
     const boxes = placed.map(item => item.box);
     const more = left.length;

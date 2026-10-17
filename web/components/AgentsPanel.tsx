@@ -48,7 +48,6 @@ export function AgentsPanel({ onClose }: { onClose: () => void }) {
   const expanded = useAtlas(state => !!state.journal.expanded);
   const historical = useAtlas(state => state.meta?.snapshot.kind === 'commit' || state.timeline.preview !== undefined);
   const [connectionsOpen, setConnectionsOpen] = useState(false);
-  const crewOpen = useAtlas(state => state.crewView);
   const snapshot = agents.snapshot;
   return <>
     <div className="panel-header"><h2>Agents</h2><div className="agents-panel-actions"><button className="button small" onClick={() => store.expandAgents(!expanded)} aria-label={expanded ? 'Dock Agents beside the map' : 'Expand Agents'}>{expanded ? 'Dock beside map' : 'Expand'}</button><button className="icon-button small" onClick={onClose} aria-label="Hide the agents panel">⇤</button></div></div>
@@ -57,12 +56,12 @@ export function AgentsPanel({ onClose }: { onClose: () => void }) {
         <div className="agents-connection" role="status"><span className={`agents-live-dot${agents.connected && snapshot?.enabled ? ' on' : ''}`} />{agents.connected ? snapshot?.enabled ? 'Live activity' : 'Activity disabled' : 'Connecting to activity…'}</div>
         <details className="agents-info" onKeyDown={event => { if (event.key === 'Escape') event.currentTarget.open = false; }}>
           <summary aria-label="About agent activity" title="About agent activity">ⓘ</summary>
-          <p className="note">Observed actions from connected coding harnesses. Map badges fade after 30 seconds. Available session history refreshes while recently observed sessions are active; messages may arrive after tool activity. Check Agent connections for supported capabilities, setup and delivery.</p>
+          <p className="note">Observed actions from connected coding harnesses. On the map, each agent is a character on the files it reads and edits, and outside the map, on a mat, for thinking, commands and waiting. Available session history refreshes while recently observed sessions are active; messages may arrive after tool activity. Check Agent connections for supported capabilities, setup and delivery.</p>
         </details>
       </div>
-      <label className="agents-toggle"><input type="checkbox" checked={agents.show} onChange={event => store.setActivity({ show: event.target.checked })} /> Show activity on the map</label>
-      <button className="button small" aria-pressed={crewOpen} onClick={() => crewOpen ? store.closeCrew() : store.openCrew()} title="The agents as characters on the map, in the middle: on the files they read and edit, outside for what is about no file">Watch them at work</button>
-      {historical && <p className="note">Activity belongs to the working tree. Return to the live map to see its badges.</p>}
+      <label className="agents-toggle" title="Each agent as a character on the map: on the files it reads and edits; outside, on a mat by the map's edge, for what is about no file"><input type="checkbox" checked={agents.show} onChange={event => store.showAgentsOnMap(event.target.checked)} /> Show agents on the map</label>
+      <button className="button small" onClick={() => store.replayAgents()} disabled={!snapshot?.events.length} title="Play the latest observed activity again on the map, sped up">↻ Replay the latest</button>
+      {historical && <p className="note">Activity belongs to the working tree. Return to the live map to see the agents on it.</p>}
     </div>
     <AgentSessionsView compact={!expanded} />
     <div className="agents-footer"><button className="button" onClick={() => setConnectionsOpen(true)} aria-haspopup="dialog">Agent connections<span aria-hidden="true">⚙</span></button></div>

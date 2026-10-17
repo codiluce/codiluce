@@ -180,9 +180,25 @@ test('the map projection is a saved preference, the 2D plan by default, and ever
   assert.equal(store.getState().center, 'focus');
   store.closeFocus();
   assert.equal(store.getState().center, 'map');
-  store.openCrew(); store.closeCrew();
-  assert.deepEqual([store.getState().center, store.getState().crewView], ['map', false]);
   setFlat(false);
+});
+
+test('agents are on the map by default, beside Agents too, and being turned off is remembered', () => {
+  const saved = new Map<string, string>();
+  const storage = { getItem: (key: string) => saved.get(key) ?? null, setItem: (key: string, value: string) => void saved.set(key, value) };
+  const store = new AtlasStore({} as AtlasApi, { storage });
+  assert.deepEqual([store.getState().center, store.getState().agents.show], ['map', true]);
+  store.openJournal('conversations');
+  store.showAgents();
+  assert.deepEqual([store.getState().center, store.getState().agents.show], ['map', true]);
+  store.showAgentsOnMap(false);
+  const again = new AtlasStore({} as AtlasApi, { storage });
+  assert.equal(again.getState().agents.show, false);
+  // Replaying the latest activity shows them again.
+  again.replayAgents();
+  assert.deepEqual([again.getState().agents.show, again.getState().agents.replay], [true, 1]);
+  again.showAgentsOnMap(true);
+  assert.equal(new AtlasStore({} as AtlasApi, { storage }).getState().agents.show, true);
 });
 
 test('in plan, the map hits the innermost block under the pointer', () => {

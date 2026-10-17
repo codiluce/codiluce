@@ -5,7 +5,7 @@
 // edge nearest its last file, does it there, and comes back for the next file.
 // Hooks observe tools, not the model: thinking is inferred from a prompt or a
 // quiet gap, and writing the reply only in a replay (the gap before a turn
-// ends). Pure (no DOM): the Agents at work tool draws it, tests run it.
+// ends). Pure (no DOM): the map draws it (crew-map.ts), tests run it.
 import type { ActivityEvent, AgentSession } from '@engine/activity/model';
 import type { Rect } from '@engine/projection/dto';
 import { providerOf, PROVIDER, type Pose, type Provider } from './pixel-crew';

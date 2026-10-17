@@ -1,18 +1,16 @@
 'use client';
-// What the visual tools share: a canvas redrawn every animation frame while
-// it is on screen, with drag to pan, the wheel to zoom and a click to select,
-// and camera fitting into what the panels leave of it.
+// A tool in the middle that draws the map itself (Focus): a canvas redrawn
+// every animation frame while it is on screen, with drag to pan, the wheel to
+// zoom and a click to select, and camera fitting into what the panels leave of
+// it.
 import { useEffect, useRef } from 'react';
 import { fitBounds, panBy, zoomAround, type Bounds, type Camera, type Viewport } from '../lib/camera';
-import { drawFace, type Provider } from '../lib/pixel-crew';
 import styles from './stage.module.css';
 
 export { styles as stageStyles };
 export interface StageFrame { ctx: CanvasRenderingContext2D; viewport: Viewport; dpr: number; time: number }
 /** Space the panels take over the canvas (CSS px). */
 export interface Insets { left: number; right: number; top: number; bottom: number }
-/** Below this width the middle is narrow: ledgers go under the map (stage.module.css says the same). */
-export const NARROW = 1000;
 export const LIMITS = { min: 0.008, max: 40 };
 const DRAG_PX = 4;
 
@@ -92,16 +90,3 @@ export function lerpCamera(a: Camera, b: Camera, t: number): Camera {
   return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, scale: Math.exp(Math.log(a.scale) + (Math.log(b.scale) - Math.log(a.scale)) * t) };
 }
 export function reducedMotion(): boolean { return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
-/** A character's face for lists (a tiny canvas). */
-export function FaceIcon({ provider, color, size = 20 }: { provider: Provider; color: string; size?: number }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const canvas = ref.current; if (!canvas) return;
-    const ctx = canvas.getContext('2d'); if (!ctx) return;
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = size * dpr; canvas.height = size * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = '#141826'; ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(size / 2, size / 2, size / 2 - 1.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    drawFace(ctx, provider, size / 2, size / 2, size * 0.38);
-  }, [provider, color, size]);
-  return <canvas ref={ref} aria-hidden="true" style={{ width: size, height: size, flex: 'none' }} />;
-}

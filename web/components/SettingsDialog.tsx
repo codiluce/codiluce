@@ -7,7 +7,7 @@ import { HiddenPathsSettings } from './MapVisibility';
 const TABS = [['appearance', 'Appearance'], ['map', 'Map'], ['views', 'Views'], ['hidden', 'Hidden paths']] as const;
 /** How the map looks, everywhere it is drawn; the first choice of each is the default. */
 const VIEW_GROUPS: { key: 'map' | 'focus'; label: string; note: string; choices: [string, string][] }[] = [
-  { key: 'map', label: 'Map projection', note: 'The map seen from straight above, as a plan where every area is a frame, or as an isometric city. One projection for everything: the map, History’s commits, Focus and Agents at work (who hop from roof to roof in isometric). The 3D control on the map switches it too.', choices: [['plan', '2D plan'], ['iso', 'Isometric']] },
+  { key: 'map', label: 'Map projection', note: 'The map seen from straight above, as a plan where every area is a frame, or as an isometric city. One projection for everything: the map, History’s commits, Focus and the agents on the map (who hop from roof to roof in isometric). The 3D control on the map switches it too.', choices: [['plan', '2D plan'], ['iso', 'Isometric']] },
   { key: 'focus', label: 'Focus layout', note: 'A selection and what it is connected to, a pull request’s files or what an explanation links: kept at their places on the map, the areas holding them opened as nested frames, or gathered and packed together.', choices: [['map', 'On the map'], ['gather', 'Gathered']] },
 ];
 type SettingsTab = typeof TABS[number][0];

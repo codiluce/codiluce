@@ -13,7 +13,7 @@ tools. It combines searchable connected harness sessions with observed runtime s
 correlated by provider and session ID. Active agent sessions rise to the top. Select one to read
 human and assistant messages; consecutive tool calls and observed activity are collapsed.
 The same panel can expand for reading and dock again without losing its filters or reading position.
-Use **Focus map activity** to filter recent map badges to the selected agent. Select a file path to reveal the exact file, including files hidden from
+Use **Focus map activity** to keep only the selected agent's character on the map. Select a file path to reveal the exact file, including files hidden from
 the map. If the file is missing from the current index, this explicit click refreshes
 the repository index before selecting it. Deleted or excluded files show an explanation
 instead of silently selecting their folder. Search scopes can select their nearest
@@ -101,11 +101,16 @@ Only paths, search queries, tool identities, session titles and lifecycle metada
 Restarting the server clears the feed. Events while the map is stopped are
 not queued or replayed.
 
-Agent colors are stable per provider/session/explicit agent id. File badges
-collapse to their visible ancestors when zoomed out; searches outline their
-scope. Multiple agent badges may share a block. Marks fade over 30 seconds,
-respect the overlay toggle and session filter, and are suppressed in history.
-Shared badges signal overlap, not a proven conflict.
+With **Show agents on the map** on (the default, remembered), each agent is a
+pixel character on the map itself, in either projection. It hops to the file it
+reads, edits or searches (copies split off for parallel reads; inside a closed
+area it stands on that area's roof, and a search outlines its scope), and steps
+outside onto a mat beside the map's edge for what is about no file: thinking,
+the reply, planning, the web, commands, waiting for permission. Its name sits
+under it, never over another label. **Replay the latest** plays recent activity
+again, sped up. Agent colors are stable per provider/session/explicit agent id.
+Characters respect the session filter and are not shown in history. Two
+characters on one block signal overlap, not a proven conflict.
 
 `--read-only` disables ingestion and index refreshes from activity. Incoming
 observations do not automatically index architecture or move the camera. Only

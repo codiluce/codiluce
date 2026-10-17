@@ -35,9 +35,9 @@ test('Agents streams both providers, selects observed code, scopes searches and 
   await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('heading', { name: 'LoginForm.tsx', exact: true })).toBeVisible();
   await panel.getByRole('button', { name: 'Focus map activity' }).click();
   await expect(panel.getByRole('button', { name: 'Focus map activity' })).toHaveAttribute('aria-pressed', 'true');
-  await panel.getByRole('checkbox', { name: 'Show activity on the map' }).uncheck();
-  await expect(panel.getByRole('checkbox', { name: 'Show activity on the map' })).not.toBeChecked();
-  await panel.getByRole('checkbox', { name: 'Show activity on the map' }).check();
+  await panel.getByRole('checkbox', { name: 'Show agents on the map' }).uncheck();
+  await expect(panel.getByRole('checkbox', { name: 'Show agents on the map' })).not.toBeChecked();
+  await panel.getByRole('checkbox', { name: 'Show agents on the map' }).check();
   await panel.getByRole('button', { name: 'Agent connections' }).click();
   const dialog = page.getByRole('dialog', { name: 'Agent connections', exact: true });
   await expect(dialog).toContainText('Hook delivery confirmed');

@@ -242,15 +242,6 @@ export function sparkle(ctx: CanvasRenderingContext2D, x: number, y: number, age
   for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2, r = 6 + age / 22; ctx.fillRect(Math.round(x + Math.cos(a) * r), Math.round(y - 14 + Math.sin(a) * r * 0.7), 3, 3); }
   ctx.restore();
 }
-/** The character's face fitted in a circle (legends, lists). */
-export function drawFace(ctx: CanvasRenderingContext2D, provider: Provider, cx: number, cy: number, r: number, time = 0, seed = 0) {
-  const rows = frameRows(provider, 'idle', false, 0, time, seed).filter(row => /[^.]/.test(row));
-  const top = provider === 'codex' ? rows.slice(0, 13) : rows;
-  const p = (r * 1.5) / Math.max(top[0]!.length, top.length);
-  ctx.save(); ctx.imageSmoothingEnabled = false;
-  pixels(ctx, top, SPRITES[provider].colors, cx - (top[0]!.length * p) / 2, cy - (top.length * p) / 2, p);
-  ctx.restore();
-}
 /** Where an agent does what is about no file: a mat on the ground outside the map, edged in its session's color. */
 export function drawYard(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, alpha: number, flat: boolean, dark: boolean) {
   ctx.save(); ctx.globalAlpha = alpha;
