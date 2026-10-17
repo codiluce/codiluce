@@ -24,7 +24,7 @@
   <a href="#contributing">Contributing</a>
 </p>
 
-![Codiluce mapping BookStack, an open-source wiki: files drawn as isometric buildings by their kind, one folder selected and its details in the inspector.](site/public/shots/map.webp)
+![Codiluce mapping BookStack, an open-source wiki, while three coding agents work on it: each session is a pixel character on the files it reads, Claude Code split into three copies for three parallel reads, and the Agents list beside the map marks each session with the same colored square.](site/public/shots/agents.webp)
 
 ## Why Codiluce?
 
@@ -38,12 +38,13 @@ the last. Reading the diff no longer tells a team what the system does, which fl
 break.
 
 Codiluce keeps understanding in step with the code. It reads your repository and draws it as a map you can zoom,
-search and replay, where every link between pages, requests, functions and tables comes with the evidence behind it.
-Your agents explain the code on that map, and you see what each of them touches while it works.
+search and replay, in 3D or as a flat 2D plan, where every link between pages, requests, functions and tables comes
+with the evidence behind it. Your agents explain the code on that map, and you watch each of them walk through the
+files it touches while it works.
 
 ## Multilingual compatibility milestone
 
-The initial multilingual compatibility milestone is closed with documented limitations on this branch.
+The initial multilingual compatibility milestone is closed with documented limitations on `main`.
 The [roadmap closure](docs/language-framework-compatibility.html#milestone-closure) records the delivered
 language/import/framework subsets, existing correctness evidence and deferred follow-ups. The completed
 Flask comparison shows a **15.1% slowdown**, above the unchanged **10% target**; production performance,
@@ -107,18 +108,22 @@ source), so the agent starts from what the code provably does instead of guessin
 
 ### Watch your agents work
 
-Open **Agents** beside the map to follow connected harness sessions at once. Each observed read, edit and search
-outlines the code it touched in that session's color, and fades after 30 seconds. When two sessions touch the same
-file, both marks show. Click a path in the feed to reveal the file, even one added since the last analysis.
+Every connected session is a little pixel character on the map, in 3D or in the 2D plan. It hops to each file it
+reads, edits or searches, and steps beside the map to think, write its reply, run commands or wait for your
+permission. Files worked on at the same time split it: parallel reads send a copy to each file, and the copies come
+back when their calls complete. A small square in the session's color floats over its characters and marks the same
+session in the **Agents** list, so you always know who is where.
 
-Agents report their activity through hooks. **Agents → Agent connections** in the map shows the configuration to merge
-into `.claude/settings.local.json` or `.codex/hooks.json`, and the CLI prints it too:
+- **Open a session** to keep only its characters on the map; point at a session in the list to dim the others.
+- **A running session** lists the files of its current turn, with its square beside those it stands on now. Click a
+  path to reveal the file, even one added since the last analysis.
+- **Replay a finished session** from its saved transcript: its character hops through the files it read and edited,
+  sped up, alone on the map.
+- **The map stays as it is:** nothing is dimmed or relabelled while agents work.
 
-```bash
-npx codiluce activity hooks --agent claude-code   # or: --agent codex
-```
-
-Only what the hooks report is shown; Codiluce does not watch the file system or guess who changed what. It keeps paths,
+Agents report their activity through hooks, set up with the harness command above or from **Agents → Agent
+connections** in the map. Only what the hooks report is shown; Codiluce does not watch the file system or guess who
+changed what, so an agent that reads fifty files from one script is one command, not fifty reads. It keeps paths,
 searches, tool names and session titles, in memory, and never prompts, file contents or command output. More in
 [Agents](https://codiluce.com/docs/agents/) and the [design notes](docs/design/agents.md).
 
@@ -127,7 +132,8 @@ searches, tool names and session titles, in memory, and never prompts, file cont
 Open **Agents → Import / refresh history** to import available local Codex and Claude Code transcripts for
 this repository, plus native Pi, Copilot CLI, Gemini CLI and repository-scoped OpenClaw sessions. Other supported
 harnesses can use explicit [session exports](docs/agents/harnesses.md#session-history). Search messages and titles, filter by agent or by a file/folder read, edited or added in a tool
-call, and open the original discussion beside the map, or expand Agents for reading. Live sessions appear in the
+call, and open the original discussion beside the map, or expand Agents for reading. **Replay on the map** plays a
+finished session again from its transcript (at most 90 seconds, the time spent on files). Live sessions appear in the
 same list, with a highlighted activity card, observed files and one replacing public progress or response line.
 The three session filters share one row; Codex setup instructions are hidden in the reader. Recently observed sessions refresh every ten seconds
 while Agents is open, without moving your reading position. Public live updates use a bounded transcript tail every
@@ -146,11 +152,13 @@ is available. Rebuilding the code index does not erase imported history.
 ## What you can do
 
 - **Ask, and read the answer on the map.** Explanations from your agent, or from the chat in the map, link the code
-  they talk about: every link lights its code, and stale answers say what changed.
-- **Watch your agents work.** Every file a Claude Code or Codex session reads, edits or searches lights up in its color,
-  as it happens.
+  they talk about: every link lights its code, and stale answers say what changed. Longer answers play as tours, with
+  scenes on the map and diagrams that rise from it.
+- **Watch your agents work.** Each session is a character that hops to the files it reads and edits as it happens,
+  splits to read several at once, and replays when it is done.
 - **Zoom from the whole repository to a single line.** Applications, folders, files and symbols nest inside each other,
-  sized by their code, each file drawn as the shape of its kind.
+  sized by their code, in 3D or as a flat 2D plan where names never overlap. Building shapes per kind of file are a
+  setting.
 - **Follow a flow end to end.** From a page or a command, through the request, to the handler and the tables it reads
   and writes.
 - **Replay your Git history.** Browse and play file additions, edits, moves and deletions directly from Git, with source
