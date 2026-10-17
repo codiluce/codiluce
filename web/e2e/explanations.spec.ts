@@ -62,11 +62,17 @@ test('explanations: a tour plays in the middle, scene by scene, with the column 
   await expect(bar).toContainText('Where login lives');
   await expect(page.getByRole('tab', { name: /Tour · Login in scenes/ })).toBeVisible();
   await expect(column(page).locator('.scene-section.current')).toContainText('Where login lives');
-  // The diagram scene: boxes rise off the map, the method sits in its file's box, and the evidenced arrow carries its chip.
+  // The diagram scene stays on the map by default, its files numbered where they are and its arrows drawn between them.
   await page.keyboard.press('ArrowRight');
   await expect(bar).toContainText('2 / 2');
   await expect(page).toHaveURL(/scene=2/);
   const diagram = page.getByRole('figure', { name: 'How the form reaches the server' });
+  const asDiagram = bar.getByRole('button', { name: 'Diagram', exact: true });
+  await expect(asDiagram).toHaveAttribute('aria-pressed', 'false');
+  await expect(diagram).toHaveCount(0);
+  // As a diagram: boxes rise off the map, the method sits in its file's box, and the evidenced arrow carries its chip.
+  await asDiagram.click();
+  await expect(asDiagram).toHaveAttribute('aria-pressed', 'true');
   await expect(diagram.locator('.cd-box')).toHaveCount(3);
   await expect(diagram.locator('.cd-part')).toContainText('login');
   await expect(diagram.locator('.cd-arrow-label', { hasText: 'asks' }).locator('.cd-chip').first()).toContainText('calls');

@@ -147,6 +147,8 @@ export function viewPrefs(saved: Partial<Record<keyof ViewPrefs, string>> | unde
   const pick = <K extends keyof ViewPrefs>(key: K): ViewPrefs[K] => (VIEW_CHOICES[key] as readonly string[]).includes(saved?.[key] ?? '') ? saved![key] as ViewPrefs[K] : DEFAULT_VIEWS[key];
   return { map: pick('map'), focus: pick('focus'), labels: pick('labels') };
 }
+/** How a tour's diagram scenes show: on the map, their files where they are (the default), or as a diagram rising from the map. */
+export type TourView = 'map' | 'diagram';
 /** What the Focus tool shows: a selection and what it is connected to, the files of a pull request, or the links of an explanation. */
 export interface FocusSubject { kind: 'selection' | 'pull' | 'explanation'; id: string; title: string }
 /** What a list of files is of: a feature, a data family, a coverage category or a person (the highlight on the map). */
@@ -334,6 +336,8 @@ export interface AtlasState {
   connections: Connections;
   /** How the map (and the tools drawing it) look. */
   views: ViewPrefs;
+  /** How a tour's diagram scenes show (Settings, Views). */
+  tourView: TourView;
   /** The Focus tool's subject, while it is open. */
   focusView?: FocusSubject;
   /** The Agents at work tool is open. */
@@ -441,7 +445,7 @@ export class AtlasStore {
   constructor(readonly api: AtlasApi, private readonly options: StoreOptions = {}) {
     this.sessions = new SessionListCache(options.storage);
     this.openingHash = options.location?.hash;
-    let prefs: { themeId?: string; shapes?: boolean; streets?: boolean; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey; explainLens?: boolean; chatModel?: string; flowSplit?: FlowSplit; connections?: Connections; views?: Partial<Record<keyof ViewPrefs, string>> } = {};
+    let prefs: { themeId?: string; shapes?: boolean; streets?: boolean; showDiagnostics?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey; explainLens?: boolean; chatModel?: string; flowSplit?: FlowSplit; connections?: Connections; views?: Partial<Record<keyof ViewPrefs, string>>; tourView?: string } = {};
     try { prefs = JSON.parse(options.storage?.getItem('codiluce:prefs') ?? '{}'); } catch { /* defaults */ }
     this.state = {
       status: 'loading', view: { level: 'Applications', focus: [], zoom: 1, visible: [], truncated: false },
@@ -452,7 +456,7 @@ export class AtlasStore {
       people: { window: prefs.peopleWindow ?? 'all', show: false, status: 'idle', open: {} }, lens: { status: 'idle' }, pulls: { status: 'idle', tab: 'open', query: '', open: {} }, center: 'map', journal: { open: [] },
       agents: { connected: false, show: true, now: Date.now() },
       explain: { open: false, list: { status: 'idle' }, lens: prefs.explainLens ?? true, draft: { text: '', context: [], ...(prefs.chatModel ? { model: prefs.chatModel } : {}) }, unseen: [], agents: [], dismissed: [] },
-      flowSplit: clampSplit(prefs.flowSplit ?? FLOW_SPLIT), connections: prefs.connections === 'rails' ? 'rails' : 'arcs', views: viewPrefs(prefs.views), crewView: false,
+      flowSplit: clampSplit(prefs.flowSplit ?? FLOW_SPLIT), connections: prefs.connections === 'rails' ? 'rails' : 'arcs', views: viewPrefs(prefs.views), tourView: prefs.tourView === 'diagram' ? 'diagram' : 'map', crewView: false,
       timeline: { open: false, mode: 'git', status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true, split: prefs.split ?? true, regionLevel: prefs.regionLevel ?? 'auto', regions: { status: 'idle' } },
     };
     // One projection for every map on screen.
@@ -478,7 +482,7 @@ export class AtlasStore {
   }
   private bumpScene(): void { this.set(state => ({ sceneRevision: state.sceneRevision + 1 })); }
   private savePrefs(): void {
-    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, shapes: this.state.shapes, streets: this.state.streets, flowSplit: this.state.flowSplit, connections: this.state.connections, views: this.state.views, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window, explainLens: this.state.explain.lens, ...(this.state.explain.draft.model ? { chatModel: this.state.explain.draft.model } : {}) })); } catch { /* preferences are optional */ }
+    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, shapes: this.state.shapes, streets: this.state.streets, flowSplit: this.state.flowSplit, connections: this.state.connections, views: this.state.views, tourView: this.state.tourView, showDiagnostics: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window, explainLens: this.state.explain.lens, ...(this.state.explain.draft.model ? { chatModel: this.state.explain.draft.model } : {}) })); } catch { /* preferences are optional */ }
   }
   dispose(): void { this.disposed = true; this.sessions.close(); for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.explainTimer) clearInterval(this.explainTimer); if (this.activityTimer) clearTimeout(this.activityTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
 
@@ -823,6 +827,8 @@ export class AtlasStore {
   async undoMapVisibility(): Promise<void> { const action = this.state.mapVisibility.undo; if (action) await this.changeMapVisibility(action, 'Map visibility restored.', false); }
   /** Draw the links on the map as arcs over the blocks or as rails along the floor. */
   setConnections(connections: Connections): void { this.set({ connections }); this.savePrefs(); }
+  /** Tour diagrams on the map (their files where they are) or as diagrams over it. */
+  setTourView(tourView: TourView): void { if (tourView !== this.state.tourView) { this.set({ tourView }); this.savePrefs(); } }
   setViews(patch: Partial<ViewPrefs>): void { this.set(state => ({ views: { ...state.views, ...patch } })); setFlat(this.state.views.map === 'plan'); this.savePrefs(); }
 
   // History -----------------------------------------------------------------

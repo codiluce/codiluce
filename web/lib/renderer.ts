@@ -16,7 +16,8 @@ import { NOT_MEASURED } from './coverage';
 import { drawIcon, drawShape, hexToHsl, ICON_PX, mixHsl, seedOf, shapeHeight, shapeTheme, type ShapeTheme, type ShapeView } from './shapes';
 import type { Hsl } from './themes';
 
-export interface EdgeOverlay { key: string; from: string; to: string; fromAncestors: string[]; toAncestors: string[]; type: string; count: number; emphasized?: boolean; change?: 'added' | 'removed' }
+/** `label`: words on the link (a tour's arrow), placed where they cover no other label; `directed` false: no arrowhead. */
+export interface EdgeOverlay { key: string; from: string; to: string; fromAncestors: string[]; toAncestors: string[]; type: string; count: number; emphasized?: boolean; change?: 'added' | 'removed'; label?: string; directed?: boolean }
 /**
  * A flow on the map (all of it, or one branch): its links, streaming from
  * where they start to where they lead (the way back in its own color), and
@@ -132,13 +133,13 @@ const STREAM_SPEED = 0.05, STREAM_DASH = [9, 13];
 /** Time a frame may spend routing rails; the rest is routed on the next frames. */
 const RAIL_BUDGET_MS = 10;
 /** A relationship resolved to the blocks drawn at this level of detail (those meeting the same blocks merged). */
-interface DrawnEdge { from: VisibleItem; to: VisibleItem; ends: [string, string]; count: number; color: string; hidden: boolean; emphasized: boolean; change?: 'added' | 'removed' }
+interface DrawnEdge { from: VisibleItem; to: VisibleItem; ends: [string, string]; count: number; color: string; hidden: boolean; emphasized: boolean; change?: 'added' | 'removed'; label?: string; directed: boolean }
 /** A flow's link resolved to the blocks drawn. */
 interface DrawnLink { from: VisibleItem; to: VisibleItem; ends: [string, string]; back: boolean }
 /** A rail on screen: its points, length so far at each, and its runs (straight on, drawn with one block in the painter's order). */
 interface RailStroke {
   points: Point[]; lengths: number[]; runs: { host: number; from: number; to: number }[];
-  color: string; width: number; alpha: number; dash?: number[]; stream?: string; count?: number; halo?: string;
+  color: string; width: number; alpha: number; dash?: number[]; stream?: string; count?: number; halo?: string; label?: string; directed?: boolean;
 }
 /** Rails of a frame: strokes, their runs by the block drawn before them, and what still goes as an arc. */
 interface RailPlan { strokes: RailStroke[]; byHost: Map<number, { stroke: RailStroke; run: RailStroke['runs'][number] }[]>; edges: DrawnEdge[]; links: DrawnLink[] }
@@ -155,6 +156,11 @@ export class MapRenderer {
   private readonly rails = new RailCache();
   /** In plan this frame (camera.ts `isFlat`). */
   private flat = false;
+  /** Badges drawn on areas this frame (counts, shares): labels placed afterwards keep off them. */
+  private badgeBoxes: Box[] = [];
+  /** Words on the links drawn this frame (a tour's arrows), placed once the map's names are. */
+  private linkLabels: { at: Point; text: string; color: string }[] = [];
+  private readonly linkSlots = new Map<string, string>();
   /** The names drawn on the last frame (screen boxes): what is drawn over the map keeps off them. */
   labelBoxes: Box[] = [];
   /** Where each beat label went on the previous frame (kept while free). */
@@ -165,7 +171,7 @@ export class MapRenderer {
 
   render(ctx: CanvasRenderingContext2D, dpr: number, viewport: Viewport, camera: Camera, scene: Scene, set: VisibleSet, state: RenderState, lod: LodConfig): void {
     const theme = this.theme;
-    this.dpr = dpr; this.ctxRef = ctx; this.flat = isFlat();
+    this.dpr = dpr; this.ctxRef = ctx; this.flat = isFlat(); this.linkLabels = []; this.badgeBoxes = [];
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.background(ctx, viewport);
     if (theme.style?.grid === 'dots') this.dotGrid(ctx, viewport, camera); else if (theme.style?.grid !== 'none') this.grid(ctx, viewport, camera);
@@ -248,10 +254,15 @@ export class MapRenderer {
     for (const [item, alpha] of notes) this.areaNote(ctx, viewport, camera, item, alpha, state.pull!);
     // A beat's labels take their places first; the map's names keep off them.
     const beat = state.beat?.files.length ? this.beatLabels(ctx, viewport, camera, scene, set, items, state) : undefined;
-    this.labels(ctx, labels, beat?.boxes);
+    // Then the words on links and the numbered labels; the map's names give way to all of them.
+    const taken = [...state.keepClear ?? [], ...beat?.boxes ?? [], ...this.badgeBoxes];
+    const worded = this.linkLabels.length ? this.placeLinkLabels(ctx, viewport, taken) : undefined;
+    const numbered = state.callouts?.length ? this.placeCallouts(ctx, viewport, camera, set, state.callouts, [...taken, ...worded?.boxes ?? []]) : undefined;
+    this.labels(ctx, labels, [...beat?.boxes ?? [], ...this.badgeBoxes, ...worded?.boxes ?? [], ...numbered?.boxes ?? []]);
     beat?.draw();
+    worded?.draw();
     if (state.pins?.length) this.pins(ctx, viewport, camera, set, state.pins);
-    if (state.callouts?.length) this.callouts(ctx, viewport, camera, set, state.callouts, state.keepClear);
+    numbered?.draw();
     if (state.frames?.length) this.frames(ctx, viewport, camera, state.frames);
     if (state.activity?.length) this.activityBadges(ctx, viewport, camera, scene, set, state.activity, state.reducedMotion);
     if (state.pointer) this.pointer(ctx, viewport, camera, scene, set, items, state.pointer);
@@ -739,7 +750,7 @@ export class MapRenderer {
       ctx.globalAlpha = Math.max(0.65, alpha); ctx.font = `700 10px ${this.font}`; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
       const width = ctx.measureText(text).width + 14;
       ctx.fillStyle = this.theme.dark ? 'rgba(8,12,26,0.82)' : 'rgba(255,253,248,0.92)';
-      roundRect(ctx, anchor.x - width / 2, anchor.y - 8, width, 16, 8); ctx.fill();
+      roundRect(ctx, anchor.x - width / 2, anchor.y - 8, width, 16, 8); ctx.fill(); this.badgeBoxes.push({ x0: anchor.x - width / 2, y0: anchor.y - 8, x1: anchor.x + width / 2, y1: anchor.y + 8 });
       ctx.fillStyle = mixHex(colors.near, colors.far, impact.depth > 1 ? (area.distance - 1) / (impact.depth - 1) : 0); ctx.fillText(text, anchor.x, anchor.y + 0.5);
     }
     ctx.restore();
@@ -758,7 +769,7 @@ export class MapRenderer {
     const total = widths.reduce((sum, width) => sum + width, 0) + 8 * (texts.length - 1) + 12;
     let cursor = anchor.x - total / 2;
     ctx.fillStyle = this.theme.dark ? 'rgba(8,12,26,0.82)' : 'rgba(255,253,248,0.92)';
-    roundRect(ctx, cursor, anchor.y - 8, total, 16, 8); ctx.fill();
+    roundRect(ctx, cursor, anchor.y - 8, total, 16, 8); ctx.fill(); this.badgeBoxes.push({ x0: cursor, y0: anchor.y - 8, x1: cursor + total, y1: anchor.y + 8 });
     cursor += 6;
     texts.forEach((part, i) => { ctx.fillStyle = this.theme.change[part.key]; ctx.fillText(part.text, cursor, anchor.y + 0.5); cursor += widths[i]! + 8; });
     ctx.restore();
@@ -878,8 +889,8 @@ export class MapRenderer {
     const asks = entries.map(entry => entry.ask), soft = entries.map(entry => entry.target);
     // What finds no room is counted in a note at the top of the map, which then stays clear too.
     const note: Box = { x0: viewport.width / 2 - 150, y0: margin, x1: viewport.width / 2 + 150, y1: margin + 20 };
-    let { placed, left } = placeLabels(asks, { bounds, avoid: state.keepClear ?? [], soft, memory: this.beatSlots });
-    if (left.length) ({ placed, left } = placeLabels(asks, { bounds, avoid: [...state.keepClear ?? [], note], soft, memory: this.beatSlots }));
+    let { placed, left } = placeLabels(asks, { bounds, avoid: [...state.keepClear ?? [], ...this.badgeBoxes], soft, memory: this.beatSlots });
+    if (left.length) ({ placed, left } = placeLabels(asks, { bounds, avoid: [...state.keepClear ?? [], ...this.badgeBoxes, note], soft, memory: this.beatSlots }));
     const byKey = new Map(entries.map(entry => [entry.key, entry]));
     const boxes = placed.map(item => item.box);
     const more = left.length;
@@ -975,8 +986,12 @@ export class MapRenderer {
       if (!from || !to || from.item === to.item) continue;
       const key = `${from.item.node.id}>${to.item.node.id}>${edge.type}>${edge.change ?? ''}`;
       const existing = drawn.get(key);
-      if (existing) { existing.count += edge.count; existing.emphasized ||= !!edge.emphasized; continue; }
-      drawn.set(key, { from: from.item, to: to.item, ends: [this.railEnd(scene, from, edge.from, edge.fromAncestors), this.railEnd(scene, to, edge.to, edge.toAncestors)], count: edge.count, color: edge.change === 'removed' ? this.theme.change.removed : this.theme.relation[edge.type] ?? this.theme.fallbackRelation, hidden: from.hidden || to.hidden, emphasized: !!edge.emphasized, ...(edge.change ? { change: edge.change } : {}) });
+      if (existing) {
+        existing.count += edge.count; existing.emphasized ||= !!edge.emphasized; existing.directed ||= edge.directed !== false;
+        if (edge.label && !existing.label?.split(' · ').includes(edge.label)) existing.label = existing.label ? `${existing.label} · ${edge.label}` : edge.label;
+        continue;
+      }
+      drawn.set(key, { from: from.item, to: to.item, ends: [this.railEnd(scene, from, edge.from, edge.fromAncestors), this.railEnd(scene, to, edge.to, edge.toAncestors)], count: edge.count, color: edge.change === 'removed' ? this.theme.change.removed : this.theme.relation[edge.type] ?? this.theme.fallbackRelation, hidden: from.hidden || to.hidden, emphasized: !!edge.emphasized, directed: edge.directed !== false, ...(edge.change ? { change: edge.change } : {}), ...(edge.label ? { label: edge.label } : {}) });
     }
     return [...drawn.values()];
   }
@@ -1000,11 +1015,51 @@ export class MapRenderer {
       if (edge.hidden || edge.change === 'removed') ctx.setLineDash(edge.change === 'removed' ? [3, 5] : [6, 5]);
       ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.quadraticCurveTo(control.x, control.y, to.x, to.y); ctx.stroke();
       ctx.setLineDash([]);
-      this.arrowhead(ctx, to, Math.atan2(to.y - control.y, to.x - control.x), 7 + width, edge.color);
-      ctx.beginPath(); ctx.arc(from.x, from.y, 3, 0, Math.PI * 2); ctx.fill();
-      if (edge.count > 1) this.countBadge(ctx, { x: 0.25 * from.x + 0.5 * control.x + 0.25 * to.x, y: 0.25 * from.y + 0.5 * control.y + 0.25 * to.y }, edge.count, edge.color);
+      if (edge.directed) this.arrowhead(ctx, to, Math.atan2(to.y - control.y, to.x - control.x), 7 + width, edge.color);
+      ctx.fillStyle = edge.color; ctx.beginPath(); ctx.arc(from.x, from.y, 3, 0, Math.PI * 2); ctx.fill();
+      const middle = { x: 0.25 * from.x + 0.5 * control.x + 0.25 * to.x, y: 0.25 * from.y + 0.5 * control.y + 0.25 * to.y };
+      if (edge.label) this.linkLabels.push({ at: middle, text: edge.label, color: edge.color });
+      else if (edge.count > 1) this.countBadge(ctx, middle, edge.count, edge.color);
       ctx.restore();
     }
+  }
+  /**
+   * Words on links: on the link's middle when that is free, otherwise beside
+   * it with a leader; never over another label, a panel or another link's
+   * words. Returns the boxes taken (the map's names then keep off them) and
+   * what draws them.
+   */
+  private placeLinkLabels(ctx: CanvasRenderingContext2D, viewport: Viewport, avoid: Box[]): { boxes: Box[]; draw: () => void } {
+    ctx.save();
+    ctx.font = `600 11px ${this.font}`;
+    const entries = this.linkLabels.map((label, index) => {
+      const text = fit(ctx, label.text, 220), w = ctx.measureText(text).width + 14, h = 19;
+      // The target is the label's own size around the middle of the link: placed there when free.
+      return { ...label, text, w, h, ask: { key: `${index}|${label.text}`, target: { x0: label.at.x - w / 2 - 3, y0: label.at.y - h / 2 - 3, x1: label.at.x + w / 2 + 3, y1: label.at.y + h / 2 + 3 }, w, h, inside: true } };
+    });
+    ctx.restore();
+    const { placed } = placeLabels(entries.map(entry => entry.ask), { bounds: { x0: 4, y0: 4, x1: viewport.width - 4, y1: viewport.height - 4 }, avoid, memory: this.linkSlots, distances: [4, 18, 36], columns: false, clearTargets: false });
+    const byKey = new Map(entries.map(entry => [entry.ask.key, entry]));
+    const draw = () => {
+      ctx.save();
+      ctx.font = `600 11px ${this.font}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      for (const spot of placed) {
+        const entry = byKey.get(spot.key)!;
+        ctx.strokeStyle = entry.color; ctx.fillStyle = entry.color;
+        if (!spot.inside) {
+          // Off the link: a leader from the link's middle to the word.
+          const to = { x: Math.max(spot.box.x0, Math.min(spot.box.x1, entry.at.x)), y: Math.max(spot.box.y0, Math.min(spot.box.y1, entry.at.y)) };
+          ctx.globalAlpha = 0.8; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(entry.at.x, entry.at.y); ctx.lineTo(to.x, to.y); ctx.stroke(); ctx.globalAlpha = 1;
+        }
+        const { x0, y0 } = spot.box;
+        ctx.fillStyle = this.theme.dark ? 'rgba(10,14,30,0.94)' : 'rgba(255,255,255,0.97)';
+        roundRect(ctx, x0, y0, entry.w, entry.h, entry.h / 2); ctx.fill();
+        ctx.lineWidth = 1.3; ctx.stroke();
+        ctx.fillStyle = this.theme.text.primary; ctx.fillText(entry.text, x0 + entry.w / 2, y0 + entry.h / 2 + 0.5);
+      }
+      ctx.restore();
+    };
+    return { boxes: placed.map(spot => spot.box), draw };
   }
   private arrowhead(ctx: CanvasRenderingContext2D, at: Point, angle: number, size: number, color: string): void {
     ctx.fillStyle = color; ctx.beginPath();
@@ -1063,7 +1118,7 @@ export class MapRenderer {
     };
     for (const edge of edges) {
       const rail = route(edge.ends);
-      if (!rail || !add(rail, { color: edge.color, width: this.edgeWidth(edge), alpha: edge.change === 'removed' ? 0.75 : edge.emphasized ? 1 : 0.9, ...(edge.hidden || edge.change === 'removed' ? { dash: edge.change === 'removed' ? [3, 5] : [6, 5] } : {}), ...(edge.count > 1 ? { count: edge.count } : {}), ...(edge.change === 'added' ? { halo: this.theme.change.added } : {}) })) plan.edges.push(edge);
+      if (!rail || !add(rail, { color: edge.color, width: this.edgeWidth(edge), alpha: edge.change === 'removed' ? 0.75 : edge.emphasized ? 1 : 0.9, ...(edge.hidden || edge.change === 'removed' ? { dash: edge.change === 'removed' ? [3, 5] : [6, 5] } : {}), ...(edge.count > 1 ? { count: edge.count } : {}), ...(edge.change === 'added' ? { halo: this.theme.change.added } : {}), ...(edge.label ? { label: edge.label } : {}), ...(edge.directed ? {} : { directed: false }) })) plan.edges.push(edge);
     }
     for (const link of links) {
       const rail = route(link.ends);
@@ -1106,13 +1161,15 @@ export class MapRenderer {
       polyline(ctx, points); ctx.stroke();
       ctx.setLineDash([]); ctx.globalAlpha = 1;
       const end = points.at(-1)!, before = points.at(-2)!, start = points[0]!;
-      this.arrowhead(ctx, end, Math.atan2(end.y - before.y, end.x - before.x), 6 + stroke.width, stroke.color);
-      ctx.beginPath(); ctx.arc(start.x, start.y, 2.6 + stroke.width * 0.3, 0, Math.PI * 2); ctx.fill();
-      if (stroke.count) {
+      if (stroke.directed !== false) this.arrowhead(ctx, end, Math.atan2(end.y - before.y, end.x - before.x), 6 + stroke.width, stroke.color);
+      ctx.fillStyle = stroke.color; ctx.beginPath(); ctx.arc(start.x, start.y, 2.6 + stroke.width * 0.3, 0, Math.PI * 2); ctx.fill();
+      if (stroke.count || stroke.label) {
         const half = stroke.lengths.at(-1)! / 2;
         const i = Math.max(1, stroke.lengths.findIndex(length => length >= half));
         const a = points[i - 1]!, b = points[i]!, span = stroke.lengths[i]! - stroke.lengths[i - 1]!, t = span > 0 ? (half - stroke.lengths[i - 1]!) / span : 0;
-        this.countBadge(ctx, { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }, stroke.count, stroke.color);
+        const middle = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+        if (stroke.label) this.linkLabels.push({ at: middle, text: stroke.label, color: stroke.color });
+        else this.countBadge(ctx, middle, stroke.count!, stroke.color);
       }
     }
     ctx.restore();
@@ -1272,7 +1329,7 @@ export class MapRenderer {
     ctx.font = `700 10px ${this.font}`; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
     const width = Math.max(64, ctx.measureText(text).width + 14);
     ctx.fillStyle = this.theme.dark ? 'rgba(8,12,26,0.86)' : 'rgba(255,253,248,0.94)';
-    roundRect(ctx, anchor.x - width / 2, anchor.y - 11, width, 22, 7); ctx.fill();
+    roundRect(ctx, anchor.x - width / 2, anchor.y - 11, width, 22, 7); ctx.fill(); this.badgeBoxes.push({ x0: anchor.x - width / 2, y0: anchor.y - 11, x1: anchor.x + width / 2, y1: anchor.y + 11 });
     let cursor = anchor.x - width / 2 + 5;
     for (const [key, count] of [...ranked, ...(counts.none ? [['none', counts.none] as [string, number]] : [])]) {
       const share = count / total;
@@ -1324,7 +1381,7 @@ export class MapRenderer {
     ctx.font = `700 10px ${this.font}`; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
     const width = Math.max(64, ctx.measureText(text).width + 14);
     ctx.fillStyle = this.theme.dark ? 'rgba(8,12,26,0.86)' : 'rgba(255,253,248,0.94)';
-    roundRect(ctx, anchor.x - width / 2, anchor.y - 11, width, 22, 7); ctx.fill();
+    roundRect(ctx, anchor.x - width / 2, anchor.y - 11, width, 22, 7); ctx.fill(); this.badgeBoxes.push({ x0: anchor.x - width / 2, y0: anchor.y - 11, x1: anchor.x + width / 2, y1: anchor.y + 11 });
     let cursor = anchor.x - width / 2 + 5;
     for (const key of ['4', '3', '2', '1', 'none']) {
       if (!counts[key]) continue;
@@ -1367,7 +1424,7 @@ export class MapRenderer {
     ctx.font = `700 10px ${this.font}`; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
     const width = Math.max(64, ctx.measureText(text).width + 14);
     ctx.fillStyle = this.theme.dark ? 'rgba(8,12,26,0.86)' : 'rgba(255,253,248,0.94)';
-    roundRect(ctx, anchor.x - width / 2, anchor.y - 11, width, 22, 7); ctx.fill();
+    roundRect(ctx, anchor.x - width / 2, anchor.y - 11, width, 22, 7); ctx.fill(); this.badgeBoxes.push({ x0: anchor.x - width / 2, y0: anchor.y - 11, x1: anchor.x + width / 2, y1: anchor.y + 11 });
     let cursor = anchor.x - width / 2 + 5;
     for (const key of order) {
       const share = (counts[key] ?? 0) / code;
@@ -1389,7 +1446,7 @@ export class MapRenderer {
    * beside each block (or the area holding it), placed where it does not
    * cover another, with a leader line to its block.
    */
-  private callouts(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, set: VisibleSet, callouts: CalloutOverlay[], keepClear: readonly Box[] = []): void {
+  private placeCallouts(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, set: VisibleSet, callouts: CalloutOverlay[], keepClear: readonly Box[] = []): { boxes: Box[]; draw: () => void } {
     const resolved = callouts.map(callout => ({ callout, at: this.resolve(set, callout.entityId, callout.ancestors) })).filter(item => item.at);
     // The current stop first, so it always gets the best place.
     resolved.sort((a, b) => Number(b.callout.current) - Number(a.callout.current) || a.callout.number - b.callout.number);
@@ -1407,29 +1464,35 @@ export class MapRenderer {
     const { placed } = placeLabels(entries.map(entry => ({ key: entry.key, target: { x0: entry.anchor.x - 8, y0: entry.anchor.y - 8, x1: entry.anchor.x + 8, y1: entry.anchor.y + 8 }, w: entry.w, h: entry.h })), {
       bounds: { x0: 2, y0: 2, x1: viewport.width - 2, y1: viewport.height - 2 }, avoid: keepClear, memory: this.calloutSlots, directions: ['ne', 'se', 'nw', 'sw', 'n', 's', 'e', 'w'], distances: [10, 26, 48], columns: false,
     });
-    const byKey = new Map(entries.map(entry => [entry.key, entry]));
-    for (const spot of placed) {
-      const { callout, anchor, text, h, badge, w } = byKey.get(spot.key)!;
-      const box = spot.box, color = this.toneColor(callout.tone);
-      const near = { x: Math.max(box.x0, Math.min(anchor.x, box.x1)), y: Math.max(box.y0, Math.min(anchor.y, box.y1)) };
-      ctx.globalAlpha = callout.current ? 1 : 0.92;
-      ctx.strokeStyle = color; ctx.lineWidth = callout.current ? 2 : 1.4;
-      ctx.beginPath(); ctx.moveTo(anchor.x, anchor.y); ctx.lineTo(near.x, near.y); ctx.stroke();
-      if (callout.current) { ctx.shadowColor = color; ctx.shadowBlur = 16; }
-      ctx.fillStyle = this.theme.dark ? 'rgba(10,14,30,0.94)' : 'rgba(255,255,255,0.97)';
-      roundRect(ctx, box.x0, box.y0, w, h, h / 2); ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.lineWidth = callout.current ? 2 : 1.2; ctx.stroke();
-      ctx.fillStyle = color;
-      ctx.beginPath(); ctx.arc(box.x0 + 3 + badge / 2, box.y0 + h / 2, badge / 2, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = this.theme.dark ? '#0b1020' : '#ffffff'; ctx.textAlign = 'center';
-      ctx.font = `800 ${callout.current ? 10.5 : 9.5}px ${this.font}`;
-      ctx.fillText(String(callout.number), box.x0 + 3 + badge / 2, box.y0 + h / 2 + 0.5);
-      ctx.textAlign = 'left'; ctx.fillStyle = this.theme.text.primary;
-      ctx.font = `${callout.current ? 800 : 700} ${callout.current ? 12.5 : 11}px ${this.font}`;
-      ctx.fillText(text, box.x0 + badge + 9, box.y0 + h / 2 + 0.5);
-    }
     ctx.restore();
+    const byKey = new Map(entries.map(entry => [entry.key, entry]));
+    const draw = () => {
+      ctx.save();
+      ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+      for (const spot of placed) {
+        const { callout, anchor, text, h, badge, w } = byKey.get(spot.key)!;
+        const box = spot.box, color = this.toneColor(callout.tone);
+        const near = { x: Math.max(box.x0, Math.min(anchor.x, box.x1)), y: Math.max(box.y0, Math.min(anchor.y, box.y1)) };
+        ctx.globalAlpha = callout.current ? 1 : 0.92;
+        ctx.strokeStyle = color; ctx.lineWidth = callout.current ? 2 : 1.4;
+        ctx.beginPath(); ctx.moveTo(anchor.x, anchor.y); ctx.lineTo(near.x, near.y); ctx.stroke();
+        if (callout.current) { ctx.shadowColor = color; ctx.shadowBlur = 16; }
+        ctx.fillStyle = this.theme.dark ? 'rgba(10,14,30,0.94)' : 'rgba(255,255,255,0.97)';
+        roundRect(ctx, box.x0, box.y0, w, h, h / 2); ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.lineWidth = callout.current ? 2 : 1.2; ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.beginPath(); ctx.arc(box.x0 + 3 + badge / 2, box.y0 + h / 2, badge / 2, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = this.theme.dark ? '#0b1020' : '#ffffff'; ctx.textAlign = 'center';
+        ctx.font = `800 ${callout.current ? 10.5 : 9.5}px ${this.font}`;
+        ctx.fillText(String(callout.number), box.x0 + 3 + badge / 2, box.y0 + h / 2 + 0.5);
+        ctx.textAlign = 'left'; ctx.fillStyle = this.theme.text.primary;
+        ctx.font = `${callout.current ? 800 : 700} ${callout.current ? 12.5 : 11}px ${this.font}`;
+        ctx.fillText(text, box.x0 + badge + 9, box.y0 + h / 2 + 0.5);
+      }
+      ctx.restore();
+    };
+    return { boxes: placed.map(spot => spot.box), draw };
   }
   private readonly calloutSlots = new Map<string, string>();
   /** Pins stacked under their block: what the flow does there that is not an entity. */

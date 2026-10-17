@@ -33,6 +33,8 @@ const BEAT_DELAY_MS = 450;
 const BEAT_OPEN_MAX = 80;
 /** Panels over the map that labels keep clear of. */
 const PANELS = ':scope > .map-controls, :scope > .status-bar, :scope > .legend, :scope > .coverage-legend, :scope > .feature-legend, :scope > .banner, :scope > .switching';
+/** Panels of the middle that float over the map from outside it. */
+const OVER_MAP = '.tour-bar, .tour-flow-card';
 interface Animation { at(t: number): Camera; start: number; duration: number }
 export interface DebugHandle { screenPositionOf(id: string): { x: number; y: number } | undefined; camera(): Camera; visibleIds(): string[]; rectOf(id: string): { x: number; y: number; w: number; h: number } | undefined }
 export interface MapControllerOptions {
@@ -339,7 +341,7 @@ export class MapController implements MapNavigator {
     }
     const render = this.renderState(state, time);
     if (extra?.frames) render.frames = extra.frames;
-    if (render.beat || render.callouts?.length) render.keepClear = this.panels();
+    if (render.beat || render.callouts?.length || render.edges.some(edge => edge.label)) render.keepClear = this.panels();
     this.renderer.render(this.ctx, this.dpr, this.viewport, this.camera, this.scene, this.set, render, this.lod);
     const moved = `${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}`;
     if (moved !== this.lastCamera) { this.lastCamera = moved; this.options.onCamera?.(); }
@@ -443,12 +445,12 @@ export class MapController implements MapNavigator {
     }
     return { at: beat.at, files: beat.labels.files };
   }
-  /** The panels over this map, in canvas pixels. */
+  /** The panels over this map (its own, and a tour's bar), in canvas pixels. */
   private panels(): Box[] {
     const stage = this.canvas.parentElement;
     if (!stage) return [];
     const box = this.canvas.getBoundingClientRect();
-    return [...stage.querySelectorAll<HTMLElement>(PANELS)].flatMap(element => {
+    return [...stage.querySelectorAll<HTMLElement>(PANELS), ...document.querySelectorAll<HTMLElement>(OVER_MAP)].flatMap(element => {
       const rect = element.getBoundingClientRect();
       return rect.width && rect.height ? [{ x0: rect.left - box.left - 4, y0: rect.top - box.top - 4, x1: rect.right - box.left + 4, y1: rect.bottom - box.top + 4 }] : [];
     });
@@ -554,17 +556,25 @@ export class MapController implements MapNavigator {
     // Explanations: the link under the pointer lights what it names; otherwise the open explanation lights everything it links.
     const explain = state.explain;
     const scene = tool === 'tour' ? sceneOnStage(state) : undefined;
-    // A tour's scene lights its code; a map scene numbers it, with the scene's captions.
+    // A tour's scene lights its code. On the map (a map scene, or a diagram scene while tours stay on the map) its
+    // code is numbered with the scene's captions, where it is, and the scene's arrows run between it with their words.
     if (scene && !explain.hover) {
-      if (this.sceneCache?.scene !== scene) {
+      const onMap = scene.view === 'map' || (scene.view === 'diagram' && state.tourView !== 'diagram');
+      if (this.sceneCache?.scene !== scene || this.sceneCache.onMap !== onMap) {
         const shown = scene.boxes.filter(box => box.link.status !== 'missing');
+        const byKey = new Map(shown.map(box => [box.key, box]));
         this.sceneCache = {
-          scene, overlay: linkOverlay([...shown.map(box => box.link), ...scene.flow && scene.flow.status !== 'missing' ? [scene.flow] : []], scene.title),
-          callouts: scene.view === 'map' ? shown.flatMap((box, index) => box.link.id ? [{ entityId: box.link.id, ancestors: box.link.ancestors ?? [], number: index + 1, label: box.caption ?? box.link.label ?? box.link.name ?? box.link.href, tone: 'call' as const, current: false }] : []) : undefined,
+          scene, onMap, overlay: linkOverlay([...shown.map(box => box.link), ...scene.flow && scene.flow.status !== 'missing' ? [scene.flow] : []], scene.title),
+          callouts: onMap ? shown.flatMap((box, index) => box.link.id ? [{ entityId: box.link.id, ancestors: box.link.ancestors ?? [], number: index + 1, label: box.caption ?? box.link.label ?? box.link.name ?? box.link.href, tone: 'call' as const, current: false }] : []) : undefined,
+          edges: onMap ? scene.arrows.flatMap((arrow, index): EdgeOverlay[] => {
+            const from = byKey.get(arrow.fromKey)?.link, to = byKey.get(arrow.toKey)?.link;
+            if (!from?.id || !to?.id) return [];
+            return [{ key: `scene:${index}`, from: from.id, fromAncestors: from.ancestors ?? [], to: to.id, toAncestors: to.ancestors ?? [], type: arrow.evidence[0]?.type ?? 'scene', count: 1, emphasized: true, ...(arrow.label ? { label: arrow.label } : {}), ...(arrow.undirected ? { directed: false } : {}) }];
+          }) : [],
         };
       }
       result.explanation = this.sceneCache.overlay;
-      result.edges = [];
+      result.edges = this.sceneCache.edges;
       result.callouts = this.sceneCache.callouts;
       result.pins = undefined;
     }
@@ -638,7 +648,7 @@ export class MapController implements MapNavigator {
     return result;
   }
   private explainCache?: { detail: object; overlay: FamilyOverlay };
-  private sceneCache?: { scene: ResolvedScene; overlay: FamilyOverlay; callouts?: CalloutOverlay[] };
+  private sceneCache?: { scene: ResolvedScene; onMap: boolean; overlay: FamilyOverlay; callouts?: CalloutOverlay[]; edges: EdgeOverlay[] };
   private agentWorkCache?: { snapshot: AtlasState['agents']['snapshot']; focus?: string; epoch: number; overlay?: FamilyOverlay };
   private explainHoverCache?: { link: object; overlay: FamilyOverlay };
   private pullCache?: { data: object; overlay: FamilyOverlay };

@@ -1,10 +1,12 @@
 'use client';
-// An explanation's tour on stage, in the middle: one scene at a time. A map
-// scene frames its code on the map and numbers it; a diagram scene frames it
-// first, then its boxes rise off their blocks into a diagram while the map
-// dims behind; the next diagram slides the boxes they share, and a map scene
-// sinks them back. The text stays in the Explanations column, in step. The
-// bar at the bottom steps through the scenes (← and → too).
+// An explanation's tour on stage, in the middle: one scene at a time. A scene
+// frames its code on the map and numbers it where it is; a diagram scene also
+// draws its arrows between those places, with their words. As diagrams
+// (Settings, Views, or the bar's Diagram chip), a diagram scene's boxes rise
+// off their blocks into a diagram while the map dims behind; the next diagram
+// slides the boxes they share, and a map scene sinks them back. The text
+// stays in the Explanations column, in step. The bar at the bottom steps
+// through the scenes (← and → too).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ResolvedLink, ResolvedScene, SceneBox } from '@engine/explanations/model';
 import { sceneOnStage } from '../lib/controller';
@@ -23,6 +25,8 @@ export function TourStage() {
   const tour = useAtlas(state => state.explain.tour);
   const count = useAtlas(state => state.explain.detail?.data?.tour?.scenes.length ?? 0);
   const title = useAtlas(state => state.explain.detail?.data?.title);
+  // Diagram scenes rise into a diagram only when asked; by default they stay on the map, where their files are.
+  const asDiagram = useAtlas(state => state.tourView === 'diagram');
   const [diagram, setDiagram] = useState<{ scene: ResolvedScene; origins: ReadonlyMap<string, ScreenRect>; leaving?: boolean; entry: number }>();
   const current = useRef(diagram);
   current.current = diagram;
@@ -51,7 +55,7 @@ export function TourStage() {
       if (nodes.length) store.navigator?.fitNodes(nodes);
     };
     const shown = current.current;
-    if (scene.view === 'diagram') {
+    if (scene.view === 'diagram' && asDiagram) {
       if (shown && !shown.leaving) setDiagram({ scene, origins: reduced ? new Map() : originsOnMap(store.navigator, items), entry: shown.entry });
       else void frame().then(() => later(FRAME_MS, () => setDiagram({ scene, origins: reduced ? new Map() : originsOnMap(store.navigator, items), entry: ++entries.current })));
     } else if (shown && !shown.leaving) {
@@ -60,7 +64,7 @@ export function TourStage() {
       later(SINK_MS, () => void frame());
     } else void frame();
     return () => { cancelled = true; for (const timer of timers) clearTimeout(timer); };
-  }, [scene, store]);
+  }, [scene, store, asDiagram]);
 
   // Leaving the stage: nothing stays lit by a box the pointer left.
   useEffect(() => () => store.hoverLink(undefined), [store]);
@@ -100,6 +104,7 @@ export function TourStage() {
           {Array.from({ length: count }, (_, index) => <button key={index} role="tab" aria-selected={index === tour.scene} className={`tour-pip${index === tour.scene ? ' current' : ''}`} onClick={() => store.showScene(index)} aria-label={`Scene ${index + 1}`} title={`Scene ${index + 1}`} />)}
         </div>
         <button ref={nextButton} className="icon-button small" onClick={() => store.stepScene(1)} disabled={tour.scene >= count - 1} aria-label="Next scene" title="Next scene (→)">›</button>
+        {scene.view === 'diagram' && <button className="chip tour-diagram" aria-pressed={asDiagram} onClick={() => store.setTourView(asDiagram ? 'map' : 'diagram')} title={asDiagram ? 'Shown as a diagram over the map (click to show it on the map, where its files are)' : 'Shown on the map, where its files are (click to show it as a diagram over the map)'}>Diagram</button>}
         <button className="icon-button tiny tour-stop" onClick={() => store.closeTour()} aria-label="Stop the tour" title="Stop the tour">✕</button>
       </div>
     </div>

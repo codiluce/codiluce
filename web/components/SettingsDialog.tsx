@@ -19,6 +19,7 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
   const connections = useAtlas(state => state.connections);
   const streets = useAtlas(state => state.streets);
   const views = useAtlas(state => state.views);
+  const tourView = useAtlas(state => state.tourView);
   const [tab, setTab] = useState<SettingsTab>('appearance');
   const dialog = useRef<HTMLDivElement>(null);
   const close = useRef<HTMLButtonElement>(null);
@@ -100,6 +101,11 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
               </div>
               <p className="note">{group.note}</p>
             </div>)}
+            <span className="settings-label">Tour diagrams</span>
+            <div className="segmented" role="group" aria-label="Tour diagrams">
+              {([['map', 'On the map'], ['diagram', 'As diagrams']] as const).map(([value, label]) => <button key={value} aria-pressed={tourView === value} onClick={() => store.setTourView(value)}>{label}</button>)}
+            </div>
+            <p className="note">An explanation’s diagram scenes: on the map, their files numbered where they are and the arrows drawn between them, or as boxes and arrows rising from the map into a diagram. The tour bar’s Diagram chip switches it too.</p>
             <span className="settings-label">Arrow labels</span>
             <div className="segmented" role="group" aria-label="Arrow labels">
               {([['placed', 'Placed'], ['numbered', 'Numbered'], ['line', 'On the line']] as const).map(([value, label]) => <button key={value} aria-pressed={views.labels === value} onClick={() => store.setViews({ labels: value })}>{label}</button>)}
