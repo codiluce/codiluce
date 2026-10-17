@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A proposed roadmap for ten Codiluce agent harness integrations, covering MCP, hooks, sessions, subagents and map characters.">
+  <title>Agent harness compatibility roadmap · Codiluce</title>
+  <style>
+    :root { color-scheme: light; --paper:#f6f5f0; --card:#fffefa; --ink:#20312f; --muted:#586762; --line:#d9dfd6; --green:#17654f; --gold:#e0b459; --soft:#eaf1e9; --blue:#285f94; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; scroll-padding-top:24px; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { max-width:1280px; margin:auto; padding:clamp(20px,4.4vw,64px); }
+    a { color:var(--green); text-underline-offset:3px; }
+    a:hover { color:var(--blue); }
+    a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible { outline:3px solid var(--gold); outline-offset:3px; }
+    .eyebrow { font-size:12px; font-weight:750; letter-spacing:.13em; text-transform:uppercase; color:var(--green); }
+    h1 { max-width:900px; margin:16px 0 22px; font-size:clamp(36px,5.7vw,68px); line-height:1.07; letter-spacing:-.045em; }
+    h2 { font-size:clamp(24px,3vw,34px); line-height:1.2; letter-spacing:-.025em; margin:0 0 18px; }
+    h3 { font-size:20px; line-height:1.35; margin:0 0 12px; }
+    h4 { font-size:16px; margin:22px 0 6px; }
+    p { margin:0 0 15px; }
+    li { margin:6px 0; }
+    p, li, td, th { overflow-wrap:anywhere; }
+    .lead { max-width:880px; font-size:21px; line-height:1.6; }
+    .meta, small, .small { font-size:14px; color:var(--muted); }
+    nav { display:flex; flex-wrap:wrap; gap:10px 24px; margin:30px 0 36px; padding:20px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+    section { margin:48px 0; }
+    .notice { border-left:4px solid var(--green); background:var(--soft); padding:20px 24px; margin:24px 0; }
+    .notice p:last-child, article p:last-child { margin-bottom:0; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+    .steps { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+    article, .box { border:1px solid var(--line); border-radius:12px; padding:24px; background:var(--card); }
+    .tag { display:inline-block; font-size:12px; line-height:1.5; font-weight:700; padding:3px 9px; border:1px solid #bdd3c2; border-radius:20px; background:var(--soft); margin:0 5px 8px 0; }
+    .tag.later { background:#f8f0dc; border-color:#dfce9f; color:#6e521b; }
+    .count { font-size:13px; color:var(--muted); font-weight:600; display:block; margin-bottom:8px; }
+    .table-wrap { overflow:auto; border:1px solid var(--line); border-radius:12px; background:var(--card); }
+    table { border-collapse:collapse; width:100%; min-width:920px; text-align:left; font-size:14px; line-height:1.5; }
+    caption { text-align:left; font-size:14px; color:var(--muted); padding:16px; }
+    th,td { padding:15px; vertical-align:top; border-bottom:1px solid var(--line); }
+    thead th { background:var(--soft); font-size:12px; letter-spacing:.035em; text-transform:uppercase; }
+    tbody tr:last-child td, tbody tr:last-child th { border-bottom:0; }
+    tbody th { width:160px; }
+    td strong { font-weight:700; }
+    .filters { display:flex; flex-wrap:wrap; gap:14px; align-items:end; margin:18px 0; }
+    label { display:grid; gap:5px; font-size:13px; font-weight:650; }
+    input,select,button { font:inherit; background:var(--card); color:var(--ink); border:1px solid #a9b8ad; border-radius:6px; padding:9px 12px; }
+    input { width:260px; max-width:100%; }
+    button { cursor:pointer; }
+    code { font: .87em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; background:#edf0e9; padding:2px 4px; border-radius:3px; overflow-wrap:anywhere; }
+    pre { white-space:pre-wrap; overflow-wrap:anywhere; background:#20312f; color:#edf3e7; border-radius:10px; padding:22px; font:13px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace; }
+    pre code { color:inherit; background:transparent; padding:0; }
+    .flow { display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding:22px; background:var(--soft); border-radius:12px; font-size:14px; }
+    .flow b { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px 14px; }
+    .sources { font-size:14px; }
+    .sources a { margin-right:8px; }
+    .phase { border-top:4px solid var(--green); }
+    .phase.later { border-top-color:var(--gold); }
+    .number { color:var(--green); font-weight:750; font-size:13px; letter-spacing:.08em; margin-bottom:12px; }
+    details { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px 22px; margin:16px 0; }
+    summary { cursor:pointer; font-weight:700; }
+    details p { margin-top:12px; }
+    footer { margin-top:50px; border-top:1px solid var(--line); padding-top:24px; color:var(--muted); font-size:14px; }
+    [hidden] { display:none!important; }
+    @media(max-width:850px) { .steps { grid-template-columns:1fr; } }
+    @media(max-width:680px) { .grid { grid-template-columns:1fr; } article,.box { padding:20px; } .lead { font-size:18px; } }
+    @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+    @media print { main { max-width:none; padding:0; } nav,.filters { display:none; } body { font-size:10pt; background:white; } h1 { font-size:30pt; } section { margin:24px 0; } .grid,.steps { display:block; } article { margin:12px 0; break-inside:avoid; } .table-wrap { overflow:visible; } table { min-width:0; font-size:8pt; } th,td { padding:7px; } pre { color:#20312f; background:#edf0e9; } a { color:inherit; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Codiluce · Product &amp; integration design</div>
+    <h1>One map.<br>Many agent harnesses.</h1>
+    <p class="lead">Make ten important coding harnesses integration targets, with a shared adapter system for MCP, observed activity, session history, subagents and the characters on the map.</p>
+    <p class="meta">Roadmap and implementation · 17 October 2026 · Original ten targets, extended with OpenClaw and Hermes.</p>
+    <div class="notice">
+      <p><strong>Implementation:</strong> all twelve harness families are registered, with MCP setup, native observation adapters, session filters and distinct map characters. OpenClaw and Hermes are included. New profiles remain experimental until qualified against the user's installed runtime.</p>
+      <p>Native history readers cover Codex, Claude Code, Pi, Copilot CLI, Gemini CLI and repository-scoped OpenClaw sessions. All twelve accept explicit session exports; OpenCode's native JSON export is accepted directly. See the <a href="../agents/harnesses.md">connection guide</a> for setup, profiles and exact coverage.</p>
+      <p>OpenCode 1.18.27 and Pi 1.3.0 passed real MCP discovery checks. Pi's resource loader loaded the generated extension without errors. The original planning baseline and proposed delivery sequence remain below for context.</p>
+    </div>
+    <div class="notice">
+      <p><strong>Recommendation:</strong> establish the adapter contract using Codex and Claude Code, then implement OpenCode and Pi first. Expand to Cursor, Copilot and Gemini CLI next. Add Cline, Antigravity and Cascade through explicit runtime profiles.</p>
+      <p>Ship useful capabilities independently. A harness can connect through MCP before Codiluce can observe its activity or import its history. Every observed actor can use a character immediately, with a shared fallback.</p>
+    </div>
+  </header>
+  <nav aria-label="Document sections">
+    <a href="#baseline">Current baseline</a><a href="#targets">Ten targets</a><a href="#profiles">Integration notes</a><a href="#architecture">Adapter design</a><a href="#characters">Characters</a><a href="#delivery">Delivery plan</a><a href="#validation">Acceptance</a><a href="#beyond-ten">Beyond ten</a>
+  </nav>
+
+  <section id="baseline">
+    <div class="eyebrow">01 · Starting point</div>
+    <h2>We already have several kinds of compatibility.</h2>
+    <p>The current checkout connects <strong>Claude Code, Codex and Cursor</strong> during MCP setup. Live hooks, connection diagnostics and imported conversations support <strong>Codex and Claude Code</strong>. The map has dedicated Clawd and Codex characters, plus Bolt as a generic fallback. These are different baselines, and the roadmap should preserve that distinction.</p>
+    <div class="grid">
+      <article>
+        <h3>Reuse the existing core</h3>
+        <p>The stdio MCP server and explanation tools are already independent of the calling model. Activity is normalized into a bounded observation model, streamed to the UI, and resolved against the repository. Conversation storage and the crew renderer can remain shared.</p>
+        <p class="small">Code: <a href="../../src/explanations/mcp.ts">MCP server</a>, <a href="../../src/activity/model.ts">activity model</a>, <a href="../../src/conversations/store.ts">conversation store</a>, <a href="../../web/lib/crew.ts">crew behavior</a>.</p>
+      </article>
+      <article>
+        <h3>Remove the two-harness assumptions</h3>
+        <p><code>AgentId</code> in setup and <code>AgentProvider</code> in activity differ. CLI validation, API schemas, transcript discovery, connection setup, filters and display labels contain fixed provider lists. History path extraction also feeds tools into the Codex hook normalizer. Adding another union member alone would leave several of these incomplete.</p>
+        <p class="small">Code: <a href="../../src/setup/agents.ts">setup</a>, <a href="../../src/cli.ts">CLI</a>, <a href="../../src/activity/routes.ts">activity routes</a>, <a href="../../src/conversations/paths.ts">history paths</a>, <a href="../../web/components/AgentsPanel.tsx">connections UI</a>, <a href="../../web/lib/pixel-crew.ts">character selection</a>.</p>
+      </article>
+    </div>
+    <p class="small" style="margin-top:16px">This section records the baseline before implementation. Current behavior is described in <a href="agents.md">Agents: observed activity on the map</a> and the <a href="../agents/harnesses.md">connection guide</a>. Documentation findings and fixture coverage do not certify every released runtime.</p>
+  </section>
+
+  <section id="targets">
+    <div class="eyebrow">02 · Target portfolio</div>
+    <h2>Ten targets, with honest capability boundaries.</h2>
+    <p>This is a product shortlist, not a measured market-share ranking. Selection balances established editor and vendor distribution, active open-source ecosystems, usable integration surfaces, maintenance cost, and the explicitly requested OpenCode and Pi. The order below groups delivery waves rather than claiming exact popularity.</p>
+    <p><strong>MCP</strong> lets the agent use Codiluce. <strong>Activity</strong> lets Codiluce observe the agent. <strong>History</strong> imports readable conversations. <strong>Agent identity</strong> distinguishes sessions and explicit child actors. MCP alone does not provide the other three.</p>
+    <div class="filters" id="filters" hidden>
+      <label>Find a target <input id="target-search" type="search" placeholder="For example: OpenCode" aria-controls="target-table"></label>
+      <label>Delivery wave <select id="wave-filter" aria-controls="target-table"><option value="all">All targets</option><option value="baseline">Existing baseline</option><option value="1">Wave 1 · Open extensibility</option><option value="2">Wave 2 · Broad distribution</option><option value="3">Wave 3 · Additional products</option></select></label>
+      <button type="button" id="reset-filters">Reset</button><span class="small" id="target-count" role="status" aria-live="polite">10 targets</span>
+    </div>
+    <div class="table-wrap" role="region" aria-label="Harness capability comparison" tabindex="0">
+      <table id="target-table">
+        <caption>Original planning comparison, before implementation. The implementation notice and connection guide above describe current coverage. All twelve implemented targets have a distinct character.</caption>
+        <thead><tr><th scope="col">Target / wave</th><th scope="col">Planning baseline</th><th scope="col">MCP route</th><th scope="col">Live activity route</th><th scope="col">Agents &amp; history goal</th></tr></thead>
+        <tbody>
+          <tr data-wave="baseline"><th scope="row"><a href="#codex">Codex</a><small class="count">Existing baseline</small></th><td>MCP, hooks, history, character</td><td>Keep current CLI setup and stdio launch.</td><td>Existing hooks; preserve trust diagnostics.</td><td>Keep local import. Child lifecycle is available; tool ownership can remain at the parent.</td></tr>
+          <tr data-wave="baseline"><th scope="row"><a href="#claude">Claude Code</a><small class="count">Existing baseline</small></th><td>MCP, hooks, history, character</td><td>Keep current CLI setup and stdio launch.</td><td>Existing lifecycle and tool hooks.</td><td>Preserve local transcripts and explicit sidechain identity.</td></tr>
+          <tr data-wave="1"><th scope="row"><a href="#opencode">OpenCode</a><small class="count">Wave 1</small></th><td>Generic MCP guidance only</td><td>Native MCP through <code>opencode.json</code> / JSONC.</td><td>Plugin tool hooks and session events.</td><td>Primary/subagent roles. Candidate: scoped server API or explicit export for history.</td></tr>
+          <tr data-wave="1"><th scope="row"><a href="#pi">Pi</a><small class="count">Wave 1</small></th><td>Generic MCP guidance only</td><td>Native MCP in current Pi; legacy extension profiles separate.</td><td>Pi extension event handlers.</td><td>Candidate: documented session tree import. Delegation identity depends on the installed extension.</td></tr>
+          <tr data-wave="2"><th scope="row"><a href="#cursor">Cursor</a><small class="count">Wave 2</small></th><td>MCP setup only</td><td>Extend existing Cursor setup.</td><td>Native hooks, selected by runtime profile.</td><td>Custom agents; child attribution where IDs are supplied. Candidate: supported transcript/export path.</td></tr>
+          <tr data-wave="2"><th scope="row"><a href="#copilot">GitHub Copilot</a><small class="count">Wave 2</small></th><td>Generic MCP guidance only</td><td>Separate CLI and VS Code config renderers.</td><td>Copilot SDK hooks; separate VS Code Local profile if supported.</td><td>Custom agents and partial child lifecycle. Candidate: public session/export interfaces.</td></tr>
+          <tr data-wave="2"><th scope="row"><a href="#gemini">Gemini CLI</a><small class="count">Wave 2</small></th><td>Generic MCP guidance only</td><td>Native MCP in <code>.gemini/settings.json</code>.</td><td><code>BeforeTool</code>, <code>AfterTool</code>, agent/session hooks.</td><td>Custom subagents. Candidate: versioned transcript import; prove child ownership separately.</td></tr>
+          <tr data-wave="3"><th scope="row"><a href="#cline">Cline</a><small class="count">Wave 3</small></th><td>Generic MCP guidance only</td><td>Native MCP; CLI and extension configuration differ.</td><td>File hooks / runtime plugin hooks, depending on product and version.</td><td>CLI/Desktop subagents differ from editor extensions. Candidate: task/session export importer.</td></tr>
+          <tr data-wave="3"><th scope="row"><a href="#antigravity">Google Antigravity</a><small class="count">Wave 3</small></th><td>Generic MCP guidance only</td><td>Native MCP, with App/CLI/IDE profiles.</td><td>Native hooks; SDK callbacks only for runs the integration owns.</td><td>Custom asynchronous subagents. Candidate: documented export/session interfaces.</td></tr>
+          <tr data-wave="3"><th scope="row"><a href="#cascade">Windsurf / Devin Desktop</a><small class="count">Wave 3</small></th><td>Generic MCP guidance only</td><td>Native Cascade MCP configuration.</td><td>Cascade pre/post hooks; distinguish Devin Local Agent.</td><td>Trajectory and turn identity. Candidate: documented transcript hook/export. Child attribution unverified.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p id="empty-targets" hidden>No targets match these filters.</p>
+    <p class="small" style="margin-top:14px">“Generic MCP guidance” means the existing JSON helper can be adapted manually; it is not a tested harness-specific setup flow. Minimum supported versions must be recorded after hands-on validation, not inferred from current documentation.</p>
+  </section>
+
+  <section id="profiles">
+    <div class="eyebrow">03 · Harness-specific work</div>
+    <h2>Use the extension surface each harness actually offers.</h2>
+    <div class="grid">
+      <article id="codex">
+        <span class="tag">Baseline</span><h3>01 · Codex</h3>
+        <p>Move the existing MCP installer, hook generator, connection/trust checks and transcript parser behind one adapter. Preserve <code>.codex/hooks.json</code> and the current user MCP scope. Keep metadata-only app-server reads bounded.</p>
+        <p>Subagent hooks can share the parent session ID. A child starting does not prove subsequent parent tool observations came from that child. Keep existing <code>codex:session-id</code> links stable.</p>
+        <p class="sources"><a href="https://learn.chatgpt.com/docs/hooks">Official hooks</a> · <a href="https://learn.chatgpt.com/docs/app-server">App-server</a> · <a href="https://learn.chatgpt.com/docs/codex/cli">CLI / MCP</a></p>
+      </article>
+      <article id="claude">
+        <span class="tag">Baseline</span><h3>02 · Claude Code</h3>
+        <p>Wrap existing MCP, <code>.claude/settings.local.json</code> hooks and JSONL import. Preserve failure events, session titles, child IDs and sidechain history. Custom agent definitions and live child instances are separate concepts.</p>
+        <p>Use this with Codex as the regression baseline. Hook event names that look similar across products must still pass through their own payload decoder and neutral response serializer.</p>
+        <p class="sources"><a href="https://code.claude.com/docs/en/hooks">Official hooks</a> · <a href="https://code.claude.com/docs/en/sub-agents">Custom subagents</a></p>
+      </article>
+      <article id="opencode">
+        <span class="tag">Wave 1</span><h3>03 · OpenCode</h3>
+        <p>Best first new adapter: native MCP, project plugins and differentiated primary/subagent roles. Generate MCP configuration and a small Codiluce plugin. Consume <code>tool.execute.before/after</code>, session status/idle/error and explicit permission events.</p>
+        <p>Preserve worktree and call IDs. Treat session idle as turn completion. Prefer a documented, scoped server API or export for history over reading private storage. Attaching requires an explicitly selected local server; never start a conversation to observe one.</p>
+        <p class="sources"><a href="https://opencode.ai/docs/mcp-servers/">MCP</a> · <a href="https://opencode.ai/docs/plugins/">Plugins/events</a> · <a href="https://opencode.ai/docs/agents/">Agents</a> · <a href="https://opencode.ai/docs/server/">Server API</a></p>
+      </article>
+      <article id="pi">
+        <span class="tag">Wave 1</span><h3>04 · Pi</h3>
+        <p>Current Pi documents native MCP and <code>.pi/mcp.json</code>; do not assume Pi always needs a third-party MCP bridge. Build a Codiluce extension for tool/session observations. Keep older MCP extensions and Pi forks as separately detected profiles.</p>
+        <p>History must follow session entry IDs, parent links and the selected branch rather than flattening every JSONL entry into one chat. Subagent extensions need explicit identity mappings. RPC is an option when a host already owns that process.</p>
+        <p class="sources"><a href="https://pi.dev/docs/latest/mcp">MCP</a> · <a href="https://pi.dev/docs/latest/extensions">Extensions</a> · <a href="https://pi.dev/docs/latest/session-format">Session format</a> · <a href="https://pi.dev/docs/latest/cli-integration">CLI/RPC</a> · <a href="https://pi.dev/packages/pi-subagents">Subagent extension</a></p>
+      </article>
+      <article id="cursor">
+        <span class="tag">Wave 2</span><h3>05 · Cursor</h3>
+        <p>Turn existing MCP setup into broader compatibility through native hooks. Prefer session, tool and file events and explicit subagent correlation. Project <code>.cursor/mcp.json</code> should be an option alongside the current user config.</p>
+        <p>Prove coverage independently for IDE and CLI versions. Cloud subagents use a different environment and MCP configuration. Start history with documented exports/transcripts; private editor databases are not a baseline requirement.</p>
+        <p class="sources"><a href="https://cursor.com/docs/hooks">Hooks</a> · <a href="https://cursor.com/docs/subagents">Subagents</a> · <a href="https://cursor.com/docs/release-notes/ide">Hook correlation updates</a></p>
+      </article>
+      <article id="copilot">
+        <span class="tag">Wave 2</span><h3>06 · GitHub Copilot</h3>
+        <p>One product family, multiple profiles: Copilot CLI, VS Code using the Copilot harness, and optionally VS Code Local. VS Code can also host Claude or Codex; those observations retain their actual harness identity.</p>
+        <p>Render MCP and hooks per profile. The CLI and VS Code may accept related files while differing in available events. Child lifecycle coverage has exceptions, and names alone are not unique child IDs. Keep cloud Copilot outside the initial local observer scope.</p>
+        <p class="sources"><a href="https://docs.github.com/en/copilot/reference/hooks-reference">Copilot hook reference</a> · <a href="https://docs.github.com/en/copilot/how-tos/copilot-cli/use-copilot-cli/overview">CLI / MCP</a> · <a href="https://code.visualstudio.com/docs/copilot/customization/hooks">VS Code harness selection</a> · <a href="https://code.visualstudio.com/docs/agent-customization/mcp-servers">VS Code MCP</a></p>
+      </article>
+      <article id="gemini">
+        <span class="tag">Wave 2</span><h3>07 · Gemini CLI</h3>
+        <p>Generate MCP and hooks under <code>.gemini/settings.json</code>. Translate native tool events and <code>BeforeAgent/AfterAgent</code> boundaries into Codiluce's shared lifecycle.</p>
+        <p>Native hook payloads include a session ID, working directory and transcript path. Validate that path against the provider-owned store before importing. Custom subagents exist, but parent/child tool attribution still needs runtime evidence. Keep this adapter separate from Antigravity.</p>
+        <p class="sources"><a href="https://geminicli.com/docs/tools/mcp-server/">MCP</a> · <a href="https://geminicli.com/docs/hooks/reference/">Hooks</a> · <a href="https://geminicli.com/docs/core/subagents/">Subagents</a></p>
+      </article>
+      <article id="cline">
+        <span class="tag later">Wave 3</span><h3>08 · Cline</h3>
+        <p>Support CLI/Desktop and editor extensions through separate profiles. Official repository docs describe both legacy <code>.clinerules/hooks</code> scripts and newer file/runtime plugin hooks. Detect the actual implementation before rendering setup.</p>
+        <p>Current subagent docs distinguish CLI/Desktop from the editor extensions and say children do not receive MCP tools. Observe actual child instances where possible; do not advertise inherited Codiluce access. Prove history through a supported task/session export before shipping an importer.</p>
+        <p class="sources"><a href="https://github.com/cline/cline/blob/main/docs/mcp/mcp-overview.mdx">MCP</a> · <a href="https://github.com/cline/cline/blob/main/.clinerules/hooks/README.md">Legacy hooks</a> · <a href="https://github.com/cline/cline/blob/main/sdk/examples/plugins/README.md">Runtime/file hooks</a> · <a href="https://github.com/cline/cline/blob/main/docs/features/subagents.mdx">Subagents</a></p>
+      </article>
+      <article id="antigravity">
+        <span class="tag later">Wave 3</span><h3>09 · Google Antigravity</h3>
+        <p>Include Google's App, CLI and IDE family with explicit profiles. Official docs describe native MCP, hooks and custom asynchronous subagents. Share adapter helpers only where payload fixtures prove compatibility with another harness.</p>
+        <p>Prioritize native installed hooks for existing sessions. SDK lifecycle callbacks are useful only when Codiluce or its host owns the run; they do not automatically observe an unrelated IDE session. Scope history and child tool ownership independently per surface.</p>
+        <p class="sources"><a href="https://antigravity.google/docs/mcp">MCP / surface configs</a> · <a href="https://antigravity.google/docs/hooks">Hooks</a> · <a href="https://antigravity.google/docs/subagents">Custom subagents</a> · <a href="https://antigravity.google/docs/sdk/lifecycle">SDK lifecycle</a></p>
+      </article>
+      <article id="cascade">
+        <span class="tag later">Wave 3</span><h3>10 · Windsurf / Devin Desktop · Cascade</h3>
+        <p>Keep a stable Cascade adapter identity with Windsurf and Devin Desktop discovery aliases. The Windsurf docs currently redirect to Devin Desktop. Cascade has native MCP and pre/post hooks for file, command and MCP actions.</p>
+        <p>Use <code>trajectory_id</code> for the conversation and <code>execution_id</code> for a turn. Verify success semantics and transcript availability. Devin Local Agent has a different hook format and needs another profile; branding alone is not proof of runtime compatibility.</p>
+        <p class="sources"><a href="https://docs.devin.ai/desktop/cascade/mcp">Cascade MCP</a> · <a href="https://docs.devin.ai/desktop/cascade/hooks">Cascade hooks / identities / transcript event</a></p>
+      </article>
+    </div>
+    <div class="notice">
+      <p><strong>Version drift is an implementation input.</strong> The Pi MCP baseline, Cline's product differences, Copilot's host selection and the Cascade naming transition show why “same JSON file” and “same model” cannot define compatibility. These are documentation findings; none replaces a smoke test of the exact installed release.</p>
+    </div>
+  </section>
+
+  <section id="architecture">
+    <div class="eyebrow">04 · Scale through adapters</div>
+    <h2>A shared core, with versioned harness profiles.</h2>
+    <div class="flow" aria-label="Proposed integration architecture">
+      <b>Harness + runtime profile</b><span aria-hidden="true">→</span><b>MCP config · hook · plugin · import</b><span aria-hidden="true">→</span><b>Validated adapter boundary</b><span aria-hidden="true">→</span><b>Shared activity &amp; conversation stores</b><span aria-hidden="true">→</span><b>Sessions · map · crew</b>
+    </div>
+    <h3 style="margin-top:28px">1. One registry owns identity and capabilities</h3>
+    <p>Introduce <code>src/harnesses/</code> with a registry, adapter contracts, shared config helpers and one directory per harness. Make setup, CLI validation, server routes, MCP tool schemas, session filters and UI labels consume registry metadata. Generate a small serializable manifest for the browser; browser imports must not pull in installers or transcript readers.</p>
+    <p>Use <code>harnessId</code> for the runtime that executes tools. Keep the host surface, model vendor/model ID, custom role definition, observed session, child agent instance and visual character separate. Claude running inside OpenCode remains OpenCode. A Codex session hosted in VS Code remains Codex.</p>
+    <pre><code>// Illustrative contract: proposal, not an implemented API.
+interface HarnessAdapter {
+  id: HarnessId;                    // registry-validated, stable identifier
+  label: string;
+  discoveryAliases: string[];       // binary names / renamed products
+  profiles: RuntimeProfile[];       // IDE, CLI, legacy versions, etc.
+  presentation: { characterId: string; fallback: 'bolt' };
+  detect(context: LocalContext): Promise&lt;DetectedProfile[]&gt;;
+  planSetup(profile: ProfileId, scope: SetupScope): Promise&lt;SetupPlan&gt;;
+  diagnose(context: LocalContext): Promise&lt;ConnectionDiagnostics&gt;;
+  activity?: ActivityAdapter;       // decoding + neutral hook response
+  history?: HistoryAdapter;         // discovery + bounded import
+}
+
+interface RuntimeProfile {
+  id: ProfileId;
+  versionRange: string;             // set only after fixture + smoke validation
+  capabilities: {
+    mcp: Capability;
+    activity: Capability;
+    history: Capability;
+    childLifecycle: Capability;
+    childToolAttribution: Capability;
+    roleDefinitions: Capability;
+  };
+}
+// Capability = support level + evidence/tested versions + known limitations.
+// Levels: verified | experimental | unsupported | unknown.
+// Connection state (configured/trusted/delivering) is separate.</code></pre>
+    <p>Retain legacy <code>provider</code> fields and old conversation/actor keys during migration, including the setup alias <code>claude</code> → <code>claude-code</code>. Do not rewrite existing IDs or fragment links. New internal keys should encode a tuple of repository/worktree, harness, source instance, session and optional child ID instead of depending on ambiguous colon splitting. Keep any public legacy key as an alias.</p>
+
+    <h3>2. Keep MCP as the portable foundation</h3>
+    <ul>
+      <li>Reuse <code>mcpLaunch()</code>, install-kind handling and the current stdio server. Render each client's schema: an <code>mcpServers</code> blob is not universal; OpenCode and VS Code already need different shapes.</li>
+      <li>Support explicit project/user scope, repository/worktree binding and custom state directories. Explain the chosen scope in setup. Prefer project scope for new integrations where the harness supports it; retain existing defaults during migration.</li>
+      <li>Expose a reviewed setup plan with exact files/commands, then use the harness CLI or a format-aware merge. Preserve unrelated MCP servers, hooks, comments and settings; malformed files must produce a useful error rather than being replaced. Track owned entries for idempotent updates and removal.</li>
+      <li>Maintain one explanation workflow, with small harness-specific instruction/skill wrappers where useful. MCP calls and client names must not fabricate a live session ID or imply observation of built-in tools.</li>
+      <li>Keep local stdio as the first goal. SSH, containers and remote hosts require a collector in the execution environment with explicit path mapping. Cloud sessions cannot deliver to a developer machine's loopback address. A remote authenticated transport is a separate milestone.</li>
+    </ul>
+
+    <h3>3. Normalize observations before they reach the core</h3>
+    <p>Use native command hooks for script-capable products, a small OpenCode plugin, and a Pi extension. All should produce the same versioned observation envelope. Keep decoding tools and lifecycle separate from shared path validation, limits, event storage and map resolution.</p>
+    <pre><code>// Proposed normalized envelope. Optional fields require source evidence.
+{
+  schemaVersion: 1,
+  harnessId, profileId, sourceInstanceId,
+  repositoryRoot, worktreeRoot,
+  sessionId, agentId?, parentAgentId?, turnId?,
+  sourceEventId?, toolCallId?, parentToolCallId?,
+  occurredAt?, receivedAt,
+  kind, phase, paths, status?,
+  provenance: { transport, attribution: 'session' | 'explicit-child' }
+}</code></pre>
+    <ul>
+      <li><strong>Map meaning, not spelling.</strong> Keep raw event names inside adapters. The crew should consume semantic session/turn/child/tool events rather than checking strings such as <code>SubagentStart</code> or <code>Stop</code>. Each tool mapper handles its native names, arguments, error shape, paths and compound tool wrappers.</li>
+      <li><strong>Preserve attempted versus completed actions.</strong> A tool starting marks an attempt. Only a successful completion confirms an edit/read. Missing completion, partial delivery or a failed tool must remain visible as uncertain or failed.</li>
+      <li><strong>Keep runtime state bounded.</strong> Turn completion becomes idle; session termination becomes finished. Silence eventually becomes unknown. Session IDs are mandatory for actors; an adapter may create a stable process-scoped ID only if it owns that source and can prove its boundaries.</li>
+      <li><strong>Support concurrent and repeated events.</strong> Correlate using explicit call IDs, retain arrival time as well as source time, and deduplicate stable source IDs. If no source ID exists, do not collapse identical legitimate actions just because the paths match. Avoid duplicate hooks and plugin delivery through source registration.</li>
+      <li><strong>Keep observers passive.</strong> Use the profile's valid neutral hook response. Never emit a permission decision, context injection, tool mutation or continuation request for observation. Extension handlers must not modify arguments/results or throw into the agent loop. Preserve other installed hooks.</li>
+      <li><strong>Retain current local boundaries.</strong> Shared validators reject foreign roots and path/symlink escapes. Keep loopback delivery, the activity request header, read-only restrictions, bounded in-memory retention and minimal metadata. Prompts, reasoning, patch bodies, raw commands and tool output stay out of activity. Existing search-query retention remains explicit.</li>
+      <li><strong>Keep delivery cheap.</strong> Preserve the current 1.5-second forwarding timeout; plugins should use bounded queues and discard excess observations without slowing tools. Disconnected delivery does not become durable transcript capture or replay.</li>
+    </ul>
+
+    <h3>4. Make history an optional, independent adapter</h3>
+    <p>Split <code>src/conversations/import.ts</code> into provider-specific readers feeding one public-message model. Discovery, repository ownership, selected branch, pagination, incremental checkpoints and error reporting belong in the history interface. Prefer documented APIs or exports, then provider-owned local files. Private databases are a last resort and an experimental profile.</p>
+    <p>Preserve the existing explicit import/refresh action and bounded refresh for observed sessions. An installation can show live activity while history is unavailable. Never follow an arbitrary transcript path from an event without checking its source store and project ownership. Exclude system prompts and private reasoning; retain current transcript redaction, truncation and read-only behavior.</p>
+    <p>Track source version and import stamp, handle partial writes/rotation/compaction, and leave an unsupported schema untouched with a clear explanation. Pi requires branch-aware import; a fork or a resumed session must not merge with unrelated history.</p>
+
+    <h3>5. Treat role definitions and child instances separately</h3>
+    <p>A “reviewer” definition configures behavior; a spawned reviewer is an observed actor. Record definition metadata only when explicitly available. Parent/child relationships need native IDs or a mapping from a collector that owns the session. Shared model names, agent names, paths or timing are insufficient evidence.</p>
+    <p>Observe delegation without making Codiluce an orchestrator. Optional Codiluce explainer/reviewer skill packages can be generated from shared instructions later. Do not promise portable model selection, tool permissions, nested delegation or MCP inheritance: those remain harness policies.</p>
+
+    <h3>6. Expose capability and connection state in the product</h3>
+    <p>Replace the two-button connection chooser with a searchable registry-driven list. For each installed profile show independent MCP, activity, history and child-attribution status, plus “not configured,” “needs trust,” “delivering,” “unsupported,” or “unknown” as appropriate. Receiving an event proves delivery, not saved trust or history access. Idle sessions need not emit heartbeats.</p>
+    <p>Keep provider-specific setup instructions and diagnostics in the connection dialog. In the main Agents list, offer harness, session, role and file filters only where data exists. Unknown future harness IDs should remain readable with a text label and fallback character even when ingestion requires a registered adapter.</p>
+  </section>
+
+  <section id="characters">
+    <div class="eyebrow">05 · Agents at work</div>
+    <h2>Every observed actor can have a character.</h2>
+    <p>Separate <code>characterId</code> from <code>harnessId</code>. Keep shared poses, props, timing, movement and hit targets; register only each character's pixel rows, palette, dimensions, face crop and hand anchors. Preserve Clawd and the blue terminal cloud. Bolt remains the fallback for every integration, including future adapters.</p>
+    <div class="grid">
+      <article>
+        <h3>Character direction</h3>
+        <p><strong>Existing:</strong> Claude Code → Clawd; Codex → blue terminal cloud.</p>
+        <p><strong>Proposed original motifs:</strong> OpenCode → terminal cube; Pi → round builder with a π badge; Cursor → pointer scout; Copilot → visor pilot; Gemini CLI → twin-star explorer; Cline → notebook courier; Antigravity → floating orbit mechanic; Cascade → wave courier.</p>
+        <p>These are art directions, not shipped assets. All eight new harnesses can launch with Bolt plus their actual name while dedicated sprites are made.</p>
+      </article>
+      <article>
+        <h3>Rules shared by every character</h3>
+        <ul>
+          <li>The harness determines the default body; the session's stable color/ring distinguishes simultaneous sessions. An optional user preference can select another skin.</li>
+          <li>Explicit children inherit the family with a smaller body and a visible parent relationship. Parallel tool calls are not extra child agents.</li>
+          <li>Movement to files requires observed paths. Commands or waiting with no path stay off-map. Missing identity never produces a fabricated actor.</li>
+          <li>Thinking/reply poses are illustrative when inferred; distinguish them from observed activity in the ledger. No reasoning text is collected.</li>
+          <li>Use the same pose set, keyboard-accessible labels, readable silhouettes, reduced-motion behavior and session link for every body.</li>
+        </ul>
+      </article>
+    </div>
+    <p class="small" style="margin-top:16px">Implementation seam: split presentation metadata from <a href="../../web/lib/pixel-crew.ts">pixel-crew.ts</a>, then remove the <code>codex | claude-code | other</code> routing assumption without losing the existing fallback. Keep <a href="../../web/lib/crew.ts">crew.ts</a> harness-neutral and consume semantic lifecycle events.</p>
+  </section>
+
+  <section id="delivery">
+    <div class="eyebrow">06 · Delivery sequence</div>
+    <h2>Prove extensibility before expanding the checklist.</h2>
+    <p>Each integration gets an initial discovery spike that records the exact product, release, platform, config scope, event samples, session identity, failure/neutral-response behavior and history access. Implementation estimates follow these spikes; no calendar promises are implied below.</p>
+    <div class="steps">
+      <article class="phase">
+        <div class="number">M0 · SHARED FOUNDATION</div><h3>Preserve the baselines</h3>
+        <p>Add registry/contracts and migrate Codex/Claude. Keep APIs and archived links readable. Extract shared tool/path logic; make UI options and crew presentation data-driven.</p>
+        <p><strong>Exit:</strong> existing setup, activity, history, trust and character behavior pass regression checks. A test adapter can register without editing core provider lists.</p>
+      </article>
+      <article class="phase">
+        <div class="number">M1 · OPEN EXTENSIBILITY</div><h3>OpenCode + Pi</h3>
+        <p>Ship scoped MCP setup, one plugin and one extension. Add activity, session identity and Bolt fallback. Deliver Pi history after branch-aware fixtures; validate OpenCode API/export history separately.</p>
+        <p><strong>Exit:</strong> both can publish explanations and light observed files without taking ownership of the user's conversations.</p>
+      </article>
+      <article class="phase">
+        <div class="number">M2 · BROAD DISTRIBUTION</div><h3>Cursor + Copilot + Gemini</h3>
+        <p>Extend Cursor's existing MCP setup; add native hook profiles for all three. Separate Copilot CLI, VS Code Copilot and VS Code Local contracts. Add history only when a supported source passes validation.</p>
+        <p><strong>Exit:</strong> each verified profile passes the same lifecycle, path, concurrency and disconnect scenarios.</p>
+      </article>
+      <article class="phase later">
+        <div class="number">M3 · ADDITIONAL PRODUCTS</div><h3>Cline + Antigravity + Cascade</h3>
+        <p>Ship MCP setup first, then verified activity profiles. Handle Cline hook generations and Cascade/Windsurf naming. Keep unsupported history or child attribution explicitly unavailable.</p>
+        <p><strong>Exit:</strong> ten target families are represented; supported releases and capability gaps are visible and documented.</p>
+      </article>
+      <article class="phase later">
+        <div class="number">PARALLEL PRODUCT TRACK</div><h3>Dedicated characters</h3>
+        <p>Design and add the eight new bodies through the presentation registry. Reuse every pose and prop. Add faces to connection/session lists and a mixed-harness crew preview.</p>
+        <p><strong>Exit:</strong> all ten have readable, accessible identities; artwork never blocks functional integration.</p>
+      </article>
+      <article class="phase later">
+        <div class="number">ONGOING</div><h3>Compatibility maintenance</h3>
+        <p>Record tested release ranges and fixtures per profile, monitor upstream format changes, and qualify upgrades. Add Kiro next using the same contract. Consider ACP or remote transport only for a concrete use case.</p>
+        <p><strong>Exit:</strong> the next harness adds adapter code, metadata and fixtures without another core integration rewrite.</p>
+      </article>
+    </div>
+    <h3 style="margin-top:28px">Suggested reviewable work packages</h3>
+    <ol>
+      <li><strong>Registry and schema compatibility:</strong> stable IDs, capability manifest, legacy aliases and old link/store compatibility.</li>
+      <li><strong>Activity boundary:</strong> separate raw decoders, shared path/tool helpers, semantic lifecycle and passive response handling.</li>
+      <li><strong>Setup and UI:</strong> installation plans, scoped config merges, profile diagnostics and registry-driven selectors.</li>
+      <li><strong>History boundary:</strong> discovery/import interface, incremental checkpoints and existing parser migration.</li>
+      <li><strong>OpenCode:</strong> MCP + plugin + event fixtures; history as a follow-up if the spike succeeds.</li>
+      <li><strong>Pi:</strong> MCP + extension + branch-aware history, with explicit supported package/profile.</li>
+      <li><strong>Remaining integrations:</strong> one family per package, split further when IDE/CLI payloads differ.</li>
+      <li><strong>Character registry and art:</strong> shared fallback first; dedicated bodies in small visual changes.</li>
+    </ol>
+    <p class="small">These are proposed work packages, not GitHub Issues already created. Exact test ownership and merge order should keep each intermediate build usable.</p>
+  </section>
+
+  <section id="validation">
+    <div class="eyebrow">07 · Definition of done</div>
+    <h2>Certify capabilities per profile.</h2>
+    <div class="grid">
+      <article>
+        <h3>MCP and setup</h3>
+        <ul>
+          <li>A clean repo and an already configured repo both get the correct scope. Applying setup twice does not duplicate entries or lose another server/hook.</li>
+          <li>Test checkout, installed package and npx launch paths; paths with spaces; custom state directories; two repositories and two worktrees.</li>
+          <li>Prove tool discovery, a real graph read, link validation and publishing an explanation. Installing hooks alone is not an MCP test.</li>
+          <li>Test config parsing and neutral hook output on each declared OS/runtime. Initial release qualification can start with Linux/macOS; Windows remains explicit until validated.</li>
+        </ul>
+      </article>
+      <article>
+        <h3>Activity and subagents</h3>
+        <ul>
+          <li>Exercise read, edit, rename/delete, search scope, command, failed tool, denied/cancelled tool, permission wait, idle turn and resumed session.</li>
+          <li>Run parallel tools and two sessions. Check duplicate and out-of-order events, missing completions and a child lifecycle with and without child tool IDs.</li>
+          <li>Prove foreign-root/symlink rejection and read-only behavior. Stop Codiluce and confirm the harness continues with normal permission handling and no added context.</li>
+          <li>Check the UI distinguishes delivering, trusted, configured and unavailable. Partial coverage must never become a full-support badge.</li>
+        </ul>
+      </article>
+      <article>
+        <h3>History</h3>
+        <ul>
+          <li>Import a real sanitized transcript/export fixture, refresh incrementally, and prove project/session identity without importing unrelated projects.</li>
+          <li>Cover forks, compaction, partial writes and schema changes. Pi needs a branch selection fixture; Cline needs its exact product/version fixture.</li>
+          <li>Check public text/tool summaries, reasoning exclusion, existing truncation rules, file associations and stable canonical links.</li>
+          <li>Activity-only profiles show an honest history-unavailable state. No importer is required to qualify MCP or activity support.</li>
+        </ul>
+      </article>
+      <article>
+        <h3>Characters and scale</h3>
+        <ul>
+          <li>Render all shared poses, left/right movement, props, list faces, reduced motion and a mixed session/subagent scene.</li>
+          <li>Check name labels and keyboard session navigation. Color alone cannot identify a harness or a failed action.</li>
+          <li>Measure that plugin delivery does not block the tool loop and that existing event/session limits still hold.</li>
+          <li>Add an eleventh test harness and an unknown presentation ID. Both should exercise the generic UI/fallback without a special-case renderer branch.</li>
+        </ul>
+      </article>
+    </div>
+    <p class="small" style="margin-top:16px">Build on existing <a href="../../tests/activity.test.ts">activity</a>, <a href="../../tests/conversations.test.ts">conversation</a>, <a href="../../tests/setup.test.ts">setup</a> and <a href="../../web/e2e/agents.spec.ts">browser</a> coverage. Fixtures certify parsers; smoke tests certify actual integration. Record both.</p>
+    <div class="notice">
+      <p><strong>Portfolio success:</strong> ten named target families; MCP setup verified for each chosen local profile; passive activity and characters wherever a supported observation API exists; history and child tool attribution only where independently proven. OpenCode and Pi must reach useful live compatibility early. The eleventh integration should need no new core provider list.</p>
+    </div>
+  </section>
+
+  <section id="beyond-ten">
+    <div class="eyebrow">08 · Extend without another redesign</div>
+    <h2>Keep the next targets inexpensive.</h2>
+    <p><strong>Kiro is the first follow-on candidate.</strong> It has documented MCP, custom agents and hook profiles, with important differences between CLI 2.x/3.x and IDE generations. It sits outside this ten-target scope to keep the initial portfolio bounded, not because it lacks an integration path. <a href="https://kiro.dev/docs/cli/">CLI</a> · <a href="https://kiro.dev/docs/hooks/types/">Hooks by surface</a> · <a href="https://kiro.dev/docs/custom-agents/configuration-reference/">Agent configuration</a>.</p>
+    <p><strong>Other candidates:</strong> Continue, JetBrains Junie, Amp, Aider and editor hosts such as Zed. Promote them after checking current demand and public extension surfaces. No live activity or MCP support is assumed here. A generic MCP connection can still be documented independently of an activity adapter.</p>
+    <p><strong>Roo Code is not a new first-class target.</strong> Its official sunset notice scheduled the extension, cloud and router shutdown for 15 May 2026. Consider legacy transcript import or an actively maintained fork only when users need it; keep fork profiles distinct. <a href="https://github.com/RooCodeInc/Roo-Code-Docs/blob/main/docs/sunset.md">Official sunset notice</a>.</p>
+    <details>
+      <summary>Checklist for adding harness eleven</summary>
+      <p>Choose a stable ID and exact runtime profile; document evidence and release range; register display metadata and Bolt fallback; implement detection and scoped MCP setup; add an optional activity decoder/collector and neutral response; add optional history discovery/import; supply sanitized fixtures and one real smoke test; publish the capability manifest and limitations.</p>
+      <p>Reuse the existing stdio tools, shared path checks, stores, session UI and crew. A third-party adapter loads only after explicit installation/registration; receiving an unknown ID must not auto-download code.</p>
+    </details>
+    <details>
+      <summary>MCP, ACP and hosted runtimes</summary>
+      <p>MCP exposes Codiluce tools to an agent. An agent/client protocol such as ACP can offer another observation source when a host owns a connection, but it is not a universal observer for arbitrary sessions. Evaluate it after the native integrations prove a concrete reuse case.</p>
+      <p>Do not bundle hosting conversations, autonomous orchestration, remote cloud ingestion or universal role/permission conversion into this roadmap's first release. They require separate contracts; the optional adapter transports leave room for them.</p>
+    </details>
+  </section>
+  <footer>
+    <p>Evidence policy: local baseline checked against the files linked above; harness claims linked to official documentation or the project's own repository. Current documentation is a discovery source, not proof that every released client implements it. Capture immutable release/commit references with adapter fixtures during implementation.</p>
+    <p>Self-contained HTML: open this file directly, or use the project's static web server. Source: <code>docs/design/agent-harness-compatibility.html</code>. Updated 17 October 2026.</p>
+  </footer>
+</main>
+<script>
+  (() => {
+    const search = document.getElementById('target-search');
+    const wave = document.getElementById('wave-filter');
+    const rows = [...document.querySelectorAll('#target-table tbody tr')];
+    const update = () => {
+      const query = search.value.trim().toLocaleLowerCase();
+      let visible = 0;
+      for (const row of rows) {
+        const match = (wave.value === 'all' || row.dataset.wave === wave.value) && row.textContent.toLocaleLowerCase().includes(query);
+        row.hidden = !match;
+        if (match) visible++;
+      }
+      document.getElementById('target-count').textContent = `${visible} of ${rows.length} targets`;
+      document.getElementById('empty-targets').hidden = visible > 0;
+    };
+    search.addEventListener('input', update);
+    wave.addEventListener('change', update);
+    document.getElementById('reset-filters').addEventListener('click', () => { search.value = ''; wave.value = 'all'; update(); });
+    document.getElementById('filters').hidden = false;
+    // Printing includes the complete portfolio even after filtering.
+    window.addEventListener('beforeprint', () => rows.forEach(row => { row.hidden = false; }));
+    window.addEventListener('afterprint', update);
+  })();
+</script>
+</body>
+</html>

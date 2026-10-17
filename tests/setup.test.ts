@@ -157,7 +157,7 @@ test('agents: the MCP command fits the install, and agents are connected through
   const root = await folder();
   await withEnv({ PATH: `${fake.bin}${path.delimiter}${process.env.PATH}`, HOME: fake.home }, async () => {
     const agents = await detectAgents(root);
-    assert.deepEqual(agents.map(agent => [agent.id, agent.installed, agent.connected]), [['claude', true, false], ['codex', true, false], ['cursor', true, false]]);
+    assert.deepEqual(agents.filter(agent => ['claude', 'codex', 'cursor'].includes(agent.id)).map(agent => [agent.id, agent.installed, agent.connected]), [['claude', true, false], ['codex', true, false], ['cursor', true, false]]);
     for (const agent of ['claude', 'codex', 'cursor'] as const) await connectAgent(agent, tool, 'npx', root);
   });
   assert.match(await fake.calls('claude'), new RegExp(`mcp add -s local codiluce -- npx -y codiluce mcp --repo ${root.replace(/[/\\]/g, '.')}`));
@@ -210,7 +210,7 @@ test('setup asks the questions, saves the answers where they belong, and connect
   const result = await withEnv({ PATH: env.PATH, HOME: env.HOME }, () => runSetup(new Writer(terminal), context(state, env), { mode: 'ask' }));
   assert.equal(result.asked, true);
   assert.equal(result.settings.history.depth, 'none');
-  assert.deepEqual(result.connected.map(item => [item.agent.id, item.ok]), [['codex', true], ['cursor', true]]);
+  assert.deepEqual(result.connected.filter(item => ['claude', 'codex', 'cursor'].includes(item.agent.id)).map(item => [item.agent.id, item.ok]), [['codex', true], ['cursor', true]]);
   assert.equal(await fake.calls('claude'), '');
   assert.equal(readRepositorySettings(state).history?.depth, 'none');
   assert.equal(readState(state).setup, 1);

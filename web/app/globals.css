@@ -1276,6 +1276,14 @@ a.xlink:hover, a.xlink:focus-visible { background: color-mix(in srgb, var(--link
 .agent-connections-dialog h2 { margin: 0; font-size: 15px; }
 .agent-connections-dialog .hidden-paths-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .agent-connections-dialog p { margin: 0; }
+.harness-chooser { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.harness-chooser label { display: grid; gap: 5px; min-width: 0; font-size: 12px; }
+.harness-chooser label:last-child { grid-column: 1 / -1; }
+.harness-chooser input, .harness-chooser select { width: 100%; min-width: 0; }
+.agent-connections-dialog .agents-setup { min-width: 0; }
+.agent-connections-dialog .agents-setup details { margin-top: 10px; }
+.agent-connections-dialog .agents-setup summary { overflow-wrap: anywhere; }
+.agent-connections-dialog .agents-config { white-space: pre-wrap; overflow-wrap: anywhere; }
 .agent-connections-dialog summary { cursor: pointer; font-size: 12px; }
 .agents-connection-summary { display: flex; align-items: center; gap: 8px; font-size: 12px; }
 .agents-source { overflow-wrap: anywhere; font-size: 10px; margin-top: 8px !important; color: var(--muted); }

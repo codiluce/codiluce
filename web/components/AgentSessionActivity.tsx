@@ -1,4 +1,5 @@
 'use client';
+import { sessionKey } from '@engine/harnesses/registry';
 import { useState } from 'react';
 import type { ActivityEvent, ActivityPath, ActivitySnapshot } from '@engine/activity/model';
 import { ACTIVITY_TRAIL_MS } from '@engine/activity/model';
@@ -8,10 +9,10 @@ import { AgentDots } from './AgentDots';
 
 export function SessionActivity({ id }: { id: string }) {
   const agents = useAtlas(state => state.agents), store = useStore();
-  const sessions = agents.snapshot?.sessions.filter(session => `${session.provider}:${session.sessionId}` === id && ['running', 'waiting'].includes(session.status) && agents.now - session.lastSeen <= 300_000) ?? [];
+  const sessions = agents.snapshot?.sessions.filter(session => sessionKey(session.provider, session.sessionId) === id && ['running', 'waiting'].includes(session.status) && agents.now - session.lastSeen <= 300_000) ?? [];
   const update = agents.live?.find(session => session.id === id)?.update;
   const files = activeSessionFiles(agents.snapshot, agents.now, id);
-  const latest = [...agents.snapshot?.events ?? []].reverse().find(event => `${event.provider}:${event.sessionId}` === id);
+  const latest = [...agents.snapshot?.events ?? []].reverse().find(event => event.sessionId && sessionKey(event.provider, event.sessionId) === id);
   if (!sessions.length) return null;
   return <div className="session-current-activity">
     <div className="rf-loading session-live-update" role="status" aria-label="Current agent update"><AgentDots /><p>{update?.text ?? latest?.label ?? 'Waiting for a public progress update…'}</p></div>

@@ -8,10 +8,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import type { InstallKind } from './settings.js';
+import { HARNESSES, harnessId, type HarnessId } from '../harnesses/registry.js';
 
 const execute = promisify(execFile);
 export interface Launch { command: string; args: string[] }
-export type AgentId = 'claude' | 'codex' | 'cursor';
+export type AgentId = HarnessId | 'claude';
 export interface Agent {
   id: AgentId; name: string;
   /** Found on this computer. */
@@ -35,7 +36,7 @@ export function mcpLaunch(toolDirectory: string, kind: InstallKind, options: { r
   return { command: process.execPath, args: [path.join(toolDirectory, 'bin/codiluce.js'), 'mcp', ...scope] };
 }
 export function shellLine(launch: Launch): string { return [launch.command, ...launch.args].map(quote).join(' '); }
-function quote(part: string): string { return /^[\w@%+=:,./${}-]+$/.test(part) ? part : `'${part.replace(/'/g, `'\\''`)}'`; }
+function quote(part: string): string { return /^[\w@%+=:,./-]+$/.test(part) ? part : `'${part.replace(/'/g, `'\\''`)}'`; }
 
 const CURSOR_CONFIG = () => path.join(os.homedir(), '.cursor', 'mcp.json');
 async function succeeds(command: string, args: string[], cwd: string): Promise<boolean> {
@@ -49,11 +50,23 @@ export async function detectAgents(root: string): Promise<Agent[]> {
   const cursor = existsSync(path.dirname(cursorConfig));
   let cursorConnected = false;
   try { cursorConnected = !!(JSON.parse(readFileSync(cursorConfig, 'utf8')) as { mcpServers?: Record<string, unknown> }).mcpServers?.codiluce; } catch { /* none yet */ }
-  return [
+  const existing: Agent[] = [
     { id: 'claude', name: 'Claude Code', installed: claude, connected: claudeConnected, scope: 'for this repository' },
     { id: 'codex', name: 'Codex', installed: codex, connected: codexConnected, scope: 'for every repository (~/.codex/config.toml)' },
     { id: 'cursor', name: 'Cursor', installed: cursor, connected: cursorConnected, scope: 'for every workspace (~/.cursor/mcp.json)' },
   ];
+  const { configurationPath } = await import('../harnesses/setup.js');
+  const { readConfiguration, valueAt } = await import('../harnesses/config.js');
+  for (const item of HARNESSES.filter(item => !['claude-code', 'codex', 'cursor'].includes(item.id))) {
+    const profile = item.profiles[0]!;
+    const files = [configurationPath(item.id, profile, 'mcp', root, { scope: 'project' }), configurationPath(item.id, profile, 'mcp', root, { scope: 'user' })].filter((file): file is string => !!file);
+    let connected = false;
+    for (const file of files) try { connected ||= !!valueAt((await readConfiguration(file, profile.mcp.format)).data, [...profile.mcp.key, 'codiluce']); } catch { /* Diagnostics are shown in the explicit setup flow. */ }
+    const binaries = item.binaries.filter(binary => (process.env.PATH ?? '').split(path.delimiter).some(directory => existsSync(path.join(directory, binary))));
+    const installed = existsSync(path.join(os.homedir(), item.home)) || files.some(file => existsSync(file)) || (await Promise.all(binaries.map(binary => succeeds(binary, ['--version'], root)))).some(Boolean);
+    existing.push({ id: item.id, name: item.label, installed, connected, scope: profile.mcp.project ? 'for this repository' : 'in user settings, bound to this repository' });
+  }
+  return existing;
 }
 /**
  * Add Codiluce to an agent. Claude Code keeps servers per project, so its
@@ -70,14 +83,18 @@ export async function connectAgent(agent: AgentId, toolDirectory: string, kind: 
     const launch = mcpLaunch(toolDirectory, kind);
     await execute('codex', ['mcp', 'remove', 'codiluce'], { cwd: root, timeout: 15_000 }).catch(() => undefined);
     await execute('codex', ['mcp', 'add', 'codiluce', '--', launch.command, ...launch.args], { cwd: root, timeout: 30_000 });
-  } else {
+  } else if (agent === 'cursor') {
     const launch = mcpLaunch(toolDirectory, kind, { repo: '${workspaceFolder}' });
     const file = CURSOR_CONFIG();
-    let config: { mcpServers?: Record<string, unknown> } & Record<string, unknown> = {};
-    try { config = JSON.parse(readFileSync(file, 'utf8')) as typeof config; } catch { /* a new file */ }
-    config.mcpServers = { ...config.mcpServers, codiluce: { command: launch.command, args: launch.args } };
-    mkdirSync(path.dirname(file), { recursive: true });
-    writeFileSync(file, `${JSON.stringify(config, null, 2)}\n`);
+    const { readConfiguration, editConfiguration, writeReviewedFile } = await import('../harnesses/config.js');
+    const before = (await readConfiguration(file, 'jsonc')).text;
+    let after = editConfiguration(before, 'jsonc', ['mcpServers', 'codiluce', 'command'], launch.command);
+    after = editConfiguration(after, 'jsonc', ['mcpServers', 'codiluce', 'args'], launch.args);
+    await writeReviewedFile(file, before, after);
+  } else {
+    const id = harnessId(agent); if (!id) throw new Error(`Unsupported agent: ${agent}`);
+    const { planIntegration, applyIntegration } = await import('../harnesses/setup.js');
+    await applyIntegration(await planIntegration(id, toolDirectory, kind, root, stateDirectory ?? path.join(root, '.codiluce'), { activity: false }));
   }
 }
 /** The JSON other MCP clients take (Windsurf, Zed, VS Code…), for the summary. */

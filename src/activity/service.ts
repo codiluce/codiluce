@@ -10,6 +10,7 @@ export class ActivityService {
   private listeners = new Set<() => void>();
   private titleReads = new Map<string, number>();
   private closed = false;
+  private sourceEvents = new Set<string>();
   constructor(
     readonly root: string | undefined, readonly enabled: boolean, readonly stateDirectory?: string,
     private readonly resolve?: (target: ActivityPath) => ActivityPath,
@@ -31,6 +32,12 @@ export class ActivityService {
   refresh(): void { if (!this.closed) for (const listener of this.listeners) listener(); }
   record(event: ActivityEvent): void {
     if (!this.enabled || this.closed || !event.sessionId) return;
+    if (event.sourceEventId) {
+      const key = JSON.stringify([event.provider, event.sourceInstanceId, event.sessionId, event.agentId, event.sourceEventId]);
+      if (this.sourceEvents.has(key)) return;
+      this.sourceEvents.add(key);
+      while (this.sourceEvents.size > MAX_EVENTS) this.sourceEvents.delete(this.sourceEvents.values().next().value!);
+    }
     this.events.push(event); this.events = this.events.slice(-MAX_EVENTS);
     const active = this.pending.get(event.actor) ?? new Map<string, 'running' | 'waiting'>();
     if (event.toolId && event.phase === 'started') active.set(event.toolId, event.status === 'waiting' ? 'waiting' : 'running');

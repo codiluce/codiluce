@@ -59,8 +59,19 @@ Want it always at hand? Run `npm install --global codiluce`, then `codiluce star
 
 ## Work with your agents
 
-Codiluce is made for code that agents write. Connect Claude Code, Codex or Cursor once: they explain the code on your
+Codiluce is made for code that agents write. Connect Claude Code, Codex, OpenCode, Pi or another supported harness: they explain the code on your
 map, and **Agents** shows you what every session is touching while it works.
+
+Twelve harness families have adapters, including Cursor, GitHub Copilot, Gemini CLI,
+Cline, Antigravity, Windsurf / Devin Desktop, OpenClaw and Hermes. New adapters are
+experimental and expose separate MCP, activity and history capabilities. See the
+[connection guide](docs/agents/harnesses.md) for exact runtime profiles and limitations.
+
+```bash
+npx codiluce harness setup --agent opencode          # preview MCP and activity files
+npx codiluce harness setup --agent opencode --apply  # merge the configuration
+npx codiluce harness setup --agent pi --apply
+```
 
 ### Ask your agent, read the answer on the map
 
@@ -70,7 +81,7 @@ Connect your agent to Codiluce's MCP server, from the repository:
 claude mcp add codiluce -- npx -y codiluce mcp
 ```
 
-`codiluce setup` does this for you when it finds Claude Code, Codex or Cursor. Then ask in your own words, for example
+`codiluce setup` detects installed harnesses and can connect their MCP configuration. Then ask in your own words, for example
 *"Use Codiluce to explain how checkout works, and publish it."* Its tools read the index (flows, blast radius, history,
 source), so the agent starts from what the code provably does instead of guessing from file names.
 
@@ -86,7 +97,7 @@ source), so the agent starts from what the code provably does instead of guessin
 
 ### Watch your agents work
 
-Open **Agents** beside the map to follow every Claude Code and Codex session at once. Each read, edit and search
+Open **Agents** beside the map to follow connected harness sessions at once. Each observed read, edit and search
 outlines the code it touched in that session's color, and fades after 30 seconds. When two sessions touch the same
 file, both marks show. Click a path in the feed to reveal the file, even one added since the last analysis.
 
@@ -104,7 +115,8 @@ searches, tool names and session titles, in memory, and never prompts, file cont
 ### Search agent sessions
 
 Open **Agents → Import / refresh history** to import available local Codex and Claude Code transcripts for
-this repository. Search messages and titles, filter by agent or by a file/folder read, edited or added in a tool
+this repository, plus native Pi, Copilot CLI, Gemini CLI and repository-scoped OpenClaw sessions. Other supported
+harnesses can use explicit [session exports](docs/agents/harnesses.md#session-history). Search messages and titles, filter by agent or by a file/folder read, edited or added in a tool
 call, and open the original discussion beside the map, or expand Agents for reading. Live sessions appear in the
 same list, with a highlighted activity card, observed files and one replacing public progress or response line.
 The three session filters share one row; Codex setup instructions are hidden in the reader. Recently observed sessions refresh every ten seconds

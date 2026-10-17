@@ -8,7 +8,8 @@
 // ends). Pure (no DOM): the Agents at work tool draws it, tests run it.
 import type { ActivityEvent, AgentSession } from '@engine/activity/model';
 import type { Rect } from '@engine/projection/dto';
-import { providerOf, type Pose, type Provider } from './pixel-crew';
+import { providerOf, PROVIDER, type Pose, type Provider } from './pixel-crew';
+import { sessionKey } from '../../src/harnesses/registry';
 
 export type CrewKind = 'read' | 'edit' | 'search' | 'command' | 'test' | 'status' | 'spawn' | 'done' | 'think' | 'reply' | 'plan' | 'web';
 export interface CrewEvent {
@@ -39,12 +40,12 @@ const WEB_TOOLS = /^(WebSearch|WebFetch|web_search|web_fetch|web\.run)$/i;
 
 /** An actor's parent session (a subagent's actor is `provider:session:agent`). */
 export function parentActor(event: Pick<ActivityEvent, 'provider' | 'sessionId' | 'agentId'>): string | undefined {
-  return event.agentId && event.sessionId ? `${event.provider}:${event.sessionId}` : undefined;
+  return event.agentId && event.sessionId ? sessionKey(event.provider, event.sessionId) : undefined;
 }
 export function sessionTitle(actor: string, sessions: readonly AgentSession[], event?: Pick<ActivityEvent, 'sessionTitle' | 'provider'>): string {
   const session = sessions.find(item => item.actor === actor);
   const provider = providerOf(session?.provider ?? event?.provider ?? 'other');
-  return session?.title || event?.sessionTitle || `${provider === 'codex' ? 'Codex' : provider === 'claude-code' ? 'Claude Code' : 'Agent'} ${(session?.sessionId ?? actor.split(':')[1] ?? '').slice(0, 6)}`;
+  return session?.title || event?.sessionTitle || `${PROVIDER[provider].label} ${(session?.sessionId ?? actor.split(':')[1] ?? '').slice(0, 6)}`;
 }
 /** One observation as the cast reads it; undefined when it shows nothing (a read whose file is not on the map). */
 export function crewEvent(event: ActivityEvent, t: number, sessions: readonly AgentSession[]): CrewEvent | undefined {
@@ -53,9 +54,9 @@ export function crewEvent(event: ActivityEvent, t: number, sessions: readonly Ag
   const parent = parentActor(event);
   const base = { t, id: event.id, at: event.at, actor: event.actor, provider: providerOf(event.provider), title: sessionTitle(event.actor, sessions, event), targets, ancestors, ...(parent ? { parent } : {}), ...(event.toolId ? { tool: event.toolId } : {}), ...(event.status ? { status: event.status } : {}) };
   const phase = event.phase;
-  if (event.label === 'UserPromptSubmit') return { ...base, kind: 'think', phase: 'status', label: 'prompt: thinking' };
-  if (event.label === 'SubagentStart') return { ...base, kind: 'spawn', phase: 'status', label: 'subagent starts' };
-  if (event.label === 'SubagentStop') return { ...base, kind: 'done', phase: 'status', label: 'subagent returns' };
+  if (event.lifecycle === 'turn-start' || event.label === 'UserPromptSubmit') return { ...base, kind: 'think', phase: 'status', label: 'prompt: thinking (illustrative)' };
+  if (event.lifecycle === 'child-start' || event.label === 'SubagentStart') return { ...base, kind: 'spawn', phase: 'status', label: 'subagent starts' };
+  if (event.lifecycle === 'child-end' || event.label === 'SubagentStop') return { ...base, kind: 'done', phase: 'status', label: 'subagent returns' };
   if (event.status === 'waiting') return { ...base, kind: 'status', phase: 'status', status: 'waiting', label: `asks for permission${event.tool ? ` (${event.tool})` : ''}` };
   if ((event.kind === 'read' || event.kind === 'edit' || event.kind === 'search') && phase === 'started' && !targets.length) return undefined;
   const tool = event.tool ?? '';

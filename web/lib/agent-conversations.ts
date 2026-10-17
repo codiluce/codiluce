@@ -1,5 +1,6 @@
 import type { AgentSession, AgentStatus } from '../../src/activity/model';
 import type { ConversationSummary } from '../../src/conversations/model';
+import { harnessLabel, sessionKey } from '../../src/harnesses/registry';
 
 export interface AgentConversation {
   id: string; provider: AgentSession['provider']; sessionId: string; title: string;
@@ -9,9 +10,9 @@ export interface AgentConversation {
 export function agentConversations(items: ConversationSummary[], sessions: AgentSession[], now: number, includeUnimported: boolean): AgentConversation[] {
   const rows = new Map<string, AgentConversation>(items.map(saved => [saved.id, { ...saved, saved, sessions: [], lastSeen: 0 }]));
   for (const session of sessions) {
-    const id = `${session.provider}:${session.sessionId}`;
+    const id = sessionKey(session.provider, session.sessionId);
     let row = rows.get(id);
-    if (!row && includeUnimported) { row = { id, provider: session.provider, sessionId: session.sessionId, title: session.title ?? `${session.provider === 'codex' ? 'Codex' : 'Claude Code'} session`, sessions: [], lastSeen: 0 }; rows.set(id, row); }
+    if (!row && includeUnimported) { row = { id, provider: session.provider, sessionId: session.sessionId, title: session.title ?? `${harnessLabel(session.provider)} session`, sessions: [], lastSeen: 0 }; rows.set(id, row); }
     if (!row) continue;
     row.sessions.push(session); row.lastSeen = Math.max(row.lastSeen, session.lastSeen);
   }

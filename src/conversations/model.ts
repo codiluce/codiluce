@@ -1,4 +1,5 @@
 import type { AgentProvider } from '../activity/model.js';
+import { sessionKey } from '../harnesses/registry.js';
 
 export type FileAction = 'read' | 'edited' | 'added';
 export type CallStatus = 'completed' | 'failed' | 'unknown';
@@ -33,4 +34,4 @@ export interface ImportResult { imported: number; unchanged: number; skipped: nu
 /** Latest public assistant text, read separately from the full archived transcript. */
 export interface SessionUpdate { id: string; text: string; at?: string }
 export interface LiveSession { id: string; provider: AgentProvider; sessionId: string; update?: SessionUpdate }
-export const conversationId = (provider: AgentProvider, sessionId: string): string => `${provider}:${sessionId}`;
+export const conversationId = sessionKey;

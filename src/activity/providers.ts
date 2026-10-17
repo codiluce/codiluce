@@ -4,6 +4,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { parse } from 'smol-toml';
 import type { AgentConnection, AgentProvider, AgentSession } from './model.js';
+import { HARNESSES, harness, type ConfigFormat, type HarnessProfile } from '../harnesses/registry.js';
+import { configurationPath } from '../harnesses/setup.js';
+import { parseConfiguration, readConfiguration, valueAt } from '../harnesses/config.js';
 
 const object = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
 const titleText = (value: unknown): string | undefined => typeof value === 'string' ? value.replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 256) || undefined : undefined;
@@ -69,7 +72,52 @@ async function configFile(file: string): Promise<Record<string, unknown> | undef
     return object(file.endsWith('.toml') ? parse(text) : JSON.parse(text));
   } catch { return undefined; }
 }
+async function mcpConfiguration(root: string, provider: AgentProvider, profile: HarnessProfile): Promise<NonNullable<AgentConnection['mcp']>> {
+  const sources: string[] = [], destinations = (['project', 'user'] as const).flatMap(scope => { const file = configurationPath(provider, profile, 'mcp', root, { scope }); return file ? [file] : []; });
+  for (const file of destinations) try {
+    const config = (await readConfiguration(file, profile.mcp.format)).data;
+    const server = valueAt(config, [...profile.mcp.key, 'codiluce']) ?? (provider === 'claude-code' ? valueAt(config, ['projects', root, 'mcpServers', 'codiluce']) : undefined);
+    if (server && typeof server === 'object') sources.push(file);
+  } catch { /* Saved config detection is independent of delivery and never reveals config contents. */ }
+  return { ...(destinations.length ? { configured: sources.length > 0 } : {}), sources: [...new Set(sources)] };
+}
 export async function connectionConfiguration(root: string, stateDirectory: string, provider: AgentProvider): Promise<AgentConnection> {
+  if (provider !== 'codex' && provider !== 'claude-code') {
+    const sources: string[] = [];
+    const profiles: NonNullable<AgentConnection['profiles']> = [];
+    for (const profile of harness(provider).profiles) {
+      const profileSources: string[] = [];
+      for (const scope of ['project', 'user'] as const) {
+      let file = configurationPath(provider, profile, 'activity', root, { scope }); if (!file) continue;
+      const native = ['opencode', 'pi', 'openclaw', 'scripts'].includes(profile.activity.format);
+      const candidates = profile.activity.format === 'scripts' ? profile.activity.events.map(event => path.join(file!, event)) : [profile.activity.format === 'openclaw' ? path.join(file, 'index.js') : file];
+      for (file of candidates) try {
+        if ((await stat(file)).size > 2 * 1024 * 1024) continue;
+        const text = await readFile(file, 'utf8');
+        if (native) { if (text.includes('Codiluce observer v1') && text.includes(JSON.stringify(root)) && (text.includes(JSON.stringify(stateDirectory)) || text.includes(stateDirectory))) profileSources.push(file); }
+        else {
+          const format: ConfigFormat = profile.activity.format === 'hermes' ? 'yaml' : 'jsonc';
+          const config = parseConfiguration(text, format);
+          const matches = (value: unknown): boolean => {
+            if (typeof value === 'string') return activityCommand(value, provider, root, stateDirectory);
+            if (Array.isArray(value)) return value.some(matches);
+            const entry = object(value);
+            if (typeof entry.exec === 'string' && Array.isArray(entry.args)) {
+              const args = entry.args;
+              const arg = (key: string) => args[args.indexOf(key) + 1];
+              if (arg('--agent') === provider && arg('--repo') === root && arg('--state-dir') === stateDirectory) return true;
+            }
+            return Object.values(entry).some(matches);
+          };
+          if (matches(config.hooks)) profileSources.push(file);
+        }
+      } catch { /* Unavailable configuration is not evidence of trust or delivery. */ }
+      }
+      const unique = [...new Set(profileSources)];
+      profiles.push({ id: profile.id, configured: unique.length > 0, sources: unique, mcp: await mcpConfiguration(root, provider, profile) }); sources.push(...unique);
+    }
+    return { provider, configured: sources.length > 0, sources: [...new Set(sources)], trust: 'unknown', profiles };
+  }
   const home = provider === 'codex' ? process.env.CODEX_HOME ?? path.join(os.homedir(), '.codex') : process.env.CLAUDE_CONFIG_DIR ?? path.join(os.homedir(), '.claude');
   const files = provider === 'codex'
     ? [path.join(home, 'hooks.json'), path.join(home, 'config.toml'), path.join(root, '.codex/hooks.json'), path.join(root, '.codex/config.toml')]
@@ -86,7 +134,7 @@ export async function connectionConfiguration(root: string, stateDirectory: stri
     }));
     if (matches) sources.push(file);
   }
-  return { provider, configured: sources.length > 0, sources, trust: 'unknown', ...(disabled !== undefined ? { disabled } : {}) };
+  return { provider, configured: sources.length > 0, sources, trust: 'unknown', mcp: await mcpConfiguration(root, provider, harness(provider).profiles[0]!), ...(disabled !== undefined ? { disabled } : {}) };
 }
 
 export class AgentMetadata {
@@ -135,7 +183,8 @@ export class AgentMetadata {
           : hooks.every(hook => ['trusted', 'managed'].includes(hook.trustStatus ?? '')) ? 'trusted' : 'unknown';
       }
     }
-    return [codex, claude];
+    const additional = await Promise.all(HARNESSES.filter(item => !['codex', 'claude-code'].includes(item.id)).map(item => connectionConfiguration(this.root, this.stateDirectory, item.id)));
+    return [codex, claude, ...additional];
   }
   close(): void { this.closed = true; this.reads.clear(); for (const run of this.queue.splice(0)) run(); }
 }

@@ -3,6 +3,8 @@ import { open } from 'node:fs/promises';
 import { messageText, object, type TranscriptSource } from './import.js';
 import { isSessionSetup } from './presentation.js';
 import type { SessionUpdate } from './model.js';
+import { harnessPublicTail } from '../harnesses/history.js';
+import path from 'node:path';
 
 /** A bounded tail keeps live updates cheap even for transcripts hundreds of MB long. */
 export async function latestPublicUpdate(source: TranscriptSource): Promise<SessionUpdate | undefined> {
@@ -14,6 +16,13 @@ export async function latestPublicUpdate(source: TranscriptSource): Promise<Sess
     const lines = buffer.subarray(0, bytesRead).toString('utf8').split('\n');
     if (start) lines.shift(); // Never parse a partial first event.
     let latest: SessionUpdate | undefined;
+    if (!['codex', 'claude-code'].includes(source.provider) || path.basename(path.dirname(source.file)) === 'agent-exports') {
+      for (const item of harnessPublicTail(source.provider, lines.join('\n'))) {
+        if (item.role === 'user') latest = undefined;
+        else if (item.content.trim()) latest = { id: createHash('sha256').update(`${item.at ?? ''}:${item.content}`).digest('hex').slice(0, 24), text: item.content.slice(0, 4000), ...(item.at ? { at: item.at } : {}) };
+      }
+      return latest;
+    }
     for (const line of lines) {
       let row: Record<string, unknown>; try { row = object(JSON.parse(line)); } catch { continue; }
       let role: string | undefined, content = '';

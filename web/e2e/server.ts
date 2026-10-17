@@ -9,6 +9,7 @@ import { indexRepository } from '../../src/pipeline/index.js';
 import { GraphStore } from '../../src/storage/sqlite.js';
 import { createInspectionServer } from '../../src/api/server.js';
 import { composeTour } from '../../src/explanations/scenes.js';
+import { HARNESS_IDS } from '../../src/harnesses/registry.js';
 
 const port = Number(process.env.E2E_PORT ?? 4399);
 const fixture = fileURLToPath(new URL('../../tests/fixtures/repository', import.meta.url));
@@ -58,4 +59,4 @@ await writeFile(path.join(claudeHome, 'projects/repo/claude-e2e.jsonl'), jsonl([
   { type: 'user', uuid: 'claude-result', cwd: root, message: { content: [{ type: 'tool_result', tool_use_id: 'edit-form', content: 'Updated successfully.' }] } },
   { type: 'ai-title', aiTitle: 'Add a human-readable session viewer', sessionId: 'claude-e2e' },
 ]));
-createInspectionServer(store, { root, stateDirectory: path.join(root, '.codiluce'), uiDirectory: ui, conversationSources: { codexHome, claudeHome } }).listen(port, '127.0.0.1', () => console.log(`e2e server on ${port}`));
+createInspectionServer(store, { root, stateDirectory: path.join(root, '.codiluce'), uiDirectory: ui, conversationSources: { codexHome, claudeHome, harnessHomes: Object.fromEntries(HARNESS_IDS.map(id => [id, path.join(root, '.codiluce/agent-fixtures', id)])) } }).listen(port, '127.0.0.1', () => console.log(`e2e server on ${port}`));

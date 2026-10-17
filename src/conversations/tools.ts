@@ -1,13 +1,14 @@
 import type { ToolSpec } from '../explanations/tools.js';
 import type { ConversationService } from './service.js';
+import { HARNESS_IDS } from '../harnesses/registry.js';
 
 const string = (description: string) => ({ type: 'string', description });
 export function conversationTools(conversations: ConversationService): ToolSpec[] {
   return [
     {
       name: 'search_conversations', title: 'Search agent sessions', readOnly: true,
-      description: 'Find imported Codex and Claude Code agent sessions for this repository by text or a file/folder observed in tool calls. Reads the local archive; never starts, resumes or imports a session.',
-      inputSchema: { type: 'object', additionalProperties: false, properties: { query: string('Search words'), path: string('Filter by an observed file or folder'), provider: { type: 'string', enum: ['codex', 'claude-code'] }, action: { type: 'string', enum: ['read', 'edited', 'added'] }, limit: { type: 'integer', minimum: 1, maximum: 100 }, offset: { type: 'integer', minimum: 0 } } },
+      description: 'Find imported agent sessions for this repository by text or a file/folder observed in tool calls. Reads the local archive; never starts, resumes or imports a session.',
+      inputSchema: { type: 'object', additionalProperties: false, properties: { query: string('Search words'), path: string('Filter by an observed file or folder'), provider: { type: 'string', enum: HARNESS_IDS }, action: { type: 'string', enum: ['read', 'edited', 'added'] }, limit: { type: 'integer', minimum: 1, maximum: 100 }, offset: { type: 'integer', minimum: 0 } } },
       async run(input) { return JSON.stringify(conversations.store.list(input)); },
     },
     {

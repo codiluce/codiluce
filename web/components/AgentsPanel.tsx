@@ -5,6 +5,7 @@ import { providerName } from '../lib/activity';
 import { useAtlas, useStore } from './context';
 import { AgentSessionsView } from './AgentSessionsView';
 import type { LiveSession } from '@engine/conversations/model';
+import { HARNESSES, harness, isHarnessId } from '@engine/harnesses/registry';
 
 /** One connection for the map, independent of whether the panel is open. */
 export function ActivityConnection() {
@@ -56,7 +57,7 @@ export function AgentsPanel({ onClose }: { onClose: () => void }) {
         <div className="agents-connection" role="status"><span className={`agents-live-dot${agents.connected && snapshot?.enabled ? ' on' : ''}`} />{agents.connected ? snapshot?.enabled ? 'Live activity' : 'Activity disabled' : 'Connecting to activity…'}</div>
         <details className="agents-info" onKeyDown={event => { if (event.key === 'Escape') event.currentTarget.open = false; }}>
           <summary aria-label="About agent activity" title="About agent activity">ⓘ</summary>
-          <p className="note">Observed actions from Codex and Claude Code. Map badges fade after 30 seconds. Agent sessions refresh while recently observed sessions are active; messages may arrive after tool activity. Live activity confirms server updates; check Agent connections for hook configuration and delivery.</p>
+          <p className="note">Observed actions from connected coding harnesses. Map badges fade after 30 seconds. Available session history refreshes while recently observed sessions are active; messages may arrive after tool activity. Check Agent connections for supported capabilities, setup and delivery.</p>
         </details>
       </div>
       <label className="agents-toggle"><input type="checkbox" checked={agents.show} onChange={event => store.setActivity({ show: event.target.checked })} /> Show activity on the map</label>
@@ -83,6 +84,8 @@ function AgentConnectionsDialog({ onClose }: { onClose: () => void }) {
   const [setup, setSetup] = useState<AgentSetup>();
   const [setupError, setSetupError] = useState<string>();
   const [provider, setProvider] = useState<AgentProvider>('codex');
+  const [profile, setProfile] = useState('codex');
+  const [search, setSearch] = useState('');
   const [copied, setCopied] = useState(false);
   const [checking, setChecking] = useState(false);
   const [revision, setRevision] = useState(0);
@@ -95,7 +98,7 @@ function AgentConnectionsDialog({ onClose }: { onClose: () => void }) {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); dismiss.current(); }
       if (event.key === 'Tab') {
-        const buttons = [...dialog.current?.querySelectorAll<HTMLElement>('button:not(:disabled), summary, [tabindex="0"]') ?? []];
+        const buttons = [...dialog.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), summary, [tabindex="0"]') ?? []];
         const first = buttons[0], last = buttons.at(-1);
         if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
@@ -112,16 +115,28 @@ function AgentConnectionsDialog({ onClose }: { onClose: () => void }) {
     }).catch(error => { if (!controller.signal.aborted) setSetupError(error.message); }).finally(() => { if (!controller.signal.aborted) setChecking(false); });
     return () => controller.abort();
   }, [revision]);
-  const connection = setup?.connections?.find(item => item.provider === provider);
+  const providerConnection = setup?.connections?.find(item => item.provider === provider);
+  const profileConnection = providerConnection?.profiles?.find(item => item.id === profile);
+  const connection = providerConnection && profileConnection ? { ...providerConnection, configured: profileConnection.configured, sources: profileConnection.sources, mcp: profileConnection.mcp } : providerConnection;
   const sessions = agents.snapshot?.sessions.filter(session => session.provider === provider) ?? [];
   const lastSeen = Math.max(0, ...sessions.map(session => session.lastSeen));
   const observed = lastSeen > 0;
   const needsSetup = !connection?.configured && !observed;
   const snippet = JSON.stringify(provider === 'codex' ? setup?.codex : setup?.claude, null, 2) ?? '';
+  const selected = harness(provider);
+  const integration = setup?.integrations?.find(item => item.provider === provider && item.profile === profile);
+  const copy = (value: string) => { void navigator.clipboard.writeText(value).then(() => setCopied(true), () => setSetupError('Copy failed. Select and copy the configuration below.')); };
   return <div className="agent-connections-backdrop" onClick={onClose}>
     <section ref={dialog} className="card agent-connections-dialog" role="dialog" aria-modal="true" aria-labelledby="agent-connections-title" onClick={event => event.stopPropagation()}>
       <div className="hidden-paths-heading"><h2 id="agent-connections-title">Agent connections</h2><button ref={close} className="icon-button small" aria-label="Close agent connections" onClick={onClose}>×</button></div>
-      <div className="segmented" role="group" aria-label="Agent setup">{(['codex', 'claude-code'] as const).map(item => <button key={item} aria-pressed={provider === item} onClick={() => { setProvider(item); setCopied(false); }}>{providerName(item)}</button>)}</div>
+      <div className="harness-chooser">
+        <label>Find harness<input className="input" type="search" aria-label="Find harness" placeholder="Search harnesses" value={search} onChange={event => setSearch(event.target.value)} /></label>
+        <label>Harness<select className="select" aria-label="Agent harness" value={provider} onChange={event => { const id = event.target.value; if (isHarnessId(id)) { setProvider(id); setProfile(harness(id).profiles[0]!.id); setCopied(false); } }}>{HARNESSES.filter(item => item.id === provider || `${item.label} ${item.aliases.join(' ')}`.toLowerCase().includes(search.toLowerCase())).map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+        <label>Runtime<select className="select" aria-label="Harness runtime" value={profile} onChange={event => { setProfile(event.target.value); setCopied(false); }}>{selected.profiles.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+      </div>
+      <p className="note">{['codex', 'claude-code'].includes(provider) ? 'Established adapter.' : 'Experimental adapter: confirm delivery with your installed version.'} MCP setup, observed activity and session history are independent.</p>
+      <p className="note"><strong>MCP configuration:</strong> {connection?.mcp?.configured === true ? 'Detected. Check tool availability in the harness.' : connection?.mcp?.configured === false ? 'Not detected at the supported configuration locations.' : 'Check the harness MCP settings.'}</p>
+      <p className="note"><strong>History:</strong> {selected.historyNote}<br /><strong>Agent identity:</strong> {selected.childAttribution}</p>
       <div className="agents-connection-summary" role="status"><span className={`agents-live-dot${observed && agents.connected && !connection?.disabled && !['needs-review', 'modified'].includes(connection?.trust ?? '') ? ' on' : ''}`} /><strong>{connectionState(connection, observed)}</strong></div>
       {observed && <p className="note">Last hook received <time dateTime={new Date(lastSeen).toISOString()}>{Math.max(0, Math.floor((agents.now - lastSeen) / 1000))}s ago</time>. Idle sessions do not send a heartbeat.</p>}
       {!observed && connection?.configured && <p className="note">Run a read or another action in your agent to confirm delivery to this map.</p>}
@@ -132,7 +147,13 @@ function AgentConnectionsDialog({ onClose }: { onClose: () => void }) {
       {!!connection?.sources.length && <details><summary>Configuration sources</summary>{connection.sources.map(source => <p className="mono agents-source" key={source}>{source}</p>)}</details>}
       {setupError && <p className="note error" role="alert">{setupError}</p>}
       {setup?.available === false && <p className="note">Agent observation is unavailable on this server.</p>}
-      {setup?.available && snippet && <details className="agents-setup" open={needsSetup} key={provider + String(needsSetup)}><summary>{needsSetup ? 'Connect this agent' : 'View or update hook configuration'}</summary>
+      {setup?.available && integration ? <details className="agents-setup" open={needsSetup} key={provider + profile + String(needsSetup)}><summary>{needsSetup ? 'Connect this agent' : 'View or update hook configuration'}</summary>
+        <p className="note">Preview the generated files in your terminal; append <code>--apply</code> to install. Existing settings are merged.</p>
+        <pre className="agents-config" tabIndex={0}>{integration.command.replace(/ --apply$/, '')}</pre>
+        <button className="button small" onClick={() => copy(integration.command.replace(/ --apply$/, ''))}>{copied ? 'Copied' : 'Copy setup command'}</button>
+        {integration.instructions.map((instruction, index) => <p className="note" key={index}>{instruction}</p>)}
+        {integration.files.map((file, index) => <details key={`${file.path}:${file.purpose}`} open={index === 0 && integration.files.length === 1}><summary>{file.purpose === 'mcp' ? 'MCP configuration' : file.purpose === 'plugin' ? 'Observer plugin' : 'Activity hooks'} · {file.path}</summary><button className="button small" onClick={() => copy(file.content)}>Copy file snippet</button><pre className="agents-config" tabIndex={0}>{file.content}</pre></details>)}
+      </details> : setup?.available && ['codex', 'claude-code'].includes(provider) && snippet && <details className="agents-setup" open={needsSetup} key={provider + String(needsSetup)}><summary>{needsSetup ? 'Connect this agent' : 'View or update hook configuration'}</summary>
         <p className="note">Merge these entries into your existing hooks.</p>
         <p className="note">{provider === 'codex' ? <>Use <code>.codex/hooks.json</code>, then review and trust the hooks with <code>/hooks</code>.</> : <>Use <code>.claude/settings.local.json</code>. Restart Claude Code if the running session does not pick up the settings.</>}</p>
         <button className="button small" onClick={() => { void navigator.clipboard.writeText(snippet).then(() => setCopied(true), () => setSetupError('Copy failed. Select and copy the configuration below.')); }}>{copied ? 'Copied' : 'Copy hook configuration'}</button><pre className="agents-config" tabIndex={0}>{snippet}</pre>
