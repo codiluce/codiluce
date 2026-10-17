@@ -1,64 +1,84 @@
 // Agents on the map: every observed session as a pixel character on the map
 // itself, while Agents › "Show agents on the map" is on. A character hops to
-// the files it is reported at (copies split off for parallel reads; inside a
-// closed area it stands on that area's roof) and steps outside, onto a mat
-// beside the map's edge, for what is about no file: thinking, writing the
-// reply, planning, the web, a command, waiting for permission, resting. In
-// both projections: positions come from the map's own drawn blocks. The
-// characters take their places before the map's labels, which give way to
-// them; their names are placed last, clear of every label and badge.
+// the files it is reported at (it splits into copies for files worked on at
+// the same time; inside a closed area it stands on that area's roof) and steps
+// outside, beside the map's edge, for what is about no file: thinking, writing
+// the reply, planning, the web, a command, waiting for permission, resting. In
+// both projections: positions come from the map's own drawn blocks. A small
+// square in the session's color marks each character, as it marks the
+// session in the Agents list. The characters take their places before the
+// map's labels, which give way to them.
 import type { ActivityEvent, ActivitySnapshot } from '@engine/activity/model';
+import type { ConversationReplay } from '@engine/conversations/model';
 import type { Rect } from '@engine/projection/dto';
-import { isFlat, worldToScreen, type Camera, type Viewport } from './camera';
+import { worldToScreen, type Camera, type Viewport } from './camera';
 import { agentColor } from './activity';
-import { Cast, crewEvent, replayEvents, YARD, type Move } from './crew';
+import { Cast, crewEvent, sessionOf, sessionReplay, YARD, type CrewEvent, type Move } from './crew';
 import { clamp01 as clamp, ease } from './focus-layout';
-import { placeLabels, type Box } from './labels';
-import { inkFor, pill } from './plan';
-import { drawPixel, drawShadow, drawYard, POSE_LABEL, sparkle, type Look } from './pixel-crew';
+import type { Box } from './labels';
+import { drawPixel, drawShadow, sparkle, type Look } from './pixel-crew';
 import type { Scene, VisibleSet } from './scene';
-import type { Theme } from './themes';
 
 /** Sessions seen within this long are on the map when it starts showing them, at their latest place. */
 const RECENT_MS = 5 * 60_000;
+/** Characters of other sessions, while the pointer is on one session in the Agents list. */
+const DIMMED = 0.18;
 interface Anchor { x: number; y: number; rect: Rect; z: number }
 type Paint = (ctx: CanvasRenderingContext2D) => void;
 /**
  * One frame of the cast: what its characters cover (the map's labels keep off
- * it), what draws them and their names (clear of `avoid`) over the map, and
- * whether anything moves (otherwise a few frames a second keep them breathing).
+ * it), what draws them over the map, and whether anything moves (otherwise a
+ * few frames a second keep them breathing).
  */
-export interface CrewFrame { reserved: Box[]; draw: (ctx: CanvasRenderingContext2D, avoid: readonly Box[]) => void; moving: boolean }
+export interface CrewFrame { reserved: Box[]; draw: (ctx: CanvasRenderingContext2D) => void; moving: boolean }
+/** A saved session to play again on the map; a new `token` starts it. */
+export interface CrewReplay { token: number; data: ConversationReplay }
+/** `focus`: only this session's characters; `dim`: the others recede. Both are session keys (`provider:session`). */
+export interface CrewView { focus?: string; dim?: string }
 
 export class CrewOnMap {
   private readonly cast: Cast;
   private readonly clock = { now: 0, last: 0 };
   private readonly seen = new Set<string>();
   private readonly requested = new Set<string>();
-  private readonly nameSlots = new Map<string, string>();
-  /** While replaying the latest observations: when the replay ends (cast clock). */
+  /** While a saved session plays: when it ends (cast clock), and which request it is. */
   private replayUntil?: number;
   private replayToken = 0;
 
-  /** `load`: make the blocks of these entities (and the areas holding them) reachable in the scene. */
-  constructor(private readonly scene: () => Scene, private readonly load: (ids: string[], areas: string[]) => void) {
+  /** `load`: make the blocks of these entities (and the areas holding them) reachable in the scene; `ended`: a replay is over. */
+  constructor(private readonly scene: () => Scene, private readonly load: (ids: string[], areas: string[]) => void, private readonly ended: (token: number) => void = () => {}) {
     this.cast = new Cast(id => scene().nodes.get(id)?.rect, () => { const current = scene(); return current.rootId ? current.nodes.get(current.rootId)?.rect : undefined; }, agentColor, true);
   }
   /** Someone is on the map, or about to be. */
   get busy(): boolean { return this.cast.actors.size > 0 || this.cast.pending > 0; }
-  /** Playing the latest observations again. */
+  /** Playing a saved session again. */
   get replaying(): boolean { return this.replayUntil !== undefined; }
+  /** Where each session's characters stand now (the character and its copies), by session key. */
+  places(): Record<string, string[]> {
+    const out: Record<string, string[]> = {};
+    for (const actor of this.cast.actors.values()) {
+      if (actor.gone !== undefined) continue;
+      const here = [actor.target, ...actor.clones.filter(clone => !clone.end).map(clone => clone.target)].filter((id): id is string => !!id && !id.startsWith(YARD));
+      if (here.length) (out[sessionOf(actor)] ??= []).push(...here);
+    }
+    return out;
+  }
 
-  /** New observations join the cast as they arrive; the first time, recent sessions start where they are. A new `replay` token plays the latest again. */
-  sync(snapshot: ActivitySnapshot | undefined, replay = 0): void {
-    if (replay !== this.replayToken) { this.replayToken = replay; if (replay && snapshot) this.startReplay(snapshot); }
+  /** New observations join the cast as they arrive; the first time, recent sessions start where they are. A new `replay` plays that session; none ends it. */
+  sync(snapshot: ActivitySnapshot | undefined, replay?: CrewReplay): void {
+    const token = replay?.token ?? 0;
+    if (token !== this.replayToken) {
+      if (this.replayUntil !== undefined) this.stopReplay();
+      this.replayToken = token;
+      if (replay) this.startReplay(replay.data);
+    }
     if (!snapshot || this.replayUntil !== undefined) return;
     const sessions = snapshot.sessions;
     const fresh = snapshot.events.filter(event => !this.seen.has(event.id)).sort((a, b) => a.at - b.at);
     if (!fresh.length) return;
     const first = this.seen.size === 0;
     for (const event of fresh) this.seen.add(event.id);
-    this.ensure(fresh);
+    this.ensure(fresh.flatMap(event => event.paths.flatMap(path => (path.id ? [{ id: path.id, areas: path.ancestors ?? [] }] : []))));
     const now = this.clock.now;
     if (first) {
       // Already done: applied at once, in the past, so nobody walks in.
@@ -69,38 +89,32 @@ export class CrewOnMap {
     }
     this.cast.push(fresh.flatMap((event, i) => { const ev = crewEvent(event, now + i * 120, sessions); return ev ? [ev] : []; }));
   }
-  /** The latest observations again, sped up: the sessions that touched files on this map, up to their last file and a little after. */
-  private startReplay(snapshot: ActivitySnapshot): void {
-    const sorted = [...snapshot.events].sort((a, b) => a.at - b.at);
-    const onMap = new Set(sorted.filter(event => event.paths.some(path => path.id)).map(event => event.actor));
-    const theirs = onMap.size ? sorted.filter(event => onMap.has(event.actor)) : sorted;
-    const lastFile = theirs.findLastIndex(event => event.paths.some(path => path.id));
-    const events = theirs.slice(Math.max(0, (lastFile < 0 ? theirs.length : lastFile + 40) - 160), lastFile < 0 ? undefined : lastFile + 40);
-    if (!events.length) return;
-    this.ensure(events);
+  /** A saved session, sped up, alone on the map. */
+  private startReplay(data: ConversationReplay): void {
+    const played: CrewEvent[] = sessionReplay(data, this.clock.now + 200);
+    if (!played.length) { this.ended(this.replayToken); return; }
+    this.ensure(played.flatMap(ev => ev.targets.map(id => ({ id, areas: ev.ancestors[id] ?? [] }))));
     this.cast.reset();
-    const played = replayEvents(events, snapshot.sessions, this.clock.now + 200);
     this.cast.push(played);
-    this.replayUntil = (played.at(-1)?.t ?? this.clock.now) + 3500;
+    this.replayUntil = played.at(-1)!.t + 2600;
   }
   /** Back to what happens now: the cast is seeded again from the snapshot. */
   private stopReplay(): void { this.replayUntil = undefined; this.cast.reset(); this.seen.clear(); }
-  private ensure(events: ActivityEvent[]): void {
+  private ensure(targets: { id: string; areas: string[] }[]): void {
     const ids: string[] = [], areas: string[] = [];
-    for (const event of events) for (const path of event.paths) if (path.id && !this.requested.has(path.id)) { this.requested.add(path.id); ids.push(path.id); areas.push(...path.ancestors ?? []); }
+    for (const target of targets) if (!this.requested.has(target.id)) { this.requested.add(target.id); ids.push(target.id); areas.push(...target.areas); }
     if (ids.length) this.load(ids, areas);
   }
 
   /** Advances the cast and lays it out on the blocks drawn this frame. */
-  /** `focus`: only this agent (and its subagents) is shown. */
-  frame(viewport: Viewport, camera: Camera, set: VisibleSet, theme: Theme, time: number, reduced: boolean, focus?: string): CrewFrame | undefined {
+  frame(viewport: Viewport, camera: Camera, set: VisibleSet, time: number, reduced: boolean, view: CrewView = {}): CrewFrame | undefined {
     // Frames come every 16 ms while they move and every 160 ms while they stand: the clock follows real time (up to a second, after a hidden tab).
     const dt = Math.min(1000, time - (this.clock.last || time)); this.clock.last = time;
     this.clock.now += dt;
     const now = this.clock.now;
-    if (this.replayUntil !== undefined && now > this.replayUntil && !this.cast.pending) this.stopReplay();
+    if (this.replayUntil !== undefined && now > this.replayUntil && !this.cast.pending) { this.stopReplay(); this.ended(this.replayToken); }
     this.cast.advance(now);
-    const actors = [...this.cast.actors.values()].filter(actor => !focus || actor.key === focus || actor.parent === focus);
+    const actors = [...this.cast.actors.values()].filter(actor => !view.focus || sessionOf(actor) === view.focus);
     if (!actors.length) return undefined;
     const scene = this.scene();
     const anchor = (id: string): Anchor | undefined => {
@@ -121,68 +135,56 @@ export class CrewOnMap {
     // One outline per place, whoever stands there (the first comes first); none around the whole map.
     const rings = new Map<string, Paint>();
     const ring = (id: string, paint: Paint) => { if (id !== scene.rootId && !rings.has(id)) rings.set(id, paint); };
-    const size = Math.max(30, Math.min(64, 30 + camera.scale * 55));
-    const ink = inkFor(theme);
-    const mats: Paint[] = [], bodies: { y: number; box: Box; paint: Paint }[] = [];
-    // Agents standing on the same block gather side by side, in rows of five, instead of on top of one another.
+    const size = Math.max(22, Math.min(46, 22 + camera.scale * 40));
+    const bodies: { y: number; box: Box; paint: Paint }[] = [];
+    // Characters and copies standing on the same drawn block (two files inside one closed area too) gather side by side, in rows of five, instead of on top of one another.
+    const drawnAt = (id: string) => (this.cast.yards.has(id) ? id : (set.items[set.index.get(id) ?? -1] ?? scene.representative(id, set))?.node.id ?? id);
     const crowds = new Map<string, string[]>();
-    for (const actor of [...actors].sort((a, b) => a.slot - b.slot)) if (actor.target) crowds.set(actor.target, [...crowds.get(actor.target) ?? [], actor.key]);
-    const stand = (actor: typeof actors[number], s: number) => {
-      const pos = position(anchor, actor.move, actor.target, now, s, reduced);
-      const crowd = actor.target ? crowds.get(actor.target)! : [];
+    const join = (at: string, member: string) => { const key = drawnAt(at); crowds.set(key, [...crowds.get(key) ?? [], member]); };
+    for (const actor of [...actors].sort((a, b) => a.slot - b.slot)) {
+      if (actor.target) join(actor.target, actor.key);
+      for (const clone of actor.clones) if (!clone.end) join(clone.target, `${actor.key}>${clone.target}`);
+    }
+    const spread = (pos: ReturnType<typeof position>, at: string | undefined, member: string, s: number) => {
+      const crowd = at ? crowds.get(drawnAt(at)) ?? [] : [];
       if (!pos || pos.moving || crowd.length < 2) return pos;
-      const i = crowd.indexOf(actor.key), row = Math.floor(i / 5), inRow = Math.min(5, crowd.length - row * 5);
-      const dx = (i % 5 - (inRow - 1) / 2) * s * 0.8, dy = -row * s * 0.55;
+      const i = crowd.indexOf(member), row = Math.floor(i / 5), inRow = Math.min(5, crowd.length - row * 5);
+      // Clawd, the widest sprite, is about 1.2 sizes wide.
+      const dx = (i % 5 - (inRow - 1) / 2) * s * 1.25, dy = -row * s * 0.6;
       return { ...pos, x: pos.x + dx, y: pos.y + dy, ground: pos.ground + dy };
     };
+    const stand = (actor: typeof actors[number], s: number) => spread(position(anchor, actor.move, actor.target, now, s, reduced), actor.target, actor.key, s);
     let moving = false;
     for (const actor of actors) {
-      const s = actor.mini ? size * 0.72 : size;
-      if (actor.target?.startsWith(YARD)) { const yard = anchor(actor.target); if (yard) mats.push(ctx => drawYard(ctx, yard.x, yard.y, s, actor.color, 0.8, isFlat(), theme.dark)); }
+      const s = actor.mini ? size * 0.75 : size;
       const pos = stand(actor, s);
       if (!pos) continue;
       // Hops, arrivals, departures, a new pose and parallel reads move: drawn every frame. Otherwise they only breathe.
       moving ||= pos.moving || actor.clones.length > 0 || now - actor.born < 400 || actor.gone !== undefined || now - actor.poseAt < 900;
       if (pos.dx) actor.facing = pos.dx > 0 ? 1 : -1;
       const born = clamp((now - actor.born) / 300), dying = actor.gone !== undefined ? clamp((actor.gone - now) / 600) : 1;
-      const alpha = Math.min(born, dying) * (actor.status === 'unknown' ? 0.4 : 1);
+      const alpha = Math.min(born, dying) * (actor.status === 'unknown' ? 0.4 : 1) * (view.dim && sessionOf(actor) !== view.dim ? DIMMED : 1);
       const target = actor.target && !actor.target.startsWith(YARD) ? anchor(actor.target) : undefined;
       if (target && !pos.moving) ring(actor.target!, ctx => outline(ctx, target.rect, target.z, actor.color, 0.75 * alpha, actor.pose === 'search'));
       const look: Look = { provider: actor.provider, color: actor.color, size: s, facing: actor.facing, pose: actor.pose, poseAge: now - actor.poseAt, time: time + actor.seed * 100, alpha, walking: false, seed: actor.seed, ...(actor.result ? { result: actor.result, resultAge: now - (actor.resultAt ?? 0) } : {}) };
-      bodies.push({ y: pos.y, box: bodyBox(pos.x, pos.y, s), paint: ctx => { drawShadow(ctx, pos.x, pos.ground, s, pos.ground - pos.y, alpha, actor.color); drawPixel(ctx, pos.x, pos.y, look); } });
+      bodies.push({ y: pos.y, box: bodyBox(pos.x, pos.y, s), paint: ctx => { drawShadow(ctx, pos.x, pos.ground, s, pos.ground - pos.y, alpha); drawPixel(ctx, pos.x, pos.y, look); } });
+      // Its copies: the same character, on the other files it works on at the same time.
       for (const clone of actor.clones) {
         const end = clone.end ? clamp((now - clone.end) / 700) : 0;
-        const cpos = position(anchor, end > 0 ? { from: clone.target, to: actor.target ?? clone.target, start: clone.end!, dur: 600 } : clone.move, end > 0 ? actor.target : clone.target, now, s * 0.78, reduced);
+        const cpos = end > 0 ? position(anchor, { from: clone.target, to: actor.target ?? clone.target, start: clone.end!, dur: 600 }, actor.target, now, s, reduced) : spread(position(anchor, clone.move, clone.target, now, s, reduced), clone.target, `${actor.key}>${clone.target}`, s);
         if (!cpos) continue;
         const spot = anchor(clone.target);
-        if (spot && !end) ring(clone.target, ctx => outline(ctx, spot.rect, spot.z, actor.color, 0.5, false));
-        const copy: Look = { ...look, size: s * 0.78, alpha: alpha * 0.62 * (1 - end * 0.6), facing: cpos.dx >= 0 ? 1 : -1, seed: actor.seed + 11 };
-        bodies.push({ y: cpos.y, box: bodyBox(cpos.x, cpos.y, s * 0.78), paint: ctx => { drawShadow(ctx, cpos.x, cpos.ground, s * 0.78, cpos.ground - cpos.y, copy.alpha); drawPixel(ctx, cpos.x, cpos.y, copy); sparkle(ctx, cpos.x, cpos.y, now - clone.start, actor.color); if (clone.end) sparkle(ctx, cpos.x, cpos.y, now - clone.end, actor.color); } });
+        if (spot && !end) ring(clone.target, ctx => outline(ctx, spot.rect, spot.z, actor.color, 0.6 * alpha, false));
+        const copy: Look = { ...look, alpha: alpha * 0.92 * (1 - end * 0.6), facing: cpos.dx >= 0 ? 1 : -1, seed: actor.seed + 11 };
+        bodies.push({ y: cpos.y, box: bodyBox(cpos.x, cpos.y, s), paint: ctx => { drawShadow(ctx, cpos.x, cpos.ground, s, cpos.ground - cpos.y, copy.alpha); drawPixel(ctx, cpos.x, cpos.y, copy); sparkle(ctx, cpos.x, cpos.y, now - clone.start, actor.color); if (clone.end) sparkle(ctx, cpos.x, cpos.y, now - clone.end, actor.color); } });
       }
     }
-    // Names under them (and what they do outside), never over one another, a character, or the map's labels and badges.
-    const names = size < 34 ? [] : actors.flatMap(actor => {
-      if (actor.mini) return [];
-      const pos = stand(actor, size);
-      if (!pos || pos.x < -50 || pos.x > viewport.width + 50) return [];
-      const outside = actor.target?.startsWith(YARD) && !pos.moving;
-      const text = outside ? `${actor.title} · ${POSE_LABEL[actor.pose]}` : actor.title;
-      return [{ color: actor.color, text, ask: { key: actor.key, target: { x0: pos.x - 10, y0: pos.ground - 2, x1: pos.x + 10, y1: pos.ground + 4 }, w: textWidth(text, ink.font) + 11, h: 19 } }];
-    });
-    const byKey = new Map(names.map(name => [name.ask.key, name]));
     return {
       moving,
       reserved: bodies.map(body => body.box),
-      draw: (ctx, avoid) => {
-        const { placed } = placeLabels(names.map(name => name.ask), { bounds: { x0: 2, y0: 2, x1: viewport.width - 2, y1: viewport.height - 2 }, avoid: [...bodies.map(body => body.box), ...avoid], memory: this.nameSlots, directions: ['s', 'se', 'sw', 'n', 'e', 'w', 'ne', 'nw'], distances: [2, 14, 30, 52, 80], columns: false });
-        for (const paint of mats) paint(ctx);
+      draw: ctx => {
         for (const paint of rings.values()) paint(ctx);
         for (const body of [...bodies].sort((a, b) => a.y - b.y)) body.paint(ctx);
-        for (const spot of placed) {
-          const { color, text } = byKey.get(spot.key)!;
-          if (spot.leader) { ctx.save(); ctx.strokeStyle = color; ctx.globalAlpha = 0.7; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(spot.leader.from.x, spot.leader.from.y); ctx.lineTo(spot.leader.to.x, spot.leader.to.y); ctx.stroke(); ctx.restore(); }
-          pill(ctx, ink, text, (spot.box.x0 + spot.box.x1) / 2, (spot.box.y0 + spot.box.y1) / 2, { color, size: 10, alpha: 0.88 });
-        }
       },
     };
   }
@@ -190,13 +192,6 @@ export class CrewOnMap {
 
 /** The screen box a character covers, feet at (x, y), with room for what floats over its head. */
 function bodyBox(x: number, y: number, size: number): Box { return { x0: x - size * 0.6, y0: y - size * 1.25, x1: x + size * 0.6, y1: y + 4 }; }
-let measure: CanvasRenderingContext2D | null | undefined;
-function textWidth(text: string, font: string): number {
-  measure ??= typeof document === 'undefined' ? null : document.createElement('canvas').getContext('2d');
-  if (!measure) return text.length * 6;
-  measure.font = `700 10px ${font}`;
-  return measure.measureText(text).width;
-}
 /** Where something moving between two places is (a hop along an arc), or where it stands. */
 function position(anchor: (id: string) => Anchor | undefined, move: Move | undefined, target: string | undefined, now: number, s: number, reduced: boolean): { x: number; y: number; ground: number; dx: number; moving: boolean } | undefined {
   const end = target ? anchor(target) : undefined;

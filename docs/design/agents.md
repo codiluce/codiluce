@@ -13,7 +13,8 @@ tools. It combines searchable connected harness sessions with observed runtime s
 correlated by provider and session ID. Active agent sessions rise to the top. Select one to read
 human and assistant messages; consecutive tool calls and observed activity are collapsed.
 The same panel can expand for reading and dock again without losing its filters or reading position.
-Use **Focus map activity** to keep only the selected agent's character on the map. Select a file path to reveal the exact file, including files hidden from
+Opening a session keeps only its characters on the map; pointing at a session in the list dims the
+other sessions' characters. Select a file path to reveal the exact file, including files hidden from
 the map. If the file is missing from the current index, this explicit click refreshes
 the repository index before selecting it. Deleted or excluded files show an explanation
 instead of silently selecting their folder. Search scopes can select their nearest
@@ -103,14 +104,40 @@ not queued or replayed.
 
 With **Show agents on the map** on (the default, remembered), each agent is a
 pixel character on the map itself, in either projection. It hops to the file it
-reads, edits or searches (copies split off for parallel reads; inside a closed
-area it stands on that area's roof, and a search outlines its scope), and steps
-outside onto a mat beside the map's edge for what is about no file: thinking,
-the reply, planning, the web, commands, waiting for permission. Its name sits
-under it, never over another label. **Replay the latest** plays recent activity
-again, sped up. Agent colors are stable per provider/session/explicit agent id.
-Characters respect the session filter and are not shown in history. Two
-characters on one block signal overlap, not a proven conflict.
+reads, edits or searches (inside a closed area it stands on that area's roof,
+and a search outlines its scope), and steps outside, beside the map's edge, for
+what is about no file: thinking, the reply, planning, the web, commands, waiting
+for permission. Files worked on at the same time split the character: parallel
+calls and batched reads send a copy to each file, which comes back when its call
+completes. A small square in the session's color floats over each character and
+its copies; the same square marks the session's row in the Agents list (subagents
+wear their session's color). Characters carry no name label. Colors are stable
+per provider/session. Characters on one block stand side by side; that signals
+overlap, not a proven conflict. They respect the session filter and are not shown
+in history.
+
+The map itself is not dimmed or relabelled while agents work: it keeps its own
+granularity, and the characters and their block outlines are the only marks. A
+running session's card lists the files and folders of its current turn, newest
+first, with the session's square beside those its characters stand on now. A
+file that is not yet in the index is shown on its nearest indexed folder, and the
+card says so.
+
+Hooks see tool calls, not what a script does. A command that reads many files
+from one script (for example `python - <<PY ... PY`) is one command with no file
+attribution: the character stays beside the map, running a command. Reads made
+with the harness's read tool or with literal `cat`/`head`/`sed -n` commands are
+attributed.
+
+**Replay on the map** (in a finished session's reader) plays that session again
+from its saved transcript, alone on the map: prompts are thinking, the reply that
+ends a turn is writing, and tool calls hop to the files they named, calls made
+within a second of each other splitting the character as before. Runs of calls
+that named no file go by quickly, so the time goes to the files; a replay lasts
+at most 90 seconds (the latest steps of a longer session). `GET
+/api/conversations/<id>/replay` returns the latest 1,000 prompts, replies and tool
+calls in order, each call with its paths resolved against the current map. It
+works in read-only mode and needs an imported transcript.
 
 `--read-only` disables ingestion and index refreshes from activity. Incoming
 observations do not automatically index architecture or move the camera. Only
@@ -159,7 +186,7 @@ legacy `conversation` fragments remain readable. A six-position, four-dot clockw
 running agents in the menu and public update; reduced-motion preferences use a static indicator.
 Public progress and response text is read from a bounded 512 KB transcript tail every three seconds;
 only the newest update is displayed in each running session card. Private reasoning is excluded.
-Current-turn file observations stay highlighted while the agent is running, and clear when it becomes idle.
+Current-turn file observations stay listed while the agent is running, and clear when it becomes idle.
 Codex setup messages remain in the archive but are hidden in the session reader. The UI filters are a
 single row: text, agent and file/folder. Messages can lag hook activity. Sessions without available transcripts retain their observed
 activity and show a pending explanation. Refresh does not move the reader; **Latest messages**

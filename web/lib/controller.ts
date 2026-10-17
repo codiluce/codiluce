@@ -1,4 +1,3 @@
-import { activeAgentOverlay } from './activity';
 // Owns a canvas: input, camera animation, render scheduling and lazy child
 // loading. React never renders map primitives; it only mounts controllers.
 // The single map has one (`main`); the split map of History has an `overview`
@@ -356,9 +355,9 @@ export class MapController implements MapNavigator {
     // The agents at work, on the map: they take their places first (the map's labels give way), their names last.
     const crew = this.crewFrame(state, time);
     if (crew) render.reserved = crew.reserved;
-    if (crew || render.beat || render.callouts?.length || render.edges.some(edge => edge.label)) render.keepClear = this.panels();
+    if (render.beat || render.callouts?.length || render.edges.some(edge => edge.label)) render.keepClear = this.panels();
     this.renderer.render(this.ctx, this.dpr, this.viewport, this.camera, this.scene, this.set, render, this.lod);
-    crew?.draw(this.ctx, [...this.renderer.labelBoxes, ...this.renderer.badgeBoxes, ...render.keepClear ?? []]);
+    crew?.draw(this.ctx);
     const moved = `${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}`;
     if (moved !== this.lastCamera) { this.lastCamera = moved; this.options.onCamera?.(); }
     this.scheduleReport(time);
@@ -371,15 +370,25 @@ export class MapController implements MapNavigator {
   /**
    * Agents on the map (Agents › Show agents on the map): the main map, in the
    * middle, on the live index (activity belongs to the working tree, not to a
-   * commit in History).
+   * commit in History). A session opened in Agents keeps only its characters;
+   * the pointer on a session in the list dims the others.
    */
   private crewFrame(state: AtlasState, time: number) {
-    if (this.role !== 'main' || this.small || !state.agents.show || state.meta?.snapshot.kind === 'commit' || this.store.previewScene) return undefined;
-    this.crew ??= new CrewOnMap(() => this.store.scene, (ids, areas) => void ensureNodes(this.store, ids, areas).catch(() => undefined));
+    if (this.role !== 'main' || this.small || !state.agents.show || state.meta?.snapshot.kind === 'commit' || this.store.previewScene) { if (this.role === 'main') this.publishPlaces({}); return undefined; }
+    this.crew ??= new CrewOnMap(() => this.store.scene, (ids, areas) => void ensureNodes(this.store, ids, areas).catch(() => undefined), token => this.store.stopReplay(token));
     this.crew.sync(state.agents.snapshot, state.agents.replay);
-    return this.crew.frame(this.viewport, this.camera, this.set, themeById(state.themeId), time, this.motionReduced, state.agents.focus);
+    const opened = state.journal.open.includes('conversations') ? state.journal.conversationId : undefined;
+    const frame = this.crew.frame(this.viewport, this.camera, this.set, time, this.motionReduced, { ...(opened ? { focus: opened } : {}), ...(state.agents.hover ? { dim: state.agents.hover } : {}) });
+    this.publishPlaces(this.crew.places());
+    return frame;
+  }
+  /** Where the characters stand, for the Agents list (only when it changes). */
+  private publishPlaces(places: Record<string, string[]>): void {
+    const key = JSON.stringify(places);
+    if (key !== this.crewPlaces) { this.crewPlaces = key; queueMicrotask(() => this.store.setActivity({ places })); }
   }
   private crew?: CrewOnMap;
+  private crewPlaces = '{}';
   private crewTimer?: ReturnType<typeof setTimeout>;
   /** The projection changed (2D plan ⇄ isometric): the same place stays in the middle, at about the same size. */
   private projectionChanged(): void {
@@ -619,11 +628,6 @@ export class MapController implements MapNavigator {
       if (this.explainCache?.detail !== detail) this.explainCache = { detail, overlay: { of: new Map(detail.footprint.ids.map(id => [id, EXPLAINED])), areas: new Map(Object.entries(detail.footprint.areas).map(([id, count]) => [id, { [EXPLAINED]: count }])), names: new Map([[EXPLAINED, 'Linked']]), hues: new Map([[EXPLAINED, EXPLAINED_HUE]]), focus: EXPLAINED } };
       result.explanation = this.explainCache.overlay;
     }
-    if (!result.explanation && tool === 'map' && state.agents.show && state.agents.connected && state.meta?.snapshot.kind !== 'commit') {
-      const epoch = Math.floor(Date.now() / 1000), snapshot = state.agents.snapshot;
-      if (!this.agentWorkCache || this.agentWorkCache.snapshot !== snapshot || this.agentWorkCache.focus !== state.agents.focus || this.agentWorkCache.epoch !== epoch) this.agentWorkCache = { snapshot, focus: state.agents.focus, epoch, overlay: activeAgentOverlay(snapshot, Date.now(), state.agents.focus) };
-      result.explanation = this.agentWorkCache.overlay;
-    }
     if (tool !== 'map' && tool !== 'files') return result;
     const coverage = state.coverage.show && state.coverage.data && state.coverage.viewStamp === stamp ? state.coverage.data : undefined;
     if (coverage) {
@@ -678,7 +682,6 @@ export class MapController implements MapNavigator {
   }
   private explainCache?: { detail: object; overlay: FamilyOverlay };
   private sceneCache?: { scene: ResolvedScene; onMap: boolean; overlay: FamilyOverlay; callouts?: CalloutOverlay[]; edges: EdgeOverlay[] };
-  private agentWorkCache?: { snapshot: AtlasState['agents']['snapshot']; focus?: string; epoch: number; overlay?: FamilyOverlay };
   private explainHoverCache?: { link: object; overlay: FamilyOverlay };
   private pullCache?: { data: object; overlay: FamilyOverlay };
   private peopleCache?: { data: object; overlay: FamilyOverlay };

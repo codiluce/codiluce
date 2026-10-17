@@ -1,5 +1,4 @@
 import type { ActivityEvent, ActivitySnapshot } from '../../src/activity/model';
-import type { FamilyOverlay } from './renderer';
 
 export { harnessLabel as providerName } from '../../src/harnesses/registry';
 import { sessionKey } from '../../src/harnesses/registry';
@@ -25,18 +24,4 @@ export function activeSessionFiles(snapshot: ActivitySnapshot | undefined, now: 
     });
   }
   return files;
-}
-
-/** Same focus treatment as explanation links; directory scopes light areas, never invented reads. */
-export function activeAgentOverlay(snapshot: ActivitySnapshot | undefined, now: number, focus?: string): FamilyOverlay | undefined {
-  const key = 'agent-work', of = new Map<string, string>(), areas = new Map<string, Record<string, number>>();
-  const seen = new Set<string>();
-  for (const { event, index } of activeSessionFiles(snapshot, now, undefined, focus)) {
-    const target = event.paths[index]!;
-    if (!target.id || seen.has(target.id)) continue; seen.add(target.id);
-    if (target.scope === 'file' && target.exact !== false) of.set(target.id, key);
-    else areas.set(target.id, { [key]: 1 });
-    for (const ancestor of target.ancestors ?? []) areas.set(ancestor, { [key]: (areas.get(ancestor)?.[key] ?? 0) + 1 });
-  }
-  return of.size || areas.size ? { of, areas, names: new Map([[key, 'Agent activity']]), hues: new Map([[key, 175]]), focus: key } : undefined;
 }

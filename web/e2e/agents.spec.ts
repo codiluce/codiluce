@@ -33,8 +33,9 @@ test('Agents streams both providers, selects observed code, scopes searches and 
   await expect(panel.locator('.activity-feed').getByRole('button', { name: 'frontend/src/components/', exact: true })).toBeVisible();
   await panel.getByRole('button', { name: 'frontend/src/components/LoginForm.tsx', exact: true }).first().click();
   await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('heading', { name: 'LoginForm.tsx', exact: true })).toBeVisible();
-  await panel.getByRole('button', { name: 'Focus map activity' }).click();
-  await expect(panel.getByRole('button', { name: 'Focus map activity' })).toHaveAttribute('aria-pressed', 'true');
+  // Each session wears its color in the list, as its character does on the map; a running session is not replayed.
+  await expect(panel.locator('.agent-session .agent-swatch')).toHaveCount(2);
+  await expect(panel.getByRole('button', { name: '▶ Replay on the map' })).toHaveCount(0);
   await panel.getByRole('checkbox', { name: 'Show agents on the map' }).uncheck();
   await expect(panel.getByRole('checkbox', { name: 'Show agents on the map' })).not.toBeChecked();
   await panel.getByRole('checkbox', { name: 'Show agents on the map' }).check();

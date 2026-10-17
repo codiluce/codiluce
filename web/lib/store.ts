@@ -349,8 +349,12 @@ export interface AtlasState {
   focusView?: FocusSubject;
   files?: FilesState;
   code?: CodeState;
-  /** `show`: the agents at work as characters on the map; `replay`: bumped to play the latest activity again. */
-  agents: { connected: boolean; show: boolean; now: number; focus?: string; snapshot?: ActivitySnapshot; live?: import('@engine/conversations/model').LiveSession[]; replay?: number };
+  /**
+   * `show`: the agents at work as characters on the map; `hover`: the session the pointer is on in the list (the
+   * others' characters recede); `replay`: a saved session playing again on the map; `places`: where each session's
+   * characters stand now (map IDs by session key, from the map).
+   */
+  agents: { connected: boolean; show: boolean; now: number; snapshot?: ActivitySnapshot; live?: import('@engine/conversations/model').LiveSession[]; hover?: string; replay?: { id: string; token: number; data: import('@engine/conversations/model').ConversationReplay }; places?: Record<string, string[]> };
   explain: ExplainState;
 }
 export interface MapNavigator {
@@ -1243,7 +1247,7 @@ export class AtlasStore {
   }
   expandAgents(expanded: boolean): void { this.set(state => ({ journal: { ...state.journal, expanded } })); }
   closeJournal(view: 'conversations'): void {
-    this.set(state => ({ journal: { ...state.journal, open: state.journal.open.filter(item => item !== view), expanded: false }, agents: { ...state.agents, focus: undefined } })); this.writeHash();
+    this.set(state => ({ journal: { ...state.journal, open: state.journal.open.filter(item => item !== view), expanded: false }, agents: { ...state.agents, hover: undefined } })); this.writeHash();
   }
   /** A tool closed: the map comes back to the middle if the tool was there. */
   private leaveCenter(view: CenterView): Partial<AtlasState> { return this.state.center === view ? { center: 'map' } : {}; }
@@ -1252,8 +1256,18 @@ export class AtlasStore {
   closeFocus(): void { this.set({ ...this.leaveCenter('focus'), focusView: undefined }); }
   /** The agents at work as characters on the map (Agents › Show agents on the map); the choice is remembered. */
   showAgentsOnMap(show: boolean): void { if (show !== this.state.agents.show) { this.setActivity({ show }); this.savePrefs(); } }
-  /** Play the latest observed agent activity again on the map, sped up. */
-  replayAgents(): void { this.showAgentsOnMap(true); this.setActivity({ replay: (this.state.agents.replay ?? 0) + 1 }); }
+  /** The pointer is on a session in the Agents list (undefined: on none): the other sessions' characters recede. */
+  hoverSession(id: string | undefined): void { if (id !== this.state.agents.hover) this.setActivity({ hover: id }); }
+  /** Play a saved session again on the map, sped up, with the map in the middle. */
+  replaySession(id: string, data: import('@engine/conversations/model').ConversationReplay): void {
+    this.showAgentsOnMap(true);
+    this.setActivity({ replay: { id, token: ++this.replays, data } });
+    if (this.state.journal.expanded) this.expandAgents(false);
+    this.setCenter('map');
+  }
+  /** The replay is over (`token`: only if it is still that one), or stopped. */
+  stopReplay(token?: number): void { if (this.state.agents.replay && (token === undefined || this.state.agents.replay.token === token)) this.setActivity({ replay: undefined }); }
+  private replays = 0;
   /** Show what depends on an entity (the selection by default) or on the uncommitted changes (`WORKING_CHANGES`) in the middle; it stays on that origin. */
   async showImpact(id = this.state.selection?.id, depth = this.state.impact.depth): Promise<void> {
     if (!id) return;

@@ -56,11 +56,10 @@ export function AgentsPanel({ onClose }: { onClose: () => void }) {
         <div className="agents-connection" role="status"><span className={`agents-live-dot${agents.connected && snapshot?.enabled ? ' on' : ''}`} />{agents.connected ? snapshot?.enabled ? 'Live activity' : 'Activity disabled' : 'Connecting to activity…'}</div>
         <details className="agents-info" onKeyDown={event => { if (event.key === 'Escape') event.currentTarget.open = false; }}>
           <summary aria-label="About agent activity" title="About agent activity">ⓘ</summary>
-          <p className="note">Observed actions from connected coding harnesses. On the map, each agent is a character on the files it reads and edits, and outside the map, on a mat, for thinking, commands and waiting. Available session history refreshes while recently observed sessions are active; messages may arrive after tool activity. Check Agent connections for supported capabilities, setup and delivery.</p>
+          <p className="note">Observed actions from connected coding harnesses. On the map, each agent is a character on the files it reads and edits (split into copies for files worked on at the same time), and beside the map for thinking, commands and waiting. Its colored square matches its session in this list. Open a session to keep only its characters on the map, or replay a finished one. Available session history refreshes while recently observed sessions are active; messages may arrive after tool activity. Check Agent connections for supported capabilities, setup and delivery.</p>
         </details>
       </div>
-      <label className="agents-toggle" title="Each agent as a character on the map: on the files it reads and edits; outside, on a mat by the map's edge, for what is about no file"><input type="checkbox" checked={agents.show} onChange={event => store.showAgentsOnMap(event.target.checked)} /> Show agents on the map</label>
-      <button className="button small" onClick={() => store.replayAgents()} disabled={!snapshot?.events.length} title="Play the latest observed activity again on the map, sped up">↻ Replay the latest</button>
+      <label className="agents-toggle" title="Each agent as a character on the map: on the files it reads and edits; beside the map's edge for what is about no file"><input type="checkbox" checked={agents.show} onChange={event => store.showAgentsOnMap(event.target.checked)} /> Show agents on the map</label>
       {historical && <p className="note">Activity belongs to the working tree. Return to the live map to see the agents on it.</p>}
     </div>
     <AgentSessionsView compact={!expanded} />

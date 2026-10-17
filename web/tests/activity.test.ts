@@ -10,8 +10,8 @@ test('each agent keeps its own color', () => {
   assert.notEqual(agentColor('codex:one'), agentColor('claude:two'));
 });
 
-test('active work keeps observed files lit until idle, suppresses failed calls, and never expands a search scope into file reads', async () => {
-  const { activeSessionFiles, activeAgentOverlay } = await import('../lib/activity');
+test('the files of the current turn stay listed until idle, without failed calls', async () => {
+  const { activeSessionFiles } = await import('../lib/activity');
   const snapshot = { enabled: true, sessions: [{ actor: 'codex:one', provider: 'codex' as const, sessionId: 'one', status: 'running' as const, lastSeen: 60000, label: 'Read file' }], events: [
     event({ id: 'old', at: 500, paths: [{ path: 'src/old.ts', scope: 'file', id: 'old' }] }),
     event({ id: 'idle', at: 1000, kind: 'status', phase: 'status', status: 'idle', paths: [] }),
@@ -21,13 +21,8 @@ test('active work keeps observed files lit until idle, suppresses failed calls, 
     event({ id: 'scope', at: 5000, kind: 'search', paths: [{ path: 'other', scope: 'directory', id: 'other', ancestors: ['root'] }] }),
   ] };
   assert.deepEqual(activeSessionFiles(snapshot, 60000).map(item => item.event.id), ['scope', 'current']);
-  const overlay = activeAgentOverlay(snapshot, 60000)!;
-  assert.equal(overlay.of.get('file'), 'agent-work');
-  assert.equal(overlay.of.has('old'), false); assert.equal(overlay.of.has('bad'), false);
-  assert.equal(overlay.of.has('other'), false, 'a directory scope does not mark its descendants');
-  assert.ok(overlay.areas.has('other')); assert.ok(overlay.areas.has('root'));
-  assert.equal(activeAgentOverlay({ ...snapshot, sessions: snapshot.sessions.map(session => ({ ...session, status: 'idle' })) }, 60000), undefined);
-  assert.equal(activeAgentOverlay(snapshot, 400001), undefined, 'unconfirmed stale activity stops lighting the map');
+  assert.deepEqual(activeSessionFiles({ ...snapshot, sessions: snapshot.sessions.map(session => ({ ...session, status: 'idle' })) }, 60000), []);
+  assert.deepEqual(activeSessionFiles(snapshot, 400001), [], 'unconfirmed stale activity is no longer current');
 });
 
 test('new harness session keys retain file activity when native IDs contain separators', async () => {

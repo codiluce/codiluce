@@ -4,7 +4,7 @@ import type { ActivityEvent, AgentSession } from '@engine/activity/model';
 import type { NodeSummary } from '@engine/projection/dto';
 import { changeLine, planBeat } from '../lib/beat';
 import { project, projectedBounds, setFlat, worldToScreen } from '../lib/camera';
-import { Cast, crewEvent, replayEvents, YARD, yardFor } from '../lib/crew';
+import { Cast, crewEvent, REPLAY_MS, sessionReplay, YARD, yardFor } from '../lib/crew';
 import { focusLayout, morph, sceneHierarchy } from '../lib/focus-layout';
 import { mergeArrows, selectionSet } from '../lib/focus-set';
 import { placeLabels, overlaps, type LabelAsk } from '../lib/labels';
@@ -118,9 +118,67 @@ test('observations become what the characters do: a prompt is thinking, a plan t
   assert.equal(crewEvent(event('5', 0, { kind: 'read', phase: 'started', label: 'Read file', paths: [{ path: 'outside.txt', scope: 'file' }] }), 0, sessions), undefined);
   const read = crewEvent(event('6', 0, { kind: 'read', phase: 'started', label: 'Read file', paths: [{ path: 'src/b.ts', scope: 'file', id: 'src/b.ts', ancestors: ['repo', 'src'] }] }), 10, sessions)!;
   assert.deepEqual([read.kind, read.targets, read.title, read.t], ['read', ['src/b.ts'], 'Fix the map', 10]);
-  // A replay reads a long quiet gap before a turn ends as writing the reply.
-  const replay = replayEvents([event('7', 0, { kind: 'edit', phase: 'completed', label: 'Edit file', toolId: 't' }), event('8', 9000, { status: 'idle' })], sessions, 0);
-  assert.deepEqual(replay.map(item => item.kind), ['edit', 'reply', 'status']);
+});
+
+test('a saved session replays as the cast: prompts think, calls hop to their files, and the turn ends writing the reply', () => {
+  const at = (s: number) => new Date(Date.UTC(2026, 9, 17, 10, 0, s)).toISOString();
+  const file = (path: string, action: 'read' | 'edited' = 'read') => ({ path, scope: 'file' as const, action, id: path, ancestors: ['repo'] });
+  const played = sessionReplay({ id: 'claude-code:s1', provider: 'claude-code', sessionId: 's1', title: 'Fix the map', truncated: false, steps: [
+    { role: 'user', at: at(0), paths: [] },
+    { role: 'assistant', at: at(2), paths: [] },
+    { role: 'tool', at: at(3), tool: 'Read', callId: 'a', status: 'completed', paths: [file('src/b.ts')] },
+    { role: 'tool', at: at(3), tool: 'Read', callId: 'b', status: 'completed', paths: [file('src/c.ts')] },
+    { role: 'tool', at: at(9), tool: 'Edit', callId: 'c', status: 'failed', paths: [file('src/c.ts', 'edited')] },
+    { role: 'tool', at: at(12), tool: 'Bash', callId: 'd', status: 'completed', paths: [] },
+    { role: 'assistant', at: at(20), paths: [] },
+  ] }, 1000);
+  // The note between tool calls is not a reply; the last message is.
+  assert.deepEqual(played.filter(ev => ev.phase !== 'completed' && ev.phase !== 'failed').map(ev => ev.kind), ['think', 'read', 'read', 'edit', 'command', 'reply', 'status']);
+  assert.ok(played.every((ev, i) => i === 0 || ev.t >= played[i - 1]!.t));
+  // Calls made together stay open together (the character splits), until the next step.
+  const [b, c] = played.filter(ev => ev.kind === 'read' && ev.phase === 'started');
+  const bEnd = played.find(ev => ev.id === `${b!.id}:end`)!, editStart = played.find(ev => ev.kind === 'edit' && ev.phase === 'started')!;
+  assert.ok(c!.t < bEnd.t && bEnd.t < editStart.t);
+  assert.equal(played.find(ev => ev.id === `${editStart.id}:end`)!.phase, 'failed');
+  assert.equal(played.at(-1)!.status, 'finished');
+  // A long session plays at most REPLAY_MS.
+  const long = sessionReplay({ id: 'codex:x', provider: 'codex', sessionId: 'x', title: '', truncated: false, steps: Array.from({ length: 2000 }, (_, i) => ({ role: 'tool' as const, at: at(i * 30), tool: 'Read', callId: String(i), paths: [file('src/b.ts')] })) }, 0);
+  assert.ok(long.at(-1)!.t <= REPLAY_MS + 2000, String(long.at(-1)!.t));
+});
+
+test('files worked on at the same time split the character: a copy goes to each, and comes back when its call ends', () => {
+  const map = scene();
+  const root = map.nodes.get('repo')!.rect;
+  const cast = new Cast(id => map.nodes.get(id)?.rect, () => root, () => 'red', false);
+  const read = (id: string, t: number, tool: string, path: string) => crewEvent(event(id, t, { kind: 'read', phase: 'started', label: 'Read file', toolId: tool, status: 'running', paths: [{ path, scope: 'file', id: path }] }), t, sessions)!;
+  const done = (id: string, t: number, tool: string) => crewEvent(event(id, t, { kind: 'read', phase: 'completed', label: 'Read file', toolId: tool, status: 'running' }), t, sessions)!;
+  cast.push([read('1', 100, 'a', 'src/b.ts'), read('2', 120, 'b', 'src/c.ts'), read('3', 140, 'c', 'web/y.ts'), done('4', 400, 'b')]);
+  cast.advance(150);
+  const actor = cast.actors.get('claude-code:s1')!;
+  assert.equal(actor.target, 'src/b.ts', 'the character stays on its first file');
+  assert.deepEqual(actor.clones.map(clone => clone.target), ['src/c.ts', 'web/y.ts']);
+  cast.advance(500);
+  // The copy on c.ts ended (after a short dwell, so it is seen); the one on y.ts still works.
+  assert.ok(actor.clones.find(clone => clone.target === 'src/c.ts')!.end! >= 120 + 1000);
+  assert.equal(actor.clones.find(clone => clone.target === 'web/y.ts')!.end, undefined);
+  // One call after the other is a hop, not a split.
+  cast.push([done('5', 600, 'a'), done('6', 600, 'c'), read('7', 700, 'd', 'src/d.ts')]);
+  cast.advance(700);
+  assert.equal(actor.target, 'src/d.ts');
+});
+
+test('a harness that reports only completed calls still sends its character to the file', () => {
+  const map = scene();
+  const root = map.nodes.get('repo')!.rect;
+  const cast = new Cast(id => map.nodes.get(id)?.rect, () => root, () => 'red', false);
+  const completed = (id: string, t: number, tool: string, path: string) => crewEvent(event(id, t, { kind: 'read', phase: 'completed', label: 'Read file', toolId: tool, status: 'running', paths: [{ path, scope: 'file', id: path }] }), t, sessions)!;
+  cast.push([completed('1', 100, 'a', 'src/b.ts'), completed('2', 900, 'b', 'web/y.ts')]);
+  cast.advance(150);
+  const actor = cast.actors.get('claude-code:s1')!;
+  assert.deepEqual([actor.target, actor.pose], ['src/b.ts', 'read']);
+  cast.advance(950);
+  assert.equal(actor.target, 'web/y.ts');
+  assert.equal(actor.clones.length, 0, 'calls reported one after the other do not split it');
 });
 
 test('the cast hops to the files it reads and steps outside, beside the nearest edge, for what is about no file', () => {
@@ -214,9 +272,16 @@ test('agents are on the map by default, beside Agents too, and being turned off 
   store.showAgentsOnMap(false);
   const again = new AtlasStore({} as AtlasApi, { storage });
   assert.equal(again.getState().agents.show, false);
-  // Replaying the latest activity shows them again.
-  again.replayAgents();
-  assert.deepEqual([again.getState().agents.show, again.getState().agents.replay], [true, 1]);
+  // Replaying a session shows them again, with the map in the middle; it ends by its token.
+  const data = { id: 'codex:x', provider: 'codex' as const, sessionId: 'x', title: 'X', truncated: false, steps: [] };
+  again.replaySession('codex:x', data);
+  assert.deepEqual([again.getState().agents.show, again.getState().agents.replay?.token, again.getState().center], [true, 1, 'map']);
+  again.stopReplay(2);
+  assert.equal(again.getState().agents.replay?.token, 1, 'an earlier replay ending does not stop a newer one');
+  again.stopReplay(1);
+  assert.equal(again.getState().agents.replay, undefined);
+  again.hoverSession('codex:x');
+  assert.equal(again.getState().agents.hover, 'codex:x');
   again.showAgentsOnMap(true);
   assert.equal(new AtlasStore({} as AtlasApi, { storage }).getState().agents.show, true);
 });

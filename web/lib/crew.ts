@@ -1,12 +1,16 @@
 // Agents at work as characters: hook observations turned into actors that hop
-// between the files they were reported at. What is about no file (thinking,
-// writing the reply, planning, the web, a command, waiting for permission,
-// resting) happens outside: the actor leaves the map for a mat beside the map
-// edge nearest its last file, does it there, and comes back for the next file.
-// Hooks observe tools, not the model: thinking is inferred from a prompt or a
-// quiet gap, and writing the reply only in a replay (the gap before a turn
-// ends). Pure (no DOM): the map draws it (crew-map.ts), tests run it.
+// between the files they were reported at. Files worked on at the same time
+// (parallel calls, a batched read) split the character: a copy goes to each.
+// What is about no file (thinking, writing the reply, planning, the web, a
+// command, waiting for permission, resting) happens outside: the actor leaves
+// the map for a spot beside the map edge nearest its last file, does it there,
+// and comes back for the next file. Hooks observe tools, not the model:
+// thinking is inferred from a prompt or a quiet gap, and writing the reply
+// only in a replay. A finished session can be replayed from its saved
+// transcript (`sessionReplay`). Pure (no DOM): the map draws it (crew-map.ts),
+// tests run it.
 import type { ActivityEvent, AgentSession } from '@engine/activity/model';
+import type { ConversationReplay, ReplayStep } from '@engine/conversations/model';
 import type { Rect } from '@engine/projection/dto';
 import { providerOf, PROVIDER, type Pose, type Provider } from './pixel-crew';
 import { sessionKey } from '../../src/harnesses/registry';
@@ -28,6 +32,8 @@ export interface Clone { target: string; tool?: string; start: number; end?: num
 export interface Actor {
   key: string; provider: Provider; title: string; color: string; parent?: string; mini: boolean; slot: number;
   target?: string; move?: Move; pose: Pose; poseAt: number; last: number; status: string; open: Set<string>; lastFile?: string;
+  /** Reads, edits and searches in flight: tool id → when it started. */
+  files: Map<string, number>;
   result?: 'ok' | 'fail'; resultAt?: number; clones: Clone[];
   born: number; gone?: number; facing: 1 | -1; seed: number;
 }
@@ -35,9 +41,18 @@ export interface Actor {
 export const YARD = 'yard:';
 /** Thinking is inferred when a running agent has had nothing in flight for this long (live). */
 export const THINK_AFTER = 2500;
+/** A file tool still in flight after this long no longer makes the next one parallel (its completion was missed). */
+const PARALLEL_MS = 8000;
+/** Copies of one character at most, besides itself. */
+const MAX_COPIES = 7;
+/** A copy stays on its file at least this long, however fast the call. */
+const COPY_DWELL = 1200;
 const PLAN_TOOLS = /^(TodoWrite|update_plan|ExitPlanMode|EnterPlanMode)$/;
 const WEB_TOOLS = /^(WebSearch|WebFetch|web_search|web_fetch|web\.run)$/i;
+const SEARCH_TOOLS = /grep|glob|search|find|\brg\b|list_dir|ls$/i;
 
+/** The session an actor belongs to: its own key, or its parent's for a subagent. */
+export function sessionOf(actor: Pick<Actor, 'key' | 'parent'>): string { return actor.parent ?? actor.key; }
 /** An actor's parent session (a subagent's actor is `provider:session:agent`). */
 export function parentActor(event: Pick<ActivityEvent, 'provider' | 'sessionId' | 'agentId'>): string | undefined {
   return event.agentId && event.sessionId ? sessionKey(event.provider, event.sessionId) : undefined;
@@ -65,28 +80,65 @@ export function crewEvent(event: ActivityEvent, t: number, sessions: readonly Ag
   const what = kind === 'plan' ? 'updates the plan' : kind === 'web' ? 'on the web' : event.label;
   return { ...base, kind, phase, label: `${what}${names.length ? ` ${names.join(', ')}${event.paths.length > 3 ? ` +${event.paths.length - 3}` : ''}` : ''}${phase === 'completed' ? ' · done' : phase === 'failed' ? ' · failed' : ''}` };
 }
+/** A replay lasts at most this long (ms on the cast's clock); a longer session plays its latest steps. */
+export const REPLAY_MS = 90_000;
+const REPLAY_STEP = 160;
+/** A call in a run of calls that named no file on the map. */
+const QUIET_STEP = 60;
+/** What a saved tool call did, for the cast. */
+function stepKind(step: ReplayStep): CrewKind {
+  const tool = step.tool ?? '';
+  if (PLAN_TOOLS.test(tool)) return 'plan';
+  if (WEB_TOOLS.test(tool)) return 'web';
+  if (step.paths.some(target => target.action !== 'read')) return 'edit';
+  if (step.paths.some(target => target.scope === 'file')) return 'read';
+  if (step.paths.length || SEARCH_TOOLS.test(tool)) return 'search';
+  return 'command';
+}
 /**
- * Recent observations for a replay, on a compressed clock starting at
- * `start`. Looking ahead, a long gap after a tool reads as thinking, and the
- * gap before a turn ends as writing the reply (only a replay can tell).
+ * A saved session as the cast plays it, on a compressed clock from `start`:
+ * prompts are thinking, replies writing, tool calls hops to the files they
+ * named. Calls made together (within a second) stay open together, so the
+ * character splits as it did. Runs of calls that named no file go by quickly,
+ * so the time goes to the files. At most `REPLAY_MS` long: the latest steps.
  */
-export function replayEvents(events: readonly ActivityEvent[], sessions: readonly AgentSession[], start: number): CrewEvent[] {
-  const sorted = [...events].sort((a, b) => a.at - b.at);
-  let t = start, previous: number | undefined;
+export function sessionReplay(replay: ConversationReplay, start: number): CrewEvent[] {
+  // Text between tool calls is a progress note: only the reply that ends a turn is played.
+  const steps = replay.steps.filter((step, i, all) => step.role !== 'assistant' || !all[i + 1] || all[i + 1]!.role === 'user').slice(-Math.floor(REPLAY_MS / REPLAY_STEP));
+  if (!steps.length) return [];
+  const provider = providerOf(replay.provider);
+  const title = replay.title || `${PROVIDER[provider].label} ${replay.sessionId.slice(0, 6)}`;
+  // Observed times (a step without one comes a second after the previous).
+  const times: number[] = [];
+  for (const step of steps) { const at = step.at ? Date.parse(step.at) : NaN; times.push(Number.isFinite(at) ? Math.max(at, times.at(-1) ?? at) : (times.at(-1) ?? 0) + 1000); }
+  const quiet = (step: ReplayStep) => step.role === 'tool' && !step.paths.some(target => target.id);
+  const gaps = times.map((at, i) => (!i ? 300 : quiet(steps[i]!) && quiet(steps[i - 1]!) ? QUIET_STEP : Math.min(1400, Math.max(REPLAY_STEP, (at - times[i - 1]!) * 0.2))));
+  const total = gaps.reduce((sum, gap) => sum + gap, 0), k = total > REPLAY_MS ? REPLAY_MS / total : 1;
+  const clock: number[] = [];
+  gaps.forEach((gap, i) => clock.push((clock[i - 1] ?? start) + gap * k));
+  const base = { actor: replay.id, provider, title, ancestors: {} as Record<string, string[]> };
   const out: CrewEvent[] = [];
-  sorted.forEach((event, i) => {
-    t += previous === undefined ? 300 : Math.min(1400, Math.max(160, (event.at - previous) * 0.2));
-    previous = event.at;
-    const ev = crewEvent(event, t, sessions);
-    if (!ev) return;
-    out.push(ev);
-    if (ev.phase === 'started') return;
-    const next = sorted.slice(i + 1).find(other => other.actor === event.actor);
-    if (!next || next.at - event.at < 4000) return;
-    const reply = next.label === 'Stop';
-    out.push({ ...ev, id: `${ev.id}:gap`, t: t + 120, kind: reply ? 'reply' : 'think', phase: 'status', targets: [], ancestors: {}, label: reply ? 'writes the reply' : 'thinking' });
+  steps.forEach((step, i) => {
+    const t = clock[i]!, id = `replay:${replay.id}:${i}`, at = times[i]!;
+    if (step.role !== 'tool') {
+      out.push({ ...base, t, id, at, kind: step.role === 'user' ? 'think' : 'reply', phase: 'status', status: 'running', targets: [], label: step.role === 'user' ? 'prompt: thinking' : 'writes the reply' });
+      return;
+    }
+    const placed = step.paths.filter(target => target.id);
+    const targets = [...new Set(placed.map(target => target.id!))];
+    const ancestors = Object.fromEntries(placed.map(target => [target.id!, target.ancestors ?? []]));
+    const kind = stepKind(step), tool = step.callId ?? id;
+    // Open until the next step that was not made together with it.
+    const next = steps.findIndex((_, j) => j > i && times[j]! - at > 1000);
+    const end = next < 0 ? t + 900 : Math.max(t + 120, clock[next]! - 60);
+    const names = step.paths.map(target => target.path.split('/').filter(Boolean).pop() ?? target.path).slice(0, 3);
+    const label = `${step.tool ?? kind}${names.length ? ` ${names.join(', ')}` : ''}`;
+    out.push({ ...base, t, id, at, kind, phase: 'started', status: 'running', tool, targets, ancestors, label });
+    out.push({ ...base, t: end, id: `${id}:end`, at, kind, phase: step.status === 'failed' ? 'failed' : 'completed', status: 'running', tool, targets: [], label: `${label} · done` });
   });
-  return out;
+  const last = Math.max(...out.map(ev => ev.t));
+  out.push({ ...base, t: last + 900, id: `replay:${replay.id}:end`, at: times.at(-1)!, kind: 'status', phase: 'status', status: 'finished', targets: [], label: 'session ends' });
+  return out.sort((a, b) => a.t - b.t);
 }
 
 /** A mat outside the map: beside the edge nearest `rect`, `out` units out, actors side by side. */
@@ -136,7 +188,8 @@ export class Cast {
       else if (working && !busy && now - actor.last > 3600) this.pose(actor, 'idle', now);
       if (actor.pose === 'sit' && now - actor.poseAt > 3200) this.pose(actor, 'sleep', now);
       actor.clones = actor.clones.filter(clone => !clone.end || now - clone.end < 900);
-      for (const clone of actor.clones) if (!clone.end && now - clone.start > 4200) clone.end = now;
+      // A copy whose completion never came goes back after a while.
+      for (const clone of actor.clones) if (!clone.end && now - clone.start > PARALLEL_MS) clone.end = now;
     }
     for (const [key, actor] of this.actors) if (actor.gone !== undefined && now > actor.gone) this.actors.delete(key);
   }
@@ -171,7 +224,8 @@ export class Cast {
     let actor = this.actors.get(ev.actor);
     if (!actor) {
       const parent = ev.parent ? this.actors.get(ev.parent) : undefined;
-      actor = { key: ev.actor, provider: ev.provider, title: ev.title, color: this.color(ev.actor), mini: !!ev.parent, slot: this.slots++, ...(ev.parent ? { parent: ev.parent } : {}), pose: 'idle', poseAt: now, last: now, status: 'running', open: new Set(), clones: [], born: now, facing: 1, seed: this.actors.size * 7 + 3 };
+      // A subagent wears its session's color: the color is how a session is told apart.
+      actor = { key: ev.actor, provider: ev.provider, title: ev.title, color: this.color(ev.parent ?? ev.actor), mini: !!ev.parent, slot: this.slots++, ...(ev.parent ? { parent: ev.parent } : {}), pose: 'idle', poseAt: now, last: now, status: 'running', open: new Set(), files: new Map(), clones: [], born: now, facing: 1, seed: this.actors.size * 7 + 3 };
       const start = parent?.target ?? ev.targets[0];
       if (start?.startsWith(YARD)) { this.yards.set(this.yardOf(actor), this.yards.get(start)!); actor.target = this.yardOf(actor); if (parent?.lastFile) actor.lastFile = parent.lastFile; }
       else if (start) { actor.target = start; actor.lastFile = start; }
@@ -187,8 +241,10 @@ export class Cast {
     actor.last = now;
     if (ev.kind !== 'status' && ev.status === 'running') actor.status = 'running';
     if (actor.gone !== undefined && ev.kind !== 'done' && ev.status !== 'finished') delete actor.gone;
+    // Some harnesses report only completed calls (Cursor): a completion whose start was never seen is the visit itself.
+    const unseen = ev.phase === 'completed' && !(ev.tool && actor.open.has(ev.tool));
     if (ev.tool && ev.phase === 'started') actor.open.add(ev.tool);
-    if (ev.tool && ev.phase !== 'started') actor.open.delete(ev.tool);
+    if (ev.tool && ev.phase !== 'started') { actor.open.delete(ev.tool); actor.files.delete(ev.tool); }
     if (ev.kind === 'spawn') return;
     if (ev.kind === 'done') {
       const parent = actor.parent ? this.actors.get(actor.parent) : undefined;
@@ -196,21 +252,26 @@ export class Cast {
       actor.gone = now + (actor.move?.dur ?? 0) + 150;
       return;
     }
-    if ((ev.kind === 'read' || ev.kind === 'edit' || ev.kind === 'search') && ev.phase === 'started' && ev.targets.length) {
+    if ((ev.kind === 'read' || ev.kind === 'edit' || ev.kind === 'search') && (ev.phase === 'started' || unseen) && ev.targets.length) {
       const origin = actor.target;
-      this.moveTo(actor, ev.targets[0]!, now);
-      this.pose(actor, ev.kind, now);
+      // Already at work on a file when this call starts (parallel calls): the character stays, a copy goes to the new file.
+      const parallel = !!origin && !origin.startsWith(YARD) && [...actor.files].some(([tool, at]) => tool !== ev.tool && now - at < PARALLEL_MS);
+      if (ev.tool && !unseen) actor.files.set(ev.tool, now);
+      if (!parallel) { this.moveTo(actor, ev.targets[0]!, now); this.pose(actor, ev.kind, now); }
       // Several files at once (a batched read, parallel calls): a copy goes to each.
-      for (const target of ev.targets.slice(1, 6)) {
+      const taken = new Set([actor.target, ...actor.clones.filter(clone => !clone.end).map(clone => clone.target)]);
+      const spread = (parallel ? ev.targets : ev.targets.slice(1)).filter(target => !taken.has(target));
+      for (const target of spread.slice(0, Math.max(0, MAX_COPIES - actor.clones.filter(clone => !clone.end).length))) {
         const from = origin ?? ev.targets[0]!;
         const a = this.rectOf(from), b = this.rectOf(target);
         const distance = a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
-        actor.clones.push({ target, ...(ev.tool ? { tool: ev.tool } : {}), start: now, move: { from, to: target, start: now + 80, dur: Math.max(380, Math.min(1100, 330 + distance * 0.32)) } });
+        actor.clones.push({ target, ...(ev.tool ? { tool: ev.tool } : {}), start: now, ...(unseen ? { end: now + COPY_DWELL } : {}), move: { from, to: target, start: now + 80, dur: Math.max(380, Math.min(1100, 330 + distance * 0.32)) } });
       }
       return;
     }
     if (ev.phase === 'completed' || ev.phase === 'failed') {
-      for (const clone of actor.clones) if (!clone.end && (!ev.tool || clone.tool === ev.tool)) clone.end = now;
+      // A copy stays a moment even for a fast call, so it is seen.
+      for (const clone of actor.clones) if (!clone.end && (!ev.tool || clone.tool === ev.tool)) clone.end = Math.max(now, clone.start + COPY_DWELL);
       if (ev.kind === 'test' || (ev.kind === 'command' && ev.phase === 'failed')) { actor.result = ev.phase === 'failed' ? 'fail' : 'ok'; actor.resultAt = now; }
       return;
     }

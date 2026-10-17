@@ -3,8 +3,9 @@
 // banner; Codex is a blue cloud with a terminal face (">_"); any other harness
 // is a grey robot, Bolt. Poses come with a prop (a magnifier for reading, a
 // notebook for editing…) or a bubble (thinking, writing the reply, asking).
-// The origin of a character is its feet; the session's color is a ring on
-// the ground. Drawing only: what the agents do is decided in crew.ts.
+// The origin of a character is its feet; the session's color is a small
+// square over its head (the same square marks the session in the Agents
+// list). Drawing only: what the agents do is decided in crew.ts.
 import { HARNESSES, harnessId, type HarnessId } from '../../src/harnesses/registry';
 import { CHARACTERS, type CharacterSprite } from './crew-characters';
 
@@ -12,10 +13,6 @@ export type Pose =
   | 'idle' | 'read' | 'edit' | 'search' | 'command' | 'test' | 'wait' | 'sit' | 'sleep' | 'wave'
   | 'think' | 'reply' | 'plan' | 'web';
 export type Provider = HarnessId | 'other';
-export const POSE_LABEL: Record<Pose, string> = {
-  idle: 'idle', read: 'reading', edit: 'editing', search: 'searching', command: 'running a command', test: 'running tests', wait: 'waiting for permission',
-  sit: 'resting', sleep: 'asleep', wave: 'done', think: 'thinking', reply: 'writing the reply', plan: 'planning', web: 'on the web',
-};
 export const PROVIDER = {
   ...Object.fromEntries(HARNESSES.map(item => [item.id, { label: item.label, short: item.short }])),
   other: { label: 'Other agent', short: '··' },
@@ -23,7 +20,7 @@ export const PROVIDER = {
 export function providerOf(provider: string): Provider { return harnessId(provider) ?? 'other'; }
 export interface Look {
   provider: Provider;
-  /** The session's color (ground ring, name). */
+  /** The session's color (the square over its head). */
   color: string;
   /** Height in CSS px. */
   size: number;
@@ -39,15 +36,19 @@ export interface Look {
   seed: number;
 }
 
-/** A soft shadow, and the session's ring on the ground while the character stands. */
-export function drawShadow(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, height: number, alpha = 1, color?: string) {
+/** A soft shadow on the ground (smaller while the character is in the air). */
+export function drawShadow(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, height: number, alpha = 1) {
   const k = Math.max(0.35, 1 - height / (size * 2.2));
-  ctx.save(); ctx.globalAlpha = 0.35 * alpha * k; ctx.fillStyle = '#000';
-  ctx.beginPath(); ctx.ellipse(x, y, size * 0.42 * k, size * 0.13 * k, 0, 0, Math.PI * 2); ctx.fill();
-  if (color && height < 4) {
-    ctx.globalAlpha = 0.9 * alpha; ctx.strokeStyle = color; ctx.lineWidth = Math.max(1.5, size / 24);
-    ctx.beginPath(); ctx.ellipse(x, y, size * 0.52, size * 0.16, 0, 0, Math.PI * 2); ctx.stroke();
-  }
+  ctx.save(); ctx.globalAlpha = 0.3 * alpha * k; ctx.fillStyle = '#000';
+  ctx.beginPath(); ctx.ellipse(x, y, size * 0.4 * k, size * 0.12 * k, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+/** The session's color: a small square, outlined so it reads on any block. */
+export function drawTag(ctx: CanvasRenderingContext2D, x: number, y: number, side: number, color: string, alpha: number) {
+  const s = Math.max(4, Math.round(side)), x0 = Math.round(x - s / 2), y0 = Math.round(y - s);
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.fillStyle = 'rgba(12, 14, 22, 0.75)'; ctx.fillRect(x0 - 1, y0 - 1, s + 2, s + 2);
+  ctx.fillStyle = color; ctx.fillRect(x0, y0, s, s);
   ctx.restore();
 }
 function blinking(time: number, seed: number): boolean { return (time + seed * 977) % 3900 < 130; }
@@ -230,6 +231,8 @@ export function drawPixel(ctx: CanvasRenderingContext2D, x: number, y: number, l
   }
   if (look.pose === 'wait') pixels(ctx, ASK_ROWS, { W: '#fffaf0', Q: '#1d1a26' }, x + (look.facing > 0 ? w * 0.25 : -w * 0.25 - 7 * p), y0 - 10 * p, p);
   ctx.restore();
+  // The session's square, over the middle of the head (bubbles float beside it).
+  drawTag(ctx, x, y0 + (rows.findIndex(row => /[^.]/.test(row)) - 1) * p, p * 2.5, look.color, look.alpha);
   ctx.save(); ctx.globalAlpha = look.alpha;
   if (look.pose === 'sleep') zees(ctx, x + 4 * p, y0, p / 2.5, look.time);
   if (look.result && look.resultAge !== undefined && look.resultAge < 2600) resultBadge(ctx, x - (w / 2 + 2 * p) * look.facing, y0 - p, 3 * p, look.result, look.resultAge);
@@ -237,20 +240,8 @@ export function drawPixel(ctx: CanvasRenderingContext2D, x: number, y: number, l
 }
 /** Sparkles where a copy pops in or out (parallel reads). */
 export function sparkle(ctx: CanvasRenderingContext2D, x: number, y: number, age: number, color: string) {
-  if (age > 500) return;
+  if (age < 0 || age > 500) return;
   ctx.save(); ctx.fillStyle = color; ctx.globalAlpha *= 1 - age / 500;
   for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2, r = 6 + age / 22; ctx.fillRect(Math.round(x + Math.cos(a) * r), Math.round(y - 14 + Math.sin(a) * r * 0.7), 3, 3); }
-  ctx.restore();
-}
-/** Where an agent does what is about no file: a mat on the ground outside the map, edged in its session's color. */
-export function drawYard(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, alpha: number, flat: boolean, dark: boolean) {
-  ctx.save(); ctx.globalAlpha = alpha;
-  const w = size * 1.25, h = flat ? size * 0.7 : size * 0.42;
-  const fill = dark ? 'rgba(70,74,96,0.55)' : 'rgba(150,140,120,0.35)', side = dark ? 'rgba(40,42,58,0.9)' : 'rgba(120,110,95,0.5)';
-  ctx.fillStyle = fill; ctx.strokeStyle = color; ctx.lineWidth = 1.4; ctx.setLineDash([4, 3]);
-  if (flat) { ctx.beginPath(); ctx.roundRect(x - w, y - h / 2, w * 2, h, h * 0.35); ctx.fill(); ctx.stroke(); ctx.restore(); return; }
-  ctx.beginPath(); ctx.moveTo(x - w, y); ctx.lineTo(x, y - h); ctx.lineTo(x + w, y); ctx.lineTo(x, y + h); ctx.closePath(); ctx.fill();
-  ctx.setLineDash([]); ctx.fillStyle = side; ctx.beginPath(); ctx.moveTo(x - w, y); ctx.lineTo(x, y + h); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + 3); ctx.lineTo(x, y + h + 3); ctx.lineTo(x - w, y + 3); ctx.closePath(); ctx.fill();
-  ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(x - w, y); ctx.lineTo(x, y - h); ctx.lineTo(x + w, y); ctx.lineTo(x, y + h); ctx.closePath(); ctx.stroke();
   ctx.restore();
 }

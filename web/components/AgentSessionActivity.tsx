@@ -1,6 +1,6 @@
 'use client';
 import { sessionKey } from '@engine/harnesses/registry';
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type { ActivityEvent, ActivityPath, ActivitySnapshot } from '@engine/activity/model';
 import { ACTIVITY_TRAIL_MS } from '@engine/activity/model';
 import { activeSessionFiles, agentColor } from '../lib/activity';
@@ -8,7 +8,7 @@ import { useAtlas, useStore } from './context';
 import { AgentDots } from './AgentDots';
 
 export function SessionActivity({ id }: { id: string }) {
-  const agents = useAtlas(state => state.agents), store = useStore();
+  const agents = useAtlas(state => state.agents);
   const sessions = agents.snapshot?.sessions.filter(session => sessionKey(session.provider, session.sessionId) === id && ['running', 'waiting'].includes(session.status) && agents.now - session.lastSeen <= 300_000) ?? [];
   const update = agents.live?.find(session => session.id === id)?.update;
   const files = activeSessionFiles(agents.snapshot, agents.now, id);
@@ -16,19 +16,19 @@ export function SessionActivity({ id }: { id: string }) {
   if (!sessions.length) return null;
   return <div className="session-current-activity">
     <div className="rf-loading session-live-update" role="status" aria-label="Current agent update"><AgentDots /><p>{update?.text ?? latest?.label ?? 'Waiting for a public progress update…'}</p></div>
-    {files.length > 0 && <div className="session-current-files" aria-label="Current agent files"><small>Observed files and folders · {files.length}</small>{files.slice(0, 6).map(entry => <SessionFile key={`${entry.event.paths[entry.index]!.scope}:${entry.event.paths[entry.index]!.path}`} event={entry.event} index={entry.index} />)}{files.length > 6 && <small>+{files.length - 6} more in session activity</small>}</div>}
-    <button className="button small" aria-pressed={sessions.some(session => session.actor === agents.focus)} onClick={() => store.setActivity({ focus: sessions.some(session => session.actor === agents.focus) ? undefined : sessions[0]!.actor })}>Focus map activity</button>
+    {files.length > 0 && <div className="session-current-files" aria-label="Current agent files"><small>Files and folders this turn · newest first</small>{files.slice(0, 6).map(entry => <SessionFile key={`${entry.event.paths[entry.index]!.scope}:${entry.event.paths[entry.index]!.path}`} event={entry.event} index={entry.index} here={agents.show && !!entry.event.paths[entry.index]!.id && !!agents.places?.[id]?.includes(entry.event.paths[entry.index]!.id!)} color={agentColor(id)} />)}{files.length > 6 && <small>+{files.length - 6} more in session activity</small>}</div>}
   </div>;
 }
 
-function SessionFile({ event, index }: { event: ActivityEvent; index: number }) {
+/** A file of the current turn: marked with the session's square while its character (or a copy) stands on it. */
+function SessionFile({ event, index, here, color }: { event: ActivityEvent; index: number; here: boolean; color: string }) {
   const store = useStore(), [pending, setPending] = useState(false), [error, setError] = useState('');
   const target = event.paths[index]!;
   const historical = useAtlas(state => state.meta?.snapshot.kind === 'commit' || state.timeline.preview !== undefined);
-  return <span className="session-file"><button className="button link mono" disabled={pending || historical || !target.id && target.scope !== 'file'} onClick={() => {
+  return <span className="session-file"><span className="session-file-row">{here ? <i className="agent-swatch" style={{ '--swatch': color } as CSSProperties} title="Its character is here on the map" /> : <i className="agent-swatch-space" />}<button className="button link mono" disabled={pending || historical || !target.id && target.scope !== 'file'} onClick={() => {
     setPending(true); setError('');
     void revealObservedPath(store, event, index).catch(error => setError(error instanceof Error ? error.message : String(error))).finally(() => setPending(false));
-  }}>{target.path}{target.scope === 'directory' && target.path !== '.' ? '/' : ''}</button>{error && <small className="error" role="alert">{error}</small>}</span>;
+  }}>{target.path}{target.scope === 'directory' && target.path !== '.' ? '/' : ''}</button></span>{target.scope === 'file' && target.exact === false && <small className="absent">Not indexed yet: shown on its folder</small>}{error && <small className="error" role="alert">{error}</small>}</span>;
 }
 
 async function revealObservedPath(store: ReturnType<typeof useStore>, event: ActivityEvent, index: number) {
