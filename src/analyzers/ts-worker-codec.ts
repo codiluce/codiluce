@@ -64,6 +64,23 @@ class Writer {
       block.set(value.subarray(offset, offset + size), this.used); this.used += size; this.bytes += size; offset += size;
     }
   }
+  text(value: string, latin: boolean): void {
+    const width = latin ? 1 : 2;
+    this.reserve(value.length * width);
+    for (let offset = 0; offset < value.length;) {
+      const block = this.room(), units = Math.min(STRING_UNITS, value.length - offset, Math.floor((block.length - this.used) / width));
+      if (!units) {
+        // A UTF-16 code unit may straddle an odd block boundary. Fill that
+        // byte and the next admitted block without padding or a temporary.
+        const unit = value.charCodeAt(offset++); this.byte(unit & 255); this.byte(unit >>> 8); continue;
+      }
+      // Keep the native string slice bounded while writing straight into the
+      // admitted output block. No per-string Buffer is allocated or copied.
+      const bytes = block.write(value.slice(offset, offset + units), this.used, units * width, latin ? 'latin1' : 'utf16le');
+      if (bytes !== units * width) throw Error('Incomplete compiler transport string');
+      this.used += bytes; this.bytes += bytes; offset += units;
+    }
+  }
   double(value: number): void { const bytes = Buffer.allocUnsafe(8); bytes.writeDoubleLE(value); this.raw(bytes); }
   finish(): Buffer {
     if (this.block) this.blocks.push(this.block.subarray(0, this.used));
@@ -91,15 +108,14 @@ export function encodeTypeScriptPayload(value: unknown, maxBytes: number, stats?
     writer.byte(latin ? Tag.String8 : Tag.String16); writer.uint(text.length);
     writer.reserve(text.length * (latin ? 1 : 2));
     budget.add('strings'); budget.add('stringUnits', text.length); strings.set(text, strings.size);
-    for (let offset = 0; offset < text.length; offset += STRING_UNITS) {
-      const bytes = Buffer.from(text.slice(offset, offset + STRING_UNITS), latin ? 'latin1' : 'utf16le');
-      if (stats) stats.peakStringTemporaryBytes = Math.max(stats.peakStringTemporaryBytes, bytes.length);
-      writer.raw(bytes);
-    }
+    writer.text(text, latin);
   };
   writer.raw(MAGIC);
   const stack: Task[] = [];
-  const push = (...tasks: Task[]): void => { budget.peak('tasks', stack.length + tasks.length); stack.push(...tasks); };
+  // Admit the whole ordered batch before scheduling it, without a rest array.
+  const push = (task: Task): void => { budget.peak('tasks', stack.length + 1); stack.push(task); };
+  const pushPair = (first: Task, second: Task): void => { budget.peak('tasks', stack.length + 2); stack.push(first, second); };
+  const pushTriple = (first: Task, second: Task, third: Task): void => { budget.peak('tasks', stack.length + 3); stack.push(first, second, third); };
   const properties = (value: object, array: boolean, depth: number): Task => {
     const keys = Object.keys(value); budget.peak('keysPerObject', keys.length); budget.add('properties', keys.length);
     return {kind: 'properties', value, keys, index: 0, array, depth};
@@ -113,17 +129,17 @@ export function encodeTypeScriptPayload(value: unknown, maxBytes: number, stats?
       if (task.array && /^(?:0|[1-9]\d*)$/.test(key) && Number(key) < 0xffffffff) { writer.byte(Tag.Index); writer.uint(Number(key)); }
       else string(key);
       // Snapshot enumerable own keys, then read each value once, as cloning does.
-      push(task, {kind: 'value', value: (task.value as Record<string, unknown>)[key], depth: task.depth + 1}); continue;
+      pushPair(task, {kind: 'value', value: (task.value as Record<string, unknown>)[key], depth: task.depth + 1}); continue;
     }
     if (task.kind === 'map') {
       const entry = task.iterator.next();
       if (entry.done) { writer.byte(Tag.End); continue; }
-      budget.add('properties', 2); push(task, {kind: 'value', value: entry.value[1], depth: task.depth + 1}, {kind: 'value', value: entry.value[0], depth: task.depth + 1}); continue;
+      budget.add('properties', 2); pushTriple(task, {kind: 'value', value: entry.value[1], depth: task.depth + 1}, {kind: 'value', value: entry.value[0], depth: task.depth + 1}); continue;
     }
     if (task.kind === 'set') {
       const entry = task.iterator.next();
       if (entry.done) { writer.byte(Tag.End); continue; }
-      budget.add('properties'); push(task, {kind: 'value', value: entry.value, depth: task.depth + 1}); continue;
+      budget.add('properties'); pushPair(task, {kind: 'value', value: entry.value, depth: task.depth + 1}); continue;
     }
     budget.peak('depth', task.depth); const item = task.value;
     if (item === undefined) { writer.byte(Tag.Undefined); continue; }
@@ -164,10 +180,13 @@ export function encodeTypeScriptPayload(value: unknown, maxBytes: number, stats?
       const index = Buffer.isBuffer(item) ? 0 : types.isInt8Array(item) ? 1 : types.isUint8Array(item) ? 2 : types.isUint8ClampedArray(item) ? 3 : types.isInt16Array(item) ? 4 : types.isUint16Array(item) ? 5 : types.isInt32Array(item) ? 6 : types.isUint32Array(item) ? 7 : types.isFloat32Array(item) ? 8 : types.isFloat64Array(item) ? 9 : types.isBigInt64Array(item) ? 10 : types.isBigUint64Array(item) ? 11 : 12;
       budget.add('binaryBytes', item.byteLength); writer.byte(Tag.View); writer.byte(index); writer.uint(item.byteLength); writer.raw(new Uint8Array(item.buffer, item.byteOffset, item.byteLength));
     }
-    else if (types.isNumberObject(item)) { writer.byte(Tag.BoxedNumber); writer.double(Number.prototype.valueOf.call(item)); }
-    else if (types.isStringObject(item)) { writer.byte(Tag.BoxedString); string(String.prototype.valueOf.call(item)); }
-    else if (types.isBooleanObject(item)) { writer.byte(Tag.BoxedBoolean); writer.byte(Boolean.prototype.valueOf.call(item) ? 1 : 0); }
-    else if (types.isBigIntObject(item)) { writer.byte(Tag.BoxedBigInt); push({kind: 'value', value: BigInt.prototype.valueOf.call(item), depth: task.depth + 1}); }
+    else if (types.isBoxedPrimitive(item)) {
+      if (types.isNumberObject(item)) { writer.byte(Tag.BoxedNumber); writer.double(Number.prototype.valueOf.call(item)); }
+      else if (types.isStringObject(item)) { writer.byte(Tag.BoxedString); string(String.prototype.valueOf.call(item)); }
+      else if (types.isBooleanObject(item)) { writer.byte(Tag.BoxedBoolean); writer.byte(Boolean.prototype.valueOf.call(item) ? 1 : 0); }
+      else if (types.isBigIntObject(item)) { writer.byte(Tag.BoxedBigInt); push({kind: 'value', value: BigInt.prototype.valueOf.call(item), depth: task.depth + 1}); }
+      else throw Error('Unsupported compiler transport object');
+    }
     else if (types.isNativeError(item)) {
       writer.byte(Tag.Error); const error = item as Error & {cause?: unknown};
       string(['EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError'].includes(error.name) ? error.name : 'Error');
@@ -175,7 +194,7 @@ export function encodeTypeScriptPayload(value: unknown, maxBytes: number, stats?
       const cause = Object.hasOwn(error, 'cause'); writer.byte(cause ? 1 : 0); if (cause) push({kind: 'value', value: error.cause, depth: task.depth + 1});
     }
     else {
-      if (types.isBoxedPrimitive(item) || types.isExternal(item)) throw Error('Unsupported compiler transport object');
+      if (types.isExternal(item)) throw Error('Unsupported compiler transport object');
       writer.byte(Tag.Object); push(properties(item, false, task.depth));
     }
   }
@@ -187,15 +206,16 @@ class Reader {
   offset = 0;
   constructor(readonly bytes: Buffer) {}
   raw(size: number): Buffer { if (!Number.isSafeInteger(size) || size < 0 || size > this.bytes.length - this.offset) throw Error('Truncated compiler transport'); const start = this.offset; this.offset += size; return this.bytes.subarray(start, this.offset); }
-  byte(): number { return this.raw(1)[0]!; }
+  byte(): number { if (this.offset >= this.bytes.length) throw Error('Truncated compiler transport'); return this.bytes[this.offset++]!; }
   uint(): number {
     let result = 0, scale = 1;
     for (let i = 0; i < 8; i++) { const byte = this.byte(); result += (byte & 127) * scale; if (!Number.isSafeInteger(result)) break; if (byte < 128) { if (i && !byte) break; return result; } scale *= 128; }
     throw Error('Invalid compiler transport integer');
   }
-  double(): number { return this.raw(8).readDoubleLE(); }
+  double(): number { if (8 > this.bytes.length - this.offset) throw Error('Truncated compiler transport'); const value = this.bytes.readDoubleLE(this.offset); this.offset += 8; return value; }
+  text(size: number, encoding: 'latin1' | 'utf16le'): string { if (!Number.isSafeInteger(size) || size < 0 || size > this.bytes.length - this.offset) throw Error('Truncated compiler transport'); const start = this.offset; this.offset += size; return this.bytes.toString(encoding, start, this.offset); }
 }
-type Frame = ({kind: 'object' | 'array'; value: Record<string, unknown>; length?: number; keys: Set<string>} | {kind: 'map'; value: Map<unknown, unknown>} | {kind: 'set'; value: Set<unknown>}) & {depth: number};
+type Frame = ({kind: 'object'; value: Record<string, unknown>; keys: number} | {kind: 'array'; value: Record<string, unknown>; length: number; keys: Set<string>} | {kind: 'map'; value: Map<unknown, unknown>} | {kind: 'set'; value: Set<unknown>}) & {depth: number};
 
 /** Decode only a complete bounded frame; the caller publishes nothing until
  * its existing protocol, graph and actual worker-exit checks also succeed. */
@@ -210,14 +230,20 @@ export function decodeTypeScriptPayload(bytes: Buffer, maxBytes: number, stats?:
     if (tag === Tag.StringRef) { const known = strings[reader.uint()]; if (known === undefined) throw Error('Invalid compiler string reference'); return known; }
     if (tag !== Tag.String8 && tag !== Tag.String16) throw Error('Invalid compiler property or string');
     const size = reader.uint(); budget.add('strings'); budget.add('stringUnits', size);
-    const text = reader.raw(size * (tag === Tag.String8 ? 1 : 2)).toString(tag === Tag.String8 ? 'latin1' : 'utf16le'); strings.push(text); return text;
+    const text = reader.text(size * (tag === Tag.String8 ? 1 : 2), tag === Tag.String8 ? 'latin1' : 'utf16le'); strings.push(text); return text;
   };
   const frame = (current: Frame): void => {
-    const tag = reader.byte(); if (tag === Tag.End) return;
+    // Restore inheritance only after every original own field is complete.
+    const tag = reader.byte(); if (tag === Tag.End) {if (current.kind === 'object') Object.setPrototypeOf(current.value, Object.prototype); return;}
     push(() => frame(current));
-    if (current.kind === 'object' || current.kind === 'array') {
-      const key = tag === Tag.Index && current.kind === 'array' ? String(reader.uint()) : string(tag);
-      if (current.keys.has(key) || current.kind === 'array' && (key === 'length' || /^(?:0|[1-9]\d*)$/.test(key) && Number(key) < 0xffffffff && Number(key) >= current.length!)) throw Error('Invalid or duplicate compiler property');
+    if (current.kind === 'object') {
+      const key = string(tag);
+      if (Object.hasOwn(current.value, key)) throw Error('Invalid or duplicate compiler property');
+      budget.peak('keysPerObject', current.keys + 1); budget.add('properties'); current.keys++;
+      push(() => value(item => {current.value[key] = item;}, current.depth + 1));
+    } else if (current.kind === 'array') {
+      const key = tag === Tag.Index ? String(reader.uint()) : string(tag);
+      if (current.keys.has(key) || key === 'length' || /^(?:0|[1-9]\d*)$/.test(key) && Number(key) < 0xffffffff && Number(key) >= current.length) throw Error('Invalid or duplicate compiler property');
       budget.peak('keysPerObject', current.keys.size + 1); budget.add('properties');
       current.keys.add(key); push(() => value(item => {Object.defineProperty(current.value, key, {value: item, writable: true, enumerable: true, configurable: true});}, current.depth + 1));
     } else if (current.kind === 'set') { budget.add('properties'); reader.offset--; push(() => value(item => {current.value.add(item);}, current.depth + 1)); }
@@ -238,7 +264,8 @@ export function decodeTypeScriptPayload(bytes: Buffer, maxBytes: number, stats?:
     else if (tag === Tag.BigInt) { const sign = reader.byte(); if (sign > 1) throw Error('Invalid compiler integer sign'); const size = reader.uint(); budget.add('binaryBytes', size); const hex = reader.raw(size).toString('hex'); item = (sign ? -1n : 1n) * BigInt('0x' + (hex || '00')); }
     else {
       budget.add('objects');
-      if (tag === Tag.Object) { item = {}; container = {kind: 'object', value: item as Record<string, unknown>, keys: new Set(), depth}; }
+      // Keep ordinary-object writes inert to inherited setters/read-only fields.
+      if (tag === Tag.Object) { item = Object.setPrototypeOf({}, null); container = {kind: 'object', value: item as Record<string, unknown>, keys: 0, depth}; }
       else if (tag === Tag.Array) { const length = reader.uint(); if (length > 0xffffffff) throw Error('Invalid compiler array length'); budget.add('arraySlots', length); item = new Array(length); container = {kind: 'array', value: item as unknown as Record<string, unknown>, length, keys: new Set(), depth}; }
       else if (tag === Tag.Map) { item = new Map(); container = {kind: 'map', value: item as Map<unknown, unknown>, depth}; }
       else if (tag === Tag.Set) { item = new Set(); container = {kind: 'set', value: item as Set<unknown>, depth}; }

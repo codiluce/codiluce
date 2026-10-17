@@ -98,6 +98,24 @@ var Writer = class {
       offset += size2;
     }
   }
+  text(value, latin) {
+    const width = latin ? 1 : 2;
+    this.reserve(value.length * width);
+    for (let offset = 0; offset < value.length; ) {
+      const block = this.room(), units = Math.min(STRING_UNITS, value.length - offset, Math.floor((block.length - this.used) / width));
+      if (!units) {
+        const unit = value.charCodeAt(offset++);
+        this.byte(unit & 255);
+        this.byte(unit >>> 8);
+        continue;
+      }
+      const bytes = block.write(value.slice(offset, offset + units), this.used, units * width, latin ? "latin1" : "utf16le");
+      if (bytes !== units * width) throw Error("Incomplete compiler transport string");
+      this.used += bytes;
+      this.bytes += bytes;
+      offset += units;
+    }
+  }
   double(value) {
     const bytes = Buffer.allocUnsafe(8);
     bytes.writeDoubleLE(value);
@@ -135,17 +153,21 @@ function encodeTypeScriptPayload(value, maxBytes, stats, policy) {
     budget.add("strings");
     budget.add("stringUnits", text.length);
     strings.set(text, strings.size);
-    for (let offset = 0; offset < text.length; offset += STRING_UNITS) {
-      const bytes = Buffer.from(text.slice(offset, offset + STRING_UNITS), latin ? "latin1" : "utf16le");
-      if (stats) stats.peakStringTemporaryBytes = Math.max(stats.peakStringTemporaryBytes, bytes.length);
-      writer.raw(bytes);
-    }
+    writer.text(text, latin);
   };
   writer.raw(MAGIC);
   const stack = [];
-  const push = (...tasks) => {
-    budget.peak("tasks", stack.length + tasks.length);
-    stack.push(...tasks);
+  const push = (task) => {
+    budget.peak("tasks", stack.length + 1);
+    stack.push(task);
+  };
+  const pushPair = (first, second) => {
+    budget.peak("tasks", stack.length + 2);
+    stack.push(first, second);
+  };
+  const pushTriple = (first, second, third) => {
+    budget.peak("tasks", stack.length + 3);
+    stack.push(first, second, third);
   };
   const properties = (value2, array, depth) => {
     const keys = Object.keys(value2);
@@ -166,7 +188,7 @@ function encodeTypeScriptPayload(value, maxBytes, stats, policy) {
         writer.byte(14 /* Index */);
         writer.uint(Number(key));
       } else string(key);
-      push(task, { kind: "value", value: task.value[key], depth: task.depth + 1 });
+      pushPair(task, { kind: "value", value: task.value[key], depth: task.depth + 1 });
       continue;
     }
     if (task.kind === "map") {
@@ -176,7 +198,7 @@ function encodeTypeScriptPayload(value, maxBytes, stats, policy) {
         continue;
       }
       budget.add("properties", 2);
-      push(task, { kind: "value", value: entry.value[1], depth: task.depth + 1 }, { kind: "value", value: entry.value[0], depth: task.depth + 1 });
+      pushTriple(task, { kind: "value", value: entry.value[1], depth: task.depth + 1 }, { kind: "value", value: entry.value[0], depth: task.depth + 1 });
       continue;
     }
     if (task.kind === "set") {
@@ -186,7 +208,7 @@ function encodeTypeScriptPayload(value, maxBytes, stats, policy) {
         continue;
       }
       budget.add("properties");
-      push(task, { kind: "value", value: entry.value, depth: task.depth + 1 });
+      pushPair(task, { kind: "value", value: entry.value, depth: task.depth + 1 });
       continue;
     }
     budget.peak("depth", task.depth);
@@ -274,18 +296,20 @@ function encodeTypeScriptPayload(value, maxBytes, stats, policy) {
       writer.byte(index);
       writer.uint(item.byteLength);
       writer.raw(new Uint8Array(item.buffer, item.byteOffset, item.byteLength));
-    } else if (types.isNumberObject(item)) {
-      writer.byte(22 /* BoxedNumber */);
-      writer.double(Number.prototype.valueOf.call(item));
-    } else if (types.isStringObject(item)) {
-      writer.byte(23 /* BoxedString */);
-      string(String.prototype.valueOf.call(item));
-    } else if (types.isBooleanObject(item)) {
-      writer.byte(24 /* BoxedBoolean */);
-      writer.byte(Boolean.prototype.valueOf.call(item) ? 1 : 0);
-    } else if (types.isBigIntObject(item)) {
-      writer.byte(25 /* BoxedBigInt */);
-      push({ kind: "value", value: BigInt.prototype.valueOf.call(item), depth: task.depth + 1 });
+    } else if (types.isBoxedPrimitive(item)) {
+      if (types.isNumberObject(item)) {
+        writer.byte(22 /* BoxedNumber */);
+        writer.double(Number.prototype.valueOf.call(item));
+      } else if (types.isStringObject(item)) {
+        writer.byte(23 /* BoxedString */);
+        string(String.prototype.valueOf.call(item));
+      } else if (types.isBooleanObject(item)) {
+        writer.byte(24 /* BoxedBoolean */);
+        writer.byte(Boolean.prototype.valueOf.call(item) ? 1 : 0);
+      } else if (types.isBigIntObject(item)) {
+        writer.byte(25 /* BoxedBigInt */);
+        push({ kind: "value", value: BigInt.prototype.valueOf.call(item), depth: task.depth + 1 });
+      } else throw Error("Unsupported compiler transport object");
     } else if (types.isNativeError(item)) {
       writer.byte(26 /* Error */);
       const error = item;
@@ -298,7 +322,7 @@ function encodeTypeScriptPayload(value, maxBytes, stats, policy) {
       writer.byte(cause ? 1 : 0);
       if (cause) push({ kind: "value", value: error.cause, depth: task.depth + 1 });
     } else {
-      if (types.isBoxedPrimitive(item) || types.isExternal(item)) throw Error("Unsupported compiler transport object");
+      if (types.isExternal(item)) throw Error("Unsupported compiler transport object");
       writer.byte(12 /* Object */);
       push(properties(item, false, task.depth));
     }
@@ -322,7 +346,8 @@ var Reader = class {
     return this.bytes.subarray(start, this.offset);
   }
   byte() {
-    return this.raw(1)[0];
+    if (this.offset >= this.bytes.length) throw Error("Truncated compiler transport");
+    return this.bytes[this.offset++];
   }
   uint() {
     let result = 0, scale = 1;
@@ -339,7 +364,16 @@ var Reader = class {
     throw Error("Invalid compiler transport integer");
   }
   double() {
-    return this.raw(8).readDoubleLE();
+    if (8 > this.bytes.length - this.offset) throw Error("Truncated compiler transport");
+    const value = this.bytes.readDoubleLE(this.offset);
+    this.offset += 8;
+    return value;
+  }
+  text(size2, encoding) {
+    if (!Number.isSafeInteger(size2) || size2 < 0 || size2 > this.bytes.length - this.offset) throw Error("Truncated compiler transport");
+    const start = this.offset;
+    this.offset += size2;
+    return this.bytes.toString(encoding, start, this.offset);
   }
 };
 function decodeTypeScriptPayload(bytes, maxBytes, stats, policy) {
@@ -364,17 +398,29 @@ function decodeTypeScriptPayload(bytes, maxBytes, stats, policy) {
     const size2 = reader.uint();
     budget.add("strings");
     budget.add("stringUnits", size2);
-    const text = reader.raw(size2 * (tag === 8 /* String8 */ ? 1 : 2)).toString(tag === 8 /* String8 */ ? "latin1" : "utf16le");
+    const text = reader.text(size2 * (tag === 8 /* String8 */ ? 1 : 2), tag === 8 /* String8 */ ? "latin1" : "utf16le");
     strings.push(text);
     return text;
   };
   const frame = (current) => {
     const tag = reader.byte();
-    if (tag === 0 /* End */) return;
+    if (tag === 0 /* End */) {
+      if (current.kind === "object") Object.setPrototypeOf(current.value, Object.prototype);
+      return;
+    }
     push(() => frame(current));
-    if (current.kind === "object" || current.kind === "array") {
-      const key = tag === 14 /* Index */ && current.kind === "array" ? String(reader.uint()) : string(tag);
-      if (current.keys.has(key) || current.kind === "array" && (key === "length" || /^(?:0|[1-9]\d*)$/.test(key) && Number(key) < 4294967295 && Number(key) >= current.length)) throw Error("Invalid or duplicate compiler property");
+    if (current.kind === "object") {
+      const key = string(tag);
+      if (Object.hasOwn(current.value, key)) throw Error("Invalid or duplicate compiler property");
+      budget.peak("keysPerObject", current.keys + 1);
+      budget.add("properties");
+      current.keys++;
+      push(() => value((item) => {
+        current.value[key] = item;
+      }, current.depth + 1));
+    } else if (current.kind === "array") {
+      const key = tag === 14 /* Index */ ? String(reader.uint()) : string(tag);
+      if (current.keys.has(key) || key === "length" || /^(?:0|[1-9]\d*)$/.test(key) && Number(key) < 4294967295 && Number(key) >= current.length) throw Error("Invalid or duplicate compiler property");
       budget.peak("keysPerObject", current.keys.size + 1);
       budget.add("properties");
       current.keys.add(key);
@@ -425,8 +471,8 @@ function decodeTypeScriptPayload(bytes, maxBytes, stats, policy) {
     } else {
       budget.add("objects");
       if (tag === 12 /* Object */) {
-        item = {};
-        container = { kind: "object", value: item, keys: /* @__PURE__ */ new Set(), depth };
+        item = Object.setPrototypeOf({}, null);
+        container = { kind: "object", value: item, keys: 0, depth };
       } else if (tag === 13 /* Array */) {
         const length = reader.uint();
         if (length > 4294967295) throw Error("Invalid compiler array length");

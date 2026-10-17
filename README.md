@@ -41,6 +41,16 @@ Codiluce keeps understanding in step with the code. It reads your repository and
 search and replay, where every link between pages, requests, functions and tables comes with the evidence behind it.
 Your agents explain the code on that map, and you see what each of them touches while it works.
 
+## Multilingual compatibility milestone
+
+The initial multilingual compatibility milestone is closed with documented limitations on this branch.
+The [roadmap closure](docs/language-framework-compatibility.html#milestone-closure) records the delivered
+language/import/framework subsets, existing correctness evidence and deferred follow-ups. The completed
+Flask comparison shows a **15.1% slowdown**, above the unchanged **10% target**; production performance,
+complete memory budgets, broader syntax/version coverage and native Windows/macOS qualification remain
+unqualified. Benchmarking and further optimization have stopped. See the
+[capability/version matrix](docs/analysis-capabilities.html) for the supported static subsets.
+
 ## Quick start
 
 Run it inside the repository you want to see:

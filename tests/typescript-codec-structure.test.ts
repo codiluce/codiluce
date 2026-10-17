@@ -37,6 +37,19 @@ test('depth, pending tasks and per-object property keys have independently enfor
     }
   }
 });
+test('ordered encoder task batches retain exact one, two and three task boundaries', () => {
+  const cases: Array<[unknown, number]> = [[undefined, 1], [{original: 1}, 2], [new Set([1]), 2], [new Map([[1, 2]]), 3]];
+  for (const [input, peakTasks] of cases) {
+    const stats = {} as TypeScriptCodecStats, frame = encode(input, bytes, stats, {tasks: peakTasks});
+    assert.equal(stats.peakTasks, peakTasks); assert.deepEqual(decode(frame, bytes), input);
+    if (peakTasks > 1) {
+      const rejected = {} as TypeScriptCodecStats;
+      assert.throws(() => encode(input, bytes, rejected, {tasks: peakTasks - 1}), (error: unknown) => error instanceof TypeScriptCodecStructureLimitError && error.resource === 'tasks' && error.selectedLimit === peakTasks - 1);
+      assert.equal(rejected.concatenatedBytes, 0);
+    }
+  }
+  assert.deepEqual(encode(new Map([[1, 2]]), bytes), Buffer.from([0x43, 0x44, 0x54, 1, 15, 5, 1, 5, 2, 0]), 'Map keys must precede values in the original wire order');
+});
 test('a tiny oversized sparse-array frame is rejected before invoking the decoder Array constructor', () => {
   const frame = sparseFrame(limits.arraySlots + 1), Original = globalThis.Array; let allocations = 0;
   globalThis.Array = new Proxy(Original, {construct() {allocations++; throw Error('Unadmitted allocation');}});
