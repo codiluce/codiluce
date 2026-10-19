@@ -10,6 +10,8 @@
 - [Harness connection guide](../agents/harnesses.md): implementation, twelve adapters, runtime profiles,
   configuration, history imports and validation coverage.
 - [Agents: observed activity on the map](agents.md): current Codex and Claude Code activity and session behavior.
+- [Onboarding tour](onboarding-tour.md): the first-visit tour on the user's own repository (one thread through six
+  stops, then chapters), taken again from Help. Designed 2026-10-19, not built.
 
 ## UI concept, 2026-10-07
 
