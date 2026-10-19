@@ -89,6 +89,15 @@ export default function ExplanationsDocs() {
         explanations.
       </p>
 
+      <h2 id="templates" className="anchor">Start from a template</h2>
+      <p>
+        Open <strong>Templates</strong> in Explain, or type <code>/</code> in an empty question. Search common questions
+        about architecture, features, tests and more, or browse by category. Choose a template, fill its{' '}
+        <code>[placeholders]</code> (Tab moves between them), then ask in the map or copy the question for your agent.
+        Clients that support MCP prompts also expose these templates as <code>explain-*</code> prompts with arguments
+        for their placeholders.
+      </p>
+
       <h2 id="links" className="anchor">Links</h2>
       <p>
         Explanations are Markdown. Links name code by repository-relative paths, which is what models already know, and

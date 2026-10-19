@@ -1,7 +1,8 @@
 # PROTOTYPE (throwaway): visual directions
 
 Three prototypes for [docs/design/visual-directions.md](../../../../docs/design/visual-directions.md), on one route.
-Throwaway code: no tests, minimal error handling, shortcuts into the app renderer's internals. Do not merge into main.
+Archived experiments: minimal error handling and shortcuts into the app renderer's internals.
+The route is available in development only; production builds return a not-found page.
 
 ```sh
 npm run prototype:visual        # next dev on :4390

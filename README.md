@@ -103,6 +103,8 @@ source), so the agent starts from what the code provably does instead of guessin
 - **Never silently stale.** Each explanation is pinned to the commit it was written against and says when the code it
   links changes.
 - **No agent at hand?** With an Anthropic or OpenAI key, ask in the column itself, with files and folders attached by `@`.
+- **Start from a template.** Open **Templates** in Explain, or type `/` in an empty question. Search common questions,
+  fill their placeholders, then ask in the map or copy the question for your agent. MCP clients also expose them as prompts.
 
 ![An explanation of how BookStack saves a page, in the Explain column: its links name the controller, repository and revision code, which is lit on the map while the rest of the repository recedes.](site/public/shots/explanations.webp)
 
@@ -169,6 +171,8 @@ is available. Rebuilding the code index does not erase imported history.
   diffs and author activity. Generate a full architecture snapshot for a selected commit when needed, then compare
   cached snapshots. Bulk snapshot generation is optional.
 - **See the blast radius.** Pick anything, or your uncommitted changes, and see what depends on it, hop by hop.
+- **Inspect dependencies.** Turn on **Dependencies** to see what a selection uses and what uses it, with direction and
+  relationship filters, arrows on the map and the evidence behind each link.
 - **Review pull requests on the map.** Open and merged pull requests, and branches not merged yet, light the files they
   change, with their commits, people and blast radius.
 - **Color the map by what matters.** Flow coverage, who changed the code most, complexity, recent changes or hotspots.
@@ -252,7 +256,7 @@ How far Codiluce follows the code depends on the stack:
 - **Map:** Angular, Remix, Fastify, Symfony, Quarkus, Blazor and every other language and framework are detected and
   mapped with their files, lines and Git metrics.
 
-Everything above ships in the npm release (0.3.0). Support deepens with every release: see how far each framework
+Everything above ships in the npm release (0.4.0). Support deepens with every release: see how far each framework
 goes, and what stays a visible gap, in [Languages & frameworks](https://codiluce.com/docs/stacks/). Missing your
 stack? [Open an issue](https://github.com/codiluce/codiluce/issues) with a public repository that shows it.
 
