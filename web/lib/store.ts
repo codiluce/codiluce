@@ -114,6 +114,15 @@ export interface ImpactState {
   data?: ImpactResult; items: ImpactItem[]; error?: string;
 }
 /** What the middle of the screen shows: the map, or a tool with the map as a small overview in a corner. */
+/**
+ * A saved session playing again on the map: `playing`, `speed` and `seek` (a new `n` goes to `step`) drive it; `step`
+ * (of `total`), `text` (what the agent does in it) and `done` come back from the map.
+ */
+export interface ReplayState {
+  id: string; token: number; data: import('@engine/conversations/model').ConversationReplay;
+  playing: boolean; speed: number; seek?: { step: number; n: number };
+  step: number; total: number; text: string; failed: boolean; done: boolean;
+}
 export type CenterView = 'map' | 'flow' | 'impact' | 'files' | 'conversations' | 'focus' | 'tour';
 /** A view of the flow open in the middle: the map, its lanes (or layers), its outline. */
 export type FlowPane = 'map' | 'diagram' | 'outline';
@@ -281,7 +290,8 @@ export interface ExplainState {
   detail?: { id: string; status: Status; data?: ExplanationDetail; error?: string };
   lens: boolean;
   hover?: ResolvedLink;
-  draft: { text: string; context: ContextChip[]; model?: string };
+  /** The question being written; `template`: the Explain template it started from, whose [placeholders] are still to fill. */
+  draft: { text: string; context: ContextChip[]; model?: string; template?: string };
   asking?: { status: 'streaming' | 'error'; explanationId?: string; refresh?: boolean; question: string; context: ContextChip[]; text: string; tools: string[]; model?: string; note?: string; error?: string };
   /** Explanations an agent saved while the column was closed. */
   unseen: string[];
@@ -351,10 +361,10 @@ export interface AtlasState {
   code?: CodeState;
   /**
    * `show`: the agents at work as characters on the map; `hover`: the session the pointer is on in the list (the
-   * others' characters recede); `replay`: a saved session playing again on the map; `places`: where each session's
+   * others' characters recede); `replay`: a saved session playing again on the map, step by step; `places`: where each session's
    * characters stand now (map IDs by session key, from the map).
    */
-  agents: { connected: boolean; show: boolean; now: number; snapshot?: ActivitySnapshot; live?: import('@engine/conversations/model').LiveSession[]; hover?: string; replay?: { id: string; token: number; data: import('@engine/conversations/model').ConversationReplay }; places?: Record<string, string[]> };
+  agents: { connected: boolean; show: boolean; now: number; snapshot?: ActivitySnapshot; live?: import('@engine/conversations/model').LiveSession[]; hover?: string; replay?: ReplayState; places?: Record<string, string[]> };
   explain: ExplainState;
 }
 export interface MapNavigator {
@@ -1261,13 +1271,41 @@ export class AtlasStore {
   /** Play a saved session again on the map, sped up, with the map in the middle. */
   replaySession(id: string, data: import('@engine/conversations/model').ConversationReplay): void {
     this.showAgentsOnMap(true);
-    this.setActivity({ replay: { id, token: ++this.replays, data } });
+    this.setActivity({ replay: { id, token: ++this.replays, data, playing: true, speed: this.replaySpeed, step: 0, total: 0, text: '', failed: false, done: false } });
     if (this.state.journal.expanded) this.expandAgents(false);
     this.setCenter('map');
   }
-  /** The replay is over (`token`: only if it is still that one), or stopped. */
+  /** The replay is closed (`token`: only if it is still that one). */
   stopReplay(token?: number): void { if (this.state.agents.replay && (token === undefined || this.state.agents.replay.token === token)) this.setActivity({ replay: undefined }); }
+  /** Play or pause the replay; once it is over, playing starts it again. */
+  playReplay(playing: boolean): void {
+    const replay = this.state.agents.replay;
+    if (!replay) return;
+    if (playing && replay.done) this.setActivity({ replay: { ...replay, playing, done: false, step: 0, seek: { step: 0, n: ++this.seeks } } });
+    else if (playing !== replay.playing) this.setActivity({ replay: { ...replay, playing } });
+  }
+  /** Go to a step of the replay: the map shows its hop, and stays paused if it was. */
+  seekReplay(step: number): void {
+    const replay = this.state.agents.replay;
+    if (!replay) return;
+    const to = Math.max(0, Math.min(Math.max(0, replay.total - 1), step));
+    this.setActivity({ replay: { ...replay, step: to, done: false, seek: { step: to, n: ++this.seeks } } });
+  }
+  /** How fast replays play (1: a visit to a file lasts about a second); kept for the next replay. */
+  setReplaySpeed(speed: number): void {
+    this.replaySpeed = speed;
+    const replay = this.state.agents.replay;
+    if (replay && replay.speed !== speed) this.setActivity({ replay: { ...replay, speed } });
+  }
+  /** Where the replay is, from the map: its step and what the agent does in it. Over, it pauses. */
+  replayProgress(progress: Pick<ReplayState, 'token' | 'step' | 'total' | 'text' | 'failed' | 'done'>): void {
+    const replay = this.state.agents.replay;
+    if (!replay || replay.token !== progress.token) return;
+    this.setActivity({ replay: { ...replay, ...progress, ...(progress.done ? { playing: false } : {}) } });
+  }
   private replays = 0;
+  private seeks = 0;
+  private replaySpeed = 1;
   /** Show what depends on an entity (the selection by default) or on the uncommitted changes (`WORKING_CHANGES`) in the middle; it stays on that origin. */
   async showImpact(id = this.state.selection?.id, depth = this.state.impact.depth): Promise<void> {
     if (!id) return;
@@ -2097,7 +2135,7 @@ export class AtlasStore {
   /** Start a new question about something (the inspector, a flow, a commit): the composer gets the question and the code it is about. */
   async askAbout(target: PromptTarget, label?: string): Promise<void> {
     const chip = target.ref ? { href: target.kind === 'commit' ? `commit:${target.ref}` : target.kind === 'pr' ? `pr:${target.ref}` : target.ref, label: label ?? target.label ?? target.ref } : undefined;
-    this.setExplain(explain => ({ detail: undefined, hover: undefined, draft: { ...explain.draft, text: chatQuestion(target, { plain: true }), context: chip ? [chip] : [] } }));
+    this.setExplain(explain => ({ detail: undefined, hover: undefined, draft: { ...explain.draft, text: chatQuestion(target, { plain: true }), context: chip ? [chip] : [], template: target.template?.id } }));
     await this.openExplanations();
   }
   /** Ask the chat: the draft (with its context) as a new explanation, or as a follow-up to the one open. */
@@ -2111,7 +2149,7 @@ export class AtlasStore {
     if (options.refresh && !explanationId) return;
     const context = options.refresh ? [] : explain.draft.context;
     const signal = this.abortable('ask');
-    this.setExplain({ asking: { status: 'streaming', ...(explanationId ? { explanationId } : {}), ...(options.refresh ? { refresh: true } : {}), question, context, text: '', tools: [], ...(explain.draft.model ? { model: explain.draft.model } : {}) }, ...(options.refresh ? {} : { draft: { ...explain.draft, text: '', context: [] } }) });
+    this.setExplain({ asking: { status: 'streaming', ...(explanationId ? { explanationId } : {}), ...(options.refresh ? { refresh: true } : {}), question, context, text: '', tools: [], ...(explain.draft.model ? { model: explain.draft.model } : {}) }, ...(options.refresh ? {} : { draft: { ...explain.draft, text: '', context: [], template: undefined } }) });
     const update = (patch: Partial<NonNullable<ExplainState['asking']>> | ((asking: NonNullable<ExplainState['asking']>) => Partial<NonNullable<ExplainState['asking']>>)) => this.setExplain(state => state.asking ? { asking: { ...state.asking, ...(typeof patch === 'function' ? patch(state.asking) : patch) } } : {});
     let saved: ExplanationDetail | undefined;
     try {

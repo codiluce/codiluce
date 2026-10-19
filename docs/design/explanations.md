@@ -112,6 +112,24 @@ question and replaces the answers.
   `⋯`: *What would break if I changed it?* (impact), and, for a file no flow reaches, *Why does no flow reach it?*
   Each one opens the question in the composer, or *Copy prompt* copies it for an agent, with the command that
   connects Codiluce if it is not connected yet. *+ Add to question* attaches the selection.
+- **Templates.** The questions people ask most, with `[placeholders]` to fill, in four groups: *Understand* (the
+  codebase, getting started on an area, a file or folder, how a feature works, where something happens, a table),
+  *Dependencies* (of a part, third-party packages, architecture and boundaries, how two parts connect), *Change*
+  (what would break, planning a change, recent changes, tests) and *Risks* (security review, possible bugs, tracking
+  down a bug, unused code, performance). They live in `src/explanations/templates.ts` and show in three places:
+  - the composer: while the box is empty, *Templates* is its primary button and four templates sit above it as
+    tiles. *Templates* (or `/` typed in the empty box) opens a dialog with a search, the four categories and a card
+    per template: an isometric icon drawn like the map (a plate, blocks, the subject in the accent color, a sign
+    such as a shield or a bug; `web/components/TemplateIcon.tsx`), what it answers, and its placeholders. Choosing
+    one fills the box with its first placeholder selected, so typing replaces it; Tab and Shift+Tab move between
+    them, `@` fills one with code from the index (its name in the sentence, its link attached), and *Ask* waits
+    until none is left. One attached chip fills the code placeholder. *Copy for agent* sends the template's own
+    tool hints.
+  - the inspector's `⋯` (with their icons), for the templates that suit the selection (a file, folder, symbol, flow or table), risks
+    first: *Review it for security issues*, *Look for bugs in it*, *How well is it tested?*… The selection fills
+    the code placeholder.
+  - MCP prompts (`explain-security`, `explain-bugs`, `explain-debug`…), one required argument per placeholder (`path`
+    for the code one), next to the six prompts above; the three those already ask are not listed twice.
 
 ## The chat
 

@@ -10,12 +10,15 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { agentLabel, type AgentActivity, type ExplanationDetail, type ExplanationSummary, type ResolvedLink } from '@engine/explanations/model';
 import { hrefForNode } from '@engine/explanations/links';
+import { placeholdersIn, templateById, TEMPLATES, type ExplainTemplate } from '@engine/explanations/templates';
 import type { NodeSummary } from '@engine/projection/dto';
 import { relativeTime, shortSha, typeLabel } from '../lib/format';
 import { workingAgents, workKey, type ContextChip } from '../lib/store';
 import { useAtlas, useStore } from './context';
 import { CopyButton, useAgentPrompt } from './ExplainActions';
 import { Markdown, type LinkHandlers } from './Markdown';
+import { TemplateIcon, TemplatesGlyph } from './TemplateIcon';
+import { TemplatesDialog } from './TemplatesDialog';
 
 export function ExplanationsPanel({ onClose }: { onClose: () => void }) {
   const store = useStore();
@@ -95,7 +98,7 @@ function EmptyState() {
   return (
     <div className="explain-empty">
       <p><strong>Ask about the code; read the answer on the map.</strong> Every file, folder, symbol and flow an answer names is a link: point at it to light it on the map, click it to open it.</p>
-      <p className="note">{canAsk ? 'Ask below, or use ✦ Explain in the inspector, on a flow or on a commit.' : 'Ask your agent (Claude Code, Codex, Cursor…): connect it to Codiluce once, and what it explains is saved here.'}</p>
+      <p className="note">{canAsk ? 'Ask below (Templates has the common questions), or use ✦ Explain in the inspector, on a flow or on a commit.' : 'Ask your agent (Claude Code, Codex, Cursor…): connect it to Codiluce once, and what it explains is saved here. Templates, below, has the common questions to copy for it.'}</p>
       <ConnectAgent open />
     </div>
   );
@@ -337,7 +340,9 @@ function duration(ms: number): string {
   return seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)} min ${String(seconds % 60).padStart(2, '0')} s`;
 }
 
-/** The question box: text, the code it is about (chips; @ adds one), the model, and asking here or copying for an agent. */
+/** The templates shown above an empty question box. */
+const FEATURED_TEMPLATES = ['codebase', 'feature', 'security', 'bugs'];
+/** The question box: text, the code it is about (chips; @ adds one), the model, and asking here or copying for an agent. Templates (or / in an empty box) start from a common question whose [placeholders] Tab moves between. */
 function Composer() {
   const store = useStore();
   const draft = useAtlas(state => state.explain.draft);
@@ -345,9 +350,41 @@ function Composer() {
   const detail = useAtlas(state => state.explain.detail?.data);
   const streaming = useAtlas(state => state.explain.asking?.status === 'streaming');
   const area = useRef<HTMLTextAreaElement>(null);
+  const box = useRef<HTMLDivElement>(null);
   const [mention, setMention] = useState<{ query: string; start: number; items: NodeSummary[]; index: number } | undefined>();
+  // The templates dialog: from the button, the strip, or / typed in an empty box.
+  const [picking, setPicking] = useState(false);
+  // A range to select once the text it belongs to is in the box.
+  const [selecting, setSelecting] = useState<{ start: number; end: number; tick: number } | undefined>();
+  const template = templateById(draft.template);
+  const blanks = template ? placeholdersIn(draft.text, template) : [];
   const reveal = useAtlas(state => state.explain.reveal);
-  useEffect(() => { if (reveal) area.current?.focus(); }, [reveal]);
+  useEffect(() => {
+    if (!reveal || !area.current) return;
+    area.current.focus();
+    // Asked from the inspector with a template: all of it in view, its first placeholder left ready to type over.
+    if (template) fit(area.current);
+    if (blanks[0]) area.current.setSelectionRange(blanks[0].start, blanks[0].end);
+  }, [reveal]);
+  useEffect(() => {
+    if (!selecting || !area.current) return;
+    area.current.focus();
+    area.current.setSelectionRange(selecting.start, selecting.end);
+  }, [selecting]);
+  // Asked or cleared: back to the height it had.
+  useEffect(() => { if (!draft.text && area.current) area.current.style.height = ''; }, [draft.text]);
+  const chooseTemplate = (item: ExplainTemplate) => {
+    // One attached file or folder fills the code placeholder.
+    const chip = draft.context.length === 1 ? draft.context[0] : undefined;
+    const text = item.code && chip ? item.text.replace(`[${item.code}]`, chip.label) : item.text;
+    // A template is a new question, not a follow-up of the explanation being read.
+    if (detail) store.closeExplanation();
+    store.setDraft({ text, template: item.id });
+    setPicking(false);
+    if (area.current) { area.current.value = text; fit(area.current); }
+    const first = placeholdersIn(text, item)[0];
+    setSelecting({ start: first?.start ?? text.length, end: first?.end ?? text.length, tick: Date.now() });
+  };
   const models = setup?.models ?? [];
   const available = models.filter(model => model.available);
   const canAsk = available.length > 0 && !setup?.readOnly;
@@ -361,7 +398,9 @@ function Composer() {
     return () => { clearTimeout(timer); controller.abort(); };
   }, [mention?.query, store]);
   const onChange = (text: string, caret: number) => {
-    store.setDraft({ text });
+    // "/" typed in an empty box opens the templates.
+    if (text === '/' && !draft.text) { setPicking(true); return; }
+    store.setDraft({ text, ...(text.trim() ? {} : { template: undefined }) });
     const before = text.slice(0, caret);
     const at = /(?:^|\s)@([^\s@]{0,60})$/.exec(before);
     setMention(at ? { query: at[1]!, start: caret - at[1]!.length - 1, items: mention && mention.query === at[1] ? mention.items : [], index: 0 } : undefined);
@@ -369,11 +408,22 @@ function Composer() {
   const choose = (node: NodeSummary) => {
     const href = hrefForNode(node);
     if (!href || !mention) return;
-    const text = draft.text.slice(0, mention.start) + draft.text.slice(mention.start + mention.query.length + 1);
+    const label = node.type === 'directory' ? `${node.name}/` : node.name;
+    // In a template, the name takes the placeholder's place in the sentence; otherwise the chip alone says it.
+    const name = template ? label : '';
+    const text = draft.text.slice(0, mention.start) + name + draft.text.slice(mention.start + mention.query.length + 1);
     store.setDraft({ text });
-    store.addContext({ href, label: node.type === 'directory' ? `${node.name}/` : node.name });
+    store.addContext({ href, label });
     setMention(undefined);
-    area.current?.focus();
+    if (template) setSelecting({ start: mention.start + name.length, end: mention.start + name.length, tick: Date.now() });
+    else area.current?.focus();
+  };
+  /** Select the next placeholder after the selection (the previous one, backwards), wrapping around. */
+  const jump = (backwards: boolean) => {
+    const element = area.current;
+    if (!element || !blanks.length) return;
+    const next = backwards ? [...blanks].reverse().find(blank => blank.end <= element.selectionStart) ?? blanks.at(-1)! : blanks.find(blank => blank.start >= element.selectionEnd) ?? blanks[0]!;
+    element.setSelectionRange(next.start, next.end);
   };
   const onKey = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (mention?.items.length) {
@@ -381,14 +431,36 @@ function Composer() {
       if (event.key === 'Enter' || event.key === 'Tab') { event.preventDefault(); choose(mention.items[mention.index]!); return; }
       if (event.key === 'Escape') { event.preventDefault(); setMention(undefined); return; }
     }
-    if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (canAsk && !streaming) void store.ask(); }
+    if (event.key === 'Tab' && blanks.length && !event.altKey && !event.ctrlKey && !event.metaKey) { event.preventDefault(); jump(event.shiftKey); return; }
+    if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+      event.preventDefault();
+      // Placeholders left: Enter goes to the first one instead of asking.
+      if (blanks.length) area.current?.setSelectionRange(blanks[0]!.start, blanks[0]!.end);
+      else if (canAsk && !streaming) void store.ask();
+    }
   };
   const agentText = () => {
     const context = draft.context.map(chip => `- [${chip.label}](${chip.href})`).join('\n');
-    return `${draft.text.trim() || 'Explain this code.'}${context ? `\n\nIt is about:\n${context}` : ''}\n\nUse the Codiluce MCP tools to answer (start with \`overview\` or \`entity\`), and save the answer with \`publish_explanation\`${detail ? ` (or add it to the explanation "${detail.title}" with \`update_explanation\`, id "${detail.id}")` : ''}. Link every file, folder, symbol and flow you mention, copying the \`link\` values the tools return.${setup ? `\n(If the Codiluce tools are not connected yet: ${setup.mcp.claude})` : ''}`;
+    return `${draft.text.trim() || 'Explain this code.'}${context ? `\n\nIt is about:\n${context}` : ''}\n\nUse the Codiluce MCP tools to answer (${template ? `${template.tools[0]!.toLowerCase()}${template.tools.slice(1, -1)}` : 'start with \`overview\` or \`entity\`'}), and save the answer with \`publish_explanation\`${detail ? ` (or add it to the explanation "${detail.title}" with \`update_explanation\`, id "${detail.id}")` : ''}. Link every file, folder, symbol and flow you mention, copying the \`link\` values the tools return.${setup ? `\n(If the Codiluce tools are not connected yet: ${setup.mcp.claude})` : ''}`;
   };
+  const empty = !draft.text.trim();
   return (
-    <div className="composer">
+    <div className="composer" ref={box}>
+      {empty && !detail && !streaming && !setup?.readOnly && (
+        <div className="template-strip">
+          <div className="template-strip-head">
+            <span id="template-strip-title">Start from a template</span>
+            <button className="link-button" onClick={() => setPicking(true)}>All {TEMPLATES.length} templates →</button>
+          </div>
+          <div className="template-strip-row" role="group" aria-labelledby="template-strip-title">
+            {FEATURED_TEMPLATES.map(id => templateById(id)).filter(item => !!item).map(item => (
+              <button key={item.id} className="template-tile" onClick={() => chooseTemplate(item)} title={item.description}>
+                <TemplateIcon id={item.id} size={44} /><span>{item.title}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {draft.context.length > 0 && (
         <div className="chips" aria-label="Attached code">
           {draft.context.map((chip: ContextChip) => <span key={chip.href} className="chip context-chip" title={chip.href}>{chip.label}<button className="chip-remove" onClick={() => store.removeContext(chip.href)} aria-label={`Remove ${chip.label}`}>×</button></span>)}
@@ -396,7 +468,7 @@ function Composer() {
       )}
       <div className="composer-box">
         <textarea ref={area} className="text-input" rows={3} value={draft.text} disabled={setup?.readOnly}
-          placeholder={setup?.readOnly ? 'This map is read-only' : detail ? 'Ask a follow-up… (@ adds a file or folder)' : 'Ask about the code… (@ adds a file or folder)'}
+          placeholder={setup?.readOnly ? 'This map is read-only' : detail ? 'Ask a follow-up… (@ adds a file or folder)' : 'Ask about the code… (@ adds a file or folder, / starts from a template)'}
           onChange={event => onChange(event.target.value, event.target.selectionStart)} onKeyDown={onKey} aria-label="Question" />
         {mention && mention.items.length > 0 && (
           <ul className="mention-menu" role="listbox" aria-label="Attach">
@@ -408,23 +480,37 @@ function Composer() {
           </ul>
         )}
       </div>
+      {blanks.length > 0 && (
+        <p className="composer-note template-note">
+          Fill <button className="link-button mono" onClick={() => { area.current?.focus(); area.current?.setSelectionRange(blanks[0]!.start, blanks[0]!.end); }} title="Select it, to type over it">[{blanks[0]!.text}]</button>
+          {blanks.length > 1 ? ` and ${blanks.length - 1} more` : ''} · Tab moves between them · @ picks code from the index
+        </p>
+      )}
       <div className="composer-actions">
+        {/* The way in while the box is empty; a quieter button once a question is written. */}
+        {!setup?.readOnly && <button className={`button small templates-button${empty ? ' primary' : ''}`} aria-haspopup="dialog" onClick={() => setPicking(true)} title="Common questions about a codebase, with [placeholders] to fill (or type / in an empty box)"><TemplatesGlyph />Templates</button>}
         {canAsk ? (
           <>
             <label className="sr-only" htmlFor="chat-model">Model</label>
             <select id="chat-model" className="select small" value={draft.model ?? ''} onChange={event => store.setDraft({ model: event.target.value })}>
               {models.map(model => <option key={model.id} value={model.id} disabled={!model.available}>{model.label}{model.available ? '' : ' (no key)'}{model.note && model.available ? ` · ${model.note}` : ''}</option>)}
             </select>
-            <button className="button small primary" disabled={streaming || !draft.text.trim()} onClick={() => void store.ask()} title={`Asks ${draft.model ?? 'the model'}, at most $${setup!.maxCost.toFixed(2)} a question. Your question, the attached code and the excerpts it reads are sent to ${available.find(model => model.id === draft.model)?.provider === 'openai' ? 'OpenAI' : 'Anthropic'}.`}>{detail ? 'Ask follow-up' : 'Ask'}</button>
+            <button className="button small primary" disabled={streaming || !draft.text.trim() || blanks.length > 0} onClick={() => void store.ask()} title={blanks.length ? `Fill ${blanks.map(blank => `[${blank.text}]`).join(', ')} first` : `Asks ${draft.model ?? 'the model'}, at most $${setup!.maxCost.toFixed(2)} a question. Your question, the attached code and the excerpts it reads are sent to ${available.find(model => model.id === draft.model)?.provider === 'openai' ? 'OpenAI' : 'Anthropic'}.`}>{detail ? 'Ask follow-up' : 'Ask'}</button>
           </>
         ) : setup && !setup.readOnly ? <span className="absent" title={`Read from the environment, or from:\n${setup.keyFiles.join('\n')}`}>To ask here, run <code>codiluce setup</code> in a terminal, or add ANTHROPIC_API_KEY or OPENAI_API_KEY to <code>{setup.keyFiles[0]}</code></span> : null}
         <CopyButton text={agentText} label="Copy for agent" className="button small" title="Copy this question as a prompt for your agent connected to Codiluce over MCP" />
       </div>
       {canAsk && <p className="composer-note">Sent to {available.find(model => model.id === draft.model)?.provider === 'openai' ? 'OpenAI' : 'Anthropic'} with the code the model reads · up to ${setup!.maxCost.toFixed(2)} a question</p>}
+      {picking && <TemplatesDialog container={box.current?.closest('.codiluce') ?? document.body} onChoose={chooseTemplate} onClose={() => setPicking(false)} />}
     </div>
   );
 }
 
+/** Grow the question box to show all of its text (up to its maximum height). */
+function fit(element: HTMLTextAreaElement): void {
+  element.style.height = '';
+  if (element.scrollHeight > element.clientHeight) element.style.height = `${element.scrollHeight + element.offsetHeight - element.clientHeight}px`;
+}
 /** The explanation as one Markdown document (questions as quotes). */
 function toMarkdown(data: ExplanationDetail): string {
   const parts = [`# ${data.title}`];

@@ -15,6 +15,7 @@ import { LINK_GUIDE } from './links.js';
 import type { SubjectKind } from './model.js';
 import { agentPrompt, MCP_PROMPTS, type PromptKind } from './prompts.js';
 import { ExplanationService } from './service.js';
+import { fillTemplate, templateArguments, TEMPLATES, type ExplainTemplate } from './templates.js';
 import { codeTools, describeTool, explanationTools, runTool, type ToolContext, type ToolSpec } from './tools.js';
 import { ConversationService } from '../conversations/service.js';
 import { conversationTools } from '../conversations/tools.js';
@@ -102,11 +103,16 @@ export class McpSession {
         const { text, isError } = await runTool(this.tools(), name, params.arguments ?? {});
         return { content: [{ type: 'text', text }], isError };
       }
-      case 'prompts/list': return { prompts: MCP_PROMPTS.map(prompt => ({ name: prompt.name, title: prompt.title, description: prompt.description, arguments: prompt.argument ? [{ name: prompt.argument.name, description: prompt.argument.description, required: true }] : [] })) };
+      case 'prompts/list': return { prompts: [
+        ...MCP_PROMPTS.map(prompt => ({ name: prompt.name, title: prompt.title, description: prompt.description, arguments: prompt.argument ? [{ name: prompt.argument.name, description: prompt.argument.description, required: true }] : [] })),
+        ...TEMPLATE_PROMPTS.map(({ name, template }) => ({ name, title: template.title, description: template.description, arguments: templateArguments(template).map(argument => ({ ...argument, required: true })) })),
+      ] };
       case 'prompts/get': {
+        const args = (params.arguments ?? {}) as Record<string, unknown>;
+        const fromTemplate = TEMPLATE_PROMPTS.find(item => item.name === params.name);
+        if (fromTemplate) return this.templatePrompt(fromTemplate.template, args);
         const prompt = MCP_PROMPTS.find(item => item.name === params.name);
         if (!prompt) throw new RpcError(-32602, `Unknown prompt ${String(params.name)}`);
-        const args = (params.arguments ?? {}) as Record<string, unknown>;
         const value = prompt.argument ? args[prompt.argument.name] : undefined;
         if (prompt.argument && (typeof value !== 'string' || !value.trim())) throw new RpcError(-32602, `The ${prompt.argument.name} argument is required`);
         const target = prompt.target(typeof value === 'string' ? value.trim() : undefined);
@@ -118,6 +124,20 @@ export class McpSession {
       case 'resources/list': return { resources: [] };
       default: throw new RpcError(-32601, `Method not found: ${method}`);
     }
+  }
+  /** An Explain template run as a prompt: its placeholders filled from the arguments, then announced like the others. */
+  private templatePrompt(template: ExplainTemplate, args: Record<string, unknown>): unknown {
+    const values: Record<string, string> = {};
+    for (const { name } of templateArguments(template)) {
+      const value = args[name];
+      if (typeof value !== 'string' || !value.trim()) throw new RpcError(-32602, `The ${name} argument is required`);
+      values[name] = value.trim();
+    }
+    const ref = template.code ? values.path : undefined;
+    const kind: SubjectKind = template.overview ? 'overview' : ref ? (ref.startsWith('flow:') ? 'flow' : 'entity') : 'question';
+    const text = fillTemplate(template, values);
+    this.activity.begin({ title: Object.keys(values).length ? `${template.title}: ${Object.values(values).join(', ')}` : template.title, question: text, subject: { kind, ...(ref ? { ref } : {}) } }, { fresh: true });
+    return { description: template.description, messages: [{ role: 'user', content: { type: 'text', text: agentPrompt({ kind: 'template', template: { ...template, text }, ...(ref ? { ref } : {}) }) } }] };
   }
   private tools(): ToolSpec[] {
     if (this.opened) return this.opened.tools;
@@ -138,7 +158,9 @@ export class McpSession {
     return this.opened.tools;
   }
 }
-const PROMPT_SUBJECTS: Record<PromptKind, SubjectKind | undefined> = { overview: 'overview', flow: 'flow', commit: 'commit', pr: 'pr', entity: 'entity', impact: 'entity', coverage: 'entity', refresh: undefined };
+const PROMPT_SUBJECTS: Record<PromptKind, SubjectKind | undefined> = { overview: 'overview', flow: 'flow', commit: 'commit', pr: 'pr', entity: 'entity', impact: 'entity', coverage: 'entity', refresh: undefined, template: undefined };
+/** The Explain templates as prompts, except those the prompts above already ask (the codebase, a path, what would break). */
+const TEMPLATE_PROMPTS = TEMPLATES.map(template => ({ name: `explain-${template.id}`, template })).filter(({ name }) => !MCP_PROMPTS.some(prompt => prompt.name === name));
 class RpcError extends Error { constructor(readonly code: number, message: string) { super(message); } }
 function error(id: Id, code: number, message: string) { return { jsonrpc: '2.0', id, error: { code, message } }; }
 function notIndexed(root: string): ToolSpec {

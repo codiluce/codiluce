@@ -163,7 +163,7 @@ function ConversationReader({ id, query, revision, messageId, live, running, eve
   </div>;
 }
 
-/** A finished session played again on the map: its character hops through the files it read and edited, sped up. */
+/** A finished session played again on the map: its character hops through the files it read and edited; the map's replay bar plays, pauses and steps it. */
 function ReplayButton({ id }: { id: string }) {
   const store = useStore(), playing = useAtlas(state => state.agents.replay?.id === id);
   const historical = useAtlas(state => state.meta?.snapshot.kind === 'commit' || state.timeline.preview !== undefined);
@@ -177,7 +177,7 @@ function ReplayButton({ id }: { id: string }) {
     } catch (error) { setError(error instanceof Error ? error.message : String(error)); } finally { setLoading(false); }
   };
   return <div className="session-replay">
-    <button className="button small" disabled={loading || historical} aria-pressed={playing} onClick={() => (playing ? store.stopReplay() : void replay())} title={historical ? 'Replays play on the live map. Return to it from History.' : 'Play this session again on the map, sped up: its character hops to the files it read and edited'}>{playing ? '■ Stop replay' : loading ? 'Loading…' : '▶ Replay on the map'}</button>
+    <button className="button small" disabled={loading || historical} aria-pressed={playing} onClick={() => (playing ? store.stopReplay() : void replay())} title={historical ? 'Replays play on the live map. Return to it from History.' : 'Play this session again on the map, step by step: its character hops to the files it read, edited and searched, labeled with each step'}>{playing ? '■ Stop replay' : loading ? 'Loading…' : '▶ Replay on the map'}</button>
     {error && <small className="error" role="alert">{error}</small>}
   </div>;
 }

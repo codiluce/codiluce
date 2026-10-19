@@ -137,7 +137,7 @@ code, pre { font-family: var(--font-mono); }
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02) inset, 0 20px 50px -20px rgba(0, 0, 0, 0.8);
 }
-.install-tabs { display: flex; gap: 2px; padding: 6px 6px 0; border-bottom: 1px solid var(--border); }
+.install-tabs { display: flex; flex-wrap: wrap; gap: 2px; padding: 6px 6px 0; border-bottom: 1px solid var(--border); }
 .install-tabs button {
   appearance: none; border: 0; background: none; cursor: pointer; color: var(--subtle);
   font: 500 12.5px/1 var(--font-mono); padding: 9px 12px 11px; border-bottom: 2px solid transparent; margin-bottom: -1px;
@@ -147,6 +147,11 @@ code, pre { font-family: var(--font-mono); }
 .install-body { position: relative; display: flex; align-items: center; }
 .install pre { margin: 0; flex: 1; min-width: 0; overflow-x: auto; padding: 16px 52px 16px 18px; font-size: 14.5px; line-height: 1.7; }
 .install code { display: block; white-space: pre; color: var(--text); }
+.install-note { padding: 11px 18px 13px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; line-height: 1.8; text-wrap: pretty; }
+.install-agent { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.install-agent img { flex: none; align-self: center; }
+.install-note button { appearance: none; border: 0; padding: 0; background: none; color: var(--accent); font: inherit; cursor: pointer; }
+.install-note button:hover { text-decoration: underline; text-underline-offset: 3px; }
 .prompt { color: var(--accent); user-select: none; }
 .copy-button {
   position: absolute; right: 10px; top: 50%; transform: translateY(-50%);

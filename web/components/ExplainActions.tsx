@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { agentPrompt, type PromptTarget } from '@engine/explanations/prompts';
 import type { ExplanationSummary } from '@engine/explanations/model';
 import { useAtlas, useStore } from './context';
+import { TemplateIcon } from './TemplateIcon';
 
 export interface Suggestion { target: PromptTarget; text: string; title: string }
 
@@ -52,7 +53,7 @@ export function ExplainActions({ suggestions, compact = false }: { suggestions: 
         <ul className="explain-more" role="menu">
           {more.map(item => (
             <li key={item.text} role="none">
-              <button role="menuitem" className="link-button" onClick={() => { setOpen(false); void store.askAbout(item.target, item.target.label); }} title={item.title}>{item.text}</button>
+              <button role="menuitem" className="link-button" onClick={() => { setOpen(false); void store.askAbout(item.target, item.target.label); }} title={item.title}>{item.target.template && <TemplateIcon id={item.target.template.id} size={22} />}{item.text}</button>
               <CopyButton text={() => prompt(item.target)} label="Copy prompt" />
             </li>
           ))}

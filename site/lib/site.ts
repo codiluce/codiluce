@@ -11,6 +11,7 @@ export const NEXT_RELEASE: readonly NextFeature[] = ['characters', 'plan', 'harn
 export const INSTALL = {
   npx: ['npx codiluce@latest start .'],
   npm: ['npm install --global codiluce', 'codiluce start .'],
+  agent: ['Install codiluce'],
   source: ['git clone https://github.com/codiluce/codiluce.git', 'cd codiluce && npm ci', 'npm start -- /path/to/repository'],
 } as const;
 

@@ -35,7 +35,7 @@ const BEAT_OPEN_MAX = 80;
 /** Between frames while the agents on the map stand still (their idle poses change every 480 ms). */
 const CREW_IDLE_MS = 160;
 /** Panels over the map that labels keep clear of. */
-const PANELS = ':scope > .map-controls, :scope > .status-bar, :scope > .legend, :scope > .coverage-legend, :scope > .feature-legend, :scope > .banner, :scope > .switching';
+const PANELS = ':scope > .map-controls, :scope > .status-bar, :scope > .legend, :scope > .coverage-legend, :scope > .feature-legend, :scope > .banner, :scope > .switching, :scope > .replay-bar';
 /** Panels of the middle that float over the map from outside it. */
 const OVER_MAP = '.tour-bar, .tour-flow-card';
 interface Animation { at(t: number): Camera; start: number; duration: number }
@@ -247,7 +247,13 @@ export class MapController implements MapNavigator {
   }
   /** The camera framing this map's home: its place (a leaf with room around it), else the whole repository. */
   private homeCamera(focus = this.options.home?.()): Camera | undefined {
-    if (!focus) { const bounds = this.rootBounds(); return bounds ? fitBounds(bounds, this.viewport, this.role === 'main' ? 32 : 14, this.limits) : undefined; }
+    if (!focus) {
+      const bounds = this.rootBounds();
+      if (!bounds) return undefined;
+      // While agents are on the map, room at its right for their queue.
+      const room = Math.min(this.crewRoom, this.viewport.width * 0.4), camera = fitBounds(bounds, { ...this.viewport, width: Math.max(1, this.viewport.width - room) }, this.role === 'main' ? 32 : 14, this.limits);
+      return room ? { ...camera, x: camera.x + room / 2 / camera.scale } : camera;
+    }
     const { node } = focus, rect = focus.frame ?? node.rect;
     const z = this.scene.nodes.has(node.id) ? this.scene.zBase(node.id) : 0;
     // A frame inside the node: what stands on it rises above the node's top.
@@ -374,14 +380,22 @@ export class MapController implements MapNavigator {
    * the pointer on a session in the list dims the others.
    */
   private crewFrame(state: AtlasState, time: number) {
-    if (this.role !== 'main' || this.small || !state.agents.show || state.meta?.snapshot.kind === 'commit' || this.store.previewScene) { if (this.role === 'main') this.publishPlaces({}); return undefined; }
-    this.crew ??= new CrewOnMap(() => this.store.scene, (ids, areas) => void ensureNodes(this.store, ids, areas).catch(() => undefined), token => this.store.stopReplay(token));
+    if (this.role !== 'main' || this.small || !state.agents.show || state.meta?.snapshot.kind === 'commit' || this.store.previewScene) { if (this.role === 'main') { this.publishPlaces({}); this.makeRoom(0); } return undefined; }
+    this.crew ??= new CrewOnMap(() => this.store.scene, (ids, areas) => void ensureNodes(this.store, ids, areas).catch(() => undefined), progress => queueMicrotask(() => this.store.replayProgress(progress)));
     this.crew.sync(state.agents.snapshot, state.agents.replay);
     const opened = state.journal.open.includes('conversations') ? state.journal.conversationId : undefined;
     const frame = this.crew.frame(this.viewport, this.camera, this.set, time, this.motionReduced, { ...(opened ? { focus: opened } : {}), ...(state.agents.hover ? { dim: state.agents.hover } : {}) });
     this.publishPlaces(this.crew.places());
+    this.makeRoom(this.crew.room(this.viewport));
     return frame;
   }
+  /** The agents' queue wants this much room at the map's right: a map still at its fitted home moves over for it. */
+  private makeRoom(room: number): void {
+    if (room === this.crewRoom) return;
+    this.crewRoom = room;
+    if (this.autoFit && this.fitted && !this.animation) queueMicrotask(() => { if (this.autoFit && !this.animation) this.goHome(); });
+  }
+  private crewRoom = 0;
   /** Where the characters stand, for the Agents list (only when it changes). */
   private publishPlaces(places: Record<string, string[]>): void {
     const key = JSON.stringify(places);

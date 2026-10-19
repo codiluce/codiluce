@@ -105,13 +105,35 @@ not queued or replayed.
 With **Show agents on the map** on (the default, remembered), each agent is a
 pixel character on the map itself, in either projection. It hops to the file it
 reads, edits or searches (inside a closed area it stands on that area's roof,
-and a search outlines its scope), and steps outside, beside the map's edge, for
-what is about no file: thinking, the reply, planning, the web, commands, waiting
-for permission. Files worked on at the same time split the character: parallel
+and a search outlines its scope), and waits in its place in the queue for what is
+about no file: thinking, the reply, planning, the web, commands, waiting for
+permission. Every hop takes 0.3 s and a visit to a file lasts at least a second,
+so the eye can follow where it goes: an actor's events play in order, and the
+next place waits for the visit to end. A live agent faster than its character
+falls behind; past five seconds behind its visits shorten, past twelve they no
+longer wait, so the character catches up instead of trailing by minutes.
+
+The queue stands beside the map's right edge, in screen space: every active
+session (idle ones included, until it finishes) has a place in it, from the top
+down in the order the sessions were first observed, a subagent after its
+session; a full column starts another to the right. A place is kept while its
+character is on the map, and the others move up when a session leaves. A map
+still at its fitted home moves over to make room for the queue while agents are
+on it; without room (zoomed in, or a narrow screen), the queue stays on screen
+over the map's right side, on a backdrop that the characters beneath recede
+behind. In the queue, characters face the map.
+
+Each character has a short label saying what it does, from its pose and the call
+it is in: "reading crew.ts", "editing store.ts", "searching "login"" (a search's
+pattern, else its folder), "running a command", "using codiluce search" (an MCP
+tool), "thinking", "waiting for permission", "idle". On a file the label sits over
+the head (a label that would cover another stacks above it, or is left out); in
+the queue, to the right. Copies carry the label of their own file. The map's
+labels give way to them. Files worked on at the same time split the character: parallel
 calls and batched reads send a copy to each file, which comes back when its call
 completes. A small square in the session's color floats over each character and
 its copies; the same square marks the session's row in the Agents list (subagents
-wear their session's color). Characters carry no name label. Colors are stable
+wear their session's color). Characters carry no name label, only what they do. Colors are stable
 per provider/session. Characters on one block stand side by side; that signals
 overlap, not a proven conflict. They respect the session filter and are not shown
 in history.
@@ -125,16 +147,22 @@ card says so.
 
 Hooks see tool calls, not what a script does. A command that reads many files
 from one script (for example `python - <<PY ... PY`) is one command with no file
-attribution: the character stays beside the map, running a command. Reads made
+attribution: the character stays in the queue, running a command. Reads made
 with the harness's read tool or with literal `cat`/`head`/`sed -n` commands are
 attributed.
 
 **Replay on the map** (in a finished session's reader) plays that session again
 from its saved transcript, alone on the map: prompts are thinking, the reply that
 ends a turn is writing, and tool calls hop to the files they named, calls made
-within a second of each other splitting the character as before. Runs of calls
-that named no file go by quickly, so the time goes to the files; a replay lasts
-at most 90 seconds (the latest steps of a longer session). `GET
+within a second of each other splitting the character as before. Its clock
+follows the cast's rules (a hop and a second per file visit, a short stop in the
+queue), so nothing waits during playback and each step plays at its mark; runs of
+calls that named no file go by quickly, and longer pauses of the session play a
+little longer. Each step is a mark; calls made together are one step. A bar over
+the map plays and pauses it, steps back and forth (the step's hop plays, then it
+stays), goes to any step from a slider, and changes the speed (0.5× to 8×). It
+shows the step, its count and what the agent does in it with full paths. Over, it
+stays on its last step until closed; playing again starts from the first. `GET
 /api/conversations/<id>/replay` returns the latest 1,000 prompts, replies and tool
 calls in order, each call with its paths resolved against the current map. It
 works in read-only mode and needs an imported transcript.

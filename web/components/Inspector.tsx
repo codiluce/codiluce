@@ -15,6 +15,7 @@ import { CallSitesSection, CommitImpactChip, EffectsSection } from './Analysis';
 import { CommitList, KindTag, PersonDot, WindowPicker, windowText } from './PeoplePanel';
 import { ExplainActions, ExplanationChips, type Suggestion } from './ExplainActions';
 import { hrefForNode } from '@engine/explanations/links';
+import { TEMPLATES, type SelectionKind } from '@engine/explanations/templates';
 import { PullDot, pullWhen, SourceTag } from './PullsPanel';
 import { CodeHealthSection } from './CodeHealth';
 
@@ -147,20 +148,26 @@ function Selection() {
     </div>
   );
 }
-/** The questions to ask about a selection: what it is (a flow, for entry points), what would break, why no flow reaches it. */
+/** The questions to ask about a selection: what it is (a flow, for entry points), what would break, why no flow reaches it, then the Explain templates that suit it (risks first). */
 export function suggestionsFor(node: NodeSummary, parent?: { type: string; name: string }, coverage?: string): Suggestion[] {
   const href = hrefForNode(node, parent);
   if (!href || node.kind !== 'entity') return [];
   const label = node.type === 'directory' || node.type === 'application' ? `${node.name}/` : node.name;
   const word = typeLabel(node.type, node.role).toLowerCase();
-  if (['route', 'api_endpoint', 'command', 'scheduled_task'].includes(node.type)) return [
+  const kind: SelectionKind | undefined = ['route', 'api_endpoint', 'command', 'scheduled_task'].includes(node.type) ? 'flow' : node.type === 'directory' || node.type === 'application' ? 'folder'
+    : node.type === 'file' ? 'file' : node.type === 'database_table' ? 'table' : node.type === 'repository' ? undefined : 'symbol';
+  const templates: Suggestion[] = TEMPLATES.filter(template => kind && template.selection?.on.includes(kind)).sort((a, b) => Number(b.group === 'risks') - Number(a.group === 'risks'))
+    .map(template => ({ target: { kind: 'template', template, ref: href, label: kind === 'flow' ? node.name : label, type: node.type }, text: template.selection!.text, title: template.description }));
+  if (kind === 'flow') return [
     { target: { kind: 'flow', ref: href, label: node.name }, text: 'Explain this flow', title: `Explain the flow that starts at ${node.name}, step by step` },
     { target: { kind: 'impact', ref: href, label: node.name, type: node.type }, text: 'What would break if I changed it?', title: 'What depends on it, and which risks are real' },
+    ...templates,
   ];
   return [
     { target: { kind: node.type === 'repository' ? 'overview' : 'entity', ref: href, label, type: node.type }, text: node.type === 'repository' ? 'Explain the codebase' : `Explain this ${word}`, title: `Explain ${label}: its role, what uses it, the flows it is part of` },
     ...(isContainer(node) || node.type === 'database_table' ? [] : [{ target: { kind: 'impact' as const, ref: href, label, type: node.type }, text: 'What would break if I changed it?', title: 'What depends on it, and which risks are real' }]),
     ...(coverage === 'unreached' ? [{ target: { kind: 'coverage' as const, ref: href, label, type: node.type }, text: 'Why does no flow reach it?', title: 'Dead code, used dynamically, or reached in a way the index cannot see?' }] : []),
+    ...templates,
   ];
 }
 /** Ask about the selection, or add it to the question being written; explanations about it, first. */

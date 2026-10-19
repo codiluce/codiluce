@@ -238,6 +238,41 @@ export function drawPixel(ctx: CanvasRenderingContext2D, x: number, y: number, l
   if (look.result && look.resultAge !== undefined && look.resultAge < 2600) resultBadge(ctx, x - (w / 2 + 2 * p) * look.facing, y0 - p, 3 * p, look.result, look.resultAge);
   ctx.restore();
 }
+const CAPTION_FONT = '600 11px system-ui, sans-serif';
+let measurer: CanvasRenderingContext2D | null | undefined;
+/** How wide a label is (px), at most `max`: measured in a page, estimated elsewhere (tests). */
+export function captionWidth(text: string, max: number): number {
+  measurer ??= typeof document === 'undefined' ? null : document.createElement('canvas').getContext('2d');
+  if (!measurer) return Math.min(max, Math.round(18 + text.length * 6.4));
+  measurer.font = CAPTION_FONT;
+  return Math.min(max, Math.ceil(measurer.measureText(text).width) + 18);
+}
+/** What a character is doing, in a dark pill marked with its session's color (it reads on any theme and block). */
+export function drawCaption(ctx: CanvasRenderingContext2D, box: { x0: number; y0: number; x1: number; y1: number }, text: string, color: string, alpha: number) {
+  const w = box.x1 - box.x0, h = box.y1 - box.y0;
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.fillStyle = 'rgba(12, 14, 22, 0.86)';
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(box.x0, box.y0, w, h, 4); else ctx.rect(box.x0, box.y0, w, h);
+  ctx.fill();
+  ctx.fillStyle = color; ctx.fillRect(Math.round(box.x0 + 4), Math.round(box.y0 + 4), 3, h - 8);
+  ctx.font = CAPTION_FONT; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#eef1f6';
+  // Cut to fit, with an ellipsis.
+  const room = w - 18;
+  let shown = text;
+  if (ctx.measureText(shown).width > room) { while (shown.length > 1 && ctx.measureText(`${shown}…`).width > room) shown = shown.slice(0, -1); shown = `${shown}…`; }
+  ctx.fillText(shown, box.x0 + 11, box.y0 + h / 2 + 0.5);
+  ctx.restore();
+}
+/** Behind the queue where it stands over the map: the characters on the map beneath recede. */
+export function drawBackdrop(ctx: CanvasRenderingContext2D, box: { x0: number; y0: number; x1: number; y1: number }) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(12, 14, 22, 0.62)'; ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(box.x0, box.y0, box.x1 - box.x0, box.y1 - box.y0, 10); else ctx.rect(box.x0, box.y0, box.x1 - box.x0, box.y1 - box.y0);
+  ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
 /** Sparkles where a copy pops in or out (parallel reads). */
 export function sparkle(ctx: CanvasRenderingContext2D, x: number, y: number, age: number, color: string) {
   if (age < 0 || age > 500) return;

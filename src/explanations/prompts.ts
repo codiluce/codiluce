@@ -3,10 +3,11 @@
 // chat in the map starts from, and the same prompts as MCP prompts (slash
 // commands in clients such as Claude Code). Pure, shared with the browser.
 // No runtime imports: the browser bundle reads this file directly (like links.ts).
+import type { ExplainTemplate } from './templates.js';
 /** A flow link, as links.ts writes it. */
 function flowHref(name: string): string { return `flow:${encodeURIComponent(name).replace(/%2F/gi, '/').replace(/%3A/gi, ':')}`; }
 
-export type PromptKind = 'overview' | 'flow' | 'commit' | 'pr' | 'entity' | 'impact' | 'coverage' | 'refresh';
+export type PromptKind = 'overview' | 'flow' | 'commit' | 'pr' | 'entity' | 'impact' | 'coverage' | 'refresh' | 'template';
 export interface PromptTarget {
   kind: PromptKind;
   /** The link of what it is about: flow:<name>, a SHA, a PR number, a path. */
@@ -17,6 +18,8 @@ export interface PromptTarget {
   type?: string;
   /** refresh: the explanation to update. */
   id?: string;
+  /** template: the question asked (`ref` fills its code placeholder). */
+  template?: ExplainTemplate;
 }
 const LINKING = 'Link every file, folder, symbol, flow and commit you mention, copying the `link` values the tools return, so each lights up on the Codiluce map.';
 
@@ -58,6 +61,13 @@ export function agentPrompt(target: PromptTarget, options: { setup?: string } = 
       lines.push(`The Codiluce explanation "${target.label ?? target.id}" (id ${target.id}) is out of date: code it links changed since it was written.`,
         `Read it with \`read_explanation\` (id "${target.id}"), check what changed with \`entity\`, \`commit\` and \`source\`, then rewrite it with \`update_explanation\` (id "${target.id}", mode "replace").`);
       break;
+    case 'template': {
+      const template = target.template!;
+      const subject = template.overview ? 'subject kind "overview"' : ref ? `subject: kind "${ref.startsWith('flow:') ? 'flow' : 'entity'}", ref "${ref}"` : 'subject kind "question"';
+      lines.push(template.code && ref ? template.text.replace(`[${template.code}]`, target.type ? `the ${what} ${name}` : name) : template.text,
+        `Use the Codiluce MCP tools to answer. ${template.tools}`, `Publish the result with \`publish_explanation\` (${subject}).`);
+      break;
+    }
   }
   lines.push(LINKING);
   if (options.setup) lines.push(`(If the Codiluce tools are not connected yet, add them first: ${options.setup})`);
@@ -79,6 +89,7 @@ export function chatQuestion(target: PromptTarget, options: { plain?: boolean } 
     case 'impact': return `What would break if I changed ${link(name, ref)}?`;
     case 'coverage': return `No flow reaches ${link(name, ref)}. Is it dead code, used dynamically, or reached in a way the index cannot see?`;
     case 'refresh': return 'The code this explanation links changed since it was written. Check what changed and rewrite the explanation so it is correct again.';
+    case 'template': { const template = target.template!; return template.code && ref ? template.text.replace(`[${template.code}]`, link(name, ref)) : template.text; }
   }
 }
 /** A link as a person reads it (`flow:POST /api/orders`, not `flow:POST%20/api/orders`). */

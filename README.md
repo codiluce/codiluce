@@ -108,17 +108,20 @@ source), so the agent starts from what the code provably does instead of guessin
 
 ### Watch your agents work
 
-Every connected session is a little pixel character on the map, in 3D or in the 2D plan. It hops to each file it
-reads, edits or searches, and steps beside the map to think, write its reply, run commands or wait for your
-permission. Files worked on at the same time split it: parallel reads send a copy to each file, and the copies come
-back when their calls complete. A small square in the session's color floats over its characters and marks the same
-session in the **Agents** list, so you always know who is where.
+Every connected session is a little pixel character on the map, in 3D or in the 2D plan. It hops quickly to each
+file it reads, edits or searches and stays there at least a second, so you can follow it, with a short label saying
+what it does: "reading crew.ts", "editing store.ts", "searching "login"". Between files it waits in a queue at the
+right of the map, in the order the sessions started (idle ones keep their place), to think, write its reply, run
+commands or wait for your permission. Files worked on at the same time split it: parallel reads send a copy to each
+file, and the copies come back when their calls complete. A small square in the session's color floats over its
+characters and marks the same session in the **Agents** list, so you always know who is where.
 
 - **Open a session** to keep only its characters on the map; point at a session in the list to dim the others.
 - **A running session** lists the files of its current turn, with its square beside those it stands on now. Click a
   path to reveal the file, even one added since the last analysis.
-- **Replay a finished session** from its saved transcript: its character hops through the files it read and edited,
-  sped up, alone on the map.
+- **Replay a finished session** from its saved transcript, alone on the map: play or pause it, step back or forward,
+  drag to any step and change the speed (0.5× to 8×). The player says what the agent does in each step, with full
+  paths.
 - **The map stays as it is:** nothing is dimmed or relabelled while agents work.
 
 Agents report their activity through hooks, set up with the harness command above or from **Agents → Agent
@@ -133,7 +136,7 @@ Open **Agents → Import / refresh history** to import available local Codex and
 this repository, plus native Pi, Copilot CLI, Gemini CLI and repository-scoped OpenClaw sessions. Other supported
 harnesses can use explicit [session exports](docs/agents/harnesses.md#session-history). Search messages and titles, filter by agent or by a file/folder read, edited or added in a tool
 call, and open the original discussion beside the map, or expand Agents for reading. **Replay on the map** plays a
-finished session again from its transcript (at most 90 seconds, the time spent on files). Live sessions appear in the
+finished session again from its transcript (its latest 1,000 messages and tool calls), step by step. Live sessions appear in the
 same list, with a highlighted activity card, observed files and one replacing public progress or response line.
 The three session filters share one row; Codex setup instructions are hidden in the reader. Recently observed sessions refresh every ten seconds
 while Agents is open, without moving your reading position. Public live updates use a bounded transcript tail every
@@ -155,7 +158,8 @@ is available. Rebuilding the code index does not erase imported history.
   they talk about: every link lights its code, and stale answers say what changed. Longer answers play as tours, with
   scenes on the map and diagrams that rise from it.
 - **Watch your agents work.** Each session is a character that hops to the files it reads and edits as it happens,
-  splits to read several at once, and replays when it is done.
+  says what it is doing, splits to read several at once, waits in a queue between files, and replays step by step when
+  it is done.
 - **Zoom from the whole repository to a single line.** Applications, folders, files and symbols nest inside each other,
   sized by their code, in 3D or as a flat 2D plan where names never overlap. Building shapes per kind of file are a
   setting.

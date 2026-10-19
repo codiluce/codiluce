@@ -6,6 +6,11 @@
 - Keep its ongoing changes isolated. Merge that branch into `main` only when the user explicitly requests it.
 - Before writing or committing, verify the working directory and branch. Preserve concurrent work from other sessions.
 
+# Public project information
+
+- When adding, changing or removing a user-facing feature, or changing the project's goals or positioning, follow [the project communication checklist](docs/agents/project-communication.md) before finishing the task. Review the landing page, public docs, GitHub README, npm README and description, and metadata; update affected content in the same task.
+- Keep the review proportional to the change. Internal refactors, tests, formatting and routine fixes do not need this review unless they affect public claims or instructions. Leave accurate content unchanged.
+
 # Report artifacts
 
 - Do not create Cursor Canvas reports or `.canvas.tsx` files to present findings.

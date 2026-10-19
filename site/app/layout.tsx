@@ -10,7 +10,7 @@ import { GA_ID } from '../lib/site';
 export const metadata: Metadata = {
   metadataBase: new URL('https://codiluce.com'),
   title: { default: 'Codiluce — Bring your code to light', template: '%s · Codiluce' },
-  description: 'Codiluce helps engineers understand their code and its architecture as agents keep changing it: every flow from the interface to the data, linked by evidence, through its whole Git history. Local and open source.',
+  description: 'Codiluce helps engineers understand their code and its architecture while agents keep changing it: every flow from the interface to the data, every commit, and every file an agent touches, you now get it.',
   applicationName: 'Codiluce',
   openGraph: {
     title: 'Codiluce — Bring your code to light',

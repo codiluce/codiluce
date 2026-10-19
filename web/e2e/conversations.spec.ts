@@ -165,3 +165,37 @@ test('hidden tabs release their live stream and reconnect with the latest activi
   await expect(panel.getByText('Live activity', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => (window as unknown as { testStreams: EventSource[] }).testStreams.filter(stream => stream.readyState !== EventSource.CLOSED).length)).toBe(1);
 });
+
+test('a finished session replays on the map step by step: it pauses, steps back and forth, speeds up and says what the agent does', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Agents', exact: true }).click();
+  const history = page.getByRole('complementary', { name: 'Agents', exact: true }).getByRole('region', { name: 'Agent sessions' });
+  await history.getByRole('button', { name: 'Import / refresh history' }).click();
+  // Other tests here keep the Codex session live; the Claude one is finished.
+  await history.getByRole('button', { name: /Add a human-readable session viewer/ }).click();
+  await history.getByRole('button', { name: '▶ Replay on the map' }).click();
+  const bar = page.getByRole('toolbar', { name: 'Session replay' });
+  await expect(bar).toContainText('Add a human-readable session viewer');
+  await bar.getByRole('button', { name: 'Pause', exact: true }).click();
+  await bar.getByRole('slider', { name: 'Replay step' }).fill('0');
+  const count = bar.locator('.replay-count'), text = bar.locator('.replay-text');
+  // The prompt, the edit, the end.
+  await expect(count).toHaveText('1 / 3');
+  await expect(text).toHaveText('Thinking');
+  await bar.getByRole('button', { name: 'Next step', exact: true }).click();
+  await expect(count).toHaveText('2 / 3');
+  await expect(text).toHaveText(/^Editing frontend\/src\/components\/LoginForm\.tsx/);
+  // Paused, it stays on that step.
+  const step = await count.innerText();
+  await page.waitForTimeout(1500);
+  await expect(count).toHaveText(step);
+  await bar.getByRole('button', { name: 'Previous step', exact: true }).click();
+  await expect(count).toHaveText('1 / 3');
+  await bar.getByRole('combobox', { name: 'Replay speed' }).selectOption('8');
+  await bar.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(text).toHaveText('Replay over', { timeout: 15_000 });
+  await expect(bar.getByRole('button', { name: 'Play again', exact: true })).toBeVisible();
+  await bar.getByRole('button', { name: 'Close the replay' }).click();
+  await expect(bar).toHaveCount(0);
+  await expect(history.getByRole('button', { name: '▶ Replay on the map' })).toBeVisible();
+});

@@ -5,7 +5,7 @@ import { DocsPager } from '../../../components/DocsNav';
 import { Shot } from '../../../components/Shot';
 import { INSTALL, NEXT_RELEASE } from '../../../lib/site';
 
-export const metadata: Metadata = { title: 'Agents', description: 'Watch your coding agents work on the map: each session is a character that hops to the files it reads and edits, as it happens, and finished sessions replay from their transcripts.' };
+export const metadata: Metadata = { title: 'Agents', description: 'Watch your coding agents work on the map: each session is a character that hops to the files it reads and edits, as it happens, labeled with what it does, and finished sessions replay step by step from their transcripts.' };
 
 export default function AgentsDocs() {
   return (
@@ -14,8 +14,9 @@ export default function AgentsDocs() {
       <h1>Agents</h1>
       <p className="lede">
         Follow your coding agents on the map. Every connected session is a little character: it hops to each file it reads
-        or edits, as it happens, and steps beside the map to think, run commands or wait for you. Open <strong>Agents</strong>
-        {' '}beside the map to read the sessions, search past ones and replay them.
+        or edits, as it happens, labeled with what it does, and waits in a queue at the right of the map to think, run
+        commands or wait for you. Open <strong>Agents</strong>{' '}beside the map to read the sessions, search past ones and
+        replay them step by step.
       </p>
 
       {NEXT_RELEASE.includes('characters') ? (
@@ -72,7 +73,9 @@ export default function AgentsDocs() {
         caption="Three sessions at once on BookStack: Claude Code reads three files in parallel, so it splits into three. The squares match the list."
       />
       <ul>
-        <li><strong>A character per session</strong>, on the map itself, in 3D or in the 2D plan. It hops to the file it reads, edits or searches (a search outlines the folder it searched), and stands on a closed folder&apos;s roof when the file is inside it. It steps beside the map for what is about no file: thinking, writing the reply, planning, the web, a command, waiting for your permission.</li>
+        <li><strong>A character per session</strong>, on the map itself, in 3D or in the 2D plan. It hops to the file it reads, edits or searches (a search outlines the folder it searched), and stands on a closed folder&apos;s roof when the file is inside it. Hops are quick, and it stays at least a second on each file, so you can see where it goes; an agent faster than that has shorter stays until its character catches up.</li>
+        <li><strong>A label</strong> beside each character says what it is doing: <em>reading crew.ts</em>, <em>editing store.ts</em>, <em>searching &quot;login&quot;</em>, <em>thinking</em>, <em>running a command</em>, <em>waiting for permission</em>, <em>idle</em>.</li>
+        <li><strong>The queue.</strong> Every active session has a place in a queue at the right of the map, from the top down in the order the sessions started, idle ones included; a full column starts another to its right. A character waits there for what is about no file: thinking, writing the reply, planning, the web, a command, waiting for your permission. While agents are on the map, a map you have not moved makes room for the queue; otherwise the queue stays on screen, over the map&apos;s edge.</li>
         <li><strong>Copies for parallel work.</strong> Files read or edited at the same time split the character: a copy goes to each file and comes back when its call completes.</li>
         <li><strong>A colored square</strong> over each character marks its session; the same square marks the session in the Agents list. Characters on one block stand side by side: that signals overlap, not a proven conflict.</li>
         <li><strong>Sessions</strong>, with their title and status: running, waiting, idle (a turn ended, not the session), finished. A running session lists the files of its current turn, newest first, with its square beside those its characters stand on now.</li>
@@ -91,10 +94,12 @@ export default function AgentsDocs() {
         and read them beside the map.
       </p>
       <p>
-        <strong>Replay on the map</strong>, in a finished session, plays it again alone on the map, sped up: prompts are
-        thinking, tool calls hop to the files they named, and the reply that ends a turn is written beside the map.
-        Calls made together split the character as they did. Stretches of commands that named no file go by quickly, and a
-        replay lasts at most 90 seconds (the latest steps of a long session).
+        <strong>Replay on the map</strong>, in a finished session, plays it again alone on the map: prompts are thinking,
+        tool calls hop to the files they named, and the reply that ends a turn is written in the queue. Calls made together
+        split the character as they did and count as one step. A player over the map plays and pauses the replay, steps
+        back or forward, goes to any step and changes the speed (0.5× to 8×; at 1×, a visit to a file lasts about a
+        second), and says what the agent does in the step, with full paths. Stretches of commands that named no file go by
+        quickly; a long session plays its latest 1,000 messages and calls.
       </p>
 
       <h2 id="observed" className="anchor">What is observed, and what is not</h2>
@@ -104,7 +109,7 @@ export default function AgentsDocs() {
       </p>
       <ul>
         <li>File reads and edits, patches (including both paths of a move) and the folders that searches name carry their paths.</li>
-        <li>A few literal shell reads (<code>cat</code>, <code>head</code>, <code>tail</code>, <code>sed -n</code>) and simple <code>rg</code> or <code>grep</code> searches are read as such. Pipelines, scripts and unfamiliar commands stay plain commands, with no file claimed: an agent that reads fifty files from one Python script stays beside the map, running a command.</li>
+        <li>A few literal shell reads (<code>cat</code>, <code>head</code>, <code>tail</code>, <code>sed -n</code>) and simple <code>rg</code> or <code>grep</code> searches are read as such. Pipelines, scripts and unfamiliar commands stay plain commands, with no file claimed: an agent that reads fifty files from one Python script stays in the queue, running a command.</li>
         <li>Known test commands are shown as test runs.</li>
         <li>A search marks the folder it searched, not every file it matched.</li>
         <li>A started action is an attempt; only its completion confirms it.</li>

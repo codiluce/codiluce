@@ -86,7 +86,7 @@ export default function Home() {
           <h1 id="hero-title">Bring your code to light</h1>
           <p className="hero-lede">
             Codiluce helps engineers understand their code and its architecture while agents keep changing it: every flow
-            from the interface to the data, every commit, and every file an agent touches, linked by evidence.
+            from the interface to the data, every commit, and every file an agent touches, you now get it.
           </p>
           <InstallCommand />
           <div className="hero-actions">
@@ -157,13 +157,13 @@ export default function Home() {
               <div className="agent-card-text">
                 <h3>Watch them work <NextTag feature="characters" /></h3>
                 <p>
-                  Every session is a little character on the map. It hops to each file it reads or edits, splits into copies to
-                  read several at once, and steps beside the map to think, run the tests or wait for you. A colored square ties
-                  it to its session in <strong>Agents</strong>.
+                  Every session is a little character on the map. It hops to each file it reads or edits, labeled with what it
+                  does, splits into copies to read several at once, and waits in a queue beside the map to think, run the tests
+                  or wait for you. A colored square ties it to its session in <strong>Agents</strong>.
                 </p>
                 <ul className="ticks">
                   <li>Open a session to keep only its characters; point at one to dim the others</li>
-                  <li>Search past sessions by message or by the files they touched, and replay a finished one on the map<NextTag feature="sessions" /></li>
+                  <li>Search past sessions by message or by the files they touched, and replay a finished one on the map, step by step<NextTag feature="sessions" /></li>
                   <li>Only paths, searches and tool names are kept, in memory: never prompts, file contents or output</li>
                 </ul>
                 <Link href="/docs/agents/" className="text-link">Agents →</Link>
@@ -284,7 +284,7 @@ export default function Home() {
         <div className="container final-inner">
           <div className="final-mark-wrap" aria-hidden="true"><EclipseMark className="final-mark" /></div>
           <h2 id="final-title">See your repository in a minute.</h2>
-          <InstallCommand methods={['npx', 'npm', 'source']} />
+          <InstallCommand methods={['npx', 'npm', 'agent', 'source']} />
           <Link href="/docs/" className="text-link">Getting started →</Link>
         </div>
       </section>

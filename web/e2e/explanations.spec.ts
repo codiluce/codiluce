@@ -30,6 +30,55 @@ test('explanations: asking without a key says where the key goes, and the questi
   await expect(column(page).locator('.context-chip')).toHaveCount(1);
   await expect(column(page).getByRole('button', { name: 'Copy for agent' })).toBeVisible();
 });
+test('explanations: a template fills the question, Tab moves between its placeholders, and the inspector offers them for the selection', async ({ page }) => {
+  await page.goto('/#explain=list');
+  const question = column(page).getByRole('textbox', { name: 'Question' });
+  const button = column(page).getByRole('button', { name: 'Templates', exact: true });
+  const dialog = page.getByRole('dialog', { name: 'Start from a template' });
+  const note = column(page).locator('.template-note');
+  // While the box is empty, Templates is the primary action, and a few are offered above it.
+  await expect(button).toHaveClass(/primary/);
+  await column(page).getByRole('group', { name: 'Start from a template' }).getByRole('button', { name: 'Security review' }).click();
+  await expect(question).toHaveValue(/^Review \[file, folder or flow\] for security issues/);
+  await expect(button).not.toHaveClass(/primary/);
+  // The dialog: categories, then a card per template.
+  await button.click();
+  await dialog.getByRole('button', { name: /^Risks/ }).click();
+  await expect(dialog.locator('.template-card')).toHaveCount(5);
+  await dialog.getByRole('button', { name: /Track down a bug/ }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(question).toHaveValue(/^Something goes wrong: \[symptom, e\.g\. the order total is wrong after a refund\]\. Where/);
+  await expect(note).toContainText('[symptom, e.g. the order total is wrong after a refund]');
+  // The placeholder is selected: typing replaces it.
+  await page.keyboard.type('logins fail');
+  await expect(question).toHaveValue(/^Something goes wrong: logins fail\. Where/);
+  await expect(note).toHaveCount(0);
+  // "/" in an empty box opens them; Enter takes the first match.
+  await question.fill('');
+  await question.press('/');
+  await expect(dialog).toBeVisible();
+  await page.keyboard.type('two parts');
+  await expect(dialog.locator('.template-card')).toHaveCount(1);
+  await page.keyboard.press('Enter');
+  await expect(question).toHaveValue(/^How is \[first part\] connected to \[second part\]\?/);
+  await expect(note).toContainText('[first part] and 1 more');
+  await page.keyboard.type('the login form');
+  await question.press('Tab');
+  // @ fills a placeholder with code from the index, and attaches it.
+  await page.keyboard.type('@AuthCon');
+  await column(page).getByRole('listbox', { name: 'Attach' }).getByRole('option').first().click();
+  await expect(question).toHaveValue(/^How is the login form connected to AuthController\S*\?/);
+  await expect(column(page).locator('.context-chip')).toHaveCount(1);
+  await expect(note).toHaveCount(0);
+  // The inspector's ⋯ asks the templates that suit the selection about it.
+  await page.goto('/#explain=2026-10-14-how-login-works-e2e0');
+  await page.reload();
+  await column(page).getByRole('link', { name: 'login', exact: true }).click();
+  await inspector(page).getByRole('button', { name: '⋯' }).click();
+  await inspector(page).getByRole('menuitem', { name: 'Look for bugs in it' }).click();
+  await expect(question).toHaveValue(/^Look for likely bugs in login: unhandled errors/);
+  await expect(column(page).locator('.context-chip')).toHaveText(/login/);
+});
 test('explanations: an agent at work shows on the button and in the column before it saves anything', async ({ page }) => {
   const now = new Date().toISOString();
   const work = { startedAt: now, updatedAt: now, title: 'How login works', question: 'How does login work?', steps: [{ text: 'flow flow:POST /auth/login', at: now }], count: 1 };

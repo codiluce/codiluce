@@ -20,6 +20,7 @@ import { activityDirectory, readActivity, WORK_TIMEOUT_MS } from '../src/explana
 import { createInspectionServer } from '../src/api/server.js';
 import { AnthropicChat, ChatService, anthropicCost, type ChatProvider, type ProviderRequest } from '../src/explanations/chat.js';
 import { agentPrompt, chatQuestion, MCP_PROMPTS } from '../src/explanations/prompts.js';
+import { fillTemplate, placeholdersIn, templateArguments, templateById, TEMPLATES } from '../src/explanations/templates.js';
 import type { AskEvent, ExplanationRecord } from '../src/explanations/model.js';
 import { composeTour, sceneProblems, scenesOf } from '../src/explanations/scenes.js';
 import { FIXTURE_CONFIG } from './history-fixture.js';
@@ -292,11 +293,18 @@ test('MCP: initialize negotiates, lists tools with hints and prompts, and report
     assert.equal((await send({ jsonrpc: '2.0', id: 5, method: 'tools/call', params: { name: 'nope' } }))!.error!.code, -32602);
     assert.equal((await send({ jsonrpc: '2.0', id: 6, method: 'unknown/method' }))!.error!.code, -32601);
     assert.equal((await session.receive('not json') as { error: { code: number } }).error.code, -32700);
-    const prompts = (await send({ jsonrpc: '2.0', id: 7, method: 'prompts/list' }))!.result!.prompts as { name: string }[];
-    assert.deepEqual(prompts.map(prompt => prompt.name), MCP_PROMPTS.map(prompt => prompt.name));
+    const prompts = (await send({ jsonrpc: '2.0', id: 7, method: 'prompts/list' }))!.result!.prompts as { name: string; arguments: { name: string; required: boolean }[] }[];
+    assert.deepEqual(prompts.slice(0, MCP_PROMPTS.length).map(prompt => prompt.name), MCP_PROMPTS.map(prompt => prompt.name));
+    assert.equal(new Set(prompts.map(prompt => prompt.name)).size, prompts.length, 'the templates the prompts already ask are not listed twice');
+    assert.deepEqual(prompts.find(prompt => prompt.name === 'explain-connection')!.arguments.map(argument => argument.name), ['first_part', 'second_part']);
     assert.equal((await send({ jsonrpc: '2.0', id: 8, method: 'prompts/get', params: { name: 'explain-flow' } }))!.error!.code, -32602);
     const prompt = (await send({ jsonrpc: '2.0', id: 9, method: 'prompts/get', params: { name: 'explain-flow', arguments: { flow: 'POST /auth/login' } } }))!.result!;
     assert.match(JSON.stringify(prompt), /flow:POST \/auth\/login/);
+    // A template is a prompt too: its placeholders are its arguments, all required.
+    assert.equal((await send({ jsonrpc: '2.0', id: 10, method: 'prompts/get', params: { name: 'explain-security', arguments: {} } }))!.error!.message, 'The path argument is required');
+    const security = (await send({ jsonrpc: '2.0', id: 11, method: 'prompts/get', params: { name: 'explain-security', arguments: { path: 'backend/app' } } }))!.result! as { messages: { content: { text: string } }[] };
+    assert.match(security.messages[0]!.content.text, /^Review backend\/app for security issues/);
+    assert.match(security.messages[0]!.content.text, /publish_explanation` \(subject: kind "entity", ref "backend\/app"\)/);
   } finally { session.close(); }
 });
 
@@ -363,6 +371,29 @@ test('activity: only explicit explanation requests start work; ordinary reads an
   await rm(old);
 });
 
+test('templates: placeholders to fill, as prompt arguments, filled from the selection or by name', () => {
+  assert.equal(new Set(TEMPLATES.map(template => template.id)).size, TEMPLATES.length);
+  for (const template of TEMPLATES) {
+    if (template.code) assert.ok(placeholdersIn(template.text).some(blank => blank.text === template.code), `${template.id}: its code placeholder is in its text`);
+    if (template.selection) assert.ok(template.code, `${template.id}: offered for a selection, so it has a code placeholder to fill`);
+  }
+  const debug = templateById('debug')!;
+  // A Markdown link is not a placeholder; with a template, only its own placeholders count.
+  assert.deepEqual(placeholdersIn('See [it](a.ts) and [this]').map(blank => blank.text), ['this']);
+  assert.deepEqual(placeholdersIn(`[mine] ${debug.text}`, debug).map(blank => blank.text), ['symptom, e.g. the order total is wrong after a refund']);
+  assert.deepEqual(templateArguments(debug), [{ name: 'symptom', description: 'Symptom, e.g. the order total is wrong after a refund' }]);
+  assert.match(fillTemplate(debug, { symptom: 'logins fail' }), /^Something goes wrong: logins fail\. /);
+  assert.equal(fillTemplate(debug, {}), debug.text);
+  const security = templateById('security')!;
+  assert.match(chatQuestion({ kind: 'template', template: security, ref: LOGIN_FORM, label: 'LoginForm.tsx' }), /^Review \[LoginForm\.tsx\]\(frontend\/src\/components\/LoginForm\.tsx\) for security issues/);
+  assert.match(chatQuestion({ kind: 'template', template: security, ref: LOGIN_FORM, label: 'LoginForm.tsx' }, { plain: true }), /^Review LoginForm\.tsx for security issues/);
+  const prompt = agentPrompt({ kind: 'template', template: security, ref: LOGIN_FORM, label: 'LoginForm.tsx', type: 'file' });
+  assert.match(prompt, /^Review the file LoginForm\.tsx \(frontend\/src\/components\/LoginForm\.tsx\) for security issues/);
+  assert.match(prompt, /Start with `entity` or `flow` on it/);
+  assert.match(prompt, /subject: kind "entity", ref "frontend\/src\/components\/LoginForm\.tsx"/);
+  assert.match(agentPrompt({ kind: 'template', template: templateById('architecture')! }), /subject kind "overview"/);
+  assert.match(agentPrompt({ kind: 'template', template: debug }), /subject kind "question"/);
+});
 test('prompts name what to explain, how to start, and how to publish', () => {
   const prompt = agentPrompt({ kind: 'entity', ref: 'a/b.ts', label: 'b.ts', type: 'file' }, { setup: 'claude mcp add codiluce -- npx -y codiluce mcp' });
   assert.match(prompt, /Explain the file b\.ts \(a\/b\.ts\)/);

@@ -4,7 +4,7 @@ import type { ActivityEvent, AgentSession } from '@engine/activity/model';
 import type { NodeSummary } from '@engine/projection/dto';
 import { changeLine, planBeat } from '../lib/beat';
 import { project, projectedBounds, setFlat, worldToScreen } from '../lib/camera';
-import { Cast, crewEvent, REPLAY_MS, sessionReplay, YARD, yardFor } from '../lib/crew';
+import { Cast, crewEvent, doing, DWELL_MS, HOP_MS, labelOf, QUEUE, sessionReplay } from '../lib/crew';
 import { focusLayout, morph, sceneHierarchy } from '../lib/focus-layout';
 import { mergeArrows, selectionSet } from '../lib/focus-set';
 import { placeLabels, overlaps, type LabelAsk } from '../lib/labels';
@@ -120,10 +120,10 @@ test('observations become what the characters do: a prompt is thinking, a plan t
   assert.deepEqual([read.kind, read.targets, read.title, read.t], ['read', ['src/b.ts'], 'Fix the map', 10]);
 });
 
-test('a saved session replays as the cast: prompts think, calls hop to their files, and the turn ends writing the reply', () => {
+test('a saved session replays as the cast, step by step: prompts think, calls hop to their files, and every visit lasts a second', () => {
   const at = (s: number) => new Date(Date.UTC(2026, 9, 17, 10, 0, s)).toISOString();
   const file = (path: string, action: 'read' | 'edited' = 'read') => ({ path, scope: 'file' as const, action, id: path, ancestors: ['repo'] });
-  const played = sessionReplay({ id: 'claude-code:s1', provider: 'claude-code', sessionId: 's1', title: 'Fix the map', truncated: false, steps: [
+  const { events: played, marks, end } = sessionReplay({ id: 'claude-code:s1', provider: 'claude-code', sessionId: 's1', title: 'Fix the map', truncated: false, steps: [
     { role: 'user', at: at(0), paths: [] },
     { role: 'assistant', at: at(2), paths: [] },
     { role: 'tool', at: at(3), tool: 'Read', callId: 'a', status: 'completed', paths: [file('src/b.ts')] },
@@ -141,96 +141,125 @@ test('a saved session replays as the cast: prompts think, calls hop to their fil
   assert.ok(c!.t < bEnd.t && bEnd.t < editStart.t);
   assert.equal(played.find(ev => ev.id === `${editStart.id}:end`)!.phase, 'failed');
   assert.equal(played.at(-1)!.status, 'finished');
-  // A long session plays at most REPLAY_MS.
-  const long = sessionReplay({ id: 'codex:x', provider: 'codex', sessionId: 'x', title: '', truncated: false, steps: Array.from({ length: 2000 }, (_, i) => ({ role: 'tool' as const, at: at(i * 30), tool: 'Read', callId: String(i), paths: [file('src/b.ts')] })) }, 0);
-  assert.ok(long.at(-1)!.t <= REPLAY_MS + 2000, String(long.at(-1)!.t));
+  // Each step is a mark to step to, saying what the agent does, with full paths; calls made together are one step.
+  assert.deepEqual(marks.map(mark => mark.text), ['Thinking', 'Reading src/b.ts and src/c.ts', 'Editing src/c.ts', 'Running a command', 'Writing the reply', 'The session ends']);
+  assert.equal(marks[2]!.failed, true);
+  assert.deepEqual(marks.map(mark => mark.t), played.filter(ev => ev.phase !== 'completed' && ev.phase !== 'failed' && ev !== c).map(ev => ev.t));
+  // A visit to a file lasts at least a hop and a second before the character goes on.
+  const bash = played.find(ev => ev.kind === 'command' && ev.phase === 'started')!;
+  assert.ok(editStart.t - b!.t >= HOP_MS + DWELL_MS && bash.t - editStart.t >= HOP_MS + DWELL_MS);
+  assert.ok(end > played.at(-1)!.t);
+  // Played by the cast, nothing waits: each step happens at its mark.
+  const cast = new Cast(() => 'red', true);
+  cast.push(played);
+  for (const mark of marks) { cast.advance(mark.t); assert.equal(cast.pending, played.filter(ev => ev.t > mark.t).length, mark.text); }
 });
 
+const read = (id: string, t: number, tool: string, path: string) => crewEvent(event(id, t, { kind: 'read', phase: 'started', label: 'Read file', toolId: tool, status: 'running', paths: [{ path, scope: 'file', id: path }] }), t, sessions)!;
+const done = (id: string, t: number, tool: string) => crewEvent(event(id, t, { kind: 'read', phase: 'completed', label: 'Read file', toolId: tool, status: 'running' }), t, sessions)!;
 test('files worked on at the same time split the character: a copy goes to each, and comes back when its call ends', () => {
-  const map = scene();
-  const root = map.nodes.get('repo')!.rect;
-  const cast = new Cast(id => map.nodes.get(id)?.rect, () => root, () => 'red', false);
-  const read = (id: string, t: number, tool: string, path: string) => crewEvent(event(id, t, { kind: 'read', phase: 'started', label: 'Read file', toolId: tool, status: 'running', paths: [{ path, scope: 'file', id: path }] }), t, sessions)!;
-  const done = (id: string, t: number, tool: string) => crewEvent(event(id, t, { kind: 'read', phase: 'completed', label: 'Read file', toolId: tool, status: 'running' }), t, sessions)!;
+  const cast = new Cast(() => 'red', false);
   cast.push([read('1', 100, 'a', 'src/b.ts'), read('2', 120, 'b', 'src/c.ts'), read('3', 140, 'c', 'web/y.ts'), done('4', 400, 'b')]);
   cast.advance(150);
   const actor = cast.actors.get('claude-code:s1')!;
   assert.equal(actor.target, 'src/b.ts', 'the character stays on its first file');
   assert.deepEqual(actor.clones.map(clone => clone.target), ['src/c.ts', 'web/y.ts']);
+  // Each says what it reads.
+  assert.deepEqual([labelOf(actor), ...actor.clones.map(clone => doing(clone.kind as 'read', clone.detail))], ['reading b.ts', 'reading c.ts', 'reading y.ts']);
   cast.advance(500);
   // The copy on c.ts ended (after a short dwell, so it is seen); the one on y.ts still works.
   assert.ok(actor.clones.find(clone => clone.target === 'src/c.ts')!.end! >= 120 + 1000);
   assert.equal(actor.clones.find(clone => clone.target === 'web/y.ts')!.end, undefined);
-  // One call after the other is a hop, not a split.
+  // One call after the other is a hop, not a split, once the visit has lasted a hop and a second.
   cast.push([done('5', 600, 'a'), done('6', 600, 'c'), read('7', 700, 'd', 'src/d.ts')]);
   cast.advance(700);
+  assert.equal(actor.target, 'src/b.ts', 'the next file waits for the visit to end');
+  cast.advance(100 + HOP_MS + DWELL_MS);
   assert.equal(actor.target, 'src/d.ts');
 });
 
 test('a harness that reports only completed calls still sends its character to the file', () => {
-  const map = scene();
-  const root = map.nodes.get('repo')!.rect;
-  const cast = new Cast(id => map.nodes.get(id)?.rect, () => root, () => 'red', false);
+  const cast = new Cast(() => 'red', false);
   const completed = (id: string, t: number, tool: string, path: string) => crewEvent(event(id, t, { kind: 'read', phase: 'completed', label: 'Read file', toolId: tool, status: 'running', paths: [{ path, scope: 'file', id: path }] }), t, sessions)!;
   cast.push([completed('1', 100, 'a', 'src/b.ts'), completed('2', 900, 'b', 'web/y.ts')]);
   cast.advance(150);
   const actor = cast.actors.get('claude-code:s1')!;
   assert.deepEqual([actor.target, actor.pose], ['src/b.ts', 'read']);
   cast.advance(950);
+  assert.equal(actor.target, 'src/b.ts');
+  cast.advance(100 + HOP_MS + DWELL_MS);
   assert.equal(actor.target, 'web/y.ts');
   assert.equal(actor.clones.length, 0, 'calls reported one after the other do not split it');
 });
 
-test('the cast hops to the files it reads and steps outside, beside the nearest edge, for what is about no file', () => {
-  const map = scene();
-  const root = map.nodes.get('repo')!.rect;
-  const cast = new Cast(id => map.nodes.get(id)?.rect, () => root, () => 'red', false);
-  const sessionsNow = sessions;
-  const at = (id: string, t: number, extra: Partial<ActivityEvent>) => crewEvent(event(id, t, extra), t, sessionsNow)!;
+test('the cast hops to the files it works on and waits in its place in the queue for what is about no file, saying what it does', () => {
+  const cast = new Cast(() => 'red', false);
+  const at = (id: string, t: number, extra: Partial<ActivityEvent>) => crewEvent(event(id, t, extra), t, sessions)!;
   cast.push([
-    at('1', 100, { kind: 'read', phase: 'started', label: 'Read file', toolId: 'r', paths: [{ path: 'web/y.ts', scope: 'file', id: 'web/y.ts' }] }),
-    at('2', 200, { kind: 'read', phase: 'completed', label: 'Read file', toolId: 'r', paths: [] }),
+    at('1', 100, { kind: 'search', phase: 'started', label: 'Search', tool: 'Grep', toolId: 'r', query: 'login', paths: [{ path: 'web', scope: 'directory', id: 'web' }] }),
+    at('2', 200, { kind: 'search', phase: 'completed', label: 'Search', toolId: 'r', paths: [] }),
     at('3', 300, { label: 'UserPromptSubmit', status: 'running' }),
-    at('4', 400, { kind: 'command', phase: 'started', label: 'Run command', toolId: 'c' }),
-    at('5', 2000, { status: 'finished', label: 'SessionEnd' }),
+    at('4', 400, { kind: 'command', phase: 'started', label: 'Run command', tool: 'Bash', toolId: 'c' }),
+    at('5', 4000, { status: 'idle', label: 'Stop' }),
+    at('6', 8000, { status: 'finished', label: 'SessionEnd' }),
   ]);
   cast.advance(150);
   const actor = cast.actors.get('claude-code:s1')!;
-  assert.equal(actor.target, 'web/y.ts');
-  assert.equal(actor.pose, 'read');
+  assert.deepEqual([actor.target, actor.pose, labelOf(actor)], ['web', 'search', 'searching "login"']);
+  // The prompt waits for the visit to end; then the character goes back to its place in the queue.
   cast.advance(350);
-  assert.equal(actor.target, `${YARD}claude-code:s1`);
-  assert.equal(actor.pose, 'think');
-  // web/y.ts is nearest the top edge: the mat is above the map.
-  const yard = cast.yards.get(actor.target!)!;
-  assert.deepEqual(yard, yardFor(root, map.nodes.get('web/y.ts')!.rect, actor.slot));
-  assert.ok(yard.y < root.y);
-  cast.advance(500);
-  assert.equal(actor.pose, 'command');
-  cast.advance(2100);
+  assert.equal(actor.target, 'web');
+  cast.advance(100 + HOP_MS + DWELL_MS);
+  assert.deepEqual([actor.target, actor.pose, labelOf(actor)], [`${QUEUE}claude-code:s1`, 'think', 'thinking']);
+  assert.deepEqual(actor.move, { from: 'web', to: `${QUEUE}claude-code:s1`, start: 100 + HOP_MS + DWELL_MS, dur: HOP_MS }, 'a quick hop');
+  cast.advance(3000);
+  assert.deepEqual([actor.pose, labelOf(actor)], ['command', 'running a command']);
+  cast.advance(4100);
+  assert.deepEqual([actor.target, labelOf(actor)], [`${QUEUE}claude-code:s1`, 'idle'], 'an idle session keeps its place');
+  cast.advance(8100);
   assert.equal(actor.pose, 'wave');
-  cast.advance(10_000);
-  assert.equal(cast.actors.size, 0);
+  cast.advance(20_000);
+  assert.equal(cast.actors.size, 0, 'a finished session leaves the queue');
 });
 
-test('an agent with no observed file starts outside and appears when the map finishes loading', () => {
-  const map = scene();
-  let root: NodeSummary['rect'] | undefined;
-  const cast = new Cast(id => map.nodes.get(id)?.rect, () => root, () => 'red', true);
-  cast.push([crewEvent(event('command', 100, { kind: 'command', phase: 'started', toolId: 'c', status: 'running' }), 100, sessions)!]);
+test('an agent starts in its place in the queue, and hops to its first file from there', () => {
+  const cast = new Cast(() => 'red', true);
+  cast.push([crewEvent(event('command', 100, { kind: 'command', phase: 'started', toolId: 'c', status: 'running', tool: 'mcp__codiluce__search' }), 100, sessions)!]);
   cast.advance(100);
   const actor = cast.actors.get('claude-code:s1')!;
-  assert.equal(actor.target, undefined);
-  root = map.nodes.get('repo')!.rect;
-  cast.advance(200);
-  assert.equal(actor.target, `${YARD}claude-code:s1`);
-  const mat = cast.rectOf(actor.target!)!;
-  assert.ok(mat.x > root.x + root.w || mat.x + mat.w < root.x || mat.y > root.y + root.h || mat.y + mat.h < root.y);
-  assert.equal(actor.lastFile, undefined, 'no file activity is invented');
-  assert.equal(actor.pose, 'command');
+  assert.deepEqual([actor.target, actor.pose, labelOf(actor)], [`${QUEUE}claude-code:s1`, 'command', 'using codiluce search']);
   cast.push([crewEvent(event('read', 300, { kind: 'read', phase: 'started', paths: [{ path: 'src/b.ts', scope: 'file', id: 'src/b.ts' }] }), 300, sessions)!]);
   cast.advance(300);
-  assert.deepEqual([actor.target, actor.pose, actor.lastFile], ['src/b.ts', 'read', 'src/b.ts']);
+  assert.deepEqual([actor.target, actor.pose, actor.move?.from], ['src/b.ts', 'read', `${QUEUE}claude-code:s1`]);
+});
+
+test('a live agent faster than its character: visits shorten as the character falls behind, so it keeps up', () => {
+  const cast = new Cast(() => 'red', false);
+  const files = ['src/b.ts', 'src/c.ts', 'src/d.ts', 'web/y.ts'];
+  // Forty reads in four seconds, one after the other.
+  cast.push(Array.from({ length: 40 }, (_, i) => [read(`s${i}`, 100 + i * 100, `t${i}`, files[i % 4]!), done(`e${i}`, 150 + i * 100, `t${i}`)]).flat());
+  const actor = () => cast.actors.get('claude-code:s1')!;
+  cast.advance(100 + HOP_MS + DWELL_MS - 1);
+  assert.equal(actor().target, 'src/b.ts', 'the first visits last a hop and a second');
+  let t = 0;
+  while (cast.pending && t < 60_000) cast.advance(t += 50);
+  // Forty full visits would take 52 s.
+  assert.ok(t < 25_000, `caught up at ${t} ms`);
+  // What was already done when the map opened plays at once.
+  const seeded = new Cast(() => 'red', false);
+  seeded.push(Array.from({ length: 10 }, (_, i) => [read(`p${i}`, 100 + i * 2, `p${i}`, files[i % 4]!), done(`q${i}`, 101 + i * 2, `p${i}`)]).flat().map(ev => ({ ...ev, instant: true })));
+  seeded.advance(200);
+  assert.equal(seeded.pending, 0);
+  assert.equal(seeded.actors.get('claude-code:s1')!.target, files[9 % 4]);
+});
+
+test('labels say what an agent does in a few words', () => {
+  assert.equal(doing('read', 'web/lib/crew.ts'), 'reading crew.ts');
+  assert.equal(doing('edit', 'web/lib/a-very-long-file-name-for-a-label.ts'), 'editing a-very-long-file-name-for…');
+  assert.equal(doing('search', 'web/lib/'), 'searching lib/');
+  assert.equal(doing('command', undefined, 'Bash'), 'running a command');
+  assert.equal(doing('web', undefined, 'WebFetch'), 'reading a web page');
+  assert.deepEqual((['think', 'reply', 'wait', 'sit', 'sleep', 'wave', 'test'] as const).map(pose => doing(pose)), ['thinking', 'writing the reply', 'waiting for permission', 'idle', 'idle', 'finished', 'running tests']);
 });
 
 test('the map projection is a saved preference, 3D by default, and every map draws in it', async () => {
