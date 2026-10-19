@@ -137,7 +137,8 @@ async function fakeAgents(): Promise<{ bin: string; home: string; calls: (agent:
   await mkdir(bin);
   await mkdir(path.join(home, '.cursor'));
   for (const [name, version] of [['claude', '2.1.299 (Claude Code)'], ['codex', 'codex-cli 0.162.1']] as const) {
-    await writeFile(path.join(bin, name), `#!/bin/sh\ncase "$1 $2" in "--version "*) echo "${version}";; "mcp get") exit 1;; *) echo "$@" >> "${home}/${name}.log";; esac\n`);
+    // `codex mcp get --json` prints codex-server.json, as if added earlier.
+    await writeFile(path.join(bin, name), `#!/bin/sh\ncase "$1 $2" in "--version "*) echo "${version}";; "mcp get") cat "${home}/${name}-server.json" 2>/dev/null || exit 1;; *) echo "$@" >> "${home}/${name}.log";; esac\n`);
     await chmod(path.join(bin, name), 0o755);
   }
   return { bin, home, calls: async agent => readFile(path.join(home, `${agent}.log`), 'utf8').catch(() => '') };
@@ -156,9 +157,17 @@ test('agents: the MCP command fits the install, and agents are connected through
   const fake = await fakeAgents();
   const root = await folder();
   await withEnv({ PATH: `${fake.bin}${path.delimiter}${process.env.PATH}`, HOME: fake.home }, async () => {
-    const agents = await detectAgents(root);
-    assert.deepEqual(agents.filter(agent => ['claude', 'codex', 'cursor'].includes(agent.id)).map(agent => [agent.id, agent.installed, agent.connected]), [['claude', true, false], ['codex', true, false], ['cursor', true, false]]);
+    const install = { toolDirectory: tool, kind: 'npx' as const };
+    const states = async () => (await detectAgents(root, install)).filter(agent => ['claude', 'codex', 'cursor'].includes(agent.id)).map(agent => [agent.id, agent.installed, agent.connected, agent.elsewhere]);
+    assert.deepEqual(await states(), [['claude', true, false, undefined], ['codex', true, false, undefined], ['cursor', true, false, undefined]]);
     for (const agent of ['claude', 'codex', 'cursor'] as const) await connectAgent(agent, tool, 'npx', root);
+    // Connected only when the server serves this repository through this install.
+    await writeFile(path.join(fake.home, '.claude.json'), JSON.stringify({ projects: { [root]: { mcpServers: { codiluce: { command: 'npx', args: ['-y', 'codiluce', 'mcp', '--repo', '/elsewhere/shop'] } } } } }));
+    await writeFile(path.join(fake.home, 'codex-server.json'), JSON.stringify({ name: 'codiluce', transport: { type: 'stdio', command: 'node', args: ['/old/codiluce/bin/codiluce.js', 'mcp'] } }));
+    assert.deepEqual(await states(), [['claude', true, false, 'connected to shop'], ['codex', true, false, 'connected through another Codiluce install'], ['cursor', true, true, undefined]]);
+    await writeFile(path.join(fake.home, '.claude.json'), JSON.stringify({ projects: { [root]: { mcpServers: { codiluce: { command: 'npx', args: ['-y', 'codiluce', 'mcp', '--repo', root] } } } } }));
+    await writeFile(path.join(fake.home, 'codex-server.json'), JSON.stringify({ name: 'codiluce', transport: { type: 'stdio', command: 'npx', args: ['-y', 'codiluce', 'mcp', '--repo', root] } }));
+    assert.deepEqual(await states(), [['claude', true, true, undefined], ['codex', true, true, undefined], ['cursor', true, true, undefined]], 'Codex bound to this repository serves it too');
   });
   assert.match(await fake.calls('claude'), new RegExp(`mcp add -s local codiluce -- npx -y codiluce mcp --repo ${root.replace(/[/\\]/g, '.')}`));
   assert.match(await fake.calls('codex'), /mcp add codiluce -- npx -y codiluce mcp\n/, 'Codex follows its working directory');

@@ -8,9 +8,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ChatService } from './chat.js';
 import { readActivity } from './activity.js';
-import type { AgentActivityList, AskEvent, ExplanationsSetup } from './model.js';
+import type { AgentActivityList, AgentConnectionList, AskEvent, ExplanationsSetup } from './model.js';
 import { ReadOnlyError, type ExplanationService } from './service.js';
-import { mcpLaunch, shellLine } from '../setup/agents.js';
+import { detectAgents, mcpLaunch, shellLine, type Install } from '../setup/agents.js';
 import { installKind } from '../setup/settings.js';
 
 export const EXPLAIN_REQUEST = 'explain';
@@ -26,6 +26,8 @@ export async function handleExplanationRoute(context: ExplanationRoutes, request
     if (method === 'GET') {
       if (!rest) return send(200, await service.list());
       if (rest === 'setup') return send(200, setup(context));
+      // The agents on this computer and whether each already reaches this repository (about a second: their CLIs are asked).
+      if (rest === 'agents') return send(200, await connections(context));
       // Agents connected over MCP and what they are explaining right now (polled every few seconds: files only, no index work).
       if (rest === 'activity') return send(200, { items: readActivity(context.stateDirectory) } satisfies AgentActivityList);
       const entity = /^entity\/([^/]+)$/.exec(rest);
@@ -67,17 +69,29 @@ async function ask(chat: ChatService, body: unknown, response: ServerResponse): 
   } finally { finished = true; response.end(); }
 }
 
+/** This server's install, which agents connect to. */
+function install(context: ExplanationRoutes): Install {
+  const root = context.service.root;
+  const toolDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+  const state = root && path.resolve(context.stateDirectory) !== path.join(root, '.codiluce') ? path.resolve(context.stateDirectory) : undefined;
+  return { toolDirectory, kind: installKind(toolDirectory, root), ...(state ? { stateDirectory: state } : {}) };
+}
+async function connections(context: ExplanationRoutes): Promise<AgentConnectionList> {
+  const root = context.service.root;
+  if (!root) return { items: [] };
+  const agents = await detectAgents(root, install(context));
+  return { items: agents.filter(agent => agent.installed || agent.connected).map(agent => ({ id: agent.id, name: agent.name, connected: agent.connected, ...(agent.elsewhere ? { elsewhere: agent.elsewhere } : {}) })) };
+}
 /** How to reach explanations from here: writing allowed, models with keys, and the command that connects an agent. */
 function setup(context: ExplanationRoutes): ExplanationsSetup {
   const root = context.service.root;
-  const tool = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-  const kind = installKind(tool, root);
-  const state = root && path.resolve(context.stateDirectory) !== path.join(root, '.codiluce') ? path.resolve(context.stateDirectory) : undefined;
+  const { toolDirectory: tool, kind, stateDirectory: state } = install(context);
   const project = mcpLaunch(tool, kind, { ...(root ? { repo: root } : {}), ...(state ? { stateDirectory: state } : {}) });
   const line = shellLine(project);
   return {
     readOnly: context.service.readOnly, ...(root ? { root } : {}),
-    mcp: { command: project.command, args: project.args, claude: `claude mcp add codiluce -- ${line}`, codex: `codex mcp add codiluce -- ${line}` },
+    // Codex keeps one list for every repository, so its server follows the folder it works in (as setup connects it).
+    mcp: { command: project.command, args: project.args, claude: `claude mcp add codiluce -- ${line}`, codex: `codex mcp add codiluce -- ${shellLine(mcpLaunch(tool, kind))}` },
     models: context.chat.models(), keyFiles: context.chat.keyFiles(), maxCost: context.chat.cap,
   };
 }

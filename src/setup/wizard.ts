@@ -34,7 +34,8 @@ export interface SetupResult {
   settings: Required<RepositorySettings>;
   /** Describe now, in the background, within this cap. */
   describe?: { maxCost: number; tasks: string[]; estimate: number };
-  connected: { agent: Agent; ok: boolean; error?: string }[];
+  /** Agents connected now, or already (`already`: connected before and not chosen again). */
+  connected: { agent: Agent; ok: boolean; error?: string; already?: boolean }[];
   keys: { provider: Provider; file: string }[];
   gitignore: Awaited<ReturnType<typeof hideFromGit>>;
   git: GitFacts;
@@ -180,7 +181,8 @@ async function askAgents(w: Writer, context: SetupContext): Promise<SetupResult[
   const { c } = w;
   const looking = spinner(w);
   looking.start('Looking for coding agents…');
-  const agents = await detectAgents(context.root);
+  const stateDirectory = path.resolve(context.stateDirectory) !== path.join(context.root, '.codiluce') ? context.stateDirectory : undefined;
+  const agents = await detectAgents(context.root, { toolDirectory: context.toolDirectory, kind: context.kind, stateDirectory });
   const installed = agents.filter(agent => agent.installed);
   looking.stop(installed.length ? `Found ${installed.map(agent => agent.name).join(', ')}` : 'No coding agent found (Claude Code, Codex, Cursor)', installed.length ? 'ok' : 'skip');
   const launch = mcpLaunch(context.toolDirectory, context.kind);
@@ -191,20 +193,20 @@ async function askAgents(w: Writer, context: SetupContext): Promise<SetupResult[
   }
   const choices: Choice<AgentId>[] = agents.map(agent => ({
     value: agent.id, label: agent.name,
-    ...(agent.installed ? agent.connected ? { hint: 'already connected · select to connect it again' } : { hint: agent.scope } : { disabled: 'not found' }),
+    ...(agent.installed ? { hint: agent.connected ? 'already connected · select to connect it again' : agent.elsewhere ? `${agent.elsewhere} · selected to connect it here` : agent.scope } : { disabled: 'not found' }),
   }));
   const chosen = await multiselect<AgentId>(w, {
     message: 'Connect your agent',
     detail: 'Add Codiluce\'s MCP server, so your agent reads the index (flows, impact, history, source) and saves what it explains in the map\'s Explain column. Then ask it, for example: "Use Codiluce to explain how sign-in works, and publish it".',
     choices, initial: installed.filter(agent => !agent.connected).map(agent => agent.id), none: 'none',
   });
-  const results: SetupResult['connected'] = [];
+  const results: SetupResult['connected'] = installed.filter(agent => agent.connected && !chosen.includes(agent.id)).map(agent => ({ agent, ok: true, already: true }));
   for (const id of chosen) {
     const agent = agents.find(item => item.id === id)!;
     const connecting = spinner(w);
     connecting.start(`Connecting ${agent.name}…`);
     try {
-      await connectAgent(id, context.toolDirectory, context.kind, context.root, path.resolve(context.stateDirectory) !== path.join(context.root, '.codiluce') ? context.stateDirectory : undefined);
+      await connectAgent(id, context.toolDirectory, context.kind, context.root, stateDirectory);
       connecting.stop(`${agent.name} connected ${c.dim(`· ${agent.scope}`)}`, 'ok');
       results.push({ agent, ok: true });
     } catch (error) {
@@ -228,7 +230,7 @@ export function printSummary(w: Writer, result: SetupResult, context: SetupConte
     ['History', historyText],
     ['Models', result.keys.length ? `${result.keys.map(item => PROVIDERS[item.provider].name).join(' and ')} key saved to ${tilde(result.keys[0]!.file)}` : 'keys as found (environment or saved earlier)'],
     ['Describe', result.describe ? `now, in the background, up to $${money(result.describe.maxCost)}` : result.settings.annotations.enabled ? 'on' : 'not now'],
-    ['Agents', result.connected.filter(item => item.ok).map(item => item.agent.name).join(', ') || 'none connected'],
+    ['Agents', result.connected.filter(item => item.ok).map(item => `${item.agent.name}${item.already ? ' (already)' : ''}`).join(', ') || 'none connected'],
     ['Saved', `${state}/config.yml${result.gitignore === 'written' ? `, and ${state}/ is hidden from Git` : ''}`],
   ];
   if (result.gitignore === 'tracked') rows.push(c.red('Something in .codiluce/ is tracked by Git, so it was not hidden from Git.'));

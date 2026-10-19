@@ -8,7 +8,7 @@
 // the code it links changed since. While a connected agent works on one, the
 // column shows it from the agent's first step, until it is saved.
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { agentLabel, type AgentActivity, type ExplanationDetail, type ExplanationSummary, type ResolvedLink } from '@engine/explanations/model';
+import { agentLabel, type AgentActivity, type AgentConnection, type AgentConnectionList, type ExplanationDetail, type ExplanationSummary, type ResolvedLink } from '@engine/explanations/model';
 import { hrefForNode } from '@engine/explanations/links';
 import { placeholdersIn, templateById, TEMPLATES, type ExplainTemplate } from '@engine/explanations/templates';
 import type { NodeSummary } from '@engine/projection/dto';
@@ -64,7 +64,7 @@ function History() {
             {shown.map(item => <HistoryItem key={item.id} item={item} onOpen={() => void store.openExplanation(item.id)} />)}
           </ul>
           {words.length > 0 && !shown.length && <p className="absent">No explanation matches.</p>}
-          <details className="section connect-agent"><summary>Connect your agent</summary><ConnectAgent /></details>
+          <ConnectSection />
         </>
       )}
     </div>
@@ -103,22 +103,53 @@ function EmptyState() {
     </div>
   );
 }
-/** How to connect an agent over MCP, with a first prompt to try. */
+/** Below the list: asks which agents are connected only once it is opened. */
+function ConnectSection() {
+  const [open, setOpen] = useState(false);
+  return <details className="section connect-agent" onToggle={event => setOpen(event.currentTarget.open)}><summary>Connect your agent</summary>{open && <ConnectAgent />}</details>;
+}
+/** The agents on this computer and whether each already reaches this repository (`codiluce setup` connects them), asked when the box shows. */
+function useAgentConnections(): AgentConnection[] | 'loading' | 'error' {
+  const [items, setItems] = useState<AgentConnection[] | 'loading' | 'error'>('loading');
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/explanations/agents', { signal: controller.signal, headers: { Accept: 'application/json' } })
+      .then(async response => { if (!response.ok) throw new Error(`Request failed (${response.status})`); setItems((await response.json() as AgentConnectionList).items); })
+      .catch(() => { if (!controller.signal.aborted) setItems('error'); });
+    return () => controller.abort();
+  }, []);
+  return items;
+}
+function names(items: string[]): string { return items.length > 1 ? `${items.slice(0, -1).join(', ')} and ${items.at(-1)}` : items[0] ?? ''; }
+/** How to connect an agent over MCP (commands only for those not connected yet), with a first prompt to try. */
 function ConnectAgent({ open = false }: { open?: boolean }) {
   const setup = useAtlas(state => state.explain.setup);
   const agents = useAtlas(state => state.explain.agents);
   const prompt = useAgentPrompt();
+  const found = useAgentConnections();
   if (!setup) return null;
   const json = JSON.stringify({ mcpServers: { codiluce: { command: setup.mcp.command, args: setup.mcp.args } } }, null, 2);
-  const connected = [...new Set(agents.map(agent => agentLabel(agent.agent)))];
+  const known = Array.isArray(found) ? found : [];
+  // Set up to reach this repository, or working on it right now.
+  const connected = [...new Set([...known.filter(agent => agent.connected).map(agent => agent.name), ...agents.map(agent => agentLabel(agent.agent))])];
+  const command = (id: 'claude' | 'codex', name: string, line: string) => {
+    const agent = known.find(item => item.id === id);
+    if (agent?.connected) return null;
+    return (
+      <>
+        <p className="note">{agent?.elsewhere ? `${name} is ${agent.elsewhere}. To connect it here, in a terminal:` : `${name}, in a terminal:`}</p>
+        <div className="command-row"><code className="mono">{line}</code><CopyButton text={line} /></div>
+      </>
+    );
+  };
   return (
     <div className="connect">
       {open && <h4>Connect your agent</h4>}
-      {connected.length > 0 && <p className="agent-connected" role="status"><span className="dot" aria-hidden="true" /><span>{connected.join(', ')} {connected.length === 1 ? 'is' : 'are'} connected: what {connected.length === 1 ? 'it explains' : 'they explain'} shows here as {connected.length === 1 ? 'it works' : 'they work'}.</span></p>}
-      <p className="note">Claude Code, in a terminal:</p>
-      <div className="command-row"><code className="mono">{setup.mcp.claude}</code><CopyButton text={setup.mcp.claude} /></div>
-      <p className="note">Codex:</p>
-      <div className="command-row"><code className="mono">{setup.mcp.codex}</code><CopyButton text={setup.mcp.codex} /></div>
+      {connected.length > 0 && <p className="agent-connected" role="status"><span className="dot" aria-hidden="true" /><span>{names(connected)} {connected.length === 1 ? 'is' : 'are'} connected: what {connected.length === 1 ? 'it explains' : 'they explain'} shows here.</span></p>}
+      {found === 'loading' ? <p className="note">Checking which agents are connected…</p> : <>
+        {command('claude', 'Claude Code', setup.mcp.claude)}
+        {command('codex', 'Codex', setup.mcp.codex)}
+      </>}
       <details><summary className="note">Cursor and other MCP clients (mcp.json)</summary><div className="command-row"><pre className="mono">{json}</pre><CopyButton text={json} /></div></details>
       <p className="note">Then ask it, for example:</p>
       <div className="command-row"><span>Explain this codebase as a whole…</span><CopyButton text={() => prompt({ kind: 'overview' })} label="Copy prompt" /></div>

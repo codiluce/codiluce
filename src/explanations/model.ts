@@ -148,6 +148,13 @@ export interface ExplanationsSetup {
   keyFiles: string[];
   maxCost: number;
 }
+/** A coding agent on this computer, and whether its Codiluce server serves this repository through this install (`GET /api/explanations/agents`). */
+export interface AgentConnection {
+  id: string; name: string; connected: boolean;
+  /** It has a Codiluce server that does not: bound to another repository, or started by another install. */
+  elsewhere?: string;
+}
+export interface AgentConnectionList { items: AgentConnection[] }
 export interface ChatModelInfo { id: string; label: string; provider: 'anthropic' | 'openai'; available: boolean; default?: boolean; note?: string }
 /** An agent connected over MCP (one per agent process), as `serve` reports it: what it is explaining while it works, before anything is saved. */
 export interface AgentActivity {
