@@ -68,11 +68,12 @@ re-analyzes everything).
 start prepares the visualizer (prebuilt in npm; built if missing in a checkout), analyzes the local
 repository and opens the map in your browser. PATH defaults to the current
 directory. On a repository's first start in a terminal it asks a few questions
-(optional architecture snapshots, API keys, describing the code, connecting your
+(API keys, describing the code, connecting your
 agent); codiluce setup asks them again. --yes asks nothing; --history DEPTH
 (a number of commits, a Git date such as "6 months ago", all or none) overrides
-the architecture snapshot depth for one start. By default, file evolution is read
-directly from Git and full historical analysis runs only when requested.
+the architecture snapshot depth for one start. Setup loads all first-parent
+commits and file changes from Git automatically; later starts refresh the cache.
+Full historical analysis runs only when requested.
 Bulk snapshots run in the background only with --history or history.precompute: true. Existing configuration and analysis caches are reused. Omit --port
 to choose an available port starting at 4300; --port 0 asks the OS to choose.
 --no-open leaves browser opening to you; --build-ui rebuilds the UI in a source checkout.

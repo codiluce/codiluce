@@ -1,19 +1,20 @@
 // The first-run setup: a few questions after the first analysis (so the
-// estimates are real) and before the browser opens. History depth, API keys
-// (checked, kept outside the repository), describing the code (with its cost),
+// estimates are real) and before the browser opens. All Git commits and file
+// changes are loaded automatically. Questions cover API keys (checked, kept
+// outside the repository), describing the code (with its cost),
 // connecting agents over MCP, and whether new repositories ask again. Every
 // answer can be changed later with `codiluce setup`. Without a terminal the
 // saved settings (or safe defaults) are used, and nothing is spent.
 import path from 'node:path';
-import { cpus } from 'node:os';
 import { connectAgent, detectAgents, mcpJson, mcpLaunch, type Agent, type AgentId } from './agents.js';
 import { checkKey, keyShape, PROVIDERS, type Provider } from './keys.js';
 import {
   credentialsFile, DEFAULT_ANNOTATIONS, DEFAULT_HISTORY, findKey, gitFacts, hideFromGit, keyFiles, readRepositorySettings, readState, readUserSettings,
   SETUP_VERSION, tilde, writeDotenv, writeRepositorySettings, writeState, writeUserSettings,
-  type AnnotationSettings, type GitFacts, type HistoryDepth, type HistorySettings, type InstallKind, type RepositorySettings,
+  type AnnotationSettings, type GitFacts, type HistorySettings, type InstallKind, type RepositorySettings,
 } from './settings.js';
-import { about, confirm, multiselect, select, spinner, text, type Choice, type Writer } from './terminal.js';
+import { prepareGitHistory } from './history.js';
+import { multiselect, select, spinner, text, type Choice, type Writer } from './terminal.js';
 
 /** What describing the code would cost now, from the offline estimate (`annotate --estimate`). */
 export interface DescribeEstimate { total: number; tasks: { task: string; pending: number; model: string }[] }
@@ -26,6 +27,8 @@ export interface SetupContext {
   base?: { repository: unknown; applications: unknown; maxFileBytes: number };
   estimateDescriptions?: () => Promise<DescribeEstimate | undefined>;
   env?: NodeJS.ProcessEnv;
+  /** Load Git history without persisting the file delta cache. */
+  readOnly?: boolean;
 }
 export interface SetupResult {
   settings: Required<RepositorySettings>;
@@ -35,12 +38,13 @@ export interface SetupResult {
   keys: { provider: Provider; file: string }[];
   gitignore: Awaited<ReturnType<typeof hideFromGit>>;
   git: GitFacts;
+  /** Number of Git commits whose file changes were loaded successfully. */
+  fileCommits?: number;
   /** Asked now (false: the saved settings or the defaults were used). */
   asked: boolean;
 }
 /** Tasks run on the first description: those that need no history (commits and chapters wait for `codiluce annotate`). */
 export const FIRST_TASKS = ['files', 'flows', 'folders', 'domains', 'overview'];
-const JOBS = Math.min(6, Math.max(1, Math.floor(cpus().length / 2)));
 
 /** The setup is due on a repository's first start (and once after the upgrade that brought it). */
 export function setupDue(stateDirectory: string): boolean { return (readState(stateDirectory).setup ?? 0) < SETUP_VERSION; }
@@ -66,7 +70,7 @@ export async function runSetup(w: Writer, context: SetupContext, options: { mode
   const git = await gitFacts(context.root);
   const ask = options.mode === 'ask';
   const files = keyFiles(context.stateDirectory, context.kind === 'checkout' ? context.toolDirectory : undefined, env);
-  let history: HistorySettings = saved.history ?? user.defaults?.history ?? DEFAULT_HISTORY;
+  const history: HistorySettings = saved.history ?? user.defaults?.history ?? DEFAULT_HISTORY;
   let annotations: AnnotationSettings = saved.annotations ?? user.defaults?.annotations ?? DEFAULT_ANNOTATIONS;
   const result: SetupResult = { settings: { history, annotations }, connected: [], keys: [], gitignore: 'present', git, asked: ask };
 
@@ -74,8 +78,9 @@ export async function runSetup(w: Writer, context: SetupContext, options: { mode
     w.write(`${c.dim(w.s.start)}  ${c.bold(`Set up Codiluce for ${context.repositoryName}`)}`);
     w.note('Enter keeps the default. Change any of this later with codiluce setup.');
     w.rail();
-    const depth = await askHistory(w, git, context.analysisMs, history.precompute ? history.depth : 'none');
-    history = { ...history, depth, ...(depth !== 'none' ? { precompute: true } : history.precompute !== undefined ? { precompute: false } : {}) };
+  }
+  result.fileCommits = await prepareGitHistory(w, context.root, context.stateDirectory, git, context.readOnly);
+  if (ask) {
     const keys = await askKeys(w, files, env);
     result.keys = keys.saved;
     if (keys.openai) {
@@ -97,26 +102,6 @@ export async function runSetup(w: Writer, context: SetupContext, options: { mode
   result.gitignore = await hideFromGit(context.root, context.stateDirectory);
   if (options.mode !== 'quiet') writeState(context.stateDirectory, { setup: SETUP_VERSION });
   return result;
-}
-
-async function askHistory(w: Writer, git: GitFacts, analysisMs: number | undefined, initial: HistoryDepth): Promise<HistoryDepth> {
-  const { c } = w;
-  if (!git.repository) { w.note('History: not a Git repository, so there is no history to index.', c.muted); return 'none'; }
-  if (git.shallow) { w.note('History: this is a shallow clone, so most commits are missing. Run git fetch --unshallow, then codiluce setup, to index history.', c.muted); return 'none'; }
-  if (!git.topLevel) { w.note('History: indexing needs the top-level folder of the Git repository; start Codiluce there to index history.', c.muted); return 'none'; }
-  const per = analysisMs ?? 0;
-  const time = (commits: number) => per ? about(Math.ceil(commits / JOBS) * per) : '';
-  const count = (commits: number) => `${commits.toLocaleString('en-US')} commit${commits === 1 ? '' : 's'}`;
-  const last = Math.min(50, git.commits);
-  const choices: Choice<HistoryDepth>[] = [
-    { value: 'none', label: 'Git evolution; architecture on demand', hint: 'recommended · no full analysis per commit' },
-    { value: 50, label: `Last ${last} commit${last === 1 ? '' : 's'}`, hint: time(last) },
-    ...(git.recent > last && git.recent < git.commits ? [{ value: git.recentSince, label: 'Last 6 months', hint: [count(git.recent), time(git.recent)].filter(Boolean).join(' · ') }] : []),
-    ...(git.commits > last ? [{ value: 'all', label: `All ${count(git.commits)}`, hint: time(git.commits) }] : []),
-  ];
-  const detail = `${git.branch ?? 'This branch'} has ${count(git.commits)}. File evolution comes directly from Git. Full architecture snapshots are generated when requested. Optionally precompute snapshots in the background${per ? ` (about ${Math.max(1, Math.round(per / 1000))} s per commit, ${JOBS} at a time)` : ''}.`;
-  const initialValue = choices.some(choice => choice.value === initial) ? initial : typeof initial === 'number' ? 50 : initial;
-  return select<HistoryDepth>(w, { message: 'History', detail, choices, initial: initialValue });
 }
 
 async function askKeys(w: Writer, files: string[], env: NodeJS.ProcessEnv): Promise<{ anthropic: boolean; openai: boolean; saved: SetupResult['keys'] }> {
@@ -234,11 +219,9 @@ async function askAgents(w: Writer, context: SetupContext): Promise<SetupResult[
 /** The answers, in one box, after the questions. */
 export function printSummary(w: Writer, result: SetupResult, context: SetupContext): void {
   const { c } = w;
-  const depth = result.settings.history.depth;
-  const commits = result.git.commits;
-  const historyText = depth === 'none' ? 'Git file evolution; architecture snapshots on demand'
-    : depth === 'all' || (typeof depth === 'number' && commits && commits <= depth) ? `all ${commits.toLocaleString('en-US')} commits, in the background`
-      : typeof depth === 'number' ? `the last ${depth} commits, in the background` : `commits since ${depth}, in the background`;
+  const historyText = result.fileCommits === undefined ? 'Git history unavailable'
+    : result.fileCommits === 0 ? 'no commits yet'
+      : `all ${result.fileCommits.toLocaleString('en-US')} commit${result.fileCommits === 1 ? '' : 's'} and file changes ready${result.git.shallow ? ' (available in this shallow clone)' : ''}`;
   const inside = path.relative(context.root, context.stateDirectory);
   const state = inside && !inside.startsWith('..') && !path.isAbsolute(inside) ? inside : tilde(context.stateDirectory);
   const rows: ([string, string] | string)[] = [

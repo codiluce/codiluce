@@ -15,7 +15,7 @@ import {
 import { CancelledError, multiselect, select, text, Writer, wrapText, type Terminal } from '../src/setup/terminal.js';
 import { connectAgent, detectAgents, mcpLaunch } from '../src/setup/agents.js';
 import { checkKey, keyShape } from '../src/setup/keys.js';
-import { runSetup, setupMode, type SetupContext } from '../src/setup/wizard.js';
+import { printSummary, runSetup, setupMode, type SetupContext } from '../src/setup/wizard.js';
 import { BackgroundWork, StatusLine } from '../src/setup/background.js';
 import { FIXTURE_CONFIG } from './history-fixture.js';
 
@@ -202,14 +202,15 @@ test('setup asks the questions, saves the answers where they belong, and connect
   assert.equal(setupMode(state, true, env), 'ask');
   assert.equal(setupMode(state, false, env), 'quiet');
   const { terminal, output } = scriptedTerminal([
-    [/History/, ENTER],                             // Git evolution, architecture on demand
     [/Language models/, ENTER],                    // no provider
     [/Connect your agent/, `${SPACE}${ENTER}`],     // all three were selected; drop Claude Code
     [/In a new repository/, `${DOWN}${ENTER}`],     // use these answers
   ]);
   const result = await withEnv({ PATH: env.PATH, HOME: env.HOME }, () => runSetup(new Writer(terminal), context(state, env), { mode: 'ask' }));
   assert.equal(result.asked, true);
+  assert.equal(result.fileCommits, 3);
   assert.equal(result.settings.history.depth, 'none');
+  assert.equal(result.settings.history.precompute, undefined);
   assert.deepEqual(result.connected.filter(item => ['claude', 'codex', 'cursor'].includes(item.agent.id)).map(item => [item.agent.id, item.ok]), [['codex', true], ['cursor', true]]);
   assert.equal(await fake.calls('claude'), '');
   assert.equal(readRepositorySettings(state).history?.depth, 'none');
@@ -217,7 +218,14 @@ test('setup asks the questions, saves the answers where they belong, and connect
   assert.equal(result.gitignore, 'written');
   assert.deepEqual(readUserSettings(env), { defaults: { history: { depth: 'none', onDemand: true }, annotations: { enabled: false, maxCost: 10 } }, askOnFirstRun: false });
   assert.equal(setupMode(state, true, env), undefined, 'asked once per repository');
-  assert.match(output(), /main has 3 commits/);
+  assert.match(output(), /History: all 3 commits and file changes ready/);
+  assert.doesNotMatch(output(), /Last 3|Last 6 months|s per commit/);
+  const cached = JSON.parse(await readFile(path.join(state, 'git-file-history.json'), 'utf8'));
+  assert.equal(cached.entries.length, 3);
+  assert.ok(cached.entries.every((entry: Record<string, unknown>) => Array.isArray(entry.files) && !entry.entities && !entry.relations));
+  await assert.rejects(readFile(path.join(state, 'history.db')));
+  printSummary(new Writer(terminal), result, context(state, env));
+  assert.match(output(), /all 3 commits and file changes ready/);
   // A new repository then takes these answers without asking.
   const other = await folder();
   assert.equal(setupMode(other, true, env), 'reuse');
@@ -235,6 +243,43 @@ test('setup without a terminal decides nothing: saved settings stay, the setup s
   assert.equal(result.describe, undefined);
   assert.deepEqual(readRepositorySettings(state), {}, 'no sections are written for the user');
   assert.equal(readState(state).setup, undefined);
+});
+
+test('setup preloads all Git commits without a terminal and preserves explicit architecture settings', async () => {
+  const state = await folder();
+  const env = { ...process.env, CODILUCE_CONFIG_HOME: await folder() };
+  writeRepositorySettings(state, { history: { depth: 1, onDemand: false, precompute: false } });
+  const { terminal, output } = scriptedTerminal();
+  const result = await runSetup(new Writer(terminal), context(state, env), { mode: 'quiet' });
+  assert.equal(result.fileCommits, 3, 'architecture depth does not limit the Git timeline');
+  assert.equal(result.describe, undefined);
+  assert.deepEqual(readRepositorySettings(state).history, { depth: 1, onDemand: false, precompute: false });
+  assert.equal(readState(state).setup, undefined);
+  assert.match(output(), /all 3 commits and file changes ready/);
+  assert.equal(JSON.parse(await readFile(path.join(state, 'git-file-history.json'), 'utf8')).entries.length, 3);
+  await assert.rejects(readFile(path.join(state, 'history.db')));
+});
+
+test('setup Git history preload respects read-only cache mode', async () => {
+  const state = await folder();
+  const env = { ...process.env, CODILUCE_CONFIG_HOME: await folder() };
+  const result = await runSetup(new Writer(scriptedTerminal().terminal), { ...context(state, env), readOnly: true }, { mode: 'quiet' });
+  assert.equal(result.fileCommits, 3);
+  await assert.rejects(readFile(path.join(state, 'git-file-history.json')));
+});
+
+test('setup preloads all locally available commits in a shallow clone', async () => {
+  const root = path.join(await folder(), 'shallow');
+  git(await folder(), 'clone', '--quiet', '--depth=2', `file://${repository}`, root);
+  const state = path.join(root, '.codiluce');
+  const env = { ...process.env, CODILUCE_CONFIG_HOME: await folder() };
+  const { terminal, output } = scriptedTerminal();
+  const result = await runSetup(new Writer(terminal), { ...context(state, env), root }, { mode: 'quiet' });
+  assert.equal(result.git.shallow, true);
+  assert.equal(result.fileCommits, 2);
+  assert.match(output(), /shallow clone; indexing all available commits/);
+  assert.equal(JSON.parse(await readFile(path.join(state, 'git-file-history.json'), 'utf8')).entries.length, 2);
+  await assert.rejects(readFile(path.join(state, 'history.db')));
 });
 
 test('background work indexes history through the CLI and reports it on one line', { timeout: 120_000 }, async () => {

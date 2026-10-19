@@ -13,7 +13,7 @@ import { emptyRegistry, extendRegistry, timelineLayout, type LayoutNode } from '
 import { git, type CommitInfo } from './git.js';
 import type { SnapshotEntity } from './snapshot.js';
 
-const VERSION = 1, MAX_CACHE_BYTES = 64 * 1024 * 1024;
+const VERSION = 1, MAX_CACHE_BYTES = 64 * 1024 * 1024, LOG_BATCH_COMMITS = 250;
 type Cache = { version: number; root: string; entries: GitCommitChanges[] };
 function validGitPath(value: unknown): value is string { return typeof value === 'string' && value.length > 0 && !path.posix.isAbsolute(value) && !value.includes('\0') && !value.split('/').some(part => part === '..' || part === '.'); }
 export function ignoredHistoryPath(relative: string, ignore: string[]): boolean {
@@ -87,11 +87,15 @@ export class FileHistory {
     const missing = commits.filter(commit => !this.entries.has(commit.sha));
     if (!missing.length) return;
     // In ordinary use the missing commits form a suffix. For rewrites/branch switches
-    // read the bounded line again; never assume a cached HEAD is still an ancestor.
+    // read the line again; never assume a cached HEAD is still an ancestor.
     const firstMissing = commits.findIndex(commit => !this.entries.has(commit.sha));
     const suffix = commits.slice(firstMissing);
-    const output = await git(this.root, ['log', '--first-parent', '--diff-merges=first-parent', '--root', '--no-ext-diff', '--no-textconv', '--raw', '--numstat', '--no-abbrev', '-M', '-z', '--format=%x00COMMIT:%H', `--max-count=${suffix.length}`, commits.at(-1)!.sha, '--']);
-    for (const entry of parseFileLog(output)) this.entries.set(entry.sha, entry);
+    // Bound each Git response independently of the length of the complete history.
+    for (let offset = 0; offset < suffix.length; offset += LOG_BATCH_COMMITS) {
+      const batch = suffix.slice(offset, offset + LOG_BATCH_COMMITS);
+      const output = await git(this.root, ['log', '--first-parent', '--diff-merges=first-parent', '--root', '--no-ext-diff', '--no-textconv', '--raw', '--numstat', '--no-abbrev', '-M', '-z', '--format=%x00COMMIT:%H', `--max-count=${batch.length}`, batch.at(-1)!.sha, '--']);
+      for (const entry of parseFileLog(output)) this.entries.set(entry.sha, entry);
+    }
     this.entries = new Map(commits.map(commit => {
       const entry = this.entries.get(commit.sha);
       if (!entry) throw new Error(`Git changes unavailable for ${commit.sha}`);

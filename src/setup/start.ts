@@ -13,6 +13,7 @@ import { loadAnnotationInput, type TaskName } from '../ai/tasks.js';
 import { estimate } from '../ai/runner.js';
 import { ExplanationStore } from '../explanations/store.js';
 import { BackgroundWork, StatusLine } from './background.js';
+import { prepareGitHistory } from './history.js';
 import { depthOf, gitFacts, installKind, packageVersion, readRepositorySettings, readState, tilde, writeState, DEFAULT_HISTORY, type HistoryDepth, type InstallKind } from './settings.js';
 import { createTerminal, elapsed, Writer, spinner, width, wrapText, type Terminal } from './terminal.js';
 import { FIRST_TASKS, printSummary, runSetup, setupMode, type DescribeEstimate, type SetupContext, type SetupResult } from './wizard.js';
@@ -57,16 +58,19 @@ export async function startCommand(options: StartOptions): Promise<LocalSession 
           analysisMs: readState(found.stateDirectory).analysisMs ?? (found.full ? found.durationMs : undefined),
           base: { repository: found.config.repository, applications: found.config.applications, maxFileBytes: found.config.maxFileBytes },
           estimateDescriptions: () => describeEstimate(found.root, found.stateDirectory),
+          readOnly: options.readOnly,
         };
         setup = await runSetup(w, context, { mode });
         if (mode === 'ask') { printSummary(w, setup, context); w.write(); }
         else if (mode === 'reuse') note(w, pretty, 'Set up with the answers you keep for new repositories (codiluce setup to change them).');
-        else note(w, pretty, 'Not asking questions without a terminal: run codiluce setup to choose how much history to index, add API keys and connect your agent.');
+        else note(w, pretty, 'Not asking questions without a terminal: run codiluce setup to add API keys and connect your agent.');
+      } else {
+        await prepareGitHistory(w, found.root, found.stateDirectory, await gitFacts(found.root), options.readOnly);
       }
       const settings = readRepositorySettings(found.stateDirectory);
       const override = options.history !== undefined ? depthOf(options.history) : undefined;
       // Legacy depth settings must not silently keep rebuilding semantic history.
-      // Bulk work is explicit: --history, or precompute chosen in setup.
+      // Bulk architecture work is explicit: --history, or precompute in config.
       history = override ?? (settings.history?.precompute ? settings.history.depth : 'none');
       writeState(found.stateDirectory, { version, lastStart: new Date().toISOString() });
       return { historyIndexing: !options.readOnly && (options.historyIndexing || (settings.history?.onDemand ?? DEFAULT_HISTORY.onDemand)) };

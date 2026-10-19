@@ -161,7 +161,7 @@ is available. Rebuilding the code index does not erase imported history.
   setting.
 - **Follow a flow end to end.** From a page or a command, through the request, to the handler and the tables it reads
   and writes.
-- **Replay your Git history.** Browse and play file additions, edits, moves and deletions directly from Git, with source
+- **Replay your Git history.** Setup loads all first-parent commits and file changes automatically. Browse and play file additions, edits, moves and deletions directly from Git, with source
   diffs and author activity. Generate a full architecture snapshot for a selected commit when needed, then compare
   cached snapshots. Bulk snapshot generation is optional.
 - **See the blast radius.** Pick anything, or your uncommitted changes, and see what depends on it, hop by hop.

@@ -1,5 +1,5 @@
 // `codiluce setup`: the first-run questions, asked again whenever the user
-// wants (history depth, API keys, describing the code, connecting agents).
+// wants (API keys, describing the code, connecting agents), and loads all Git history.
 // Estimates use the last analysis; nothing is analyzed or served here.
 import { realpath } from 'node:fs/promises';
 import path from 'node:path';
@@ -32,7 +32,7 @@ export async function setupCommand(options: { repo?: string; stateDirectory?: st
   const result = await runSetup(w, context, { mode: 'ask' });
   printSummary(w, result, context);
   w.write();
-  w.write(`  ${c.muted('Run')} ${c.bold('codiluce start')} ${c.muted('to open the map; history is indexed in the background from there.')}`);
+  w.write(`  ${c.muted('Run')} ${c.bold('codiluce start')} ${c.muted('to open the map with your Git history ready.')}`);
   w.write();
   return 0;
 }

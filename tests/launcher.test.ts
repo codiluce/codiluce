@@ -41,6 +41,8 @@ test('start with legacy depth settings serves Git history without launching bulk
   const bulk = mock.method(BackgroundWork.prototype, 'history', async () => ({ indexed: 0, skipped: 0, failed: 0 }));
   const session = await startCommand({ repo: root, stateDirectory, uiDirectory: ui, port: 0, open: false, yes: true });
   try {
+    const cached = JSON.parse(await readFile(path.join(stateDirectory, 'git-file-history.json'), 'utf8'));
+    assert.equal(cached.entries.length, 1, 'Git changes are ready before the timeline is requested');
     const timeline = await (await fetch(`${session.url}api/history`)).json() as { available: boolean; entries: { snapshot?: unknown }[] };
     await new Promise(resolve => setTimeout(resolve, 100));
     assert.equal(timeline.available, true);

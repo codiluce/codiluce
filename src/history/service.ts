@@ -19,7 +19,6 @@ import { childExecArgv, HISTORY_DATABASE, historyConfig, historyIdentity } from 
 import { pullRequestFromMessage, pullRequestFromRecord } from './pull-requests.js';
 import { HistoryStore } from './store.js';
 
-const MAX_ENTRIES = 5000;
 /** Opens `<state>/history.db` read-only once it exists (it may be created while the server runs). */
 export class HistoryAccess {
   private store?: HistoryStore;
@@ -90,7 +89,7 @@ export class HistoryService {
     const identity = await this.currentIdentity();
     const snapshots = history?.snapshotsByCommit(identity) ?? new Map();
     const pullRequests = new Map((history?.pullRequests() ?? []).map(record => [record.mergeCommitSha!, pullRequestFromRecord(record)]));
-    const commits = listed.commits.slice(-MAX_ENTRIES);
+    const commits = listed.commits;
     let files: Map<string, GitCommitChanges> | undefined;
     if (this.files) try { files = await this.files.load(commits); } catch (error) { if (!history) throw error; /* Stored snapshots still work without readable Git objects. */ }
     const entries: TimelineEntry[] = commits.map(commit => {
@@ -103,11 +102,11 @@ export class HistoryService {
         ...(snapshot ? { snapshot: { id: snapshot.id, stale: identity !== undefined && snapshot.identity !== identity, stats: snapshot.stats } } : {}),
       };
     });
-    return { available: true, ref, ...(listed.head ? { head: listed.head } : {}), firstParent: true, entries, ...(workingTree ? { workingTree } : {}), indexing, ...(files ? { fileHistory: { truncated: listed.commits.length > MAX_ENTRIES } } : {}) };
+    return { available: true, ref, ...(listed.head ? { head: listed.head } : {}), firstParent: true, entries, ...(workingTree ? { workingTree } : {}), indexing, ...(files ? { fileHistory: { truncated: false } } : {}) };
   }
 
   async commitFiles(sha: string, ref?: string): Promise<GitCommitChanges> {
-    const commits = (await this.commits(ref ?? await this.defaultRef()))?.commits.slice(-MAX_ENTRIES);
+    const commits = (await this.commits(ref ?? await this.defaultRef()))?.commits;
     if (!this.files || !isSha(sha) || !commits?.some(commit => commit.sha === sha)) throw new Error('Commit is not on the file timeline');
     return (await this.files.load(commits)).get(sha)!;
   }
@@ -132,7 +131,7 @@ export class HistoryService {
     }
   }
   async gitEvolution(ref?: string, mapNodes?: (index: ProjectionIndex) => Map<string, LayoutNode>, layoutRevision = ''): Promise<EvolutionResponse> {
-    const commits = (await this.commits(ref ?? await this.defaultRef()))?.commits.slice(-MAX_ENTRIES);
+    const commits = (await this.commits(ref ?? await this.defaultRef()))?.commits;
     if (!commits || !this.files) throw new Error('Git file history is unavailable');
     const raw = this.options.stateDirectory ? await historyConfig(this.options.root!, this.options.stateDirectory) : {};
     const name = raw.repository?.name ?? this.options.store.currentRun()?.repositoryName ?? 'repository';

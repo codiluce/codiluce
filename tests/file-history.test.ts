@@ -141,3 +141,26 @@ test('renamed files and new files reusing their old paths have distinct identiti
     assert.ok(frame.changes.some(([index, status]) => data.nodes[index!]!.id === replacement.id && status === 1));
   } finally { await f.cleanup(); }
 });
+
+test('the complete Git timeline, commit details and playback include commits beyond 5,000', async () => {
+  const f = await fixture(); const store = new GraphStore(':memory:'); const accessHistory = new HistoryAccess(f.state);
+  try {
+    const count = 5001;
+    const commits: string[] = [];
+    for (let i = 1; i <= count; i++) {
+      const subject = `Commit ${i}`;
+      commits.push(`commit refs/heads/complete\nmark :${i}\ncommitter Fixture <fixture@test.invalid> ${1700000000 + i} +0000\ndata ${subject.length}\n${subject}\n${i === 1 ? 'M 100644 inline stable.txt\ndata 7\nstable\n\n' : '\n'}`);
+    }
+    execFileSync('git', ['fast-import', '--quiet'], { cwd: f.root, input: commits.join('') });
+    const service = new HistoryService({ root: f.root, stateDirectory: f.state, store, history: accessHistory });
+    const timeline = await service.timeline('complete');
+    assert.equal(timeline.entries.length, count);
+    assert.equal(timeline.entries[0]!.subject, 'Commit 1');
+    assert.equal(timeline.fileHistory?.truncated, false);
+    assert.equal((await service.commitFiles(timeline.entries[0]!.sha, 'complete')).files[0]!.path, 'stable.txt');
+    const evolution = await service.gitEvolution('complete');
+    assert.equal(evolution.status, 'ready');
+    if (evolution.status === 'ready') assert.equal(evolution.frames.length, count);
+    await assert.rejects(access(path.join(f.state, 'history.db')));
+  } finally { accessHistory.close(); store.close(); await f.cleanup(); }
+});

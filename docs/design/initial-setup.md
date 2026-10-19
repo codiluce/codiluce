@@ -1,6 +1,9 @@
 # Initial setup
 
-A first-run configurator for `codiluce start`, designed 2026-10-10. Nothing here is built yet.
+A first-run configurator for `codiluce start`, designed 2026-10-10. This is the original design;
+the configurator is now implemented. History setup now loads all first-parent Git commits and file changes
+automatically, without asking for a depth or precomputing architecture snapshots. See the
+[current history behavior](../architecture-visualizer.md#13-history).
 
 ## Why
 
