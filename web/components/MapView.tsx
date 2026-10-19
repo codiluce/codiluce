@@ -105,7 +105,6 @@ export function Legend() {
   if (!meta) return null;
   const present = new Set(meta.entityTypes.map(item => item.type));
   const types = ['application', 'directory', 'file', 'class', 'controller', 'model', 'component', 'function', 'method', 'api_endpoint', 'route', 'database_table'].filter(type => present.has(type));
-  const relationTypes = meta.relationTypes.filter(item => item.type !== 'contains');
   // Themes that color files by language list those colors.
   const languages = Object.entries(theme.entity).filter(([key]) => key.startsWith('file:'));
   const coverage = meta.coverage;
@@ -138,10 +137,6 @@ export function Legend() {
             {languages.map(([key, c]) => <span key={key} className="legend-item"><span className="type-dot" style={{ background: `hsl(${c.h} ${c.s}% ${c.l}%)` }} />{key.slice(5)} files</span>)}
           </div>
         )}
-        <div className="legend-grid">
-          {relationTypes.map(item => <span key={item.type} className="legend-item"><span className="line" style={{ background: theme.relation[item.type] ?? theme.fallbackRelation }} />{item.type}</span>)}
-          <span className="legend-item"><span className="line" style={{ background: `repeating-linear-gradient(90deg, ${theme.text.secondary} 0 4px, transparent 4px 7px)` }} />via hidden endpoint</span>
-        </div>
         <div>{items.map(item => <div key={item.text} className={`coverage-item ${item.state}`}><span className="mark">{item.state === 'present' ? '●' : item.state === 'partial' ? '◐' : '○'}</span>{item.text}</div>)}</div>
       </div>
     </details>

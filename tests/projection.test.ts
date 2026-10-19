@@ -189,6 +189,31 @@ test('relations expose direction, type counts and endpoint ancestry; aggregates 
   }
   assert.ok(![...reached].some(id => projection.locate(id).node.path?.startsWith('frontend/')), 'only the outside side is listed');
 });
+test('dependencies list each file at the other end once per direction, with the relationships behind it', () => {
+  const projection = new ProjectionService(store);
+  const form = entityId('LoginForm.tsx', 'file');
+  const dependencies = projection.dependencies(form);
+  const relations = projection.relations(form, { scope: 'contained', limit: 500 });
+  // Every relationship of the file or its symbols with code outside it, once.
+  assert.equal(dependencies.total, relations.items.filter(item => item.direction !== 'self').length);
+  assert.equal(dependencies.items.reduce((sum, item) => sum + item.count, 0), dependencies.total);
+  assert.ok(dependencies.items.length > 0);
+  const keys = dependencies.items.map(item => `${item.direction}:${item.end.id}`);
+  assert.equal(new Set(keys).size, keys.length, 'one dependency per end and direction');
+  for (const item of dependencies.items) {
+    assert.notEqual(item.end.id, form);
+    assert.equal(item.types.reduce((sum, entry) => sum + entry.count, 0), item.count);
+    assert.deepEqual(item.endAncestors, projection.locate(item.end.id).spatialAncestors.map(node => node.id));
+    // Raised to its file: no symbol of another file is an end.
+    if (item.end.type !== 'file') assert.ok(!projection.locate(item.end.id).spatialAncestors.some(node => node.type === 'file'), `${item.end.name} is not inside a file`);
+    assert.ok(item.links.length > 0 && item.links.every(link => (item.direction === 'outgoing' ? link.to.id : link.from.id) !== form));
+  }
+  // An application: its requests to the backend's endpoints, as many as the aggregate counts across its boundary.
+  const frontend = entityId('frontend', 'application');
+  const outside = projection.dependencies(frontend);
+  assert.equal(outside.total, projection.aggregate(frontend, {}).totalCrossing);
+  assert.ok(outside.items.some(item => item.end.type === 'api_endpoint' && item.direction === 'outgoing' && item.types.some(entry => entry.type === 'requests')));
+});
 test('diagnostics are attached to entities and visible from containing areas', () => {
   const projection = new ProjectionService(store);
   const dynamic = entityId('dynamicUrl');

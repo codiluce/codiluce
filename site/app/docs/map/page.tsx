@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CodeBlock } from '../../../components/CodeBlock';
 import { DocsPager } from '../../../components/DocsNav';
+import { NextTag } from '../../../components/NextTag';
 import { ShapeGallery } from '../../../components/ShapeGallery';
 import { Shot } from '../../../components/Shot';
 
@@ -109,9 +110,24 @@ export default function MapDocs() {
         caption="Selecting a folder: the kinds of block it holds, the flows that reach it, its data, and who changed it and when."
       />
       <p>
-        Select anything to see its type, canonical path, source range and metrics. Incoming and outgoing relationships are
-        drawn as arcs and listed with filters. Every relationship has <strong>Why?</strong>: the analyzer and version, the
+        Select anything to see its type, canonical path, source range and metrics, with its incoming and outgoing
+        relationships listed with filters. Every relationship has <strong>Why?</strong>: the analyzer and version, the
         file and line, and an explanation. It opens the source with the evidence lines highlighted.
+      </p>
+      <h3 id="dependencies" className="anchor">Dependencies<NextTag feature="dependencies" /></h3>
+      <p>
+        The <strong>Dependencies</strong> button (off by default) draws what the selection uses and what uses it as a
+        diagram on the map. Each dependency is a rail along the floors to the file at its other end (or the endpoint,
+        route or table, when no file holds it), with words on the arrow saying what it does: <em>calls ×3 · imports</em>,{' '}
+        <em>requests GET /api/users</em>, <em>imported by</em>. The folders holding those files open whatever the zoom, so
+        the arrows end on the files themselves, and the map moves to show the whole diagram when part of it is out of view.
+        What the selection reaches stays lit and the rest recedes.
+      </p>
+      <p>
+        The inspector then lists the dependencies first, one per file, split into <strong>Uses</strong> and{' '}
+        <strong>Used by</strong>, with filters by direction and kind that choose what the map draws. Pointing at a row brings
+        its rail to the front; <strong>Why?</strong> lists the relationships behind it, each with its evidence. A folder
+        lists everything crossing its boundary; the map draws the 80 most connected.
       </p>
       <p>
         A symbol also lists its <strong>effects</strong> (database reads and writes, responses with their HTTP status,

@@ -17,6 +17,7 @@ import { ExplainActions, ExplanationChips, type Suggestion } from './ExplainActi
 import { hrefForNode } from '@engine/explanations/links';
 import { PullDot, pullWhen, SourceTag } from './PullsPanel';
 import { CodeHealthSection } from './CodeHealth';
+import { DependenciesSection } from './Dependencies';
 
 export function Inspector({ onClose }: { onClose: () => void }) {
   const selection = useAtlas(state => state.selection);
@@ -36,6 +37,7 @@ export function Inspector({ onClose }: { onClose: () => void }) {
 }
 function Overview() {
   const meta = useAtlas(state => state.meta);
+  const dependencies = useAtlas(state => state.dependencies.show);
   const store = useStore();
   if (!meta) return <p className="absent">Waiting for the index…</p>;
   if (meta.comparison) return <ComparisonOverview />;
@@ -60,7 +62,7 @@ function Overview() {
       <OverviewExplain />
       <RepositoryOverview />
       <RepositoryPeople />
-      <p className="note">Search with <kbd>/</kbd>, or zoom into the map: applications open into directories, then files, then symbols. Selecting an entity shows its indexed relationships and the evidence behind each one.</p>
+      <p className="note">Search with <kbd>/</kbd>, or zoom into the map: applications open into directories, then files, then symbols. Selecting an entity shows its indexed relationships and the evidence behind each one{dependencies ? '; with Dependencies on, the map draws them as rails to the files at their other ends' : ' (Dependencies draws them on the map)'}.</p>
       <div className="inspector-actions">
         <button className="button" onClick={() => void store.select(root.id, { fly: true })}>Repository connections</button>
       </div>
@@ -90,6 +92,7 @@ function Selection() {
   const selection = useAtlas(state => state.selection)!;
   const visibility = useAtlas(state => state.mapVisibility);
   const writable = useAtlas(state => state.meta?.mapVisibility?.writable);
+  const dependencies = useAtlas(state => state.dependencies.show);
   const node = selection.node, entity = selection.entity;
   if (!node) return selection.entityStatus === 'error' ? <p className="note error">Could not load this entity: {selection.error}</p> : <p className="absent">Locating…</p>;
   const container = isContainer(node);
@@ -109,6 +112,7 @@ function Selection() {
         <AnalysisButtons node={node} />
       </div>
       {node.hidden && <p className="note">Hidden from map. Its code and connections remain available.</p>}
+      {dependencies && <DependenciesSection node={node} />}
       <SelectionExplain node={node} />
       <SummaryCard node={node} />
       <FamilyChip node={node} />
@@ -135,7 +139,7 @@ function Selection() {
       {entity && <EffectsSection entity={entity} />}
       {entity && <CallSitesSection entity={entity} />}
       <Diagnostics />
-      {container ? <Aggregate node={node} /> : <Relations node={node} />}
+      {!dependencies && (container ? <Aggregate node={node} /> : <Relations node={node} />)}
       {selection.timeline && <EntityTimeline />}
       {entity && <EntityEvidence entity={entity} store={store} />}
       {entity && Object.keys(entity.metadata).length > 0 && (
@@ -637,7 +641,7 @@ function Relations({ node }: { node: NodeSummary }) {
   const groups = (['outgoing', 'self', 'incoming'] as const).map(direction => ({ direction, items: relations.items.filter(item => item.direction === direction) })).filter(group => group.items.length);
   return (
     <section className="section">
-      <h4>Relationships {relations.status === 'ready' && <span className="chip"><span className="count">{totalAll}</span></span>}</h4>
+      <h4>Relationships {relations.status === 'ready' && <span className="chip"><span className="count">{totalAll}</span></span>}{totalAll > 0 && <ShowDependencies />}</h4>
       {relations.status === 'ready' && totalAll === 0 && <p className="note">No indexed relationships besides containment{node.type === 'file' ? ', for the file or its symbols' : ''}. Only calls the analyzers could resolve are relationships: calls through callbacks, props or untyped values are counted under call sites instead, so this is not evidence that nothing is connected.</p>}
       {node.type === 'file' && totalAll > 0 && <p className="absent" style={{ margin: '0 0 6px' }}>The file's own relationships and those of its symbols with code outside it.</p>}
       {totalAll > 0 && (
@@ -663,6 +667,11 @@ function Relations({ node }: { node: NodeSummary }) {
       {relations.hasMore && <button className="button small" onClick={() => store.loadMoreRelations()} disabled={relations.status === 'loading'}>Load more ({relations.items.length} of {relations.total})</button>}
     </section>
   );
+}
+/** Dependencies off: the button that draws them on the map (and lists them first). */
+function ShowDependencies() {
+  const store = useStore();
+  return <button className="button small heading-action" onClick={() => store.toggleDependencies(true)} title="Draw them on the map as rails to the files at their other ends, and list them first here">Show on the map</button>;
 }
 function RelationRow({ item, emphasized, selectedName }: { item: RelationItem; emphasized: boolean; selectedName: string }) {
   const store = useStore();
@@ -718,7 +727,7 @@ function Aggregate({ node }: { node: NodeSummary }) {
   const drill = aggregate.drill;
   return (
     <section className="section">
-      <h4>Connections across this boundary <span className="chip"><span className="count">{data.totalCrossing}</span></span></h4>
+      <h4>Connections across this boundary <span className="chip"><span className="count">{data.totalCrossing}</span></span>{data.totalCrossing > 0 && <ShowDependencies />}</h4>
       {data.internal.length > 0 && <p className="absent" style={{ margin: '0 0 6px' }}>Inside: {data.internal.map(item => `${compactNumber(item.count)} ${item.type}`).join(' · ')}</p>}
       {data.totalCrossing === 0 && <p className="note">No indexed relationship crosses this boundary.{node.type === 'application' ? ' Cross-application HTTP requests are only linked when the URL\'s origin is proven: a literal configured origin, or a base built from one or from an environment variable declared in apiOriginEnv. Unresolved calls are listed under findings.' : ''}</p>}
       {types.length > 1 && (

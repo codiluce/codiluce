@@ -16,8 +16,13 @@ import { drawIcon, drawShape, hexToHsl, ICON_PX, mixHsl, seedOf, shapeHeight, sh
 import { drawGlyph, GLYPH_PX, glyphOf, type Glyph } from './glyphs';
 import type { Hsl } from './themes';
 
-/** `label`: words on the link (a tour's arrow), placed where they cover no other label; `directed` false: no arrowhead. */
-export interface EdgeOverlay { key: string; from: string; to: string; fromAncestors: string[]; toAncestors: string[]; type: string; count: number; emphasized?: boolean; change?: 'added' | 'removed'; label?: string; directed?: boolean }
+/**
+ * `label`: words on the link (a tour's arrow), placed where they cover no
+ * other label; `directed` false: no arrowhead; `far`: the end a reader looks
+ * for (a dependency's other end), named in the words when its block is too
+ * small to carry its own name or out of view.
+ */
+export interface EdgeOverlay { key: string; from: string; to: string; fromAncestors: string[]; toAncestors: string[]; type: string; count: number; emphasized?: boolean; change?: 'added' | 'removed'; label?: string; directed?: boolean; far?: { side: 'from' | 'to'; name: string } }
 /**
  * A flow on the map (all of it, or one branch): its links, streaming from
  * where they start to where they lead (the way back in its own color), and
@@ -99,6 +104,10 @@ export interface RenderState {
   shapes?: boolean;
   /** Links drawn as arcs over the blocks (the default) or as rails along the floors. */
   connections?: 'arcs' | 'rails';
+  /** Blocks named whatever their size, before the other names (the files a selection's dependencies lead to). */
+  named?: Set<string>;
+  /** With an emphasized link, the other links recede (a dependency pointed at in the list). */
+  spotlight?: boolean;
   /** Blocks drawn inside their places: open areas' floors take a road's tone between them. */
   streets?: boolean;
   time: number;
@@ -131,16 +140,26 @@ const SOFT_PX = 16;
 const FOCUS_DIM = 0.35;
 /** A flow's links stream at this speed (CSS pixels per millisecond), in dashes this long and this far apart. */
 const STREAM_SPEED = 0.05, STREAM_DASH = [9, 13];
+/** Named blocks (`RenderState.named`) keep their names down to this size on screen; smaller, a link's words name them. */
+const NAMED_PX = 16;
+/** A link's words sit this far along it toward the end a reader looks for (a dependency's other end), off the crowd at the selection. */
+const FAR_WORDS = 0.72;
+/** Names from this priority (the selection, the hovered block, where a dependency leads) are placed before the words on links. */
+const LEADING_LABEL = 1.5e9;
+/** Links other than the one in the spotlight keep this much of their opacity. */
+const SPOTLIGHT_DIM = 0.28;
 /** Time a frame may spend routing rails; the rest is routed on the next frames. */
 const RAIL_BUDGET_MS = 10;
 /** A relationship resolved to the blocks drawn at this level of detail (those meeting the same blocks merged). */
-interface DrawnEdge { from: VisibleItem; to: VisibleItem; ends: [string, string]; count: number; color: string; hidden: boolean; emphasized: boolean; change?: 'added' | 'removed'; label?: string; directed: boolean }
+interface DrawnEdge { from: VisibleItem; to: VisibleItem; ends: [string, string]; count: number; color: string; /** An end is drawn as an area holding it (an arc ends there). */ hidden: boolean; /** An end is inside an area drawn closed (a rail ends there too). */ closed: boolean; emphasized: boolean; /** Where its words go along it (0 at `from`, 1 at `to`): nearer the end a reader looks for. */ wordsAt: number; /** Without words, its count shows on it (not for a dependency, whose words say it). */ badge: boolean; change?: 'added' | 'removed'; label?: string; directed: boolean }
 /** A flow's link resolved to the blocks drawn. */
 interface DrawnLink { from: VisibleItem; to: VisibleItem; ends: [string, string]; back: boolean }
 /** A rail on screen: its points, length so far at each, and its runs (straight on, drawn with one block in the painter's order). */
 interface RailStroke {
   points: Point[]; lengths: number[]; runs: { host: number; from: number; to: number }[];
   color: string; width: number; alpha: number; dash?: number[]; stream?: string; count?: number; halo?: string; label?: string; directed?: boolean;
+  /** Where its words go along the part in view (0 at its start, 1 at its end). */
+  wordsAt?: number;
 }
 /** Rails of a frame: strokes, their runs by the block drawn before them, and what still goes as an arc. */
 interface RailPlan { strokes: RailStroke[]; byHost: Map<number, { stroke: RailStroke; run: RailStroke['runs'][number] }[]>; edges: DrawnEdge[]; links: DrawnLink[] }
@@ -160,7 +179,7 @@ export class MapRenderer {
   /** Badges drawn on areas this frame (counts, shares): labels placed afterwards keep off them. */
   badgeBoxes: Box[] = [];
   /** Words on the links drawn this frame (a tour's arrows), placed once the map's names are. */
-  private linkLabels: { at: Point; text: string; color: string }[] = [];
+  private linkLabels: { at: Point; text: string; color: string; /** Its link recedes (another is in the spotlight). */ faded?: boolean }[] = [];
   private readonly linkSlots = new Map<string, string>();
   /** The names drawn on the last frame (screen boxes): what is drawn over the map keeps off them. */
   labelBoxes: Box[] = [];
@@ -248,18 +267,21 @@ export class MapRenderer {
     const hovered = state.hoveredId ? items[set.index.get(state.hoveredId) ?? -1] : undefined;
     if (hovered && hovered !== selected) this.outline(ctx, viewport, camera, hovered, theme.hover, 1.5, false);
     if (state.source && selected && selected.node.id === state.source.nodeId && selected.size >= lod.sourcePx) this.sourceFace(ctx, viewport, camera, selected, state.source);
-    if (rails) this.railTops(ctx, rails);
-    this.edges(ctx, viewport, camera, rails ? rails.edges : edges);
+    if (rails) this.railTops(ctx, viewport, rails);
+    this.edges(ctx, viewport, camera, rails ? rails.edges : edges, !!state.spotlight);
     if (state.unresolved && state.unresolved.count > 0) this.unresolvedStub(ctx, viewport, camera, scene, set, state.unresolved);
     if (state.flow) { this.flowArcs(ctx, viewport, camera, rails ? rails.links : links, state); this.flowStops(ctx, viewport, camera, set, state.flow); }
     for (const [item, alpha] of notes) this.areaNote(ctx, viewport, camera, item, alpha, state.pull!);
     // A beat's labels take their places first; the map's names keep off them.
     const beat = state.beat?.files.length ? this.beatLabels(ctx, viewport, camera, scene, set, items, state) : undefined;
-    // Then the words on links and the numbered labels; the map's names give way to all of them.
-    const taken = [...state.keepClear ?? [], ...state.reserved ?? [], ...beat?.boxes ?? [], ...this.badgeBoxes];
+    // With words on links, the selection's name and the names of where its links lead go first: the words keep off them.
+    this.labelBoxes = [];
+    const leading = this.linkLabels.length ? this.labels(ctx, labels.filter(label => label.priority >= LEADING_LABEL), [...state.reserved ?? [], ...beat?.boxes ?? [], ...this.badgeBoxes]) : [];
+    // Then the words on links and the numbered labels; the map's other names give way to all of them.
+    const taken = [...state.keepClear ?? [], ...state.reserved ?? [], ...beat?.boxes ?? [], ...this.badgeBoxes, ...leading];
     const worded = this.linkLabels.length ? this.placeLinkLabels(ctx, viewport, taken) : undefined;
     const numbered = state.callouts?.length ? this.placeCallouts(ctx, viewport, camera, set, state.callouts, [...taken, ...worded?.boxes ?? []]) : undefined;
-    this.labels(ctx, labels, [...state.reserved ?? [], ...beat?.boxes ?? [], ...this.badgeBoxes, ...worded?.boxes ?? [], ...numbered?.boxes ?? []]);
+    this.labels(ctx, leading.length || this.linkLabels.length ? labels.filter(label => label.priority < LEADING_LABEL) : labels, [...state.reserved ?? [], ...beat?.boxes ?? [], ...this.badgeBoxes, ...leading, ...worded?.boxes ?? [], ...numbered?.boxes ?? []]);
     beat?.draw();
     worded?.draw();
     if (state.pins?.length) this.pins(ctx, viewport, camera, set, state.pins);
@@ -779,7 +801,9 @@ export class MapRenderer {
     ctx.globalAlpha = 1;
   }
   private collectLabel(labels: Label[], viewport: Viewport, camera: Camera, item: VisibleItem, state: RenderState, alpha: number, dimmed: boolean, lod: LodConfig): void {
-    if (item.tier === 'hidden' || alpha < 0.25) return;
+    // Where a selection's dependencies lead is named whatever its size, before the other names.
+    const named = !item.open && !!state.named?.has(item.node.id);
+    if ((item.tier === 'hidden' && !(named && item.size >= NAMED_PX)) || alpha < 0.25) return;
     const node = item.node, theme = this.theme;
     const important = node.id === state.selectedId || node.id === state.hoveredId;
     const color = dimmed ? theme.text.secondary : theme.text.primary;
@@ -790,7 +814,7 @@ export class MapRenderer {
       const size = node.type === 'application' ? 15 : node.type === 'repository' ? 13 : 11;
       const text = `${state.comparison ? changeGlyph(node) : ''}${node.type === 'repository' ? node.name : node.kind === 'group' ? `${node.name}` : node.type === 'directory' ? `${node.name}/` : node.name}`;
       // In plan an area's name sits inside its top-left corner, as on a floor plan; in isometric, above its back corner.
-      labels.push({ x: this.flat ? top.x + 5 : top.x, y: this.flat ? top.y + 3 : top.y - 4, align: this.flat ? 'corner' : 'above', priority: 1e9 - node.depth * 1e6 + item.size - (dimmed ? 5e5 : 0), lines: [{ text, font: `${node.type === 'application' ? 700 : 600} ${size}px ${this.font}`, color: dimmed ? theme.text.secondary : theme.text.district }] });
+      labels.push({ x: this.flat ? top.x + 5 : top.x, y: this.flat ? top.y + 3 : top.y - 4, align: this.flat ? 'corner' : 'above', priority: (important ? 2e9 : 1e9 - node.depth * 1e6) + item.size - (dimmed ? 5e5 : 0), lines: [{ text, font: `${node.type === 'application' || important ? 700 : 600} ${size}px ${this.font}`, color: dimmed ? theme.text.secondary : theme.text.district }] });
       return;
     }
     const { x, y, w, h } = node.rect;
@@ -811,7 +835,7 @@ export class MapRenderer {
       const detail = detailLine(node);
       if (detail) lines.push({ text: detail, font: `400 ${Math.max(9, nameSize - 3).toFixed(1)}px ${node.detail?.startsWith('(') ? MONO : this.font}`, color: theme.text.secondary });
     }
-    labels.push({ x: center.x, y: center.y, align: sign ? 'below' : 'center', priority: (important ? 2e9 : 0) + item.size, lines });
+    labels.push({ x: center.x, y: center.y, align: sign ? 'below' : 'center', priority: (important ? 2e9 : named ? 1.5e9 : 0) + item.size, lines });
   }
   /**
    * A beat's labels, for the files landed so far: each where it covers no
@@ -913,10 +937,11 @@ export class MapRenderer {
     };
     return { boxes: more ? [...boxes, note] : boxes, draw };
   }
-  private labels(ctx: CanvasRenderingContext2D, labels: Label[], reserved: readonly Box[] = []): void {
+  /** Place and draw names, the most important first, none over another or over `reserved`; returns the boxes they took. */
+  private labels(ctx: CanvasRenderingContext2D, labels: Label[], reserved: readonly Box[] = []): Box[] {
     labels.sort((a, b) => b.priority - a.priority);
     const placed: { x0: number; y0: number; x1: number; y1: number }[] = [...reserved];
-    this.labelBoxes = [];
+    const taken: Box[] = [];
     ctx.textBaseline = 'middle'; ctx.textAlign = 'center'; ctx.lineJoin = 'round';
     let count = 0;
     for (const label of labels) {
@@ -932,7 +957,7 @@ export class MapRenderer {
       const x = label.align === 'corner' ? label.x + width / 2 : label.x;
       const box = { x0: x - width / 2 - 3, y0: y0 - 2, x1: x + width / 2 + 3, y1: y0 + height + 2 };
       if (placed.some(other => box.x0 < other.x1 && box.x1 > other.x0 && box.y0 < other.y1 && box.y1 > other.y0)) continue;
-      placed.push(box); this.labelBoxes.push(box); count++;
+      placed.push(box); this.labelBoxes.push(box); taken.push(box); count++;
       let cursor = y0;
       label.lines.forEach((line, i) => {
         const h = metrics[i]!.h;
@@ -946,6 +971,7 @@ export class MapRenderer {
         cursor += h;
       });
     }
+    return taken;
   }
   private anchor(viewport: Viewport, camera: Camera, item: VisibleItem): Point {
     const { x, y, w, h } = item.node.rect;
@@ -979,18 +1005,21 @@ export class MapRenderer {
       if (!from || !to || from.item === to.item) continue;
       const key = `${from.item.node.id}>${to.item.node.id}>${edge.type}>${edge.change ?? ''}`;
       const existing = drawn.get(key);
+      // The far end is named in the words when its own name would not show.
+      const far = edge.far && (edge.far.side === 'to' ? to : from);
+      const label = edge.label && far && (far.hidden || far.item.size < NAMED_PX) ? `${edge.label} ${edge.far!.name}` : edge.label;
       if (existing) {
         existing.count += edge.count; existing.emphasized ||= !!edge.emphasized; existing.directed ||= edge.directed !== false;
-        if (edge.label && !existing.label?.split(' · ').includes(edge.label)) existing.label = existing.label ? `${existing.label} · ${edge.label}` : edge.label;
+        if (label && !existing.label?.split(' · ').includes(label)) existing.label = existing.label ? `${existing.label} · ${label}` : label;
         continue;
       }
-      drawn.set(key, { from: from.item, to: to.item, ends: [this.railEnd(scene, from, edge.from, edge.fromAncestors), this.railEnd(scene, to, edge.to, edge.toAncestors)], count: edge.count, color: edge.change === 'removed' ? this.theme.change.removed : this.theme.relation[edge.type] ?? this.theme.fallbackRelation, hidden: from.hidden || to.hidden, emphasized: !!edge.emphasized, directed: edge.directed !== false, ...(edge.change ? { change: edge.change } : {}), ...(edge.label ? { label: edge.label } : {}) });
+      drawn.set(key, { from: from.item, to: to.item, ends: [this.railEnd(scene, from, edge.from, edge.fromAncestors), this.railEnd(scene, to, edge.to, edge.toAncestors)], count: edge.count, color: edge.change === 'removed' ? this.theme.change.removed : this.theme.relation[edge.type] ?? this.theme.fallbackRelation, hidden: from.hidden || to.hidden, closed: (from.hidden && !from.item.open) || (to.hidden && !to.item.open), wordsAt: edge.far ? (edge.far.side === 'to' ? FAR_WORDS : 1 - FAR_WORDS) : 0.5, badge: !edge.far, emphasized: !!edge.emphasized, directed: edge.directed !== false, ...(edge.change ? { change: edge.change } : {}), ...(label ? { label } : {}) });
     }
     return [...drawn.values()];
   }
   private edgeWidth(edge: DrawnEdge): number { return Math.min(5, 1.4 + Math.log2(edge.count) * 0.8) + (edge.emphasized ? 1.2 : 0); }
   /** Relationships as arcs over the blocks, from the top of one to the top of the other. */
-  private edges(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, edges: DrawnEdge[]): void {
+  private edges(ctx: CanvasRenderingContext2D, viewport: Viewport, camera: Camera, edges: DrawnEdge[], spotlight = false): void {
     for (const edge of edges) {
       const from = this.anchor(viewport, camera, edge.from), to = this.anchor(viewport, camera, edge.to);
       const control = curveControl(from, to);
@@ -1003,16 +1032,16 @@ export class MapRenderer {
         ctx.strokeStyle = this.theme.change.added; ctx.globalAlpha = 0.45; ctx.lineWidth = width + 5;
         ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.quadraticCurveTo(control.x, control.y, to.x, to.y); ctx.stroke();
       }
-      ctx.strokeStyle = edge.color; ctx.globalAlpha = edge.change === 'removed' ? 0.75 : edge.emphasized ? 1 : 0.85;
+      ctx.strokeStyle = edge.color; ctx.globalAlpha = (edge.change === 'removed' ? 0.75 : edge.emphasized ? 1 : 0.85) * (spotlight && !edge.emphasized ? SPOTLIGHT_DIM : 1);
       ctx.lineWidth = width;
       if (edge.hidden || edge.change === 'removed') ctx.setLineDash(edge.change === 'removed' ? [3, 5] : [6, 5]);
       ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.quadraticCurveTo(control.x, control.y, to.x, to.y); ctx.stroke();
       ctx.setLineDash([]);
       if (edge.directed) this.arrowhead(ctx, to, Math.atan2(to.y - control.y, to.x - control.x), 7 + width, edge.color);
       ctx.fillStyle = edge.color; ctx.beginPath(); ctx.arc(from.x, from.y, 3, 0, Math.PI * 2); ctx.fill();
-      const middle = { x: 0.25 * from.x + 0.5 * control.x + 0.25 * to.x, y: 0.25 * from.y + 0.5 * control.y + 0.25 * to.y };
-      if (edge.label) this.linkLabels.push({ at: middle, text: edge.label, color: edge.color });
-      else if (edge.count > 1) this.countBadge(ctx, middle, edge.count, edge.color);
+      const t = edge.label ? edge.wordsAt : 0.5, middle = { x: (1 - t) ** 2 * from.x + 2 * (1 - t) * t * control.x + t * t * to.x, y: (1 - t) ** 2 * from.y + 2 * (1 - t) * t * control.y + t * t * to.y };
+      if (edge.label) this.linkLabels.push({ at: middle, text: edge.label, color: edge.color, ...(spotlight && !edge.emphasized ? { faded: true } : {}) });
+      else if (edge.count > 1 && edge.badge) this.countBadge(ctx, middle, edge.count, edge.color);
       ctx.restore();
     }
   }
@@ -1037,13 +1066,14 @@ export class MapRenderer {
       ctx.save();
       ctx.font = `600 11px ${this.font}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       for (const spot of placed) {
-        const entry = byKey.get(spot.key)!;
+        const entry = byKey.get(spot.key)!, alpha = entry.faded ? 0.35 : 1;
         ctx.strokeStyle = entry.color; ctx.fillStyle = entry.color;
         if (!spot.inside) {
           // Off the link: a leader from the link's middle to the word.
           const to = { x: Math.max(spot.box.x0, Math.min(spot.box.x1, entry.at.x)), y: Math.max(spot.box.y0, Math.min(spot.box.y1, entry.at.y)) };
-          ctx.globalAlpha = 0.8; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(entry.at.x, entry.at.y); ctx.lineTo(to.x, to.y); ctx.stroke(); ctx.globalAlpha = 1;
+          ctx.globalAlpha = 0.8 * alpha; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(entry.at.x, entry.at.y); ctx.lineTo(to.x, to.y); ctx.stroke();
         }
+        ctx.globalAlpha = alpha;
         const { x0, y0 } = spot.box;
         ctx.fillStyle = this.theme.dark ? 'rgba(10,14,30,0.94)' : 'rgba(255,255,255,0.97)';
         roundRect(ctx, x0, y0, entry.w, entry.h, entry.h / 2); ctx.fill();
@@ -1111,7 +1141,7 @@ export class MapRenderer {
     };
     for (const edge of edges) {
       const rail = route(edge.ends);
-      if (!rail || !add(rail, { color: edge.color, width: this.edgeWidth(edge), alpha: edge.change === 'removed' ? 0.75 : edge.emphasized ? 1 : 0.9, ...(edge.hidden || edge.change === 'removed' ? { dash: edge.change === 'removed' ? [3, 5] : [6, 5] } : {}), ...(edge.count > 1 ? { count: edge.count } : {}), ...(edge.change === 'added' ? { halo: this.theme.change.added } : {}), ...(edge.label ? { label: edge.label } : {}), ...(edge.directed ? {} : { directed: false }) })) plan.edges.push(edge);
+      if (!rail || !add(rail, { color: edge.color, width: this.edgeWidth(edge), alpha: (edge.change === 'removed' ? 0.75 : edge.emphasized ? 1 : 0.9) * (state.spotlight && !edge.emphasized ? SPOTLIGHT_DIM : 1), ...(edge.closed || edge.change === 'removed' ? { dash: edge.change === 'removed' ? [3, 5] : [6, 5] } : {}), ...(edge.count > 1 && edge.badge ? { count: edge.count } : {}), ...(edge.change === 'added' ? { halo: this.theme.change.added } : {}), ...(edge.label ? { label: edge.label, wordsAt: edge.wordsAt } : {}), ...(edge.directed ? {} : { directed: false }) })) plan.edges.push(edge);
     }
     for (const link of links) {
       const rail = route(link.ends);
@@ -1144,26 +1174,21 @@ export class MapRenderer {
     }
     ctx.restore();
   }
-  /** Over everything: where the rails go behind blocks (faint), their arrowheads, start dots and counts. */
-  private railTops(ctx: CanvasRenderingContext2D, plan: RailPlan): void {
+  /** Over everything: where the rails go behind blocks (faint), their arrowheads, start dots, and their words or counts (on the part in view). */
+  private railTops(ctx: CanvasRenderingContext2D, viewport: Viewport, plan: RailPlan): void {
     ctx.save();
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     for (const stroke of plan.strokes) {
       const { points } = stroke;
-      ctx.globalAlpha = 0.22; ctx.strokeStyle = stroke.color; ctx.lineWidth = 1.4; ctx.setLineDash([2, 4]);
+      ctx.globalAlpha = 0.22 * stroke.alpha; ctx.strokeStyle = stroke.color; ctx.lineWidth = 1.4; ctx.setLineDash([2, 4]);
       polyline(ctx, points); ctx.stroke();
-      ctx.setLineDash([]); ctx.globalAlpha = 1;
+      ctx.setLineDash([]); ctx.globalAlpha = Math.min(1, stroke.alpha / 0.9);
       const end = points.at(-1)!, before = points.at(-2)!, start = points[0]!;
       if (stroke.directed !== false) this.arrowhead(ctx, end, Math.atan2(end.y - before.y, end.x - before.x), 6 + stroke.width, stroke.color);
       ctx.fillStyle = stroke.color; ctx.beginPath(); ctx.arc(start.x, start.y, 2.6 + stroke.width * 0.3, 0, Math.PI * 2); ctx.fill();
-      if (stroke.count || stroke.label) {
-        const half = stroke.lengths.at(-1)! / 2;
-        const i = Math.max(1, stroke.lengths.findIndex(length => length >= half));
-        const a = points[i - 1]!, b = points[i]!, span = stroke.lengths[i]! - stroke.lengths[i - 1]!, t = span > 0 ? (half - stroke.lengths[i - 1]!) / span : 0;
-        const middle = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
-        if (stroke.label) this.linkLabels.push({ at: middle, text: stroke.label, color: stroke.color });
-        else this.countBadge(ctx, middle, stroke.count!, stroke.color);
-      }
+      const middle = stroke.count || stroke.label ? pointInView(points, viewport, stroke.label ? stroke.wordsAt : 0.5) : undefined;
+      if (middle && stroke.label) this.linkLabels.push({ at: middle, text: stroke.label, color: stroke.color, ...(stroke.alpha < 0.5 ? { faded: true } : {}) });
+      else if (middle) this.countBadge(ctx, middle, stroke.count!, stroke.color);
     }
     ctx.restore();
   }
@@ -1552,6 +1577,40 @@ function streamPhase(state: RenderState): number {
 function curveControl(from: Point, to: Point, lift = 1): Point {
   const distance = Math.hypot(to.x - from.x, to.y - from.y);
   return { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 - Math.min(220, distance * 0.35 + 20) * lift };
+}
+/**
+ * A point of the part of a line in view (the longest stretch of it inside
+ * the viewport), `at` along it (0.5: its middle): its words stay on screen
+ * when one end is off it.
+ */
+export function pointInView(points: Point[], viewport: Viewport, at = 0.5, margin = 12): Point | undefined {
+  const x0 = margin, y0 = margin, x1 = viewport.width - margin, y1 = viewport.height - margin;
+  let best: { from: number; to: number; length: number } | undefined, run: typeof best;
+  const pieces: { a: Point; b: Point; at: number; length: number }[] = [];
+  let travelled = 0;
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1]!, b = points[i]!, length = Math.hypot(b.x - a.x, b.y - a.y);
+    // The part of the segment inside the viewport (Liang–Barsky).
+    let t0 = 0, t1 = 1;
+    const dx = b.x - a.x, dy = b.y - a.y;
+    for (const [p, q] of [[-dx, a.x - x0], [dx, x1 - a.x], [-dy, a.y - y0], [dy, y1 - a.y]] as const) {
+      if (p === 0) { if (q < 0) { t0 = 1; t1 = 0; } continue; }
+      const r = q / p;
+      if (p < 0) t0 = Math.max(t0, r); else t1 = Math.min(t1, r);
+    }
+    if (t1 > t0 && length > 0) {
+      const from = travelled + t0 * length, to = travelled + t1 * length;
+      run = run && Math.abs(run.to - from) < 1e-6 ? { from: run.from, to, length: to - run.from } : { from, to, length: to - from };
+      if (!best || run.length > best.length) best = run;
+    } else run = undefined;
+    pieces.push({ a, b, at: travelled, length });
+    travelled += length;
+  }
+  if (!best) return undefined;
+  const half = best.from + (best.to - best.from) * at;
+  const piece = pieces.find(item => half <= item.at + item.length + 1e-9) ?? pieces.at(-1)!;
+  const t = piece.length > 0 ? (half - piece.at) / piece.length : 0;
+  return { x: piece.a.x + (piece.b.x - piece.a.x) * t, y: piece.a.y + (piece.b.y - piece.a.y) * t };
 }
 function polyline(ctx: CanvasRenderingContext2D, points: Point[]): void {
   ctx.beginPath(); ctx.moveTo(points[0]!.x, points[0]!.y);

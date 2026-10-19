@@ -14,12 +14,15 @@ import { CORNER_LOD, DEFAULT_LOD, abstractionLevel, screenSize, type LodConfig }
 import { FLASH_MS, MapRenderer, RISE_MS, type BeatLabel, type BeatOverlay, type CalloutOverlay, type CoverageOverlay, type EdgeOverlay, type FamilyOverlay, type FlowOverlay, type FrameOverlay, type LevelOverlay, type MotionState, type RenderState } from './renderer';
 import { flowAreas, flowDepths, flowLit, type MapFlow } from './map-flow';
 import { nodeHeight, type Scene, type VisibleSet } from './scene';
-import { isContainer, type AtlasState, type AtlasStore, type MapNavigator, type ViewState } from './store';
+import { DEPENDENCIES_DRAWN, isContainer, shownDependencies, type AtlasState, type AtlasStore, type MapNavigator, type ViewState } from './store';
 import { familyHues, featureHues, personHue, personHues, pullHue, themeById } from './themes';
 import { LENS_TEXT } from './lenses';
+import { dependencyLabel } from './format';
 
 /** A flow labels at most this many stops (the first ones), and shows at most this many pins. */
 const CALLOUT_MAX = 18, PIN_MAX = 40;
+/** Words go on the arrows of this many dependencies (the most connected, and the one pointed at in the list): more would hide the map. */
+const DEPENDENCY_WORDS = 24;
 /** While only a flow's links stream, the map is drawn at most this often (milliseconds between frames). */
 const STREAM_FRAME_MS = 32;
 /** Delay between a rising area and its contents, so new districts build up level by level. */
@@ -39,6 +42,8 @@ const PANELS = ':scope > .map-controls, :scope > .status-bar, :scope > .legend, 
 /** Panels of the middle that float over the map from outside it. */
 const OVER_MAP = '.tour-bar, .tour-flow-card';
 interface Animation { at(t: number): Camera; start: number; duration: number }
+/** The selection's dependencies as the map draws them: rails with their words, what stays lit, whose names show, the areas opened. */
+interface DependencyOverlay { key: string; edges: EdgeOverlay[]; emphasis: Set<string>; within: Set<string>; named: Set<string>; force: Set<string> }
 export interface DebugHandle { screenPositionOf(id: string): { x: number; y: number } | undefined; camera(): Camera; visibleIds(): string[]; rectOf(id: string): { x: number; y: number; w: number; h: number } | undefined }
 export interface MapControllerOptions {
   /**
@@ -273,13 +278,25 @@ export class MapController implements MapNavigator {
   }
   fitNodes(nodes: NodeSummary[]): void {
     if (!nodes.length || this.deferred(() => this.fitNodes(nodes))) return;
-    const bounds = nodes.map(node => { const z = this.scene.nodes.has(node.id) ? this.scene.zBase(node.id) : 0; return projectedBounds(node.rect, z, z + nodeHeight(node)); })
-      .reduce((a, b) => ({ minX: Math.min(a.minX, b.minX), minY: Math.min(a.minY, b.minY), maxX: Math.max(a.maxX, b.maxX), maxY: Math.max(a.maxY, b.maxY) }));
-    const padding = Math.min(72, Math.max(24, Math.min(this.viewport.width, this.viewport.height) * 0.12));
-    this.animateTo(fitBounds(bounds, this.viewport, padding, this.limits));
+    const bounds = this.boundsOf(nodes);
+    this.animateTo(fitBounds(bounds, this.viewport, this.fitPadding(), this.limits));
     // Resizing the map (a split of the middle moving) frames the same nodes again.
-    this.refit = () => { this.camera = fitBounds(bounds, this.viewport, Math.min(72, Math.max(24, Math.min(this.viewport.width, this.viewport.height) * 0.12)), this.limits); this.animation = undefined; };
+    this.refit = () => { this.camera = fitBounds(bounds, this.viewport, this.fitPadding(), this.limits); this.animation = undefined; };
   }
+  reveal(nodes: NodeSummary[]): void {
+    if (!nodes.length || this.deferred(() => this.reveal(nodes))) return;
+    const bounds = this.boundsOf(nodes), padding = this.fitPadding();
+    // Where the camera is going, when it is on its way (flying to the selection).
+    const camera = this.animation?.at(1) ?? this.camera, view = visibleBounds(camera, this.viewport, -padding);
+    if (bounds.minX >= view.minX && bounds.maxX <= view.maxX && bounds.minY >= view.minY && bounds.maxY <= view.maxY) return;
+    const target = fitBounds(bounds, this.viewport, padding, this.limits);
+    this.animateTo({ ...target, scale: Math.min(target.scale, camera.scale) });
+  }
+  private boundsOf(nodes: NodeSummary[]): Bounds {
+    return nodes.map(node => { const z = this.scene.nodes.has(node.id) ? this.scene.zBase(node.id) : 0; return projectedBounds(node.rect, z, z + nodeHeight(node)); })
+      .reduce(union);
+  }
+  private fitPadding(): number { return Math.min(72, Math.max(24, Math.min(this.viewport.width, this.viewport.height) * 0.12)); }
   zoomBy(factor: number): void { if (this.deferred(() => this.zoomBy(factor))) return; this.animateTo(zoomAround(this.camera, this.viewport, this.viewport.width / 2, this.viewport.height / 2, factor, this.limits), 260); }
   flyTo(node: NodeSummary, options: { mode?: 'focus' | 'enter' } = {}): void {
     if (this.deferred(() => this.flyTo(node, options))) return;
@@ -340,11 +357,13 @@ export class MapController implements MapNavigator {
     const shown = this.shownFlow(this.store.getState());
     const extra = this.options.extra?.();
     const flowAreas = shown && !this.store.previewScene ? this.areasOf(shown.flow, shown.branch) : undefined;
-    const opened = [flowAreas, extra?.force, this.beat?.force].filter((areas): areas is ReadonlySet<string> => !!areas?.size);
+    // The selection's dependencies end on their files: the areas holding them open whatever the zoom.
+    const dependencies = shown || this.store.previewScene ? undefined : this.dependencyOverlay(state);
+    const opened = [flowAreas, dependencies?.force, extra?.force, this.beat?.force].filter((areas): areas is ReadonlySet<string> => !!areas?.size);
     const force = opened.length > 1 ? new Set(opened.flatMap(areas => [...areas])) : opened[0];
     // Shapes are buildings: in plan, blocks stay flat.
     this.scene.shapes = state.shapes && !this.flat; this.scene.setStreets(state.streets);
-    const key = `${state.shapes ? 'S' : 'P'}|${this.flat ? 'plan' : 'iso'}|${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}|${this.scene.revision}|${shown ? `${shown.flow.key}#${shown.branch ?? 'all'}` : ''}|${extra?.key ?? ''}|${this.beat?.force ? this.beat.key : ''}|${this.lod.openPx}`;
+    const key = `${state.shapes ? 'S' : 'P'}|${this.flat ? 'plan' : 'iso'}|${this.camera.x}|${this.camera.y}|${this.camera.scale}|${this.viewport.width}|${this.viewport.height}|${this.scene.revision}|${shown ? `${shown.flow.key}#${shown.branch ?? 'all'}` : ''}|${extra?.key ?? ''}|${this.beat?.force ? this.beat.key : ''}|${dependencies?.key ?? ''}|${this.lod.openPx}`;
     if (key !== this.setKey) {
       this.set = this.scene.visible(this.camera, this.viewport, this.lod, force);
       this.setKey = key;
@@ -504,36 +523,12 @@ export class MapController implements MapNavigator {
   }
   private renderState(state: AtlasState, time: number): RenderState {
     const selection = state.selection;
-    const selectedAncestors = selection?.locate?.spatialAncestors.map(node => node.id) ?? [];
-    const edges: EdgeOverlay[] = [];
-    // The selection lights itself with its content and what it is connected to (with the areas holding it); the rest recedes.
-    let emphasis: Set<string> | undefined, within: Set<string> | undefined;
-    if (selection?.node && !isContainer(selection.node) && state.relations.forId === selection.id && (state.relations.status === 'ready' || state.relations.items.length)) {
-      emphasis = new Set([selection.id]); within = new Set([selection.id]);
-      for (const item of state.relations.items) {
-        if (state.relations.type && item.type !== state.relations.type) continue;
-        emphasis.add(item.other.id); within.add(item.other.id);
-        for (const id of item.otherAncestors) emphasis.add(id);
-        const incoming = item.direction === 'incoming';
-        edges.push({ key: item.id, type: item.type, count: 1, from: incoming ? item.other.id : selection.id, fromAncestors: incoming ? item.otherAncestors : selectedAncestors, to: incoming ? selection.id : item.other.id, toAncestors: incoming ? selectedAncestors : item.otherAncestors, emphasized: state.evidence?.relationId === item.id, ...(item.change ? { change: item.change } : {}) });
-      }
-    } else if (selection?.node && isContainer(selection.node) && state.aggregate.forId === selection.id && state.aggregate.data) {
-      emphasis = new Set([selection.id]); within = new Set([selection.id]);
-      const drill = state.aggregate.drill, reached = state.aggregate.data.reached ?? {};
-      for (const [type, ids] of Object.entries(reached)) if (!state.relations.type || type === state.relations.type) for (const id of ids) emphasis.add(id);
-      for (const group of state.aggregate.data.groups) {
-        if (state.relations.type && group.type !== state.relations.type) continue;
-        emphasis.add(group.anchor.id);
-        for (const id of group.anchorAncestors) emphasis.add(id);
-        // Too many connected entities of this type were listed: the anchor's whole content stays lit.
-        if (!reached[group.type]) within.add(group.anchor.id);
-        const outgoing = group.direction === 'outgoing';
-        edges.push({ key: `${group.direction}:${group.type}:${group.anchor.id}`, type: group.type, count: group.count, from: outgoing ? selection.id : group.anchor.id, fromAncestors: outgoing ? selectedAncestors : group.anchorAncestors, to: outgoing ? group.anchor.id : selection.id, toAncestors: outgoing ? group.anchorAncestors : selectedAncestors, emphasized: drill?.group === group });
-      }
-    }
-    const unresolvedCount = selection && !isContainer(selection.node ?? { type: 'file', kind: 'entity' }) && selection.node?.type !== 'file' ? state.diagnostics.data?.codes.find(code => code.code === 'unresolved-http-call')?.count ?? 0 : 0;
-    return {
-      selectedId: selection?.id, hoveredId: state.hover?.id, emphasis, within, edges,
+    // The selection's connections show only with Dependencies on: as rails to the files at their other ends.
+    const dependencies = this.dependencyOverlay(state);
+    const edges = dependencies?.edges ?? [], emphasis = dependencies?.emphasis, within = dependencies?.within;
+    const unresolvedCount = dependencies && selection && !isContainer(selection.node ?? { type: 'file', kind: 'entity' }) && selection.node?.type !== 'file' ? state.diagnostics.data?.codes.find(code => code.code === 'unresolved-http-call')?.count ?? 0 : 0;
+    const render: RenderState = {
+      selectedId: selection?.id, hoveredId: state.hover?.id ?? (dependencies ? state.dependencies.hover : undefined), emphasis, within, edges,
       showDiagnostics: state.showDiagnostics, source: this.sourceFace(state), time, reducedMotion: this.motionReduced, shapes: state.shapes, streets: state.streets, connections: state.connections,
       ...(state.meta?.comparison ? { comparison: { dimUnchanged: state.timeline.dimUnchanged } } : {}),
       ...(unresolvedCount && selection ? { unresolved: { nodeId: selection.id, count: unresolvedCount } } : {}),
@@ -543,7 +538,48 @@ export class MapController implements MapNavigator {
       ...(this.store.previewScene ? { edges: [], emphasis: undefined, within: undefined, lit: undefined, flow: undefined, callouts: undefined, pins: undefined, coverage: undefined, families: undefined, measure: undefined, feature: undefined, people: undefined, person: undefined, pull: undefined, explanation: undefined, pointer: undefined, unresolved: undefined, impact: undefined, comparison: state.timeline.compare || state.timeline.mode === 'git' ? { dimUnchanged: state.timeline.dimUnchanged } : undefined } : {}),
       ...(this.beat && !this.small ? { beat: this.beatOverlay(state) } : {}),
     };
+    // Dependencies are drawn as a diagram on the map: rails along the floors, their ends named, the one pointed at in the list in front.
+    if (dependencies && render.edges === dependencies.edges && edges.length) {
+      render.connections = 'rails'; render.named = dependencies.named;
+      if (state.dependencies.hover) render.spotlight = true;
+    }
+    return render;
   }
+  /**
+   * Dependencies on the map (the Dependencies button): one rail per
+   * dependency between the selection and the file at its other end, labeled
+   * with what it does, the most connected first. What they reach stays lit
+   * (the rest recedes), their ends are named, and the areas holding the
+   * selection and those files open whatever the zoom, so the rails end on them.
+   */
+  private dependencyOverlay(state: AtlasState): DependencyOverlay | undefined {
+    const dependencies = state.dependencies, selection = state.selection;
+    // With a tool in the middle, the overview in the corner shows what that tool lights instead.
+    const data = dependencies.show && !this.small && selection && dependencies.forId === selection.id ? dependencies.data : undefined;
+    if (!data || !selection) return undefined;
+    const cached = this.dependencyCache;
+    if (cached && cached.data === data && cached.locate === selection.locate && cached.type === dependencies.type && cached.direction === dependencies.direction && cached.hover === dependencies.hover) return cached.overlay;
+    const ancestors = selection.locate?.spatialAncestors.map(node => node.id) ?? [];
+    const shown = shownDependencies(dependencies).slice(0, DEPENDENCIES_DRAWN);
+    const emphasis = new Set([selection.id]), within = new Set([selection.id]), named = new Set<string>(), force = new Set(ancestors);
+    const edges = shown.map((item, index): EdgeOverlay => {
+      emphasis.add(item.end.id); within.add(item.end.id); named.add(item.end.id);
+      for (const id of item.endAncestors) { emphasis.add(id); force.add(id); }
+      const types = dependencies.type ? item.types.filter(entry => entry.type === dependencies.type) : item.types;
+      const outgoing = item.direction === 'outgoing';
+      return {
+        key: `dependency:${item.direction}:${item.end.id}`, type: types[0]!.type, count: types.reduce((sum, entry) => sum + entry.count, 0),
+        from: outgoing ? selection.id : item.end.id, fromAncestors: outgoing ? ancestors : item.endAncestors,
+        to: outgoing ? item.end.id : selection.id, toAncestors: outgoing ? item.endAncestors : ancestors,
+        emphasized: dependencies.hover === item.end.id, far: { side: outgoing ? 'to' : 'from', name: item.end.name },
+        ...(index < DEPENDENCY_WORDS || dependencies.hover === item.end.id ? { label: dependencyLabel(types, item.direction) } : {}),
+      };
+    });
+    const overlay = { key: `${selection.id}|${dependencies.type ?? ''}|${dependencies.direction}|${shown.length}`, edges, emphasis, within, named, force };
+    this.dependencyCache = { data, locate: selection.locate, type: dependencies.type, direction: dependencies.direction, hover: dependencies.hover, overlay };
+    return overlay;
+  }
+  private dependencyCache?: { data: object; locate?: object; type?: string; direction: string; hover?: string; overlay: DependencyOverlay };
   /**
    * Blast radius (of the selection, or of a comparison's changes) and the
    * Steps picture. An open Steps panel lights its entities and draws its links

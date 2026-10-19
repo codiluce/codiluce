@@ -188,6 +188,20 @@ details[open].section > summary::before { transform: rotate(90deg); }
 .row.emphasized { outline: 1.5px solid var(--accent); }
 .direction { font-weight: 700; font-size: 11px; color: var(--muted); }
 .relation-phrase { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 5px; white-space: nowrap; }
+/* A button at the end of a section's heading (Relationships › Show on the map). */
+.section > h4 .heading-action { margin-left: auto; text-transform: none; letter-spacing: normal; font-weight: 600; }
+/* Dependencies on: the list comes first in the inspector, set apart from the sections after it. */
+.dependencies-section { margin: 2px 0 10px; padding: 10px 11px; border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--panel-border)); border-radius: 10px; background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.dependencies-section > h4 { color: var(--text); font-size: 12px; }
+.dependencies-summary { margin: 0 0 8px; font-size: 12px; }
+.dependencies-section .segmented { margin-bottom: 8px; }
+.dependencies-actions { justify-content: flex-start; margin-bottom: 8px; }
+.dependencies-group { margin-bottom: 8px; }
+.dependencies-group > .direction { margin: 6px 0 4px; display: flex; gap: 6px; }
+.dependency-row .relation-phrase { flex: none; max-width: 55%; overflow: hidden; text-overflow: ellipsis; }
+.dependency-row { align-items: start; }
+.dependency-links { margin: 6px 0 2px; }
+.dependency-links .row { background: var(--panel-solid); padding: 4px 6px; }
 .filters { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
 .segmented { display: inline-flex; border: 1px solid var(--panel-border); border-radius: var(--radius, 7px); overflow: hidden; }
 .segmented button { border: none; background: none; padding: 3px 9px; font-size: 12px; }

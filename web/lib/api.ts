@@ -5,7 +5,7 @@ import type { MapVisibilityAction, MapVisibilityState } from '@engine/projection
 import type { Entity, Relation } from '@engine/core/graph';
 import type { EvolutionResponse, GitCommitChanges, GitFileDiff } from '@engine/projection/dto';
 import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, EntityPulls, MetricLens, MetricLensResult, PersonAuthorship, PullDetail, PullsResult } from '@engine/projection/dto';
-import type { AggregateEdgesPage, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageExport, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FamiliesResult, FeaturesResult, FileListResult, FlowList, ImpactGroupBy, ImpactResult, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
+import type { AggregateEdgesPage, AggregateResult, CatalogKind, DependenciesResult, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageExport, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FamiliesResult, FeaturesResult, FileListResult, FlowList, ImpactGroupBy, ImpactResult, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
 
 export class ApiError extends Error { constructor(readonly status: number, message: string, readonly body?: unknown) { super(message); } }
 export function isAbort(error: unknown): boolean { return error instanceof DOMException && error.name === 'AbortError' || (error instanceof Error && error.name === 'AbortError'); }
@@ -27,6 +27,8 @@ export interface AtlasApi {
   relations(id: string, options: { type?: string; direction?: string; offset?: number; limit?: number; scope?: 'contained' }, signal?: AbortSignal): Promise<RelationsPage>;
   aggregate(id: string, signal?: AbortSignal): Promise<AggregateResult>;
   aggregateEdges(id: string, options: { anchor: string; type: string; direction: string; offset?: number; limit?: number }, signal?: AbortSignal): Promise<AggregateEdgesPage>;
+  /** What an entity or area depends on and what depends on it, by the file at the other end. */
+  dependencies(id: string, signal?: AbortSignal): Promise<DependenciesResult>;
   diagnostics(id: string, options: { offset?: number; limit?: number }, signal?: AbortSignal): Promise<DiagnosticsPage>;
   between(a: string, b: string, signal?: AbortSignal): Promise<{ items: RelationItem[] }>;
   entity(id: string, signal?: AbortSignal): Promise<Entity>;
@@ -145,6 +147,7 @@ export class HttpAtlasApi implements AtlasApi {
   aggregateEdges(id: string, options: { anchor: string; type: string; direction: string; offset?: number; limit?: number }, signal?: AbortSignal) {
     return this.get<AggregateEdgesPage>(`/api/projection/aggregate/${encodeURIComponent(id)}/edges${this.q({ anchor: options.anchor, type: options.type, direction: options.direction, offset: options.offset ?? 0, limit: options.limit ?? 50 })}`, signal);
   }
+  dependencies(id: string, signal?: AbortSignal) { return this.get<DependenciesResult>(`/api/projection/dependencies/${encodeURIComponent(id)}${this.q()}`, signal); }
   diagnostics(id: string, options: { offset?: number; limit?: number }, signal?: AbortSignal) { return this.get<DiagnosticsPage>(`/api/projection/diagnostics/${encodeURIComponent(id)}${this.q({ offset: options.offset ?? 0, limit: options.limit ?? 50 })}`, signal); }
   between(a: string, b: string, signal?: AbortSignal) { return this.get<{ items: RelationItem[] }>(`/api/projection/between${this.q({ a, b })}`, signal); }
   entity(id: string, signal?: AbortSignal) { return this.get<Entity>(`/api/entities/${encodeURIComponent(id)}${this.q()}`, signal); }

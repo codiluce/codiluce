@@ -29,7 +29,7 @@ import { ProjectionIndex, type EntityRow, type ProjectionNode, type RelationRow 
 import { dataFamilies, NO_FAMILY, type FamilyAssignment } from './families.js';
 import { isMetricLens, metricLens, unavailableLens, type MeasuredValues, type MetricLensResult } from './lenses.js';
 import { readSnapshotFile, readSnapshotSource, snapshotRef, SourceError, splitLines, type SourceRequest, type SourceResponse } from './source.js';
-import type { AggregateResult, ChangeRegionsResult, ChangesPage, CoverageDetail, CoverageExport, CoverageExportSymbol, CoverageResult, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, FamiliesResult, FeaturesResult, FileListResult, FlowList, FlowSummary, ImpactGroup, ImpactGroupBy, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowEdge, RequestFlowList, RequestFlowNode, RequestFlowSummary, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
+import type { AggregateResult, ChangeRegionsResult, DependenciesResult, DependencyLink, ChangesPage, CoverageDetail, CoverageExport, CoverageExportSymbol, CoverageResult, DiagnosticItem, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, EntitySide, FamiliesResult, FeaturesResult, FileListResult, FlowList, FlowSummary, ImpactGroup, ImpactGroupBy, ImpactHop, ImpactItem, ImpactResult, LocateResult, NodeChange, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowEdge, RequestFlowList, RequestFlowNode, RequestFlowSummary, SearchPage, SourceDiffResponse, SourceDiffSide, Step, StepGuard, StepHop, StepLink, StepsResult, ViewKey } from './dto.js';
 import { computeImpact, DEFAULT_IMPACT_DEPTH, FILE_IMPACT_TYPES, impactPath, MAX_IMPACT_SEEDS, seedsOf, SYMBOL_IMPACT_TYPES, type ImpactComputation } from './impact.js';
 import { walkSteps } from './steps.js';
 import { computeArchetypeCounts, computeArchetypes, type ArchetypeCount, type ArchetypeInfo } from './archetypes.js';
@@ -116,6 +116,8 @@ const TYPE_ORDER: Record<string, number> = { application: 0, directory: 1, file:
 const VIEW_CACHE = 8, DATA_CACHE = 10;
 /** Connected entities (with their areas) listed per relation type by an aggregate; beyond, the map lights only the anchors. */
 export const AGGREGATE_REACHED_MAX = 4000;
+/** Dependencies listed for a selection (the most connected first), and relationships listed behind each. */
+export const DEPENDENCIES_MAX = 400, DEPENDENCY_LINKS_MAX = 12;
 const METHOD_ORDER: Record<string, number> = { GET: 0, HEAD: 1, POST: 2, PUT: 3, PATCH: 4, DELETE: 5, OPTIONS: 6 };
 export interface ProjectionOptions {
   readOnly?: boolean;
@@ -897,6 +899,54 @@ export class ProjectionService {
       return { ...item, inside: this.summary(current, current.index.node(item.direction === 'outgoing' ? relation.from : relation.to)!) };
     });
     return { items, limit, offset, total: matching.length, hasMore: offset + limit < matching.length };
+  }
+  /**
+   * What a selection depends on and what depends on it: every relationship
+   * with one end inside it (a file with its symbols, an area with everything
+   * it holds), the other end raised to the file holding it, one dependency
+   * per file and direction.
+   */
+  dependencies(id: string, options: { view?: ViewKey } = {}): DependenciesResult {
+    const current = this.load(options.view);
+    const selection = this.require(current, id);
+    const index = current.index;
+    // The file holding an outside entity; the entity itself when no file holds it, or when its file holds the selection too.
+    const ends = new Map<string, ProjectionNode>();
+    const endOf = (otherId: string): ProjectionNode => {
+      let end = ends.get(otherId);
+      if (end) return end;
+      const other = index.node(otherId)!;
+      end = other;
+      for (let node: ProjectionNode | undefined = other; node; node = node.spatialParentId ? index.node(node.spatialParentId) : undefined) {
+        if (node.type === 'file') { if (!index.contains(node, selection)) end = node; break; }
+      }
+      ends.set(otherId, end);
+      return end;
+    };
+    const groups = new Map<string, { direction: 'outgoing' | 'incoming'; end: ProjectionNode; count: number; types: Map<string, number>; links: DependencyLink[] }>();
+    let total = 0;
+    index.relations.forEach(relation => {
+      // Dependencies describe the viewed snapshot; removed relationships are listed per entity instead.
+      if (relation.change === 'removed' || relation.from === relation.to) return;
+      const fromInside = index.contains(selection, index.node(relation.from)!), toInside = index.contains(selection, index.node(relation.to)!);
+      if (fromInside === toInside) return;
+      const direction = fromInside ? 'outgoing' : 'incoming';
+      const end = endOf(fromInside ? relation.to : relation.from);
+      const key = `${direction}\u0000${end.id}`;
+      let group = groups.get(key);
+      if (!group) groups.set(key, group = { direction, end, count: 0, types: new Map(), links: [] });
+      group.count++; total++;
+      group.types.set(relation.type, (group.types.get(relation.type) ?? 0) + 1);
+      if (group.links.length < DEPENDENCY_LINKS_MAX) group.links.push({ id: relation.id, type: relation.type, from: { id: relation.from, name: index.node(relation.from)!.name }, to: { id: relation.to, name: index.node(relation.to)!.name }, ...(relation.change === 'added' ? { change: 'added' as const } : {}) });
+    });
+    const sorted = [...groups.values()].sort((a, b) => b.count - a.count || (a.direction < b.direction ? 1 : a.direction > b.direction ? -1 : 0) || compareNames(current, a.end.id, b.end.id));
+    return {
+      items: sorted.slice(0, DEPENDENCIES_MAX).map(group => ({
+        direction: group.direction, end: this.summary(current, group.end), endAncestors: index.spatialAncestors(group.end).map(node => node.id), count: group.count,
+        types: [...group.types].map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count || (a.type < b.type ? -1 : 1)), links: group.links,
+      })),
+      total, truncated: sorted.length > DEPENDENCIES_MAX,
+    };
   }
   diagnostics(id: string, options: { limit?: number; offset?: number; severity?: string; view?: ViewKey }): DiagnosticsPage {
     const current = this.load(options.view);

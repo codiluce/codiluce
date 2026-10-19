@@ -31,6 +31,7 @@ export class ServiceApi implements AtlasApi {
   relations(id: string, options: { type?: string; direction?: string; offset?: number; limit?: number; scope?: 'contained' }, signal?: AbortSignal) { return this.run('relations', id, signal, () => this.projection.relations(id, { ...options, view: this.view })); }
   aggregate(id: string, signal?: AbortSignal) { return this.run('aggregate', id, signal, () => this.projection.aggregate(id, { view: this.view })); }
   aggregateEdges(id: string, options: { anchor: string; type: string; direction: string; offset?: number; limit?: number }, signal?: AbortSignal) { return this.run('edges', id, signal, () => this.projection.aggregateEdges(id, { ...options, view: this.view })); }
+  dependencies(id: string, signal?: AbortSignal) { return this.run('dependencies', id, signal, () => this.projection.dependencies(id, { view: this.view })); }
   diagnostics(id: string, options: { offset?: number; limit?: number }, signal?: AbortSignal) { return this.run('diagnostics', id, signal, () => this.projection.diagnostics(id, { ...options, view: this.view })); }
   between(a: string, b: string, signal?: AbortSignal) { return this.run('between', `${a}>${b}`, signal, () => this.projection.between(a, b, this.view)); }
   entity(id: string, signal?: AbortSignal) { return this.run('entity', id, signal, () => { const entity = this.view.snapshot || this.view.compareTo ? this.projection.entity(id, this.view) : this.store.entity(id); if (!entity) throw new Error('Entity not found'); return entity; }); }
