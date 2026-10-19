@@ -89,7 +89,7 @@ export default function ExplanationsDocs() {
         explanations.
       </p>
 
-      <h2 id="templates" className="anchor">Start from a template</h2>
+      <h2 id="templates" className="anchor">Start from a template<NextTag feature="templates" /></h2>
       <p>
         Open <strong>Templates</strong> in Explain, or type <code>/</code> in an empty question. Search common questions
         about architecture, features, tests and more, or browse by category. Choose a template, fill its{' '}
