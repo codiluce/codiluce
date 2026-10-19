@@ -104,21 +104,31 @@ async function background(w: Writer, pretty: boolean, work: BackgroundWork, cont
 
 function banner(w: Writer, version: string): void {
   const { c } = w;
-  // The Eclipse mark: two filled halves with a horizontal band of light.
-  const logo = [
-    '     .------.     ',
-    "  .-'########'-.  ",
-    ' /##############\\ ',
-    '                  ',
-    ' \\##############/ ',
-    "  '-.########.-'  ",
-    "     '------'     ",
+  // The Eclipse mark: a disc cut by a horizontal band of light, traced from the
+  // logo's SVG in quadrant blocks (two pixels per cell each way, so it stays round);
+  // the same disc in plain characters where the terminal lacks them.
+  const logo = w.terminal.unicode ? [
+    '  ▗▄▟████▙▄▖  ',
+    ' ▟██████████▙ ',
+    '▟████████████▙',
+    '              ',
+    '▜████████████▛',
+    ' ▜██████████▛ ',
+    '  ▝▀▜████▛▀▘  ',
+  ] : [
+    '   .######.   ',
+    ' .##########. ',
+    '##############',
+    '              ',
+    '##############',
+    " '##########' ",
+    "   '######'   ",
   ];
   const title = `${c.bold('codiluce')} ${c.dim(version)}`;
   const tagline = c.muted('Bring your code to light');
   const beside = (w.terminal.output.columns ?? 80) >= 52;
   w.write();
-  logo.forEach((line, index) => w.write(`  ${c.accent(line)}${beside && index === 2 ? `  ${title}` : beside && index === 4 ? `  ${tagline}` : ''}`.trimEnd()));
+  logo.forEach((line, index) => w.write(`  ${c.accent(line)}${beside && index === 2 ? `   ${title}` : beside && index === 4 ? `   ${tagline}` : ''}`.trimEnd()));
   if (!beside) { w.write(`  ${title}`); w.write(`  ${tagline}`); }
   w.write();
   for (const line of wrapText('See how your code fits together. Explore files, flows and dependencies, and understand the impact of changes.', width(w.terminal) - 2)) w.write(`  ${c.muted(line)}`);
