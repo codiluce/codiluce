@@ -70,7 +70,8 @@
     "grammars:sync": "node scripts/sync-grammars.mjs",
     "build": "npm run build:cli && npm run build:web",
     "prepack": "npm run build",
-    "build:native-worker": "node scripts/build-native-worker.mjs"
+    "build:native-worker": "node scripts/build-native-worker.mjs",
+    "prototype:visual": "next dev web --port 4390"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.131.0",
