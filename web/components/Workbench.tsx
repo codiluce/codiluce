@@ -31,7 +31,7 @@ export function Workbench({ split }: { split: boolean }) {
   const [overview, setOverview] = useState(true);
   const style = flow ? { '--flow-side': `${shares.side}fr`, '--flow-main': `${1 - shares.side}fr`, '--flow-bottom': `${shares.bottom}fr`, '--flow-top': `${1 - shares.bottom}fr` } as CSSProperties : undefined;
   return (
-    <section className={`map-area${corner ? ' tool-open' : ''}`}>
+    <section className={`map-area${corner ? ' tool-open' : ''}`} data-onboarding="map">
       <CenterTabs />
       <div className={`center-body${flow ? ` flow-split${flow.pane ? ` max-${flow.pane}` : ''}` : ''}`} style={style}>
         {flow && <FlowHead />}

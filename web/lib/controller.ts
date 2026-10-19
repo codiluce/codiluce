@@ -278,6 +278,13 @@ export class MapController implements MapNavigator {
     if (!this.frame) this.frame = requestAnimationFrame(time => this.tick(time));
   }
   // MapNavigator --------------------------------------------------------------
+  /** Where the camera is (the one kept for the full map while it is an overview), in the projection it is in. */
+  cameraState(): { camera: Camera; flat: boolean } { return { camera: { ...(this.overview?.camera ?? this.camera) }, flat: this.flat }; }
+  /** Fly back to a camera from `cameraState`; one from the other projection no longer frames the same place, so it is left. */
+  restoreCamera(saved: { camera: Camera; flat: boolean }): void {
+    if (saved.flat !== isFlat() || this.deferred(() => this.restoreCamera(saved))) return;
+    this.animateTo(saved.camera);
+  }
   fitAll(): void {
     const target = this.homeCamera();
     if (target) this.animateTo(target);

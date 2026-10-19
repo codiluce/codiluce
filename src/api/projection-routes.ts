@@ -75,6 +75,7 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
     else if (pathname === '/api/projection/families') result = projection.families(view);
     else if (pathname === '/api/projection/lens') result = await projection.metricLens(view, { lens: text(params, 'lens'), window: text(params, 'window') });
     else if (pathname === '/api/projection/features') result = projection.features(view);
+    else if (pathname === '/api/projection/onboarding') result = await projection.onboarding(view, context.history ? await context.history.timeline().catch(() => undefined) : undefined);
     else if (pathname === '/api/projection/files') result = await projection.fileList(view, { feature: params.get('feature') ?? undefined, family: params.get('family') ?? undefined, coverage: params.get('coverage') ?? undefined, person: params.get('person') ?? undefined, pull: params.get('pull') ?? undefined, window: text(params, 'window') });
     else if (pathname === '/api/authorship') result = await projection.authorship(view, { window: text(params, 'window') });
     else if ((match = new RegExp(`^/api/authorship/person/${ID}$`).exec(pathname))) result = await projection.personAuthorship(decodeURIComponent(match[1]!), view, { window: text(params, 'window') });

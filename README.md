@@ -66,6 +66,9 @@ The first time, it asks whether to precompute architecture snapshots (optional; 
 immediately), which API keys to use for the optional language-model features, and which coding agents to connect. Enter keeps the defaults; `codiluce setup` asks again. The analysis lives in `.codiluce/`,
 which hides itself from Git.
 
+On your first visit, the map offers a two-minute tour. It follows one of your files across the map, its code, the flow
+it is part of, what depends on it and its history. Take it again, or one of its chapters, from **?** in the top bar.
+
 Want it always at hand? Run `npm install --global codiluce`, then `codiluce start .` in any repository.
 
 ## Work with your agents

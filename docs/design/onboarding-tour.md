@@ -3,7 +3,8 @@
 A guided first visit to the map, designed 2026-10-19 (a grilling session). The tour walks the user through their
 own repository, one thread at a time: find something, understand it, see what it is part of, what breaks if it
 changes, and how it got here. Each stop does something real on their map and spotlights the control that did it.
-It is offered once, on the first visit, and can be taken again from Help. Not built yet.
+It is offered once, on the first visit, and can be taken again from Help. Built 2026-10-19 on `main`; the
+[As built](#as-built) section says where it differs from the plan below.
 
 ## Decisions
 
@@ -163,6 +164,32 @@ place and commit only this work's hunks.
   - A second visit shows no card.
   - Help → *Take the tour* and `?tour=people` start it.
   - The History stop's fallback works on the history-less server.
+
+## As built
+
+- **Code:**
+  - The thread: `src/projection/onboarding.ts` (pure picker) and `ProjectionService.onboarding`, served at
+    `/api/projection/onboarding` with the History service's timeline.
+  - The stops and chapters: `web/lib/onboarding.ts`. The run, snapshot and restore: `web/lib/store.ts`.
+  - On screen: `web/components/Onboarding.tsx` (welcome card, ring, card, closing card, Help menu).
+  - Tests: `tests/onboarding.test.ts`, `web/tests/onboarding.test.ts` and `web/e2e/onboarding.spec.ts`. The other
+    browser specs visit with the tour marked seen (`playwright.config.ts`).
+- **The file:**
+  - Among the flow's files, the handler's file comes first when something depends on it, then the rest by dependents
+    (distinct other files with a relation into it).
+  - With Git history, the first of the top six with at least two commits wins; otherwise the first.
+- **History:** the timeline opens in Git mode at the oldest of the file's latest commits (up to eight) and plays from
+  there, unless reduced motion is on. While the time-lapse is being prepared, the card shows its progress. There is
+  no separate "indexing" state.
+- **Flows:** the stop closes Code, so the flow has the middle; the end of the tour opens it again if it was open.
+- **Map:** the stop moves on with Next only. Exploring the map is its point, and a camera that is still settling must
+  not count as the user acting.
+- **Chapters:**
+  - Agents and Explain are one stop each. Explain does not play a saved tour, because explanation tours also take
+    ← and →.
+  - People & PRs without Git history, and Features before `annotate`, are one card saying how to turn them on.
+- **Card:** Search's card stands right of the box, so the results stay visible. The card is named "Tour: <stop>" for
+  assistive technology. The ring dims the rest of the screen without blocking it.
 
 ## Later
 

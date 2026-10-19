@@ -53,7 +53,7 @@ export function ColorBy() {
     else if (event.key === 'Tab') setOpen(false);
   };
   return (
-    <div className="color-by" ref={root} onKeyDown={open ? onKey : undefined}>
+    <div className="color-by" ref={root} onKeyDown={open ? onKey : undefined} data-onboarding="color">
       <button ref={button} className="button" onClick={() => { if (!open) setPlace(under(button.current!)); setOpen(!open); }} aria-haspopup="menu" aria-expanded={open} data-active={mode !== 'type'} aria-label={`Color by: ${current.label}`} title={`What colors the files on the map. Now: ${current.hint}`}>
         Color: {current.label} <span aria-hidden>▾</span>
       </button>

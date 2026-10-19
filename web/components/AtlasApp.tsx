@@ -4,7 +4,8 @@ import { HttpAtlasApi } from '../lib/api';
 import { HttpExplanationsApi } from '../lib/explanations';
 import { agentLabel } from '@engine/explanations/model';
 import { shortSha, relativeTime } from '../lib/format';
-import { AtlasStore, workingAgents } from '../lib/store';
+import { AtlasStore, workingAgents, type LeftTab } from '../lib/store';
+import { tourParam, withoutTourParam, type TourKey } from '../lib/onboarding';
 import { themeById, UI_PROPERTIES } from '../lib/themes';
 import { Breadcrumbs } from './Breadcrumbs';
 import { CodeView } from './CodeView';
@@ -20,16 +21,28 @@ import { PeoplePanel } from './PeoplePanel';
 import { PullsPanel } from './PullsPanel';
 import { Inspector } from './Inspector';
 import { MapVisibilityUI } from './MapVisibility';
+import { HelpMenu, Onboarding } from './Onboarding';
 import { SettingsDialog } from './SettingsDialog';
 import { SearchBox } from './SearchBox';
 import { Timeline } from './Timeline';
 import { Workbench } from './Workbench';
 import { ArchetypeLegend } from './ArchetypeMark';
 
+/**
+ * `?tour` starts the onboarding tour (`?tour=people` a chapter). It is read
+ * once (React's development double mount creates the store twice) and leaves
+ * the address, so a reload does not start it again.
+ */
+let askedTour: { tour?: TourKey } | undefined;
 function createStore(): AtlasStore {
   const storage = (() => { try { return window.localStorage; } catch { return undefined; } })();
+  askedTour ??= (() => {
+    const search = window.location.search, tour = tourParam(search);
+    if (new URLSearchParams(search).has('tour')) history.replaceState(null, '', window.location.pathname + withoutTourParam(search) + window.location.hash);
+    return tour ? { tour } : {};
+  })();
   return new AtlasStore(new HttpAtlasApi(''), {
-    storage, explanations: new HttpExplanationsApi(''),
+    storage, explanations: new HttpExplanationsApi(''), ...askedTour,
     location: { get hash() { return window.location.hash; }, replace: hash => history.replaceState(null, '', hash === '#' ? window.location.pathname + window.location.search : hash) },
   });
 }
@@ -106,13 +119,17 @@ function Shell() {
   const runningAgents = useAtlas(state => state.agents.connected && state.agents.snapshot?.enabled
     ? state.agents.snapshot.sessions.filter(session => session.status === 'running' && state.agents.now - session.lastSeen <= 300_000).length
     : 0);
-  const [inspectorOpen, setInspectorOpen] = useState(true);
-  const [leftOpen, setLeftOpen] = useState(false);
+  // The layout is the store's, so the onboarding tour can open panels and put them back as they were.
+  const inspectorOpen = useAtlas(state => state.panels.inspector);
+  const leftOpen = useAtlas(state => state.panels.left);
+  const leftTab = useAtlas(state => state.panels.tab);
+  const setInspectorOpen = (inspector: boolean) => store.setPanels({ inspector });
+  const setLeftOpen = (left: boolean) => store.setPanels({ left });
+  const setLeftTab = (tab: LeftTab) => store.setPanels({ tab });
   const agentsReveal = useAtlas(state => state.journal.reveal);
   const agentsExpanded = useAtlas(state => !!state.journal.expanded);
   useEffect(() => { if (agentsReveal) { setLeftOpen(true); setLeftTab('agents'); } }, [agentsReveal]);
   // The left panel holds the features (once described), every flow (pages, requests, console), the people who changed the code and the pull requests.
-  const [leftTab, setLeftTab] = useState<LeftTab>('flows');
   const reveal = useAtlas(state => state.catalog.reveal);
   useEffect(() => { if (reveal) { setLeftOpen(true); setLeftTab('flows'); } }, [reveal]);
   const featureReveal = useAtlas(state => state.features.reveal);
@@ -134,8 +151,8 @@ function Shell() {
   const codeOpen = useAtlas(state => !!state.code);
   const dependencies = useAtlas(state => state.dependencies.show);
   const [help, setHelp] = useState(false);
-  const [settings, setSettings] = useState(false);
-  const closeSettings = useCallback(() => setSettings(false), []);
+  const settings = useAtlas(state => state.panels.settings);
+  const closeSettings = useCallback(() => store.setPanels({ settings: false }), [store]);
   // Floating themes paint a backdrop behind panels held apart by the theme's gap; the others dock panels on a flat background.
   const style = useMemo(() => ({ ...theme.ui, background: theme.style?.floating ? theme.ui['--app-bg'] ?? theme.ui['--bg'] : theme.ui['--bg'] }) as React.CSSProperties, [theme]);
   useEffect(() => {
@@ -188,29 +205,29 @@ function Shell() {
             <button className="icon-button" onClick={() => void store.forward()} disabled={history.index >= history.entries.length - 1} aria-label="Forward" title="Forward (Alt+→)">→</button>
           </div>
           <div className="top-action-group" role="group" aria-label="Timeline" title="Opens the history timeline below the map">
-            <button className="button" onClick={() => void (timelineOpen ? store.closeTimeline() : store.openTimeline())} aria-pressed={timelineOpen} title="Browse Git file evolution; explore architecture snapshots on demand">History</button>
+            <button className="button" data-onboarding="history" onClick={() => void (timelineOpen ? store.closeTimeline() : store.openTimeline())} aria-pressed={timelineOpen} title="Browse Git file evolution; explore architecture snapshots on demand">History</button>
           </div>
           <div className="top-action-group" role="group" aria-label="Sidebar panels" title="Opens in the left sidebar">
-            {features > 0 && <button className="button" onClick={() => showLeft('features')} aria-pressed={leftOpen && leftTab === 'features'} aria-controls="left-panel" title={`The ${features} features of the product, as the model described them: select one to light its files and see its flows`}>Features</button>}
-            <button className="button" onClick={() => showLeft('flows')} aria-pressed={leftOpen && leftTab === 'flows'} aria-controls="left-panel" title="Flows by CLI, HTTP, UI, MCP and worker entry points, with source scope and evidence coverage">Flows</button>
-            <button className="button" onClick={() => showLeft('people')} aria-pressed={leftOpen && leftTab === 'people'} aria-controls="left-panel" title="Who changed which code, from the Git history: select a person to light the files they changed">People</button>
-            <button className="button" onClick={() => showLeft('pulls')} aria-pressed={leftOpen && leftTab === 'pulls'} aria-controls="left-panel" title="Pull requests, open and merged: select one to light the files it changes">PRs</button>
-            <button className={`button agents-top${runningAgents > 0 ? ' has-running' : ''}`} onClick={() => showLeft('agents')} aria-label="Agents" aria-pressed={leftOpen && leftTab === 'agents'} aria-controls="left-panel" title={`${runningAgents > 0 ? `${runningAgents} agent${runningAgents === 1 ? '' : 's'} running · ` : ''}Live and searchable agent sessions beside the map`}>{runningAgents > 0 && <AgentDots />}Agents{runningAgents > 0 && <span className="badge" aria-label={`${runningAgents} agent${runningAgents === 1 ? '' : 's'} running`}>{runningAgents}</span>}</button>
+            {features > 0 && <button className="button" data-onboarding="features" onClick={() => showLeft('features')} aria-pressed={leftOpen && leftTab === 'features'} aria-controls="left-panel" title={`The ${features} features of the product, as the model described them: select one to light its files and see its flows`}>Features</button>}
+            <button className="button" data-onboarding="flows" onClick={() => showLeft('flows')} aria-pressed={leftOpen && leftTab === 'flows'} aria-controls="left-panel" title="Flows by CLI, HTTP, UI, MCP and worker entry points, with source scope and evidence coverage">Flows</button>
+            <button className="button" data-onboarding="people" onClick={() => showLeft('people')} aria-pressed={leftOpen && leftTab === 'people'} aria-controls="left-panel" title="Who changed which code, from the Git history: select a person to light the files they changed">People</button>
+            <button className="button" data-onboarding="pulls" onClick={() => showLeft('pulls')} aria-pressed={leftOpen && leftTab === 'pulls'} aria-controls="left-panel" title="Pull requests, open and merged: select one to light the files it changes">PRs</button>
+            <button className={`button agents-top${runningAgents > 0 ? ' has-running' : ''}`} data-onboarding="agents" onClick={() => showLeft('agents')} aria-label="Agents" aria-pressed={leftOpen && leftTab === 'agents'} aria-controls="left-panel" title={`${runningAgents > 0 ? `${runningAgents} agent${runningAgents === 1 ? '' : 's'} running · ` : ''}Live and searchable agent sessions beside the map`}>{runningAgents > 0 && <AgentDots />}Agents{runningAgents > 0 && <span className="badge" aria-label={`${runningAgents} agent${runningAgents === 1 ? '' : 's'} running`}>{runningAgents}</span>}</button>
           </div>
           <div className="top-action-group" role="group" aria-label="Center tools" title="Opens in a center tab">
-            <button className="button" onClick={() => impactOpen ? store.setCenter('map') : void store.openImpactTool()} aria-pressed={impactOpen} title="What depends on the selection, or on your uncommitted changes, hop by hop">Impact</button>
+            <button className="button" data-onboarding="impact" onClick={() => impactOpen ? store.setCenter('map') : void store.openImpactTool()} aria-pressed={impactOpen} title="What depends on the selection, or on your uncommitted changes, hop by hop">Impact</button>
           </div>
           <div className="top-action-group" role="group" aria-label="Additional columns" title="Opens an additional column beside the map">
-            <button className={`button explain-top${working ? ' working' : ''}`} onClick={() => store.toggleExplanations()} aria-pressed={explainOpen} aria-controls="explain-panel" title={`${working ? `${working} ${working.endsWith(' agents') ? 'are' : 'is'} working on an explanation. ` : ''}Explanations: ask about the code, or read what your agent explained (${explanations} saved); their links light the code on the map`}>Explain{working && <span className="agent-pulse" role="status" aria-label={`${working} working`} />}{unseen > 0 && <span className="badge" aria-label={`${unseen} new`}>{unseen}</span>}</button>
-            <button className="button" onClick={() => codeOpen ? store.closeCode() : store.openCode()} aria-pressed={codeOpen} title="The code of the selection beside the inspector: a file, or a symbol in its file, with the file's outline">Code</button>
+            <button className={`button explain-top${working ? ' working' : ''}`} data-onboarding="explain" onClick={() => store.toggleExplanations()} aria-pressed={explainOpen} aria-controls="explain-panel" title={`${working ? `${working} ${working.endsWith(' agents') ? 'are' : 'is'} working on an explanation. ` : ''}Explanations: ask about the code, or read what your agent explained (${explanations} saved); their links light the code on the map`}>Explain{working && <span className="agent-pulse" role="status" aria-label={`${working} working`} />}{unseen > 0 && <span className="badge" aria-label={`${unseen} new`}>{unseen}</span>}</button>
+            <button className="button" data-onboarding="code" onClick={() => codeOpen ? store.closeCode() : store.openCode()} aria-pressed={codeOpen} title="The code of the selection beside the inspector: a file, or a symbol in its file, with the file's outline">Code</button>
           </div>
           <div className="top-action-group" role="group" aria-label="Map overlays" title="Changes what the map shows">
             <button className="button" onClick={() => store.toggleDependencies()} aria-pressed={dependencies} title="What the selection uses and what uses it (calls, requests, imports…), drawn on the map as labeled rails to each file, and listed first in the inspector">Dependencies</button>
             <ColorBy />
           </div>
           <div className="top-action-group" role="group" aria-label="Settings and help">
-            <button className="icon-button" onClick={() => setSettings(open => !open)} aria-expanded={settings} aria-label="Settings" title="Settings">⚙</button>
-            <button className="icon-button" onClick={() => setHelp(open => !open)} aria-expanded={help} aria-label="Keyboard shortcuts">?</button>
+            <button className="icon-button" data-onboarding="settings" onClick={() => store.setPanels({ settings: !settings })} aria-expanded={settings} aria-label="Settings" title="Settings">⚙</button>
+            <HelpMenu onKeyboard={() => setHelp(true)} />
           </div>
         </div>
       </header>
@@ -245,7 +262,7 @@ function Shell() {
           </aside>
         )}
         {inspectorOpen ? (
-          <aside className="panel" style={{ width: inspectorWidth }} aria-label="Inspector">
+          <aside className="panel" data-onboarding="inspector" style={{ width: inspectorWidth }} aria-label="Inspector">
             <ResizeHandle side="right" width={inspectorWidth} onResize={setInspectorWidth} label="Resize inspector" />
             <Inspector onClose={() => setInspectorOpen(false)} />
           </aside>
@@ -255,10 +272,10 @@ function Shell() {
       {help && <HelpDialog onClose={() => setHelp(false)} />}
       {settings && <SettingsDialog onClose={closeSettings} />}
       <MapVisibilityUI />
+      <Onboarding />
     </div>
   );
 }
-type LeftTab = 'features' | 'flows' | 'people' | 'pulls' | 'agents';
 const TAB_TEXT: Record<LeftTab, string> = { features: 'Features', flows: 'Flows', people: 'People', pulls: 'PRs', agents: 'Agents' };
 function HelpDialog({ onClose }: { onClose: () => void }) {
   const close = useRef<HTMLButtonElement>(null);

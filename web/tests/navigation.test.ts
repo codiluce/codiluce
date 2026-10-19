@@ -40,8 +40,9 @@ async function ready(api = new ServiceApi()) {
 test('init loads only the projection root and its first level, not the whole graph', async () => {
   const { atlas, api } = await ready();
   assert.equal(atlas.getState().status, 'ready');
-  // Besides the root's children, only the small annotations overview (empty when none were written).
-  assert.deepEqual(api.calls.sort(), ['annotations:', `children:${graph.run.repositoryId}`, 'meta:'].sort());
+  // Besides the root's children, only the small annotations overview (empty when none were written) and, on a first
+  // visit (nothing remembered), what the onboarding tour's welcome card counts.
+  assert.deepEqual(api.calls.sort(), ['annotations:', `children:${graph.run.repositoryId}`, 'meta:', 'onboarding:'].sort());
   assert.ok(atlas.scene.nodes.size < graph.entities.length / 3);
 });
 test('dependencies load for the selection only once the Dependencies button is on, and follow the selection', async () => {

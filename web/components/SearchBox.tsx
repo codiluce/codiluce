@@ -36,6 +36,13 @@ export function SearchBox() {
   const input = useRef<HTMLInputElement>(null);
   const box = useRef<HTMLDivElement>(null);
   const abort = useRef<AbortController | null>(null);
+  // Text asked by the store (the onboarding tour types here): shown as if typed; empty text clears the box.
+  const request = useAtlas(state => state.searchRequest);
+  useEffect(() => {
+    if (!request) return;
+    setQuery(request.text); setType(undefined); setOpen(!!request.text);
+    if (request.text) input.current?.focus(); else input.current?.blur();
+  }, [request]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -94,7 +101,7 @@ export function SearchBox() {
   // Leaving the search for one of its own controls (a facet, an action) keeps the results open.
   const onBlur = (event: React.FocusEvent) => { if (!box.current?.contains(event.relatedTarget as Node | null)) setTimeout(() => setOpen(false), 150); };
   return (
-    <div className="search" role="search" ref={box} onBlur={onBlur}>
+    <div className="search" role="search" ref={box} onBlur={onBlur} data-onboarding="search">
       <span className="search-icon" aria-hidden>⌕</span>
       <input
         ref={input} type="search" value={query} placeholder="Search files, symbols, routes, controllers…" aria-label="Search the indexed graph"

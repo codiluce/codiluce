@@ -661,3 +661,26 @@ export interface EntityAnnotation {
   /** The description was made from another version of this code. */
   outdated?: boolean;
 }
+
+// Onboarding ---------------------------------------------------------------------------
+/**
+ * What the onboarding tour shows of a view: the repository's size for the
+ * welcome card, and one thread through it (projection/onboarding.ts). Every
+ * part of the thread is optional: a repository without flows has no flow, one
+ * without Git history no history.
+ */
+export interface OnboardingResult {
+  repository: string;
+  counts: { files: number; flows: number; commits?: number };
+  thread: {
+    file?: NodeSummary & { dependents: number };
+    /** The file's top-level area on the map (a child of the root). */
+    folder?: NodeSummary & { files: number };
+    flow?: FlowSummary & { folders: number };
+    /** What depends on the file, within the default depth. */
+    impact?: { total: number; hops: number };
+    /** Who changed the file and its latest commits (newest first), in all of the history. */
+    history?: { commits: number; recent: AuthorshipCommit[]; people: { key: string; name: string; commits: number }[] };
+  };
+  available: { history: boolean; historyReason?: string; people: boolean; peopleReason?: string; features: number };
+}

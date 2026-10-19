@@ -5,7 +5,7 @@ import type { MapVisibilityAction, MapVisibilityState } from '@engine/projection
 import type { Entity, Relation } from '@engine/core/graph';
 import type { EvolutionResponse, GitCommitChanges, GitFileDiff } from '@engine/projection/dto';
 import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, EntityPulls, MetricLens, MetricLensResult, PersonAuthorship, PullDetail, PullsResult } from '@engine/projection/dto';
-import type { AggregateEdgesPage, AggregateResult, CatalogKind, DependenciesResult, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageExport, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FamiliesResult, FeaturesResult, FileListResult, FlowList, ImpactGroupBy, ImpactResult, LocateResult, NodeSummary, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
+import type { AggregateEdgesPage, AggregateResult, CatalogKind, DependenciesResult, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageExport, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FamiliesResult, FeaturesResult, FileListResult, FlowList, ImpactGroupBy, ImpactResult, LocateResult, NodeSummary, OnboardingResult, Page, ProjectionMeta, RelationItem, RelationsPage, RequestFlow, RequestFlowList, SearchPage, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineResponse, ViewKey } from '@engine/projection/dto';
 
 export class ApiError extends Error { constructor(readonly status: number, message: string, readonly body?: unknown) { super(message); } }
 export function isAbort(error: unknown): boolean { return error instanceof DOMException && error.name === 'AbortError' || (error instanceof Error && error.name === 'AbortError'); }
@@ -70,6 +70,8 @@ export interface AtlasApi {
   families(signal?: AbortSignal): Promise<FamiliesResult>;
   /** Features (the model's domains): each with its folders, the feature of every file and entry point, and per area. */
   features(signal?: AbortSignal): Promise<FeaturesResult>;
+  /** What the onboarding tour shows of the view: its size and one thread through it (a file, its flow, its folder, its history). */
+  onboarding(signal?: AbortSignal): Promise<OnboardingResult>;
   /** The files a highlight lights: a feature, a data family, a coverage category or a person (in a window). */
   files(query: FileQuery, signal?: AbortSignal): Promise<FileListResult>;
   /** Who changed the view's files in a window of the Git history: people, the person who changed each file most, per area. */
@@ -183,6 +185,7 @@ export class HttpAtlasApi implements AtlasApi {
   entityAnnotation(id: string, signal?: AbortSignal) { return this.get<EntityAnnotation>(`/api/annotations/entity/${encodeURIComponent(id)}${this.q()}`, signal); }
   families(signal?: AbortSignal) { return this.get<FamiliesResult>(`/api/projection/families${this.q()}`, signal); }
   features(signal?: AbortSignal) { return this.get<FeaturesResult>(`/api/projection/features${this.q()}`, signal); }
+  onboarding(signal?: AbortSignal) { return this.get<OnboardingResult>(`/api/projection/onboarding${this.q()}`, signal); }
   files(query: FileQuery, signal?: AbortSignal) { return this.get<FileListResult>(`/api/projection/files${this.q({ ...query })}`, signal); }
   authorship(window: AuthorshipWindowKey, signal?: AbortSignal) { return this.get<AuthorshipResult>(`/api/authorship${this.q({ window })}`, signal); }
   lens(lens: MetricLens, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.get<MetricLensResult>(`/api/projection/lens${this.q(lens === 'complexity' ? { lens } : { lens, window })}`, signal); }

@@ -47,7 +47,8 @@ import type { PullFileChange } from '../history/pull-requests.js';
 import { computePulls, entityPulls, pullDetail, pullFiles, pullsResult, type PullsComputation } from './pulls.js';
 import type { EntityPulls, PullDetail, PullOrigin, PullsResult } from './dto.js';
 import { authorshipResult, computeAuthorship, entityAuthorship, isAuthorshipWindow, personAuthorship, type AuthorshipComputation } from './authorship.js';
-import type { AuthorshipResult, AuthorshipWindowKey, EntityAuthorship, PersonAuthorship } from './dto.js';
+import type { AuthorshipResult, AuthorshipWindowKey, EntityAuthorship, OnboardingResult, PersonAuthorship } from './dto.js';
+import { dependentFiles, pickFile, threadFiles, threadFlow, tourFlows } from './onboarding.js';
 export type { NodeSummary, Page, RelationItem, ViewKey } from './dto.js';
 /** Relations that do not make their target used: structure and re-export bookkeeping. */
 const UNUSED_IGNORED = new Set(['contains', 'exports']);
@@ -1393,6 +1394,58 @@ export class ProjectionService {
       items.push(feature ? { ...summary, feature } : summary);
     }
     return { items, counts, scopeCounts, ...(options.entity ? { entity: options.entity } : {}) };
+  }
+  /**
+   * What the onboarding tour shows of a view: its size and one thread through
+   * it (projection/onboarding.ts). `timeline` (the History service's) gives
+   * the commits and whether there is history; the thread's file is the first
+   * candidate with history when there is any.
+   */
+  async onboarding(view?: ViewKey, timeline?: TimelineResponse): Promise<OnboardingResult> {
+    const current = this.load(view);
+    const links = this.linkContext(view);
+    const index = current.index;
+    const flows = tourFlows(links.flows);
+    const dependents = dependentFiles(index, links.fileOf);
+    const flow = threadFlow(links.flows);
+    const candidates = threadFiles(index, links.fileOf, dependents, flow).slice(0, 6);
+    const authorship = new Map<string, EntityAuthorship>();
+    for (const id of candidates) {
+      const found = await this.entityAuthorship(id, view, { window: 'all' });
+      authorship.set(id, found);
+      // Without Git history, every candidate says so: one is enough.
+      if (!found.available || found.commits >= 2) break;
+    }
+    const people = [...authorship.values()][0];
+    const fileId = pickFile(candidates.map(id => ({ id, commits: authorship.get(id)?.commits })));
+    const file = fileId ? index.node(fileId) : undefined;
+    const thread: OnboardingResult['thread'] = {};
+    if (file) {
+      thread.file = { ...this.summary(current, file), dependents: dependents.get(file.id) ?? 0 };
+      const top = index.spatialAncestors(file)[1];
+      if (top) thread.folder = { ...this.summary(current, top), files: top.stats.files };
+      const impact = this.impact(file.id, { view });
+      thread.impact = { total: impact.total, hops: impact.byDistance.reduce((last, count, hops) => count ? hops : last, 0) };
+      const history = authorship.get(file.id);
+      if (history?.available && history.commits) thread.history = { commits: history.commits, recent: history.recent.slice(0, 8), people: history.people.slice(0, 3).map(person => ({ key: person.key, name: person.name, commits: person.commits })) };
+    }
+    if (flow) {
+      const folders = new Set<string>();
+      for (const member of flow.members) { const id = links.fileOf(member), node = id ? index.node(id) : undefined; const parent = node?.spatialParentId ?? node?.canonicalParentId; if (parent) folders.add(parent); }
+      const feature = this.domains()?.of.get(flow.summary.entry.id);
+      thread.flow = { ...flow.summary, ...(feature ? { feature } : {}), folders: folders.size };
+    }
+    const files = [...index.nodes.values()].filter(node => node.kind === 'entity' && node.type === 'file' && node.change?.status !== 'removed').length;
+    return {
+      repository: current.target.info.run.repositoryName,
+      counts: { files, flows: flows.length, ...(timeline?.available ? { commits: timeline.entries.length } : {}) },
+      thread,
+      available: {
+        history: !!timeline?.available, ...(timeline && !timeline.available && timeline.reason ? { historyReason: timeline.reason } : !timeline ? { historyReason: 'History is not served for this repository' } : {}),
+        people: !!people?.available, ...(people && !people.available && people.reason ? { peopleReason: people.reason } : {}),
+        features: this.features(view).features.length,
+      },
+    };
   }
   private coverageOfView(current: View): CoverageComputation {
     const catalog = this.catalog(current);

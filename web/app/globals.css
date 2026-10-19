@@ -1640,3 +1640,33 @@ a.xlink:hover, a.xlink:focus-visible { background: color-mix(in srgb, var(--link
 .replay-text.failed { color: var(--danger); }
 .replay-scrub { width: 100%; margin: 0; accent-color: var(--accent); }
 @media (max-width: 700px) { .replay-bar { width: calc(100% - 24px); top: auto; bottom: 52px; } }
+
+/* Onboarding tour (components/Onboarding.tsx): the welcome card, the ring around a stop's control, the card beside it. */
+.onboarding-welcome, .onboarding-card { position: fixed; z-index: 60; display: grid; gap: 8px; padding: 12px 14px 12px; background: var(--panel-solid); color: var(--text); border: 1px solid var(--panel-border); border-radius: var(--radius-float, 10px); box-shadow: var(--shadow); text-align: left; }
+.onboarding-welcome { left: 16px; bottom: 16px; width: min(360px, calc(100vw - 32px)); }
+.onboarding-welcome h2, .onboarding-head h2 { margin: 0; font-size: 14px; line-height: 1.35; font-weight: 600; }
+.onboarding-welcome h2 { padding-right: 24px; }
+.onboarding-welcome h2 strong { color: var(--accent); }
+.onboarding-welcome p { margin: 0; font-size: 13px; line-height: 1.45; }
+.onboarding-welcome .onboarding-lead { color: var(--muted); font-size: 12px; }
+.onboarding-close { position: absolute; top: 8px; right: 8px; }
+.onboarding-head { display: grid; gap: 2px; padding-right: 24px; }
+.onboarding-step { font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--subtle); }
+.onboarding-text { margin: 0; font-size: 13px; line-height: 1.5; }
+.onboarding-text.missing { color: var(--muted); }
+.onboarding-text code, .onboarding-how code { background: var(--chip); padding: 0 4px; border-radius: 4px; font-size: 11.5px; }
+.onboarding-actions { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+.onboarding-skip { margin-left: auto; font-size: 12px; }
+.onboarding-ring { position: fixed; z-index: 55; pointer-events: none; border-radius: var(--radius, 8px); box-shadow: 0 0 0 2px var(--accent), 0 0 0 6px color-mix(in srgb, var(--accent) 22%, transparent), 0 0 0 100vmax rgba(0, 0, 0, 0.14); transition: left .25s ease, top .25s ease, width .25s ease, height .25s ease; }
+.onboarding-ring.area { border-radius: var(--radius-panel, 12px); box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 100vmax rgba(0, 0, 0, 0.1); }
+.onboarding-card.closing { max-height: calc(100vh - 24px); overflow-y: auto; }
+.onboarding-chapters ul { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 4px; }
+.onboarding-chapters li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; padding: 6px 0; border-top: 1px solid var(--panel-border); }
+.onboarding-chapter-text { display: grid; gap: 1px; min-width: 0; }
+.onboarding-chapter-text strong { font-size: 12.5px; }
+.onboarding-chapter-text small { font-size: 11px; color: var(--subtle); line-height: 1.35; }
+.onboarding-how { grid-column: 1 / -1; margin: 0; font-size: 12px; line-height: 1.45; }
+.onboarding-done { color: var(--ok, var(--accent)); }
+.help-menu-list [role="menuitem"] { display: flex; align-items: flex-start; gap: 6px; width: 100%; padding: 6px 8px; border: 1px solid transparent; border-radius: var(--radius-chip, 6px); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.help-menu-list [role="menuitem"]:hover, .help-menu-list [role="menuitem"]:focus-visible { border-color: var(--panel-border); background: var(--chip-active); outline: none; }
+@media (prefers-reduced-motion: reduce) { .onboarding-ring { transition: none; } }

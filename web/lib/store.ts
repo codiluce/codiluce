@@ -10,14 +10,15 @@ import type { ActivitySnapshot } from '@engine/activity/model';
 import type { GitCommitChanges, GitFileDiff, MapVisibilityAction } from '@engine/projection/dto';
 import type { Entity, Relation } from '@engine/core/graph';
 import type { AggregateEdgesPage, AggregateGroup, AggregateResult, CatalogKind, DependenciesResult, Dependency, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FlowList, FlowSummary, ImpactItem, ImpactResult, LocateResult, NodeSummary, ProjectionMeta, Rect, RelationItem, RequestFlow, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineEntry, TimelineResponse, ViewKey } from '@engine/projection/dto';
-import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, EntityPulls, FamiliesResult, FeaturesResult, FileListResult, FlowStatus, ImpactGroupBy, MetricLens, MetricLensResult, PersonAuthorship, PullDetail, PullsResult } from '@engine/projection/dto';
+import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, OnboardingResult, EntityAuthorship, EntityPulls, FamiliesResult, FeaturesResult, FileListResult, FlowStatus, ImpactGroupBy, MetricLens, MetricLensResult, PersonAuthorship, PullDetail, PullsResult } from '@engine/projection/dto';
 import type { CatalogTab } from './catalog';
 import { fromRequestFlow, fromSteps, type MapFlow } from './map-flow';
 import { isAbort, type AtlasApi } from './api';
 import { DEFAULT_LOD, type Level } from './lod';
 import { Scene } from './scene';
 import { SessionListCache } from './session-cache';
-import { setFlat } from './camera';
+import { setFlat, type Camera } from './camera';
+import { readSaved, stopsOf, writeSaved, type ChapterKey, type OnboardingSaved, type Stop, type TourKey } from './onboarding';
 import { Evolution } from './evolution';
 import { themeById } from './themes';
 import type { AgentActivity, AskEvent, ExplanationDetail, ExplanationList, ExplanationsSetup, ResolvedLink } from '@engine/explanations/model';
@@ -374,6 +375,39 @@ export interface AtlasState {
    */
   agents: { connected: boolean; show: boolean; now: number; snapshot?: ActivitySnapshot; live?: import('@engine/conversations/model').LiveSession[]; hover?: string; replay?: ReplayState; places?: Record<string, string[]> };
   explain: ExplainState;
+  /** The shell's layout (the left panel, the inspector, Settings), which the onboarding tour opens and puts back. */
+  panels: PanelsState;
+  /** Text asked of the search box (the onboarding tour types there); `n` tells two asks apart. */
+  searchRequest?: { text: string; n: number };
+  onboarding: OnboardingState;
+}
+/** The tabs of the left panel. */
+export type LeftTab = 'features' | 'flows' | 'people' | 'pulls' | 'agents';
+/** `left`: the left panel is open, on `tab` (kept while it is closed). */
+export interface PanelsState { left: boolean; tab: LeftTab; inspector: boolean; settings: boolean }
+/**
+ * The onboarding tour (lib/onboarding.ts): `welcome` offers it on a first
+ * visit; `thread` is what it follows; `run` is the tour playing, on a stop
+ * (`stop` equal to the number of stops: the closing card) and beat, `busy`
+ * while a stop's action runs. `chapters` were taken in this browser.
+ */
+export interface OnboardingState {
+  welcome: boolean;
+  thread: { status: Status; data?: OnboardingResult; error?: string };
+  run?: { tour: TourKey; stop: number; beat: 'invite' | 'show'; busy: boolean };
+  chapters: ChapterKey[];
+}
+/** Where a map's camera was, in the projection it was in. */
+export interface SavedCamera { camera: Camera; flat: boolean }
+/** What was open before the onboarding tour began, put back when it ends. */
+interface OnboardingSnapshot {
+  selection?: string; center: CenterView; panels: PanelsState; code: boolean;
+  explain: { open: boolean; detail?: string; scene?: number };
+  timeline: { open: boolean; mode: TimelineState['mode']; gitTarget?: string };
+  impact: { open: boolean; forId?: string; depth: number };
+  flowView?: FlowViewState; catalog?: { id: string; name: string } | null;
+  color: ColorMode; person?: string; pull?: string; feature?: string;
+  agents: boolean; camera?: SavedCamera;
 }
 export interface MapNavigator {
   flyTo(node: NodeSummary, options?: { mode?: 'focus' | 'enter' }): void;
@@ -383,6 +417,9 @@ export interface MapNavigator {
   reveal?(nodes: NodeSummary[]): void;
   fitAll(): void;
   zoomBy(factor: number): void;
+  /** Where the camera is, to come back to it (the onboarding tour does when it ends), and going back there. */
+  cameraState?(): SavedCamera;
+  restoreCamera?(saved: SavedCamera): void;
   /** Where a node's block (or its nearest drawn ancestor's) is on screen, in client pixels. */
   screenRect?(id: string, ancestors?: string[]): { x: number; y: number; w: number; h: number; own: boolean } | undefined;
 }
@@ -391,6 +428,8 @@ export interface StoreOptions {
   location?: { hash: string; replace(hash: string): void };
   /** Explanations and the chat (absent: the column stays empty). */
   explanations?: ExplanationsApi;
+  /** The onboarding tour the address asks for (`?tour`): it starts once the map is loaded, instead of the welcome card. */
+  tour?: TourKey;
 }
 const EMPTY_RELATIONS: RelationsState = { status: 'idle', items: [], typeCounts: [], total: 0, hasMore: false, direction: 'both' };
 const EMPTY_CHANGES: TimelineState['changes'] = { status: 'idle', items: [] };
@@ -478,10 +517,13 @@ export class AtlasStore {
   /** Where the single map starts when it next appears (a place of the split map opened on its own). */
   private pendingFocus?: { node: NodeSummary; frame?: Rect };
 
+  /** What this browser remembers of the onboarding tour. */
+  private saved: OnboardingSaved;
   /** The address the page opened with: read once, as another store (React's development double mount) may rewrite it first. */
   private openingHash?: string;
   constructor(readonly api: AtlasApi, private readonly options: StoreOptions = {}) {
     this.sessions = new SessionListCache(options.storage);
+    this.saved = readSaved(options.storage);
     this.openingHash = options.location?.hash;
     // Building shapes and findings on the map are opt-in, saved as `buildingShapes` and `mapFindings`: earlier
     // versions saved `shapes: true` and `showDiagnostics: true` with every preference.
@@ -497,6 +539,8 @@ export class AtlasStore {
       agents: { connected: false, show: prefs.showAgents ?? true, now: Date.now() },
       explain: { open: false, list: { status: 'idle' }, lens: prefs.explainLens ?? true, draft: { text: '', context: [], ...(prefs.chatModel ? { model: prefs.chatModel } : {}) }, unseen: [], agents: [], dismissed: [] },
       flowSplit: clampSplit(prefs.flowSplit ?? FLOW_SPLIT), connections: prefs.connections === 'rails' ? 'rails' : 'arcs', views: viewPrefs(prefs.views), tourView: prefs.tourView === 'diagram' ? 'diagram' : 'map',
+      panels: { left: false, tab: 'flows', inspector: true, settings: false },
+      onboarding: { welcome: false, thread: { status: 'idle' }, chapters: this.saved.chapters },
       timeline: { open: false, mode: 'git', status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true, split: prefs.split ?? true, regionLevel: prefs.regionLevel ?? 'auto', regions: { status: 'idle' } },
     };
     // One projection for every map on screen.
@@ -554,6 +598,9 @@ export class AtlasStore {
       const scene = Number(param('scene'));
       if (explain) void this.openExplanations(explain === 'list' ? {} : { id: explain, ...(Number.isInteger(scene) && scene >= 1 ? { scene: scene - 1 } : {}) });
       else void this.loadExplanations();
+      // The address asks for the tour, or this browser has not been offered it yet.
+      if (this.options.tour) void this.startOnboarding(this.options.tour);
+      else if (!this.saved.seen) this.offerOnboarding();
     } catch (error) {
       this.set({ status: 'error', error: error instanceof Error ? error.message : String(error) });
     }
@@ -2244,6 +2291,160 @@ export class AtlasStore {
       const data = await api.forEntity(id, signal);
       this.set(state => state.selection?.id === id ? { selection: { ...state.selection, explained: { status: 'ready', data } } } : {});
     } catch (error) { if (!isAbort(error)) this.set(state => state.selection?.id === id ? { selection: { ...state.selection, explained: { status: 'error', error: error instanceof Error ? error.message : String(error) } } } : {}); }
+  }
+  // The shell's layout ----------------------------------------------------------------
+  setPanels(patch: Partial<PanelsState>): void {
+    const panels = this.state.panels;
+    if ((Object.keys(patch) as (keyof PanelsState)[]).every(key => panels[key] === patch[key])) return;
+    this.set({ panels: { ...panels, ...patch } });
+  }
+  /** Type in the search box: its results open as if typed there (empty text clears it). */
+  requestSearch(text: string): void { this.set(state => ({ searchRequest: { text, n: (state.searchRequest?.n ?? 0) + 1 } })); }
+
+  // The onboarding tour (lib/onboarding.ts) -----------------------------------------------
+  private setOnboarding(patch: Partial<OnboardingState> | ((onboarding: OnboardingState) => Partial<OnboardingState>)): void {
+    this.set(state => ({ onboarding: { ...state.onboarding, ...(typeof patch === 'function' ? patch(state.onboarding) : patch) } }));
+  }
+  private setRun(patch: Partial<NonNullable<OnboardingState['run']>>): void {
+    this.setOnboarding(onboarding => onboarding.run ? { run: { ...onboarding.run, ...patch } } : {});
+  }
+  private remember(patch: Partial<OnboardingSaved>): void { this.saved = { ...this.saved, ...patch }; writeSaved(this.options.storage, this.saved); }
+  private onboardingLoad?: Promise<OnboardingResult | undefined>;
+  /** What was open when the tour began, and the state when the stop on screen began (its invite's `done` compares with it). */
+  private onboardingBefore?: OnboardingSnapshot;
+  private onboardingStart?: AtlasState;
+  /** What the tour follows: read once. */
+  loadOnboarding(): Promise<OnboardingResult | undefined> {
+    const thread = this.state.onboarding.thread;
+    if (thread.status === 'ready') return Promise.resolve(thread.data);
+    this.onboardingLoad ??= (async () => {
+      this.setOnboarding({ thread: { status: 'loading' } });
+      try { const data = await this.api.onboarding(); this.setOnboarding({ thread: { status: 'ready', data } }); return data; }
+      catch (error) { this.setOnboarding({ thread: { status: 'error', error: error instanceof Error ? error.message : String(error) } }); return undefined; }
+      finally { this.onboardingLoad = undefined; }
+    })();
+    return this.onboardingLoad;
+  }
+  /** A first visit: the welcome card offers the tour, with what was indexed. */
+  offerOnboarding(): void { this.setOnboarding({ welcome: true }); void this.loadOnboarding(); }
+  /** The welcome card answered without the tour: it is not offered again. */
+  dismissWelcome(): void { this.setOnboarding({ welcome: false }); this.remember({ seen: true }); }
+  /** The stops of the tour playing (none until its thread is read). */
+  onboardingStops(state = this.state): Stop[] { const run = state.onboarding.run, thread = state.onboarding.thread.data; return run && thread ? stopsOf(run.tour, thread) : []; }
+  /** Why a stop has nothing to show here (undefined: it has something). */
+  onboardingMissing(stop: Stop): string | undefined {
+    const thread = this.state.onboarding.thread.data;
+    return thread ? stop.missing?.({ thread, state: this.state, start: this.onboardingStart ?? this.state }) : undefined;
+  }
+  /** Start a tour (the core tour or a chapter) from its first stop; what is open now comes back when it ends. */
+  async startOnboarding(tour: TourKey = 'core'): Promise<void> {
+    if (!this.state.onboarding.run) this.onboardingBefore = this.snapshotLayout();
+    this.setOnboarding({ welcome: false, run: { tour, stop: 0, beat: 'invite', busy: true } });
+    this.remember({ seen: true });
+    this.closeTour();
+    if (this.state.timeline.playing) this.pause(false);
+    const thread = await this.loadOnboarding();
+    // Unreadable: the card says so (and closes).
+    if (!thread) { this.setRun({ busy: false }); return; }
+    if (this.state.onboarding.run?.tour === tour) await this.enterStop(0);
+  }
+  private async enterStop(index: number): Promise<void> {
+    const thread = this.state.onboarding.thread.data, stop = this.onboardingStops()[index];
+    if (!thread || !this.state.onboarding.run) return;
+    this.setRun({ stop: index, beat: 'invite', busy: true });
+    if (stop?.prepare && !this.onboardingMissing(stop)) { try { await stop.prepare(this, thread); } catch { /* the card still shows */ } }
+    if (this.state.onboarding.run?.stop !== index) return;
+    this.onboardingStart = this.state;
+    this.setRun({ busy: false });
+  }
+  /** Next: the stop's action (on its invite), then the next stop; after the last, the closing card; on that, the end. */
+  async onboardingNext(): Promise<void> {
+    const run = this.state.onboarding.run, thread = this.state.onboarding.thread.data;
+    if (!run || run.busy) return;
+    if (!thread) { await this.exitOnboarding(); return; }
+    const stops = this.onboardingStops();
+    if (run.stop >= stops.length) { await this.exitOnboarding(); return; }
+    const stop = stops[run.stop]!;
+    if (run.beat === 'invite' && stop.show && !this.onboardingMissing(stop)) {
+      this.setRun({ busy: true });
+      try { await stop.show.run(this, thread); } catch { /* the card still says what it shows */ }
+      if (this.state.onboarding.run?.stop === run.stop) this.setRun({ beat: 'show', busy: false });
+      return;
+    }
+    if (run.stop + 1 < stops.length) { await this.enterStop(run.stop + 1); return; }
+    this.setRun({ stop: stops.length, beat: 'invite' });
+    if (run.tour !== 'core' && !this.saved.chapters.includes(run.tour)) {
+      this.remember({ chapters: [...this.saved.chapters, run.tour] });
+      this.setOnboarding({ chapters: this.saved.chapters });
+    }
+  }
+  /** Back: the stop on screen from its invite, else the previous one as its action left it. */
+  async onboardingBack(): Promise<void> {
+    const run = this.state.onboarding.run;
+    if (!run || run.busy || !this.state.onboarding.thread.data) return;
+    const stops = this.onboardingStops();
+    if (run.beat === 'show' && run.stop < stops.length) { await this.enterStop(run.stop); return; }
+    const previous = Math.min(run.stop, stops.length) - 1;
+    if (previous < 0) return;
+    await this.enterStop(previous);
+    if (stops[previous]!.show) await this.onboardingNext();
+  }
+  /** The user did what the invite asks (it was not done when the stop began): the stop's action follows, as Next would. `focused`: the `data-onboarding` area holding the focus. */
+  onboardingCheck(focused?: string): void {
+    const run = this.state.onboarding.run, thread = this.state.onboarding.thread.data, start = this.onboardingStart;
+    if (!run || run.busy || run.beat !== 'invite' || !thread || !start) return;
+    const stop = this.onboardingStops()[run.stop];
+    if (!stop?.done || !stop.show || this.onboardingMissing(stop)) return;
+    const context = { thread, state: this.state, start, focused };
+    if (stop.done(context) && !stop.done({ ...context, state: start, focused: undefined })) void this.onboardingNext();
+  }
+  /** End the tour, whatever stop it is on: what was open before comes back. */
+  async exitOnboarding(): Promise<void> {
+    if (!this.state.onboarding.run) return;
+    this.setOnboarding({ run: undefined });
+    const before = this.onboardingBefore;
+    this.onboardingBefore = undefined; this.onboardingStart = undefined;
+    if (before) await this.restoreLayout(before);
+  }
+  private snapshotLayout(): OnboardingSnapshot {
+    const state = this.state, camera = this.navigator?.cameraState?.();
+    return {
+      ...(state.selection ? { selection: state.selection.id } : {}), center: state.center, panels: state.panels, code: !!state.code,
+      explain: { open: state.explain.open, ...(state.explain.detail ? { detail: state.explain.detail.id } : {}), ...(state.explain.tour ? { scene: state.explain.tour.scene } : {}) },
+      timeline: { open: state.timeline.open, mode: state.timeline.mode, ...(state.timeline.gitTarget ? { gitTarget: state.timeline.gitTarget } : {}) },
+      impact: { open: state.impact.open, ...(state.impact.forId ? { forId: state.impact.forId } : {}), depth: state.impact.depth },
+      ...(state.flowView ? { flowView: state.flowView } : {}),
+      // Undefined: the Flows list was never read, so it is left as the tour leaves it.
+      ...(state.catalog.status !== 'idle' ? { catalog: state.catalog.entity ?? null } : {}),
+      color: this.colorMode(), ...(state.people.focus ? { person: state.people.focus } : {}), ...(state.pulls.focus ? { pull: state.pulls.focus } : {}), ...(state.features.focus ? { feature: state.features.focus } : {}),
+      agents: state.journal.open.includes('conversations'), ...(camera ? { camera } : {}),
+    };
+  }
+  private async restoreLayout(before: OnboardingSnapshot): Promise<void> {
+    const now = () => this.state;
+    if (now().searchRequest?.text) this.requestSearch('');
+    if (now().panels.settings && !before.panels.settings) this.setPanels({ settings: false });
+    if (now().timeline.open && !before.timeline.open) await this.closeTimeline();
+    else if (before.timeline.open && before.timeline.mode === 'git' && before.timeline.gitTarget && now().timeline.gitTarget !== before.timeline.gitTarget) { this.pause(false); await this.setGitTarget(before.timeline.gitTarget); }
+    if (!before.flowView) { if (now().flowView) this.closeFlowView(); }
+    else if (now().flowView?.id !== before.flowView.id) void this.openFlowView(before.flowView, { pane: before.flowView.pane ?? null });
+    if (!before.impact.open) { if (now().impact.open) this.hideImpact(); }
+    else if (before.impact.forId && now().impact.forId !== before.impact.forId) void this.showImpact(before.impact.forId, before.impact.depth);
+    if (before.code !== !!now().code) { if (before.code) this.openCode(); else this.closeCode(); }
+    if (!before.explain.open && now().explain.open) this.closeExplanations();
+    else if (before.explain.open && !now().explain.open) void this.openExplanations(before.explain.detail ? { id: before.explain.detail, ...(before.explain.scene !== undefined ? { scene: before.explain.scene } : {}) } : {});
+    else if (before.explain.scene !== undefined && !now().explain.tour) this.showScene(before.explain.scene);
+    if (!before.agents && now().journal.open.includes('conversations')) this.closeJournal('conversations');
+    if (this.colorMode() !== before.color) void this.colorBy(before.color);
+    if (now().people.focus !== before.person) void this.focusPerson(before.person);
+    if (now().pulls.focus !== before.pull) void this.focusPull(before.pull);
+    if (now().features.focus !== before.feature) void this.focusFeature(before.feature);
+    if (before.catalog !== undefined && now().catalog.entity?.id !== before.catalog?.id) void this.loadCatalog(before.catalog);
+    if (before.selection) { if (now().selection?.id !== before.selection) await this.select(before.selection, { fly: false, recordHistory: false }); }
+    else if (now().selection) this.clearSelection();
+    this.setPanels(before.panels);
+    this.setCenter(before.center);
+    if (before.camera) this.navigator?.restoreCamera?.(before.camera);
   }
   setFlowGroupsOpen(keys: string[], open: boolean): void {
     this.set(state => ({ catalog: { ...state.catalog, open: { ...state.catalog.open, ...Object.fromEntries(keys.map(key => [key, open])) } } }));

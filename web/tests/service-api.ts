@@ -78,6 +78,7 @@ export class ServiceApi implements AtlasApi {
   entityAnnotation(id: string, signal?: AbortSignal) { return this.run('entityAnnotation', id, signal, () => this.projection.entityAnnotation(id, this.view)); }
   families(signal?: AbortSignal) { return this.run('families', '', signal, () => this.projection.families(this.view)); }
   features(signal?: AbortSignal) { return this.run('features', '', signal, () => this.projection.features(this.view)); }
+  onboarding(signal?: AbortSignal) { return this.run('onboarding', '', signal, async () => this.projection.onboarding(this.view, this.options.history ? await this.options.history.timeline().catch(() => undefined) : undefined)); }
   files(query: FileQuery, signal?: AbortSignal) { return this.run('files', JSON.stringify(query), signal, () => this.projection.fileList(this.view, query)); }
   authorship(window: AuthorshipWindowKey, signal?: AbortSignal) { return this.run('authorship', window, signal, () => this.projection.authorship(this.view, { window })); }
   lens(lens: MetricLens, window: AuthorshipWindowKey, signal?: AbortSignal) { return this.run('lens', `${lens}|${window}`, signal, () => this.projection.metricLens(this.view, { lens, window })); }
