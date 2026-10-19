@@ -98,6 +98,27 @@ export interface AggregateResult {
   reached: Record<string, string[]>;
 }
 export type AggregateEdgesPage = Page<RelationItem & { inside: NodeSummary }>;
+/** One relationship behind a dependency, between the entities at its two ends (symbols, endpoints, tables…). */
+export interface DependencyLink { id: string; type: string; from: { id: string; name: string }; to: { id: string; name: string }; change?: 'added' }
+/**
+ * A dependency of a selection, or on it: its relationships with one file
+ * outside it (or one entity no file holds: an endpoint, a route, a table, or a
+ * symbol of the selection's own file).
+ */
+export interface Dependency {
+  direction: 'outgoing' | 'incoming';
+  /** The file at the other end, or the entity itself when no file holds it. */
+  end: NodeSummary;
+  /** Spatial ancestors of `end`, root first. */
+  endAncestors: string[];
+  count: number;
+  /** Relationships by type, the most first. */
+  types: { type: string; count: number }[];
+  /** The first relationships behind it (`count` in all). */
+  links: DependencyLink[];
+}
+/** Everything a selection depends on and everything depending on it, by the file at the other end, the most connected first. */
+export interface DependenciesResult { items: Dependency[]; /** Relationships crossing the selection's boundary. */ total: number; /** More dependencies than listed. */ truncated: boolean }
 export type DiagnosticItem = Omit<Diagnostic, 'resolution' | 'severity'> & { severity: string; nodeId: string; nodeName: string; change?: 'added' };
 export type DiagnosticsPage = Page<DiagnosticItem> & { codes: { code: string; severity: string; count: number }[] };
 export interface SourceRequest {

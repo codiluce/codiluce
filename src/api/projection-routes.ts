@@ -59,6 +59,7 @@ export async function handleProjectionRoute(context: ProjectionContext, url: URL
     else if (pathname === '/api/projection/search') result = projection.search(params.get('q') ?? '', { ...page, type: text(params, 'type'), view });
     else if ((match = new RegExp(`^/api/projection/relations/${ID}$`).exec(pathname))) result = projection.relations(decodeURIComponent(match[1]!), { ...page, direction: text(params, 'direction'), type: text(params, 'type'), scope: text(params, 'scope'), view });
     else if ((match = new RegExp(`^/api/projection/aggregate/${ID}$`).exec(pathname))) result = projection.aggregate(decodeURIComponent(match[1]!), { direction: text(params, 'direction'), type: text(params, 'type'), view });
+    else if ((match = new RegExp(`^/api/projection/dependencies/${ID}$`).exec(pathname))) result = projection.dependencies(decodeURIComponent(match[1]!), { view });
     else if ((match = new RegExp(`^/api/projection/aggregate/${ID}/edges$`).exec(pathname))) {
       const anchor = params.get('anchor');
       if (!anchor) throw new Error('anchor is required');

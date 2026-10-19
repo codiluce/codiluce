@@ -9,7 +9,7 @@ import type { ActivitySnapshot } from '@engine/activity/model';
 // the map are kept; a view epoch drops responses that belong to an old view.
 import type { GitCommitChanges, GitFileDiff, MapVisibilityAction } from '@engine/projection/dto';
 import type { Entity, Relation } from '@engine/core/graph';
-import type { AggregateEdgesPage, AggregateGroup, AggregateResult, CatalogKind, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FlowList, FlowSummary, ImpactItem, ImpactResult, LocateResult, NodeSummary, ProjectionMeta, Rect, RelationItem, RequestFlow, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineEntry, TimelineResponse, ViewKey } from '@engine/projection/dto';
+import type { AggregateEdgesPage, AggregateGroup, AggregateResult, CatalogKind, DependenciesResult, Dependency, ChangeRegionsResult, ChangesPage, RegionLevel, CoverageDetail, CoverageResult, DiagnosticsPage, EntityChangeDetail, EntityHistoryResponse, FlowList, FlowSummary, ImpactItem, ImpactResult, LocateResult, NodeSummary, ProjectionMeta, Rect, RelationItem, RequestFlow, SourceDiffResponse, SourceRequest, SourceResponse, StepsResult, TimelineEntry, TimelineResponse, ViewKey } from '@engine/projection/dto';
 import type { AnnotationsOverview, AuthorshipResult, AuthorshipWindowKey, EntityAnnotation, EntityAuthorship, EntityPulls, FamiliesResult, FeaturesResult, FileListResult, FlowStatus, ImpactGroupBy, MetricLens, MetricLensResult, PersonAuthorship, PullDetail, PullsResult } from '@engine/projection/dto';
 import type { CatalogTab } from './catalog';
 import { fromRequestFlow, fromSteps, type MapFlow } from './map-flow';
@@ -57,6 +57,13 @@ export interface SelectionState {
 export interface RelationsState { status: Status; forId?: string; items: RelationItem[]; typeCounts: { type: string; direction: string; count: number }[]; total: number; hasMore: boolean; type?: string; direction: 'both' | 'outgoing' | 'incoming'; error?: string }
 export interface AggregateState { status: Status; forId?: string; data?: AggregateResult; error?: string; drill?: { group: AggregateGroup; status: Status; page?: AggregateEdgesPage; items: AggregateEdgesPage['items']; error?: string } }
 export interface DiagnosticsState { status: Status; forId?: string; data?: DiagnosticsPage; error?: string }
+/**
+ * Dependencies on the map (the Dependencies button, off by default): the
+ * selection's dependencies drawn as labeled rails to the files at their other
+ * ends, and listed first in the inspector. `type` and `direction` filter both;
+ * `hover` is the other end the pointer is on in the list.
+ */
+export interface DependenciesState { show: boolean; status: Status; forId?: string; data?: DependenciesResult; error?: string; type?: string; direction: 'both' | 'outgoing' | 'incoming'; hover?: string }
 export interface EvidenceState { relationId: string; context?: { from: string; to: string; type: string }; status: Status; relation?: Relation; error?: string }
 export interface SourceState { request: SourceRequest; title: string; status: Status; data?: SourceResponse; error?: string }
 export interface DiffState { entity: string; title: string; status: Status; data?: SourceDiffResponse; error?: string; ignoreWhitespace: boolean; layout: 'unified' | 'split' }
@@ -316,6 +323,7 @@ export interface AtlasState {
   relations: RelationsState;
   aggregate: AggregateState;
   diagnostics: DiagnosticsState;
+  dependencies: DependenciesState;
   evidence?: EvidenceState;
   source?: SourceState;
   diff?: DiffState;
@@ -371,6 +379,8 @@ export interface MapNavigator {
   flyTo(node: NodeSummary, options?: { mode?: 'focus' | 'enter' }): void;
   /** Fit several nodes (e.g. a selection and its related endpoints) into view. */
   fitNodes(nodes: NodeSummary[]): void;
+  /** Bring nodes into view: the camera moves only when some are out of it, and zooms out no further than needed (never in). */
+  reveal?(nodes: NodeSummary[]): void;
   fitAll(): void;
   zoomBy(factor: number): void;
   /** Where a node's block (or its nearest drawn ancestor's) is on screen, in client pixels. */
@@ -423,6 +433,14 @@ export function workingAgents(explain: Pick<ExplainState, 'agents' | 'dismissed'
   return explain.agents.filter(agent => agent.state === 'working' && agent.work && !explain.dismissed.includes(workKey(agent)));
 }
 function evolutionKey(timeline: TimelineResponse | undefined, mode: 'git' | 'architecture'): string { return `${mode}:` + (timeline?.entries ?? []).flatMap(entry => mode === 'git' ? [entry.sha] : entry.snapshot ? [entry.snapshot.id] : []).join(','); }
+/** Dependencies on the map: the map draws at most this many (the most connected); the inspector lists them all. */
+export const DEPENDENCIES_DRAWN = 80;
+/** The selection's dependencies the filters keep (direction, type), the most connected first. */
+export function shownDependencies(dependencies: Pick<DependenciesState, 'data' | 'type' | 'direction'>): Dependency[] {
+  return (dependencies.data?.items ?? []).filter(item => (dependencies.direction === 'both' || item.direction === dependencies.direction) && (!dependencies.type || item.types.some(entry => entry.type === dependencies.type)));
+}
+/** Dependencies of no selection (the button keeps its state and filters). */
+function idleDependencies(dependencies: DependenciesState): DependenciesState { return { show: dependencies.show, status: 'idle', direction: dependencies.direction }; }
 export function isContainer(node: Pick<NodeSummary, 'type' | 'kind'>): boolean {
   return node.kind === 'group' || ['repository', 'application', 'directory'].includes(node.type);
 }
@@ -467,11 +485,11 @@ export class AtlasStore {
     this.openingHash = options.location?.hash;
     // Building shapes and findings on the map are opt-in, saved as `buildingShapes` and `mapFindings`: earlier
     // versions saved `shapes: true` and `showDiagnostics: true` with every preference.
-    let prefs: { themeId?: string; buildingShapes?: boolean; streets?: boolean; openPx?: number; mapFindings?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey; explainLens?: boolean; chatModel?: string; flowSplit?: FlowSplit; connections?: Connections; views?: Partial<Record<keyof ViewPrefs, string>>; tourView?: string; showAgents?: boolean } = {};
+    let prefs: { themeId?: string; buildingShapes?: boolean; streets?: boolean; openPx?: number; mapFindings?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey; explainLens?: boolean; chatModel?: string; flowSplit?: FlowSplit; connections?: Connections; dependencies?: boolean; views?: Partial<Record<keyof ViewPrefs, string>>; tourView?: string; showAgents?: boolean } = {};
     try { prefs = JSON.parse(options.storage?.getItem('codiluce:prefs') ?? '{}'); } catch { /* defaults */ }
     this.state = {
       status: 'loading', view: { level: 'Applications', focus: [], zoom: 1, visible: [], truncated: false },
-      relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' },
+      relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' }, dependencies: { show: prefs.dependencies === true, status: 'idle', direction: 'both' },
       history: { entries: [], index: -1 }, showDiagnostics: prefs.mapFindings ?? false, themeId: themeById(prefs.themeId).id, shapes: prefs.buildingShapes ?? false, streets: prefs.streets ?? true, openPx: openSize(prefs.openPx),
       staleIndex: false, sceneRevision: 0, mapVisibility: { open: false, busy: false },
       impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '', open: {} }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, families: { show: false, status: 'idle' }, features: { status: 'idle', open: {} },
@@ -504,7 +522,7 @@ export class AtlasStore {
   }
   private bumpScene(): void { this.set(state => ({ sceneRevision: state.sceneRevision + 1 })); }
   private savePrefs(): void {
-    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, buildingShapes: this.state.shapes, streets: this.state.streets, ...(this.state.openPx !== DEFAULT_LOD.openPx ? { openPx: this.state.openPx } : {}), flowSplit: this.state.flowSplit, connections: this.state.connections, views: this.state.views, tourView: this.state.tourView, showAgents: this.state.agents.show, mapFindings: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window, explainLens: this.state.explain.lens, ...(this.state.explain.draft.model ? { chatModel: this.state.explain.draft.model } : {}) })); } catch { /* preferences are optional */ }
+    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, buildingShapes: this.state.shapes, streets: this.state.streets, ...(this.state.openPx !== DEFAULT_LOD.openPx ? { openPx: this.state.openPx } : {}), flowSplit: this.state.flowSplit, connections: this.state.connections, dependencies: this.state.dependencies.show, views: this.state.views, tourView: this.state.tourView, showAgents: this.state.agents.show, mapFindings: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window, explainLens: this.state.explain.lens, ...(this.state.explain.draft.model ? { chatModel: this.state.explain.draft.model } : {}) })); } catch { /* preferences are optional */ }
   }
   dispose(): void { this.disposed = true; this.sessions.close(); for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.explainTimer) clearInterval(this.explainTimer); if (this.activityTimer) clearTimeout(this.activityTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
 
@@ -563,7 +581,7 @@ export class AtlasStore {
   async reload(): Promise<void> {
     const selected = this.state.selection?.id;
     this.api.clear(); this.childLoads.clear(); this.clearMapEvolution();
-    this.set({ selection: undefined, relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' }, evidence: undefined, source: undefined });
+    this.set(state => ({ selection: undefined, relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' }, dependencies: idleDependencies(state.dependencies), evidence: undefined, source: undefined }));
     await this.init();
     if (selected && !this.state.selection) await this.select(selected, { fly: false, recordHistory: false }).catch(() => undefined);
     // A new run is a new view: who changed it, and the pull requests on it, are read again.
@@ -626,6 +644,7 @@ export class AtlasStore {
         isEntity ? this.api.entity(id, signal).then(entity => this.set(state => state.selection?.id === id ? { selection: { ...state.selection, entity, entityStatus: 'ready' } } : {})) : Promise.resolve(this.set(state => state.selection?.id === id ? { selection: { ...state.selection, entityStatus: 'ready' } } : {})),
         fileAncestor ? this.api.entity(fileAncestor.id, signal).then(file => this.set(state => state.selection?.id === id ? { selection: { ...state.selection, file } } : {})).catch(() => undefined) : Promise.resolve(),
         this.loadRelations(id, located.node),
+        this.state.dependencies.show ? this.loadDependencies(id) : Promise.resolve(),
         this.loadDiagnostics(id),
         isEntity && this.comparing ? this.loadChange(id, signal) : Promise.resolve(),
         isEntity && this.state.timeline.open && this.state.meta?.history.available ? this.loadEntityTimeline(id, signal) : Promise.resolve(),
@@ -642,7 +661,7 @@ export class AtlasStore {
   }
   clearSelection(): void {
     this.aborts.get('selection')?.abort();
-    this.set({ selection: undefined, relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' }, evidence: undefined });
+    this.set(state => ({ selection: undefined, relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' }, dependencies: idleDependencies(state.dependencies), evidence: undefined }));
     this.writeHash(undefined);
   }
   /** `#id=…&at=…&vs=…`: the selection and, in history mode, the viewed and baseline commits. */
@@ -758,6 +777,35 @@ export class AtlasStore {
       for (const item of page.items) { this.scene.upsert(item.other); }
       this.set(state => state.aggregate.drill?.group === group ? { aggregate: { ...state.aggregate, drill: { group, status: 'ready', page, items: [...previous, ...page.items] } } } : {});
     } catch (error) { if (!isAbort(error)) this.set(state => ({ aggregate: { ...state.aggregate, drill: { group, status: 'error', items: previous, error: String(error instanceof Error ? error.message : error) } } })); }
+  }
+  /** The Dependencies button: the selection's dependencies on the map, as labeled rails to the files at their other ends. */
+  toggleDependencies(show = !this.state.dependencies.show): void {
+    this.set(state => ({ dependencies: { ...state.dependencies, show, hover: undefined } }));
+    this.savePrefs();
+    const selection = this.state.selection;
+    if (show && selection?.node) { if (this.state.dependencies.forId !== selection.id) void this.loadDependencies(selection.id); else this.revealDependencies(); }
+  }
+  setDependencyFilter(filter: { type?: string | null; direction?: DependenciesState['direction'] }): void {
+    this.set(state => ({ dependencies: { ...state.dependencies, ...(filter.type !== undefined ? { type: filter.type ?? undefined } : {}), ...(filter.direction ? { direction: filter.direction } : {}) } }));
+  }
+  /** The pointer on a dependency in the list: its rail stands out on the map. */
+  hoverDependency(endId: string | undefined): void { if (endId !== this.state.dependencies.hover) this.set(state => ({ dependencies: { ...state.dependencies, hover: endId } })); }
+  private async loadDependencies(id: string): Promise<void> {
+    // Another selection starts with every type shown.
+    this.set(state => ({ dependencies: { ...state.dependencies, status: 'loading', forId: id, error: undefined, hover: undefined, ...(state.dependencies.forId === id ? {} : { data: undefined, type: undefined }) } }));
+    try {
+      const data = await this.api.dependencies(id, this.aborts.get('selection')?.signal);
+      if (this.state.selection?.id !== id) return;
+      for (const item of data.items) this.scene.upsert(item.end);
+      this.set(state => ({ dependencies: { ...state.dependencies, status: 'ready', forId: id, data } }));
+      this.revealDependencies();
+    } catch (error) { if (!isAbort(error)) this.set(state => state.selection?.id === id ? { dependencies: { ...state.dependencies, status: 'error', forId: id, error: String(error instanceof Error ? error.message : error) } } : {}); }
+  }
+  /** The diagram of the selection's dependencies comes into view (the camera moves only when part of it is out of view). */
+  private revealDependencies(): void {
+    const node = this.state.selection?.node, dependencies = this.state.dependencies;
+    if (!node || !dependencies.show || dependencies.forId !== node.id) return;
+    this.navigator?.reveal?.([node, ...shownDependencies(dependencies).slice(0, DEPENDENCIES_DRAWN).map(item => item.end)]);
   }
   private async loadDiagnostics(id: string): Promise<void> {
     this.set({ diagnostics: { status: 'loading', forId: id } });
@@ -1206,7 +1254,7 @@ export class AtlasStore {
       // The settled view takes over from a time-lapse frame (unless playback is moving on).
       const settled = !this.state.timeline.playing;
       if (settled) this.previewScene = undefined;
-      this.set(state => ({ meta, staleIndex: false, sceneRevision: state.sceneRevision + 1, relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' }, evidence: undefined, timeline: { ...state.timeline, switching: false, changes: EMPTY_CHANGES, ...(settled ? { preview: undefined } : {}) } }));
+      this.set(state => ({ meta, staleIndex: false, sceneRevision: state.sceneRevision + 1, relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' }, dependencies: idleDependencies(state.dependencies), evidence: undefined, timeline: { ...state.timeline, switching: false, changes: EMPTY_CHANGES, ...(settled ? { preview: undefined } : {}) } }));
       this.writeHash(select);
       const { source, diff } = this.state;
       if (diff) { if (meta.comparison) void this.openDiff(diff.entity, diff.title); else this.set({ diff: undefined }); }

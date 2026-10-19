@@ -40,6 +40,10 @@ export function relationPhrase(type: string, direction: 'outgoing' | 'incoming' 
   if (!labels) return direction === 'incoming' ? `${type} (incoming)` : type;
   return direction === 'incoming' ? labels.incoming : labels.outgoing;
 }
+/** What a selection does with a dependency (`calls ×3 · imports`), or what the dependency does with it (`imported by`), the most first. */
+export function dependencyLabel(types: { type: string; count: number }[], direction: 'outgoing' | 'incoming'): string {
+  return types.map(entry => `${relationPhrase(entry.type, direction)}${entry.count > 1 ? ` ×${compactNumber(entry.count)}` : ''}`).join(' · ');
+}
 export function compactNumber(value: number): string {
   if (value < 1000) return String(value);
   if (value < 10_000) return `${(value / 1000).toFixed(1).replace(/\.0$/, '')}k`;

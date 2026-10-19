@@ -44,6 +44,29 @@ test('init loads only the projection root and its first level, not the whole gra
   assert.deepEqual(api.calls.sort(), ['annotations:', `children:${graph.run.repositoryId}`, 'meta:'].sort());
   assert.ok(atlas.scene.nodes.size < graph.entities.length / 3);
 });
+test('dependencies load for the selection only once the Dependencies button is on, and follow the selection', async () => {
+  const { atlas, api } = await ready();
+  const form = id('LoginForm.tsx', 'file');
+  await atlas.select(form);
+  assert.ok(!api.calls.some(call => call.startsWith('dependencies:')), 'off by default: nothing to draw');
+  atlas.toggleDependencies(true);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  let state = atlas.getState().dependencies;
+  assert.equal(state.forId, form);
+  assert.equal(state.status, 'ready');
+  assert.ok(state.data!.items.length > 0);
+  // Every end is in the scene, so the map can draw the rail to it.
+  assert.ok(state.data!.items.every(item => atlas.scene.nodes.has(item.end.id)));
+  atlas.setDependencyFilter({ direction: 'incoming', type: state.data!.items[0]!.types[0]!.type });
+  atlas.hoverDependency(state.data!.items[0]!.end.id);
+  // Another selection: its own dependencies, every type shown again, the direction kept.
+  const frontend = id('frontend', 'application');
+  await atlas.select(frontend);
+  state = atlas.getState().dependencies;
+  assert.deepEqual([state.forId, state.status, state.type, state.direction, state.hover], [frontend, 'ready', undefined, 'incoming', undefined]);
+  atlas.clearSelection();
+  assert.deepEqual([atlas.getState().dependencies.show, atlas.getState().dependencies.data], [true, undefined]);
+});
 test('selecting a deeply nested search result loads its ancestors, reveals it and records history', async () => {
   const { atlas, api, navigator } = await ready();
   const [result] = projection.search('AuthController::login', {}).items;

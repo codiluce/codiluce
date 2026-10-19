@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import type { AtlasApi } from '../lib/api';
 import { glyphOf } from '../lib/glyphs';
 import { DEFAULT_LOD } from '../lib/lod';
-import { receding } from '../lib/renderer';
+import { pointInView, receding } from '../lib/renderer';
 import { AtlasStore, OPEN_PX_RANGE } from '../lib/store';
 
 function storage() {
@@ -49,4 +49,25 @@ test('kinds that matter in a flow get a glyph; tests, and folders of mostly test
   assert.equal(receding({ archetype: { kind: 'service', basis: 'convention', reason: '' }, stats: stats(1) }), false);
   assert.equal(receding({ archetypeCounts: [{ kind: 'test', count: 9 }], stats: stats(11) }), true);
   assert.equal(receding({ archetypeCounts: [{ kind: 'test', count: 3 }, { kind: 'component', count: 8 }], stats: stats(11) }), false);
+});
+
+test('dependencies on the map are off by default; turning them on is a saved choice', () => {
+  const { storage: store } = storage();
+  const atlas = new AtlasStore({} as AtlasApi, { storage: store });
+  assert.equal(atlas.getState().dependencies.show, false);
+  atlas.toggleDependencies();
+  assert.equal(new AtlasStore({} as AtlasApi, { storage: store }).getState().dependencies.show, true);
+  atlas.toggleDependencies(false);
+  assert.equal(new AtlasStore({} as AtlasApi, { storage: store }).getState().dependencies.show, false);
+});
+
+test('words on a link go along its part in view', () => {
+  const viewport = { width: 200, height: 100 };
+  // All in view: the middle of the whole line, or nearer one end.
+  assert.deepEqual(pointInView([{ x: 20, y: 50 }, { x: 120, y: 50 }, { x: 120, y: 90 }], viewport, 0.5, 0), { x: 90, y: 50 });
+  assert.deepEqual(pointInView([{ x: 20, y: 50 }, { x: 120, y: 50 }, { x: 120, y: 90 }], viewport, 0.75, 0), { x: 120, y: 55 });
+  // One end far off screen: the middle of what shows.
+  assert.deepEqual(pointInView([{ x: 40, y: 50 }, { x: 1000, y: 50 }], viewport, 0.5, 0), { x: 120, y: 50 });
+  // Nothing in view: no place for words.
+  assert.equal(pointInView([{ x: -50, y: -50 }, { x: -10, y: -50 }], viewport, 0.5, 0), undefined);
 });
