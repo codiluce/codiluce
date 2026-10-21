@@ -1,0 +1,63 @@
+# Dependencies and generated build/test output
+node_modules/
+dist/
+coverage/
+.nyc_output/
+.cache/
+*.tsbuildinfo
+/*.tgz
+
+# Local repository analysis state (may contain private source metadata)
+.codiluce/
+/config.yml
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite-journal
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+*.sqlite3-journal
+
+# Local environment and credentials; keep sanitized templates publishable
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.template
+!.env.*.template
+.npmrc
+.netrc
+.htpasswd
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Logs and local editor/OS files
+*.log
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Visualizer build and browser-test output
+web/.next/
+web/out/
+test-results/
+playwright-report/
+
+# Local example checkouts and analysis output; keep only the catalog tracked
+/examples/*
+!/examples/readme.md
+
+# Local research notes, source material, and reading guides
+/research/
+
+# Marketing Videos
+/docs/marketing/*.mp4

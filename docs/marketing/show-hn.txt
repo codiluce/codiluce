@@ -1,0 +1,20 @@
+Show HN: Codiluce - Understand how your AI agents are changing the code
+
+https://github.com/codiluce/codiluce
+
+Hi all,
+
+I've built a tool for engineers to understand what their agents are doing in their codebases.
+
+Ok, the thing is: the agents have changed how we work and how we generate code, but we should still be able to understand what's happening below the surface. I've talked to different engineers and the main approach is now using skills or directly to ask Codex or Claude about the codebase, a new functionality, a PR, etc.
+
+But I was missing an standardized view: a map, something we can share with other engineers and teams. Something where I can see better the dependencies, flows, hotspots (using deterministic parameters like cyclomatic complexity and # times updated), etc.
+
+Super easy to install:
+"npx codiluce@latest start ."
+Or ask your agent "Install codiluce"
+
+Open to contributions! This is a personal project, no monetizing goals, just want to see if this can generate some impact or not. Please feel free to ask any questions or to provide any suggestions.
+
+Thanks!
+PS: Seeing your agents working in real time directly in the map is top-tier :)

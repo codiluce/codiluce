@@ -1,0 +1,470 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Codiluce launch film</title>
+<style>
+@font-face { font-family: 'SG'; src: url(assets/space-grotesk-latin-wght-normal.woff2) format('woff2'); font-weight: 300 700; }
+@font-face { font-family: 'Geist'; src: url(assets/geist-latin-wght-normal.woff2) format('woff2'); font-weight: 100 900; }
+@font-face { font-family: 'GMono'; src: url(assets/geist-mono-latin-wght-normal.woff2) format('woff2'); font-weight: 100 900; }
+:root { --ink: #0a0a0b; --paper: #f5f5f3; --muted: #a1a1a7; --subtle: #7d7d84; --amber: #ffbf47; --green: #5ee39a; --red: #ff6b6b; }
+html, body { margin: 0; background: var(--ink); }
+#stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--ink); color: var(--paper); font-family: 'Geist', sans-serif; }
+.layer { position: absolute; inset: 0; visibility: hidden; }
+.abs { position: absolute; }
+.sg { font-family: 'SG', sans-serif; font-weight: 500; letter-spacing: -0.03em; }
+.mono { font-family: 'GMono', monospace; }
+#bg { visibility: visible; }
+.glow { position: absolute; border-radius: 50%; filter: blur(90px); }
+/* hook */
+#hookCanvas { position: absolute; inset: 0; }
+.headline { position: absolute; left: 0; right: 0; text-align: center; font-size: 112px; line-height: 1; white-space: nowrap; }
+.headline .w { display: inline-block; will-change: transform, opacity, filter; }
+.amber { color: var(--amber); }
+/* problem */
+#pr .eyebrow { font-size: 22px; letter-spacing: 0.16em; color: var(--muted); text-transform: uppercase; }
+#pr .big { font-size: 168px; line-height: 1; white-space: nowrap; }
+#pr .delta { font-size: 46px; white-space: nowrap; }
+#pr .squares span { display: inline-block; width: 30px; height: 30px; margin-right: 7px; border-radius: 6px; }
+.question { position: absolute; left: 200px; font-size: 96px; line-height: 1; white-space: nowrap; }
+.question .q { color: var(--amber); }
+/* reveal */
+#streak { position: absolute; left: 0; top: 540px; height: 2px; width: 1920px; transform-origin: 50% 50%; background: linear-gradient(90deg, transparent, rgba(255,214,140,0.0) 5%, #ffd68c 30%, #fff8e8 50%, #ffd68c 70%, rgba(255,214,140,0) 95%, transparent); }
+#mark { position: absolute; left: 0; top: 0; width: 1px; height: 1px; }
+#mark svg { position: absolute; overflow: visible; }
+.word { position: absolute; font-size: 200px; line-height: 1; white-space: nowrap; }
+.tagline { position: absolute; left: 0; right: 0; text-align: center; font-size: 46px; color: var(--paper); letter-spacing: -0.01em; }
+/* features */
+.feat .eyebrow { position: absolute; left: 272px; top: 50px; font-size: 21px; letter-spacing: 0.16em; color: var(--amber); text-transform: uppercase; white-space: nowrap; }
+.feat .eyebrow b { color: var(--muted); font-weight: 400; margin-right: 18px; }
+.feat .title { position: absolute; left: 268px; top: 82px; font-size: 80px; line-height: 1; white-space: nowrap; }
+.feat .title .w { display: inline-block; }
+.feat .sub { position: absolute; left: 272px; top: 178px; font-size: 28px; line-height: 1.2; color: var(--muted); white-space: nowrap; }
+.win { position: absolute; left: 272px; top: 250px; width: 1376px; height: 860px; border-radius: 18px; overflow: hidden; background: #0c0c0d;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.11), 0 50px 140px rgba(0,0,0,0.75), 0 0 120px rgba(255,191,71,0.06); }
+.chrome { position: absolute; left: 0; right: 0; top: 0; height: 34px; background: #131315; border-bottom: 1px solid #222226; }
+.chrome i { position: absolute; top: 12px; width: 11px; height: 11px; border-radius: 50%; background: #2c2c31; }
+.chrome .url { position: absolute; left: 50%; top: 7px; transform: translateX(-50%); height: 20px; padding: 0 14px; border-radius: 7px; background: #0c0c0d; color: var(--subtle); font-size: 13px; line-height: 20px; font-family: 'GMono'; }
+.vp { position: absolute; left: 0; right: 0; top: 34px; bottom: 0; overflow: hidden; }
+.vp .cam { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; transform-origin: 0 0; }
+.vp img { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; }
+.vp .band { position: absolute; left: 0; width: 100%; height: 3px; display: none; background: linear-gradient(90deg, rgba(255,191,71,0), #ffcf7a 15%, #fff6e0 50%, #ffcf7a 85%, rgba(255,191,71,0)); box-shadow: 0 0 20px 5px rgba(255,191,71,0.5); }
+.callout { position: absolute; border: 3px solid var(--amber); border-radius: 12px; box-shadow: 0 0 0 4px rgba(255,191,71,0.18), 0 0 40px rgba(255,191,71,0.35); }
+.pill { position: absolute; padding: 10px 20px; border-radius: 999px; background: var(--amber); color: #1a1100; font-family: 'SG'; font-weight: 600; font-size: 28px; white-space: nowrap; letter-spacing: -0.01em; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+/* montage */
+.mont img { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; transform-origin: 0 0; }
+.mont .shade { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(10,10,11,0.96) 0%, rgba(10,10,11,0.82) 22%, rgba(10,10,11,0) 52%); }
+.mont .label { position: absolute; left: 120px; bottom: 96px; font-size: 128px; line-height: 1; white-space: nowrap; }
+/* cta */
+#cta .line { position: absolute; left: 0; right: 0; text-align: center; font-size: 66px; white-space: nowrap; }
+#cmd { position: absolute; left: 50%; top: 668px; height: 84px; transform: translateX(-50%); padding: 0 38px; border-radius: 18px; background: #111113; box-shadow: 0 0 0 1px #2f2f35; font-size: 36px; line-height: 84px; white-space: nowrap; font-family: 'GMono'; }
+#cmd .p { color: var(--amber); margin-right: 22px; }
+#cmd .caret { display: inline-block; width: 18px; height: 40px; background: var(--paper); vertical-align: -7px; margin-left: 4px; }
+#out { position: absolute; left: 0; right: 0; top: 776px; text-align: center; font-size: 26px; color: var(--green); font-family: 'GMono'; }
+#foot { position: absolute; left: 0; right: 0; top: 900px; text-align: center; font-size: 28px; color: var(--muted); letter-spacing: 0.01em; }
+#foot b { color: var(--paper); font-weight: 500; }
+/* overlays */
+#wipe { position: absolute; left: 0; width: 1920px; height: 3px; visibility: hidden; background: linear-gradient(90deg, rgba(255,191,71,0), #ffcf7a 15%, #fff6e0 50%, #ffcf7a 85%, rgba(255,191,71,0)); box-shadow: 0 0 24px 6px rgba(255,191,71,0.55), 0 0 90px 24px rgba(255,191,71,0.18); }
+.edge { position: absolute; left: 0; width: 1920px; height: 3px; visibility: hidden; background: linear-gradient(90deg, rgba(255,191,71,0), #ffcf7a 15%, #fff6e0 50%, #ffcf7a 85%, rgba(255,191,71,0)); box-shadow: 0 0 24px 6px rgba(255,191,71,0.55), 0 0 90px 24px rgba(255,191,71,0.18); }
+#flash { position: absolute; inset: 0; background: #fff6e0; visibility: visible; opacity: 0; mix-blend-mode: screen; }
+#grain { position: absolute; inset: 0; width: 1920px; height: 1080px; opacity: 0.06; mix-blend-mode: overlay; visibility: visible; image-rendering: pixelated; }
+#vignette { position: absolute; inset: 0; visibility: visible; background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%); pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="layer" id="bg">
+    <div class="glow" id="glowA" style="width:1100px;height:520px;background:rgba(255,191,71,0.16)"></div>
+    <div class="glow" id="glowB" style="width:900px;height:900px;background:rgba(120,120,160,0.07)"></div>
+  </div>
+
+  <div class="layer" id="hook">
+    <canvas id="hookCanvas" width="1920" height="1080"></canvas>
+    <div class="headline sg" id="hookA" style="top:170px"></div>
+    <div class="headline sg" id="hookB" style="top:390px"></div>
+    <div class="abs mono" id="hookCount" style="left:0;right:0;top:560px;text-align:center;font-size:30px;color:var(--muted)"></div>
+  </div>
+
+  <div class="layer" id="pr">
+    <div class="abs" id="prBlock" style="left:200px;top:300px;transform-origin:0 0">
+      <div class="eyebrow mono" id="prEyebrow"></div>
+      <div class="big sg" style="margin-top:22px"><span id="prCount">0</span> files changed</div>
+      <div class="delta mono" style="margin-top:26px"><span style="color:var(--green)" id="prAdd">+0</span>&nbsp;&nbsp;<span style="color:var(--red)" id="prDel">−0</span>&nbsp;&nbsp;<span class="squares" id="prSquares"></span></div>
+    </div>
+    <div class="question sg" id="q0">What does it <span class="q">touch?</span></div>
+    <div class="question sg" id="q1">What could it <span class="q">break?</span></div>
+    <div class="question sg" id="q2">How does it all <span class="q">fit?</span></div>
+  </div>
+
+  <div class="layer" id="reveal">
+    <div id="streak"></div>
+    <div class="word sg" id="word"><span id="wordInner" style="display:inline-block">codiluce</span></div>
+    <div id="mark">
+      <svg id="markTop" viewBox="19 19 62 62" width="62" height="62"><path d="M19.1455 47A31 31 0 0 1 80.8545 47Z" fill="currentColor"/></svg>
+      <svg id="markBot" viewBox="19 19 62 62" width="62" height="62"><path d="M80.8545 53A31 31 0 0 1 19.1455 53Z" fill="currentColor"/></svg>
+    </div>
+    <div class="tagline" id="tagline"></div>
+  </div>
+
+  <div id="feats"></div>
+  <div id="monts"></div>
+
+  <div class="layer" id="cta">
+    <div class="line sg" id="ctaLine" style="top:524px"></div>
+    <div id="cmd"><span class="p">$</span><span id="cmdText"></span><span class="caret" id="caret"></span></div>
+    <div id="out">✓ Map ready · http://127.0.0.1:4300</div>
+    <div id="foot">Free and open source · MIT · <b>codiluce.com</b></div>
+  </div>
+
+  <div id="wipe"></div>
+  <div id="openTop" class="edge"></div><div id="openBot" class="edge"></div>
+  <div id="flash"></div>
+  <canvas id="grain" width="480" height="270"></canvas>
+  <div id="vignette"></div>
+</div>
+<script src="timeline.js"></script>
+<script src="assets/code.js"></script>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const eio = k => k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+const eout = k => 1 - Math.pow(1 - k, 3);
+const eout5 = k => 1 - Math.pow(1 - k, 5);
+const ein = k => k * k * k;
+const back = k => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
+const show = (el, on) => { el.style.visibility = on ? 'visible' : 'hidden'; };
+const css = (el, o) => { for (const k in o) el.style[k] = o[k]; };
+/** Interpolates keyframes [[t, ...values]] with an ease. */
+function keys(frames, t, curve = eio) {
+  if (t <= frames[0][0]) return frames[0].slice(1);
+  for (let i = 1; i < frames.length; i++) {
+    const a = frames[i - 1], b = frames[i];
+    if (t <= b[0]) { const k = curve((t - a[0]) / (b[0] - a[0])); return a.slice(1).map((v, j) => lerp(v, b[j + 1], k)); }
+  }
+  return frames[frames.length - 1].slice(1);
+}
+const SC = TL.scenes, CU = TL.cues;
+const CLIPS = { map: 216, wishflow: 222, prfocus: 192, prtour: 204, health: 198, agents: 252, people: 90, deps: 96, history: 156, plan: 108 };
+const clipSrc = (name, t) => { const i = clamp(Math.floor((t - TL.clips[name]) * 60 + 1e-6), 0, CLIPS[name] - 1); return `../clips/${name}/f${String(i).padStart(4, '0')}.jpg`; };
+const pending = [];
+function setImg(img, src) { if (img.dataset.src === src) return; img.dataset.src = src; img.src = src; pending.push(img.decode().catch(() => {})); }
+
+/* ---------- words that rise ---------- */
+function wordsHTML(el, text) { el.innerHTML = text.split(' ').map(w => `<span class="w">${w}</span>`).join(' '); return [...el.querySelectorAll('.w')]; }
+function rise(ws, t, t0, step = 0.06, dur = 0.42, dist = 46) {
+  ws.forEach((w, i) => { const k = seg(t, t0 + i * step, t0 + i * step + dur), e = eout5(k);
+    css(w, { opacity: e, transform: `translateY(${(1 - e) * dist}px)`, filter: `blur(${(1 - e) * 10}px)` }); });
+}
+
+/* ---------- 1. hook: agent panes ---------- */
+const AGENTS = [
+  ['Claude Code', 'Add page templates', '#8b7cff'], ['Codex', 'Speed up search', '#5ee39a'], ['Cursor', 'Fix image uploads', '#ffbf47'],
+  ['Gemini CLI', 'Refactor permissions', '#ff6fae'], ['Copilot', 'Upgrade to PHP 8.3', '#4fd1e8'], ['OpenCode', 'Add webhooks', '#ff8a5b'],
+  ['Claude Code', 'Fix flaky export test', '#b6a8ff'], ['Codex', 'Cache the book tree', '#7ef0b8'], ['Cline', 'Rewrite markdown import', '#ffd27a'],
+  ['Windsurf', 'Migrate auth to OIDC', '#ff9ec8'], ['Claude Code', 'Split PageRepo', '#8b7cff'], ['Codex', 'Add audit log export', '#5ee39a'],
+];
+const FILES = Object.keys(CODE);
+function paneLines(seed) {
+  const f = FILES[seed % FILES.length], src = CODE[f], out = [];
+  let r = seed * 9301 + 49297;
+  const rnd = () => (r = (r * 233280 + 49297) % 2147483647) / 2147483647;
+  for (let n = 0; n < 160; n++) {
+    if (n % 14 === 0) { out.push(['tool', `⏺ ${rnd() < 0.55 ? 'Edit' : 'Read'}(${FILES[(seed + n) % FILES.length]})`]); continue; }
+    const line = src[(seed * 7 + n) % src.length];
+    const x = rnd(); out.push([x < 0.42 ? 'add' : x < 0.62 ? 'del' : 'ctx', line]);
+  }
+  return out;
+}
+const PANES = [];
+for (let r = 0; r < 5; r++) for (let c = 0; c < 7; c++) {
+  const ring = Math.max(Math.abs(c - 3), Math.abs(r - 2));
+  const first = r === 2 && c >= 2 && c <= 4;
+  const id = PANES.length;
+  PANES.push({ c, r, appear: first ? CU.hookPanes[[3, 2, 4].indexOf(c)] : CU.hookGrid[Math.min(2, ring - 1)], agent: AGENTS[(id * 5 + 3) % AGENTS.length], lines: paneLines(id + 3), speed: 4 + (id * 37 % 5) });
+}
+// The first three, in order: Claude Code, Codex, Cursor.
+PANES.filter(p => p.r === 2 && p.c >= 2 && p.c <= 4).forEach(p => { p.agent = AGENTS[[1, 0, 2][p.c - 2]]; });
+const hctx = $('hookCanvas').getContext('2d');
+function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function drawPane(ctx, p, t, alpha) {
+  const W = 500, H = 360;
+  ctx.save(); ctx.globalAlpha = alpha;
+  rr(ctx, 0, 0, W, H, 14); ctx.fillStyle = '#111113'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#2a2a2f'; ctx.stroke();
+  ctx.save(); rr(ctx, 0, 0, W, H, 14); ctx.clip();
+  ctx.fillStyle = '#161619'; ctx.fillRect(0, 0, W, 40); ctx.fillStyle = '#232328'; ctx.fillRect(0, 40, W, 1);
+  ctx.fillStyle = p.agent[2]; rr(ctx, 16, 14, 12, 12, 3); ctx.fill();
+  ctx.font = '600 16px Geist'; ctx.fillStyle = '#f5f5f3'; ctx.textBaseline = 'middle'; ctx.fillText(p.agent[0], 38, 21);
+  const nw = ctx.measureText(p.agent[0]).width;
+  ctx.font = '400 15px Geist'; ctx.fillStyle = '#8a8a91'; ctx.fillText('· ' + p.agent[1], 46 + nw, 21);
+  ctx.font = '500 13px GMono'; ctx.fillStyle = '#5ee39a'; ctx.textAlign = 'right'; ctx.fillText('● running', W - 16, 21); ctx.textAlign = 'left';
+  const lh = 21, scroll = (t - p.appear + 3) * p.speed * (t > 1.5 ? 2.6 : 1), first = Math.floor(scroll), frac = scroll - first;
+  ctx.font = '400 14px GMono';
+  for (let i = 0; i < 16; i++) {
+    const [kind, text] = p.lines[(first + i) % p.lines.length], y = 56 + (i - frac) * lh;
+    if (y < 44 || y > H - 8) continue;
+    if (kind === 'add') { ctx.fillStyle = 'rgba(94,227,154,0.09)'; ctx.fillRect(0, y - 10, W, lh); ctx.fillStyle = '#7ef0b8'; ctx.fillText('+ ' + text.trim().slice(0, 52), 16, y); }
+    else if (kind === 'del') { ctx.fillStyle = 'rgba(255,107,107,0.08)'; ctx.fillRect(0, y - 10, W, lh); ctx.fillStyle = '#ff8f8f'; ctx.fillText('- ' + text.trim().slice(0, 52), 16, y); }
+    else if (kind === 'tool') { ctx.fillStyle = '#f5f5f3'; ctx.fillText(text.slice(0, 54), 16, y); }
+    else { ctx.fillStyle = '#6d6d74'; ctx.fillText('  ' + text.trim().slice(0, 52), 16, y); }
+  }
+  ctx.restore(); ctx.restore();
+}
+function drawHook(t) {
+  const ctx = hctx; ctx.clearRect(0, 0, 1920, 1080);
+  const zk = eio(seg(t, 1.5, 2.95));
+  let cam = lerp(1.18, 0.4, zk), cy = lerp(690, 590, zk);
+  // Collapse into the pull request.
+  const ck = ein(seg(t, 2.8, 3.02)); cam *= lerp(1, 0.05, ck);
+  ctx.save(); ctx.translate(960, cy); ctx.scale(cam, cam); ctx.translate(-960, -700);
+  for (const p of PANES) {
+    const k = seg(t, p.appear, p.appear + 0.36); if (k <= 0) continue;
+    const e = eout5(k), x = 960 + (p.c - 3) * 540 - 250, y = 700 + (p.r - 2) * 400 - 180 + (1 - e) * 90;
+    const dim = t > 1.5 ? lerp(1, 0.5, seg(t, 1.5, 2.2)) : 1;
+    ctx.save(); ctx.translate(x, y); drawPane(ctx, p, t, e * dim * (1 - ck)); ctx.restore();
+  }
+  ctx.restore();
+}
+const hookA = wordsHTML($('hookA'), 'Agents write the code now.');
+const hookB = wordsHTML($('hookB'), 'Can you still follow it?');
+hookB[3].classList.add('amber');
+function renderHook(t) {
+  const on = t < 3.05; show($('hook'), on); if (!on) return;
+  drawHook(t);
+  rise(hookA, t, CU.hookWords[0], 0.09, 0.4, 50);
+  const outA = eio(seg(t, 1.38, 1.62));
+  css($('hookA'), { opacity: 1 - outA, transform: `translateY(${-outA * 60}px)`, filter: `blur(${outA * 8}px)` });
+  rise(hookB, t, 1.55, 0.08, 0.42, 60);
+  const outB = ein(seg(t, 2.78, 3.0));
+  css($('hookB'), { opacity: 1 - outB, transform: `scale(${1 - outB * 0.4})`, filter: `blur(${outB * 12}px)`, textShadow: '0 0 60px rgba(10,10,11,0.95), 0 0 20px rgba(10,10,11,0.9)' });
+  const n = Math.floor(lerp(1200, 48906, eio(seg(t, 1.7, 2.9))));
+  $('hookCount').textContent = `+${n.toLocaleString('en-US')} lines changed today`;
+  css($('hookCount'), { opacity: seg(t, 1.75, 1.95) * (1 - outB), textShadow: '0 0 30px rgba(10,10,11,1)' });
+}
+
+/* ---------- 2. problem ---------- */
+$('prEyebrow').textContent = `Pull request #${TL.pr.number} · opened by an agent`;
+const SQ = $('prSquares'); SQ.innerHTML = '<span></span>'.repeat(5);
+function renderProblem(t) {
+  const on = t >= 2.98 && t < 5.78; show($('pr'), on); if (!on) return;
+  const inK = eout5(seg(t, 3.0, 3.28));
+  const settle = eio(seg(t, 3.55, 3.85));
+  const suck = ein(seg(t, 5.42, 5.75));
+  css($('prBlock'), { opacity: inK * lerp(1, 0.4, settle) * (1 - suck), transform: `translate(${lerp(0, 0, settle)}px, ${lerp(0, -170, settle)}px) scale(${lerp(1.18 - inK * 0.18, 0.62, settle)})`, filter: `blur(${(1 - inK) * 14}px)` });
+  const c = eout(seg(t, 3.0, 3.42));
+  $('prCount').textContent = Math.round(TL.pr.files * c);
+  $('prAdd').textContent = '+' + Math.round(TL.pr.added * c).toLocaleString('en-US');
+  $('prDel').textContent = '−' + Math.round(TL.pr.deleted * c).toLocaleString('en-US');
+  [...SQ.children].forEach((s, i) => { s.style.background = '#3fb27f'; s.style.opacity = seg(t, 3.05 + i * 0.05, 3.15 + i * 0.05); });
+  CU.questions.forEach((tq, i) => {
+    const el = $('q' + i), k = eout5(seg(t, tq, tq + 0.3)), dimK = i < 2 ? eio(seg(t, CU.questions[i + 1], CU.questions[i + 1] + 0.25)) : 0;
+    const y = 470 + i * 128;
+    css(el, { top: y + 'px', opacity: k * lerp(1, 0.32, dimK) * (1 - suck), transform: `translateY(${(1 - k) * 60}px) scale(${1.08 - 0.08 * k})`, transformOrigin: '0 50%', filter: `blur(${(1 - k) * 12}px)` });
+  });
+  css($('pr'), { transform: `scale(${1 - suck * 0.7})`, filter: `blur(${suck * 16}px)`, transformOrigin: '50% 55%' });
+}
+
+/* ---------- 3. reveal ---------- */
+const MARK_TOP = $('markTop'), MARK_BOT = $('markBot');
+let REVEAL_G = 0;
+const wordWs = null;
+const tagWs = wordsHTML($('tagline'), 'Bring your code to light.');
+function renderReveal(t) {
+  const on = t >= 5.6 && t < 8.55; show($('reveal'), on);
+  if (t >= 8.6 || t < 7.98) ['openTop', 'openBot'].forEach(id => { $(id).style.visibility = 'hidden'; });
+  if (!on) return;
+  // The point of light the pull request collapsed into, then the streak.
+  const pre = seg(t, 5.55, 5.75), hit = seg(t, 6.0, 6.5);
+  const streakW = t < 6 ? lerp(0.0, 0.02, pre) : lerp(1.0, 0.55, eout(hit));
+  const streakH = t < 6 ? 3 : lerp(10, 2, eout(seg(t, 6.0, 6.35)));
+  const streakA = t < 5.75 ? pre : t < 6 ? 0.25 : lerp(1, 0.55, seg(t, 6.3, 7.4)) * (1 - seg(t, 7.9, 8.2));
+  css($('streak'), { transform: `scaleX(${streakW})`, height: streakH + 'px', top: (540 - streakH / 2) + 'px', opacity: streakA,
+    boxShadow: `0 0 ${lerp(80, 22, eout(hit))}px ${lerp(26, 4, eout(hit))}px rgba(255,191,71,${lerp(0.75, 0.4, eout(hit))})` });
+  // The mark: two halves out of the light; at the end they part and the map shows in the band between them.
+  const appear = back(seg(t, 6.0, 6.42));
+  const lock = eio(seg(t, 6.38, 6.85)), center = eio(seg(t, 7.78, 7.98)), open = eio(seg(t, 7.98, 8.55));
+  const size = lerp(lerp(260, 168, lock), 240, center) * (1 + open * 0.75);
+  const cx = lerp(lerp(960, 568, lock), 960, center), cy = 540;
+  const gap = 6 / 62 * size, half = size / 2, split = open * 600;
+  REVEAL_G = t >= 7.98 ? gap / 2 + split : 0;
+  [MARK_TOP, MARK_BOT].forEach((el, i) => css(el, { width: size + 'px', height: size + 'px', left: (cx - half) + 'px', top: (cy - half + (i ? split : -split)) + 'px', color: '#f5f5f3',
+    transform: `scaleY(${t < 6 ? 0 : appear})`, transformOrigin: `50% ${i ? 'calc(50% + ' + gap / 2 + 'px)' : 'calc(50% - ' + gap / 2 + 'px)'}`, opacity: t < 6 ? 0 : 1 - seg(t, 8.15, 8.55) }));
+  ['openTop', 'openBot'].forEach((id, i) => { const on = t >= 7.98 && t < 8.6; css($(id), { visibility: on ? 'visible' : 'hidden', top: (540 + (i ? 1 : -1) * REVEAL_G - 1.5) + 'px', opacity: 1 - seg(t, 8.3, 8.6) }); });
+  // Wordmark slides out from behind the mark.
+  const wk = eout5(seg(t, CU.wordmark, CU.wordmark + 0.5)), wOut = eio(seg(t, 7.7, 7.88));
+  css($('word'), { left: (cx + half * (t < 6 ? 0 : 1) + 18) + 'px', top: (540 - 112) + 'px', clipPath: 'inset(-40px -40px -60px 0)', opacity: 1 - wOut, fontSize: '196px' });
+  css($('wordInner'), { transform: `translateX(${lerp(-104, 0, wk)}%)` });
+  rise(tagWs, t, CU.tagline, 0.07, 0.45, 30);
+  css($('tagline'), { top: '680px', opacity: 1 - wOut });
+}
+
+/* ---------- 4. features ---------- */
+// Camera inside the window: [local time, zoom, focus x, focus y] in the app's CSS pixels (1440 × 900).
+// A feature with beats has one camera per beat, in the beat's own time.
+const CAMS = {
+  map: [[0, 1, 720, 436], [3, 1.09, 720, 470]],
+  flows: [[0, 1, 720, 436], [0.62, 1, 720, 436], [1.45, 1.42, 715, 432], [2.35, 1.44, 715, 432], [3.05, 1.36, 872, 742], [3.6, 1.38, 872, 742]],
+  prfocus: [[0, 1, 720, 436], [1.1, 1, 720, 436], [1.9, 1.3, 905, 545], [3.0, 1.34, 905, 545]],
+  prtour: [[0, 1.08, 640, 450], [0.72, 1.08, 640, 450], [1.6, 1.45, 905, 512], [3.2, 1.48, 905, 512]],
+  health: [[0, 1, 720, 450], [1.5, 1, 720, 450], [2.6, 1.18, 640, 520], [3.2, 1.2, 640, 520]],
+  agents: [[0, 1.42, 933, 590], [4.2, 1.5, 945, 590]],
+};
+const FEATS = TL.features.map(f => {
+  const beats = f.beats ?? [{ at: SC[f.key][0], clip: f.clip, sub: f.sub }];
+  const el = document.createElement('div'); el.className = 'layer feat'; el.id = 'feat-' + f.key;
+  el.innerHTML = `<div class="eyebrow mono"><b>${f.n}</b>${f.eyebrow}</div><div class="title sg"></div>${beats.map(b => `<div class="sub">${b.sub}</div>`).join('')}
+    <div class="win"><div class="chrome"><i style="left:16px"></i><i style="left:34px"></i><i style="left:52px"></i><div class="url">127.0.0.1:4300 · ${f.repo}</div></div>
+    <div class="vp">${beats.map(() => '<div class="cam"><img alt=""></div>').join('')}<div class="band"></div></div></div>`;
+  $('feats').append(el);
+  const ws = wordsHTML(el.querySelector('.title'), f.title);
+  const cams = [...el.querySelectorAll('.cam')], subs = [...el.querySelectorAll('.sub')];
+  return { ...f, el, ws, win: el.querySelector('.win'), band: el.querySelector('.band'),
+    beats: beats.map((b, i) => ({ ...b, cam: cams[i], img: cams[i].querySelector('img'), sub: subs[i], frames: CAMS[b.clip === 'wishflow' ? 'flows' : b.clip] })) };
+});
+function camTransform(frames, lt, vpW = 1376, vpH = 826) {
+  const [s, fx, fy] = keys(frames, lt), b = vpW / 1440, k = b * s;
+  let tx = vpW / 2 - fx * k, ty = vpH / 2 - fy * k;
+  tx = clamp(tx, vpW - 1440 * k, 0); ty = clamp(ty, vpH - 900 * k, 0);
+  return `translate(${tx}px, ${ty}px) scale(${k})`;
+}
+/** The light band sweeping down at a cut: [start, end]. */
+const WIPE = 0.2;
+function renderFeatures(t) {
+  let wipeY = null;
+  FEATS.forEach((f, i) => {
+    const [a, b] = SC[f.key];
+    const startVis = i === 0 ? 7.98 : a - WIPE, endVis = b + WIPE;
+    const on = t >= startVis && t < endVis; show(f.el, on); if (!on) return;
+    // Clip: revealed from the top by the band at its start, hidden from the top by the band at its end.
+    let top = 0, bottom = 0;
+    if (i === 0 && t < 8.6) { const g = t < 8.55 ? REVEAL_G : 600; top = Math.max(0, 540 - g); bottom = Math.max(0, 540 - g); }
+    else if (t < a + WIPE) { const y = lerp(0, 1080, eio(seg(t, a - WIPE, a + WIPE))); bottom = 1080 - y; wipeY = y; }
+    if (t > b - WIPE) { const y = lerp(0, 1080, eio(seg(t, b - WIPE, b + WIPE))); top = y; wipeY = y; }
+    f.el.style.clipPath = `inset(${top}px 0 ${bottom}px 0)`;
+    // Header.
+    const hk = i === 0 ? 8.35 : a + 0.02;
+    const eb = eout5(seg(t, hk, hk + 0.35));
+    css(f.el.querySelector('.eyebrow'), { opacity: eb, transform: `translateX(${(1 - eb) * -24}px)` });
+    rise(f.ws, t, hk + 0.06, 0.055, 0.45, 40);
+    // Window: a slow drift, and the map window rises out of the eclipse.
+    const drift = Math.sin((t - a) * 0.6) * 4;
+    const winIn = i === 0 ? eout(seg(t, 7.98, 8.9)) : 1;
+    css(f.win, { transform: `translateY(${(1 - winIn) * 70 + drift}px) scale(${lerp(1.06, 1, winIn)})` });
+    // Beats: each its own clip and line; the next one comes in under a band of light inside the window.
+    let band = null;
+    f.beats.forEach((bt, j) => {
+      const next = f.beats[j + 1], from = j === 0 ? a : bt.at;
+      const inK = j === 0 ? 1 : eio(seg(t, bt.at - 0.16, bt.at + 0.16));
+      const live = t >= (j === 0 ? -1 : bt.at - 0.16) && (!next || t < next.at + 0.16);
+      bt.cam.style.display = live ? 'block' : 'none';  // display, not visibility: a visible child would show through its hidden layer
+      const sIn = eout5(seg(t, (j === 0 ? hk + 0.32 : bt.at + 0.05), (j === 0 ? hk + 0.7 : bt.at + 0.45)));
+      const sOut = next ? eio(seg(t, next.at - 0.2, next.at)) : 0;
+      css(bt.sub, { opacity: sIn * (1 - sOut), transform: `translateY(${(1 - sIn) * 12 - sOut * 10}px)` });
+      if (!live) return;
+      if (j > 0) { bt.cam.style.clipPath = inK < 1 ? `inset(0 0 ${(1 - inK) * 100}% 0)` : 'none'; if (inK > 0 && inK < 1) band = inK; }
+      setImg(bt.img, clipSrc(bt.clip, t));
+      bt.cam.style.transform = camTransform(bt.frames, t - from);
+    });
+    css(f.band, { display: band === null ? 'none' : 'block', top: ((band ?? 0) * 826 - 1.5) + 'px' });
+  });
+  return wipeY;
+}
+
+/* ---------- 5. montage ---------- */
+const MFOCUS = { people: [1.6, 880, 400], deps: [1.25, 600, 500], history: [1.42, 760, 430], plan: [1.42, 705, 512] };
+const MONTS = TL.montage.map(m => {
+  const el = document.createElement('div'); el.className = 'layer mont';
+  el.innerHTML = `<img alt=""><div class="shade"></div><div class="label sg"></div>`;
+  $('monts').append(el);
+  return { ...m, el, img: el.querySelector('img'), ws: wordsHTML(el.querySelector('.label'), m.label) };
+});
+function renderMontage(t, wipeY) {
+  MONTS.forEach((m, i) => {
+    const on = t >= (i === 0 ? m.from - WIPE : m.from) && t < m.to; show(m.el, on); if (!on) return;
+    m.el.style.clipPath = i === 0 && t < m.from + WIPE ? `inset(0 0 ${1080 - lerp(0, 1080, eio(seg(t, m.from - WIPE, m.from + WIPE)))}px 0)` : 'none';
+    setImg(m.img, clipSrc(m.clip, t));
+    const [s, fx, fy] = MFOCUS[m.clip], push = 1 + (t - m.from) * 0.05, k = 1920 / 1440 * s * push;
+    const tx = clamp(960 - fx * k, 1920 - 1440 * k, 0), ty = clamp(540 - fy * k, 1080 - 900 * k, 0);
+    m.img.style.transform = `translate(${tx}px, ${ty}px) scale(${k})`;
+    rise(m.ws, t, m.from + 0.03, 0.05, 0.3, 50);
+  });
+}
+
+/* ---------- 6. call to action ---------- */
+const ctaWs = wordsHTML($('ctaLine'), 'Bring your code to light.');
+ctaWs[4].classList.add('amber');
+function renderCTA(t) {
+  const on = t >= SC.cta[0]; show($('cta'), on);
+  if (!on) return;
+  const c0 = SC.cta[0];
+  rise(ctaWs, t, c0 + 0.35, 0.05, 0.45, 36);
+  const ck = eout5(seg(t, c0 + 0.7, c0 + 1.05));
+  css($('cmd'), { opacity: ck, transform: `translateX(-50%) translateY(${(1 - ck) * 24}px)`,
+    boxShadow: t >= CU.enter ? `0 0 0 2px rgba(255,191,71,${lerp(1, 0.45, seg(t, CU.enter, CU.enter + 0.6))}), 0 0 60px rgba(255,191,71,${lerp(0.35, 0.12, seg(t, CU.enter, CU.enter + 0.8))})` : '0 0 0 1px #2f2f35' });
+  const n = Math.floor(TL.command.length * seg(t, CU.typeStart, CU.typeEnd) + 1e-6);
+  $('cmdText').textContent = TL.command.slice(0, n);
+  $('caret').style.opacity = (t < CU.typeEnd + 0.05 || Math.floor((t - CU.typeEnd) * 2.4) % 2 === 1) ? 1 : 0;
+  const ok = eout5(seg(t, CU.enter + 0.08, CU.enter + 0.4));
+  css($('out'), { opacity: ok, transform: `translateY(${(1 - ok) * 10}px)` });
+  const fk = eout5(seg(t, CU.url, CU.url + 0.45));
+  css($('foot'), { opacity: fk, transform: `translateY(${(1 - fk) * 12}px)` });
+}
+function renderLockup(t) {
+  // The end card reuses the mark and wordmark, smaller and higher.
+  if (t < SC.cta[0]) return;
+  show($('reveal'), true);
+  const c0 = SC.cta[0], k = back(seg(t, c0, c0 + 0.4)), size = 132;
+  const total = size + 26 + 470, x0 = 960 - total / 2, cy = 330;
+  [MARK_TOP, MARK_BOT].forEach((el, i) => css(el, { width: size + 'px', height: size + 'px', left: x0 + 'px', top: (cy - size / 2) + 'px', color: '#f5f5f3', transform: `scaleY(${k})`, transformOrigin: '50% 50%', opacity: 1 }));
+  const wk = eout5(seg(t, c0 + 0.08, c0 + 0.5));
+  css($('word'), { left: (x0 + size + 22) + 'px', top: (cy - 79) + 'px', fontSize: '140px', clipPath: 'inset(-40px -40px -60px 0)', opacity: 1 });
+  css($('wordInner'), { transform: `translateX(${lerp(-104, 0, wk)}%)` });
+  const sk = eout(seg(t, c0, c0 + 0.6));
+  css($('streak'), { transform: `scaleX(${lerp(1, 0.62, sk)})`, height: '2px', top: cy + 'px', opacity: lerp(1, 0.5, sk), boxShadow: `0 0 ${lerp(70, 20, sk)}px ${lerp(20, 3, sk)}px rgba(255,191,71,0.45)` });
+  css($('tagline'), { opacity: 0 });
+}
+
+/* ---------- background, flash, grain ---------- */
+const gctx = $('grain').getContext('2d'), gimg = gctx.createImageData(480, 270);
+function renderGrain(frame) {
+  let s = (frame * 2654435761) >>> 0;
+  for (let i = 0; i < gimg.data.length; i += 4) { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; const v = (s >>> 24); gimg.data[i] = gimg.data[i + 1] = gimg.data[i + 2] = v; gimg.data[i + 3] = 255; }
+  gctx.putImageData(gimg, 0, 0);
+}
+function renderBg(t) {
+  const feat = t >= 8.2 && t < SC.montage[0] + 0.2;
+  const ga = t < 3 ? 0.35 : t < 5.75 ? 0.25 : t < 6 ? 0 : t < 8.4 ? lerp(1, 0.6, seg(t, 6.0, 7.5)) : feat ? 0.75 : 0.9;
+  css($('glowA'), { left: (960 - 550) + 'px', top: (feat ? 120 : t >= SC.cta[0] ? 70 : 280) + 'px', opacity: ga });
+  css($('glowB'), { left: (960 - 450 + Math.sin(t * 0.4) * 200) + 'px', top: '300px', opacity: 0.7 });
+}
+function renderFlash(t) {
+  let a = 0;
+  const pulse = (c, peak, d) => { if (t >= c && t < c + d) a = Math.max(a, peak * (1 - (t - c) / d)); };
+  pulse(6.0, 0.32, 0.3); pulse(3.0, 0.12, 0.15); pulse(SC.cta[0], 0.3, 0.3);
+  CU.montageCuts.slice(1).forEach(c => pulse(c, 0.1, 0.1)); pulse(CU.planSnap, 0.12, 0.1);
+  $('flash').style.opacity = a;
+}
+function renderWipe(y) {
+  const w = $('wipe'); if (y === null || y <= 0 || y >= 1080) { w.style.visibility = 'hidden'; return; }
+  css(w, { visibility: 'visible', top: (y - 1.5) + 'px' });
+}
+
+window.render = async function (frame) {
+  const t = frame / TL.fps;
+  pending.length = 0;
+  renderBg(t); renderHook(t); renderProblem(t); renderReveal(t);
+  const wipeY = renderFeatures(t);
+  renderMontage(t, wipeY);
+  renderCTA(t); renderLockup(t);
+  const m0 = SC.montage[0];
+  renderWipe(t >= m0 - WIPE && t < m0 + WIPE ? lerp(0, 1080, eio(seg(t, m0 - WIPE, m0 + WIPE))) : wipeY);
+  renderFlash(t); renderGrain(frame);
+  await Promise.all(pending);
+  await new Promise(r => requestAnimationFrame(() => r()));
+};
+window.ready = (async () => { await document.fonts.load('500 80px SG'); await document.fonts.load('400 20px Geist'); await document.fonts.load('600 16px Geist'); await document.fonts.load('400 14px GMono'); await document.fonts.ready; })();
+</script>
+</body>
+</html>
