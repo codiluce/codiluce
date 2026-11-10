@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { chmod, cp, mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { chmod, cp, mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -252,6 +252,31 @@ test('setup without a terminal decides nothing: saved settings stay, the setup s
   assert.equal(result.describe, undefined);
   assert.deepEqual(readRepositorySettings(state), {}, 'no sections are written for the user');
   assert.equal(readState(state).setup, undefined);
+});
+
+test('setup keeps existing agent connections when no new connections are selected', async () => {
+  const fake = await fakeAgents(), root = await folder();
+  for (const name of ['cat', 'git']) await symlink(execFileSync('which', [name], { encoding: 'utf8' }).trim(), path.join(fake.bin, name));
+  const state = path.join(root, '.codiluce');
+  const launch = { command: 'npx', args: ['-y', 'codiluce', 'mcp'] };
+  await writeFile(path.join(fake.home, '.claude.json'), JSON.stringify({ projects: { [root]: { mcpServers: { codiluce: { ...launch, args: [...launch.args, '--repo', root] } } } } }));
+  await writeFile(path.join(fake.home, 'codex-server.json'), JSON.stringify({ transport: launch }));
+  const cursor = JSON.stringify({ mcpServers: { codiluce: { ...launch, args: [...launch.args, '--repo', '${workspaceFolder}'] } } });
+  await writeFile(path.join(fake.home, '.cursor/mcp.json'), cursor);
+  const env = { CODILUCE_CONFIG_HOME: await folder(), PATH: fake.bin, HOME: fake.home };
+  const { terminal, output } = scriptedTerminal([
+    [/Language models/, ENTER], [/Connect your agent/, ENTER], [/In a new repository/, ENTER],
+  ]);
+  const setupContext = { ...context(state, env), root };
+  const result = await withEnv({ PATH: env.PATH, HOME: env.HOME }, () => runSetup(new Writer(terminal), setupContext, { mode: 'ask' }));
+  assert.deepEqual(result.connected.map(item => [item.agent.id, item.ok, item.already]), [['claude', true, true], ['codex', true, true], ['cursor', true, true]]);
+  printSummary(new Writer(terminal), result, setupContext);
+  assert.match(output(), /no new connections \(Claude Code, Codex, Cursor already connected\)/);
+  assert.match(output(), /Claude Code \(already\), Codex \(already\), Cursor \(already\)/);
+  assert.doesNotMatch(output(), /none connected/);
+  assert.equal(await fake.calls('claude'), '');
+  assert.equal(await fake.calls('codex'), '');
+  assert.equal(await readFile(path.join(fake.home, '.cursor/mcp.json'), 'utf8'), cursor);
 });
 
 test('setup preloads all Git commits without a terminal and preserves explicit architecture settings', async () => {

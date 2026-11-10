@@ -98,7 +98,7 @@ function EmptyState() {
   return (
     <div className="explain-empty">
       <p><strong>Ask about the code; read the answer on the map.</strong> Every file, folder, symbol and flow an answer names is a link: point at it to light it on the map, click it to open it.</p>
-      <p className="note">{canAsk ? 'Ask below (Templates has the common questions), or use ✦ Explain in the inspector, on a flow or on a commit.' : 'Ask your agent (Claude Code, Codex, Cursor…): connect it to Codiluce once, and what it explains is saved here. Templates, below, has the common questions to copy for it.'}</p>
+      <p className="note">{canAsk ? 'Ask below (Templates has the common questions), or use ✦ Explain in the inspector, on a flow or on a commit.' : 'Ask your coding agent to explain this repository and publish the answer here. Templates, below, has common questions to copy for it.'}</p>
       <ConnectAgent open />
     </div>
   );
@@ -109,16 +109,19 @@ function ConnectSection() {
   return <details className="section connect-agent" onToggle={event => setOpen(event.currentTarget.open)}><summary>Connect your agent</summary>{open && <ConnectAgent />}</details>;
 }
 /** The agents on this computer and whether each already reaches this repository (`codiluce setup` connects them), asked when the box shows. */
-function useAgentConnections(): AgentConnection[] | 'loading' | 'error' {
+function useAgentConnections(): { items: AgentConnection[] | 'loading' | 'error'; retry: () => void } {
   const [items, setItems] = useState<AgentConnection[] | 'loading' | 'error'>('loading');
+  const [revision, setRevision] = useState(0);
+  const connected = useAtlas(state => state.agents.connected);
   useEffect(() => {
     const controller = new AbortController();
+    setItems('loading');
     fetch('/api/explanations/agents', { signal: controller.signal, headers: { Accept: 'application/json' } })
       .then(async response => { if (!response.ok) throw new Error(`Request failed (${response.status})`); setItems((await response.json() as AgentConnectionList).items); })
       .catch(() => { if (!controller.signal.aborted) setItems('error'); });
     return () => controller.abort();
-  }, []);
-  return items;
+  }, [connected, revision]);
+  return { items, retry: () => setRevision(value => value + 1) };
 }
 function names(items: string[]): string { return items.length > 1 ? `${items.slice(0, -1).join(', ')} and ${items.at(-1)}` : items[0] ?? ''; }
 /** How to connect an agent over MCP (commands only for those not connected yet), with a first prompt to try. */
@@ -126,7 +129,7 @@ function ConnectAgent({ open = false }: { open?: boolean }) {
   const setup = useAtlas(state => state.explain.setup);
   const agents = useAtlas(state => state.explain.agents);
   const prompt = useAgentPrompt();
-  const found = useAgentConnections();
+  const { items: found, retry } = useAgentConnections();
   if (!setup) return null;
   const json = JSON.stringify({ mcpServers: { codiluce: { command: setup.mcp.command, args: setup.mcp.args } } }, null, 2);
   const known = Array.isArray(found) ? found : [];
@@ -134,7 +137,7 @@ function ConnectAgent({ open = false }: { open?: boolean }) {
   const connected = [...new Set([...known.filter(agent => agent.connected).map(agent => agent.name), ...agents.map(agent => agentLabel(agent.agent))])];
   const command = (id: 'claude' | 'codex', name: string, line: string) => {
     const agent = known.find(item => item.id === id);
-    if (agent?.connected) return null;
+    if (connected.includes(name)) return null;
     return (
       <>
         <p className="note">{agent?.elsewhere ? `${name} is ${agent.elsewhere}. To connect it here, in a terminal:` : `${name}, in a terminal:`}</p>
@@ -144,13 +147,13 @@ function ConnectAgent({ open = false }: { open?: boolean }) {
   };
   return (
     <div className="connect">
-      {open && <h4>Connect your agent</h4>}
+      {open && <h4>{connected.length ? 'Your agents' : 'Connect your agent'}</h4>}
       {connected.length > 0 && <p className="agent-connected" role="status"><span className="dot" aria-hidden="true" /><span>{names(connected)} {connected.length === 1 ? 'is' : 'are'} connected: what {connected.length === 1 ? 'it explains' : 'they explain'} shows here.</span></p>}
-      {found === 'loading' ? <p className="note">Checking which agents are connected…</p> : <>
+      {found === 'loading' ? <p className="note">Checking which agents are connected…</p> : found === 'error' ? <p className="note" role="status">Could not check agent connections. Keep Codiluce running in its terminal. <button className="button small" onClick={retry}>Retry connection check</button></p> : <>
         {command('claude', 'Claude Code', setup.mcp.claude)}
         {command('codex', 'Codex', setup.mcp.codex)}
       </>}
-      <details><summary className="note">Cursor and other MCP clients (mcp.json)</summary><div className="command-row"><pre className="mono">{json}</pre><CopyButton text={json} /></div></details>
+      <details><summary className="note">{connected.includes('Cursor') ? 'Other MCP clients (mcp.json)' : 'Cursor and other MCP clients (mcp.json)'}</summary><div className="command-row"><pre className="mono">{json}</pre><CopyButton text={json} /></div></details>
       <p className="note">Then ask it, for example:</p>
       <div className="command-row"><span>Explain this codebase as a whole…</span><CopyButton text={() => prompt({ kind: 'overview' })} label="Copy prompt" /></div>
       <p className="note">Its tools read Codiluce's index (flows, impact, history, source); <code>publish_explanation</code> checks every link, then saves the answer in <code>.codiluce/explanations/</code>, where this column shows it.</p>

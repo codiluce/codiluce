@@ -3,6 +3,31 @@ import { expect, test } from '@playwright/test';
 const column = (page: import('@playwright/test').Page) => page.getByRole('complementary', { name: 'Explanations' });
 const inspector = (page: import('@playwright/test').Page) => page.getByRole('complementary', { name: 'Inspector' });
 
+test('explanations recognizes configured agents before any explanation has been saved', async ({ page }) => {
+  await page.route('**/api/explanations', route => route.fulfill({ json: { items: [], version: 'empty' } }));
+  await page.route('**/api/explanations/agents', route => route.fulfill({ json: { items: [
+    { id: 'claude', name: 'Claude Code', connected: true }, { id: 'codex', name: 'Codex', connected: true }, { id: 'cursor', name: 'Cursor', connected: true },
+  ] } }));
+  await page.goto('/#explain=list');
+  await expect(column(page).getByRole('heading', { name: 'Your agents' })).toBeVisible();
+  await expect(column(page).getByRole('status').filter({ hasText: 'Claude Code, Codex and Cursor are connected' })).toBeVisible();
+  await expect(column(page).locator('.connect .command-row code')).toHaveCount(0);
+  await expect(column(page).getByText('Cursor and other MCP clients (mcp.json)', { exact: true })).toHaveCount(0);
+});
+
+test('explanations retries failed connection detection without treating configured agents as disconnected', async ({ page }) => {
+  let unavailable = true;
+  await page.route('**/api/explanations', route => route.fulfill({ json: { items: [], version: 'empty' } }));
+  await page.route('**/api/explanations/agents', route => unavailable ? route.abort('connectionrefused') : route.fulfill({ json: { items: [{ id: 'codex', name: 'Codex', connected: true }] } }));
+  await page.goto('/#explain=list');
+  await expect(column(page).getByText('Could not check agent connections.', { exact: false })).toBeVisible();
+  await expect(column(page).locator('.connect .command-row code')).toHaveCount(0);
+  unavailable = false;
+  await column(page).getByRole('button', { name: 'Retry connection check' }).click();
+  await expect(column(page).getByRole('status').filter({ hasText: 'Codex is connected' })).toBeVisible();
+  await expect(column(page).getByText('Codex, in a terminal:', { exact: true })).toHaveCount(0);
+});
+
 test('explanations: the column lists what agents saved; links open code, missing ones say why', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: /^Explain/ }).click();

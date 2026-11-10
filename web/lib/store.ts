@@ -373,7 +373,7 @@ export interface AtlasState {
    * others' characters recede); `replay`: a saved session playing again on the map, step by step; `places`: where each session's
    * characters stand now (map IDs by session key, from the map).
    */
-  agents: { connected: boolean; show: boolean; now: number; snapshot?: ActivitySnapshot; live?: import('@engine/conversations/model').LiveSession[]; hover?: string; replay?: ReplayState; places?: Record<string, string[]> };
+  agents: { connected: boolean; connectionError?: boolean; show: boolean; now: number; snapshot?: ActivitySnapshot; live?: import('@engine/conversations/model').LiveSession[]; hover?: string; replay?: ReplayState; places?: Record<string, string[]> };
   explain: ExplainState;
   /** The shell's layout (the left panel, the inspector, Settings), which the onboarding tour opens and puts back. */
   panels: PanelsState;

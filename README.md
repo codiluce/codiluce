@@ -62,6 +62,8 @@ npx codiluce@latest start .
 
 Codiluce indexes the code, starts a local server and opens the map in your browser. You need Node.js 22.12 or newer.
 
+Keep the command running while using the map. After restarting it, finish any setup questions and open the printed URL; a browser tab left open while the server is stopped cannot load agent activity or explanations.
+
 The first time, it asks whether to precompute architecture snapshots (optional; Git file evolution is available
 immediately), which API keys to use for the optional language-model features, and which coding agents to connect. Enter keeps the defaults; `codiluce setup` asks again. The analysis lives in `.codiluce/`,
 which hides itself from Git.

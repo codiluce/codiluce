@@ -64,6 +64,25 @@ test('Agents and the other header tools remain reachable on smaller screens', as
   }
 });
 
+test('Agents explains an unavailable server and reloads a failed session list after reconnecting', async ({ page }) => {
+  let unavailable = true, failedLists = 0;
+  await page.route('**/api/agents/stream', route => unavailable ? route.abort('connectionrefused') : route.continue());
+  await page.route('**/api/conversations?*', route => {
+    if (unavailable) { failedLists++; return route.abort('connectionrefused'); }
+    return route.continue();
+  });
+  await page.goto('/');
+  const panel = page.getByRole('complementary', { name: 'Agents' });
+  await page.getByRole('button', { name: 'Agents', exact: true }).click();
+  await expect(panel.getByText('Local server unavailable · reconnecting…', { exact: true })).toBeVisible();
+  await expect(panel.getByRole('alert')).toContainText('finish setup and open the printed map URL');
+  await expect.poll(() => failedLists).toBeGreaterThan(0);
+  unavailable = false;
+  await expect(panel.getByText('Live activity', { exact: true })).toBeVisible({ timeout: 15_000 });
+  await expect(panel.getByRole('alert')).toHaveCount(0);
+  await expect(panel.getByRole('button', { name: 'Import / refresh history' })).toBeEnabled();
+});
+
 
 test('an observed file added after indexing is revealed as a file instead of selecting its folder', async ({ page, request }) => {
   const setup = await (await request.get('/api/explanations/setup')).json();

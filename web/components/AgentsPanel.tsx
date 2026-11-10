@@ -29,9 +29,9 @@ export function ActivityConnection() {
       const current = source = new EventSource('/api/agents/stream');
       current.onmessage = message => {
         if (source !== current) return;
-        try { store.setActivity({ snapshot: JSON.parse(message.data) as ActivitySnapshot, connected: true, now: Date.now() }); void refresh(); } catch { /* wait for the next snapshot */ }
+        try { store.setActivity({ snapshot: JSON.parse(message.data) as ActivitySnapshot, connected: true, connectionError: false, now: Date.now() }); void refresh(); } catch { /* wait for the next snapshot */ }
       };
-      current.onerror = () => { if (source === current) store.setActivity({ connected: false }); };
+      current.onerror = () => { if (source === current) store.setActivity({ connected: false, connectionError: true }); };
       void refresh();
     };
     document.addEventListener('visibilitychange', connect); connect();
@@ -53,12 +53,13 @@ export function AgentsPanel({ onClose }: { onClose: () => void }) {
     <div className="panel-header"><h2>Agents</h2><div className="agents-panel-actions"><button className="button small" onClick={() => store.expandAgents(!expanded)} aria-label={expanded ? 'Dock Agents beside the map' : 'Expand Agents'}>{expanded ? 'Dock beside map' : 'Expand'}</button><button className="icon-button small" onClick={onClose} aria-label="Hide the agents panel">⇤</button></div></div>
     <div className="agents-toolbar">
       <div className="agents-status-row">
-        <div className="agents-connection" role="status"><span className={`agents-live-dot${agents.connected && snapshot?.enabled ? ' on' : ''}`} />{agents.connected ? snapshot?.enabled ? 'Live activity' : 'Activity disabled' : 'Connecting to activity…'}</div>
+        <div className="agents-connection" role="status"><span className={`agents-live-dot${agents.connected && snapshot?.enabled ? ' on' : ''}`} />{agents.connected ? snapshot?.enabled ? 'Live activity' : 'Activity disabled' : agents.connectionError ? 'Local server unavailable · reconnecting…' : 'Connecting to activity…'}</div>
         <details className="agents-info" onKeyDown={event => { if (event.key === 'Escape') event.currentTarget.open = false; }}>
           <summary aria-label="About agent activity" title="About agent activity">ⓘ</summary>
           <p className="note">Observed actions from connected coding harnesses. On the map, each agent is a character on the files it reads, edits and searches (split into copies for files worked on at the same time), labeled with what it is doing, and waits in a queue at the right of the map, in the order the sessions started, for thinking, commands and permission. Its colored square matches its session in this list. Open a session to keep only its characters on the map, or replay a finished one step by step. Available session history refreshes while recently observed sessions are active; messages may arrive after tool activity. Check Agent connections for supported capabilities, setup and delivery.</p>
         </details>
       </div>
+      {!agents.connected && agents.connectionError && <p className="note" role="alert">Keep <code>codiluce start</code> running in its terminal. If restarting, finish setup and open the printed map URL. This page retries automatically.</p>}
       <label className="agents-toggle" title="Each agent as a character on the map: on the files it reads and edits; beside the map's edge for what is about no file"><input type="checkbox" checked={agents.show} onChange={event => store.showAgentsOnMap(event.target.checked)} /> Show agents on the map</label>
       {historical && <p className="note">Activity belongs to the working tree. Return to the live map to see the agents on it.</p>}
     </div>

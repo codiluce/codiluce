@@ -42,7 +42,7 @@ export function AgentSessionsView({ compact = false }: { compact?: boolean }) {
     }, query || path || provider ? 200 : 0);
     // A request can finish and populate the cache after the panel closes.
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [store, scope, key, listQuery, revision]);
+  }, [store, scope, key, listQuery, revision, agents.connected]);
   // Polling only imports recently observed sessions, and never moves the reading position.
   useEffect(() => {
     if (!page) return;
@@ -82,7 +82,7 @@ export function AgentSessionsView({ compact = false }: { compact?: boolean }) {
       <input className="text-input mono" aria-label="Filter agent sessions by file or folder" placeholder="File or folder…" value={path} onChange={event => { setPath(event.target.value); setOffset(0); }} />
 
     </div>
-    {error && <p className="note error" role="alert">{error}</p>}
+    {error && !(!agents.connected && agents.connectionError) && <p className="note error" role="alert">{error} <button className="button small" onClick={() => setRevision(value => value + 1)}>Retry agent sessions</button></p>}
     {report && <div className="note" role="status">Imported {report.imported} agent sessions · {report.unchanged} unchanged.{report.errors.length > 0 && <details><summary>{report.errors.length} import issues</summary>{report.errors.map((error, i) => <p key={i}>{error}</p>)}</details>}</div>}
     <div className={`journal-columns${journal.conversationId ? ' has-reader' : ''}`}>
       <aside className="journal-list" aria-label="Saved agent sessions">

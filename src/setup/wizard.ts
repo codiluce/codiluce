@@ -195,10 +195,12 @@ async function askAgents(w: Writer, context: SetupContext): Promise<SetupResult[
     value: agent.id, label: agent.name,
     ...(agent.installed ? { hint: agent.connected ? 'already connected · select to connect it again' : agent.elsewhere ? `${agent.elsewhere} · selected to connect it here` : agent.scope } : { disabled: 'not found' }),
   }));
+  const already = installed.filter(agent => agent.connected);
   const chosen = await multiselect<AgentId>(w, {
     message: 'Connect your agent',
     detail: 'Add Codiluce\'s MCP server, so your agent reads the index (flows, impact, history, source) and saves what it explains in the map\'s Explain column. Then ask it, for example: "Use Codiluce to explain how sign-in works, and publish it".',
-    choices, initial: installed.filter(agent => !agent.connected).map(agent => agent.id), none: 'none',
+    choices, initial: installed.filter(agent => !agent.connected).map(agent => agent.id),
+    none: already.length ? `no new connections (${already.map(agent => agent.name).join(', ')} already connected)` : 'none',
   });
   const results: SetupResult['connected'] = installed.filter(agent => agent.connected && !chosen.includes(agent.id)).map(agent => ({ agent, ok: true, already: true }));
   for (const id of chosen) {

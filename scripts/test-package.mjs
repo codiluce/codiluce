@@ -74,6 +74,15 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
     for (const asset of assets) assert.equal((await fetch(new URL(asset, url))).status, 200, asset);
     const summary = await (await fetch(`${url}api/summary`)).json();
     assert.ok(summary.counts.entities > 0 && summary.counts.relations > 0);
+    const setup = await (await fetch(`${url}api/explanations/setup`)).json();
+    assert.equal(setup.mcp.command, process.execPath);
+    assert.equal(setup.mcp.args[0], bin, 'installed connection commands use the package root, not dist/');
+    assert.ok(!setup.mcp.args[0].includes('/dist/bin/'));
+    const activity = await fetch(`${url}api/agents/stream`);
+    assert.equal(activity.status, 200);
+    assert.match(activity.headers.get('content-type'), /text\/event-stream/);
+    await activity.body.cancel();
+    assert.equal((await fetch(`${url}api/explanations/activity`)).status, 200, 'closing an activity stream leaves the map server running');
     {
       const found=await(await fetch(`${url}api/entities?search=backend%2Fapp%2FServices%2FAuthService.php&type=file`)).json(),file=found.items.find(item=>item.path==='backend/app/Services/AuthService.php');assert.ok(file);
       const detail=await(await fetch(`${url}api/entities/${file.id}`)).json();assert.equal(detail.metadata.analysis.features.structure.status,'supported');assert.equal(detail.metadata.phpSourceProvider.available,true);assert.ok(detail.metadata.phpSourceProvider.nativeBytes>0);assert.match(detail.metadata.phpSourceProvider.version,/php-source-unit:1$/);assert.ok(!JSON.stringify(detail).includes('"phpAst"'));
