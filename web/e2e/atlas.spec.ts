@@ -66,29 +66,31 @@ test('relationship evidence opens highlighted supporting source', async ({ page 
   await expect(source.locator('tr.focus')).toContainText("Route::post('login'");
   await expect(source.locator('tr.focus .hljs-string').first()).toBeVisible();
 });
-test('Dependencies draws the selection\'s dependencies on the map and lists them first', async ({ page }) => {
+test('the Dependencies view draws the selection\'s dependencies on the map and follows the selection', async ({ page }) => {
   await open(page);
   await search(page, 'LoginForm.tsx');
   await expect(inspector(page).getByRole('heading', { name: 'LoginForm.tsx' })).toBeVisible();
-  // Off by default: the relationships stay at the end of the inspector.
-  const button = page.getByRole('button', { name: 'Dependencies', exact: true });
+  // The Selection view first: the map plain.
+  const button = page.locator('.rail').getByRole('button', { name: 'Dependencies', exact: true });
   await expect(button).toHaveAttribute('aria-pressed', 'false');
-  await expect(inspector(page).getByRole('region', { name: 'Dependencies' })).toHaveCount(0);
   await button.click();
-  const section = inspector(page).getByRole('region', { name: 'Dependencies' });
+  const view = page.getByRole('complementary', { name: 'Dependencies' });
+  const section = view.getByRole('region', { name: 'Dependencies' });
   await expect(section.locator('.dependency-row').first()).toBeVisible();
-  // First in the inspector, before the flows; the list at the end steps aside.
-  const order = await inspector(page).locator('.section').evaluateAll(sections => sections.map(element => element.getAttribute('aria-label') ?? element.querySelector('h4')?.textContent ?? ''));
-  expect(order[0]).toBe('Dependencies');
-  await expect(inspector(page).getByRole('heading', { name: /^Relationships/ })).toHaveCount(0);
   // The relationships behind a dependency, each with its evidence.
   const row = section.locator('.dependency-row').first();
   await row.getByRole('button', { name: 'Why?' }).click();
   await row.locator('.dependency-links').getByRole('button', { name: /^Why is/ }).first().click();
   await expect(page.getByRole('dialog', { name: 'Why is this connected?' })).toBeVisible();
-  // A saved choice.
+  await page.getByRole('button', { name: 'Close evidence' }).click();
+  // Another selection: the view stays, with its dependencies.
+  await search(page, 'AuthController.php');
+  await expect(view.getByRole('heading', { name: 'AuthController.php' })).toBeVisible();
+  await expect(button).toHaveAttribute('aria-pressed', 'true');
+  // Not a saved choice: a visit starts on the Selection view.
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Dependencies', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.rail').getByRole('button', { name: 'Selection', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('complementary', { name: 'Dependencies' })).toHaveCount(0);
 });
 test('dynamic requests are shown as unresolved, not linked', async ({ page }) => {
   await open(page);

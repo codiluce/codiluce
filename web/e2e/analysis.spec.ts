@@ -11,9 +11,11 @@ async function search(page: Page, query: string) {
   await page.keyboard.press('Enter');
 }
 const inspector = (page: Page) => page.getByRole('complementary', { name: 'Inspector' });
+/** What is selected: the last of its breadcrumbs (whatever view the column shows). */
+const selected = (page: Page) => page.getByRole('navigation', { name: 'Canonical location of the selection' }).locator('[aria-current="true"]');
 async function select(page: Page, query: string, heading: string) {
   await search(page, query);
-  await expect(inspector(page).getByRole('heading', { name: heading, exact: true })).toBeVisible();
+  await expect(selected(page)).toHaveText(heading);
 }
 
 test('Python shows source, declarations and partial import/reference support', async ({ page }) => {
@@ -47,9 +49,9 @@ test('impact shows what depends on a method across the stack, by hops or by appl
   await open(page);
   await select(page, 'AuthService::authenticate', 'authenticate');
   await inspector(page).getByRole('button', { name: 'Impact', exact: true }).click();
-  // In the middle of the screen, with the map as an overview in a corner.
-  const section = page.getByRole('region', { name: 'Blast radius' });
-  await expect(page.getByRole('tab', { name: 'Impact · authenticate' })).toHaveAttribute('aria-selected', 'true');
+  // In the column (the Impact view), the map colored in the middle.
+  const section = page.getByRole('complementary', { name: 'Impact' }).getByRole('region', { name: 'Blast radius' });
+  await expect(page.locator('.rail').getByRole('button', { name: 'Impact', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(section.locator('.impact-bars')).toBeVisible();
   await expect(section).toContainText(/Reaches \d+ endpoints\. Affected: \d+ in (backend|frontend), \d+ in (backend|frontend)\./);
   await expect(section).toContainText('Lower bound');
@@ -64,7 +66,7 @@ test('impact shows what depends on a method across the stack, by hops or by appl
   await page.getByRole('button', { name: 'Close evidence' }).click();
   // Selecting what it lists leaves the radius on its origin.
   await signIn.locator('.row-title').click();
-  await expect(inspector(page).getByRole('heading', { name: 'signIn', exact: true })).toBeVisible();
+  await expect(selected(page)).toHaveText('signIn');
   await expect(section.locator('h2')).toHaveText('Impact of authenticate');
   // By application: the frontend lists only its own.
   await section.getByRole('group', { name: 'List by' }).getByRole('button', { name: 'Application' }).click();
@@ -76,7 +78,6 @@ test('impact shows what depends on a method across the stack, by hops or by appl
   await expect(groups.locator('.impact-row .row-title .label', { hasText: /AuthController/ })).toHaveCount(0);
   await section.getByRole('group', { name: 'List by' }).getByRole('button', { name: 'Hops' }).click();
   await select(page, 'AuthService::authenticate', 'authenticate');
-  await page.getByRole('tab', { name: 'Impact · authenticate' }).click();
   // Deeper walks reach the pages.
   await section.getByLabel('Hops').selectOption('6');
   await expect(row('/account').locator('.impact-distance')).toHaveText('6');
@@ -85,9 +86,9 @@ test('impact shows what depends on a method across the stack, by hops or by appl
   // The link reopens it.
   await page.reload();
   await expect(row('/account')).toBeVisible();
-  await inspector(page).getByRole('button', { name: 'Hide impact' }).click();
+  await section.getByRole('button', { name: 'Close impact' }).click();
   await expect(page.getByRole('region', { name: 'Blast radius' })).toHaveCount(0);
-  await expect(page.getByRole('tab', { name: /^Impact/ })).toHaveCount(0);
+  await expect(inspector(page)).toBeVisible();
   await expect.poll(() => page.url()).not.toContain('impact=');
 });
 test('impact reports name-only possible callers instead of linking them', async ({ page }) => {
@@ -159,7 +160,7 @@ test('effects and call sites explain what a symbol does and what could not be re
   const source = page.getByRole('region', { name: 'Code of handleSave' });
   await expect(source.locator('.call-mark').first()).toBeVisible();
   await source.locator('tr[data-line="9"] .call-mark').click();
-  await expect(inspector(page).getByRole('heading', { name: /^(getInstance|signIn)$/ })).toBeVisible();
+  await expect(selected(page)).toHaveText(/^(getInstance|signIn)$/);
   // The code follows the selection: the target's own lines are marked now.
   await expect(page.getByRole('region', { name: /^Code of (getInstance|signIn)$/ }).locator('tr.focus').first()).toBeVisible();
 });

@@ -99,7 +99,7 @@ export default function GettingStarted() {
       <ul>
         <li><strong>Zoom</strong> with the wheel, a pinch or <kbd>+</kbd> / <kbd>−</kbd>; drag or use the arrow keys to pan; <kbd>F</kbd> fits the view.</li>
         <li><strong>Search</strong> with <kbd>/</kbd>: files, symbols, routes, endpoints, controllers, tables. Choose a result and the map flies there.</li>
-        <li><strong>Select</strong> anything to see its relationships drawn on the map and its facts in the inspector. <strong>Why?</strong> on a relationship opens its evidence.</li>
+        <li><strong>Select</strong> anything to see its facts and relationships in the inspector; the <strong>Dependencies</strong> view draws what it uses and what uses it on the map. <strong>Why?</strong> on a relationship opens its evidence.</li>
         <li>Open <strong>Flows</strong>, <strong>History</strong>, <strong>Explain</strong>, <strong>Agents</strong> or <strong>Coverage</strong> from the header, and switch between 3D and the 2D plan with the <strong>3D</strong> button beside the map.</li>
       </ul>
       <p>The next page explains the map in detail.</p>

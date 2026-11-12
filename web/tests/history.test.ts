@@ -323,7 +323,7 @@ test('pull requests: open work listed and lit one focus at a time, its files, it
     assert.equal(atlas.getState().center, 'files');
     assert.deepEqual(atlas.getState().files?.data?.files.map(file => file.path), [LOGIN]);
     await atlas.showPullImpact('branch:wip');
-    assert.equal(atlas.getState().center, 'impact');
+    assert.deepEqual([atlas.getState().panels.view, atlas.getState().center], ['impact', 'map']);
     assert.equal(atlas.getState().impact.data?.origin.kind, 'pull');
     assert.ok(api.calls.includes('impact:pull:branch:wip'));
     await atlas.select(login.id, { fly: false });

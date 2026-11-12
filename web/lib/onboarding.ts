@@ -86,7 +86,7 @@ async function selectFile(store: AtlasStore, thread: OnboardingResult): Promise<
   const file = thread.thread.file;
   if (file && store.getState().selection?.id !== file.id) await store.select(file.id, { fly: true, recordHistory: false });
 }
-const leftOpen = (state: AtlasState, tab: AtlasState['panels']['tab']) => state.panels.left && state.panels.tab === tab;
+const shown = (state: AtlasState, view: AtlasState['panels']['view']) => state.panels.column && state.panels.view === view;
 const reducedMotion = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 const MAP: Stop = {
@@ -98,8 +98,8 @@ const MAP: Stop = {
     text: ({ thread }) => {
       const folder = thread.thread.folder;
       return folder
-        ? `**${folder.name}** holds ${plural(folder.files, 'file')} of the ${thread.counts.files.toLocaleString('en')}. Folders open as you zoom in, and the Inspector on the right describes what is selected.`
-        : `Folders open as you zoom in, and the Inspector on the right describes what is selected. **F** fits the whole repository again.`;
+        ? `**${folder.name}** holds ${plural(folder.files, 'file')} of the ${thread.counts.files.toLocaleString('en')}. Folders open as you zoom in, and the Inspector on the left describes what is selected.`
+        : `Folders open as you zoom in, and the Inspector on the left describes what is selected. **F** fits the whole repository again.`;
     },
   },
 };
@@ -118,29 +118,27 @@ const CODE: Stop = {
   prepare: selectFile,
   invite: ({ thread }) => {
     const dependents = thread.thread.file?.dependents ?? 0;
-    return `**${fileName(thread)}** is selected. The Inspector lists what it uses and what uses it${dependents ? ` (${depend(dependents, 'file')} on it)` : ''}, and the rest of the map recedes. Click **Code** to read it.`;
+    return `**${fileName(thread)}** is selected, and the Inspector describes it${dependents ? ` (${depend(dependents, 'file')} on it)` : ''}. Click **Code** in the rail to read it.`;
   },
   done: ({ state }) => !!state.code,
-  show: { run: store => store.openCode(), text: () => 'Code shows the source beside the Inspector and follows what you select: a file whole, or a symbol in its file with its lines marked.' },
+  show: { run: store => store.openCode(), text: () => 'Code shows the source in the column and follows what you select on the map: a file whole, or a symbol in its file with its lines marked. **Selection** brings the Inspector back.' },
   missing: ({ thread }) => thread.thread.file ? undefined : 'Nothing is indexed yet: the Inspector and Code show what you select on the map.',
 };
 const FLOWS: Stop = {
   key: 'flows', title: 'Flows', target: 'flows',
-  // The flow takes the middle: the code steps aside (it comes back when the tour ends, if it was open).
-  prepare: async (store, thread) => { if (store.getState().code) store.closeCode(); await selectFile(store, thread); },
+  prepare: selectFile,
   invite: ({ thread }) => thread.thread.flow ? `Which flows pass through **${fileName(thread)}**? Click **Flows**.` : 'Flows are what the code does, from an entry point on. Click **Flows**.',
-  done: ({ state }) => leftOpen(state, 'flows'),
+  done: ({ state }) => shown(state, 'flows'),
   show: {
     run: async (store, thread) => {
       const { file, flow } = thread.thread;
-      store.setPanels({ left: true, tab: 'flows' });
       await store.showFlows({ entity: flow && file ? { id: file.id, name: file.name } : null });
       if (flow) await store.openCatalogFlow(flow);
     },
     text: ({ thread }) => {
       const flow = thread.thread.flow;
       if (!flow) return `The Flows panel lists all ${plural(thread.counts.flows, 'flow')} by entry point: pages, requests, commands and scheduled tasks.`;
-      return `It is part of **${flow.title ?? flow.name}**: ${plural(flow.files, 'file')} in ${plural(flow.folders, 'folder')}${flow.tables ? `, down to ${plural(flow.tables, 'table')}` : ''}. The middle shows it on the map, in lanes and as an outline; the panel lists every flow through the file.`;
+      return `It is part of **${flow.title ?? flow.name}**: ${plural(flow.files, 'file')} in ${plural(flow.folders, 'folder')}${flow.tables ? `, down to ${plural(flow.tables, 'table')}` : ''}. The middle shows it on the map, in lanes and as an outline; the column lists every flow through the file.`;
     },
   },
   missing: ({ thread }) => thread.counts.flows ? undefined : 'No entry points were found here. Flows start at the routes, endpoints, pages, commands and scheduled tasks of the languages and frameworks Codiluce reads (codiluce.com/docs/stacks).',
@@ -149,12 +147,12 @@ const IMPACT: Stop = {
   key: 'impact', title: 'Impact', target: 'impact',
   prepare: selectFile,
   invite: ({ thread }) => `What would a change to **${fileName(thread)}** affect? Click **Impact**.`,
-  done: ({ state }) => state.center === 'impact' && state.impact.open,
+  done: ({ state }) => shown(state, 'impact') && state.impact.open,
   show: {
     run: (store, thread) => { const file = thread.thread.file; if (file) return store.showImpact(file.id); },
     text: ({ thread }) => {
       const impact = thread.thread.impact;
-      const reach = impact?.total ? `${depend(impact.total, 'place')} on it, up to ${plural(impact.hops, 'hop')} away, listed by hop (or by app, feature or folder) and lit on the map.` : 'Nothing indexed depends on it: a change stays here.';
+      const reach = impact?.total ? `${depend(impact.total, 'place')} on it, up to ${plural(impact.hops, 'hop')} away, listed by hop (or by app, feature or folder) and colored on the map while Impact is shown.` : 'Nothing indexed depends on it: a change stays here.';
       return `${reach} **Uncommitted changes** does the same for what you are editing now.`;
     },
   },
@@ -183,7 +181,7 @@ const HISTORY: Stop = {
 
 const PEOPLE: Stop[] = [
   {
-    key: 'people-inspector', title: 'Who changed it', target: 'inspector', prepare: selectFile,
+    key: 'people-inspector', title: 'Who changed it', target: 'inspector', prepare: (store, thread) => { store.showView('selection'); return selectFile(store, thread); },
     invite: ({ thread }) => {
       const history = thread.thread.history;
       if (!history) return `The Inspector says who changed what you select, and when.`;
@@ -194,19 +192,19 @@ const PEOPLE: Stop[] = [
   {
     key: 'people-panel', title: 'People', target: 'people',
     invite: () => 'Click **People** for everyone who changed the code.',
-    done: ({ state }) => leftOpen(state, 'people'),
+    done: ({ state }) => shown(state, 'people'),
     show: {
-      run: async (store, thread) => { store.setPanels({ left: true, tab: 'people' }); const person = thread.thread.history?.people[0]; if (person) await store.revealPeople(person.key); else await store.ensurePeople(); },
+      run: async (store, thread) => { store.showView('people'); const person = thread.thread.history?.people[0]; if (person) await store.revealPeople(person.key); else await store.ensurePeople(); },
       text: ({ thread }) => { const person = thread.thread.history?.people[0]; return `${person ? `Selecting **${person.name}** lights the files they changed and dims the rest.` : 'Selecting a person lights the files they changed and dims the rest.'} The window at the top sets how far back the figures go.`; },
     },
   },
   {
     key: 'pulls', title: 'Pull requests', target: 'pulls',
     invite: () => 'Click **PRs** for the pull requests: open work, and what was merged.',
-    done: ({ state }) => leftOpen(state, 'pulls'),
+    done: ({ state }) => shown(state, 'pulls'),
     show: {
       run: async store => {
-        store.setPanels({ left: true, tab: 'pulls' });
+        store.showView('pulls');
         await store.ensurePulls();
         const data = store.getState().pulls.data, pull = data?.open[0] ?? data?.merged[0];
         if (pull) await store.revealPulls(pull.id);
@@ -247,11 +245,11 @@ const EXPLAIN: Stop = {
 const FEATURES: Stop = {
   key: 'features', title: 'Features', target: 'features',
   invite: () => 'Click **Features** for what the product does.',
-  done: ({ state }) => leftOpen(state, 'features'),
+  done: ({ state }) => shown(state, 'features'),
   show: {
     run: async store => {
       await store.ensureFeatures();
-      store.setPanels({ left: true, tab: 'features' });
+      store.showView('features');
       const feature = store.getState().features.data?.features[0];
       if (feature) await store.revealFeature(feature.key);
     },
@@ -267,7 +265,7 @@ const lensText: Partial<Record<ColorMode, string>> = {
 const COLOR: Stop[] = [
   {
     key: 'color', title: 'Color by', target: 'color',
-    invite: () => 'The map can be colored by more than what each block is. Click **Color** to choose.',
+    invite: () => 'The map can be colored by more than what each block is. Click **Color**, at the top left of the map, to choose.',
     done: ({ state, start }) => colorOf(state) !== colorOf(start),
     show: { run: store => store.colorBy('complexity'), text: () => lensText.complexity! },
   },

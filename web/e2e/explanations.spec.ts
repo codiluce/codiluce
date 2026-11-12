@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test';
 
 const column = (page: import('@playwright/test').Page) => page.getByRole('complementary', { name: 'Explanations' });
 const inspector = (page: import('@playwright/test').Page) => page.getByRole('complementary', { name: 'Inspector' });
+const selected = (page: import('@playwright/test').Page) => page.getByRole('navigation', { name: 'Canonical location of the selection' }).locator('[aria-current="true"]');
+const rail = (page: import('@playwright/test').Page, name: string) => page.locator('.rail').getByRole('button', { name, exact: true });
 
 test('explanations recognizes configured agents before any explanation has been saved', async ({ page }) => {
   await page.route('**/api/explanations', route => route.fulfill({ json: { items: [], version: 'empty' } }));
@@ -37,10 +39,14 @@ test('explanations: the column lists what agents saved; links open code, missing
   await expect(column(page)).toContainText('How does login work?');
   await expect(column(page).locator('.explain-answer .xlink.missing')).toHaveAttribute('title', /Not in the index/);
   await expect(page).toHaveURL(/#.*explain=2026-10-14-how-login-works-e2e0/);
-  // Clicking a link selects what it names and opens its code.
+  // Clicking a link selects what it names; the column stays on the explanation.
   await column(page).getByRole('link', { name: 'login', exact: true }).click();
-  await expect(inspector(page).getByRole('heading', { name: 'login' })).toBeVisible();
-  await expect(page.getByRole('complementary', { name: 'Code' })).toBeVisible();
+  await expect(selected(page)).toHaveText('login');
+  await expect(column(page).getByRole('heading', { name: 'How login works' })).toBeVisible();
+  // Code follows it.
+  await rail(page, 'Code').click();
+  await expect(page.getByRole('region', { name: 'Code of login' })).toBeVisible();
+  await rail(page, 'Selection').click();
   // The inspector lists the explanations that link the selection, and offers to explain it.
   await expect(inspector(page)).toContainText('Explained in');
   await expect(inspector(page).getByRole('button', { name: /Explain this method/ })).toBeVisible();
@@ -99,6 +105,7 @@ test('explanations: a template fills the question, Tab moves between its placeho
   await page.goto('/#explain=2026-10-14-how-login-works-e2e0');
   await page.reload();
   await column(page).getByRole('link', { name: 'login', exact: true }).click();
+  await rail(page, 'Selection').click();
   await inspector(page).getByRole('button', { name: '⋯' }).click();
   await inspector(page).getByRole('menuitem', { name: 'Look for bugs in it' }).click();
   await expect(question).toHaveValue(/^Look for likely bugs in login: unhandled errors/);
@@ -136,10 +143,12 @@ test('explanations: a tour plays in the middle, scene by scene, with the column 
   await expect(bar).toContainText('Where login lives');
   await expect(page.getByRole('tab', { name: /Tour · Login in scenes/ })).toBeVisible();
   await expect(column(page).locator('.scene-section.current')).toContainText('Where login lives');
-  // Opening the Agents sidebar must leave this tour on stage.
+  // Showing Agents in the column must leave this tour on stage; Explain brings the explanation back.
   await page.getByRole('button', { name: 'Agents', exact: true }).click();
   await expect(bar).toBeVisible();
-  await page.getByRole('button', { name: 'Agents', exact: true }).click();
+  await rail(page, 'Explain').click();
+  // Explain puts the cursor in its question box, where the arrows move the cursor: out of it, they step the tour.
+  await column(page).getByRole('textbox', { name: 'Question' }).blur();
   // The diagram scene stays on the map by default, its files numbered where they are and its arrows drawn between them.
   await page.keyboard.press('ArrowRight');
   await expect(bar).toContainText('2 / 2');
@@ -155,9 +164,9 @@ test('explanations: a tour plays in the middle, scene by scene, with the column 
   await expect(diagram.locator('.cd-part')).toContainText('login');
   await expect(diagram.locator('.cd-arrow-label', { hasText: 'asks' }).locator('.cd-chip').first()).toContainText('calls');
   await expect(column(page).locator('.scene-section.current')).toContainText('How the form reaches the server');
-  // A box opens its code while the tour stays on stage; a section's title puts its scene back.
+  // A box selects what it names while the tour stays on stage; a section's title puts its scene back.
   await diagram.getByRole('button', { name: /AuthService/ }).click();
-  await expect(inspector(page).getByRole('heading', { name: 'AuthService.php' })).toBeVisible();
+  await expect(selected(page)).toHaveText('AuthService.php');
   await expect(bar).toBeVisible();
   await column(page).getByRole('button', { name: /Where login lives/ }).click();
   await expect(bar).toContainText('1 / 2');

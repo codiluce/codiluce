@@ -1,6 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { appendFile } from 'node:fs/promises';
 import path from 'node:path';
+
+/** What is selected: the last of its breadcrumbs (whatever view the column shows). */
+const selected = (page: Page) => page.getByRole('navigation', { name: 'Canonical location of the selection' }).locator('[aria-current="true"]');
 
 test('Agents reads searchable history beside the map, expands in place, and reveals tool paths', async ({ page, request }) => {
   expect((await request.get('/api/decisions')).status()).toBe(404);
@@ -37,8 +40,9 @@ test('Agents reads searchable history beside the map, expands in place, and reve
   await expect(conversation.getByText('Login form code.', { exact: true })).toBeVisible();
   await expect(page.locator('.map-canvas').first()).toBeVisible();
   await conversation.getByRole('button', { name: 'frontend/src/components/LoginForm.tsx', exact: true }).first().click();
-  await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('heading', { name: 'LoginForm.tsx', exact: true })).toBeVisible();
-  await page.getByRole('group', { name: 'Additional columns' }).getByRole('button', { name: 'Code', exact: true }).click();
+  // Selected on the map; the column stays on Agents.
+  await expect(selected(page)).toHaveText('LoginForm.tsx');
+  await expect(panel).toBeVisible();
   const url = page.url();
   await page.goto(url);
   await expect(page.getByRole('complementary', { name: 'Agents', exact: true }).getByLabel('Agent session reader', { exact: true }).getByText('Keep session history readable as Markdown, with original messages and tool activity.')).toBeVisible();
@@ -135,7 +139,8 @@ test('cached sessions appear during slow refreshes, survive reloads, and remain 
   failed = true;
   await panel.getByRole('button', { name: 'Hide the agents panel' }).click();
   await page.getByRole('button', { name: 'Agents', exact: true }).click();
-  await expect(panel.getByRole('alert')).toHaveText('Temporary archive refresh failure');
+  await expect(panel.getByRole('alert')).toContainText('Temporary archive refresh failure');
+  await expect(panel.getByRole('alert').getByRole('button', { name: 'Retry agent sessions' })).toBeVisible();
   await expect(panel.getByRole('button', { name: /Updated in the background/ })).toBeVisible();
   expect(new URL(page.url()).hash).toBe('#sessions=list');
 });

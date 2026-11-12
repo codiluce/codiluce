@@ -2,26 +2,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { HttpAtlasApi } from '../lib/api';
 import { HttpExplanationsApi } from '../lib/explanations';
-import { agentLabel } from '@engine/explanations/model';
 import { shortSha, relativeTime } from '../lib/format';
-import { AtlasStore, workingAgents, type LeftTab } from '../lib/store';
+import { AtlasStore } from '../lib/store';
 import { tourParam, withoutTourParam, type TourKey } from '../lib/onboarding';
 import { themeById, UI_PROPERTIES } from '../lib/themes';
 import { Breadcrumbs } from './Breadcrumbs';
-import { CodeView } from './CodeView';
-import { ColorBy } from './ColorBy';
 import { AtlasContext, useAtlas, useStore } from './context';
 import { EclipseMark } from './EclipseMark';
-import { ActivityConnection, AgentsPanel } from './AgentsPanel';
-import { AgentDots } from './AgentDots';
-import { ExplanationsPanel } from './ExplanationsPanel';
-import { FeaturesPanel } from './FeaturesPanel';
-import { FlowsPanel } from './FlowsPanel';
-import { PeoplePanel } from './PeoplePanel';
-import { PullsPanel } from './PullsPanel';
-import { Inspector } from './Inspector';
+import { ActivityConnection } from './AgentsPanel';
+import { Column, Rail } from './Column';
 import { MapVisibilityUI } from './MapVisibility';
-import { HelpMenu, Onboarding } from './Onboarding';
+import { Onboarding } from './Onboarding';
 import { SettingsDialog } from './SettingsDialog';
 import { SearchBox } from './SearchBox';
 import { Timeline } from './Timeline';
@@ -71,34 +62,6 @@ export function AtlasApp() {
     </AtlasContext.Provider>
   );
 }
-function usePanelWidth(key: string, initial: number): [number, (width: number) => void] {
-  const [width, setWidth] = useState(initial);
-  useEffect(() => { try { const saved = Number(localStorage.getItem(key)); if (saved >= 240 && saved <= 720) setWidth(saved); } catch { /* optional */ } }, [key]);
-  return [width, (next: number) => { const clamped = Math.max(240, Math.min(720, next)); setWidth(clamped); try { localStorage.setItem(key, String(clamped)); } catch { /* optional */ } }];
-}
-const CODE_SHARE_KEY = 'codiluce:code-share';
-/** The code panel's width: 30% of the window at first, then the share it was resized to (18–60%), following the window as it resizes. */
-function useCodeWidth(): [number, (width: number) => void] {
-  const [share, setShare] = useState(() => { try { const saved = Number(localStorage.getItem(CODE_SHARE_KEY)); if (saved >= 0.18 && saved <= 0.6) return saved; } catch { /* optional */ } return 0.3; });
-  const [viewport, setViewport] = useState(() => window.innerWidth);
-  useEffect(() => { const onResize = () => setViewport(window.innerWidth); window.addEventListener('resize', onResize); return () => window.removeEventListener('resize', onResize); }, []);
-  return [Math.max(280, Math.round(share * viewport)), (next: number) => {
-    const value = Math.max(0.18, Math.min(0.6, next / window.innerWidth));
-    setShare(value); try { localStorage.setItem(CODE_SHARE_KEY, value.toFixed(4)); } catch { /* optional */ }
-  }];
-}
-function ResizeHandle({ side, width, onResize, label }: { side: 'left' | 'right'; width: number; onResize: (width: number) => void; label: string }) {
-  const start = useRef<{ x: number; width: number } | null>(null);
-  return (
-    <div
-      className="resize-handle" style={side === 'right' ? { left: -3 } : { right: -3 }} role="separator" aria-orientation="vertical" aria-label={label} aria-valuenow={width} tabIndex={0}
-      onPointerDown={event => { start.current = { x: event.clientX, width }; (event.target as HTMLElement).setPointerCapture(event.pointerId); }}
-      onPointerMove={event => { if (start.current) onResize(start.current.width + (side === 'right' ? start.current.x - event.clientX : event.clientX - start.current.x)); }}
-      onPointerUp={() => { start.current = null; }}
-      onKeyDown={event => { if (event.key === 'ArrowLeft') onResize(width + (side === 'right' ? 24 : -24)); if (event.key === 'ArrowRight') onResize(width + (side === 'right' ? -24 : 24)); }}
-    />
-  );
-}
 function Shell() {
   const store = useStore();
   const themeId = useAtlas(state => state.themeId);
@@ -107,49 +70,11 @@ function Shell() {
   const timelineOpen = useAtlas(state => state.timeline.open);
   const timeline = useAtlas(state => state.timeline.data);
   const theme = themeById(themeId);
-  const [inspectorWidth, setInspectorWidth] = usePanelWidth('codiluce:inspector-width', 380);
-  const [flowWidth, setFlowWidth] = usePanelWidth('codiluce:flow-width', 300);
-  const [codeWidth, setCodeWidth] = useCodeWidth();
-  const [explainWidth, setExplainWidth] = usePanelWidth('codiluce:explain-width', 400);
-  const explainOpen = useAtlas(state => state.explain.open);
-  const unseen = useAtlas(state => state.explain.unseen.length);
-  // An agent connected over MCP is working on an explanation: the button says so before anything is saved.
-  const working = useAtlas(state => { const agents = workingAgents(state.explain); return agents.length === 1 ? agentLabel(agents[0]!.agent) : agents.length ? `${agents.length} agents` : ''; });
-  const explanations = useAtlas(state => state.explain.list.data?.items.length ?? 0);
-  const runningAgents = useAtlas(state => state.agents.connected && state.agents.snapshot?.enabled
-    ? state.agents.snapshot.sessions.filter(session => session.status === 'running' && state.agents.now - session.lastSeen <= 300_000).length
-    : 0);
-  // The layout is the store's, so the onboarding tour can open panels and put them back as they were.
-  const inspectorOpen = useAtlas(state => state.panels.inspector);
-  const leftOpen = useAtlas(state => state.panels.left);
-  const leftTab = useAtlas(state => state.panels.tab);
-  const setInspectorOpen = (inspector: boolean) => store.setPanels({ inspector });
-  const setLeftOpen = (left: boolean) => store.setPanels({ left });
-  const setLeftTab = (tab: LeftTab) => store.setPanels({ tab });
-  const agentsReveal = useAtlas(state => state.journal.reveal);
-  const agentsExpanded = useAtlas(state => !!state.journal.expanded);
-  useEffect(() => { if (agentsReveal) { setLeftOpen(true); setLeftTab('agents'); } }, [agentsReveal]);
-  // The left panel holds the features (once described), every flow (pages, requests, console), the people who changed the code and the pull requests.
-  const reveal = useAtlas(state => state.catalog.reveal);
-  useEffect(() => { if (reveal) { setLeftOpen(true); setLeftTab('flows'); } }, [reveal]);
-  const featureReveal = useAtlas(state => state.features.reveal);
-  useEffect(() => { if (featureReveal) { setLeftOpen(true); setLeftTab('features'); } }, [featureReveal]);
-  const peopleReveal = useAtlas(state => state.people.reveal);
-  useEffect(() => { if (peopleReveal) { setLeftOpen(true); setLeftTab('people'); } }, [peopleReveal]);
-  const pullsReveal = useAtlas(state => state.pulls.reveal);
-  useEffect(() => { if (pullsReveal) { setLeftOpen(true); setLeftTab('pulls'); } }, [pullsReveal]);
-  const features = useAtlas(state => state.annotations.data?.domains.length ?? 0);
+  // The layout is the store's (the rail, the column's view), so the onboarding tour can open views and put them back as they were.
+  const column = useAtlas(state => state.panels.column);
+  const agentsExpanded = useAtlas(state => state.panels.view === 'agents' && !!state.journal.expanded);
   // Comparing in History: one view per place that changed, around an overview (unless the single map is chosen).
   const split = useAtlas(state => state.timeline.open && state.timeline.compare && state.timeline.split && (!!state.meta?.comparison || state.timeline.preview !== undefined));
-  const closeAgents = () => { setLeftOpen(false); store.closeJournal('conversations'); };
-  const showLeft = (tab: LeftTab) => {
-    if (leftOpen && leftTab === tab) { if (tab === 'agents') closeAgents(); else setLeftOpen(false); }
-    else { if (tab === 'agents') store.showAgents(); else { store.closeJournal('conversations'); setLeftOpen(true); setLeftTab(tab); } }
-  };
-  const tabs = [...(features > 0 ? ['features' as const] : []), 'flows' as const, 'people' as const, 'pulls' as const, 'agents' as const];
-  const impactOpen = useAtlas(state => state.impact.open && state.center === 'impact');
-  const codeOpen = useAtlas(state => !!state.code);
-  const dependencies = useAtlas(state => state.dependencies.show);
   const [help, setHelp] = useState(false);
   const settings = useAtlas(state => state.panels.settings);
   const closeSettings = useCallback(() => store.setPanels({ settings: false }), [store]);
@@ -207,66 +132,13 @@ function Shell() {
           <div className="top-action-group" role="group" aria-label="Timeline" title="Opens the history timeline below the map">
             <button className="button" data-onboarding="history" onClick={() => void (timelineOpen ? store.closeTimeline() : store.openTimeline())} aria-pressed={timelineOpen} title="Browse Git file evolution; explore architecture snapshots on demand">History</button>
           </div>
-          <div className="top-action-group" role="group" aria-label="Sidebar panels" title="Opens in the left sidebar">
-            {features > 0 && <button className="button" data-onboarding="features" onClick={() => showLeft('features')} aria-pressed={leftOpen && leftTab === 'features'} aria-controls="left-panel" title={`The ${features} features of the product, as the model described them: select one to light its files and see its flows`}>Features</button>}
-            <button className="button" data-onboarding="flows" onClick={() => showLeft('flows')} aria-pressed={leftOpen && leftTab === 'flows'} aria-controls="left-panel" title="Flows by CLI, HTTP, UI, MCP and worker entry points, with source scope and evidence coverage">Flows</button>
-            <button className="button" data-onboarding="people" onClick={() => showLeft('people')} aria-pressed={leftOpen && leftTab === 'people'} aria-controls="left-panel" title="Who changed which code, from the Git history: select a person to light the files they changed">People</button>
-            <button className="button" data-onboarding="pulls" onClick={() => showLeft('pulls')} aria-pressed={leftOpen && leftTab === 'pulls'} aria-controls="left-panel" title="Pull requests, open and merged: select one to light the files it changes">PRs</button>
-            <button className={`button agents-top${runningAgents > 0 ? ' has-running' : ''}`} data-onboarding="agents" onClick={() => showLeft('agents')} aria-label="Agents" aria-pressed={leftOpen && leftTab === 'agents'} aria-controls="left-panel" title={`${runningAgents > 0 ? `${runningAgents} agent${runningAgents === 1 ? '' : 's'} running · ` : ''}Live and searchable agent sessions beside the map`}>{runningAgents > 0 && <AgentDots />}Agents{runningAgents > 0 && <span className="badge" aria-label={`${runningAgents} agent${runningAgents === 1 ? '' : 's'} running`}>{runningAgents}</span>}</button>
-          </div>
-          <div className="top-action-group" role="group" aria-label="Center tools" title="Opens in a center tab">
-            <button className="button" data-onboarding="impact" onClick={() => impactOpen ? store.setCenter('map') : void store.openImpactTool()} aria-pressed={impactOpen} title="What depends on the selection, or on your uncommitted changes, hop by hop">Impact</button>
-          </div>
-          <div className="top-action-group" role="group" aria-label="Additional columns" title="Opens an additional column beside the map">
-            <button className={`button explain-top${working ? ' working' : ''}`} data-onboarding="explain" onClick={() => store.toggleExplanations()} aria-pressed={explainOpen} aria-controls="explain-panel" title={`${working ? `${working} ${working.endsWith(' agents') ? 'are' : 'is'} working on an explanation. ` : ''}Explanations: ask about the code, or read what your agent explained (${explanations} saved); their links light the code on the map`}>Explain{working && <span className="agent-pulse" role="status" aria-label={`${working} working`} />}{unseen > 0 && <span className="badge" aria-label={`${unseen} new`}>{unseen}</span>}</button>
-            <button className="button" data-onboarding="code" onClick={() => codeOpen ? store.closeCode() : store.openCode()} aria-pressed={codeOpen} title="The code of the selection beside the inspector: a file, or a symbol in its file, with the file's outline">Code</button>
-          </div>
-          <div className="top-action-group" role="group" aria-label="Map overlays" title="Changes what the map shows">
-            <button className="button" onClick={() => store.toggleDependencies()} aria-pressed={dependencies} title="What the selection uses and what uses it (calls, requests, imports…), drawn on the map as labeled rails to each file, and listed first in the inspector">Dependencies</button>
-            <ColorBy />
-          </div>
-          <div className="top-action-group" role="group" aria-label="Settings and help">
-            <button className="icon-button" data-onboarding="settings" onClick={() => store.setPanels({ settings: !settings })} aria-expanded={settings} aria-label="Settings" title="Settings">⚙</button>
-            <HelpMenu onKeyboard={() => setHelp(true)} />
-          </div>
         </div>
       </header>
       <Breadcrumbs />
-      <main className={`workspace${codeOpen ? ' with-code' : ''}${explainOpen ? ' with-explain' : ''}${leftOpen && leftTab === 'agents' && agentsExpanded ? ' agents-expanded' : ''}`}>
-        {leftOpen ? (
-          <aside id="left-panel" className={`panel left${leftTab === 'agents' ? ' agents-host' : ''}`} style={{ width: Math.max(flowWidth, leftTab === 'agents' ? 420 : 340) }} aria-label={TAB_TEXT[leftTab]}>
-            {tabs.length > 1 && (
-              <div className="segmented panel-tabs" role="tablist" aria-label="Left panel">
-                {tabs.map(tab => <button key={tab} role="tab" aria-selected={leftTab === tab} aria-pressed={leftTab === tab} onClick={() => { if (tab === 'agents') store.showAgents(); else { store.closeJournal('conversations'); setLeftTab(tab); } }}>{TAB_TEXT[tab]}</button>)}
-              </div>
-            )}
-            {leftTab === 'features' && features > 0 ? <FeaturesPanel onClose={() => setLeftOpen(false)} />
-              : leftTab === 'agents' ? <AgentsPanel onClose={closeAgents} />
-              : leftTab === 'people' ? <PeoplePanel onClose={() => setLeftOpen(false)} />
-              : leftTab === 'pulls' ? <PullsPanel onClose={() => setLeftOpen(false)} />
-              : <FlowsPanel onClose={() => setLeftOpen(false)} />}
-            {!(leftTab === 'agents' && agentsExpanded) && <ResizeHandle side="left" width={flowWidth} onResize={setFlowWidth} label="Resize the left panel" />}
-          </aside>
-        ) : <div />}
-        {explainOpen && (
-          <aside id="explain-panel" className="panel left explain-panel" style={{ width: explainWidth }} aria-label="Explanations">
-            <ExplanationsPanel onClose={() => store.closeExplanations()} />
-            <ResizeHandle side="left" width={explainWidth} onResize={setExplainWidth} label="Resize the explanations" />
-          </aside>
-        )}
+      <main className={`workspace${column ? ' with-column' : ''}${agentsExpanded ? ' agents-expanded' : ''}`}>
+        <Rail onKeyboard={() => setHelp(true)} />
+        <Column />
         <Workbench split={split} />
-        {codeOpen && (
-          <aside className="panel code-panel" style={{ width: codeWidth }} aria-label="Code">
-            <ResizeHandle side="right" width={codeWidth} onResize={setCodeWidth} label="Resize the code panel" />
-            <CodeView />
-          </aside>
-        )}
-        {inspectorOpen ? (
-          <aside className="panel" data-onboarding="inspector" style={{ width: inspectorWidth }} aria-label="Inspector">
-            <ResizeHandle side="right" width={inspectorWidth} onResize={setInspectorWidth} label="Resize inspector" />
-            <Inspector onClose={() => setInspectorOpen(false)} />
-          </aside>
-        ) : <button className="panel-collapsed right" onClick={() => setInspectorOpen(true)}>Inspector</button>}
       </main>
       {timelineOpen && <Timeline />}
       {help && <HelpDialog onClose={() => setHelp(false)} />}
@@ -276,7 +148,6 @@ function Shell() {
     </div>
   );
 }
-const TAB_TEXT: Record<LeftTab, string> = { features: 'Features', flows: 'Flows', people: 'People', pulls: 'PRs', agents: 'Agents' };
 function HelpDialog({ onClose }: { onClose: () => void }) {
   const close = useRef<HTMLButtonElement>(null);
   useEffect(() => { close.current?.focus(); const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, [onClose]);
@@ -291,7 +162,7 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
       <div className="card" role="dialog" aria-modal="true" aria-labelledby="help-title" onClick={event => event.stopPropagation()} style={{ textAlign: 'left', maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}>
         <h2 id="help-title" style={{ marginTop: 0, fontSize: 15 }}>Keyboard and pointer</h2>
         <dl className="facts">{rows.map(([key, text]) => [<dt key={`k${key}`}><kbd>{key}</kbd></dt>, <dd key={`d${key}`}>{text}</dd>])}</dl>
-        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout. Hiding or restoring paths repacks the map to reclaim space; selection and search keep positions stable. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing. Dragging the timeline or pressing play shows each commit at once as a time-lapse; the full view of a commit loads when you let go or pause. When comparing, the split map shows one view on each place that changed around an overview of the whole repository, where numbered frames show what each view shows. Flows, steps, a blast radius (<strong>Impact</strong>, also of your uncommitted changes), and the files a highlight lights open in the middle of the screen as tabs beside <strong>Map</strong>; the map then stays in a corner as an overview of what they light, and a click on it brings it back. Search results offer the same: a flow on the map or in lanes, what happens from it, its impact (<kbd>Tab</kbd> reaches them). <strong>Code</strong> opens the code of the selection in a panel beside the inspector (drag its edge to resize it) and follows what you select. <strong>Dependencies</strong> draws what the selection uses and what uses it as a diagram on the map: rails to the files at the other ends, each arrow saying what it does (calls, requests, imports…), what they reach lit and the rest receding; the inspector lists them first, and pointing at one brings its rail to the front. <strong>Features</strong> (once the code is described) lists what the product does: selecting a feature lights its files on the map, with the flows that start in it; a folder's inspector shows which data families its files belong to. <strong>People</strong> lists who changed the code, from the Git history (authors and co-authors, agents and bots told apart), in a window of time ending at the commit shown: selecting a person lights the files they changed, and every inspector says who changed its selection and when. <strong>PRs</strong> lists pull requests: open work (branches not merged yet, and with <code>--pr-metadata github</code> the open pull requests on GitHub) and what was merged into the branch in the same window. Selecting one lights the files it changes, with its commits, people and blast radius; every inspector lists the open pull requests changing its selection.</p>
+        <p className="note">The map is a projection of the indexed graph: positions come from a deterministic layout. Hiding or restoring paths repacks the map to reclaim space; selection and search keep positions stable. In History, every commit is laid out against one shared slot registry, so areas stay put while you move through time; removed entities remain as translucent ghosts when comparing. Dragging the timeline or pressing play shows each commit at once as a time-lapse; the full view of a commit loads when you let go or pause. When comparing, the split map shows one view on each place that changed around an overview of the whole repository, where numbered frames show what each view shows. The rail on the left picks what the column beside it shows, one view at a time: <strong>Selection</strong> (the inspector), <strong>Code</strong>, <strong>Impact</strong>, <strong>Flows</strong>, <strong>Dependencies</strong>, <strong>People</strong>, <strong>PRs</strong>, <strong>Explain</strong> and <strong>Agents</strong>, with Settings and Help at its foot. Selecting on the map never moves the column; the current view's item hides it, and its edge resizes it. The map draws what the view lights: <strong>Impact</strong> colors what depends on the selection, or on your uncommitted changes, hop by hop; <strong>Dependencies</strong> draws what the selection uses and what uses it as rails to the files at the other ends, each arrow saying what it does (calls, requests, imports…), and pointing at one in its list brings its rail to the front. <strong>Code</strong> shows the code of the selection and follows what you select. Flows, steps and the files a highlight lights open in the middle of the screen as tabs beside <strong>Map</strong>; the map then stays in a corner as an overview of what they light, and a click on it brings it back. Search results offer the same: a flow on the map or in lanes, what happens from it, its impact (<kbd>Tab</kbd> reaches them). <strong>Color by</strong>, at the map's top left, colors its files by type, flow coverage, who changed them, complexity, recent changes or hotspots. <strong>Features</strong> (once the code is described) lists what the product does: selecting a feature lights its files on the map, with the flows that start in it; a folder's inspector shows which data families its files belong to. <strong>People</strong> lists who changed the code, from the Git history (authors and co-authors, agents and bots told apart), in a window of time ending at the commit shown: selecting a person lights the files they changed, and every inspector says who changed its selection and when. <strong>PRs</strong> lists pull requests: open work (branches not merged yet, and with <code>--pr-metadata github</code> the open pull requests on GitHub) and what was merged into the branch in the same window. Selecting one lights the files it changes, with its commits, people and blast radius; every inspector lists the open pull requests changing its selection.</p>
 
         <h2 style={{ fontSize: 15 }}>Building shapes</h2>
         <p className="note">Each kind of block has a shape, the same in every language and framework. It comes from the index where it can (a controller class, endpoints declared in a file, a page route) and from folder and name conventions otherwise; the inspector says which. Small blocks show it as a mark on their roof, and a closed folder shows the kinds it holds most, each with its count (its inspector lists them all). Blocks stand a little inside their places, so streets run between them. Settings turns shapes and streets off.</p>

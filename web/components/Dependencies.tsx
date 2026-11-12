@@ -5,14 +5,42 @@ import { compactNumber, dependencyLabel, relationPhrase, typeLabel } from '../li
 import { DEPENDENCIES_DRAWN as DRAWN, shownDependencies } from '../lib/store';
 import { themeById } from '../lib/themes';
 import { useAtlas, useStore } from './context';
+import { TypeBadge } from './TypeBadge';
 
 const DIRECTION_TEXT = { outgoing: 'Uses', incoming: 'Used by' } as const;
 
 /**
- * Dependencies on (the Dependencies button): what the selection uses and what
- * uses it, one row per file at the other end, first in the inspector. The
- * direction and type filters choose what the map draws too; the pointer on a
- * row puts its rail in front.
+ * The Dependencies view in the column: what the selection uses and what uses
+ * it, drawn on the map as labeled rails while the view is shown, and following
+ * the selection.
+ */
+export function DependenciesView({ onClose }: { onClose: () => void }) {
+  const node = useAtlas(state => state.selection?.node);
+  return (
+    <>
+      <div className="panel-header">
+        <h2>Dependencies</h2>
+        <button className="icon-button small" onClick={onClose} aria-label="Hide the column" title="Hide the column">⇤</button>
+      </div>
+      <div className="panel-body">
+        {node ? (
+          <>
+            <div className="inspector-title">
+              <TypeBadge type={node.type} role={node.role} kind={node.kind} />
+              <h3>{node.name}</h3>
+              {node.path && <span className="qualified mono">{node.path}</span>}
+            </div>
+            <DependenciesSection node={node} />
+          </>
+        ) : <p className="note">Select a file or a folder, on the map or with <kbd>/</kbd>: what it uses and what uses it are listed here, and drawn on the map as rails to each file with words saying what they do.</p>}
+      </div>
+    </>
+  );
+}
+/**
+ * What the selection uses and what uses it, one row per file at the other end.
+ * The direction and type filters choose what the map draws too; the pointer on
+ * a row puts its rail in front, and Go selects it (its own dependencies follow).
  */
 export function DependenciesSection({ node }: { node: NodeSummary }) {
   const store = useStore();
@@ -104,7 +132,7 @@ function DependencyRow({ item, filter, hovered }: { item: Dependency; filter?: s
       </div>
       <div className="row-actions">
         <button className="button small" onClick={() => setOpen(value => !value)} aria-expanded={open} title="The relationships behind it, each with its evidence">{open ? 'Hide' : 'Why?'}</button>
-        <button className="button small" onClick={() => void store.select(item.end.id, { fly: true })} aria-label={`Go to ${item.end.name}`}>Go</button>
+        <button className="button small" onClick={() => void store.select(item.end.id, { fly: true })} aria-label={`Go to ${item.end.name}`} title="Select it, with its own dependencies on the map">Go</button>
       </div>
     </li>
   );

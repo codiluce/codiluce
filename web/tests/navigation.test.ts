@@ -45,28 +45,51 @@ test('init loads only the projection root and its first level, not the whole gra
   assert.deepEqual(api.calls.sort(), ['annotations:', `children:${graph.run.repositoryId}`, 'meta:', 'onboarding:'].sort());
   assert.ok(atlas.scene.nodes.size < graph.entities.length / 3);
 });
-test('dependencies load for the selection only once the Dependencies button is on, and follow the selection', async () => {
+test('dependencies load while the Dependencies view is shown, follow the selection, and stop with the view', async () => {
   const { atlas, api } = await ready();
   const form = id('LoginForm.tsx', 'file');
   await atlas.select(form);
-  assert.ok(!api.calls.some(call => call.startsWith('dependencies:')), 'off by default: nothing to draw');
-  atlas.toggleDependencies(true);
+  assert.ok(!api.calls.some(call => call.startsWith('dependencies:')), 'the Selection view first: nothing to draw');
+  atlas.showView('dependencies');
   await new Promise(resolve => setTimeout(resolve, 0));
   let state = atlas.getState().dependencies;
-  assert.equal(state.forId, form);
-  assert.equal(state.status, 'ready');
+  assert.deepEqual([atlas.getState().panels.view, state.show, state.forId, state.status], ['dependencies', true, form, 'ready']);
   assert.ok(state.data!.items.length > 0);
   // Every end is in the scene, so the map can draw the rail to it.
   assert.ok(state.data!.items.every(item => atlas.scene.nodes.has(item.end.id)));
   atlas.setDependencyFilter({ direction: 'incoming', type: state.data!.items[0]!.types[0]!.type });
   atlas.hoverDependency(state.data!.items[0]!.end.id);
-  // Another selection: its own dependencies, every type shown again, the direction kept.
+  // Another selection, from the map or the list: the view stays, with its dependencies; every type shown again, the direction kept.
   const frontend = id('frontend', 'application');
   await atlas.select(frontend);
   state = atlas.getState().dependencies;
-  assert.deepEqual([state.forId, state.status, state.type, state.direction, state.hover], [frontend, 'ready', undefined, 'incoming', undefined]);
-  atlas.clearSelection();
-  assert.deepEqual([atlas.getState().dependencies.show, atlas.getState().dependencies.data], [true, undefined]);
+  assert.deepEqual([atlas.getState().panels.view, state.forId, state.status, state.type, state.direction, state.hover], ['dependencies', frontend, 'ready', undefined, 'incoming', undefined]);
+  // Hiding the column keeps them drawn; another view stops them, and nothing more is fetched.
+  atlas.toggleView('dependencies');
+  assert.deepEqual([atlas.getState().panels.column, atlas.getState().dependencies.show], [false, true]);
+  atlas.toggleView('people');
+  assert.deepEqual([atlas.getState().panels.column, atlas.getState().panels.view, atlas.getState().dependencies.show], [true, 'people', false]);
+  const calls = api.calls.filter(call => call.startsWith('dependencies:')).length;
+  await atlas.select(form);
+  assert.equal(api.calls.filter(call => call.startsWith('dependencies:')).length, calls);
+  assert.equal(atlas.getState().panels.view, 'people', 'a selection does not move the column');
+});
+test('the column shows one view: Code, Explain and Agents close when it moves on, Impact keeps its results and colors the map only while shown', async () => {
+  const { atlas } = await ready();
+  const form = id('LoginForm.tsx', 'file');
+  await atlas.select(form);
+  atlas.openCode();
+  assert.deepEqual([atlas.getState().panels.view, !!atlas.getState().code], ['code', true]);
+  await atlas.showImpact(form);
+  assert.deepEqual([atlas.getState().panels.view, !!atlas.getState().code, atlas.getState().impact.forId, atlas.getState().center], ['impact', false, form, 'map']);
+  atlas.showAgents();
+  assert.deepEqual([atlas.getState().panels.view, atlas.getState().journal.open.includes('conversations'), atlas.getState().impact.forId], ['agents', true, form]);
+  atlas.showView('flows');
+  assert.deepEqual([atlas.getState().panels.view, atlas.getState().journal.open.includes('conversations')], ['flows', false]);
+  await atlas.openImpactTool();
+  assert.deepEqual([atlas.getState().panels.view, atlas.getState().impact.forId], ['impact', form]);
+  atlas.hideImpact();
+  assert.deepEqual([atlas.getState().panels.view, atlas.getState().impact.open], ['selection', false]);
 });
 test('selecting a deeply nested search result loads its ancestors, reveals it and records history', async () => {
   const { atlas, api, navigator } = await ready();
@@ -166,12 +189,13 @@ test('the code panel follows the selection: a symbol in its file, the file whole
   assert.equal(code.node?.type, 'directory');
   assert.equal(code.data, undefined);
   await until(() => atlas.scene.childList(id('Controllers', 'directory')).complete);
-  // A tool in the middle does not stop it following.
-  void atlas.openImpactTool();
   await atlas.select(login!.id, { fly: false });
   await until(() => atlas.getState().code?.forId === login!.id && atlas.getState().code?.status === 'ready');
+  // Closed, the column shows the selection again; another view closes it too.
   atlas.closeCode();
-  assert.equal(atlas.getState().center, 'impact');
+  assert.deepEqual([atlas.getState().panels.view, atlas.getState().code], ['selection', undefined]);
+  atlas.openCode();
+  atlas.showView('flows');
   assert.equal(atlas.getState().code, undefined);
   // Closed, it reads nothing.
   const closed = reads();

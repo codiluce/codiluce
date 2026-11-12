@@ -69,7 +69,7 @@ immediately), which API keys to use for the optional language-model features, an
 which hides itself from Git.
 
 On your first visit, the map offers a two-minute tour. It follows one of your files across the map, its code, the flow
-it is part of, what depends on it and its history. Take it again, or one of its chapters, from **?** in the top bar.
+it is part of, what depends on it and its history. Take it again, or one of its chapters, from **Help** at the foot of the rail.
 
 Want it always at hand? Run `npm install --global codiluce`, then `codiluce start .` in any repository.
 
@@ -176,7 +176,7 @@ is available. Rebuilding the code index does not erase imported history.
   diffs and author activity. Generate a full architecture snapshot for a selected commit when needed, then compare
   cached snapshots. Bulk snapshot generation is optional.
 - **See the blast radius.** Pick anything, or your uncommitted changes, and see what depends on it, hop by hop.
-- **Inspect dependencies.** Turn on **Dependencies** to see what a selection uses and what uses it, with direction and
+- **Inspect dependencies.** Open **Dependencies** to see what a selection uses and what uses it, with direction and
   relationship filters, arrows on the map and the evidence behind each link.
 - **Review pull requests on the map.** Open and merged pull requests, and branches not merged yet, light the files they
   change, with their commits, people and blast radius.

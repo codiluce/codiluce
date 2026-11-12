@@ -59,7 +59,6 @@ export function ImpactView() {
                 {DEPTHS.map(depth => <option key={depth} value={depth}>{depth}</option>)}
               </select>
               <CopyButton text={copy} disabled={!impact.items.length} label="Copy list" title="Copy the entities listed (name, type, hops, path), one per line" />
-              <button className="button small primary" onClick={() => store.setCenter('map')} disabled={!data} title="Back to the map, colored by hops from the origin">Show on map</button>
             </>
           )}
           <button className="icon-button small" onClick={() => store.hideImpact()} aria-label="Close impact">✕</button>

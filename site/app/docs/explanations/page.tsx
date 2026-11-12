@@ -113,7 +113,7 @@ export default function ExplanationsDocs() {
       <h2 id="reading" className="anchor">Reading on the map</h2>
       <ul>
         <li><strong>Point at a link</strong> and only what it names stays lit, outlined. The map does not move; an arrow at the edge points to code off screen.</li>
-        <li><strong>Click it</strong> to open it: a file or symbol in the Code panel, a flow in the middle, a commit on the timeline.</li>
+        <li><strong>Click it</strong> to open it: a file or symbol is selected on the map while the explanation stays in the column (<strong>Code</strong> in the rail reads it), a flow opens in the middle, a commit on the timeline.</li>
         <li><strong>Light on map</strong> lights everything the open explanation links while you read it.</li>
         <li><strong>Explained in</strong>, in the inspector, lists the explanations that link the selection, something inside it, or a folder holding it.</li>
         <li>Explanations about a commit or a pull request are marked on the timeline. Those about a flow show on the flow, and those about a file show in its inspector.</li>

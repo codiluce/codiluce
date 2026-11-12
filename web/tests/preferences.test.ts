@@ -51,13 +51,14 @@ test('kinds that matter in a flow get a glyph; tests, and folders of mostly test
   assert.equal(receding({ archetypeCounts: [{ kind: 'test', count: 3 }, { kind: 'component', count: 8 }], stats: stats(11) }), false);
 });
 
-test('dependencies on the map are off by default; turning them on is a saved choice', () => {
-  const { storage: store } = storage();
+test('dependencies on the map are off on every visit: turning them on is not saved, and an earlier saved choice is ignored', () => {
+  const { storage: store, saved } = storage();
   const atlas = new AtlasStore({} as AtlasApi, { storage: store });
   assert.equal(atlas.getState().dependencies.show, false);
   atlas.toggleDependencies();
-  assert.equal(new AtlasStore({} as AtlasApi, { storage: store }).getState().dependencies.show, true);
-  atlas.toggleDependencies(false);
+  assert.equal(atlas.getState().dependencies.show, true);
+  assert.equal(new AtlasStore({} as AtlasApi, { storage: store }).getState().dependencies.show, false);
+  saved.set('codiluce:prefs', JSON.stringify({ dependencies: true }));
   assert.equal(new AtlasStore({} as AtlasApi, { storage: store }).getState().dependencies.show, false);
 });
 

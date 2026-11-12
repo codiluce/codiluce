@@ -1,6 +1,9 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { writeFile, unlink } from 'node:fs/promises';
 import path from 'node:path';
+
+/** What is selected: the last of its breadcrumbs (whatever view the column shows). */
+const selected = (page: Page) => page.getByRole('navigation', { name: 'Canonical location of the selection' }).locator('[aria-current="true"]');
 
 test('Agents streams both providers, selects observed code, scopes searches and offers connection setup', async ({ page, request }) => {
   await page.goto('/');
@@ -32,7 +35,8 @@ test('Agents streams both providers, selects observed code, scopes searches and 
   await expect(panel.locator('.activity-query')).toContainText('login');
   await expect(panel.locator('.activity-feed').getByRole('button', { name: 'frontend/src/components/', exact: true })).toBeVisible();
   await panel.getByRole('button', { name: 'frontend/src/components/LoginForm.tsx', exact: true }).first().click();
-  await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('heading', { name: 'LoginForm.tsx', exact: true })).toBeVisible();
+  // Selected on the map; the column stays on Agents.
+  await expect(selected(page)).toHaveText('LoginForm.tsx');
   // Each session wears its color in the list, as its character does on the map; a running session is not replayed.
   await expect(panel.locator('.agent-session .agent-swatch')).toHaveCount(2);
   await expect(panel.getByRole('button', { name: '▶ Replay on the map' })).toHaveCount(0);
@@ -97,7 +101,7 @@ test('an observed file added after indexing is revealed as a file instead of sel
     await panel.getByRole('button', { name: /Codex session/ }).click();
     await panel.getByText('Observed tool activity · 1', { exact: true }).click();
     await panel.getByRole('button', { name: relative + ' · reveal file', exact: true }).click();
-    await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('heading', { name: 'ObservedNewFile.tsx', exact: true })).toBeVisible({ timeout: 25000 });
+    await expect(selected(page)).toHaveText('ObservedNewFile.tsx', { timeout: 25000 });
     await expect(panel.locator('.activity-feed').getByRole('button', { name: relative, exact: true })).toBeVisible();
     const events = await (await request.get('/api/agents')).json();
     const observed = events.events.find((event: { sessionId: string }) => event.sessionId === 'e2e-new-file');

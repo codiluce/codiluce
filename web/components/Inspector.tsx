@@ -18,27 +18,23 @@ import { hrefForNode } from '@engine/explanations/links';
 import { TEMPLATES, type SelectionKind } from '@engine/explanations/templates';
 import { PullDot, pullWhen, SourceTag } from './PullsPanel';
 import { CodeHealthSection } from './CodeHealth';
-import { DependenciesSection } from './Dependencies';
 
 export function Inspector({ onClose }: { onClose: () => void }) {
   const selection = useAtlas(state => state.selection);
-  const evidence = useAtlas(state => state.evidence);
   return (
     <>
       <div className="panel-header">
         <h2>Inspector</h2>
-        <button className="icon-button small" onClick={onClose} aria-label="Collapse inspector">⇥</button>
+        <button className="icon-button small" onClick={onClose} aria-label="Hide the column" title="Hide the column">⇤</button>
       </div>
       <div className="panel-body" aria-live="polite">
         {!selection ? <Overview /> : <Selection />}
       </div>
-      {evidence && <EvidenceView />}
     </>
   );
 }
 function Overview() {
   const meta = useAtlas(state => state.meta);
-  const dependencies = useAtlas(state => state.dependencies.show);
   const store = useStore();
   if (!meta) return <p className="absent">Waiting for the index…</p>;
   if (meta.comparison) return <ComparisonOverview />;
@@ -63,7 +59,7 @@ function Overview() {
       <OverviewExplain />
       <RepositoryOverview />
       <RepositoryPeople />
-      <p className="note">Search with <kbd>/</kbd>, or zoom into the map: applications open into directories, then files, then symbols. Selecting an entity shows its indexed relationships and the evidence behind each one{dependencies ? '; with Dependencies on, the map draws them as rails to the files at their other ends' : ' (Dependencies draws them on the map)'}.</p>
+      <p className="note">Search with <kbd>/</kbd>, or zoom into the map: applications open into directories, then files, then symbols. Selecting an entity shows its indexed relationships and the evidence behind each one (the Dependencies view draws them on the map).</p>
       <div className="inspector-actions">
         <button className="button" onClick={() => void store.select(root.id, { fly: true })}>Repository connections</button>
       </div>
@@ -93,7 +89,6 @@ function Selection() {
   const selection = useAtlas(state => state.selection)!;
   const visibility = useAtlas(state => state.mapVisibility);
   const writable = useAtlas(state => state.meta?.mapVisibility?.writable);
-  const dependencies = useAtlas(state => state.dependencies.show);
   const node = selection.node, entity = selection.entity;
   if (!node) return selection.entityStatus === 'error' ? <p className="note error">Could not load this entity: {selection.error}</p> : <p className="absent">Locating…</p>;
   const container = isContainer(node);
@@ -107,13 +102,12 @@ function Selection() {
         {node.path && <span className="qualified mono">{node.path}{node.sourceRange ? `:${node.sourceRange.startLine}–${node.sourceRange.endLine}` : ''}</span>}
       </div>
       <div className="inspector-actions">
-        {sourceable && <button className="button primary small" onClick={() => store.openCode()} title="Read its code in the middle of the screen">Code</button>}
+        {sourceable && <button className="button primary small" onClick={() => store.openCode()} title="Read its code (the Code view, following the selection)">Code</button>}
         <button className="button small" disabled={node.hidden} onClick={() => { store.setCenter('map'); store.navigator?.flyTo(node, { mode: container ? 'enter' : 'focus' }); }}>Zoom to</button>
         {node.hidden && node.path ? <button className="button small" disabled={visibility.busy || !writable} onClick={() => void store.revealOnMap(node)}>Reveal on map</button> : node.path && node.path !== '.' && ['application', 'directory', 'file'].includes(node.type) && <button className="button small" disabled={visibility.busy || !writable} onClick={() => void store.hideFromMap(node)}>Hide from map</button>}
         <AnalysisButtons node={node} />
       </div>
       {node.hidden && <p className="note">Hidden from map. Its code and connections remain available.</p>}
-      {dependencies && <DependenciesSection node={node} />}
       <SelectionExplain node={node} />
       <SummaryCard node={node} />
       <FamilyChip node={node} />
@@ -140,7 +134,7 @@ function Selection() {
       {entity && <EffectsSection entity={entity} />}
       {entity && <CallSitesSection entity={entity} />}
       <Diagnostics />
-      {!dependencies && (container ? <Aggregate node={node} /> : <Relations node={node} />)}
+      {container ? <Aggregate node={node} /> : <Relations node={node} />}
       {selection.timeline && <EntityTimeline />}
       {entity && <EntityEvidence entity={entity} store={store} />}
       {entity && Object.keys(entity.metadata).length > 0 && (
@@ -675,10 +669,10 @@ function Relations({ node }: { node: NodeSummary }) {
     </section>
   );
 }
-/** Dependencies off: the button that draws them on the map (and lists them first). */
+/** The Dependencies view: they are drawn on the map as rails to the files at their other ends, and listed by file. */
 function ShowDependencies() {
   const store = useStore();
-  return <button className="button small heading-action" onClick={() => store.toggleDependencies(true)} title="Draw them on the map as rails to the files at their other ends, and list them first here">Show on the map</button>;
+  return <button className="button small heading-action" onClick={() => store.showView('dependencies')} title="The Dependencies view: drawn on the map as rails to the files at their other ends, and listed by file">Show on the map</button>;
 }
 function RelationRow({ item, emphasized, selectedName }: { item: RelationItem; emphasized: boolean; selectedName: string }) {
   const store = useStore();
@@ -830,7 +824,8 @@ function EntityEvidence({ entity, store }: { entity: Entity; store: AtlasStore }
     </details>
   );
 }
-function EvidenceView() {
+/** Why is this connected: over the column, whatever view asked (the inspector, Dependencies, Impact, a flow). */
+export function EvidenceView() {
   const store = useStore();
   const evidence = useAtlas(state => state.evidence)!;
   const relation = evidence.relation;

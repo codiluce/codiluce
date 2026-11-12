@@ -12,7 +12,7 @@ button { cursor: pointer; }
 code, .mono { font-family: var(--font-mono, ui-monospace, "SF Mono", Menlo, Consolas, monospace); font-size: 12px; }
 
 .codiluce { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr); height: 100vh; }
-.topbar { display: flex; align-items: center; gap: 14px; padding: 8px 14px; background: var(--panel-solid); border-bottom: 1px solid var(--panel-border); z-index: 5; }
+.topbar { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 8px 14px; background: var(--panel-solid); border-bottom: 1px solid var(--panel-border); z-index: 5; }
 /*
  * The logo (Eclipse 04, Geometric) in every theme: the Eclipse mark beside a lowercase Space Grotesk
  * wordmark with the tagline tucked under it, no wider than the name. Themes only tint it.
@@ -68,7 +68,29 @@ button.chip:hover { border-color: var(--panel-border); }
 .breadcrumbs .sep { color: var(--subtle); }
 .breadcrumbs .hint { color: var(--subtle); }
 
-.workspace { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; min-height: 0; position: relative; }
+.workspace { display: grid; grid-template-columns: auto minmax(0, 1fr); min-height: 0; position: relative; }
+.workspace.with-column { grid-template-columns: auto auto minmax(0, 1fr); }
+/* The rail: what the column beside it shows (one view at a time), Settings and Help at its foot. */
+.rail { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 72px; padding: 8px 3px; min-height: 0; overflow-y: auto; overflow-x: hidden; background: var(--panel-solid); border-right: 1px solid var(--panel-border); scrollbar-width: none; }
+.rail-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; width: 68px; flex: none; padding: 7px 1px 6px; border: 0; border-radius: var(--radius-chip, 8px); background: transparent; color: var(--muted); font: inherit; font-size: 9.5px; line-height: 1.2; letter-spacing: -0.02em; cursor: pointer; }
+.rail-item:hover { background: var(--chip); color: var(--text); }
+.rail-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.rail-item[aria-pressed="true"], .rail-item[aria-expanded="true"] { background: var(--chip-active); color: var(--text); }
+/* The view the map draws for while the column is hidden. */
+.rail-item[data-current]:not([aria-pressed="true"])::before { content: ''; position: absolute; left: -3px; top: 10px; bottom: 10px; width: 2px; border-radius: 2px; background: var(--accent); }
+.rail-icon { display: flex; }
+.rail-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rail-item .badge { position: absolute; top: 2px; right: 10px; }
+.rail-item .agent-pulse { position: absolute; top: 7px; left: 14px; margin: 0; }
+.rail-item.working, .rail-item.has-running { color: var(--accent); }
+.rail-spacer { flex: 1; min-height: 8px; }
+.rail .help-menu { display: flex; }
+/* The column: one width for every view (resized by its edge). */
+.column { min-width: 0; }
+.column-tool { position: relative; flex: 1; min-height: 0; }
+/* Color by, at the map's top left. */
+.map-color-by { position: absolute; top: 12px; left: 12px; z-index: 3; }
+.map-color-by .color-by > .button:not([data-active="true"]) { background: var(--panel); border-color: var(--panel-border); box-shadow: var(--shadow); }
 .map-area { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .map-stage { position: relative; min-height: 0; overflow: hidden; }
 .map-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; outline: none; }
@@ -366,6 +388,7 @@ details[open].section > summary::before { transform: rotate(90deg); }
 [data-floating="true"] .breadcrumbs .crumb { border-radius: var(--radius, 999px); padding: 2px 8px; }
 [data-floating="true"] .workspace { gap: var(--gap, 12px); }
 [data-floating="true"] .map-area { border-radius: var(--radius-panel, 24px); overflow: hidden; border: var(--border-width, 1px) solid var(--panel-border); box-shadow: var(--shadow); isolation: isolate; }
+[data-floating="true"] .rail { border: var(--border-width, 1px) solid var(--panel-border); border-radius: var(--radius-panel, 24px); background: var(--panel); -webkit-backdrop-filter: blur(var(--blur)) saturate(1.4); backdrop-filter: blur(var(--blur)) saturate(1.4); box-shadow: var(--shadow); }
 [data-floating="true"] .panel, [data-floating="true"] .panel.left { border: var(--border-width, 1px) solid var(--panel-border); border-radius: var(--radius-panel, 24px); background: var(--panel); -webkit-backdrop-filter: blur(var(--blur)) saturate(1.4); backdrop-filter: blur(var(--blur)) saturate(1.4); box-shadow: var(--shadow); overflow: hidden; }
 [data-floating="true"] .panel-header { padding: var(--panel-pad, 14px 16px); padding-bottom: 10px; }
 [data-floating="true"] .panel-header h2 { text-transform: var(--title-case, none); letter-spacing: var(--title-tracking, 0); font-size: var(--title-size, 14px); font-weight: var(--title-weight, 800); color: var(--text); }
@@ -458,10 +481,10 @@ details[open].section > summary::before { transform: rotate(90deg); }
 [data-theme="neon"] .inspector-title h3 { font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
 
 @media (max-width: 900px) {
-  .workspace, .workspace.with-code { grid-template-columns: 1fr; }
-  .panel.code-panel { z-index: 9; }
+  .workspace, .workspace.with-column { grid-template-columns: auto minmax(0, 1fr); }
   .panel { position: absolute; top: 0; bottom: 0; right: 0; width: min(92vw, 380px) !important; z-index: 8; box-shadow: var(--shadow); }
   .panel.left { left: 0; right: auto; }
+  .panel.left.column { left: 72px; width: min(calc(100vw - 80px), 380px) !important; }
   .brand small, .run-info { display: none; }
   .status-bar { max-width: calc(100% - 24px); bottom: 56px; }
   .legend { display: none; }
@@ -1035,7 +1058,6 @@ p.pulls-provider { display: block; color: var(--subtle); }
 .search-result[aria-selected="true"] .search-actions, .search-result:hover .search-actions, .search-actions:focus-within { display: flex; }
 .search-action { padding: 2px 8px; border: 1px solid var(--panel-border); border-radius: 999px; background: var(--chip); color: var(--text); font: inherit; font-size: 11px; white-space: nowrap; cursor: pointer; }
 .search-action:hover, .search-action:focus-visible { border-color: var(--accent); outline: none; }
-.workspace.with-code { grid-template-columns: auto minmax(0, 1fr) auto auto; }
 .code-view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .code-actions { display: flex; align-items: center; gap: 6px; }
 .code-title { display: grid; gap: 2px; padding: 8px 12px; border-bottom: 1px solid var(--panel-border); min-width: 0; }
@@ -1116,13 +1138,11 @@ p.pulls-provider { display: block; color: var(--subtle); }
 .hidden-paths-settings h3 { margin: 20px 0 8px; font-size: 12px; }
 .hidden-paths-settings .row-main { overflow-wrap: anywhere; }
 /* Explanations: the column (history, reader, composer), its links, and "Explain" where the code is. */
-.workspace.with-explain { grid-template-columns: auto auto minmax(0, 1fr) auto; }
-.workspace.with-explain.with-code { grid-template-columns: auto auto minmax(0, 1fr) auto auto; }
 .panel.explain-panel { border-right: 1px solid var(--panel-border); }
 .explain-panel .panel-header { justify-content: flex-start; }
 .explain-panel .panel-header h2 { flex: 1; }
 .explain-body { display: flex; flex-direction: column; gap: 10px; }
-.button.explain-top .badge, .badge { display: inline-flex; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; align-items: center; justify-content: center; background: var(--accent); color: var(--accent-ink); font-size: 10px; font-weight: 700; }
+.badge { display: inline-flex; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; align-items: center; justify-content: center; background: var(--accent); color: var(--accent-ink); font-size: 10px; font-weight: 700; }
 .link-button { border: 0; background: none; padding: 0; color: var(--link); font: inherit; text-align: left; cursor: pointer; }
 .link-button:hover, .link-button:focus-visible { text-decoration: underline; outline: none; }
 .explain-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
@@ -1201,8 +1221,6 @@ a.xlink:hover, a.xlink:focus-visible { background: color-mix(in srgb, var(--link
 /* An agent connected over MCP at work: a pulse on the Explain button, a card in the column until it saves. */
 .agent-pulse { display: inline-block; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: agent-pulse 1.4s ease-out infinite; }
 @keyframes agent-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent); } 100% { box-shadow: 0 0 0 7px transparent; } }
-.button.explain-top .agent-pulse { margin-left: 7px; }
-.button.explain-top.working { border-color: var(--accent); }
 .agent-work { display: grid; gap: 7px; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--panel-border)); border-radius: var(--radius-item, 8px); background: color-mix(in srgb, var(--accent) 6%, var(--chip)); }
 .agent-work-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .agent-work-head strong { flex: 1; min-width: 0; font-size: 12.5px; }
@@ -1338,11 +1356,7 @@ a.xlink:hover, a.xlink:focus-visible { background: color-mix(in srgb, var(--link
 .timeline-target .explain-actions .button.small { font-size: 11px; }
 .tick .explained { fill: var(--link); }
 .rf-head .explanation-chips { flex: 0 1 auto; min-width: 0; }
-@media (max-width: 900px) {
-  .workspace.with-explain, .workspace.with-explain.with-code { grid-template-columns: 1fr; }
-  .panel.explain-panel { z-index: 9; left: 0; right: auto; }
-}
-/* Color by: one coloring of the map's files at a time (top bar menu), and the measure lenses' legend. */
+/* Color by: one coloring of the map's files at a time (a menu at the map's top left), and the measure lenses' legend. */
 .color-by { position: relative; }
 .color-by > .button { white-space: nowrap; }
 .color-by > .button[data-active="true"] { background: var(--chip-active); }
@@ -1369,7 +1383,6 @@ a.xlink:hover, a.xlink:focus-visible { background: color-mix(in srgb, var(--link
 .lens-legend .people-window { margin: 0; }
 
 /* Observed agent activity, kept separate from architecture and Git authorship. */
-.button.agents-top.has-running { border-color: var(--accent); }
 .agents-status-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .agents-info { position: relative; flex: none; }
 .agents-info summary { list-style: none; cursor: pointer; font-size: 16px; color: var(--muted); line-height: 1; border-radius: 50%; }
@@ -1424,11 +1437,6 @@ a.xlink:hover, a.xlink:focus-visible { background: color-mix(in srgb, var(--link
 .activity-path:hover:enabled { text-decoration: underline; }
 .activity-query { font-size: 11px; overflow-wrap: anywhere; padding-top: 6px; }
 
-/* Keep the expanded set of map tools reachable on smaller screens. */
-@media (max-width: 1380px) {
-  .topbar { flex-wrap: wrap; }
-  .top-actions { flex: 1 1 100%; flex-wrap: wrap; margin-left: 0; }
-}
 
 /* Agent sessions show history beside their source messages. */
 .journal-view { position: absolute; inset: 0; display: flex; flex-direction: column; min-width: 0; background: var(--panel-solid); overflow: hidden; }
@@ -1471,7 +1479,6 @@ a.xlink:hover, a.xlink:focus-visible { background: color-mix(in srgb, var(--link
 .journal-path { display: inline-flex; flex-direction: column; max-width: 100%; margin-right: 8px; }
 .journal-path button { white-space: normal; overflow-wrap: anywhere; text-align: left; }
 .journal-call-path { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; margin-top: 8px; }
-@media (max-width: 1650px) { .topbar { flex-wrap: wrap; } .top-actions { flex: 1 1 100%; flex-wrap: wrap; margin-left: 0; } }
 @media (max-width: 1000px) { .journal-columns { grid-template-columns: minmax(160px, 220px) minmax(0, 1fr); } .journal-reader { padding: 14px 12px 150px; } }
 @media (max-width: 700px) { .journal-columns { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(100px, 30%) minmax(0, 1fr); } .journal-list { border-right: none; border-bottom: 1px solid var(--panel-border); } .journal-heading, .journal-filters { padding: 10px; } .journal-empty { padding: 18px; } }
 

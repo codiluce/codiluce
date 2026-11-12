@@ -6,7 +6,7 @@ import { NextTag } from '../../../components/NextTag';
 import { ShapeGallery } from '../../../components/ShapeGallery';
 import { Shot } from '../../../components/Shot';
 
-export const metadata: Metadata = { title: 'Using the map', description: 'Zoom levels, 3D or 2D, the inspector, flows, coverage, blast radius, data families and descriptions.' };
+export const metadata: Metadata = { title: 'Using the map', description: 'The rail and the column, zoom levels, 3D or 2D, the inspector, dependencies, flows, coverage, blast radius, data families and descriptions.' };
 
 const SHAPES: [string, string, string][] = [
   ['Lighthouse', 'Entry point', 'public/index.php, artisan, main.tsx'], ['Gate', 'Routes', 'routes/web.php, urls.py, route.ts'],
@@ -28,6 +28,18 @@ export default function MapDocs() {
       <p className="lede">
         The map draws the repository in isometric 3D or as a flat 2D plan: applications, folders, files and symbols nested
         inside each other, each sized by its code.
+      </p>
+
+      <h2 id="layout" className="anchor">The rail and the column<NextTag feature="layout" /></h2>
+      <p>
+        The rail on the left picks what the column beside it shows, one view at a time: <strong>Selection</strong> (the
+        inspector), <strong>Code</strong>, <strong>Impact</strong>, <strong>Flows</strong>, <strong>Dependencies</strong>,{' '}
+        <strong>People</strong>, <strong>PRs</strong>, <strong>Explain</strong> and <strong>Agents</strong> (and{' '}
+        <strong>Features</strong>, once the code is described), with Settings and Help at its foot. Selecting something on
+        the map never moves the column: Code keeps following the selection, Dependencies shows its dependencies, and a list
+        stays where you were. Clicking the item of the view shown hides the column; drag its edge to resize it, one width
+        for every view. The map draws what the view lights, Impact&apos;s blast radius or Dependencies&apos; rails, even
+        while the column is hidden. <strong>Color by</strong> sits at the map&apos;s top left.
       </p>
 
       <h2 id="zoom" className="anchor">Zoom levels</h2>
@@ -110,24 +122,25 @@ export default function MapDocs() {
         caption="Selecting a folder: the kinds of block it holds, the flows that reach it, its data, and who changed it and when."
       />
       <p>
-        Select anything to see its type, canonical path, source range and metrics, with its incoming and outgoing
-        relationships listed with filters. Every relationship has <strong>Why?</strong>: the analyzer and version, the
+        Select anything to see, in the <strong>Selection</strong> view, its type, canonical path, source range and
+        metrics, with its incoming and outgoing relationships listed with filters. Every relationship has <strong>Why?</strong>: the analyzer and version, the
         file and line, and an explanation. It opens the source with the evidence lines highlighted.
       </p>
       <h3 id="dependencies" className="anchor">Dependencies<NextTag feature="dependencies" /></h3>
       <p>
-        The <strong>Dependencies</strong> button (off by default) draws what the selection uses and what uses it as a
-        diagram on the map. Each dependency is a rail along the floors to the file at its other end (or the endpoint,
-        route or table, when no file holds it), with words on the arrow saying what it does: <em>calls ×3 · imports</em>,{' '}
+        The <strong>Dependencies</strong> view draws what the selection uses and what uses it as a diagram on the map, and
+        follows the selection while it is shown; the other views leave the map plain. Each dependency is a rail along the floors to the file at its other end (or the endpoint, route or table, when no
+        file holds it), with words on the arrow saying what it does: <em>calls ×3 · imports</em>,{' '}
         <em>requests GET /api/users</em>, <em>imported by</em>. The folders holding those files open whatever the zoom, so
         the arrows end on the files themselves, and the map moves to show the whole diagram when part of it is out of view.
         What the selection reaches stays lit and the rest recedes.
       </p>
       <p>
-        The inspector then lists the dependencies first, one per file, split into <strong>Uses</strong> and{' '}
-        <strong>Used by</strong>, with filters by direction and kind that choose what the map draws. Pointing at a row brings
-        its rail to the front; <strong>Why?</strong> lists the relationships behind it, each with its evidence. A folder
-        lists everything crossing its boundary; the map draws the 80 most connected.
+        The view lists them one per file, split into <strong>Uses</strong> and <strong>Used by</strong>, with filters by
+        direction and kind that choose what the map draws. Pointing at a row brings its rail to the front, and{' '}
+        <strong>Go</strong> selects it, with its own dependencies drawn; <strong>Why?</strong> lists the relationships
+        behind it, each with its evidence. A folder lists everything crossing its boundary; the map
+        draws the 80 most connected.
       </p>
       <p>
         A symbol also lists its <strong>effects</strong> (database reads and writes, responses with their HTTP status,
@@ -142,7 +155,7 @@ export default function MapDocs() {
 
       <h2 id="flows" className="anchor">Flows</h2>
       <p>
-        <strong>Flows</strong> in the header is one list of every flow the index can follow, filtered by where it starts:
+        <strong>Flows</strong> in the rail is one list of every flow the index can follow, filtered by where it starts:
       </p>
       <ul>
         <li><strong>Pages</strong>: a page of the interface, or an endpoint that serves one. Its flow is what it renders, the requests it makes and what they reach, down to the tables.</li>
@@ -171,9 +184,9 @@ export default function MapDocs() {
       <h2 id="impact" className="anchor">Blast radius and steps</h2>
       <p>
         <strong>Impact</strong> on any entity or area walks what depends on it, hop by hop, over calls, renders, references,
-        handlers, routes, requests and inheritance. It opens in the middle of the screen, listed by hops or grouped by
-        application, feature or folder, each entity with the chain that reaches it; the map tints what it reaches by distance.
-        <strong>Impact</strong> in the header also shows what your <strong>uncommitted changes</strong> affect. The result is a
+        handlers, routes, requests and inheritance. It opens in the column, listed by hops or grouped by application,
+        feature or folder, each entity with the chain that reaches it; while it is shown, the map tints what it reaches by
+        distance. <strong>Impact</strong> in the rail also shows what your <strong>uncommitted changes</strong> affect. The result is a
         lower bound and says so: it tells you which unresolved calls might reach further.
       </p>
       <p>
@@ -219,7 +232,7 @@ export default function MapDocs() {
 
       <h2 id="themes" className="anchor">Themes and keyboard</h2>
       <p>
-        Pick Codiluce Dusk (the default) or Dawn in the header; <strong>More themes</strong> in Settings adds Midnight, Paper,
+        Pick Codiluce Dusk (the default) or Dawn in Settings, at the foot of the rail; <strong>More themes</strong> adds Midnight, Paper,
         Sorbet and others. Useful keys:
         <kbd>/</kbd> search, <kbd>F</kbd> fit, <kbd>Alt</kbd> + <kbd>←</kbd> / <kbd>→</kbd> back and forward,
         double-click to zoom into an area. Links carry the view (<code>#id=…</code>), so you can share an exact place.

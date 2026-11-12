@@ -190,8 +190,8 @@ function PathButton({ target }: { target: Pick<ConversationPath, 'path' | 'scope
       const page = await store.api.search(target.path === '.' ? '' : target.path, undefined);
       const item = target.path === '.' ? store.getState().meta?.root : page.items.find(item => item.path === target.path && (target.scope === 'file' ? item.type === 'file' : ['directory', 'application'].includes(item.type)));
       if (!item) throw new Error('This path is not in the current map. Its historical association is preserved.');
-      store.expandAgents(false); store.setCenter('map'); await store.select(item.id, { fly: false }); if (target.scope === 'file') store.openCode();
+      store.expandAgents(false); store.setCenter('map'); await store.select(item.id, { fly: false });
     } catch (error) { setError(error instanceof Error ? error.message : String(error)); }
   };
-  return <span className="journal-path"><button className="button link mono" onClick={() => void reveal()} title="Open this path in the inspector">{target.path}{target.scope === 'directory' && target.path !== '.' && !target.path.endsWith('/') ? '/' : ''}</button>{error && <small className="error" role="status">{error}</small>}</span>;
+  return <span className="journal-path"><button className="button link mono" onClick={() => void reveal()} title="Select it on the map">{target.path}{target.scope === 'directory' && target.path !== '.' && !target.path.endsWith('/') ? '/' : ''}</button>{error && <small className="error" role="status">{error}</small>}</span>;
 }

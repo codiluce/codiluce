@@ -93,13 +93,13 @@ test('Next alone walks the core tour on the thread, and the end puts everything 
   await atlas.onboardingNext();
   assert.equal(current(atlas), 'flows:invite');
   await atlas.onboardingNext();
-  assert.deepEqual([atlas.getState().panels.left, atlas.getState().panels.tab], [true, 'flows']);
+  assert.deepEqual([atlas.getState().panels.column, atlas.getState().panels.view], [true, 'flows']);
   assert.equal(atlas.getState().catalog.entity?.id, file.id);
   assert.equal(atlas.getState().flowView?.id, flow.id);
   assert.equal(atlas.getState().center, 'flow');
   await atlas.onboardingNext();
   await atlas.onboardingNext();
-  assert.equal(atlas.getState().center, 'impact');
+  assert.equal(atlas.getState().panels.view, 'impact');
   assert.equal(atlas.getState().impact.forId, file.id);
   // No Git history here: the History stop says why, and has one beat.
   await atlas.onboardingNext();
@@ -118,7 +118,7 @@ test('Next alone walks the core tour on the thread, and the end puts everything 
   assert.equal(state.flowView, undefined);
   assert.equal(state.impact.open, false);
   assert.equal(state.center, 'map');
-  assert.deepEqual(state.panels, { left: false, tab: 'flows', inspector: true, settings: false });
+  assert.deepEqual(state.panels, { column: true, view: 'selection', settings: false });
   assert.equal(state.searchRequest?.text, '');
   assert.deepEqual(navigator.restored, [navigator.camera]);
 });

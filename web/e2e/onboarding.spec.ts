@@ -30,12 +30,12 @@ test('a first visit offers the tour, which follows one file through the map with
   // Code: the file is selected; clicking the lit Code button opens it, as Next would.
   await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('heading', { name: file, exact: true })).toBeVisible();
   await expect(page.locator('.onboarding-ring')).toBeVisible();
-  await page.locator('.topbar').getByRole('button', { name: 'Code', exact: true }).click();
+  await page.locator('.rail').getByRole('button', { name: 'Code', exact: true }).click();
   await expect(page.getByRole('complementary', { name: 'Code' })).toBeVisible();
   await expect(card(page)).toContainText('follows what you select');
   await next(page).click();
   // Flows: its flow opens in the middle.
-  await page.locator('.topbar').getByRole('button', { name: 'Flows', exact: true }).click();
+  await page.locator('.rail').getByRole('button', { name: 'Flows', exact: true }).click();
   await expect(card(page)).toContainText(`It is part of ${flow}`);
   await expect(page.getByRole('tab', { name: `Flow · ${flow}` })).toBeVisible();
   // Impact, with the arrow keys.

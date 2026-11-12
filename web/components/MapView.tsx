@@ -9,7 +9,7 @@ import { newHere, pullName, SourceTag } from './PullsPanel';
 import { COVERAGE_HINT, COVERAGE_ORDER, COVERAGE_TEXT, NOT_MEASURED } from '../lib/coverage';
 import { impactColors } from '../lib/renderer';
 import { NO_FAMILY } from '../lib/store';
-import { LensLegend } from './ColorBy';
+import { ColorBy, LensLegend } from './ColorBy';
 import { ReplayBar } from './ReplayBar';
 import { useAtlas, useStore } from './context';
 
@@ -31,6 +31,8 @@ export function MapView() {
     <div className="map-stage">
       <canvas ref={canvas} className="map-canvas" tabIndex={0} role="application" aria-roledescription="code map" aria-label={`${plan ? 'Plan' : 'Isometric map'} of the repository. Drag or use arrow keys to pan, wheel or plus/minus to zoom, click to select.`} aria-describedby="map-status" />
       <MapControls />
+      {/* What colors the map, chosen on it (hidden with the rest when the map is a corner overview). */}
+      <div className="map-color-by"><ColorBy /></div>
       <StatusBar />
       <ReplayBar />
       <Legend />

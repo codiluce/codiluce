@@ -3,6 +3,8 @@ import { expect, test, type Page } from '@playwright/test';
 // Flows against the fixture repository served by web/e2e/server.ts: the
 // Flows panel, a request shown on the map, its lanes, a step's details, and
 // the inspector's way in.
+/** What is selected: the last of its breadcrumbs (whatever view the column shows). */
+const selected = (page: Page) => page.getByRole('navigation', { name: 'Canonical location of the selection' }).locator('[aria-current="true"]');
 const visibleIds = () => (window as unknown as { __CODILUCE__?: { visibleIds(): string[] } }).__CODILUCE__?.visibleIds() ?? [];
 async function open(page: Page) {
   await page.goto('/');
@@ -123,7 +125,7 @@ test('one list holds every flow, filtered by channel and evidence; a request is 
   await expect.poll(() => page.evaluate(visibleIds), { timeout: 10000 }).toContain(users);
   await branches.getByRole('group', { name: 'Made on the page /login' }).locator('.flow-branch').click();
   await expect(branches.locator('.flow-branch.current')).toContainText('login');
-  await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('heading', { name: 'login', exact: true })).toBeVisible();
+  await expect(selected(page)).toHaveText('login');
   await branches.getByRole('button', { name: 'All', exact: true }).click();
   await expect(branches.locator('.flow-branch.current')).toHaveText('All');
   // No player: nothing to play or pause, the links stream all the time.
@@ -142,7 +144,7 @@ test('one list holds every flow, filtered by channel and evidence; a request is 
   await detail.getByRole('button', { name: 'Close step details' }).click();
   // A step shown on the map from the lanes: selected there.
   await theater.locator('.rf-node.k-table', { hasText: 'users' }).dblclick();
-  await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('heading', { name: 'users', exact: true })).toBeVisible();
+  await expect(selected(page)).toHaveText('users');
   // One view with the whole middle at a time, and back side by side.
   const views = page.getByRole('group', { name: 'Views' });
   await views.getByRole('button', { name: 'Lanes' }).click();

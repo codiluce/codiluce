@@ -204,7 +204,8 @@ function Closing({ store }: { store: AtlasStore }) {
 
 const MENU_WIDTH = 300;
 /** The ? of the top bar: the tour, a chapter of it, or the keyboard and pointer. */
-export function HelpMenu({ onKeyboard }: { onKeyboard: () => void }) {
+/** Help: the tour and the keyboard. `rail`: an item of the rail, its menu opening beside it. */
+export function HelpMenu({ onKeyboard, rail }: { onKeyboard: () => void; rail?: React.ReactNode }) {
   const store = useStore();
   const done = useAtlas(state => state.onboarding.chapters);
   const [open, setOpen] = useState(false);
@@ -219,7 +220,10 @@ export function HelpMenu({ onKeyboard }: { onKeyboard: () => void }) {
     return () => { document.removeEventListener('pointerdown', onDown); window.removeEventListener('resize', close); };
   }, [open]);
   const toggle = () => {
-    if (!open && button.current) { const at = button.current.getBoundingClientRect(), width = Math.min(MENU_WIDTH, window.innerWidth - 24); setPlace({ top: at.bottom + 6, left: Math.max(12, Math.min(at.right - width, window.innerWidth - width - 12)), width }); }
+    if (!open && button.current) {
+      const at = button.current.getBoundingClientRect(), width = Math.min(MENU_WIDTH, window.innerWidth - 24);
+      setPlace(rail ? { bottom: Math.max(12, window.innerHeight - at.bottom), left: Math.min(at.right + 8, window.innerWidth - width - 12), width } : { top: at.bottom + 6, left: Math.max(12, Math.min(at.right - width, window.innerWidth - width - 12)), width });
+    }
     setOpen(!open);
   };
   const choose = (action: () => void) => { setOpen(false); action(); };
@@ -233,7 +237,7 @@ export function HelpMenu({ onKeyboard }: { onKeyboard: () => void }) {
   };
   return (
     <div className="help-menu" ref={root} onKeyDown={open ? onKey : undefined}>
-      <button ref={button} className="icon-button" onClick={toggle} aria-haspopup="menu" aria-expanded={open} aria-label="Help" title="Help: the tour, and the keyboard and pointer">?</button>
+      <button ref={button} className={rail ? 'rail-item' : 'icon-button'} onClick={toggle} aria-haspopup="menu" aria-expanded={open} aria-label="Help" title="Help: the tour, and the keyboard and pointer">{rail ?? '?'}</button>
       {open && (
         <div ref={menu} className="color-by-menu help-menu-list" role="menu" aria-label="Help" style={place}>
           <button role="menuitem" onClick={() => choose(() => void store.startOnboarding())}>

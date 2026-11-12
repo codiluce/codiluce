@@ -38,7 +38,7 @@ const BEAT_OPEN_MAX = 80;
 /** Between frames while the agents on the map stand still (their idle poses change every 480 ms). */
 const CREW_IDLE_MS = 160;
 /** Panels over the map that labels keep clear of. */
-const PANELS = ':scope > .map-controls, :scope > .status-bar, :scope > .legend, :scope > .coverage-legend, :scope > .feature-legend, :scope > .banner, :scope > .switching, :scope > .replay-bar';
+const PANELS = ':scope > .map-controls, :scope > .map-color-by, :scope > .status-bar, :scope > .legend, :scope > .coverage-legend, :scope > .feature-legend, :scope > .banner, :scope > .switching, :scope > .replay-bar';
 /** Panels of the middle that float over the map from outside it. */
 const OVER_MAP = '.tour-bar, .tour-flow-card';
 interface Animation { at(t: number): Camera; start: number; duration: number }
@@ -611,7 +611,8 @@ export class MapController implements MapNavigator {
     const stamp = this.store.viewStamp();
     // With a tool in the middle, the overview shows what that tool lights, and nothing else.
     const tool = this.role === 'main' ? state.center : 'map';
-    const impact = tool !== 'map' && tool !== 'impact' ? undefined : state.impact.open && state.impact.data && state.impact.viewStamp === stamp ? state.impact.data
+    // A blast radius colors the map while the column shows it (the Impact view).
+    const impact = tool !== 'map' ? undefined : state.panels.view === 'impact' && state.impact.open && state.impact.data && state.impact.viewStamp === stamp ? state.impact.data
       : state.commitImpact.show && state.commitImpact.data && state.commitImpact.viewStamp === stamp ? state.commitImpact.data : undefined;
     if (impact) {
       if (this.impactCache?.data !== impact) this.impactCache = { data: impact, overlay: { distances: new Map(Object.entries(impact.distances)), areas: new Map(Object.entries(impact.areas)), depth: impact.depth, dimOthers: !state.meta?.comparison } };

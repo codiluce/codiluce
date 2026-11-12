@@ -59,10 +59,11 @@ export interface RelationsState { status: Status; forId?: string; items: Relatio
 export interface AggregateState { status: Status; forId?: string; data?: AggregateResult; error?: string; drill?: { group: AggregateGroup; status: Status; page?: AggregateEdgesPage; items: AggregateEdgesPage['items']; error?: string } }
 export interface DiagnosticsState { status: Status; forId?: string; data?: DiagnosticsPage; error?: string }
 /**
- * Dependencies on the map (the Dependencies button, off by default): the
- * selection's dependencies drawn as labeled rails to the files at their other
- * ends, and listed first in the inspector. `type` and `direction` filter both;
- * `hover` is the other end the pointer is on in the list.
+ * Dependencies on the map: while the column shows the Dependencies view, the
+ * selection's dependencies are drawn as labeled rails to the files at their
+ * other ends, and listed in the view; they follow the selection. Not a saved
+ * choice: each visit starts on the Selection view. `type` and `direction`
+ * filter both; `hover` is the other end the pointer is on in the list.
  */
 export interface DependenciesState { show: boolean; status: Status; forId?: string; data?: DependenciesResult; error?: string; type?: string; direction: 'both' | 'outgoing' | 'incoming'; hover?: string }
 export interface EvidenceState { relationId: string; context?: { from: string; to: string; type: string }; status: Status; relation?: Relation; error?: string }
@@ -131,7 +132,7 @@ export interface ReplayState {
   playing: boolean; speed: number; seek?: { step: number; n: number };
   step: number; total: number; text: string; failed: boolean; done: boolean;
 }
-export type CenterView = 'map' | 'flow' | 'impact' | 'files' | 'conversations' | 'focus' | 'tour';
+export type CenterView = 'map' | 'flow' | 'files' | 'conversations' | 'focus' | 'tour';
 /** A view of the flow open in the middle: the map, its lanes (or layers), its outline. */
 export type FlowPane = 'map' | 'diagram' | 'outline';
 /**
@@ -382,9 +383,15 @@ export interface AtlasState {
   onboarding: OnboardingState;
 }
 /** The tabs of the left panel. */
-export type LeftTab = 'features' | 'flows' | 'people' | 'pulls' | 'agents';
-/** `left`: the left panel is open, on `tab` (kept while it is closed). */
-export interface PanelsState { left: boolean; tab: LeftTab; inspector: boolean; settings: boolean }
+/**
+ * What the column on the left shows, one view at a time, picked from the rail.
+ * The map draws what the view lights: Dependencies its rails, Impact its blast
+ * radius. Leaving Code, Explain, Agents or Dependencies closes it; Impact keeps
+ * its results for when it comes back.
+ */
+export type ColumnView = 'selection' | 'code' | 'impact' | 'features' | 'flows' | 'dependencies' | 'people' | 'pulls' | 'explain' | 'agents';
+/** `column`: the column is shown (hidden, the view still draws on the map). */
+export interface PanelsState { column: boolean; view: ColumnView; settings: boolean }
 /**
  * The onboarding tour (lib/onboarding.ts): `welcome` offers it on a first
  * visit; `thread` is what it follows; `run` is the tour playing, on a stop
@@ -527,11 +534,11 @@ export class AtlasStore {
     this.openingHash = options.location?.hash;
     // Building shapes and findings on the map are opt-in, saved as `buildingShapes` and `mapFindings`: earlier
     // versions saved `shapes: true` and `showDiagnostics: true` with every preference.
-    let prefs: { themeId?: string; buildingShapes?: boolean; streets?: boolean; openPx?: number; mapFindings?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey; explainLens?: boolean; chatModel?: string; flowSplit?: FlowSplit; connections?: Connections; dependencies?: boolean; views?: Partial<Record<keyof ViewPrefs, string>>; tourView?: string; showAgents?: boolean } = {};
+    let prefs: { themeId?: string; buildingShapes?: boolean; streets?: boolean; openPx?: number; mapFindings?: boolean; dimUnchanged?: boolean; split?: boolean; regionLevel?: RegionLevel; peopleWindow?: AuthorshipWindowKey; explainLens?: boolean; chatModel?: string; flowSplit?: FlowSplit; connections?: Connections; views?: Partial<Record<keyof ViewPrefs, string>>; tourView?: string; showAgents?: boolean } = {};
     try { prefs = JSON.parse(options.storage?.getItem('codiluce:prefs') ?? '{}'); } catch { /* defaults */ }
     this.state = {
       status: 'loading', view: { level: 'Applications', focus: [], zoom: 1, visible: [], truncated: false },
-      relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' }, dependencies: { show: prefs.dependencies === true, status: 'idle', direction: 'both' },
+      relations: EMPTY_RELATIONS, aggregate: { status: 'idle' }, diagnostics: { status: 'idle' }, dependencies: { show: false, status: 'idle', direction: 'both' },
       history: { entries: [], index: -1 }, showDiagnostics: prefs.mapFindings ?? false, themeId: themeById(prefs.themeId).id, shapes: prefs.buildingShapes ?? false, streets: prefs.streets ?? true, openPx: openSize(prefs.openPx),
       staleIndex: false, sceneRevision: 0, mapVisibility: { open: false, busy: false },
       impact: { open: false, status: 'idle', depth: 4, filter: {}, items: [] }, commitImpact: { status: 'idle', show: false }, requests: {}, catalog: { status: 'idle', kind: 'all', query: '', open: {} }, coverage: { show: false, status: 'idle' }, annotations: { status: 'idle' }, families: { show: false, status: 'idle' }, features: { status: 'idle', open: {} },
@@ -539,7 +546,7 @@ export class AtlasStore {
       agents: { connected: false, show: prefs.showAgents ?? true, now: Date.now() },
       explain: { open: false, list: { status: 'idle' }, lens: prefs.explainLens ?? true, draft: { text: '', context: [], ...(prefs.chatModel ? { model: prefs.chatModel } : {}) }, unseen: [], agents: [], dismissed: [] },
       flowSplit: clampSplit(prefs.flowSplit ?? FLOW_SPLIT), connections: prefs.connections === 'rails' ? 'rails' : 'arcs', views: viewPrefs(prefs.views), tourView: prefs.tourView === 'diagram' ? 'diagram' : 'map',
-      panels: { left: false, tab: 'flows', inspector: true, settings: false },
+      panels: { column: true, view: 'selection', settings: false },
       onboarding: { welcome: false, thread: { status: 'idle' }, chapters: this.saved.chapters },
       timeline: { open: false, mode: 'git', status: 'idle', compare: true, pinned: false, dimUnchanged: prefs.dimUnchanged ?? true, switching: false, changes: EMPTY_CHANGES, evolution: { status: 'idle' }, playing: false, speed: 1, follow: true, split: prefs.split ?? true, regionLevel: prefs.regionLevel ?? 'auto', regions: { status: 'idle' } },
     };
@@ -566,7 +573,7 @@ export class AtlasStore {
   }
   private bumpScene(): void { this.set(state => ({ sceneRevision: state.sceneRevision + 1 })); }
   private savePrefs(): void {
-    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, buildingShapes: this.state.shapes, streets: this.state.streets, ...(this.state.openPx !== DEFAULT_LOD.openPx ? { openPx: this.state.openPx } : {}), flowSplit: this.state.flowSplit, connections: this.state.connections, dependencies: this.state.dependencies.show, views: this.state.views, tourView: this.state.tourView, showAgents: this.state.agents.show, mapFindings: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window, explainLens: this.state.explain.lens, ...(this.state.explain.draft.model ? { chatModel: this.state.explain.draft.model } : {}) })); } catch { /* preferences are optional */ }
+    try { this.options.storage?.setItem('codiluce:prefs', JSON.stringify({ themeId: this.state.themeId, buildingShapes: this.state.shapes, streets: this.state.streets, ...(this.state.openPx !== DEFAULT_LOD.openPx ? { openPx: this.state.openPx } : {}), flowSplit: this.state.flowSplit, connections: this.state.connections, views: this.state.views, tourView: this.state.tourView, showAgents: this.state.agents.show, mapFindings: this.state.showDiagnostics, dimUnchanged: this.state.timeline.dimUnchanged, split: this.state.timeline.split, regionLevel: this.state.timeline.regionLevel, peopleWindow: this.state.people.window, explainLens: this.state.explain.lens, ...(this.state.explain.draft.model ? { chatModel: this.state.explain.draft.model } : {}) })); } catch { /* preferences are optional */ }
   }
   dispose(): void { this.disposed = true; this.sessions.close(); for (const controller of this.aborts.values()) controller.abort(); if (this.pollTimer) clearInterval(this.pollTimer); if (this.explainTimer) clearInterval(this.explainTimer); if (this.activityTimer) clearTimeout(this.activityTimer); if (this.timelineTimer) clearTimeout(this.timelineTimer); }
 
@@ -825,10 +832,14 @@ export class AtlasStore {
       this.set(state => state.aggregate.drill?.group === group ? { aggregate: { ...state.aggregate, drill: { group, status: 'ready', page, items: [...previous, ...page.items] } } } : {});
     } catch (error) { if (!isAbort(error)) this.set(state => ({ aggregate: { ...state.aggregate, drill: { group, status: 'error', items: previous, error: String(error instanceof Error ? error.message : error) } } })); }
   }
-  /** The Dependencies button: the selection's dependencies on the map, as labeled rails to the files at their other ends. */
+  /** The Dependencies view (on: shown in the column; off: back to the Selection view when it was showing). */
   toggleDependencies(show = !this.state.dependencies.show): void {
+    if (show) this.showView('dependencies');
+    else if (this.state.panels.view === 'dependencies') this.showView('selection');
+  }
+  /** The selection's dependencies on the map, as labeled rails to the files at their other ends (with nothing selected, the next selection's). */
+  private drawDependencies(show: boolean): void {
     this.set(state => ({ dependencies: { ...state.dependencies, show, hover: undefined } }));
-    this.savePrefs();
     const selection = this.state.selection;
     if (show && selection?.node) { if (this.state.dependencies.forId !== selection.id) void this.loadDependencies(selection.id); else this.revealDependencies(); }
   }
@@ -863,7 +874,8 @@ export class AtlasStore {
   }
   async openEvidence(relationId: string, context?: EvidenceState['context']): Promise<void> {
     const signal = this.abortable('evidence');
-    this.set({ evidence: { relationId, context, status: 'loading' } });
+    // It shows over the column.
+    this.set(state => ({ evidence: { relationId, context, status: 'loading' }, panels: { ...state.panels, column: true } }));
     try {
       const relation = await this.api.relation(relationId, signal);
       this.set(state => state.evidence?.relationId === relationId ? { evidence: { relationId, context, status: 'ready', relation } } : {});
@@ -1340,18 +1352,25 @@ export class AtlasStore {
   setCenter(view: CenterView): void {
     const state = this.state;
     if (view === 'conversations') { this.showAgents(); return; }
-    if (view !== 'map' && !(view === 'flow' ? state.flowView : view === 'impact' ? state.impact.open : view === 'focus' ? state.focusView : view === 'tour' ? state.explain.tour : state.files)) return;
+    if (view !== 'map' && !(view === 'flow' ? state.flowView : view === 'focus' ? state.focusView : view === 'tour' ? state.explain.tour : state.files)) return;
     if (state.center !== view) { this.set({ center: view }); this.writeHash(); }
   }
   openJournal(view: 'conversations', options: { id?: string; messageId?: string; path?: string } = {}): void {
+    this.switchView('agents');
     this.set(state => ({ journal: { ...state.journal, open: [...new Set([...state.journal.open, view])], conversationId: options.id, messageId: options.messageId, path: options.path, reveal: (state.journal.reveal ?? 0) + 1 } }));
     this.writeHash();
   }
   showAgents(): void {
+    this.switchView('agents');
     this.set(state => ({ journal: { ...state.journal, open: [...new Set([...state.journal.open, 'conversations' as const])], reveal: (state.journal.reveal ?? 0) + 1 } })); this.writeHash();
   }
   expandAgents(expanded: boolean): void { this.set(state => ({ journal: { ...state.journal, expanded } })); }
   closeJournal(view: 'conversations'): void {
+    this.endAgents(view);
+    if (this.state.panels.view === 'agents') this.setPanels({ view: 'selection' });
+  }
+  private endAgents(view: 'conversations'): void {
+    if (!this.state.journal.open.includes(view) && !this.state.journal.expanded) return;
     this.set(state => ({ journal: { ...state.journal, open: state.journal.open.filter(item => item !== view), expanded: false }, agents: { ...state.agents, hover: undefined } })); this.writeHash();
   }
   /** A tool closed: the map comes back to the middle if the tool was there. */
@@ -1404,22 +1423,26 @@ export class AtlasStore {
   /** Show what depends on an entity (the selection by default) or on the uncommitted changes (`WORKING_CHANGES`) in the middle; it stays on that origin. */
   async showImpact(id = this.state.selection?.id, depth = this.state.impact.depth): Promise<void> {
     if (!id) return;
-    this.set(state => ({ center: 'impact', impact: { ...state.impact, open: true, forId: id, depth, filter: {}, ...(state.impact.forId !== id || state.impact.depth !== depth ? { data: undefined, items: [] } : {}) } }));
+    this.set(state => ({ impact: { ...state.impact, open: true, forId: id, depth, filter: {}, ...(state.impact.forId !== id || state.impact.depth !== depth ? { data: undefined, items: [] } : {}) } }));
+    this.switchView('impact');
     this.writeHash();
     await this.loadImpact(id);
   }
   /** What the uncommitted changes of the live index affect. */
   showWorkingImpact(): Promise<void> { return this.showImpact(WORKING_CHANGES); }
-  /** Start from the selection; an existing radius stays on its origin while its results are inspected. */
+  /** The Impact view: from the selection; an existing radius stays on its origin while its results are inspected. */
   async openImpactTool(): Promise<void> {
-    if (this.state.impact.open && this.state.impact.forId) { this.setCenter('impact'); return; }
+    if (this.state.impact.open && this.state.impact.forId) { this.switchView('impact'); return; }
     const selection = this.state.selection?.node;
     if (selection?.kind === 'entity') { await this.showImpact(selection.id); return; }
-    this.set(state => ({ center: 'impact', impact: { ...state.impact, open: true, status: 'idle', forId: undefined, data: undefined, items: [], filter: {}, error: undefined } }));
+    this.set(state => ({ impact: { ...state.impact, open: true, status: 'idle', forId: undefined, data: undefined, items: [], filter: {}, error: undefined } }));
+    this.switchView('impact');
   }
+  /** Close the blast radius (the column goes back to the Selection view). */
   hideImpact(): void {
     this.aborts.get('impact')?.abort();
-    this.set(state => ({ ...this.leaveCenter('impact'), impact: { ...state.impact, open: false, status: 'idle', forId: undefined, data: undefined, items: [], error: undefined } }));
+    this.set(state => ({ impact: { ...state.impact, open: false, status: 'idle', forId: undefined, data: undefined, items: [], error: undefined } }));
+    if (this.state.panels.view === 'impact') this.setPanels({ view: 'selection' });
     this.writeHash();
   }
   /** List the blast radius by application, feature or folder (undefined: by hops). */
@@ -1545,6 +1568,7 @@ export class AtlasStore {
   }
   /** Show the Flows panel, optionally filtered to one kind and to the flows through an entity. */
   async showFlows(options: { kind?: CatalogState['kind']; entity?: { id: string; name: string } | null } = {}): Promise<void> {
+    this.switchView('flows');
     this.setCatalog(catalog => ({ reveal: (catalog.reveal ?? 0) + 1, ...(options.kind ? { kind: options.kind } : {}) }));
     if (options.entity !== undefined || this.state.catalog.status === 'idle' || this.state.catalog.viewStamp !== this.viewStamp()) await this.loadCatalog(options.entity);
   }
@@ -1721,6 +1745,7 @@ export class AtlasStore {
   }
   /** Open the Features panel (on one feature, lit on the map). */
   async revealFeature(key?: string): Promise<void> {
+    this.switchView('features');
     this.set(state => ({ features: { ...state.features, reveal: (state.features.reveal ?? 0) + 1 } }));
     if (key && this.state.features.focus !== key) await this.focusFeature(key, { fit: true });
   }
@@ -1818,6 +1843,7 @@ export class AtlasStore {
   }
   /** Open the People panel (on one person, lit on the map). */
   async revealPeople(key?: string): Promise<void> {
+    this.switchView('people');
     this.set(state => ({ people: { ...state.people, reveal: (state.people.reveal ?? 0) + 1 } }));
     if (key && this.state.people.focus !== key) await this.focusPerson(key, { fit: true });
   }
@@ -1915,6 +1941,7 @@ export class AtlasStore {
   }
   /** Open the Pull requests panel (on one, lit on the map, on the list that holds it). */
   async revealPulls(id?: string): Promise<void> {
+    this.switchView('pulls');
     this.set(state => ({ pulls: { ...state.pulls, reveal: (state.pulls.reveal ?? 0) + 1 } }));
     if (!id) return;
     await this.ensurePulls();
@@ -1965,11 +1992,18 @@ export class AtlasStore {
   }
   // The code of the selection ---------------------------------------------------
   /** Open the Code panel beside the inspector: it shows the selection's code. */
+  /** The Code view: the selection's code, following it. */
   openCode(): void {
+    this.switchView('code');
     if (!this.state.code) { this.set({ code: { status: 'idle' } }); this.writeHash(); }
     this.followCode();
   }
   closeCode(): void {
+    this.endCode();
+    if (this.state.panels.view === 'code') this.setPanels({ view: 'selection' });
+  }
+  private endCode(): void {
+    if (!this.state.code) return;
     for (const key of ['code', 'code-more', 'code-outline']) this.aborts.get(key)?.abort();
     this.set({ code: undefined });
     this.writeHash();
@@ -2060,11 +2094,13 @@ export class AtlasStore {
   }
   /** Show the column (and an explanation in it). */
   async openExplanations(options: { id?: string; scene?: number } = {}): Promise<void> {
+    this.switchView('explain');
     this.setExplain(explain => ({ open: true, unseen: [], reveal: (explain.reveal ?? 0) + 1 }));
     this.writeHash();
     await Promise.all([this.loadExplanations(), this.loadExplanationSetup(), options.id ? this.openExplanation(options.id, { ...(options.scene !== undefined ? { scene: options.scene } : {}) }) : Promise.resolve()]);
   }
-  closeExplanations(): void { this.setExplain({ open: false, hover: undefined }); this.writeHash(); }
+  closeExplanations(): void { this.endExplanations(); if (this.state.panels.view === 'explain') this.setPanels({ view: 'selection' }); }
+  private endExplanations(): void { if (!this.state.explain.open) return; this.setExplain({ open: false, hover: undefined }); this.writeHash(); }
   toggleExplanations(): void { if (this.state.explain.open) this.closeExplanations(); else void this.openExplanations(); }
   async loadExplanations(): Promise<void> {
     const api = this.options.explanations;
@@ -2178,14 +2214,12 @@ export class AtlasStore {
       } catch { /* not on the map: the scene frames the rest */ }
     }));
   }
-  /** A box of a tour clicked: select what it names and read its code, while the tour stays on stage. */
+  /** A box of a tour clicked: select what it names, while the tour stays on stage (the column stays on its view). */
   async openFromTour(link: ResolvedLink): Promise<void> {
     this.setExplain({ hover: undefined });
     if (link.kind !== 'path' && link.kind !== 'table') { await this.followLink(link); return; }
     if (!link.id) return;
     await this.select(link.id, { fly: false });
-    const node = this.state.selection?.node;
-    if (node && !isContainer(node) && node.type !== 'database_table') this.openCode();
   }
   stepScene(delta: number): void { const tour = this.state.explain.tour; if (tour) this.showScene(tour.scene + delta); }
   /** Stop the tour: the map comes back to the middle. */
@@ -2200,7 +2234,7 @@ export class AtlasStore {
     this.setExplain({ hover: link && (link.id || link.members?.length) ? link : undefined });
   }
   setExplanationLens(lens: boolean): void { this.setExplain({ lens }); this.savePrefs(); }
-  /** Open what a link names: select it and read its code, its flow, its commit, its feature. */
+  /** Open what a link names: select it (the column stays on the explanation), its flow, its commit, its feature. */
   async followLink(link: ResolvedLink): Promise<void> {
     this.setExplain({ hover: undefined });
     if (link.kind === 'commit' || link.kind === 'pr') {
@@ -2218,8 +2252,6 @@ export class AtlasStore {
     }
     this.setCenter('map');
     await this.select(link.id, { fly: true });
-    const node = this.state.selection?.node;
-    if (node && !isContainer(node) && node.type !== 'database_table') this.openCode();
   }
   setDraft(patch: Partial<ExplainState['draft']>): void { this.setExplain(explain => ({ draft: { ...explain.draft, ...patch } })); if (patch.model) this.savePrefs(); }
   addContext(chip: ContextChip, options: { reveal?: boolean } = {}): void {
@@ -2293,6 +2325,38 @@ export class AtlasStore {
     } catch (error) { if (!isAbort(error)) this.set(state => state.selection?.id === id ? { selection: { ...state.selection, explained: { status: 'error', error: error instanceof Error ? error.message : String(error) } } } : {}); }
   }
   // The shell's layout ----------------------------------------------------------------
+  /** Show a view in the column (opening Code, Explain, Agents, Impact or Dependencies as needed). */
+  showView(view: ColumnView): void {
+    const before = this.state.panels, entering = !before.column || before.view !== view;
+    this.switchView(view);
+    const state = this.state;
+    if (view === 'code' && !state.code) this.openCode();
+    // Explanations and agent sessions are read again when their view comes back.
+    else if (view === 'explain' && (entering || !state.explain.open)) void this.openExplanations();
+    else if (view === 'agents' && (entering || !state.journal.open.includes('conversations'))) this.showAgents();
+    else if (view === 'impact' && !state.impact.open) void this.openImpactTool();
+  }
+  /** The rail: its view, or the column hidden when that view is already shown. */
+  toggleView(view: ColumnView): void {
+    const panels = this.state.panels;
+    if (panels.column && panels.view === view) this.setPanels({ column: false });
+    else this.showView(view);
+  }
+  /** The column moves to a view: the view it leaves closes (Impact keeps its results, a tour its explanation), Dependencies draws while shown. */
+  private switchView(view: ColumnView): void {
+    const from = this.state.panels.view;
+    if (from !== view) {
+      if (from === 'code') this.endCode();
+      // A tour on stage in the middle keeps its explanation.
+      else if (from === 'explain' && !this.state.explain.tour) this.endExplanations();
+      else if (from === 'agents') this.endAgents('conversations');
+      else if (from === 'dependencies') this.drawDependencies(false);
+    }
+    this.setPanels({ column: true, view });
+    // What the view draws needs the map in the middle.
+    if ((view === 'impact' || view === 'dependencies') && from !== view && this.state.center !== 'map') this.setCenter('map');
+    if (view === 'dependencies' && !this.state.dependencies.show) this.drawDependencies(true);
+  }
   setPanels(patch: Partial<PanelsState>): void {
     const panels = this.state.panels;
     if ((Object.keys(patch) as (keyof PanelsState)[]).every(key => panels[key] === patch[key])) return;
@@ -2442,6 +2506,7 @@ export class AtlasStore {
     if (before.catalog !== undefined && now().catalog.entity?.id !== before.catalog?.id) void this.loadCatalog(before.catalog);
     if (before.selection) { if (now().selection?.id !== before.selection) await this.select(before.selection, { fly: false, recordHistory: false }); }
     else if (now().selection) this.clearSelection();
+    if (now().panels.view !== before.panels.view) this.showView(before.panels.view);
     this.setPanels(before.panels);
     this.setCenter(before.center);
     if (before.camera) this.navigator?.restoreCamera?.(before.camera);

@@ -42,7 +42,7 @@ async function ready(hash = '') {
 test('the Impact tool starts with the selection, offers a chooser without one, and preserves an existing origin', async () => {
   const { atlas } = await ready();
   await atlas.openImpactTool();
-  assert.equal(atlas.getState().center, 'impact');
+  assert.equal(atlas.getState().panels.view, 'impact');
   assert.equal(atlas.getState().impact.forId, undefined);
   assert.equal(atlas.getState().impact.status, 'idle');
   const authenticate = symbol('App\\Services\\AuthService::authenticate');
@@ -67,7 +67,7 @@ test('impact stays on its origin while the selection moves, pages its items, gro
   let impact = atlas.getState().impact;
   assert.equal(impact.status, 'ready');
   assert.equal(impact.forId, authenticate);
-  assert.equal(atlas.getState().center, 'impact', 'the blast radius opens in the middle');
+  assert.deepEqual([atlas.getState().panels.view, atlas.getState().center], ['impact', 'map'], 'the blast radius opens in the column, colored on the map');
   assert.ok(impact.data!.distances[id('signIn')] === 3);
   assert.ok(impact.items.length > 0 && impact.items.every((item, i, all) => i === 0 || all[i - 1]!.distance <= item.distance));
   assert.match(replaced.at(-1)!, /impact=6/);
