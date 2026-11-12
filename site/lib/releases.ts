@@ -18,7 +18,7 @@ export type Release = {
 export const RELEASES: readonly Release[] = [
   {
     version: '0.5.0',
-    publishedAt: '2026-11-12',
+    publishedAt: '2026-11-12T12:59:56.284Z',
     title: 'One column. A guided way into your code.',
     summary: 'A simpler map layout, a tour of your own repository and more reliable agent connections.',
     changes: [
