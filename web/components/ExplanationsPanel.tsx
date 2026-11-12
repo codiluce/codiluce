@@ -36,6 +36,7 @@ export function ExplanationsPanel({ onClose }: { onClose: () => void }) {
         <button className="icon-button small" onClick={onClose} aria-label="Hide the explanations" title="Hide">⇤</button>
       </div>
       <div className="panel-body explain-body" ref={body}>
+        {!detail && <OutdatedAgents />}
         {!showAsking && <AgentsAtWork compact={!!detail} />}
         {detail ? <Reader /> : !showAsking && <History />}
         {showAsking && <Asking />}
@@ -135,6 +136,8 @@ function ConnectAgent({ open = false }: { open?: boolean }) {
   const known = Array.isArray(found) ? found : [];
   // Set up to reach this repository, or working on it right now.
   const connected = [...new Set([...known.filter(agent => agent.connected).map(agent => agent.name), ...agents.map(agent => agentLabel(agent.agent))])];
+  // Connected (or not yet) but without activity hooks here: setup adds them with the MCP server.
+  const unseen = known.filter(agent => agent.activity === false && (agent.connected || ['claude', 'codex'].includes(agent.id))).map(agent => agent.name);
   const command = (id: 'claude' | 'codex', name: string, line: string) => {
     const agent = known.find(item => item.id === id);
     if (connected.includes(name)) return null;
@@ -152,6 +155,10 @@ function ConnectAgent({ open = false }: { open?: boolean }) {
       {found === 'loading' ? <p className="note">Checking which agents are connected…</p> : found === 'error' ? <p className="note" role="status">Could not check agent connections. Keep Codiluce running in its terminal. <button className="button small" onClick={retry}>Retry connection check</button></p> : <>
         {command('claude', 'Claude Code', setup.mcp.claude)}
         {command('codex', 'Codex', setup.mcp.codex)}
+        {unseen.length > 0 && <>
+          <p className="note">{names(unseen)} {unseen.length === 1 ? 'is' : 'are'} not shown in Agents while {unseen.length === 1 ? 'it works' : 'they work'}. Setup connects {unseen.length === 1 ? 'it' : 'them'} with activity hooks for this repository:</p>
+          <div className="command-row"><code className="mono">{setup.mcp.setup}</code><CopyButton text={setup.mcp.setup} /></div>
+        </>}
       </>}
       <details><summary className="note">{connected.includes('Cursor') ? 'Other MCP clients (mcp.json)' : 'Cursor and other MCP clients (mcp.json)'}</summary><div className="command-row"><pre className="mono">{json}</pre><CopyButton text={json} /></div></details>
       <p className="note">Then ask it, for example:</p>
@@ -310,6 +317,25 @@ function Asking() {
   );
 }
 
+/**
+ * Agents connected through another Codiluce version than this map (an old global install or npx cache, often): their
+ * tools can lack newer features (tours) and their work may not show while they explain. Setup run with this install
+ * connects them to this version.
+ */
+function OutdatedAgents() {
+  const setup = useAtlas(state => state.explain.setup);
+  const agents = useAtlas(state => state.explain.agents);
+  if (!setup?.version) return null;
+  const outdated = [...new Map(agents.filter(agent => agent.version !== setup.version).map(agent => [agentLabel(agent.agent), agent.version])).entries()];
+  if (!outdated.length) return null;
+  const who = outdated.map(([label, version]) => `${label} (${version ? `Codiluce ${version}` : 'an older Codiluce'})`);
+  return (
+    <div className="note warning outdated-agents" role="status">
+      <p>{names(who)} {outdated.length === 1 ? 'reaches' : 'reach'} this map through another Codiluce version than the map&apos;s {setup.version}, so tours and live progress can be missing. To connect {outdated.length === 1 ? 'it' : 'them'} to {setup.version}, run setup, then start a new session:</p>
+      <div className="command-row"><code className="mono">{setup.mcp.setup}</code><CopyButton text={setup.mcp.setup} /></div>
+    </div>
+  );
+}
 /** Agents connected over MCP working on an explanation: shown after an explicit explanation start or prompt until they save it. */
 function AgentsAtWork({ compact }: { compact: boolean }) {
   const store = useStore();

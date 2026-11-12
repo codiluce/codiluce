@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { CodeBlock } from '../../../components/CodeBlock';
 import { DocsPager } from '../../../components/DocsNav';
 import { Shot } from '../../../components/Shot';
+import { NextTag } from '../../../components/NextTag';
 import { INSTALL, NEXT_RELEASE } from '../../../lib/site';
 
 export const metadata: Metadata = { title: 'Agents', description: 'Watch your coding agents work on the map: each session is a character that hops to the files it reads and edits, as it happens, labeled with what it does, and finished sessions replay step by step from their transcripts.' };
@@ -46,6 +47,13 @@ export default function AgentsDocs() {
 
       <h2 id="connect" className="anchor">Connect an agent</h2>
       <p>
+        <strong>From setup.</strong><NextTag feature="setup-hooks" /> The first <code>codiluce start</code> (or{' '}
+        <code>codiluce setup</code>) offers to connect the agents it finds: their MCP server, and their activity hooks for
+        this repository, in its own agent settings (<code>.claude/settings.local.json</code>, <code>.codex/hooks.json</code>,
+        <code>.cursor/hooks.json</code>…), kept out of Git through <code>.git/info/exclude</code>. Codex runs new hooks once you
+        trust them: open <code>/hooks</code> in Codex.
+      </p>
+      <p>
         Agents learn about Codiluce through their hooks. Twelve harness families have adapters: Claude Code, Codex, Cursor,
         OpenCode, Pi, GitHub Copilot, Gemini CLI, Cline, Google Antigravity, Windsurf / Devin Desktop, OpenClaw and Hermes.
         Claude Code and Codex are established; the others are newer, so confirm delivery with your installed version.
@@ -54,8 +62,8 @@ export default function AgentsDocs() {
       <CodeBlock
         prompt
         code={[
-          'npx codiluce harness setup --agent claude-code',
-          'npx codiluce harness setup --agent claude-code --apply',
+          'npx codiluce@latest harness setup --agent claude-code',
+          'npx codiluce@latest harness setup --agent claude-code --apply',
         ].join('\n')}
       />
       <p>

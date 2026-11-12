@@ -163,6 +163,31 @@ export async function hideFromGit(root: string, stateDirectory: string): Promise
   writeFileSync(file, '# Written by Codiluce: the analysis, history and explanations stay out of Git.\n*\n');
   return 'written';
 }
+/**
+ * Keep files setup wrote for agents in the repository (their hooks, with this computer's paths) out of Git, through
+ * the repository's local `info/exclude`, never its `.gitignore`. Tracked files are left as they are (Git shows the
+ * change) and returned; files already ignored, or in the state directory (hidden by its own `.gitignore`), are skipped.
+ */
+export async function excludeFromGit(root: string, stateDirectory: string, files: string[]): Promise<{ hidden: string[]; tracked: string[] }> {
+  const hidden: string[] = [], tracked: string[] = [];
+  const git = (args: string[]) => execute('git', args, { cwd: root, timeout: 15_000 });
+  let exclude: string;
+  try { exclude = path.resolve(root, (await git(['rev-parse', '--git-path', 'info/exclude'])).stdout.trim()); } catch { return { hidden, tracked }; }
+  for (const file of files) {
+    const relative = path.relative(root, file), inState = path.relative(stateDirectory, file);
+    if (relative.startsWith('..') || path.isAbsolute(relative) || !inState.startsWith('..')) continue;
+    const name = relative.split(path.sep).join('/');
+    if (await git(['ls-files', '--error-unmatch', '--', name]).then(() => true, () => false)) { tracked.push(name); continue; }
+    if (await git(['check-ignore', '-q', '--', name]).then(() => true, () => false)) continue;
+    hidden.push(name);
+  }
+  if (hidden.length) {
+    const before = existsSync(exclude) ? readFileSync(exclude, 'utf8') : '';
+    mkdirSync(path.dirname(exclude), { recursive: true });
+    writeFileSync(exclude, `${before}${before && !before.endsWith('\n') ? '\n' : ''}# Codiluce: agent settings with this computer's paths\n${hidden.map(name => `/${name}`).join('\n')}\n`);
+  }
+  return { hidden, tracked };
+}
 export interface GitFacts { repository: boolean; topLevel: boolean; shallow: boolean; branch?: string; commits: number; recent: number; recentSince: string }
 /** What history the repository has: first-parent commits of HEAD, and how many in the last six months. */
 export async function gitFacts(root: string): Promise<GitFacts> {
@@ -189,6 +214,14 @@ export function installKind(toolDirectory: string, root?: string): InstallKind {
 }
 export function packageVersion(toolDirectory: string): string {
   try { return (JSON.parse(readFileSync(path.join(toolDirectory, 'package.json'), 'utf8')) as { version?: string }).version ?? '0.0.0'; } catch { return '0.0.0'; }
+}
+/**
+ * The package an agent's `npx` starts: this version, so the agent runs the same Codiluce as the map. A bare
+ * `npx codiluce` takes any global install or cached copy first, which can be several releases older.
+ */
+export function npxPackage(toolDirectory: string): string {
+  const version = packageVersion(toolDirectory);
+  return version === '0.0.0' ? 'codiluce' : `codiluce@${version}`;
 }
 /** A path with the home directory written as ~. */
 export function tilde(file: string): string {

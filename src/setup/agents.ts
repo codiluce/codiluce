@@ -7,8 +7,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import type { InstallKind } from './settings.js';
-import { HARNESSES, harnessId, type HarnessId } from '../harnesses/registry.js';
+import { excludeFromGit, npxPackage, type InstallKind } from './settings.js';
+import { HARNESSES, harnessId, runtimeProfile, type HarnessId } from '../harnesses/registry.js';
 
 const execute = promisify(execFile);
 export interface Launch { command: string; args: string[] }
@@ -23,21 +23,35 @@ export interface Agent {
   elsewhere?: string;
   /** Where the connection is kept, for the summary. */
   scope: string;
+  /** Its activity hooks for this repository are installed (the map's Agents shows its work); absent where it has no per-repository hooks. */
+  activity?: boolean;
 }
+/** What connecting an agent changed besides its MCP server: the activity hooks written in this repository. */
+export interface Connection {
+  /** Files written (absolute), those of them hidden from Git through `info/exclude`, and those Git tracks (shown as changed). */
+  activity?: { files: string[]; hidden: string[]; tracked: string[] };
+}
+/** The harness each of setup's agents is. */
+export function harnessOf(agent: AgentId): HarnessId | undefined { return agent === 'claude' ? 'claude-code' : harnessId(agent); }
 /** The install that connects agents: which command starts `codiluce mcp`, and a state directory outside the repository, if any. */
 export interface Install { toolDirectory: string; kind: InstallKind; stateDirectory?: string }
 
 /**
  * The command an agent runs to start `codiluce mcp`. A source checkout runs
  * its TypeScript; an installed package runs its own bin with this Node; npx
- * (a cache that may be replaced) goes through npx again. `repo` binds it to one
+ * (a cache that may be replaced) goes through npx again, pinned to this
+ * version (see `npxPackage`). `repo` binds it to one
  * repository; without it, the server serves the repository it is started in.
  */
 export function mcpLaunch(toolDirectory: string, kind: InstallKind, options: { repo?: string; stateDirectory?: string } = {}): Launch {
   const scope = [...options.repo ? ['--repo', options.repo] : [], ...options.stateDirectory ? ['--state-dir', options.stateDirectory] : []];
-  if (kind === 'checkout') return { command: process.execPath, args: ['--experimental-sqlite', '--no-warnings', '--import', path.join(toolDirectory, 'node_modules/tsx/dist/loader.mjs'), path.join(toolDirectory, 'src/cli.ts'), 'mcp', ...scope] };
-  if (kind === 'npx') return { command: 'npx', args: ['-y', 'codiluce', 'mcp', ...scope] };
-  return { command: process.execPath, args: [path.join(toolDirectory, 'bin/codiluce.js'), 'mcp', ...scope] };
+  return cliLaunch(toolDirectory, kind, ['mcp', ...scope]);
+}
+/** Any `codiluce` command run with this install (the same version as the map), e.g. `setup` for a repository. */
+export function cliLaunch(toolDirectory: string, kind: InstallKind, args: string[]): Launch {
+  if (kind === 'checkout') return { command: process.execPath, args: ['--experimental-sqlite', '--no-warnings', '--import', path.join(toolDirectory, 'node_modules/tsx/dist/loader.mjs'), path.join(toolDirectory, 'src/cli.ts'), ...args] };
+  if (kind === 'npx') return { command: 'npx', args: ['-y', npxPackage(toolDirectory), ...args] };
+  return { command: process.execPath, args: [path.join(toolDirectory, 'bin/codiluce.js'), ...args] };
 }
 export function shellLine(launch: Launch): string { return [launch.command, ...launch.args].map(quote).join(' '); }
 function quote(part: string): string { return /^[\w@%+=:,./-]+$/.test(part) ? part : `'${part.replace(/'/g, `'\\''`)}'`; }
@@ -71,7 +85,11 @@ function compare(found: { command: string; args: string } | undefined, expected:
   if (found.command === expected.command && here(found.args) === here(expected.args.join(' '))) return { connected: true };
   const repo = /(?:^| )--repo (\S+)/.exec(found.args)?.[1];
   const other = repo && repo !== '${workspaceFolder}' && path.resolve(repo) !== path.resolve(root);
-  return { connected: false, elsewhere: other ? `connected to ${path.basename(repo)}` : 'connected through another Codiluce install' };
+  if (other) return { connected: false, elsewhere: `connected to ${path.basename(repo)}` };
+  // Through npx: a bare `codiluce` starts whatever npx finds first (a global install, an old cache).
+  const spec = found.command === 'npx' ? /(?:^| )codiluce(?:@(\S+))? mcp(?: |$)/.exec(found.args) : undefined;
+  if (spec) return { connected: false, elsewhere: spec[1] ? `connected to codiluce@${spec[1]}` : 'connected through npx without a version, which can start an older Codiluce' };
+  return { connected: false, elsewhere: 'connected through another Codiluce install' };
 }
 /**
  * The server Claude Code would start here, read from its configuration (`claude
@@ -120,11 +138,23 @@ export async function detectAgents(root: string, install: Install): Promise<Agen
     const installed = existsSync(path.join(os.homedir(), item.home)) || files.some(file => existsSync(file)) || (await Promise.all(binaries.map(binary => succeeds(binary, ['--version'], root)))).some(Boolean);
     existing.push({ id: item.id, name: item.label, installed, connected, scope: profile.mcp.project ? 'for this repository' : 'in user settings, bound to this repository' });
   }
+  const { activityInstalled } = await import('../harnesses/setup.js');
+  const state = install.stateDirectory ?? path.join(root, '.codiluce');
+  await Promise.all(existing.filter(agent => agent.installed).map(async agent => {
+    const id = harnessOf(agent.id);
+    const installed = id ? await activityInstalled(id, install.toolDirectory, install.kind, root, state) : undefined;
+    if (installed !== undefined) agent.activity = installed;
+  }));
   return existing;
 }
-/** Add Codiluce to an agent, with the server `agentLaunch` gives it (replacing any it had). */
-export async function connectAgent(agent: AgentId, toolDirectory: string, kind: InstallKind, root: string, stateDirectory?: string): Promise<void> {
+/**
+ * Add Codiluce to an agent: the MCP server `agentLaunch` gives it (replacing any it had), then its activity hooks for
+ * this repository (in the repository's own agent settings, such as `.claude/settings.local.json` or
+ * `.codex/hooks.json`), so the map's Agents shows its work. Files written in the repository stay out of Git.
+ */
+export async function connectAgent(agent: AgentId, toolDirectory: string, kind: InstallKind, root: string, stateDirectory?: string): Promise<Connection> {
   const install: Install = { toolDirectory, kind, stateDirectory };
+  const written: string[] = [];
   if (agent === 'claude') {
     const launch = agentLaunch('claude', install, root);
     await execute('claude', ['mcp', 'remove', 'codiluce', '-s', 'local'], { cwd: root, timeout: 15_000 }).catch(() => undefined);
@@ -144,8 +174,17 @@ export async function connectAgent(agent: AgentId, toolDirectory: string, kind: 
   } else {
     const id = harnessId(agent); if (!id) throw new Error(`Unsupported agent: ${agent}`);
     const { planIntegration, applyIntegration } = await import('../harnesses/setup.js');
-    await applyIntegration(await planIntegration(id, toolDirectory, kind, root, stateDirectory ?? path.join(root, '.codiluce'), { activity: false }));
+    const plan = await planIntegration(id, toolDirectory, kind, root, stateDirectory ?? path.join(root, '.codiluce'), { activity: false });
+    await applyIntegration(plan);
+    written.push(...plan.changes.filter(change => change.before !== change.after).map(change => change.path));
   }
+  const id = harnessOf(agent), state = stateDirectory ?? path.join(root, '.codiluce');
+  if (!id || !runtimeProfile(id).activity.project) return {};
+  const { planIntegration, applyIntegration } = await import('../harnesses/setup.js');
+  const plan = await planIntegration(id, toolDirectory, kind, root, state, { mcp: false, scope: 'project' });
+  await applyIntegration(plan);
+  const files = plan.changes.filter(change => change.before !== change.after).map(change => change.path);
+  return { activity: { files, ...await excludeFromGit(root, state, [...written, ...files]) } };
 }
 /** The JSON other MCP clients take (Windsurf, Zed, VS Code…), for the summary. */
 export function mcpJson(launch: Launch): string { return JSON.stringify({ mcpServers: { codiluce: { command: launch.command, args: launch.args } } }, null, 2); }

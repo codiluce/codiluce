@@ -319,6 +319,7 @@ test('activity: only explicit explanation requests start work; ordinary reads an
     await send({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', clientInfo: { name: 'claude-code' } } });
     assert.equal(only().state, 'connected');
     assert.equal(only().agent, 'claude-code');
+    assert.equal(only().version, '9.9.9', 'the map can tell an agent on another Codiluce version to reconnect');
     await call(20, 'overview', {});
     await call(21, 'search', { query: 'Login' });
     await send({ jsonrpc: '2.0', id: 22, method: 'tools/call', params: { name: 'source', arguments: { link: LOGIN_FORM } } });
@@ -358,6 +359,10 @@ test('activity: only explicit explanation requests start work; ordinary reads an
       const { port } = server.address() as { port: number };
       const body = await (await fetch(`http://127.0.0.1:${port}/api/explanations/activity`)).json() as { items: { agent: string; state: string; work: { steps: { text: string }[] } }[] };
       assert.deepEqual(body.items.map(item => [item.agent, item.state, item.work.steps[0]!.text]), [['claude-code', 'working', 'search Login']]);
+      // The map's own version, which agents' servers should match, and setup with this install to reconnect them.
+      const setup = await (await fetch(`http://127.0.0.1:${port}/api/explanations/setup`)).json() as { version: string; mcp: { setup: string } };
+      assert.equal(setup.version, JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')).version);
+      assert.ok(setup.mcp.setup.endsWith(`src/cli.ts setup ${root} --state-dir ${state}`), setup.mcp.setup);
     } finally { await new Promise(resolve => server.close(resolve)); }
   } finally { session.close(); if (saved) service.remove(saved); }
   // The session's file goes with it; one left by a process that ended is not shown.
@@ -368,6 +373,9 @@ test('activity: only explicit explanation requests start work; ordinary reads an
   const old = path.join(activityDirectory(state), 'legacy-read.json');
   await writeFile(old, JSON.stringify({ session: 'legacy-read', pid: process.pid, connectedAt: new Date().toISOString(), updatedAt: new Date().toISOString(), work: { startedAt: new Date().toISOString(), updatedAt: new Date().toISOString(), steps: [{ text: 'overview' }], count: 1 } }));
   assert.equal(readActivity(state)[0]?.state, 'connected', 'legacy inferred reads do not light Explanations');
+  // A server before 0.4.0 wrote no intent, but its start_explanation named the question: that is an explanation under way.
+  await writeFile(old, JSON.stringify({ session: 'legacy-read', pid: process.pid, connectedAt: new Date().toISOString(), updatedAt: new Date().toISOString(), work: { startedAt: new Date().toISOString(), updatedAt: new Date().toISOString(), question: 'How does tracing work?', steps: [{ text: 'overview' }], count: 1 } }));
+  assert.deepEqual([readActivity(state)[0]?.state, readActivity(state)[0]?.version], ['working', undefined]);
   await rm(old);
 });
 

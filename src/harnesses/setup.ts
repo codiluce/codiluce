@@ -1,8 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
 import { access, readFile, lstat } from 'node:fs/promises';
-import { mcpLaunch, shellLine, type Launch } from '../setup/agents.js';
-import { activityLaunch, hookConfiguration } from '../activity/hooks.js';
+import { cliLaunch, mcpLaunch, shellLine, type Launch } from '../setup/agents.js';
+import { activityLaunch, activityLauncher, hookConfiguration, launcherLaunch } from '../activity/hooks.js';
 import type { InstallKind } from '../setup/settings.js';
 import type { AgentIntegration } from '../activity/model.js';
 import { harness, runtimeProfile, type HarnessId, type HarnessProfile, type ConfigFormat } from './registry.js';
@@ -61,6 +61,13 @@ export function integrationConfiguration(id: HarnessId, tool: string, kind: Inst
   }
   if (options.activity !== false) {
     const activityFile = configurationPath(id, profile, 'activity', root, options);
+    // Through npx, hook commands run a launcher in the state directory (see `activityLauncher`): npx on every tool call is slow.
+    const observer = (): Launch => {
+      if (kind !== 'npx') return activityLaunch(tool, kind, id, root, stateDirectory);
+      const launcher = activityLauncher(tool, stateDirectory);
+      if (!files.some(file => file.path === launcher.path)) files.push({ path: launcher.path, content: launcher.content, purpose: 'plugin' });
+      return launcherLaunch(id, root, stateDirectory);
+    };
     if (!activityFile) instructions.push('Activity installation is unavailable at this scope. Choose user scope or use the supplied project profile.');
     else if (['opencode', 'pi'].includes(profile.activity.format)) files.push({ path: activityFile, content: collectorSource(id, root, stateDirectory), purpose: 'plugin' });
     else if (profile.activity.format === 'openclaw') {
@@ -69,10 +76,10 @@ export function integrationConfiguration(id: HarnessId, tool: string, kind: Inst
       files.push({ path: path.join(activityFile, 'package.json'), content: JSON.stringify({ name: 'codiluce-openclaw', version: '1.0.0', type: 'module', openclaw: { extensions: ['./index.js'] } }, null, 2) + '\n', purpose: 'plugin' });
       instructions.push(`Install the local observer: openclaw plugins install -l ${shellLine({ command: activityFile, args: [] })}`, 'Enable codiluce in OpenClaw and review its hook capability. Existing plugin allowlists are not changed.');
     } else if (profile.activity.format === 'scripts') {
-      const observer = activityLaunch(tool, kind, id, root, stateDirectory);
-      for (const event of profile.activity.events) files.push({ path: path.join(activityFile, event), content: script(observer, profile.id, event), purpose: 'activity', executable: true });
+      const launch = observer();
+      for (const event of profile.activity.events) files.push({ path: path.join(activityFile, event), content: script(launch, profile.id, event), purpose: 'activity', executable: true });
     } else {
-      const hooks = hookConfiguration(id, activityLaunch(tool, kind, id, root, stateDirectory), profile.id);
+      const hooks = hookConfiguration(id, observer(), profile.id);
       const format: ConfigFormat = profile.activity.format === 'hermes' ? 'yaml' : 'jsonc';
       let content = '';
       if (hooks.version) content = editConfiguration(content, format, ['version'], hooks.version);
@@ -84,7 +91,8 @@ export function integrationConfiguration(id: HarnessId, tool: string, kind: Inst
   if (id === 'pi') instructions.push('Trust this project in Pi before project MCP/extension configuration can run. Prefer one observer installation scope.');
   if (profile.note) instructions.push(profile.note);
   instructions.push('Reload the harness configuration or restart its session, then run a file read to confirm activity delivery.', item.historyNote, item.childAttribution);
-  const command = shellLine({ command: 'codiluce', args: ['harness', 'setup', '--agent', id, '--profile', profile.id, '--repo', root, '--state-dir', stateDirectory, ...(options.scope ? ['--scope', options.scope] : []), '--apply'] });
+  // With this install: a bare `codiluce` can be another (older) global install.
+  const command = shellLine(cliLaunch(tool, kind, ['harness', 'setup', '--agent', id, '--profile', profile.id, '--repo', root, '--state-dir', stateDirectory, ...(options.scope ? ['--scope', options.scope] : []), '--apply']));
   return { provider: id, profile: profile.id, label: profile.label, files, instructions, command };
 }
 
@@ -121,6 +129,16 @@ export async function planIntegration(id: HarnessId, tool: string, kind: Install
     }
   }
   return { integration, changes: [...changes.values()] };
+}
+
+/**
+ * Whether this repository's activity hooks for a harness are installed as setup would write them now (`undefined`: it
+ * has no per-repository hook location). Hooks of another version or install count as not installed.
+ */
+export async function activityInstalled(id: HarnessId, tool: string, kind: InstallKind, root: string, stateDirectory: string): Promise<boolean | undefined> {
+  if (!runtimeProfile(id).activity.project) return undefined;
+  try { return (await planIntegration(id, tool, kind, root, stateDirectory, { mcp: false, scope: 'project' })).changes.every(change => change.before === change.after); }
+  catch { return false; }
 }
 
 export async function applyIntegration(plan: SetupPlan): Promise<void> {

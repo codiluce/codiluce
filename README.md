@@ -21,6 +21,7 @@
 <p align="center">
   <a href="https://codiluce.com">Website</a> ·
   <a href="https://codiluce.com/docs/">Docs</a> ·
+  <a href="https://codiluce.com/releases/">Releases</a> ·
   <a href="#contributing">Contributing</a>
 </p>
 
@@ -84,9 +85,9 @@ experimental and expose separate MCP, activity and history capabilities. See the
 [connection guide](docs/agents/harnesses.md) for exact runtime profiles and limitations.
 
 ```bash
-npx codiluce harness setup --agent opencode          # preview MCP and activity files
-npx codiluce harness setup --agent opencode --apply  # merge the configuration
-npx codiluce harness setup --agent pi --apply
+npx codiluce@latest harness setup --agent opencode          # preview MCP and activity files
+npx codiluce@latest harness setup --agent opencode --apply  # merge the configuration
+npx codiluce@latest harness setup --agent pi --apply
 ```
 
 ### Ask your agent, read the answer on the map
@@ -94,10 +95,14 @@ npx codiluce harness setup --agent pi --apply
 Connect your agent to Codiluce's MCP server, from the repository:
 
 ```bash
-claude mcp add codiluce -- npx -y codiluce mcp
+claude mcp add codiluce -- npx -y codiluce@latest mcp
 ```
 
-`codiluce setup` detects installed harnesses and can connect their MCP configuration. Then ask in your own words, for example
+Keep `@latest` (or a version): with a bare `codiluce`, npx starts any global install or cached copy first, which
+can be older than your map.
+
+`codiluce setup` (also offered on the first `start`) detects installed harnesses and connects their MCP server, and
+their activity hooks for this repository, so their work also shows in **Agents**. Then ask in your own words, for example
 *"Use Codiluce to explain how checkout works, and publish it."* Its tools read the index (flows, blast radius, history,
 source), so the agent starts from what the code provably does instead of guessing from file names.
 
@@ -131,8 +136,10 @@ characters and marks the same session in the **Agents** list, so you always know
   paths.
 - **The map stays as it is:** nothing is dimmed or relabelled while agents work.
 
-Agents report their activity through hooks, set up with the harness command above or from **Agents → Agent
-connections** in the map. Only what the hooks report is shown; Codiluce does not watch the file system or guess who
+Agents report their activity through hooks. `codiluce setup` adds them when it connects your agent, in the
+repository's own agent settings (`.claude/settings.local.json`, `.codex/hooks.json`…), kept out of Git through
+`.git/info/exclude`; Codex runs new hooks once you trust them in `/hooks`. The harness command above, or **Agents →
+Agent connections** in the map, sets up one harness at a time. Only what the hooks report is shown; Codiluce does not watch the file system or guess who
 changed what, so an agent that reads fifty files from one script is one command, not fifty reads. It keeps paths,
 searches, tool names and session titles, in memory, and never prompts, file contents or command output. More in
 [Agents](https://codiluce.com/docs/agents/) and the [design notes](docs/design/agents.md).
@@ -261,7 +268,7 @@ How far Codiluce follows the code depends on the stack:
 - **Map:** Angular, Remix, Fastify, Symfony, Quarkus, Blazor and every other language and framework are detected and
   mapped with their files, lines and Git metrics.
 
-Everything above ships in the npm release (0.4.0). Support deepens with every release: see how far each framework
+Everything above ships in the npm release (0.5.0). Support deepens with every release: see how far each framework
 goes, and what stays a visible gap, in [Languages & frameworks](https://codiluce.com/docs/stacks/). Missing your
 stack? [Open an issue](https://github.com/codiluce/codiluce/issues) with a public repository that shows it.
 

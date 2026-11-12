@@ -60,7 +60,7 @@ export class McpSession {
   private opened?: { store: GraphStore; access: HistoryAccess; notes: AnnotationAccess; tools: ToolSpec[] };
   private journal?: { conversations: ConversationService; tools: ToolSpec[] };
   readonly activity: ActivityWriter;
-  constructor(private readonly options: McpOptions) { this.activity = new ActivityWriter(options.stateDirectory); }
+  constructor(private readonly options: McpOptions) { this.activity = new ActivityWriter(options.stateDirectory, undefined, options.version); }
   close(): void { this.activity.close(); this.journal?.conversations.close(); if (this.opened) { this.opened.access.close(); this.opened.notes.close(); this.opened.store.close(); } }
 
   async receive(line: string): Promise<unknown> {

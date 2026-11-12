@@ -53,14 +53,14 @@ export default function ExplanationsDocs() {
         prompt
         code={[
           '# Claude Code',
-          'claude mcp add codiluce -- npx -y codiluce mcp',
+          'claude mcp add codiluce -- npx -y codiluce@latest mcp',
           '# Codex',
-          'codex mcp add codiluce -- npx -y codiluce mcp',
+          'codex mcp add codiluce -- npx -y codiluce@latest mcp',
         ].join('\n')}
       />
       <p>
         Or let <code>codiluce setup</code> do it: on the first <code>start</code> it finds Claude Code, Codex and Cursor and
-        offers to connect them. Other clients take the same command (<code>npx</code> with <code>-y codiluce mcp</code>) in
+        offers to connect them. Other clients take the same command (<code>npx</code> with <code>-y codiluce@latest mcp</code>) in
         their MCP configuration; the <em>Connect your agent</em> panel in the column shows the exact command for your setup. Then ask in
         your own words, for example <em>&quot;Use Codiluce to explain how checkout works, and publish it&quot;</em>. Clients
         that support MCP prompts also get <code>explain-codebase</code>, <code>explain-flow</code>,
@@ -150,7 +150,7 @@ export default function ExplanationsDocs() {
         {' '}<code>~/.config/codiluce/credentials</code>, readable only by you and never inside the repository. A key in the
         environment works too, and no restart is needed.
       </p>
-      <CodeBlock prompt code={'npx codiluce setup'} />
+      <CodeBlock prompt code={'npx codiluce@latest setup'} />
       <ul>
         <li>Type <code>@</code> to attach files and folders. <strong>+ Add to question</strong> in the inspector attaches the selection.</li>
         <li><strong>✦ Explain</strong> in the inspector, on a flow or on a commit starts the question for you. <strong>Copy prompt</strong> copies it for your agent instead.</li>

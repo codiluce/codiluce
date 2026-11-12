@@ -1,7 +1,7 @@
 {
   "name": "codiluce-site",
   "private": true,
-  "description": "The Codiluce website: home, roadmap and docs, statically exported",
+  "description": "The Codiluce website: home, releases and docs, statically exported",
   "type": "module",
   "scripts": {
     "dev": "next dev --port 4320",

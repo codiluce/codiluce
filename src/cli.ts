@@ -102,7 +102,7 @@ the estimate (add --pilot to measure). Unchanged inputs are never sent again.
 mcp serves the index to an agent over the Model Context Protocol (stdio):
 search, entities, flows, impact, history and source, and saving explanations
 the map shows in its Explanations column (<state>/explanations/*.md). Add it
-to Claude Code with: claude mcp add codiluce -- npx -y codiluce mcp
+to Claude Code with: claude mcp add codiluce -- npx -y codiluce@latest mcp
 (run from the repository, or pass --repo). It writes only explanations.
 `;
 async function main(): Promise<void> {

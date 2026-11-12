@@ -141,8 +141,10 @@ export interface ExplanationList {
 export interface ExplanationsSetup {
   readOnly: boolean;
   root?: string;
+  /** This server's Codiluce version, which agents' servers should match. */
+  version: string;
   /** Command that adds Codiluce to Claude Code (other agents take the same command and arguments). */
-  mcp: { command: string; args: string[]; claude: string; codex: string };
+  mcp: { command: string; args: string[]; claude: string; codex: string; /** `codiluce setup` for this repository, run with this install. */ setup: string };
   models: ChatModelInfo[];
   /** Where to put keys when none is set. */
   keyFiles: string[];
@@ -153,6 +155,8 @@ export interface AgentConnection {
   id: string; name: string; connected: boolean;
   /** It has a Codiluce server that does not: bound to another repository, or started by another install. */
   elsewhere?: string;
+  /** Its activity hooks for this repository are installed (false: setup would add them; absent: none to add). */
+  activity?: boolean;
 }
 export interface AgentConnectionList { items: AgentConnection[] }
 export interface ChatModelInfo { id: string; label: string; provider: 'anthropic' | 'openai'; available: boolean; default?: boolean; note?: string }
@@ -161,6 +165,8 @@ export interface AgentActivity {
   session: string;
   /** The MCP client's name (e.g. `claude-code`). */
   agent?: string;
+  /** The Codiluce version serving it (older servers leave it out): an agent on another version than the map should reconnect. */
+  version?: string;
   /** working: it took a step recently and has not published since; connected: idle. */
   state: 'connected' | 'working';
   connectedAt: string; updatedAt: string;

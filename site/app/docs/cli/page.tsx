@@ -98,7 +98,7 @@ export default function CliDocs() {
         <code>codiluce mcp</code> serves the index to an agent over the Model Context Protocol, on stdio. Add it once, from the
         repository:
       </p>
-      <CodeBlock prompt code={['claude mcp add codiluce -- npx -y codiluce mcp', 'codex mcp add codiluce -- npx -y codiluce mcp'].join('\n')} />
+      <CodeBlock prompt code={['claude mcp add codiluce -- npx -y codiluce@latest mcp', 'codex mcp add codiluce -- npx -y codiluce@latest mcp'].join('\n')} />
       <p>
         Its tools search the index and read entities, relationships, flows, impact, history and source, and save explanations
         for the map. See <Link href="/docs/explanations/">Explanations</Link>.

@@ -17,7 +17,8 @@ export function SiteHeader() {
         <Link href="/" className="brand" aria-label="Codiluce home"><Logo /></Link>
         <nav className="header-nav" aria-label="Main">
           <Link href="/docs/">Docs</Link>
-          <Link href="/#contribute">Contribute</Link>
+          <Link href="/releases/">Releases</Link>
+          <Link href="/#contribute" className="header-contribute">Contribute</Link>
           <a href={GITHUB_URL} className="header-github" target="_blank" rel="noreferrer" aria-label="GitHub">
             <GitHubIcon /><span className="hide-xs">GitHub</span>
           </a>
@@ -41,6 +42,7 @@ export function SiteFooter() {
         <nav className="footer-links" aria-label="Footer">
           <div>
             <p>Project</p>
+            <Link href="/releases/">Releases</Link>
             <a href={GITHUB_URL} target="_blank" rel="noreferrer">GitHub</a>
             <a href={ISSUES_URL} target="_blank" rel="noreferrer">Issues</a>
             <a href={NPM_URL} target="_blank" rel="noreferrer">npm</a>
@@ -60,7 +62,7 @@ export function SiteFooter() {
         </nav>
       </div>
       <div className="container footer-legal">
-        <span>v{VERSION} · MIT License</span>
+        <span><Link href="/releases/">v{VERSION}</Link> · MIT License</span>
         <span>Runs locally. Your code is read, never executed.</span>
       </div>
     </footer>

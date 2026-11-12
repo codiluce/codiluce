@@ -6,7 +6,7 @@
 // answer can be changed later with `codiluce setup`. Without a terminal the
 // saved settings (or safe defaults) are used, and nothing is spent.
 import path from 'node:path';
-import { connectAgent, detectAgents, mcpJson, mcpLaunch, type Agent, type AgentId } from './agents.js';
+import { connectAgent, detectAgents, mcpJson, mcpLaunch, type Agent, type AgentId, type Connection } from './agents.js';
 import { checkKey, keyShape, PROVIDERS, type Provider } from './keys.js';
 import {
   credentialsFile, DEFAULT_ANNOTATIONS, DEFAULT_HISTORY, findKey, gitFacts, hideFromGit, keyFiles, readRepositorySettings, readState, readUserSettings,
@@ -34,8 +34,8 @@ export interface SetupResult {
   settings: Required<RepositorySettings>;
   /** Describe now, in the background, within this cap. */
   describe?: { maxCost: number; tasks: string[]; estimate: number };
-  /** Agents connected now, or already (`already`: connected before and not chosen again). */
-  connected: { agent: Agent; ok: boolean; error?: string; already?: boolean }[];
+  /** Agents connected now, or already (`already`: connected before and not chosen again), with the activity hooks written now. */
+  connected: { agent: Agent; ok: boolean; error?: string; already?: boolean; activity?: NonNullable<Connection['activity']> }[];
   keys: { provider: Provider; file: string }[];
   gitignore: Awaited<ReturnType<typeof hideFromGit>>;
   git: GitFacts;
@@ -193,13 +193,13 @@ async function askAgents(w: Writer, context: SetupContext): Promise<SetupResult[
   }
   const choices: Choice<AgentId>[] = agents.map(agent => ({
     value: agent.id, label: agent.name,
-    ...(agent.installed ? { hint: agent.connected ? 'already connected · select to connect it again' : agent.elsewhere ? `${agent.elsewhere} · selected to connect it here` : agent.scope } : { disabled: 'not found' }),
+    ...(agent.installed ? { hint: complete(agent) ? 'already connected · select to connect it again' : agent.connected ? 'connected, not shown on the map yet · selected to add its activity hooks' : agent.elsewhere ? `${agent.elsewhere} · selected to connect it here` : agent.scope } : { disabled: 'not found' }),
   }));
-  const already = installed.filter(agent => agent.connected);
+  const already = installed.filter(complete);
   const chosen = await multiselect<AgentId>(w, {
     message: 'Connect your agent',
-    detail: 'Add Codiluce\'s MCP server, so your agent reads the index (flows, impact, history, source) and saves what it explains in the map\'s Explain column. Then ask it, for example: "Use Codiluce to explain how sign-in works, and publish it".',
-    choices, initial: installed.filter(agent => !agent.connected).map(agent => agent.id),
+    detail: 'Add Codiluce\'s MCP server, so your agent reads the index (flows, impact, history, source) and saves what it explains in the map\'s Explain column, and its activity hooks for this repository, so Agents shows what it reads and edits as it works. Then ask it, for example: "Use Codiluce to explain how sign-in works, and publish it".',
+    choices, initial: installed.filter(agent => !complete(agent)).map(agent => agent.id),
     none: already.length ? `no new connections (${already.map(agent => agent.name).join(', ')} already connected)` : 'none',
   });
   const results: SetupResult['connected'] = installed.filter(agent => agent.connected && !chosen.includes(agent.id)).map(agent => ({ agent, ok: true, already: true }));
@@ -208,9 +208,12 @@ async function askAgents(w: Writer, context: SetupContext): Promise<SetupResult[
     const connecting = spinner(w);
     connecting.start(`Connecting ${agent.name}…`);
     try {
-      await connectAgent(id, context.toolDirectory, context.kind, context.root, stateDirectory);
-      connecting.stop(`${agent.name} connected ${c.dim(`· ${agent.scope}`)}`, 'ok');
-      results.push({ agent, ok: true });
+      const { activity } = await connectAgent(id, context.toolDirectory, context.kind, context.root, stateDirectory);
+      const hooks = activity?.files.filter(file => !path.relative(context.root, file).startsWith('..')).map(file => path.relative(context.root, file).split(path.sep).join('/')).filter(file => !file.startsWith(`${path.relative(context.root, context.stateDirectory)}/`));
+      connecting.stop(`${agent.name} connected ${c.dim(`· ${agent.scope}${hooks?.length ? ` · shown on the map (hooks in ${hooks.join(', ')})` : agent.activity !== undefined ? ' · shown on the map' : ''}`)}`, 'ok');
+      for (const file of activity?.tracked ?? []) w.note(`${file} is tracked by Git: Codiluce's hooks show as a change in it.`, c.muted);
+      if (id === 'codex' && activity?.files.length) w.note('Codex runs new hooks once you trust them: in Codex, open /hooks and trust Codiluce\'s (and this folder, if Codex asks).', c.muted);
+      results.push({ agent, ok: true, ...(activity ? { activity } : {}) });
     } catch (error) {
       const message = error instanceof Error ? (error.message.split('\n').find(line => line.trim()) ?? error.message) : String(error);
       connecting.stop(`${agent.name}: ${message}`, 'error');
@@ -219,6 +222,9 @@ async function askAgents(w: Writer, context: SetupContext): Promise<SetupResult[
   }
   return results;
 }
+
+/** Connected over MCP, and shown on the map where it can be (activity hooks for this repository). */
+function complete(agent: Agent): boolean { return agent.connected && agent.activity !== false; }
 
 /** The answers, in one box, after the questions. */
 export function printSummary(w: Writer, result: SetupResult, context: SetupContext): void {
@@ -233,6 +239,8 @@ export function printSummary(w: Writer, result: SetupResult, context: SetupConte
     ['Models', result.keys.length ? `${result.keys.map(item => PROVIDERS[item.provider].name).join(' and ')} key saved to ${tilde(result.keys[0]!.file)}` : 'keys as found (environment or saved earlier)'],
     ['Describe', result.describe ? `now, in the background, up to $${money(result.describe.maxCost)}` : result.settings.annotations.enabled ? 'on' : 'not now'],
     ['Agents', result.connected.filter(item => item.ok).map(item => `${item.agent.name}${item.already ? ' (already)' : ''}`).join(', ') || 'none connected'],
+    ...result.connected.some(item => item.ok && (item.activity || item.agent.activity)) ? [['Activity', `${result.connected.filter(item => item.ok && (item.activity || item.agent.activity)).map(item => item.agent.name).join(', ')} shown in Agents as they work${result.connected.some(item => item.activity?.hidden.length) ? ' (hooks hidden from Git)' : ''}`] as [string, string]] : [],
+    ...result.connected.some(item => item.agent.id === 'codex' && item.activity?.files.length) ? ['Codex: open /hooks once and trust Codiluce\'s hooks.'] : [],
     ['Saved', `${state}/config.yml${result.gitignore === 'written' ? `, and ${state}/ is hidden from Git` : ''}`],
   ];
   if (result.gitignore === 'tracked') rows.push(c.red('Something in .codiluce/ is tracked by Git, so it was not hidden from Git.'));

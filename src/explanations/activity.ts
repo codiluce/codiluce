@@ -2,7 +2,9 @@
 // explanation on its way long before it is saved. `codiluce mcp` keeps one
 // small JSON file per session in `<state>/explanations/activity/`: written when
 // the client connects, on explicit explanation prompts and their tool calls (before the tool runs),
-// and when it publishes; removed when the session ends. `serve` reads the
+// and when it publishes; removed when the session ends. Each file names the
+// Codiluce version serving it, so the map can tell an agent on an older server
+// (whose tools lack newer features) to reconnect. `serve` reads the
 // folder: a session whose process ended is left out, and work quiet for long
 // (the agent stopped, or used the tools for something else) is no longer shown
 // as working.
@@ -29,9 +31,9 @@ export class ActivityWriter {
   private readonly record: ActivityRecord;
   private readonly file: string;
   private written = false;
-  constructor(private readonly stateDirectory: string, private readonly now: () => Date = () => new Date()) {
+  constructor(private readonly stateDirectory: string, private readonly now: () => Date = () => new Date(), version?: string) {
     const at = now().toISOString();
-    this.record = { session: `${process.pid}-${randomBytes(3).toString('hex')}`, pid: process.pid, connectedAt: at, updatedAt: at };
+    this.record = { session: `${process.pid}-${randomBytes(3).toString('hex')}`, pid: process.pid, ...(version ? { version } : {}), connectedAt: at, updatedAt: at };
     this.file = path.join(activityDirectory(stateDirectory), `${this.record.session}.json`);
   }
   get session(): string { return this.record.session; }
@@ -96,7 +98,7 @@ export function readActivity(stateDirectory: string, now = Date.now()): AgentAct
   for (const { record } of sessions(directory)) {
     if (!alive(record.pid)) continue;
     const { pid: _pid, work, ...rest } = record;
-    const working = work?.intent === 'explanation' && now - Date.parse(work.updatedAt) < WORK_TIMEOUT_MS;
+    const working = !!work && explaining(work) && now - Date.parse(work.updatedAt) < WORK_TIMEOUT_MS;
     items.push({ ...rest, state: working ? 'working' : 'connected', ...(working ? { work } : {}) });
   }
   return items.sort((a, b) => (a.state === b.state ? (a.updatedAt < b.updatedAt ? 1 : -1) : a.state === 'working' ? -1 : 1));
@@ -123,6 +125,11 @@ function alive(pid: unknown): boolean {
   if (typeof pid !== 'number' || !Number.isInteger(pid) || pid <= 0) return false;
   try { process.kill(pid, 0); return true; } catch (failure) { return (failure as NodeJS.ErrnoException).code === 'EPERM'; }
 }
+/**
+ * Work that is an explanation under way. Servers before 0.4.0 wrote no `intent` and started work on any tool
+ * call; theirs counts once `start_explanation` or a prompt named what was asked.
+ */
+function explaining(work: AgentWork): boolean { return work.intent === 'explanation' || (work.intent === undefined && !!(work.question || work.title)); }
 function clean(start: WorkStart): WorkStart {
   const text = (value: string | undefined, max: number) => value?.trim() ? value.trim().slice(0, max) : undefined;
   const title = text(start.title, 200), question = text(start.question, 2000);

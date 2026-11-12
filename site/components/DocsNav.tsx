@@ -20,6 +20,7 @@ export function DocsNav() {
         ))}
       </ul>
       <div className="docs-nav-extra">
+        <Link href="/releases/">Release notes →</Link>
         <a href={GITHUB_URL} target="_blank" rel="noreferrer"><GitHubIcon />Source on GitHub</a>
         <a href={ISSUES_URL} target="_blank" rel="noreferrer">Report an issue ↗</a>
       </div>

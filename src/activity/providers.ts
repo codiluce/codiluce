@@ -13,7 +13,7 @@ const titleText = (value: unknown): string | undefined => typeof value === 'stri
 
 /** Recognize this repository's observer, not another repository or an unrelated Codiluce command. */
 export function activityCommand(command: unknown, provider: AgentProvider, root: string, stateDirectory: string): boolean {
-  if (typeof command !== 'string' || !/(?:activity[\\/]hook-cli\.(?:ts|js)|\bactivity\s+hook\b)/.test(command)) return false;
+  if (typeof command !== 'string' || !/(?:activity[\\/]hook-cli\.(?:ts|js)|\bactivity\s+hook\b|activity-hook\.mjs)/.test(command)) return false;
   const tokens = command.match(/'(?:[^']|'\\'')*'|"[^"\n]*"|[^\s'"]+/g)?.map(token => token.replace(/^(['"])(.*)\1$/, '$2').replace(/'\\''/g, "'")) ?? [];
   const arg = (name: string) => tokens[tokens.indexOf(name) + 1];
   return tokens.includes('--repo') && tokens.includes('--state-dir') && arg('--agent') === provider && arg('--repo') === root && arg('--state-dir') === stateDirectory;

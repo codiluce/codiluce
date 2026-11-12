@@ -9,11 +9,14 @@ import { after, before, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { stringify } from 'yaml';
 import {
-  credentialsFile, depthOf, findKey, hideFromGit, installKind, keyFiles, readDotenv, readRepositorySettings, readState, readUserSettings,
+  credentialsFile, depthOf, excludeFromGit, findKey, hideFromGit, installKind, keyFiles, readDotenv, readRepositorySettings, readState, readUserSettings,
   writeDotenv, writeRepositorySettings, writeState, gitFacts,
 } from '../src/setup/settings.js';
 import { CancelledError, multiselect, select, text, Writer, wrapText, type Terminal } from '../src/setup/terminal.js';
-import { connectAgent, detectAgents, mcpLaunch } from '../src/setup/agents.js';
+import { cliLaunch, connectAgent, detectAgents, mcpLaunch } from '../src/setup/agents.js';
+import { activityLaunch, activityLauncher, launcherLaunch } from '../src/activity/hooks.js';
+import { activityCommand } from '../src/activity/providers.js';
+import { activityInstalled, applyIntegration, planIntegration } from '../src/harnesses/setup.js';
 import { checkKey, keyShape } from '../src/setup/keys.js';
 import { printSummary, runSetup, setupMode, type SetupContext } from '../src/setup/wizard.js';
 import { BackgroundWork, StatusLine } from '../src/setup/background.js';
@@ -151,7 +154,13 @@ function withEnv<T>(patch: NodeJS.ProcessEnv, work: () => Promise<T>): Promise<T
 
 test('agents: the MCP command fits the install, and agents are connected through their own CLIs or configuration', async () => {
   const tool = '/opt/codiluce';
-  assert.deepEqual(mcpLaunch(tool, 'npx', { repo: '/r' }), { command: 'npx', args: ['-y', 'codiluce', 'mcp', '--repo', '/r'] });
+  assert.deepEqual(mcpLaunch(tool, 'npx', { repo: '/r' }), { command: 'npx', args: ['-y', 'codiluce', 'mcp', '--repo', '/r'] }, 'no version known: npx resolves it');
+  // npx is pinned to this version: a bare `codiluce` would start a global install or an old cache first.
+  const released = await folder();
+  await writeFile(path.join(released, 'package.json'), JSON.stringify({ name: 'codiluce', version: '9.9.9' }));
+  assert.deepEqual(mcpLaunch(released, 'npx'), { command: 'npx', args: ['-y', 'codiluce@9.9.9', 'mcp'] });
+  assert.deepEqual(activityLaunch(released, 'npx', 'codex', '/r', '/r/.codiluce').args.slice(0, 4), ['-y', 'codiluce@9.9.9', 'activity', 'hook']);
+  assert.deepEqual(cliLaunch(released, 'npx', ['setup', '/r']), { command: 'npx', args: ['-y', 'codiluce@9.9.9', 'setup', '/r'] });
   assert.deepEqual(mcpLaunch(tool, 'global'), { command: process.execPath, args: ['/opt/codiluce/bin/codiluce.js', 'mcp'] });
   assert.equal(mcpLaunch(tool, 'checkout').args.at(-2), '/opt/codiluce/src/cli.ts');
   const fake = await fakeAgents();
@@ -168,11 +177,52 @@ test('agents: the MCP command fits the install, and agents are connected through
     await writeFile(path.join(fake.home, '.claude.json'), JSON.stringify({ projects: { [root]: { mcpServers: { codiluce: { command: 'npx', args: ['-y', 'codiluce', 'mcp', '--repo', root] } } } } }));
     await writeFile(path.join(fake.home, 'codex-server.json'), JSON.stringify({ name: 'codiluce', transport: { type: 'stdio', command: 'npx', args: ['-y', 'codiluce', 'mcp', '--repo', root] } }));
     assert.deepEqual(await states(), [['claude', true, true, undefined], ['codex', true, true, undefined], ['cursor', true, true, undefined]], 'Codex bound to this repository serves it too');
+    // A released install pins its version: an unpinned or other-version npx server is reconnected.
+    const pinned = { toolDirectory: released, kind: 'npx' as const };
+    const codex = async () => (await detectAgents(root, pinned)).find(agent => agent.id === 'codex')!;
+    assert.deepEqual([(await codex()).connected, (await codex()).elsewhere], [false, 'connected through npx without a version, which can start an older Codiluce']);
+    await writeFile(path.join(fake.home, 'codex-server.json'), JSON.stringify({ name: 'codiluce', transport: { type: 'stdio', command: 'npx', args: ['-y', 'codiluce@0.3.0', 'mcp'] } }));
+    assert.equal((await codex()).elsewhere, 'connected to codiluce@0.3.0');
+    await writeFile(path.join(fake.home, 'codex-server.json'), JSON.stringify({ name: 'codiluce', transport: { type: 'stdio', command: 'npx', args: ['-y', 'codiluce@9.9.9', 'mcp'] } }));
+    assert.equal((await codex()).connected, true);
   });
   assert.match(await fake.calls('claude'), new RegExp(`mcp add -s local codiluce -- npx -y codiluce mcp --repo ${root.replace(/[/\\]/g, '.')}`));
   assert.match(await fake.calls('codex'), /mcp add codiluce -- npx -y codiluce mcp\n/, 'Codex follows its working directory');
   const cursor = JSON.parse(await readFile(path.join(fake.home, '.cursor/mcp.json'), 'utf8')) as { mcpServers: { codiluce: { args: string[] } } };
   assert.deepEqual(cursor.mcpServers.codiluce.args, ['-y', 'codiluce', 'mcp', '--repo', '${workspaceFolder}']);
+});
+
+test('agents: activity hooks count as installed only as setup writes them; their files stay out of Git', async () => {
+  const root = await folder(), state = path.join(root, '.codiluce'), tool = await folder();
+  await writeFile(path.join(tool, 'package.json'), JSON.stringify({ name: 'codiluce', version: '9.9.9' }));
+  assert.equal(await activityInstalled('codex', tool, 'npx', root, state), false);
+  assert.equal(await activityInstalled('openclaw', tool, 'npx', root, state), undefined, 'no per-repository hooks');
+  await applyIntegration(await planIntegration('codex', tool, 'npx', root, state, { mcp: false, scope: 'project' }));
+  assert.equal(await activityInstalled('codex', tool, 'npx', root, state), true);
+  await writeFile(path.join(tool, 'package.json'), JSON.stringify({ name: 'codiluce', version: '9.9.10' }));
+  assert.equal(await activityInstalled('codex', tool, 'npx', root, state), false, 'another version: the launcher changes');
+  // The launcher runs the cached copy directly, with the hook's arguments.
+  await mkdir(path.join(tool, 'dist/src/activity'), { recursive: true });
+  await writeFile(path.join(tool, 'dist/src/activity/hook-cli.js'), "process.stdout.write(JSON.stringify(process.argv.slice(2)));\n");
+  const launcher = activityLauncher(tool, state);
+  await writeFile(launcher.path, launcher.content);
+  const launch = launcherLaunch('codex', root, state);
+  assert.deepEqual(JSON.parse(execFileSync(launch.command, [...launch.args, '--event', 'PreToolUse'], { encoding: 'utf8', input: '{}' })), ['--agent', 'codex', '--repo', root, '--state-dir', state, '--event', 'PreToolUse']);
+  // Git: untracked files written for agents are excluded locally; tracked ones are reported; nothing twice.
+  // Without this computer's global excludes (which may already ignore .claude/settings.local.json).
+  const isolated = { GIT_CONFIG_GLOBAL: path.join(root, 'no-gitconfig'), XDG_CONFIG_HOME: await folder() };
+  const git = (...args: string[]) => execFileSync('git', args, { cwd: root, encoding: 'utf8', env: { ...process.env, ...isolated } });
+  git('init', '-q'); git('config', 'user.email', 'test@example.com'); git('config', 'user.name', 'Test');
+  await mkdir(path.join(root, '.claude')); await writeFile(path.join(root, '.claude/settings.json'), '{}'); git('add', '.claude/settings.json'); git('commit', '-qm', 'settings');
+  await writeFile(path.join(root, '.claude/settings.local.json'), '{}');
+  const files = [path.join(root, '.codex/hooks.json'), path.join(root, '.claude/settings.local.json'), path.join(root, '.claude/settings.json'), launcher.path];
+  await withEnv(isolated, async () => {
+    assert.deepEqual(await excludeFromGit(root, state, files), { hidden: ['.codex/hooks.json', '.claude/settings.local.json'], tracked: ['.claude/settings.json'] });
+    assert.deepEqual(await excludeFromGit(root, state, files), { hidden: [], tracked: ['.claude/settings.json'] });
+  });
+  assert.equal((await readFile(path.join(root, '.git/info/exclude'), 'utf8')).match(/\/\.codex\/hooks\.json/g)?.length, 1);
+  assert.doesNotMatch(git('status', '--porcelain', '--untracked-files=all'), /\.codex|settings\.local/);
+  assert.deepEqual(await excludeFromGit(await folder(), state, files), { hidden: [], tracked: [] }, 'not a Git repository');
 });
 
 test('keys are checked with the provider: a working key, a refused one, and no network', async () => {
@@ -222,6 +272,15 @@ test('setup asks the questions, saves the answers where they belong, and connect
   assert.equal(result.settings.history.precompute, undefined);
   assert.deepEqual(result.connected.filter(item => ['claude', 'codex', 'cursor'].includes(item.agent.id)).map(item => [item.agent.id, item.ok]), [['codex', true], ['cursor', true]]);
   assert.equal(await fake.calls('claude'), '');
+  // Connecting also installs activity hooks in the repository, through the launcher (npx is slow per tool call), hidden from Git.
+  const codexHooks = JSON.parse(await readFile(path.join(repository, '.codex/hooks.json'), 'utf8')) as { hooks: Record<string, { hooks: { command: string }[] }[]> };
+  assert.ok(activityCommand(codexHooks.hooks.PreToolUse![0]!.hooks[0]!.command, 'codex', repository, state));
+  assert.match(codexHooks.hooks.PreToolUse![0]!.hooks[0]!.command, /\.codiluce\/activity-hook\.mjs --agent codex /);
+  assert.match(await readFile(path.join(state, 'activity-hook.mjs'), 'utf8'), /Codiluce observer v1/);
+  assert.ok(JSON.parse(await readFile(path.join(repository, '.cursor/hooks.json'), 'utf8')).hooks);
+  await assert.rejects(readFile(path.join(repository, '.claude/settings.local.json')), 'Claude Code was not chosen');
+  assert.equal(execFileSync('git', ['status', '--porcelain', '--untracked-files=all'], { cwd: repository, encoding: 'utf8' }), '');
+  assert.equal(result.connected.find(item => item.agent.id === 'codex')!.activity!.hidden.join(), '.codex/hooks.json');
   assert.equal(readRepositorySettings(state).history?.depth, 'none');
   assert.equal(readState(state).setup, 1);
   assert.equal(result.gitignore, 'written');
@@ -235,6 +294,9 @@ test('setup asks the questions, saves the answers where they belong, and connect
   await assert.rejects(readFile(path.join(state, 'history.db')));
   printSummary(new Writer(terminal), result, context(state, env));
   assert.match(output(), /all 3 commits and file changes ready/);
+  assert.match(output(), /shown on the map \(hooks in \.codex\/hooks\.json\)/);
+  assert.match(output(), /Activity\s+Codex, Cursor, [^│]*shown in Agents as they work/);
+  assert.match(output(), /open \/hooks once and trust Codiluce's hooks/);
   // A new repository then takes these answers without asking.
   const other = await folder();
   assert.equal(setupMode(other, true, env), 'reuse');
@@ -263,6 +325,8 @@ test('setup keeps existing agent connections when no new connections are selecte
   await writeFile(path.join(fake.home, 'codex-server.json'), JSON.stringify({ transport: launch }));
   const cursor = JSON.stringify({ mcpServers: { codiluce: { ...launch, args: [...launch.args, '--repo', '${workspaceFolder}'] } } });
   await writeFile(path.join(fake.home, '.cursor/mcp.json'), cursor);
+  // Connected means its activity hooks are here too.
+  for (const id of ['claude-code', 'codex', 'cursor'] as const) await applyIntegration(await planIntegration(id, '/opt/codiluce', 'npx', root, state, { mcp: false, scope: 'project' }));
   const env = { CODILUCE_CONFIG_HOME: await folder(), PATH: fake.bin, HOME: fake.home };
   const { terminal, output } = scriptedTerminal([
     [/Language models/, ENTER], [/Connect your agent/, ENTER], [/In a new repository/, ENTER],

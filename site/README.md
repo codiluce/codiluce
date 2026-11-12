@@ -1,6 +1,6 @@
 # Codiluce website
 
-The public site: home (demo, goal, agents, features, stacks, contributing) and the docs. Next.js App Router, statically
+The public site: home (demo, goal, agents, features, stacks, releases, contributing), release notes and the docs. Next.js App Router, statically
 exported to `out/`, so any static host works (GitHub Pages, Netlify, Cloudflare Pages, S3, nginx).
 
 ```bash
@@ -12,6 +12,10 @@ npm run preview    # serves out/ on http://localhost:4321
 ```
 
 - `app/page.tsx`: home. `app/docs/*`: one folder per docs page; the order lives in `lib/site.ts` (`DOCS_NAV`).
+- `app/releases/page.tsx`: the complete npm changelog. `lib/releases.ts` holds the release notes and npm publication
+  dates, newest first; `components/ReleasesPreview.tsx` shows the latest three stable releases on the home page.
+  Add an entry when publishing an npm release, and update `VERSION` in `lib/site.ts` in the same change. Include only
+  shipped changes; keep features awaiting publication under `NEXT_RELEASE`.
 - `components/HeroShader.tsx`: the hero, a WebGL2 fragment shader. The Eclipse disc sizes itself to the space
   above the hero text. It pauses off screen and in background tabs, draws one still frame with
   `prefers-reduced-motion`, and leaves the CSS backdrop in place when WebGL2 is missing.

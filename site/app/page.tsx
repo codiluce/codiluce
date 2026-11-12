@@ -9,6 +9,7 @@ import { HeroShader } from '../components/HeroShader';
 import { InstallCommand } from '../components/InstallCommand';
 import { MapDemo } from '../components/MapDemo';
 import { NextTag } from '../components/NextTag';
+import { ReleasesPreview } from '../components/ReleasesPreview';
 import { Stacks } from '../components/Stacks';
 import { GitHubIcon } from '../components/SiteChrome';
 import { HORIZON_SCRIPT } from '../lib/hero';
@@ -82,7 +83,7 @@ export default function Home() {
       <section className="hero" aria-labelledby="hero-title" suppressHydrationWarning>
         <div className="hero-backdrop" aria-hidden="true"><HeroShader /></div>
         <div className="container hero-content">
-          <p className="hero-badge"><span className="pulse-dot" aria-hidden="true" />v{VERSION} · early preview · MIT</p>
+          <Link href="/releases/" className="hero-badge"><span className="pulse-dot" aria-hidden="true" />v{VERSION} · early preview · MIT <span aria-hidden="true">→</span></Link>
           <h1 id="hero-title">Bring your code to light</h1>
           <p className="hero-lede">
             Codiluce helps engineers understand their code and its architecture while agents keep changing it: every flow
@@ -148,7 +149,7 @@ export default function Home() {
                   <li>Answers are pinned to their commit and say when the code they link changes</li>
                   <li>No agent at hand? Ask in the map, with your own Anthropic or OpenAI key</li>
                 </ul>
-                <CodeBlock prompt code="claude mcp add codiluce -- npx -y codiluce mcp" />
+                <CodeBlock prompt code="claude mcp add codiluce -- npx -y codiluce@latest mcp" />
                 <Link href="/docs/explanations/" className="text-link">Explanations →</Link>
               </div>
             </article>
@@ -200,6 +201,8 @@ export default function Home() {
           <Stacks />
         </div>
       </section>
+
+      <ReleasesPreview />
 
       <section className="section contribute-section" id="contribute" aria-labelledby="contribute-title">
         <div className="container">

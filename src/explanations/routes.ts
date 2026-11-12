@@ -10,8 +10,8 @@ import type { ChatService } from './chat.js';
 import { readActivity } from './activity.js';
 import type { AgentActivityList, AgentConnectionList, AskEvent, ExplanationsSetup } from './model.js';
 import { ReadOnlyError, type ExplanationService } from './service.js';
-import { detectAgents, mcpLaunch, shellLine, type Install } from '../setup/agents.js';
-import { installKind } from '../setup/settings.js';
+import { cliLaunch, detectAgents, mcpLaunch, shellLine, type Install } from '../setup/agents.js';
+import { installKind, packageVersion } from '../setup/settings.js';
 
 export const EXPLAIN_REQUEST = 'explain';
 export interface ExplanationRoutes { service: ExplanationService; chat: ChatService; stateDirectory: string }
@@ -80,7 +80,7 @@ async function connections(context: ExplanationRoutes): Promise<AgentConnectionL
   const root = context.service.root;
   if (!root) return { items: [] };
   const agents = await detectAgents(root, await install(context));
-  return { items: agents.filter(agent => agent.installed || agent.connected).map(agent => ({ id: agent.id, name: agent.name, connected: agent.connected, ...(agent.elsewhere ? { elsewhere: agent.elsewhere } : {}) })) };
+  return { items: agents.filter(agent => agent.installed || agent.connected).map(agent => ({ id: agent.id, name: agent.name, connected: agent.connected, ...(agent.elsewhere ? { elsewhere: agent.elsewhere } : {}), ...(agent.activity !== undefined ? { activity: agent.activity } : {}) })) };
 }
 /** How to reach explanations from here: writing allowed, models with keys, and the command that connects an agent. */
 async function setup(context: ExplanationRoutes): Promise<ExplanationsSetup> {
@@ -89,9 +89,11 @@ async function setup(context: ExplanationRoutes): Promise<ExplanationsSetup> {
   const project = mcpLaunch(tool, kind, { ...(root ? { repo: root } : {}), ...(state ? { stateDirectory: state } : {}) });
   const line = shellLine(project);
   return {
-    readOnly: context.service.readOnly, ...(root ? { root } : {}),
+    readOnly: context.service.readOnly, ...(root ? { root } : {}), version: packageVersion(tool),
     // Codex keeps one list for every repository, so its server follows the folder it works in (as setup connects it).
-    mcp: { command: project.command, args: project.args, claude: `claude mcp add codiluce -- ${line}`, codex: `codex mcp add codiluce -- ${shellLine(mcpLaunch(tool, kind))}` },
+    mcp: { command: project.command, args: project.args, claude: `claude mcp add codiluce -- ${line}`, codex: `codex mcp add codiluce -- ${shellLine(mcpLaunch(tool, kind))}`,
+      // Setup with this install: it replaces an agent's server that another version starts.
+      setup: shellLine(cliLaunch(tool, kind, ['setup', ...root ? [root] : [], ...state ? ['--state-dir', state] : []])) },
     models: context.chat.models(), keyFiles: context.chat.keyFiles(), maxCost: context.chat.cap,
   };
 }
