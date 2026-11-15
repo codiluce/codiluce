@@ -33,9 +33,9 @@ async function fixture(){
  const root=await mkdtemp(path.join(os.tmpdir(),'codiluce-independent-history-audit-')),source=path.join(root,'source'),directory=path.join(root,'observation'),unit=path.join(directory,'owned'),state=path.join(unit,'state'),tree=path.join(unit,'tree');
  await mkdir(source);await mkdir(state,{recursive:true});await mkdir(tree);
  const env=Object.fromEntries(Object.entries(process.env).filter(([key])=>!key.startsWith('GIT_')));Object.assign(env,{GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null'});
- const git=async args=>(await execute('git',['-c','core.fsmonitor=false','-c','core.hooksPath=/dev/null','-c','commit.gpgsign=false','-C',source,...args],{env})).stdout.trim();
+ const git=async args=>(await execute('git',['-c','core.fsmonitor=false','-c','core.hooksPath=/dev/null','-c','commit.gpgsign=false','-C',source,...args],{env,timeout:30_000})).stdout.trim();
  await git(['init','--template=']);await git(['config','user.name','Owned audit fixture']);await git(['config','user.email','fixture@example.invalid']);
- const database=path.join(state,'history.db'),store=new HistoryStore(database),revisions=[],observations=[],identity='owned-exact-history';let head;
+ const database=path.join(state,'history.db'),store=new HistoryStore(database),revisions=[],observations=[],identity='owned-exact-history';let head,closed=false;
  try{
   for(const text of ['original source\n','changed source\n']){
    await writeFile(path.join(source,'original.txt'),text);await git(['add','original.txt']);await git(['commit','-m',text.trim()]);head=await git(['rev-parse','HEAD']);const revision=await readRevision(source,head);revisions.push(revision);
@@ -48,10 +48,10 @@ async function fixture(){
   }
   store.saveTimeline(head,head,revisions.map(row=>row.commit),true);store.db.prepare('PRAGMA wal_checkpoint(TRUNCATE)').get();
   // Completed-worker fixture PID has actually exited, rather than a guessed PID.
-  const exited=await execute(process.execPath,['-e','process.stdout.write(String(process.pid))']);const workerPid=Number(exited.stdout);await assert.rejects(access('/proc/'+workerPid),{code:'ENOENT'});
+  const exited=await execute(process.execPath,['-e','process.stdout.write(String(process.pid))'],{timeout:30_000});const workerPid=Number(exited.stdout);await assert.rejects(access('/proc/'+workerPid),{code:'ENOENT'});
   const specification={id:'owned',repository:'https://github.com/owned/fixture',head,coverageIntent:'Owned exact SQLite history audit',policy:'consecutive-first-parent',revisions,extraRevisions:[]},record={id:'owned',head,expectedRevisions:2,status:'verified',error:null,worker:{pid:workerPid,exitCode:0,signal:null,samples:1,treePeakKiB:1},readOnlyReopenVerified:true,completedAt:new Date().toISOString(),database:'owned/state/history.db',historyIdentity:identity,revisions:observations,storage:store.status()},corpus={schema:1,repositories:[specification]},receipt={schema:1,platform:'linux',repositories:[record],passed:true,completedAt:new Date().toISOString()};
   return {root,source,directory,database,corpus,receipt};
- }catch(error){store.close();await rm(root,{recursive:true,force:true,maxRetries:10,retryDelay:50});throw error;}finally{if(store.db.isOpen)store.close();}
+ }catch(error){store.close();closed=true;await rm(root,{recursive:true,force:true,maxRetries:10,retryDelay:50});throw error;}finally{if(!closed)store.close();}
 }
 
 test('independent read-only audit verifies original blobs, all exact SQLite payloads, deduplication and commit metadata',async()=>{
@@ -87,7 +87,7 @@ test('qualified engine, frozen observer and original profile drift fail the inde
   const changedProfile=structuredClone(receipt);changedProfile.repositories[0].config={maxFileBytes:1};await assert.rejects(verifyProductionHistoryRunInputs({...options,receipt:changedProfile}),/configuration differs/);
   const corpusFile=path.join(value.root,'corpus.json'),profilesFile=path.join(value.root,'profiles.json'),receiptFile=path.join(value.directory,'receipt.json'),output=path.join(value.root,'audit.json');await writeFile(corpusFile,corpusBytes);await writeFile(profilesFile,profilesBytes);await writeFile(receiptFile,JSON.stringify(receipt));
   const args=['--experimental-sqlite',fileURLToPath(new URL('../audit-production-history.mjs',import.meta.url)),'--corpus',corpusFile,'--profiles',profilesFile,'--engine',engine,'--receipt',receiptFile,'--source','owned='+value.source,'--output',output];
-  await execute(process.execPath,args);const retained=JSON.parse(await readFile(output)),inputBytes=await readFile(output+'.inputs.json'),input=JSON.parse(inputBytes);assert.equal(retained.passed,true);assert.equal(retained.full195RevisionGateQualified,false);assert.equal(retained.inputSnapshot.sha256,hash(inputBytes));assert.equal(input.files.receipt.utf8,(await readFile(receiptFile)).toString());assert.equal(input.files.receipt.sha256,retained.receiptSha256);
-  const unsafe=[...args];unsafe[unsafe.indexOf('--output')+1]=path.join(value.source,'audit.json');await assert.rejects(execute(process.execPath,unsafe),error=>/outside original inputs/.test(error.stderr));await assert.rejects(access(path.join(value.source,'audit.json.inputs.json')),{code:'ENOENT'});
+  await execute(process.execPath,args,{timeout:60_000});const retained=JSON.parse(await readFile(output)),inputBytes=await readFile(output+'.inputs.json'),input=JSON.parse(inputBytes);assert.equal(retained.passed,true);assert.equal(retained.full195RevisionGateQualified,false);assert.equal(retained.inputSnapshot.sha256,hash(inputBytes));assert.equal(input.files.receipt.utf8,(await readFile(receiptFile)).toString());assert.equal(input.files.receipt.sha256,retained.receiptSha256);
+  const unsafe=[...args];unsafe[unsafe.indexOf('--output')+1]=path.join(value.source,'audit.json');await assert.rejects(execute(process.execPath,unsafe,{timeout:60_000}),error=>/outside original inputs/.test(error.stderr));await assert.rejects(access(path.join(value.source,'audit.json.inputs.json')),{code:'ENOENT'});
  }finally{await rm(value.root,{recursive:true,force:true,maxRetries:10,retryDelay:50});}
 });

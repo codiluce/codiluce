@@ -49,6 +49,17 @@ test('PHP snapshot byte/count limits and oversized unit bypass never fabricate a
   assert.throws(()=>new PhpResidency(incomplete),/nonnegative safe integers/);
 });
 
+test('PHP snapshot identity bridges path and handle device IDs while rejecting a replaced open file',()=>{
+  const value={content:'original'},cache=store<typeof value>({maxResidentBytes:0,maxResidentUnits:0,maxSpoolBytes:4096,maxSpoolUnits:4});
+  const lstat=fs.lstatSync,fstat=fs.fstatSync;let changed=false,handles=0;
+  const pathStats=mock.method(fs,'lstatSync',((...args:Parameters<typeof lstat>)=>{const info=lstat(...args);assert.ok(info);Object.defineProperty(info,'dev',{value:BigInt(info.dev)+1n});return info;}) as typeof lstat);
+  const handleStats=mock.method(fs,'fstatSync',((...args:Parameters<typeof fstat>)=>{const info=fstat(...args);if(changed&&++handles===2)Object.defineProperty(info,'ino',{value:BigInt(info.ino)+1n});return info;}) as typeof fstat);syncBuiltinESMExports();
+  try{
+    cache.put('stable',value,8);assert.deepEqual(cache.get('stable'),value);assert.equal(cache.stats().reloads,1);
+    cache.put('replaced',value,8);changed=true;assert.equal(cache.get('replaced'),undefined);assert.equal(cache.stats().failures,1);
+  }finally{pathStats.mock.restore();handleStats.mock.restore();syncBuiltinESMExports();}
+});
+
 test('corrupt, truncated and symlinked private PHP snapshots become repairable misses',async()=>{
   const root=await mkdtemp(path.join(tmpdir(),'codiluce-php-snapshot-test-'));roots.push(root);
   for(const failure of ['corrupt','truncate','symlink',...process.platform==='linux'?['fifo']:[]]){

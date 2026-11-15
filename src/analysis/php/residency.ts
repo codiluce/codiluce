@@ -34,14 +34,20 @@ export class PhpResidency<T> {
     if(snapshot.invalid){this.misses++;return undefined;}
     let descriptor:number|undefined;
     try{
-      const before=lstatSync(snapshot.file);if(!before.isFile())throw Error('PHP snapshot is not a regular file');
+      const before=lstatSync(snapshot.file,{bigint:true});if(!before.isFile())throw Error('PHP snapshot is not a regular file');
       descriptor=openSync(snapshot.file,constants.O_RDONLY|(constants.O_NOFOLLOW??0)|(constants.O_NONBLOCK??0));
-      const info=fstatSync(descriptor);
-      if(!info.isFile()||info.size!==snapshot.bytes||info.dev!==before.dev||info.ino!==before.ino)throw Error('Changed PHP snapshot identity or size');
+      const info=fstatSync(descriptor,{bigint:true});
+      if(!info.isFile()||info.size!==BigInt(snapshot.bytes)||info.ino!==before.ino)throw Error('Changed PHP snapshot identity or size');
+      if(info.dev!==before.dev){
+        // Windows libuv versions can report different path/handle device IDs.
+        // Compare two handles instead; retain exact inode and path checks.
+        const check=openSync(snapshot.file,constants.O_RDONLY|(constants.O_NOFOLLOW??0)|(constants.O_NONBLOCK??0));
+        try{const current=fstatSync(check,{bigint:true});if(current.dev!==info.dev||current.ino!==info.ino)throw Error('Changed PHP snapshot handle');}finally{closeSync(check);}
+      }
       const buffer=Buffer.allocUnsafe(snapshot.bytes);let offset=0;
       while(offset<buffer.length){const count=readSync(descriptor,buffer,offset,buffer.length-offset,null);if(!count)throw Error('Truncated PHP snapshot');offset+=count;}
       if(readSync(descriptor,Buffer.allocUnsafe(1),0,1,null)||createHash('sha256').update(buffer).digest('hex')!==snapshot.digest)throw Error('Changed PHP snapshot payload');
-      const after=lstatSync(snapshot.file);if(!after.isFile()||after.dev!==info.dev||after.ino!==info.ino)throw Error('Changed PHP snapshot path');
+      const after=lstatSync(snapshot.file,{bigint:true});if(!after.isFile()||after.dev!==before.dev||after.ino!==before.ino)throw Error('Changed PHP snapshot path');
       closeSync(descriptor);descriptor=undefined;
       const value=deserialize(buffer) as T;
       this.snapshots.delete(key);this.snapshots.set(key,snapshot);this.reloads++;
