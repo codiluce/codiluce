@@ -21,6 +21,12 @@ import {isolatedTypescriptAnalyzer} from '../src/analyzers/typescript-isolated.j
 const parsed=(file:string)=>ts.createSourceFile(file,'// é😀\r\nexport function original(){return 1;}',ts.ScriptTarget.Latest,true);
 const declaration=(file:ts.SourceFile)=>file.statements[0]as ts.FunctionDeclaration;
 const entity=(id:string):Entity=>({id,type:'function',name:'original',path:id,metadata:{},evidence:[]});
+test('separate compiler instances bridge native and normalized declaration filenames',()=>{
+ const file=path.join(tmpdir(),'owned-declaration-site.ts'),original=parsed(file),index=new DeclarationIndex(),expected=entity('original');
+ index.set(declaration(original),expected);index.releaseSourceFiles([original]);
+ const compilerName=path.dirname(file).replaceAll('\\','/')+'/./'+path.basename(file);
+ assert.equal(index.get(declaration(parsed(compilerName))),expected);
+});
 test('retired source files release only their AST keys while exact declaration sites stay available to other compiler instances',()=>{
  const index=new DeclarationIndex(),first=parsed('/owned/first.ts'),other=parsed('/owned/other.ts'),a=entity('first'),b=entity('other');index.set(declaration(first),a);index.set(declaration(other),b);index.set(declaration(first),a);assert.deepEqual(index.ownershipStats(),{nodeKeys:2,sourceSites:2});index.releaseSourceFiles([first]);assert.equal(Map.prototype.has.call(index,declaration(first)),false);assert.equal(index.get(declaration(first)),a);assert.equal(index.get(declaration(parsed('/owned/first.ts'))),a);assert.equal(Map.prototype.has.call(index,declaration(other)),true);assert.deepEqual(index.ownershipStats(),{nodeKeys:1,sourceSites:2});index.releaseSourceFiles([first,other]);assert.deepEqual(index.ownershipStats(),{nodeKeys:0,sourceSites:2});index.clear();assert.deepEqual(index.ownershipStats(),{nodeKeys:0,sourceSites:0});
 });

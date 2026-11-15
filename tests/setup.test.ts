@@ -158,7 +158,7 @@ if(agent==='claude'||agent==='codex'){
  process.exit(0);
 }`);
     for (const agent of ['claude', 'codex']) await cp(process.execPath, path.join(bin, agent + '.exe'));
-    nodeOptions = `--require "${preload}"`;
+    nodeOptions = `--require "${preload.replaceAll('\\', '/')}"`;
   }
   const env = { PATH: `${bin}${path.delimiter}${process.env.PATH}`, HOME: home, USERPROFILE: home, ...(nodeOptions ? { NODE_OPTIONS: nodeOptions } : {}) };
   return { bin, home, env, calls: async agent => readFile(path.join(home, `${agent}.log`), 'utf8').catch(() => '') };
@@ -292,7 +292,7 @@ test('setup asks the questions, saves the answers where they belong, and connect
   // Connecting also installs activity hooks in the repository, through the launcher (npx is slow per tool call), hidden from Git.
   const codexHooks = JSON.parse(await readFile(path.join(repository, '.codex/hooks.json'), 'utf8')) as { hooks: Record<string, { hooks: { command: string }[] }[]> };
   assert.ok(activityCommand(codexHooks.hooks.PreToolUse![0]!.hooks[0]!.command, 'codex', repository, state));
-  assert.match(codexHooks.hooks.PreToolUse![0]!.hooks[0]!.command, /\.codiluce\/activity-hook\.mjs --agent codex /);
+  assert.match(codexHooks.hooks.PreToolUse![0]!.hooks[0]!.command.replaceAll('\\', '/'), /\.codiluce\/activity-hook\.mjs['"]? --agent codex /);
   assert.match(await readFile(path.join(state, 'activity-hook.mjs'), 'utf8'), /Codiluce observer v1/);
   assert.ok(JSON.parse(await readFile(path.join(repository, '.cursor/hooks.json'), 'utf8')).hooks);
   await assert.rejects(readFile(path.join(repository, '.claude/settings.local.json')), 'Claude Code was not chosen');

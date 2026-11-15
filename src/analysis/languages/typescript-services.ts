@@ -17,7 +17,7 @@ import { nuxtConfiguration, type NuxtConfig } from '../frameworks/nuxt-config.js
 export class DeclarationIndex extends Map<ts.Node, Entity> {
   private readonly bySite = new Map<string, Entity>();
   private sourceNodes = new WeakMap<ts.SourceFile,Set<ts.Node>>();
-  private site(node: ts.Node): string | undefined { const source = node.getSourceFile(); return source ? JSON.stringify([source.fileName, node.kind, node.getStart(source), node.end]) : undefined; }
+  private site(node: ts.Node): string | undefined { const source = node.getSourceFile(); return source ? JSON.stringify([path.normalize(source.fileName), node.kind, node.getStart(source), node.end]) : undefined; }
   override set(node: ts.Node, entity: Entity): this {
     const site = this.site(node); if (site) this.bySite.set(site, entity);
     const source=node.getSourceFile();if(source){let nodes=this.sourceNodes.get(source);if(!nodes){nodes=new Set();this.sourceNodes.set(source,nodes);}nodes.add(node);}

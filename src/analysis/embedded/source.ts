@@ -2,7 +2,7 @@ import ts from 'typescript';
 import type { SourceRange } from '../../core/graph.js';
 import { SourceText } from '../source-map.js';
 
-export const EMBEDDED_VERSION = '1.0.1';
+export const EMBEDDED_VERSION = '1.0.2';
 export type EmbeddedLanguage = 'vue' | 'svelte' | 'astro';
 export type EmbeddedRole = 'module' | 'instance' | 'setup' | 'frontmatter' | 'client';
 export interface EmbeddedRegion {

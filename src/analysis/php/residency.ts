@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto';
-import {closeSync, constants, fstatSync, mkdtempSync, openSync, readSync, rmSync, unlinkSync, writeFileSync} from 'node:fs';
+import {closeSync, constants, fstatSync, lstatSync, mkdtempSync, openSync, readSync, rmSync, unlinkSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {deserialize, serialize} from 'node:v8';
@@ -34,12 +34,14 @@ export class PhpResidency<T> {
     if(snapshot.invalid){this.misses++;return undefined;}
     let descriptor:number|undefined;
     try{
+      const before=lstatSync(snapshot.file);if(!before.isFile())throw Error('PHP snapshot is not a regular file');
       descriptor=openSync(snapshot.file,constants.O_RDONLY|(constants.O_NOFOLLOW??0)|(constants.O_NONBLOCK??0));
       const info=fstatSync(descriptor);
-      if(!info.isFile()||info.size!==snapshot.bytes)throw Error('Changed PHP snapshot size');
+      if(!info.isFile()||info.size!==snapshot.bytes||info.dev!==before.dev||info.ino!==before.ino)throw Error('Changed PHP snapshot identity or size');
       const buffer=Buffer.allocUnsafe(snapshot.bytes);let offset=0;
       while(offset<buffer.length){const count=readSync(descriptor,buffer,offset,buffer.length-offset,null);if(!count)throw Error('Truncated PHP snapshot');offset+=count;}
       if(readSync(descriptor,Buffer.allocUnsafe(1),0,1,null)||createHash('sha256').update(buffer).digest('hex')!==snapshot.digest)throw Error('Changed PHP snapshot payload');
+      const after=lstatSync(snapshot.file);if(!after.isFile()||after.dev!==info.dev||after.ino!==info.ino)throw Error('Changed PHP snapshot path');
       closeSync(descriptor);descriptor=undefined;
       const value=deserialize(buffer) as T;
       this.snapshots.delete(key);this.snapshots.set(key,snapshot);this.reloads++;
