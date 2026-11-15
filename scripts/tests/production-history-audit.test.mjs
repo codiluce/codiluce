@@ -15,6 +15,7 @@ import {productionSnapshotDigest} from '../production-history-storage.mjs';
 import {readRevision} from '../production-history-inputs.mjs';
 import {inspectProductionHistoryTree,verifyHistoryGraphInputs} from '../production-history-tree.mjs';
 import {auditProductionHistory,independentHistoryJSONDigest,verifyProductionHistoryRunInputs} from '../audit-production-history.mjs';
+import {retiredProcessIds} from './fixtures/retired-processes.mjs';
 
 const execute=promisify(execFile),hash=bytes=>createHash('sha256').update(bytes).digest('hex'),proof={source:'filesystem',analyzer:'owned-audit',analyzerVersion:'1',confidence:1};
 const canonical=value=>value===null||typeof value!=='object'?JSON.stringify(value):Array.isArray(value)?'['+value.map(canonical).join(',')+']':'{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+canonical(value[key])).join(',')+'}';
@@ -35,7 +36,7 @@ async function fixture(){
  const env=Object.fromEntries(Object.entries(process.env).filter(([key])=>!key.startsWith('GIT_')));Object.assign(env,{GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null'});
  const git=async args=>(await execute('git',['-c','core.fsmonitor=false','-c','core.hooksPath=/dev/null','-c','commit.gpgsign=false','-C',source,...args],{env,timeout:30_000})).stdout.trim();
  await git(['init','--template=']);await git(['config','user.name','Owned audit fixture']);await git(['config','user.email','fixture@example.invalid']);
- const database=path.join(state,'history.db'),store=new HistoryStore(database),revisions=[],observations=[],identity='owned-exact-history';let head,closed=false;
+ const database=path.join(state,'history.db'),store=new HistoryStore(database),revisions=[],observations=[],identity='owned-exact-history';let head,identities,closed=false;
  try{
   for(const text of ['original source\n','changed source\n']){
    await writeFile(path.join(source,'original.txt'),text);await git(['add','original.txt']);await git(['commit','-m',text.trim()]);head=await git(['rev-parse','HEAD']);const revision=await readRevision(source,head);revisions.push(revision);
@@ -48,16 +49,16 @@ async function fixture(){
   }
   store.saveTimeline(head,head,revisions.map(row=>row.commit),true);store.db.prepare('PRAGMA wal_checkpoint(TRUNCATE)').get();
   // Completed-worker fixture PID has actually exited, rather than a guessed PID.
-  const exited=await execute(process.execPath,['-e','process.stdout.write(String(process.pid))'],{timeout:30_000});const workerPid=Number(exited.stdout);await assert.rejects(access('/proc/'+workerPid),{code:'ENOENT'});
+  identities=await retiredProcessIds(1);const [workerPid]=identities.pids;
   const specification={id:'owned',repository:'https://github.com/owned/fixture',head,coverageIntent:'Owned exact SQLite history audit',policy:'consecutive-first-parent',revisions,extraRevisions:[]},record={id:'owned',head,expectedRevisions:2,status:'verified',error:null,worker:{pid:workerPid,exitCode:0,signal:null,samples:1,treePeakKiB:1},readOnlyReopenVerified:true,completedAt:new Date().toISOString(),database:'owned/state/history.db',historyIdentity:identity,revisions:observations,storage:store.status()},corpus={schema:1,repositories:[specification]},receipt={schema:1,platform:'linux',repositories:[record],passed:true,completedAt:new Date().toISOString()};
-  return {root,source,directory,database,corpus,receipt};
- }catch(error){store.close();closed=true;await rm(root,{recursive:true,force:true,maxRetries:10,retryDelay:50});throw error;}finally{if(!closed)store.close();}
+  return {root,source,directory,database,corpus,receipt,releaseWorker:identities.close};
+ }catch(error){store.close();closed=true;await identities?.close();await rm(root,{recursive:true,force:true,maxRetries:10,retryDelay:50});throw error;}finally{if(!closed)store.close();}
 }
 
 test('independent read-only audit verifies original blobs, all exact SQLite payloads, deduplication and commit metadata',async()=>{
  const value=await fixture();try{
   const before=hash(await readFile(value.database)),result=await auditProductionHistory({...value,sources:{owned:value.source}});assert.equal(result.passed,true);assert.equal(result.full195RevisionGateQualified,false);assert.equal(result.repositories[0].revisions.length,2);assert.equal(result.repositories[0].originalBlobObjects,2);assert.equal(result.repositories[0].storage.versions.entities,3);assert.equal(hash(await readFile(value.database)),before);assert.equal(result.layoutResumeQualified,false);assert.equal(result.relativeHistoryTimeRssQualified,false);
- }finally{await rm(value.root,{recursive:true,force:true,maxRetries:10,retryDelay:50});}
+ }finally{await value.releaseWorker();await rm(value.root,{recursive:true,force:true,maxRetries:10,retryDelay:50});}
 });
 
 test('actual SQLite metadata, payload, dangling memberships and original receipt corruption cannot qualify',async()=>{
@@ -72,7 +73,7 @@ test('actual SQLite metadata, payload, dangling memberships and original receipt
   const original=JSON.parse(originalBytes);original.entries[0].sha256='0'.repeat(64);original.recordDigest=hash(JSON.stringify(original.entries));await writeFile(originalPath,JSON.stringify(original));await assert.rejects(audit(),/SHA-256 differs/);await writeFile(originalPath,originalBytes);
   const mutable=structuredClone(value.receipt);mutable.repositories[0].worker.pid=process.pid;await assert.rejects(auditProductionHistory({...value,receipt:mutable,sources:{owned:value.source}}),/worker is still live/);
   const normalized=structuredClone(value.receipt);normalized.repositories[0].revisions[0].logical.normalization=['run UUID/time'];await assert.rejects(auditProductionHistory({...value,receipt:normalized,sources:{owned:value.source}}));
- }finally{await rm(value.root,{recursive:true,force:true,maxRetries:10,retryDelay:50});}
+ }finally{await value.releaseWorker();await rm(value.root,{recursive:true,force:true,maxRetries:10,retryDelay:50});}
 });
 
 test('qualified engine, frozen observer and original profile drift fail the independent run-input audit',async()=>{
@@ -89,5 +90,5 @@ test('qualified engine, frozen observer and original profile drift fail the inde
   const args=['--experimental-sqlite',fileURLToPath(new URL('../audit-production-history.mjs',import.meta.url)),'--corpus',corpusFile,'--profiles',profilesFile,'--engine',engine,'--receipt',receiptFile,'--source','owned='+value.source,'--output',output];
   await execute(process.execPath,args,{timeout:60_000});const retained=JSON.parse(await readFile(output)),inputBytes=await readFile(output+'.inputs.json'),input=JSON.parse(inputBytes);assert.equal(retained.passed,true);assert.equal(retained.full195RevisionGateQualified,false);assert.equal(retained.inputSnapshot.sha256,hash(inputBytes));assert.equal(input.files.receipt.utf8,(await readFile(receiptFile)).toString());assert.equal(input.files.receipt.sha256,retained.receiptSha256);
   const unsafe=[...args];unsafe[unsafe.indexOf('--output')+1]=path.join(value.source,'audit.json');await assert.rejects(execute(process.execPath,unsafe,{timeout:60_000}),error=>/outside original inputs/.test(error.stderr));await assert.rejects(access(path.join(value.source,'audit.json.inputs.json')),{code:'ENOENT'});
- }finally{await rm(value.root,{recursive:true,force:true,maxRetries:10,retryDelay:50});}
+ }finally{await value.releaseWorker();await rm(value.root,{recursive:true,force:true,maxRetries:10,retryDelay:50});}
 });

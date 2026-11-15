@@ -11,13 +11,14 @@ import {HistoryStore} from '../../src/history/store.ts';
 import {GraphBuilder} from '../../src/core/graph.ts';
 import {productionGraphDigest} from '../production-graph-digest.mjs';
 import {snapshotStorageLedger} from '../production-history-storage-ledger.mjs';
+import {retiredProcessIds} from './fixtures/retired-processes.mjs';
 
 const execute=promisify(execFile),project=fileURLToPath(new URL('../../',import.meta.url)),sha=bytes=>createHash('sha256').update(bytes).digest('hex'),python=process.platform==='win32'?'python':'python3';
 test('independent fresh-entrypoint column audit joins terminal worker UUIDs and retains failed evidence',async()=>{
- const root=await mkdtemp(path.join(os.tmpdir(),'codiluce-fresh-columns-'));let store,passed=false;
+ const root=await mkdtemp(path.join(os.tmpdir(),'codiluce-fresh-columns-'));let store,identities,passed=false;
  try{
   const observation=path.join(root,'observation'),unit=path.join(observation,'owned'),database=path.join(unit,'state/history.db'),receiptFile=path.join(observation,'receipt.json'),childFile=path.join(unit,'child-receipt.json');await mkdir(path.dirname(database),{recursive:true});
-  const pids=[];for(let i=0;i<3;i++)pids.push(Number((await execute(process.execPath,['-e','process.stdout.write(String(process.pid))'])).stdout));
+  identities=await retiredProcessIds(3);const {pids}=identities;
   store=new HistoryStore(database);const commits=['a'.repeat(40),'b'.repeat(40)];store.saveCommits(commits.map((commit,index)=>({sha:commit,tree:'c'.repeat(40),parents:index?[commits[0]]:[],authorName:'Owned',authorEmail:'fixture@example.invalid',authoredAt:'2026-01-01T00:00:00Z',committedAt:'2026-01-01T00:00:00Z',subject:'Owned '+index,body:''})));
   const revisions=commits.map((commit,index)=>{
    const builder=new GraphBuilder('owned-fresh-columns'),repository=builder.id('repository'),proof={source:'filesystem',analyzer:'owned',analyzerVersion:'1',confidence:1};builder.addEntity({id:repository,type:'repository',name:'Owned',metadata:{},evidence:[proof]});builder.contain({id:builder.id('file','😀.txt'),type:'file',name:'😀.txt',path:'😀.txt',parentId:repository,metadata:{unknown:'😀β;row:'.repeat(1000)},metrics:{loc:1},evidence:[proof]});const graph=builder.finish({id:randomUUID(),repositoryId:repository,repositoryName:'Owned',commitSha:commit,dirty:false,analyzedAt:new Date().toISOString(),schemaVersion:1,configDigest:'owned',analyzerVersions:{owned:'1'}}),snapshot=store.saveSnapshot(graph,'owned'),logical=productionGraphDigest(graph,{normalize:false});return {commit,workerPid:pids[index+1],status:'verified',acknowledged:true,snapshot,logical,readback:logical};
@@ -38,5 +39,5 @@ test('independent fresh-entrypoint column audit joins terminal worker UUIDs and 
   receipt.repositories[0].databaseSha256=sha(await readFile(database));await writeFile(receiptFile,JSON.stringify(receipt));await writeFile(childFile,JSON.stringify(child));assert.match((await audit('hidden-column',false)).error,/Complete column ledger differs: entity_versions/);
   await assert.rejects(execute(python,['scripts/audit-history-entrypoint-columns.py','--receipt',receiptFile,'--repository','owned','--output',path.join(observation,'unsafe.json')],{cwd:project}),error=>/inside an observation/.test(error.stderr));
   passed=true;
- }finally{store?.close();if(passed)await rm(root,{recursive:true,force:true});else console.error('Retained fresh column fixture',root);}
+ }finally{store?.close();await identities?.close();if(passed)await rm(root,{recursive:true,force:true});else console.error('Retained fresh column fixture',root);}
 });
