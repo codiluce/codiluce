@@ -89,10 +89,10 @@ export function createTypeScriptServices(context: AnalysisContext): TypeScriptSe
     let options: ts.CompilerOptions = { allowJs: true, jsx: ts.JsxEmit.ReactJSX, moduleResolution: ts.ModuleResolutionKind.Bundler, module: ts.ModuleKind.ESNext };
     if (sources.fileExists(configFile)) {
       const configHost = resolver.configHost(project);
-      const read = ts.readConfigFile(configFile, configHost.readFile!);
+      const read = ts.readConfigFile(configFile.split(path.sep).join('/'), configHost.readFile!);
       if (read.error) context.graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'error', code: 'tsconfig-error', file: path.relative(context.root, configFile).split(path.sep).join('/'), reason: ts.flattenDiagnosticMessageText(read.error.messageText, '\n') });
       else {
-        const parsed = ts.parseJsonConfigFileContent(read.config, { ...configHost, useCaseSensitiveFileNames: true, readDirectory: () => [] }, path.dirname(configFile));
+        const parsed = ts.parseJsonConfigFileContent(read.config, { ...configHost, useCaseSensitiveFileNames: true, readDirectory: () => [] }, path.dirname(configFile).split(path.sep).join('/'));
         options = { ...options, ...parsed.options };
         for (const error of parsed.errors.filter(error => error.code !== 18003 && error.code !== 18002)) context.graph.diagnose({ analyzer: 'typescript-nextjs', severity: 'error', code: 'tsconfig-error', file: path.relative(context.root, configFile).split(path.sep).join('/'), reason: ts.flattenDiagnosticMessageText(error.messageText, '\n') });
         const inside = (absolute: string): string | undefined => { const relative = path.relative(context.root, absolute).split(path.sep).join('/') || '.'; return relative === '..' || relative.startsWith('../') || path.isAbsolute(relative) ? undefined : relative; };

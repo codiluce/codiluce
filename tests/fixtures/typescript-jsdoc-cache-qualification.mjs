@@ -150,7 +150,7 @@ test('Complete Express working-tree/cache/revision graphs keep original document
     const put = mock.method(TypeScriptSourceCache.prototype, 'put', function (...args) {
         const cache = replacement(this);
         originalPut.call(cache, ...args);
-        if (args[2].fileName === path.join(root, 'handlers.js')) {
+        if (path.normalize(args[2].fileName) === path.join(root, 'handlers.js')) {
             assert.ok(originalGet.call(cache, args[0], args[2].text, args[1]) === undefined, 'The complete original handler remains a live input while its parsed documentation denies cache ownership');
             documentedHandlerBypasses++;
         }
