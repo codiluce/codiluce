@@ -1,6 +1,9 @@
 // Owned transport fault controls. This file is never selected by target configuration.
 import {deserialize,serialize,getHeapStatistics} from 'node:v8';
 import {fork} from 'node:child_process';
+// Match the real bootstrap's owner-disconnect behavior on platforms where
+// terminating the owner cannot run its shutdown handlers.
+process.once('disconnect',()=>process.exit(process.exitCode ?? 0));
 if(process.argv.includes('--child'))setInterval(()=>{},1000);
 else process.once('message',message=>{
  const request=deserialize(message),mode=request.context.config.repository.name;

@@ -178,7 +178,7 @@ test('an installed package uses its prebuilt UI and reports missing assets witho
   await assert.rejects(prepareVisualizer(tool, { buildUi: true }), /only available in a Codiluce source checkout/);
 });
 
-test('CLI defaults to the current repository and shuts down cleanly on SIGINT', { timeout: 20_000 }, async () => {
+test('CLI defaults to the current repository and stops on SIGINT', { timeout: 20_000 }, async () => {
   const { root, ui } = await fixture();
   const cli = fileURLToPath(new URL('../src/cli.ts', import.meta.url));
   const loader = new URL('../node_modules/tsx/dist/loader.mjs', import.meta.url).href;
@@ -201,7 +201,7 @@ test('CLI defaults to the current repository and shuts down cleanly on SIGINT', 
     assert.equal((await fetch(url)).status, 200);
     child.kill('SIGINT');
     const [code, signal] = await exited;
-    assert.deepEqual([code, signal], [0, null]);
+    assert.deepEqual([code, signal], process.platform === 'win32' ? [null, 'SIGINT'] : [0, null]);
     await assert.rejects(fetch(url));
   } finally { if (child.exitCode === null && child.signalCode === null) { child.kill('SIGKILL'); await exited; } }
 });

@@ -312,7 +312,7 @@ async function checkSession(bin, repo, args = [], signal = 'SIGINT') {
     const helperReferences=await(await fetch(`${url}api/entities/${helperEndpoint.id}/relations?direction=outgoing&type=references`)).json();assert.equal(helperReferences.items.filter(edge=>edge.metadata?.role==='middleware').length,2);
     assert.equal((await fetch(`${url}licenses/fontsource-variable-nunito.txt`)).status, 200);
     child.kill(signal);
-    assert.deepEqual(await exited, [0, null], output);
+    assert.deepEqual(await exited, process.platform === 'win32' ? [null, signal] : [0, null], output);
     await assert.rejects(fetch(url));
   } finally {
     clearTimeout(timeout);

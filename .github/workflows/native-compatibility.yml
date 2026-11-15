@@ -33,8 +33,10 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '3.13'
-      - name: Use a canonical temporary directory
-        run: node scripts/prepare-native-host.mjs
+      - name: Normalize native paths and Git fixture bytes
+        run: |
+          git config --global core.autocrlf false
+          node scripts/prepare-native-host.mjs
       - name: Validate and record this native host
         run: node scripts/qualify-native-release.mjs --install --output test-results/native-release
       - name: Retain success, failure and incomplete evidence
