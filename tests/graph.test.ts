@@ -337,7 +337,8 @@ test('files carry Git metrics of committed history, following renames; history s
   const head = (await execute('git', ['rev-parse', 'HEAD'], { cwd: repository })).stdout.trim();
   const indexed = await indexRepository(repository);
   const moved = indexed.entities.find(item => item.type === 'file' && item.path === 'frontend/src/components/auth/LoginForm.tsx')!;
-  assert.deepEqual(moved.metrics, { loc: 7, commits: 3, authors: 2, churn: 7, lastChangedAt: '2026-01-03T10:00:00+00:00', lastCommit: head, codeLines: 4, functions: 2, maxComplexity: 1, maxNesting: 0 }, 'the rename carries the older history; author e-mails are compared case-insensitively');
+  assert.equal(Date.parse(moved.metrics!.lastChangedAt!), Date.parse('2026-01-03T10:00:00+00:00'));
+  assert.deepEqual({ ...moved.metrics, lastChangedAt: undefined }, { loc: 7, commits: 3, authors: 2, churn: 7, lastChangedAt: undefined, lastCommit: head, codeLines: 4, functions: 2, maxComplexity: 1, maxNesting: 0 }, 'the rename carries the older history; author e-mails are compared case-insensitively');
   const untouched = indexed.entities.find(item => item.type === 'file' && item.path === 'backend/routes/api.php')!;
   assert.equal(untouched.metrics!.commits, 1);
   assert.ok(indexed.run.analyzerVersions['git-metrics']);

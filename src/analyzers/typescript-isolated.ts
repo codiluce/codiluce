@@ -2,7 +2,7 @@ import { fork } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { deserialize, serialize } from 'node:v8';
 import type { Analyzer, AnalysisContext } from '../core/analyzer.js';
 import { ANALYZER_VERSION } from '../core/graph.js';
@@ -72,7 +72,7 @@ export async function runTypeScriptWorker(request: TypeScriptWorkerRequest, opti
   catch (error) { if (error instanceof TypeScriptCodecStructureLimitError) throw Error(`TypeScript worker input exceeds structural limit: ${error.message}`); if (error instanceof TypeScriptCodecLimitError) throw Error(`TypeScript worker input exceeds ${maxBytes} bytes`); throw error; }
   if (payload.length > maxBytes) throw Error(`TypeScript worker input exceeds ${maxBytes} bytes`);
   const execArgv = [`--max-old-space-size=${old}`, `--max-semi-space-size=${young}`];
-  if (worker === WORKER && !existsSync(new URL('./ts-worker.js', import.meta.url))) execArgv.push('--import', createRequire(import.meta.url).resolve('tsx'));
+  if (worker === WORKER && !existsSync(new URL('./ts-worker.js', import.meta.url))) execArgv.push('--import', pathToFileURL(createRequire(import.meta.url).resolve('tsx')).href);
   // Caller hooks, inspectors, loaders and NODE_OPTIONS must not expand the
   // compiler budget or execute inside the child. The owned source loader is
   // needed only for development; an installed package uses ordinary JS.

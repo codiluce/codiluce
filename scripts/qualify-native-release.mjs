@@ -15,7 +15,7 @@ const npmCli=await npmCliPath(),testFiles=[];
 for(const folder of ['tests','web/tests','scripts/tests'])for(const file of(await readdir(path.join(root,folder))).sort())if(/\.test\.(?:ts|mjs)$/.test(file))testFiles.push(`${folder}/${file}`);
 const commands=[
   ...args.includes('--install')?[{name:'dependencies',executable:process.execPath,parameters:[npmCli,'ci','--ignore-scripts','--no-audit','--no-fund'],install:true}]:[],
-  {name:'tests',executable:process.execPath,parameters:['--experimental-sqlite','--import','tsx','--test','--test-concurrency=4',...testFiles],requiresInstall:true},
+  {name:'tests',executable:process.execPath,parameters:['--experimental-sqlite','--import','tsx','--test','--test-reporter=tap','--test-timeout=180000','--test-concurrency=4',...testFiles],requiresInstall:true},
   {name:'typecheck',executable:process.execPath,parameters:[npmCli,'run','typecheck'],requiresInstall:true},
   {name:'capability-docs',executable:process.execPath,parameters:['scripts/generate-compatibility-docs.mjs','--check'],requiresInstall:true},
   {name:'installed-package',executable:process.execPath,parameters:[npmCli,'run','test:package','--','--evidence-dir',path.join(output,'installed-package-evidence')],requiresInstall:true,packageEvidence:'installed-package-evidence'},

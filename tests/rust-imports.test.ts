@@ -247,6 +247,7 @@ test('Malformed/denied Cargo manifests and unknown targets never infer a crate f
         await assert.rejects(() => resolveConfig(root, { applications: [{ name: 'app', path: '.', rust }] } as any), /Rust|escapes|outside/);
 });
 test('Private source and binary aliases do not export their targets to other modules', async () => {
+    const rawFile = process.platform === 'win32' ? 'comma,quoted.rs' : 'comma",quoted.rs';
     const root = await repo({ 'Cargo.toml': manifest('app', '[dependencies]\nexternal="1"'), 'src/lib.rs': 'mod origin{pub struct Public;}mod hidden{use crate::origin::Public as PrivateAlias;use external::Type as ExternalAlias;}mod client{use crate::hidden::{PrivateAlias,ExternalAlias};}' }), g = await index(root);
     assert.deepEqual(use(g).map(o => o.outcome.status), ['resolved', 'external', 'unresolved', 'unresolved']);
     assert.ok(!g.relations.some(edge => edge.type === 'imports' && edge.metadata?.specifier === 'crate::hidden::PrivateAlias'));
@@ -264,7 +265,8 @@ test('Source types and values share a spelling only across native disjoint names
     assert.equal(use(unitStruct).at(-1)!.outcome.status, 'ambiguous');
 });
 test('Absolute globs, grouped comments and raw cfg/path strings retain native parsing', async () => {
-    const root = await repo({ 'Cargo.toml': manifest('app', '[dependencies]\nexternal="1"'), 'src/lib.rs': 'mod external{pub struct Local;}use ::external::*;mod a{pub struct One;pub struct Two;}use crate::a::{One,/* 😀 */Two};#[cfg_attr(unix,path=r##"comma\",quoted.rs"##)]mod raw;use crate::raw::Public;', 'src/comma",quoted.rs': 'pub struct Public;' }), g = await index(root, [{ name: 'app', path: '.', rust: { ...selected, cfg: { flags: ['unix'] } } }]);
+    const rawFile = process.platform === 'win32' ? 'comma,quoted.rs' : 'comma",quoted.rs';
+    const root = await repo({ 'Cargo.toml': manifest('app', '[dependencies]\nexternal="1"'), 'src/lib.rs': 'mod external{pub struct Local;}use ::external::*;mod a{pub struct One;pub struct Two;}use crate::a::{One,/* 😀 */Two};#[cfg_attr(unix,path=r##"' + rawFile + '"##)]mod raw;use crate::raw::Public;', ['src/' + rawFile]: 'pub struct Public;' }), g = await index(root, [{ name: 'app', path: '.', rust: { ...selected, cfg: { flags: ['unix'] } } }]);
     assert.deepEqual(use(g).map(o => o.outcome.status), ['external', 'resolved', 'resolved', 'resolved']);
     assert.equal(use(g)[0]!.specifier, '::external::*');
     assert.equal(rustCfg('custom=r##"a\",b"##', { test: false, cfg: { values: { custom: ['a",b'] } } }), true);

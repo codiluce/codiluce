@@ -50,7 +50,7 @@ async function fixture(){
   const exited=await execute(process.execPath,['-e','process.stdout.write(String(process.pid))']);const workerPid=Number(exited.stdout);await assert.rejects(access('/proc/'+workerPid),{code:'ENOENT'});
   const specification={id:'owned',repository:'https://github.com/owned/fixture',head,coverageIntent:'Owned exact SQLite history audit',policy:'consecutive-first-parent',revisions,extraRevisions:[]},record={id:'owned',head,expectedRevisions:2,status:'verified',error:null,worker:{pid:workerPid,exitCode:0,signal:null,samples:1,treePeakKiB:1},readOnlyReopenVerified:true,completedAt:new Date().toISOString(),database:'owned/state/history.db',historyIdentity:identity,revisions:observations,storage:store.status()},corpus={schema:1,repositories:[specification]},receipt={schema:1,platform:'linux',repositories:[record],passed:true,completedAt:new Date().toISOString()};
   return {root,source,directory,database,corpus,receipt};
- }catch(error){await rm(root,{recursive:true,force:true});throw error;}finally{store.close();}
+ }catch(error){store.close();await rm(root,{recursive:true,force:true});throw error;}finally{if(store.db.isOpen)store.close();}
 }
 
 test('independent read-only audit verifies original blobs, all exact SQLite payloads, deduplication and commit metadata',async()=>{

@@ -5,6 +5,7 @@ bytes, require this repository's terminal row to remain unchanged, and join
 the independently streamed columns to the actual worker snapshot UUIDs.
 """
 import argparse
+from contextlib import closing
 import hashlib
 import importlib.util
 import json
@@ -140,7 +141,7 @@ def main():
         assert file_hash(database) == row["databaseSha256"], "Database differs from terminal observation"
         result["database"] = audit_columns(database, child["snapshotColumnLedger"])
         assert result["database"]["sha256"] == row["databaseSha256"]
-        with sqlite3.connect(database.as_uri() + "?mode=ro", uri=True) as connection:
+        with closing(sqlite3.connect(database.as_uri() + "?mode=ro", uri=True)) as connection:
             connection.execute("PRAGMA query_only=ON")
             saved = list(connection.execute("SELECT id,seq,commit_sha FROM snapshots ORDER BY seq"))
         assert len(saved) == len(commits)

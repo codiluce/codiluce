@@ -195,9 +195,9 @@ test('index completion waits for every native, script and PHP parser address spa
     const graph=await indexRepository(context.root,{config:context.config});
     assert.ok(graph.entities.some(entity=>entity.name==='phpOriginal'));
     assert.ok(graph.entities.some(entity=>entity.name==='client'));
-    assert.ok(children.some(child=>child.spawnargs.some(argument=>argument.endsWith('/php/native-worker.mjs'))));
-    assert.ok(children.some(child=>child.spawnargs.some(argument=>argument.endsWith('/tree-sitter/native-worker.mjs'))));
-    assert.ok(children.some(child=>child.spawnargs.some(argument=>argument.endsWith('/tree-sitter/native-script-worker.mjs'))));
+    assert.ok(children.some(child=>child.spawnargs.some(argument=>argument.replaceAll('\\','/').endsWith('/php/native-worker.mjs'))));
+    assert.ok(children.some(child=>child.spawnargs.some(argument=>argument.replaceAll('\\','/').endsWith('/tree-sitter/native-worker.mjs'))));
+    assert.ok(children.some(child=>child.spawnargs.some(argument=>argument.replaceAll('\\','/').endsWith('/tree-sitter/native-script-worker.mjs'))));
     for(const child of children)assert.ok(child.exitCode!==null||child.signalCode!==null,'No parser address space may survive completed indexing');
   } finally {observer.mock.restore();syncBuiltinESMExports();}
 });

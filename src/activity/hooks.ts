@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { HOOK_EVENTS } from './normalize.js';
 import type { AgentProvider } from './model.js';
 import { shellLine, type Launch } from '../setup/agents.js';
@@ -7,7 +8,7 @@ import { runtimeProfile } from '../harnesses/registry.js';
 
 export function activityLaunch(tool: string, kind: InstallKind, provider: AgentProvider, root: string, stateDirectory: string): Launch {
   const scope = hookScope(provider, root, stateDirectory);
-  if (kind === 'checkout') return { command: process.execPath, args: ['--no-warnings', '--import', path.join(tool, 'node_modules/tsx/dist/loader.mjs'), path.join(tool, 'src/activity/hook-cli.ts'), ...scope] };
+  if (kind === 'checkout') return { command: process.execPath, args: ['--no-warnings', '--import', pathToFileURL(path.join(tool, 'node_modules/tsx/dist/loader.mjs')).href, path.join(tool, 'src/activity/hook-cli.ts'), ...scope] };
   if (kind === 'npx') return { command: 'npx', args: ['-y', npxPackage(tool), 'activity', 'hook', ...scope] };
   return { command: process.execPath, args: ['--no-warnings', path.join(tool, 'dist/src/activity/hook-cli.js'), ...scope] };
 }

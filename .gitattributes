@@ -1,3 +1,2 @@
-# Keep the checked parser bundle reproducible across native checkouts.
-src/analysis/tree-sitter/native-script-worker.mjs text eol=lf
-src/analysis/tree-sitter/native-worker.mjs text eol=lf
+# Keep source fingerprints, generated bundles and fixtures identical on every OS.
+* text=auto eol=lf

@@ -96,12 +96,15 @@ export interface ProgramInputs {
  * ownership is separate. Explicit text maps remain supported for callers. */
 export function createApplicationProgram(files: ReadonlyMap<string, string> | ReadonlySet<string>, options: ts.CompilerOptions, currentDirectory: string, inputs: ProgramInputs = {}): ts.Program {
   const compilerOptions = programOptions(options);
-  const libDirectory = path.dirname(ts.getDefaultLibFilePath(compilerOptions));
+  const libDirectory = path.dirname(path.normalize(ts.getDefaultLibFilePath(compilerOptions)));
   const isLib = (fileName: string) => path.dirname(fileName) === libDirectory && fileName.endsWith('.d.ts');
   const directories = new Set<string>([libDirectory]);
   for (const file of files.keys()) for (let directory = path.dirname(file); !directories.has(directory); directory = path.dirname(directory)) { directories.add(directory); if (directory === path.dirname(directory)) break; }
   const host: ts.CompilerHost = {
     getSourceFile(fileName, languageVersionOrOptions) {
+      // TypeScript asks with forward slashes, including on Windows. Indexed
+      // providers and text maps use native absolute paths.
+      fileName = path.normalize(fileName);
       const parseKey = JSON.stringify(languageVersionOrOptions);
       const key = JSON.stringify([currentDirectory, parseKey, compilerOptions.moduleDetection, compilerOptions.module, compilerOptions.jsx]);
       const text = ('get' in files ? files.get(fileName) : undefined) ?? inputs.readSource?.(fileName);
@@ -132,9 +135,9 @@ export function createApplicationProgram(files: ReadonlyMap<string, string> | Re
     getCanonicalFileName: fileName => fileName,
     useCaseSensitiveFileNames: () => true,
     getNewLine: () => '\n',
-    fileExists: fileName => files.has(fileName) || !!inputs.moduleHost?.fileExists(fileName) || (isLib(fileName) && ts.sys.fileExists(fileName)),
-    readFile: fileName => ('get' in files ? files.get(fileName) : files.has(fileName) ? inputs.readSource?.(fileName) : undefined) ?? inputs.moduleHost?.readFile(fileName) ?? (isLib(fileName) ? ts.sys.readFile(fileName) : undefined),
-    directoryExists: directory => directories.has(directory) || !!inputs.moduleHost?.directoryExists?.(directory),
+    fileExists: fileName => { fileName = path.normalize(fileName); return files.has(fileName) || !!inputs.moduleHost?.fileExists(fileName) || (isLib(fileName) && ts.sys.fileExists(fileName)); },
+    readFile: fileName => { fileName = path.normalize(fileName); return ('get' in files ? files.get(fileName) : files.has(fileName) ? inputs.readSource?.(fileName) : undefined) ?? inputs.moduleHost?.readFile(fileName) ?? (isLib(fileName) ? ts.sys.readFile(fileName) : undefined); },
+    directoryExists: directory => { directory = path.normalize(directory); return directories.has(directory) || !!inputs.moduleHost?.directoryExists?.(directory); },
     getDirectories: () => [],
     realpath: fileName => fileName,
     ...(inputs.resolveModuleNameLiterals ? { resolveModuleNameLiterals: inputs.resolveModuleNameLiterals } : {}),

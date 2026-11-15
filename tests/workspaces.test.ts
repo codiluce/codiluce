@@ -38,7 +38,7 @@ test('declared npm/Yarn/pnpm members extend application discovery without crossi
   ];
   for (const manifest of manifests) {
     const root = await repository({ ...manifest, 'deep/one/two/three/package.json': json({ dependencies: { express: '*' } }), 'deep/excluded/member/package.json': json({ dependencies: { next: '*' } }), 'deep/hidden/package.json': json({ dependencies: { next: '*' } }), 'deep/real/package.json': json({ dependencies: { next: '*' } }), 'deep/tests/package.json': json({ dependencies: { next: '*' } }) });
-    await symlink(path.join(root, 'deep/real'), path.join(root, 'deep/link'));
+    await symlink(path.join(root, 'deep/real'), path.join(root, 'deep/link'), process.platform === 'win32' ? 'junction' : 'dir');
     const apps = await detectApplications(root, 'fixture', ['deep/hidden/**']);
     assert.ok(apps.some(app => app.path === 'deep/one/two/three'));
     assert.ok(apps.some(app => app.path === 'deep/real'));
@@ -306,4 +306,16 @@ test('semantic services recover exact declaration owners from a graph cache hit'
   assert.ok(services.projectFor('shared/source.ts'), 'project ownership does not require a live compiler');
   const rebuilt = shared.program().getSourceFile(path.join(root, 'shared/source.ts'))!;
   assert.ok([...shared.owners(rebuilt).values()].some(entity => entity.name === 'action'), 'released services reconstruct declaration owners from the graph');
+});
+
+test('repository aliases resolve configured and discovered applications without allowing an escaping application', async () => {
+  const root = await repository({ 'deep/app/package.json': json({ dependencies: { express: '5.1.0' } }), 'package.json': json({ workspaces: ['deep/*'] }) });
+  const aliasParent = await mkdtemp(path.join(tmpdir(), 'codiluce-workspace-alias-')); temporary.push(aliasParent);
+  const alias = path.join(aliasParent, 'repository');
+  await symlink(root, alias, process.platform === 'win32' ? 'junction' : 'dir');
+  const configured = await resolveConfig(alias, { applications: [{ name: 'app', path: 'deep/app' }] });
+  assert.equal(configured.applications[0]!.path, 'deep/app');
+  assert.ok((await detectApplications(alias)).some(app => app.path === 'deep/app'));
+  await symlink(aliasParent, path.join(root, 'outside'), process.platform === 'win32' ? 'junction' : 'dir');
+  await assert.rejects(resolveConfig(alias, { applications: [{ name: 'outside', path: 'outside' }] }), /Application symlink escapes repository/);
 });

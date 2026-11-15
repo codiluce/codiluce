@@ -98,7 +98,7 @@ test('the history is folded onto a commit: renames followed, merges left out', a
   const before = history.fold(commits.C!)!;
   assert.deepEqual(before.commits.map(commit => commit.sha), [commits.C, commits.B, commits.A]);
   assert.ok(before.commits.find(commit => commit.sha === commits.B)!.changes.some(change => change.path === OLD_LOGIN));
-  assert.equal(before.until, '2026-01-10T10:00:00+00:00');
+  assert.equal(Date.parse(before.until), Date.parse('2026-01-10T10:00:00+00:00'));
 });
 
 test('a view says who changed each file most, per area, in a window ending at its commit', async () => {

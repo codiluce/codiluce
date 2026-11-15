@@ -22,7 +22,8 @@ async function fixture() {
   const state = await mkdtemp(path.join(tmpdir(), 'codiluce-file-state-'));
   const env = { ...process.env, GIT_AUTHOR_NAME: 'Fixture', GIT_AUTHOR_EMAIL: 'fixture@test.invalid', GIT_COMMITTER_NAME: 'Fixture', GIT_COMMITTER_EMAIL: 'fixture@test.invalid' };
   const git = (...args: string[]) => execFileSync('git', args, { cwd: root, env, encoding: 'utf8' }).trim();
-  const commit = (message: string) => { git('add', '-A'); git('commit', '-qm', message); return git('rev-parse', 'HEAD'); };
+  let oddBlob: string | undefined;
+  const commit = (message: string) => { git('add', '-A'); if (oddBlob) git('update-index', '--add', '--cacheinfo', `100644,${oddBlob},tab\tnewline\n.txt`); git('commit', '-qm', message); return git('rev-parse', 'HEAD'); };
   git('init', '-qb', 'main');
   await mkdir(path.join(root, 'src'));
   await writeFile(path.join(root, 'src/a.ts'), 'export const a = 1;\n');
@@ -30,7 +31,8 @@ async function fixture() {
   const A = commit('Initial');
   await writeFile(path.join(root, 'src/a.ts'), 'export const a = 2;\nexport const b = 3;\n');
   await writeFile(path.join(root, 'binary.bin'), Buffer.from([0, 1, 2]));
-  await writeFile(path.join(root, 'tab\tnewline\n.txt'), 'odd path\n');
+  // Store this original Git path directly: Windows cannot create control characters in filenames.
+  oddBlob = execFileSync('git', ['hash-object', '-w', '--stdin'], { cwd: root, env, input: 'odd path\n', encoding: 'utf8' }).trim();
   const B = commit('Edit and add');
   git('mv', 'src/a.ts', 'src/renamed.ts');
   await rm(path.join(root, 'binary.bin'));

@@ -169,6 +169,7 @@ export function matchesGlob(relative: string, glob: string): boolean {
  * would split its analysis. `rootName` names one at the root.
  */
 export async function detectApplications(root: string, rootName = path.basename(root), extraIgnores: readonly string[] = []): Promise<ApplicationConfig[]> {
+  root = await realpath(root);
   const apps: ApplicationConfig[] = [];
   const inventory = await gitIgnored(root);
   const ignored = inventory?.directories ?? new Set<string>();
@@ -402,7 +403,8 @@ async function configuredApplication(root: string, input: ApplicationInput): Pro
   const absolute = repoPath(root, input.path);
   const relative = path.relative(root, absolute).split(path.sep).join('/') || '.';
   const resolved = await realpath(absolute);
-  if (resolved !== root && !resolved.startsWith(`${root}${path.sep}`)) throw new Error('Application symlink escapes repository');
+  const canonicalRoot = await realpath(root), resolvedRelative = path.relative(canonicalRoot, resolved);
+  if (path.isAbsolute(resolvedRelative) || resolvedRelative === '..' || resolvedRelative.startsWith(`..${path.sep}`)) throw new Error('Application symlink escapes repository');
   if (!(await stat(resolved)).isDirectory()) throw new Error('Application path must be a directory');
   const found = await readManifests(resolved, await readdir(resolved), relative).catch(() => undefined);
   const { type, ...rest } = input;

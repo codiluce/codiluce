@@ -89,3 +89,11 @@ test('zero-exit native package commands cannot qualify without preserved package
  const result=await qualify({root,output,identity,commands:[{...command('installed-package',''),packageEvidence:'installed-package-evidence'}]});
  assert.equal(result.checks[0].exitCode,0);assert.equal(result.checks[0].status,'failed');assert.match(result.checks[0].evidenceError,/ENOENT/);assert.equal(result.qualified,false);
 });
+
+test('native CI scratch resolves runner aliases before exporting every platform temp variable',async()=>{
+ const root=await directory(),target=path.join(root,'canonical');await mkdir(target);
+ const fs=await import('node:fs/promises'),alias=path.join(root,'alias');await fs.symlink(target,alias,process.platform==='win32'?'junction':'dir');
+ const environment=path.join(root,'github-env');
+ await execute(process.execPath,[fileURLToPath(new URL('../prepare-native-host.mjs',import.meta.url))],{env:{...process.env,RUNNER_TEMP:alias,GITHUB_ENV:environment}});
+ const canonical=await fs.realpath(target);assert.equal(await readFile(environment,'utf8'),['TMPDIR','TMP','TEMP'].map(name=>`${name}=${canonical}\n`).join(''));
+});

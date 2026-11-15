@@ -6,6 +6,7 @@ import { execFile } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 import { excludeFromGit, npxPackage, type InstallKind } from './settings.js';
 import { HARNESSES, harnessId, runtimeProfile, type HarnessId } from '../harnesses/registry.js';
@@ -49,7 +50,7 @@ export function mcpLaunch(toolDirectory: string, kind: InstallKind, options: { r
 }
 /** Any `codiluce` command run with this install (the same version as the map), e.g. `setup` for a repository. */
 export function cliLaunch(toolDirectory: string, kind: InstallKind, args: string[]): Launch {
-  if (kind === 'checkout') return { command: process.execPath, args: ['--experimental-sqlite', '--no-warnings', '--import', path.join(toolDirectory, 'node_modules/tsx/dist/loader.mjs'), path.join(toolDirectory, 'src/cli.ts'), ...args] };
+  if (kind === 'checkout') return { command: process.execPath, args: ['--experimental-sqlite', '--no-warnings', '--import', pathToFileURL(path.join(toolDirectory, 'node_modules/tsx/dist/loader.mjs')).href, path.join(toolDirectory, 'src/cli.ts'), ...args] };
   if (kind === 'npx') return { command: 'npx', args: ['-y', npxPackage(toolDirectory), ...args] };
   return { command: process.execPath, args: [path.join(toolDirectory, 'bin/codiluce.js'), ...args] };
 }

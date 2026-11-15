@@ -32,7 +32,7 @@ test('PHP unit eviction preserves exact Unicode, undefined fields and shared AST
   const original={content:'é😀\r\n',ast:{one:node,two:node},missing:undefined};
   cache.put('../../original.php',original,8);cache.put('next.php',{...original,content:'next'},8);
   assert.equal(cache.stats().units,1);assert.equal(cache.stats().bytes,8);assert.equal(cache.stats().evictions,1);
-  const directory=cache.directory()!;assert.equal(statSync(directory).mode&0o777,0o700);assert.equal(statSync(snapshot(directory,'../../original.php')).mode&0o777,0o600);
+  const directory=cache.directory()!;if(process.platform!=='win32'){assert.equal(statSync(directory).mode&0o777,0o700);assert.equal(statSync(snapshot(directory,'../../original.php')).mode&0o777,0o600);}
   const loaded=cache.get('../../original.php')!;assert.deepEqual(loaded,original);assert.equal(loaded.ast.one,loaded.ast.two);assert.ok(Object.hasOwn(loaded,'missing'));
   assert.equal(cache.stats().reloads,1);assert.ok(cache.stats().bytes<=10);cache.clear();assert.ok(!existsSync(directory));
 });

@@ -96,7 +96,7 @@ test('all runtime setup plans merge idempotently in isolated homes without chang
     const repeat = await planIntegration(item.id, '/opt/codiluce', 'global', scopeRoot, scopeState, options);
     assert.ok(repeat.changes.every(file => file.before === file.after), profile.id);
     assert.equal(initial.integration.files.some(file => file.purpose === 'mcp'), true);
-    for (const change of initial.changes) if (change.executable) assert.equal((await stat(change.path)).mode & 0o777, 0o700);
+    for (const change of initial.changes) if (change.executable && process.platform !== 'win32') assert.equal((await stat(change.path)).mode & 0o777, 0o700);
     const snippet = initial.integration.files.find(file => file.purpose === 'mcp')!;
     const entry = valueAt(parseConfiguration(snippet.content, profile.mcp.format), [...profile.mcp.key, 'codiluce']); assert.ok(entry, profile.id);
     assert.ok(!initial.integration.instructions.join(' ').includes('auto-approve'));

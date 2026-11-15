@@ -75,8 +75,13 @@ test('fresh output refuses target roots and symlink aliases, including other pro
 test('path traversal, reserved names, alias collisions and nonportable names cannot be silently renamed',async t=>{
   for(const candidate of ['../escape','/absolute','a/../b','.git/config','a\\b','C:drive','CON.txt','nul','trailing.','space ','a//b'])assert.equal(materializedPathReason(candidate),'unsafe-or-nonportable-path',candidate);
   assert.equal(materializedPathReason('docs/ñ-and-\uFEFF.txt'),undefined);
-  if(process.platform==='win32')return;
-  const input=await fixture(t,{'Folder/a.txt':Buffer.from('one'),'folder/b.txt':Buffer.from('two'),'literal`$(target)`file.txt':Buffer.from('literal original'),'safe.txt':Buffer.from('healthy')});
+  const input=await fixture(t,{'one.txt':Buffer.from('one'),'two.txt':Buffer.from('two'),'literal`$(target)`file.txt':Buffer.from('literal original'),'safe.txt':Buffer.from('healthy')});
+  // Record both original spellings even on a case-insensitive filesystem.
+  const one=await input.git('rev-parse','HEAD:one.txt'),two=await input.git('rev-parse','HEAD:two.txt');
+  await input.git('update-index','--force-remove','one.txt','two.txt');
+  await input.git('update-index','--add','--cacheinfo',`100644,${one},Folder/a.txt`);
+  await input.git('update-index','--add','--cacheinfo',`100644,${two},folder/b.txt`);
+  await input.git('commit','-q','-m','Original case-colliding paths');input.revision=await readRevision(input.root,await input.git('rev-parse','HEAD'));
   const record=await materializeProductionRevision({...input,source:input.root});assert.equal(record.entries.filter(entry=>entry.reason==='portable-path-alias-collision').length,2);assert.deepEqual(await readFile(path.join(input.output,'tree','literal`$(target)`file.txt')),input.files['literal`$(target)`file.txt']);assert.equal(record.entries.find(entry=>entry.path==='safe.txt').status,'materialized');
 });
 
@@ -96,9 +101,10 @@ test('missing original blob objects retain a failure receipt and cannot qualify 
 });
 
 test('BOM path bytes remain original and unrepresentable UTF-8 paths remain explicit skips',async t=>{
-  if(process.platform==='win32')return;
   const input=await fixture(t,{'\uFEFForiginal.txt':Buffer.from('BOM filename')});
-  await writeFile(Buffer.concat([Buffer.from(input.root+'/'),Buffer.from([0xff])]),Buffer.from('non-UTF8 name'));
-  await input.git('add','.');await input.git('commit','-q','-m','Original path bytes');input.revision=await readRevision(input.root,await input.git('rev-parse','HEAD'));
+  // Git stores arbitrary path bytes independently of host filename support.
+  const object=await input.git('rev-parse','HEAD:\uFEFForiginal.txt');
+  await new Promise((resolve,reject)=>{const child=execFile('git',['-C',input.root,'update-index','-z','--index-info'],error=>error?reject(error):resolve());child.stdin.end(Buffer.concat([Buffer.from(`100644 ${object}\t`),Buffer.from([0xff,0])]));});
+  await input.git('commit','-q','-m','Original path bytes');input.revision=await readRevision(input.root,await input.git('rev-parse','HEAD'));
   const receipt=await materializeProductionRevision({...input,source:input.root});assert.deepEqual(await readFile(path.join(input.output,'tree','\uFEFForiginal.txt')),Buffer.from('BOM filename'));assert.ok(receipt.entries.some(entry=>entry.pathBytesHex==='ff'&&entry.reason==='non-utf8-path'&&entry.status==='skipped'));assert.equal(receipt.allRegularFilesMaterialized,false);assert.equal(receipt.originalBlobBytesComplete,false);
 });

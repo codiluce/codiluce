@@ -134,7 +134,7 @@ test('prompts: choose with arrows and digits, select several with space, type a 
 });
 
 /** Fake agent CLIs that record what they were asked to do. */
-async function fakeAgents(): Promise<{ bin: string; home: string; calls: (agent: string) => Promise<string> }> {
+async function fakeAgents(): Promise<{ bin: string; home: string; env: NodeJS.ProcessEnv; calls: (agent: string) => Promise<string> }> {
   const home = await folder();
   const bin = path.join(home, 'bin');
   await mkdir(bin);
@@ -144,7 +144,24 @@ async function fakeAgents(): Promise<{ bin: string; home: string; calls: (agent:
     await writeFile(path.join(bin, name), `#!/bin/sh\ncase "$1 $2" in "--version "*) echo "${version}";; "mcp get") cat "${home}/${name}-server.json" 2>/dev/null || exit 1;; *) echo "$@" >> "${home}/${name}.log";; esac\n`);
     await chmod(path.join(bin, name), 0o755);
   }
-  return { bin, home, calls: async agent => readFile(path.join(home, `${agent}.log`), 'utf8').catch(() => '') };
+  let nodeOptions = process.env.NODE_OPTIONS;
+  if (process.platform === 'win32') {
+    // Native executables let execFile exercise the same calls without a shell.
+    const preload = path.join(home, 'fake-agent.cjs');
+    await writeFile(preload, `const fs=require('node:fs'),path=require('node:path');
+const agent=path.basename(process.execPath,'.exe');
+if(agent==='claude'||agent==='codex'){
+ const home=${JSON.stringify(home)},args=process.argv.slice(1);args[0]=path.basename(args[0]);
+ if(args[0]==='mcp'&&args[1]==='get'){
+  try{process.stdout.write(fs.readFileSync(path.join(home,agent+'-server.json')));}catch{process.exit(1);}
+ }else fs.appendFileSync(path.join(home,agent+'.log'),args.join(' ')+'\\n');
+ process.exit(0);
+}`);
+    for (const agent of ['claude', 'codex']) await cp(process.execPath, path.join(bin, agent + '.exe'));
+    nodeOptions = `--require "${preload}"`;
+  }
+  const env = { PATH: `${bin}${path.delimiter}${process.env.PATH}`, HOME: home, USERPROFILE: home, ...(nodeOptions ? { NODE_OPTIONS: nodeOptions } : {}) };
+  return { bin, home, env, calls: async agent => readFile(path.join(home, `${agent}.log`), 'utf8').catch(() => '') };
 }
 function withEnv<T>(patch: NodeJS.ProcessEnv, work: () => Promise<T>): Promise<T> {
   const previous = Object.fromEntries(Object.keys(patch).map(key => [key, process.env[key]]));
@@ -161,11 +178,11 @@ test('agents: the MCP command fits the install, and agents are connected through
   assert.deepEqual(mcpLaunch(released, 'npx'), { command: 'npx', args: ['-y', 'codiluce@9.9.9', 'mcp'] });
   assert.deepEqual(activityLaunch(released, 'npx', 'codex', '/r', '/r/.codiluce').args.slice(0, 4), ['-y', 'codiluce@9.9.9', 'activity', 'hook']);
   assert.deepEqual(cliLaunch(released, 'npx', ['setup', '/r']), { command: 'npx', args: ['-y', 'codiluce@9.9.9', 'setup', '/r'] });
-  assert.deepEqual(mcpLaunch(tool, 'global'), { command: process.execPath, args: ['/opt/codiluce/bin/codiluce.js', 'mcp'] });
-  assert.equal(mcpLaunch(tool, 'checkout').args.at(-2), '/opt/codiluce/src/cli.ts');
+  assert.deepEqual(mcpLaunch(tool, 'global'), { command: process.execPath, args: [path.join(tool, 'bin/codiluce.js'), 'mcp'] });
+  assert.equal(mcpLaunch(tool, 'checkout').args.at(-2), path.join(tool, 'src/cli.ts'));
   const fake = await fakeAgents();
   const root = await folder();
-  await withEnv({ PATH: `${fake.bin}${path.delimiter}${process.env.PATH}`, HOME: fake.home }, async () => {
+  await withEnv(fake.env, async () => {
     const install = { toolDirectory: tool, kind: 'npx' as const };
     const states = async () => (await detectAgents(root, install)).filter(agent => ['claude', 'codex', 'cursor'].includes(agent.id)).map(agent => [agent.id, agent.installed, agent.connected, agent.elsewhere]);
     assert.deepEqual(await states(), [['claude', true, false, undefined], ['codex', true, false, undefined], ['cursor', true, false, undefined]]);
@@ -256,7 +273,7 @@ function context(stateDirectory: string, env: NodeJS.ProcessEnv): SetupContext {
 test('setup asks the questions, saves the answers where they belong, and connects the chosen agents', async () => {
   const fake = await fakeAgents();
   const home = await folder();
-  const env = { ...process.env, CODILUCE_CONFIG_HOME: home, PATH: `${fake.bin}${path.delimiter}${process.env.PATH}`, HOME: fake.home };
+  const env: NodeJS.ProcessEnv = { ...process.env, CODILUCE_CONFIG_HOME: home, ...fake.env };
   const state = path.join(repository, '.codiluce');
   assert.equal(setupMode(state, true, env), 'ask');
   assert.equal(setupMode(state, false, env), 'quiet');
@@ -265,7 +282,7 @@ test('setup asks the questions, saves the answers where they belong, and connect
     [/Connect your agent/, `${SPACE}${ENTER}`],     // all three were selected; drop Claude Code
     [/In a new repository/, `${DOWN}${ENTER}`],     // use these answers
   ]);
-  const result = await withEnv({ PATH: env.PATH, HOME: env.HOME }, () => runSetup(new Writer(terminal), context(state, env), { mode: 'ask' }));
+  const result = await withEnv({ ...fake.env, PATH: env.PATH }, () => runSetup(new Writer(terminal), context(state, env), { mode: 'ask' }));
   assert.equal(result.asked, true);
   assert.equal(result.fileCommits, 3);
   assert.equal(result.settings.history.depth, 'none');
@@ -295,7 +312,7 @@ test('setup asks the questions, saves the answers where they belong, and connect
   printSummary(new Writer(terminal), result, context(state, env));
   assert.match(output(), /all 3 commits and file changes ready/);
   assert.match(output(), /shown on the map \(hooks in \.codex\/hooks\.json\)/);
-  assert.match(output(), /Activity\s+Codex, Cursor, [^│]*shown in Agents as they work/);
+  assert.match(output(), /Activity\s+Codex, Cursor(?:, [^│\n]*)? shown in Agents as they work/);
   assert.match(output(), /open \/hooks once and trust Codiluce's hooks/);
   // A new repository then takes these answers without asking.
   const other = await folder();
@@ -318,7 +335,7 @@ test('setup without a terminal decides nothing: saved settings stay, the setup s
 
 test('setup keeps existing agent connections when no new connections are selected', async () => {
   const fake = await fakeAgents(), root = await folder();
-  for (const name of ['cat', 'git']) await symlink(execFileSync('which', [name], { encoding: 'utf8' }).trim(), path.join(fake.bin, name));
+  if (process.platform !== 'win32') for (const name of ['cat', 'git']) await symlink(execFileSync('which', [name], { encoding: 'utf8' }).trim(), path.join(fake.bin, name));
   const state = path.join(root, '.codiluce');
   const launch = { command: 'npx', args: ['-y', 'codiluce', 'mcp'] };
   await writeFile(path.join(fake.home, '.claude.json'), JSON.stringify({ projects: { [root]: { mcpServers: { codiluce: { ...launch, args: [...launch.args, '--repo', root] } } } } }));
@@ -327,12 +344,12 @@ test('setup keeps existing agent connections when no new connections are selecte
   await writeFile(path.join(fake.home, '.cursor/mcp.json'), cursor);
   // Connected means its activity hooks are here too.
   for (const id of ['claude-code', 'codex', 'cursor'] as const) await applyIntegration(await planIntegration(id, '/opt/codiluce', 'npx', root, state, { mcp: false, scope: 'project' }));
-  const env = { CODILUCE_CONFIG_HOME: await folder(), PATH: fake.bin, HOME: fake.home };
+  const env = { CODILUCE_CONFIG_HOME: await folder(), ...fake.env, PATH: process.platform === 'win32' ? fake.bin + path.delimiter + path.dirname(execFileSync('where.exe', ['git'], { encoding: 'utf8' }).trim().split(/\r?\n/)[0]!) : fake.bin };
   const { terminal, output } = scriptedTerminal([
     [/Language models/, ENTER], [/Connect your agent/, ENTER], [/In a new repository/, ENTER],
   ]);
   const setupContext = { ...context(state, env), root };
-  const result = await withEnv({ PATH: env.PATH, HOME: env.HOME }, () => runSetup(new Writer(terminal), setupContext, { mode: 'ask' }));
+  const result = await withEnv({ ...fake.env, PATH: env.PATH }, () => runSetup(new Writer(terminal), setupContext, { mode: 'ask' }));
   assert.deepEqual(result.connected.map(item => [item.agent.id, item.ok, item.already]), [['claude', true, true], ['codex', true, true], ['cursor', true, true]]);
   printSummary(new Writer(terminal), result, setupContext);
   assert.match(output(), /no new connections \(Claude Code, Codex, Cursor already connected\)/);
@@ -385,7 +402,7 @@ test('background work indexes history through the CLI and reports it on one line
   await mkdir(state);
   await writeFile(path.join(state, 'config.yml'), stringify({ repository: { name: 'shop' }, applications: FIXTURE_CONFIG.applications }));
   const { terminal, output } = scriptedTerminal();
-  const loader = fileURLToPath(new URL('../node_modules/tsx/dist/loader.mjs', import.meta.url));
+  const loader = new URL('../node_modules/tsx/dist/loader.mjs', import.meta.url).href;
   const cli = fileURLToPath(new URL('../src/cli.ts', import.meta.url));
   const work = new BackgroundWork({ root: repository, stateDirectory: state, entry: ['--experimental-sqlite', '--no-warnings', '--import', loader, cli], line: new StatusLine(new Writer(terminal)) });
   const result = await work.history(2);

@@ -181,7 +181,7 @@ test('an installed package uses its prebuilt UI and reports missing assets witho
 test('CLI defaults to the current repository and shuts down cleanly on SIGINT', { timeout: 20_000 }, async () => {
   const { root, ui } = await fixture();
   const cli = fileURLToPath(new URL('../src/cli.ts', import.meta.url));
-  const loader = fileURLToPath(new URL('../node_modules/tsx/dist/loader.mjs', import.meta.url));
+  const loader = new URL('../node_modules/tsx/dist/loader.mjs', import.meta.url).href;
   const child = spawn(process.execPath, ['--experimental-sqlite', '--import', loader, cli, 'start', '--ui', ui, '--port', '0', '--no-open'], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
   const exited = once(child, 'exit');
   let output = '';
