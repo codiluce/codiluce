@@ -39,7 +39,7 @@ program.getTypeChecker();
 const sources = program.getSourceFiles().map(source => ({ file: source.fileName, sha256: hash(source.text), utf16Bytes: 2 * source.text.length }));
 assert.equal(sources.length, texts.size);
 for (const source of program.getSourceFiles()) {
-  assert.equal(source.text, texts.get(source.fileName));
+  assert.equal(source.text, texts.get(path.normalize(source.fileName)));
   assert.equal(source, first.getSourceFile(source.fileName), 'Unchanged originals reuse parsed ASTs');
 }
 
@@ -80,7 +80,7 @@ try {
   const read = async file => (await post('Runtime.callFunctionOn', {
     objectId: host, functionDeclaration: 'function(file){return this.readFile(file);}', arguments: [{ value: file }], returnByValue: true,
   })).result.value;
-  const lateFile = sources[0].file;
+  const lateFile = path.normalize(sources[0].file);
   context.sources.clear();
   const late = await read(lateFile);
   assert.equal(late, texts.get(lateFile), 'Late registered-root reads preserve original bytes');
