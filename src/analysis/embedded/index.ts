@@ -132,11 +132,12 @@ export class EmbeddedSources {
     for (const recipe of recipes) { this.virtual.set(recipe.input.file.absolutePath, recipe.input); this.recipes.set(recipe.input.file.absolutePath, recipe); }
   }
   inputs(file: ScannedFile): ScannedFile[] { return this.byOriginal.get(file.path)?.map(input => input.file) ?? []; }
-  facade(fileName: string): string | undefined { return this.facades.get(fileName); }
-  input(fileName: string): EmbeddedInput | undefined { return this.virtual.get(fileName); }
-  original(fileName: string): string { return this.virtual.get(fileName)?.file.path ?? path.relative(this.context.root, fileName).split(path.sep).join('/'); }
-  mapped(fileName: string, start: number, end: number): boolean { const input = this.virtual.get(fileName); return !input || !!input.region && !!mappedRange(input.region, start, end); }
+  facade(fileName: string): string | undefined { return this.facades.get(path.normalize(fileName)); }
+  input(fileName: string): EmbeddedInput | undefined { return this.virtual.get(path.normalize(fileName)); }
+  original(fileName: string): string { return this.virtual.get(path.normalize(fileName))?.file.path ?? path.relative(this.context.root, fileName).split(path.sep).join('/'); }
+  mapped(fileName: string, start: number, end: number): boolean { const input = this.virtual.get(path.normalize(fileName)); return !input || !!input.region && !!mappedRange(input.region, start, end); }
   readFile(fileName: string): string | undefined {
+    fileName = path.normalize(fileName);
     const recipe = this.recipes.get(fileName); if (!recipe) return undefined;
     const cached = this.texts.get(fileName);
     if (cached) { this.hits++; this.texts.delete(fileName); this.texts.set(fileName, cached); return cached.text; }
@@ -153,6 +154,7 @@ export class EmbeddedSources {
     return text;
   }
   internal(specifier: string, importer: string): string | undefined {
+    importer = path.normalize(importer);
     if (!this.virtual.has(importer) || !specifier.startsWith('./')) return undefined;
     const candidate = path.resolve(path.dirname(importer), specifier), input = this.virtual.get(candidate);
     return input?.region?.role === 'module' && input.file.path === this.virtual.get(importer)!.file.path ? candidate : undefined;
