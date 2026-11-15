@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stringify } from 'yaml';
 import { indexRepository } from '../src/pipeline/index.js';
+import { cliLaunch, shellLine } from '../src/setup/agents.js';
 import { GraphStore } from '../src/storage/sqlite.js';
 import { ProjectionService } from '../src/projection/service.js';
 import { HistoryAccess, HistoryService } from '../src/history/service.js';
@@ -362,7 +363,7 @@ test('activity: only explicit explanation requests start work; ordinary reads an
       // The map's own version, which agents' servers should match, and setup with this install to reconnect them.
       const setup = await (await fetch(`http://127.0.0.1:${port}/api/explanations/setup`)).json() as { version: string; mcp: { setup: string } };
       assert.equal(setup.version, JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')).version);
-      assert.ok(setup.mcp.setup.endsWith(`src/cli.ts setup ${root} --state-dir ${state}`), setup.mcp.setup);
+      assert.equal(setup.mcp.setup, shellLine(cliLaunch(process.cwd(), 'checkout', ['setup', root, '--state-dir', state])));
     } finally { await new Promise(resolve => server.close(resolve)); }
   } finally { session.close(); if (saved) service.remove(saved); }
   // The session's file goes with it; one left by a process that ended is not shown.

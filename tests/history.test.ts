@@ -27,6 +27,8 @@ import { createHistoryFixture, type HistoryFixture } from './history-fixture.js'
 
 let fixture: HistoryFixture, history: HistoryStore, store: GraphStore, projection: ProjectionService;
 const snapshots: Record<string, SnapshotRecord> = {};
+const accesses: HistoryAccess[] = [];
+function historyAccess(state: string) { const access = new HistoryAccess(state); accesses.push(access); return access; }
 before(async () => {
   fixture = await createHistoryFixture();
   const result = await indexHistory({ root: fixture.root, stateDirectory: fixture.state, ref: 'main', jobs: 1 });
@@ -38,10 +40,10 @@ before(async () => {
   // The live working tree equals D, where the configured backend/ now lives at server/.
   store = new GraphStore(':memory:');
   store.save(await indexRepository(fixture.root, { config: (await revisionConfig(await historyConfig(fixture.root, fixture.state), fixture.root)).config }));
-  const access = new HistoryAccess(fixture.state);
+  const access = historyAccess(fixture.state);
   projection = new ProjectionService(store, { root: fixture.root, stateDirectory: fixture.state, history: access.get });
 });
-after(async () => { history.close(); store.close(); await fixture.cleanup(); });
+after(async () => { for (const access of accesses) access.close(); history.close(); store.close(); await fixture.cleanup(); });
 
 const view = (target: string, baseline?: string) => ({ snapshot: snapshots[target]!.id, ...(baseline ? { compareTo: snapshots[baseline]!.id } : {}) });
 const entityIn = (snapshot: string, predicate: (row: ReturnType<HistoryStore['entities']>[number]) => boolean) => {
@@ -258,7 +260,7 @@ test('timeline layout: reserved slots at largest size, aliases inherit slots', (
 });
 test('the time-lapse draws each commit where its comparison with the previous commit does, and names what changed', async () => {
   const ids = ['A', 'B', 'C', 'D'].map(name => snapshots[name]!.id);
-  const fresh = new ProjectionService(store, { root: fixture.root, stateDirectory: fixture.state, history: new HistoryAccess(fixture.state).get });
+  const fresh = new ProjectionService(store, { root: fixture.root, stateDirectory: fixture.state, history: historyAccess(fixture.state).get });
   assert.equal(fresh.evolution(ids).status, 'computing', 'computed in the background');
   const evolution = await fresh.awaitEvolution(ids);
   assert.equal(evolution.status, 'ready');

@@ -18,7 +18,7 @@ import { complexityLevel, rankLevels, type MetricLensResult } from '../src/proje
 import { ProjectionService } from '../src/projection/service.js';
 import { GraphStore } from '../src/storage/sqlite.js';
 
-let root: string, state: string, store: GraphStore, projection: ProjectionService;
+let root: string, state: string, store: GraphStore, projection: ProjectionService, access: HistoryAccess;
 const commits: string[] = [];
 /** A function deciding `count` times: complexity count + 1. */
 const decide = (name: string, count: number) => `export function ${name}(value: number) {\n${Array.from({ length: count }, (_, index) => `  if (value === ${index}) return ${index};`).join('\n')}\n  return -1;\n}\n`;
@@ -42,9 +42,9 @@ before(async () => {
   await write('src/mid.ts', `// tuned\n${(await import('node:fs')).readFileSync(path.join(root, 'src/mid.ts'), 'utf8')}`); commit('Tune the router');
   store = new GraphStore(':memory:');
   store.save(await indexRepository(root));
-  projection = new ProjectionService(store, { root, stateDirectory: state, history: new HistoryAccess(state).get });
+  projection = new ProjectionService(store, { root, stateDirectory: state, history: (access = new HistoryAccess(state)).get });
 });
-after(async () => { store?.close(); await rm(root, { recursive: true, force: true }); await rm(state, { recursive: true, force: true }); });
+after(async () => { access?.close(); store?.close(); await rm(root, { recursive: true, force: true }); await rm(state, { recursive: true, force: true }); });
 const id = (name: string, type = 'file') => store.entities({ type }).items.find(entity => (type === 'file' ? entity.path : entity.name) === name)!.id;
 
 test('levels: cyclomatic bands, and changes by the share of files below', () => {

@@ -25,6 +25,7 @@ async function fixture() {
   let oddBlob: string | undefined;
   const commit = (message: string) => { git('add', '-A'); if (oddBlob) git('update-index', '--add', '--cacheinfo', `100644,${oddBlob},tab\tnewline\n.txt`); git('commit', '-qm', message); return git('rev-parse', 'HEAD'); };
   git('init', '-qb', 'main');
+  git('config', 'core.protectNTFS', 'false'); // Owned Git-only control-character paths never reach the filesystem.
   await mkdir(path.join(root, 'src'));
   await writeFile(path.join(root, 'src/a.ts'), 'export const a = 1;\n');
   await writeFile(path.join(root, 'stable.txt'), 'unchanged\n');

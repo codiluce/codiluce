@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {createReadStream} from 'node:fs';
 import {lstat,readlink,realpath} from 'node:fs/promises';
+import {finished} from 'node:stream/promises';
 import path from 'node:path';
 import {historyRuntimeLayout,historyRuntimeLedgers,historySourceIdentity} from './production-history-runtime-layout.mjs';
 
@@ -50,7 +51,7 @@ export async function verifyPerformanceRuntimeFiles(identity,root,record=()=>{})
   for(const row of ledger.identity.files){
    names.add(row.file);const file=path.resolve(ledger.root,row.file);
    assert.ok(file.startsWith(ledger.root+path.sep));assert.equal(await realpath(file),file);assert.equal((await lstat(file)).isFile(),true);
-   const digest=createHash('sha256');for await(const bytes of createReadStream(file))digest.update(bytes);
+   const digest=createHash('sha256'),stream=createReadStream(file);for await(const bytes of stream)digest.update(bytes);await finished(stream);
    assert.equal(digest.digest('hex'),row.sha256,'Frozen '+ledger.role+' runtime changed: '+row.file);record(file,row.sha256);
   }
   for(const link of ledger.identity.links??[]){

@@ -32,6 +32,29 @@ def regular(file):
 
 def dead(pid):
     assert type(pid) is int and pid > 0
+    if os.name == "nt":
+        # os.kill(pid, 0) does not provide POSIX process probing on Windows.
+        import ctypes
+        from ctypes import wintypes
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel.OpenProcess.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+        kernel.OpenProcess.restype = wintypes.HANDLE
+        kernel.GetExitCodeProcess.argtypes = (wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD))
+        kernel.CloseHandle.argtypes = (wintypes.HANDLE,)
+        handle = kernel.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+        if not handle:
+            error = ctypes.get_last_error()
+            if error == 87:  # ERROR_INVALID_PARAMETER: PID no longer exists.
+                return
+            raise ctypes.WinError(error)
+        try:
+            code = wintypes.DWORD()
+            if not kernel.GetExitCodeProcess(handle, ctypes.byref(code)):
+                raise ctypes.WinError(ctypes.get_last_error())
+            assert code.value != 259, "Completed observation process is still live: " + str(pid)
+            return
+        finally:
+            kernel.CloseHandle(handle)
     try:
         os.kill(pid, 0)
     except ProcessLookupError:

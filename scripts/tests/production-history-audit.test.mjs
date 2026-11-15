@@ -7,6 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {promisify} from 'node:util';
 import {DatabaseSync} from 'node:sqlite';
+import {fileURLToPath} from 'node:url';
 import {GraphBuilder} from '../../src/core/graph.ts';
 import {HistoryStore} from '../../src/history/store.ts';
 import {productionGraphDigest} from '../production-graph-digest.mjs';
@@ -85,7 +86,7 @@ test('qualified engine, frozen observer and original profile drift fail the inde
   const changedObserver=structuredClone(receipt);changedObserver.observer['production-history-storage.mjs']='0'.repeat(64);await assert.rejects(verifyProductionHistoryRunInputs({...options,receipt:changedObserver}),/Frozen observer input changed/);
   const changedProfile=structuredClone(receipt);changedProfile.repositories[0].config={maxFileBytes:1};await assert.rejects(verifyProductionHistoryRunInputs({...options,receipt:changedProfile}),/configuration differs/);
   const corpusFile=path.join(value.root,'corpus.json'),profilesFile=path.join(value.root,'profiles.json'),receiptFile=path.join(value.directory,'receipt.json'),output=path.join(value.root,'audit.json');await writeFile(corpusFile,corpusBytes);await writeFile(profilesFile,profilesBytes);await writeFile(receiptFile,JSON.stringify(receipt));
-  const args=['--experimental-sqlite',new URL('../audit-production-history.mjs',import.meta.url).pathname,'--corpus',corpusFile,'--profiles',profilesFile,'--engine',engine,'--receipt',receiptFile,'--source','owned='+value.source,'--output',output];
+  const args=['--experimental-sqlite',fileURLToPath(new URL('../audit-production-history.mjs',import.meta.url)),'--corpus',corpusFile,'--profiles',profilesFile,'--engine',engine,'--receipt',receiptFile,'--source','owned='+value.source,'--output',output];
   await execute(process.execPath,args);const retained=JSON.parse(await readFile(output)),inputBytes=await readFile(output+'.inputs.json'),input=JSON.parse(inputBytes);assert.equal(retained.passed,true);assert.equal(retained.full195RevisionGateQualified,false);assert.equal(retained.inputSnapshot.sha256,hash(inputBytes));assert.equal(input.files.receipt.utf8,(await readFile(receiptFile)).toString());assert.equal(input.files.receipt.sha256,retained.receiptSha256);
   const unsafe=[...args];unsafe[unsafe.indexOf('--output')+1]=path.join(value.source,'audit.json');await assert.rejects(execute(process.execPath,unsafe),error=>/outside original inputs/.test(error.stderr));await assert.rejects(access(path.join(value.source,'audit.json.inputs.json')),{code:'ENOENT'});
  }finally{await rm(value.root,{recursive:true,force:true});}

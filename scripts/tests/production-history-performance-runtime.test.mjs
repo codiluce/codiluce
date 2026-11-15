@@ -30,12 +30,12 @@ async function withFiles(check){
  try{
   const sourceRoot=path.join(root,'source'),installedRoot=path.join(root,'installed'),value=fixture().baselineExecutionReceipt.engineIdentity;value.sourceQualification.root=sourceRoot;
   for(const [directory,ledger] of [[sourceRoot,value.sourceQualification.identity],[installedRoot,value]])for(const row of ledger.files){const file=path.join(directory,row.file);await mkdir(path.dirname(file),{recursive:true});await writeFile(file,roles[ledger.files.indexOf(row)]);}
-  await symlink('history/indexer.js',path.join(installedRoot,'codiluce/dist/src/literal-link'));value.links=[{file:'codiluce/dist/src/literal-link',target:'history/indexer.js'}];
+  await symlink('indexer.js',path.join(installedRoot,'codiluce/dist/src/literal-link'));value.links=[{file:'codiluce/dist/src/literal-link',target:'indexer.js'}];
   await check({value,sourceRoot,installedRoot});passed=true;
  }finally{if(passed)await rm(root,{recursive:true});else console.error('Retained performance runtime fixture:',root);}
 }
 test('performance runtime verification hashes both actual ledgers and preserves literal links',()=>withFiles(async({value,installedRoot})=>{
- const recorded=[];await verifyPerformanceRuntimeFiles(value,installedRoot,(file,digest)=>recorded.push({file,digest}));assert.equal(recorded.length,12);assert.equal(recorded.filter(r=>r.file.includes('/source/')).length,6);assert.equal(await readlink(path.join(installedRoot,value.links[0].file)),value.links[0].target);
+ const recorded=[];await verifyPerformanceRuntimeFiles(value,installedRoot,(file,digest)=>recorded.push({file,digest}));assert.equal(recorded.length,12);assert.equal(recorded.filter(r=>r.file.includes(path.sep+'source'+path.sep)).length,6);assert.equal(await readlink(path.join(installedRoot,value.links[0].file)),value.links[0].target);
 }));
 test('performance runtime verification catches changed installed bytes and separately changed source bytes',()=>withFiles(async({value,installedRoot,sourceRoot})=>{
  for(const [directory,ledger] of [[installedRoot,value],[sourceRoot,value.sourceQualification.identity]]){const file=path.join(directory,ledger.files[0].file);await writeFile(file,'changed runtime');await assert.rejects(verifyPerformanceRuntimeFiles(value,installedRoot),/runtime changed/);await writeFile(file,roles[0]);}

@@ -3,7 +3,8 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {createReadStream} from 'node:fs';
-import {access,lstat,readFile,realpath,writeFile} from 'node:fs/promises';
+import {lstat,readFile,realpath,writeFile} from 'node:fs/promises';
+import {finished} from 'node:stream/promises';
 import path from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
 import {fileURLToPath} from 'node:url';
@@ -13,7 +14,7 @@ const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const groups={entities:['entity','entity_id'],relations:['relation','relation_id'],diagnostics:['diagnostic','id']};
 const symbols=new Set(['class','controller','component','function','method','model','test']);
 const compare=(a,b)=>a<b?-1:a>b?1:0;
-async function fileHash(file){const digest=createHash('sha256');for await(const bytes of createReadStream(file))digest.update(bytes);return digest.digest('hex');}
+async function fileHash(file){const digest=createHash('sha256'),stream=createReadStream(file);for await(const bytes of stream)digest.update(bytes);await finished(stream);return digest.digest('hex');}
 async function walIdentity(file){try{const info=await lstat(file+'-wal');assert.ok(info.isFile()&&!info.isSymbolicLink());return {bytes:info.size,sha256:await fileHash(file+'-wal')};}catch(error){if(error.code==='ENOENT')return null;throw error;}}
 
 export async function verifyProductionHistoryRunInputs({receipt,corpusBytes,profilesBytes,engine}){
@@ -100,10 +101,8 @@ export async function auditProductionHistoryRepository({specification,record,dir
  assert.equal(record.id,specification.id);assert.equal(record.head,specification.head);assert.equal(record.status,'verified','Only completed verified repository observations may be audited');
  assert.equal(record.error,null);assert.equal(record.worker.exitCode,0);assert.equal(record.worker.signal,null);assert.equal(record.readOnlyReopenVerified,true);assert.ok(record.completedAt);
  assert.ok(record.worker.samples>0&&record.worker.treePeakKiB>0);assert.ok(Number.isSafeInteger(record.worker.pid)&&record.worker.pid>0);
- if(process.platform==='linux'){
-  let live=true;try{await access('/proc/'+record.worker.pid);}catch(error){assert.equal(error.code,'ENOENT');live=false;}
-  assert.equal(live,false,'Observed worker is still live; refuse to audit mutable database bytes');
- }
+ let live=true;try{process.kill(record.worker.pid,0);}catch(error){assert.equal(error.code,'ESRCH');live=false;}
+ assert.equal(live,false,'Observed worker is still live; refuse to audit mutable database bytes');
  const selected=[...specification.revisions,...specification.extraRevisions];assert.equal(record.expectedRevisions,selected.length);assert.deepEqual(record.revisions.map(row=>row.commit),selected.map(row=>row.commit));
  directory=await realpath(directory);source=await realpath(source);const database=path.resolve(directory,record.database);
  assert.equal(database,path.join(directory,specification.id,'state','history.db'));assert.equal(await realpath(database),database,'Database path crosses an alias');
